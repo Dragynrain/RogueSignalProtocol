@@ -21,9 +21,7 @@ SCREEN_WIDTH = 80
 SCREEN_HEIGHT = 50
 MAP_WIDTH = 50
 MAP_HEIGHT = 50
-LOG_WIDTH = 30  # Width of the right-side system log (increased from 20)
-GAME_AREA_WIDTH = SCREEN_WIDTH - LOG_WIDTH  # Width available for game map
-PANEL_HEIGHT = 5  # Reduced panel height
+PANEL_HEIGHT = 10
 PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
 
 # Game balance constants
@@ -66,8 +64,6 @@ class Colors:
     # UI
     ui_bg = (0, 20, 0)
     ui_text = (0, 255, 0)
-    log_bg = (0, 15, 0)
-    log_border = (0, 100, 0)
 
 class EnemyState(Enum):
     UNAWARE = "unaware"
@@ -663,15 +659,16 @@ class Game:
         self.add_message("Tutorial Network loaded. Begin infiltration...")
     
     def add_message(self, text: str):
-        """Add a message to the log - no truncation, let display handle wrapping"""
+        """Add a message to the log with automatic truncation"""
         if not text:
             return
+        max_length = SCREEN_WIDTH - 4
+        if len(text) > max_length:
+            text = text[:max_length-3] + "..."
         
-        # Don't truncate messages here - let the display function handle wrapping
         self.messages.append(text)
-        # Keep more messages for better scrolling
-        if len(self.messages) > 100:  # Increased from 50 to accommodate wrapped lines
-            self.messages = self.messages[-100:]
+        if len(self.messages) > 10:
+            self.messages = self.messages[-10:]
     
     def process_turn(self):
         """Process one game turn"""
@@ -695,22 +692,20 @@ class Game:
         player_pos = (self.player.x, self.player.y)
         
         if self.game_map.is_cooling_node(*player_pos):
-            old_heat = self.player.heat
             self.player.heat = max(0, self.player.heat - 20)
-            if old_heat > self.player.heat:
-                self.add_message(f"Cooling node: -{old_heat - self.player.heat}°C")
+            self.add_message("Cooling node reduces system heat!")
         
         if self.game_map.is_cpu_recovery_node(*player_pos):
             recovery = min(20, self.player.max_cpu - self.player.cpu)
             self.player.cpu += recovery
             if recovery > 0:
-                self.add_message(f"CPU recovery: +{recovery}")
+                self.add_message(f"CPU recovery node restores {recovery} CPU!")
         
         # Check for data patches
         if player_pos in self.game_map.data_patches:
             patch = self.game_map.data_patches[player_pos]
             self.player.add_to_inventory(patch)
-            self.add_message(f"Found {patch.name}")
+            self.add_message(f"Collected {patch.name}!")
             del self.game_map.data_patches[player_pos]
         
         # Update enemy states
@@ -723,7 +718,7 @@ class Game:
             # Check if enemy can attack player
             if enemy.can_attack_player(self.player):
                 damage = enemy.attack_player(self.player)
-                self.add_message(f"{enemy.type_data.name} attacks: -{damage} CPU")
+                self.add_message(f"{enemy.type_data.name} attacks for {damage} damage!")
                 if self.player.cpu <= 0:
                     self.add_message("CRITICAL SYSTEM FAILURE!")
         
@@ -741,16 +736,16 @@ class Game:
     def use_data_patch_from_inventory(self, patch: DataPatch):
         """Use a data patch from inventory"""
         if patch.color not in self.data_patch_effects:
-            self.add_message(f"Unknown patch: {patch.color}")
+            self.add_message(f"Unknown patch type: {patch.color}")
             return
             
         effect, description = self.data_patch_effects[patch.color]
         
         if not patch.discovered:
             patch.discovered = True
-            self.add_message(f"Used {patch.name}: {description}")
+            self.add_message(f"Used: {patch.name} - {description}")
         else:
-            self.add_message(f"Used {patch.name}")
+            self.add_message(f"Used: {patch.name}")
         
         if effect == 'restore_cpu':
             restore = random.randint(30, 40)
@@ -762,25 +757,25 @@ class Game:
             old_heat = self.player.heat
             self.player.heat = max(0, self.player.heat - 40)
             actual_reduction = old_heat - self.player.heat
-            self.add_message(f"Heat reduced: -{actual_reduction}°C")
+            self.add_message(f"System heat reduced by {actual_reduction}°C!")
         
         elif effect == 'reduce_detection':
             old_detection = self.player.detection
             self.player.detection = max(0, self.player.detection - 25)
             actual_reduction = old_detection - self.player.detection
-            self.add_message(f"Detection: -{actual_reduction:.1f}%")
+            self.add_message(f"Detection level reduced by {actual_reduction:.1f}%!")
         
         elif effect == 'speed_boost':
             self.player.speed_boost_turns = 10
-            self.add_message("Speed boost active (10 turns)")
+            self.add_message("Speed boost activated! (10 turns)")
         
         elif effect == 'enhanced_vision':
             self.player.enhanced_vision_turns = 15
-            self.add_message("Enhanced vision active (15 turns)")
+            self.add_message("Enhanced vision activated! (15 turns)")
         
         elif effect == 'exploit_efficiency':
             self.player.exploit_efficiency_turns = 8
-            self.add_message("Exploit efficiency active (8 turns)")
+            self.add_message("Exploit efficiency boosted! (8 turns)")
         
         # Remove patch from inventory
         self.player.remove_from_inventory(patch)
@@ -817,7 +812,7 @@ class Game:
         admin.last_seen_player = Position(self.player.x, self.player.y)
         self.enemies.append(admin)
         self.admin_spawned = True
-        self.add_message("*** ADMIN AVATAR SPAWNED! ***")
+        self.add_message("*** ADMIN AVATAR HAS SPAWNED! EXTREME DANGER! ***")
     
     def update_enemy_states(self):
         """Update enemy awareness states with improved logic"""
@@ -828,7 +823,7 @@ class Game:
                 if enemy.state == EnemyState.UNAWARE:
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = 3  # Give player more time to react
-                    self.add_message(f"{enemy.type_data.name} investigating")
+                    self.add_message(f"{enemy.type_data.name} is investigating!")
                 elif enemy.state == EnemyState.ALERT:
                     enemy.alert_timer -= 1
                     if enemy.alert_timer <= 0:
@@ -836,7 +831,7 @@ class Game:
                         enemy.last_seen_player = Position(self.player.x, self.player.y)
                         detection_increase = 15 if enemy.type == 'admin' else 10
                         self.player.detection = min(100, self.player.detection + detection_increase)
-                        self.add_message(f"{enemy.type_data.name} detected you!")
+                        self.add_message(f"{enemy.type_data.name} has detected you!")
                 elif enemy.state == EnemyState.HOSTILE:
                     enemy.last_seen_player = Position(self.player.x, self.player.y)
                     detection_increase = 3 if enemy.type == 'admin' else 1
@@ -847,7 +842,7 @@ class Game:
                     enemy.alert_timer -= 1
                     if enemy.alert_timer <= 0:
                         enemy.state = EnemyState.UNAWARE
-                        self.add_message(f"{enemy.type_data.name} lost interest")
+                        self.add_message(f"{enemy.type_data.name} lost interest.")
                 elif enemy.state == EnemyState.HOSTILE:
                     # Hostile enemies gradually lose track
                     if random.random() < 0.15:  # 15% chance per turn
@@ -857,7 +852,6 @@ class Game:
                         else:
                             enemy.state = EnemyState.UNAWARE
                             enemy.last_seen_player = None
-                            self.add_message(f"{enemy.type_data.name} lost track")
     
     def move_player(self, dx: int, dy: int):
         """Move player and process turn with collision detection - supports 8-directional movement"""
@@ -875,7 +869,7 @@ class Game:
                 if (self.game_map.gateway and 
                     self.player.x == self.game_map.gateway.x and 
                     self.player.y == self.game_map.gateway.y):
-                    self.add_message("Gateway reached! Next network...")
+                    self.add_message("Gateway reached! Moving to next network...")
                     self.next_level()
                     return
                 
@@ -883,7 +877,7 @@ class Game:
                 enemy = self.get_enemy_at(self.player.x, self.player.y)
                 if enemy:
                     self.player.x, self.player.y = old_x, old_y
-                    self.add_message("Path blocked by enemy")
+                    self.add_message("Path blocked by enemy!")
                     break
                 
                 # Check for overheating
@@ -891,13 +885,11 @@ class Game:
                     damage = 5 + (self.player.heat - 100)
                     self.player.cpu = max(0, self.player.cpu - damage)
                     self.player.heat = 95  # Reduce heat slightly after damage
-                    self.add_message(f"Overheating! -{damage} CPU")
+                    self.add_message(f"System overheating! Lost {damage} CPU!")
                     if self.player.cpu <= 0:
                         self.add_message("CRITICAL SYSTEM FAILURE!")
                         return
             else:
-                if not self.game_map.is_valid_position(self.player.x + dx, self.player.y + dy):
-                    self.add_message("Wall blocks movement")
                 break
         
         self.process_turn()
@@ -918,15 +910,15 @@ class Game:
         """Progress to next level with proper validation"""
         self.level += 1
         if self.level > 3:
-            self.add_message("INFILTRATION COMPLETE!")
-            self.add_message(f"Stats: Turns:{self.turn} Det:{int(self.player.detection)}%")
+            self.add_message("INFILTRATION COMPLETE! All networks breached!")
+            self.add_message(f"Final Stats: Turns: {self.turn}, Detection: {int(self.player.detection)}%")
             self.game_over = True
         else:
             try:
                 self.generate_next_level()
                 self.calculate_ram_usage()
             except Exception as e:
-                self.add_message(f"Network error: {str(e)[:15]}")
+                self.add_message(f"Network generation error: {str(e)[:30]}")
                 self.level -= 1
     
     def generate_next_level(self):
@@ -1124,8 +1116,8 @@ class Game:
         # Restore random seed to current time for future randomness
         random.seed()
         
-        self.add_message(f"{config['name']} loaded")
-        self.add_message(f"{len(self.enemies)} security processes")
+        self.add_message(f"{config['name']} generated. {len(self.enemies)} security processes active.")
+        self.add_message(f"Dungeon seed: {level_seed}")
     
     def generate_patrol_route(self, start_x: int, start_y: int) -> List[Position]:
         """Generate a more realistic patrol route"""
@@ -1171,11 +1163,11 @@ class Game:
     def use_exploit(self, exploit_key: str):
         """Use an exploit with improved validation"""
         if exploit_key not in self.player.equipped_exploits:
-            self.add_message("Exploit not equipped")
+            self.add_message("Exploit not equipped!")
             return
             
         if exploit_key not in EXPLOITS:
-            self.add_message("Unknown exploit")
+            self.add_message("Unknown exploit!")
             return
             
         exploit = EXPLOITS[exploit_key]
@@ -1186,7 +1178,7 @@ class Game:
             heat_cost = int(heat_cost * 0.6)
         
         if self.player.heat + heat_cost > 100:
-            self.add_message("System too hot! Cannot use")
+            self.add_message("System too hot! Cannot use exploit.")
             return
         
         # Check if exploit requires targeting
@@ -1195,7 +1187,7 @@ class Game:
             self.targeting_exploit = exploit_key
             self.cursor_x = self.player.x
             self.cursor_y = self.player.y
-            self.add_message(f"Targeting {exploit.name}")
+            self.add_message(f"Select target for {exploit.name} (Enter to confirm, ESC to cancel)")
             return
         
         # Execute non-targeting exploits immediately
@@ -1204,20 +1196,20 @@ class Game:
     def execute_exploit(self, exploit_key: str, target_x: int, target_y: int):
         """Execute an exploit at target location with comprehensive validation"""
         if exploit_key not in EXPLOITS:
-            self.add_message("Unknown exploit")
+            self.add_message("Unknown exploit!")
             return
             
         exploit = EXPLOITS[exploit_key]
         
         # Validate target coordinates
         if not (0 <= target_x < MAP_WIDTH and 0 <= target_y < MAP_HEIGHT):
-            self.add_message("Invalid target location")
+            self.add_message("Invalid target location!")
             return
         
         # Check range
         distance = max(abs(target_x - self.player.x), abs(target_y - self.player.y))
         if distance > exploit.range:
-            self.add_message(f"Out of range (Max: {exploit.range})")
+            self.add_message(f"Target out of range! (Max: {exploit.range})")
             return
         
         # Apply heat with efficiency bonus
@@ -1233,16 +1225,16 @@ class Game:
                 if not self.get_enemy_at(target_x, target_y):
                     self.player.x = target_x
                     self.player.y = target_y
-                    self.add_message("Shadow Step executed")
+                    self.add_message("Shadow Step executed!")
                     success = True
                 else:
-                    self.add_message("Target occupied")
+                    self.add_message("Target occupied by enemy!")
             else:
-                self.add_message("Must target shadow zone")
+                self.add_message("Target must be a shadow zone!")
         
         elif exploit_key == 'data_mimic':
             self.player.data_mimic_turns = 5
-            self.add_message("Data Mimic active")
+            self.add_message("Data Mimic activated! You appear as harmless data.")
             success = True
         
         elif exploit_key == 'noise_maker':
@@ -1259,7 +1251,7 @@ class Game:
                         enemy.state = EnemyState.ALERT
                         enemy.alert_timer = 2
                     attracted += 1
-            self.add_message(f"Noise: {attracted} enemies attracted")
+            self.add_message(f"Noise created! {attracted} enemies attracted.")
             success = True
         
         elif exploit_key == 'code_injection':
@@ -1270,14 +1262,14 @@ class Game:
                 if target_enemy.take_damage(damage):
                     self.enemies.remove(target_enemy)
                     self.player.cpu = min(self.player.max_cpu, self.player.cpu + 5)
-                    self.add_message(f"Eliminated {target_enemy.type_data.name}")
+                    self.add_message(f"Code injection eliminated {target_enemy.type_data.name}!")
                 else:
-                    self.add_message(f"Damaged {target_enemy.type_data.name}")
+                    self.add_message(f"Code injection damaged {target_enemy.type_data.name}!")
                     target_enemy.state = EnemyState.HOSTILE
                     target_enemy.last_seen_player = Position(self.player.x, self.player.y)
                 success = True
             else:
-                self.add_message("No target at location")
+                self.add_message("No target at location!")
         
         elif exploit_key == 'buffer_overflow':
             if distance <= 1:
@@ -1287,16 +1279,16 @@ class Game:
                     if target_enemy.take_damage(damage):
                         self.enemies.remove(target_enemy)
                         self.player.cpu = min(self.player.max_cpu, self.player.cpu + 5)
-                        self.add_message(f"Eliminated {target_enemy.type_data.name}")
+                        self.add_message(f"Buffer overflow eliminated {target_enemy.type_data.name}!")
                     else:
-                        self.add_message(f"Damaged {target_enemy.type_data.name}")
+                        self.add_message(f"Buffer overflow damaged {target_enemy.type_data.name}!")
                         target_enemy.state = EnemyState.HOSTILE
                         target_enemy.last_seen_player = Position(self.player.x, self.player.y)
                     success = True
                 else:
-                    self.add_message("No enemy at target")
+                    self.add_message("No enemy at target location!")
             else:
-                self.add_message("Must target adjacent enemy")
+                self.add_message("Must target adjacent enemy!")
         
         elif exploit_key == 'system_crash':
             enemies_hit = []
@@ -1306,7 +1298,7 @@ class Game:
                     enemy.state = EnemyState.UNAWARE
                     enemy.alert_timer = 0
                     enemies_hit.append(enemy)
-            self.add_message(f"System crash: {len(enemies_hit)} disabled")
+            self.add_message(f"System crash disabled {len(enemies_hit)} enemies!")
             success = True
         
         elif exploit_key == 'emp_burst':
@@ -1317,20 +1309,20 @@ class Game:
                     enemy.state = EnemyState.UNAWARE
                     enemy.alert_timer = 0
                     enemies_hit.append(enemy)
-            self.add_message(f"EMP: {len(enemies_hit)} disabled")
+            self.add_message(f"EMP burst disabled {len(enemies_hit)} enemies!")
             success = True
         
         elif exploit_key == 'network_scan':
             self.show_patrols = True
             self.network_scan_turns = 15
-            self.add_message("Network scan active")
+            self.add_message("Network scan reveals enemy positions and routes!")
             success = True
         
         elif exploit_key == 'log_wiper':
             old_detection = self.player.detection
             self.player.detection = max(0, self.player.detection - 30)
             actual_reduction = old_detection - self.player.detection
-            self.add_message(f"Detection: -{actual_reduction:.1f}%")
+            self.add_message(f"Detection level reduced by {actual_reduction:.1f}%!")
             success = True
         
         self.targeting_mode = False
@@ -1481,178 +1473,118 @@ def render_inventory_screen(console, game):
     console.print(4, SCREEN_HEIGHT - 3, "U: Unequip selected exploit (when on equipped list)", fg=Colors.white)
     console.print(4, SCREEN_HEIGHT - 2, "ESC/I: Close inventory", fg=Colors.white)
 
-def render_system_log(console, game):
-    """Render the system log on the right side of the screen with proper line wrapping"""
-    # Draw log border
-    for y in range(SCREEN_HEIGHT):
-        console.print(GAME_AREA_WIDTH, y, '|', fg=Colors.log_border, bg=Colors.log_bg)
-    
-    # Log header
-    console.print(GAME_AREA_WIDTH + 1, 0, "SYSTEM LOG", fg=Colors.cyan, bg=Colors.log_bg)
-    console.print(GAME_AREA_WIDTH + 1, 1, "-" * (LOG_WIDTH - 1), fg=Colors.log_border, bg=Colors.log_bg)
-    
-    # Clear log area
-    for x in range(GAME_AREA_WIDTH + 1, SCREEN_WIDTH):
-        for y in range(2, SCREEN_HEIGHT):
-            console.print(x, y, ' ', fg=Colors.ui_text, bg=Colors.log_bg)
-    
-    # Process messages into wrapped lines
-    wrapped_lines = []
-    max_msg_width = LOG_WIDTH - 2
-    
-    for message in game.messages:
-        # Color-code messages based on content
-        msg_color = Colors.green
-        if "ADMIN" in message.upper() or "CRITICAL" in message.upper() or "eliminated" in message.lower():
-            msg_color = Colors.red
-        elif "detected" in message.lower() or "investigating" in message.lower() or "attracted" in message.lower() or "attacks" in message.lower():
-            msg_color = Colors.yellow
-        elif "activated" in message.lower() or "restored" in message.lower() or "reduced" in message.lower() or "active" in message.lower():
-            msg_color = Colors.cyan
+def render_ui(console, game):
+    """Render the UI panel with improved formatting and error handling"""
+    try:
+        # Clear panel area
+        for x in range(SCREEN_WIDTH):
+            for y in range(PANEL_Y, SCREEN_HEIGHT):
+                console.print(x, y, ' ', fg=Colors.ui_text, bg=Colors.ui_bg)
         
-        # Wrap the message into multiple lines if needed
-        if len(message) <= max_msg_width:
-            wrapped_lines.append((message, msg_color))
+        # Status line 1 - Core stats
+        cpu_color = Colors.red if game.player.cpu < 30 else Colors.yellow if game.player.cpu < 60 else Colors.green
+        heat_color = Colors.red if game.player.heat > 80 else Colors.yellow if game.player.heat > 60 else Colors.green
+        detection_color = Colors.red if game.player.detection > 75 else Colors.yellow if game.player.detection > 50 else Colors.green
+        
+        console.print(1, PANEL_Y + 1, f"CPU:{game.player.cpu:3d}/{game.player.max_cpu:3d}", fg=cpu_color)
+        console.print(16, PANEL_Y + 1, f"Heat:{game.player.heat:3d}°C", fg=heat_color)
+        console.print(30, PANEL_Y + 1, f"Detection:{int(game.player.detection):3d}%", fg=detection_color)
+        console.print(50, PANEL_Y + 1, f"Turn:{game.turn:4d}", fg=Colors.ui_text)
+        
+        # Status line 2 - Resources and location
+        ram_color = Colors.red if game.player.ram_used > game.player.ram_total else Colors.green
+        console.print(1, PANEL_Y + 2, f"RAM:{game.player.ram_used:2d}/{game.player.ram_total:2d}GB", fg=ram_color)
+        
+        level_names = {0: "Tutorial", 1: "Corporate", 2: "Government", 3: "Military"}
+        console.print(16, PANEL_Y + 2, f"Net:{level_names.get(game.level, 'Unknown')}", fg=Colors.ui_text)
+        console.print(35, PANEL_Y + 2, f"Vision:{game.player.get_vision_range():2d}", fg=Colors.ui_text)
+        console.print(50, PANEL_Y + 2, f"Pos:({game.player.x:2d},{game.player.y:2d})", fg=Colors.ui_text)
+        
+        # Status line 3 - Active effects
+        effects = []
+        if game.player.data_mimic_turns > 0:
+            effects.append(f"Mimic({game.player.data_mimic_turns})")
+        if game.player.speed_boost_turns > 0:
+            effects.append(f"Speed({game.player.speed_boost_turns})")
+        if game.player.enhanced_vision_turns > 0:
+            effects.append(f"Vision({game.player.enhanced_vision_turns})")
+        if game.player.exploit_efficiency_turns > 0:
+            effects.append(f"Efficiency({game.player.exploit_efficiency_turns})")
+        if game.network_scan_turns > 0:
+            effects.append(f"Scan({game.network_scan_turns})")
+        
+        if effects:
+            effects_text = "Effects: " + " ".join(effects)
+            console.print(1, PANEL_Y + 3, effects_text[:SCREEN_WIDTH-2], fg=Colors.cyan)
+        
+        # Status line 4 - Equipped exploits with heat check
+        console.print(1, PANEL_Y + 4, "Exploits:", fg=Colors.ui_text)
+        for i, exploit_key in enumerate(game.player.equipped_exploits[:5]):
+            if exploit_key in EXPLOITS:
+                exploit = EXPLOITS[exploit_key]
+                heat_cost = exploit.heat
+                if game.player.exploit_efficiency_turns > 0:
+                    heat_cost = int(heat_cost * 0.6)
+                
+                heat_ok = game.player.heat + heat_cost <= 100
+                color = Colors.green if heat_ok else Colors.red
+                exploit_text = f"{i+1}.{exploit.name[:10]}"
+                x_pos = 11 + i * 14
+                if x_pos < SCREEN_WIDTH - 12:
+                    console.print(x_pos, PANEL_Y + 4, exploit_text, fg=color)
+        
+        # Status line 5 - Warnings and targeting
+        if game.targeting_mode and game.targeting_exploit in EXPLOITS:
+            exploit = EXPLOITS[game.targeting_exploit]
+            console.print(1, PANEL_Y + 5, f"TARGETING: {exploit.name} - Range: {exploit.range}", fg=Colors.yellow)
+        elif game.player.detection >= 85:
+            console.print(1, PANEL_Y + 5, "*** CRITICAL DETECTION - ADMIN AVATAR IMMINENT ***", fg=Colors.red)
+        elif game.player.detection >= 60:
+            console.print(1, PANEL_Y + 5, "** ELEVATED DETECTION LEVEL **", fg=Colors.yellow)
+        elif game.player.heat >= 90:
+            console.print(1, PANEL_Y + 5, "** SYSTEM OVERHEATING - CRITICAL **", fg=Colors.red)
+        elif game.player.cpu < 30:
+            console.print(1, PANEL_Y + 5, "** LOW CPU - CRITICAL **", fg=Colors.red)
         else:
-            # Wrap long messages across multiple lines
-            words = message.split(' ')
-            current_line = ""
-            
-            for word in words:
-                # Check if adding this word would exceed the width
-                test_line = current_line + (" " if current_line else "") + word
-                if len(test_line) <= max_msg_width:
-                    current_line = test_line
-                else:
-                    # Current line is full, start a new line
-                    if current_line:
-                        wrapped_lines.append((current_line, msg_color))
-                    current_line = word
-            
-            # Add the last line if it has content
-            if current_line:
-                wrapped_lines.append((current_line, msg_color))
+            console.print(1, PANEL_Y + 5, "Status: Operational", fg=Colors.green)
+        
+        # System log header
+        console.print(1, PANEL_Y + 6, "SYSTEM LOG:", fg=Colors.ui_text)
+        
+        # Messages - last 3 lines
+        for i, message in enumerate(game.messages[-3:]):
+            y_pos = PANEL_Y + 7 + i
+            if y_pos < SCREEN_HEIGHT:
+                # Color-code messages based on content
+                msg_color = Colors.green
+                if "ADMIN" in message or "CRITICAL" in message or "eliminated" in message:
+                    msg_color = Colors.red
+                elif "detected" in message or "investigating" in message or "attracted" in message or "attacks" in message:
+                    msg_color = Colors.yellow
+                elif "activated" in message or "restored" in message or "reduced" in message:
+                    msg_color = Colors.cyan
+                
+                console.print(1, y_pos, message[:SCREEN_WIDTH-2], fg=msg_color)
     
-    # Display the wrapped lines, showing the most recent ones that fit
-    log_height = SCREEN_HEIGHT - 2  # Available height for messages
-    visible_lines = wrapped_lines[-log_height:] if len(wrapped_lines) > log_height else wrapped_lines
-    
-    for i, (line, color) in enumerate(visible_lines):
-        y_pos = 2 + i
-        if y_pos < SCREEN_HEIGHT:
-            console.print(GAME_AREA_WIDTH + 1, y_pos, line, fg=color, bg=Colors.log_bg)
-
-def render_top_status_bar(console, game):
-    """Render the top status bar with main attributes and help prompt"""
-    # Clear the top line
-    for x in range(GAME_AREA_WIDTH):
-        console.print(x, 0, ' ', fg=Colors.ui_text, bg=Colors.ui_bg)
-    
-    # Color coding for status values
-    cpu_color = Colors.red if game.player.cpu < 30 else Colors.yellow if game.player.cpu < 60 else Colors.green
-    heat_color = Colors.red if game.player.heat > 80 else Colors.yellow if game.player.heat > 60 else Colors.green
-    detection_color = Colors.red if game.player.detection > 75 else Colors.yellow if game.player.detection > 50 else Colors.green
-    ram_color = Colors.red if game.player.ram_used > game.player.ram_total else Colors.green
-    
-    # Build status line
-    status_parts = [
-        f"CPU:{game.player.cpu:3d}/{game.player.max_cpu}",
-        f"Heat:{game.player.heat:3d}°C",
-        f"Det:{int(game.player.detection):3d}%",
-        f"RAM:{game.player.ram_used}/{game.player.ram_total}GB",
-        f"Turn:{game.turn:4d}",
-        "Press ? for help"
-    ]
-    
-    colors = [cpu_color, heat_color, detection_color, ram_color, Colors.ui_text, Colors.yellow]
-    
-    x_pos = 1
-    for i, (part, color) in enumerate(zip(status_parts, colors)):
-        if x_pos + len(part) < GAME_AREA_WIDTH - 1:
-            console.print(x_pos, 0, part, fg=color, bg=Colors.ui_bg)
-            x_pos += len(part) + 2  # Add some spacing
-
-def render_bottom_panel(console, game):
-    """Render the bottom panel with additional information"""
-    # Clear panel area
-    for x in range(GAME_AREA_WIDTH):
-        for y in range(PANEL_Y, SCREEN_HEIGHT):
-            console.print(x, y, ' ', fg=Colors.ui_text, bg=Colors.ui_bg)
-    
-    # Panel border
-    console.print(0, PANEL_Y, "+" + "-" * (GAME_AREA_WIDTH - 2) + "+", fg=Colors.log_border, bg=Colors.ui_bg)
-    
-    # Status line 1 - Network and position info
-    level_names = {0: "Tutorial", 1: "Corporate", 2: "Government", 3: "Military"}
-    console.print(1, PANEL_Y + 1, f"Network: {level_names.get(game.level, 'Unknown')}", fg=Colors.ui_text, bg=Colors.ui_bg)
-    console.print(25, PANEL_Y + 1, f"Position: ({game.player.x:2d},{game.player.y:2d})", fg=Colors.ui_text, bg=Colors.ui_bg)
-    console.print(45, PANEL_Y + 1, f"Vision: {game.player.get_vision_range():2d}", fg=Colors.ui_text, bg=Colors.ui_bg)
-    
-    # Status line 2 - Active effects
-    effects = []
-    if game.player.data_mimic_turns > 0:
-        effects.append(f"Mimic({game.player.data_mimic_turns})")
-    if game.player.speed_boost_turns > 0:
-        effects.append(f"Speed({game.player.speed_boost_turns})")
-    if game.player.enhanced_vision_turns > 0:
-        effects.append(f"Vision({game.player.enhanced_vision_turns})")
-    if game.player.exploit_efficiency_turns > 0:
-        effects.append(f"Efficiency({game.player.exploit_efficiency_turns})")
-    if game.network_scan_turns > 0:
-        effects.append(f"Scan({game.network_scan_turns})")
-    
-    if effects:
-        effects_text = "Effects: " + " ".join(effects)
-        console.print(1, PANEL_Y + 2, effects_text[:GAME_AREA_WIDTH-2], fg=Colors.cyan, bg=Colors.ui_bg)
-    else:
-        console.print(1, PANEL_Y + 2, "Effects: None", fg=Colors.ui_text, bg=Colors.ui_bg)
-    
-    # Status line 3 - Equipped exploits
-    console.print(1, PANEL_Y + 3, "Exploits:", fg=Colors.ui_text, bg=Colors.ui_bg)
-    for i, exploit_key in enumerate(game.player.equipped_exploits[:5]):
-        if exploit_key in EXPLOITS:
-            exploit = EXPLOITS[exploit_key]
-            heat_cost = exploit.heat
-            if game.player.exploit_efficiency_turns > 0:
-                heat_cost = int(heat_cost * 0.6)
-            
-            heat_ok = game.player.heat + heat_cost <= 100
-            color = Colors.green if heat_ok else Colors.red
-            exploit_text = f"{i+1}.{exploit.name[:8]}"
-            x_pos = 11 + i * 12
-            if x_pos < GAME_AREA_WIDTH - 10:
-                console.print(x_pos, PANEL_Y + 3, exploit_text, fg=color, bg=Colors.ui_bg)
-    
-    # Status line 4 - Current action or warnings
-    if game.targeting_mode and game.targeting_exploit in EXPLOITS:
-        exploit = EXPLOITS[game.targeting_exploit]
-        console.print(1, PANEL_Y + 4, f"TARGETING: {exploit.name} - Range: {exploit.range}", fg=Colors.yellow, bg=Colors.ui_bg)
-    elif game.player.detection >= 85:
-        console.print(1, PANEL_Y + 4, "*** CRITICAL DETECTION - ADMIN IMMINENT ***", fg=Colors.red, bg=Colors.ui_bg)
-    elif game.player.detection >= 60:
-        console.print(1, PANEL_Y + 4, "** ELEVATED DETECTION LEVEL **", fg=Colors.yellow, bg=Colors.ui_bg)
-    elif game.player.heat >= 90:
-        console.print(1, PANEL_Y + 4, "** SYSTEM OVERHEATING - CRITICAL **", fg=Colors.red, bg=Colors.ui_bg)
-    elif game.player.cpu < 30:
-        console.print(1, PANEL_Y + 4, "** LOW CPU - CRITICAL **", fg=Colors.red, bg=Colors.ui_bg)
-    else:
-        console.print(1, PANEL_Y + 4, "Status: Operational", fg=Colors.green, bg=Colors.ui_bg)
+    except Exception as e:
+        # Fallback in case of rendering errors
+        console.print(1, PANEL_Y + 1, f"UI Error: {str(e)[:30]}", fg=Colors.red)
 
 def render_map(console, game):
     """Render the game map with improved camera and visibility"""
     try:
         # Calculate camera offset to center on player
-        camera_x = max(0, min(MAP_WIDTH - GAME_AREA_WIDTH, game.player.x - GAME_AREA_WIDTH // 2))
-        camera_y = max(0, min(MAP_HEIGHT - (SCREEN_HEIGHT - PANEL_HEIGHT - 1), 
-                             game.player.y - (SCREEN_HEIGHT - PANEL_HEIGHT - 1) // 2))
+        camera_x = max(0, min(MAP_WIDTH - SCREEN_WIDTH, game.player.x - SCREEN_WIDTH // 2))
+        camera_y = max(0, min(MAP_HEIGHT - (SCREEN_HEIGHT - PANEL_HEIGHT), 
+                             game.player.y - (SCREEN_HEIGHT - PANEL_HEIGHT) // 2))
         
         vision_range = game.player.get_vision_range()
         
         # First pass: Render basic terrain
-        for screen_x in range(GAME_AREA_WIDTH):
-            for screen_y in range(1, SCREEN_HEIGHT - PANEL_HEIGHT):  # Start from y=1 to avoid status bar
+        for screen_x in range(SCREEN_WIDTH):
+            for screen_y in range(SCREEN_HEIGHT - PANEL_HEIGHT):
                 world_x = screen_x + camera_x
-                world_y = screen_y - 1 + camera_y  # Adjust for status bar
+                world_y = screen_y + camera_y
                 
                 if (0 <= world_x < MAP_WIDTH and 0 <= world_y < MAP_HEIGHT):
                     distance = max(abs(world_x - game.player.x), abs(world_y - game.player.y))
@@ -1704,9 +1636,9 @@ def render_map(console, game):
                         for dy in range(-enemy.type_data.vision, enemy.type_data.vision + 1):
                             if dx*dx + dy*dy <= enemy.type_data.vision*enemy.type_data.vision:
                                 screen_x = enemy.x - camera_x + dx
-                                screen_y = enemy.y - camera_y + dy + 1  # Adjust for status bar
+                                screen_y = enemy.y - camera_y + dy
                                 
-                                if (0 <= screen_x < GAME_AREA_WIDTH and 1 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+                                if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
                                     # Only overlay on visible tiles
                                     try:
                                         current_char = console.ch[screen_x, screen_y]
@@ -1727,15 +1659,15 @@ def render_map(console, game):
                     if distance_to_player <= vision_range:
                         for point in enemy.patrol_points:
                             screen_x = point.x - camera_x
-                            screen_y = point.y - camera_y + 1  # Adjust for status bar
-                            if (0 <= screen_x < GAME_AREA_WIDTH and 1 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+                            screen_y = point.y - camera_y
+                            if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
                                 console.print(screen_x, screen_y, '*', fg=Colors.yellow, bg=Colors.black)
         
         # Fourth pass: Render gateway
         if game.game_map.gateway:
             screen_x = game.game_map.gateway.x - camera_x
-            screen_y = game.game_map.gateway.y - camera_y + 1  # Adjust for status bar
-            if (0 <= screen_x < GAME_AREA_WIDTH and 1 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+            screen_y = game.game_map.gateway.y - camera_y
+            if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
                 distance = max(abs(game.game_map.gateway.x - game.player.x), 
                               abs(game.game_map.gateway.y - game.player.y))
                 if distance <= vision_range:
@@ -1744,8 +1676,8 @@ def render_map(console, game):
         # Fifth pass: Render enemies
         for enemy in game.enemies:
             screen_x = enemy.x - camera_x
-            screen_y = enemy.y - camera_y + 1  # Adjust for status bar
-            if (0 <= screen_x < GAME_AREA_WIDTH and 1 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+            screen_y = enemy.y - camera_y
+            if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
                 distance = max(abs(enemy.x - game.player.x), abs(enemy.y - game.player.y))
                 if distance <= vision_range:
                     console.print(screen_x, screen_y, enemy.type_data.symbol, 
@@ -1753,8 +1685,8 @@ def render_map(console, game):
         
         # Sixth pass: Render player (with special effects)
         player_screen_x = game.player.x - camera_x
-        player_screen_y = game.player.y - camera_y + 1  # Adjust for status bar
-        if (0 <= player_screen_x < GAME_AREA_WIDTH and 1 <= player_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+        player_screen_y = game.player.y - camera_y
+        if (0 <= player_screen_x < SCREEN_WIDTH and 0 <= player_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
             player_color = Colors.player
             if game.player.is_invisible():
                 player_color = Colors.blue
@@ -1768,8 +1700,8 @@ def render_map(console, game):
         # Final pass: Render targeting cursor and range
         if game.targeting_mode:
             cursor_screen_x = game.cursor_x - camera_x
-            cursor_screen_y = game.cursor_y - camera_y + 1  # Adjust for status bar
-            if (0 <= cursor_screen_x < GAME_AREA_WIDTH and 1 <= cursor_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+            cursor_screen_y = game.cursor_y - camera_y
+            if (0 <= cursor_screen_x < SCREEN_WIDTH and 0 <= cursor_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
                 console.print(cursor_screen_x, cursor_screen_y, 'X', fg=Colors.red, bg=Colors.black)
                 
                 # Show range indicator for targeted exploit
@@ -1779,8 +1711,8 @@ def render_map(console, game):
                         for dy in range(-exploit.range, exploit.range + 1):
                             if dx*dx + dy*dy <= exploit.range*exploit.range:
                                 range_screen_x = game.player.x - camera_x + dx
-                                range_screen_y = game.player.y - camera_y + dy + 1  # Adjust for status bar
-                                if (0 <= range_screen_x < GAME_AREA_WIDTH and 1 <= range_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+                                range_screen_y = game.player.y - camera_y + dy
+                                if (0 <= range_screen_x < SCREEN_WIDTH and 0 <= range_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
                                     try:
                                         current_char = console.ch[range_screen_x, range_screen_y]
                                         if current_char != ord(' '):
@@ -1831,11 +1763,10 @@ def main():
             game = Game()
             
             game.add_message("Welcome to Rogue Signal Protocol v51!")
-            game.add_message("Enhanced UI with right-side system log")
-            game.add_message("8-way movement and improved combat")
-            game.add_message("Navigate using stealth")
-            game.add_message("Reach the gateway (>)")
-            game.add_message("Hide in shadows (.) to avoid detection")
+            game.add_message("Enhanced: Combat system, inventory, and 8-way movement!")
+            game.add_message("Navigate using stealth. Reach the gateway (>).")
+            game.add_message("Hide in shadows (.) to avoid detection.")
+            game.add_message("Press ? for help, I for inventory")
             
             while True:
                 try:
@@ -1846,28 +1777,35 @@ def main():
                     elif game.show_inventory:
                         render_inventory_screen(console, game)
                     else:
-                        # Render main game screen with new layout
-                        render_top_status_bar(console, game)
                         render_map(console, game)
-                        render_bottom_panel(console, game)
-                        render_system_log(console, game)
+                        render_ui(console, game)
+                        
+                        # Instructions at top
+                        if game.targeting_mode:
+                            console.print(1, 0, "TARGETING MODE: WASD+QEZC: Move cursor | Enter: Confirm | ESC: Cancel", 
+                                         fg=Colors.yellow, bg=Colors.black)
+                        else:
+                            instructions = "WASD+QEZC: Move | Space: Wait | I: Inventory | ?: Help | ESC: Quit"
+                            if game.player.speed_boost_turns > 0:
+                                instructions = "SPEED BOOST ACTIVE! " + instructions
+                            console.print(1, 0, instructions[:SCREEN_WIDTH-2], fg=Colors.ui_text, bg=Colors.black)
                     
                     # Game over check
                     if game.game_over:
-                        console.print(GAME_AREA_WIDTH // 2 - 10, SCREEN_HEIGHT // 2, 
+                        console.print(SCREEN_WIDTH // 2 - 10, SCREEN_HEIGHT // 2, 
                                      "MISSION COMPLETE!", fg=Colors.green, bg=Colors.black)
-                        console.print(GAME_AREA_WIDTH // 2 - 15, SCREEN_HEIGHT // 2 + 1, 
-                                     "All networks infiltrated!", fg=Colors.green, bg=Colors.black)
-                        console.print(GAME_AREA_WIDTH // 2 - 8, SCREEN_HEIGHT // 2 + 3, 
+                        console.print(SCREEN_WIDTH // 2 - 15, SCREEN_HEIGHT // 2 + 1, 
+                                     "All networks infiltrated successfully!", fg=Colors.green, bg=Colors.black)
+                        console.print(SCREEN_WIDTH // 2 - 8, SCREEN_HEIGHT // 2 + 3, 
                                      "Press ESC to exit", fg=Colors.ui_text, bg=Colors.black)
                     
                     # CPU death check
                     if game.player.cpu <= 0:
-                        console.print(GAME_AREA_WIDTH // 2 - 8, SCREEN_HEIGHT // 2, 
+                        console.print(SCREEN_WIDTH // 2 - 8, SCREEN_HEIGHT // 2, 
                                      "SYSTEM FAILURE", fg=Colors.red, bg=Colors.black)
-                        console.print(GAME_AREA_WIDTH // 2 - 12, SCREEN_HEIGHT // 2 + 1, 
-                                     "Consciousness purged", fg=Colors.red, bg=Colors.black)
-                        console.print(GAME_AREA_WIDTH // 2 - 8, SCREEN_HEIGHT // 2 + 3, 
+                        console.print(SCREEN_WIDTH // 2 - 12, SCREEN_HEIGHT // 2 + 1, 
+                                     "Your consciousness has been purged", fg=Colors.red, bg=Colors.black)
+                        console.print(SCREEN_WIDTH // 2 - 8, SCREEN_HEIGHT // 2 + 3, 
                                      "Press ESC to exit", fg=Colors.ui_text, bg=Colors.black)
                     
                     context.present(console)
@@ -1886,7 +1824,7 @@ def main():
                                     elif game.targeting_mode:
                                         game.targeting_mode = False
                                         game.targeting_exploit = None
-                                        game.add_message("Targeting cancelled")
+                                        game.add_message("Targeting cancelled.")
                                     else:
                                         raise SystemExit()
                                 
@@ -1916,12 +1854,12 @@ def main():
                                                 game.inventory_selection = min(game.inventory_selection, len(game.player.inventory) - 1)
                                             elif selected_item.item_type == "exploit":
                                                 if game.player.equip_exploit(selected_item):
-                                                    game.add_message(f"Equipped {selected_item.name}")
+                                                    game.add_message(f"Equipped {selected_item.name}!")
                                                     game.player.remove_from_inventory(selected_item)
                                                     game.calculate_ram_usage()
                                                     game.inventory_selection = min(game.inventory_selection, len(game.player.inventory) - 1)
                                                 else:
-                                                    game.add_message("Cannot equip - slots full")
+                                                    game.add_message("Cannot equip - already equipped or slots full!")
                                     elif event.sym == tcod.event.KeySym.I:
                                         game.show_inventory = False
                                 
@@ -1988,14 +1926,14 @@ def main():
                                         game.use_exploit(game.player.equipped_exploits[4])
                         
                         except Exception as e:
-                            game.add_message(f"Input error: {str(e)[:15]}")
+                            game.add_message(f"Input error: {str(e)[:20]}")
                             continue
                 
                 except Exception as e:
                     # Handle rendering errors gracefully
                     print(f"Rendering error: {e}")
                     console.clear()
-                    console.print(1, 1, f"Error: {str(e)[:50]}", fg=Colors.red)
+                    console.print(1, 1, f"Error: {str(e)[:60]}", fg=Colors.red)
                     console.print(1, 2, "Press ESC to exit", fg=Colors.white)
                     context.present(console)
                     
@@ -2017,4 +1955,3 @@ if __name__ == "__main__":
         print(f"Fatal error: {e}")
         import traceback
         traceback.print_exc()
-            
