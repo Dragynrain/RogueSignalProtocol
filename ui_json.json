@@ -1,0 +1,226 @@
+{
+  "_comment": "UI configuration and text data for Rogue Signal Protocol",
+  "colors": {
+    "primary": {
+      "background": [0, 0, 0],
+      "text": [0, 255, 0],
+      "accent": [0, 255, 255],
+      "warning": [255, 255, 0],
+      "danger": [255, 0, 0],
+      "success": [0, 255, 0]
+    },
+    "game_elements": {
+      "player": [0, 255, 255],
+      "wall": [255, 255, 255],
+      "floor": [0, 50, 0],
+      "shadow": [0, 20, 0],
+      "gateway": [255, 255, 0],
+      "cooling_node": [0, 255, 255],
+      "cpu_recovery": [255, 100, 100]
+    },
+    "enemy_states": {
+      "unaware": [255, 136, 0],
+      "alert": [255, 255, 0],
+      "hostile": [255, 0, 0],
+      "disabled": [0, 0, 255]
+    },
+    "ui_elements": {
+      "panel_background": [0, 17, 0],
+      "border": [0, 255, 0],
+      "button_normal": [0, 100, 0],
+      "button_hover": [0, 150, 0],
+      "button_pressed": [0, 200, 0]
+    }
+  },
+  "symbols": {
+    "game_entities": {
+      "player": "@",
+      "wall": "█",
+      "floor": ".",
+      "shadow": "◉",
+      "gateway": ">",
+      "cooling_node": "℺",
+      "cpu_recovery": "+",
+      "data_patch": "◈"
+    },
+    "enemy_symbols": {
+      "scanner": "s",
+      "patrol": "p", 
+      "bot": "b",
+      "firewall": "F",
+      "hunter": "H",
+      "admin": "A"
+    },
+    "special_items": {
+      "ram_module": "§",
+      "cpu_core": "◊",
+      "cooling_chip": "※",
+      "trace_remover": "↻",
+      "ghost_packet": "⦿",
+      "system_key": "⚷"
+    },
+    "ui_decorations": {
+      "border_corner": "┌┐└┘",
+      "border_horizontal": "─",
+      "border_vertical": "│",
+      "cursor": "X",
+      "selection": "►"
+    }
+  },
+  "screen_layout": {
+    "dimensions": {
+      "screen_width": 80,
+      "screen_height": 50,
+      "panel_height": 10,
+      "info_panel_width": 300
+    },
+    "panels": {
+      "status_bar": {
+        "height": 3,
+        "position": "top",
+        "elements": ["cpu", "heat", "detection", "ram", "network", "turn"]
+      },
+      "game_area": {
+        "flexible": true,
+        "position": "center",
+        "shows_viewport": true
+      },
+      "message_log": {
+        "height": 4,
+        "position": "bottom",
+        "max_messages": 10
+      },
+      "exploit_panel": {
+        "width": 25,
+        "position": "right",
+        "shows_loaded_exploits": true
+      }
+    }
+  },
+  "text_strings": {
+    "game_title": "Rogue Signal Protocol v7.0",
+    "subtitle": "Hacker Stealth Dungeon Crawler",
+    "controls": {
+      "movement": "WASD/Arrows: Move",
+      "wait": "Space: Wait",
+      "patrols": "Tab: Show patrols",
+      "exploits": "1-9: Use exploits",
+      "quit": "ESC: Quit"
+    },
+    "status_labels": {
+      "cpu": "CPU",
+      "heat": "Heat", 
+      "detection": "Detection",
+      "ram": "RAM",
+      "network": "Network",
+      "turn": "Turn",
+      "effects": "Effects"
+    },
+    "messages": {
+      "welcome": "Welcome to Rogue Signal Protocol v7.0",
+      "tutorial_start": "Navigate using stealth. Reach the gateway (>).",
+      "stealth_tip": "Hide in shadows (◉) to avoid detection.",
+      "gateway_reached": "Gateway reached! Moving to next network...",
+      "mission_complete": "INFILTRATION COMPLETE! All networks breached!",
+      "system_failure": "SYSTEM FAILURE - Your consciousness has been purged",
+      "admin_spawn": "*** ADMIN AVATAR HAS SPAWNED! EXTREME DANGER! ***"
+    },
+    "tutorials": [
+      {
+        "title": "Welcome to Rogue Signal Protocol",
+        "content": "You are a hacker's consciousness trapped in cyberspace. Navigate this network using stealth and cunning to reach the gateway without being detected by security processes."
+      },
+      {
+        "title": "Movement",
+        "content": "Use WASD keys or arrow keys to move through the network grid. Each move takes one turn, and all enemies will move after you do."
+      },
+      {
+        "title": "Shadows and Stealth", 
+        "content": "Dark areas (◉) are shadow zones that provide complete concealment. Hide in shadows to avoid enemy detection. Walls (█) block vision for both you and enemies."
+      },
+      {
+        "title": "Enemy Vision",
+        "content": "Orange circles around enemies show their vision range. Stay out of these areas to remain undetected. Different enemy types have different vision ranges."
+      },
+      {
+        "title": "Detection System",
+        "content": "Your detection level rises when enemies see you or when you eliminate them. If detection reaches the threshold, the Admin Avatar will spawn to hunt you down."
+      },
+      {
+        "title": "Begin Infiltration",
+        "content": "Navigate to the yellow gateway (>) to progress. Use stealth, observe enemy patterns, and stay in the shadows. Good luck, hacker."
+      }
+    ],
+    "enemy_descriptions": {
+      "scanner": "Static security scanner with short-range detection",
+      "patrol": "Mobile patrol unit following predefined routes", 
+      "bot": "Autonomous bot with unpredictable movement patterns",
+      "firewall": "Heavily armored barrier with damage reduction",
+      "hunter": "Advanced hunter that seeks disturbances and threats",
+      "admin": "System administrator avatar with perfect tracking"
+    },
+    "exploit_descriptions": {
+      "shadow_step": "Teleport instantly between shadow zones",
+      "data_mimic": "Disguise your presence as harmless data",
+      "noise_maker": "Create a distraction to lure enemies away",
+      "buffer_overflow": "High-damage melee attack that pierces armor",
+      "code_injection": "Ranged attack that bypasses firewall defenses",
+      "system_crash": "Area effect that disables multiple enemies",
+      "network_scan": "Reveals enemy positions and patrol routes",
+      "log_wiper": "Significantly reduces your detection level",
+      "emp_burst": "Electromagnetic pulse that disables all nearby systems"
+    }
+  },
+  "animations": {
+    "player_effects": {
+      "invisibility": {
+        "blink_rate": 0.5,
+        "color_shift": [0, 0, 255]
+      },
+      "speed_boost": {
+        "trail_effect": true,
+        "color_shift": [255, 255, 0]
+      },
+      "taking_damage": {
+        "flash_color": [255, 0, 0],
+        "duration": 0.3
+      }
+    },
+    "combat_effects": {
+      "melee_attack": {
+        "flash_duration": 0.2,
+        "color": [255, 255, 255]
+      },
+      "exploit_usage": {
+        "glow_duration": 0.5,
+        "range_indicator": true
+      },
+      "enemy_elimination": {
+        "fade_duration": 0.8,
+        "explosion_effect": true
+      }
+    },
+    "ui_transitions": {
+      "panel_slide": 0.3,
+      "text_fade": 0.2,
+      "button_press": 0.1
+    }
+  },
+  "accessibility": {
+    "colorblind_support": {
+      "alternative_symbols": true,
+      "high_contrast_mode": true,
+      "symbol_indicators": true
+    },
+    "text_scaling": {
+      "font_sizes": [10, 12, 14, 16, 18],
+      "default_size": 12
+    },
+    "audio_cues": {
+      "enemy_detection": true,
+      "low_resources": true,
+      "exploit_ready": true,
+      "level_complete": true
+    }
+  }
+}

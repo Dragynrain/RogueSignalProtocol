@@ -1,0 +1,244 @@
+{
+  "_comment": "Network level configurations for Rogue Signal Protocol",
+  "network_configs": {
+    "0": {
+      "name": "Tutorial Network",
+      "type": "tutorial",
+      "description": "Training environment for learning stealth basics",
+      "size": {
+        "width": 50,
+        "height": 50
+      },
+      "enemy_config": {
+        "total_enemies": 3,
+        "spawn_distance_from_player": 10,
+        "types": {
+          "scanner": 1,
+          "patrol": 1, 
+          "bot": 1
+        }
+      },
+      "terrain": {
+        "shadow_coverage": 0.5,
+        "wall_density": 0.15,
+        "room_count": 3,
+        "corridor_complexity": "simple"
+      },
+      "special_nodes": {
+        "cooling_nodes": 2,
+        "cpu_recovery_nodes": 2,
+        "data_patches": 3
+      },
+      "admin_avatar": {
+        "spawn_threshold": 100,
+        "spawn_delay": 0
+      },
+      "objectives": [
+        "Learn movement controls",
+        "Understand enemy vision",
+        "Use shadow zones for stealth", 
+        "Reach the gateway"
+      ],
+      "tutorial_steps": 6,
+      "fixed_layout": true
+    },
+    "1": {
+      "name": "Corporate Network", 
+      "type": "procedural",
+      "description": "Standard corporate security system with moderate defenses",
+      "size": {
+        "width": 50,
+        "height": 50
+      },
+      "enemy_config": {
+        "total_enemies": 8,
+        "spawn_distance_from_player": 10,
+        "types": {
+          "scanner": 3,
+          "patrol": 2,
+          "bot": 2,
+          "firewall": 1
+        }
+      },
+      "terrain": {
+        "shadow_coverage": 0.4,
+        "wall_density": 0.2,
+        "room_count": 8,
+        "corridor_complexity": "moderate"
+      },
+      "special_nodes": {
+        "cooling_nodes": 4,
+        "cpu_recovery_nodes": 3,
+        "data_patches": 7
+      },
+      "admin_avatar": {
+        "spawn_threshold": 100,
+        "spawn_delay": 2
+      },
+      "objectives": [
+        "Navigate procedural network layout",
+        "Avoid 8 security processes",
+        "Manage resource consumption",
+        "Reach gateway undetected"
+      ],
+      "difficulty_modifiers": {
+        "detection_rate": 1.0,
+        "enemy_alertness": 1.0,
+        "resource_scarcity": 1.0
+      }
+    },
+    "2": {
+      "name": "Government System",
+      "type": "procedural", 
+      "description": "Enhanced government security with reduced hiding spots",
+      "size": {
+        "width": 50,
+        "height": 50
+      },
+      "enemy_config": {
+        "total_enemies": 12,
+        "spawn_distance_from_player": 8,
+        "types": {
+          "scanner": 3,
+          "patrol": 3,
+          "bot": 2,
+          "firewall": 2,
+          "hunter": 2
+        }
+      },
+      "terrain": {
+        "shadow_coverage": 0.25,
+        "wall_density": 0.25,
+        "room_count": 10,
+        "corridor_complexity": "complex"
+      },
+      "special_nodes": {
+        "cooling_nodes": 3,
+        "cpu_recovery_nodes": 2,
+        "data_patches": 8
+      },
+      "admin_avatar": {
+        "spawn_threshold": 75,
+        "spawn_delay": 1
+      },
+      "objectives": [
+        "Infiltrate high-security government system",
+        "Evade 12 security processes including hunters",
+        "Admin Avatar spawns at 75% detection",
+        "Limited shadow coverage for hiding"
+      ],
+      "difficulty_modifiers": {
+        "detection_rate": 1.2,
+        "enemy_alertness": 1.3,
+        "resource_scarcity": 1.2
+      }
+    },
+    "3": {
+      "name": "Military Backbone",
+      "type": "procedural",
+      "description": "Maximum security military network with minimal cover",
+      "size": {
+        "width": 50,
+        "height": 50
+      },
+      "enemy_config": {
+        "total_enemies": 16,
+        "spawn_distance_from_player": 6,
+        "types": {
+          "scanner": 4,
+          "patrol": 4,
+          "bot": 2,
+          "firewall": 3,
+          "hunter": 3
+        }
+      },
+      "terrain": {
+        "shadow_coverage": 0.15,
+        "wall_density": 0.3,
+        "room_count": 12,
+        "corridor_complexity": "maximum"
+      },
+      "special_nodes": {
+        "cooling_nodes": 2,
+        "cpu_recovery_nodes": 1,
+        "data_patches": 10
+      },
+      "admin_avatar": {
+        "spawn_threshold": 50,
+        "spawn_delay": 0
+      },
+      "objectives": [
+        "Breach maximum security military network",
+        "Survive 16 security processes",
+        "Admin Avatar spawns at 50% detection",
+        "Minimal shadow coverage and resources"
+      ],
+      "difficulty_modifiers": {
+        "detection_rate": 1.5,
+        "enemy_alertness": 1.5,
+        "resource_scarcity": 1.5
+      }
+    }
+  },
+  "terrain_generation": {
+    "room_types": {
+      "standard": {
+        "min_size": [4, 4],
+        "max_size": [8, 8],
+        "spawn_weight": 60
+      },
+      "large": {
+        "min_size": [8, 8], 
+        "max_size": [12, 12],
+        "spawn_weight": 20
+      },
+      "corridor": {
+        "min_size": [2, 6],
+        "max_size": [3, 12],
+        "spawn_weight": 20
+      }
+    },
+    "corridor_patterns": {
+      "simple": {
+        "description": "Straight L-shaped connections",
+        "complexity": 1
+      },
+      "moderate": {
+        "description": "Some branching and curves", 
+        "complexity": 2
+      },
+      "complex": {
+        "description": "Multiple branches and alternate routes",
+        "complexity": 3
+      },
+      "maximum": {
+        "description": "Maze-like with dead ends and loops",
+        "complexity": 4
+      }
+    }
+  },
+  "progression": {
+    "completion_rewards": {
+      "tutorial": {
+        "unlocked_exploits": [],
+        "ram_upgrade": 0,
+        "achievement": "First Steps"
+      },
+      "corporate": {
+        "unlocked_exploits": ["noise_maker", "log_wiper"],
+        "ram_upgrade": 2,
+        "achievement": "Corporate Infiltrator"
+      },
+      "government": {
+        "unlocked_exploits": ["system_crash"],
+        "ram_upgrade": 2, 
+        "achievement": "Government Hacker"
+      },
+      "military": {
+        "unlocked_exploits": ["emp_burst"],
+        "ram_upgrade": 4,
+        "achievement": "Military Breach"
+      }
+    }
+  }
+}

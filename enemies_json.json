@@ -1,0 +1,158 @@
+{
+  "_comment": "Enemy type definitions for Rogue Signal Protocol",
+  "enemy_types": {
+    "scanner": {
+      "name": "Scanner",
+      "symbol": "s",
+      "cpu": 20,
+      "max_cpu": 20,
+      "vision": 2,
+      "movement": "static",
+      "description": "Static security scanner with short-range detection",
+      "spawn_weight": 30,
+      "armor": 0,
+      "special_abilities": [],
+      "loot_chance": 0.1,
+      "detection_value": 5
+    },
+    "patrol": {
+      "name": "Patrol",
+      "symbol": "p", 
+      "cpu": 25,
+      "max_cpu": 25,
+      "vision": 3,
+      "movement": "linear",
+      "description": "Mobile patrol unit following predefined routes",
+      "spawn_weight": 25,
+      "armor": 0,
+      "special_abilities": ["patrol_route"],
+      "loot_chance": 0.15,
+      "detection_value": 10,
+      "patrol_config": {
+        "min_points": 2,
+        "max_points": 4,
+        "step_distance": 5
+      }
+    },
+    "bot": {
+      "name": "Bot",
+      "symbol": "b",
+      "cpu": 15,
+      "max_cpu": 15,
+      "vision": 2,
+      "movement": "random",
+      "description": "Autonomous bot with unpredictable movement patterns",
+      "spawn_weight": 25,
+      "armor": 0,
+      "special_abilities": ["unpredictable"],
+      "loot_chance": 0.05,
+      "detection_value": 3
+    },
+    "firewall": {
+      "name": "Firewall",
+      "symbol": "F",
+      "cpu": 40,
+      "max_cpu": 40,
+      "vision": 1,
+      "movement": "static",
+      "description": "Heavily armored barrier with damage reduction",
+      "spawn_weight": 15,
+      "armor": 50,
+      "special_abilities": ["damage_reduction", "chokepoint_guard"],
+      "loot_chance": 0.25,
+      "detection_value": 15,
+      "damage_reduction": 0.5
+    },
+    "hunter": {
+      "name": "Hunter",
+      "symbol": "H",
+      "cpu": 35,
+      "max_cpu": 35,
+      "vision": 5,
+      "movement": "seek",
+      "description": "Advanced hunter that seeks disturbances and threats",
+      "spawn_weight": 10,
+      "armor": 10,
+      "special_abilities": ["seek_disturbances", "enhanced_vision"],
+      "loot_chance": 0.2,
+      "detection_value": 20,
+      "seek_range": 8
+    },
+    "admin": {
+      "name": "Admin Avatar",
+      "symbol": "A",
+      "cpu": 100,
+      "max_cpu": 100,
+      "vision": 6,
+      "movement": "track",
+      "description": "System administrator avatar with perfect tracking",
+      "spawn_weight": 0,
+      "armor": 25,
+      "special_abilities": ["perfect_tracking", "system_access", "regeneration"],
+      "loot_chance": 0.5,
+      "detection_value": 50,
+      "regeneration_rate": 2,
+      "tracking_range": 99
+    }
+  },
+  "movement_types": {
+    "static": {
+      "description": "Does not move from initial position",
+      "ai_complexity": 1
+    },
+    "linear": {
+      "description": "Follows predefined patrol routes",
+      "ai_complexity": 2
+    },
+    "random": {
+      "description": "Moves randomly with some prediction",
+      "ai_complexity": 2
+    },
+    "seek": {
+      "description": "Moves toward disturbances and last known positions",
+      "ai_complexity": 3
+    },
+    "track": {
+      "description": "Perfect tracking and pathfinding to target",
+      "ai_complexity": 4
+    }
+  },
+  "special_abilities": {
+    "patrol_route": {
+      "description": "Follows multi-point patrol routes",
+      "implementation": "generate_patrol_points"
+    },
+    "unpredictable": {
+      "description": "Movement cannot be perfectly predicted",
+      "implementation": "random_movement_with_prediction"
+    },
+    "damage_reduction": {
+      "description": "Reduces incoming damage by percentage",
+      "implementation": "apply_armor_reduction"
+    },
+    "chokepoint_guard": {
+      "description": "Specialized for guarding narrow passages",
+      "implementation": "static_chokepoint_positioning"
+    },
+    "seek_disturbances": {
+      "description": "Moves toward noise and detected threats",
+      "implementation": "pathfind_to_disturbance"
+    },
+    "enhanced_vision": {
+      "description": "Increased vision range and detection ability",
+      "implementation": "vision_range_bonus"
+    },
+    "perfect_tracking": {
+      "description": "Always knows player location when hostile",
+      "implementation": "track_player_perfectly"
+    },
+    "system_access": {
+      "description": "Can access system functions and alerts",
+      "implementation": "admin_system_access"
+    },
+    "regeneration": {
+      "description": "Slowly recovers CPU over time",
+      "implementation": "regenerate_cpu_per_turn"
+    }
+  }
+}

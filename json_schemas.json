@@ -1,0 +1,355 @@
+{
+  "schemas": {
+    "exploit_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "stealth_exploits": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z_]+$": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "integer", "minimum": 1},
+                "name": {"type": "string"},
+                "ram_cost": {"type": "integer", "minimum": 1, "maximum": 12},
+                "heat_generated": {"type": "integer", "minimum": 0, "maximum": 100},
+                "duration": {"type": "integer", "minimum": 1},
+                "range": {"type": "integer", "minimum": 1, "maximum": 10},
+                "effects": {
+                  "type": "object",
+                  "properties": {
+                    "invisibility": {"type": "boolean"},
+                    "move_through_enemies": {"type": "boolean"},
+                    "backstab_bonus": {"type": "integer"},
+                    "teleport": {"type": "boolean"},
+                    "silent": {"type": "boolean"},
+                    "no_detection": {"type": "boolean"}
+                  }
+                },
+                "description": {"type": "string"},
+                "unlock_requirement": {"type": "string"}
+              },
+              "required": ["id", "name", "ram_cost", "heat_generated", "description"]
+            }
+          }
+        },
+        "combat_exploits": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z_]+$": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "integer", "minimum": 1},
+                "name": {"type": "string"},
+                "ram_cost": {"type": "integer", "minimum": 1, "maximum": 12},
+                "heat_generated": {"type": "integer", "minimum": 0, "maximum": 100},
+                "range": {"type": "integer", "minimum": 1, "maximum": 10},
+                "damage_base": {"type": "integer", "minimum": 1},
+                "damage_scaling": {"type": "string"},
+                "effects": {
+                  "type": "object",
+                  "properties": {
+                    "armor_piercing": {"type": "boolean"},
+                    "stealth_damage_multiplier": {"type": "number"},
+                    "silent_kill_threshold": {"type": "integer"}
+                  }
+                },
+                "overclock": {
+                  "type": "object",
+                  "properties": {
+                    "cpu_cost": {"type": "integer"},
+                    "damage_multiplier": {"type": "number"}
+                  }
+                }
+              },
+              "required": ["id", "name", "ram_cost", "heat_generated", "damage_base"]
+            }
+          }
+        }
+      }
+    },
+    
+    "enemy_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "patternProperties": {
+        "^level_[0-9]+$": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z_]+$": {
+              "type": "object",
+              "properties": {
+                "symbol": {"type": "string", "maxLength": 1},
+                "name": {"type": "string"},
+                "hp": {"type": "integer", "minimum": 1, "maximum": 1000},
+                "damage": {"type": "integer", "minimum": 0, "maximum": 100},
+                "cpu_reward": {"type": "integer", "minimum": 0, "maximum": 500},
+                "vision_range": {"type": "integer", "minimum": 1, "maximum": 15},
+                "vision_type": {"enum": ["360_degree", "180_degree", "90_degree"]},
+                "patrol_type": {"enum": ["linear", "circular", "random_walk", "static", "hunter"]},
+                "patrol_config": {
+                  "type": "object",
+                  "properties": {
+                    "cycle_length": {"type": "integer", "minimum": 1},
+                    "waypoints": {"type": "integer", "minimum": 2},
+                    "direction_change_frequency": {
+                      "type": "array",
+                      "items": {"type": "integer"},
+                      "minItems": 2,
+                      "maxItems": 2
+                    }
+                  }
+                },
+                "detection_on_kill": {"type": "integer", "minimum": 0, "maximum": 50},
+                "detection_on_alert": {"type": "integer", "minimum": 0, "maximum": 25},
+                "detection_on_spot": {"type": "integer", "minimum": 0, "maximum": 25},
+                "sprite_index": {"type": "integer", "minimum": 0},
+                "color": {
+                  "type": "array",
+                  "items": {"type": "integer", "minimum": 0, "maximum": 255},
+                  "minItems": 3,
+                  "maxItems": 3
+                },
+                "special_abilities": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "immune_to": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                }
+              },
+              "required": ["symbol", "name", "hp", "damage", "cpu_reward", "vision_range", "patrol_type"]
+            }
+          }
+        }
+      }
+    },
+    
+    "network_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "patternProperties": {
+        "^network_[0-9]+_[a-z_]+$": {
+          "type": "object",
+          "properties": {
+            "name": {"type": "string"},
+            "size": {
+              "type": "array",
+              "items": {"type": "integer", "minimum": 30, "maximum": 100},
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "enemy_count": {
+              "type": "array",
+              "items": {"type": "integer", "minimum": 1, "maximum": 50},
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "obstacle_coverage": {"type": "integer", "minimum": 10, "maximum": 60},
+            "enemy_types": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "special_features": {
+              "type": "array",
+              "items": {"type": "string"}
+            },
+            "detection_rate": {
+              "type": "object",
+              "properties": {
+                "passive_increase": {"type": "integer", "minimum": 5, "maximum": 30},
+                "area_modifiers": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^[a-z_]+$": {"type": "integer"}
+                  }
+                }
+              },
+              "required": ["passive_increase"]
+            },
+            "loot_tables": {
+              "type": "object",
+              "properties": {
+                "common": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "uncommon": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "rare": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                }
+              }
+            }
+          },
+          "required": ["name", "size", "enemy_count", "obstacle_coverage", "enemy_types", "detection_rate"]
+        }
+      }
+    },
+    
+    "class_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "patternProperties": {
+        "^[a-z_]+$": {
+          "type": "object",
+          "properties": {
+            "name": {"type": "string"},
+            "unlock_requirement": {"type": "string"},
+            "always_unlocked": {"type": "boolean"},
+            "achievement_description": {"type": "string"},
+            "stats": {
+              "type": "object",
+              "properties": {
+                "max_hp": {"type": "integer", "minimum": 20, "maximum": 150},
+                "max_cpu": {"type": "integer", "minimum": 50, "maximum": 200},
+                "heat_capacity": {"type": "integer", "minimum": 30, "maximum": 120},
+                "max_ram": {"type": "integer", "minimum": 4, "maximum": 16},
+                "detection_resistance": {"type": "integer", "minimum": -20, "maximum": 50}
+              },
+              "required": ["max_hp", "max_cpu", "heat_capacity", "max_ram", "detection_resistance"]
+            },
+            "starting_equipment": {
+              "type": "object",
+              "properties": {
+                "exploits": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                },
+                "items": {
+                  "type": "array",
+                  "items": {"type": "string"}
+                }
+              }
+            },
+            "class_bonuses": {
+              "type": "object"
+            },
+            "class_penalties": {
+              "type": "object"
+            },
+            "description": {"type": "string"},
+            "sprite_index": {"type": "integer", "minimum": 0}
+          },
+          "required": ["name", "unlock_requirement", "stats", "description"]
+        }
+      }
+    },
+    
+    "memory_fragment_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "memory_fragments": {
+          "type": "object",
+          "patternProperties": {
+            "^network_[0-9]+_fragments$": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {"type": "string"},
+                  "title": {"type": "string"},
+                  "text": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                  },
+                  "unlock_requirement": {"type": "string"},
+                  "gameplay_bonus": {
+                    "type": "object",
+                    "properties": {
+                      "type": {"type": "string"},
+                      "value": {"type": "integer"},
+                      "duration": {"type": "integer"},
+                      "description": {"type": "string"}
+                    },
+                    "required": ["type", "description"]
+                  },
+                  "story_flags": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                  }
+                },
+                "required": ["id", "title", "text", "unlock_requirement", "gameplay_bonus"]
+              }
+            }
+          }
+        },
+        "corporate_documents": {
+          "type": "object",
+          "patternProperties": {
+            "^network_[0-9]+_intel$": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {"type": "string"},
+                  "classification": {"type": "string"},
+                  "text": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                  }
+                },
+                "required": ["title", "text"]
+              }
+            }
+          }
+        }
+      }
+    },
+    
+    "balance_schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "properties": {
+        "global_modifiers": {
+          "type": "object",
+          "properties": {
+            "difficulty_scaling": {"type": "number", "minimum": 0.1, "maximum": 3.0},
+            "detection_rate_multiplier": {"type": "number", "minimum": 0.1, "maximum": 3.0},
+            "heat_generation_multiplier": {"type": "number", "minimum": 0.1, "maximum": 3.0},
+            "enemy_damage_multiplier": {"type": "number", "minimum": 0.1, "maximum": 3.0}
+          },
+          "required": ["difficulty_scaling", "detection_rate_multiplier", "heat_generation_multiplier", "enemy_damage_multiplier"]
+        },
+        "progression": {
+          "type": "object",
+          "properties": {
+            "cpu_scaling_per_network": {"type": "number", "minimum": 1.0, "maximum": 2.0},
+            "enemy_hp_scaling": {"type": "number", "minimum": 1.0, "maximum": 2.0},
+            "loot_quality_scaling": {"type": "number", "minimum": 1.0, "maximum": 2.0}
+          },
+          "required": ["cpu_scaling_per_network", "enemy_hp_scaling", "loot_quality_scaling"]
+        },
+        "experimental_features": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-z_]+$": {"type": "boolean"}
+          }
+        }
+      },
+      "required": ["global_modifiers", "progression"]
+    }
+  },
+  
+  "validation_rules": {
+    "cross_references": {
+      "enemy_types_in_networks": "All enemy_types in networks.json must exist in enemies.json",
+      "exploits_in_classes": "All exploits in starting_equipment must exist in exploits.json",
+      "unlock_requirements": "All unlock_requirement values must be valid achievement IDs",
+      "sprite_indices": "All sprite_index values must be within valid ranges for sprite sheets"
+    },
+    
+    "balance_checks": {
+      "ram_limits": "Total RAM cost of starting exploits must not exceed max_ram",
+      "progression_scaling": "Higher level enemies must have higher stats than lower level ones",
+      "detection_bounds": "All detection values must be between 0 and 100",
+      "heat_capacity": "Heat generation should not regularly exceed heat capacity"
+    }
+  }
+}
