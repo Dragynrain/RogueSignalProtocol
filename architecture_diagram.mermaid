@@ -1,0 +1,122 @@
+graph TB
+    subgraph "User Interface Layer"
+        UI[UI Manager]
+        GS[Game Screen]
+        IS[Inventory Screen]
+        MS[Menu Screen]
+        TS[Tutorial Screen]
+        
+        UI --> GS
+        UI --> IS
+        UI --> MS
+        UI --> TS
+    end
+    
+    subgraph "Core Game Engine"
+        ENG[Game Engine]
+        SM[State Manager]
+        IH[Input Handler]
+        REN[Renderer]
+        
+        ENG --> SM
+        ENG --> IH
+        ENG --> REN
+    end
+    
+    subgraph "Game Systems"
+        STEALTH[Stealth System]
+        DET[Detection System]
+        COM[Combat System]
+        INV[Inventory System]
+        HEAT[Heat System]
+        
+        ENG --> STEALTH
+        ENG --> DET
+        ENG --> COM
+        ENG --> INV
+        ENG --> HEAT
+    end
+    
+    subgraph "Entity Management"
+        PLAYER[Player Entity]
+        ENEMY[Enemy Manager]
+        EXPLOIT[Exploit System]
+        ITEM[Item Manager]
+        
+        STEALTH --> PLAYER
+        STEALTH --> ENEMY
+        COM --> EXPLOIT
+        INV --> ITEM
+    end
+    
+    subgraph "Level Generation"
+        NETGEN[Network Generator]
+        ROOMGEN[Room Generator]
+        ENEMYPLACE[Enemy Placer]
+        LOOTGEN[Loot Generator]
+        
+        NETGEN --> ROOMGEN
+        ROOMGEN --> ENEMYPLACE
+        ROOMGEN --> LOOTGEN
+        ENG --> NETGEN
+    end
+    
+    subgraph "Data Layer"
+        DM[Data Manager]
+        SAVE[Save System]
+        ACHIEVE[Achievement System]
+        
+        DM --> SAVE
+        DM --> ACHIEVE
+        ENG --> DM
+    end
+    
+    subgraph "External Libraries"
+        TCOD[tcod Library]
+        NUMPY[NumPy]
+        PIL[Pillow]
+        PYGAME[Pygame Audio]
+        
+        REN --> TCOD
+        NETGEN --> NUMPY
+        REN --> PIL
+        ENG --> PYGAME
+    end
+    
+    subgraph "Configuration Files"
+        EXPLOITS[exploits.json]
+        ENEMIES[enemies.json]
+        ITEMS[items.json]
+        CLASSES[classes.json]
+        NETWORKS[networks.json]
+        BALANCE[balance.json]
+        MEMORY[memory_fragments.json]
+        
+        DM --> EXPLOITS
+        DM --> ENEMIES
+        DM --> ITEMS
+        DM --> CLASSES
+        DM --> NETWORKS
+        DM --> BALANCE
+        DM --> MEMORY
+    end
+    
+    subgraph "Asset Pipeline"
+        SPRITES[Sprite Sheets]
+        FONTS[Font Files]
+        AUDIO[Audio Files]
+        
+        REN --> SPRITES
+        REN --> FONTS
+        ENG --> AUDIO
+    end
+    
+    classDef coreSystem fill:#e1f5fe
+    classDef gameSystem fill:#f3e5f5
+    classDef dataSystem fill:#e8f5e8
+    classDef external fill:#fff3e0
+    
+    class ENG,SM,IH,REN coreSystem
+    class STEALTH,DET,COM,INV,HEAT gameSystem
+    class DM,SAVE,ACHIEVE dataSystem
+    class TCOD,NUMPY,PIL,PYGAME external

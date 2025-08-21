@@ -1,0 +1,13 @@
+{
+  "_comment": "This is the main game_data.json file that references all other data files",
+  "data_files": {
+    "enemies": "data/enemies.json",
+    "exploits": "data/exploits.json", 
+    "networks": "data/networks.json",
+    "items": "data/items.json",
+    "balance": "data/balance.json",
+    "ui": "data/ui.json"
+  },
+  "version": "7.0",
+  "last_updated": "2025-01-20"
+}

@@ -1,0 +1,165 @@
+{
+  "_comment": "Game balance configuration for Rogue Signal Protocol",
+  "player_stats": {
+    "starting_stats": {
+      "cpu": 100,
+      "max_cpu": 100,
+      "heat": 0,
+      "detection": 0,
+      "ram_total": 8,
+      "ram_used": 0
+    },
+    "stat_limits": {
+      "max_cpu_cap": 200,
+      "heat_cap": 100,
+      "detection_cap": 100,
+      "ram_cap": 20
+    },
+    "regeneration_rates": {
+      "heat_cooling_per_turn": 2,
+      "heat_cooling_efficient": 3,
+      "passive_detection_increase": 1,
+      "detection_increase_interval": 10
+    }
+  },
+  "combat_balance": {
+    "base_damage": {
+      "melee_attack": 20,
+      "stealth_multiplier": 2.0,
+      "critical_chance": 0.1,
+      "critical_multiplier": 1.5
+    },
+    "damage_ranges": {
+      "low": [10, 20],
+      "medium": [20, 35],
+      "high": [35, 50],
+      "extreme": [50, 80]
+    },
+    "armor_effectiveness": {
+      "firewall_reduction": 0.5,
+      "hunter_reduction": 0.1,
+      "admin_reduction": 0.25
+    }
+  },
+  "detection_system": {
+    "detection_sources": {
+      "seen_by_enemy": 20,
+      "combat_engagement": 15,
+      "enemy_elimination": 10,
+      "passive_time": 1,
+      "use_loud_exploit": 5
+    },
+    "detection_reduction": {
+      "log_wiper_amount": 25,
+      "trace_remover_amount": 100,
+      "shadow_zone_reduction": 0.5,
+      "cooling_node_reduction": 2
+    },
+    "admin_spawn_thresholds": {
+      "tutorial": 100,
+      "corporate": 100,
+      "government": 75,
+      "military": 50
+    }
+  },
+  "resource_economy": {
+    "exploit_costs": {
+      "low_cost": [5, 15],
+      "medium_cost": [15, 25],
+      "high_cost": [25, 40],
+      "emergency_cost": [35, 50]
+    },
+    "ram_requirements": {
+      "basic_exploits": 1,
+      "advanced_exploits": 2,
+      "powerful_exploits": 3,
+      "emergency_exploits": 3
+    },
+    "resource_recovery": {
+      "cpu_per_kill": 5,
+      "cpu_recovery_node": 20,
+      "cooling_node_heat_reduction": 20,
+      "data_patch_cpu_range": [30, 40]
+    }
+  },
+  "difficulty_scaling": {
+    "level_multipliers": {
+      "tutorial": {
+        "enemy_damage": 0.8,
+        "detection_rate": 0.8,
+        "resource_scarcity": 0.7
+      },
+      "corporate": {
+        "enemy_damage": 1.0,
+        "detection_rate": 1.0,
+        "resource_scarcity": 1.0
+      },
+      "government": {
+        "enemy_damage": 1.2,
+        "detection_rate": 1.2,
+        "resource_scarcity": 1.2
+      },
+      "military": {
+        "enemy_damage": 1.5,
+        "detection_rate": 1.5,
+        "resource_scarcity": 1.5
+      }
+    }
+  },
+  "ai_parameters": {
+    "vision_ranges": {
+      "scanner": 2,
+      "patrol": 3,
+      "bot": 2,
+      "firewall": 1,
+      "hunter": 5,
+      "admin": 6
+    },
+    "alert_durations": {
+      "alert_to_hostile": 1,
+      "hostile_to_unaware": 10,
+      "investigation_time": 5
+    },
+    "movement_speeds": {
+      "static": 0,
+      "slow": 1,
+      "normal": 1,
+      "fast": 2,
+      "admin": 2
+    }
+  },
+  "item_balance": {
+    "spawn_rates": {
+      "data_patch_base_rate": 0.3,
+      "special_item_base_rate": 0.05,
+      "consumable_base_rate": 0.15
+    },
+    "effect_durations": {
+      "speed_boost": 10,
+      "enhanced_vision": 15,
+      "exploit_efficiency": 8,
+      "invisibility": 5,
+      "data_mimic": 5
+    },
+    "effect_magnitudes": {
+      "cpu_restore_min": 30,
+      "cpu_restore_max": 40,
+      "heat_reduction": 40,
+      "detection_reduction": 25,
+      "vision_bonus": 5,
+      "heat_efficiency": 0.5
+    }
+  },
+  "game_flow": {
+    "target_session_length": {
+      "tutorial_minutes": 15,
+      "level_minutes": 30,
+      "total_game_minutes": 120
+    },
+    "pacing_guidelines": {
+      "stealth_segments": 70,
+      "combat_segments": 20,
+      "resource_management": 10
+    }
+  }
+}
