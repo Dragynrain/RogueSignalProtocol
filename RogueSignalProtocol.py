@@ -1,6 +1,443 @@
-#!/usr/bin/env python3
+def render_ui(console, game):
+    """Render the UI panel with improved formatting and error handling"""
+    try:
+        # Clear panel area
+        for x in range(SCREEN_WIDTH):
+            for y in range(PANEL_Y, SCREEN_HEIGHT):
+                console.print(x, y, ' ', fg=Colors.ui_text, bg=Colors.ui_bg)
+        
+        # Status line 1 - Core stats
+        cpu_color = Colors.red if game.player.cpu < 30 else Colors.yellow if game.player.cpu < 60 else Colors.green
+        heat_color = Colors.red if game.player.heat > 80 else Colors.yellow if game.player.heat > 60 else Colors.green
+        detection_color = Colors.red if game.player.detection > 75 else Colors.yellow if game.player.detection > 50 else Colors.green
+        
+        console.print(1, PANEL_Y + 1, f"CPU:{game.player.cpu:3d}/{game.player.max_cpu:3d}", fg=cpu_color)
+        console.print(16, PANEL_Y + 1, f"Heat:{game.player.heat:3d}°C", fg=heat_color)
+        console.print(30, PANEL_Y + 1, f"Detection:{int(game.player.detection):3d}%", fg=detection_color)
+        console.print(50, PANEL_Y + 1, f"Turn:{game.turn:4d}", fg=Colors.ui_text)
+        
+        # Status line 2 - Resources and location
+        ram_color = Colors.red if game.player.ram_used > game.player.ram_total else Colors.green
+        console.print(1, PANEL_Y + 2, f"RAM:{game.player.ram_used:2d}/{game.player.ram_total:2d}GB", fg=ram_color)
+        
+        level_names = {0: "Tutorial", 1: "Corporate", 2: "Government", 3: "Military"}
+        console.print(16, PANEL_Y + 2, f"Net:{level_names.get(game.level, 'Unknown')}", fg=Colors.ui_text)
+        console.print(35, PANEL_Y + 2, f"Vision:{game.player.get_vision_range():2d}", fg=Colors.ui_text)
+        console.print(50, PANEL_Y + 2, f"Pos:({game.player.x:2d},{game.player.y:2d})", fg=Colors.ui_text)
+        
+        # Status line 3 - Active effects
+        effects = []
+        if game.player.data_mimic_turns > 0:
+            effects.append(f"Mimic({game.player.data_mimic_turns})")
+        if game.player.speed_boost_turns > 0:
+            effects.append(f"Speed({game.player.speed_boost_turns})")
+        if game.player.enhanced_vision_turns > 0:
+            effects.append(f"Vision({game.player.enhanced_vision_turns})")
+        if game.player.exploit_efficiency_turns > 0:
+            effects.append(f"Efficiency({game.player.exploit_efficiency_turns})")
+        if game.network_scan_turns > 0:
+            effects.append(f"Scan({game.network_scan_turns})")
+        
+        if effects:
+            effects_text = "Effects: " + " ".join(effects)
+            console.print(1, PANEL_Y + 3, effects_text[:SCREEN_WIDTH-2], fg=Colors.cyan)
+        
+        # Status line 4 - Loaded exploits with heat check
+        console.print(1, PANEL_Y + 4, "Exploits:", fg=Colors.ui_text)
+        for i, exploit_key in enumerate(game.loaded_exploits[:5]):
+            if exploit_key in EXPLOITS:
+                exploit = EXPLOITS[exploit_key]
+                heat_cost = exploit.heat
+                if game.player.exploit_efficiency_turns > 0:
+                    heat_cost = int(heat_cost * 0.6)
+                
+                heat_ok = game.player.heat + heat_cost <= 100
+                color = Colors.green if heat_ok else Colors.red
+                exploit_text = f"{i+1}.{exploit.name[:10]}"
+                x_pos = 11 + i * 14
+                if x_pos < SCREEN_WIDTH - 12:
+                    console.print(x_pos, PANEL_Y + 4, exploit_text, fg=color)
+        
+        # Status line 5 - Warnings and targeting
+        if game.targeting_mode and game.targeting_exploit in EXPLOITS:
+            exploit = EXPLOITS[game.targeting_exploit]
+            console.print(1, PANEL_Y + 5, f"TARGETING: {exploit.name} - Range: {exploit.range}", fg=Colors.yellow)
+        elif game.player.detection >= 85:
+            console.print(1, PANEL_Y + 5, "*** CRITICAL DETECTION - ADMIN AVATAR IMMINENT ***", fg=Colors.red)
+        elif game.player.detection >= 60:
+            console.print(1, PANEL_Y + 5, "** ELEVATED DETECTION LEVEL **", fg=Colors.yellow)
+        elif game.player.heat >= 90:
+            console.print(1, PANEL_Y + 5, "** SYSTEM OVERHEATING - CRITICAL **", fg=Colors.red)
+        elif game.player.cpu < 30:
+            console.print(1, PANEL_Y + 5, "** LOW CPU - CRITICAL **", fg=Colors.red)
+        else:
+            console.print(1, PANEL_Y + 5, "Status: Operational", fg=Colors.green)
+        
+        # System log header
+        console.print(1, PANEL_Y + 6, "SYSTEM LOG:", fg=Colors.ui_text)
+        
+        # Messages - last 3 lines
+        for i, message in enumerate(game.messages[-3:]):
+            y_pos = PANEL_Y + 7 + i
+            if y_pos < SCREEN_HEIGHT:
+                # Color-code messages based on content
+                msg_color = Colors.green
+                if "ADMIN" in message or "CRITICAL" in message or "eliminated" in message:
+                    msg_color = Colors.red
+                elif "detected" in message or "investigating" in message or "attracted" in message:
+                    msg_color = Colors.yellow
+                elif "activated" in message or "restored" in message or "reduced" in message:
+                    msg_color = Colors.cyan
+                
+                console.print(1, y_pos, message[:SCREEN_WIDTH-2], fg=msg_color)
+    
+    except Exception as e:
+        # Fallback in case of rendering errors
+        console.print(1, PANEL_Y + 1, f"UI Error: {str(e)[:30]}", fg=Colors.red)
+
+def render_map(console, game):
+    """Render the game map with improved camera and visibility"""
+    try:
+        # Calculate camera offset to center on player
+        camera_x = max(0, min(MAP_WIDTH - SCREEN_WIDTH, game.player.x - SCREEN_WIDTH // 2))
+        camera_y = max(0, min(MAP_HEIGHT - (SCREEN_HEIGHT - PANEL_HEIGHT), 
+                             game.player.y - (SCREEN_HEIGHT - PANEL_HEIGHT) // 2))
+        
+        vision_range = game.player.get_vision_range()
+        
+        # First pass: Render basic terrain
+        for screen_x in range(SCREEN_WIDTH):
+            for screen_y in range(SCREEN_HEIGHT - PANEL_HEIGHT):
+                world_x = screen_x + camera_x
+                world_y = screen_y + camera_y
+                
+                if (0 <= world_x < MAP_WIDTH and 0 <= world_y < MAP_HEIGHT):
+                    distance = max(abs(world_x - game.player.x), abs(world_y - game.player.y))
+                    
+                    if distance <= vision_range or game.player.can_see_through_walls():
+                        # Check what's at this position (priority order)
+                        if game.game_map.is_wall(world_x, world_y):
+                            console.print(screen_x, screen_y, '#', fg=Colors.wall, bg=Colors.black)
+                        elif game.game_map.is_cooling_node(world_x, world_y):
+                            console.print(screen_x, screen_y, 'C', fg=Colors.cyan, bg=Colors.black)
+                        elif game.game_map.is_cpu_recovery_node(world_x, world_y):
+                            console.print(screen_x, screen_y, '+', fg=Colors.red, bg=Colors.black)
+                        elif (world_x, world_y) in game.game_map.data_patches:
+                            patch = game.game_map.data_patches[(world_x, world_y)]
+                            color_map = {
+                                'crimson': Colors.red, 'azure': Colors.blue, 'emerald': Colors.green,
+                                'golden': Colors.yellow, 'violet': Colors.magenta, 'silver': Colors.white
+                            }
+                            console.print(screen_x, screen_y, 'D', fg=color_map.get(patch.color, Colors.white), bg=Colors.black)
+                        elif game.game_map.is_shadow(world_x, world_y):
+                            console.print(screen_x, screen_y, '.', fg=Colors.green, bg=Colors.shadow)
+                        else:
+                            console.print(screen_x, screen_y, '.', fg=Colors.floor, bg=Colors.black)
+                    else:
+                        # Fog of war
+                        console.print(screen_x, screen_y, ' ', fg=Colors.black, bg=Colors.black)
+                else:
+                    # Outside map bounds
+                    console.print(screen_x, screen_y, ' ', fg=Colors.black, bg=Colors.black)
+        
+        # Second pass: Render enemy vision ranges (when not invisible)
+        if not game.player.is_invisible():
+            for enemy in game.enemies:
+                if enemy.disabled_turns > 0:
+                    continue
+                    
+                distance_to_player = max(abs(enemy.x - game.player.x), abs(enemy.y - game.player.y))
+                if distance_to_player <= vision_range:
+                    # Determine vision overlay color based on enemy state
+                    if enemy.state == EnemyState.HOSTILE:
+                        overlay_color = Colors.vision_hostile
+                    elif enemy.state == EnemyState.ALERT:
+                        overlay_color = Colors.vision_alert
+                    else:
+                        overlay_color = Colors.vision_unaware
+                    
+                    # Draw vision range as subtle background overlay
+                    for dx in range(-enemy.type_data.vision, enemy.type_data.vision + 1):
+                        for dy in range(-enemy.type_data.vision, enemy.type_data.vision + 1):
+                            if dx*dx + dy*dy <= enemy.type_data.vision*enemy.type_data.vision:
+                                screen_x = enemy.x - camera_x + dx
+                                screen_y = enemy.y - camera_y + dy
+                                
+                                if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+                                    # Only overlay on visible tiles
+                                    try:
+                                        current_char = console.ch[screen_x, screen_y]
+                                        if current_char != ord(' '):  # Don't overlay fog of war
+                                            current_fg = console.fg[screen_x, screen_y]
+                                            # Safely convert to tuple
+                                            if hasattr(current_fg, '__iter__') and len(current_fg) >= 3:
+                                                fg_tuple = tuple(current_fg[:3])
+                                                console.print(screen_x, screen_y, chr(current_char), fg=fg_tuple, bg=overlay_color)
+                                    except (IndexError, ValueError):
+                                        continue
+        
+        # Third pass: Render patrol routes if enabled
+        if game.show_patrols:
+            for enemy in game.enemies:
+                if enemy.patrol_points and len(enemy.patrol_points) > 1:
+                    distance_to_player = max(abs(enemy.x - game.player.x), abs(enemy.y - game.player.y))
+                    if distance_to_player <= vision_range:
+                        for point in enemy.patrol_points:
+                            screen_x = point.x - camera_x
+                            screen_y = point.y - camera_y
+                            if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+                                console.print(screen_x, screen_y, '*', fg=Colors.yellow, bg=Colors.black)
+        
+        # Fourth pass: Render gateway
+        if game.game_map.gateway:
+            screen_x = game.game_map.gateway.x - camera_x
+            screen_y = game.game_map.gateway.y - camera_y
+            if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+                distance = max(abs(game.game_map.gateway.x - game.player.x), 
+                              abs(game.game_map.gateway.y - game.player.y))
+                if distance <= vision_range:
+                    console.print(screen_x, screen_y, '>', fg=Colors.gateway, bg=Colors.black)
+        
+        # Fifth pass: Render enemies
+        for enemy in game.enemies:
+            screen_x = enemy.x - camera_x
+            screen_y = enemy.y - camera_y
+            if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+                distance = max(abs(enemy.x - game.player.x), abs(enemy.y - game.player.y))
+                if distance <= vision_range:
+                    console.print(screen_x, screen_y, enemy.type_data.symbol, 
+                                    fg=enemy.get_color(), bg=Colors.black)
+        
+        # Sixth pass: Render player (with special effects)
+        player_screen_x = game.player.x - camera_x
+        player_screen_y = game.player.y - camera_y
+        if (0 <= player_screen_x < SCREEN_WIDTH and 0 <= player_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+            player_color = Colors.player
+            if game.player.is_invisible():
+                player_color = Colors.blue
+            elif game.player.speed_boost_turns > 0:
+                player_color = Colors.yellow
+            elif game.player.heat >= 90:
+                player_color = Colors.red
+            
+            console.print(player_screen_x, player_screen_y, '@', fg=player_color, bg=Colors.black)
+        
+        # Final pass: Render targeting cursor and range
+        if game.targeting_mode:
+            cursor_screen_x = game.cursor_x - camera_x
+            cursor_screen_y = game.cursor_y - camera_y
+            if (0 <= cursor_screen_x < SCREEN_WIDTH and 0 <= cursor_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+                console.print(cursor_screen_x, cursor_screen_y, 'X', fg=Colors.red, bg=Colors.black)
+                
+                # Show range indicator for targeted exploit
+                if game.targeting_exploit in EXPLOITS:
+                    exploit = EXPLOITS[game.targeting_exploit]
+                    for dx in range(-exploit.range, exploit.range + 1):
+                        for dy in range(-exploit.range, exploit.range + 1):
+                            if dx*dx + dy*dy <= exploit.range*exploit.range:
+                                range_screen_x = game.player.x - camera_x + dx
+                                range_screen_y = game.player.y - camera_y + dy
+                                if (0 <= range_screen_x < SCREEN_WIDTH and 0 <= range_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
+                                    try:
+                                        current_char = console.ch[range_screen_x, range_screen_y]
+                                        if current_char != ord(' '):
+                                            current_fg = console.fg[range_screen_x, range_screen_y]
+                                            if hasattr(current_fg, '__iter__') and len(current_fg) >= 3:
+                                                fg_tuple = tuple(current_fg[:3])
+                                                console.print(range_screen_x, range_screen_y, chr(current_char), 
+                                                             fg=fg_tuple, bg=(40, 40, 40))
+                                    except (IndexError, ValueError):
+                                        continue
+    
+    except Exception as e:
+        # Fallback in case of rendering errors
+        console.print(1, 1, f"Map Error: {str(e)[:50]}", fg=Colors.red, bg=Colors.black)
+
+def main():
+    """Main game loop with improved error handling and 8-directional controls"""
+    # Initialize tcod with comprehensive fallback handling
+    tileset = None
+    try:
+        # Try to load the preferred tileset
+        tileset = tcod.tileset.load_tilesheet(
+            "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
+        )
+    except (FileNotFoundError, ImportError, Exception):
+        try:
+            # Try default tileset
+            tileset = tcod.tileset.load_tilesheet(
+                tcod.tileset.get_default(), 16, 16, tcod.tileset.CHARMAP_TCOD
+            )
+        except Exception:
+            # Use built-in fallback
+            pass
+    
+    context_args = {
+        "columns": SCREEN_WIDTH,
+        "rows": SCREEN_HEIGHT,
+        "title": "Rogue Signal Protocol v50 - 8-Directional Movement & Random Dungeons",
+        "vsync": True
+    }
+    
+    if tileset:
+        context_args["tileset"] = tileset
+    
+    try:
+        with tcod.context.new(**context_args) as context:
+            console = tcod.console.Console(SCREEN_WIDTH, SCREEN_HEIGHT, order='F')
+            game = Game()
+            
+            game.add_message("Welcome to Rogue Signal Protocol v50!")
+            game.add_message("NEW: 8-directional movement! Use NumPad or YK UO HL BN keys")
+            game.add_message("NEW: Randomly seeded dungeons change every playthrough!")
+            game.add_message("Navigate using stealth. Reach the gateway (>).")
+            game.add_message("Hide in shadows (.) to avoid detection.")
+            
+            while True:
+                try:
+                    console.clear()
+                    
+                    render_map(console, game)
+                    render_ui(console, game)
+                    
+                    # Instructions at top
+                    if game.targeting_mode:
+                        console.print(1, 0, "TARGETING MODE: NumPad/YKUOHLBN: Move cursor | Enter: Confirm | ESC: Cancel", 
+                                     fg=Colors.yellow, bg=Colors.black)
+                    else:
+                        instructions = "NumPad/YKUOHLBN: Move | Space: Wait | Tab: Patrols | 1-5: Exploits | ESC: Quit"
+                        if game.player.speed_boost_turns > 0:
+                            instructions = "SPEED BOOST ACTIVE! " + instructions
+                        console.print(1, 0, instructions[:SCREEN_WIDTH-2], fg=Colors.ui_text, bg=Colors.black)
+                    
+                    # Game over check
+                    if game.game_over:
+                        console.print(SCREEN_WIDTH // 2 - 10, SCREEN_HEIGHT // 2, 
+                                     "MISSION COMPLETE!", fg=Colors.green, bg=Colors.black)
+                        console.print(SCREEN_WIDTH // 2 - 15, SCREEN_HEIGHT // 2 + 1, 
+                                     "All networks infiltrated successfully!", fg=Colors.green, bg=Colors.black)
+                        console.print(SCREEN_WIDTH // 2 - 8, SCREEN_HEIGHT // 2 + 3, 
+                                     "Press ESC to exit", fg=Colors.ui_text, bg=Colors.black)
+                    
+                    # CPU death check
+                    if game.player.cpu <= 0:
+                        console.print(SCREEN_WIDTH // 2 - 8, SCREEN_HEIGHT // 2, 
+                                     "SYSTEM FAILURE", fg=Colors.red, bg=Colors.black)
+                        console.print(SCREEN_WIDTH // 2 - 12, SCREEN_HEIGHT // 2 + 1, 
+                                     "Your consciousness has been purged", fg=Colors.red, bg=Colors.black)
+                        console.print(SCREEN_WIDTH // 2 - 8, SCREEN_HEIGHT // 2 + 3, 
+                                     "Press ESC to exit", fg=Colors.ui_text, bg=Colors.black)
+                    
+                    context.present(console)
+                    
+                    # Handle input with proper error handling - 8-directional movement
+                    for event in tcod.event.wait():
+                        try:
+                            if event.type == "QUIT":
+                                raise SystemExit()
+                            elif event.type == "KEYDOWN":
+                                if event.sym == tcod.event.KeySym.ESCAPE:
+                                    if game.targeting_mode:
+                                        game.targeting_mode = False
+                                        game.targeting_exploit = None
+                                        game.add_message("Targeting cancelled.")
+                                    else:
+                                        raise SystemExit()
+                                
+                                elif game.player.cpu <= 0 or game.game_over:
+                                    # Only allow ESC when dead or game over
+                                    continue
+                                
+                                elif game.targeting_mode:
+                                    # Targeting mode controls - 8-directional
+                                    if event.sym in (tcod.event.KeySym.KP_8, tcod.event.KeySym.UP, tcod.event.KeySym.K):
+                                        game.move_cursor(0, -1)
+                                    elif event.sym in (tcod.event.KeySym.KP_9, tcod.event.KeySym.U):
+                                        game.move_cursor(1, -1)
+                                    elif event.sym in (tcod.event.KeySym.KP_6, tcod.event.KeySym.RIGHT, tcod.event.KeySym.L):
+                                        game.move_cursor(1, 0)
+                                    elif event.sym in (tcod.event.KeySym.KP_3, tcod.event.KeySym.N):
+                                        game.move_cursor(1, 1)
+                                    elif event.sym in (tcod.event.KeySym.KP_2, tcod.event.KeySym.DOWN, tcod.event.KeySym.J):
+                                        game.move_cursor(0, 1)
+                                    elif event.sym in (tcod.event.KeySym.KP_1, tcod.event.KeySym.B):
+                                        game.move_cursor(-1, 1)
+                                    elif event.sym in (tcod.event.KeySym.KP_4, tcod.event.KeySym.LEFT, tcod.event.KeySym.H):
+                                        game.move_cursor(-1, 0)
+                                    elif event.sym in (tcod.event.KeySym.KP_7, tcod.event.KeySym.Y):
+                                        game.move_cursor(-1, -1)
+                                    elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
+                                        game.execute_exploit(game.targeting_exploit, game.cursor_x, game.cursor_y)
+                                
+                                else:
+                                    # Normal game controls - 8-directional movement
+                                    if event.sym in (tcod.event.KeySym.KP_8, tcod.event.KeySym.UP, tcod.event.KeySym.K):
+                                        game.move_player(0, -1)
+                                    elif event.sym in (tcod.event.KeySym.KP_9, tcod.event.KeySym.U):
+                                        game.move_player(1, -1)
+                                    elif event.sym in (tcod.event.KeySym.KP_6, tcod.event.KeySym.RIGHT, tcod.event.KeySym.L):
+                                        game.move_player(1, 0)
+                                    elif event.sym in (tcod.event.KeySym.KP_3, tcod.event.KeySym.N):
+                                        game.move_player(1, 1)
+                                    elif event.sym in (tcod.event.KeySym.KP_2, tcod.event.KeySym.DOWN, tcod.event.KeySym.J):
+                                        game.move_player(0, 1)
+                                    elif event.sym in (tcod.event.KeySym.KP_1, tcod.event.KeySym.B):
+                                        game.move_player(-1, 1)
+                                    elif event.sym in (tcod.event.KeySym.KP_4, tcod.event.KeySym.LEFT, tcod.event.KeySym.H):
+                                        game.move_player(-1, 0)
+                                    elif event.sym in (tcod.event.KeySym.KP_7, tcod.event.KeySym.Y):
+                                        game.move_player(-1, -1)
+                                    elif event.sym in (tcod.event.KeySym.KP_5, tcod.event.KeySym.SPACE, tcod.event.KeySym.PERIOD):
+                                        game.process_turn()
+                                    elif event.sym == tcod.event.KeySym.TAB:
+                                        game.show_patrols = not game.show_patrols
+                                        status = "visible" if game.show_patrols else "hidden"
+                                        game.add_message(f"Patrol routes {status}")
+                                    elif event.sym == tcod.event.KeySym.N1 and len(game.loaded_exploits) > 0:
+                                        game.use_exploit(game.loaded_exploits[0])
+                                    elif event.sym == tcod.event.KeySym.N2 and len(game.loaded_exploits) > 1:
+                                        game.use_exploit(game.loaded_exploits[1])
+                                    elif event.sym == tcod.event.KeySym.N3 and len(game.loaded_exploits) > 2:
+                                        game.use_exploit(game.loaded_exploits[2])
+                                    elif event.sym == tcod.event.KeySym.N4 and len(game.loaded_exploits) > 3:
+                                        game.use_exploit(game.loaded_exploits[3])
+                                    elif event.sym == tcod.event.KeySym.N5 and len(game.loaded_exploits) > 4:
+                                        game.use_exploit(game.loaded_exploits[4])
+                        
+                        except Exception as e:
+                            game.add_message(f"Input error: {str(e)[:20]}")
+                            continue
+                
+                except Exception as e:
+                    # Handle rendering errors gracefully
+                    print(f"Rendering error: {e}")
+                    console.clear()
+                    console.print(1, 1, f"Error: {str(e)[:60]}", fg=Colors.red)
+                    console.print(1, 2, "Press ESC to exit", fg=Colors.white)
+                    context.present(console)
+                    
+                    for event in tcod.event.wait():
+                        if event.type == "QUIT" or (event.type == "KEYDOWN" and event.sym == tcod.event.KeySym.ESCAPE):
+                            raise SystemExit()
+    
+    except Exception as e:
+        print(f"Critical error: {e}")
+        print("Make sure you have 'pip install tcod'")
+        import traceback
+        traceback.print_exc()
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nGame interrupted by user")
+    except Exception as e:
+        print(f"Fatal error: {e}")
+        print("Please ensure tcod is properly installed: pip install tcod")
+        import traceback
+        traceback.print_exc()#!/usr/bin/env python3
 """
-Rogue Signal Protocol v50 - Comprehensive Bug Fixes
+Rogue Signal Protocol v50 - 8-Directional Movement & Random Seed
 A stealth-focused traditional roguelike using Python and tcod
 """
 
@@ -165,7 +602,7 @@ class Player:
         self.last_position = Position(x, y)
         
     def move(self, dx: int, dy: int, game_map):
-        """Move player with boundary checking"""
+        """Move player with boundary checking - supports 8-directional movement"""
         self.last_position = Position(self.x, self.y)
         new_x = max(0, min(MAP_WIDTH - 1, self.x + dx))
         new_y = max(0, min(MAP_HEIGHT - 1, self.y + dy))
@@ -242,7 +679,7 @@ class Enemy:
         return game_map.has_line_of_sight(self.x, self.y, player.x, player.y)
     
     def move(self, game_map, player):
-        """Move enemy with proper cooldown and validation"""
+        """Move enemy with proper cooldown and validation - supports 8-directional movement"""
         if self.disabled_turns > 0:
             self.disabled_turns -= 1
             return
@@ -272,8 +709,8 @@ class Enemy:
                 self.move_toward(player.x, player.y, game_map)
     
     def _move_random(self, game_map):
-        """Random movement with bounds checking"""
-        directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+        """Random movement with bounds checking - 8-directional"""
+        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
         random.shuffle(directions)
         
         for dx, dy in directions:
@@ -327,17 +764,28 @@ class Enemy:
         return predicted
     
     def move_toward(self, target_x: int, target_y: int, game_map):
-        """Move one step toward target using improved pathfinding"""
+        """Move one step toward target using improved 8-directional pathfinding"""
         if not (0 <= target_x < MAP_WIDTH and 0 <= target_y < MAP_HEIGHT):
             return
             
         dx = 0 if self.x == target_x else (1 if target_x > self.x else -1)
         dy = 0 if self.y == target_y else (1 if target_y > self.y else -1)
         
-        # Try diagonal first, then cardinal directions
-        move_attempts = [(dx, dy), (dx, 0), (0, dy)]
+        # Try diagonal first, then cardinal directions, then other diagonals
+        move_attempts = [
+            (dx, dy),      # Direct diagonal/cardinal
+            (dx, 0),       # Horizontal
+            (0, dy),       # Vertical
+            (dx, -dy),     # Other diagonal
+            (-dx, dy),     # Other diagonal
+            (-dx, 0),      # Opposite horizontal
+            (0, -dy),      # Opposite vertical
+            (-dx, -dy)     # Opposite diagonal
+        ]
         
         for try_dx, try_dy in move_attempts:
+            if try_dx == 0 and try_dy == 0:
+                continue
             new_x, new_y = self.x + try_dx, self.y + try_dy
             if (0 <= new_x < MAP_WIDTH and 0 <= new_y < MAP_HEIGHT and
                 game_map.is_valid_position(new_x, new_y)):
@@ -460,6 +908,9 @@ class Game:
         self.admin_spawned = False
         self.show_patrol_predictions = False
         self.network_scan_turns = 0
+        
+        # Random seed for dungeon generation
+        self.dungeon_seed = random.randint(1, 1000000)
         
         self.tutorial_active = False
         self.tutorial_step = 0
@@ -746,7 +1197,7 @@ class Game:
                             enemy.last_seen_player = None
     
     def move_player(self, dx: int, dy: int):
-        """Move player and process turn with collision detection"""
+        """Move player and process turn with collision detection - supports 8-directional movement"""
         if self.targeting_mode:
             self.move_cursor(dx, dy)
             return
@@ -787,7 +1238,7 @@ class Game:
         self.process_turn()
     
     def move_cursor(self, dx: int, dy: int):
-        """Move targeting cursor with bounds checking"""
+        """Move targeting cursor with bounds checking - supports 8-directional movement"""
         self.cursor_x = max(0, min(MAP_WIDTH - 1, self.cursor_x + dx))
         self.cursor_y = max(0, min(MAP_HEIGHT - 1, self.cursor_y + dy))
     
@@ -850,12 +1301,16 @@ class Game:
                 self.level -= 1
     
     def generate_next_level(self):
-        """Generate procedural network for levels 1-3 with improved algorithms"""
+        """Generate procedural network for levels 1-3 with improved algorithms and random seeds"""
         if self.level not in NETWORK_CONFIGS:
             self.add_message(f"Invalid level: {self.level}")
             return
             
         config = NETWORK_CONFIGS[self.level]
+        
+        # Set random seed for this level
+        level_seed = self.dungeon_seed + self.level * 12345
+        random.seed(level_seed)
         
         # Clear existing data
         self.game_map.walls.clear()
@@ -1037,7 +1492,11 @@ class Game:
         self.player.detection = max(0, self.player.detection - 20)  # Slight detection reduction
         self.player.heat = max(0, self.player.heat - 30)  # Slight heat reduction
         
+        # Restore random seed to current time for future randomness
+        random.seed()
+        
         self.add_message(f"{config['name']} generated. {len(self.enemies)} security processes active.")
+        self.add_message(f"Dungeon seed: {level_seed}")
     
     def generate_patrol_route(self, start_x: int, start_y: int) -> List[Position]:
         """Generate a more realistic patrol route"""
@@ -1250,425 +1709,3 @@ class Game:
         
         if success:
             self.process_turn()
-
-def render_ui(console, game):
-    """Render the UI panel with improved formatting and error handling"""
-    try:
-        # Clear panel area
-        for x in range(SCREEN_WIDTH):
-            for y in range(PANEL_Y, SCREEN_HEIGHT):
-                console.print(x, y, ' ', fg=Colors.ui_text, bg=Colors.ui_bg)
-        
-        # Status line 1 - Core stats
-        cpu_color = Colors.red if game.player.cpu < 30 else Colors.yellow if game.player.cpu < 60 else Colors.green
-        heat_color = Colors.red if game.player.heat > 80 else Colors.yellow if game.player.heat > 60 else Colors.green
-        detection_color = Colors.red if game.player.detection > 75 else Colors.yellow if game.player.detection > 50 else Colors.green
-        
-        console.print(1, PANEL_Y + 1, f"CPU:{game.player.cpu:3d}/{game.player.max_cpu:3d}", fg=cpu_color)
-        console.print(16, PANEL_Y + 1, f"Heat:{game.player.heat:3d}°C", fg=heat_color)
-        console.print(30, PANEL_Y + 1, f"Detection:{int(game.player.detection):3d}%", fg=detection_color)
-        console.print(50, PANEL_Y + 1, f"Turn:{game.turn:4d}", fg=Colors.ui_text)
-        
-        # Status line 2 - Resources and location
-        ram_color = Colors.red if game.player.ram_used > game.player.ram_total else Colors.green
-        console.print(1, PANEL_Y + 2, f"RAM:{game.player.ram_used:2d}/{game.player.ram_total:2d}GB", fg=ram_color)
-        
-        level_names = {0: "Tutorial", 1: "Corporate", 2: "Government", 3: "Military"}
-        console.print(16, PANEL_Y + 2, f"Net:{level_names.get(game.level, 'Unknown')}", fg=Colors.ui_text)
-        console.print(35, PANEL_Y + 2, f"Vision:{game.player.get_vision_range():2d}", fg=Colors.ui_text)
-        console.print(50, PANEL_Y + 2, f"Pos:({game.player.x:2d},{game.player.y:2d})", fg=Colors.ui_text)
-        
-        # Status line 3 - Active effects
-        effects = []
-        if game.player.data_mimic_turns > 0:
-            effects.append(f"Mimic({game.player.data_mimic_turns})")
-        if game.player.speed_boost_turns > 0:
-            effects.append(f"Speed({game.player.speed_boost_turns})")
-        if game.player.enhanced_vision_turns > 0:
-            effects.append(f"Vision({game.player.enhanced_vision_turns})")
-        if game.player.exploit_efficiency_turns > 0:
-            effects.append(f"Efficiency({game.player.exploit_efficiency_turns})")
-        if game.network_scan_turns > 0:
-            effects.append(f"Scan({game.network_scan_turns})")
-        
-        if effects:
-            effects_text = "Effects: " + " ".join(effects)
-            console.print(1, PANEL_Y + 3, effects_text[:SCREEN_WIDTH-2], fg=Colors.cyan)
-        
-        # Status line 4 - Loaded exploits with heat check
-        console.print(1, PANEL_Y + 4, "Exploits:", fg=Colors.ui_text)
-        for i, exploit_key in enumerate(game.loaded_exploits[:5]):
-            if exploit_key in EXPLOITS:
-                exploit = EXPLOITS[exploit_key]
-                heat_cost = exploit.heat
-                if game.player.exploit_efficiency_turns > 0:
-                    heat_cost = int(heat_cost * 0.6)
-                
-                heat_ok = game.player.heat + heat_cost <= 100
-                color = Colors.green if heat_ok else Colors.red
-                exploit_text = f"{i+1}.{exploit.name[:10]}"
-                x_pos = 11 + i * 14
-                if x_pos < SCREEN_WIDTH - 12:
-                    console.print(x_pos, PANEL_Y + 4, exploit_text, fg=color)
-        
-        # Status line 5 - Warnings and targeting
-        if game.targeting_mode and game.targeting_exploit in EXPLOITS:
-            exploit = EXPLOITS[game.targeting_exploit]
-            console.print(1, PANEL_Y + 5, f"TARGETING: {exploit.name} - Range: {exploit.range}", fg=Colors.yellow)
-        elif game.player.detection >= 85:
-            console.print(1, PANEL_Y + 5, "*** CRITICAL DETECTION - ADMIN AVATAR IMMINENT ***", fg=Colors.red)
-        elif game.player.detection >= 60:
-            console.print(1, PANEL_Y + 5, "** ELEVATED DETECTION LEVEL **", fg=Colors.yellow)
-        elif game.player.heat >= 90:
-            console.print(1, PANEL_Y + 5, "** SYSTEM OVERHEATING - CRITICAL **", fg=Colors.red)
-        elif game.player.cpu < 30:
-            console.print(1, PANEL_Y + 5, "** LOW CPU - CRITICAL **", fg=Colors.red)
-        else:
-            console.print(1, PANEL_Y + 5, "Status: Operational", fg=Colors.green)
-        
-        # System log header
-        console.print(1, PANEL_Y + 6, "SYSTEM LOG:", fg=Colors.ui_text)
-        
-        # Messages - last 3 lines
-        for i, message in enumerate(game.messages[-3:]):
-            y_pos = PANEL_Y + 7 + i
-            if y_pos < SCREEN_HEIGHT:
-                # Color-code messages based on content
-                msg_color = Colors.green
-                if "ADMIN" in message or "CRITICAL" in message or "eliminated" in message:
-                    msg_color = Colors.red
-                elif "detected" in message or "investigating" in message or "attracted" in message:
-                    msg_color = Colors.yellow
-                elif "activated" in message or "restored" in message or "reduced" in message:
-                    msg_color = Colors.cyan
-                
-                console.print(1, y_pos, message[:SCREEN_WIDTH-2], fg=msg_color)
-    
-    except Exception as e:
-        # Fallback in case of rendering errors
-        console.print(1, PANEL_Y + 1, f"UI Error: {str(e)[:30]}", fg=Colors.red)
-
-def render_map(console, game):
-    """Render the game map with improved camera and visibility"""
-    try:
-        # Calculate camera offset to center on player
-        camera_x = max(0, min(MAP_WIDTH - SCREEN_WIDTH, game.player.x - SCREEN_WIDTH // 2))
-        camera_y = max(0, min(MAP_HEIGHT - (SCREEN_HEIGHT - PANEL_HEIGHT), 
-                             game.player.y - (SCREEN_HEIGHT - PANEL_HEIGHT) // 2))
-        
-        vision_range = game.player.get_vision_range()
-        
-        # First pass: Render basic terrain
-        for screen_x in range(SCREEN_WIDTH):
-            for screen_y in range(SCREEN_HEIGHT - PANEL_HEIGHT):
-                world_x = screen_x + camera_x
-                world_y = screen_y + camera_y
-                
-                if (0 <= world_x < MAP_WIDTH and 0 <= world_y < MAP_HEIGHT):
-                    distance = max(abs(world_x - game.player.x), abs(world_y - game.player.y))
-                    
-                    if distance <= vision_range or game.player.can_see_through_walls():
-                        # Check what's at this position (priority order)
-                        if game.game_map.is_wall(world_x, world_y):
-                            console.print(screen_x, screen_y, '#', fg=Colors.wall, bg=Colors.black)
-                        elif game.game_map.is_cooling_node(world_x, world_y):
-                            console.print(screen_x, screen_y, 'C', fg=Colors.cyan, bg=Colors.black)
-                        elif game.game_map.is_cpu_recovery_node(world_x, world_y):
-                            console.print(screen_x, screen_y, '+', fg=Colors.red, bg=Colors.black)
-                        elif (world_x, world_y) in game.game_map.data_patches:
-                            patch = game.game_map.data_patches[(world_x, world_y)]
-                            color_map = {
-                                'crimson': Colors.red, 'azure': Colors.blue, 'emerald': Colors.green,
-                                'golden': Colors.yellow, 'violet': Colors.magenta, 'silver': Colors.white
-                            }
-                            console.print(screen_x, screen_y, 'D', fg=color_map.get(patch.color, Colors.white), bg=Colors.black)
-                        elif game.game_map.is_shadow(world_x, world_y):
-                            console.print(screen_x, screen_y, '.', fg=Colors.green, bg=Colors.shadow)
-                        else:
-                            console.print(screen_x, screen_y, '.', fg=Colors.floor, bg=Colors.black)
-                    else:
-                        # Fog of war
-                        console.print(screen_x, screen_y, ' ', fg=Colors.black, bg=Colors.black)
-                else:
-                    # Outside map bounds
-                    console.print(screen_x, screen_y, ' ', fg=Colors.black, bg=Colors.black)
-        
-        # Second pass: Render enemy vision ranges (when not invisible)
-        if not game.player.is_invisible():
-            for enemy in game.enemies:
-                if enemy.disabled_turns > 0:
-                    continue
-                    
-                distance_to_player = max(abs(enemy.x - game.player.x), abs(enemy.y - game.player.y))
-                if distance_to_player <= vision_range:
-                    # Determine vision overlay color based on enemy state
-                    if enemy.state == EnemyState.HOSTILE:
-                        overlay_color = Colors.vision_hostile
-                    elif enemy.state == EnemyState.ALERT:
-                        overlay_color = Colors.vision_alert
-                    else:
-                        overlay_color = Colors.vision_unaware
-                    
-                    # Draw vision range as subtle background overlay
-                    for dx in range(-enemy.type_data.vision, enemy.type_data.vision + 1):
-                        for dy in range(-enemy.type_data.vision, enemy.type_data.vision + 1):
-                            if dx*dx + dy*dy <= enemy.type_data.vision*enemy.type_data.vision:
-                                screen_x = enemy.x - camera_x + dx
-                                screen_y = enemy.y - camera_y + dy
-                                
-                                if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
-                                    # Only overlay on visible tiles
-                                    try:
-                                        current_char = console.ch[screen_x, screen_y]
-                                        if current_char != ord(' '):  # Don't overlay fog of war
-                                            current_fg = console.fg[screen_x, screen_y]
-                                            # Safely convert to tuple
-                                            if hasattr(current_fg, '__iter__') and len(current_fg) >= 3:
-                                                fg_tuple = tuple(current_fg[:3])
-                                                console.print(screen_x, screen_y, chr(current_char), fg=fg_tuple, bg=overlay_color)
-                                    except (IndexError, ValueError):
-                                        continue
-        
-        # Third pass: Render patrol routes if enabled
-        if game.show_patrols:
-            for enemy in game.enemies:
-                if enemy.patrol_points and len(enemy.patrol_points) > 1:
-                    distance_to_player = max(abs(enemy.x - game.player.x), abs(enemy.y - game.player.y))
-                    if distance_to_player <= vision_range:
-                        for point in enemy.patrol_points:
-                            screen_x = point.x - camera_x
-                            screen_y = point.y - camera_y
-                            if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
-                                console.print(screen_x, screen_y, '*', fg=Colors.yellow, bg=Colors.black)
-        
-        # Fourth pass: Render gateway
-        if game.game_map.gateway:
-            screen_x = game.game_map.gateway.x - camera_x
-            screen_y = game.game_map.gateway.y - camera_y
-            if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
-                distance = max(abs(game.game_map.gateway.x - game.player.x), 
-                              abs(game.game_map.gateway.y - game.player.y))
-                if distance <= vision_range:
-                    console.print(screen_x, screen_y, '>', fg=Colors.gateway, bg=Colors.black)
-        
-        # Fifth pass: Render enemies
-        for enemy in game.enemies:
-            screen_x = enemy.x - camera_x
-            screen_y = enemy.y - camera_y
-            if (0 <= screen_x < SCREEN_WIDTH and 0 <= screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
-                distance = max(abs(enemy.x - game.player.x), abs(enemy.y - game.player.y))
-                if distance <= vision_range:
-                    console.print(screen_x, screen_y, enemy.type_data.symbol, 
-                                    fg=enemy.get_color(), bg=Colors.black)
-        
-        # Sixth pass: Render player (with special effects)
-        player_screen_x = game.player.x - camera_x
-        player_screen_y = game.player.y - camera_y
-        if (0 <= player_screen_x < SCREEN_WIDTH and 0 <= player_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
-            player_color = Colors.player
-            if game.player.is_invisible():
-                player_color = Colors.blue
-            elif game.player.speed_boost_turns > 0:
-                player_color = Colors.yellow
-            elif game.player.heat >= 90:
-                player_color = Colors.red
-            
-            console.print(player_screen_x, player_screen_y, '@', fg=player_color, bg=Colors.black)
-        
-        # Final pass: Render targeting cursor and range
-        if game.targeting_mode:
-            cursor_screen_x = game.cursor_x - camera_x
-            cursor_screen_y = game.cursor_y - camera_y
-            if (0 <= cursor_screen_x < SCREEN_WIDTH and 0 <= cursor_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
-                console.print(cursor_screen_x, cursor_screen_y, 'X', fg=Colors.red, bg=Colors.black)
-                
-                # Show range indicator for targeted exploit
-                if game.targeting_exploit in EXPLOITS:
-                    exploit = EXPLOITS[game.targeting_exploit]
-                    for dx in range(-exploit.range, exploit.range + 1):
-                        for dy in range(-exploit.range, exploit.range + 1):
-                            if dx*dx + dy*dy <= exploit.range*exploit.range:
-                                range_screen_x = game.player.x - camera_x + dx
-                                range_screen_y = game.player.y - camera_y + dy
-                                if (0 <= range_screen_x < SCREEN_WIDTH and 0 <= range_screen_y < SCREEN_HEIGHT - PANEL_HEIGHT):
-                                    try:
-                                        current_char = console.ch[range_screen_x, range_screen_y]
-                                        if current_char != ord(' '):
-                                            current_fg = console.fg[range_screen_x, range_screen_y]
-                                            if hasattr(current_fg, '__iter__') and len(current_fg) >= 3:
-                                                fg_tuple = tuple(current_fg[:3])
-                                                console.print(range_screen_x, range_screen_y, chr(current_char), 
-                                                             fg=fg_tuple, bg=(40, 40, 40))
-                                    except (IndexError, ValueError):
-                                        continue
-    
-    except Exception as e:
-        # Fallback in case of rendering errors
-        console.print(1, 1, f"Map Error: {str(e)[:50]}", fg=Colors.red, bg=Colors.black)
-
-def main():
-    """Main game loop with improved error handling"""
-    # Initialize tcod with comprehensive fallback handling
-    tileset = None
-    try:
-        # Try to load the preferred tileset
-        tileset = tcod.tileset.load_tilesheet(
-            "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
-        )
-    except (FileNotFoundError, ImportError, Exception):
-        try:
-            # Try default tileset
-            tileset = tcod.tileset.load_tilesheet(
-                tcod.tileset.get_default(), 16, 16, tcod.tileset.CHARMAP_TCOD
-            )
-        except Exception:
-            # Use built-in fallback
-            pass
-    
-    context_args = {
-        "columns": SCREEN_WIDTH,
-        "rows": SCREEN_HEIGHT,
-        "title": "Rogue Signal Protocol v50 - Comprehensive Bug Fixes",
-        "vsync": True
-    }
-    
-    if tileset:
-        context_args["tileset"] = tileset
-    
-    try:
-        with tcod.context.new(**context_args) as context:
-            console = tcod.console.Console(SCREEN_WIDTH, SCREEN_HEIGHT, order='F')
-            game = Game()
-            
-            game.add_message("Welcome to Rogue Signal Protocol v50!")
-            game.add_message("Major bug fixes: improved movement, enemy AI, heat system")
-            game.add_message("Navigate using stealth. Reach the gateway (>).")
-            game.add_message("Hide in shadows (.) to avoid detection.")
-            
-            while True:
-                try:
-                    console.clear()
-                    
-                    render_map(console, game)
-                    render_ui(console, game)
-                    
-                    # Instructions at top
-                    if game.targeting_mode:
-                        console.print(1, 0, "TARGETING MODE: WASD/Arrows: Move cursor | Enter: Confirm | ESC: Cancel", 
-                                     fg=Colors.yellow, bg=Colors.black)
-                    else:
-                        instructions = "WASD/Arrows: Move | Space: Wait | Tab: Patrols | 1-5: Exploits | ESC: Quit"
-                        if game.player.speed_boost_turns > 0:
-                            instructions = "SPEED BOOST ACTIVE! " + instructions
-                        console.print(1, 0, instructions[:SCREEN_WIDTH-2], fg=Colors.ui_text, bg=Colors.black)
-                    
-                    # Game over check
-                    if game.game_over:
-                        console.print(SCREEN_WIDTH // 2 - 10, SCREEN_HEIGHT // 2, 
-                                     "MISSION COMPLETE!", fg=Colors.green, bg=Colors.black)
-                        console.print(SCREEN_WIDTH // 2 - 15, SCREEN_HEIGHT // 2 + 1, 
-                                     "All networks infiltrated successfully!", fg=Colors.green, bg=Colors.black)
-                        console.print(SCREEN_WIDTH // 2 - 8, SCREEN_HEIGHT // 2 + 3, 
-                                     "Press ESC to exit", fg=Colors.ui_text, bg=Colors.black)
-                    
-                    # CPU death check
-                    if game.player.cpu <= 0:
-                        console.print(SCREEN_WIDTH // 2 - 8, SCREEN_HEIGHT // 2, 
-                                     "SYSTEM FAILURE", fg=Colors.red, bg=Colors.black)
-                        console.print(SCREEN_WIDTH // 2 - 12, SCREEN_HEIGHT // 2 + 1, 
-                                     "Your consciousness has been purged", fg=Colors.red, bg=Colors.black)
-                        console.print(SCREEN_WIDTH // 2 - 8, SCREEN_HEIGHT // 2 + 3, 
-                                     "Press ESC to exit", fg=Colors.ui_text, bg=Colors.black)
-                    
-                    context.present(console)
-                    
-                    # Handle input with proper error handling
-                    for event in tcod.event.wait():
-                        try:
-                            if event.type == "QUIT":
-                                raise SystemExit()
-                            elif event.type == "KEYDOWN":
-                                if event.sym == tcod.event.KeySym.ESCAPE:
-                                    if game.targeting_mode:
-                                        game.targeting_mode = False
-                                        game.targeting_exploit = None
-                                        game.add_message("Targeting cancelled.")
-                                    else:
-                                        raise SystemExit()
-                                
-                                elif game.player.cpu <= 0 or game.game_over:
-                                    # Only allow ESC when dead or game over
-                                    continue
-                                
-                                elif game.targeting_mode:
-                                    # Targeting mode controls
-                                    if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W):
-                                        game.move_cursor(0, -1)
-                                    elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S):
-                                        game.move_cursor(0, 1)
-                                    elif event.sym in (tcod.event.KeySym.LEFT, tcod.event.KeySym.A):
-                                        game.move_cursor(-1, 0)
-                                    elif event.sym in (tcod.event.KeySym.RIGHT, tcod.event.KeySym.D):
-                                        game.move_cursor(1, 0)
-                                    elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
-                                        game.execute_exploit(game.targeting_exploit, game.cursor_x, game.cursor_y)
-                                
-                                else:
-                                    # Normal game controls
-                                    if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W):
-                                        game.move_player(0, -1)
-                                    elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S):
-                                        game.move_player(0, 1)
-                                    elif event.sym in (tcod.event.KeySym.LEFT, tcod.event.KeySym.A):
-                                        game.move_player(-1, 0)
-                                    elif event.sym in (tcod.event.KeySym.RIGHT, tcod.event.KeySym.D):
-                                        game.move_player(1, 0)
-                                    elif event.sym == tcod.event.KeySym.SPACE:
-                                        game.process_turn()
-                                    elif event.sym == tcod.event.KeySym.TAB:
-                                        game.show_patrols = not game.show_patrols
-                                        status = "visible" if game.show_patrols else "hidden"
-                                        game.add_message(f"Patrol routes {status}")
-                                    elif event.sym == tcod.event.KeySym.N1 and len(game.loaded_exploits) > 0:
-                                        game.use_exploit(game.loaded_exploits[0])
-                                    elif event.sym == tcod.event.KeySym.N2 and len(game.loaded_exploits) > 1:
-                                        game.use_exploit(game.loaded_exploits[1])
-                                    elif event.sym == tcod.event.KeySym.N3 and len(game.loaded_exploits) > 2:
-                                        game.use_exploit(game.loaded_exploits[2])
-                                    elif event.sym == tcod.event.KeySym.N4 and len(game.loaded_exploits) > 3:
-                                        game.use_exploit(game.loaded_exploits[3])
-                                    elif event.sym == tcod.event.KeySym.N5 and len(game.loaded_exploits) > 4:
-                                        game.use_exploit(game.loaded_exploits[4])
-                        
-                        except Exception as e:
-                            game.add_message(f"Input error: {str(e)[:20]}")
-                            continue
-                
-                except Exception as e:
-                    # Handle rendering errors gracefully
-                    print(f"Rendering error: {e}")
-                    console.clear()
-                    console.print(1, 1, f"Error: {str(e)[:60]}", fg=Colors.red)
-                    console.print(1, 2, "Press ESC to exit", fg=Colors.white)
-                    context.present(console)
-                    
-                    for event in tcod.event.wait():
-                        if event.type == "QUIT" or (event.type == "KEYDOWN" and event.sym == tcod.event.KeySym.ESCAPE):
-                            raise SystemExit()
-    
-    except Exception as e:
-        print(f"Critical error: {e}")
-        print("Make sure you have 'pip install tcod'")
-        import traceback
-        traceback.print_exc()
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        print("\nGame interrupted by user")
-    except Exception as e:
-        print(f"Fatal error: {e}")
-        print("Please ensure tcod is properly installed: pip install tcod")
-        import traceback
-        traceback.print_exc()
