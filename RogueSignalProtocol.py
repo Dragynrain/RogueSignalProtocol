@@ -1943,7 +1943,6 @@ def main():
     
     except Exception as e:
         print(f"Critical error: {e}")
-        print("Make sure you have 'pip install tcod'")
         import traceback
         traceback.print_exc()
 
@@ -1954,6 +1953,5 @@ if __name__ == "__main__":
         print("\nGame interrupted by user")
     except Exception as e:
         print(f"Fatal error: {e}")
-        print("Please ensure tcod is properly installed: pip install tcod")
         import traceback
         traceback.print_exc()
