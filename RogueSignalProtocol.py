@@ -1600,9 +1600,10 @@ class InputHandler:
     
     def _handle_inventory_input(self, event) -> bool:
         """Handle input while inventory is open."""
-        if event.sym == tcod.event.KeySym.W:
+        # Navigation keys - expanded to include arrows and numpad
+        if event.sym in (tcod.event.KeySym.W, tcod.event.KeySym.UP, tcod.event.KeySym.KP_8):
             self._navigate_inventory(-1)
-        elif event.sym == tcod.event.KeySym.S:
+        elif event.sym in (tcod.event.KeySym.S, tcod.event.KeySym.DOWN, tcod.event.KeySym.KP_2):
             self._navigate_inventory(1)
         elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
             self._use_selected_inventory_item()
@@ -1610,11 +1611,12 @@ class InputHandler:
             self.game.show_inventory = False
         
         return True
-    
+
     def _handle_targeting_input(self, event) -> bool:
         """Handle input while in targeting mode."""
-        # Movement keys
+        # Movement keys - expanded to include numpad and arrows
         movement_map = {
+            # WASD + QEZC (original)
             tcod.event.KeySym.W: (0, -1),
             tcod.event.KeySym.Q: (-1, -1),
             tcod.event.KeySym.E: (1, -1),
@@ -1622,7 +1624,21 @@ class InputHandler:
             tcod.event.KeySym.C: (1, 1),
             tcod.event.KeySym.S: (0, 1),
             tcod.event.KeySym.Z: (-1, 1),
-            tcod.event.KeySym.A: (-1, 0)
+            tcod.event.KeySym.A: (-1, 0),
+            # Arrow keys
+            tcod.event.KeySym.UP: (0, -1),
+            tcod.event.KeySym.DOWN: (0, 1),
+            tcod.event.KeySym.LEFT: (-1, 0),
+            tcod.event.KeySym.RIGHT: (1, 0),
+            # Numpad
+            tcod.event.KeySym.KP_8: (0, -1),
+            tcod.event.KeySym.KP_9: (1, -1),
+            tcod.event.KeySym.KP_6: (1, 0),
+            tcod.event.KeySym.KP_3: (1, 1),
+            tcod.event.KeySym.KP_2: (0, 1),
+            tcod.event.KeySym.KP_1: (-1, 1),
+            tcod.event.KeySym.KP_4: (-1, 0),
+            tcod.event.KeySym.KP_7: (-1, -1)
         }
         
         if event.sym in movement_map:
@@ -1638,8 +1654,9 @@ class InputHandler:
     
     def _handle_gameplay_input(self, event) -> bool:
         """Handle input during normal gameplay."""
-        # Movement keys
+        # Movement keys - expanded to include numpad and arrows
         movement_map = {
+            # WASD + QEZC (original)
             tcod.event.KeySym.W: (0, -1),
             tcod.event.KeySym.Q: (-1, -1),
             tcod.event.KeySym.E: (1, -1),
@@ -1647,7 +1664,21 @@ class InputHandler:
             tcod.event.KeySym.C: (1, 1),
             tcod.event.KeySym.S: (0, 1),
             tcod.event.KeySym.Z: (-1, 1),
-            tcod.event.KeySym.A: (-1, 0)
+            tcod.event.KeySym.A: (-1, 0),
+            # Arrow keys
+            tcod.event.KeySym.UP: (0, -1),
+            tcod.event.KeySym.DOWN: (0, 1),
+            tcod.event.KeySym.LEFT: (-1, 0),
+            tcod.event.KeySym.RIGHT: (1, 0),
+            # Numpad
+            tcod.event.KeySym.KP_8: (0, -1),
+            tcod.event.KeySym.KP_9: (1, -1),
+            tcod.event.KeySym.KP_6: (1, 0),
+            tcod.event.KeySym.KP_3: (1, 1),
+            tcod.event.KeySym.KP_2: (0, 1),
+            tcod.event.KeySym.KP_1: (-1, 1),
+            tcod.event.KeySym.KP_4: (-1, 0),
+            tcod.event.KeySym.KP_7: (-1, -1)
         }
         
         if event.sym in movement_map:
@@ -1655,7 +1686,7 @@ class InputHandler:
             self.game.move_player(dx, dy)
         
         # Wait/rest
-        elif event.sym in (tcod.event.KeySym.SPACE, tcod.event.KeySym.PERIOD):
+        elif event.sym in (tcod.event.KeySym.SPACE, tcod.event.KeySym.PERIOD, tcod.event.KeySym.KP_5):
             self.game.process_turn()
         
         # UI toggles
@@ -1795,10 +1826,9 @@ class UIRenderer:
         return [
             ("MOVEMENT (8-DIRECTIONAL):", Colors.CYAN),
             ("  WASD + QEZC: Move in 8 directions", Colors.WHITE),
-            ("  W: North    Q: Northwest    E: Northeast", Colors.WHITE),
-            ("  A: West     S: South        D: East", Colors.WHITE),
-            ("  Z: Southwest               C: Southeast", Colors.WHITE),
-            ("  Space/.: Wait/Rest", Colors.WHITE),
+            ("  Arrow Keys: 4-directional movement", Colors.WHITE),
+            ("  Numpad 1-9: 8-directional movement", Colors.WHITE),
+            ("  Space/./5: Wait/Rest", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("EXPLOITS:", Colors.CYAN),
@@ -1808,7 +1838,8 @@ class UIRenderer:
             
             ("INVENTORY & EQUIPMENT:", Colors.CYAN),
             ("  I: Open inventory", Colors.WHITE),
-            ("  Use inventory to equip exploits or use data patches", Colors.WHITE),
+            ("  W/S or ↑/↓ or 8/2: Navigate selection", Colors.WHITE),
+            ("  Enter: Use data patch / Equip exploit", Colors.WHITE),
             ("  Max 5 exploits can be equipped at once", Colors.WHITE),
             ("", Colors.WHITE),
             
@@ -2412,7 +2443,7 @@ def main():
             game.message_log.add_message("Reach the gateway (>)")
             game.message_log.add_message("Hide in shadows (.) to avoid detection")
             game.message_log.add_message("Starting Corporate Network infiltration...")
-                        
+
             # Main game loop
             while True:
                 try:
