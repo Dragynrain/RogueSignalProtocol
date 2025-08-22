@@ -288,26 +288,27 @@ class InventoryManager:
     
     def add_item(self, item: InventoryItem) -> bool:
         """Add an item to inventory."""
-        """Add an item to inventory, stacking data patches by color."""
         if isinstance(item, DataPatch):
             # Look for existing data patch of the same color
             for existing_item in self.items:
                 if (isinstance(existing_item, DataPatch) and 
                     existing_item.color == item.color):
-                    # Found matching color, add to existing stack
-                    existing_item.quantity += item.quantity
-                    # If the new patch is discovered, mark the stack as discovered
-                    if item.discovered:
-                        existing_item.discovered = True
-                    return True
+                        # Found matching color, add to existing stack
+                        existing_item.quantity += item.quantity
+                        # If the new patch is discovered, mark the stack as discovered
+                        if item.discovered:
+                            existing_item.discovered = True
+                        return True
             # No existing stack found, add as new item
         
         # Add non-data-patch items or new data patch colors
         self.items.append(item)
         return True
+    
     def remove_item(self, item: InventoryItem) -> bool:
         """Remove an item from inventory."""
         if item in self.items:
+
             self.items.remove(item)
             return True
         return False
@@ -319,10 +320,21 @@ class InventoryManager:
             items.sort(key=lambda x: x.name.lower())
         return items
     
+    def get_display_items(self) -> List[InventoryItem]:
+        """Get all items in display order (data patches first, then exploits)."""
+        display_items = []
+        # Add data patches first (sorted alphabetically)
+        display_items.extend(self.get_items_by_type("data_patch"))
+        # Add other items (exploits, etc.)
+        display_items.extend(self.get_items_by_type("exploit"))
+        # Add any other item types
+        display_items.extend([item for item in self.items if item.item_type not in ["data_patch", "exploit"]])
+        return display_items
+    
     def equip_exploit(self, exploit_item: ExploitItem) -> bool:
         """Equip an exploit from inventory."""
         if exploit_item.exploit_key not in self.equipped_exploits:
-            if len(self.equipped_exploits) < self.max_equipped_exploits:
+
                 self.equipped_exploits.append(exploit_item.exploit_key)
                 self.remove_item(exploit_item)
                 self.player.calculate_ram_usage()
@@ -1786,21 +1798,27 @@ class InputHandler:
     
     def _navigate_inventory(self, direction: int):
         """Navigate inventory selection."""
-        total_items = len(self.game.player.inventory_manager.items)
+        total_items = len(self.game.player.inventory_manager.get_display_items())
         if total_items > 0:
             self.game.inventory_selection = (self.game.inventory_selection + direction) % total_items
     
     def _use_selected_inventory_item(self):
+
         """Use the currently selected inventory item."""
-        items = self.game.player.inventory_manager.items
+        items = self.game.player.inventory_manager.get_display_items()
         if items and 0 <= self.game.inventory_selection < len(items):
             selected_item = items[self.game.inventory_selection]
             if selected_item.use(self.game.player, self.game):
                 # Update selection if item was consumed
                 self.game.inventory_selection = min(
                     self.game.inventory_selection, 
-                    len(self.game.player.inventory_manager.items) - 1
+                    len(self.game.player.inventory_manager.get_display_items()) - 1
                 )
+    
+    def _toggle_patrol_visibility(self):
+
+                    len(self.game.player.inventory_manager.items) - 1
+                
     
     def _toggle_patrol_visibility(self):
         """Toggle patrol route visibility."""
@@ -1999,11 +2017,14 @@ class UIRenderer:
             console.print(4, y, "No data patches collected", fg=Colors.WHITE)
             y += 1
         else:
+            display_items = game.player.inventory_manager.get_display_items()
             for i, patch in enumerate(data_patches):
-                if i == game.inventory_selection and len(data_patches) > 0:
+                display_index = display_items.index(patch)
+                if display_index == game.inventory_selection:
                     color = Colors.YELLOW
                     prefix = ">"
                 else:
+
                     color = Colors.WHITE
                     prefix = " "
                 
@@ -2024,12 +2045,14 @@ class UIRenderer:
             console.print(4, y, "No unequipped exploits", fg=Colors.WHITE)
             y += 1
         else:
-            data_patches = game.player.inventory_manager.get_items_by_type("data_patch")
-            start_selection = len(data_patches)
+            display_items = game.player.inventory_manager.get_display_items()
             
             for i, exploit_item in enumerate(exploit_items):
-                selection_index = start_selection + i
-                if selection_index == game.inventory_selection:
+                try:
+                    display_index = display_items.index(exploit_item)
+                except ValueError:
+                    display_index = -1
+                if display_index == game.inventory_selection:
                     color = Colors.YELLOW
                     prefix = ">"
                 else:
