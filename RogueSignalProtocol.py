@@ -200,16 +200,22 @@ class InventoryItem(ABC):
 class DataPatch(InventoryItem):
     """Randomized data patches with unknown effects until used."""
     
-    def __init__(self, color: str, effect: str, name: str, description: str = ""):
+    def __init__(self, color: str, effect: str, name: str, description: str = "", quantity: int = 1):
         super().__init__(name, "data_patch", description)
         self.color = color
         self.effect = effect
+        self.quantity = quantity
         self.discovered = False
     
     def use(self, player: 'Player', game: 'Game') -> bool:
         """Apply the data patch effect to the player."""
         if self.color not in game.data_patch_effects:
             return False
+        
+        # Use one from the stack
+        self.quantity -= 1
+        if self.quantity <= 0:
+            player.inventory_manager.remove_item(self)
         
         effect_key, description = game.data_patch_effects[self.color]
         
@@ -282,9 +288,23 @@ class InventoryManager:
     
     def add_item(self, item: InventoryItem) -> bool:
         """Add an item to inventory."""
+        """Add an item to inventory, stacking data patches by color."""
+        if isinstance(item, DataPatch):
+            # Look for existing data patch of the same color
+            for existing_item in self.items:
+                if (isinstance(existing_item, DataPatch) and 
+                    existing_item.color == item.color):
+                    # Found matching color, add to existing stack
+                    existing_item.quantity += item.quantity
+                    # If the new patch is discovered, mark the stack as discovered
+                    if item.discovered:
+                        existing_item.discovered = True
+                    return True
+            # No existing stack found, add as new item
+        
+        # Add non-data-patch items or new data patch colors
         self.items.append(item)
         return True
-    
     def remove_item(self, item: InventoryItem) -> bool:
         """Remove an item from inventory."""
         if item in self.items:
@@ -294,7 +314,10 @@ class InventoryManager:
     
     def get_items_by_type(self, item_type: str) -> List[InventoryItem]:
         """Get all items of a specific type."""
-        return [item for item in self.items if item.item_type == item_type]
+        items = [item for item in self.items if item.item_type == item_type]
+        if item_type == "data_patch":
+            items.sort(key=lambda x: x.name.lower())
+        return items
     
     def equip_exploit(self, exploit_item: ExploitItem) -> bool:
         """Equip an exploit from inventory."""
@@ -1985,7 +2008,8 @@ class UIRenderer:
                     prefix = " "
                 
                 description = patch.description if patch.discovered else "Unknown effect"
-                console.print(4, y, f"{prefix} {patch.name} - {description}", fg=color)
+                quantity_text = f" ({patch.quantity})" if patch.quantity > 1 else ""
+                console.print(4, y, f"{prefix} {patch.name}{quantity_text} - {description}", fg=color)
                 y += 1
         
         return y
