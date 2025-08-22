@@ -628,7 +628,7 @@ class Enemy:
         while len(self.random_move_queue) < 3:
             self.random_move_queue.append(random.choice(directions))
     
-    def _old_move_random(self, game_map: 'GameMap', player: Player):
+    def _move_patrol(self, game_map: 'GameMap', player: Player):
         """Execute patrol movement pattern."""
         if self.state == EnemyState.HOSTILE:
             self._move_toward(player.position, game_map, player)
@@ -642,6 +642,8 @@ class Enemy:
         if self.position.distance_to(target) <= 1:
             self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
             target = self.patrol_points[self.patrol_index]
+        
+        self._move_toward(target, game_map, player)
         
         self._move_toward(target, game_map, player)
     
