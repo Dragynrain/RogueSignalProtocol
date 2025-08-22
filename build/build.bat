@@ -1,0 +1,1 @@
+.\.venv\Scripts\pyinstaller.exe --onefile  .\RogueSignalProtocol.py
