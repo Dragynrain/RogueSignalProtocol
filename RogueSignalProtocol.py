@@ -940,7 +940,7 @@ class Game:
         for enemy in self.enemies[:]:
             if enemy.can_attack_player(self.player):
                 damage = enemy.attack_player(self.player)
-                self.message_log.add_message(f"{enemy.type_data.name} attacks: -{damage} CPU")
+                self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
                 if self.player.cpu <= 0:
                     self.message_log.add_message("CRITICAL SYSTEM FAILURE!")
     
@@ -997,6 +997,17 @@ class Game:
         
         for move_count in range(moves):
             old_position = Position(self.player.x, self.player.y)
+            new_position = Position(
+                max(0, min(GameConfig.MAP_WIDTH - 1, self.player.x + dx)),
+                max(0, min(GameConfig.MAP_HEIGHT - 1, self.player.y + dy))
+            )
+            
+            # Check for enemy at target position first
+            target_enemy = self._get_enemy_at(new_position)
+            if target_enemy:
+                # Bump attack the enemy
+                self._perform_bump_attack(target_enemy)
+                break  # Attacking takes the full turn
             
             if self.player.move(dx, dy, self.game_map):
                 # Check for gateway
@@ -1006,18 +1017,12 @@ class Game:
                     self.next_level()
                     return
                 
-                # Check for enemy collision
-                if self._get_enemy_at(self.player.position):
-                    self.player.position = old_position
-                    self.message_log.add_message("Path blocked by enemy")
-                    break
-                
                 # Check for overheating
                 if self.player.heat >= 100:
                     damage = 5 + (self.player.heat - 100)
                     self.player.take_damage(damage)
                     self.player.heat = 95
-                    self.message_log.add_message(f"Overheating! -{damage} CPU")
+                    self.message_log.add_message(f"Overheating! {damage} CPU damage")
                     if self.player.cpu <= 0:
                         self.message_log.add_message("CRITICAL SYSTEM FAILURE!")
                         return
@@ -1028,7 +1033,49 @@ class Game:
                 break
         
         self.process_turn()
-    
+
+    def _perform_bump_attack(self, target_enemy: Enemy):
+        """Perform a bump attack on an enemy."""
+        # Calculate base damage
+        base_damage = 25
+        
+        # Stealth bonus: extra damage if attacking from shadows or while invisible
+        stealth_bonus = 0
+        if self.game_map.is_shadow(self.player.position) or self.player.is_invisible():
+            stealth_bonus = 15
+            self.message_log.add_message("Stealth attack!")
+        
+        # Speed boost bonus
+        speed_bonus = 10 if self.player.temporary_effects['speed_boost_turns'] > 0 else 0
+        
+        total_damage = base_damage + stealth_bonus + speed_bonus
+        
+        # Log the attack with damage amount
+        self.message_log.add_message(f"{target_enemy.type_data.name} damaged")
+                
+        # Apply damage
+        if target_enemy.take_damage(total_damage):
+            # Enemy destroyed
+            self.enemies.remove(target_enemy)
+            self.player.cpu = min(self.player.max_cpu, self.player.cpu + 5)  # Small CPU recovery
+            self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+5 CPU)")
+        else:
+            # Enemy damaged but alive - show remaining health
+            self.message_log.add_message(f"{target_enemy.type_data.name} health: {target_enemy.cpu}/{target_enemy.max_cpu}")
+            # Make enemy hostile and aware of player
+            target_enemy.state = EnemyState.HOSTILE
+            target_enemy.last_seen_player = Position(self.player.x, self.player.y)
+        
+        # Generate some heat from the attack
+        heat_generated = 8
+        if self.player.temporary_effects['exploit_efficiency_turns'] > 0:
+            heat_generated = int(heat_generated * 0.7)  # Reduced heat with efficiency
+        
+        self.player.heat = min(100, self.player.heat + heat_generated)
+        
+        # Increase detection slightly
+        self.player.detection = min(100, self.player.detection + 5)
+
     def _move_cursor(self, dx: int, dy: int):
         """Move targeting cursor."""
         new_x = max(0, min(GameConfig.MAP_WIDTH - 1, self.cursor_position.x + dx))
@@ -1053,7 +1100,10 @@ class Game:
             try:
                 self._generate_procedural_level()
             except Exception as e:
-                self.message_log.add_message(f"Network error: {str(e)[:15]}")
+                import traceback
+                tb = traceback.extract_tb(e.__traceback__)
+                line_no = tb[-1].lineno if tb else "?"
+                self.message_log.add_message(f"Network error: {str(e)[:15]} (line {line_no})")
                 self.level -= 1
 
     def _generate_procedural_level(self):
@@ -1344,7 +1394,7 @@ class ExploitSystem:
     def use_exploit(self, exploit_key: str) -> bool:
         """Attempt to use an exploit."""
         if not self.game.player.inventory_manager.can_use_exploit(exploit_key):
-            self.game.message_log.add_message("Exploit not equipped")
+            self.message_log.add_message("Exploit not equipped")
             return False
         
         exploit = GameData.EXPLOITS[exploit_key]
@@ -1352,7 +1402,7 @@ class ExploitSystem:
         # Check heat limit
         heat_cost = self._calculate_heat_cost(exploit)
         if self.game.player.heat + heat_cost > 100:
-            self.game.message_log.add_message("System too hot! Cannot use")
+            self.message_log.add_message("System too hot! Cannot use")
             return False
         
         # Check if exploit requires targeting
@@ -1360,7 +1410,7 @@ class ExploitSystem:
             self.game.targeting_mode = True
             self.game.targeting_exploit = exploit_key
             self.game.cursor_position = Position(self.game.player.x, self.game.player.y)
-            self.game.message_log.add_message(f"Targeting {exploit.name}")
+            self.message_log.add_message(f"Targeting {exploit.name}")
             return True
         
         # Execute non-targeting exploits immediately
@@ -1369,7 +1419,7 @@ class ExploitSystem:
     def execute_exploit(self, exploit_key: str, target: Position) -> bool:
         """Execute an exploit at target location."""
         if exploit_key not in GameData.EXPLOITS:
-            self.game.message_log.add_message("Unknown exploit")
+            self.message_log.add_message("Unknown exploit")
             return False
         
         exploit = GameData.EXPLOITS[exploit_key]
@@ -1400,12 +1450,12 @@ class ExploitSystem:
     def _validate_target(self, exploit: ExploitDefinition, target: Position) -> bool:
         """Validate targeting for exploit."""
         if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-            self.game.message_log.add_message("Invalid target location")
+            self.message_log.add_message("Invalid target location")
             return False
         
         distance = self.game.player.position.distance_to(target)
         if distance > exploit.range:
-            self.game.message_log.add_message(f"Out of range (Max: {exploit.range})")
+            self.message_log.add_message(f"Out of range (Max: {exploit.range})")
             return False
         
         return True
@@ -1438,18 +1488,18 @@ class ExploitSystem:
         if self.game.game_map.is_shadow(target) and self.game.game_map.is_valid_position(target):
             if not self.game._get_enemy_at(target):
                 self.game.player.position = target
-                self.game.message_log.add_message("Shadow Step executed")
+                self.message_log.add_message("Shadow Step executed")
                 return True
             else:
-                self.game.message_log.add_message("Target occupied")
+                self.message_log.add_message("Target occupied")
         else:
-            self.game.message_log.add_message("Must target shadow zone")
+            self.message_log.add_message("Must target shadow zone")
         return False
     
     def _execute_data_mimic(self) -> bool:
         """Execute data mimic exploit."""
         self.game.player.temporary_effects['data_mimic_turns'] = 5
-        self.game.message_log.add_message("Data Mimic active")
+        self.message_log.add_message("Data Mimic active")
         return True
     
     def _execute_noise_maker(self, target: Position) -> bool:
@@ -1466,7 +1516,7 @@ class ExploitSystem:
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = 2
                 attracted += 1
-        self.game.message_log.add_message(f"Noise: {attracted} enemies attracted")
+        self.message_log.add_message(f"Noise: {attracted} enemies attracted")
         return True
     
     def _execute_code_injection(self, target: Position) -> bool:
@@ -1478,14 +1528,14 @@ class ExploitSystem:
             if target_enemy.take_damage(damage):
                 self.game.enemies.remove(target_enemy)
                 self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + 5)
-                self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
+                self.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
             else:
-                self.game.message_log.add_message(f"Damaged {target_enemy.type_data.name}")
+                self.message_log.add_message(f"{target_enemy.type_data.name} damaged")
                 target_enemy.state = EnemyState.HOSTILE
                 target_enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
             return True
         else:
-            self.game.message_log.add_message("No target at location")
+            self.message_log.add_message("No target at location")
             return False
     
     def _execute_buffer_overflow(self, target: Position) -> bool:
@@ -1498,16 +1548,16 @@ class ExploitSystem:
                 if target_enemy.take_damage(damage):
                     self.game.enemies.remove(target_enemy)
                     self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + 5)
-                    self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
+                    self.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
                 else:
-                    self.game.message_log.add_message(f"Damaged {target_enemy.type_data.name}")
+                    self.message_log.add_message(f"{target_enemy.type_data.name} damaged")
                     target_enemy.state = EnemyState.HOSTILE
                     target_enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
                 return True
             else:
-                self.game.message_log.add_message("No enemy at target")
+                self.message_log.add_message("No enemy at target")
         else:
-            self.game.message_log.add_message("Must target adjacent enemy")
+            self.message_log.add_message("Must target adjacent enemy")
         return False
     
     def _execute_system_crash(self, target: Position, exploit_range: int) -> bool:
@@ -1519,14 +1569,14 @@ class ExploitSystem:
                 enemy.state = EnemyState.UNAWARE
                 enemy.alert_timer = 0
                 enemies_hit.append(enemy)
-        self.game.message_log.add_message(f"System crash: {len(enemies_hit)} disabled")
+        self.message_log.add_message(f"System crash: {len(enemies_hit)} disabled")
         return True
     
     def _execute_network_scan(self) -> bool:
         """Execute network scan exploit."""
         self.game.show_patrols = True
         self.game.network_scan_turns = 15
-        self.game.message_log.add_message("Network scan active")
+        self.message_log.add_message("Network scan active")
         return True
     
     def _execute_log_wiper(self) -> bool:
@@ -1534,7 +1584,7 @@ class ExploitSystem:
         old_detection = self.game.player.detection
         self.game.player.detection = max(0, self.game.player.detection - 30)
         actual_reduction = old_detection - self.game.player.detection
-        self.game.message_log.add_message(f"Detection: -{actual_reduction:.1f}%")
+        self.message_log.add_message(f"Detection: -{actual_reduction:.1f}%")
         return True
     
     def _execute_emp_burst(self, target: Position, exploit_range: int) -> bool:
@@ -1546,7 +1596,7 @@ class ExploitSystem:
                 enemy.state = EnemyState.UNAWARE
                 enemy.alert_timer = 0
                 enemies_hit.append(enemy)
-        self.game.message_log.add_message(f"EMP: {len(enemies_hit)} disabled")
+        self.message_log.add_message(f"EMP: {len(enemies_hit)} disabled")
         return True
 
 # ============================================================================
@@ -1593,7 +1643,7 @@ class InputHandler:
         elif self.game.targeting_mode:
             self.game.targeting_mode = False
             self.game.targeting_exploit = None
-            self.game.message_log.add_message("Targeting cancelled")
+            self.message_log.add_message("Targeting cancelled")
         else:
             return False  # Exit game
         return True
@@ -1733,7 +1783,7 @@ class InputHandler:
         """Toggle patrol route visibility."""
         self.game.show_patrols = not self.game.show_patrols
         status = "visible" if self.game.show_patrols else "hidden"
-        self.game.message_log.add_message(f"Patrol routes {status}")
+        self.message_log.add_message(f"Patrol routes {status}")
     
     def _open_inventory(self):
         """Open the inventory screen."""
@@ -2198,7 +2248,10 @@ class MapRenderer:
             
         except Exception as e:
             # Fallback error display
-            console.print(1, 1, f"Map Error: {str(e)[:50]}", fg=Colors.RED, bg=Colors.BLACK)
+            import traceback
+            tb = traceback.extract_tb(e.__traceback__)
+            line_no = tb[-1].lineno if tb else "?"
+            console.print(1, 1, f"Map Error: {str(e)[:50]} (line {line_no})", fg=Colors.RED, bg=Colors.BLACK)
     
     def _calculate_camera_offset(self, player: Player) -> Position:
         """Calculate camera offset to center on player."""
@@ -2296,7 +2349,11 @@ class MapRenderer:
                 if hasattr(current_fg, '__iter__') and len(current_fg) >= 3:
                     fg_tuple = tuple(current_fg[:3])
                     console.print(x, y, chr(current_char), fg=fg_tuple, bg=bg_color)
-        except (IndexError, ValueError):
+        except (IndexError, ValueError) as e:
+            import traceback
+            tb = traceback.extract_tb(e.__traceback__)
+            line_no = tb[-1].lineno if tb else "?"
+            # Silent fail for overlay errors, but could log line_no if needed for debugging
             pass
     
     def _render_patrol_routes(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
@@ -2404,13 +2461,20 @@ def initialize_tcod_context():
         tileset = tcod.tileset.load_tilesheet(
             "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
         )
-    except (FileNotFoundError, ImportError, Exception):
+    except (FileNotFoundError, ImportError, Exception) as e:
+        import traceback
+        tb = traceback.extract_tb(e.__traceback__)
+        line_no = tb[-1].lineno if tb else "?"
+        print(f"Tileset loading error: {e} (line {line_no})")
         try:
             # Try default tileset
             tileset = tcod.tileset.load_tilesheet(
                 tcod.tileset.get_default(), 16, 16, tcod.tileset.CHARMAP_TCOD
             )
-        except Exception:
+        except Exception as e2:
+            tb2 = traceback.extract_tb(e2.__traceback__)
+            line_no2 = tb2[-1].lineno if tb2 else "?"
+            print(f"Default tileset error: {e2} (line {line_no2})")
             # Use built-in fallback
             pass
     
@@ -2461,9 +2525,12 @@ def main():
                         
                 except Exception as e:
                     # Handle rendering errors gracefully
-                    print(f"Rendering error: {e}")
+                    import traceback
+                    tb = traceback.extract_tb(e.__traceback__)
+                    line_no = tb[-1].lineno if tb else "?"
+                    print(f"Rendering error: {e} (line {line_no})")
                     console.clear()
-                    console.print(1, 1, f"Error: {str(e)[:50]}", fg=Colors.RED)
+                    console.print(1, 1, f"Error: {str(e)[:50]} (line {line_no})", fg=Colors.RED)
                     console.print(1, 2, "Press ESC to exit", fg=Colors.WHITE)
                     context.present(console)
                     
@@ -2472,8 +2539,10 @@ def main():
                             return
     
     except Exception as e:
-        print(f"Critical error: {e}")
         import traceback
+        tb = traceback.extract_tb(e.__traceback__)
+        line_no = tb[-1].lineno if tb else "?"
+        print(f"Critical error: {e} (line {line_no})")
         traceback.print_exc()
 
 if __name__ == "__main__":
