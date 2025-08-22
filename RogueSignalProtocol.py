@@ -783,7 +783,10 @@ class Game:
         self.admin_spawned = False
         
         # UI state
-        self.show_patrols = False
+        self.show_patrol_predictions = False
+        self.show_help = False
+        self.inventory_selection = 0
+
         self.show_patrol_predictions = False
         self.show_inventory = False
         self.show_help = False
@@ -884,10 +887,7 @@ class Game:
         """Update network scan effect."""
         if self.network_scan_turns > 0:
             self.network_scan_turns -= 1
-            if self.network_scan_turns == 0:
-                self.show_patrols = False
-                self.message_log.add_message("Network scan expired.")
-    
+
     def _process_special_tiles(self):
         """Process effects of special tiles at player position."""
         player_pos = (self.player.x, self.player.y)
@@ -1415,6 +1415,123 @@ class Game:
                 route.append(Position(start.x, start.y + 3))
         
         return route
+    
+    def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
+        """Get the next N positions this enemy will move to."""
+        if enemy.disabled_turns > 0:
+            return []
+        
+        positions = []
+        
+        if enemy.type_data.movement == EnemyMovement.STATIC:
+            return []
+        elif enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+            positions = self._predict_patrol_movement(enemy, steps)
+        elif enemy.type_data.movement == EnemyMovement.RANDOM:
+            positions = self._predict_random_movement(enemy, steps)
+        elif enemy.type_data.movement == EnemyMovement.SEEK:
+            if enemy.state == EnemyState.HOSTILE and enemy.last_seen_player:
+                positions = self._predict_seek_movement(enemy, steps)
+        elif enemy.type_data.movement == EnemyMovement.TRACK:
+            if enemy.state == EnemyState.HOSTILE:
+                positions = self._predict_track_movement(enemy, steps)
+        
+        return positions
+    
+    def _predict_patrol_movement(self, enemy: Enemy, steps: int) -> List[Position]:
+        """Predict next positions for patrol movement."""
+        if not enemy.patrol_points:
+            return []
+        
+        positions = []
+        current_pos = Position(enemy.x, enemy.y)
+        current_index = enemy.patrol_index
+        
+        for step in range(steps):
+            target = enemy.patrol_points[current_index]
+            
+            if current_pos.distance_to(target) <= 1:
+                current_index = (current_index + 1) % len(enemy.patrol_points)
+                target = enemy.patrol_points[current_index]
+            
+            next_pos = self._get_next_move_toward(current_pos, target)
+            if next_pos and next_pos != current_pos:
+                positions.append(next_pos)
+                current_pos = next_pos
+            else:
+                break
+        
+        return positions
+    
+    def _predict_random_movement(self, enemy: Enemy, steps: int) -> List[Position]:
+        """Predict next positions for random movement (show possible moves)."""
+        if enemy.state == EnemyState.HOSTILE:
+            return self._predict_seek_movement(enemy, steps)
+        
+        # For random movement, show the 8 possible directions as potential moves
+        current_pos = Position(enemy.x, enemy.y)
+        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+        positions = []
+        
+        for dx, dy in directions[:min(steps, len(directions))]:
+            new_pos = Position(current_pos.x + dx, current_pos.y + dy)
+            if (new_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                self.game_map.is_valid_position(new_pos)):
+                positions.append(new_pos)
+        
+        return positions
+    
+    def _predict_seek_movement(self, enemy: Enemy, steps: int) -> List[Position]:
+        """Predict next positions for seek movement."""
+        if not enemy.last_seen_player:
+            return []
+        
+        return self._predict_movement_toward_target(enemy, enemy.last_seen_player, steps)
+    
+    def _predict_track_movement(self, enemy: Enemy, steps: int) -> List[Position]:
+        """Predict next positions for track movement."""
+        return self._predict_movement_toward_target(enemy, self.player.position, steps)
+    
+    def _predict_movement_toward_target(self, enemy: Enemy, target: Position, steps: int) -> List[Position]:
+        """Predict movement toward a specific target."""
+        positions = []
+        current_pos = Position(enemy.x, enemy.y)
+        
+        for step in range(steps):
+            next_pos = self._get_next_move_toward(current_pos, target)
+            if next_pos and next_pos != current_pos:
+                positions.append(next_pos)
+                current_pos = next_pos
+            else:
+                break
+        
+        return positions
+    
+    def _get_next_move_toward(self, start: Position, target: Position) -> Optional[Position]:
+        """Get the next move position toward target."""
+        if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+            return None
+        
+        dx = 0 if start.x == target.x else (1 if target.x > start.x else -1)
+        dy = 0 if start.y == target.y else (1 if target.y > start.y else -1)
+        
+        # Try different movement directions in order of preference
+        move_attempts = [
+            (dx, dy), (dx, 0), (0, dy), (dx, -dy), (-dx, dy),
+            (-dx, 0), (0, -dy), (-dx, -dy)
+        ]
+        
+        for try_dx, try_dy in move_attempts:
+            if try_dx == 0 and try_dy == 0:
+                continue
+            
+            new_position = Position(start.x + try_dx, start.y + try_dy)
+            if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                self.game_map.is_valid_position(new_position) and
+                not new_position.distance_to(self.player.position) == 0):
+                return new_position
+        
+        return None
 
 # ============================================================================
 # EXPLOIT SYSTEM
@@ -1609,11 +1726,10 @@ class ExploitSystem:
     
     def _execute_network_scan(self) -> bool:
         """Execute network scan exploit."""
-        self.game.show_patrols = True
         self.game.network_scan_turns = 15
-        self.message_log.add_message("Network scan active")
+        self.game.message_log.add_message("Network scan active")
         return True
-    
+
     def _execute_log_wiper(self) -> bool:
         """Execute log wiper exploit."""
         old_detection = self.game.player.detection
@@ -1782,14 +1898,12 @@ class InputHandler:
         elif event.sym == tcod.event.KeySym.SLASH and event.mod & tcod.event.KMOD_SHIFT:
             self.game.show_help = True
         
+        # Inventory
+        elif event.sym == tcod.event.KeySym.I:
+            self._open_inventory()
+        
         # Exploit usage (1-5 keys)
-        elif event.sym == tcod.event.KeySym.N1:
-            self._use_exploit_slot(0)
-        elif event.sym == tcod.event.KeySym.N2:
-            self._use_exploit_slot(1)
-        elif event.sym == tcod.event.KeySym.N3:
-            self._use_exploit_slot(2)
-        elif event.sym == tcod.event.KeySym.N4:
+
             self._use_exploit_slot(3)
         elif event.sym == tcod.event.KeySym.N5:
             self._use_exploit_slot(4)
@@ -1820,15 +1934,10 @@ class InputHandler:
                     len(self.game.player.inventory_manager.items) - 1
                 
     
-    def _toggle_patrol_visibility(self):
-        """Toggle patrol route visibility."""
-        self.game.show_patrols = not self.game.show_patrols
-        status = "visible" if self.game.show_patrols else "hidden"
-        self.game.message_log.add_message(f"Patrol routes {status}")
-    
     def _open_inventory(self):
         """Open the inventory screen."""
         """Open the inventory screen."""
+
         self.game.show_inventory = True
         self.game.inventory_selection = 0
     
@@ -1941,9 +2050,7 @@ class UIRenderer:
             ("  ESC: Cancel targeting/Close menus/Quit", Colors.WHITE),
             ("", Colors.WHITE),
             
-            ("GAMEPLAY TIPS:", Colors.CYAN),
-            ("  - Hide in shadows (.) to avoid detection", Colors.WHITE),
-            ("  - Use cooling nodes (C) to reduce heat", Colors.WHITE),
+
             ("  - CPU recovery nodes (+) restore health", Colors.WHITE),
             ("  - Collect data patches (D) for various effects", Colors.WHITE),
             ("  - Stealth attacks deal more damage", Colors.WHITE),
@@ -2405,20 +2512,28 @@ class MapRenderer:
             pass
     
     def _render_patrol_routes(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
-        """Render patrol routes if enabled."""
-        if not game.show_patrols:
-            return
+        """Render next 3 predicted moves for all moving enemies."""
         
         for enemy in game.enemies:
-            if enemy.patrol_points and len(enemy.patrol_points) > 1:
-                distance_to_player = game.player.position.distance_to(enemy.position)
-                if distance_to_player <= vision_range:
-                    for point in enemy.patrol_points:
+            distance_to_player = game.player.position.distance_to(enemy.position)
+            if distance_to_player <= vision_range:
+                next_positions = game.get_enemy_next_positions(enemy, 3)
+                
+                for i, point in enumerate(next_positions):
+                    screen_x = point.x - camera_offset.x
+                    screen_y = point.y - camera_offset.y + 1
+                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
+                        1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                        # Color code by step: bright yellow for step 1, dimmer for later steps
+                        if i == 0:
+                            color = Colors.YELLOW
+                        elif i == 1:
+                            color = (200, 200, 0)  # Dimmer yellow
+                        else:
+                            color = (150, 150, 0)  # Dimmest yellow
                         screen_x = point.x - camera_offset.x
                         screen_y = point.y - camera_offset.y + 1
-                        if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
-                            1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                            console.print(screen_x, screen_y, '*', fg=Colors.YELLOW, bg=Colors.BLACK)
+                        console.print(screen_x, screen_y, '•', fg=color, bg=Colors.BLACK)
     
     def _render_gateway(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render the level gateway."""
@@ -2530,7 +2645,8 @@ def initialize_tcod_context():
         "columns": GameConfig.SCREEN_WIDTH,
         "rows": GameConfig.SCREEN_HEIGHT,
         "title": "Rogue Signal Protocol v51 - Enhanced Combat & Inventory",
-        "vsync": True
+        "vsync": True,
+        "sdl_window_flags": 160
     }
     
     if tileset:
@@ -2546,7 +2662,7 @@ def main():
             game = Game()
             renderer = Renderer()
             input_handler = InputHandler(game)
-            
+
             # Initial welcome messages - Remove tutorial references
             game.message_log.add_message("Welcome to Rogue Signal Protocol v51!")
             game.message_log.add_message("Enhanced UI with right-side system log")
