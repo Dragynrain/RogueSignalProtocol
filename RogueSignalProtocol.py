@@ -522,13 +522,7 @@ class Enemy:
         distance = self.position.distance_to(player.position)
         if distance > self.type_data.vision:
             return False
-        
-        if player.is_invisible():
-            return False
-        
-        if game_map.is_shadow(player.position):
-            return False
-        
+
         return game_map.has_line_of_sight(self.position, player.position)
     
     def can_attack_player(self, player: Player) -> bool:
@@ -1595,28 +1589,30 @@ class ExploitSystem:
         # Check heat limit
         heat_cost = self._calculate_heat_cost(exploit)
         if self.game.player.heat + heat_cost > 100:
-            self.message_log.add_message("System too hot! Cannot use")
+            self.game.message_log.add_message("System too hot! Cannot use")
             return False
         
         # Check if exploit requires targeting
+
         if exploit.targeting != TargetingMode.NONE and exploit.range > 0:
             self.game.targeting_mode = True
             self.game.targeting_exploit = exploit_key
             self.game.cursor_position = Position(self.game.player.x, self.game.player.y)
-            self.message_log.add_message(f"Targeting {exploit.name}")
+            self.game.message_log.add_message(f"Targeting {exploit.name}")
             return True
         
         # Execute non-targeting exploits immediately
+
         return self.execute_exploit(exploit_key, self.game.player.position)
     
     def execute_exploit(self, exploit_key: str, target: Position) -> bool:
         """Execute an exploit at target location."""
         if exploit_key not in GameData.EXPLOITS:
-            self.message_log.add_message("Unknown exploit")
+            self.game.message_log.add_message("Unknown exploit")
             return False
         
         exploit = GameData.EXPLOITS[exploit_key]
-        
+
         # Validate target
         if not self._validate_target(exploit, target):
             return False
@@ -1643,15 +1639,16 @@ class ExploitSystem:
     def _validate_target(self, exploit: ExploitDefinition, target: Position) -> bool:
         """Validate targeting for exploit."""
         if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-            self.message_log.add_message("Invalid target location")
+            self.game.message_log.add_message("Invalid target location")
             return False
         
         distance = self.game.player.position.distance_to(target)
         if distance > exploit.range:
-            self.message_log.add_message(f"Out of range (Max: {exploit.range})")
+            self.game.message_log.add_message(f"Out of range (Max: {exploit.range})")
             return False
         
         return True
+
     
     def _execute_specific_exploit(self, exploit_key: str, exploit: ExploitDefinition, target: Position) -> bool:
         """Execute the specific exploit effect."""
@@ -1681,18 +1678,18 @@ class ExploitSystem:
         if self.game.game_map.is_shadow(target) and self.game.game_map.is_valid_position(target):
             if not self.game._get_enemy_at(target):
                 self.game.player.position = target
-                self.message_log.add_message("Shadow Step executed")
+                self.game.message_log.add_message("Shadow Step executed")
                 return True
             else:
-                self.message_log.add_message("Target occupied")
+                self.game.message_log.add_message("Target occupied")
         else:
-            self.message_log.add_message("Must target shadow zone")
+            self.game.message_log.add_message("Must target shadow zone")
         return False
     
     def _execute_data_mimic(self) -> bool:
         """Execute data mimic exploit."""
         self.game.player.temporary_effects['data_mimic_turns'] = 5
-        self.message_log.add_message("Data Mimic active")
+        self.game.message_log.add_message("Data Mimic active")
         return True
     
     def _execute_noise_maker(self, target: Position) -> bool:
@@ -1709,10 +1706,11 @@ class ExploitSystem:
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = 2
                 attracted += 1
-        self.message_log.add_message(f"Noise: {attracted} enemies attracted")
+        self.game.message_log.add_message(f"Noise: {attracted} enemies attracted")
         return True
     
     def _execute_code_injection(self, target: Position) -> bool:
+
         """Execute code injection exploit."""
         target_enemy = self.game._get_enemy_at(target)
         if target_enemy:
@@ -1721,18 +1719,18 @@ class ExploitSystem:
             if target_enemy.take_damage(damage):
                 self.game.enemies.remove(target_enemy)
                 self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + 5)
-                self.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
+                self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
             else:
-                self.message_log.add_message(f"{target_enemy.type_data.name} damaged")
+                self.game.message_log.add_message(f"{target_enemy.type_data.name} damaged")
                 target_enemy.state = EnemyState.HOSTILE
                 target_enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
             return True
         else:
-            self.message_log.add_message("No target at location")
+            self.game.message_log.add_message("No target at location")
             return False
     
     def _execute_buffer_overflow(self, target: Position) -> bool:
-        """Execute buffer overflow exploit."""
+
         distance = self.game.player.position.distance_to(target)
         if distance <= 1:
             target_enemy = self.game._get_enemy_at(target)
@@ -1741,16 +1739,16 @@ class ExploitSystem:
                 if target_enemy.take_damage(damage):
                     self.game.enemies.remove(target_enemy)
                     self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + 5)
-                    self.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
+                    self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
                 else:
-                    self.message_log.add_message(f"{target_enemy.type_data.name} damaged")
+                    self.game.message_log.add_message(f"{target_enemy.type_data.name} damaged")
                     target_enemy.state = EnemyState.HOSTILE
                     target_enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
                 return True
             else:
-                self.message_log.add_message("No enemy at target")
+                self.game.message_log.add_message("No enemy at target")
         else:
-            self.message_log.add_message("Must target adjacent enemy")
+            self.game.message_log.add_message("Must target adjacent enemy")
         return False
     
     def _execute_system_crash(self, target: Position, exploit_range: int) -> bool:
@@ -1762,7 +1760,7 @@ class ExploitSystem:
                 enemy.state = EnemyState.UNAWARE
                 enemy.alert_timer = 0
                 enemies_hit.append(enemy)
-        self.message_log.add_message(f"System crash: {len(enemies_hit)} disabled")
+        self.game.message_log.add_message(f"System crash: {len(enemies_hit)} disabled")
         return True
     
     def _execute_network_scan(self) -> bool:
@@ -1772,14 +1770,15 @@ class ExploitSystem:
         return True
 
     def _execute_log_wiper(self) -> bool:
-        """Execute log wiper exploit."""
+
         old_detection = self.game.player.detection
         self.game.player.detection = max(0, self.game.player.detection - 30)
         actual_reduction = old_detection - self.game.player.detection
-        self.message_log.add_message(f"Detection: -{actual_reduction:.1f}%")
+        self.game.message_log.add_message(f"Detection: -{actual_reduction:.1f}%")
         return True
     
     def _execute_emp_burst(self, target: Position, exploit_range: int) -> bool:
+
         """Execute EMP burst exploit."""
         enemies_hit = []
         for enemy in self.game.enemies[:]:
@@ -1788,10 +1787,8 @@ class ExploitSystem:
                 enemy.state = EnemyState.UNAWARE
                 enemy.alert_timer = 0
                 enemies_hit.append(enemy)
-        self.message_log.add_message(f"EMP: {len(enemies_hit)} disabled")
+        self.game.message_log.add_message(f"EMP: {len(enemies_hit)} disabled")
         return True
-
-# ============================================================================
 # INPUT HANDLING
 # ============================================================================
 
@@ -1939,13 +1936,17 @@ class InputHandler:
         elif event.sym == tcod.event.KeySym.SLASH and event.mod & tcod.event.KMOD_SHIFT:
             self.game.show_help = True
         
-        # Inventory
-        elif event.sym == tcod.event.KeySym.I:
-            self._open_inventory()
-        
         # Exploit usage (1-5 keys)
-
+        elif event.sym == tcod.event.KeySym.N1:
+            self._use_exploit_slot(0)
+        elif event.sym == tcod.event.KeySym.N2:
+            self._use_exploit_slot(1)
+        elif event.sym == tcod.event.KeySym.N3:
+            self._use_exploit_slot(2)
+        elif event.sym == tcod.event.KeySym.N4:
             self._use_exploit_slot(3)
+        elif event.sym == tcod.event.KeySym.N5:
+            self._use_exploit_slot(4)
         elif event.sym == tcod.event.KeySym.N5:
             self._use_exploit_slot(4)
         
