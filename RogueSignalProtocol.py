@@ -39,8 +39,8 @@ class GameConfig:
     PANEL_HEIGHT = 5
     PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
     
-    # Game balance
-    ADMIN_SPAWN_THRESHOLDS = {0: 100, 1: 90, 2: 75, 3: 60}
+    # Game balance - Remove level 0 (tutorial)
+    ADMIN_SPAWN_THRESHOLDS = {1: 90, 2: 75, 3: 60}
     NETWORK_CONFIGS = {
         1: {"enemies": 8, "shadow_coverage": 0.4, "name": "Corporate Network"},
         2: {"enemies": 12, "shadow_coverage": 0.25, "name": "Government System"},
@@ -741,8 +741,8 @@ class Game:
         self.game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
         self.message_log = MessageLog()
         
-        # Game state
-        self.level = 0
+        # Game state - Start at level 1 instead of 0
+        self.level = 1
         self.turn = 0
         self.game_over = False
         self.admin_spawned = False
@@ -768,9 +768,9 @@ class Game:
         self.data_patch_effects: Dict[str, Tuple[str, str]] = {}
         self._randomize_data_patches()
         
-        # Initialize
+        # Initialize - Start with first procedural level
         self.dungeon_seed = random.randint(1, 1000000)
-        self._generate_tutorial_network()
+        self._generate_procedural_level()
     
     def _randomize_data_patches(self):
         """Randomize data patch effects for this game session."""
@@ -788,37 +788,7 @@ class Game:
         for color, (effect, desc) in zip(colors, effects):
             self.data_patch_effects[color] = (effect, desc)
     
-    def _generate_tutorial_network(self):
-        """Generate the fixed tutorial network."""
-        self._clear_map()
-        
-        # Create border walls
-        self._create_border_walls()
-        
-        # Add internal wall structure
-        self._add_tutorial_walls()
-        
-        # Create shadow zones
-        self._add_tutorial_shadows()
-        
-        # Add special nodes
-        self.game_map.cooling_nodes.add((15, 8))
-        self.game_map.cpu_recovery_nodes.add((8, 15))
-        
-        # Add data patches
-        self._add_tutorial_data_patches()
-        
-        # Create enemies with patrol routes
-        self._create_tutorial_enemies()
-        
-        # Set gateway
-        self.game_map.gateway = Position(45, 45)
-        
-        # Reset player
-        self._reset_player_state(5, 5)
-        
-        self.message_log.add_message("Tutorial Network loaded. Begin infiltration...")
-    
+   
     def _clear_map(self):
         """Clear all map data."""
         self.game_map.walls.clear()
@@ -836,52 +806,7 @@ class Game:
         for y in range(GameConfig.MAP_HEIGHT):
             self.game_map.walls.add((0, y))
             self.game_map.walls.add((GameConfig.MAP_WIDTH - 1, y))
-    
-    def _add_tutorial_walls(self):
-        """Add internal walls for tutorial."""
-        for x in range(20, 30):
-            self.game_map.walls.add((x, 20))
-            self.game_map.walls.add((x, 30))
-        for y in range(20, 30):
-            self.game_map.walls.add((20, y))
-            self.game_map.walls.add((30, y))
-    
-    def _add_tutorial_shadows(self):
-        """Add shadow zones for tutorial."""
-        for x in range(10, 18):
-            for y in range(10, 18):
-                self.game_map.shadows.add((x, y))
         
-        for x in range(35, 42):
-            for y in range(35, 42):
-                self.game_map.shadows.add((x, y))
-    
-    def _add_tutorial_data_patches(self):
-        """Add data patches for tutorial."""
-        colors = list(self.data_patch_effects.keys())
-        positions = [(12, 25), (30, 35), (40, 20)]
-        
-        for i, (x, y) in enumerate(positions):
-            if i < len(colors):
-                color = colors[i]
-                effect, desc = self.data_patch_effects[color]
-                patch = DataPatch(color, effect, f"{color.title()} Data Patch", desc)
-                self.game_map.data_patches[(x, y)] = patch
-    
-    def _create_tutorial_enemies(self):
-        """Create enemies for tutorial with patrol routes."""
-        self.enemies = [
-            Enemy(Position(15, 15), 'scanner'),
-            Enemy(Position(25, 25), 'patrol'),
-            Enemy(Position(35, 15), 'bot')
-        ]
-        
-        # Set patrol route for patrol enemy
-        self.enemies[1].patrol_points = [
-            Position(25, 25), Position(28, 25),
-            Position(28, 28), Position(25, 28)
-        ]
-    
     def _reset_player_state(self, x: int, y: int):
         """Reset player to starting state."""
         self.player.position = Position(x, y)
@@ -1130,7 +1055,7 @@ class Game:
             except Exception as e:
                 self.message_log.add_message(f"Network error: {str(e)[:15]}")
                 self.level -= 1
-    
+
     def _generate_procedural_level(self):
         """Generate a procedural level based on current level."""
         if self.level not in GameConfig.NETWORK_CONFIGS:
@@ -2103,13 +2028,13 @@ class UIRenderer:
     
     def _render_network_info(self, console: tcod.console.Console, game: Game):
         """Render network and position information."""
-        level_names = {0: "Tutorial", 1: "Corporate", 2: "Government", 3: "Military"}
+        level_names = {1: "Corporate", 2: "Government", 3: "Military"}  # Remove tutorial entry
         y = GameConfig.PANEL_Y + 1
         
         console.print(1, y, f"Network: {level_names.get(game.level, 'Unknown')}", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
         console.print(25, y, f"Position: ({game.player.x:2d},{game.player.y:2d})", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
-        console.print(45, y, f"Vision: {game.player.get_vision_range():2d}", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
-    
+        console.print(45, y, f"Vision: {game.player.get_vision_range():2d}", fg=Colors.UI_TEXT, bg=Colors.UI_BG)    
+
     def _render_active_effects(self, console: tcod.console.Console, game: Game):
         """Render active temporary effects."""
         y = GameConfig.PANEL_Y + 2
@@ -2479,14 +2404,15 @@ def main():
             renderer = Renderer()
             input_handler = InputHandler(game)
             
-            # Initial welcome messages
+            # Initial welcome messages - Remove tutorial references
             game.message_log.add_message("Welcome to Rogue Signal Protocol v51!")
             game.message_log.add_message("Enhanced UI with right-side system log")
             game.message_log.add_message("8-way movement and improved combat")
             game.message_log.add_message("Navigate using stealth")
             game.message_log.add_message("Reach the gateway (>)")
             game.message_log.add_message("Hide in shadows (.) to avoid detection")
-            
+            game.message_log.add_message("Starting Corporate Network infiltration...")
+                        
             # Main game loop
             while True:
                 try:
