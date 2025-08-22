@@ -484,9 +484,11 @@ class Enemy:
         self.patrol_points: List[Position] = []
         self.patrol_index = 0
         self.last_seen_player: Optional[Position] = None
+        self.random_move_queue: List[Tuple[int, int]] = []
     
     @property
     def x(self) -> int:
+
         return self.position.x
     
     @x.setter
@@ -576,24 +578,57 @@ class Enemy:
         else:
             self.move_cooldown = 2
     
+    def _ensure_random_move_queue(self):
+        """Ensure the random move queue has at least 3 moves."""
+        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+        
+        while len(self.random_move_queue) < 3:
+            self.random_move_queue.append(random.choice(directions))
+    
     def _move_random(self, game_map: 'GameMap', player: Player):
-        """Execute random movement pattern."""
+        """Execute random movement pattern with move queue."""
         if self.state == EnemyState.HOSTILE:
             self._move_toward(player.position, game_map, player)
             return
         
-        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
-        random.shuffle(directions)
+        # Ensure we have moves queued
+        self._ensure_random_move_queue()
         
-        for dx, dy in directions:
+        # Execute the next queued move
+        if self.random_move_queue:
+            dx, dy = self.random_move_queue.pop(0)
             new_position = Position(self.x + dx, self.y + dy)
             if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
                 game_map.is_valid_position(new_position) and
                 not new_position.distance_to(player.position) == 0):
                 self.position = new_position
-                break
+                return
     
     def _move_patrol(self, game_map: 'GameMap', player: Player):
+
+        self._move_toward(player.position, game_map, player)
+        return
+        
+        # Ensure we have moves queued
+        self._ensure_random_move_queue()
+        
+        # Execute the next queued move
+        if self.random_move_queue:
+            dx, dy = self.random_move_queue.pop(0)
+            new_position = Position(self.x + dx, self.y + dy)
+            if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                game_map.is_valid_position(new_position) and
+                not new_position.distance_to(player.position) == 0):
+                self.position = new_position
+    
+    def _ensure_random_move_queue(self):
+        """Ensure the random move queue has at least 3 moves."""
+        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+        
+        while len(self.random_move_queue) < 3:
+            self.random_move_queue.append(random.choice(directions))
+    
+    def _old_move_random(self, game_map: 'GameMap', player: Player):
         """Execute patrol movement pattern."""
         if self.state == EnemyState.HOSTILE:
             self._move_toward(player.position, game_map, player)
@@ -1468,17 +1503,21 @@ class Game:
         if enemy.state == EnemyState.HOSTILE:
             return self._predict_seek_movement(enemy, steps)
         
-        # For random movement, show the 8 possible directions as potential moves
+        # For random movement, show the queued moves
+        enemy._ensure_random_move_queue()
         current_pos = Position(enemy.x, enemy.y)
-        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
         positions = []
         
-        for dx, dy in directions[:min(steps, len(directions))]:
+        for i, (dx, dy) in enumerate(enemy.random_move_queue[:steps]):
             new_pos = Position(current_pos.x + dx, current_pos.y + dy)
             if (new_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
                 self.game_map.is_valid_position(new_pos)):
                 positions.append(new_pos)
+                current_pos = new_pos
+                positions.append(new_pos)
+                current_pos = new_pos
         
+        positions.append(new_pos)
         return positions
     
     def _predict_seek_movement(self, enemy: Enemy, steps: int) -> List[Position]:
