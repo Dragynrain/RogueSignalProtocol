@@ -1824,9 +1824,10 @@ class InputHandler:
         """Toggle patrol route visibility."""
         self.game.show_patrols = not self.game.show_patrols
         status = "visible" if self.game.show_patrols else "hidden"
-        self.message_log.add_message(f"Patrol routes {status}")
+        self.game.message_log.add_message(f"Patrol routes {status}")
     
     def _open_inventory(self):
+        """Open the inventory screen."""
         """Open the inventory screen."""
         self.game.show_inventory = True
         self.game.inventory_selection = 0
