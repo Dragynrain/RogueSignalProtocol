@@ -452,6 +452,31 @@ class Player:
         """Check if player can see through walls."""
         return self.temporary_effects['enhanced_vision_turns'] > 0
     
+    def can_see_enemy(self, enemy: 'Enemy', game_map: 'GameMap') -> bool:
+        """Check if player can see enemy, considering shadow mechanics."""
+        distance = self.position.distance_to(enemy.position)
+        
+        # Check basic vision range
+        if distance > self.get_vision_range():
+            return False
+        
+        # Check for stealth mechanics
+        player_in_shadow = game_map.is_shadow(self.position)
+        enemy_in_shadow = game_map.is_shadow(enemy.position)
+        
+        # If enemy is in shadow, only visible if player is directly adjacent (distance <= 1)
+        if enemy_in_shadow and distance > 1:
+            return False
+        
+        # If player is in shadow, they can't see as far (but can still see adjacent)
+        if player_in_shadow and distance > 1:
+            # Reduce vision range when in shadows
+            if distance > max(1, self.get_vision_range() // 2):
+                return False
+        
+        # Check line of sight
+        return game_map.has_line_of_sight(self.position, enemy.position)
+    
     def calculate_ram_usage(self):
         """Update RAM usage calculation."""
         # This is now handled by InventoryManager
@@ -527,6 +552,24 @@ class Enemy:
         distance = self.position.distance_to(player.position)
         if distance > self.type_data.vision:
             return False
+
+        # Check if player is invisible (data mimic effect)
+        if player.is_invisible():
+            return False
+        
+        # Check for stealth mechanics
+        player_in_shadow = game_map.is_shadow(player.position)
+        enemy_in_shadow = game_map.is_shadow(self.position)
+        
+        # If player is in shadow, only visible if enemy is directly adjacent (distance <= 1)
+        if player_in_shadow and distance > 1:
+            return False
+        
+        # If enemy is in shadow, it can't see as far (but can still see adjacent)
+        if enemy_in_shadow and distance > 1:
+            # Reduce vision range when in shadows
+            if distance > max(1, self.type_data.vision // 2):
+                return False
 
         return game_map.has_line_of_sight(self.position, player.position)
     
@@ -2623,8 +2666,8 @@ class MapRenderer:
             if enemy.disabled_turns > 0:
                 continue
             
-            distance_to_player = game.player.position.distance_to(enemy.position)
-            if distance_to_player <= vision_range:
+            # Only show vision overlays for enemies the player can see
+            if game.player.can_see_enemy(enemy, game.game_map):
                 overlay_color = self._get_vision_overlay_color(enemy.state)
                 self._render_enemy_vision_range(console, enemy, camera_offset, overlay_color)
     
@@ -2670,8 +2713,8 @@ class MapRenderer:
         """Render next 3 predicted moves for all moving enemies."""
         
         for enemy in game.enemies:
-            distance_to_player = game.player.position.distance_to(enemy.position)
-            if distance_to_player <= vision_range:
+            # Only show patrol routes for enemies the player can see
+            if game.player.can_see_enemy(enemy, game.game_map):
                 next_positions = game.get_enemy_next_positions(enemy, 3)
                 
                 for i, point in enumerate(next_positions):
@@ -2719,8 +2762,8 @@ class MapRenderer:
             
             if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
                 1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                distance = game.player.position.distance_to(enemy.position)
-                if distance <= vision_range:
+                # Use the new shadow-aware visibility check
+                if game.player.can_see_enemy(enemy, game.game_map):
                     console.print(screen_x, screen_y, enemy.type_data.symbol, 
                                 fg=enemy.get_color(), bg=Colors.BLACK)
     
