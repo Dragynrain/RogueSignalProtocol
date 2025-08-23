@@ -283,7 +283,10 @@ class InventoryManager:
     def __init__(self, player: 'Player'):
         self.player = player
         self.items: List[InventoryItem] = []
-        self.equipped_exploits: List[str] = ['shadow_step', 'network_scan', 'code_injection']
+        # Start with one random exploit
+        import random
+        all_exploits = list(GameData.EXPLOITS.keys())
+        self.equipped_exploits: List[str] = [random.choice(all_exploits)]
         self.max_equipped_exploits = 5
     
     def add_item(self, item: InventoryItem) -> bool:
@@ -667,6 +670,7 @@ class GameMap:
         
         # Items
         self.data_patches: Dict[Tuple[int, int], DataPatch] = {}
+        self.exploit_pickups: Dict[Tuple[int, int], ExploitItem] = {}
         
         # Special locations
         self.gateway: Optional[Position] = None
@@ -694,6 +698,10 @@ class GameMap:
     def get_data_patch(self, position: Position) -> Optional[DataPatch]:
         """Get data patch at position."""
         return self.data_patches.get((position.x, position.y))
+    
+    def get_exploit_pickup(self, position: Position) -> Optional[ExploitItem]:
+        """Get exploit pickup at position."""
+        return self.exploit_pickups.get((position.x, position.y))
     
     def is_valid_position(self, position: Position) -> bool:
         """Check if position is valid for movement."""
@@ -794,10 +802,6 @@ class Game:
         self.admin_spawned = False
         
         # UI state
-        self.show_patrol_predictions = False
-        self.show_help = False
-        self.inventory_selection = 0
-
         self.show_patrol_predictions = False
         self.show_inventory = False
         self.show_help = False
@@ -923,6 +927,13 @@ class Game:
             self.player.inventory_manager.add_item(patch)
             self.message_log.add_message(f"Found {patch.name}")
             del self.game_map.data_patches[player_pos]
+        
+        # Exploit pickup
+        if player_pos in self.game_map.exploit_pickups:
+            exploit_item = self.game_map.exploit_pickups[player_pos]
+            self.player.inventory_manager.add_item(exploit_item)
+            self.message_log.add_message(f"Found {exploit_item.name}")
+            del self.game_map.exploit_pickups[player_pos]
     
     def _update_enemies(self):
         """Update all enemy states and actions."""
@@ -1207,6 +1218,7 @@ class Game:
             self._generate_shadows(config["shadow_coverage"])
             self._place_special_nodes()
             self._place_data_patches()
+            self._place_exploit_pickups()
             self._place_enemies(config["enemies"])
             self._place_gateway(rooms)
             
@@ -1352,6 +1364,29 @@ class Game:
                 patch = DataPatch(color, effect, f"{color.title()} Data Patch", desc)
                 self.game_map.data_patches[(x, y)] = patch
                 placed_patches += 1
+    
+    def _place_exploit_pickups(self):
+        """Place random exploit pickups throughout the level."""
+        exploit_count = 2 + max(0, self.level - 1)  # 2 on level 1, 3 on level 2, etc.
+        placed_exploits = 0
+        attempts = 0
+        
+        # Get list of available exploits (excluding ones player starts with)
+        available_exploits = list(GameData.EXPLOITS.keys())
+        
+        while placed_exploits < exploit_count and attempts < 100:
+            attempts += 1
+            x = random.randint(5, GameConfig.MAP_WIDTH - 5)
+            y = random.randint(5, GameConfig.MAP_HEIGHT - 5)
+            position = Position(x, y)
+            
+            if self._is_valid_patch_placement(position):  # Reuse data patch placement validation
+                # Choose random exploit
+                exploit_key = random.choice(available_exploits)
+                exploit_def = GameData.EXPLOITS[exploit_key]
+                exploit_item = ExploitItem(exploit_key, exploit_def)
+                self.game_map.exploit_pickups[(x, y)] = exploit_item
+                placed_exploits += 1
     
     def _place_enemies(self, enemy_count: int):
         """Place enemies throughout the level."""
@@ -1859,6 +1894,8 @@ class InputHandler:
             self._navigate_inventory(1)
         elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
             self._use_selected_inventory_item()
+        elif event.sym == tcod.event.KeySym.U:
+            self._unequip_selected_exploit()
         elif event.sym == tcod.event.KeySym.I:
             self.game.show_inventory = False
         
@@ -1946,7 +1983,7 @@ class InputHandler:
             self._toggle_patrol_visibility()
         elif event.sym == tcod.event.KeySym.I:
             self._open_inventory()
-        elif event.sym == tcod.event.KeySym.SLASH and event.mod & tcod.event.KMOD_SHIFT:
+        elif event.sym == tcod.event.KeySym.SLASH and event.mod & tcod.event.Modifier.SHIFT:
             self.game.show_help = True
         
         # Exploit usage (1-5 keys)
@@ -1983,6 +2020,23 @@ class InputHandler:
                     self.game.inventory_selection, 
                     len(self.game.player.inventory_manager.get_display_items()) - 1
                 )
+    
+    def _unequip_selected_exploit(self):
+        """Unequip an exploit based on selection."""
+        # For simplicity, allow unequipping the first equipped exploit
+        equipped_exploits = self.game.player.inventory_manager.equipped_exploits
+        if equipped_exploits:
+            exploit_key = equipped_exploits[0]
+            if self.game.player.inventory_manager.unequip_exploit(exploit_key):
+                # Add the exploit back to inventory as an item
+                exploit_def = GameData.EXPLOITS[exploit_key]
+                exploit_item = ExploitItem(exploit_key, exploit_def)
+                self.game.player.inventory_manager.add_item(exploit_item)
+                self.game.message_log.add_message(f"Unequipped {exploit_def.name}")
+            else:
+                self.game.message_log.add_message("Cannot unequip exploit")
+        else:
+            self.game.message_log.add_message("No exploits equipped to unequip")
     
     def _toggle_patrol_visibility(self):
 
@@ -2502,6 +2556,8 @@ class MapRenderer:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             color = self._get_patch_color(patch.color)
             console.print(screen_x, screen_y, 'D', fg=color, bg=Colors.BLACK)
+        elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
+            console.print(screen_x, screen_y, 'E', fg=Colors.MAGENTA, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             console.print(screen_x, screen_y, '.', fg=Colors.GREEN, bg=Colors.SHADOW)
         else:
