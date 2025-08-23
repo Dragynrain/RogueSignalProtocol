@@ -599,30 +599,6 @@ class Enemy:
                 return
     
     def _move_patrol(self, game_map: 'GameMap', player: Player):
-
-        self._move_toward(player.position, game_map, player)
-        return
-        
-        # Ensure we have moves queued
-        self._ensure_random_move_queue()
-        
-        # Execute the next queued move
-        if self.random_move_queue:
-            dx, dy = self.random_move_queue.pop(0)
-            new_position = Position(self.x + dx, self.y + dy)
-            if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                game_map.is_valid_position(new_position) and
-                not new_position.distance_to(player.position) == 0):
-                self.position = new_position
-    
-    def _ensure_random_move_queue(self):
-        """Ensure the random move queue has at least 3 moves."""
-        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
-        
-        while len(self.random_move_queue) < 3:
-            self.random_move_queue.append(random.choice(directions))
-    
-    def _move_patrol(self, game_map: 'GameMap', player: Player):
         """Execute patrol movement pattern."""
         if self.state == EnemyState.HOSTILE:
             self._move_toward(player.position, game_map, player)
@@ -638,8 +614,7 @@ class Enemy:
             target = self.patrol_points[self.patrol_index]
         
         self._move_toward(target, game_map, player)
-        
-        self._move_toward(target, game_map, player)
+
     
     def _move_toward(self, target: Position, game_map: 'GameMap', player: Player):
         """Move one step toward target position."""
@@ -964,7 +939,7 @@ class Game:
         """Handle when enemy sees the player."""
         if enemy.state == EnemyState.UNAWARE:
             enemy.state = EnemyState.ALERT
-            enemy.alert_timer = 3
+            enemy.alert_timer = 2
             self.message_log.add_message(f"{enemy.type_data.name} investigating")
         elif enemy.state == EnemyState.ALERT:
             enemy.alert_timer -= 1
@@ -974,6 +949,8 @@ class Game:
                 detection_increase = 15 if enemy.type == 'admin' else 10
                 self.player.detection = min(100, self.player.detection + detection_increase)
                 self.message_log.add_message(f"{enemy.type_data.name} detected you!")
+                # Alert nearby enemies when this enemy becomes hostile
+                self._alert_nearby_enemies(enemy)
         elif enemy.state == EnemyState.HOSTILE:
             enemy.last_seen_player = Position(self.player.x, self.player.y)
             detection_increase = 3 if enemy.type == 'admin' else 1
@@ -999,16 +976,23 @@ class Game:
     def _move_enemies(self):
         """Move all enemies according to their AI."""
         for enemy in self.enemies:
+            # Mark that this enemy has moved this turn
+            enemy.has_moved_this_turn = True
             enemy.move(self.game_map, self.player)
     
     def _process_enemy_attacks(self):
         """Process attacks from enemies adjacent to player."""
         for enemy in self.enemies[:]:
-            if enemy.can_attack_player(self.player):
+            # Only attack if enemy hasn't moved this turn (move OR attack, not both)
+            if enemy.can_attack_player(self.player) and not getattr(enemy, 'has_moved_this_turn', False):
                 damage = enemy.attack_player(self.player)
                 self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
                 if self.player.cpu <= 0:
                     self.message_log.add_message("CRITICAL SYSTEM FAILURE!")
+        
+        # Reset movement flags for next turn
+        for enemy in self.enemies:
+            enemy.has_moved_this_turn = False
     
     def _check_admin_spawn(self):
         """Check if admin avatar should spawn."""
