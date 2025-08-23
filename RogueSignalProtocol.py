@@ -157,7 +157,7 @@ class GameData:
         'bot': EnemyTypeDefinition('b', 15, 2, EnemyMovement.RANDOM, "Bot", 8),
         'firewall': EnemyTypeDefinition('F', 40, 1, EnemyMovement.STATIC, "Firewall", 20),
         'hunter': EnemyTypeDefinition('H', 35, 5, EnemyMovement.SEEK, "Hunter", 25),
-        'admin': EnemyTypeDefinition('A', 100, 6, EnemyMovement.TRACK, "Admin Avatar", 40)
+        'admin': EnemyTypeDefinition('A', 300, 6, EnemyMovement.TRACK, "Admin Avatar", 50)
     }
     
     EXPLOITS = {
@@ -540,6 +540,12 @@ class Enemy:
     
     def take_damage(self, damage: int) -> bool:
         """Take damage and return True if destroyed."""
+        # Admin avatar has 50% damage resistance
+        if self.type == 'admin':
+            damage = damage // 2
+            if damage < 5:  # Minimum damage to prevent immunity
+                damage = 5
+        
         self.cpu -= damage
         return self.cpu <= 0
     
@@ -1060,21 +1066,43 @@ class Game:
             self.message_log.add_message("*** ADMIN AVATAR SPAWNED! ***")
     
     def _find_admin_spawn_position(self) -> Optional[Position]:
-        """Find a suitable spawn position for admin avatar."""
-        for _ in range(50):
-            x = random.randint(5, GameConfig.MAP_WIDTH - 5)
-            y = random.randint(5, GameConfig.MAP_HEIGHT - 5)
+        """Find a suitable spawn position for admin avatar near player and visible."""
+        player_vision = self.player.get_vision_range()
+        
+        # Try to spawn within player's vision range (5-10 tiles away for dramatic effect)
+        for _ in range(100):
+            # Generate position within player's vision range but not too close
+            distance = random.randint(5, min(10, player_vision))
+            angle = random.uniform(0, 2 * 3.14159)  # Random angle in radians
+            
+            x = int(self.player.x + distance * math.cos(angle))
+            y = int(self.player.y + distance * math.sin(angle))
             position = Position(x, y)
             
             if (self.game_map.is_valid_position(position) and
-                position.distance_to(self.player.position) > 15 and
+                position.distance_to(self.player.position) >= 5 and  # Not too close to player
+                position.distance_to(self.player.position) <= player_vision and  # Within sight
+                self.game_map.has_line_of_sight(self.player.position, position) and  # Actually visible
                 not self._get_enemy_at(position) and
                 (x, y) not in self.game_map.data_patches and
                 (x, y) not in self.game_map.cooling_nodes and
                 (x, y) not in self.game_map.cpu_recovery_nodes):
                 return position
         
-        # Fallback position
+        # Fallback: try positions just within vision range if ideal spots don't work
+        for _ in range(50):
+            distance = player_vision - 1  # Just within vision
+            angle = random.uniform(0, 2 * 3.14159)
+            
+            x = int(self.player.x + distance * math.cos(angle))
+            y = int(self.player.y + distance * math.sin(angle))
+            position = Position(x, y)
+            
+            if (self.game_map.is_valid_position(position) and
+                not self._get_enemy_at(position)):
+                return position
+        
+        # Last resort fallback position
         fallback = Position(GameConfig.MAP_WIDTH - 10, GameConfig.MAP_HEIGHT - 10)
         if self.game_map.is_valid_position(fallback):
             return fallback
