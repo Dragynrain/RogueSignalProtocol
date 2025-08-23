@@ -542,7 +542,7 @@ class Enemy:
         self.cpu -= damage
         return self.cpu <= 0
     
-    def move(self, game_map: 'GameMap', player: Player) -> bool:
+    def move(self, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
         """Move enemy based on its AI behavior. Returns True if enemy actually moved."""
         if self.disabled_turns > 0:
             self.disabled_turns -= 1
@@ -558,15 +558,15 @@ class Enemy:
         if self.type_data.movement == EnemyMovement.STATIC:
             return False
         elif self.type_data.movement == EnemyMovement.RANDOM:
-            return self._move_random(game_map, player)
+            return self._move_random(game_map, player, game)
         elif self.type_data.movement == EnemyMovement.LINEAR and self.patrol_points:
-            return self._move_patrol(game_map, player)
+            return self._move_patrol(game_map, player, game)
         elif self.type_data.movement == EnemyMovement.SEEK:
             if self.state == EnemyState.HOSTILE and self.last_seen_player:
-                return self._move_toward(self.last_seen_player, game_map, player)
+                return self._move_toward(self.last_seen_player, game_map, player, game)
         elif self.type_data.movement == EnemyMovement.TRACK:
             if self.state == EnemyState.HOSTILE:
-                return self._move_toward(player.position, game_map, player)
+                return self._move_toward(player.position, game_map, player, game)
         
         return False
     
@@ -584,10 +584,10 @@ class Enemy:
         while len(self.random_move_queue) < 3:
             self.random_move_queue.append(random.choice(directions))
     
-    def _move_random(self, game_map: 'GameMap', player: Player) -> bool:
+    def _move_random(self, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
         """Execute random movement pattern with move queue. Returns True if moved."""
         if self.state == EnemyState.HOSTILE:
-            return self._move_toward(player.position, game_map, player)
+            return self._move_toward(player.position, game_map, player, game)
         
         # Ensure we have moves queued
         self._ensure_random_move_queue()
@@ -598,16 +598,17 @@ class Enemy:
             new_position = Position(self.x + dx, self.y + dy)
             if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
                 game_map.is_valid_position(new_position) and
-                not new_position.distance_to(player.position) == 0):
+                not new_position.distance_to(player.position) == 0 and
+                (game is None or not game._get_enemy_at(new_position))):
                 self.position = new_position
                 return True
         
         return False
     
-    def _move_patrol(self, game_map: 'GameMap', player: Player) -> bool:
+    def _move_patrol(self, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
         """Execute patrol movement pattern. Returns True if moved."""
         if self.state == EnemyState.HOSTILE:
-            return self._move_toward(player.position, game_map, player)
+            return self._move_toward(player.position, game_map, player, game)
         
         if not self.patrol_points:
             return False
@@ -618,10 +619,10 @@ class Enemy:
             self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
             target = self.patrol_points[self.patrol_index]
         
-        return self._move_toward(target, game_map, player)
+        return self._move_toward(target, game_map, player, game)
 
     
-    def _move_toward(self, target: Position, game_map: 'GameMap', player: Player) -> bool:
+    def _move_toward(self, target: Position, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
         """Move one step toward target position. Returns True if moved."""
         if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
             return False
@@ -643,7 +644,8 @@ class Enemy:
             new_position = Position(self.x + try_dx, self.y + try_dy)
             if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
                 game_map.is_valid_position(new_position) and
-                not new_position.distance_to(player.position) == 0):
+                not new_position.distance_to(player.position) == 0 and
+                (game is None or not game._get_enemy_at(new_position))):
                 self.position = new_position
                 break
         
@@ -1017,7 +1019,7 @@ class Game:
         """Move all enemies according to their AI."""
         for enemy in self.enemies:
             # Only mark as moved if enemy actually moved
-            did_move = enemy.move(self.game_map, self.player)
+            did_move = enemy.move(self.game_map, self.player, self)
             enemy.has_moved_this_turn = did_move
     
     def _process_enemy_attacks(self):
