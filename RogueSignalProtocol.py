@@ -173,8 +173,8 @@ class GameData:
                                           "Ranged attack, bypasses firewalls"),
         'system_crash': ExploitDefinition("System Crash", 3, 35, 3, "combat", TargetingMode.AREA,
                                         "Area damage, disables multiple enemies"),
-        'network_scan': ExploitDefinition("Network Scan", 1, 10, 8, "utility", TargetingMode.NONE,
-                                        "Reveals enemy positions and patrol routes"),
+        'network_scan': ExploitDefinition("Network Scan", 2, 25, 0, "utility", TargetingMode.NONE,
+                                        "Reveals ALL enemies, vision, & movement intentions (5 turns)"),
         'log_wiper': ExploitDefinition("Log Wiper", 1, 5, 0, "utility", TargetingMode.NONE,
                                      "Reduces detection level significantly"),
         'emp_burst': ExploitDefinition("EMP Burst", 3, 40, 2, "emergency", TargetingMode.AREA,
@@ -474,8 +474,9 @@ class Player:
             if distance > max(1, self.get_vision_range() // 2):
                 return False
         
-        # Check line of sight
-        return game_map.has_line_of_sight(self.position, enemy.position)
+        # Check line of sight (enhanced vision can see through walls)
+        return (self.can_see_through_walls() or 
+                game_map.has_line_of_sight(self.position, enemy.position))
     
     def calculate_ram_usage(self):
         """Update RAM usage calculation."""
@@ -495,7 +496,12 @@ class Player:
 class Enemy:
     """Enemy character with AI behavior."""
     
+    _next_id = 1  # Class variable for unique IDs
+    
     def __init__(self, position: Position, enemy_type: str):
+        self.id = Enemy._next_id
+        Enemy._next_id += 1
+        
         self.position = position
         self.type = enemy_type
         self.type_data = GameData.ENEMY_TYPES[enemy_type]
@@ -727,6 +733,10 @@ class GameMap:
         
         # Special locations
         self.gateway: Optional[Position] = None
+        
+        # Memory system for hybrid fog of war
+        self.explored_tiles: Set[Tuple[int, int]] = set()
+        self.last_known_enemy_positions: Dict[int, Tuple[Position, int]] = {}  # enemy_id -> (position, turn_seen)
     
     def is_wall(self, position: Position) -> bool:
         """Check if position contains a wall."""
@@ -902,6 +912,8 @@ class Game:
         self.game_map.cooling_nodes.clear()
         self.game_map.cpu_recovery_nodes.clear()
         self.game_map.data_patches.clear()
+        self.game_map.explored_tiles.clear()  # Clear memory system
+        self.game_map.last_known_enemy_positions.clear()  # Clear enemy memory
         self.enemies.clear()
     
     def _create_border_walls(self):
@@ -944,6 +956,9 @@ class Game:
         # Update enemies
         self._update_enemies()
         
+        # Update memory system
+        self._update_memory_system()
+        
         # Check for admin spawn
         self._check_admin_spawn()
         
@@ -955,6 +970,28 @@ class Game:
         """Update network scan effect."""
         if self.network_scan_turns > 0:
             self.network_scan_turns -= 1
+    
+    def _update_memory_system(self):
+        """Update the hybrid fog of war memory system."""
+        vision_range = self.player.get_vision_range()
+        
+        # Update explored tiles
+        for dx in range(-vision_range, vision_range + 1):
+            for dy in range(-vision_range, vision_range + 1):
+                if dx*dx + dy*dy <= vision_range*vision_range:
+                    x = self.player.x + dx
+                    y = self.player.y + dy
+                    world_pos = Position(x, y)
+                    
+                    if (world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                        (self.player.can_see_through_walls() or 
+                         self.game_map.has_line_of_sight(self.player.position, world_pos))):
+                        self.game_map.explored_tiles.add((x, y))
+        
+        # Update last known enemy positions
+        for enemy in self.enemies:
+            if self.player.can_see_enemy(enemy, self.game_map):
+                self.game_map.last_known_enemy_positions[enemy.id] = (enemy.position, self.turn)
 
     def _process_special_tiles(self):
         """Process effects of special tiles at player position."""
@@ -2114,9 +2151,19 @@ class ExploitSystem:
         return True
     
     def _execute_network_scan(self) -> bool:
-        """Execute network scan exploit."""
-        self.game.network_scan_turns = 15
-        self.game.message_log.add_message("Network scan active")
+        """Execute enhanced network scan exploit."""
+        self.game.network_scan_turns = 5  # Shorter duration but more powerful
+        
+        # Network scan reveals entire map layout
+        for x in range(GameConfig.MAP_WIDTH):
+            for y in range(GameConfig.MAP_HEIGHT):
+                self.game.game_map.explored_tiles.add((x, y))
+        
+        # Update all enemy positions in memory
+        for enemy in self.game.enemies:
+            self.game.game_map.last_known_enemy_positions[enemy.id] = (enemy.position, self.game.turn)
+        
+        self.game.message_log.add_message("FULL NETWORK SCAN ACTIVE - All systems revealed!")
         return True
 
     def _execute_log_wiper(self) -> bool:
@@ -2836,14 +2883,38 @@ class MapRenderer:
                 if world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
                     distance = game.player.position.distance_to(world_pos)
                     
-                    if distance <= vision_range or game.player.can_see_through_walls():
+                    # Check if player can see this position
+                    can_see = (distance <= vision_range and 
+                              (game.player.can_see_through_walls() or 
+                               game.game_map.has_line_of_sight(game.player.position, world_pos)))
+                    
+                    # Check if this tile has been explored (memory system)
+                    explored = (world_pos.x, world_pos.y) in game.game_map.explored_tiles
+                    
+                    if can_see:
                         self._render_tile(console, screen_x, screen_y, world_pos, game)
+                    elif explored:
+                        # Render remembered tile with dimmed colors
+                        self._render_remembered_tile(console, screen_x, screen_y, world_pos, game)
                     else:
                         # Fog of war
                         console.print(screen_x, screen_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
                 else:
                     # Outside map bounds
                     console.print(screen_x, screen_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
+    
+    def _render_remembered_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
+        """Render a tile from memory with dimmed colors."""
+        # Only render basic terrain in memory, not dynamic elements
+        if game.game_map.is_wall(world_pos):
+            # Dimmed wall
+            console.print(screen_x, screen_y, '#', fg=(100, 100, 100), bg=Colors.BLACK)
+        elif game.game_map.is_shadow(world_pos):
+            # Dimmed shadow
+            console.print(screen_x, screen_y, '.', fg=(60, 60, 60), bg=(0, 10, 0))
+        else:
+            # Dimmed floor
+            console.print(screen_x, screen_y, '.', fg=(80, 80, 80), bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a single tile."""
@@ -2878,13 +2949,22 @@ class MapRenderer:
         if game.player.is_invisible():
             return
         
+        network_scan_active = game.network_scan_turns > 0
+        
         for enemy in game.enemies:
             if enemy.disabled_turns > 0:
                 continue
             
-            # Only show vision overlays for enemies the player can see
-            if game.player.can_see_enemy(enemy, game.game_map):
+            # Show vision overlays for visible enemies OR if Network Scan is active
+            can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
+            
+            if can_see_enemy or network_scan_active:
                 overlay_color = self._get_vision_overlay_color(enemy.state)
+                
+                # If revealed by network scan, make overlay more translucent
+                if network_scan_active and not can_see_enemy:
+                    overlay_color = tuple(c // 2 for c in overlay_color)  # Make it dimmer
+                
                 self._render_enemy_vision_range(console, enemy, camera_offset, overlay_color)
     
     def _get_vision_overlay_color(self, enemy_state: EnemyState) -> Tuple[int, int, int]:
@@ -2928,9 +3008,13 @@ class MapRenderer:
     def _render_patrol_routes(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render next 3 predicted moves for all moving enemies."""
         
+        network_scan_active = game.network_scan_turns > 0
+        
         for enemy in game.enemies:
-            # Only show patrol routes for enemies the player can see
-            if game.player.can_see_enemy(enemy, game.game_map):
+            # Show patrol routes for visible enemies OR if Network Scan is active
+            can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
+            
+            if can_see_enemy or network_scan_active:
                 next_positions = game.get_enemy_next_positions(enemy, 3)
                 
                 for i, point in enumerate(next_positions):
@@ -2938,13 +3022,23 @@ class MapRenderer:
                     screen_y = point.y - camera_offset.y + 1
                     if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
                         1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                        # Color code by step: bright yellow for step 1, dimmer for later steps
-                        if i == 0:
-                            color = Colors.YELLOW
-                        elif i == 1:
-                            color = (200, 200, 0)  # Dimmer yellow
+                        # Color code by step and scan status
+                        if network_scan_active and not can_see_enemy:
+                            # Network scan reveals movement with special cyan colors
+                            if i == 0:
+                                color = Colors.CYAN
+                            elif i == 1:
+                                color = (0, 200, 200)  # Dimmer cyan
+                            else:
+                                color = (0, 150, 150)  # Dimmest cyan
                         else:
-                            color = (150, 150, 0)  # Dimmest yellow
+                            # Normal patrol route colors
+                            if i == 0:
+                                color = Colors.YELLOW
+                            elif i == 1:
+                                color = (200, 200, 0)  # Dimmer yellow
+                            else:
+                                color = (150, 150, 0)  # Dimmest yellow
                         screen_x = point.x - camera_offset.x
                         screen_y = point.y - camera_offset.y + 1
                         # Preserve existing background color if present (e.g., vision overlay)
@@ -2967,21 +3061,59 @@ class MapRenderer:
         if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
             1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
             distance = game.player.position.distance_to(game.game_map.gateway)
-            if distance <= vision_range:
+            # Check if player can see the gateway (respecting walls)
+            can_see = (distance <= vision_range and 
+                      (game.player.can_see_through_walls() or 
+                       game.game_map.has_line_of_sight(game.player.position, game.game_map.gateway)))
+            if can_see:
                 console.print(screen_x, screen_y, '>', fg=Colors.GATEWAY, bg=Colors.BLACK)
     
     def _render_enemies(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
-        """Render all enemies."""
+        """Render all enemies and their last known positions."""
+        # First, render last known positions as ghosts
+        for enemy_id, (position, turn_seen) in game.game_map.last_known_enemy_positions.items():
+            # Find if this enemy is still alive and currently visible
+            current_enemy = None
+            currently_visible = False
+            for enemy in game.enemies:
+                if enemy.id == enemy_id:
+                    current_enemy = enemy
+                    if game.player.can_see_enemy(enemy, game.game_map):
+                        currently_visible = True
+                    break
+            
+            # Only show ghost if enemy is not currently visible and was seen recently
+            if not currently_visible and turn_seen > game.turn - 20:  # Show ghost for 20 turns
+                screen_x = position.x - camera_offset.x
+                screen_y = position.y - camera_offset.y + 1
+                
+                if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
+                    1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                    if current_enemy:
+                        # Dimmed ghost of living enemy
+                        ghost_color = tuple(c // 3 for c in current_enemy.get_color())
+                        console.print(screen_x, screen_y, '?', fg=ghost_color, bg=Colors.BLACK)
+        
+        # Then render currently visible enemies
         for enemy in game.enemies:
             screen_x = enemy.x - camera_offset.x
             screen_y = enemy.y - camera_offset.y + 1
             
             if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
                 1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                # Use the new shadow-aware visibility check
-                if game.player.can_see_enemy(enemy, game.game_map):
-                    console.print(screen_x, screen_y, enemy.type_data.symbol, 
-                                fg=enemy.get_color(), bg=Colors.BLACK)
+                # Check if Network Scan is active (shows all enemies)
+                network_scan_active = game.network_scan_turns > 0
+                can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
+                
+                if can_see_enemy or network_scan_active:
+                    if network_scan_active and not can_see_enemy:
+                        # Network scan reveals enemy with special highlighting
+                        console.print(screen_x, screen_y, enemy.type_data.symbol, 
+                                    fg=Colors.CYAN, bg=(20, 0, 20))  # Cyan text on dark purple bg
+                    else:
+                        # Normal enemy rendering
+                        console.print(screen_x, screen_y, enemy.type_data.symbol, 
+                                    fg=enemy.get_color(), bg=Colors.BLACK)
     
     def _render_player(self, console: tcod.console.Console, game: Game, camera_offset: Position):
         """Render the player character."""
