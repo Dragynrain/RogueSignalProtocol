@@ -3182,10 +3182,14 @@ def initialize_tcod_context():
     """Initialize tcod context with fallback handling."""
     tileset = None
     try:
+
         # Try to load the preferred tileset
         tileset = tcod.tileset.load_tilesheet(
             "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
-        )
+        ) 
+        tileset = tcod.tileset.load_truetype_font("Orbitron-VariableFont_wght.ttf")
+
+
     except (FileNotFoundError, ImportError, Exception) as e:
         import traceback
         tb = traceback.extract_tb(e.__traceback__)
