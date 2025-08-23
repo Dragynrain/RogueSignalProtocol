@@ -539,31 +539,33 @@ class Enemy:
         self.cpu -= damage
         return self.cpu <= 0
     
-    def move(self, game_map: 'GameMap', player: Player):
-        """Move enemy based on its AI behavior."""
+    def move(self, game_map: 'GameMap', player: Player) -> bool:
+        """Move enemy based on its AI behavior. Returns True if enemy actually moved."""
         if self.disabled_turns > 0:
             self.disabled_turns -= 1
-            return
+            return False
         
         # Movement cooldown system
         self.move_cooldown -= 1
         if self.move_cooldown > 0:
-            return
+            return False
         
         self._reset_movement_cooldown()
         
         if self.type_data.movement == EnemyMovement.STATIC:
-            return
+            return False
         elif self.type_data.movement == EnemyMovement.RANDOM:
-            self._move_random(game_map, player)
+            return self._move_random(game_map, player)
         elif self.type_data.movement == EnemyMovement.LINEAR and self.patrol_points:
-            self._move_patrol(game_map, player)
+            return self._move_patrol(game_map, player)
         elif self.type_data.movement == EnemyMovement.SEEK:
             if self.state == EnemyState.HOSTILE and self.last_seen_player:
-                self._move_toward(self.last_seen_player, game_map, player)
+                return self._move_toward(self.last_seen_player, game_map, player)
         elif self.type_data.movement == EnemyMovement.TRACK:
             if self.state == EnemyState.HOSTILE:
-                self._move_toward(player.position, game_map, player)
+                return self._move_toward(player.position, game_map, player)
+        
+        return False
     
     def _reset_movement_cooldown(self):
         """Reset movement cooldown based on enemy type."""
@@ -579,11 +581,10 @@ class Enemy:
         while len(self.random_move_queue) < 3:
             self.random_move_queue.append(random.choice(directions))
     
-    def _move_random(self, game_map: 'GameMap', player: Player):
-        """Execute random movement pattern with move queue."""
+    def _move_random(self, game_map: 'GameMap', player: Player) -> bool:
+        """Execute random movement pattern with move queue. Returns True if moved."""
         if self.state == EnemyState.HOSTILE:
-            self._move_toward(player.position, game_map, player)
-            return
+            return self._move_toward(player.position, game_map, player)
         
         # Ensure we have moves queued
         self._ensure_random_move_queue()
@@ -596,16 +597,17 @@ class Enemy:
                 game_map.is_valid_position(new_position) and
                 not new_position.distance_to(player.position) == 0):
                 self.position = new_position
-                return
+                return True
+        
+        return False
     
-    def _move_patrol(self, game_map: 'GameMap', player: Player):
-        """Execute patrol movement pattern."""
+    def _move_patrol(self, game_map: 'GameMap', player: Player) -> bool:
+        """Execute patrol movement pattern. Returns True if moved."""
         if self.state == EnemyState.HOSTILE:
-            self._move_toward(player.position, game_map, player)
-            return
+            return self._move_toward(player.position, game_map, player)
         
         if not self.patrol_points:
-            return
+            return False
         
         target = self.patrol_points[self.patrol_index]
         
@@ -613,14 +615,15 @@ class Enemy:
             self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
             target = self.patrol_points[self.patrol_index]
         
-        self._move_toward(target, game_map, player)
+        return self._move_toward(target, game_map, player)
 
     
-    def _move_toward(self, target: Position, game_map: 'GameMap', player: Player):
-        """Move one step toward target position."""
+    def _move_toward(self, target: Position, game_map: 'GameMap', player: Player) -> bool:
+        """Move one step toward target position. Returns True if moved."""
         if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-            return
+            return False
         
+        original_position = self.position
         dx = 0 if self.x == target.x else (1 if target.x > self.x else -1)
         dy = 0 if self.y == target.y else (1 if target.y > self.y else -1)
         
@@ -640,6 +643,8 @@ class Enemy:
                 not new_position.distance_to(player.position) == 0):
                 self.position = new_position
                 break
+        
+        return self.position != original_position
 
 # ============================================================================
 # GAME MAP
@@ -973,12 +978,36 @@ class Game:
                     enemy.last_seen_player = None
                     self.message_log.add_message(f"{enemy.type_data.name} lost track")
     
+    def _alert_nearby_enemies(self, alerting_enemy: Enemy):
+        """Alert nearby enemies when one becomes hostile."""
+        alert_range = 8
+        alerted_count = 0
+        
+        for enemy in self.enemies:
+            if enemy is alerting_enemy or enemy.state == EnemyState.HOSTILE:
+                continue
+                
+            distance = enemy.position.distance_to(alerting_enemy.position)
+            if distance <= alert_range:
+                if enemy.state == EnemyState.UNAWARE:
+                    enemy.state = EnemyState.ALERT
+                    enemy.alert_timer = 3
+                    enemy.last_seen_player = Position(self.player.x, self.player.y)
+                    alerted_count += 1
+                elif enemy.state == EnemyState.ALERT:
+                    enemy.alert_timer = max(enemy.alert_timer, 3)
+                    enemy.last_seen_player = Position(self.player.x, self.player.y)
+                    alerted_count += 1
+        
+        if alerted_count > 0:
+            self.message_log.add_message(f"{alerted_count} enemies alerted nearby!")
+    
     def _move_enemies(self):
         """Move all enemies according to their AI."""
         for enemy in self.enemies:
-            # Mark that this enemy has moved this turn
-            enemy.has_moved_this_turn = True
-            enemy.move(self.game_map, self.player)
+            # Only mark as moved if enemy actually moved
+            did_move = enemy.move(self.game_map, self.player)
+            enemy.has_moved_this_turn = did_move
     
     def _process_enemy_attacks(self):
         """Process attacks from enemies adjacent to player."""

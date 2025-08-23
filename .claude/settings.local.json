@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Bash(python:*)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)",
+      "Read(/C:\\Projects\\RogueSignalProtocol/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
