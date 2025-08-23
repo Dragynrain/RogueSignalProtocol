@@ -394,6 +394,7 @@ class Player:
             'enhanced_vision_turns': 0,
             'exploit_efficiency_turns': 0
         }
+        self.speed_moves_remaining = 0
         
         # Inventory system
         self.inventory_manager = InventoryManager(self)
@@ -1114,22 +1115,24 @@ class Game:
             self._move_cursor(dx, dy)
             return
         
-        moves = 2 if self.player.temporary_effects['speed_boost_turns'] > 0 else 1
+        # Handle speed boost: grant 2 moves at start of speed boost turn
+        if self.player.temporary_effects['speed_boost_turns'] > 0 and self.player.speed_moves_remaining == 0:
+            self.player.speed_moves_remaining = 2
+        elif self.player.temporary_effects['speed_boost_turns'] == 0:
+            self.player.speed_moves_remaining = 0
         
-        for move_count in range(moves):
-            old_position = Position(self.player.x, self.player.y)
-            new_position = Position(
-                max(0, min(GameConfig.MAP_WIDTH - 1, self.player.x + dx)),
-                max(0, min(GameConfig.MAP_HEIGHT - 1, self.player.y + dy))
-            )
-            
-            # Check for enemy at target position first
-            target_enemy = self._get_enemy_at(new_position)
-            if target_enemy:
-                # Bump attack the enemy
-                self._perform_bump_attack(target_enemy)
-                break  # Attacking takes the full turn
-            
+        # Check for enemy at target position first
+        new_position = Position(
+            max(0, min(GameConfig.MAP_WIDTH - 1, self.player.x + dx)),
+            max(0, min(GameConfig.MAP_HEIGHT - 1, self.player.y + dy))
+        )
+        
+        target_enemy = self._get_enemy_at(new_position)
+        if target_enemy:
+            # Bump attack the enemy
+            self._perform_bump_attack(target_enemy)
+        else:
+            # Try to move player
             if self.player.move(dx, dy, self.game_map):
                 # Check for gateway
                 if (self.game_map.gateway and 
@@ -1148,12 +1151,21 @@ class Game:
                         self.message_log.add_message("CRITICAL SYSTEM FAILURE!")
                         return
             else:
-                new_pos = Position(self.player.x + dx, self.player.y + dy)
-                if not self.game_map.is_valid_position(new_pos):
-                    self.message_log.add_message("Wall blocks movement")
-                break
+                # Movement blocked
+                self.message_log.add_message("Wall blocks movement")
         
-        self.process_turn()
+        # Handle speed boost and turn processing
+        self.maybe_process_turn()
+
+    def maybe_process_turn(self):
+        """Process turn only if speed boost doesn't allow another action."""
+        # Consume speed move if applicable
+        if self.player.speed_moves_remaining > 0:
+            self.player.speed_moves_remaining -= 1
+        
+        # Only process turn if no speed moves remaining
+        if self.player.speed_moves_remaining == 0:
+            self.process_turn()
 
     def _perform_bump_attack(self, target_enemy: Enemy):
         """Perform a bump attack on an enemy."""
@@ -1706,7 +1718,7 @@ class ExploitSystem:
         if success:
             self.game.targeting_mode = False
             self.game.targeting_exploit = None
-            self.game.process_turn()
+            self.game.maybe_process_turn()
         
         return success
     
@@ -2007,7 +2019,7 @@ class InputHandler:
         
         # Wait/rest
         elif event.sym in (tcod.event.KeySym.SPACE, tcod.event.KeySym.PERIOD, tcod.event.KeySym.KP_5):
-            self.game.process_turn()
+            self.game.maybe_process_turn()
         
         # UI toggles
         elif event.sym == tcod.event.KeySym.TAB:
