@@ -114,9 +114,10 @@ class Position:
     x: int
     y: int
     
-    def distance_to(self, other: 'Position') -> int:
-        """Calculate Chebyshev distance to another position."""
-        return max(abs(self.x - other.x), abs(self.y - other.y))
+    def distance_to(self, other: 'Position') -> float:
+        """Calculate Euclidean distance to another position."""
+        import math
+        return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
     
     def is_valid(self, width: int, height: int) -> bool:
         """Check if position is within bounds."""
@@ -957,7 +958,7 @@ class Game:
         """Handle when enemy sees the player."""
         if enemy.state == EnemyState.UNAWARE:
             enemy.state = EnemyState.ALERT
-            enemy.alert_timer = 2
+            enemy.alert_timer = 1
             self.message_log.add_message(f"{enemy.type_data.name} investigating")
         elif enemy.state == EnemyState.ALERT:
             enemy.alert_timer -= 1
@@ -2600,6 +2601,7 @@ class MapRenderer:
         """Render vision range for a single enemy."""
         for dx in range(-enemy.type_data.vision, enemy.type_data.vision + 1):
             for dy in range(-enemy.type_data.vision, enemy.type_data.vision + 1):
+                # Use Euclidean distance to match the actual detection logic
                 if dx*dx + dy*dy <= enemy.type_data.vision*enemy.type_data.vision:
                     screen_x = enemy.x - camera_offset.x + dx
                     screen_y = enemy.y - camera_offset.y + dy + 1
@@ -2646,7 +2648,14 @@ class MapRenderer:
                             color = (150, 150, 0)  # Dimmest yellow
                         screen_x = point.x - camera_offset.x
                         screen_y = point.y - camera_offset.y + 1
-                        console.print(screen_x, screen_y, '•', fg=color, bg=Colors.BLACK)
+                        # Preserve existing background color if present (e.g., vision overlay)
+                        try:
+                            current_bg = tuple(console.bg[screen_x, screen_y][:3])
+                            # Use current background if it's not black, otherwise use black
+                            bg_color = current_bg if current_bg != (0, 0, 0) else Colors.BLACK
+                        except (IndexError, AttributeError):
+                            bg_color = Colors.BLACK
+                        console.print(screen_x, screen_y, '•', fg=color, bg=bg_color)
     
     def _render_gateway(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render the level gateway."""
