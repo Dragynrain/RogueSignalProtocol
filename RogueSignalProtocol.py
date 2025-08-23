@@ -48,40 +48,49 @@ class GameConfig:
     }
 
 class Colors:
-    """Color definitions for the game."""
-    # Basic colors
+    """Modern cyberpunk neon color definitions for the game."""
+    # Core neon palette
     WHITE = (255, 255, 255)
-    BLACK = (0, 0, 0)
-    RED = (255, 0, 0)
-    GREEN = (0, 255, 0)
-    BLUE = (0, 0, 255)
-    YELLOW = (255, 255, 0)
-    CYAN = (0, 255, 255)
-    MAGENTA = (255, 0, 255)
-    ORANGE = (255, 136, 0)
+    BLACK = (5, 5, 15)  # Deep space blue-black
+    RED = (255, 20, 60)  # Hot neon pink-red
+    GREEN = (20, 255, 120)  # Electric neon green
+    BLUE = (20, 120, 255)  # Bright electric blue
+    YELLOW = (255, 220, 20)  # Neon yellow
+    CYAN = (20, 255, 255)  # Bright neon cyan
+    MAGENTA = (255, 20, 255)  # Hot neon magenta
+    ORANGE = (255, 120, 20)  # Neon orange
     
-    # Game-specific colors
-    FLOOR = (0, 50, 0)
-    WALL = (200, 200, 200)
-    SHADOW = (0, 20, 0)
-    PLAYER = (0, 255, 255)
-    GATEWAY = (255, 255, 0)
+    # Extended neon palette
+    ELECTRIC_PURPLE = (160, 20, 255)  # Electric purple
+    NEON_PINK = (255, 20, 147)  # Hot pink
+    ACID_GREEN = (50, 255, 50)  # Acid green
+    ELECTRIC_BLUE = (0, 191, 255)  # Electric blue
+    CYBER_TEAL = (20, 255, 200)  # Cyber teal
     
-    # Enemy colors by state
-    ENEMY_UNAWARE = (255, 136, 0)
-    ENEMY_ALERT = (255, 255, 0)
-    ENEMY_HOSTILE = (255, 0, 0)
+    # Game-specific colors with neon theme
+    FLOOR = (20, 25, 40)  # Dark blue-gray floor
+    WALL = (120, 140, 180)  # Light blue-gray walls
+    SHADOW = (15, 40, 60)  # Dark blue shadows
+    PLAYER = (20, 255, 255)  # Bright cyan player
+    GATEWAY = (255, 220, 20)  # Bright neon yellow
     
-    # Vision overlays
-    VISION_UNAWARE = (40, 20, 0)
-    VISION_ALERT = (40, 40, 0)
-    VISION_HOSTILE = (40, 0, 0)
+    # Enemy colors with neon intensity
+    ENEMY_UNAWARE = (255, 120, 20)  # Neon orange (calm)
+    ENEMY_ALERT = (255, 220, 20)  # Neon yellow (cautious)
+    ENEMY_HOSTILE = (255, 20, 60)  # Hot neon red (aggressive)
     
-    # UI colors
-    UI_BG = (0, 20, 0)
-    UI_TEXT = (0, 255, 0)
-    LOG_BG = (0, 15, 0)
-    LOG_BORDER = (0, 100, 0)
+    # Vision overlays with neon glow
+    VISION_UNAWARE = (80, 40, 10)  # Orange glow
+    VISION_ALERT = (80, 60, 10)  # Yellow glow  
+    VISION_HOSTILE = (80, 10, 20)  # Red glow
+    
+    # Modern UI colors
+    UI_BG = (10, 15, 25)  # Dark blue-gray background
+    UI_TEXT = (20, 255, 255)  # Bright cyan text
+    UI_ACCENT = (160, 20, 255)  # Electric purple accents
+    UI_HIGHLIGHT = (255, 20, 255)  # Hot magenta highlights
+    LOG_BG = (8, 12, 20)  # Darker blue background
+    LOG_BORDER = (20, 255, 200)  # Cyber teal border
 
 # ============================================================================
 # ENUMS AND DATA CLASSES
@@ -2445,18 +2454,18 @@ class Renderer:
         center_x = GameConfig.GAME_AREA_WIDTH // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
         
-        console.print(center_x - 10, center_y, "MISSION COMPLETE!", fg=Colors.GREEN)
-        console.print(center_x - 15, center_y + 1, "All networks infiltrated!", fg=Colors.GREEN)
-        console.print(center_x - 8, center_y + 3, "Press ESC to exit", fg=Colors.UI_TEXT)
+        console.print(center_x - 10, center_y, "MISSION COMPLETE!", fg=Colors.ACID_GREEN)
+        console.print(center_x - 15, center_y + 1, "All networks infiltrated!", fg=Colors.CYBER_TEAL)
+        console.print(center_x - 8, center_y + 3, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
     
     def _render_death_message(self, console: tcod.console.Console):
         """Render death message."""
         center_x = GameConfig.GAME_AREA_WIDTH // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
         
-        console.print(center_x - 8, center_y, "SYSTEM FAILURE", fg=Colors.RED)
+        console.print(center_x - 8, center_y, "SYSTEM FAILURE", fg=Colors.NEON_PINK)
         console.print(center_x - 12, center_y + 1, "Consciousness purged", fg=Colors.RED)
-        console.print(center_x - 8, center_y + 3, "Press ESC to exit", fg=Colors.UI_TEXT)
+        console.print(center_x - 8, center_y + 3, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
 
 class UIRenderer:
     """Renders UI elements."""
@@ -2662,7 +2671,7 @@ class UIRenderer:
             "Press ? for help"
         ]
         
-        colors = [cpu_color, heat_color, detection_color, ram_color, Colors.UI_TEXT, Colors.YELLOW]
+        colors = [cpu_color, heat_color, detection_color, ram_color, Colors.UI_TEXT, Colors.ELECTRIC_PURPLE]
         
         x_pos = 1
         for part, color in zip(status_parts, colors):
@@ -2751,7 +2760,7 @@ class UIRenderer:
     def _render_equipped_exploits_panel(self, console: tcod.console.Console, game: Game):
         """Render equipped exploits in bottom panel."""
         y = GameConfig.PANEL_Y + 3
-        console.print(1, y, "Exploits:", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
+        console.print(1, y, "Exploits:", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)
         
         for i, exploit_key in enumerate(game.player.inventory_manager.equipped_exploits[:5]):
             if exploit_key in GameData.EXPLOITS:
@@ -2792,7 +2801,7 @@ class UIRenderer:
             console.print(GameConfig.GAME_AREA_WIDTH, y, '|', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
         # Log header
-        console.print(GameConfig.GAME_AREA_WIDTH + 1, 0, "SYSTEM LOG", fg=Colors.CYAN, bg=Colors.LOG_BG)
+        console.print(GameConfig.GAME_AREA_WIDTH + 1, 0, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
         console.print(GameConfig.GAME_AREA_WIDTH + 1, 1, "-" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
         # Clear log area
@@ -2904,17 +2913,17 @@ class MapRenderer:
                     console.print(screen_x, screen_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
     
     def _render_remembered_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
-        """Render a tile from memory with dimmed colors."""
+        """Render a tile from memory with dimmed neon colors."""
         # Only render basic terrain in memory, not dynamic elements
         if game.game_map.is_wall(world_pos):
-            # Dimmed wall
-            console.print(screen_x, screen_y, '#', fg=(100, 100, 100), bg=Colors.BLACK)
+            # Dimmed neon wall
+            console.print(screen_x, screen_y, '#', fg=(60, 70, 90), bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            # Dimmed shadow
-            console.print(screen_x, screen_y, '.', fg=(60, 60, 60), bg=(0, 10, 0))
+            # Dimmed neon shadow
+            console.print(screen_x, screen_y, '.', fg=(10, 60, 90), bg=(5, 15, 25))
         else:
-            # Dimmed floor
-            console.print(screen_x, screen_y, '.', fg=(80, 80, 80), bg=Colors.BLACK)
+            # Dimmed neon floor
+            console.print(screen_x, screen_y, '.', fg=(15, 20, 35), bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a single tile."""
@@ -2924,7 +2933,7 @@ class MapRenderer:
         elif game.game_map.is_cooling_node(world_pos):
             console.print(screen_x, screen_y, 'C', fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_cpu_recovery_node(world_pos):
-            console.print(screen_x, screen_y, '+', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '+', fg=Colors.ELECTRIC_BLUE, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             color = self._get_patch_color(patch.color)
@@ -2932,17 +2941,17 @@ class MapRenderer:
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
             console.print(screen_x, screen_y, 'E', fg=Colors.MAGENTA, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            console.print(screen_x, screen_y, '.', fg=Colors.GREEN, bg=Colors.SHADOW)
+            console.print(screen_x, screen_y, '.', fg=Colors.CYBER_TEAL, bg=Colors.SHADOW)
         else:
             console.print(screen_x, screen_y, '.', fg=Colors.FLOOR, bg=Colors.BLACK)
     
     def _get_patch_color(self, color_name: str) -> Tuple[int, int, int]:
         """Get color tuple for data patch."""
         color_map = {
-            'crimson': Colors.RED, 'azure': Colors.BLUE, 'emerald': Colors.GREEN,
-            'golden': Colors.YELLOW, 'violet': Colors.MAGENTA, 'silver': Colors.WHITE
+            'crimson': Colors.NEON_PINK, 'azure': Colors.ELECTRIC_BLUE, 'emerald': Colors.ACID_GREEN,
+            'golden': Colors.YELLOW, 'violet': Colors.ELECTRIC_PURPLE, 'silver': Colors.CYAN
         }
-        return color_map.get(color_name, Colors.WHITE)
+        return color_map.get(color_name, Colors.CYAN)
     
     def _render_vision_overlays(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render enemy vision range overlays."""
