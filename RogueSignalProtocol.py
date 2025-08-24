@@ -42,7 +42,7 @@ class GameConfig:
     # Game balance - Remove level 0 (tutorial)
     ADMIN_SPAWN_THRESHOLDS = {1: 90, 2: 75, 3: 60}
     NETWORK_CONFIGS = {
-        1: {"enemies": 15, "shadow_coverage": 0.4, "name": "Corporate Network"},
+        1: {"enemies": 15, "shadow_coverage": 0.2, "name": "Corporate Network"},
         2: {"enemies": 22, "shadow_coverage": 0.25, "name": "Government System"},
         3: {"enemies": 30, "shadow_coverage": 0.15, "name": "Military Backbone"}
     }
@@ -70,7 +70,7 @@ class Colors:
     # Game-specific colors with neon theme
     FLOOR = (20, 25, 40)  # Dark blue-gray floor
     WALL = (120, 140, 180)  # Light blue-gray walls
-    SHADOW = (15, 40, 60)  # Dark blue shadows
+    SHADOW = (40, 60, 80)  # Lighter blue shadows
     PLAYER = (20, 255, 255)  # Bright cyan player
     GATEWAY = (255, 220, 20)  # Bright neon yellow
     
@@ -161,9 +161,9 @@ class GameData:
     """Static game data definitions."""
     
     ENEMY_TYPES = {
-        'scanner': EnemyTypeDefinition('s', 20, 2, EnemyMovement.STATIC, "Scanner", 10),
-        'patrol': EnemyTypeDefinition('p', 25, 3, EnemyMovement.LINEAR, "Patrol", 15),
-        'bot': EnemyTypeDefinition('b', 15, 2, EnemyMovement.RANDOM, "Bot", 8),
+        'scanner': EnemyTypeDefinition('S', 20, 2, EnemyMovement.STATIC, "Scanner", 10),
+        'patrol': EnemyTypeDefinition('P', 25, 3, EnemyMovement.LINEAR, "Patrol", 15),
+        'bot': EnemyTypeDefinition('B', 15, 2, EnemyMovement.RANDOM, "Bot", 8),
         'firewall': EnemyTypeDefinition('F', 40, 1, EnemyMovement.STATIC, "Firewall", 20),
         'hunter': EnemyTypeDefinition('H', 35, 5, EnemyMovement.SEEK, "Hunter", 25),
         'admin': EnemyTypeDefinition('A', 300, 6, EnemyMovement.TRACK, "Admin Avatar", 50)
@@ -630,6 +630,8 @@ class Enemy:
         elif self.type_data.movement == EnemyMovement.SEEK:
             if self.state == EnemyState.HOSTILE and self.last_seen_player:
                 return self._move_toward(self.last_seen_player, game_map, player, game)
+            elif self.state == EnemyState.ALERT and self.last_seen_player:
+                return self._move_toward(self.last_seen_player, game_map, player, game)
         elif self.type_data.movement == EnemyMovement.TRACK:
             if self.state == EnemyState.HOSTILE:
                 return self._move_toward(player.position, game_map, player, game)
@@ -654,6 +656,8 @@ class Enemy:
         """Execute random movement pattern with move queue. Returns True if moved."""
         if self.state == EnemyState.HOSTILE:
             return self._move_toward(player.position, game_map, player, game)
+        elif self.state == EnemyState.ALERT and self.last_seen_player:
+            return self._move_toward(self.last_seen_player, game_map, player, game)
         
         # Ensure we have moves queued
         self._ensure_random_move_queue()
@@ -675,6 +679,8 @@ class Enemy:
         """Execute patrol movement pattern. Returns True if moved."""
         if self.state == EnemyState.HOSTILE:
             return self._move_toward(player.position, game_map, player, game)
+        elif self.state == EnemyState.ALERT and self.last_seen_player:
+            return self._move_toward(self.last_seen_player, game_map, player, game)
         
         if not self.patrol_points:
             return False
@@ -1584,16 +1590,17 @@ class Game:
     
     def _generate_shadows(self, coverage: float):
         """Generate strategic shadow areas for better stealth gameplay."""
-        # More shadow clusters for better stealth coverage
-        shadow_clusters = random.randint(10, 16)
+        # Adjust shadow cluster count based on coverage
+        base_clusters = 8 if coverage < 0.25 else 12
+        shadow_clusters = random.randint(base_clusters, base_clusters + 4)
         
         # Create larger, more connected shadow areas
         for _ in range(shadow_clusters):
             center_x = random.randint(8, GameConfig.MAP_WIDTH - 8)
             center_y = random.randint(8, GameConfig.MAP_HEIGHT - 8)
             
-            # Larger shadow clusters for better stealth areas
-            cluster_size = random.randint(15, 35)
+            # Smaller shadow clusters for lower coverage
+            cluster_size = random.randint(10, 25) if coverage < 0.25 else random.randint(15, 35)
             
             # Create more organic shadow shapes
             shadow_shape = random.choice(['circular', 'linear', 'L-shaped'])
@@ -1659,8 +1666,8 @@ class Game:
                             not self.game_map.is_wall(position)):
                             self.game_map.shadows.add((x, y))
         
-        # Add some additional scattered shadow spots for tactical hiding
-        scattered_shadows = random.randint(20, 40)
+        # Add some additional scattered shadow spots for tactical hiding (fewer for lower coverage)
+        scattered_shadows = random.randint(10, 20) if coverage < 0.25 else random.randint(20, 40)
         for _ in range(scattered_shadows):
             x = random.randint(3, GameConfig.MAP_WIDTH - 3)
             y = random.randint(3, GameConfig.MAP_HEIGHT - 3)
@@ -2337,11 +2344,9 @@ class InputHandler:
             self.game.maybe_process_turn()
         
         # UI toggles
-        elif event.sym == tcod.event.KeySym.TAB:
-            self._toggle_patrol_visibility()
         elif event.sym == tcod.event.KeySym.I:
             self._open_inventory()
-        elif event.sym == tcod.event.KeySym.SLASH and event.mod & tcod.event.Modifier.SHIFT:
+        elif event.sym == tcod.event.KeySym.SLASH and (event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)):
             self.game.show_help = True
         
         # Exploit usage (1-5 keys)
@@ -2396,15 +2401,8 @@ class InputHandler:
         else:
             self.game.message_log.add_message("No exploits equipped to unequip")
     
-    def _toggle_patrol_visibility(self):
-
-                    len(self.game.player.inventory_manager.items) - 1
-                
-    
     def _open_inventory(self):
         """Open the inventory screen."""
-        """Open the inventory screen."""
-
         self.game.show_inventory = True
         self.game.inventory_selection = 0
     
@@ -2512,22 +2510,37 @@ class UIRenderer:
             ("", Colors.WHITE),
             
             ("INTERFACE:", Colors.CYAN),
-            ("  Tab: Toggle patrol route visibility", Colors.WHITE),
             ("  ?: This help screen", Colors.WHITE),
             ("  ESC: Cancel targeting/Close menus/Quit", Colors.WHITE),
             ("", Colors.WHITE),
             
+            ("MAP SYMBOLS:", Colors.CYAN),
+            ("  @: Player character", Colors.PLAYER),
+            ("  #: Walls", Colors.WALL),
+            ("  .: Floor/Shadow areas", Colors.FLOOR),
+            ("  G: Gateway (level exit)", Colors.GATEWAY),
+            ("", Colors.WHITE),
+            
+            ("ITEMS & PICKUPS:", Colors.CYAN),
+            ("  !: Data patches (various effects)", Colors.GREEN),
+            ("  &: Exploit programs", Colors.MAGENTA),
+            ("  ~: Cooling nodes (reduce heat)", Colors.CYAN),
+            ("  +: CPU recovery nodes (restore health)", Colors.ELECTRIC_BLUE),
+            ("", Colors.WHITE),
 
+            ("GAMEPLAY TIPS:", Colors.CYAN),
+            ("  - Hide in shadows (.) to avoid detection", Colors.WHITE),
+            ("  - Use cooling nodes (~) to manage heat", Colors.WHITE),
             ("  - CPU recovery nodes (+) restore health", Colors.WHITE),
-            ("  - Collect data patches (D) for various effects", Colors.WHITE),
+            ("  - Collect data patches (!) for various effects", Colors.WHITE),
             ("  - Stealth attacks deal more damage", Colors.WHITE),
             ("  - Watch your heat and detection levels!", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("ENEMY TYPES:", Colors.CYAN),
-            ("  s: Scanner (static, low vision)", Colors.ORANGE),
-            ("  p: Patrol (moves on routes)", Colors.ORANGE),
-            ("  b: Bot (random movement)", Colors.ORANGE),
+            ("  S: Scanner (static, low vision)", Colors.ORANGE),
+            ("  P: Patrol (moves on routes)", Colors.ORANGE),
+            ("  B: Bot (random movement)", Colors.ORANGE),
             ("  F: Firewall (high health, static)", Colors.RED),
             ("  H: Hunter (seeks players)", Colors.RED),
             ("  A: Admin Avatar (extremely dangerous!)", Colors.RED),
@@ -2931,15 +2944,15 @@ class MapRenderer:
         if game.game_map.is_wall(world_pos):
             console.print(screen_x, screen_y, '#', fg=Colors.WALL, bg=Colors.BLACK)
         elif game.game_map.is_cooling_node(world_pos):
-            console.print(screen_x, screen_y, 'C', fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '~', fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_cpu_recovery_node(world_pos):
             console.print(screen_x, screen_y, '+', fg=Colors.ELECTRIC_BLUE, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             color = self._get_patch_color(patch.color)
-            console.print(screen_x, screen_y, 'D', fg=color, bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '!', fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
-            console.print(screen_x, screen_y, 'E', fg=Colors.MAGENTA, bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             console.print(screen_x, screen_y, '.', fg=Colors.CYBER_TEAL, bg=Colors.SHADOW)
         else:
