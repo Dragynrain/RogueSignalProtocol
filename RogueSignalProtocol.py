@@ -40,11 +40,11 @@ class GameConfig:
     PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
     
     # Game balance - Remove level 0 (tutorial)
-    ADMIN_SPAWN_THRESHOLDS = {1: 90, 2: 75, 3: 60}
+    ADMIN_SPAWN_THRESHOLD = 90  # Fixed threshold for admin spawn
     NETWORK_CONFIGS = {
-        1: {"enemies": 15, "shadow_coverage": 0.2, "name": "Corporate Network"},
-        2: {"enemies": 22, "shadow_coverage": 0.25, "name": "Government System"},
-        3: {"enemies": 30, "shadow_coverage": 0.15, "name": "Military Backbone"}
+        1: {"enemies": 15, "shadow_coverage": 0.2, "name": "Corporate Network", "background_detection": 1},
+        2: {"enemies": 22, "shadow_coverage": 0.25, "name": "Government System", "background_detection": 2}, 
+        3: {"enemies": 30, "shadow_coverage": 0.15, "name": "Military Backbone", "background_detection": 3}
     }
 
 class Colors:
@@ -281,7 +281,21 @@ class ExploitItem(InventoryItem):
     
     def use(self, player: 'Player', game: 'Game') -> bool:
         """Equip the exploit."""
-        return player.inventory_manager.equip_exploit(self)
+        success = player.inventory_manager.equip_exploit(self)
+        if success:
+            game.message_log.add_message(f"Equipped {self.name}")
+        else:
+            # Check specific failure reasons
+            if self.exploit_key in player.inventory_manager.equipped_exploits:
+                game.message_log.add_message(f"{self.name} already equipped")
+            elif len(player.inventory_manager.equipped_exploits) >= player.inventory_manager.max_equipped_exploits:
+                game.message_log.add_message(f"No exploit slots available ({player.inventory_manager.max_equipped_exploits} max)")
+            else:
+                # Must be RAM issue
+                current_ram = player.inventory_manager.get_ram_usage()
+                needed_ram = GameData.EXPLOITS[self.exploit_key].ram if self.exploit_key in GameData.EXPLOITS else 0
+                game.message_log.add_message(f"Not enough RAM: {current_ram + needed_ram}/{player.ram_total}")
+        return success
 
 # ============================================================================
 # PLAYER INVENTORY MANAGEMENT
@@ -346,13 +360,26 @@ class InventoryManager:
     
     def equip_exploit(self, exploit_item: ExploitItem) -> bool:
         """Equip an exploit from inventory."""
-        if exploit_item.exploit_key not in self.equipped_exploits:
-
-                self.equipped_exploits.append(exploit_item.exploit_key)
-                self.remove_item(exploit_item)
-                self.player.calculate_ram_usage()
-                return True
-        return False
+        # Check if already equipped
+        if exploit_item.exploit_key in self.equipped_exploits:
+            return False
+        
+        # Check if we have slots available
+        if len(self.equipped_exploits) >= self.max_equipped_exploits:
+            return False
+        
+        # Check if we have enough RAM
+        if exploit_item.exploit_key in GameData.EXPLOITS:
+            exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
+            current_ram = self.get_ram_usage()
+            if current_ram + exploit_def.ram > self.player.ram_total:
+                return False
+        
+        # All checks passed, equip the exploit
+        self.equipped_exploits.append(exploit_item.exploit_key)
+        self.remove_item(exploit_item)
+        self.player.calculate_ram_usage()
+        return True
     
     def unequip_exploit(self, exploit_key: str) -> bool:
         """Unequip an exploit."""
@@ -977,9 +1004,11 @@ class Game:
         # Check for admin spawn
         self._check_admin_spawn()
         
-        # Passive detection increase
+        # Passive detection increase (higher on higher levels)
         if self.turn % 15 == 0:
-            self.player.detection = min(100, self.player.detection + 1)
+            config = GameConfig.NETWORK_CONFIGS.get(self.level, {"background_detection": 1})
+            background_increase = config.get("background_detection", 1)
+            self.player.detection = min(100, self.player.detection + background_increase)
     
     def _update_network_scan(self):
         """Update network scan effect."""
@@ -1141,8 +1170,7 @@ class Game:
     
     def _check_admin_spawn(self):
         """Check if admin avatar should spawn."""
-        spawn_threshold = GameConfig.ADMIN_SPAWN_THRESHOLDS.get(self.level, 50)
-        if (self.player.detection >= spawn_threshold and 
+        if (self.player.detection >= GameConfig.ADMIN_SPAWN_THRESHOLD and 
             not self.admin_spawned and 
             not any(e.type == 'admin' for e in self.enemies)):
             self._spawn_admin_avatar()
@@ -2366,30 +2394,44 @@ class InputHandler:
         return True
     
     def _navigate_inventory(self, direction: int):
-        """Navigate inventory selection."""
-        total_items = len(self.game.player.inventory_manager.get_display_items())
+        """Navigate inventory selection across equipped exploits and inventory items."""
+        # Get total selectable items (equipped exploits + inventory items)
+        equipped_count = len(self.game.player.inventory_manager.equipped_exploits)
+        inventory_items = len(self.game.player.inventory_manager.get_display_items())
+        total_items = equipped_count + inventory_items
+        
         if total_items > 0:
             self.game.inventory_selection = (self.game.inventory_selection + direction) % total_items
     
     def _use_selected_inventory_item(self):
-
-        """Use the currently selected inventory item."""
-        items = self.game.player.inventory_manager.get_display_items()
-        if items and 0 <= self.game.inventory_selection < len(items):
-            selected_item = items[self.game.inventory_selection]
-            if selected_item.use(self.game.player, self.game):
-                # Update selection if item was consumed
-                self.game.inventory_selection = min(
-                    self.game.inventory_selection, 
-                    len(self.game.player.inventory_manager.get_display_items()) - 1
-                )
+        """Use the currently selected item (unequip exploit or use inventory item)."""
+        equipped_count = len(self.game.player.inventory_manager.equipped_exploits)
+        
+        if self.game.inventory_selection < equipped_count:
+            # Selection is in equipped exploits - unequip the selected one
+            self._unequip_selected_exploit()
+        else:
+            # Selection is in inventory items - use the selected item
+            inventory_items = self.game.player.inventory_manager.get_display_items()
+            item_index = self.game.inventory_selection - equipped_count
+            
+            if 0 <= item_index < len(inventory_items):
+                selected_item = inventory_items[item_index]
+                if selected_item.use(self.game.player, self.game):
+                    # Update selection if item was consumed
+                    new_equipped_count = len(self.game.player.inventory_manager.equipped_exploits)
+                    new_inventory_count = len(self.game.player.inventory_manager.get_display_items())
+                    max_selection = new_equipped_count + new_inventory_count - 1
+                    
+                    if max_selection >= 0:
+                        self.game.inventory_selection = min(self.game.inventory_selection, max_selection)
     
     def _unequip_selected_exploit(self):
-        """Unequip an exploit based on selection."""
-        # For simplicity, allow unequipping the first equipped exploit
+        """Unequip the specifically selected exploit."""
         equipped_exploits = self.game.player.inventory_manager.equipped_exploits
-        if equipped_exploits:
-            exploit_key = equipped_exploits[0]
+        
+        if 0 <= self.game.inventory_selection < len(equipped_exploits):
+            exploit_key = equipped_exploits[self.game.inventory_selection]
             if self.game.player.inventory_manager.unequip_exploit(exploit_key):
                 # Add the exploit back to inventory as an item
                 exploit_def = GameData.EXPLOITS[exploit_key]
@@ -2399,7 +2441,7 @@ class InputHandler:
             else:
                 self.game.message_log.add_message("Cannot unequip exploit")
         else:
-            self.game.message_log.add_message("No exploits equipped to unequip")
+            self.game.message_log.add_message("No exploit selected")
     
     def _open_inventory(self):
         """Open the inventory screen."""
@@ -2548,11 +2590,21 @@ class UIRenderer:
     
     def render_inventory_screen(self, console: tcod.console.Console, game: Game):
         """Render the inventory screen."""
-        console.clear()
+        # Clear only the main game area, preserve top bar, bottom panel, and system log
+        # Clear lines 1 to PANEL_Y-1 in game area (x 0-54)
+        for x in range(GameConfig.GAME_AREA_WIDTH):
+            for y in range(1, GameConfig.PANEL_Y):
+                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
         
-        # Title
+        # Title (centered in game area only)
         title = "INVENTORY SYSTEM"
-        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        title_x = GameConfig.GAME_AREA_WIDTH // 2 - len(title) // 2
+        console.print(title_x, 2, title, fg=Colors.YELLOW)
+        
+        # Render preserved UI elements
+        self.render_top_status_bar(console, game)
+        self.render_bottom_panel(console, game)
+        self.render_system_log(console, game)
         
         y = 5
         
@@ -2576,13 +2628,22 @@ class UIRenderer:
         y += 1
         
         for i, exploit_key in enumerate(game.player.inventory_manager.equipped_exploits):
-            if exploit_key in GameData.EXPLOITS:
-                exploit = GameData.EXPLOITS[exploit_key]
+            # Check if this equipped exploit is selected
+            if i == game.inventory_selection:
+                color = Colors.YELLOW
+                prefix = ">"
+            elif exploit_key in GameData.EXPLOITS:
                 color = Colors.GREEN
-                status_text = f"{i+1}. {exploit.name} (RAM: {exploit.ram}, Heat: {exploit.heat})"
+                prefix = " "
             else:
                 color = Colors.RED
-                status_text = f"{i+1}. INVALID: {exploit_key}"
+                prefix = " "
+            
+            if exploit_key in GameData.EXPLOITS:
+                exploit = GameData.EXPLOITS[exploit_key]
+                status_text = f"{prefix} {i+1}. {exploit.name} (RAM: {exploit.ram}, Heat: {exploit.heat})"
+            else:
+                status_text = f"{prefix} {i+1}. INVALID: {exploit_key}"
             
             console.print(4, y, status_text, fg=color)
             y += 1
@@ -2606,13 +2667,17 @@ class UIRenderer:
             y += 1
         else:
             display_items = game.player.inventory_manager.get_display_items()
+            equipped_count = len(game.player.inventory_manager.equipped_exploits)
+            
             for i, patch in enumerate(data_patches):
                 display_index = display_items.index(patch)
-                if display_index == game.inventory_selection:
+                # Adjust selection index to account for equipped exploits
+                adjusted_selection_index = display_index + equipped_count
+                
+                if adjusted_selection_index == game.inventory_selection:
                     color = Colors.YELLOW
                     prefix = ">"
                 else:
-
                     color = Colors.WHITE
                     prefix = " "
                 
@@ -2634,13 +2699,17 @@ class UIRenderer:
             y += 1
         else:
             display_items = game.player.inventory_manager.get_display_items()
+            equipped_count = len(game.player.inventory_manager.equipped_exploits)
             
             for i, exploit_item in enumerate(exploit_items):
                 try:
                     display_index = display_items.index(exploit_item)
+                    # Adjust selection index to account for equipped exploits
+                    adjusted_selection_index = display_index + equipped_count
                 except ValueError:
-                    display_index = -1
-                if display_index == game.inventory_selection:
+                    adjusted_selection_index = -1
+                
+                if adjusted_selection_index == game.inventory_selection:
                     color = Colors.YELLOW
                     prefix = ">"
                 else:
@@ -2658,8 +2727,8 @@ class UIRenderer:
         
         console.print(2, y_start, "CONTROLS:", fg=Colors.CYAN)
         console.print(4, y_start + 1, "W/S: Navigate selection", fg=Colors.WHITE)
-        console.print(4, y_start + 2, "Enter: Use data patch / Equip exploit", fg=Colors.WHITE)
-        console.print(4, y_start + 3, "U: Unequip selected exploit (when on equipped list)", fg=Colors.WHITE)
+        console.print(4, y_start + 2, "Enter: Use selected item", fg=Colors.WHITE)
+        console.print(4, y_start + 3, "U: Unequip selected exploit", fg=Colors.WHITE)
         console.print(4, y_start + 4, "ESC/I: Close inventory", fg=Colors.WHITE)
     
     def render_top_status_bar(self, console: tcod.console.Console, game: Game):
@@ -2730,52 +2799,29 @@ class UIRenderer:
         border = "+" + "-" * (GameConfig.GAME_AREA_WIDTH - 2) + "+"
         console.print(0, GameConfig.PANEL_Y, border, fg=Colors.LOG_BORDER, bg=Colors.UI_BG)
         
-        # Network and position info
-        self._render_network_info(console, game)
-        
-        # Active effects
-        self._render_active_effects(console, game)
-        
-        # Equipped exploits
+        # Equipped exploits (2 lines)
         self._render_equipped_exploits_panel(console, game)
         
-        # Current status/warnings
-        self._render_status_warnings(console, game)
+        # Temporary conditions/effects (1 line)
+        self._render_temporary_conditions(console, game)
     
-    def _render_network_info(self, console: tcod.console.Console, game: Game):
-        """Render network and position information."""
-        level_names = {1: "Corporate", 2: "Government", 3: "Military"}  # Remove tutorial entry
-        y = GameConfig.PANEL_Y + 1
-        
-        console.print(1, y, f"Network: {level_names.get(game.level, 'Unknown')}", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
-        console.print(25, y, f"Position: ({game.player.x:2d},{game.player.y:2d})", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
-        console.print(45, y, f"Vision: {game.player.get_vision_range():2d}", fg=Colors.UI_TEXT, bg=Colors.UI_BG)    
-
-    def _render_active_effects(self, console: tcod.console.Console, game: Game):
-        """Render active temporary effects."""
-        y = GameConfig.PANEL_Y + 2
-        effects = []
-        
-        for effect_name, turns in game.player.temporary_effects.items():
-            if turns > 0:
-                display_name = effect_name.replace('_turns', '').replace('_', ' ').title()
-                effects.append(f"{display_name}({turns})")
-        
-        if game.network_scan_turns > 0:
-            effects.append(f"Scan({game.network_scan_turns})")
-        
-        if effects:
-            effects_text = "Effects: " + " ".join(effects)
-            console.print(1, y, effects_text[:GameConfig.GAME_AREA_WIDTH-2], fg=Colors.CYAN, bg=Colors.UI_BG)
-        else:
-            console.print(1, y, "Effects: None", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
     
     def _render_equipped_exploits_panel(self, console: tcod.console.Console, game: Game):
-        """Render equipped exploits in bottom panel."""
-        y = GameConfig.PANEL_Y + 3
-        console.print(1, y, "Exploits:", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)
+        """Render equipped exploits in bottom panel using 2 lines."""
+        y1 = GameConfig.PANEL_Y + 1
+        y2 = GameConfig.PANEL_Y + 2
         
-        for i, exploit_key in enumerate(game.player.inventory_manager.equipped_exploits[:5]):
+        console.print(1, y1, "Exploits:", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)
+        
+        equipped_exploits = game.player.inventory_manager.equipped_exploits[:5]
+        
+        # Split exploits across 2 lines (up to 3 on first line, rest on second)
+        first_line_exploits = equipped_exploits[:3]
+        second_line_exploits = equipped_exploits[3:]
+        
+        # Render first line exploits
+        x_pos = 11
+        for i, exploit_key in enumerate(first_line_exploits):
             if exploit_key in GameData.EXPLOITS:
                 exploit = GameData.EXPLOITS[exploit_key]
                 heat_cost = exploit.heat
@@ -2784,28 +2830,65 @@ class UIRenderer:
                 
                 heat_ok = game.player.heat + heat_cost <= 100
                 color = Colors.GREEN if heat_ok else Colors.RED
-                exploit_text = f"{i+1}.{exploit.name[:8]}"
-                x_pos = 11 + i * 12
-                if x_pos < GameConfig.GAME_AREA_WIDTH - 10:
-                    console.print(x_pos, y, exploit_text, fg=color, bg=Colors.UI_BG)
-    
-    def _render_status_warnings(self, console: tcod.console.Console, game: Game):
-        """Render status warnings and current action."""
-        y = GameConfig.PANEL_Y + 4
+                exploit_text = f"{i+1}.{exploit.name}"
+                
+                # Check if it fits on this line
+                if x_pos + len(exploit_text) + 2 <= GameConfig.GAME_AREA_WIDTH:
+                    console.print(x_pos, y1, exploit_text, fg=color, bg=Colors.UI_BG)
+                    x_pos += len(exploit_text) + 2  # Add some spacing
         
-        if game.targeting_mode and game.targeting_exploit in GameData.EXPLOITS:
-            exploit = GameData.EXPLOITS[game.targeting_exploit]
-            console.print(1, y, f"TARGETING: {exploit.name} - Range: {exploit.range}", fg=Colors.YELLOW, bg=Colors.UI_BG)
-        elif game.player.detection >= 85:
-            console.print(1, y, "*** CRITICAL DETECTION - ADMIN IMMINENT ***", fg=Colors.RED, bg=Colors.UI_BG)
-        elif game.player.detection >= 60:
-            console.print(1, y, "** ELEVATED DETECTION LEVEL **", fg=Colors.YELLOW, bg=Colors.UI_BG)
-        elif game.player.heat >= 90:
-            console.print(1, y, "** SYSTEM OVERHEATING - CRITICAL **", fg=Colors.RED, bg=Colors.UI_BG)
-        elif game.player.cpu < 30:
-            console.print(1, y, "** LOW CPU - CRITICAL **", fg=Colors.RED, bg=Colors.UI_BG)
+        # Render second line exploits
+        if second_line_exploits:
+            console.print(1, y2, "        ", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)  # Indent to align
+            x_pos = 11
+            for i, exploit_key in enumerate(second_line_exploits):
+                if exploit_key in GameData.EXPLOITS:
+                    exploit = GameData.EXPLOITS[exploit_key]
+                    heat_cost = exploit.heat
+                    if game.player.temporary_effects['exploit_efficiency_turns'] > 0:
+                        heat_cost = int(heat_cost * 0.6)
+                    
+                    heat_ok = game.player.heat + heat_cost <= 100
+                    color = Colors.GREEN if heat_ok else Colors.RED
+                    exploit_text = f"{i+4}.{exploit.name}"  # Continue numbering from where first line left off
+                    
+                    # Check if it fits on this line
+                    if x_pos + len(exploit_text) + 2 <= GameConfig.GAME_AREA_WIDTH:
+                        console.print(x_pos, y2, exploit_text, fg=color, bg=Colors.UI_BG)
+                        x_pos += len(exploit_text) + 2
+    
+    def _render_temporary_conditions(self, console: tcod.console.Console, game: Game):
+        """Render all temporary conditions with turn counts remaining."""
+        y = GameConfig.PANEL_Y + 3
+        
+        conditions = []
+        
+        # Player temporary effects (from data patches and other sources)
+        for effect_name, turns in game.player.temporary_effects.items():
+            if turns > 0:
+                display_name = effect_name.replace('_turns', '').replace('_', ' ').title()
+                conditions.append(f"{display_name}({turns})")
+        
+        # Network scan effect
+        if game.network_scan_turns > 0:
+            conditions.append(f"Network Scan({game.network_scan_turns})")
+        
+        # Speed moves remaining (from speed boost)
+        if game.player.speed_moves_remaining > 0:
+            conditions.append(f"Speed Moves({game.player.speed_moves_remaining})")
+        
+        # Any other temporary game-wide effects could be added here
+        
+        if conditions:
+            conditions_text = "Conditions: " + " ".join(conditions)
+            # Truncate if too long for the line
+            max_width = GameConfig.GAME_AREA_WIDTH - 2
+            if len(conditions_text) > max_width:
+                conditions_text = conditions_text[:max_width-3] + "..."
+            console.print(1, y, conditions_text, fg=Colors.CYAN, bg=Colors.UI_BG)
         else:
-            console.print(1, y, "Status: Operational", fg=Colors.GREEN, bg=Colors.UI_BG)
+            console.print(1, y, "Conditions: None", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
+    
     
     def render_system_log(self, console: tcod.console.Console, game: Game):
         """Render the system log on the right side."""
