@@ -150,6 +150,7 @@ class ExploitDefinition:
     heat: int
     range: int
     exploit_type: str
+    damage: int = 0  # Damage dealt (0 for non-combat exploits)
     targeting: TargetingMode = TargetingMode.NONE
     description: str = ""
 
@@ -161,33 +162,67 @@ class GameData:
     """Static game data definitions."""
     
     ENEMY_TYPES = {
-        'scanner': EnemyTypeDefinition('S', 20, 2, EnemyMovement.STATIC, "Scanner", 10),
-        'patrol': EnemyTypeDefinition('P', 25, 3, EnemyMovement.LINEAR, "Patrol", 15),
-        'bot': EnemyTypeDefinition('B', 15, 2, EnemyMovement.RANDOM, "Bot", 8),
-        'firewall': EnemyTypeDefinition('F', 40, 1, EnemyMovement.STATIC, "Firewall", 20),
-        'hunter': EnemyTypeDefinition('H', 35, 5, EnemyMovement.SEEK, "Hunter", 25),
-        'admin': EnemyTypeDefinition('A', 300, 6, EnemyMovement.TRACK, "Admin Avatar", 50)
+        # Rebalanced for challenging stealth gameplay
+        'scanner': EnemyTypeDefinition('S', 35, 5, EnemyMovement.STATIC, "Scanner", 0),  # High vision, no attack - pure detection
+        'patrol': EnemyTypeDefinition('P', 40, 4, EnemyMovement.LINEAR, "Patrol", 20),  # Larger coverage, decent damage
+        'bot': EnemyTypeDefinition('B', 25, 3, EnemyMovement.RANDOM, "Bot", 12),  # More HP, better vision
+        'firewall': EnemyTypeDefinition('F', 80, 6, EnemyMovement.STATIC, "Firewall", 0),  # Massive HP, huge vision, no attack
+        'hunter': EnemyTypeDefinition('H', 50, 7, EnemyMovement.SEEK, "Hunter", 30),  # Elite threat - high stats
+        'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.TRACK, "Admin Avatar", 60)  # Boss-level but not impossible
     }
     
     EXPLOITS = {
-        'shadow_step': ExploitDefinition("Shadow Step", 2, 20, 8, "stealth", TargetingMode.SINGLE,
-                                       "Teleport between shadow zones"),
-        'data_mimic': ExploitDefinition("Data Mimic", 1, 15, 0, "stealth", TargetingMode.NONE,
-                                      "Appear as harmless data for 5 turns"),
-        'noise_maker': ExploitDefinition("Noise Maker", 1, 10, 6, "stealth", TargetingMode.SINGLE,
-                                       "Create distraction at target location"),
-        'buffer_overflow': ExploitDefinition("Buffer Overflow", 2, 25, 1, "combat", TargetingMode.SINGLE,
-                                           "High melee damage, armor piercing"),
-        'code_injection': ExploitDefinition("Code Injection", 1, 15, 4, "combat", TargetingMode.SINGLE,
-                                          "Ranged attack, bypasses firewalls"),
-        'system_crash': ExploitDefinition("System Crash", 3, 35, 3, "combat", TargetingMode.AREA,
-                                        "Area damage, disables multiple enemies"),
-        'network_scan': ExploitDefinition("Network Scan", 2, 25, 0, "utility", TargetingMode.NONE,
-                                        "Reveals ALL enemies, vision, & movement intentions (5 turns)"),
-        'log_wiper': ExploitDefinition("Log Wiper", 1, 5, 0, "utility", TargetingMode.NONE,
-                                     "Reduces detection level significantly"),
-        'emp_burst': ExploitDefinition("EMP Burst", 3, 40, 2, "emergency", TargetingMode.AREA,
-                                     "Disables all nearby enemies temporarily")
+        # Rebalanced for strategic resource management with damage values
+        'shadow_step': ExploitDefinition("Shadow Step", 3, 30, 6, "stealth", 0, TargetingMode.SINGLE,
+                                       "Teleport between shadow zones"),  # No damage, pure mobility
+        'data_mimic': ExploitDefinition("Data Mimic", 2, 25, 0, "stealth", 0, TargetingMode.NONE,
+                                      "Appear as harmless data for 5 turns"),  # No damage, pure stealth
+        'noise_maker': ExploitDefinition("Noise Maker", 1, 15, 8, "stealth", 0, TargetingMode.SINGLE,
+                                       "Create distraction at target location"),  # No damage, distraction
+        'buffer_overflow': ExploitDefinition("Buffer Overflow", 2, 30, 1, "combat", 40, TargetingMode.SINGLE,
+                                           "High melee damage, armor piercing"),  # High single-target damage
+        'code_injection': ExploitDefinition("Code Injection", 2, 20, 5, "combat", 25, TargetingMode.SINGLE,
+                                          "Ranged attack, bypasses firewalls"),  # Moderate ranged damage
+        'system_crash': ExploitDefinition("System Crash", 4, 45, 3, "combat", 30, TargetingMode.AREA,
+                                        "Area damage, disables multiple enemies"),  # Area damage
+        'network_scan': ExploitDefinition("Network Scan", 3, 35, 0, "utility", 0, TargetingMode.NONE,
+                                        "Reveals ALL enemies, vision, & movement intentions (5 turns)"),  # No damage, intel
+        'log_wiper': ExploitDefinition("Log Wiper", 2, 20, 0, "utility", 0, TargetingMode.NONE,
+                                     "Reduces detection level significantly"),  # No damage, counter-detection
+        'emp_burst': ExploitDefinition("EMP Burst", 4, 50, 3, "emergency", 20, TargetingMode.AREA,
+                                     "Disables all nearby enemies temporarily")  # Moderate area damage + disable
+    }
+
+# ============================================================================
+# PERMANENT UPGRADES SYSTEM
+# ============================================================================
+
+@dataclass
+class UpgradeDefinition:
+    """Definition of a permanent upgrade with its properties."""
+    name: str
+    symbol: str
+    color: str
+    stat_type: str  # 'ram', 'cpu', 'heat'
+    bonus_amount: int
+    description: str
+
+class GameUpgrades:
+    """Static upgrade definitions."""
+    
+    UPGRADES = {
+        'ram_boost': UpgradeDefinition(
+            "Memory Expansion", "M", "BRIGHT_BLUE", "ram", 4,
+            "Permanently increases RAM capacity by 4"
+        ),
+        'cpu_boost': UpgradeDefinition(
+            "Processing Core", "C", "BRIGHT_GREEN", "cpu", 20,
+            "Permanently increases CPU capacity by 20"
+        ),
+        'heat_boost': UpgradeDefinition(
+            "Cooling Matrix", "H", "BRIGHT_CYAN", "heat", 20,
+            "Permanently increases heat tolerance by 20"
+        )
     }
 
 # ============================================================================
@@ -417,6 +452,7 @@ class Player:
         self.cpu = 100
         self.max_cpu = 100
         self.heat = 0
+        self._max_heat = 100  # Initialize max heat capacity
         self.detection = 0
         self.ram_total = 8
         
@@ -518,6 +554,33 @@ class Player:
         """Update RAM usage calculation."""
         # This is now handled by InventoryManager
         pass
+    
+    @property
+    def max_heat(self) -> int:
+        """Get maximum heat capacity."""
+        return getattr(self, '_max_heat', 100)  # Default 100 if not set
+    
+    @max_heat.setter  
+    def max_heat(self, value: int):
+        """Set maximum heat capacity."""
+        self._max_heat = value
+    
+    def apply_permanent_upgrade(self, upgrade_key: str) -> bool:
+        """Apply a permanent upgrade to the player."""
+        if upgrade_key not in GameUpgrades.UPGRADES:
+            return False
+            
+        upgrade = GameUpgrades.UPGRADES[upgrade_key]
+        
+        if upgrade.stat_type == 'ram':
+            self.ram_total += upgrade.bonus_amount
+        elif upgrade.stat_type == 'cpu':
+            self.max_cpu += upgrade.bonus_amount
+            self.cpu += upgrade.bonus_amount  # Boost current as well
+        elif upgrade.stat_type == 'heat':
+            self.max_heat += upgrade.bonus_amount
+            
+        return True
     
     def take_damage(self, damage: int) -> int:
         """Take damage and return actual damage taken."""
@@ -772,6 +835,7 @@ class GameMap:
         # Items
         self.data_patches: Dict[Tuple[int, int], DataPatch] = {}
         self.exploit_pickups: Dict[Tuple[int, int], ExploitItem] = {}
+        self.permanent_upgrades: Dict[Tuple[int, int], str] = {}  # position -> upgrade_key
         
         # Special locations
         self.gateway: Optional[Position] = None
@@ -954,6 +1018,8 @@ class Game:
         self.game_map.cooling_nodes.clear()
         self.game_map.cpu_recovery_nodes.clear()
         self.game_map.data_patches.clear()
+        self.game_map.exploit_pickups.clear()
+        self.game_map.permanent_upgrades.clear()  # Clear permanent upgrades
         self.game_map.explored_tiles.clear()  # Clear memory system
         self.game_map.last_known_enemy_positions.clear()  # Clear enemy memory
         self.enemies.clear()
@@ -1068,6 +1134,16 @@ class Game:
             self.player.inventory_manager.add_item(exploit_item)
             self.message_log.add_message(f"Found {exploit_item.name}")
             del self.game_map.exploit_pickups[player_pos]
+        
+        # Permanent upgrade pickup (auto-equip)
+        if player_pos in self.game_map.permanent_upgrades:
+            upgrade_key = self.game_map.permanent_upgrades[player_pos]
+            if upgrade_key in GameUpgrades.UPGRADES:
+                upgrade = GameUpgrades.UPGRADES[upgrade_key]
+                if self.player.apply_permanent_upgrade(upgrade_key):
+                    self.message_log.add_message(f"Integrated {upgrade.name}!")
+                    self.message_log.add_message(upgrade.description)
+                    del self.game_map.permanent_upgrades[player_pos]
     
     def _update_enemies(self):
         """Update all enemy states and actions."""
@@ -1292,17 +1368,17 @@ class Game:
 
     def _perform_bump_attack(self, target_enemy: Enemy):
         """Perform a bump attack on an enemy."""
-        # Calculate base damage
-        base_damage = 25
+        # Calculate base damage - rebalanced for new enemy HP values
+        base_damage = 30  # Increased from 25 to match average enemy damage
         
         # Stealth bonus: extra damage if attacking from shadows or while invisible
         stealth_bonus = 0
         if self.game_map.is_shadow(self.player.position) or self.player.is_invisible():
-            stealth_bonus = 15
+            stealth_bonus = 10  # Reduced from 15 to prevent trivial one-shots
             self.message_log.add_message("Stealth attack!")
         
         # Speed boost bonus
-        speed_bonus = 10 if self.player.temporary_effects['speed_boost_turns'] > 0 else 0
+        speed_bonus = 5 if self.player.temporary_effects['speed_boost_turns'] > 0 else 0  # Reduced from 10
         
         total_damage = base_damage + stealth_bonus + speed_bonus
         
@@ -1386,6 +1462,7 @@ class Game:
             self._place_special_nodes()
             self._place_data_patches()
             self._place_exploit_pickups()
+            self._place_permanent_upgrades()
             self._place_enemies(config["enemies"])
             self._place_gateway(rooms)
             
@@ -1771,14 +1848,51 @@ class Game:
                 self.game_map.exploit_pickups[(x, y)] = exploit_item
                 placed_exploits += 1
     
+    def _place_permanent_upgrades(self):
+        """Place permanent upgrades throughout the level with level-based rarity."""
+        # Level-based upgrade counts
+        if self.level == 1:
+            upgrade_count = 1  # Rare on level 1
+        elif self.level == 2:
+            upgrade_count = 2  # More common on level 2
+        else:
+            upgrade_count = 3  # Most common on level 3+
+        
+        placed_upgrades = 0
+        attempts = 0
+        available_upgrades = list(GameUpgrades.UPGRADES.keys())
+        
+        while placed_upgrades < upgrade_count and attempts < 100:
+            attempts += 1
+            x = random.randint(8, GameConfig.MAP_WIDTH - 8)
+            y = random.randint(8, GameConfig.MAP_HEIGHT - 8) 
+            position = Position(x, y)
+            
+            # Use stricter placement rules for rare upgrades
+            if (self._is_valid_patch_placement(position) and
+                abs(x - 5) > 10 and abs(y - 5) > 10):  # Not near starting position
+                
+                upgrade_key = random.choice(available_upgrades)
+                self.game_map.permanent_upgrades[(x, y)] = upgrade_key
+                placed_upgrades += 1
+                
+                # Remove from available to prevent duplicates on same level
+                available_upgrades.remove(upgrade_key)
+                if not available_upgrades:
+                    break
+    
     def _place_enemies(self, enemy_count: int):
-        """Place enemies throughout the level."""
+        """Place enemies throughout the level with increased density."""
         enemy_types = ['scanner', 'patrol', 'bot', 'firewall', 'hunter']
-        enemy_weights = [3, 2, 3, 1, 1]
+        # Adjust weights for challenging gameplay
+        enemy_weights = [4, 3, 2, 2, 2]  # More scanners and firewalls for detection challenge
+        
+        # Increase enemy density significantly
+        actual_enemy_count = int(enemy_count * 1.6)  # 60% more enemies
         placed_enemies = 0
         attempts = 0
         
-        while placed_enemies < enemy_count and attempts < enemy_count * 20:
+        while placed_enemies < actual_enemy_count and attempts < actual_enemy_count * 25:
             attempts += 1
             x = random.randint(8, GameConfig.MAP_WIDTH - 8)
             y = random.randint(8, GameConfig.MAP_HEIGHT - 8)
@@ -1848,18 +1962,21 @@ class Game:
                 not self._get_enemy_at(position))
     
     def _generate_patrol_route(self, start: Position) -> List[Position]:
-        """Generate a patrol route starting from given position."""
+        """Generate larger, more comprehensive patrol routes."""
         route = [start]
-        route_length = random.randint(4, 8)
+        route_length = random.randint(8, 15)  # Much longer patrols
         current = start
         
         for _ in range(route_length - 1):
             attempts = 0
-            while attempts < 30:
+            while attempts < 40:
                 attempts += 1
-                step_size = random.randint(2, 5)
+                step_size = random.randint(3, 8)  # Larger steps for wider coverage
                 direction = random.choice([(0, -step_size), (step_size, 0), 
-                                         (0, step_size), (-step_size, 0)])
+                                         (0, step_size), (-step_size, 0),
+                                         # Add diagonal movements for more coverage
+                                         (step_size, -step_size), (step_size, step_size),
+                                         (-step_size, -step_size), (-step_size, step_size)])
                 new_pos = Position(current.x + direction[0], current.y + direction[1])
                 
                 if (new_pos.is_valid(GameConfig.MAP_WIDTH - 3, GameConfig.MAP_HEIGHT - 3) and
@@ -3036,6 +3153,11 @@ class MapRenderer:
             console.print(screen_x, screen_y, '!', fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
             console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
+        elif (world_pos.x, world_pos.y) in game.game_map.permanent_upgrades:
+            upgrade_key = game.game_map.permanent_upgrades[(world_pos.x, world_pos.y)]
+            upgrade = GameUpgrades.UPGRADES[upgrade_key]
+            color = self._get_upgrade_color(upgrade.color)
+            console.print(screen_x, screen_y, upgrade.symbol, fg=color, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             console.print(screen_x, screen_y, '.', fg=Colors.CYBER_TEAL, bg=Colors.SHADOW)
         else:
@@ -3048,6 +3170,15 @@ class MapRenderer:
             'golden': Colors.YELLOW, 'violet': Colors.ELECTRIC_PURPLE, 'silver': Colors.CYAN
         }
         return color_map.get(color_name, Colors.CYAN)
+    
+    def _get_upgrade_color(self, color_name: str) -> Tuple[int, int, int]:
+        """Get color tuple for permanent upgrade."""
+        color_map = {
+            'BRIGHT_BLUE': Colors.ELECTRIC_BLUE,
+            'BRIGHT_GREEN': Colors.ACID_GREEN, 
+            'BRIGHT_CYAN': Colors.CYAN
+        }
+        return color_map.get(color_name, Colors.WHITE)
     
     def _render_vision_overlays(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render enemy vision range overlays."""
