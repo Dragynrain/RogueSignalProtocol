@@ -268,6 +268,193 @@ class PersistentStorage:
             logging.error(f"Failed to save progress file: {e}")
 
 
+class SaveGameManager:
+    """Manages complete game save/load operations."""
+    
+    SAVE_FILE = "rogue_signal_save.json"
+    
+    @classmethod
+    def save_exists(cls) -> bool:
+        """Check if a save file exists."""
+        return os.path.exists(cls.SAVE_FILE)
+    
+    @classmethod
+    def save_game(cls, game: 'Game') -> bool:
+        """Save complete game state to file."""
+        try:
+            # Gather all game state data
+            save_data = {
+                "version": "1.0",
+                "timestamp": time.time(),
+                
+                # Game state
+                "level": game.level,
+                "turn": game.turn,
+                "game_over": game.game_over,
+                "admin_spawned": game.admin_spawned,
+                "dungeon_seed": game.game_state.dungeon_seed,
+                
+                # Player state
+                "player": {
+                    "x": game.player.x,
+                    "y": game.player.y,
+                    "cpu": game.player.cpu,
+                    "max_cpu": game.player.max_cpu,
+                    "heat": game.player.heat,
+                    "detection": game.player.detection,
+                    "ram_total": game.player.ram_total,
+                    "temporary_effects": dict(game.player.temporary_effects),
+                    "equipped_exploits": game.player.inventory_manager.equipped_exploits.copy(),
+                    "inventory_items": cls._serialize_inventory(game.player.inventory_manager.items)
+                },
+                
+                # Game effects and state
+                "network_scan_turns": game.game_state.network_scan_turns,
+                "noise_locations": [{"x": pos.x, "y": pos.y} for pos in game.game_state.noise_locations],
+                "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in game.game_state.distraction_points.items()},
+                
+                # Map state (items and special locations only - layout regenerated)
+                "map_state": {
+                    "data_patches": cls._serialize_data_patches(game.game_map.data_patches),
+                    "exploit_pickups": cls._serialize_exploit_pickups(game.game_map.exploit_pickups),
+                    "permanent_upgrades": {f"{pos[0]},{pos[1]}": upgrade_key for pos, upgrade_key in game.game_map.permanent_upgrades.items()},
+                    "story_fragments": {f"{pos[0]},{pos[1]}": fragment.fragment_index for pos, fragment in game.game_map.story_fragments.items()},
+                    "gateway": {"x": game.game_map.gateway.x, "y": game.game_map.gateway.y} if game.game_map.gateway else None
+                },
+                
+                # Enemies
+                "enemies": cls._serialize_enemies(game.enemies),
+                
+                # Data patch effects for this run
+                "data_patch_effects": game.data_patch_effects
+            }
+            
+            with open(cls.SAVE_FILE, 'w', encoding='utf-8') as f:
+                json.dump(save_data, f, indent=2, ensure_ascii=False)
+            
+            logging.info("Game saved successfully")
+            return True
+            
+        except Exception as e:
+            logging.error(f"Failed to save game: {e}")
+            return False
+    
+    @classmethod
+    def load_game(cls) -> Optional[Dict[str, Any]]:
+        """Load complete game state from file."""
+        if not cls.save_exists():
+            return None
+            
+        try:
+            with open(cls.SAVE_FILE, 'r', encoding='utf-8') as f:
+                save_data = json.load(f)
+            
+            logging.info("Game loaded successfully")
+            return save_data
+            
+        except Exception as e:
+            logging.error(f"Failed to load game: {e}")
+            return None
+    
+    @classmethod
+    def delete_save(cls) -> bool:
+        """Delete the save file."""
+        try:
+            if cls.save_exists():
+                os.remove(cls.SAVE_FILE)
+                logging.info("Save file deleted")
+            return True
+        except Exception as e:
+            logging.error(f"Failed to delete save: {e}")
+            return False
+    
+    @classmethod
+    def _serialize_inventory(cls, items: List) -> List[Dict[str, Any]]:
+        """Serialize inventory items."""
+        serialized = []
+        for item in items:
+            if hasattr(item, 'item_type'):
+                item_data = {
+                    "type": item.item_type,
+                    "name": item.name,
+                    "description": item.description
+                }
+                
+                if hasattr(item, 'color'):  # DataPatch
+                    item_data.update({
+                        "color": item.color,
+                        "effect": item.effect,
+                        "quantity": getattr(item, 'quantity', 1),
+                        "discovered": getattr(item, 'discovered', False)
+                    })
+                elif hasattr(item, 'exploit_key'):  # ExploitItem
+                    item_data.update({
+                        "exploit_key": item.exploit_key,
+                        "ram_cost": item.ram_cost
+                    })
+                elif hasattr(item, 'fragment_index'):  # StoryFragment
+                    item_data.update({
+                        "fragment_index": item.fragment_index
+                    })
+                
+                serialized.append(item_data)
+        
+        return serialized
+    
+    @classmethod
+    def _serialize_data_patches(cls, patches: Dict) -> Dict[str, Dict]:
+        """Serialize data patches."""
+        return {
+            f"{pos[0]},{pos[1]}": {
+                "color": patch.color,
+                "effect": patch.effect,
+                "name": patch.name,
+                "quantity": patch.quantity,
+                "discovered": patch.discovered
+            }
+            for pos, patch in patches.items()
+        }
+    
+    @classmethod
+    def _serialize_exploit_pickups(cls, exploits: Dict) -> Dict[str, str]:
+        """Serialize exploit pickups."""
+        return {
+            f"{pos[0]},{pos[1]}": exploit.exploit_key 
+            for pos, exploit in exploits.items()
+        }
+    
+    @classmethod
+    def _serialize_enemies(cls, enemies: List) -> List[Dict[str, Any]]:
+        """Serialize enemy data."""
+        serialized = []
+        for enemy in enemies:
+            enemy_data = {
+                "type": enemy.type,
+                "x": enemy.position.x,
+                "y": enemy.position.y,
+                "cpu": enemy.cpu,
+                "state": enemy.state.value,
+                "move_cooldown": enemy.move_cooldown,
+                "disabled_turns": enemy.disabled_turns,
+                "alert_timer": enemy.alert_timer,
+                "patrol_index": enemy.patrol_index,
+                "last_seen_player": {
+                    "x": enemy.last_seen_player.x, 
+                    "y": enemy.last_seen_player.y
+                } if enemy.last_seen_player else None
+            }
+            
+            if enemy.patrol_points:
+                enemy_data["patrol_points"] = [
+                    {"x": point.x, "y": point.y} 
+                    for point in enemy.patrol_points
+                ]
+            
+            serialized.append(enemy_data)
+        
+        return serialized
+
+
 class StoryFragmentManager:
     """Manages story fragment discovery and display."""
     
@@ -1739,7 +1926,7 @@ class TurnProcessor:
 class Game:
     """Main game class that manages all game state and logic."""
     
-    def __init__(self):
+    def __init__(self, load_save: bool = False):
         # Core game objects
         self.player = Player(5, 5)
         self.game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
@@ -1766,13 +1953,20 @@ class Game:
         
         # Data patch system
         self.data_patch_effects: Dict[str, Tuple[str, str]] = {}
-        self._randomize_data_patches()
         
         # Story fragment system
         self.story_fragment_manager = StoryFragmentManager()
         
-        # Initialize - Start with first procedural level
-        self._generate_procedural_level()
+        # Initialize game state
+        if load_save:
+            success = self._load_from_save()
+            if not success:
+                # Fallback to new game if loading fails
+                self._randomize_data_patches()
+                self._generate_procedural_level()
+        else:
+            self._randomize_data_patches()
+            self._generate_procedural_level()
     
     # Properties for backward compatibility with existing code
     @property
@@ -1818,6 +2012,170 @@ class Game:
     def _get_enemy_at(self, position: Position) -> Optional[Enemy]:
         """Get enemy at position - for backward compatibility."""
         return self.enemy_manager.get_enemy_at_position(position)
+    
+    def _load_from_save(self) -> bool:
+        """Load game state from save file."""
+        save_data = SaveGameManager.load_game()
+        if not save_data:
+            return False
+        
+        try:
+            # Restore game state
+            self.game_state.level = save_data["level"]
+            self.game_state.turn = save_data["turn"]
+            self.game_state.game_over = save_data["game_over"]
+            self.game_state.admin_spawned = save_data["admin_spawned"]
+            self.game_state.dungeon_seed = save_data["dungeon_seed"]
+            
+            # Restore player state
+            player_data = save_data["player"]
+            self.player.x = player_data["x"]
+            self.player.y = player_data["y"]
+            self.player.cpu = player_data["cpu"]
+            self.player.max_cpu = player_data["max_cpu"]
+            self.player.heat = player_data["heat"]
+            self.player.detection = player_data["detection"]
+            self.player.ram_total = player_data["ram_total"]
+            self.player.temporary_effects = player_data["temporary_effects"]
+            
+            # Restore inventory
+            self.player.inventory_manager.equipped_exploits = player_data["equipped_exploits"]
+            self.player.inventory_manager.items = self._deserialize_inventory(player_data["inventory_items"])
+            
+            # Restore game effects
+            self.game_state.network_scan_turns = save_data["network_scan_turns"]
+            self.game_state.noise_locations = [Position(loc["x"], loc["y"]) for loc in save_data["noise_locations"]]
+            self.game_state.distraction_points = {
+                Position(*map(int, pos.split(','))): turns 
+                for pos, turns in save_data["distraction_points"].items()
+            }
+            
+            # Restore data patch effects
+            self.data_patch_effects = save_data["data_patch_effects"]
+            
+            # Generate level layout for map structure
+            self.level_generator.generate_level(self.game_state.level, self.game_state.dungeon_seed)
+            
+            # Restore map items
+            self._restore_map_items(save_data["map_state"])
+            
+            # Restore enemies
+            self._restore_enemies(save_data["enemies"])
+            
+            self.message_log.add_message("Game loaded successfully!", Colors.GREEN)
+            return True
+            
+        except Exception as e:
+            logging.error(f"Failed to restore game state: {e}")
+            return False
+    
+    def _deserialize_inventory(self, items_data: List[Dict]) -> List:
+        """Deserialize inventory items from save data."""
+        items = []
+        for item_data in items_data:
+            if item_data["type"] == "data_patch":
+                from RogueSignalProtocol import DataPatch
+                item = DataPatch(
+                    color=item_data["color"],
+                    effect=item_data["effect"],
+                    name=item_data["name"],
+                    quantity=item_data.get("quantity", 1)
+                )
+                item.discovered = item_data.get("discovered", False)
+                items.append(item)
+            elif item_data["type"] == "exploit":
+                from RogueSignalProtocol import ExploitItem
+                if item_data["exploit_key"] in GameData.EXPLOITS:
+                    exploit_def = GameData.EXPLOITS[item_data["exploit_key"]]
+                    item = ExploitItem(item_data["exploit_key"], exploit_def)
+                    items.append(item)
+            elif item_data["type"] == "story_fragment":
+                item = StoryFragment(item_data["fragment_index"])
+                items.append(item)
+        
+        return items
+    
+    def _restore_map_items(self, map_data: Dict) -> None:
+        """Restore items on the map from save data."""
+        # Clear current items
+        self.game_map.data_patches.clear()
+        self.game_map.exploit_pickups.clear()
+        self.game_map.permanent_upgrades.clear()
+        self.game_map.story_fragments.clear()
+        
+        # Restore data patches
+        for pos_str, patch_data in map_data["data_patches"].items():
+            x, y = map(int, pos_str.split(','))
+            patch = DataPatch(
+                color=patch_data["color"],
+                effect=patch_data["effect"],
+                name=patch_data["name"],
+                quantity=patch_data["quantity"]
+            )
+            patch.discovered = patch_data["discovered"]
+            self.game_map.data_patches[(x, y)] = patch
+        
+        # Restore exploit pickups
+        for pos_str, exploit_key in map_data["exploit_pickups"].items():
+            x, y = map(int, pos_str.split(','))
+            if exploit_key in GameData.EXPLOITS:
+                exploit_def = GameData.EXPLOITS[exploit_key]
+                exploit_item = ExploitItem(exploit_key, exploit_def)
+                self.game_map.exploit_pickups[(x, y)] = exploit_item
+        
+        # Restore permanent upgrades
+        for pos_str, upgrade_key in map_data["permanent_upgrades"].items():
+            x, y = map(int, pos_str.split(','))
+            self.game_map.permanent_upgrades[(x, y)] = upgrade_key
+        
+        # Restore story fragments
+        for pos_str, fragment_index in map_data["story_fragments"].items():
+            x, y = map(int, pos_str.split(','))
+            fragment = StoryFragment(fragment_index)
+            self.game_map.story_fragments[(x, y)] = fragment
+        
+        # Restore gateway
+        if map_data["gateway"]:
+            self.game_map.gateway = Position(map_data["gateway"]["x"], map_data["gateway"]["y"])
+    
+    def _restore_enemies(self, enemies_data: List[Dict]) -> None:
+        """Restore enemies from save data."""
+        self.enemy_manager.enemies.clear()
+        
+        for enemy_data in enemies_data:
+            position = Position(enemy_data["x"], enemy_data["y"])
+            enemy = Enemy(position, enemy_data["type"])
+            
+            # Restore enemy state
+            enemy.cpu = enemy_data["cpu"]
+            enemy.state = EnemyState(enemy_data["state"])
+            enemy.move_cooldown = enemy_data["move_cooldown"]
+            enemy.disabled_turns = enemy_data["disabled_turns"]
+            enemy.alert_timer = enemy_data["alert_timer"]
+            enemy.patrol_index = enemy_data["patrol_index"]
+            
+            if enemy_data["last_seen_player"]:
+                enemy.last_seen_player = Position(
+                    enemy_data["last_seen_player"]["x"],
+                    enemy_data["last_seen_player"]["y"]
+                )
+            
+            if "patrol_points" in enemy_data:
+                enemy.patrol_points = [
+                    Position(point["x"], point["y"]) 
+                    for point in enemy_data["patrol_points"]
+                ]
+            
+            self.enemy_manager.enemies.append(enemy)
+    
+    def auto_save(self) -> None:
+        """Auto-save the current game state."""
+        if not self.game_over:  # Don't auto-save if game is over
+            success = SaveGameManager.save_game(self)
+            if success:
+                logging.info("Auto-save completed")
+            else:
+                logging.warning("Auto-save failed")
     
     def _randomize_data_patches(self):
         """Randomize data patch effects for this game session."""
@@ -2264,9 +2622,13 @@ class Game:
             self.message_log.add_message("INFILTRATION COMPLETE!")
             self.message_log.add_message(f"Stats: Turns:{self.turn} Det:{int(self.player.detection)}%")
             self.game_over = True
+            # Auto-save on game completion
+            self.auto_save()
         else:
             try:
                 self._generate_procedural_level()
+                # Auto-save after successful level generation
+                self.auto_save()
             except Exception as e:
                 import traceback
                 tb = traceback.extract_tb(e.__traceback__)
@@ -3826,7 +4188,7 @@ class UIRenderer:
                 content_lines = [line.strip() for line in fragment_text.split('\n') if line.strip()]
                 if len(content_lines) > 1:
                     preview = content_lines[1][:70] + "..." if len(content_lines[1]) > 70 else content_lines[1]
-                    console.print(6, y_offset, preview, fg=Colors.DARK_GRAY)
+                    console.print(6, y_offset, preview, fg=(128, 128, 128))
                     y_offset += 1
                 
                 y_offset += 1  # Space between entries
@@ -4148,7 +4510,7 @@ class MapRenderer:
             console.print(screen_x, screen_y, upgrade.symbol, fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.story_fragments:
             # Story fragment - glowing/pulsing appearance
-            console.print(screen_x, screen_y, '?', fg=Colors.BRIGHT_CYAN, bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '?', fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             console.print(screen_x, screen_y, '.', fg=Colors.CYBER_TEAL, bg=Colors.SHADOW)
         else:
@@ -4437,23 +4799,238 @@ def initialize_tcod_context():
     
     return tcod.context.new(**context_args)
 
+
+# ============================================================================
+# MAIN MENU SYSTEM
+# ============================================================================
+
+class MainMenu:
+    """Main menu for New Game/Continue options."""
+    
+    def __init__(self):
+        self.selected_option = 0
+        self.options = ["Continue Game", "New Game", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Exit"]
+        self.show_warning = False
+        self.warning_selection = 0
+    
+    def render(self, console: tcod.console.Console) -> None:
+        """Render the main menu."""
+        console.clear()
+        
+        if self.show_warning:
+            self._render_warning_dialog(console)
+        else:
+            self._render_main_menu(console)
+    
+    def _render_main_menu(self, console: tcod.console.Console) -> None:
+        """Render the main menu screen."""
+        # Title
+        title = "ROGUE SIGNAL PROTOCOL"
+        subtitle = "Cyberpunk Stealth Infiltration"
+        console.print(
+            GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8,
+            title, fg=Colors.CYAN
+        )
+        console.print(
+            GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9,
+            subtitle, fg=Colors.CYAN
+        )
+        
+        # Version and build info
+        console.print(
+            GameConfig.SCREEN_WIDTH // 2 - 10, 11,
+            "v1.0 - Enhanced Edition", fg=(128, 128, 128)
+        )
+        
+        # Menu options
+        start_y = 16
+        for i, option in enumerate(self.options):
+            color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
+            prefix = "> " if i == self.selected_option else "  "
+            console.print(
+                GameConfig.SCREEN_WIDTH // 2 - len(option) // 2 - 1, start_y + i * 2,
+                f"{prefix}{option}", fg=color
+            )
+        
+        # Save file info
+        if SaveGameManager.save_exists():
+            console.print(
+                GameConfig.SCREEN_WIDTH // 2 - 15, start_y + len(self.options) * 2 + 2,
+                "Save file found - Continue to resume", fg=Colors.GREEN
+            )
+        
+        # Controls
+        console.print(
+            GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
+            "↑/↓ or W/S: Navigate", fg=(128, 128, 128)
+        )
+        console.print(
+            GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
+            "Enter: Select", fg=(128, 128, 128)
+        )
+        console.print(
+            GameConfig.SCREEN_WIDTH // 2 - 8, GameConfig.SCREEN_HEIGHT - 4,
+            "ESC: Exit", fg=(128, 128, 128)
+        )
+        
+        # Story fragments info
+        if SaveGameManager.save_exists():
+            story_manager = StoryFragmentManager()
+            discovered, total = story_manager.get_fragment_count()
+            console.print(
+                GameConfig.SCREEN_WIDTH // 2 - 12, GameConfig.SCREEN_HEIGHT - 2,
+                f"Story Fragments: {discovered}/{total}", fg=Colors.CYAN
+            )
+    
+    def _render_warning_dialog(self, console: tcod.console.Console) -> None:
+        """Render save deletion warning dialog."""
+        # Dim background
+        for x in range(GameConfig.SCREEN_WIDTH):
+            for y in range(GameConfig.SCREEN_HEIGHT):
+                console.print(x, y, ' ', fg=Colors.BLACK, bg=(64, 64, 64))
+        
+        # Dialog box
+        dialog_width = 50
+        dialog_height = 12
+        start_x = (GameConfig.SCREEN_WIDTH - dialog_width) // 2
+        start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
+        
+        # Draw dialog background
+        for x in range(start_x, start_x + dialog_width):
+            for y in range(start_y, start_y + dialog_height):
+                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
+        
+        # Draw border
+        for x in range(start_x, start_x + dialog_width):
+            console.print(x, start_y, '═', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(x, start_y + dialog_height - 1, '═', fg=Colors.RED, bg=Colors.BLACK)
+        for y in range(start_y, start_y + dialog_height):
+            console.print(start_x, y, '║', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(start_x + dialog_width - 1, y, '║', fg=Colors.RED, bg=Colors.BLACK)
+        
+        # Title
+        console.print(start_x + dialog_width // 2 - 7, start_y + 2, "WARNING", fg=Colors.RED, bg=Colors.BLACK)
+        
+        # Message
+        messages = [
+            "Starting a new game will delete your",
+            "current save file permanently.",
+            "",
+            "This will erase all progress including:",
+            "• Current level and character state",
+            "• Inventory and upgrades", 
+            "• Story fragments remain safe",
+            "",
+            "Are you sure you want to continue?"
+        ]
+        
+        for i, msg in enumerate(messages):
+            console.print(start_x + 2, start_y + 4 + i, msg, fg=Colors.WHITE, bg=Colors.BLACK)
+        
+        # Options
+        options = ["Yes, Delete Save", "No, Go Back"]
+        for i, option in enumerate(options):
+            color = Colors.RED if i == self.warning_selection and i == 0 else Colors.YELLOW if i == self.warning_selection else Colors.WHITE
+            prefix = "> " if i == self.warning_selection else "  "
+            console.print(
+                start_x + dialog_width // 2 - len(option) // 2 - 1, 
+                start_y + dialog_height - 3 + i,
+                f"{prefix}{option}", fg=color, bg=Colors.BLACK
+            )
+    
+    def handle_input(self, event) -> str:
+        """Handle menu input. Returns action: 'continue', 'new_game', 'exit', or ''."""
+        if self.show_warning:
+            return self._handle_warning_input(event)
+        else:
+            return self._handle_menu_input(event)
+    
+    def _handle_menu_input(self, event) -> str:
+        """Handle main menu input."""
+        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W):
+            self.selected_option = (self.selected_option - 1) % len(self.options)
+        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S):
+            self.selected_option = (self.selected_option + 1) % len(self.options)
+        elif event.sym == tcod.event.KeySym.RETURN:
+            option = self.options[self.selected_option]
+            if option == "Continue Game":
+                return "continue"
+            elif option == "New Game":
+                if SaveGameManager.save_exists():
+                    self.show_warning = True
+                    self.warning_selection = 1  # Default to "No"
+                else:
+                    return "new_game"
+            elif option == "Exit":
+                return "exit"
+        elif event.sym == tcod.event.KeySym.ESCAPE:
+            return "exit"
+        
+        return ""
+    
+    def _handle_warning_input(self, event) -> str:
+        """Handle warning dialog input."""
+        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.DOWN, tcod.event.KeySym.W, tcod.event.KeySym.S):
+            self.warning_selection = 1 - self.warning_selection
+        elif event.sym == tcod.event.KeySym.RETURN:
+            if self.warning_selection == 0:  # Yes, Delete Save
+                SaveGameManager.delete_save()
+                return "new_game"
+            else:  # No, Go Back
+                self.show_warning = False
+        elif event.sym == tcod.event.KeySym.ESCAPE:
+            self.show_warning = False
+        
+        return ""
+
+
 def main():
-    """Main game loop with improved error handling."""
+    """Main game loop with main menu and save/load functionality."""
     try:
         with initialize_tcod_context() as context:
             console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
-            game = Game()
+            
+            # Show main menu first
+            menu = MainMenu()
+            
+            while True:
+                menu.render(console)
+                context.present(console)
+                
+                for event in tcod.event.wait():
+                    if event.type == "QUIT":
+                        return
+                    elif event.type == "KEYDOWN":
+                        action = menu.handle_input(event)
+                        
+                        if action == "exit":
+                            return
+                        elif action == "continue":
+                            # Load existing game
+                            game = Game(load_save=True)
+                            break
+                        elif action == "new_game":
+                            # Start new game
+                            game = Game(load_save=False)
+                            break
+                
+                # If we broke out of the menu loop, start the game
+                if 'game' in locals():
+                    break
+            
+            # Initialize game systems
             renderer = Renderer()
             input_handler = InputHandler(game)
 
-            # Initial welcome messages - Remove tutorial references
-            game.message_log.add_message("Welcome to Rogue Signal Protocol v51!")
-            game.message_log.add_message("Enhanced UI with right-side system log")
-            game.message_log.add_message("8-way movement and improved combat")
-            game.message_log.add_message("Navigate using stealth")
-            game.message_log.add_message("Reach the gateway (>)")
-            game.message_log.add_message("Hide in shadows (.) to avoid detection")
-            game.message_log.add_message("Starting Corporate Network infiltration...")
+            # Initial welcome messages
+            if not SaveGameManager.save_exists():  # Only show on new game
+                game.message_log.add_message("Welcome to Rogue Signal Protocol v1.0!")
+                game.message_log.add_message("Enhanced Edition with save/load and story fragments")
+                game.message_log.add_message("Navigate using stealth")
+                game.message_log.add_message("Reach the gateway (>)")
+                game.message_log.add_message("Hide in shadows (.) to avoid detection")
+                game.message_log.add_message("Press 'L' to view discovered lore")
+                game.message_log.add_message("Starting Corporate Network infiltration...")
 
             # Main game loop
             while True:
@@ -4465,9 +5042,13 @@ def main():
                     # Handle input events
                     for event in tcod.event.wait():
                         if event.type == "QUIT":
+                            # Auto-save on quit
+                            game.auto_save()
                             return
                         elif event.type == "KEYDOWN":
                             if not input_handler.handle_keydown(event):
+                                # Auto-save on game exit
+                                game.auto_save()
                                 return  # Exit game
                         
                 except Exception as e:
