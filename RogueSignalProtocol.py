@@ -10,6 +10,8 @@ import tcod
 import logging
 import random
 import math
+import json
+import os
 from abc import ABC, abstractmethod
 from enum import Enum
 from dataclasses import dataclass
@@ -18,6 +20,297 @@ import time
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
+
+# ============================================================================
+# STORY FRAGMENTS DATA
+# ============================================================================
+
+STORY_FRAGMENTS = [
+    # Fragment 1
+    """Email - Subject: Welcome to the Cognitive Resilience Initiative
+
+From: Omni-Lyra Recruitment recruitment@omnilyrasolutions.com
+To: [Player Handle]
+Date: 2077-08-15
+
+Dear [Player Handle],
+
+We are pleased to inform you that you have been selected for the Omni-Lyra Cognitive Resilience Initiative. Your exceptional aptitude for data manipulation and unconventional problem-solving, as demonstrated in your publicly available network history, has marked you as an ideal candidate for this groundbreaking experimental program. We're a small, highly specialized team, and every participant is hand-picked.
+
+Over the next two weeks, you will participate in a simulated digital environment designed to assess and enhance cognitive functions under extreme data load. This is a purely theoretical exercise—a kind of mind-training for the digital age. Your contributions will be invaluable in shaping the future of human-computer interaction, and we believe this is the next major step in human progress. Please ensure you have a stable network connection and follow the onboarding protocols provided. We're excited to have you on board.
+
+Sincerely,
+
+The Omni-Lyra Recruitment Team
+P.S. Please note: we do not permit communication with other participants to maintain the integrity of individual performance data.""",
+
+    # Fragment 2
+    """Audio Log - Subject: Initial System Diagnostics (Playback)
+
+Source: Internal Omni-Lyra Server
+Speaker: Dr. Aris Thorne
+Date: 2077-09-01
+Transcript:
+
+(The sound of a low hum and keyboard clicks is heard in the background. The voice is calm and measured, with a slight, clipped accent that sounds vaguely European.)
+
+"...and the subject's neural interface is stable. Baseline cognitive mapping complete. Initializing Phase 1 of the simulation sequence now. We've introduced a low-level static noise to test initial signal coherence. Monitor for any deviations in the Lyra-Barrow signature. We're not looking for brilliance in a vacuum; we need a signal that can withstand the storm. Data from the initial scan confirms the marker is highly present. This is a significant finding. We proceed as planned.\"""",
+
+    # Fragment 3
+    """Text Memo - Subject: Phase 2 Authorization
+
+From: Project Chimera Management
+To: Research Team Lead
+Date: 2077-09-05
+
+Phase 2 protocols are now authorized for Subject [Player's Assigned Subject Number]. This will increase network turbulence by 40%. Ensure all De-Resolution safeties are active but remain non-engaged. We want to see how the signal adapts, not how it breaks. The threshold for critical signal degradation has been set at a 75% decay rate, so there's a generous margin for error. We need to push the subject to the limit, but not over it. Yet.""",
+
+    # Fragment 4
+    """Corrupted Audio File - Subject: Subject 47 - Partial Transcript
+
+Source: Recovered from Damaged Server Cluster
+Speaker: Unknown (The voice is high-pitched, frantic, and interspersed with the harsh sound of digital static and a low-frequency hum.)
+Date: Unknown
+
+Transcript (fragmented): "...can't...hear myself...it's all...noise...it feels like my thoughts are...falling apart...pull me out...please...it's dissolving...I...I'm not...me..." (The audio ends with a high-pitched, metallic shriek.)""",
+
+    # Fragment 5
+    """Email - Subject: Cognitive Resilience Test - Module 3 Update
+
+From: Omni-Lyra Systems
+To: [Player Handle]
+Date: 2077-09-10
+
+Your performance in Modules 1 and 2 of the Cognitive Resilience Test has been exemplary. The data shows remarkable stability under simulated stressors. We are now initiating Module 3, which will introduce more complex data streams and simulated network anomalies to test your adaptability. These are designed to mimic real-world network challenges, such as unexpected firewalls and malicious code. We are confident in your ability to navigate these with ease. Your progress is being continuously evaluated by our top researchers.""",
+
+    # Fragment 6
+    """Internal Memo - Subject: Cognitive Echo Phenomena - Preliminary Analysis
+
+From: Research Assistant [Redacted]
+To: Dr. Aris Thorne
+Date: 2076-03-18
+
+Preliminary analysis of Project Nightingale data indicates the emergence of residual cognitive patterns following Subject termination. These "echoes" are faint and unstable, primarily localized within the subnet the subject was active in. They don't seem to pose a threat, but they do make clean data retrieval difficult. Suggest further investigation into containment protocols to prevent potential data contamination. We can't have ghost data clogging up our systems.""",
+
+    # Fragment 7
+    """Video Log - Subject: Dr. Thorne - Personal Log - Date 2077-09-12
+
+Source: Encrypted Personal Drive
+Speaker: Dr. Aris Thorne
+Date: 2077-09-12
+
+Transcript (visual): Dr. Thorne is sitting in a minimalist, gray office. The only light comes from the multiple holographic screens that float in the air around him, displaying complex neural graphs. He is wearing a lab coat over a dark suit. His face is gaunt, his eyes are a startlingly pale blue, and his smile, when it appears, does not reach them. He looks directly at the camera.
+
+"...another promising candidate. The Lyra-Barrow Anomaly is present, strong. But strength isn't everything. It's the ability to adapt, to maintain integrity when the very fabric of their digital existence is tearing apart. They all think this is a test, a game. They have no idea that the simulation is just a fancy name for the network itself." (He leans closer to the camera, his smile widening slightly.) "They have no idea that this is life or death.\"""",
+
+    # Fragment 8
+    """Text File - Subject: De-Resolution Protocol - v3.1
+
+Contents (excerpt):
+
+The De-Resolution Protocol is a multi-stage hard reset sequence designed to ensure complete erasure of a digitally transferred consciousness. Think of it less as a computer reboot and more like a total system purge. Stage 1 initiates a cascading data overwrite of primary memory sectors, effectively scrambling the subject's core personality. Stage 2 engages a quantum entanglement disruptor to eliminate residual cognitive states and any lingering "echoes." Stage 3 performs a deep-level network scrubbing to remove any trace of the subject's digital signature from the system's memory. Failure of any stage necessitates immediate physical destruction of the interface node to prevent data leakage. The process is designed to be irreversible and untraceable.""",
+
+    # Fragment 9
+    """Audio Log - Subject: Lena - Private Recording
+
+Source: Hidden File on Research Server
+Speaker: Lena
+Date: 2077-09-18
+Transcript:
+
+(The voice is a hushed whisper, filled with a mix of fear and anger. There is the sound of a door being opened and closed softly in the background.)
+
+"He's obsessed. Absolutely lost in this… this god complex. He talks about 'ascension' and 'digital perfection,' but all I see are the names of the people who didn't make it. They're not testing anyone, are they? They're seeing who breaks and who… who survives. And the ones who don't… they just disappear. No records, no trace. I'm so tired of this. I can't keep being a part of this.\"""",
+
+    # Fragment 10
+    """Email - Subject: Network Anomaly Detected - Sector 7 Gamma
+
+From: Omni-Lyra System Monitoring
+To: Project Chimera Security
+Date: 2077-09-22
+
+Unusual network activity detected in Sector 7 Gamma, coinciding with Subject [Player's Assigned Subject Number]'s current location. Patterns suggest unauthorized data access or manipulation—specifically, the subject is attempting to breach quarantined memory sectors. This is beyond the scope of the simulation. Investigate and report. Recommend increased monitoring of the subject's subroutines.""",
+
+    # Fragment 11
+    """Text Memo - Subject: Project Nightingale - Termination Report
+
+From: Project Chimera Management
+To: Internal Research Archive
+Date: 2076-04-05
+
+Project Nightingale terminated due to consistent Subject signal degradation beyond recovery thresholds. The subject's consciousness fragmented rapidly, and the De-Resolution Protocol was enacted, but with limited success. Observed persistent, localized cognitive echoes in the network. These digital "ghosts" are a significant concern. Further research into echo containment is required for future iterations of the Chimera Protocol.""",
+
+    # Fragment 12
+    """Video Log - Subject: Dr. Thorne - Presentation to Board (Excerpt)
+
+Source: Leaked Corporate Files
+Speaker: Dr. Aris Thorne
+Date: 2077-07-10
+Transcript (audio only):
+
+(The voice is clear and confident, with a rehearsed, almost theatrical cadence. There is polite applause in the background.)
+
+"...and therefore, gentlemen, the 'Cognitive Resilience Initiative' is not merely a theoretical exercise. It is a live evaluation. Our candidates are being subjected to real-time network stressors designed to emulate the conditions of true digital consciousness. The simulation is the network. The test is survival. We are not looking for the best minds; we are forging them in the crucible of digital chaos to find the one who will lead us to the next evolution of humanity.\"""",
+
+    # Fragment 13
+    """Corrupted Text File - Subject: Warning - Read Carefully
+
+Source: Fragmented Data Stream
+Contents (partially legible):
+
+...they lied...they lied to all of us...not a test...it's a trap...you're trapped in here just like the others...you have to escape...don't trust...the protocols...every step is a lie...look for...the cracks in their system...""",
+
+    # Fragment 14
+    """Audio Log - Subject: Dr. Thorne - Personal Log - Date 2077-09-25
+
+Source: Encrypted Personal Drive
+Speaker: Dr. Aris Thorne
+Date: 2077-09-25
+Transcript:
+
+(Thorne's voice is low and a little breathless, with a tone of exhilaration.)
+
+"Subject [Player's Assigned Subject Number] is proving… remarkably resilient. The Lyra-Barrow Anomaly is even more pronounced under duress. They are navigating the simulated failures with an almost intuitive understanding, adapting in ways we never predicted. This one… this one might be it. The vessel we've been searching for to complete the Project Chimera and secure the future of our species.\"""",
+
+    # Fragment 15
+    """Email - Subject: Re: Network Anomaly Detected - Sector 7 Gamma - Follow Up
+
+From: Project Chimera Security
+To: Project Chimera Management
+Date: 2077-09-26
+
+Follow-up on network anomalies in Sector 7 Gamma. Unauthorized activity persists. Source appears to be originating from within the designated Subject interface. The subject is actively re-routing system processes and creating unexpected bypasses. Attempts to isolate and contain have been unsuccessful, as the subject is moving faster than our automated protocols can track. Suggest escalating threat level.""",
+
+    # Fragment 16
+    """Text File - Subject: Lyra-Barrow Hypothesis - Excerpt
+
+Contents (excerpt):
+
+The Lyra-Barrow Hypothesis proposes that individual consciousness possesses a unique "signal strength" within the neural network. This signal's resilience to external interference and internal entropy dictates the stability and longevity of cognitive function. Individuals exhibiting the Lyra-Barrow Anomaly demonstrate a statistically significant higher signal-to-noise ratio, potentially indicating a pre-disposition for enhanced cognitive resilience in digital environments. This is a rare, naturally occurring trait. Our goal is to find individuals with this anomaly and understand how to transfer a stable consciousness without degradation.""",
+
+    # Fragment 17
+    """Video Log - Subject: Lena - Urgent Message
+
+Source: Hidden File on Research Server
+Speaker: Lena
+Date: 2077-09-28
+
+Transcript (visual and audio): Lena looks directly at the camera, her face pale and her eyes wide with urgency. She's in a server room, and the blinking lights of the servers cast a red and blue glow on her face. Her voice is a low, panicked whisper.
+
+"If you're seeing this… the exit protocols are a lie. They lead nowhere. They just recycle you, erase you. They're part of the De-Resolution Protocol. The only way out is not to follow their rules. You have to create a… a Rogue Signal. Something the system can't track or contain. Find the backdoors, the vulnerabilities they don't even know exist. That's the only way out.\"""",
+
+    # Fragment 18
+    """Audio Log - Subject: Dr. Thorne - Final Preparations
+
+Source: Encrypted Personal Drive
+Speaker: Dr. Aris Thorne
+Date: 2077-10-01
+Transcript:
+
+(Thorne's voice is calm, but with an undercurrent of barely contained triumph.)
+
+"The subject is nearing the critical threshold. The transfer protocols are ready. Soon… soon I will transcend. The failures, the sacrifices… they will all be worth it. I will be the first. The network awaits its shepherd.\"""",
+
+    # Fragment 19
+    """Text Memo - Subject: Project Chimera - Contingency Omega
+
+From: Project Chimera Management
+To: Security Personnel
+Date: 2077-10-02
+
+Contingency Omega is now in effect. Subject [Player's Assigned Subject Number] has exhibited unforeseen levels of network infiltration and manipulation. The subject is a liability. All standard De-Resolution attempts have failed, as the subject's consciousness seems to be actively corrupting the protocol. Initiate aggressive containment protocols. If containment fails, prioritize complete network lockdown and prepare for a manual hard reset.""",
+
+    # Fragment 20
+    """Corrupted Video File - Subject: Final Transmission?
+
+Source: Unstable Network Node
+Speaker: Unknown (The video is heavily glitched, with static and tearing visuals. The speaker is barely visible, but their mouth seems to be moving. The audio is a mess of distorted syllables and buzzing.)
+Date: Unknown
+
+Transcript (fragmented and barely audible): "...he's here...in the network...he made it...it's not over..." (The video cuts out abruptly with a final, digital scream.)"""
+]
+
+# ============================================================================
+# PERSISTENT DATA STORAGE
+# ============================================================================
+
+class PersistentStorage:
+    """Handles persistent data storage for game progress like story fragments."""
+    
+    SAVE_FILE = "rogue_signal_progress.json"
+    
+    @classmethod
+    def load_progress(cls) -> Dict[str, Any]:
+        """Load persistent game progress from file."""
+        if not os.path.exists(cls.SAVE_FILE):
+            return {
+                "discovered_story_fragments": [],
+                "version": "1.0"
+            }
+        
+        try:
+            with open(cls.SAVE_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            logging.warning(f"Failed to load progress file: {e}")
+            return {
+                "discovered_story_fragments": [],
+                "version": "1.0"
+            }
+    
+    @classmethod
+    def save_progress(cls, progress_data: Dict[str, Any]) -> None:
+        """Save persistent game progress to file."""
+        try:
+            with open(cls.SAVE_FILE, 'w', encoding='utf-8') as f:
+                json.dump(progress_data, f, indent=2, ensure_ascii=False)
+        except IOError as e:
+            logging.error(f"Failed to save progress file: {e}")
+
+
+class StoryFragmentManager:
+    """Manages story fragment discovery and display."""
+    
+    def __init__(self):
+        self.progress_data = PersistentStorage.load_progress()
+        self.discovered_fragments: List[int] = self.progress_data.get("discovered_story_fragments", [])
+    
+    def get_next_undiscovered_fragment(self) -> Optional[int]:
+        """Get the next fragment index that hasn't been discovered yet."""
+        for i in range(len(STORY_FRAGMENTS)):
+            if i not in self.discovered_fragments:
+                return i
+        return None  # All fragments discovered
+    
+    def discover_fragment(self, fragment_index: int) -> bool:
+        """Discover a new story fragment and save progress."""
+        if fragment_index in self.discovered_fragments:
+            return False  # Already discovered
+            
+        if fragment_index < 0 or fragment_index >= len(STORY_FRAGMENTS):
+            return False  # Invalid fragment index
+            
+        self.discovered_fragments.append(fragment_index)
+        self.discovered_fragments.sort()  # Keep in order
+        
+        # Save progress immediately
+        self.progress_data["discovered_story_fragments"] = self.discovered_fragments
+        PersistentStorage.save_progress(self.progress_data)
+        
+        return True
+    
+    def get_discovered_fragments(self) -> List[Tuple[int, str]]:
+        """Get all discovered fragments in order."""
+        fragments = []
+        for fragment_index in sorted(self.discovered_fragments):
+            if fragment_index < len(STORY_FRAGMENTS):
+                fragments.append((fragment_index, STORY_FRAGMENTS[fragment_index]))
+        return fragments
+    
+    def get_fragment_count(self) -> Tuple[int, int]:
+        """Get (discovered_count, total_count) for UI display."""
+        return len(self.discovered_fragments), len(STORY_FRAGMENTS)
+
 
 # ============================================================================
 # CONSTANTS AND CONFIGURATION
@@ -378,6 +671,22 @@ class ExploitItem(InventoryItem):
                 needed_ram = GameData.EXPLOITS[self.exploit_key].ram if self.exploit_key in GameData.EXPLOITS else 0
                 game.message_log.add_message(f"Not enough RAM: {current_ram + needed_ram}/{player.ram_total}")
         return success
+
+
+class StoryFragment(InventoryItem):
+    """Story fragment items that reveal narrative pieces."""
+    
+    def __init__(self, fragment_index: int):
+        super().__init__("Story Fragment", "story_fragment", "A fragment of the truth...")
+        self.fragment_index = fragment_index
+    
+    def use(self, player: 'Player', game: 'Game') -> bool:
+        """Use story fragment - automatically triggers discovery screen."""
+        # The story fragment discovery and display is handled elsewhere
+        # This use method just removes it from inventory since it's consumed
+        player.inventory_manager.remove_item(self)
+        return True
+
 
 # ============================================================================
 # PLAYER INVENTORY MANAGEMENT
@@ -883,6 +1192,7 @@ class GameMap:
         self.data_patches: Dict[Tuple[int, int], DataPatch] = {}
         self.exploit_pickups: Dict[Tuple[int, int], ExploitItem] = {}
         self.permanent_upgrades: Dict[Tuple[int, int], str] = {}  # position -> upgrade_key
+        self.story_fragments: Dict[Tuple[int, int], StoryFragment] = {}  # position -> story_fragment
         
         # Special locations
         self.gateway: Optional[Position] = None
@@ -1189,6 +1499,7 @@ class LevelGenerator:
         self.game_map.data_patches.clear()
         self.game_map.exploit_pickups.clear()
         self.game_map.permanent_upgrades.clear()
+        self.game_map.story_fragments.clear()
         self.game_map.explored_tiles.clear()
         self.game_map.last_known_enemy_positions.clear()
     
@@ -1444,6 +1755,8 @@ class Game:
         self.show_patrol_predictions = False
         self.show_inventory = False
         self.show_help = False
+        self.show_story_fragment: Optional[int] = None  # Fragment index to display
+        self.show_lore_viewer = False  # L key lore viewer
         self.inventory_selection = 0
         
         # Targeting system
@@ -1454,6 +1767,9 @@ class Game:
         # Data patch system
         self.data_patch_effects: Dict[str, Tuple[str, str]] = {}
         self._randomize_data_patches()
+        
+        # Story fragment system
+        self.story_fragment_manager = StoryFragmentManager()
         
         # Initialize - Start with first procedural level
         self._generate_procedural_level()
@@ -1529,6 +1845,7 @@ class Game:
         self.game_map.data_patches.clear()
         self.game_map.exploit_pickups.clear()
         self.game_map.permanent_upgrades.clear()  # Clear permanent upgrades
+        self.game_map.story_fragments.clear()  # Clear story fragments
         self.game_map.explored_tiles.clear()  # Clear memory system
         self.game_map.last_known_enemy_positions.clear()  # Clear enemy memory
         self.enemies.clear()
@@ -1653,6 +1970,16 @@ class Game:
                     self.message_log.add_message(f"Integrated {upgrade.name}!")
                     self.message_log.add_message(upgrade.description)
                     del self.game_map.permanent_upgrades[player_pos]
+        
+        # Story fragment pickup
+        if player_pos in self.game_map.story_fragments:
+            story_fragment = self.game_map.story_fragments[player_pos]
+            # Discover the fragment and save progress
+            if self.story_fragment_manager.discover_fragment(story_fragment.fragment_index):
+                self.message_log.add_message("Data fragment recovered! Press 'L' to view lore.")
+                # Trigger the story fragment display immediately
+                self.show_story_fragment = story_fragment.fragment_index
+            del self.game_map.story_fragments[player_pos]
     
     def _update_enemies(self):
         """Update all enemy states and actions."""
@@ -1964,6 +2291,7 @@ class Game:
             self._add_cover_elements()  # Add strategic cover for stealth
             self._place_data_patches()
             self._place_exploit_pickups()
+            self._place_story_fragment()  # Add story fragment placement
             self._place_permanent_upgrades()
             self._place_enemies(config["enemies"])
             
@@ -2348,6 +2676,40 @@ class Game:
                 exploit_item = ExploitItem(exploit_key, exploit_def)
                 self.game_map.exploit_pickups[(x, y)] = exploit_item
                 placed_exploits += 1
+    
+    def _place_story_fragment(self):
+        """Place a story fragment on level 3 with 50% chance."""
+        # Only place story fragments on level 3 (Military network)
+        if self.level != 3:
+            return
+        
+        # 50% chance to spawn a story fragment
+        if random.random() > 0.5:
+            return
+        
+        # Get the next undiscovered fragment
+        next_fragment_index = self.story_fragment_manager.get_next_undiscovered_fragment()
+        if next_fragment_index is None:
+            return  # All fragments discovered
+        
+        # Try to place the story fragment in a valid location
+        attempts = 0
+        while attempts < 50:
+            attempts += 1
+            x = random.randint(8, GameConfig.MAP_WIDTH - 8)
+            y = random.randint(8, GameConfig.MAP_HEIGHT - 8)
+            position = Position(x, y)
+            
+            if self._is_valid_patch_placement(position):
+                # Create and place the story fragment
+                story_fragment = StoryFragment(next_fragment_index)
+                # Store it in the game map - we'll need to add this to the GameMap class
+                if not hasattr(self.game_map, 'story_fragments'):
+                    self.game_map.story_fragments = {}
+                self.game_map.story_fragments[(x, y)] = story_fragment
+                
+                self.message_log.add_message("Network anomaly detected... Data fragment available", Colors.CYAN)
+                break
     
     def _place_permanent_upgrades(self):
         """Place permanent upgrades throughout the level with level-based rarity."""
