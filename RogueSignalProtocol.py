@@ -1539,17 +1539,7 @@ class GameStateManager:
         if self.admin_spawned:
             return False
             
-        config = self.get_current_network_config()
-        spawn_threshold = GameBalance.ADMIN_SPAWN_THRESHOLD
-        
-        if self.level == 1:  # Corporate
-            spawn_threshold = 100  # Spawn at 100% for corporate
-        elif self.level == 2:  # Government  
-            spawn_threshold = 75   # Spawn at 75% for government
-        elif self.level == 3:  # Military
-            spawn_threshold = 50   # Spawn at 50% for military
-            
-        return detection_level >= spawn_threshold
+        return detection_level >= 100
 
 
 class EnemyManager:
@@ -1697,6 +1687,13 @@ class LevelGenerator:
         
         # Generate rooms
         rooms = self._generate_rooms(level)
+        
+        # Debug: Ensure we have at least one room
+        if not rooms:
+            # Emergency fallback - create a basic room in the center
+            center_room = (GameConfig.MAP_WIDTH // 4, GameConfig.MAP_HEIGHT // 4, 10, 10)
+            rooms.append(center_room)
+            self._carve_room(center_room)
         
         # Connect rooms with corridors
         self._connect_rooms_with_corridors(rooms)
@@ -2243,6 +2240,32 @@ class Game:
             self.game_map.walls.add((0, y))
             self.game_map.walls.add((GameConfig.MAP_WIDTH - 1, y))
         
+    def _find_valid_spawn_position(self) -> Position:
+        """Find a valid open position to spawn the player."""
+        # Try common spawn locations first
+        preferred_positions = [
+            Position(5, 5), Position(10, 10), Position(15, 15), Position(20, 20),
+            Position(25, 25), Position(30, 30), Position(35, 35)
+        ]
+        
+        for pos in preferred_positions:
+            if (pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                not self.game_map.is_wall(pos)):
+                return pos
+        
+        # If no preferred position works, scan for any open tile
+        for x in range(1, GameConfig.MAP_WIDTH - 1):
+            for y in range(1, GameConfig.MAP_HEIGHT - 1):
+                pos = Position(x, y)
+                if not self.game_map.is_wall(pos):
+                    return pos
+        
+        # Emergency fallback - force clear a position
+        fallback_pos = Position(5, 5)
+        if (fallback_pos.x, fallback_pos.y) in self.game_map.walls:
+            self.game_map.walls.remove((fallback_pos.x, fallback_pos.y))
+        return fallback_pos
+
     def _reset_player_state(self, x: int, y: int):
         """Reset player to starting state."""
         self.player.position = Position(x, y)
@@ -2288,8 +2311,8 @@ class Game:
     
     def _update_network_scan(self):
         """Update network scan effect."""
-        if self.network_scan_turns > 0:
-            self.network_scan_turns -= 1
+        if self.game_state.network_scan_turns > 0:
+            self.game_state.network_scan_turns -= 1
     
     def _update_memory_system(self):
         """Update the hybrid fog of war memory system."""
@@ -2466,7 +2489,7 @@ class Game:
     
     def _check_admin_spawn(self):
         """Check if admin avatar should spawn."""
-        if (self.player.detection >= GameConfig.ADMIN_SPAWN_THRESHOLD and 
+        if (self.player.detection >= 100 and 
             not self.admin_spawned and 
             not any(e.type == 'admin' for e in self.enemies)):
             self._spawn_admin_avatar()
@@ -2683,13 +2706,20 @@ class Game:
             self._place_permanent_upgrades()
             self._place_enemies(config["enemies"])
             
-            # Reset player state
-            self._reset_player_state(5, 5)
+            # Reset player state to a valid open position
+            spawn_pos = self._find_valid_spawn_position()
+            self._reset_player_state(spawn_pos.x, spawn_pos.y)
+            self.message_log.add_message(f"Player spawned at ({spawn_pos.x}, {spawn_pos.y})")
             self.player.detection = max(0, self.player.detection - 20)
             self.player.heat = max(0, self.player.heat - 30)
             
             self.message_log.add_message(f"{config['name']} loaded")
             self.message_log.add_message(f"{len(self.enemies)} security processes")
+            # Debug info about map generation
+            wall_count = len(self.game_map.walls)
+            total_tiles = GameConfig.MAP_WIDTH * GameConfig.MAP_HEIGHT
+            open_tiles = total_tiles - wall_count
+            self.message_log.add_message(f"Map: {open_tiles} open tiles, {wall_count} walls")
             
         finally:
             # Restore random seed
@@ -3564,7 +3594,7 @@ class ExploitSystem:
     
     def _execute_network_scan(self) -> bool:
         """Execute enhanced network scan exploit."""
-        self.game.network_scan_turns = 5  # Shorter duration but more powerful
+        self.game.game_state.network_scan_turns = 5  # Shorter duration but more powerful
         
         # Network scan reveals entire map layout
         for x in range(GameConfig.MAP_WIDTH):
@@ -4363,8 +4393,8 @@ class UIRenderer:
                 conditions.append(f"{display_name}({turns})")
         
         # Network scan effect
-        if game.network_scan_turns > 0:
-            conditions.append(f"Network Scan({game.network_scan_turns})")
+        if game.game_state.network_scan_turns > 0:
+            conditions.append(f"Network Scan({game.game_state.network_scan_turns})")
         
         # Speed moves remaining (from speed boost)
         if game.player.speed_moves_remaining > 0:
@@ -4564,7 +4594,7 @@ class MapRenderer:
         if game.player.is_invisible():
             return
         
-        network_scan_active = game.network_scan_turns > 0
+        network_scan_active = game.game_state.network_scan_turns > 0
         
         for enemy in game.enemies:
             if enemy.disabled_turns > 0:
@@ -4623,7 +4653,7 @@ class MapRenderer:
     def _render_patrol_routes(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render next 3 predicted moves for all moving enemies."""
         
-        network_scan_active = game.network_scan_turns > 0
+        network_scan_active = game.game_state.network_scan_turns > 0
         
         for enemy in game.enemies:
             # Show patrol routes for visible enemies OR if Network Scan is active
@@ -4717,7 +4747,7 @@ class MapRenderer:
             if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
                 1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                 # Check if Network Scan is active (shows all enemies)
-                network_scan_active = game.network_scan_turns > 0
+                network_scan_active = game.game_state.network_scan_turns > 0
                 can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
                 
                 if can_see_enemy or network_scan_active:
@@ -4888,7 +4918,7 @@ class MainMenu:
         # Controls
         console.print(
             GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
-            "↑/↓ or W/S: Navigate", fg=(128, 128, 128)
+            "UP/DOWN or W/S: Navigate", fg=(128, 128, 128)
         )
         console.print(
             GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
@@ -4917,7 +4947,7 @@ class MainMenu:
         
         # Dialog box
         dialog_width = 50
-        dialog_height = 12
+        dialog_height = 18
         start_x = (GameConfig.SCREEN_WIDTH - dialog_width) // 2
         start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
         
