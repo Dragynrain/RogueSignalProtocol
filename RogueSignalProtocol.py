@@ -3235,6 +3235,16 @@ class InputHandler:
             self.game.show_help = False
             return True
         
+        if self.game.show_story_fragment is not None:
+            # Any key closes the story fragment display
+            self.game.show_story_fragment = None
+            return True
+        
+        if self.game.show_lore_viewer:
+            # ESC already handled, any other key closes lore viewer
+            self.game.show_lore_viewer = False
+            return True
+        
         if self.game.show_inventory:
             return self._handle_inventory_input(event)
         
@@ -3246,7 +3256,11 @@ class InputHandler:
     
     def _handle_escape(self) -> bool:
         """Handle escape key in different contexts."""
-        if self.game.show_help:
+        if self.game.show_story_fragment is not None:
+            self.game.show_story_fragment = None
+        elif self.game.show_lore_viewer:
+            self.game.show_lore_viewer = False
+        elif self.game.show_help:
             self.game.show_help = False
         elif self.game.show_inventory:
             self.game.show_inventory = False
@@ -3354,6 +3368,8 @@ class InputHandler:
         # UI toggles
         elif event.sym == tcod.event.KeySym.I:
             self._open_inventory()
+        elif event.sym == tcod.event.KeySym.L:
+            self.game.show_lore_viewer = True
         elif event.sym == tcod.event.KeySym.SLASH and (event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)):
             self.game.show_help = True
         
@@ -3449,7 +3465,11 @@ class Renderer:
         """Render the complete game state."""
         console.clear()
         
-        if game.show_help:
+        if game.show_story_fragment is not None:
+            self.ui_renderer.render_story_fragment_screen(console, game, game.show_story_fragment)
+        elif game.show_lore_viewer:
+            self.ui_renderer.render_lore_viewer_screen(console, game)
+        elif game.show_help:
             self.ui_renderer.render_help_screen(console)
         elif game.show_inventory:
             self.ui_renderer.render_inventory_screen(console, game)
@@ -3710,6 +3730,111 @@ class UIRenderer:
         console.print(4, y_start + 2, "Enter: Use selected item", fg=Colors.WHITE)
         console.print(4, y_start + 3, "U: Unequip selected exploit", fg=Colors.WHITE)
         console.print(4, y_start + 4, "ESC/I: Close inventory", fg=Colors.WHITE)
+    
+    def render_story_fragment_screen(self, console: tcod.console.Console, game: Game, fragment_index: int):
+        """Render a single story fragment discovery screen."""
+        console.clear()
+        
+        # Get the fragment text
+        if fragment_index < 0 or fragment_index >= len(STORY_FRAGMENTS):
+            return
+        
+        fragment_text = STORY_FRAGMENTS[fragment_index]
+        
+        # Header
+        console.print(2, 1, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(GameConfig.SCREEN_WIDTH // 2 - 10, 2, "DATA FRAGMENT RECOVERED", fg=Colors.CYAN)
+        console.print(2, 3, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        
+        # Display fragment content with word wrapping
+        y_offset = 5
+        max_width = GameConfig.SCREEN_WIDTH - 6
+        lines = []
+        
+        # Split into paragraphs first
+        paragraphs = fragment_text.split('\n\n')
+        for paragraph in paragraphs:
+            if not paragraph.strip():
+                lines.append("")
+                continue
+                
+            # Word wrap each paragraph
+            words = paragraph.strip().split()
+            current_line = ""
+            
+            for word in words:
+                if len(current_line + " " + word) <= max_width:
+                    if current_line:
+                        current_line += " " + word
+                    else:
+                        current_line = word
+                else:
+                    if current_line:
+                        lines.append(current_line)
+                    current_line = word
+            
+            if current_line:
+                lines.append(current_line)
+            lines.append("")  # Add blank line between paragraphs
+        
+        # Render the text
+        for i, line in enumerate(lines[:GameConfig.SCREEN_HEIGHT - 10]):
+            console.print(3, y_offset + i, line, fg=Colors.WHITE)
+        
+        # Footer
+        footer_y = GameConfig.SCREEN_HEIGHT - 4
+        console.print(2, footer_y, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(GameConfig.SCREEN_WIDTH // 2 - 15, footer_y + 1, "Press any key to continue...", fg=Colors.YELLOW)
+        console.print(GameConfig.SCREEN_WIDTH // 2 - 12, footer_y + 2, "Press 'L' to view all lore", fg=Colors.YELLOW)
+    
+    def render_lore_viewer_screen(self, console: tcod.console.Console, game: Game):
+        """Render the lore viewer showing all discovered fragments."""
+        console.clear()
+        
+        discovered_fragments = game.story_fragment_manager.get_discovered_fragments()
+        discovered_count, total_count = game.story_fragment_manager.get_fragment_count()
+        
+        # Header
+        console.print(2, 1, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        title = f"RECOVERED DATA FRAGMENTS ({discovered_count}/{total_count})"
+        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.CYAN)
+        console.print(2, 3, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        
+        if not discovered_fragments:
+            # No fragments discovered yet
+            console.print(GameConfig.SCREEN_WIDTH // 2 - 15, 10, "No data fragments discovered yet.", fg=Colors.YELLOW)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 12, "Reach the Military Network (Level 3) to find them.", fg=Colors.WHITE)
+        else:
+            # Show list of discovered fragments with brief previews
+            y_offset = 5
+            max_display_height = GameConfig.SCREEN_HEIGHT - 8
+            
+            for i, (fragment_index, fragment_text) in enumerate(discovered_fragments):
+                if y_offset >= max_display_height:
+                    console.print(3, y_offset, f"... and {len(discovered_fragments) - i} more fragments", fg=Colors.YELLOW)
+                    break
+                
+                # Fragment title (first line of the fragment)
+                first_line = fragment_text.split('\n')[0]
+                if len(first_line) > 60:
+                    first_line = first_line[:57] + "..."
+                
+                console.print(3, y_offset, f"{fragment_index + 1:2d}. {first_line}", fg=Colors.WHITE)
+                y_offset += 1
+                
+                # Brief preview (first few words of actual content)
+                content_lines = [line.strip() for line in fragment_text.split('\n') if line.strip()]
+                if len(content_lines) > 1:
+                    preview = content_lines[1][:70] + "..." if len(content_lines[1]) > 70 else content_lines[1]
+                    console.print(6, y_offset, preview, fg=Colors.DARK_GRAY)
+                    y_offset += 1
+                
+                y_offset += 1  # Space between entries
+        
+        # Footer
+        footer_y = GameConfig.SCREEN_HEIGHT - 3
+        console.print(2, footer_y, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(GameConfig.SCREEN_WIDTH // 2 - 10, footer_y + 1, "Press ESC to close", fg=Colors.YELLOW)
     
     def render_top_status_bar(self, console: tcod.console.Console, game: Game):
         """Render the top status bar."""
@@ -4021,6 +4146,9 @@ class MapRenderer:
             upgrade = GameUpgrades.UPGRADES[upgrade_key]
             color = self._get_upgrade_color(upgrade.color)
             console.print(screen_x, screen_y, upgrade.symbol, fg=color, bg=Colors.BLACK)
+        elif (world_pos.x, world_pos.y) in game.game_map.story_fragments:
+            # Story fragment - glowing/pulsing appearance
+            console.print(screen_x, screen_y, '?', fg=Colors.BRIGHT_CYAN, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             console.print(screen_x, screen_y, '.', fg=Colors.CYBER_TEAL, bg=Colors.SHADOW)
         else:
