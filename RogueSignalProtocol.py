@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Rogue Signal Protocol v65 - Enhanced Combat & Inventory System
+Rogue Signal Protocol - Enhanced Edition
 A stealth-focused traditional roguelike using Python and tcod
 
-Refactored for better code organization and maintainability.
+Features cyberpunk-themed infiltration gameplay with permadeath,
+procedural level generation, and persistent story progression.
 """
 
 import tcod
@@ -319,7 +320,8 @@ class SaveGameManager:
                     "exploit_pickups": cls._serialize_exploit_pickups(game.game_map.exploit_pickups),
                     "permanent_upgrades": {f"{pos[0]},{pos[1]}": upgrade_key for pos, upgrade_key in game.game_map.permanent_upgrades.items()},
                     "story_fragments": {f"{pos[0]},{pos[1]}": fragment.fragment_index for pos, fragment in game.game_map.story_fragments.items()},
-                    "gateway": {"x": game.game_map.gateway.x, "y": game.game_map.gateway.y} if game.game_map.gateway else None
+                    "gateway": {"x": game.game_map.gateway.x, "y": game.game_map.gateway.y} if game.game_map.gateway else None,
+                    "explored_tiles": [f"{x},{y}" for x, y in game.game_map.explored_tiles]
                 },
                 
                 # Enemies
@@ -509,8 +511,8 @@ class GameBalance:
     # Heat management
     HEAT_REDUCTION_NORMAL: int = 2
     HEAT_REDUCTION_BOOSTED: int = 3
-    DETECTION_INCREASE_INTERVAL: int = 15
-    DETECTION_INCREASE_AMOUNT: int = 5
+    DETECTION_INCREASE_INTERVAL: int = 25
+    DETECTION_INCREASE_AMOUNT: int = 3
     
     # Node effects
     COOLING_NODE_EFFECT: int = 20
@@ -523,15 +525,9 @@ class GameBalance:
     CPU_RESTORE_MIN: int = 30
     CPU_RESTORE_MAX: int = 40
     HEAT_REDUCTION_INSTANT: int = 40
-    
-    # Admin spawning
-    ADMIN_SPAWN_THRESHOLD: int = 90
-    ADMIN_SPAWN_DELAY_CORPORATE: int = 2
-    ADMIN_SPAWN_DELAY_GOVERNMENT: int = 1
-    ADMIN_SPAWN_DELAY_MILITARY: int = 0
 
 
-@dataclass
+@dataclass  
 class RoomGenerationConfig:
     """Configuration for procedural room generation."""
     MIN_ROOMS_BASE: int = 12
@@ -739,15 +735,15 @@ class GameUpgrades:
     
     UPGRADES = {
         'ram_boost': UpgradeDefinition(
-            "Memory Expansion", "M", "BRIGHT_BLUE", "ram", 4,
+            "Memory Expansion", "◈", "BRIGHT_BLUE", "ram", 4,
             "Permanently increases RAM capacity by 4"
         ),
         'cpu_boost': UpgradeDefinition(
-            "Processing Core", "C", "BRIGHT_GREEN", "cpu", 20,
+            "Processing Core", "⬢", "BRIGHT_GREEN", "cpu", 20,
             "Permanently increases CPU capacity by 20"
         ),
         'heat_boost': UpgradeDefinition(
-            "Cooling Matrix", "H", "BRIGHT_CYAN", "heat", 20,
+            "Cooling Matrix", "❅", "BRIGHT_CYAN", "heat", 20,
             "Permanently increases heat tolerance by 20"
         )
     }
@@ -1688,9 +1684,9 @@ class LevelGenerator:
         # Generate rooms
         rooms = self._generate_rooms(level)
         
-        # Debug: Ensure we have at least one room
+        # Ensure we have at least one room for a playable map
         if not rooms:
-            # Emergency fallback - create a basic room in the center
+            # Failsafe: create a basic room in the center if room generation failed
             center_room = (GameConfig.MAP_WIDTH // 4, GameConfig.MAP_HEIGHT // 4, 10, 10)
             rooms.append(center_room)
             self._carve_room(center_room)
@@ -2157,6 +2153,18 @@ class Game:
             fragment = StoryFragment(fragment_index)
             self.game_map.story_fragments[(x, y)] = fragment
         
+        # Restore explored tiles
+        if "explored_tiles" in map_data:
+            self.game_map.explored_tiles.clear()
+            for tile_str in map_data["explored_tiles"]:
+                try:
+                    coords = tile_str.split(',')
+                    if len(coords) == 2:
+                        x, y = int(coords[0]), int(coords[1])
+                        self.game_map.explored_tiles.add((x, y))
+                except (ValueError, IndexError):
+                    continue
+        
         # Restore gateway
         if map_data["gateway"]:
             self.game_map.gateway = Position(map_data["gateway"]["x"], map_data["gateway"]["y"])
@@ -2241,11 +2249,12 @@ class Game:
             self.game_map.walls.add((GameConfig.MAP_WIDTH - 1, y))
         
     def _find_valid_spawn_position(self) -> Position:
-        """Find a valid open position to spawn the player."""
-        # Try common spawn locations first
+        """Find player spawn position in top-left area."""
+        # Try top-left positions in order of preference
         preferred_positions = [
-            Position(5, 5), Position(10, 10), Position(15, 15), Position(20, 20),
-            Position(25, 25), Position(30, 30), Position(35, 35)
+            Position(2, 2), Position(3, 2), Position(4, 2),
+            Position(2, 3), Position(3, 3), Position(4, 3),
+            Position(2, 4), Position(3, 4), Position(4, 4)
         ]
         
         for pos in preferred_positions:
@@ -2253,15 +2262,8 @@ class Game:
                 not self.game_map.is_wall(pos)):
                 return pos
         
-        # If no preferred position works, scan for any open tile
-        for x in range(1, GameConfig.MAP_WIDTH - 1):
-            for y in range(1, GameConfig.MAP_HEIGHT - 1):
-                pos = Position(x, y)
-                if not self.game_map.is_wall(pos):
-                    return pos
-        
-        # Emergency fallback - force clear a position
-        fallback_pos = Position(5, 5)
+        # Fallback: force clear a position in top-left
+        fallback_pos = Position(3, 3)
         if (fallback_pos.x, fallback_pos.y) in self.game_map.walls:
             self.game_map.walls.remove((fallback_pos.x, fallback_pos.y))
         return fallback_pos
@@ -2482,6 +2484,9 @@ class Game:
                 self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
                 if self.player.cpu <= 0:
                     self.message_log.add_message("CRITICAL SYSTEM FAILURE!")
+                    # Delete save on death (permadeath)
+                    SaveGameManager.delete_save()
+                    self.message_log.add_message("Save data purged")
         
         # Reset movement flags for next turn
         for enemy in self.enemies:
@@ -2591,6 +2596,9 @@ class Game:
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
                     if self.player.cpu <= 0:
                         self.message_log.add_message("CRITICAL SYSTEM FAILURE!")
+                        # Delete save on death (permadeath)
+                        SaveGameManager.delete_save()
+                        self.message_log.add_message("Save data purged")
                         return
             else:
                 # Movement blocked
@@ -2709,17 +2717,11 @@ class Game:
             # Reset player state to a valid open position
             spawn_pos = self._find_valid_spawn_position()
             self._reset_player_state(spawn_pos.x, spawn_pos.y)
-            self.message_log.add_message(f"Player spawned at ({spawn_pos.x}, {spawn_pos.y})")
             self.player.detection = max(0, self.player.detection - 20)
             self.player.heat = max(0, self.player.heat - 30)
             
             self.message_log.add_message(f"{config['name']} loaded")
             self.message_log.add_message(f"{len(self.enemies)} security processes")
-            # Debug info about map generation
-            wall_count = len(self.game_map.walls)
-            total_tiles = GameConfig.MAP_WIDTH * GameConfig.MAP_HEIGHT
-            open_tiles = total_tiles - wall_count
-            self.message_log.add_message(f"Map: {open_tiles} open tiles, {wall_count} walls")
             
         finally:
             # Restore random seed
@@ -3175,8 +3177,9 @@ class Game:
         
         while placed_enemies < actual_enemy_count and attempts < actual_enemy_count * 25:
             attempts += 1
-            x = random.randint(8, GameConfig.MAP_WIDTH - 8)
-            y = random.randint(8, GameConfig.MAP_HEIGHT - 8)
+            # Ensure enemies spawn well away from top-left player spawn area
+            x = random.randint(10, GameConfig.MAP_WIDTH - 2)
+            y = random.randint(10, GameConfig.MAP_HEIGHT - 2)
             position = Position(x, y)
             
             if self._is_valid_enemy_placement(position):
@@ -3189,25 +3192,6 @@ class Game:
                 self.enemies.append(enemy)
                 placed_enemies += 1
     
-    def _place_gateway(self, rooms: List[Tuple[int, int, int, int]]):
-        """Place the level gateway."""
-        # Try to place in a room first
-        for room_x, room_y, room_w, room_h in rooms:
-            x = room_x + room_w // 2
-            y = room_y + room_h // 2
-            position = Position(x, y)
-            
-            if self._is_valid_gateway_placement(position):
-                self.game_map.gateway = position
-                return
-        
-        # Fallback placement
-        for x in range(GameConfig.MAP_WIDTH - 10, GameConfig.MAP_WIDTH - 5):
-            for y in range(GameConfig.MAP_HEIGHT - 10, GameConfig.MAP_HEIGHT - 5):
-                position = Position(x, y)
-                if self.game_map.is_valid_position(position):
-                    self.game_map.gateway = position
-                    return
     
     def _is_valid_special_placement(self, position: Position) -> bool:
         """Check if position is valid for special node placement."""
@@ -3233,14 +3217,6 @@ class Game:
                 (position.x, position.y) not in self.game_map.cooling_nodes and
                 (position.x, position.y) not in self.game_map.cpu_recovery_nodes)
     
-    def _is_valid_gateway_placement(self, position: Position) -> bool:
-        """Check if position is valid for gateway placement."""
-        return (self.game_map.is_valid_position(position) and
-                position.distance_to(Position(5, 5)) > 25 and
-                (position.x, position.y) not in self.game_map.data_patches and
-                (position.x, position.y) not in self.game_map.cooling_nodes and
-                (position.x, position.y) not in self.game_map.cpu_recovery_nodes and
-                not self._get_enemy_at(position))
     
     def _generate_patrol_route(self, start: Position) -> List[Position]:
         """Generate larger, more comprehensive patrol routes."""
@@ -3920,6 +3896,10 @@ class Renderer:
         """Render death message."""
         center_x = GameConfig.GAME_AREA_WIDTH // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
+        
+        # Ensure save is deleted on death (permadeath)
+        if SaveGameManager.save_exists():
+            SaveGameManager.delete_save()
         
         console.print(center_x - 8, center_y, "SYSTEM FAILURE", fg=Colors.NEON_PINK)
         console.print(center_x - 12, center_y + 1, "Consciousness purged", fg=Colors.RED)
