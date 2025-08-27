@@ -565,9 +565,9 @@ class GameConfig:
     
     # Network configurations
     NETWORK_CONFIGS = {
-        1: {"enemies": 15, "shadow_coverage": 0.2, "name": "Corporate Network", "background_detection": 1},
-        2: {"enemies": 22, "shadow_coverage": 0.25, "name": "Government System", "background_detection": 2}, 
-        3: {"enemies": 30, "shadow_coverage": 0.15, "name": "Military Backbone", "background_detection": 3}
+        1: {"enemies": 15, "shadow_coverage": 0.08, "name": "Corporate Network", "background_detection": 1},
+        2: {"enemies": 22, "shadow_coverage": 0.12, "name": "Government System", "background_detection": 2}, 
+        3: {"enemies": 30, "shadow_coverage": 0.10, "name": "Military Backbone", "background_detection": 3}
     }
 
 class Colors:
@@ -1681,48 +1681,70 @@ class LevelGenerator:
             for y in range(GameConfig.MAP_HEIGHT):
                 self.game_map.walls.add((x, y))
         
-        # Generate rooms
-        rooms = self._generate_rooms(level)
+        # Create varied spawn room in top-left area
+        spawn_room = self._generate_spawn_room()
+        rooms = [spawn_room]
+        self._carve_room(spawn_room)
         
-        # Ensure we have at least one room for a playable map
-        if not rooms:
-            # Failsafe: create a basic room in the center if room generation failed
-            center_room = (GameConfig.MAP_WIDTH // 4, GameConfig.MAP_HEIGHT // 4, 10, 10)
+        # Generate additional rooms (avoid spawn room)
+        additional_rooms = self._generate_rooms_avoiding_existing(level, rooms)
+        rooms.extend(additional_rooms)
+        
+        # Ensure we have at least one additional room for a playable map
+        if len(rooms) == 1:  # Only have spawn room
+            # Create a second room to ensure connectivity
+            center_room = (GameConfig.MAP_WIDTH // 2, GameConfig.MAP_HEIGHT // 2, 6, 6)
             rooms.append(center_room)
             self._carve_room(center_room)
         
-        # Connect rooms with corridors
+        # Connect all rooms with corridors (including spawn room)
         self._connect_rooms_with_corridors(rooms)
         
         # Add shadow areas for stealth gameplay
         self._place_shadow_areas(level, rooms)
     
-    def _generate_rooms(self, level: int) -> List[Tuple[int, int, int, int]]:
+    def _generate_rooms_avoiding_existing(self, level: int, existing_rooms: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
         """Generate room layouts for the level."""
         num_rooms = RoomGenerationConfig.MIN_ROOMS_BASE + level * RoomGenerationConfig.ROOM_LEVEL_MULTIPLIER
         max_rooms = min(num_rooms, RoomGenerationConfig.MAX_ROOMS)
         max_attempts = RoomGenerationConfig.MAX_PLACEMENT_ATTEMPTS
         
-        rooms = []
+        new_rooms = []
+        all_rooms = existing_rooms.copy()  # Include existing rooms for overlap checking
         
         for _ in range(max_attempts):
-            if len(rooms) >= max_rooms:
+            if len(new_rooms) >= max_rooms:
                 break
                 
-            # Generate random room
+            # Generate random room, avoiding top-left spawn area
             room_width = random.randint(RoomGenerationConfig.MIN_ROOM_SIZE, RoomGenerationConfig.MAX_ROOM_SIZE)
             room_height = random.randint(RoomGenerationConfig.MIN_ROOM_SIZE, RoomGenerationConfig.MAX_ROOM_SIZE)
-            room_x = random.randint(1, GameConfig.MAP_WIDTH - room_width - 2)
-            room_y = random.randint(1, GameConfig.MAP_HEIGHT - room_height - 2)
+            room_x = random.randint(12, GameConfig.MAP_WIDTH - room_width - 2)  # Start at 12 to avoid spawn area
+            room_y = random.randint(12, GameConfig.MAP_HEIGHT - room_height - 2)
             
             new_room = (room_x, room_y, room_width, room_height)
             
-            # Check if room overlaps with existing rooms
-            if not self._room_overlaps(new_room, rooms):
-                rooms.append(new_room)
+            # Check if room overlaps with any existing rooms
+            if not self._room_overlaps(new_room, all_rooms):
+                new_rooms.append(new_room)
+                all_rooms.append(new_room)  # Add to tracking list
                 self._carve_room(new_room)
         
-        return rooms
+        return new_rooms
+    
+    def _generate_spawn_room(self) -> Tuple[int, int, int, int]:
+        """Generate a varied spawn room in the top-left area."""
+        # Randomize spawn room size and position within safe area
+        room_width = random.randint(6, 10)  # Varied width
+        room_height = random.randint(6, 10)  # Varied height
+        room_x = random.randint(1, 4)  # Small variation in x position
+        room_y = random.randint(1, 4)  # Small variation in y position
+        
+        # Ensure room doesn't go too far (stay in top-left)
+        max_x = min(room_x, 10 - room_width)
+        max_y = min(room_y, 10 - room_height)
+        
+        return (max_x, max_y, room_width, room_height)
     
     def _room_overlaps(self, new_room: Tuple[int, int, int, int], existing_rooms: List[Tuple[int, int, int, int]]) -> bool:
         """Check if a new room overlaps with existing rooms."""
@@ -1834,11 +1856,39 @@ class LevelGenerator:
                 self.game_map.cpu_recovery_nodes.add(pos)
     
     def _place_gateway(self) -> None:
-        """Place the exit gateway in a random floor position."""
+        """Place the exit gateway far from spawn but with some randomness."""
+        spawn_area = Position(5, 5)  # Center of spawn area
         floor_positions = self._get_all_floor_positions()
-        if floor_positions:
-            gateway_pos = random.choice(floor_positions)
-            self.game_map.gateway = Position(gateway_pos[0], gateway_pos[1])
+        
+        if not floor_positions:
+            return
+            
+        # Get positions far from spawn (bottom-right quadrant preferred)
+        far_positions = []
+        medium_positions = []
+        
+        for pos in floor_positions:
+            position = Position(pos[0], pos[1])
+            distance = spawn_area.distance_to(position)
+            
+            # Prefer positions that are far from spawn
+            if distance > 30:  # Very far
+                far_positions.append(pos)
+            elif distance > 20:  # Medium distance
+                medium_positions.append(pos)
+        
+        # Choose gateway position with preference for far positions
+        if far_positions:
+            gateway_pos = random.choice(far_positions)
+        elif medium_positions:
+            gateway_pos = random.choice(medium_positions)
+        else:
+            # Fallback: any position far enough
+            valid_positions = [pos for pos in floor_positions 
+                             if spawn_area.distance_to(Position(pos[0], pos[1])) > 15]
+            gateway_pos = random.choice(valid_positions) if valid_positions else random.choice(floor_positions)
+        
+        self.game_map.gateway = Position(gateway_pos[0], gateway_pos[1])
     
     def _get_all_floor_positions(self) -> List[Tuple[int, int]]:
         """Get all valid floor positions (not walls)."""
@@ -2417,14 +2467,14 @@ class Game:
             if enemy.alert_timer <= 0:
                 enemy.state = EnemyState.HOSTILE
                 enemy.last_seen_player = Position(self.player.x, self.player.y)
-                detection_increase = 15 if enemy.type == 'admin' else 10
+                detection_increase = 8 if enemy.type == 'admin' else 5  # Reduced from 15/10
                 self.player.detection = min(100, self.player.detection + detection_increase)
                 self.message_log.add_message(f"{enemy.type_data.name} detected you!")
                 # Alert nearby enemies when this enemy becomes hostile
                 self._alert_nearby_enemies(enemy)
         elif enemy.state == EnemyState.HOSTILE:
             enemy.last_seen_player = Position(self.player.x, self.player.y)
-            detection_increase = 3 if enemy.type == 'admin' else 1
+            detection_increase = 2 if enemy.type == 'admin' else 0.5  # Reduced from 3/1
             self.player.detection = min(100, self.player.detection + detection_increase)
     
     def _handle_enemy_loses_player(self, enemy: Enemy):
