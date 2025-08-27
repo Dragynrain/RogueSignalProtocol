@@ -593,7 +593,7 @@ class Colors:
     # Game-specific colors with neon theme
     FLOOR = (20, 25, 40)  # Dark blue-gray floor
     WALL = (120, 140, 180)  # Light blue-gray walls
-    SHADOW = (40, 60, 80)  # Lighter blue shadows
+    SHADOW = (3, 3, 8)  # Dark shadow areas
     PLAYER = (20, 255, 255)  # Bright cyan player
     GATEWAY = (255, 220, 20)  # Bright neon yellow
     
@@ -1212,9 +1212,12 @@ class Enemy:
         return game_map.has_line_of_sight(self.position, player.position)
     
     def can_attack_player(self, player: Player) -> bool:
-        """Check if enemy can attack player (adjacent)."""
-        distance = self.position.distance_to(player.position)
-        return distance <= 1 and self.disabled_turns == 0
+        """Check if enemy can attack player (adjacent including diagonally)."""
+        dx = abs(self.position.x - player.position.x)
+        dy = abs(self.position.y - player.position.y)
+        # Adjacent in any direction (including diagonal)
+        is_adjacent = dx <= 1 and dy <= 1 and (dx + dy) > 0
+        return is_adjacent and self.disabled_turns == 0
     
     def attack_player(self, player: Player) -> int:
         """Attack the player and return damage dealt."""
@@ -1587,12 +1590,6 @@ class EnemyManager:
             
             # Move enemy
             enemy.move(self.game_map, player, game)
-            
-            # Check if enemy can attack player
-            if enemy.can_attack_player(player):
-                damage_dealt = enemy.attack_player(player)
-                if damage_dealt > 0:
-                    self.message_log.add_message(f"{enemy.type_data.name} attacks for {damage_dealt} damage!")
     
     def get_enemy_at_position(self, position: Position) -> Optional[Enemy]:
         """Get enemy at the specified position."""
@@ -2721,6 +2718,10 @@ class Game:
             if enemy.position.distance_to(position) == 0:
                 return enemy
         return None
+    
+    def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
+        """Get the next N positions this enemy will move to."""
+        return self.level_generator.get_enemy_next_positions(enemy, steps)
     
     def next_level(self):
         """Progress to the next level."""
@@ -4568,11 +4569,11 @@ class MapRenderer:
             # Dimmed neon wall
             console.print(screen_x, screen_y, '#', fg=(60, 70, 90), bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            # Dimmed neon shadow
-            console.print(screen_x, screen_y, '.', fg=(10, 60, 90), bg=(5, 15, 25))
+            # Dark shadow areas for stealth
+            console.print(screen_x, screen_y, '░', fg=(8, 8, 15), bg=(3, 3, 8))
         else:
-            # Dimmed neon floor
-            console.print(screen_x, screen_y, '.', fg=(15, 20, 35), bg=Colors.BLACK)
+            # Bright lit corridors
+            console.print(screen_x, screen_y, '.', fg=(80, 120, 200), bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a single tile."""
@@ -4598,7 +4599,7 @@ class MapRenderer:
             # Story fragment - glowing/pulsing appearance
             console.print(screen_x, screen_y, '?', fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            console.print(screen_x, screen_y, '.', fg=Colors.CYBER_TEAL, bg=Colors.SHADOW)
+            console.print(screen_x, screen_y, '░', fg=(8, 8, 15), bg=(3, 3, 8))
         else:
             console.print(screen_x, screen_y, '.', fg=Colors.FLOOR, bg=Colors.BLACK)
     
