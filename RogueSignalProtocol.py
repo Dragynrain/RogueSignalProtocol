@@ -23,6 +23,54 @@ logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message
 # CONSTANTS AND CONFIGURATION
 # ============================================================================
 
+@dataclass
+class GameBalance:
+    """Game balance constants and configuration values."""
+    # Heat management
+    HEAT_REDUCTION_NORMAL: int = 2
+    HEAT_REDUCTION_BOOSTED: int = 3
+    DETECTION_INCREASE_INTERVAL: int = 15
+    DETECTION_INCREASE_AMOUNT: int = 5
+    
+    # Node effects
+    COOLING_NODE_EFFECT: int = 20
+    CPU_RECOVERY_AMOUNT: int = 20
+    
+    # Combat rewards
+    ENEMY_ELIMINATION_CPU_REWARD: int = 5
+    
+    # Data patch effects
+    CPU_RESTORE_MIN: int = 30
+    CPU_RESTORE_MAX: int = 40
+    HEAT_REDUCTION_INSTANT: int = 40
+    
+    # Admin spawning
+    ADMIN_SPAWN_THRESHOLD: int = 90
+    ADMIN_SPAWN_DELAY_CORPORATE: int = 2
+    ADMIN_SPAWN_DELAY_GOVERNMENT: int = 1
+    ADMIN_SPAWN_DELAY_MILITARY: int = 0
+
+
+@dataclass
+class RoomGenerationConfig:
+    """Configuration for procedural room generation."""
+    MIN_ROOMS_BASE: int = 12
+    ROOM_LEVEL_MULTIPLIER: int = 3
+    MAX_ROOMS: int = 20
+    MAX_PLACEMENT_ATTEMPTS: int = 400
+    
+    MIN_ROOM_SIZE: int = 3
+    MAX_ROOM_SIZE: int = 8
+    ROOM_PADDING: int = 1
+    
+    # Special tile placement
+    COOLING_NODES_PER_LEVEL: int = 3
+    CPU_NODES_PER_LEVEL: int = 2
+    DATA_PATCHES_PER_LEVEL: int = 4
+    EXPLOIT_PICKUPS_PER_LEVEL: int = 3
+    PERMANENT_UPGRADES_PER_LEVEL: int = 1
+
+
 class GameConfig:
     """Central configuration for game constants."""
     # Screen dimensions
@@ -39,8 +87,7 @@ class GameConfig:
     PANEL_HEIGHT = 5
     PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
     
-    # Game balance - Remove level 0 (tutorial)
-    ADMIN_SPAWN_THRESHOLD = 90  # Fixed threshold for admin spawn
+    # Network configurations
     NETWORK_CONFIGS = {
         1: {"enemies": 15, "shadow_coverage": 0.2, "name": "Corporate Network", "background_detection": 1},
         2: {"enemies": 22, "shadow_coverage": 0.25, "name": "Government System", "background_detection": 2}, 
@@ -275,14 +322,14 @@ class DataPatch(InventoryItem):
     def _apply_effect(self, effect_key: str, player: 'Player', game: 'Game') -> bool:
         """Apply the specific effect."""
         if effect_key == 'restore_cpu':
-            restore = random.randint(30, 40)
+            restore = random.randint(GameBalance.CPU_RESTORE_MIN, GameBalance.CPU_RESTORE_MAX)
             actual = min(restore, player.max_cpu - player.cpu)
             player.cpu += actual
             game.message_log.add_message(f"CPU restored: +{actual}")
         
         elif effect_key == 'reduce_heat':
             old_heat = player.heat
-            player.heat = max(0, player.heat - 40)
+            player.heat = max(0, player.heat - GameBalance.HEAT_REDUCTION_INSTANT)
             actual_reduction = old_heat - player.heat
             game.message_log.add_message(f"Heat reduced: -{actual_reduction}°C")
         
@@ -730,10 +777,10 @@ class Enemy:
     
     def _reset_movement_cooldown(self):
         """Reset movement cooldown based on enemy type."""
-        if self.type_data.movement == EnemyMovement.LINEAR:
-            self.move_cooldown = 1
+        if self.type_data.movement == EnemyMovement.STATIC:
+            self.move_cooldown = 999  # Static enemies never move
         else:
-            self.move_cooldown = 2
+            self.move_cooldown = 1  # All moving enemies move every turn
     
     def _ensure_random_move_queue(self):
         """Ensure the random move queue has at least 3 moves."""
@@ -951,6 +998,430 @@ class MessageLog:
         return self.messages[-count:] if len(self.messages) > count else self.messages
 
 # ============================================================================
+# GAME SYSTEMS - EXTRACTED FROM MONOLITHIC GAME CLASS
+# ============================================================================
+
+class GameStateManager:
+    """Manages core game state like level, turn, and game status."""
+    
+    def __init__(self):
+        self.level: int = 1
+        self.turn: int = 0
+        self.game_over: bool = False
+        self.admin_spawned: bool = False
+        self.dungeon_seed: int = random.randint(1, 1000000)
+        
+        # Game effects
+        self.network_scan_turns: int = 0
+        self.noise_locations: List[Position] = []
+        self.distraction_points: Dict[Position, int] = {}
+    
+    def advance_turn(self) -> None:
+        """Advance to the next turn."""
+        self.turn += 1
+        
+        # Update network scan effect
+        if self.network_scan_turns > 0:
+            self.network_scan_turns -= 1
+            
+        # Decay distraction points
+        expired_distractions = []
+        for position, turns_remaining in self.distraction_points.items():
+            if turns_remaining <= 1:
+                expired_distractions.append(position)
+            else:
+                self.distraction_points[position] = turns_remaining - 1
+                
+        for position in expired_distractions:
+            del self.distraction_points[position]
+    
+    def get_current_network_config(self) -> Dict[str, Any]:
+        """Get configuration for the current network level."""
+        return GameConfig.NETWORK_CONFIGS.get(self.level, GameConfig.NETWORK_CONFIGS[1])
+    
+    def should_spawn_admin(self, detection_level: float) -> bool:
+        """Determine if admin should spawn based on detection level."""
+        if self.admin_spawned:
+            return False
+            
+        config = self.get_current_network_config()
+        spawn_threshold = GameBalance.ADMIN_SPAWN_THRESHOLD
+        
+        if self.level == 1:  # Corporate
+            spawn_threshold = 100  # Spawn at 100% for corporate
+        elif self.level == 2:  # Government  
+            spawn_threshold = 75   # Spawn at 75% for government
+        elif self.level == 3:  # Military
+            spawn_threshold = 50   # Spawn at 50% for military
+            
+        return detection_level >= spawn_threshold
+
+
+class EnemyManager:
+    """Manages enemy spawning, AI coordination, and state updates."""
+    
+    def __init__(self, game_map: 'GameMap', message_log: MessageLog):
+        self.enemies: List[Enemy] = []
+        self.game_map = game_map
+        self.message_log = message_log
+    
+    def spawn_enemy(self, position: Position, enemy_type: str) -> Enemy:
+        """Spawn a new enemy at the specified position."""
+        enemy = Enemy(position, enemy_type)
+        
+        # Set up patrol route for patrol enemies
+        if enemy.type == 'patrol':
+            enemy.patrol_points = self._generate_patrol_route(position)
+            
+        self.enemies.append(enemy)
+        return enemy
+    
+    def update_all_enemies(self, player: Player, game_state: GameStateManager, game: 'Game') -> None:
+        """Update AI and movement for all enemies."""
+        for enemy in self.enemies[:]:  # Use slice copy for safe iteration
+            if enemy.disabled_turns > 0:
+                continue
+                
+            # Update enemy state based on player visibility
+            if enemy.can_see_player(player, self.game_map):
+                if enemy.state == EnemyState.UNAWARE:
+                    enemy.state = EnemyState.ALERT
+                    enemy.alert_timer = 5
+                    self.message_log.add_message(f"{enemy.type_data.name} detected movement!")
+                elif enemy.state == EnemyState.ALERT:
+                    enemy.state = EnemyState.HOSTILE
+                    self.message_log.add_message(f"{enemy.type_data.name} is now hostile!")
+                
+                enemy.last_seen_player = Position(player.x, player.y)
+            else:
+                # Handle state decay when player not visible
+                if enemy.state == EnemyState.HOSTILE and enemy.alert_timer <= 0:
+                    enemy.state = EnemyState.ALERT
+                    enemy.alert_timer = 10
+                elif enemy.state == EnemyState.ALERT:
+                    enemy.alert_timer -= 1
+                    if enemy.alert_timer <= 0:
+                        enemy.state = EnemyState.UNAWARE
+                        enemy.last_seen_player = None
+            
+            # Move enemy
+            enemy.move(self.game_map, player, game)
+            
+            # Check if enemy can attack player
+            if enemy.can_attack_player(player):
+                damage_dealt = enemy.attack_player(player)
+                if damage_dealt > 0:
+                    self.message_log.add_message(f"{enemy.type_data.name} attacks for {damage_dealt} damage!")
+    
+    def get_enemy_at_position(self, position: Position) -> Optional[Enemy]:
+        """Get enemy at the specified position."""
+        for enemy in self.enemies:
+            if enemy.position.x == position.x and enemy.position.y == position.y:
+                return enemy
+        return None
+    
+    def remove_enemy(self, enemy: Enemy) -> None:
+        """Remove an enemy from the game."""
+        if enemy in self.enemies:
+            self.enemies.remove(enemy)
+    
+    def _generate_patrol_route(self, start: Position) -> List[Position]:
+        """Generate larger, more comprehensive patrol routes."""
+        route = [start]
+        route_length = random.randint(8, 15)  # Much longer patrols
+        current = start
+        
+        for _ in range(route_length - 1):
+            attempts = 0
+            while attempts < 40:
+                attempts += 1
+                step_size = random.randint(3, 8)  # Larger steps for wider coverage
+                direction = random.choice([(0, -step_size), (step_size, 0), 
+                                         (0, step_size), (-step_size, 0),
+                                         # Add diagonal movements for more coverage
+                                         (step_size, -step_size), (step_size, step_size),
+                                         (-step_size, -step_size), (-step_size, step_size)])
+                new_pos = Position(current.x + direction[0], current.y + direction[1])
+                
+                if (new_pos.is_valid(GameConfig.MAP_WIDTH - 3, GameConfig.MAP_HEIGHT - 3) and
+                    new_pos.x >= 3 and new_pos.y >= 3 and
+                    self.game_map.is_valid_position(new_pos)):
+                    route.append(new_pos)
+                    current = new_pos
+                    break
+        
+        # Ensure minimum route length
+        if len(route) < 3:
+            if start.x < GameConfig.MAP_WIDTH - 5:
+                route.append(Position(start.x + 3, start.y))
+            if start.y < GameConfig.MAP_HEIGHT - 5:
+                route.append(Position(start.x, start.y + 3))
+        
+        return route
+
+
+class LevelGenerator:
+    """Handles procedural level generation and room placement."""
+    
+    def __init__(self, game_map: GameMap):
+        self.game_map = game_map
+    
+    def generate_level(self, level: int, seed: int) -> None:
+        """Generate a complete level with rooms, corridors, and special tiles."""
+        random.seed(seed + level)
+        
+        # Clear existing level data
+        self._clear_level_data()
+        
+        # Generate the level structure
+        self._generate_procedural_level(level)
+        
+        # Place special tiles and items
+        self._place_special_tiles(level)
+        self._place_gateway()
+    
+    def _clear_level_data(self) -> None:
+        """Clear all existing level data."""
+        self.game_map.walls.clear()
+        self.game_map.shadows.clear()
+        self.game_map.cooling_nodes.clear()
+        self.game_map.cpu_recovery_nodes.clear()
+        self.game_map.data_patches.clear()
+        self.game_map.exploit_pickups.clear()
+        self.game_map.permanent_upgrades.clear()
+        self.game_map.explored_tiles.clear()
+        self.game_map.last_known_enemy_positions.clear()
+    
+    def _generate_procedural_level(self, level: int) -> None:
+        """Generate the basic level structure with rooms and corridors."""
+        # Fill map with walls initially
+        for x in range(GameConfig.MAP_WIDTH):
+            for y in range(GameConfig.MAP_HEIGHT):
+                self.game_map.walls.add((x, y))
+        
+        # Generate rooms
+        rooms = self._generate_rooms(level)
+        
+        # Connect rooms with corridors
+        self._connect_rooms_with_corridors(rooms)
+        
+        # Add shadow areas for stealth gameplay
+        self._place_shadow_areas(level, rooms)
+    
+    def _generate_rooms(self, level: int) -> List[Tuple[int, int, int, int]]:
+        """Generate room layouts for the level."""
+        num_rooms = RoomGenerationConfig.MIN_ROOMS_BASE + level * RoomGenerationConfig.ROOM_LEVEL_MULTIPLIER
+        max_rooms = min(num_rooms, RoomGenerationConfig.MAX_ROOMS)
+        max_attempts = RoomGenerationConfig.MAX_PLACEMENT_ATTEMPTS
+        
+        rooms = []
+        
+        for _ in range(max_attempts):
+            if len(rooms) >= max_rooms:
+                break
+                
+            # Generate random room
+            room_width = random.randint(RoomGenerationConfig.MIN_ROOM_SIZE, RoomGenerationConfig.MAX_ROOM_SIZE)
+            room_height = random.randint(RoomGenerationConfig.MIN_ROOM_SIZE, RoomGenerationConfig.MAX_ROOM_SIZE)
+            room_x = random.randint(1, GameConfig.MAP_WIDTH - room_width - 2)
+            room_y = random.randint(1, GameConfig.MAP_HEIGHT - room_height - 2)
+            
+            new_room = (room_x, room_y, room_width, room_height)
+            
+            # Check if room overlaps with existing rooms
+            if not self._room_overlaps(new_room, rooms):
+                rooms.append(new_room)
+                self._carve_room(new_room)
+        
+        return rooms
+    
+    def _room_overlaps(self, new_room: Tuple[int, int, int, int], existing_rooms: List[Tuple[int, int, int, int]]) -> bool:
+        """Check if a new room overlaps with existing rooms."""
+        x1, y1, w1, h1 = new_room
+        
+        for x2, y2, w2, h2 in existing_rooms:
+            if (x1 < x2 + w2 + RoomGenerationConfig.ROOM_PADDING and 
+                x1 + w1 + RoomGenerationConfig.ROOM_PADDING > x2 and
+                y1 < y2 + h2 + RoomGenerationConfig.ROOM_PADDING and
+                y1 + h1 + RoomGenerationConfig.ROOM_PADDING > y2):
+                return True
+        return False
+    
+    def _carve_room(self, room: Tuple[int, int, int, int]) -> None:
+        """Remove walls to create a room."""
+        x, y, width, height = room
+        for rx in range(x, x + width):
+            for ry in range(y, y + height):
+                if (rx, ry) in self.game_map.walls:
+                    self.game_map.walls.remove((rx, ry))
+    
+    def _connect_rooms_with_corridors(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+        """Connect all rooms with corridors using a minimum spanning tree approach."""
+        if len(rooms) < 2:
+            return
+            
+        # Connect each room to the next one
+        for i in range(len(rooms) - 1):
+            self._connect_two_rooms(rooms[i], rooms[i + 1])
+        
+        # Add some additional connections for more interesting layouts
+        for i in range(0, len(rooms), 3):
+            if i + 2 < len(rooms):
+                self._connect_two_rooms(rooms[i], rooms[i + 2])
+    
+    def _connect_two_rooms(self, room1: Tuple[int, int, int, int], room2: Tuple[int, int, int, int]) -> None:
+        """Connect two rooms with an L-shaped corridor."""
+        x1, y1, w1, h1 = room1
+        x2, y2, w2, h2 = room2
+        
+        # Get room centers
+        center1_x, center1_y = x1 + w1 // 2, y1 + h1 // 2
+        center2_x, center2_y = x2 + w2 // 2, y2 + h2 // 2
+        
+        # Create L-shaped corridor
+        if random.choice([True, False]):
+            # Horizontal first, then vertical
+            self._carve_corridor(center1_x, center1_y, center2_x, center1_y)
+            self._carve_corridor(center2_x, center1_y, center2_x, center2_y)
+        else:
+            # Vertical first, then horizontal  
+            self._carve_corridor(center1_x, center1_y, center1_x, center2_y)
+            self._carve_corridor(center1_x, center2_y, center2_x, center2_y)
+    
+    def _carve_corridor(self, x1: int, y1: int, x2: int, y2: int) -> None:
+        """Carve a corridor between two points."""
+        if x1 == x2:  # Vertical corridor
+            for y in range(min(y1, y2), max(y1, y2) + 1):
+                if (x1, y) in self.game_map.walls:
+                    self.game_map.walls.remove((x1, y))
+        else:  # Horizontal corridor
+            for x in range(min(x1, x2), max(x1, x2) + 1):
+                if (x, y1) in self.game_map.walls:
+                    self.game_map.walls.remove((x, y1))
+    
+    def _place_shadow_areas(self, level: int, rooms: List[Tuple[int, int, int, int]]) -> None:
+        """Place shadow areas for stealth gameplay."""
+        config = GameConfig.NETWORK_CONFIGS.get(level, GameConfig.NETWORK_CONFIGS[1])
+        shadow_coverage = config['shadow_coverage']
+        
+        total_floor_tiles = sum(w * h for x, y, w, h in rooms)
+        target_shadow_tiles = int(total_floor_tiles * shadow_coverage)
+        
+        placed_shadows = 0
+        for room in rooms:
+            if placed_shadows >= target_shadow_tiles:
+                break
+                
+            x, y, width, height = room
+            shadows_in_room = min(target_shadow_tiles - placed_shadows, width * height // 3)
+            
+            for _ in range(shadows_in_room):
+                shadow_x = random.randint(x, x + width - 1)
+                shadow_y = random.randint(y, y + height - 1)
+                
+                if (shadow_x, shadow_y) not in self.game_map.walls:
+                    self.game_map.shadows.add((shadow_x, shadow_y))
+                    placed_shadows += 1
+    
+    def _place_special_tiles(self, level: int) -> None:
+        """Place cooling nodes, CPU recovery nodes, and other special tiles."""
+        floor_positions = self._get_all_floor_positions()
+        
+        if not floor_positions:
+            return
+        
+        # Place cooling nodes
+        for _ in range(RoomGenerationConfig.COOLING_NODES_PER_LEVEL):
+            if floor_positions:
+                pos = random.choice(floor_positions)
+                floor_positions.remove(pos)
+                self.game_map.cooling_nodes.add(pos)
+        
+        # Place CPU recovery nodes  
+        for _ in range(RoomGenerationConfig.CPU_NODES_PER_LEVEL):
+            if floor_positions:
+                pos = random.choice(floor_positions)
+                floor_positions.remove(pos)
+                self.game_map.cpu_recovery_nodes.add(pos)
+    
+    def _place_gateway(self) -> None:
+        """Place the exit gateway in a random floor position."""
+        floor_positions = self._get_all_floor_positions()
+        if floor_positions:
+            gateway_pos = random.choice(floor_positions)
+            self.game_map.gateway = Position(gateway_pos[0], gateway_pos[1])
+    
+    def _get_all_floor_positions(self) -> List[Tuple[int, int]]:
+        """Get all valid floor positions (not walls)."""
+        floor_positions = []
+        for x in range(GameConfig.MAP_WIDTH):
+            for y in range(GameConfig.MAP_HEIGHT):
+                if (x, y) not in self.game_map.walls:
+                    floor_positions.append((x, y))
+        return floor_positions
+
+
+class TurnProcessor:
+    """Handles turn-based game logic and effects processing."""
+    
+    def __init__(self, game_state: GameStateManager, message_log: MessageLog):
+        self.game_state = game_state
+        self.message_log = message_log
+    
+    def process_turn(self, player: Player) -> None:
+        """Process a complete game turn including heat management and effects."""
+        self.game_state.advance_turn()
+        
+        # Process heat reduction
+        self._process_heat_management(player)
+        
+        # Process temporary effects
+        self._process_temporary_effects(player)
+        
+        # Process detection increase
+        self._process_detection_increase(player)
+    
+    def _process_heat_management(self, player: Player) -> None:
+        """Handle heat reduction over time."""
+        if player.heat > 0:
+            heat_reduction = (GameBalance.HEAT_REDUCTION_BOOSTED 
+                            if player.temporary_effects['exploit_efficiency_turns'] > 0 
+                            else GameBalance.HEAT_REDUCTION_NORMAL)
+            
+            old_heat = player.heat
+            player.heat = max(0, player.heat - heat_reduction)
+            
+            if old_heat != player.heat:
+                self.message_log.add_message(f"System cooling: -{heat_reduction}°C")
+    
+    def _process_temporary_effects(self, player: Player) -> None:
+        """Process and decay temporary effects."""
+        effects_to_update = list(player.temporary_effects.keys())
+        
+        for effect_name in effects_to_update:
+            if player.temporary_effects[effect_name] > 0:
+                player.temporary_effects[effect_name] -= 1
+                
+                if player.temporary_effects[effect_name] == 0:
+                    if effect_name == 'exploit_efficiency_turns':
+                        self.message_log.add_message("Exploit efficiency boost expired")
+                    elif effect_name == 'stealth_boost_turns':
+                        self.message_log.add_message("Stealth boost expired")
+    
+    def _process_detection_increase(self, player: Player) -> None:
+        """Handle periodic detection level increases."""
+        if self.game_state.turn % GameBalance.DETECTION_INCREASE_INTERVAL == 0:
+            config = self.game_state.get_current_network_config()
+            detection_increase = config.get('background_detection', 1) * GameBalance.DETECTION_INCREASE_AMOUNT
+            
+            old_detection = player.detection
+            player.detection = min(100, player.detection + detection_increase)
+            
+            if player.detection != old_detection:
+                self.message_log.add_message(f"Network security tightening: +{detection_increase}% detection")
+
+
+# ============================================================================
 # GAME STATE AND MAIN GAME CLASS
 # ============================================================================
 
@@ -960,15 +1431,14 @@ class Game:
     def __init__(self):
         # Core game objects
         self.player = Player(5, 5)
-        self.enemies: List[Enemy] = []
         self.game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
         self.message_log = MessageLog()
         
-        # Game state - Start at level 1 instead of 0
-        self.level = 1
-        self.turn = 0
-        self.game_over = False
-        self.admin_spawned = False
+        # Game systems - dependency injection for better architecture
+        self.game_state = GameStateManager()
+        self.enemy_manager = EnemyManager(self.game_map, self.message_log)
+        self.level_generator = LevelGenerator(self.game_map)
+        self.turn_processor = TurnProcessor(self.game_state, self.message_log)
         
         # UI state
         self.show_patrol_predictions = False
@@ -981,25 +1451,64 @@ class Game:
         self.targeting_exploit: Optional[str] = None
         self.cursor_position = Position(0, 0)
         
-        # Game effects
-        self.network_scan_turns = 0
-        self.noise_locations: List[Position] = []
-        self.distraction_points: Dict[Position, int] = {}
-        
         # Data patch system
         self.data_patch_effects: Dict[str, Tuple[str, str]] = {}
         self._randomize_data_patches()
         
         # Initialize - Start with first procedural level
-        self.dungeon_seed = random.randint(1, 1000000)
         self._generate_procedural_level()
+    
+    # Properties for backward compatibility with existing code
+    @property
+    def level(self) -> int:
+        """Current game level."""
+        return self.game_state.level
+    
+    @level.setter
+    def level(self, value: int) -> None:
+        """Set current game level."""
+        self.game_state.level = value
+    
+    @property 
+    def turn(self) -> int:
+        """Current turn number."""
+        return self.game_state.turn
+    
+    @property
+    def game_over(self) -> bool:
+        """Whether the game is over."""
+        return self.game_state.game_over
+    
+    @game_over.setter
+    def game_over(self, value: bool) -> None:
+        """Set game over state."""
+        self.game_state.game_over = value
+    
+    @property
+    def admin_spawned(self) -> bool:
+        """Whether admin has been spawned."""
+        return self.game_state.admin_spawned
+    
+    @admin_spawned.setter
+    def admin_spawned(self, value: bool) -> None:
+        """Set admin spawned state."""
+        self.game_state.admin_spawned = value
+    
+    @property
+    def enemies(self) -> List[Enemy]:
+        """List of all enemies."""
+        return self.enemy_manager.enemies
+    
+    def _get_enemy_at(self, position: Position) -> Optional[Enemy]:
+        """Get enemy at position - for backward compatibility."""
+        return self.enemy_manager.get_enemy_at_position(position)
     
     def _randomize_data_patches(self):
         """Randomize data patch effects for this game session."""
         colors = ['crimson', 'azure', 'emerald', 'golden', 'violet', 'silver']
         effects = [
-            ('restore_cpu', 'Restore 30-40 CPU'),
-            ('reduce_heat', 'Reduce heat by 40°C instantly'),
+            ('restore_cpu', f'Restore {GameBalance.CPU_RESTORE_MIN}-{GameBalance.CPU_RESTORE_MAX} CPU'),
+            ('reduce_heat', f'Reduce heat by {GameBalance.HEAT_REDUCTION_INSTANT}°C instantly'),
             ('reduce_detection', '-25% detection level'),
             ('speed_boost', 'Temporary speed boost (10 turns)'),
             ('enhanced_vision', 'Enhanced vision (15 turns)'),
@@ -1045,15 +1554,15 @@ class Game:
             self.player.temporary_effects[effect] = 0
     
     def process_turn(self):
-        """Process one complete game turn."""
-        self.turn += 1
+        """Process one complete game turn using the new system architecture."""
+        # Process turn using the dedicated turn processor
+        self.turn_processor.process_turn(self.player)
         
         # Update player effects
         self.player.update_effects()
         
-        # Cool down heat
-        heat_reduction = 3 if self.player.temporary_effects['exploit_efficiency_turns'] > 0 else 2
-        self.player.heat = max(0, self.player.heat - heat_reduction)
+        # Update all enemies using the enemy manager
+        self.enemy_manager.update_all_enemies(self.player, self.game_state, self)
         
         # Handle network scan effect
         self._update_network_scan()
@@ -1071,7 +1580,7 @@ class Game:
         self._check_admin_spawn()
         
         # Passive detection increase (higher on higher levels)
-        if self.turn % 15 == 0:
+        if self.turn % GameBalance.DETECTION_INCREASE_INTERVAL == 0:
             config = GameConfig.NETWORK_CONFIGS.get(self.level, {"background_detection": 1})
             background_increase = config.get("background_detection", 1)
             self.player.detection = min(100, self.player.detection + background_increase)
@@ -1116,7 +1625,7 @@ class Game:
         
         # CPU recovery node
         if self.game_map.is_cpu_recovery_node(self.player.position):
-            recovery = min(20, self.player.max_cpu - self.player.cpu)
+            recovery = min(GameBalance.CPU_RECOVERY_AMOUNT, self.player.max_cpu - self.player.cpu)
             self.player.cpu += recovery
             if recovery > 0:
                 self.message_log.add_message(f"CPU recovery: +{recovery}")
@@ -1389,8 +1898,8 @@ class Game:
         if target_enemy.take_damage(total_damage):
             # Enemy destroyed
             self.enemies.remove(target_enemy)
-            self.player.cpu = min(self.player.max_cpu, self.player.cpu + 5)  # Small CPU recovery
-            self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+5 CPU)")
+            self.player.cpu = min(self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)  # Small CPU recovery
+            self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")
         else:
             # Enemy damaged but alive - show remaining health
             self.message_log.add_message(f"{target_enemy.type_data.name} health: {target_enemy.cpu}/{target_enemy.max_cpu}")
@@ -1439,32 +1948,24 @@ class Game:
                 self.level -= 1
 
     def _generate_procedural_level(self):
-        """Generate a procedural level based on current level."""
+        """Generate a procedural level using the new LevelGenerator system."""
         if self.level not in GameConfig.NETWORK_CONFIGS:
             self.message_log.add_message(f"Invalid level: {self.level}")
             return
         
         config = GameConfig.NETWORK_CONFIGS[self.level]
         
-        # Set deterministic seed for this level
-        level_seed = self.dungeon_seed + self.level * 12345
-        random.seed(level_seed)
-        
         try:
-            self._clear_map()
-            self._create_border_walls()
+            # Use the new LevelGenerator system
+            self.level_generator.generate_level(self.level, self.game_state.dungeon_seed)
             
-            # Generate level content
-            rooms = self._generate_rooms()
-            self._connect_rooms(rooms)
+            # Generate additional game elements not handled by LevelGenerator
+            self._create_border_walls()
             self._add_cover_elements()  # Add strategic cover for stealth
-            self._generate_shadows(config["shadow_coverage"])
-            self._place_special_nodes()
             self._place_data_patches()
             self._place_exploit_pickups()
             self._place_permanent_upgrades()
             self._place_enemies(config["enemies"])
-            self._place_gateway(rooms)
             
             # Reset player state
             self._reset_player_state(5, 5)
@@ -1484,10 +1985,10 @@ class Game:
         """Generate rooms with varied sizes and better space utilization."""
         rooms = []
         # More rooms based on level (12-20 instead of 6-12)
-        num_rooms = 12 + self.level * 3
-        max_rooms = min(num_rooms, 20)  # Cap at 20 rooms
+        num_rooms = RoomGenerationConfig.MIN_ROOMS_BASE + self.level * RoomGenerationConfig.ROOM_LEVEL_MULTIPLIER
+        max_rooms = min(num_rooms, RoomGenerationConfig.MAX_ROOMS)  # Cap at maximum rooms
         attempts = 0
-        max_attempts = 400  # More attempts for better placement
+        max_attempts = RoomGenerationConfig.MAX_PLACEMENT_ATTEMPTS  # More attempts for better placement
         
         while len(rooms) < max_rooms and attempts < max_attempts:
             attempts += 1
@@ -2266,7 +2767,7 @@ class ExploitSystem:
             
             if target_enemy.take_damage(damage):
                 self.game.enemies.remove(target_enemy)
-                self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + 5)
+                self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
                 self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
             else:
                 self.game.message_log.add_message(f"{target_enemy.type_data.name} damaged")
@@ -2286,7 +2787,7 @@ class ExploitSystem:
                 damage = 50
                 if target_enemy.take_damage(damage):
                     self.game.enemies.remove(target_enemy)
-                    self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + 5)
+                    self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
                     self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
                 else:
                     self.game.message_log.add_message(f"{target_enemy.type_data.name} damaged")
@@ -3414,7 +3915,7 @@ def initialize_tcod_context():
         tileset = tcod.tileset.load_tilesheet(
             "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
         ) 
-        tileset = tcod.tileset.load_truetype_font("Orbitron-VariableFont_wght.ttf")
+        tileset = tcod.tileset.load_truetype_font("Orbitron-VariableFont_wght.ttf", 16, 16)
 
 
     except (FileNotFoundError, ImportError, Exception) as e:
@@ -3424,9 +3925,8 @@ def initialize_tcod_context():
         print(f"Tileset loading error: {e} (line {line_no})")
         try:
             # Try default tileset
-            tileset = tcod.tileset.load_tilesheet(
-                tcod.tileset.get_default(), 16, 16, tcod.tileset.CHARMAP_TCOD
-            )
+            # Use a simple built-in tileset
+            tileset = None  # Let tcod use its default
         except Exception as e2:
             tb2 = traceback.extract_tb(e2.__traceback__)
             line_no2 = tb2[-1].lineno if tb2 else "?"
