@@ -956,14 +956,12 @@ class InventoryManager:
         # All checks passed, equip the exploit
         self.equipped_exploits.append(exploit_item.exploit_key)
         self.remove_item(exploit_item)
-        self.player.calculate_ram_usage()
         return True
     
     def unequip_exploit(self, exploit_key: str) -> bool:
         """Unequip an exploit."""
         if exploit_key in self.equipped_exploits:
             self.equipped_exploits.remove(exploit_key)
-            self.player.calculate_ram_usage()
             return True
         return False
     
@@ -1093,10 +1091,6 @@ class Player:
         return (self.can_see_through_walls() or 
                 game_map.has_line_of_sight(self.position, enemy.position))
     
-    def calculate_ram_usage(self):
-        """Update RAM usage calculation."""
-        # This is now handled by InventoryManager
-        pass
     
     @property
     def max_heat(self) -> int:
@@ -1116,12 +1110,12 @@ class Player:
         upgrade = GameUpgrades.UPGRADES[upgrade_key]
         
         if upgrade.stat_type == 'ram':
-            self.ram_total += upgrade.bonus_amount
+            self.ram_total = min(20, self.ram_total + upgrade.bonus_amount)  # Cap at 20
         elif upgrade.stat_type == 'cpu':
-            self.max_cpu += upgrade.bonus_amount
-            self.cpu += upgrade.bonus_amount  # Boost current as well
+            self.max_cpu = min(200, self.max_cpu + upgrade.bonus_amount)  # Cap at 200
+            self.cpu = min(self.max_cpu, self.cpu + upgrade.bonus_amount)  # Boost current as well but cap at max
         elif upgrade.stat_type == 'heat':
-            self.max_heat += upgrade.bonus_amount
+            self.max_heat = min(200, self.max_heat + upgrade.bonus_amount)  # Cap at 200
             
         return True
     
@@ -1234,9 +1228,7 @@ class Enemy:
         """Take damage and return True if destroyed."""
         # Admin avatar has 50% damage resistance
         if self.type == 'admin':
-            damage = damage // 2
-            if damage < 5:  # Minimum damage to prevent immunity
-                damage = 5
+            damage = max(5, damage // 2)  # Minimum 5 damage to prevent immunity
         
         self.cpu -= damage
         return self.cpu <= 0
@@ -1434,8 +1426,10 @@ class GameMap:
         err = dx - dy
         
         x, y = start.x, start.y
+        max_steps = dx + dy + 1  # Safety counter to prevent infinite loops
+        steps = 0
         
-        while True:
+        while steps < max_steps:
             if x == end.x and y == end.y:
                 return True
             if self.is_wall(Position(x, y)):
@@ -1448,6 +1442,10 @@ class GameMap:
             if e2 < dx:
                 err += dx
                 y += sy
+            
+            steps += 1
+        
+        return False  # Safety fallback if max steps exceeded
 
 # ============================================================================
 # MESSAGE LOG SYSTEM
@@ -2045,10 +2043,14 @@ class Game:
             # Restore game effects
             self.game_state.network_scan_turns = save_data["network_scan_turns"]
             self.game_state.noise_locations = [Position(loc["x"], loc["y"]) for loc in save_data["noise_locations"]]
-            self.game_state.distraction_points = {
-                Position(*map(int, pos.split(','))): turns 
-                for pos, turns in save_data["distraction_points"].items()
-            }
+            self.game_state.distraction_points = {}
+            for pos, turns in save_data["distraction_points"].items():
+                try:
+                    coords = pos.split(',')
+                    if len(coords) == 2:
+                        self.game_state.distraction_points[Position(int(coords[0]), int(coords[1]))] = turns
+                except (ValueError, IndexError):
+                    continue  # Skip malformed coordinate data
             
             # Restore data patch effects
             self.data_patch_effects = save_data["data_patch_effects"]
@@ -2105,7 +2107,13 @@ class Game:
         
         # Restore data patches
         for pos_str, patch_data in map_data["data_patches"].items():
-            x, y = map(int, pos_str.split(','))
+            try:
+                coords = pos_str.split(',')
+                if len(coords) != 2:
+                    continue
+                x, y = int(coords[0]), int(coords[1])
+            except (ValueError, IndexError):
+                continue
             patch = DataPatch(
                 color=patch_data["color"],
                 effect=patch_data["effect"],
@@ -2117,7 +2125,13 @@ class Game:
         
         # Restore exploit pickups
         for pos_str, exploit_key in map_data["exploit_pickups"].items():
-            x, y = map(int, pos_str.split(','))
+            try:
+                coords = pos_str.split(',')
+                if len(coords) != 2:
+                    continue
+                x, y = int(coords[0]), int(coords[1])
+            except (ValueError, IndexError):
+                continue
             if exploit_key in GameData.EXPLOITS:
                 exploit_def = GameData.EXPLOITS[exploit_key]
                 exploit_item = ExploitItem(exploit_key, exploit_def)
@@ -2125,12 +2139,24 @@ class Game:
         
         # Restore permanent upgrades
         for pos_str, upgrade_key in map_data["permanent_upgrades"].items():
-            x, y = map(int, pos_str.split(','))
+            try:
+                coords = pos_str.split(',')
+                if len(coords) != 2:
+                    continue
+                x, y = int(coords[0]), int(coords[1])
+            except (ValueError, IndexError):
+                continue
             self.game_map.permanent_upgrades[(x, y)] = upgrade_key
         
         # Restore story fragments
         for pos_str, fragment_index in map_data["story_fragments"].items():
-            x, y = map(int, pos_str.split(','))
+            try:
+                coords = pos_str.split(',')
+                if len(coords) != 2:
+                    continue
+                x, y = int(coords[0]), int(coords[1])
+            except (ValueError, IndexError):
+                continue
             fragment = StoryFragment(fragment_index)
             self.game_map.story_fragments[(x, y)] = fragment
         
