@@ -1213,11 +1213,15 @@ class Enemy:
     
     def can_attack_player(self, player: Player) -> bool:
         """Check if enemy can attack player (adjacent including diagonally)."""
+        # Can't attack if no damage or disabled
+        if self.type_data.damage <= 0 or self.disabled_turns > 0:
+            return False
+            
         dx = abs(self.position.x - player.position.x)
         dy = abs(self.position.y - player.position.y)
         # Adjacent in any direction (including diagonal)
         is_adjacent = dx <= 1 and dy <= 1 and (dx + dy) > 0
-        return is_adjacent and self.disabled_turns == 0
+        return is_adjacent
     
     def attack_player(self, player: Player) -> int:
         """Attack the player and return damage dealt."""
@@ -1321,6 +1325,11 @@ class Enemy:
     def _move_toward(self, target: Position, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
         """Move one step toward target position. Returns True if moved."""
         if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+            return False
+        
+        # Don't move if already adjacent to target (can attack instead)
+        current_distance = self.position.distance_to(target)
+        if current_distance <= 1.5:  # Adjacent (including diagonally)
             return False
         
         original_position = self.position
@@ -2333,9 +2342,6 @@ class Game:
         
         # Update player effects
         self.player.update_effects()
-        
-        # Update all enemies using the enemy manager
-        self.enemy_manager.update_all_enemies(self.player, self.game_state, self)
         
         # Handle network scan effect
         self._update_network_scan()
