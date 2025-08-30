@@ -589,9 +589,11 @@ class SoundManager:
     
     def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
         """Play a loaded sound effect with channel management"""
-        if not self.enabled or sound_id not in self.sounds:
-            # Placeholder logging for development
-            logging.debug(f"SOUND PLACEHOLDER: Playing '{sound_id}'")
+        if not self.enabled:
+            logging.debug(f"Audio disabled - would play: '{sound_id}'")
+            return None
+        elif sound_id not in self.sounds:
+            logging.debug(f"Sound not loaded - would play: '{sound_id}'")
             return None
         
         try:
@@ -616,7 +618,7 @@ class SoundManager:
     def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0):
         """Play background music"""
         if not self.enabled:
-            logging.debug(f"MUSIC PLACEHOLDER: Playing '{filename}'")
+            logging.debug(f"Audio disabled - would play music: '{filename}'")
             return
         
         try:
@@ -3693,7 +3695,7 @@ class ExploitSystem:
     def use_exploit(self, exploit_key: str) -> bool:
         """Attempt to use an exploit."""
         if not self.game.player.inventory_manager.can_use_exploit(exploit_key):
-            self.message_log.add_message("Exploit not equipped")
+            self.game.message_log.add_message("Exploit not equipped")
             return False
         
         exploit = GameData.EXPLOITS[exploit_key]
@@ -3933,7 +3935,7 @@ class InputHandler:
                 self.game.show_pause_menu = True
             return True
         
-        # Modal screens
+        # Modal screens - handle non-escape keys
         if self.game.show_help:
             self.game.show_help = False
             return True
@@ -3944,7 +3946,7 @@ class InputHandler:
             return True
         
         if self.game.show_lore_viewer:
-            # ESC already handled, any other key closes lore viewer
+            # Any key closes lore viewer
             self.game.show_lore_viewer = False
             return True
         
@@ -5563,7 +5565,7 @@ def main():
                     # Initial welcome messages
                     if not SaveGameManager.save_exists():  # Only show on new game
                         game.message_log.add_message("Welcome to Rogue Signal Protocol v1.0!")
-                        game.message_log.add_message("Enhanced Edition with save/load and story fragments")
+                        game.message_log.add_message("Enhanced Edition with sound, settings, and story fragments")
                         game.message_log.add_message("Navigate using stealth")
                         game.message_log.add_message("Reach the gateway (>)")
                         game.message_log.add_message("Hide in shadows (.) to avoid detection")
@@ -5629,9 +5631,18 @@ def main():
                                 game.sound_manager.cleanup()
                                 return
                             elif event.type == "KEYDOWN":
-                                # Handle escape key for pause menu
+                                # Handle escape key
                                 if event.sym == tcod.event.KeySym.ESCAPE:
-                                    game.show_pause_menu = True
+                                    # Check if any UI states are open - close those first
+                                    if (game.show_story_fragment is not None or 
+                                        game.show_lore_viewer or 
+                                        game.show_help or 
+                                        game.show_inventory or 
+                                        game.targeting_mode):
+                                        input_handler._handle_escape()
+                                    else:
+                                        # No UI states open, show pause menu
+                                        game.show_pause_menu = True
                                     break
                                 else:
                                     input_handler.handle_keydown(event)
