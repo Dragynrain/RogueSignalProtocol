@@ -19,6 +19,14 @@ from dataclasses import dataclass
 from typing import List, Tuple, Optional, Dict, Any, Set
 import time
 
+# Audio imports
+try:
+    import pygame
+    AUDIO_AVAILABLE = True
+except ImportError:
+    AUDIO_AVAILABLE = False
+    print("Warning: pygame not available. Sound will be disabled.")
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
 
@@ -455,6 +463,223 @@ class SaveGameManager:
             serialized.append(enemy_data)
         
         return serialized
+
+
+class GameSettings:
+    """Manages game settings with persistent storage."""
+    
+    SETTINGS_FILE = "rogue_signal_settings.json"
+    
+    def __init__(self):
+        self.master_volume = 0.7
+        self.sfx_volume = 0.8
+        self.music_volume = 0.5
+        self.graphics_mode = "ascii"  # "ascii" or "graphics"
+        self.load_settings()
+    
+    def load_settings(self):
+        """Load settings from file."""
+        try:
+            if os.path.exists(self.SETTINGS_FILE):
+                with open(self.SETTINGS_FILE, 'r') as f:
+                    settings_data = json.load(f)
+                    self.master_volume = settings_data.get("master_volume", 0.7)
+                    self.sfx_volume = settings_data.get("sfx_volume", 0.8)
+                    self.music_volume = settings_data.get("music_volume", 0.5)
+                    self.graphics_mode = settings_data.get("graphics_mode", "ascii")
+        except Exception as e:
+            logging.warning(f"Failed to load settings: {e}")
+    
+    def save_settings(self):
+        """Save settings to file."""
+        try:
+            settings_data = {
+                "master_volume": self.master_volume,
+                "sfx_volume": self.sfx_volume,
+                "music_volume": self.music_volume,
+                "graphics_mode": self.graphics_mode
+            }
+            with open(self.SETTINGS_FILE, 'w') as f:
+                json.dump(settings_data, f, indent=2)
+        except Exception as e:
+            logging.error(f"Failed to save settings: {e}")
+    
+    def set_master_volume(self, volume: float):
+        """Set master volume (0.0 to 1.0)"""
+        self.master_volume = max(0.0, min(1.0, volume))
+        self.save_settings()
+    
+    def set_sfx_volume(self, volume: float):
+        """Set SFX volume (0.0 to 1.0)"""
+        self.sfx_volume = max(0.0, min(1.0, volume))
+        self.save_settings()
+    
+    def set_music_volume(self, volume: float):
+        """Set music volume (0.0 to 1.0)"""
+        self.music_volume = max(0.0, min(1.0, volume))
+        self.save_settings()
+    
+    def set_graphics_mode(self, mode: str):
+        """Set graphics mode ('ascii' or 'graphics')"""
+        if mode in ["ascii", "graphics"]:
+            self.graphics_mode = mode
+            self.save_settings()
+    
+    def get_volume_percent(self, volume_type: str) -> int:
+        """Get volume as percentage (0-100)"""
+        if volume_type == "master":
+            return int(self.master_volume * 100)
+        elif volume_type == "sfx":
+            return int(self.sfx_volume * 100)
+        elif volume_type == "music":
+            return int(self.music_volume * 100)
+        return 0
+    
+    def set_volume_percent(self, volume_type: str, percent: int):
+        """Set volume from percentage (0-100)"""
+        volume = percent / 100.0
+        if volume_type == "master":
+            self.set_master_volume(volume)
+        elif volume_type == "sfx":
+            self.set_sfx_volume(volume)
+        elif volume_type == "music":
+            self.set_music_volume(volume)
+
+
+class SoundManager:
+    """Manages sound effects and background music using pygame."""
+    
+    def __init__(self, settings: GameSettings = None):
+        self.settings = settings or GameSettings()
+        self.enabled = AUDIO_AVAILABLE
+        self.sounds = {}
+        self.current_music = None
+        self.music_playing = False
+        self.max_channels = 8  # Limit simultaneous sound effects
+        
+        if self.enabled:
+            try:
+                pygame.mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=512)
+                pygame.mixer.init()
+                pygame.mixer.set_num_channels(self.max_channels)
+                logging.info(f"Sound system initialized with {self.max_channels} channels")
+            except Exception as e:
+                logging.warning(f"Failed to initialize sound system: {e}")
+                self.enabled = False
+    
+    def update_volumes(self):
+        """Update volumes from settings"""
+        if self.enabled:
+            pygame.mixer.music.set_volume(self.settings.music_volume * self.settings.master_volume)
+    
+    def load_sound(self, sound_id: str, filename: str):
+        """Load a sound effect from file"""
+        if not self.enabled:
+            return
+        
+        try:
+            sound_path = os.path.join("sounds", filename)
+            if os.path.exists(sound_path):
+                self.sounds[sound_id] = pygame.mixer.Sound(sound_path)
+                logging.info(f"Loaded sound: {sound_id}")
+            else:
+                logging.warning(f"Sound file not found: {sound_path}")
+        except Exception as e:
+            logging.error(f"Failed to load sound {sound_id}: {e}")
+    
+    def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
+        """Play a loaded sound effect with channel management"""
+        if not self.enabled or sound_id not in self.sounds:
+            # Placeholder logging for development
+            logging.debug(f"SOUND PLACEHOLDER: Playing '{sound_id}'")
+            return None
+        
+        try:
+            sound = self.sounds[sound_id]
+            final_volume = self.settings.sfx_volume * self.settings.master_volume * volume_modifier
+            sound.set_volume(final_volume)
+            
+            # Find available channel or use priority to override
+            channel = pygame.mixer.find_channel()
+            if channel is None and priority > 0:
+                # Force stop lowest priority channel if needed
+                channel = pygame.mixer.Channel(0)  # Use first channel
+            
+            if channel:
+                return channel.play(sound)
+            else:
+                return sound.play()  # Fallback to default behavior
+        except Exception as e:
+            logging.error(f"Failed to play sound {sound_id}: {e}")
+            return None
+    
+    def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0):
+        """Play background music"""
+        if not self.enabled:
+            logging.debug(f"MUSIC PLACEHOLDER: Playing '{filename}'")
+            return
+        
+        try:
+            music_path = os.path.join("music", filename)
+            if os.path.exists(music_path):
+                pygame.mixer.music.load(music_path)
+                pygame.mixer.music.set_volume(self.settings.music_volume * self.settings.master_volume)
+                if fade_in_ms > 0:
+                    pygame.mixer.music.play(loops, fade_in_ms=fade_in_ms)
+                else:
+                    pygame.mixer.music.play(loops)
+                self.current_music = filename
+                self.music_playing = True
+                logging.info(f"Playing music: {filename}")
+            else:
+                logging.warning(f"Music file not found: {music_path}")
+        except Exception as e:
+            logging.error(f"Failed to play music {filename}: {e}")
+    
+    def stop_music(self, fade_out_ms: int = 0):
+        """Stop background music"""
+        if not self.enabled:
+            return
+        
+        try:
+            if fade_out_ms > 0:
+                pygame.mixer.music.fadeout(fade_out_ms)
+            else:
+                pygame.mixer.music.stop()
+            self.music_playing = False
+            self.current_music = None
+        except Exception as e:
+            logging.error(f"Failed to stop music: {e}")
+    
+    def pause_music(self):
+        """Pause background music"""
+        if self.enabled:
+            pygame.mixer.music.pause()
+    
+    def unpause_music(self):
+        """Resume paused background music"""
+        if self.enabled:
+            pygame.mixer.music.unpause()
+    
+    def is_music_playing(self) -> bool:
+        """Check if music is currently playing"""
+        if not self.enabled:
+            return False
+        return pygame.mixer.music.get_busy()
+    
+    def update(self):
+        """Update sound system (call each frame)"""
+        if self.enabled and self.music_playing and not pygame.mixer.music.get_busy():
+            # Music stopped playing
+            self.music_playing = False
+            self.current_music = None
+    
+    def cleanup(self):
+        """Clean up sound system"""
+        if self.enabled:
+            pygame.mixer.music.stop()
+            pygame.mixer.stop()
+            pygame.mixer.quit()
 
 
 class StoryFragmentManager:
@@ -1973,7 +2198,7 @@ class TurnProcessor:
 class Game:
     """Main game class that manages all game state and logic."""
     
-    def __init__(self, load_save: bool = False):
+    def __init__(self, load_save: bool = False, settings: GameSettings = None):
         # Core game objects
         self.player = Player(5, 5)
         self.game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
@@ -1984,6 +2209,7 @@ class Game:
         self.enemy_manager = EnemyManager(self.game_map, self.message_log)
         self.level_generator = LevelGenerator(self.game_map)
         self.turn_processor = TurnProcessor(self.game_state, self.message_log)
+        self.sound_manager = SoundManager(settings)
         
         # UI state
         self.show_patrol_predictions = False
@@ -1991,6 +2217,7 @@ class Game:
         self.show_help = False
         self.show_story_fragment: Optional[int] = None  # Fragment index to display
         self.show_lore_viewer = False  # L key lore viewer
+        self.show_pause_menu = False  # Pause menu state
         self.inventory_selection = 0
         
         # Targeting system
@@ -2412,6 +2639,7 @@ class Game:
         # Data patch
         if player_pos in self.game_map.data_patches:
             patch = self.game_map.data_patches[player_pos]
+            self.sound_manager.play_sound("item_pickup_data")
             self.player.inventory_manager.add_item(patch)
             self.message_log.add_message(f"Found {patch.name}")
             del self.game_map.data_patches[player_pos]
@@ -2419,6 +2647,7 @@ class Game:
         # Exploit pickup
         if player_pos in self.game_map.exploit_pickups:
             exploit_item = self.game_map.exploit_pickups[player_pos]
+            self.sound_manager.play_sound("item_pickup_exploit")
             self.player.inventory_manager.add_item(exploit_item)
             self.message_log.add_message(f"Found {exploit_item.name}")
             del self.game_map.exploit_pickups[player_pos]
@@ -2429,6 +2658,7 @@ class Game:
             if upgrade_key in GameUpgrades.UPGRADES:
                 upgrade = GameUpgrades.UPGRADES[upgrade_key]
                 if self.player.apply_permanent_upgrade(upgrade_key):
+                    self.sound_manager.play_sound("item_pickup_upgrade")
                     self.message_log.add_message(f"Integrated {upgrade.name}!")
                     self.message_log.add_message(upgrade.description)
                     del self.game_map.permanent_upgrades[player_pos]
@@ -2438,6 +2668,7 @@ class Game:
             story_fragment = self.game_map.story_fragments[player_pos]
             # Discover the fragment and save progress
             if self.story_fragment_manager.discover_fragment(story_fragment.fragment_index):
+                self.sound_manager.play_sound("item_pickup_story")
                 self.message_log.add_message("Data fragment recovered! Press 'L' to view lore.")
                 # Trigger the story fragment display immediately
                 self.show_story_fragment = story_fragment.fragment_index
@@ -2533,9 +2764,11 @@ class Game:
         for enemy in self.enemies[:]:
             # Only attack if enemy hasn't moved this turn (move OR attack, not both)
             if enemy.can_attack_player(self.player) and not getattr(enemy, 'has_moved_this_turn', False):
+                self.sound_manager.play_sound("enemy_attack")
                 damage = enemy.attack_player(self.player)
                 self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
                 if self.player.cpu <= 0:
+                    self.sound_manager.play_sound("player_death")
                     self.message_log.add_message("CRITICAL SYSTEM FAILURE!")
                     # Delete save on death (permadeath)
                     SaveGameManager.delete_save()
@@ -2634,20 +2867,24 @@ class Game:
         else:
             # Try to move player
             if self.player.move(dx, dy, self.game_map):
+                self.sound_manager.play_sound("player_move")
                 # Check for gateway
                 if (self.game_map.gateway and 
                     self.player.position.distance_to(self.game_map.gateway) == 0):
+                    self.sound_manager.play_sound("level_complete")
                     self.message_log.add_message("Gateway reached! Next network...")
                     self.next_level()
                     return
                 
                 # Check for overheating
                 if self.player.heat >= 100:
+                    self.sound_manager.play_sound("player_overheat")
                     damage = 5 + (self.player.heat - 100)
                     self.player.take_damage(damage)
                     self.player.heat = 95
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
                     if self.player.cpu <= 0:
+                        self.sound_manager.play_sound("player_death")
                         self.message_log.add_message("CRITICAL SYSTEM FAILURE!")
                         # Delete save on death (permadeath)
                         SaveGameManager.delete_save()
@@ -2679,7 +2916,10 @@ class Game:
         stealth_bonus = 0
         if self.game_map.is_shadow(self.player.position) or self.player.is_invisible():
             stealth_bonus = 10  # Reduced from 15 to prevent trivial one-shots
+            self.sound_manager.play_sound("stealth_attack")
             self.message_log.add_message("Stealth attack!")
+        else:
+            self.sound_manager.play_sound("player_attack")
         
         # Speed boost bonus
         speed_bonus = 5 if self.player.temporary_effects['speed_boost_turns'] > 0 else 0  # Reduced from 10
@@ -2692,6 +2932,7 @@ class Game:
         # Apply damage
         if target_enemy.take_damage(total_damage):
             # Enemy destroyed
+            self.sound_manager.play_sound("enemy_death")
             self.enemies.remove(target_enemy)
             self.player.cpu = min(self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)  # Small CPU recovery
             self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")
@@ -2733,6 +2974,7 @@ class Game:
         """Progress to the next level."""
         self.level += 1
         if self.level > 3:
+            self.sound_manager.play_music("victory.ogg", loops=1)
             self.message_log.add_message("INFILTRATION COMPLETE!")
             self.message_log.add_message(f"Stats: Turns:{self.turn} Det:{int(self.player.detection)}%")
             self.game_over = True
@@ -2759,6 +3001,14 @@ class Game:
         config = GameConfig.NETWORK_CONFIGS[self.level]
         
         try:
+            # Play appropriate background music for the level
+            if self.level == 1:
+                self.sound_manager.play_music("level1_stealth.ogg", fade_in_ms=2000)
+            elif self.level == 2:
+                self.sound_manager.play_music("level2_infiltration.ogg", fade_in_ms=2000) 
+            elif self.level == 3:
+                self.sound_manager.play_music("level3_core.ogg", fade_in_ms=2000)
+            
             # Use the new LevelGenerator system
             self.level_generator.generate_level(self.level, self.game_state.dungeon_seed)
             
@@ -3451,12 +3701,14 @@ class ExploitSystem:
         # Check heat limit
         heat_cost = self._calculate_heat_cost(exploit)
         if self.game.player.heat + heat_cost > 100:
+            self.game.sound_manager.play_sound("exploit_failed")
             self.game.message_log.add_message("System too hot! Cannot use")
             return False
         
         # Check if exploit requires targeting
 
         if exploit.targeting != TargetingMode.NONE and exploit.range > 0:
+            self.game.sound_manager.play_sound("exploit_targeting")
             self.game.targeting_mode = True
             self.game.targeting_exploit = exploit_key
             self.game.cursor_position = Position(self.game.player.x, self.game.player.y)
@@ -3539,6 +3791,7 @@ class ExploitSystem:
         """Execute shadow step exploit."""
         if self.game.game_map.is_shadow(target) and self.game.game_map.is_valid_position(target):
             if not self.game._get_enemy_at(target):
+                self.game.sound_manager.play_sound("exploit_shadow_step")
                 self.game.player.position = target
                 self.game.message_log.add_message("Shadow Step executed")
                 return True
@@ -3556,6 +3809,7 @@ class ExploitSystem:
     
     def _execute_noise_maker(self, target: Position) -> bool:
         """Execute noise maker exploit."""
+        self.game.sound_manager.play_sound("exploit_noise_maker")
         attracted = 0
         for enemy in self.game.enemies:
             if (enemy.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.RANDOM, EnemyMovement.LINEAR] and
@@ -3672,14 +3926,12 @@ class InputHandler:
         self.exploit_system = ExploitSystem(game)
     
     def handle_keydown(self, event) -> bool:
-        """Handle keydown events. Returns True if game should continue."""
-        # Global exit conditions
-        if event.sym == tcod.event.KeySym.ESCAPE:
-            return self._handle_escape()
-        
-        # Dead/game over state
+        """Handle keydown events. Returns True if game should continue."""        
+        # Dead/game over state - only allow escape
         if self.game.player.cpu <= 0 or self.game.game_over:
-            return True  # Only allow ESC when dead
+            if event.sym == tcod.event.KeySym.ESCAPE:
+                self.game.show_pause_menu = True
+            return True
         
         # Modal screens
         if self.game.show_help:
@@ -3706,7 +3958,7 @@ class InputHandler:
         return self._handle_gameplay_input(event)
     
     def _handle_escape(self) -> bool:
-        """Handle escape key in different contexts."""
+        """Handle escape key for UI states."""
         if self.game.show_story_fragment is not None:
             self.game.show_story_fragment = None
         elif self.game.show_lore_viewer:
@@ -3718,9 +3970,10 @@ class InputHandler:
         elif self.game.targeting_mode:
             self.game.targeting_mode = False
             self.game.targeting_exploit = None
-            self.message_log.add_message("Targeting cancelled")
+            self.game.message_log.add_message("Targeting cancelled")
         else:
-            return False  # Exit game
+            # Show pause menu instead of exiting
+            self.game.show_pause_menu = True
         return True
     
     def _handle_inventory_input(self, event) -> bool:
@@ -3892,6 +4145,7 @@ class InputHandler:
     
     def _open_inventory(self):
         """Open the inventory screen."""
+        self.game.sound_manager.play_sound("ui_menu_open")
         self.game.show_inventory = True
         self.game.inventory_selection = 0
     
@@ -4902,7 +5156,7 @@ class MainMenu:
     
     def __init__(self):
         self.selected_option = 0
-        self.options = ["Continue Game", "New Game", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Exit"]
+        self.options = ["Continue Game", "New Game", "Settings", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Exit"]
         self.show_warning = False
         self.warning_selection = 0
     
@@ -5054,6 +5308,8 @@ class MainMenu:
                     self.warning_selection = 1  # Default to "No"
                 else:
                     return "new_game"
+            elif option == "Settings":
+                return "settings"
             elif option == "Exit":
                 return "exit"
         elif event.sym == tcod.event.KeySym.ESCAPE:
@@ -5077,72 +5333,308 @@ class MainMenu:
         return ""
 
 
+class SettingsMenu:
+    """Settings menu for audio and graphics options."""
+    
+    def __init__(self, settings: GameSettings):
+        self.settings = settings
+        self.selected_option = 0
+        self.options = [
+            {"name": "Master Volume", "type": "volume", "key": "master"},
+            {"name": "SFX Volume", "type": "volume", "key": "sfx"},
+            {"name": "Music Volume", "type": "volume", "key": "music"},
+            {"name": "Graphics Mode", "type": "toggle", "key": "graphics_mode", 
+             "values": ["ASCII", "Graphics"]},
+            {"name": "Back", "type": "action"}
+        ]
+    
+    def render(self, console: tcod.console.Console) -> None:
+        """Render the settings menu."""
+        console.clear()
+        
+        # Title
+        title = "SETTINGS"
+        console.print(
+            GameConfig.SCREEN_WIDTH // 2 - len(title) // 2,
+            5,
+            title,
+            Colors.WHITE
+        )
+        
+        # Options
+        start_y = 10
+        for i, option in enumerate(self.options):
+            color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
+            
+            # Option name
+            console.print(10, start_y + i * 2, option["name"], color)
+            
+            # Option value
+            if option["type"] == "volume":
+                volume_percent = self.settings.get_volume_percent(option["key"])
+                bar_length = 20
+                filled_length = int(bar_length * volume_percent / 100)
+                
+                # Volume bar
+                bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
+                console.print(30, start_y + i * 2, f"{bar} {volume_percent}%", color)
+                
+            elif option["type"] == "toggle":
+                if option["key"] == "graphics_mode":
+                    current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "ASCII"
+                    console.print(30, start_y + i * 2, f"< {current_value} >", color)
+        
+        # Instructions
+        instructions = [
+            "Arrow Keys/WASD: Navigate",
+            "Left/Right or A/D: Adjust volumes/toggle options", 
+            "Enter: Select",
+            "Escape: Back"
+        ]
+        
+        for i, instruction in enumerate(instructions):
+            console.print(
+                GameConfig.SCREEN_WIDTH // 2 - len(instruction) // 2,
+                GameConfig.SCREEN_HEIGHT - 8 + i,
+                instruction,
+                Colors.LIGHT_GRAY
+            )
+    
+    def handle_input(self, event) -> str:
+        """Handle settings menu input. Returns action: 'back', 'exit', or ''."""
+        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W):
+            self.selected_option = (self.selected_option - 1) % len(self.options)
+        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S):
+            self.selected_option = (self.selected_option + 1) % len(self.options)
+        elif event.sym == tcod.event.KeySym.RETURN:
+            option = self.options[self.selected_option]
+            if option["type"] == "action" and option["name"] == "Back":
+                return "back"
+        elif event.sym in (tcod.event.KeySym.LEFT, tcod.event.KeySym.A):
+            self._adjust_setting(-1)
+        elif event.sym in (tcod.event.KeySym.RIGHT, tcod.event.KeySym.D):
+            self._adjust_setting(1)
+        elif event.sym == tcod.event.KeySym.ESCAPE:
+            return "back"
+        
+        return ""
+    
+    def _adjust_setting(self, direction: int):
+        """Adjust the currently selected setting."""
+        option = self.options[self.selected_option]
+        
+        if option["type"] == "volume":
+            current_percent = self.settings.get_volume_percent(option["key"])
+            new_percent = max(0, min(100, current_percent + (direction * 5)))
+            self.settings.set_volume_percent(option["key"], new_percent)
+            # Note: Sound manager will be updated when the game is created with these settings
+            
+        elif option["type"] == "toggle":
+            if option["key"] == "graphics_mode":
+                current_mode = self.settings.graphics_mode
+                new_mode = "graphics" if current_mode == "ascii" else "ascii"
+                self.settings.set_graphics_mode(new_mode)
+
+
+class PauseMenu:
+    """Pause menu shown during gameplay when Escape is pressed."""
+    
+    def __init__(self, settings: GameSettings):
+        self.settings = settings
+        self.selected_option = 0
+        self.options = ["Resume", "New Game", "Settings", "Quit to Main Menu"]
+    
+    def render(self, console: tcod.console.Console) -> None:
+        """Render the pause menu overlay."""
+        # Create semi-transparent background
+        for x in range(GameConfig.SCREEN_WIDTH):
+            for y in range(GameConfig.SCREEN_HEIGHT):
+                console.print(x, y, " ", bg=Colors.BLACK)
+        
+        # Title
+        title = "GAME PAUSED"
+        console.print(
+            GameConfig.SCREEN_WIDTH // 2 - len(title) // 2,
+            GameConfig.SCREEN_HEIGHT // 2 - 8,
+            title,
+            Colors.WHITE
+        )
+        
+        # Options
+        start_y = GameConfig.SCREEN_HEIGHT // 2 - 4
+        for i, option in enumerate(self.options):
+            color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
+            console.print(
+                GameConfig.SCREEN_WIDTH // 2 - len(option) // 2,
+                start_y + i * 2,
+                option,
+                color
+            )
+        
+        # Instructions
+        instructions = [
+            "Arrow Keys/WASD: Navigate",
+            "Enter: Select",
+            "Escape: Resume Game"
+        ]
+        
+        for i, instruction in enumerate(instructions):
+            console.print(
+                GameConfig.SCREEN_WIDTH // 2 - len(instruction) // 2,
+                GameConfig.SCREEN_HEIGHT - 6 + i,
+                instruction,
+                Colors.LIGHT_GRAY
+            )
+    
+    def handle_input(self, event) -> str:
+        """Handle pause menu input. Returns action: 'resume', 'new_game', 'settings', 'quit', or ''."""
+        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W):
+            self.selected_option = (self.selected_option - 1) % len(self.options)
+        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S):
+            self.selected_option = (self.selected_option + 1) % len(self.options)
+        elif event.sym == tcod.event.KeySym.RETURN:
+            option = self.options[self.selected_option]
+            if option == "Resume":
+                return "resume"
+            elif option == "New Game":
+                return "new_game"
+            elif option == "Settings":
+                return "settings"
+            elif option == "Quit to Main Menu":
+                return "quit"
+        elif event.sym == tcod.event.KeySym.ESCAPE:
+            return "resume"
+        
+        return ""
+
+
 def main():
     """Main game loop with main menu and save/load functionality."""
     try:
         with initialize_tcod_context() as context:
             console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
             
-            # Show main menu first
-            menu = MainMenu()
+            # Initialize settings and menus
+            settings = GameSettings()
+            main_menu = MainMenu()
+            settings_menu = SettingsMenu(settings)
+            pause_menu = PauseMenu(settings)
+            
+            game = None
             
             while True:
-                menu.render(console)
-                context.present(console)
-                
-                for event in tcod.event.wait():
-                    if event.type == "QUIT":
-                        return
-                    elif event.type == "KEYDOWN":
-                        action = menu.handle_input(event)
-                        
-                        if action == "exit":
-                            return
-                        elif action == "continue":
-                            # Load existing game
-                            game = Game(load_save=True)
-                            break
-                        elif action == "new_game":
-                            # Start new game
-                            game = Game(load_save=False)
-                            break
-                
-                # If we broke out of the menu loop, start the game
-                if 'game' in locals():
-                    break
-            
-            # Initialize game systems
-            renderer = Renderer()
-            input_handler = InputHandler(game)
-
-            # Initial welcome messages
-            if not SaveGameManager.save_exists():  # Only show on new game
-                game.message_log.add_message("Welcome to Rogue Signal Protocol v1.0!")
-                game.message_log.add_message("Enhanced Edition with save/load and story fragments")
-                game.message_log.add_message("Navigate using stealth")
-                game.message_log.add_message("Reach the gateway (>)")
-                game.message_log.add_message("Hide in shadows (.) to avoid detection")
-                game.message_log.add_message("Press 'L' to view discovered lore")
-                game.message_log.add_message("Starting Corporate Network infiltration...")
-
-            # Main game loop
-            while True:
-                try:
-                    # Render current game state
-                    renderer.render_game(console, game)
-                    context.present(console)
+                if game is None:
+                    # Show main menu flow
+                    current_menu = main_menu
                     
-                    # Handle input events
-                    for event in tcod.event.wait():
-                        if event.type == "QUIT":
-                            # Auto-save on quit
-                            game.auto_save()
-                            return
-                        elif event.type == "KEYDOWN":
-                            if not input_handler.handle_keydown(event):
-                                # Auto-save on game exit
+                    while True:
+                        current_menu.render(console)
+                        context.present(console)
+                        
+                        for event in tcod.event.wait():
+                            if event.type == "QUIT":
+                                return
+                            elif event.type == "KEYDOWN":
+                                action = current_menu.handle_input(event)
+                                
+                                if action == "exit":
+                                    return
+                                elif action == "settings":
+                                    current_menu = settings_menu
+                                elif action == "back":
+                                    current_menu = main_menu
+                                elif action == "continue":
+                                    # Load existing game
+                                    game = Game(load_save=True, settings=settings)
+                                    break
+                                elif action == "new_game":
+                                    # Start new game
+                                    game = Game(load_save=False, settings=settings)
+                                    break
+                        
+                        # If we broke out of the menu loop, start the game
+                        if game is not None:
+                            break
+                    
+                    # Initialize game systems
+                    renderer = Renderer()
+                    input_handler = InputHandler(game)
+
+                    # Initial welcome messages
+                    if not SaveGameManager.save_exists():  # Only show on new game
+                        game.message_log.add_message("Welcome to Rogue Signal Protocol v1.0!")
+                        game.message_log.add_message("Enhanced Edition with save/load and story fragments")
+                        game.message_log.add_message("Navigate using stealth")
+                        game.message_log.add_message("Reach the gateway (>)")
+                        game.message_log.add_message("Hide in shadows (.) to avoid detection")
+                        game.message_log.add_message("Press 'L' to view discovered lore")
+                        game.message_log.add_message("Starting Corporate Network infiltration...")
+
+                # Main game loop
+                while game is not None:
+                    try:
+                        # Update sound system
+                        game.sound_manager.update()
+                        
+                        # Handle pause menu
+                        if game.show_pause_menu:
+                            pause_menu.render(console)
+                            context.present(console)
+                            
+                            for event in tcod.event.wait():
+                                if event.type == "QUIT":
+                                    game.auto_save()
+                                    game.sound_manager.cleanup()
+                                    return
+                                elif event.type == "KEYDOWN":
+                                    action = pause_menu.handle_input(event)
+                                    
+                                    if action == "resume":
+                                        game.show_pause_menu = False
+                                    elif action == "settings":
+                                        # Handle settings from pause menu
+                                        settings_from_pause = True
+                                        while settings_from_pause:
+                                            settings_menu.render(console)
+                                            context.present(console)
+                                            
+                                            for settings_event in tcod.event.wait():
+                                                if settings_event.type == "QUIT":
+                                                    game.auto_save()
+                                                    game.sound_manager.cleanup()
+                                                    return
+                                                elif settings_event.type == "KEYDOWN":
+                                                    settings_action = settings_menu.handle_input(settings_event)
+                                                    if settings_action == "back":
+                                                        settings_from_pause = False
+                                                        break
+                                    elif action == "new_game":
+                                        game.auto_save()
+                                        game = Game(load_save=False, settings=settings)
+                                        renderer = Renderer()
+                                        input_handler = InputHandler(game)
+                                    elif action == "quit":
+                                        game.auto_save()
+                                        game = None  # Return to main menu
+                            continue
+                        
+                        # Normal game rendering and input
+                        renderer.render_game(console, game)
+                        context.present(console)
+                        
+                        # Handle input events
+                        for event in tcod.event.wait():
+                            if event.type == "QUIT":
                                 game.auto_save()
-                                return  # Exit game
+                                game.sound_manager.cleanup()
+                                return
+                            elif event.type == "KEYDOWN":
+                                # Handle escape key for pause menu
+                                if event.sym == tcod.event.KeySym.ESCAPE:
+                                    game.show_pause_menu = True
+                                    break
+                                else:
+                                    input_handler.handle_keydown(event)
                         
                 except Exception as e:
                     # Handle rendering errors gracefully
