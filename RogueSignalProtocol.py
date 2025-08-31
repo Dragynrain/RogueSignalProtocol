@@ -13,7 +13,7 @@ import random
 import math
 import json
 import os
-from abc import ABC, abstractmethod
+# ABC removed - simplified inheritance pattern
 from enum import Enum
 from dataclasses import dataclass
 from typing import List, Tuple, Optional, Dict, Any, Set
@@ -477,7 +477,7 @@ class GameSettings:
         self.graphics_mode = "ascii"  # "ascii" or "graphics"
         self.load_settings()
     
-    def load_settings(self):
+    def load_settings(self) -> None:
         """Load settings from file."""
         try:
             if os.path.exists(self.SETTINGS_FILE):
@@ -490,7 +490,7 @@ class GameSettings:
         except Exception as e:
             logging.warning(f"Failed to load settings: {e}")
     
-    def save_settings(self):
+    def save_settings(self) -> None:
         """Save settings to file."""
         try:
             settings_data = {
@@ -504,20 +504,23 @@ class GameSettings:
         except Exception as e:
             logging.error(f"Failed to save settings: {e}")
     
+    def _set_volume_attribute(self, volume_type: str, volume: float):
+        """Generic volume setter for any volume type."""
+        clamped_volume = clamp_value(volume, 0.0, 1.0)
+        setattr(self, f"{volume_type}_volume", clamped_volume)
+        self.save_settings()
+    
     def set_master_volume(self, volume: float):
         """Set master volume (0.0 to 1.0)"""
-        self.master_volume = max(0.0, min(1.0, volume))
-        self.save_settings()
+        self._set_volume_attribute("master", volume)
     
     def set_sfx_volume(self, volume: float):
         """Set SFX volume (0.0 to 1.0)"""
-        self.sfx_volume = max(0.0, min(1.0, volume))
-        self.save_settings()
+        self._set_volume_attribute("sfx", volume)
     
     def set_music_volume(self, volume: float):
         """Set music volume (0.0 to 1.0)"""
-        self.music_volume = max(0.0, min(1.0, volume))
-        self.save_settings()
+        self._set_volume_attribute("music", volume)
     
     def set_graphics_mode(self, mode: str):
         """Set graphics mode ('ascii' or 'graphics')"""
@@ -790,6 +793,15 @@ class GameConfig:
     PANEL_HEIGHT = 5
     PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
     
+    # Game mechanics
+    DEFAULT_VISION_RANGE = 10
+    MAX_HEAT = 100
+    DETECTION_REDUCTION_ON_LEVEL = 50  # Detection reduction when moving to new level
+    DUNGEON_SEED_RANGE = 1000000  # Range for random dungeon seeds
+    
+    # Sound system
+    DEFAULT_FADE_TIME = 2000  # Default fade in time for music (ms)
+    
     # Network configurations
     NETWORK_CONFIGS = {
         1: {"enemies": 15, "shadow_coverage": 0.15, "name": "Corporate Network", "background_detection": 1},
@@ -876,12 +888,15 @@ class Position:
     
     def distance_to(self, other: 'Position') -> float:
         """Calculate Euclidean distance to another position."""
-        import math
         return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
     
     def is_valid(self, width: int, height: int) -> bool:
         """Check if position is within bounds."""
         return 0 <= self.x < width and 0 <= self.y < height
+    
+    def __str__(self) -> str:
+        """String representation for debugging."""
+        return f"{self.x},{self.y}"
 
 @dataclass
 class EnemyTypeDefinition:
@@ -977,10 +992,26 @@ class GameUpgrades:
     }
 
 # ============================================================================
+# UTILITY FUNCTIONS - Functional helpers for common operations
+# ============================================================================
+
+def clamp_value(value: float, min_val: float, max_val: float) -> float:
+    """Clamp a value between min and max bounds."""
+    return max(min_val, min(max_val, value))
+
+def calculate_distance(pos1: Position, pos2: Position) -> float:
+    """Calculate Manhattan distance between two positions."""
+    return abs(pos1.x - pos2.x) + abs(pos1.y - pos2.y)
+
+def is_position_valid(pos: Position, width: int, height: int) -> bool:
+    """Check if position is within bounds."""
+    return 0 <= pos.x < width and 0 <= pos.y < height
+
+# ============================================================================
 # INVENTORY SYSTEM
 # ============================================================================
 
-class InventoryItem(ABC):
+class InventoryItem:
     """Base class for all inventory items."""
     
     def __init__(self, name: str, item_type: str, description: str = ""):
@@ -988,10 +1019,9 @@ class InventoryItem(ABC):
         self.item_type = item_type
         self.description = description
     
-    @abstractmethod
     def use(self, player: 'Player', game: 'Game') -> bool:
-        """Use the item. Returns True if successful."""
-        pass
+        """Use the item. Returns True if successful. Override in subclasses."""
+        return False
 
 class DataPatch(InventoryItem):
     """Randomized data patches with unknown effects until used."""
@@ -1740,7 +1770,7 @@ class GameStateManager:
         self.turn: int = 0
         self.game_over: bool = False
         self.admin_spawned: bool = False
-        self.dungeon_seed: int = random.randint(1, 1000000)
+        self.dungeon_seed: int = random.randint(1, GameConfig.DUNGEON_SEED_RANGE)
         
         # Game effects
         self.network_scan_turns: int = 0
@@ -3207,18 +3237,17 @@ class Game:
         try:
             # Play appropriate background music for the level
             if self.level == 1:
-                self.sound_manager.play_music("level1_stealth.ogg", fade_in_ms=2000)
+                self.sound_manager.play_music("level1_stealth.ogg", fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
             elif self.level == 2:
-                self.sound_manager.play_music("level2_infiltration.ogg", fade_in_ms=2000) 
+                self.sound_manager.play_music("level2_infiltration.ogg", fade_in_ms=GameConfig.DEFAULT_FADE_TIME) 
             elif self.level == 3:
-                self.sound_manager.play_music("level3_core.ogg", fade_in_ms=2000)
+                self.sound_manager.play_music("level3_core.ogg", fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
             
             # Use the new LevelGenerator system
             self.level_generator.generate_level(self.level, self.game_state.dungeon_seed)
             
             # Generate additional game elements not handled by LevelGenerator
             self._create_border_walls()
-            self._add_cover_elements()  # Add strategic cover for stealth
             self._place_data_patches()
             self._place_exploit_pickups()
             self._place_story_fragment()  # Add story fragment placement
@@ -3239,219 +3268,6 @@ class Game:
             random.seed()
         
         self.admin_spawned = False
-    
-    def _generate_rooms(self) -> List[Tuple[int, int, int, int]]:
-        """Generate rooms with varied sizes and better space utilization."""
-        rooms = []
-        # More rooms based on level (12-20 instead of 6-12)
-        num_rooms = RoomGenerationConfig.MIN_ROOMS_BASE + self.level * RoomGenerationConfig.ROOM_LEVEL_MULTIPLIER
-        max_rooms = min(num_rooms, RoomGenerationConfig.MAX_ROOMS)  # Cap at maximum rooms
-        attempts = 0
-        max_attempts = RoomGenerationConfig.MAX_PLACEMENT_ATTEMPTS  # More attempts for better placement
-        
-        while len(rooms) < max_rooms and attempts < max_attempts:
-            attempts += 1
-            
-            # Varied room sizes like dungeon-gen-v3
-            room_type = random.random()
-            if room_type < 0.15:  # 15% chance of extra large room
-                w = random.randint(10, 14)
-                h = random.randint(10, 14)
-            elif room_type < 0.40:  # 25% chance of large room
-                w = random.randint(7, 10)
-                h = random.randint(7, 10)
-            elif room_type < 0.70:  # 30% chance of medium room
-                w = random.randint(5, 7)
-                h = random.randint(5, 7)
-            else:  # 30% chance of small room (good for stealth)
-                w = random.randint(3, 5)
-                h = random.randint(3, 5)
-            
-            x = random.randint(3, GameConfig.MAP_WIDTH - w - 3)
-            y = random.randint(3, GameConfig.MAP_HEIGHT - h - 3)
-            
-            # Check for overlap with reduced buffer for tighter packing
-            if self._is_room_valid(x, y, w, h, rooms):
-                self._create_room(x, y, w, h)
-                rooms.append((x, y, w, h))
-        
-        # Try to fill gaps with smaller rooms
-        for _ in range(30):  # Extra attempts to fill space
-            w = random.randint(2, 4)
-            h = random.randint(2, 4)
-            x = random.randint(3, GameConfig.MAP_WIDTH - w - 3)
-            y = random.randint(3, GameConfig.MAP_HEIGHT - h - 3)
-            
-            if self._is_room_valid(x, y, w, h, rooms):
-                self._create_room(x, y, w, h)
-                rooms.append((x, y, w, h))
-        
-        return rooms
-    
-    def _is_room_valid(self, x: int, y: int, w: int, h: int, 
-                      existing_rooms: List[Tuple[int, int, int, int]]) -> bool:
-        """Check if room placement is valid with tighter packing."""
-        # Check overlap with existing rooms (reduced buffer for tighter packing)
-        for rx, ry, rw, rh in existing_rooms:
-            if not (x + w <= rx or x >= rx + rw or y + h <= ry or y >= ry + rh):
-                return False
-        
-        # Keep spawn area clear
-        if x < 8 and y < 8:
-            return False
-        
-        # Ensure room is within bounds
-        if x + w >= GameConfig.MAP_WIDTH - 1 or y + h >= GameConfig.MAP_HEIGHT - 1:
-            return False
-        
-        return True
-    
-    def _create_room(self, x: int, y: int, width: int, height: int):
-        """Create a rectangular room."""
-        for i in range(width):
-            wall_x = x + i
-            if 0 <= wall_x < GameConfig.MAP_WIDTH:
-                if 0 <= y < GameConfig.MAP_HEIGHT:
-                    self.game_map.walls.add((wall_x, y))
-                if 0 <= y + height - 1 < GameConfig.MAP_HEIGHT:
-                    self.game_map.walls.add((wall_x, y + height - 1))
-        
-        for i in range(height):
-            wall_y = y + i
-            if 0 <= wall_y < GameConfig.MAP_HEIGHT:
-                if 0 <= x < GameConfig.MAP_WIDTH:
-                    self.game_map.walls.add((x, wall_y))
-                if 0 <= x + width - 1 < GameConfig.MAP_WIDTH:
-                    self.game_map.walls.add((x + width - 1, wall_y))
-    
-    def _connect_rooms(self, rooms: List[Tuple[int, int, int, int]]):
-        """Connect rooms using MST approach for better connectivity."""
-        if len(rooms) < 2:
-            return
-        
-        # MST-based connection like dungeon-gen-v3
-        connected = [rooms[0]]
-        unconnected = rooms[1:].copy()
-        
-        while unconnected:
-            # Find closest pair between connected and unconnected
-            min_dist = float('inf')
-            closest_pair = None
-            
-            for conn_room in connected:
-                cx = conn_room[0] + conn_room[2] // 2
-                cy = conn_room[1] + conn_room[3] // 2
-                
-                for i, unconn_room in enumerate(unconnected):
-                    ux = unconn_room[0] + unconn_room[2] // 2
-                    uy = unconn_room[1] + unconn_room[3] // 2
-                    
-                    dist = abs(cx - ux) + abs(cy - uy)
-                    if dist < min_dist:
-                        min_dist = dist
-                        closest_pair = (conn_room, unconn_room, i)
-            
-            if closest_pair:
-                room1, room2, idx = closest_pair
-                self._create_corridor_between_rooms(room1, room2)
-                connected.append(room2)
-                unconnected.pop(idx)
-        
-        # Add extra connections for multiple paths (good for stealth)
-        self._add_extra_connections(rooms)
-    
-    def _create_corridor_between_rooms(self, room1: Tuple[int, int, int, int], 
-                                     room2: Tuple[int, int, int, int]):
-        """Create an L-shaped corridor between two rooms."""
-        # Get center points of rooms
-        x1 = room1[0] + room1[2] // 2
-        y1 = room1[1] + room1[3] // 2
-        x2 = room2[0] + room2[2] // 2
-        y2 = room2[1] + room2[3] // 2
-        
-        # Randomly choose corridor width (1-2 for stealth gameplay)
-        corridor_width = 1 if random.random() < 0.7 else 2
-        
-        # Randomly choose to go horizontal first or vertical first
-        if random.random() < 0.5:
-            self._carve_h_corridor(x1, x2, y1, corridor_width)
-            self._carve_v_corridor(y1, y2, x2, corridor_width)
-        else:
-            self._carve_v_corridor(y1, y2, x1, corridor_width)
-            self._carve_h_corridor(x1, x2, y2, corridor_width)
-    
-    def _carve_h_corridor(self, x1: int, x2: int, y: int, width: int):
-        """Carve a horizontal corridor."""
-        for x in range(min(x1, x2), max(x1, x2) + 1):
-            for dy in range(width):
-                if 1 <= y + dy < GameConfig.MAP_HEIGHT - 1 and 1 <= x < GameConfig.MAP_WIDTH - 1:
-                    self.game_map.walls.discard((x, y + dy))
-    
-    def _carve_v_corridor(self, y1: int, y2: int, x: int, width: int):
-        """Carve a vertical corridor."""
-        for y in range(min(y1, y2), max(y1, y2) + 1):
-            for dx in range(width):
-                if 1 <= y < GameConfig.MAP_HEIGHT - 1 and 1 <= x + dx < GameConfig.MAP_WIDTH - 1:
-                    self.game_map.walls.discard((x + dx, y))
-    
-    def _add_extra_connections(self, rooms: List[Tuple[int, int, int, int]]):
-        """Add extra corridors for multiple paths (good for stealth)."""
-        if len(rooms) < 3:
-            return
-        
-        # Add more extra connections for better connectivity
-        extra_connections = min(random.randint(3, 6), len(rooms) // 2)
-        
-        for _ in range(extra_connections):
-            room1 = random.choice(rooms)
-            room2 = random.choice(rooms)
-            if room1 != room2:
-                self._create_corridor_between_rooms(room1, room2)
-    
-    def _add_cover_elements(self):
-        """Add small wall segments in larger open areas for cover."""
-        for y in range(5, GameConfig.MAP_HEIGHT - 5, 6):
-            for x in range(5, GameConfig.MAP_WIDTH - 5, 6):
-                # Check if area is mostly open
-                open_count = 0
-                for dy in range(-3, 4):
-                    for dx in range(-3, 4):
-                        check_y, check_x = y + dy, x + dx
-                        if (0 <= check_y < GameConfig.MAP_HEIGHT and 
-                            0 <= check_x < GameConfig.MAP_WIDTH):
-                            if (check_x, check_y) not in self.game_map.walls:
-                                open_count += 1
-                
-                # If area is very open, maybe add a small cover element
-                if open_count > 35 and random.random() < 0.25:
-                    # Add small L-shaped or straight cover
-                    if random.random() < 0.5:
-                        # Straight cover
-                        if random.random() < 0.5:
-                            for dx in range(2):
-                                if x + dx < GameConfig.MAP_WIDTH - 1:
-                                    self.game_map.walls.add((x + dx, y))
-                        else:
-                            for dy in range(2):
-                                if y + dy < GameConfig.MAP_HEIGHT - 1:
-                                    self.game_map.walls.add((x, y + dy))
-                    else:
-                        # L-shaped cover
-                        self.game_map.walls.add((x, y))
-                        if random.random() < 0.5:
-                            if x + 1 < GameConfig.MAP_WIDTH - 1:
-                                self.game_map.walls.add((x + 1, y))
-                            if y + 1 < GameConfig.MAP_HEIGHT - 1:
-                                self.game_map.walls.add((x, y + 1))
-    
-    def _create_corridor(self, x1: int, y1: int, x2: int, y2: int):
-        """Create a corridor between two points."""
-        for x in range(min(x1, x2), max(x1, x2) + 1):
-            if 0 <= x < GameConfig.MAP_WIDTH and 0 <= y1 < GameConfig.MAP_HEIGHT:
-                self.game_map.walls.discard((x, y1))
-        for y in range(min(y1, y2), max(y1, y2) + 1):
-            if 0 <= x2 < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT:
-                self.game_map.walls.discard((x2, y))
     
     def _generate_shadows(self, coverage: float):
         """Generate strategic shadow areas for better stealth gameplay."""
@@ -5513,7 +5329,7 @@ class LoreMenu:
         try:
             game = Game(load_save=True, settings=None)
             ui_renderer.render_lore_viewer_screen(console, game)
-        except:
+        except Exception as e:
             # If no save file exists or lore can't be loaded, show message
             console.clear()
             title = "DISCOVERED LORE FRAGMENTS"
