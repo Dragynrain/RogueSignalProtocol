@@ -739,7 +739,7 @@ class GameBalance:
     HEAT_REDUCTION_NORMAL: int = 2
     HEAT_REDUCTION_BOOSTED: int = 3
     DETECTION_INCREASE_INTERVAL: int = 25
-    DETECTION_INCREASE_AMOUNT: int = 3
+    DETECTION_INCREASE_AMOUNT: int = 1  # Reduced from 3 to make it less aggressive
     
     # Node effects
     COOLING_NODE_EFFECT: int = 20
@@ -841,6 +841,7 @@ class Colors:
     UI_HIGHLIGHT = (255, 20, 255)  # Hot magenta highlights
     LOG_BG = (8, 12, 20)  # Darker blue background
     LOG_BORDER = (20, 255, 200)  # Cyber teal border
+    LIGHT_GRAY = (160, 170, 190)  # Light cyberpunk gray
 
 # ============================================================================
 # ENUMS AND DATA CLASSES
@@ -917,7 +918,7 @@ class GameData:
         'patrol': EnemyTypeDefinition('P', 40, 4, EnemyMovement.LINEAR, "Patrol", 20),  # Larger coverage, decent damage
         'bot': EnemyTypeDefinition('B', 25, 3, EnemyMovement.RANDOM, "Bot", 12),  # More HP, better vision
         'firewall': EnemyTypeDefinition('F', 80, 6, EnemyMovement.STATIC, "Firewall", 0),  # Massive HP, huge vision, no attack
-        'hunter': EnemyTypeDefinition('H', 50, 7, EnemyMovement.SEEK, "Hunter", 30),  # Elite threat - high stats
+        'hunter': EnemyTypeDefinition('H', 50, -1, EnemyMovement.SEEK, "Hunter", 30),  # Elite threat - reduced vision
         'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.TRACK, "Admin Avatar", 60)  # Boss-level but not impossible
     }
     
@@ -3929,10 +3930,11 @@ class InputHandler:
     
     def handle_keydown(self, event) -> bool:
         """Handle keydown events. Returns True if game should continue."""        
-        # Dead/game over state - only allow escape
+        # Dead/game over state - only allow escape to exit
         if self.game.player.cpu <= 0 or self.game.game_over:
             if event.sym == tcod.event.KeySym.ESCAPE:
-                self.game.show_pause_menu = True
+                # Exit to main menu instead of showing pause menu when dead
+                return False
             return True
         
         # Modal screens - handle non-escape keys
@@ -4356,6 +4358,10 @@ class UIRenderer:
             else:
                 status_text = f"{prefix} {i+1}. INVALID: {exploit_key}"
             
+            # Truncate text to fit in game area (leave some margin for log)
+            max_width = GameConfig.GAME_AREA_WIDTH - 6  # 4 indent + 2 margin
+            if len(status_text) > max_width:
+                status_text = status_text[:max_width-3] + "..."
             console.print(4, y, status_text, fg=color)
             y += 1
         
@@ -4394,7 +4400,13 @@ class UIRenderer:
                 
                 description = patch.description if patch.discovered else "Unknown effect"
                 quantity_text = f" ({patch.quantity})" if patch.quantity > 1 else ""
-                console.print(4, y, f"{prefix} {patch.name}{quantity_text} - {description}", fg=color)
+                patch_text = f"{prefix} {patch.name}{quantity_text} - {description}"
+                
+                # Truncate text to fit in game area
+                max_width = GameConfig.GAME_AREA_WIDTH - 6  # 4 indent + 2 margin
+                if len(patch_text) > max_width:
+                    patch_text = patch_text[:max_width-3] + "..."
+                console.print(4, y, patch_text, fg=color)
                 y += 1
         
         return y
@@ -4427,7 +4439,13 @@ class UIRenderer:
                     color = Colors.WHITE
                     prefix = " "
                 
-                console.print(4, y, f"{prefix} {exploit_item.name} - {exploit_item.description}", fg=color)
+                exploit_text = f"{prefix} {exploit_item.name} - {exploit_item.description}"
+                
+                # Truncate text to fit in game area
+                max_width = GameConfig.GAME_AREA_WIDTH - 6  # 4 indent + 2 margin
+                if len(exploit_text) > max_width:
+                    exploit_text = exploit_text[:max_width-3] + "..."
+                console.print(4, y, exploit_text, fg=color)
                 y += 1
         
         return y
@@ -5296,9 +5314,9 @@ class MainMenu:
     
     def _handle_menu_input(self, event) -> str:
         """Handle main menu input."""
-        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W):
+        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W, tcod.event.KeySym.KP_8):
             self.selected_option = (self.selected_option - 1) % len(self.options)
-        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S):
+        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S, tcod.event.KeySym.KP_2):
             self.selected_option = (self.selected_option + 1) % len(self.options)
         elif event.sym == tcod.event.KeySym.RETURN:
             option = self.options[self.selected_option]
@@ -5321,7 +5339,7 @@ class MainMenu:
     
     def _handle_warning_input(self, event) -> str:
         """Handle warning dialog input."""
-        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.DOWN, tcod.event.KeySym.W, tcod.event.KeySym.S):
+        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.DOWN, tcod.event.KeySym.W, tcod.event.KeySym.S, tcod.event.KeySym.KP_8, tcod.event.KeySym.KP_2):
             self.warning_selection = 1 - self.warning_selection
         elif event.sym == tcod.event.KeySym.RETURN:
             if self.warning_selection == 0:  # Yes, Delete Save
@@ -5336,17 +5354,19 @@ class MainMenu:
 
 
 class SettingsMenu:
-    """Settings menu for audio and graphics options."""
+    """Settings menu for audio, graphics, and help options."""
     
     def __init__(self, settings: GameSettings):
         self.settings = settings
         self.selected_option = 0
+        self.show_help = False
         self.options = [
             {"name": "Master Volume", "type": "volume", "key": "master"},
             {"name": "SFX Volume", "type": "volume", "key": "sfx"},
             {"name": "Music Volume", "type": "volume", "key": "music"},
             {"name": "Graphics Mode", "type": "toggle", "key": "graphics_mode", 
              "values": ["ASCII", "Graphics"]},
+            {"name": "Help", "type": "action"},
             {"name": "Back", "type": "action"}
         ]
     
@@ -5354,8 +5374,12 @@ class SettingsMenu:
         """Render the settings menu."""
         console.clear()
         
+        if self.show_help:
+            self._render_help(console)
+            return
+        
         # Title
-        title = "SETTINGS"
+        title = "SETTINGS / HELP"
         console.print(
             GameConfig.SCREEN_WIDTH // 2 - len(title) // 2,
             5,
@@ -5404,14 +5428,22 @@ class SettingsMenu:
     
     def handle_input(self, event) -> str:
         """Handle settings menu input. Returns action: 'back', 'exit', or ''."""
-        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W):
+        if self.show_help:
+            # Any key closes help
+            self.show_help = False
+            return ""
+        
+        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W, tcod.event.KeySym.KP_8):
             self.selected_option = (self.selected_option - 1) % len(self.options)
-        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S):
+        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S, tcod.event.KeySym.KP_2):
             self.selected_option = (self.selected_option + 1) % len(self.options)
         elif event.sym == tcod.event.KeySym.RETURN:
             option = self.options[self.selected_option]
-            if option["type"] == "action" and option["name"] == "Back":
-                return "back"
+            if option["type"] == "action":
+                if option["name"] == "Back":
+                    return "back"
+                elif option["name"] == "Help":
+                    self.show_help = True
         elif event.sym in (tcod.event.KeySym.LEFT, tcod.event.KeySym.A):
             self._adjust_setting(-1)
         elif event.sym in (tcod.event.KeySym.RIGHT, tcod.event.KeySym.D):
@@ -5436,6 +5468,79 @@ class SettingsMenu:
                 current_mode = self.settings.graphics_mode
                 new_mode = "graphics" if current_mode == "ascii" else "ascii"
                 self.settings.set_graphics_mode(new_mode)
+    
+    def _render_help(self, console: tcod.console.Console) -> None:
+        """Render the help screen within settings."""
+        # Title
+        title = "ROGUE SIGNAL PROTOCOL - HELP"
+        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        
+        y = 5
+        help_sections = self._get_help_sections()
+        
+        for text, color in help_sections:
+            if y < GameConfig.SCREEN_HEIGHT - 2:
+                console.print(2, y, text, fg=color)
+                y += 1
+        
+        console.print(GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 2, 
+                     "Press any key to return", fg=Colors.YELLOW)
+    
+    def _get_help_sections(self) -> List[Tuple[str, Tuple[int, int, int]]]:
+        """Get help text sections."""
+        return [
+            ("MOVEMENT (8-DIRECTIONAL):", Colors.CYAN),
+            ("  WASD + QEZC: Move in 8 directions", Colors.WHITE),
+            ("  Arrow Keys: 4-directional movement", Colors.WHITE),
+            ("  Numpad 1-9: 8-directional movement", Colors.WHITE),
+            ("  Space/./5: Wait/Rest", Colors.WHITE),
+            ("", Colors.WHITE),
+            
+            ("EXPLOITS:", Colors.CYAN),
+            ("  1-5: Use equipped exploits", Colors.WHITE),
+            ("  Follow targeting prompts for ranged exploits", Colors.WHITE),
+            ("", Colors.WHITE),
+            
+            ("INVENTORY & EQUIPMENT:", Colors.CYAN),
+            ("  I: Open inventory", Colors.WHITE),
+            ("  W/S or ↑/↓ or 8/2: Navigate selection", Colors.WHITE),
+            ("  Enter: Use data patch / Equip exploit", Colors.WHITE),
+            ("  Max 5 exploits can be equipped at once", Colors.WHITE),
+            ("", Colors.WHITE),
+            
+            ("INTERFACE:", Colors.CYAN),
+            ("  Settings: Access from main menu or pause menu", Colors.WHITE),
+            ("  ESC: Open pause menu/Close screens", Colors.WHITE),
+            ("", Colors.WHITE),
+            
+            ("MAP SYMBOLS:", Colors.CYAN),
+            ("  @: Player character", Colors.PLAYER),
+            ("  #: Walls", Colors.WALL),
+            ("  .: Floor/Shadow areas", Colors.FLOOR),
+            ("  G: Gateway (level exit)", Colors.GATEWAY),
+            ("", Colors.WHITE),
+            
+            ("ITEMS & PICKUPS:", Colors.CYAN),
+            ("  !: Data patches (various effects)", Colors.GREEN),
+            ("  &: Exploit programs", Colors.MAGENTA),
+            ("  ~: Cooling nodes (reduce heat)", Colors.CYAN),
+            ("  +: CPU recovery nodes (restore health)", Colors.ELECTRIC_BLUE),
+            ("", Colors.WHITE),
+            
+            ("ENEMIES:", Colors.CYAN),
+            ("  Orange: Unaware (normal patrol)", Colors.ENEMY_UNAWARE),
+            ("  Yellow: Alert (investigating)", Colors.ENEMY_ALERT), 
+            ("  Red: Hostile (actively hunting)", Colors.ENEMY_HOSTILE),
+            ("", Colors.WHITE),
+            
+            ("GAME MECHANICS:", Colors.CYAN),
+            ("  Heat builds up from exploit usage", Colors.WHITE),
+            ("  Overheating (100°C+) causes damage", Colors.WHITE),
+            ("  Detection increases over time and when spotted", Colors.WHITE),
+            ("  Hide in shadows (.) to avoid detection", Colors.WHITE),
+            ("  Use cooling nodes to manage heat", Colors.WHITE),
+            ("  Use CPU nodes to restore health", Colors.WHITE),
+        ]
 
 
 class PauseMenu:
@@ -5490,9 +5595,9 @@ class PauseMenu:
     
     def handle_input(self, event) -> str:
         """Handle pause menu input. Returns action: 'resume', 'new_game', 'settings', 'quit', or ''."""
-        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W):
+        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W, tcod.event.KeySym.KP_8):
             self.selected_option = (self.selected_option - 1) % len(self.options)
-        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S):
+        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S, tcod.event.KeySym.KP_2):
             self.selected_option = (self.selected_option + 1) % len(self.options)
         elif event.sym == tcod.event.KeySym.RETURN:
             option = self.options[self.selected_option]
@@ -5645,22 +5750,26 @@ def main():
                                         game.show_pause_menu = True
                                     break
                                 else:
-                                    input_handler.handle_keydown(event)
+                                    should_continue = input_handler.handle_keydown(event)
+                                    if not should_continue:
+                                        # Player is dead and pressed ESC - return to main menu
+                                        game = None
+                                        break
                         
-                except Exception as e:
-                    # Handle rendering errors gracefully
-                    import traceback
-                    tb = traceback.extract_tb(e.__traceback__)
-                    line_no = tb[-1].lineno if tb else "?"
-                    print(f"Rendering error: {e} (line {line_no})")
-                    console.clear()
-                    console.print(1, 1, f"Error: {str(e)[:50]} (line {line_no})", fg=Colors.RED)
-                    console.print(1, 2, "Press ESC to exit", fg=Colors.WHITE)
-                    context.present(console)
-                    
-                    for event in tcod.event.wait():
-                        if event.type == "QUIT" or (event.type == "KEYDOWN" and event.sym == tcod.event.KeySym.ESCAPE):
-                            return
+                    except Exception as e:
+                        # Handle rendering errors gracefully
+                        import traceback
+                        tb = traceback.extract_tb(e.__traceback__)
+                        line_no = tb[-1].lineno if tb else "?"
+                        print(f"Rendering error: {e} (line {line_no})")
+                        console.clear()
+                        console.print(1, 1, f"Error: {str(e)[:50]} (line {line_no})", fg=Colors.RED)
+                        console.print(1, 2, "Press ESC to exit", fg=Colors.WHITE)
+                        context.present(console)
+                        
+                        for event in tcod.event.wait():
+                            if event.type == "QUIT" or (event.type == "KEYDOWN" and event.sym == tcod.event.KeySym.ESCAPE):
+                                return
     
     except Exception as e:
         import traceback
