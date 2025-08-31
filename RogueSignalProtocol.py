@@ -937,7 +937,7 @@ class GameData:
         'system_crash': ExploitDefinition("System Crash", 4, 45, 3, "combat", 30, TargetingMode.AREA,
                                         "Area attack (30 damage) that disables enemies for 4 turns"),  # Area damage
         'network_scan': ExploitDefinition("Network Scan", 3, 20, 0, "utility", 0, TargetingMode.NONE,
-                                        "Reveals ALL enemies, vision cones, & movement paths (5 turns)"),  # No damage, intel
+                                        "Reveals ALL enemies, vision ranges, & movement paths (5 turns)"),  # No damage, intel
         'log_wiper': ExploitDefinition("Log Wiper", 2, 20, 0, "utility", 0, TargetingMode.NONE,
                                      "Significantly reduces detection level (-50%)"),  # No damage, counter-detection
         'emp_burst': ExploitDefinition("EMP Burst", 4, 50, 3, "emergency", 20, TargetingMode.AREA,
@@ -4241,82 +4241,11 @@ class UIRenderer:
     """Renders UI elements."""
     
     def render_help_screen(self, console: tcod.console.Console):
-        """Render the help screen."""
-        console.clear()
-        
-        # Title
-        title = "ROGUE SIGNAL PROTOCOL - HELP"
-        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
-        
-        y = 5
-        help_sections = self._get_help_sections()
-        
-        for text, color in help_sections:
-            if y < GameConfig.SCREEN_HEIGHT - 2:
-                console.print(2, y, text, fg=color)
-                y += 1
-        
-        console.print(GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 2, 
-                     "Press any key to return", fg=Colors.YELLOW)
+        """Render the help screen using HelpMenu content."""
+        # Create a temporary HelpMenu and use its render method
+        help_menu = HelpMenu()
+        help_menu.render(console)
     
-    def _get_help_sections(self) -> List[Tuple[str, Tuple[int, int, int]]]:
-        """Get help text sections."""
-        return [
-            ("MOVEMENT (8-DIRECTIONAL):", Colors.CYAN),
-            ("  WASD + QEZC: Move in 8 directions", Colors.WHITE),
-            ("  Arrow Keys: 4-directional movement", Colors.WHITE),
-            ("  Numpad 1-9: 8-directional movement", Colors.WHITE),
-            ("  Space/./5: Wait/Rest", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("EXPLOITS:", Colors.CYAN),
-            ("  1-5: Use equipped exploits", Colors.WHITE),
-            ("  Follow targeting prompts for ranged exploits", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("INVENTORY & EQUIPMENT:", Colors.CYAN),
-            ("  I: Open inventory", Colors.WHITE),
-            ("  W/S or ↑/↓ or 8/2: Navigate selection", Colors.WHITE),
-            ("  Enter: Use data patch / Equip exploit", Colors.WHITE),
-            ("  Max 5 exploits can be equipped at once", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("INTERFACE:", Colors.CYAN),
-            ("  ?: This help screen", Colors.WHITE),
-            ("  ESC: Cancel targeting/Close menus/Quit", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("MAP SYMBOLS:", Colors.CYAN),
-            ("  @: Player character", Colors.PLAYER),
-            ("  #: Walls", Colors.WALL),
-            ("  .: Floor/Shadow areas", Colors.FLOOR),
-            ("  G: Gateway (level exit)", Colors.GATEWAY),
-            ("", Colors.WHITE),
-            
-            ("ITEMS & PICKUPS:", Colors.CYAN),
-            ("  !: Data patches (various effects)", Colors.GREEN),
-            ("  &: Exploit programs", Colors.MAGENTA),
-            ("  ~: Cooling nodes (reduce heat)", Colors.CYAN),
-            ("  +: CPU recovery nodes (restore health)", Colors.ELECTRIC_BLUE),
-            ("", Colors.WHITE),
-
-            ("GAMEPLAY TIPS:", Colors.CYAN),
-            ("  - Hide in shadows (.) to avoid detection", Colors.WHITE),
-            ("  - Use cooling nodes (~) to manage heat", Colors.WHITE),
-            ("  - CPU recovery nodes (+) restore health", Colors.WHITE),
-            ("  - Collect data patches (!) for various effects", Colors.WHITE),
-            ("  - Stealth attacks deal more damage", Colors.WHITE),
-            ("  - Watch your heat and detection levels!", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("ENEMY TYPES:", Colors.CYAN),
-            ("  S: Scanner (35hp, 5 vision, static, no attack)", Colors.ORANGE),
-            ("  P: Patrol (40hp, 4 vision, linear routes, 15 dmg)", Colors.ORANGE),
-            ("  B: Bot (25hp, 3 vision, random movement, 8 dmg)", Colors.ORANGE),
-            ("  F: Firewall (80hp, 6 vision, static, no attack)", Colors.RED),
-            ("  H: Hunter (50hp, 6 vision, seeks players, 22 dmg)", Colors.RED),
-            ("  A: Admin Avatar (250hp, 8 vision, perfect tracking, 45 dmg)", Colors.RED),
-        ]
     
     def render_inventory_screen(self, console: tcod.console.Console, game: Game):
         """Render the inventory screen."""
@@ -5199,7 +5128,7 @@ class MainMenu:
     
     def __init__(self):
         self.selected_option = 0
-        self.options = ["Continue Game", "New Game", "Settings", "Help", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Exit"]
+        self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Lore", "Exit"]
         self.show_warning = False
         self.warning_selection = 0
     
@@ -5355,6 +5284,8 @@ class MainMenu:
                 return "settings"
             elif option == "Help":
                 return "help"
+            elif option == "Lore":
+                return "lore"
             elif option == "Exit":
                 return "exit"
         elif event.sym == tcod.event.KeySym.ESCAPE:
@@ -5376,6 +5307,34 @@ class MainMenu:
             self.show_warning = False
         
         return ""
+
+
+class LoreMenu:
+    """Lore viewer menu for main menu."""
+    
+    def __init__(self):
+        pass
+    
+    def render(self, console: tcod.console.Console) -> None:
+        """Render the lore viewer screen."""
+        # Use the same rendering as the in-game lore viewer
+        ui_renderer = UIRenderer()
+        # Create a minimal game object to access discovered lore
+        try:
+            game = Game(load_save=True, settings=None)
+            ui_renderer.render_lore_viewer_screen(console, game)
+        except:
+            # If no save file exists or lore can't be loaded, show message
+            console.clear()
+            title = "DISCOVERED LORE FRAGMENTS"
+            console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+            console.print(2, 5, "No lore fragments discovered yet.", fg=Colors.WHITE)
+            console.print(2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
+            console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to main menu", fg=Colors.LIGHT_GRAY)
+    
+    def handle_input(self, event) -> str:
+        """Handle lore menu input. Returns 'back' on any key press."""
+        return "back"
 
 
 class HelpMenu:
@@ -5470,7 +5429,7 @@ class HelpMenu:
             ("  Shadow Step: Teleport to shadow zones (6 tile range)", Colors.WHITE),
             ("  Data Mimic: Become invisible (5 turns)", Colors.WHITE),
             ("  Noise Maker: Create distraction (8 turn duration)", Colors.WHITE),
-            ("  Network Scan: Reveal all enemies & paths (5 turns)", Colors.WHITE),
+            ("  Network Scan: Reveal all enemies, vision & paths (5 turns)", Colors.WHITE),
             ("  Log Wiper: Reduce detection level (-50%)", Colors.WHITE),
             ("", Colors.WHITE),
             
@@ -5674,6 +5633,7 @@ def main():
             main_menu = MainMenu()
             settings_menu = SettingsMenu(settings)
             help_menu = HelpMenu()
+            lore_menu = LoreMenu()
             pause_menu = PauseMenu(settings)
             
             game = None
@@ -5699,6 +5659,8 @@ def main():
                                     current_menu = settings_menu
                                 elif action == "help":
                                     current_menu = help_menu
+                                elif action == "lore":
+                                    current_menu = lore_menu
                                 elif action == "back":
                                     current_menu = main_menu
                                 elif action == "continue":
