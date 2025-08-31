@@ -830,7 +830,7 @@ class Colors:
     CYBER_TEAL = (20, 255, 200)  # Cyber teal
     
     # Game-specific colors with neon theme
-    FLOOR = (20, 25, 40)  # Dark blue-gray floor
+    FLOOR = (180, 180, 220)  # Bright light dots for empty spaces
     WALL = (120, 140, 180)  # Light blue-gray walls
     SHADOW = (3, 3, 8)  # Dark shadow areas
     PLAYER = (20, 255, 255)  # Bright cyan player
@@ -1873,14 +1873,14 @@ class EnemyManager:
     def _generate_patrol_route(self, start: Position) -> List[Position]:
         """Generate larger, more comprehensive patrol routes."""
         route = [start]
-        route_length = random.randint(8, 15)  # Much longer patrols
+        route_length = random.randint(12, 20)  # Even longer, more complex patrols
         current = start
         
         for _ in range(route_length - 1):
             attempts = 0
-            while attempts < 40:
+            while attempts < 50:  # More attempts for complex routes
                 attempts += 1
-                step_size = random.randint(3, 8)  # Larger steps for wider coverage
+                step_size = random.randint(4, 10)  # Even larger steps for maximum coverage
                 direction = random.choice([(0, -step_size), (step_size, 0), 
                                          (0, step_size), (-step_size, 0),
                                          # Add diagonal movements for more coverage
@@ -3514,7 +3514,7 @@ class Game:
                 enemy = Enemy(position, enemy_type)
                 
                 if enemy_type == 'patrol':
-                    enemy.patrol_points = self._generate_patrol_route(position)
+                    enemy.patrol_points = self.enemy_manager._generate_patrol_route(position)
                 
                 self.enemies.append(enemy)
                 placed_enemies += 1
@@ -3544,40 +3544,6 @@ class Game:
                 (position.x, position.y) not in self.game_map.cooling_nodes and
                 (position.x, position.y) not in self.game_map.cpu_recovery_nodes)
     
-    
-    def _generate_patrol_route(self, start: Position) -> List[Position]:
-        """Generate larger, more comprehensive patrol routes."""
-        route = [start]
-        route_length = random.randint(8, 15)  # Much longer patrols
-        current = start
-        
-        for _ in range(route_length - 1):
-            attempts = 0
-            while attempts < 40:
-                attempts += 1
-                step_size = random.randint(3, 8)  # Larger steps for wider coverage
-                direction = random.choice([(0, -step_size), (step_size, 0), 
-                                         (0, step_size), (-step_size, 0),
-                                         # Add diagonal movements for more coverage
-                                         (step_size, -step_size), (step_size, step_size),
-                                         (-step_size, -step_size), (-step_size, step_size)])
-                new_pos = Position(current.x + direction[0], current.y + direction[1])
-                
-                if (new_pos.is_valid(GameConfig.MAP_WIDTH - 3, GameConfig.MAP_HEIGHT - 3) and
-                    new_pos.x >= 3 and new_pos.y >= 3 and
-                    self.game_map.is_valid_position(new_pos)):
-                    route.append(new_pos)
-                    current = new_pos
-                    break
-        
-        # Ensure minimum route length
-        if len(route) < 3:
-            if start.x < GameConfig.MAP_WIDTH - 5:
-                route.append(Position(start.x + 3, start.y))
-            if start.y < GameConfig.MAP_HEIGHT - 5:
-                route.append(Position(start.x, start.y + 3))
-        
-        return route
     
     def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
         """Get the next N positions this enemy will move to."""
@@ -3639,13 +3605,15 @@ class Game:
         for i, (dx, dy) in enumerate(enemy.random_move_queue[:steps]):
             new_pos = Position(current_pos.x + dx, current_pos.y + dy)
             if (new_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                self.game_map.is_valid_position(new_pos)):
+                self.game_map.is_valid_position(new_pos) and
+                not new_pos.distance_to(self.player.position) == 0 and
+                not self._get_enemy_at(new_pos)):
                 positions.append(new_pos)
                 current_pos = new_pos
-                positions.append(new_pos)
-                current_pos = new_pos
+            else:
+                # If this move is blocked, stop predicting further moves
+                break
         
-        positions.append(new_pos)
         return positions
     
     def _predict_seek_movement(self, enemy: Enemy, steps: int) -> List[Position]:
@@ -4801,11 +4769,11 @@ class MapRenderer:
             # Dimmed neon wall
             console.print(screen_x, screen_y, '#', fg=(60, 70, 90), bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            # Dark shadow areas for stealth
-            console.print(screen_x, screen_y, '░', fg=(8, 8, 15), bg=(3, 3, 8))
+            # Darker purple shadow areas in memory
+            console.print(screen_x, screen_y, '●', fg=(80, 40, 120), bg=Colors.BLACK)
         else:
-            # Bright lit corridors
-            console.print(screen_x, screen_y, '.', fg=(80, 120, 200), bg=Colors.BLACK)
+            # Darker dots for remembered empty spaces
+            console.print(screen_x, screen_y, '•', fg=(90, 90, 130), bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a single tile."""
@@ -4831,9 +4799,9 @@ class MapRenderer:
             # Story fragment - glowing/pulsing appearance
             console.print(screen_x, screen_y, '?', fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            console.print(screen_x, screen_y, '▓', fg=(15, 15, 25), bg=(5, 5, 12))
+            console.print(screen_x, screen_y, '●', fg=(150, 80, 200), bg=Colors.BLACK)
         else:
-            console.print(screen_x, screen_y, '.', fg=Colors.FLOOR, bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '•', fg=Colors.FLOOR, bg=Colors.BLACK)
     
     def _get_patch_color(self, color_name: str) -> Tuple[int, int, int]:
         """Get color tuple for data patch."""
@@ -4922,6 +4890,7 @@ class MapRenderer:
             # Show patrol routes for visible enemies OR if Network Scan is active
             can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
             
+            # Show movement intentions only for visible enemies or during network scan
             if can_see_enemy or network_scan_active:
                 next_positions = game.get_enemy_next_positions(enemy, 3)
                 
@@ -4942,26 +4911,19 @@ class MapRenderer:
                         bg_brightness = sum(bg_color) if bg_color != Colors.BLACK else 0
                         is_bright_area = bg_brightness > 30
                         
-                        # Color code by step and scan status with better visibility
-                        if network_scan_active and not can_see_enemy:
-                            # Network scan reveals movement with special cyan colors
-                            if i == 0:
-                                color = (0, 255, 255) if is_bright_area else Colors.CYAN
-                            elif i == 1:
-                                color = (0, 220, 220) if is_bright_area else (0, 200, 200)
-                            else:
-                                color = (0, 180, 180) if is_bright_area else (0, 150, 150)
+                        # Large bright yellow shapes for all enemy movement prediction
+                        if i == 0:
+                            # Next immediate move - brightest and largest
+                            color = (255, 255, 50)
+                            symbol = '"'
+                        elif i == 1:
+                            # Second move - slightly dimmer but still bright
+                            color = (240, 240, 30)
+                            symbol = '"'
                         else:
-                            # Normal patrol route colors - brighter in bright areas
-                            if i == 0:
-                                color = (255, 255, 0) if is_bright_area else Colors.YELLOW
-                            elif i == 1:
-                                color = (220, 220, 0) if is_bright_area else (200, 200, 0)
-                            else:
-                                color = (180, 180, 0) if is_bright_area else (150, 150, 0)
-                        
-                        # Use a more visible symbol in bright areas
-                        symbol = '●' if is_bright_area else '•'
+                            # Third+ moves - still bright yellow
+                            color = (220, 220, 20)
+                            symbol = '"'
                         console.print(screen_x, screen_y, symbol, fg=color, bg=bg_color)
     
     def _render_gateway(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
@@ -5742,6 +5704,8 @@ def main():
                                     elif action == "quit":
                                         game.auto_save()
                                         game = None  # Return to main menu
+                                        # Reset main menu warning state
+                                        main_menu.show_warning = False
                             continue
                         
                         # Normal game rendering and input
