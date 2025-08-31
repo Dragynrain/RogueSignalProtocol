@@ -792,9 +792,9 @@ class GameConfig:
     
     # Network configurations
     NETWORK_CONFIGS = {
-        1: {"enemies": 15, "shadow_coverage": 0.08, "name": "Corporate Network", "background_detection": 1},
-        2: {"enemies": 22, "shadow_coverage": 0.12, "name": "Government System", "background_detection": 2}, 
-        3: {"enemies": 30, "shadow_coverage": 0.10, "name": "Military Backbone", "background_detection": 3}
+        1: {"enemies": 15, "shadow_coverage": 0.15, "name": "Corporate Network", "background_detection": 1},
+        2: {"enemies": 22, "shadow_coverage": 0.18, "name": "Government System", "background_detection": 2}, 
+        3: {"enemies": 30, "shadow_coverage": 0.16, "name": "Military Backbone", "background_detection": 3}
     }
 
 class Colors:
@@ -915,33 +915,33 @@ class GameData:
     ENEMY_TYPES = {
         # Rebalanced for challenging stealth gameplay
         'scanner': EnemyTypeDefinition('S', 35, 5, EnemyMovement.STATIC, "Scanner", 0),  # High vision, no attack - pure detection
-        'patrol': EnemyTypeDefinition('P', 40, 4, EnemyMovement.LINEAR, "Patrol", 20),  # Larger coverage, decent damage
-        'bot': EnemyTypeDefinition('B', 25, 3, EnemyMovement.RANDOM, "Bot", 12),  # More HP, better vision
+        'patrol': EnemyTypeDefinition('P', 40, 4, EnemyMovement.LINEAR, "Patrol", 15),  # Larger coverage, moderate damage
+        'bot': EnemyTypeDefinition('B', 25, 3, EnemyMovement.RANDOM, "Bot", 8),  # More HP, better vision, light damage
         'firewall': EnemyTypeDefinition('F', 80, 6, EnemyMovement.STATIC, "Firewall", 0),  # Massive HP, huge vision, no attack
-        'hunter': EnemyTypeDefinition('H', 50, -1, EnemyMovement.SEEK, "Hunter", 30),  # Elite threat - reduced vision
-        'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.TRACK, "Admin Avatar", 60)  # Boss-level but not impossible
+        'hunter': EnemyTypeDefinition('H', 50, 6, EnemyMovement.SEEK, "Hunter", 22),  # Elite threat - good vision, high damage
+        'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.TRACK, "Admin Avatar", 45)  # Boss-level but not impossible
     }
     
     EXPLOITS = {
         # Rebalanced for strategic resource management with damage values
         'shadow_step': ExploitDefinition("Shadow Step", 3, 30, 6, "stealth", 0, TargetingMode.SINGLE,
-                                       "Teleport between shadow zones"),  # No damage, pure mobility
+                                       "Teleport to any shadow zone within range (6 tiles)"),  # No damage, pure mobility
         'data_mimic': ExploitDefinition("Data Mimic", 2, 25, 0, "stealth", 0, TargetingMode.NONE,
-                                      "Appear as harmless data for 5 turns"),  # No damage, pure stealth
+                                      "Become invisible to enemies for 5 turns"),  # No damage, pure stealth
         'noise_maker': ExploitDefinition("Noise Maker", 1, 15, 8, "stealth", 0, TargetingMode.SINGLE,
-                                       "Create distraction at target location"),  # No damage, distraction
+                                       "Create distraction that lasts 8 turns at target location"),  # No damage, distraction
         'buffer_overflow': ExploitDefinition("Buffer Overflow", 2, 30, 1, "combat", 40, TargetingMode.SINGLE,
-                                           "High melee damage, armor piercing"),  # High single-target damage
+                                           "Devastating melee attack (40 damage, 1 tile range)"),  # High single-target damage
         'code_injection': ExploitDefinition("Code Injection", 2, 20, 5, "combat", 25, TargetingMode.SINGLE,
-                                          "Ranged attack, bypasses firewalls"),  # Moderate ranged damage
+                                          "Ranged attack (25 damage, 5 tile range)"),  # Moderate ranged damage
         'system_crash': ExploitDefinition("System Crash", 4, 45, 3, "combat", 30, TargetingMode.AREA,
-                                        "Area damage, disables multiple enemies"),  # Area damage
-        'network_scan': ExploitDefinition("Network Scan", 3, 35, 0, "utility", 0, TargetingMode.NONE,
-                                        "Reveals ALL enemies, vision, & movement intentions (5 turns)"),  # No damage, intel
+                                        "Area attack (30 damage) that disables enemies for 4 turns"),  # Area damage
+        'network_scan': ExploitDefinition("Network Scan", 3, 20, 0, "utility", 0, TargetingMode.NONE,
+                                        "Reveals ALL enemies, vision cones, & movement paths (5 turns)"),  # No damage, intel
         'log_wiper': ExploitDefinition("Log Wiper", 2, 20, 0, "utility", 0, TargetingMode.NONE,
-                                     "Reduces detection level significantly"),  # No damage, counter-detection
+                                     "Significantly reduces detection level (-50%)"),  # No damage, counter-detection
         'emp_burst': ExploitDefinition("EMP Burst", 4, 50, 3, "emergency", 20, TargetingMode.AREA,
-                                     "Disables all nearby enemies temporarily")  # Moderate area damage + disable
+                                     "Area attack (20 damage) that disables all nearby enemies")  # Moderate area damage + disable
     }
 
 # ============================================================================
@@ -2688,7 +2688,18 @@ class Game:
         for enemy in self.enemies[:]:
             old_state = enemy.state
             
-            if enemy.can_see_player(self.player, self.game_map):
+            # Admin Avatar has perfect tracking - always knows player location
+            if enemy.type == 'admin':
+                enemy.state = EnemyState.HOSTILE
+                enemy.last_seen_player = Position(self.player.x, self.player.y)
+                if old_state != EnemyState.HOSTILE:
+                    detection_increase = 8
+                    self.player.detection = min(100, self.player.detection + detection_increase)
+                    self.message_log.add_message(f"{enemy.type_data.name} detected you!")
+                else:
+                    detection_increase = 2
+                    self.player.detection = min(100, self.player.detection + detection_increase)
+            elif enemy.can_see_player(self.player, self.game_map):
                 self._handle_enemy_sees_player(enemy)
             else:
                 self._handle_enemy_loses_player(enemy)
@@ -3734,12 +3745,13 @@ class ExploitSystem:
         if not self._validate_target(exploit, target):
             return False
         
-        # Apply heat cost
-        heat_cost = self._calculate_heat_cost(exploit)
-        self.game.player.heat = min(100, self.game.player.heat + heat_cost)
-        
         # Execute specific exploit
         success = self._execute_specific_exploit(exploit_key, exploit, target)
+        
+        # Only apply heat cost if the exploit was successful
+        if success:
+            heat_cost = self._calculate_heat_cost(exploit)
+            self.game.player.heat = min(100, self.game.player.heat + heat_cost)
         
         if success:
             self.game.targeting_mode = False
@@ -3806,6 +3818,7 @@ class ExploitSystem:
     
     def _execute_data_mimic(self) -> bool:
         """Execute data mimic exploit."""
+        self.game.sound_manager.play_sound("exploit_data_mimic")
         self.game.player.temporary_effects['data_mimic_turns'] = 5
         self.game.message_log.add_message("Data Mimic active")
         return True
@@ -3829,8 +3842,8 @@ class ExploitSystem:
         return True
     
     def _execute_code_injection(self, target: Position) -> bool:
-
         """Execute code injection exploit."""
+        self.game.sound_manager.play_sound("exploit_code_injection")
         target_enemy = self.game._get_enemy_at(target)
         if target_enemy:
             damage = 35 if target_enemy.type == 'firewall' else 30
@@ -3849,7 +3862,8 @@ class ExploitSystem:
             return False
     
     def _execute_buffer_overflow(self, target: Position) -> bool:
-
+        """Execute buffer overflow exploit."""
+        self.game.sound_manager.play_sound("exploit_buffer_overflow")
         distance = self.game.player.position.distance_to(target)
         if distance <= 1:
             target_enemy = self.game._get_enemy_at(target)
@@ -3872,6 +3886,7 @@ class ExploitSystem:
     
     def _execute_system_crash(self, target: Position, exploit_range: int) -> bool:
         """Execute system crash exploit."""
+        self.game.sound_manager.play_sound("exploit_system_crash")
         enemies_hit = []
         for enemy in self.game.enemies[:]:
             if enemy.position.distance_to(target) <= exploit_range:
@@ -3884,7 +3899,8 @@ class ExploitSystem:
     
     def _execute_network_scan(self) -> bool:
         """Execute enhanced network scan exploit."""
-        self.game.game_state.network_scan_turns = 5  # Shorter duration but more powerful
+        self.game.sound_manager.play_sound("exploit_network_scan")
+        self.game.game_state.network_scan_turns = 5  # Extended duration for tactical advantage
         
         # Network scan reveals entire map layout
         for x in range(GameConfig.MAP_WIDTH):
@@ -3899,7 +3915,8 @@ class ExploitSystem:
         return True
 
     def _execute_log_wiper(self) -> bool:
-
+        """Execute log wiper exploit."""
+        self.game.sound_manager.play_sound("exploit_log_wiper")
         old_detection = self.game.player.detection
         self.game.player.detection = max(0, self.game.player.detection - 30)
         actual_reduction = old_detection - self.game.player.detection
@@ -3907,8 +3924,8 @@ class ExploitSystem:
         return True
     
     def _execute_emp_burst(self, target: Position, exploit_range: int) -> bool:
-
         """Execute EMP burst exploit."""
+        self.game.sound_manager.play_sound("exploit_emp_burst")
         enemies_hit = []
         for enemy in self.game.enemies[:]:
             if enemy.position.distance_to(target) <= exploit_range:
@@ -4293,12 +4310,12 @@ class UIRenderer:
             ("", Colors.WHITE),
             
             ("ENEMY TYPES:", Colors.CYAN),
-            ("  S: Scanner (static, low vision)", Colors.ORANGE),
-            ("  P: Patrol (moves on routes)", Colors.ORANGE),
-            ("  B: Bot (random movement)", Colors.ORANGE),
-            ("  F: Firewall (high health, static)", Colors.RED),
-            ("  H: Hunter (seeks players)", Colors.RED),
-            ("  A: Admin Avatar (extremely dangerous!)", Colors.RED),
+            ("  S: Scanner (35hp, 5 vision, static, no attack)", Colors.ORANGE),
+            ("  P: Patrol (40hp, 4 vision, linear routes, 15 dmg)", Colors.ORANGE),
+            ("  B: Bot (25hp, 3 vision, random movement, 8 dmg)", Colors.ORANGE),
+            ("  F: Firewall (80hp, 6 vision, static, no attack)", Colors.RED),
+            ("  H: Hunter (50hp, 6 vision, seeks players, 22 dmg)", Colors.RED),
+            ("  A: Admin Avatar (250hp, 8 vision, perfect tracking, 45 dmg)", Colors.RED),
         ]
     
     def render_inventory_screen(self, console: tcod.console.Console, game: Game):
@@ -4879,7 +4896,7 @@ class MapRenderer:
             # Story fragment - glowing/pulsing appearance
             console.print(screen_x, screen_y, '?', fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            console.print(screen_x, screen_y, '░', fg=(8, 8, 15), bg=(3, 3, 8))
+            console.print(screen_x, screen_y, '▓', fg=(15, 15, 25), bg=(5, 5, 12))
         else:
             console.print(screen_x, screen_y, '.', fg=Colors.FLOOR, bg=Colors.BLACK)
     
@@ -4978,25 +4995,6 @@ class MapRenderer:
                     screen_y = point.y - camera_offset.y + 1
                     if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
                         1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                        # Color code by step and scan status
-                        if network_scan_active and not can_see_enemy:
-                            # Network scan reveals movement with special cyan colors
-                            if i == 0:
-                                color = Colors.CYAN
-                            elif i == 1:
-                                color = (0, 200, 200)  # Dimmer cyan
-                            else:
-                                color = (0, 150, 150)  # Dimmest cyan
-                        else:
-                            # Normal patrol route colors
-                            if i == 0:
-                                color = Colors.YELLOW
-                            elif i == 1:
-                                color = (200, 200, 0)  # Dimmer yellow
-                            else:
-                                color = (150, 150, 0)  # Dimmest yellow
-                        screen_x = point.x - camera_offset.x
-                        screen_y = point.y - camera_offset.y + 1
                         # Preserve existing background color if present (e.g., vision overlay)
                         try:
                             current_bg = tuple(console.bg[screen_x, screen_y][:3])
@@ -5004,7 +5002,32 @@ class MapRenderer:
                             bg_color = current_bg if current_bg != (0, 0, 0) else Colors.BLACK
                         except (IndexError, AttributeError):
                             bg_color = Colors.BLACK
-                        console.print(screen_x, screen_y, '•', fg=color, bg=bg_color)
+                        
+                        # Check if background is bright (sum of RGB values > 30 indicates brighter area)
+                        bg_brightness = sum(bg_color) if bg_color != Colors.BLACK else 0
+                        is_bright_area = bg_brightness > 30
+                        
+                        # Color code by step and scan status with better visibility
+                        if network_scan_active and not can_see_enemy:
+                            # Network scan reveals movement with special cyan colors
+                            if i == 0:
+                                color = (0, 255, 255) if is_bright_area else Colors.CYAN
+                            elif i == 1:
+                                color = (0, 220, 220) if is_bright_area else (0, 200, 200)
+                            else:
+                                color = (0, 180, 180) if is_bright_area else (0, 150, 150)
+                        else:
+                            # Normal patrol route colors - brighter in bright areas
+                            if i == 0:
+                                color = (255, 255, 0) if is_bright_area else Colors.YELLOW
+                            elif i == 1:
+                                color = (220, 220, 0) if is_bright_area else (200, 200, 0)
+                            else:
+                                color = (180, 180, 0) if is_bright_area else (150, 150, 0)
+                        
+                        # Use a more visible symbol in bright areas
+                        symbol = '●' if is_bright_area else '•'
+                        console.print(screen_x, screen_y, symbol, fg=color, bg=bg_color)
     
     def _render_gateway(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render the level gateway."""
@@ -5176,7 +5199,7 @@ class MainMenu:
     
     def __init__(self):
         self.selected_option = 0
-        self.options = ["Continue Game", "New Game", "Settings", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Exit"]
+        self.options = ["Continue Game", "New Game", "Settings", "Help", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Exit"]
         self.show_warning = False
         self.warning_selection = 0
     
@@ -5330,6 +5353,8 @@ class MainMenu:
                     return "new_game"
             elif option == "Settings":
                 return "settings"
+            elif option == "Help":
+                return "help"
             elif option == "Exit":
                 return "exit"
         elif event.sym == tcod.event.KeySym.ESCAPE:
@@ -5353,20 +5378,124 @@ class MainMenu:
         return ""
 
 
+class HelpMenu:
+    """Help menu displaying game information."""
+    
+    def __init__(self):
+        pass
+    
+    def render(self, console: tcod.console.Console) -> None:
+        """Render the help screen."""
+        console.clear()
+        
+        # Title
+        title = "ROGUE SIGNAL PROTOCOL - HELP"
+        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        
+        y = 5
+        help_sections = self._get_help_sections()
+        
+        for text, color in help_sections:
+            if y < GameConfig.SCREEN_HEIGHT - 2:
+                console.print(2, y, text, fg=color)
+                y += 1
+        
+        # Back instruction
+        console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to main menu", fg=Colors.LIGHT_GRAY)
+    
+    def handle_input(self, event) -> str:
+        """Handle help menu input. Returns 'back' on any key press."""
+        return "back"
+    
+    def _get_help_sections(self):
+        """Get help sections with text and colors."""
+        return [
+            ("OBJECTIVE:", Colors.CYAN),
+            ("  Navigate network levels using stealth", Colors.WHITE),
+            ("  Reach the gateway (>) to advance", Colors.WHITE),
+            ("  Avoid detection by enemies and Admin Avatar", Colors.WHITE),
+            ("  Collect data patches, exploits, and upgrades", Colors.WHITE),
+            ("", Colors.WHITE),
+            
+            ("MOVEMENT & CONTROLS:", Colors.CYAN),
+            ("  Arrow Keys, WASD, or Numpad: Move/Navigate", Colors.WHITE),
+            ("  1-9: Use loaded exploits (requires targeting)", Colors.WHITE),
+            ("  I: Inventory (manage data patches & exploits)", Colors.WHITE),
+            ("  Tab: Toggle vision overlays", Colors.WHITE),
+            ("  L: View discovered lore fragments", Colors.WHITE),
+            ("  ESC: Pause menu / Close screens", Colors.WHITE),
+            ("", Colors.WHITE),
+            
+            ("MAP SYMBOLS:", Colors.CYAN),
+            ("  @: Player (you)", Colors.PLAYER),
+            ("  #: Walls (impassable)", Colors.WHITE),
+            ("  ▓: Shadows (stealth zones)", Colors.FLOOR),
+            ("  >: Gateway to next level", Colors.ACID_GREEN),
+            ("  ?: Story fragments (lore)", Colors.CYAN),
+            ("", Colors.WHITE),
+            
+            ("ENEMY TYPES (HP, Vision, Behavior, Damage):", Colors.CYAN),
+            ("  S: Scanner (35hp, 5 vision, static, no attack)", Colors.ORANGE),
+            ("  P: Patrol (40hp, 4 vision, linear routes, 15 dmg)", Colors.ORANGE),
+            ("  B: Bot (25hp, 3 vision, random movement, 8 dmg)", Colors.ORANGE),
+            ("  F: Firewall (80hp, 6 vision, static, no attack)", Colors.RED),
+            ("  H: Hunter (50hp, 6 vision, seeks players, 22 dmg)", Colors.RED),
+            ("  A: Admin Avatar (250hp, 8 vision, perfect tracking, 45 dmg)", Colors.RED),
+            ("", Colors.WHITE),
+            
+            ("ITEMS & PICKUPS:", Colors.CYAN),
+            ("  @: Data patches (boost CPU, RAM, heat capacity)", Colors.ELECTRIC_PURPLE),
+            ("  E: Exploits (combat & utility abilities)", Colors.NEON_PINK),
+            ("  U: Permanent upgrades (permanent stat boosts)", Colors.ELECTRIC_BLUE),
+            ("  ^: CPU recovery nodes (restore health)", Colors.ACID_GREEN),
+            ("  ~: Cooling nodes (reduce heat)", Colors.ELECTRIC_BLUE),
+            ("", Colors.WHITE),
+            
+            ("CORE MECHANICS:", Colors.CYAN),
+            ("  Heat: Builds from exploit usage, causes damage at 100°C+", Colors.WHITE),
+            ("  Detection: Increases when spotted, Admin spawns at threshold", Colors.WHITE),
+            ("  CPU: Your health - if it reaches 0, you die permanently", Colors.WHITE),
+            ("  RAM: Limits how many exploits you can equip (max 5)", Colors.WHITE),
+            ("  Shadows: Hide in ▓ tiles to avoid enemy detection", Colors.WHITE),
+            ("", Colors.WHITE),
+            
+            ("COMBAT EXPLOITS:", Colors.CYAN),
+            ("  Buffer Overflow: 40 dmg melee (1 tile range)", Colors.WHITE),
+            ("  Code Injection: 25 dmg ranged (5 tile range)", Colors.WHITE),
+            ("  System Crash: 30 dmg area (disables enemies 4 turns)", Colors.WHITE),
+            ("  EMP Burst: 20 dmg area (disables all nearby enemies)", Colors.WHITE),
+            ("", Colors.WHITE),
+            
+            ("STEALTH & UTILITY EXPLOITS:", Colors.CYAN),
+            ("  Shadow Step: Teleport to shadow zones (6 tile range)", Colors.WHITE),
+            ("  Data Mimic: Become invisible (5 turns)", Colors.WHITE),
+            ("  Noise Maker: Create distraction (8 turn duration)", Colors.WHITE),
+            ("  Network Scan: Reveal all enemies & paths (5 turns)", Colors.WHITE),
+            ("  Log Wiper: Reduce detection level (-50%)", Colors.WHITE),
+            ("", Colors.WHITE),
+            
+            ("SURVIVAL TIPS:", Colors.CYAN),
+            ("  Use shadows frequently - stealth is key", Colors.WHITE),
+            ("  Monitor heat and detection levels constantly", Colors.WHITE),
+            ("  Plan exploit usage - heat management is critical", Colors.WHITE),
+            ("  Use CPU nodes when low on health", Colors.WHITE),
+            ("  Admin Avatar spawns at high detection - be careful!", Colors.WHITE),
+            ("  Save cooling nodes for emergencies", Colors.WHITE),
+        ]
+
+
 class SettingsMenu:
     """Settings menu for audio, graphics, and help options."""
     
     def __init__(self, settings: GameSettings):
         self.settings = settings
         self.selected_option = 0
-        self.show_help = False
         self.options = [
             {"name": "Master Volume", "type": "volume", "key": "master"},
             {"name": "SFX Volume", "type": "volume", "key": "sfx"},
             {"name": "Music Volume", "type": "volume", "key": "music"},
             {"name": "Graphics Mode", "type": "toggle", "key": "graphics_mode", 
              "values": ["ASCII", "Graphics"]},
-            {"name": "Help", "type": "action"},
             {"name": "Back", "type": "action"}
         ]
     
@@ -5374,12 +5503,9 @@ class SettingsMenu:
         """Render the settings menu."""
         console.clear()
         
-        if self.show_help:
-            self._render_help(console)
-            return
         
         # Title
-        title = "SETTINGS / HELP"
+        title = "SETTINGS"
         console.print(
             GameConfig.SCREEN_WIDTH // 2 - len(title) // 2,
             5,
@@ -5428,10 +5554,6 @@ class SettingsMenu:
     
     def handle_input(self, event) -> str:
         """Handle settings menu input. Returns action: 'back', 'exit', or ''."""
-        if self.show_help:
-            # Any key closes help
-            self.show_help = False
-            return ""
         
         if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W, tcod.event.KeySym.KP_8):
             self.selected_option = (self.selected_option - 1) % len(self.options)
@@ -5442,8 +5564,6 @@ class SettingsMenu:
             if option["type"] == "action":
                 if option["name"] == "Back":
                     return "back"
-                elif option["name"] == "Help":
-                    self.show_help = True
         elif event.sym in (tcod.event.KeySym.LEFT, tcod.event.KeySym.A):
             self._adjust_setting(-1)
         elif event.sym in (tcod.event.KeySym.RIGHT, tcod.event.KeySym.D):
@@ -5469,78 +5589,6 @@ class SettingsMenu:
                 new_mode = "graphics" if current_mode == "ascii" else "ascii"
                 self.settings.set_graphics_mode(new_mode)
     
-    def _render_help(self, console: tcod.console.Console) -> None:
-        """Render the help screen within settings."""
-        # Title
-        title = "ROGUE SIGNAL PROTOCOL - HELP"
-        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
-        
-        y = 5
-        help_sections = self._get_help_sections()
-        
-        for text, color in help_sections:
-            if y < GameConfig.SCREEN_HEIGHT - 2:
-                console.print(2, y, text, fg=color)
-                y += 1
-        
-        console.print(GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 2, 
-                     "Press any key to return", fg=Colors.YELLOW)
-    
-    def _get_help_sections(self) -> List[Tuple[str, Tuple[int, int, int]]]:
-        """Get help text sections."""
-        return [
-            ("MOVEMENT (8-DIRECTIONAL):", Colors.CYAN),
-            ("  WASD + QEZC: Move in 8 directions", Colors.WHITE),
-            ("  Arrow Keys: 4-directional movement", Colors.WHITE),
-            ("  Numpad 1-9: 8-directional movement", Colors.WHITE),
-            ("  Space/./5: Wait/Rest", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("EXPLOITS:", Colors.CYAN),
-            ("  1-5: Use equipped exploits", Colors.WHITE),
-            ("  Follow targeting prompts for ranged exploits", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("INVENTORY & EQUIPMENT:", Colors.CYAN),
-            ("  I: Open inventory", Colors.WHITE),
-            ("  W/S or ↑/↓ or 8/2: Navigate selection", Colors.WHITE),
-            ("  Enter: Use data patch / Equip exploit", Colors.WHITE),
-            ("  Max 5 exploits can be equipped at once", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("INTERFACE:", Colors.CYAN),
-            ("  Settings: Access from main menu or pause menu", Colors.WHITE),
-            ("  ESC: Open pause menu/Close screens", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("MAP SYMBOLS:", Colors.CYAN),
-            ("  @: Player character", Colors.PLAYER),
-            ("  #: Walls", Colors.WALL),
-            ("  .: Floor/Shadow areas", Colors.FLOOR),
-            ("  G: Gateway (level exit)", Colors.GATEWAY),
-            ("", Colors.WHITE),
-            
-            ("ITEMS & PICKUPS:", Colors.CYAN),
-            ("  !: Data patches (various effects)", Colors.GREEN),
-            ("  &: Exploit programs", Colors.MAGENTA),
-            ("  ~: Cooling nodes (reduce heat)", Colors.CYAN),
-            ("  +: CPU recovery nodes (restore health)", Colors.ELECTRIC_BLUE),
-            ("", Colors.WHITE),
-            
-            ("ENEMIES:", Colors.CYAN),
-            ("  Orange: Unaware (normal patrol)", Colors.ENEMY_UNAWARE),
-            ("  Yellow: Alert (investigating)", Colors.ENEMY_ALERT), 
-            ("  Red: Hostile (actively hunting)", Colors.ENEMY_HOSTILE),
-            ("", Colors.WHITE),
-            
-            ("GAME MECHANICS:", Colors.CYAN),
-            ("  Heat builds up from exploit usage", Colors.WHITE),
-            ("  Overheating (100°C+) causes damage", Colors.WHITE),
-            ("  Detection increases over time and when spotted", Colors.WHITE),
-            ("  Hide in shadows (.) to avoid detection", Colors.WHITE),
-            ("  Use cooling nodes to manage heat", Colors.WHITE),
-            ("  Use CPU nodes to restore health", Colors.WHITE),
-        ]
 
 
 class PauseMenu:
@@ -5625,6 +5673,7 @@ def main():
             settings = GameSettings()
             main_menu = MainMenu()
             settings_menu = SettingsMenu(settings)
+            help_menu = HelpMenu()
             pause_menu = PauseMenu(settings)
             
             game = None
@@ -5648,6 +5697,8 @@ def main():
                                     return
                                 elif action == "settings":
                                     current_menu = settings_menu
+                                elif action == "help":
+                                    current_menu = help_menu
                                 elif action == "back":
                                     current_menu = main_menu
                                 elif action == "continue":

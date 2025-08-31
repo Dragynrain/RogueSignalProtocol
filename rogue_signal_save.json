@@ -1,18 +1,18 @@
 {
   "version": "1.0",
-  "timestamp": 1756636135.598482,
-  "level": 3,
-  "turn": 243,
+  "timestamp": 1756636918.077963,
+  "level": 1,
+  "turn": 160,
   "game_over": false,
   "admin_spawned": false,
-  "dungeon_seed": 995812,
+  "dungeon_seed": 433367,
   "player": {
-    "x": 21,
-    "y": 12,
-    "cpu": 0,
-    "max_cpu": 120,
-    "heat": 16,
-    "detection": 100,
+    "x": 34,
+    "y": 15,
+    "cpu": 100,
+    "max_cpu": 100,
+    "heat": 0,
+    "detection": 71.0,
     "ram_total": 8,
     "temporary_effects": {
       "data_mimic_turns": 0,
@@ -21,54 +21,31 @@
       "exploit_efficiency_turns": 0
     },
     "equipped_exploits": [
-      "network_scan"
+      "log_wiper"
     ],
     "inventory_items": [
       {
         "type": "data_patch",
-        "name": "Crimson Data Patch",
-        "description": "Reduce heat by 40°C instantly",
-        "color": "crimson",
-        "effect": "reduce_heat",
-        "quantity": 3,
-        "discovered": true
-      },
-      {
-        "type": "exploit",
-        "name": "Shadow Step",
-        "description": "Teleport between shadow zones",
-        "exploit_key": "shadow_step",
-        "ram_cost": 3
-      },
-      {
-        "type": "exploit",
-        "name": "Noise Maker",
-        "description": "Create distraction at target location",
-        "exploit_key": "noise_maker",
-        "ram_cost": 1
-      },
-      {
-        "type": "data_patch",
-        "name": "Azure Data Patch",
+        "name": "Emerald Data Patch",
         "description": "Temporary speed boost (10 turns)",
-        "color": "azure",
+        "color": "emerald",
         "effect": "speed_boost",
-        "quantity": 3,
+        "quantity": 1,
         "discovered": true
       },
       {
         "type": "exploit",
-        "name": "Code Injection",
-        "description": "Ranged attack, bypasses firewalls",
-        "exploit_key": "code_injection",
+        "name": "Buffer Overflow",
+        "description": "Devastating melee attack (40 damage, 1 tile range)",
+        "exploit_key": "buffer_overflow",
         "ram_cost": 2
       },
       {
         "type": "exploit",
-        "name": "EMP Burst",
-        "description": "Disables all nearby enemies temporarily",
-        "exploit_key": "emp_burst",
-        "ram_cost": 4
+        "name": "Network Scan",
+        "description": "Reveals ALL enemies, vision cones, & movement paths (5 turns)",
+        "exploit_key": "network_scan",
+        "ram_cost": 3
       }
     ]
   },
@@ -77,552 +54,614 @@
   "distraction_points": {},
   "map_state": {
     "data_patches": {
-      "43,43": {
+      "34,35": {
         "color": "emerald",
-        "effect": "reduce_detection",
+        "effect": "speed_boost",
         "name": "Emerald Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "12,6": {
-        "color": "azure",
-        "effect": "speed_boost",
-        "name": "Azure Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "32,35": {
-        "color": "azure",
-        "effect": "speed_boost",
-        "name": "Azure Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "39,32": {
-        "color": "crimson",
-        "effect": "reduce_heat",
-        "name": "Crimson Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "29,33": {
+      "24,23": {
         "color": "golden",
-        "effect": "enhanced_vision",
+        "effect": "restore_cpu",
         "name": "Golden Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "47,30": {
-        "color": "crimson",
-        "effect": "reduce_heat",
-        "name": "Crimson Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "27,26": {
-        "color": "silver",
-        "effect": "exploit_efficiency",
-        "name": "Silver Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "32,29": {
-        "color": "emerald",
-        "effect": "reduce_detection",
-        "name": "Emerald Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "38,43": {
-        "color": "silver",
-        "effect": "exploit_efficiency",
-        "name": "Silver Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "25,30": {
-        "color": "azure",
-        "effect": "speed_boost",
-        "name": "Azure Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "46,36": {
-        "color": "azure",
-        "effect": "speed_boost",
-        "name": "Azure Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "32,42": {
-        "color": "azure",
-        "effect": "speed_boost",
-        "name": "Azure Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "36,19": {
+      "42,16": {
         "color": "violet",
-        "effect": "restore_cpu",
+        "effect": "enhanced_vision",
         "name": "Violet Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "34,25": {
+      "26,44": {
         "color": "emerald",
-        "effect": "reduce_detection",
-        "name": "Emerald Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "40,27": {
-        "color": "silver",
-        "effect": "exploit_efficiency",
-        "name": "Silver Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "21,23": {
-        "color": "emerald",
-        "effect": "reduce_detection",
-        "name": "Emerald Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "35,30": {
-        "color": "golden",
-        "effect": "enhanced_vision",
-        "name": "Golden Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "17,26": {
-        "color": "azure",
         "effect": "speed_boost",
+        "name": "Emerald Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "17,38": {
+        "color": "azure",
+        "effect": "exploit_efficiency",
         "name": "Azure Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "21,9": {
-        "color": "silver",
+      "24,28": {
+        "color": "azure",
         "effect": "exploit_efficiency",
-        "name": "Silver Data Patch",
+        "name": "Azure Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "14,22": {
-        "color": "golden",
+      "45,46": {
+        "color": "violet",
         "effect": "enhanced_vision",
+        "name": "Violet Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "34,46": {
+        "color": "violet",
+        "effect": "enhanced_vision",
+        "name": "Violet Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "35,35": {
+        "color": "golden",
+        "effect": "restore_cpu",
         "name": "Golden Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "15,32": {
-        "color": "emerald",
-        "effect": "reduce_detection",
-        "name": "Emerald Data Patch",
+      "42,20": {
+        "color": "violet",
+        "effect": "enhanced_vision",
+        "name": "Violet Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "31,24": {
-        "color": "crimson",
-        "effect": "reduce_heat",
-        "name": "Crimson Data Patch",
+      "19,35": {
+        "color": "golden",
+        "effect": "restore_cpu",
+        "name": "Golden Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "30,39": {
-        "color": "silver",
-        "effect": "exploit_efficiency",
-        "name": "Silver Data Patch",
+      "27,42": {
+        "color": "golden",
+        "effect": "restore_cpu",
+        "name": "Golden Data Patch",
         "quantity": 1,
         "discovered": false
       }
     },
     "exploit_pickups": {
-      "21,29": "data_mimic",
-      "32,20": "noise_maker",
-      "41,41": "noise_maker",
-      "34,40": "network_scan",
-      "38,14": "code_injection",
-      "19,33": "noise_maker",
-      "37,16": "noise_maker",
-      "25,20": "data_mimic",
-      "23,20": "log_wiper",
-      "21,38": "buffer_overflow",
-      "35,21": "noise_maker"
+      "25,26": "log_wiper",
+      "24,34": "network_scan",
+      "34,24": "network_scan",
+      "28,45": "noise_maker",
+      "38,23": "log_wiper"
     },
     "permanent_upgrades": {
-      "19,34": "ram_boost",
-      "35,21": "heat_boost"
+      "23,36": "cpu_boost"
     },
     "story_fragments": {},
     "gateway": {
-      "x": 39,
-      "y": 32
+      "x": 34,
+      "y": 31
     },
     "explored_tiles": [
-      "15,21",
+      "26,21",
       "7,17",
       "18,17",
-      "18,26",
-      "0,5",
-      "8,18",
+      "8,0",
+      "8,9",
+      "11,5",
       "19,18",
-      "11,14",
+      "30,18",
+      "33,20",
+      "25,25",
       "4,2",
-      "22,10",
+      "34,12",
       "3,6",
       "22,19",
-      "3,15",
+      "34,21",
       "14,15",
-      "14,24",
+      "37,17",
+      "22,28",
+      "34,30",
       "7,3",
       "15,16",
       "26,16",
-      "15,25",
+      "38,18",
+      "18,12",
+      "26,25",
       "18,21",
-      "18,30",
-      "21,32",
-      "0,9",
+      "8,4",
+      "33,6",
+      "33,15",
+      "44,15",
+      "33,24",
       "25,20",
+      "25,29",
+      "22,5",
+      "34,7",
       "3,1",
+      "34,16",
       "22,14",
+      "45,16",
       "3,10",
+      "22,23",
+      "34,25",
       "7,7",
       "26,20",
       "7,16",
       "18,16",
-      "29,22",
       "21,18",
-      "21,27",
+      "11,4",
+      "33,10",
       "10,17",
+      "33,19",
       "25,15",
+      "25,24",
+      "34,11",
       "3,5",
+      "14,5",
       "22,18",
-      "3,14",
-      "14,14",
-      "14,23",
-      "15,6",
-      "17,25",
+      "37,16",
+      "22,27",
       "7,2",
-      "17,34",
+      "6,15",
       "29,17",
       "21,13",
       "21,22",
-      "21,31",
+      "33,5",
+      "41,18",
+      "33,14",
       "2,8",
+      "33,23",
       "25,19",
+      "25,28",
+      "34,6",
+      "3,0",
       "22,13",
       "3,9",
-      "3,18",
-      "14,18",
-      "17,20",
-      "28,20",
-      "17,29",
+      "36,24",
       "6,10",
-      "21,8",
       "21,17",
-      "21,26",
+      "33,9",
       "2,3",
+      "25,5",
       "10,16",
+      "33,18",
+      "25,14",
+      "32,22",
+      "32,31",
+      "24,27",
       "3,4",
-      "16,32",
-      "17,6",
+      "36,19",
       "17,15",
-      "17,24",
-      "17,33",
+      "28,15",
+      "28,24",
       "6,5",
+      "6,14",
       "29,16",
+      "40,16",
       "21,12",
-      "21,21",
-      "21,30",
+      "29,25",
+      "33,4",
       "2,7",
-      "13,22",
-      "16,18",
-      "16,27",
+      "32,17",
+      "43,17",
+      "24,13",
+      "32,26",
+      "24,22",
+      "35,22",
+      "24,31",
       "5,8",
       "9,6",
       "5,17",
       "17,19",
-      "28,19",
-      "17,28",
+      "9,15",
+      "6,0",
       "6,9",
-      "21,7",
-      "6,18",
       "21,16",
       "20,20",
       "10,6",
+      "23,25",
       "2,2",
+      "35,8",
+      "32,21",
       "13,17",
       "24,17",
-      "13,26",
-      "16,22",
-      "16,31",
+      "35,17",
+      "32,30",
+      "24,26",
+      "35,26",
       "5,3",
+      "17,5",
+      "36,18",
+      "9,1",
+      "28,5",
       "5,12",
       "17,14",
-      "17,23",
+      "9,10",
       "6,4",
+      "6,13",
+      "19,32",
+      "39,19",
       "20,15",
-      "20,24",
+      "31,15",
       "31,24",
       "23,20",
+      "23,29",
+      "32,16",
+      "43,16",
       "1,10",
+      "24,12",
       "32,25",
+      "35,12",
+      "24,21",
+      "35,21",
       "16,17",
-      "16,26",
-      "16,35",
+      "24,30",
       "5,7",
       "9,5",
       "5,16",
-      "28,18",
-      "20,10",
-      "12,6",
+      "27,22",
+      "19,27",
       "20,19",
+      "31,19",
       "12,15",
       "23,15",
       "4,11",
+      "23,24",
       "1,5",
+      "35,7",
+      "32,20",
       "13,16",
       "24,16",
-      "16,21",
-      "16,30",
+      "35,16",
+      "24,25",
+      "35,25",
       "5,2",
+      "9,0",
       "5,11",
+      "9,9",
       "27,17",
+      "19,13",
+      "27,26",
       "19,22",
-      "11,18",
       "19,31",
+      "20,5",
+      "31,5",
+      "39,18",
       "20,14",
+      "31,23",
       "4,6",
       "23,19",
       "4,15",
+      "23,28",
+      "32,6",
+      "1,0",
       "1,9",
+      "35,11",
       "16,16",
-      "15,20",
+      "26,29",
       "5,6",
-      "18,25",
-      "18,34",
-      "27,21",
-      "0,4",
+      "8,8",
       "8,17",
       "19,17",
+      "30,17",
       "19,26",
+      "30,26",
+      "19,35",
+      "12,5",
+      "23,5",
       "20,18",
       "4,1",
-      "12,14",
+      "31,18",
+      "23,14",
       "4,10",
+      "23,23",
+      "34,20",
+      "34,29",
       "1,4",
+      "35,6",
       "15,15",
-      "15,24",
+      "26,15",
+      "38,17",
+      "26,24",
       "18,20",
-      "18,29",
+      "8,3",
       "27,16",
-      "0,8",
+      "19,12",
+      "27,25",
       "19,21",
       "11,17",
+      "19,30",
+      "31,4",
       "20,13",
       "4,5",
       "23,18",
       "4,14",
+      "45,15",
+      "34,15",
+      "22,22",
+      "34,24",
+      "37,20",
       "7,6",
-      "18,6",
       "26,19",
-      "15,19",
+      "7,15",
       "18,15",
-      "18,24",
-      "18,33",
+      "26,28",
       "8,7",
-      "27,20",
-      "0,3",
-      "19,16",
       "8,16",
+      "19,16",
+      "30,16",
       "19,25",
       "30,25",
+      "25,23",
+      "4,0",
       "4,9",
+      "34,10",
       "22,17",
-      "3,13",
-      "14,22",
+      "34,19",
+      "22,26",
+      "34,28",
+      "15,5",
+      "26,5",
       "7,1",
-      "15,14",
+      "38,16",
       "7,10",
-      "15,23",
+      "26,23",
       "18,19",
-      "18,28",
-      "0,7",
+      "8,2",
       "11,16",
+      "33,13",
+      "33,22",
       "25,18",
+      "25,27",
+      "34,5",
       "22,12",
+      "34,14",
       "3,8",
       "22,21",
-      "3,17",
+      "34,23",
       "14,17",
-      "14,26",
+      "37,19",
       "7,5",
-      "15,18",
+      "18,5",
       "26,18",
       "18,14",
-      "18,23",
       "29,20",
-      "19,6",
-      "21,25",
-      "0,2",
+      "33,8",
+      "10,15",
+      "33,17",
+      "44,17",
+      "25,13",
+      "33,26",
+      "25,22",
+      "25,31",
+      "34,9",
       "3,3",
       "22,16",
-      "3,12",
-      "17,32",
+      "34,18",
+      "22,25",
+      "7,0",
       "7,9",
       "18,18",
-      "21,11",
-      "29,24",
+      "29,15",
       "21,20",
-      "21,29",
+      "41,16",
+      "33,12",
       "2,6",
+      "33,21",
       "25,17",
-      "22,11",
+      "33,30",
+      "25,26",
+      "34,4",
       "3,7",
       "22,20",
-      "3,16",
       "14,16",
-      "14,25",
       "17,18",
-      "17,27",
       "7,4",
       "6,8",
-      "21,6",
       "6,17",
+      "29,19",
+      "40,19",
       "21,15",
       "21,24",
+      "10,5",
+      "33,7",
       "2,1",
+      "33,16",
+      "44,16",
       "2,10",
-      "13,25",
+      "25,12",
+      "25,21",
+      "32,29",
       "3,2",
-      "3,11",
-      "17,22",
-      "28,22",
-      "9,18",
-      "17,31",
+      "36,17",
+      "17,13",
       "6,3",
-      "21,10",
-      "29,23",
+      "29,5",
+      "6,12",
       "21,19",
-      "21,28",
+      "33,11",
       "2,5",
-      "10,18",
       "25,16",
+      "32,15",
+      "43,15",
       "32,24",
       "24,20",
-      "14,6",
-      "16,25",
-      "16,34",
+      "35,20",
+      "24,29",
+      "9,4",
       "5,15",
       "17,17",
       "28,17",
-      "17,26",
       "6,7",
       "21,5",
       "6,16",
+      "40,18",
       "29,18",
       "21,14",
       "21,23",
+      "10,4",
+      "2,0",
+      "23,32",
       "2,9",
-      "13,6",
-      "13,15",
+      "32,19",
+      "43,19",
       "24,15",
-      "13,24",
-      "16,20",
-      "16,29",
+      "13,15",
+      "35,15",
+      "32,28",
+      "24,24",
+      "35,24",
       "5,1",
+      "36,16",
       "5,10",
-      "17,21",
-      "28,21",
+      "17,12",
+      "9,8",
       "9,17",
-      "17,30",
       "6,2",
-      "21,9",
-      "12,18",
+      "6,11",
+      "20,22",
+      "31,22",
+      "23,27",
       "2,4",
+      "32,5",
       "1,8",
-      "16,6",
+      "35,10",
+      "32,23",
       "24,19",
+      "35,19",
       "16,15",
-      "16,24",
-      "16,33",
+      "24,28",
+      "35,28",
       "5,5",
+      "36,20",
+      "9,3",
       "5,14",
       "17,16",
       "28,16",
       "6,6",
+      "19,34",
       "20,17",
+      "31,17",
+      "23,13",
       "31,26",
-      "4,18",
+      "23,22",
+      "23,31",
       "1,3",
-      "13,14",
-      "13,23",
-      "16,19",
-      "16,28",
+      "13,5",
+      "32,18",
+      "35,5",
+      "24,5",
+      "24,14",
+      "35,14",
+      "32,27",
+      "24,23",
+      "35,23",
+      "5,0",
       "5,9",
       "9,7",
-      "5,18",
       "9,16",
+      "27,15",
+      "27,24",
       "6,1",
       "19,20",
       "30,20",
+      "19,29",
+      "39,16",
       "20,12",
       "20,21",
       "4,4",
+      "31,21",
       "12,17",
       "23,17",
       "4,13",
+      "23,26",
+      "32,4",
       "1,7",
-      "13,18",
+      "35,9",
+      "16,5",
       "24,18",
-      "16,14",
-      "16,23",
+      "35,18",
+      "38,20",
+      "26,27",
       "5,4",
+      "9,2",
       "5,13",
-      "18,32",
       "8,6",
-      "27,19",
+      "8,15",
       "19,15",
+      "27,28",
+      "30,15",
       "19,24",
       "30,24",
+      "19,33",
       "20,16",
+      "31,16",
+      "23,12",
       "31,25",
       "4,8",
       "23,21",
       "4,17",
+      "23,30",
+      "34,27",
       "1,2",
-      "15,22",
-      "7,18",
-      "18,27",
-      "0,6",
-      "11,6",
+      "35,4",
+      "35,13",
+      "26,22",
+      "27,5",
+      "8,1",
+      "8,10",
+      "27,23",
+      "19,19",
+      "30,19",
       "11,15",
-      "20,11",
+      "19,28",
       "31,20",
       "4,3",
       "12,16",
       "23,16",
       "4,12",
+      "34,13",
+      "34,22",
+      "37,18",
+      "22,29",
       "1,6",
       "15,17",
       "26,17",
-      "15,26",
+      "38,19",
+      "18,13",
+      "26,26",
       "18,22",
-      "18,31",
       "8,5",
-      "27,18",
-      "0,1",
+      "19,5",
+      "30,5",
       "19,14",
-      "0,10",
+      "42,16",
+      "27,27",
       "19,23",
       "30,23",
       "33,25",
+      "25,30",
       "4,7",
+      "34,8",
       "4,16",
       "22,15",
+      "34,17",
+      "45,17",
+      "22,24",
+      "34,26",
       "1,1",
       "7,8"
     ]
@@ -630,539 +669,263 @@
   "enemies": [
     {
       "type": "patrol",
-      "x": 21,
-      "y": 13,
-      "cpu": 40,
-      "state": "hostile",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 2,
-      "last_seen_player": {
-        "x": 21,
-        "y": 12
-      },
-      "patrol_points": [
-        {
-          "x": 22,
-          "y": 15
-        },
-        {
-          "x": 22,
-          "y": 19
-        },
-        {
-          "x": 30,
-          "y": 19
-        },
-        {
-          "x": 36,
-          "y": 25
-        },
-        {
-          "x": 33,
-          "y": 22
-        },
-        {
-          "x": 28,
-          "y": 17
-        },
-        {
-          "x": 31,
-          "y": 17
-        },
-        {
-          "x": 36,
-          "y": 17
-        },
-        {
-          "x": 29,
-          "y": 17
-        },
-        {
-          "x": 25,
-          "y": 17
-        },
-        {
-          "x": 25,
-          "y": 12
-        },
-        {
-          "x": 31,
-          "y": 6
-        },
-        {
-          "x": 35,
-          "y": 6
-        }
-      ]
-    },
-    {
-      "type": "scanner",
-      "x": 26,
-      "y": 22,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 757,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 14
-      }
-    },
-    {
-      "type": "bot",
-      "x": 33,
-      "y": 35,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "hunter",
-      "x": 39,
-      "y": 41,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "hunter",
-      "x": 17,
-      "y": 43,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "firewall",
       "x": 22,
-      "y": 21,
-      "cpu": 80,
-      "state": "alert",
-      "move_cooldown": 757,
-      "disabled_turns": 0,
-      "alert_timer": 2,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 12
-      }
-    },
-    {
-      "type": "bot",
-      "x": 34,
-      "y": 18,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 35,
-        "y": 16
-      }
-    },
-    {
-      "type": "firewall",
-      "x": 41,
-      "y": 43,
-      "cpu": 80,
-      "state": "unaware",
-      "move_cooldown": 757,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 39,
-        "y": 38
-      }
-    },
-    {
-      "type": "scanner",
-      "x": 39,
-      "y": 46,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 757,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 39,
-        "y": 38
-      }
-    },
-    {
-      "type": "bot",
-      "x": 21,
-      "y": 19,
-      "cpu": 25,
-      "state": "alert",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 2,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 12
-      }
-    },
-    {
-      "type": "patrol",
-      "x": 27,
-      "y": 24,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 1,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 29,
-          "y": 26
-        },
-        {
-          "x": 26,
-          "y": 23
-        },
-        {
-          "x": 22,
-          "y": 19
-        },
-        {
-          "x": 15,
-          "y": 26
-        },
-        {
-          "x": 22,
-          "y": 33
-        },
-        {
-          "x": 26,
-          "y": 33
-        },
-        {
-          "x": 22,
-          "y": 37
-        },
-        {
-          "x": 25,
-          "y": 40
-        },
-        {
-          "x": 19,
-          "y": 46
-        }
-      ]
-    },
-    {
-      "type": "scanner",
-      "x": 25,
-      "y": 41,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 757,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 26,
-      "y": 32,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 757,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 25,
-      "y": 40,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 1,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 27,
-          "y": 42
-        },
-        {
-          "x": 24,
-          "y": 39
-        },
-        {
-          "x": 28,
-          "y": 39
-        },
-        {
-          "x": 28,
-          "y": 35
-        },
-        {
-          "x": 28,
-          "y": 41
-        },
-        {
-          "x": 31,
-          "y": 41
-        },
-        {
-          "x": 36,
-          "y": 46
-        },
-        {
-          "x": 40,
-          "y": 46
-        },
-        {
-          "x": 35,
-          "y": 41
-        },
-        {
-          "x": 30,
-          "y": 36
-        },
-        {
-          "x": 26,
-          "y": 36
-        },
-        {
-          "x": 26,
-          "y": 39
-        },
-        {
-          "x": 31,
-          "y": 34
-        },
-        {
-          "x": 31,
-          "y": 42
-        },
-        {
-          "x": 39,
-          "y": 34
-        }
-      ]
-    },
-    {
-      "type": "scanner",
-      "x": 24,
-      "y": 16,
-      "cpu": 35,
-      "state": "alert",
-      "move_cooldown": 757,
-      "disabled_turns": 0,
-      "alert_timer": 2,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 12
-      }
-    },
-    {
-      "type": "scanner",
-      "x": 41,
-      "y": 46,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 757,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 39,
-        "y": 38
-      }
-    },
-    {
-      "type": "patrol",
-      "x": 24,
-      "y": 32,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 3,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 37,
-          "y": 25
-        },
-        {
-          "x": 32,
-          "y": 25
-        },
-        {
-          "x": 24,
-          "y": 33
-        },
-        {
-          "x": 24,
-          "y": 28
-        },
-        {
-          "x": 24,
-          "y": 33
-        },
-        {
-          "x": 24,
-          "y": 40
-        },
-        {
-          "x": 18,
-          "y": 46
-        },
-        {
-          "x": 24,
-          "y": 40
-        },
-        {
-          "x": 31,
-          "y": 40
-        },
-        {
-          "x": 27,
-          "y": 40
-        },
-        {
-          "x": 33,
-          "y": 34
-        },
-        {
-          "x": 33,
-          "y": 41
-        },
-        {
-          "x": 25,
-          "y": 41
-        },
-        {
-          "x": 25,
-          "y": 34
-        }
-      ]
-    },
-    {
-      "type": "patrol",
-      "x": 18,
       "y": 42,
       "cpu": 40,
       "state": "unaware",
       "move_cooldown": 1,
       "disabled_turns": 0,
       "alert_timer": 0,
-      "patrol_index": 3,
+      "patrol_index": 1,
       "last_seen_player": null,
       "patrol_points": [
         {
-          "x": 27,
-          "y": 35
-        },
-        {
-          "x": 22,
-          "y": 35
-        },
-        {
-          "x": 25,
-          "y": 35
-        },
-        {
-          "x": 17,
-          "y": 43
-        },
-        {
-          "x": 14,
+          "x": 24,
           "y": 46
         },
         {
           "x": 19,
-          "y": 46
+          "y": 41
+        },
+        {
+          "x": 19,
+          "y": 44
+        },
+        {
+          "x": 13,
+          "y": 38
+        },
+        {
+          "x": 19,
+          "y": 38
         },
         {
           "x": 15,
-          "y": 46
+          "y": 38
+        },
+        {
+          "x": 15,
+          "y": 45
         },
         {
           "x": 15,
           "y": 42
         },
         {
-          "x": 22,
-          "y": 35
+          "x": 19,
+          "y": 42
         },
         {
-          "x": 25,
-          "y": 35
+          "x": 23,
+          "y": 46
         },
         {
-          "x": 25,
-          "y": 31
+          "x": 17,
+          "y": 40
         }
       ]
     },
     {
-      "type": "admin",
+      "type": "patrol",
+      "x": 35,
+      "y": 36,
+      "cpu": 40,
+      "state": "unaware",
+      "move_cooldown": 1,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 1,
+      "last_seen_player": null,
+      "patrol_points": [
+        {
+          "x": 35,
+          "y": 36
+        },
+        {
+          "x": 35,
+          "y": 33
+        },
+        {
+          "x": 41,
+          "y": 27
+        },
+        {
+          "x": 36,
+          "y": 27
+        },
+        {
+          "x": 36,
+          "y": 19
+        },
+        {
+          "x": 41,
+          "y": 14
+        },
+        {
+          "x": 34,
+          "y": 14
+        },
+        {
+          "x": 34,
+          "y": 6
+        },
+        {
+          "x": 34,
+          "y": 13
+        },
+        {
+          "x": 34,
+          "y": 7
+        },
+        {
+          "x": 34,
+          "y": 13
+        }
+      ]
+    },
+    {
+      "type": "patrol",
+      "x": 36,
+      "y": 31,
+      "cpu": 40,
+      "state": "unaware",
+      "move_cooldown": 1,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 3,
+      "last_seen_player": null,
+      "patrol_points": [
+        {
+          "x": 44,
+          "y": 34
+        },
+        {
+          "x": 44,
+          "y": 29
+        },
+        {
+          "x": 38,
+          "y": 35
+        },
+        {
+          "x": 33,
+          "y": 30
+        },
+        {
+          "x": 37,
+          "y": 34
+        },
+        {
+          "x": 32,
+          "y": 34
+        },
+        {
+          "x": 38,
+          "y": 34
+        },
+        {
+          "x": 44,
+          "y": 40
+        },
+        {
+          "x": 44,
+          "y": 44
+        },
+        {
+          "x": 44,
+          "y": 37
+        },
+        {
+          "x": 44,
+          "y": 40
+        },
+        {
+          "x": 36,
+          "y": 32
+        },
+        {
+          "x": 36,
+          "y": 35
+        }
+      ]
+    },
+    {
+      "type": "patrol",
       "x": 39,
-      "y": 27,
-      "cpu": 250,
+      "y": 18,
+      "cpu": 40,
       "state": "unaware",
       "move_cooldown": 1,
       "disabled_turns": 0,
       "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 41,
-        "y": 34
-      }
+      "patrol_index": 3,
+      "last_seen_player": null,
+      "patrol_points": [
+        {
+          "x": 41,
+          "y": 14
+        },
+        {
+          "x": 37,
+          "y": 18
+        },
+        {
+          "x": 32,
+          "y": 18
+        },
+        {
+          "x": 39,
+          "y": 25
+        },
+        {
+          "x": 39,
+          "y": 17
+        },
+        {
+          "x": 44,
+          "y": 17
+        },
+        {
+          "x": 44,
+          "y": 25
+        },
+        {
+          "x": 44,
+          "y": 19
+        },
+        {
+          "x": 40,
+          "y": 23
+        },
+        {
+          "x": 40,
+          "y": 26
+        },
+        {
+          "x": 32,
+          "y": 34
+        },
+        {
+          "x": 25,
+          "y": 27
+        },
+        {
+          "x": 25,
+          "y": 30
+        },
+        {
+          "x": 33,
+          "y": 22
+        }
+      ]
     },
     {
-      "type": "hunter",
-      "x": 34,
-      "y": 16,
-      "cpu": 50,
+      "type": "scanner",
+      "x": 41,
+      "y": 18,
+      "cpu": 35,
       "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "hunter",
-      "x": 43,
-      "y": 27,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
+      "move_cooldown": 840,
       "disabled_turns": 0,
       "alert_timer": 0,
       "patrol_index": 0,
@@ -1171,172 +934,34 @@
     {
       "type": "scanner",
       "x": 38,
-      "y": 13,
+      "y": 35,
       "cpu": 35,
       "state": "unaware",
-      "move_cooldown": 898,
+      "move_cooldown": 840,
       "disabled_turns": 0,
       "alert_timer": 0,
       "patrol_index": 0,
       "last_seen_player": null
-    },
-    {
-      "type": "bot",
-      "x": 44,
-      "y": 16,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 19,
-      "y": 13,
-      "cpu": 35,
-      "state": "alert",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 2,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 12
-      }
-    },
-    {
-      "type": "patrol",
-      "x": 26,
-      "y": 40,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 2,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 25,
-          "y": 37
-        },
-        {
-          "x": 30,
-          "y": 42
-        },
-        {
-          "x": 24,
-          "y": 36
-        },
-        {
-          "x": 32,
-          "y": 44
-        },
-        {
-          "x": 32,
-          "y": 37
-        },
-        {
-          "x": 32,
-          "y": 44
-        },
-        {
-          "x": 32,
-          "y": 41
-        },
-        {
-          "x": 32,
-          "y": 35
-        },
-        {
-          "x": 29,
-          "y": 38
-        }
-      ]
-    },
-    {
-      "type": "patrol",
-      "x": 28,
-      "y": 14,
-      "cpu": 40,
-      "state": "alert",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 2,
-      "patrol_index": 2,
-      "last_seen_player": {
-        "x": 21,
-        "y": 12
-      },
-      "patrol_points": [
-        {
-          "x": 26,
-          "y": 12
-        },
-        {
-          "x": 29,
-          "y": 12
-        },
-        {
-          "x": 25,
-          "y": 16
-        },
-        {
-          "x": 29,
-          "y": 16
-        },
-        {
-          "x": 22,
-          "y": 16
-        },
-        {
-          "x": 22,
-          "y": 23
-        },
-        {
-          "x": 29,
-          "y": 30
-        },
-        {
-          "x": 26,
-          "y": 27
-        },
-        {
-          "x": 30,
-          "y": 31
-        },
-        {
-          "x": 24,
-          "y": 37
-        },
-        {
-          "x": 19,
-          "y": 37
-        },
-        {
-          "x": 24,
-          "y": 32
-        },
-        {
-          "x": 24,
-          "y": 36
-        },
-        {
-          "x": 30,
-          "y": 42
-        }
-      ]
     },
     {
       "type": "scanner",
       "x": 23,
-      "y": 32,
+      "y": 44,
       "cpu": 35,
       "state": "unaware",
-      "move_cooldown": 898,
+      "move_cooldown": 840,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "scanner",
+      "x": 36,
+      "y": 46,
+      "cpu": 35,
+      "state": "unaware",
+      "move_cooldown": 840,
       "disabled_turns": 0,
       "alert_timer": 0,
       "patrol_index": 0,
@@ -1344,8 +969,180 @@
     },
     {
       "type": "patrol",
-      "x": 44,
-      "y": 39,
+      "x": 39,
+      "y": 34,
+      "cpu": 40,
+      "state": "unaware",
+      "move_cooldown": 1,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 1,
+      "last_seen_player": null,
+      "patrol_points": [
+        {
+          "x": 36,
+          "y": 31
+        },
+        {
+          "x": 40,
+          "y": 35
+        },
+        {
+          "x": 40,
+          "y": 30
+        },
+        {
+          "x": 40,
+          "y": 33
+        },
+        {
+          "x": 40,
+          "y": 27
+        },
+        {
+          "x": 36,
+          "y": 23
+        },
+        {
+          "x": 36,
+          "y": 17
+        },
+        {
+          "x": 43,
+          "y": 17
+        },
+        {
+          "x": 36,
+          "y": 17
+        },
+        {
+          "x": 32,
+          "y": 17
+        }
+      ]
+    },
+    {
+      "type": "hunter",
+      "x": 32,
+      "y": 38,
+      "cpu": 50,
+      "state": "unaware",
+      "move_cooldown": 1,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "scanner",
+      "x": 31,
+      "y": 46,
+      "cpu": 35,
+      "state": "unaware",
+      "move_cooldown": 840,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "hunter",
+      "x": 28,
+      "y": 45,
+      "cpu": 50,
+      "state": "unaware",
+      "move_cooldown": 1,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "hunter",
+      "x": 38,
+      "y": 34,
+      "cpu": 50,
+      "state": "unaware",
+      "move_cooldown": 1,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "hunter",
+      "x": 31,
+      "y": 35,
+      "cpu": 50,
+      "state": "unaware",
+      "move_cooldown": 1,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "patrol",
+      "x": 42,
+      "y": 16,
+      "cpu": 40,
+      "state": "unaware",
+      "move_cooldown": 1,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 1,
+      "last_seen_player": null,
+      "patrol_points": [
+        {
+          "x": 40,
+          "y": 18
+        },
+        {
+          "x": 43,
+          "y": 15
+        },
+        {
+          "x": 40,
+          "y": 18
+        },
+        {
+          "x": 44,
+          "y": 18
+        },
+        {
+          "x": 41,
+          "y": 18
+        },
+        {
+          "x": 34,
+          "y": 25
+        },
+        {
+          "x": 34,
+          "y": 30
+        },
+        {
+          "x": 34,
+          "y": 25
+        },
+        {
+          "x": 30,
+          "y": 21
+        },
+        {
+          "x": 30,
+          "y": 18
+        },
+        {
+          "x": 30,
+          "y": 25
+        }
+      ]
+    },
+    {
+      "type": "patrol",
+      "x": 19,
+      "y": 25,
       "cpu": 40,
       "state": "unaware",
       "move_cooldown": 1,
@@ -1355,1529 +1152,112 @@
       "last_seen_player": null,
       "patrol_points": [
         {
-          "x": 26,
-          "y": 36
-        },
-        {
-          "x": 31,
-          "y": 36
-        },
-        {
-          "x": 36,
-          "y": 36
-        },
-        {
-          "x": 33,
-          "y": 39
-        },
-        {
-          "x": 36,
-          "y": 39
-        },
-        {
-          "x": 39,
-          "y": 39
-        },
-        {
-          "x": 44,
-          "y": 39
-        },
-        {
-          "x": 44,
-          "y": 32
-        },
-        {
-          "x": 44,
-          "y": 29
-        },
-        {
-          "x": 36,
-          "y": 21
-        },
-        {
-          "x": 28,
-          "y": 13
-        },
-        {
-          "x": 33,
-          "y": 13
-        },
-        {
-          "x": 30,
-          "y": 13
-        },
-        {
-          "x": 35,
-          "y": 18
-        },
-        {
-          "x": 35,
-          "y": 21
-        }
-      ]
-    },
-    {
-      "type": "hunter",
-      "x": 25,
-      "y": 30,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "hunter",
-      "x": 32,
-      "y": 17,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 17
-      }
-    },
-    {
-      "type": "patrol",
-      "x": 27,
-      "y": 36,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 2,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 35,
-          "y": 36
-        },
-        {
           "x": 27,
-          "y": 36
+          "y": 16
         },
         {
-          "x": 27,
-          "y": 33
+          "x": 19,
+          "y": 16
         },
         {
-          "x": 23,
-          "y": 33
+          "x": 11,
+          "y": 16
         },
         {
-          "x": 23,
-          "y": 37
+          "x": 16,
+          "y": 16
         },
         {
-          "x": 23,
-          "y": 31
+          "x": 19,
+          "y": 13
         },
         {
-          "x": 28,
-          "y": 36
+          "x": 19,
+          "y": 16
         },
         {
-          "x": 28,
-          "y": 31
-        }
-      ]
-    },
-    {
-      "type": "patrol",
-      "x": 30,
-      "y": 41,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 2,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 25,
-          "y": 36
-        },
-        {
-          "x": 22,
-          "y": 36
-        },
-        {
-          "x": 30,
-          "y": 44
-        },
-        {
-          "x": 35,
-          "y": 39
-        },
-        {
-          "x": 31,
-          "y": 39
-        },
-        {
-          "x": 31,
-          "y": 33
-        },
-        {
-          "x": 31,
-          "y": 29
-        },
-        {
-          "x": 37,
-          "y": 29
-        },
-        {
-          "x": 32,
-          "y": 34
-        },
-        {
-          "x": 25,
-          "y": 27
-        },
-        {
-          "x": 17,
+          "x": 19,
           "y": 19
         },
         {
-          "x": 17,
+          "x": 25,
           "y": 25
         },
         {
-          "x": 17,
-          "y": 32
-        },
-        {
-          "x": 13,
-          "y": 28
+          "x": 25,
+          "y": 31
         }
       ]
     },
     {
-      "type": "scanner",
-      "x": 30,
-      "y": 21,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 17
-      }
-    },
-    {
-      "type": "firewall",
-      "x": 45,
-      "y": 19,
-      "cpu": 80,
-      "state": "unaware",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "hunter",
-      "x": 36,
-      "y": 25,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 19,
-      "y": 38,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
       "type": "patrol",
-      "x": 29,
-      "y": 24,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 1,
-      "last_seen_player": {
-        "x": 33,
-        "y": 12
-      },
-      "patrol_points": [
-        {
-          "x": 29,
-          "y": 24
-        },
-        {
-          "x": 22,
-          "y": 24
-        },
-        {
-          "x": 30,
-          "y": 24
-        },
-        {
-          "x": 22,
-          "y": 32
-        },
-        {
-          "x": 22,
-          "y": 28
-        },
-        {
-          "x": 27,
-          "y": 28
-        },
-        {
-          "x": 27,
-          "y": 23
-        },
-        {
-          "x": 34,
-          "y": 30
-        },
-        {
-          "x": 34,
-          "y": 24
-        }
-      ]
-    },
-    {
-      "type": "bot",
-      "x": 42,
-      "y": 25,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 44,
-      "y": 29,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 25,
+      "x": 34,
       "y": 37,
       "cpu": 40,
       "state": "unaware",
       "move_cooldown": 1,
       "disabled_turns": 0,
       "alert_timer": 0,
-      "patrol_index": 1,
+      "patrol_index": 2,
       "last_seen_player": null,
       "patrol_points": [
         {
-          "x": 27,
-          "y": 35
+          "x": 34,
+          "y": 31
         },
         {
-          "x": 24,
+          "x": 34,
           "y": 38
         },
         {
-          "x": 29,
-          "y": 33
-        },
-        {
-          "x": 29,
-          "y": 28
-        },
-        {
-          "x": 35,
-          "y": 28
-        },
-        {
-          "x": 35,
-          "y": 31
-        },
-        {
-          "x": 39,
-          "y": 31
-        },
-        {
-          "x": 31,
-          "y": 31
-        },
-        {
-          "x": 31,
-          "y": 39
-        },
-        {
-          "x": 31,
-          "y": 36
-        },
-        {
-          "x": 31,
-          "y": 28
-        },
-        {
-          "x": 25,
-          "y": 28
-        }
-      ]
-    },
-    {
-      "type": "patrol",
-      "x": 36,
-      "y": 26,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 1,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 36,
-          "y": 26
-        },
-        {
-          "x": 36,
-          "y": 18
-        },
-        {
-          "x": 32,
-          "y": 14
+          "x": 34,
+          "y": 45
         },
         {
           "x": 28,
-          "y": 14
+          "y": 45
         },
         {
           "x": 34,
-          "y": 14
-        },
-        {
-          "x": 28,
-          "y": 14
-        },
-        {
-          "x": 36,
-          "y": 14
-        },
-        {
-          "x": 30,
-          "y": 14
-        },
-        {
-          "x": 30,
-          "y": 21
-        },
-        {
-          "x": 30,
-          "y": 27
-        },
-        {
-          "x": 26,
-          "y": 27
-        },
-        {
-          "x": 32,
-          "y": 27
-        },
-        {
-          "x": 28,
-          "y": 31
-        }
-      ]
-    },
-    {
-      "type": "scanner",
-      "x": 24,
-      "y": 30,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 38,
-      "y": 14,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 6,
-      "last_seen_player": {
-        "x": 35,
-        "y": 16
-      },
-      "patrol_points": [
-        {
-          "x": 39,
-          "y": 16
-        },
-        {
-          "x": 35,
-          "y": 16
-        },
-        {
-          "x": 30,
-          "y": 16
-        },
-        {
-          "x": 33,
-          "y": 13
-        },
-        {
-          "x": 33,
-          "y": 17
-        },
-        {
-          "x": 33,
-          "y": 13
-        },
-        {
-          "x": 39,
-          "y": 13
-        },
-        {
-          "x": 43,
-          "y": 13
-        },
-        {
-          "x": 36,
-          "y": 13
+          "y": 45
         },
         {
           "x": 31,
-          "y": 13
-        },
-        {
-          "x": 35,
-          "y": 13
-        }
-      ]
-    },
-    {
-      "type": "firewall",
-      "x": 29,
-      "y": 40,
-      "cpu": 80,
-      "state": "unaware",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 44,
-      "y": 34,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 7,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 40,
-          "y": 33
-        },
-        {
-          "x": 36,
-          "y": 37
-        },
-        {
-          "x": 29,
-          "y": 37
-        },
-        {
-          "x": 33,
-          "y": 37
-        },
-        {
-          "x": 36,
-          "y": 34
-        },
-        {
-          "x": 36,
-          "y": 39
-        },
-        {
-          "x": 44,
-          "y": 31
-        },
-        {
-          "x": 44,
-          "y": 39
-        },
-        {
-          "x": 39,
-          "y": 39
-        },
-        {
-          "x": 36,
-          "y": 36
-        },
-        {
-          "x": 31,
-          "y": 31
-        },
-        {
-          "x": 31,
-          "y": 23
-        },
-        {
-          "x": 31,
-          "y": 28
-        },
-        {
-          "x": 36,
-          "y": 23
-        }
-      ]
-    },
-    {
-      "type": "firewall",
-      "x": 36,
-      "y": 27,
-      "cpu": 80,
-      "state": "unaware",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 34,
-      "y": 44,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 47,
-      "y": 19,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "bot",
-      "x": 31,
-      "y": 28,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "firewall",
-      "x": 43,
-      "y": 32,
-      "cpu": 80,
-      "state": "unaware",
-      "move_cooldown": 898,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "hunter",
-      "x": 17,
-      "y": 34,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "bot",
-      "x": 46,
-      "y": 31,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "bot",
-      "x": 14,
-      "y": 40,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "bot",
-      "x": 21,
-      "y": 15,
-      "cpu": 25,
-      "state": "hostile",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 13
-      }
-    },
-    {
-      "type": "patrol",
-      "x": 29,
-      "y": 25,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 6,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 43,
-          "y": 24
-        },
-        {
-          "x": 40,
-          "y": 24
-        },
-        {
-          "x": 32,
-          "y": 24
-        },
-        {
-          "x": 29,
-          "y": 24
-        },
-        {
-          "x": 35,
-          "y": 18
-        },
-        {
-          "x": 29,
-          "y": 24
-        },
-        {
-          "x": 29,
-          "y": 30
-        },
-        {
-          "x": 34,
-          "y": 35
-        },
-        {
-          "x": 28,
-          "y": 41
-        },
-        {
-          "x": 31,
-          "y": 41
-        },
-        {
-          "x": 35,
-          "y": 41
-        }
-      ]
-    },
-    {
-      "type": "patrol",
-      "x": 37,
-      "y": 26,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 1,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 37,
-          "y": 26
-        },
-        {
-          "x": 31,
-          "y": 32
-        },
-        {
-          "x": 24,
-          "y": 32
-        },
-        {
-          "x": 17,
-          "y": 32
-        },
-        {
-          "x": 17,
-          "y": 39
-        },
-        {
-          "x": 17,
-          "y": 34
-        },
-        {
-          "x": 17,
-          "y": 27
-        },
-        {
-          "x": 17,
-          "y": 30
-        }
-      ]
-    },
-    {
-      "type": "hunter",
-      "x": 17,
-      "y": 41,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "hunter",
-      "x": 21,
-      "y": 11,
-      "cpu": 50,
-      "state": "hostile",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 12
-      }
-    },
-    {
-      "type": "scanner",
-      "x": 30,
-      "y": 42,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 34,
-      "y": 35,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 34,
-      "y": 19,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 20,
-      "y": 29,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 3,
-      "last_seen_player": {
-        "x": 16,
-        "y": 19
-      },
-      "patrol_points": [
-        {
-          "x": 28,
-          "y": 34
+          "y": 45
         },
         {
           "x": 23,
-          "y": 29
+          "y": 37
         },
         {
           "x": 23,
-          "y": 23
-        },
-        {
-          "x": 17,
-          "y": 29
+          "y": 42
         },
         {
           "x": 23,
-          "y": 29
-        },
-        {
-          "x": 30,
-          "y": 22
-        },
-        {
-          "x": 34,
-          "y": 26
-        },
-        {
-          "x": 39,
-          "y": 21
-        },
-        {
-          "x": 39,
-          "y": 28
-        },
-        {
-          "x": 39,
-          "y": 25
+          "y": 34
         }
       ]
-    },
-    {
-      "type": "scanner",
-      "x": 42,
-      "y": 27,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "bot",
-      "x": 41,
-      "y": 44,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 26,
-      "y": 31,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 18,
-      "y": 41,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "hunter",
-      "x": 31,
-      "y": 23,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
     },
     {
       "type": "firewall",
       "x": 32,
-      "y": 41,
+      "y": 29,
       "cpu": 80,
       "state": "unaware",
-      "move_cooldown": 938,
+      "move_cooldown": 840,
       "disabled_turns": 0,
       "alert_timer": 0,
       "patrol_index": 0,
       "last_seen_player": null
-    },
-    {
-      "type": "hunter",
-      "x": 28,
-      "y": 47,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 17,
-      "y": 29,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 4,
-      "last_seen_player": {
-        "x": 16,
-        "y": 19
-      },
-      "patrol_points": [
-        {
-          "x": 16,
-          "y": 27
-        },
-        {
-          "x": 16,
-          "y": 23
-        },
-        {
-          "x": 16,
-          "y": 26
-        },
-        {
-          "x": 16,
-          "y": 22
-        },
-        {
-          "x": 23,
-          "y": 29
-        },
-        {
-          "x": 18,
-          "y": 29
-        },
-        {
-          "x": 18,
-          "y": 33
-        },
-        {
-          "x": 18,
-          "y": 38
-        }
-      ]
-    },
-    {
-      "type": "scanner",
-      "x": 33,
-      "y": 23,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 38,
-      "y": 39,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 27,
-      "y": 33,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 1,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 27,
-          "y": 33
-        },
-        {
-          "x": 27,
-          "y": 41
-        },
-        {
-          "x": 27,
-          "y": 33
-        },
-        {
-          "x": 31,
-          "y": 29
-        },
-        {
-          "x": 27,
-          "y": 29
-        },
-        {
-          "x": 27,
-          "y": 22
-        },
-        {
-          "x": 33,
-          "y": 16
-        },
-        {
-          "x": 33,
-          "y": 22
-        }
-      ]
-    },
-    {
-      "type": "patrol",
-      "x": 21,
-      "y": 46,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 1,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 21,
-          "y": 46
-        },
-        {
-          "x": 26,
-          "y": 46
-        },
-        {
-          "x": 34,
-          "y": 38
-        },
-        {
-          "x": 38,
-          "y": 34
-        },
-        {
-          "x": 34,
-          "y": 30
-        },
-        {
-          "x": 31,
-          "y": 33
-        },
-        {
-          "x": 35,
-          "y": 29
-        },
-        {
-          "x": 39,
-          "y": 33
-        },
-        {
-          "x": 46,
-          "y": 33
-        },
-        {
-          "x": 39,
-          "y": 26
-        },
-        {
-          "x": 39,
-          "y": 23
-        },
-        {
-          "x": 36,
-          "y": 26
-        },
-        {
-          "x": 42,
-          "y": 32
-        },
-        {
-          "x": 42,
-          "y": 25
-        }
-      ]
-    },
-    {
-      "type": "scanner",
-      "x": 20,
-      "y": 40,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 37,
-      "y": 25,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 1,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 37,
-          "y": 24
-        },
-        {
-          "x": 37,
-          "y": 20
-        },
-        {
-          "x": 29,
-          "y": 20
-        },
-        {
-          "x": 22,
-          "y": 20
-        },
-        {
-          "x": 16,
-          "y": 26
-        },
-        {
-          "x": 16,
-          "y": 23
-        },
-        {
-          "x": 16,
-          "y": 28
-        },
-        {
-          "x": 16,
-          "y": 25
-        },
-        {
-          "x": 16,
-          "y": 19
-        }
-      ]
     },
     {
       "type": "scanner",
       "x": 41,
-      "y": 35,
+      "y": 26,
       "cpu": 35,
       "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 26,
-      "y": 29,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 42,
-      "y": 22,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 6,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 33,
-          "y": 16
-        },
-        {
-          "x": 38,
-          "y": 21
-        },
-        {
-          "x": 38,
-          "y": 18
-        },
-        {
-          "x": 32,
-          "y": 18
-        },
-        {
-          "x": 37,
-          "y": 18
-        },
-        {
-          "x": 43,
-          "y": 24
-        },
-        {
-          "x": 35,
-          "y": 16
-        },
-        {
-          "x": 32,
-          "y": 19
-        },
-        {
-          "x": 25,
-          "y": 19
-        },
-        {
-          "x": 28,
-          "y": 16
-        }
-      ]
-    },
-    {
-      "type": "hunter",
-      "x": 18,
-      "y": 36,
-      "cpu": 50,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 25,
-      "y": 43,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 23,
-      "y": 17,
-      "cpu": 35,
-      "state": "alert",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 2,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 12
-      }
-    },
-    {
-      "type": "scanner",
-      "x": 29,
-      "y": 22,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 17
-      }
-    },
-    {
-      "type": "scanner",
-      "x": 36,
-      "y": 30,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 20,
-      "y": 20,
-      "cpu": 35,
-      "state": "alert",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 2,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 21,
-        "y": 12
-      }
-    },
-    {
-      "type": "patrol",
-      "x": 25,
-      "y": 29,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 3,
-      "last_seen_player": {
-        "x": 16,
-        "y": 19
-      },
-      "patrol_points": [
-        {
-          "x": 16,
-          "y": 42
-        },
-        {
-          "x": 16,
-          "y": 34
-        },
-        {
-          "x": 21,
-          "y": 29
-        },
-        {
-          "x": 27,
-          "y": 29
-        },
-        {
-          "x": 24,
-          "y": 32
-        },
-        {
-          "x": 16,
-          "y": 24
-        },
-        {
-          "x": 24,
-          "y": 16
-        },
-        {
-          "x": 31,
-          "y": 23
-        },
-        {
-          "x": 26,
-          "y": 23
-        },
-        {
-          "x": 23,
-          "y": 20
-        }
-      ]
-    },
-    {
-      "type": "scanner",
-      "x": 22,
-      "y": 30,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 16,
-        "y": 19
-      }
-    },
-    {
-      "type": "firewall",
-      "x": 19,
-      "y": 34,
-      "cpu": 80,
-      "state": "unaware",
-      "move_cooldown": 938,
+      "move_cooldown": 840,
       "disabled_turns": 0,
       "alert_timer": 0,
       "patrol_index": 0,
@@ -2885,50 +1265,11 @@
     },
     {
       "type": "firewall",
-      "x": 30,
-      "y": 30,
-      "cpu": 80,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 34,
-      "y": 40,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 22,
+      "x": 25,
       "y": 28,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 938,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": {
-        "x": 16,
-        "y": 19
-      }
-    },
-    {
-      "type": "firewall",
-      "x": 22,
-      "y": 31,
       "cpu": 80,
       "state": "unaware",
-      "move_cooldown": 938,
+      "move_cooldown": 840,
       "disabled_turns": 0,
       "alert_timer": 0,
       "patrol_index": 0,
@@ -2936,11 +1277,11 @@
     },
     {
       "type": "scanner",
-      "x": 43,
-      "y": 40,
+      "x": 33,
+      "y": 25,
       "cpu": 35,
       "state": "unaware",
-      "move_cooldown": 938,
+      "move_cooldown": 840,
       "disabled_turns": 0,
       "alert_timer": 0,
       "patrol_index": 0,
@@ -2948,87 +1289,41 @@
     },
     {
       "type": "scanner",
-      "x": 36,
-      "y": 40,
+      "x": 44,
+      "y": 19,
       "cpu": 35,
       "state": "unaware",
-      "move_cooldown": 938,
+      "move_cooldown": 840,
       "disabled_turns": 0,
       "alert_timer": 0,
       "patrol_index": 0,
       "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 40,
-      "y": 36,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 1,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 1,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 33,
-          "y": 33
-        },
-        {
-          "x": 40,
-          "y": 40
-        },
-        {
-          "x": 37,
-          "y": 40
-        },
-        {
-          "x": 37,
-          "y": 37
-        },
-        {
-          "x": 31,
-          "y": 43
-        },
-        {
-          "x": 37,
-          "y": 37
-        },
-        {
-          "x": 30,
-          "y": 44
-        },
-        {
-          "x": 30,
-          "y": 37
-        }
-      ]
     }
   ],
   "data_patch_effects": {
     "crimson": [
-      "reduce_heat",
-      "Reduce heat by 40°C instantly"
-    ],
-    "azure": [
-      "speed_boost",
-      "Temporary speed boost (10 turns)"
-    ],
-    "emerald": [
       "reduce_detection",
       "-25% detection level"
     ],
-    "golden": [
-      "enhanced_vision",
-      "Enhanced vision (15 turns)"
+    "azure": [
+      "exploit_efficiency",
+      "Exploit efficiency (8 turns)"
     ],
-    "violet": [
+    "emerald": [
+      "speed_boost",
+      "Temporary speed boost (10 turns)"
+    ],
+    "golden": [
       "restore_cpu",
       "Restore 30-40 CPU"
     ],
+    "violet": [
+      "enhanced_vision",
+      "Enhanced vision (15 turns)"
+    ],
     "silver": [
-      "exploit_efficiency",
-      "Exploit efficiency (8 turns)"
+      "reduce_heat",
+      "Reduce heat by 40°C instantly"
     ]
   }
 }
