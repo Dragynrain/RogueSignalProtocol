@@ -1909,33 +1909,32 @@ class LevelGenerator:
         self.game_map.last_known_enemy_positions.clear()
     
     def _generate_procedural_level(self, level: int) -> None:
-        """Generate the basic level structure with rooms and corridors."""
+        """Generate the basic level structure using improved algorithm from dungeon-gen-v3.py"""
         # Fill map with walls initially
         for x in range(GameConfig.MAP_WIDTH):
             for y in range(GameConfig.MAP_HEIGHT):
                 self.game_map.walls.add((x, y))
         
-        # Create varied spawn room in top-left area
-        spawn_room = self._generate_spawn_room()
-        rooms = [spawn_room]
-        self._carve_room(spawn_room)
+        # Create rooms with varied sizes (inspired by dungeon-gen-v3.py)
+        rooms = self._create_varied_rooms(level)
         
-        # Generate additional rooms (avoid spawn room)
-        additional_rooms = self._generate_rooms_avoiding_existing(level, rooms)
-        rooms.extend(additional_rooms)
+        # Connect rooms using MST approach for better connectivity
+        self._connect_rooms_mst(rooms)
         
-        # Ensure we have at least one additional room for a playable map
-        if len(rooms) == 1:  # Only have spawn room
-            # Create a second room to ensure connectivity
-            center_room = (GameConfig.MAP_WIDTH // 2, GameConfig.MAP_HEIGHT // 2, 6, 6)
-            rooms.append(center_room)
-            self._carve_room(center_room)
+        # Add extra paths for multiple routes (good for stealth)
+        self._add_extra_paths(rooms)
         
-        # Connect all rooms with corridors (including spawn room)
-        self._connect_rooms_with_corridors(rooms)
+        # Add strategic cover elements in open areas
+        self._add_cover_elements_new()
         
         # Add shadow areas for stealth gameplay
         self._place_shadow_areas(level, rooms)
+        
+        # Ensure border walls are intact
+        self._ensure_border_walls_new()
+        
+        # Store final room list
+        self.last_generated_rooms = rooms
     
     def _generate_rooms_avoiding_existing(self, level: int, existing_rooms: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
         """Generate room layouts for the level."""
@@ -2133,6 +2132,200 @@ class LevelGenerator:
                     floor_positions.append((x, y))
         return floor_positions
 
+    def _create_varied_rooms(self, level: int) -> List[Tuple[int, int, int, int]]:
+        """Create multiple rooms of varying sizes (improved algorithm)"""
+        rooms = []
+        num_rooms = random.randint(12, 18)  # More rooms for stealth gameplay
+        attempts = 0
+        max_attempts = 300
+        
+        # Ensure spawn room in top-left area
+        spawn_room = self._generate_spawn_room()
+        rooms.append(spawn_room)
+        self._carve_room_tuple(spawn_room)
+        
+        while len(rooms) < num_rooms and attempts < max_attempts:
+            attempts += 1
+            
+            # Varied room sizes based on probability
+            room_type = random.random()
+            if room_type < 0.15:  # 15% extra large
+                w = random.randint(10, 14)
+                h = random.randint(10, 14)
+            elif room_type < 0.40:  # 25% large
+                w = random.randint(7, 10)
+                h = random.randint(7, 10)
+            elif room_type < 0.70:  # 30% medium
+                w = random.randint(5, 7)
+                h = random.randint(5, 7)
+            else:  # 30% small (good for stealth)
+                w = random.randint(3, 5)
+                h = random.randint(3, 5)
+            
+            x = random.randint(1, GameConfig.MAP_WIDTH - w - 1)
+            y = random.randint(1, GameConfig.MAP_HEIGHT - h - 1)
+            
+            # Reduced buffer for tighter packing
+            if not self._room_overlaps_new(rooms, x-1, y-1, w+1, h+1):
+                rooms.append((x, y, w, h))
+                self._carve_room_tuple((x, y, w, h))
+        
+        # Try to fill gaps with smaller rooms
+        for _ in range(50):
+            w = random.randint(2, 4)
+            h = random.randint(2, 4)
+            x = random.randint(1, GameConfig.MAP_WIDTH - w - 1)
+            y = random.randint(1, GameConfig.MAP_HEIGHT - h - 1)
+            
+            if not self._room_overlaps_new(rooms, x, y, w, h):
+                rooms.append((x, y, w, h))
+                self._carve_room_tuple((x, y, w, h))
+        
+        return rooms
+    
+    def _room_overlaps_new(self, rooms: List[Tuple[int, int, int, int]], 
+                          x: int, y: int, w: int, h: int) -> bool:
+        """Check if a room overlaps with existing rooms"""
+        for rx, ry, rw, rh in rooms:
+            if not (x + w <= rx or x >= rx + rw or y + h <= ry or y >= ry + rh):
+                return True
+        return False
+    
+    def _carve_room_tuple(self, room_tuple: Tuple[int, int, int, int]) -> None:
+        """Carve out a room using tuple format (x, y, w, h)"""
+        x, y, w, h = room_tuple
+        for i in range(y, y + h):
+            for j in range(x, x + w):
+                if 1 <= i < GameConfig.MAP_HEIGHT - 1 and 1 <= j < GameConfig.MAP_WIDTH - 1:
+                    self.game_map.walls.discard((j, i))
+    
+    def _connect_rooms_mst(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+        """Connect rooms with corridors using MST approach for better connectivity"""
+        if len(rooms) < 2:
+            return
+        
+        connected = [rooms[0]]
+        unconnected = rooms[1:]
+        
+        while unconnected:
+            # Find closest pair between connected and unconnected
+            min_dist = float('inf')
+            closest_pair = None
+            
+            for conn_room in connected:
+                cx = conn_room[0] + conn_room[2] // 2
+                cy = conn_room[1] + conn_room[3] // 2
+                
+                for i, unconn_room in enumerate(unconnected):
+                    ux = unconn_room[0] + unconn_room[2] // 2
+                    uy = unconn_room[1] + unconn_room[3] // 2
+                    
+                    dist = abs(cx - ux) + abs(cy - uy)
+                    if dist < min_dist:
+                        min_dist = dist
+                        closest_pair = (conn_room, unconn_room, i)
+            
+            if closest_pair:
+                room1, room2, idx = closest_pair
+                self._create_corridor_new(room1, room2)
+                connected.append(room2)
+                unconnected.pop(idx)
+    
+    def _create_corridor_new(self, room1: Tuple[int, int, int, int], 
+                            room2: Tuple[int, int, int, int]) -> None:
+        """Create an L-shaped corridor between two rooms"""
+        # Get center points of rooms
+        x1 = room1[0] + room1[2] // 2
+        y1 = room1[1] + room1[3] // 2
+        x2 = room2[0] + room2[2] // 2
+        y2 = room2[1] + room2[3] // 2
+        
+        # Randomly choose corridor width (1-2 for stealth gameplay)
+        corridor_width = 1 if random.random() < 0.7 else 2
+        
+        # Randomly choose to go horizontal first or vertical first
+        if random.random() < 0.5:
+            self._carve_h_corridor_new(x1, x2, y1, corridor_width)
+            self._carve_v_corridor_new(y1, y2, x2, corridor_width)
+        else:
+            self._carve_v_corridor_new(y1, y2, x1, corridor_width)
+            self._carve_h_corridor_new(x1, x2, y2, corridor_width)
+    
+    def _carve_h_corridor_new(self, x1: int, x2: int, y: int, width: int) -> None:
+        """Carve a horizontal corridor"""
+        for x in range(min(x1, x2), max(x1, x2) + 1):
+            for dy in range(width):
+                if (1 <= y + dy < GameConfig.MAP_HEIGHT - 1 and 
+                    1 <= x < GameConfig.MAP_WIDTH - 1):
+                    self.game_map.walls.discard((x, y + dy))
+    
+    def _carve_v_corridor_new(self, y1: int, y2: int, x: int, width: int) -> None:
+        """Carve a vertical corridor"""
+        for y in range(min(y1, y2), max(y1, y2) + 1):
+            for dx in range(width):
+                if (1 <= y < GameConfig.MAP_HEIGHT - 1 and 
+                    1 <= x + dx < GameConfig.MAP_WIDTH - 1):
+                    self.game_map.walls.discard((x + dx, y))
+    
+    def _add_extra_paths(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+        """Add extra corridors for multiple paths (good for stealth)"""
+        if len(rooms) < 3:
+            return
+        
+        # Add more connections for better connectivity
+        extra_connections = min(random.randint(3, 6), len(rooms) // 2)
+        
+        for _ in range(extra_connections):
+            room1 = random.choice(rooms)
+            room2 = random.choice(rooms)
+            if room1 != room2:
+                self._create_corridor_new(room1, room2)
+    
+    def _add_cover_elements_new(self) -> None:
+        """Add small wall segments in larger open areas for cover"""
+        for y in range(3, GameConfig.MAP_HEIGHT - 3, 5):
+            for x in range(3, GameConfig.MAP_WIDTH - 3, 5):
+                # Check if area is mostly open
+                open_count = 0
+                for dy in range(-2, 3):
+                    for dx in range(-2, 3):
+                        check_x, check_y = x + dx, y + dy
+                        if (0 <= check_x < GameConfig.MAP_WIDTH and 
+                            0 <= check_y < GameConfig.MAP_HEIGHT and
+                            (check_x, check_y) not in self.game_map.walls):
+                            open_count += 1
+                
+                # If area is very open, maybe add a small cover element
+                if open_count > 20 and random.random() < 0.3:
+                    # Add small L-shaped or straight cover
+                    if random.random() < 0.5:
+                        # Straight cover
+                        if random.random() < 0.5:
+                            for dx in range(2):
+                                if x + dx < GameConfig.MAP_WIDTH - 1:
+                                    self.game_map.walls.add((x + dx, y))
+                        else:
+                            for dy in range(2):
+                                if y + dy < GameConfig.MAP_HEIGHT - 1:
+                                    self.game_map.walls.add((x, y + dy))
+                    else:
+                        # L-shaped cover
+                        self.game_map.walls.add((x, y))
+                        if random.random() < 0.5:
+                            if x + 1 < GameConfig.MAP_WIDTH - 1:
+                                self.game_map.walls.add((x + 1, y))
+                            if y + 1 < GameConfig.MAP_HEIGHT - 1:
+                                self.game_map.walls.add((x, y + 1))
+    
+    def _ensure_border_walls_new(self) -> None:
+        """Ensure all edges are walls"""
+        for i in range(GameConfig.MAP_HEIGHT):
+            self.game_map.walls.add((0, i))
+            self.game_map.walls.add((GameConfig.MAP_WIDTH - 1, i))
+        for j in range(GameConfig.MAP_WIDTH):
+            self.game_map.walls.add((j, 0))
+            self.game_map.walls.add((j, GameConfig.MAP_HEIGHT - 1))
+
 
 class TurnProcessor:
     """Handles turn-based game logic and effects processing."""
@@ -2194,9 +2387,6 @@ class TurnProcessor:
                 self.message_log.add_message(f"Network security tightening: +{detection_increase}% detection")
 
 
-# ============================================================================
-# GAME STATE AND MAIN GAME CLASS
-# ============================================================================
 
 class Game:
     """Main game class that manages all game state and logic."""
