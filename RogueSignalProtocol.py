@@ -25,7 +25,7 @@ try:
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
-    print("Warning: pygame not available. Sound will be disabled.")
+    logging.warning("pygame not available. Sound will be disabled.")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
@@ -802,6 +802,14 @@ class GameConfig:
     # Sound system
     DEFAULT_FADE_TIME = 2000  # Default fade in time for music (ms)
     
+    # UI message positioning
+    MESSAGE_CENTER_OFFSET_LARGE = 15
+    MESSAGE_CENTER_OFFSET_MEDIUM = 12
+    MESSAGE_CENTER_OFFSET_SMALL = 8
+    MESSAGE_CENTER_OFFSET_TINY = 10
+    MESSAGE_LINE_SPACING = 1
+    MESSAGE_BUTTON_SPACING = 3
+    
     # Network configurations
     NETWORK_CONFIGS = {
         1: {"enemies": 15, "shadow_coverage": 0.15, "name": "Corporate Network", "background_detection": 1},
@@ -1299,7 +1307,7 @@ class Player:
             return True
         return False
     
-    def update_effects(self):
+    def update_effects(self) -> None:
         """Update temporary effects each turn."""
         for effect in self.temporary_effects:
             self.temporary_effects[effect] = max(0, self.temporary_effects[effect] - 1)
@@ -2517,50 +2525,15 @@ class Game:
             return False
         
         try:
-            # Restore game state
-            self.game_state.level = save_data["level"]
-            self.game_state.turn = save_data["turn"]
-            self.game_state.game_over = save_data["game_over"]
-            self.game_state.admin_spawned = save_data["admin_spawned"]
-            self.game_state.dungeon_seed = save_data["dungeon_seed"]
-            
-            # Restore player state
-            player_data = save_data["player"]
-            self.player.x = player_data["x"]
-            self.player.y = player_data["y"]
-            self.player.cpu = player_data["cpu"]
-            self.player.max_cpu = player_data["max_cpu"]
-            self.player.heat = player_data["heat"]
-            self.player.detection = player_data["detection"]
-            self.player.ram_total = player_data["ram_total"]
-            self.player.temporary_effects = player_data["temporary_effects"]
-            
-            # Restore inventory
-            self.player.inventory_manager.equipped_exploits = player_data["equipped_exploits"]
-            self.player.inventory_manager.items = self._deserialize_inventory(player_data["inventory_items"])
-            
-            # Restore game effects
-            self.game_state.network_scan_turns = save_data["network_scan_turns"]
-            self.game_state.noise_locations = [Position(loc["x"], loc["y"]) for loc in save_data["noise_locations"]]
-            self.game_state.distraction_points = {}
-            for pos, turns in save_data["distraction_points"].items():
-                try:
-                    coords = pos.split(',')
-                    if len(coords) == 2:
-                        self.game_state.distraction_points[Position(int(coords[0]), int(coords[1]))] = turns
-                except (ValueError, IndexError):
-                    continue  # Skip malformed coordinate data
-            
-            # Restore data patch effects
-            self.data_patch_effects = save_data["data_patch_effects"]
+            self._restore_game_state(save_data)
+            self._restore_player_state(save_data["player"])
+            self._restore_game_effects(save_data)
             
             # Generate level layout for map structure
             self.level_generator.generate_level(self.game_state.level, self.game_state.dungeon_seed)
             
-            # Restore map items
+            # Restore map items and enemies
             self._restore_map_items(save_data["map_state"])
-            
-            # Restore enemies
             self._restore_enemies(save_data["enemies"])
             
             self.message_log.add_message("Game loaded successfully!", Colors.GREEN)
@@ -2569,6 +2542,48 @@ class Game:
         except Exception as e:
             logging.error(f"Failed to restore game state: {e}")
             return False
+    
+    def _restore_game_state(self, save_data: Dict[str, Any]) -> None:
+        """Restore core game state from save data."""
+        self.game_state.level = save_data["level"]
+        self.game_state.turn = save_data["turn"]
+        self.game_state.game_over = save_data["game_over"]
+        self.game_state.admin_spawned = save_data["admin_spawned"]
+        self.game_state.dungeon_seed = save_data["dungeon_seed"]
+    
+    def _restore_player_state(self, player_data: Dict[str, Any]) -> None:
+        """Restore player state from save data."""
+        self.player.x = player_data["x"]
+        self.player.y = player_data["y"]
+        self.player.cpu = player_data["cpu"]
+        self.player.max_cpu = player_data["max_cpu"]
+        self.player.heat = player_data["heat"]
+        self.player.detection = player_data["detection"]
+        self.player.ram_total = player_data["ram_total"]
+        self.player.temporary_effects = player_data["temporary_effects"]
+        
+        # Restore inventory
+        self.player.inventory_manager.equipped_exploits = player_data["equipped_exploits"]
+        self.player.inventory_manager.items = self._deserialize_inventory(player_data["inventory_items"])
+    
+    def _restore_game_effects(self, save_data: Dict[str, Any]) -> None:
+        """Restore game effects and environmental state from save data."""
+        self.game_state.network_scan_turns = save_data["network_scan_turns"]
+        self.game_state.noise_locations = [Position(loc["x"], loc["y"]) for loc in save_data["noise_locations"]]
+        
+        # Restore distraction points with error handling
+        self.game_state.distraction_points = {}
+        for pos_str, turns in save_data["distraction_points"].items():
+            try:
+                coords = pos_str.split(',')
+                if len(coords) == 2:
+                    position = Position(int(coords[0]), int(coords[1]))
+                    self.game_state.distraction_points[position] = turns
+            except (ValueError, IndexError):
+                continue  # Skip malformed coordinate data
+        
+        # Restore data patch effects
+        self.data_patch_effects = save_data["data_patch_effects"]
     
     def _deserialize_inventory(self, items_data: List[Dict]) -> List:
         """Deserialize inventory items from save data."""
@@ -4194,9 +4209,9 @@ class Renderer:
         center_x = GameConfig.GAME_AREA_WIDTH // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
         
-        console.print(center_x - 10, center_y, "MISSION COMPLETE!", fg=Colors.ACID_GREEN)
-        console.print(center_x - 15, center_y + 1, "All networks infiltrated!", fg=Colors.CYBER_TEAL)
-        console.print(center_x - 8, center_y + 3, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
+        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_TINY, center_y, "MISSION COMPLETE!", fg=Colors.ACID_GREEN)
+        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_LARGE, center_y + GameConfig.MESSAGE_LINE_SPACING, "All networks infiltrated!", fg=Colors.CYBER_TEAL)
+        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y + GameConfig.MESSAGE_BUTTON_SPACING, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
     
     def _render_death_message(self, console: tcod.console.Console):
         """Render death message."""
@@ -4207,12 +4222,23 @@ class Renderer:
         if SaveGameManager.save_exists():
             SaveGameManager.delete_save()
         
-        console.print(center_x - 8, center_y, "SYSTEM FAILURE", fg=Colors.NEON_PINK)
-        console.print(center_x - 12, center_y + 1, "Consciousness purged", fg=Colors.RED)
-        console.print(center_x - 8, center_y + 3, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
+        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y, "SYSTEM FAILURE", fg=Colors.NEON_PINK)
+        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_MEDIUM, center_y + GameConfig.MESSAGE_LINE_SPACING, "Consciousness purged", fg=Colors.RED)
+        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y + GameConfig.MESSAGE_BUTTON_SPACING, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
 
 class UIRenderer:
     """Renders UI elements."""
+    
+    def _clear_game_area(self, console: tcod.console.Console) -> None:
+        """Clear only the main game area, preserving UI elements."""
+        for x in range(GameConfig.GAME_AREA_WIDTH):
+            for y in range(1, GameConfig.PANEL_Y):
+                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
+    
+    def _render_centered_title(self, console: tcod.console.Console, title: str, y: int, color: tuple = Colors.YELLOW) -> None:
+        """Render a centered title in the game area."""
+        title_x = GameConfig.GAME_AREA_WIDTH // 2 - len(title) // 2
+        console.print(title_x, y, title, fg=color)
     
     def render_help_screen(self, console: tcod.console.Console):
         """Render the help screen using HelpMenu content."""
@@ -4223,16 +4249,11 @@ class UIRenderer:
     
     def render_inventory_screen(self, console: tcod.console.Console, game: Game):
         """Render the inventory screen."""
-        # Clear only the main game area, preserve top bar, bottom panel, and system log
-        # Clear lines 1 to PANEL_Y-1 in game area (x 0-54)
-        for x in range(GameConfig.GAME_AREA_WIDTH):
-            for y in range(1, GameConfig.PANEL_Y):
-                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
+        # Clear only the main game area, preserve UI elements
+        self._clear_game_area(console)
         
         # Title (centered in game area only)
-        title = "INVENTORY SYSTEM"
-        title_x = GameConfig.GAME_AREA_WIDTH // 2 - len(title) // 2
-        console.print(title_x, 2, title, fg=Colors.YELLOW)
+        self._render_centered_title(console, "INVENTORY SYSTEM", 2)
         
         # Render preserved UI elements
         self.render_top_status_bar(console, game)
@@ -5061,7 +5082,7 @@ def initialize_tcod_context():
         import traceback
         tb = traceback.extract_tb(e.__traceback__)
         line_no = tb[-1].lineno if tb else "?"
-        print(f"Tileset loading error: {e} (line {line_no})")
+        logging.error(f"Tileset loading error: {e} (line {line_no})")
         try:
             # Try default tileset
             # Use a simple built-in tileset
@@ -5069,7 +5090,7 @@ def initialize_tcod_context():
         except Exception as e2:
             tb2 = traceback.extract_tb(e2.__traceback__)
             line_no2 = tb2[-1].lineno if tb2 else "?"
-            print(f"Default tileset error: {e2} (line {line_no2})")
+            logging.error(f"Default tileset error: {e2} (line {line_no2})")
             # Use built-in fallback
             pass
     
@@ -5744,7 +5765,7 @@ def main():
                         import traceback
                         tb = traceback.extract_tb(e.__traceback__)
                         line_no = tb[-1].lineno if tb else "?"
-                        print(f"Rendering error: {e} (line {line_no})")
+                        logging.error(f"Rendering error: {e} (line {line_no})")
                         console.clear()
                         console.print(1, 1, f"Error: {str(e)[:50]} (line {line_no})", fg=Colors.RED)
                         console.print(1, 2, "Press ESC to exit", fg=Colors.WHITE)
@@ -5758,15 +5779,15 @@ def main():
         import traceback
         tb = traceback.extract_tb(e.__traceback__)
         line_no = tb[-1].lineno if tb else "?"
-        print(f"Critical error: {e} (line {line_no})")
+        logging.critical(f"Critical error: {e} (line {line_no})")
         traceback.print_exc()
 
 if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nGame interrupted by user")
+        logging.info("Game interrupted by user")
     except Exception as e:
-        print(f"Fatal error: {e}")
+        logging.critical(f"Fatal error: {e}")
         import traceback
         traceback.print_exc()
