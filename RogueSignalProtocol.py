@@ -1974,6 +1974,29 @@ class LevelGenerator:
         # Store final room list
         self.last_generated_rooms = rooms
     
+    def _create_varied_rooms(self, level: int) -> List[Tuple[int, int, int, int]]:
+        """Create varied rooms including a guaranteed spawn room in top-left corner."""
+        rooms = []
+        
+        # First, create the spawn room in the top-left corner (always safe and empty)
+        spawn_room = (2, 2, 8, 8)  # Position (2,2) with size 8x8 for a safe spawn area
+        rooms.append(spawn_room)
+        self._carve_room(spawn_room)
+        
+        # Generate remaining rooms using the existing logic
+        remaining_rooms = self._generate_rooms_avoiding_existing(level, [spawn_room])
+        rooms.extend(remaining_rooms)
+        
+        return rooms
+    
+    def _carve_room(self, room: Tuple[int, int, int, int]) -> None:
+        """Carve out a room by removing walls in the specified area."""
+        x, y, width, height = room
+        for rx in range(x, x + width):
+            for ry in range(y, y + height):
+                if (rx, ry) in self.game_map.walls:
+                    self.game_map.walls.remove((rx, ry))
+    
     def _generate_rooms_avoiding_existing(self, level: int, existing_rooms: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
         """Generate room layouts for the level."""
         num_rooms = RoomGenerationConfig.MIN_ROOMS_BASE + level * RoomGenerationConfig.ROOM_LEVEL_MULTIPLIER
@@ -3295,21 +3318,34 @@ class Game:
         self.admin_spawned = False
     
     def _find_valid_spawn_position(self) -> Position:
-        """Find a valid spawn position for the player (open floor tile)."""
-        # Try to find an open position, starting from a safe area
-        for _ in range(100):  # Maximum attempts to prevent infinite loop
-            x = random.randint(2, GameConfig.MAP_WIDTH - 3)
-            y = random.randint(2, GameConfig.MAP_HEIGHT - 3)
-            pos = Position(x, y)
-            
-            # Check if position is valid (not a wall, not occupied by enemies)
-            if (self.game_map.is_valid_position(pos) and 
-                not self.game_map.is_wall(pos) and
-                not self._get_enemy_at(pos)):
-                return pos
+        """Find a valid spawn position for the player in the top-left spawn room."""
+        # Always spawn in the center of the predefined spawn room (2,2,8,8)
+        # This corresponds to the spawn room created in _create_varied_rooms
+        spawn_room_center_x = 2 + 8 // 2  # 6
+        spawn_room_center_y = 2 + 8 // 2  # 6
         
-        # Fallback to default spawn if no valid position found
-        return Position(5, 5)
+        # Verify the position is valid (should always be since we created the room)
+        pos = Position(spawn_room_center_x, spawn_room_center_y)
+        if (self.game_map.is_valid_position(pos) and 
+            not self.game_map.is_wall(pos) and
+            not self._get_enemy_at(pos)):
+            return pos
+        
+        # If center is somehow occupied, try nearby positions in the spawn room
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                if dx == 0 and dy == 0:
+                    continue  # Already tried center
+                test_pos = Position(spawn_room_center_x + dx, spawn_room_center_y + dy)
+                if (test_pos.x >= 2 and test_pos.x < 10 and  # Within spawn room bounds
+                    test_pos.y >= 2 and test_pos.y < 10 and
+                    self.game_map.is_valid_position(test_pos) and 
+                    not self.game_map.is_wall(test_pos) and
+                    not self._get_enemy_at(test_pos)):
+                    return test_pos
+        
+        # Final fallback (should never be needed)
+        return Position(6, 6)
     
     def _generate_shadows(self, coverage: float):
         """Generate strategic shadow areas for better stealth gameplay."""
@@ -4436,9 +4472,9 @@ class UIRenderer:
         fragment_text = STORY_FRAGMENTS[fragment_index]
         
         # Header
-        console.print(2, 1, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(2, 1, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
         console.print(GameConfig.SCREEN_WIDTH // 2 - 10, 2, "DATA FRAGMENT RECOVERED", fg=Colors.CYAN)
-        console.print(2, 3, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(2, 3, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
         
         # Display fragment content with word wrapping
         y_offset = 5
@@ -4477,7 +4513,7 @@ class UIRenderer:
         
         # Footer
         footer_y = GameConfig.SCREEN_HEIGHT - 4
-        console.print(2, footer_y, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(2, footer_y, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
         console.print(GameConfig.SCREEN_WIDTH // 2 - 15, footer_y + 1, "Press any key to continue...", fg=Colors.YELLOW)
         console.print(GameConfig.SCREEN_WIDTH // 2 - 12, footer_y + 2, "Press 'L' to view all lore", fg=Colors.YELLOW)
     
@@ -4489,10 +4525,10 @@ class UIRenderer:
         discovered_count, total_count = game.story_fragment_manager.get_fragment_count()
         
         # Header
-        console.print(2, 1, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(2, 1, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
         title = f"RECOVERED DATA FRAGMENTS ({discovered_count}/{total_count})"
         console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.CYAN)
-        console.print(2, 3, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(2, 3, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
         
         if not discovered_fragments:
             # No fragments discovered yet
@@ -4527,7 +4563,7 @@ class UIRenderer:
         
         # Footer
         footer_y = GameConfig.SCREEN_HEIGHT - 3
-        console.print(2, footer_y, "═" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(2, footer_y, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
         console.print(GameConfig.SCREEN_WIDTH // 2 - 10, footer_y + 1, "Press ESC to close", fg=Colors.YELLOW)
     
     def render_top_status_bar(self, console: tcod.console.Console, game: Game):
@@ -4649,7 +4685,7 @@ class UIRenderer:
                     
                     heat_ok = game.player.heat + heat_cost <= 100
                     color = Colors.GREEN if heat_ok else Colors.RED
-                    exploit_text = f"{i+4}.{exploit.name}"  # Continue numbering from where first line left off
+                    exploit_text = f"{i+len(first_line_exploits)+1}.{exploit.name}"  # Continue numbering from where first line left off
                     
                     # Check if it fits on this line
                     if x_pos + len(exploit_text) + 2 <= GameConfig.GAME_AREA_WIDTH:
@@ -4815,10 +4851,10 @@ class MapRenderer:
             console.print(screen_x, screen_y, '#', fg=(60, 70, 90), bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             # Darker purple shadow areas in memory
-            console.print(screen_x, screen_y, '●', fg=(80, 40, 120), bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '#', fg=(80, 40, 120), bg=Colors.BLACK)
         else:
             # Darker dots for remembered empty spaces
-            console.print(screen_x, screen_y, '•', fg=(90, 90, 130), bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '.', fg=(90, 90, 130), bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a single tile."""
@@ -4844,9 +4880,9 @@ class MapRenderer:
             # Story fragment - glowing/pulsing appearance
             console.print(screen_x, screen_y, '?', fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            console.print(screen_x, screen_y, '●', fg=(150, 80, 200), bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '#', fg=(150, 80, 200), bg=Colors.BLACK)
         else:
-            console.print(screen_x, screen_y, '•', fg=Colors.FLOOR, bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '.', fg=Colors.FLOOR, bg=Colors.BLACK)
     
     def _get_patch_color(self, color_name: str) -> Tuple[int, int, int]:
         """Get color tuple for data patch."""
@@ -5144,15 +5180,20 @@ class MainMenu:
         self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Lore", "Exit"]
         self.show_warning = False
         self.warning_selection = 0
+        self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
     
     def refresh_options(self, show_continue: bool = True) -> None:
         """Refresh menu options. Set show_continue=False when accessed from mid-game."""
         if show_continue and SaveGameManager.save_exists():
             self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Exit"]
+            self.mid_game_mode = False
         else:
             self.options = ["New Game", "Settings", "Help", "Lore", "Exit"]
+            self.mid_game_mode = not show_continue  # True when accessed from mid-game
         # Reset selection to prevent index out of bounds
         self.selected_option = 0
+        # Reset warning state when refreshing options
+        self.show_warning = False
     
     def render(self, console: tcod.console.Console) -> None:
         """Render the main menu."""
@@ -5243,11 +5284,11 @@ class MainMenu:
         
         # Draw border
         for x in range(start_x, start_x + dialog_width):
-            console.print(x, start_y, '═', fg=Colors.RED, bg=Colors.BLACK)
-            console.print(x, start_y + dialog_height - 1, '═', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(x, start_y, '=', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(x, start_y + dialog_height - 1, '=', fg=Colors.RED, bg=Colors.BLACK)
         for y in range(start_y, start_y + dialog_height):
-            console.print(start_x, y, '║', fg=Colors.RED, bg=Colors.BLACK)
-            console.print(start_x + dialog_width - 1, y, '║', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(start_x, y, '|', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(start_x + dialog_width - 1, y, '|', fg=Colors.RED, bg=Colors.BLACK)
         
         # Title
         console.print(start_x + dialog_width // 2 - 7, start_y + 2, "WARNING", fg=Colors.RED, bg=Colors.BLACK)
@@ -5297,7 +5338,7 @@ class MainMenu:
             if option == "Continue Game":
                 return "continue"
             elif option == "New Game":
-                if SaveGameManager.save_exists():
+                if SaveGameManager.save_exists() and not self.mid_game_mode:
                     self.show_warning = True
                     self.warning_selection = 1  # Default to "No"
                 else:
@@ -5311,7 +5352,11 @@ class MainMenu:
             elif option == "Exit":
                 return "exit"
         elif event.sym == tcod.event.KeySym.ESCAPE:
-            return "exit"
+            # If Continue Game is available (first option), return continue, otherwise exit
+            if "Continue Game" in self.options:
+                return "continue"
+            else:
+                return "exit"
         
         return ""
     
