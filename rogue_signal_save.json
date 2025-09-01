@@ -1,11 +1,11 @@
 {
   "version": "1.0",
-  "timestamp": 1756718455.399775,
+  "timestamp": 1756750020.2511952,
   "level": 1,
   "turn": 0,
   "game_over": false,
   "admin_spawned": false,
-  "dungeon_seed": 110163,
+  "dungeon_seed": 202365,
   "player": {
     "x": 6,
     "y": 6,
@@ -30,143 +30,143 @@
   "distraction_points": {},
   "map_state": {
     "data_patches": {
-      "28,13": {
-        "color": "silver",
-        "effect": "speed_boost",
-        "name": "Silver Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "35,28": {
-        "color": "violet",
-        "effect": "exploit_efficiency",
-        "name": "Violet Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "30,33": {
-        "color": "violet",
-        "effect": "exploit_efficiency",
-        "name": "Violet Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "10,44": {
-        "color": "violet",
-        "effect": "exploit_efficiency",
-        "name": "Violet Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "36,10": {
-        "color": "azure",
-        "effect": "reduce_heat",
-        "name": "Azure Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "29,40": {
-        "color": "emerald",
-        "effect": "reduce_detection",
-        "name": "Emerald Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "45,40": {
-        "color": "azure",
-        "effect": "reduce_heat",
-        "name": "Azure Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "23,19": {
+      "18,15": {
         "color": "golden",
         "effect": "restore_cpu",
         "name": "Golden Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "31,17": {
+      "33,39": {
+        "color": "golden",
+        "effect": "restore_cpu",
+        "name": "Golden Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "35,15": {
+        "color": "golden",
+        "effect": "restore_cpu",
+        "name": "Golden Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "43,42": {
+        "color": "azure",
+        "effect": "reduce_detection",
+        "name": "Azure Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "38,16": {
         "color": "violet",
-        "effect": "exploit_efficiency",
+        "effect": "enhanced_vision",
         "name": "Violet Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "18,4": {
-        "color": "crimson",
+      "16,6": {
+        "color": "violet",
         "effect": "enhanced_vision",
+        "name": "Violet Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "32,42": {
+        "color": "violet",
+        "effect": "enhanced_vision",
+        "name": "Violet Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "22,17": {
+        "color": "crimson",
+        "effect": "exploit_efficiency",
         "name": "Crimson Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "17,13": {
-        "color": "violet",
-        "effect": "exploit_efficiency",
-        "name": "Violet Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "11,28": {
-        "color": "violet",
-        "effect": "exploit_efficiency",
-        "name": "Violet Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "29,34": {
-        "color": "emerald",
-        "effect": "reduce_detection",
-        "name": "Emerald Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "39,9": {
-        "color": "violet",
-        "effect": "exploit_efficiency",
-        "name": "Violet Data Patch",
-        "quantity": 1,
-        "discovered": false
-      },
-      "23,29": {
+      "36,40": {
         "color": "golden",
         "effect": "restore_cpu",
         "name": "Golden Data Patch",
         "quantity": 1,
         "discovered": false
       },
-      "15,34": {
-        "color": "emerald",
+      "29,20": {
+        "color": "golden",
+        "effect": "restore_cpu",
+        "name": "Golden Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "13,39": {
+        "color": "violet",
+        "effect": "enhanced_vision",
+        "name": "Violet Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "47,40": {
+        "color": "azure",
         "effect": "reduce_detection",
-        "name": "Emerald Data Patch",
+        "name": "Azure Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "37,39": {
+        "color": "crimson",
+        "effect": "exploit_efficiency",
+        "name": "Crimson Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "18,24": {
+        "color": "crimson",
+        "effect": "exploit_efficiency",
+        "name": "Crimson Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "43,12": {
+        "color": "violet",
+        "effect": "enhanced_vision",
+        "name": "Violet Data Patch",
+        "quantity": 1,
+        "discovered": false
+      },
+      "37,24": {
+        "color": "azure",
+        "effect": "reduce_detection",
+        "name": "Azure Data Patch",
         "quantity": 1,
         "discovered": false
       }
     },
     "exploit_pickups": {
-      "14,34": "buffer_overflow",
-      "23,13": "code_injection",
-      "10,6": "log_wiper",
-      "20,27": "data_mimic",
-      "15,41": "noise_maker",
-      "37,30": "network_scan",
-      "7,21": "log_wiper"
+      "34,37": "system_crash",
+      "22,14": "shadow_step",
+      "10,15": "noise_maker",
+      "10,44": "buffer_overflow",
+      "18,35": "code_injection",
+      "28,39": "data_mimic",
+      "40,27": "system_crash"
     },
     "permanent_upgrades": {
-      "41,26": "ram_boost"
+      "17,19": "cpu_boost"
     },
     "story_fragments": {},
     "gateway": {
-      "x": 38,
-      "y": 16
+      "x": 45,
+      "y": 42
     },
     "explored_tiles": []
   },
   "enemies": [
     {
       "type": "firewall",
-      "x": 12,
-      "y": 28,
+      "x": 13,
+      "y": 33,
       "cpu": 80,
       "state": "unaware",
       "move_cooldown": 0,
@@ -176,10 +176,10 @@
       "last_seen_player": null
     },
     {
-      "type": "firewall",
+      "type": "scanner",
       "x": 37,
-      "y": 14,
-      "cpu": 80,
+      "y": 12,
+      "cpu": 35,
       "state": "unaware",
       "move_cooldown": 0,
       "disabled_turns": 0,
@@ -189,8 +189,8 @@
     },
     {
       "type": "firewall",
-      "x": 32,
-      "y": 38,
+      "x": 13,
+      "y": 41,
       "cpu": 80,
       "state": "unaware",
       "move_cooldown": 0,
@@ -201,8 +201,8 @@
     },
     {
       "type": "patrol",
-      "x": 32,
-      "y": 33,
+      "x": 41,
+      "y": 44,
       "cpu": 40,
       "state": "unaware",
       "move_cooldown": 0,
@@ -212,23 +212,313 @@
       "last_seen_player": null,
       "patrol_points": [
         {
-          "x": 32,
-          "y": 33
+          "x": 41,
+          "y": 44
         },
         {
-          "x": 41,
-          "y": 33
+          "x": 45,
+          "y": 40
         },
         {
           "x": 35,
+          "y": 30
+        },
+        {
+          "x": 26,
           "y": 39
         },
         {
+          "x": 17,
+          "y": 39
+        },
+        {
+          "x": 12,
+          "y": 34
+        },
+        {
+          "x": 4,
+          "y": 42
+        },
+        {
+          "x": 10,
+          "y": 36
+        },
+        {
+          "x": 16,
+          "y": 36
+        },
+        {
+          "x": 10,
+          "y": 30
+        },
+        {
+          "x": 3,
+          "y": 23
+        },
+        {
+          "x": 11,
+          "y": 15
+        },
+        {
+          "x": 21,
+          "y": 15
+        },
+        {
+          "x": 17,
+          "y": 15
+        },
+        {
+          "x": 9,
+          "y": 15
+        },
+        {
+          "x": 16,
+          "y": 22
+        },
+        {
+          "x": 25,
+          "y": 31
+        },
+        {
+          "x": 19,
+          "y": 37
+        },
+        {
+          "x": 19,
+          "y": 31
+        }
+      ]
+    },
+    {
+      "type": "firewall",
+      "x": 40,
+      "y": 16,
+      "cpu": 80,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "firewall",
+      "x": 42,
+      "y": 43,
+      "cpu": 80,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "bot",
+      "x": 36,
+      "y": 44,
+      "cpu": 25,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "patrol",
+      "x": 29,
+      "y": 32,
+      "cpu": 40,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null,
+      "patrol_points": [
+        {
+          "x": 29,
+          "y": 32
+        },
+        {
+          "x": 29,
+          "y": 40
+        },
+        {
+          "x": 29,
+          "y": 36
+        },
+        {
+          "x": 35,
+          "y": 42
+        },
+        {
+          "x": 42,
+          "y": 42
+        },
+        {
+          "x": 36,
+          "y": 42
+        },
+        {
+          "x": 43,
+          "y": 42
+        },
+        {
+          "x": 43,
+          "y": 34
+        },
+        {
+          "x": 34,
+          "y": 25
+        },
+        {
+          "x": 34,
+          "y": 20
+        },
+        {
           "x": 28,
+          "y": 20
+        },
+        {
+          "x": 38,
+          "y": 30
+        },
+        {
+          "x": 38,
+          "y": 38
+        },
+        {
+          "x": 31,
+          "y": 45
+        }
+      ]
+    },
+    {
+      "type": "scanner",
+      "x": 17,
+      "y": 14,
+      "cpu": 35,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "bot",
+      "x": 25,
+      "y": 35,
+      "cpu": 25,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "patrol",
+      "x": 35,
+      "y": 41,
+      "cpu": 40,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null,
+      "patrol_points": [
+        {
+          "x": 35,
+          "y": 41
+        },
+        {
+          "x": 35,
+          "y": 37
+        },
+        {
+          "x": 35,
+          "y": 44
+        },
+        {
+          "x": 44,
+          "y": 35
+        },
+        {
+          "x": 44,
+          "y": 42
+        },
+        {
+          "x": 36,
+          "y": 42
+        },
+        {
+          "x": 36,
+          "y": 37
+        },
+        {
+          "x": 31,
+          "y": 42
+        },
+        {
+          "x": 39,
+          "y": 42
+        },
+        {
+          "x": 46,
+          "y": 42
+        },
+        {
+          "x": 46,
+          "y": 32
+        },
+        {
+          "x": 36,
+          "y": 42
+        },
+        {
+          "x": 32,
+          "y": 42
+        },
+        {
+          "x": 22,
           "y": 32
         },
         {
           "x": 22,
+          "y": 25
+        },
+        {
+          "x": 22,
+          "y": 32
+        }
+      ]
+    },
+    {
+      "type": "patrol",
+      "x": 29,
+      "y": 39,
+      "cpu": 40,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null,
+      "patrol_points": [
+        {
+          "x": 29,
+          "y": 39
+        },
+        {
+          "x": 35,
+          "y": 45
+        },
+        {
+          "x": 35,
           "y": 38
         },
         {
@@ -240,59 +530,39 @@
           "y": 38
         },
         {
-          "x": 23,
-          "y": 28
+          "x": 33,
+          "y": 43
         },
         {
-          "x": 13,
-          "y": 38
+          "x": 33,
+          "y": 39
         },
         {
-          "x": 22,
+          "x": 33,
+          "y": 43
+        },
+        {
+          "x": 43,
+          "y": 33
+        },
+        {
+          "x": 39,
           "y": 29
         },
         {
-          "x": 22,
-          "y": 36
+          "x": 29,
+          "y": 29
         },
         {
-          "x": 17,
-          "y": 41
-        },
-        {
-          "x": 26,
-          "y": 32
-        },
-        {
-          "x": 19,
-          "y": 32
-        },
-        {
-          "x": 28,
-          "y": 32
-        },
-        {
-          "x": 34,
-          "y": 32
-        },
-        {
-          "x": 24,
-          "y": 32
-        },
-        {
-          "x": 15,
-          "y": 41
-        },
-        {
-          "x": 19,
-          "y": 41
+          "x": 20,
+          "y": 20
         }
       ]
     },
     {
       "type": "scanner",
-      "x": 33,
-      "y": 35,
+      "x": 16,
+      "y": 43,
       "cpu": 35,
       "state": "unaware",
       "move_cooldown": 0,
@@ -302,10 +572,10 @@
       "last_seen_player": null
     },
     {
-      "type": "bot",
-      "x": 25,
-      "y": 41,
-      "cpu": 25,
+      "type": "scanner",
+      "x": 33,
+      "y": 37,
+      "cpu": 35,
       "state": "unaware",
       "move_cooldown": 0,
       "disabled_turns": 0,
@@ -315,9 +585,165 @@
     },
     {
       "type": "hunter",
-      "x": 48,
-      "y": 38,
+      "x": 35,
+      "y": 21,
       "cpu": 50,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null
+    },
+    {
+      "type": "patrol",
+      "x": 17,
+      "y": 22,
+      "cpu": 40,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null,
+      "patrol_points": [
+        {
+          "x": 17,
+          "y": 22
+        },
+        {
+          "x": 21,
+          "y": 22
+        },
+        {
+          "x": 13,
+          "y": 22
+        },
+        {
+          "x": 22,
+          "y": 22
+        },
+        {
+          "x": 22,
+          "y": 30
+        },
+        {
+          "x": 12,
+          "y": 30
+        },
+        {
+          "x": 6,
+          "y": 36
+        },
+        {
+          "x": 11,
+          "y": 41
+        },
+        {
+          "x": 11,
+          "y": 31
+        },
+        {
+          "x": 18,
+          "y": 38
+        },
+        {
+          "x": 14,
+          "y": 34
+        },
+        {
+          "x": 4,
+          "y": 24
+        },
+        {
+          "x": 12,
+          "y": 16
+        },
+        {
+          "x": 4,
+          "y": 8
+        },
+        {
+          "x": 8,
+          "y": 8
+        },
+        {
+          "x": 18,
+          "y": 18
+        }
+      ]
+    },
+    {
+      "type": "patrol",
+      "x": 15,
+      "y": 16,
+      "cpu": 40,
+      "state": "unaware",
+      "move_cooldown": 0,
+      "disabled_turns": 0,
+      "alert_timer": 0,
+      "patrol_index": 0,
+      "last_seen_player": null,
+      "patrol_points": [
+        {
+          "x": 15,
+          "y": 16
+        },
+        {
+          "x": 21,
+          "y": 16
+        },
+        {
+          "x": 15,
+          "y": 22
+        },
+        {
+          "x": 6,
+          "y": 22
+        },
+        {
+          "x": 6,
+          "y": 31
+        },
+        {
+          "x": 6,
+          "y": 35
+        },
+        {
+          "x": 6,
+          "y": 30
+        },
+        {
+          "x": 6,
+          "y": 21
+        },
+        {
+          "x": 6,
+          "y": 13
+        },
+        {
+          "x": 6,
+          "y": 4
+        },
+        {
+          "x": 6,
+          "y": 13
+        },
+        {
+          "x": 6,
+          "y": 5
+        },
+        {
+          "x": 16,
+          "y": 5
+        }
+      ]
+    },
+    {
+      "type": "scanner",
+      "x": 22,
+      "y": 18,
+      "cpu": 35,
       "state": "unaware",
       "move_cooldown": 0,
       "disabled_turns": 0,
@@ -327,8 +753,8 @@
     },
     {
       "type": "firewall",
-      "x": 39,
-      "y": 41,
+      "x": 35,
+      "y": 24,
       "cpu": 80,
       "state": "unaware",
       "move_cooldown": 0,
@@ -338,111 +764,9 @@
       "last_seen_player": null
     },
     {
-      "type": "scanner",
-      "x": 26,
-      "y": 13,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 39,
-      "y": 30,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "patrol",
-      "x": 35,
-      "y": 11,
-      "cpu": 40,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null,
-      "patrol_points": [
-        {
-          "x": 35,
-          "y": 11
-        },
-        {
-          "x": 41,
-          "y": 17
-        },
-        {
-          "x": 41,
-          "y": 24
-        },
-        {
-          "x": 41,
-          "y": 28
-        },
-        {
-          "x": 41,
-          "y": 22
-        },
-        {
-          "x": 34,
-          "y": 29
-        },
-        {
-          "x": 40,
-          "y": 29
-        },
-        {
-          "x": 35,
-          "y": 34
-        },
-        {
-          "x": 27,
-          "y": 42
-        },
-        {
-          "x": 23,
-          "y": 38
-        },
-        {
-          "x": 17,
-          "y": 38
-        },
-        {
-          "x": 25,
-          "y": 38
-        },
-        {
-          "x": 19,
-          "y": 32
-        },
-        {
-          "x": 28,
-          "y": 41
-        },
-        {
-          "x": 24,
-          "y": 41
-        },
-        {
-          "x": 32,
-          "y": 41
-        }
-      ]
-    },
-    {
       "type": "hunter",
-      "x": 29,
-      "y": 37,
+      "x": 36,
+      "y": 12,
       "cpu": 50,
       "state": "unaware",
       "move_cooldown": 0,
@@ -453,8 +777,8 @@
     },
     {
       "type": "patrol",
-      "x": 21,
-      "y": 32,
+      "x": 33,
+      "y": 48,
       "cpu": 40,
       "state": "unaware",
       "move_cooldown": 0,
@@ -464,79 +788,67 @@
       "last_seen_player": null,
       "patrol_points": [
         {
-          "x": 21,
-          "y": 32
+          "x": 33,
+          "y": 48
         },
         {
-          "x": 21,
-          "y": 28
+          "x": 33,
+          "y": 38
         },
         {
-          "x": 25,
-          "y": 32
-        },
-        {
-          "x": 29,
-          "y": 32
-        },
-        {
-          "x": 24,
-          "y": 32
-        },
-        {
-          "x": 31,
-          "y": 32
-        },
-        {
-          "x": 31,
-          "y": 41
-        },
-        {
-          "x": 31,
-          "y": 35
-        },
-        {
-          "x": 35,
-          "y": 35
-        },
-        {
-          "x": 35,
+          "x": 33,
           "y": 29
         },
         {
-          "x": 44,
-          "y": 20
+          "x": 29,
+          "y": 29
         },
         {
-          "x": 37,
-          "y": 27
+          "x": 29,
+          "y": 21
         },
         {
-          "x": 31,
-          "y": 33
+          "x": 21,
+          "y": 13
         },
         {
-          "x": 36,
-          "y": 28
+          "x": 15,
+          "y": 7
+        },
+        {
+          "x": 9,
+          "y": 13
+        },
+        {
+          "x": 9,
+          "y": 17
+        },
+        {
+          "x": 3,
+          "y": 23
+        },
+        {
+          "x": 10,
+          "y": 16
+        },
+        {
+          "x": 4,
+          "y": 16
+        },
+        {
+          "x": 4,
+          "y": 22
+        },
+        {
+          "x": 13,
+          "y": 13
         }
       ]
     },
     {
-      "type": "scanner",
-      "x": 19,
-      "y": 32,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
       "type": "bot",
-      "x": 34,
-      "y": 40,
+      "x": 19,
+      "y": 42,
       "cpu": 25,
       "state": "unaware",
       "move_cooldown": 0,
@@ -548,7 +860,7 @@
     {
       "type": "scanner",
       "x": 14,
-      "y": 44,
+      "y": 13,
       "cpu": 35,
       "state": "unaware",
       "move_cooldown": 0,
@@ -558,94 +870,10 @@
       "last_seen_player": null
     },
     {
-      "type": "bot",
-      "x": 12,
-      "y": 34,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "firewall",
-      "x": 19,
-      "y": 29,
-      "cpu": 80,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 10,
-      "y": 25,
-      "cpu": 35,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "firewall",
-      "x": 33,
-      "y": 34,
-      "cpu": 80,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "bot",
-      "x": 12,
-      "y": 26,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "bot",
-      "x": 32,
-      "y": 34,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "bot",
-      "x": 23,
-      "y": 30,
-      "cpu": 25,
-      "state": "unaware",
-      "move_cooldown": 0,
-      "disabled_turns": 0,
-      "alert_timer": 0,
-      "patrol_index": 0,
-      "last_seen_player": null
-    },
-    {
-      "type": "scanner",
-      "x": 25,
-      "y": 38,
-      "cpu": 35,
+      "type": "hunter",
+      "x": 18,
+      "y": 43,
+      "cpu": 50,
       "state": "unaware",
       "move_cooldown": 0,
       "disabled_turns": 0,
@@ -656,24 +884,24 @@
   ],
   "data_patch_effects": {
     "crimson": [
-      "enhanced_vision",
-      "Enhanced vision (15 turns)"
+      "exploit_efficiency",
+      "Exploit efficiency (8 turns)"
     ],
     "azure": [
-      "reduce_heat",
-      "Reduce heat by 40°C instantly"
-    ],
-    "emerald": [
       "reduce_detection",
       "-25% detection level"
+    ],
+    "emerald": [
+      "reduce_heat",
+      "Reduce heat by 40°C instantly"
     ],
     "golden": [
       "restore_cpu",
       "Restore 30-40 CPU"
     ],
     "violet": [
-      "exploit_efficiency",
-      "Exploit efficiency (8 turns)"
+      "enhanced_vision",
+      "Enhanced vision (15 turns)"
     ],
     "silver": [
       "speed_boost",

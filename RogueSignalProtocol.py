@@ -3994,6 +3994,108 @@ class ExploitSystem:
 # INPUT HANDLING
 # ============================================================================
 
+class UniversalInputHandler:
+    """Universal input handler for all menu and UI screens."""
+    
+    # Define common key sets
+    NAVIGATION_UP = (tcod.event.KeySym.UP, tcod.event.KeySym.W, tcod.event.KeySym.KP_8)
+    NAVIGATION_DOWN = (tcod.event.KeySym.DOWN, tcod.event.KeySym.S, tcod.event.KeySym.KP_2)
+    NAVIGATION_LEFT = (tcod.event.KeySym.LEFT, tcod.event.KeySym.A, tcod.event.KeySym.KP_4)
+    NAVIGATION_RIGHT = (tcod.event.KeySym.RIGHT, tcod.event.KeySym.D, tcod.event.KeySym.KP_6)
+    CONFIRM = (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER)
+    
+    @staticmethod
+    def handle_list_navigation(screen_instance, event, option_count: int, wrap_around: bool = True, callback=None) -> bool:
+        """Handle up/down navigation for list-based screens.
+        
+        Args:
+            screen_instance: The screen object with selected_option attribute
+            event: The input event
+            option_count: Number of options in the list
+            wrap_around: Whether to wrap around at ends
+            callback: Optional callback function to call with direction (-1 or 1)
+            
+        Returns:
+            True if input was handled, False otherwise
+        """
+        if event.sym in UniversalInputHandler.NAVIGATION_UP:
+            if callback:
+                callback(-1)
+            elif wrap_around:
+                screen_instance.selected_option = (screen_instance.selected_option - 1) % option_count
+            else:
+                screen_instance.selected_option = max(0, screen_instance.selected_option - 1)
+            return True
+        elif event.sym in UniversalInputHandler.NAVIGATION_DOWN:
+            if callback:
+                callback(1)
+            elif wrap_around:
+                screen_instance.selected_option = (screen_instance.selected_option + 1) % option_count
+            else:
+                screen_instance.selected_option = min(option_count - 1, screen_instance.selected_option + 1)
+            return True
+        return False
+    
+    @staticmethod
+    def handle_dialog_navigation(screen_instance, event, option_count: int = 2) -> bool:
+        """Handle navigation for simple dialogs (usually 2 options).
+        
+        Args:
+            screen_instance: The screen object with a selection attribute
+            event: The input event
+            option_count: Number of options (default 2 for Yes/No dialogs)
+            
+        Returns:
+            True if input was handled, False otherwise
+        """
+        selection_attr = getattr(screen_instance, 'warning_selection', getattr(screen_instance, 'selected_option', None))
+        if selection_attr is None:
+            return False
+            
+        if event.sym in (UniversalInputHandler.NAVIGATION_UP + UniversalInputHandler.NAVIGATION_DOWN):
+            # For simple dialogs, any up/down toggles between options
+            if hasattr(screen_instance, 'warning_selection'):
+                screen_instance.warning_selection = 1 - screen_instance.warning_selection
+            else:
+                screen_instance.selected_option = 1 - screen_instance.selected_option
+            return True
+        return False
+    
+    @staticmethod
+    def handle_value_adjustment(screen_instance, event, adjust_callback) -> bool:
+        """Handle left/right adjustment for settings or values.
+        
+        Args:
+            screen_instance: The screen object
+            event: The input event
+            adjust_callback: Function to call with direction (-1 or 1)
+            
+        Returns:
+            True if input was handled, False otherwise
+        """
+        if event.sym in UniversalInputHandler.NAVIGATION_LEFT:
+            adjust_callback(-1)
+            return True
+        elif event.sym in UniversalInputHandler.NAVIGATION_RIGHT:
+            adjust_callback(1)
+            return True
+        return False
+    
+    @staticmethod
+    def is_confirm_key(event) -> bool:
+        """Check if the event is a confirm key (Enter/Return)."""
+        return event.sym in UniversalInputHandler.CONFIRM
+    
+    @staticmethod
+    def is_escape_key(event) -> bool:
+        """Check if the event is an escape key."""
+        return event.sym == tcod.event.KeySym.ESCAPE
+    
+    @staticmethod
+    def handle_any_key_screen(event) -> bool:
+        """Handle input for screens that return on any key press."""
+        return True  # Any key should trigger a return action
+
 class InputHandler:
     """Handles all user input and translates it to game actions."""
     
@@ -4052,12 +4154,12 @@ class InputHandler:
     
     def _handle_inventory_input(self, event) -> bool:
         """Handle input while inventory is open."""
-        # Navigation keys - expanded to include arrows and numpad
-        if event.sym in (tcod.event.KeySym.W, tcod.event.KeySym.UP, tcod.event.KeySym.KP_8):
-            self._navigate_inventory(-1)
-        elif event.sym in (tcod.event.KeySym.S, tcod.event.KeySym.DOWN, tcod.event.KeySym.KP_2):
-            self._navigate_inventory(1)
-        elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
+        # Handle navigation using universal handler with callback
+        if UniversalInputHandler.handle_list_navigation(self, event, 0, True, self._navigate_inventory):
+            return True
+        
+        # Handle selection and other actions
+        if UniversalInputHandler.is_confirm_key(event):
             self._use_selected_inventory_item()
         elif event.sym == tcod.event.KeySym.U:
             self._unequip_selected_exploit()
@@ -4071,25 +4173,44 @@ class InputHandler:
         discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
         
         if not discovered_fragments:
-            # No fragments, just allow ESC to close
-            return True
+            # No fragments, only ESC should work to close (handled by main loop)
+            return UniversalInputHandler.is_escape_key(event)
             
         if self.game.lore_viewer_mode == "list":
-            # List mode navigation
-            if event.sym in (tcod.event.KeySym.W, tcod.event.KeySym.UP, tcod.event.KeySym.KP_8):
-                self.game.lore_viewer_selection = max(0, self.game.lore_viewer_selection - 1)
-            elif event.sym in (tcod.event.KeySym.S, tcod.event.KeySym.DOWN, tcod.event.KeySym.KP_2):
-                self.game.lore_viewer_selection = min(len(discovered_fragments) - 1, self.game.lore_viewer_selection + 1)
-            elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
+            # Handle navigation using universal handler with callback
+            if UniversalInputHandler.handle_list_navigation(self, event, len(discovered_fragments), False, self._navigate_lore_viewer):
+                return True
+            
+            # Handle selection
+            if UniversalInputHandler.is_confirm_key(event):
                 # Enter reading mode for selected fragment
                 self.game.lore_viewer_mode = "reading"
+                return True
+            elif UniversalInputHandler.is_escape_key(event):
+                # Let main loop handle ESC
+                return False
         
         elif self.game.lore_viewer_mode == "reading":
-            # Reading mode - any key returns to list
-            if event.sym != tcod.event.KeySym.ESCAPE:  # Let ESC be handled by main escape handler
+            # Reading mode - any key except ESC returns to list
+            if UniversalInputHandler.is_escape_key(event):
+                # Let main loop handle ESC
+                return False
+            else:
+                # Any other key returns to list
                 self.game.lore_viewer_mode = "list"
+                return True
         
-        return True
+        # Unhandled key - let other handlers process it
+        return False
+    
+    def _navigate_lore_viewer(self, direction: int):
+        """Navigate lore viewer selection."""
+        discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
+        if discovered_fragments:
+            if direction == -1:
+                self.game.lore_viewer_selection = max(0, self.game.lore_viewer_selection - 1)
+            else:
+                self.game.lore_viewer_selection = min(len(discovered_fragments) - 1, self.game.lore_viewer_selection + 1)
     
     def _handle_targeting_input(self, event) -> bool:
         """Handle input while in targeting mode."""
@@ -5451,11 +5572,12 @@ class MainMenu:
     
     def _handle_menu_input(self, event) -> str:
         """Handle main menu input."""
-        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W, tcod.event.KeySym.KP_8):
-            self.selected_option = (self.selected_option - 1) % len(self.options)
-        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S, tcod.event.KeySym.KP_2):
-            self.selected_option = (self.selected_option + 1) % len(self.options)
-        elif event.sym == tcod.event.KeySym.RETURN:
+        # Handle navigation using universal handler
+        if UniversalInputHandler.handle_list_navigation(self, event, len(self.options)):
+            return ""
+        
+        # Handle selection
+        if UniversalInputHandler.is_confirm_key(event):
             option = self.options[self.selected_option]
             if option == "Continue Game":
                 return "continue"
@@ -5479,15 +5601,18 @@ class MainMenu:
     
     def _handle_warning_input(self, event) -> str:
         """Handle warning dialog input."""
-        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.DOWN, tcod.event.KeySym.W, tcod.event.KeySym.S, tcod.event.KeySym.KP_8, tcod.event.KeySym.KP_2):
-            self.warning_selection = 1 - self.warning_selection
-        elif event.sym == tcod.event.KeySym.RETURN:
+        # Handle navigation using universal handler
+        if UniversalInputHandler.handle_dialog_navigation(self, event):
+            return ""
+        
+        # Handle selection
+        if UniversalInputHandler.is_confirm_key(event):
             if self.warning_selection == 0:  # Yes, Delete Save
                 SaveGameManager.delete_save()
                 return "new_game"
             else:  # No, Go Back
                 self.show_warning = False
-        elif event.sym == tcod.event.KeySym.ESCAPE:
+        elif UniversalInputHandler.is_escape_key(event):
             self.show_warning = False
         
         return ""
@@ -5518,7 +5643,9 @@ class LoreMenu:
     
     def handle_input(self, event) -> str:
         """Handle lore menu input. Returns 'back' on any key press."""
-        return "back"
+        if UniversalInputHandler.handle_any_key_screen(event):
+            return "back"
+        return ""
 
 
 class HelpMenu:
@@ -5548,7 +5675,9 @@ class HelpMenu:
     
     def handle_input(self, event) -> str:
         """Handle help menu input. Returns 'back' on any key press."""
-        return "back"
+        if UniversalInputHandler.handle_any_key_screen(event):
+            return "back"
+        return ""
     
     def _get_help_sections(self):
         """Get help sections with text and colors."""
@@ -5698,20 +5827,23 @@ class SettingsMenu:
     def handle_input(self, event) -> str:
         """Handle settings menu input. Returns action: 'back', 'exit', or ''."""
         
-        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W, tcod.event.KeySym.KP_8):
-            self.selected_option = (self.selected_option - 1) % len(self.options)
-        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S, tcod.event.KeySym.KP_2):
-            self.selected_option = (self.selected_option + 1) % len(self.options)
-        elif event.sym == tcod.event.KeySym.RETURN:
+        # Handle navigation using universal handler
+        if UniversalInputHandler.handle_list_navigation(self, event, len(self.options)):
+            return ""
+        
+        # Handle selection
+        if UniversalInputHandler.is_confirm_key(event):
             option = self.options[self.selected_option]
             if option["type"] == "action":
                 if option["name"] == "Back":
                     return "back"
-        elif event.sym in (tcod.event.KeySym.LEFT, tcod.event.KeySym.A):
-            self._adjust_setting(-1)
-        elif event.sym in (tcod.event.KeySym.RIGHT, tcod.event.KeySym.D):
-            self._adjust_setting(1)
-        elif event.sym == tcod.event.KeySym.ESCAPE:
+        
+        # Handle value adjustment using universal handler
+        if UniversalInputHandler.handle_value_adjustment(self, event, self._adjust_setting):
+            return ""
+        
+        # Handle escape
+        if UniversalInputHandler.is_escape_key(event):
             return "back"
         
         return ""
