@@ -1731,13 +1731,13 @@ class Enemy:
         
         target = self.patrol_points[self.patrol_index]
         
-        # Check if we're at the current patrol point
-        if self.position.distance_to(target) <= 1:
+        # Check if we're at the current patrol point (exactly on it)
+        if self.position.x == target.x and self.position.y == target.y:
             self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
             target = self.patrol_points[self.patrol_index]
         
-        # Try to move toward current target
-        moved = self._move_toward(target, game_map, player, game)
+        # Try to move toward current target using specialized patrol movement
+        moved = self._move_toward_patrol(target, game_map, player, game)
         
         # If we can't move toward the target, try advancing to next patrol point
         # This prevents getting stuck on one patrol point
@@ -1745,10 +1745,60 @@ class Enemy:
             # Skip to next patrol point if we're stuck
             self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
             target = self.patrol_points[self.patrol_index]
-            moved = self._move_toward(target, game_map, player, game)
+            moved = self._move_toward_patrol(target, game_map, player, game)
         
         return moved
 
+    def _move_toward_patrol(self, target: Position, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
+        """Move toward target for patrol movement (allows moving to exact target position). Returns True if moved."""
+        if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+            return False
+        
+        # Calculate movement direction
+        dx = 0 if self.x == target.x else (1 if target.x > self.x else -1)
+        dy = 0 if self.y == target.y else (1 if target.y > self.y else -1)
+        
+        # Try different movement directions in order of preference
+        move_attempts = [
+            (dx, dy), (dx, 0), (0, dy), (dx, -dy), (-dx, dy),
+            (-dx, 0), (0, -dy), (-dx, -dy)
+        ]
+        
+        # First pass: try to move without occupying other enemy positions
+        for try_dx, try_dy in move_attempts:
+            if try_dx == 0 and try_dy == 0:
+                continue
+            
+            new_position = Position(self.x + try_dx, self.y + try_dy)
+            if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                game_map.is_valid_position(new_position) and
+                not new_position.distance_to(player.position) == 0 and
+                (game is None or not game._get_enemy_at(new_position))):
+                self.position = new_position
+                return True
+        
+        # Second pass: if blocked by enemies, try to swap positions
+        if game is not None:
+            for try_dx, try_dy in move_attempts[:4]:  # Only try main directions for swapping
+                if try_dx == 0 and try_dy == 0:
+                    continue
+                
+                new_position = Position(self.x + try_dx, self.y + try_dy)
+                if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                    game_map.is_valid_position(new_position) and
+                    not new_position.distance_to(player.position) == 0):
+                    
+                    # Check if there's an enemy at the target position
+                    blocking_enemy = game._get_enemy_at(new_position)
+                    if blocking_enemy and blocking_enemy != self:
+                        # Try to swap positions if the other enemy can move to our position
+                        if (game_map.is_valid_position(self.position) and 
+                            not game._get_enemy_at(self.position, exclude=self)):
+                            blocking_enemy.position = self.position
+                            self.position = new_position
+                            return True
+        
+        return False
     
     def _move_toward(self, target: Position, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
         """Move one step toward target position. Returns True if moved."""
@@ -3668,6 +3718,10 @@ class Game:
     
     def _place_data_patches(self):
         """Place data patches throughout the level."""
+        # Ensure data patch effects are initialized
+        if not self.data_patch_effects:
+            self._randomize_data_patches()
+        
         patch_count = 12 + self.level * 4  # Much more data patches (was 6 + level * 2)
         placed_patches = 0
         attempts = 0
@@ -3821,6 +3875,10 @@ class Game:
     
     def _is_valid_enemy_placement(self, position: Position) -> bool:
         """Check if position is valid for enemy placement."""
+        # Extra safety check: ensure we're not placing on walls
+        if self.game_map.is_wall(position):
+            return False
+        
         return (self.game_map.is_valid_position(position) and
                 position.distance_to(Position(5, 5)) > 12 and
                 not self._get_enemy_at(position) and
@@ -4365,6 +4423,8 @@ class InputHandler:
             self._use_selected_inventory_item()
         elif event.sym == tcod.event.KeySym.U:
             self._unequip_selected_exploit()
+        elif event.sym == tcod.event.KeySym.X:
+            self._examine_selected_item()
         elif event.sym == tcod.event.KeySym.I:
             self.game.show_inventory = False
         
@@ -4564,6 +4624,75 @@ class InputHandler:
                 self.game.message_log.add_message("Cannot unequip exploit")
         else:
             self.game.message_log.add_message("No exploit selected")
+    
+    def _examine_selected_item(self):
+        """Show detailed information about the selected inventory item."""
+        equipped_exploits = self.game.player.inventory_manager.equipped_exploits
+        display_items = self.game.player.inventory_manager.get_display_items()
+        
+        # Determine what is selected
+        selection_index = self.game.inventory_selection
+        
+        # Check if we're selecting an equipped exploit
+        if selection_index < len(equipped_exploits):
+            # Examining equipped exploit
+            exploit_key = equipped_exploits[selection_index]
+            if exploit_key in GameData.EXPLOITS:
+                self._show_exploit_details(GameData.EXPLOITS[exploit_key])
+            else:
+                self.game.message_log.add_message(f"Unknown exploit: {exploit_key}")
+            return
+        
+        # Check if we're selecting an unequipped item
+        unequipped_index = selection_index - len(equipped_exploits)
+        if unequipped_index >= 0 and unequipped_index < len(display_items):
+            selected_item = display_items[unequipped_index]
+            
+            # Check if it's an exploit (unequipped)
+            if hasattr(selected_item, 'exploit_key') and selected_item.exploit_key in GameData.EXPLOITS:
+                exploit_def = GameData.EXPLOITS[selected_item.exploit_key]
+                self._show_exploit_details(exploit_def)
+            elif hasattr(selected_item, 'color') and hasattr(selected_item, 'effect'):
+                # Data patch
+                self._show_data_patch_details(selected_item)
+            else:
+                # Generic item
+                self.game.message_log.add_message(f"=== {selected_item.name} ===")
+                self.game.message_log.add_message(f"Description: {selected_item.description}")
+        else:
+            self.game.message_log.add_message("No item selected")
+    
+    def _show_exploit_details(self, exploit_def):
+        """Show detailed information about an exploit."""
+        self.game.message_log.add_message(f"=== {exploit_def.name} ===")
+        self.game.message_log.add_message(f"Category: {exploit_def.exploit_type.title()}")
+        self.game.message_log.add_message(f"RAM Cost: {exploit_def.ram}")
+        self.game.message_log.add_message(f"Heat Cost: {exploit_def.heat}")
+        
+        if exploit_def.damage > 0:
+            self.game.message_log.add_message(f"Damage: {exploit_def.damage}")
+        if exploit_def.range > 0:
+            self.game.message_log.add_message(f"Range: {exploit_def.range} tiles")
+        
+        self.game.message_log.add_message(f"Targeting: {exploit_def.targeting.name}")
+        self.game.message_log.add_message(f"Effect: {exploit_def.description}")
+    
+    def _show_data_patch_details(self, data_patch):
+        """Show detailed information about a data patch."""
+        if data_patch.discovered:
+            if data_patch.color in self.game.data_patch_effects:
+                effect_key, desc = self.game.data_patch_effects[data_patch.color]
+                self.game.message_log.add_message(f"=== {data_patch.name} ===")
+                self.game.message_log.add_message(f"Effect: {desc}")
+                if data_patch.quantity > 1:
+                    self.game.message_log.add_message(f"Quantity: {data_patch.quantity}")
+            else:
+                self.game.message_log.add_message("Data patch effect unknown")
+        else:
+            self.game.message_log.add_message(f"=== {data_patch.name} ===")
+            self.game.message_log.add_message("Effect: Unknown until used")
+            if data_patch.quantity > 1:
+                self.game.message_log.add_message(f"Quantity: {data_patch.quantity}")
     
     def _open_inventory(self):
         """Open the inventory screen."""
@@ -4811,14 +4940,10 @@ class UIRenderer:
             
             if exploit_key in GameData.EXPLOITS:
                 exploit = GameData.EXPLOITS[exploit_key]
-                status_text = f"{prefix} {i+1}. {exploit.name} (RAM: {exploit.ram}, Heat: {exploit.heat})"
+                status_text = f"{prefix} {i+1}. {exploit.name}"
             else:
                 status_text = f"{prefix} {i+1}. INVALID: {exploit_key}"
             
-            # Truncate text to fit in game area (leave some margin for log)
-            max_width = GameConfig.GAME_AREA_WIDTH - 6  # 4 indent + 2 margin
-            if len(status_text) > max_width:
-                status_text = status_text[:max_width-3] + "..."
             console.print(4, y, status_text, fg=color)
             y += 1
         
@@ -4896,14 +5021,28 @@ class UIRenderer:
                     color = Colors.WHITE
                     prefix = " "
                 
-                exploit_text = f"{prefix} {exploit_item.name} - {exploit_item.description}"
-                
-                # Truncate text to fit in game area
-                max_width = GameConfig.GAME_AREA_WIDTH - 6  # 4 indent + 2 margin
-                if len(exploit_text) > max_width:
-                    exploit_text = exploit_text[:max_width-3] + "..."
-                console.print(4, y, exploit_text, fg=color)
-                y += 1
+                # Get exploit definition for stats
+                if exploit_item.exploit_key in GameData.EXPLOITS:
+                    exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
+                    
+                    # Show name and stats breakdown
+                    name_text = f"{prefix} {exploit_item.name}"
+                    console.print(4, y, name_text, fg=color)
+                    y += 1
+                    
+                    # Show stats on second line with smaller indentation
+                    stats_text = f"    RAM:{exploit_def.ram} Heat:{exploit_def.heat}"
+                    if exploit_def.damage > 0:
+                        stats_text += f" Damage:{exploit_def.damage}"
+                    if exploit_def.range > 0:
+                        stats_text += f" Range:{exploit_def.range}"
+                    console.print(4, y, stats_text, fg=Colors.LIGHT_GRAY)
+                    y += 1
+                else:
+                    # Fallback for unknown exploits
+                    exploit_text = f"{prefix} {exploit_item.name} - Unknown exploit"
+                    console.print(4, y, exploit_text, fg=color)
+                    y += 1
         
         return y
     
@@ -4912,10 +5051,9 @@ class UIRenderer:
         y_start = GameConfig.SCREEN_HEIGHT - 6
         
         console.print(2, y_start, "CONTROLS:", fg=Colors.CYAN)
-        console.print(4, y_start + 1, "W/S: Navigate selection", fg=Colors.WHITE)
-        console.print(4, y_start + 2, "Enter: Use selected item", fg=Colors.WHITE)
-        console.print(4, y_start + 3, "U: Unequip selected exploit", fg=Colors.WHITE)
-        console.print(4, y_start + 4, "ESC/I: Close inventory", fg=Colors.WHITE)
+        console.print(4, y_start + 1, "W/S: Navigate  Enter: Use  X: Examine", fg=Colors.WHITE)
+        console.print(4, y_start + 2, "U: Unequip selected exploit", fg=Colors.WHITE)
+        console.print(4, y_start + 3, "ESC/I: Close inventory", fg=Colors.WHITE)
     
     def render_story_fragment_screen(self, console: tcod.console.Console, game: Game, fragment_index: int):
         """Render a single story fragment discovery screen."""
