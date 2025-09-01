@@ -11,7 +11,7 @@ import tcod
 import logging
 import random
 import math
-import json
+import json3
 import os
 # ABC removed - simplified inheritance pattern
 from enum import Enum
@@ -5352,11 +5352,7 @@ class MainMenu:
             elif option == "Exit":
                 return "exit"
         elif event.sym == tcod.event.KeySym.ESCAPE:
-            # If Continue Game is available (first option), return continue, otherwise exit
-            if "Continue Game" in self.options:
-                return "continue"
-            else:
-                return "exit"
+            return "exit"
         
         return ""
     
