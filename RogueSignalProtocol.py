@@ -384,11 +384,15 @@ class SaveGameManager:
                 "player": {
                     "x": game.player.x,
                     "y": game.player.y,
+                    "last_x": game.player.last_position.x,
+                    "last_y": game.player.last_position.y,
                     "cpu": game.player.cpu,
                     "max_cpu": game.player.max_cpu,
                     "heat": game.player.heat,
+                    "max_heat": game.player.max_heat,
                     "detection": game.player.detection,
                     "ram_total": game.player.ram_total,
+                    "speed_moves_remaining": game.player.speed_moves_remaining,
                     "temporary_effects": dict(game.player.temporary_effects),
                     "equipped_exploits": game.player.inventory_manager.equipped_exploits.copy(),
                     "inventory_items": cls._serialize_inventory(game.player.inventory_manager.items)
@@ -413,7 +417,12 @@ class SaveGameManager:
                 "enemies": cls._serialize_enemies(game.enemies),
                 
                 # Data patch effects for this run
-                "data_patch_effects": game.data_patch_effects
+                "data_patch_effects": game.data_patch_effects,
+                
+                # UI state (optional - for better user experience)
+                "ui_state": {
+                    "show_patrol_predictions": game.show_patrol_predictions
+                }
             }
             
             with open(cls.SAVE_FILE, 'w', encoding='utf-8') as f:
@@ -454,6 +463,29 @@ class SaveGameManager:
         except Exception as e:
             logging.error(f"Failed to delete save: {e}")
             return False
+    
+    @classmethod
+    def get_save_timestamp(cls) -> Optional[str]:
+        """Get formatted timestamp of save file."""
+        if not cls.save_exists():
+            return None
+        
+        try:
+            save_data = cls.load_game()
+            if save_data and "timestamp" in save_data:
+                import datetime
+                timestamp = save_data["timestamp"]
+                dt = datetime.datetime.fromtimestamp(timestamp)
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            else:
+                # Fallback to file modification time
+                import datetime
+                stat_result = os.stat(cls.SAVE_FILE)
+                dt = datetime.datetime.fromtimestamp(stat_result.st_mtime)
+                return dt.strftime("%Y-%m-%d %H:%M:%S")
+        except Exception as e:
+            logging.warning(f"Could not get save timestamp: {e}")
+            return "Unknown"
     
     @classmethod
     def _serialize_inventory(cls, items: List) -> List[Dict[str, Any]]:
@@ -1699,11 +1731,23 @@ class Enemy:
         
         target = self.patrol_points[self.patrol_index]
         
+        # Check if we're at the current patrol point
         if self.position.distance_to(target) <= 1:
             self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
             target = self.patrol_points[self.patrol_index]
         
-        return self._move_toward(target, game_map, player, game)
+        # Try to move toward current target
+        moved = self._move_toward(target, game_map, player, game)
+        
+        # If we can't move toward the target, try advancing to next patrol point
+        # This prevents getting stuck on one patrol point
+        if not moved and self.position.distance_to(target) > 2:
+            # Skip to next patrol point if we're stuck
+            self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
+            target = self.patrol_points[self.patrol_index]
+            moved = self._move_toward(target, game_map, player, game)
+        
+        return moved
 
     
     def _move_toward(self, target: Position, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
@@ -1726,6 +1770,7 @@ class Enemy:
             (-dx, 0), (0, -dy), (-dx, -dy)
         ]
         
+        # First pass: try to move without occupying other enemy positions
         for try_dx, try_dy in move_attempts:
             if try_dx == 0 and try_dy == 0:
                 continue
@@ -1736,9 +1781,31 @@ class Enemy:
                 not new_position.distance_to(player.position) == 0 and
                 (game is None or not game._get_enemy_at(new_position))):
                 self.position = new_position
-                break
+                return True
         
-        return self.position != original_position
+        # Second pass: if blocked by enemies, try to swap positions or push
+        if game is not None:
+            for try_dx, try_dy in move_attempts[:4]:  # Only try main directions for swapping
+                if try_dx == 0 and try_dy == 0:
+                    continue
+                
+                new_position = Position(self.x + try_dx, self.y + try_dy)
+                if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                    game_map.is_valid_position(new_position) and
+                    not new_position.distance_to(player.position) == 0):
+                    
+                    # Check if there's an enemy at the target position
+                    blocking_enemy = game._get_enemy_at(new_position)
+                    if blocking_enemy and blocking_enemy != self:
+                        # Try to swap positions if the other enemy can move to our position
+                        if (game_map.is_valid_position(self.position) and 
+                            blocking_enemy.type_data.movement != EnemyMovement.STATIC):
+                            # Simple position swap
+                            blocking_enemy.position = self.position
+                            self.position = new_position
+                            return True
+        
+        return False
 
 # ============================================================================
 # GAME MAP
@@ -2547,6 +2614,8 @@ class TurnProcessor:
                         self.message_log.add_message("Exploit efficiency boost expired")
                     elif effect_name == 'stealth_boost_turns':
                         self.message_log.add_message("Stealth boost expired")
+                    elif effect_name == 'data_mimic_turns':
+                        self.message_log.add_message("Data Mimic invisibility expired")
     
     def _process_detection_increase(self, player: Player) -> None:
         """Handle periodic detection level increases."""
@@ -2666,6 +2735,7 @@ class Game:
             self._restore_game_state(save_data)
             self._restore_player_state(save_data["player"])
             self._restore_game_effects(save_data)
+            self._restore_ui_state(save_data)
             
             # Generate level layout for map structure
             self.level_generator.generate_level(self.game_state.level, self.game_state.dungeon_seed)
@@ -2691,13 +2761,24 @@ class Game:
     
     def _restore_player_state(self, player_data: Dict[str, Any]) -> None:
         """Restore player state from save data."""
+        # Position
         self.player.x = player_data.get("x", 1)
         self.player.y = player_data.get("y", 1)
+        self.player.last_position.x = player_data.get("last_x", self.player.x)
+        self.player.last_position.y = player_data.get("last_y", self.player.y)
+        
+        # Core stats
         self.player.cpu = player_data.get("cpu", 100)
         self.player.max_cpu = player_data.get("max_cpu", 100)
         self.player.heat = player_data.get("heat", 0)
+        self.player.max_heat = player_data.get("max_heat", 100)
         self.player.detection = player_data.get("detection", 0)
         self.player.ram_total = player_data.get("ram_total", 8)
+        
+        # Speed boost state
+        self.player.speed_moves_remaining = player_data.get("speed_moves_remaining", 0)
+        
+        # Temporary effects with defaults
         self.player.temporary_effects = player_data.get("temporary_effects", {
             'speed_boost_turns': 0,
             'enhanced_vision_turns': 0,
@@ -2728,6 +2809,11 @@ class Game:
         
         # Restore data patch effects
         self.data_patch_effects = save_data["data_patch_effects"]
+    
+    def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:
+        """Restore UI state from save data."""
+        ui_state = save_data.get("ui_state", {})
+        self.show_patrol_predictions = ui_state.get("show_patrol_predictions", False)
     
     def _deserialize_inventory(self, items_data: List[Dict]) -> List:
         """Deserialize inventory items from save data."""
@@ -2949,8 +3035,6 @@ class Game:
         # Process turn using the dedicated turn processor
         self.turn_processor.process_turn(self.player)
         
-        # Update player effects
-        self.player.update_effects()
         
         # Handle network scan effect
         self._update_network_scan()
@@ -3427,7 +3511,9 @@ class Game:
             # - CPU: Preserved (carries over)
             # - Heat: Preserved (carries over) 
             # - Detection: Reset to 0 (doesn't carry over)
+            # - Admin spawned state: Reset (new network, fresh start)
             self.player.detection = 0
+            self.admin_spawned = False
             
             self.message_log.add_message(f"{config['name']} loaded")
             self.message_log.add_message(f"{len(self.enemies)} security processes")
@@ -3436,8 +3522,6 @@ class Game:
         finally:
             # Restore random seed
             random.seed()
-        
-        self.admin_spawned = False
     
     def _find_valid_spawn_position(self) -> Position:
         """Find a valid spawn position for the player in the top-left spawn room."""
@@ -5011,13 +5095,12 @@ class UIRenderer:
         
         equipped_exploits = game.player.inventory_manager.equipped_exploits[:5]
         
-        # Split exploits across 2 lines (up to 3 on first line, rest on second)
-        first_line_exploits = equipped_exploits[:3]
-        second_line_exploits = equipped_exploits[3:]
-        
-        # Render first line exploits
+        # Dynamically fit exploits on lines based on available space
+        line1_exploits = []
+        line2_exploits = []
         x_pos = 11
-        for i, exploit_key in enumerate(first_line_exploits):
+        
+        for i, exploit_key in enumerate(equipped_exploits):
             if exploit_key in GameData.EXPLOITS:
                 exploit = GameData.EXPLOITS[exploit_key]
                 heat_cost = exploit.heat
@@ -5028,30 +5111,27 @@ class UIRenderer:
                 color = Colors.GREEN if heat_ok else Colors.RED
                 exploit_text = f"{i+1}.{exploit.name}"
                 
-                # Check if it fits on this line
-                if x_pos + len(exploit_text) + 2 <= GameConfig.GAME_AREA_WIDTH:
-                    console.print(x_pos, y1, exploit_text, fg=color, bg=Colors.UI_BG)
-                    x_pos += len(exploit_text) + 2  # Add some spacing
+                # Try to fit on first line
+                if len(line1_exploits) == 0 or x_pos + len(exploit_text) + 2 <= GameConfig.GAME_AREA_WIDTH:
+                    line1_exploits.append((exploit_key, exploit_text, color, i+1))
+                    x_pos += len(exploit_text) + 2
+                else:
+                    # Move to second line
+                    line2_exploits.append((exploit_key, exploit_text, color, i+1))
+        
+        # Render first line exploits
+        x_pos = 11
+        for exploit_key, exploit_text, color, slot_num in line1_exploits:
+            console.print(x_pos, y1, exploit_text, fg=color, bg=Colors.UI_BG)
+            x_pos += len(exploit_text) + 2
         
         # Render second line exploits
-        if second_line_exploits:
+        if line2_exploits:
             console.print(1, y2, "        ", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)  # Indent to align
             x_pos = 11
-            for i, exploit_key in enumerate(second_line_exploits):
-                if exploit_key in GameData.EXPLOITS:
-                    exploit = GameData.EXPLOITS[exploit_key]
-                    heat_cost = exploit.heat
-                    if game.player.temporary_effects['exploit_efficiency_turns'] > 0:
-                        heat_cost = int(heat_cost * 0.6)
-                    
-                    heat_ok = game.player.heat + heat_cost <= GameConfig.MAX_HEAT
-                    color = Colors.GREEN if heat_ok else Colors.RED
-                    exploit_text = f"{i+len(first_line_exploits)+1}.{exploit.name}"  # Continue numbering from where first line left off
-                    
-                    # Check if it fits on this line
-                    if x_pos + len(exploit_text) + 2 <= GameConfig.GAME_AREA_WIDTH:
-                        console.print(x_pos, y2, exploit_text, fg=color, bg=Colors.UI_BG)
-                        x_pos += len(exploit_text) + 2
+            for exploit_key, exploit_text, color, slot_num in line2_exploits:
+                console.print(x_pos, y2, exploit_text, fg=color, bg=Colors.UI_BG)
+                x_pos += len(exploit_text) + 2
     
     def _render_temporary_conditions(self, console: tcod.console.Console, game: Game):
         """Render all temporary conditions with turn counts remaining."""
@@ -5602,10 +5682,16 @@ class MainMenu:
         
         # Save file info
         if SaveGameManager.save_exists():
-            console.print(
-                GameConfig.SCREEN_WIDTH // 2 - 15, start_y + len(self.options) * 2 + 2,
-                "Save file found - Continue to resume", fg=Colors.GREEN
-            )
+            save_timestamp = SaveGameManager.get_save_timestamp()
+            if save_timestamp:
+                console.print(
+                    GameConfig.SCREEN_WIDTH // 2 - 15, start_y + len(self.options) * 2 + 2,
+                    "Save file found - Continue to resume", fg=Colors.GREEN
+                )
+                console.print(
+                    GameConfig.SCREEN_WIDTH // 2 - 12, start_y + len(self.options) * 2 + 3,
+                    f"Last saved: {save_timestamp}", fg=Colors.LIGHT_GRAY
+                )
         
         # Controls
         console.print(
@@ -5741,30 +5827,138 @@ class LoreMenu:
     """Lore viewer menu for main menu."""
     
     def __init__(self):
-        pass
+        self.story_fragment_manager = None
+        self.lore_viewer_selection = 0
+        self.lore_viewer_mode = "list"  # "list" or "reading"
+    
+    def _load_story_fragments(self):
+        """Load story fragment manager from save data."""
+        if self.story_fragment_manager is None:
+            self.story_fragment_manager = StoryFragmentManager()
     
     def render(self, console: tcod.console.Console) -> None:
         """Render the lore viewer screen."""
-        # Use the same rendering as the in-game lore viewer
-        ui_renderer = UIRenderer()
-        # Create a minimal game object to access discovered lore
-        try:
-            game = Game(load_save=True, settings=None)
-            ui_renderer.render_lore_viewer_screen(console, game)
-        except Exception as e:
-            # If no save file exists or lore can't be loaded, show message
-            console.clear()
-            title = "DISCOVERED LORE FRAGMENTS"
-            console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        console.clear()
+        
+        self._load_story_fragments()
+        discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
+        discovered_count, total_count = self.story_fragment_manager.get_fragment_count()
+        
+        if self.lore_viewer_mode == "reading" and discovered_fragments:
+            self._render_reading_mode(console, discovered_fragments)
+        else:
+            self._render_list_mode(console, discovered_fragments, discovered_count, total_count)
+    
+    def _render_list_mode(self, console, discovered_fragments, discovered_count, total_count):
+        """Render lore fragment list."""
+        title = f"DISCOVERED LORE FRAGMENTS ({discovered_count}/{total_count})"
+        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        
+        if not discovered_fragments:
             console.print(2, 5, "No lore fragments discovered yet.", fg=Colors.WHITE)
             console.print(2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
             console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to main menu", fg=Colors.LIGHT_GRAY)
+            return
+        
+        start_y = 5
+        for i, (fragment_index, fragment_text) in enumerate(discovered_fragments):
+            # Clamp selection
+            if self.lore_viewer_selection >= len(discovered_fragments):
+                self.lore_viewer_selection = len(discovered_fragments) - 1
+            
+            is_selected = (i == self.lore_viewer_selection)
+            color = Colors.CYAN if is_selected else Colors.WHITE
+            prefix = "> " if is_selected else "  "
+            
+            # Show first line of fragment as title
+            first_line = fragment_text.split('\n')[0][:60]
+            console.print(2, start_y + i, f"{prefix}Fragment {fragment_index + 1}: {first_line}", fg=color)
+        
+        # Instructions
+        console.print(2, GameConfig.SCREEN_HEIGHT - 4, "Up/Down: Navigate  Enter: Read  Esc: Back", fg=Colors.LIGHT_GRAY)
+    
+    def _render_reading_mode(self, console, discovered_fragments):
+        """Render individual fragment for reading."""
+        if self.lore_viewer_selection >= len(discovered_fragments):
+            self.lore_viewer_mode = "list"
+            return
+            
+        fragment_index, fragment_text = discovered_fragments[self.lore_viewer_selection]
+        
+        title = f"DATA FRAGMENT {fragment_index + 1}"
+        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        
+        # Render fragment text with wrapping
+        lines = fragment_text.split('\n')
+        y = 5
+        for line in lines:
+            if y < GameConfig.SCREEN_HEIGHT - 4:
+                # Simple word wrapping
+                if len(line) <= GameConfig.SCREEN_WIDTH - 4:
+                    console.print(2, y, line, fg=Colors.WHITE)
+                    y += 1
+                else:
+                    # Basic word wrapping for long lines
+                    words = line.split(' ')
+                    current_line = ""
+                    for word in words:
+                        if len(current_line + " " + word) <= GameConfig.SCREEN_WIDTH - 4:
+                            current_line += (" " if current_line else "") + word
+                        else:
+                            console.print(2, y, current_line, fg=Colors.WHITE)
+                            y += 1
+                            current_line = word
+                            if y >= GameConfig.SCREEN_HEIGHT - 4:
+                                break
+                    if current_line and y < GameConfig.SCREEN_HEIGHT - 4:
+                        console.print(2, y, current_line, fg=Colors.WHITE)
+                        y += 1
+        
+        console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to list", fg=Colors.LIGHT_GRAY)
     
     def handle_input(self, event) -> str:
-        """Handle lore menu input. Returns 'back' on any key press."""
-        if UniversalInputHandler.handle_any_key_screen(event):
-            return "back"
+        """Handle lore menu input with proper navigation."""
+        self._load_story_fragments()
+        discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
+        
+        if not discovered_fragments:
+            # No fragments - any key returns to main menu
+            if UniversalInputHandler.handle_any_key_screen(event):
+                return "back"
+            return ""
+        
+        if self.lore_viewer_mode == "list":
+            # Handle navigation using universal handler
+            if UniversalInputHandler.handle_list_navigation(
+                self, event, len(discovered_fragments), False, self._navigate_lore_selection
+            ):
+                return ""
+            
+            # Handle selection
+            if UniversalInputHandler.is_confirm_key(event):
+                self.lore_viewer_mode = "reading"
+                return ""
+            elif UniversalInputHandler.is_escape_key(event):
+                return "back"
+        
+        elif self.lore_viewer_mode == "reading":
+            # Any key except ESC returns to list
+            if UniversalInputHandler.is_escape_key(event):
+                return "back"
+            else:
+                self.lore_viewer_mode = "list"
+                return ""
+        
         return ""
+    
+    def _navigate_lore_selection(self, direction: int):
+        """Navigate lore selection."""
+        discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
+        if discovered_fragments:
+            if direction == -1:
+                self.lore_viewer_selection = max(0, self.lore_viewer_selection - 1)
+            else:
+                self.lore_viewer_selection = min(len(discovered_fragments) - 1, self.lore_viewer_selection + 1)
 
 
 class HelpMenu:
