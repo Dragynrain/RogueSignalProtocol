@@ -796,6 +796,7 @@ class GameConfig:
     # Game mechanics
     DEFAULT_VISION_RANGE = 10
     MAX_HEAT = 100
+    MAX_DETECTION = 100  # Maximum detection level before admin spawn
     DETECTION_REDUCTION_ON_LEVEL = 50  # Detection reduction when moving to new level
     DUNGEON_SEED_RANGE = 1000000  # Range for random dungeon seeds
     
@@ -1813,7 +1814,7 @@ class GameStateManager:
         if self.admin_spawned:
             return False
             
-        return detection_level >= 100
+        return detection_level >= GameConfig.MAX_DETECTION
 
 
 class EnemyManager:
@@ -2052,13 +2053,6 @@ class LevelGenerator:
                 return True
         return False
     
-    def _carve_room(self, room: Tuple[int, int, int, int]) -> None:
-        """Remove walls to create a room."""
-        x, y, width, height = room
-        for rx in range(x, x + width):
-            for ry in range(y, y + height):
-                if (rx, ry) in self.game_map.walls:
-                    self.game_map.walls.remove((rx, ry))
     
     def _connect_rooms_with_corridors(self, rooms: List[Tuple[int, int, int, int]]) -> None:
         """Connect all rooms with corridors using a minimum spanning tree approach."""
@@ -2542,9 +2536,6 @@ class Game:
         """Get enemy at position - for backward compatibility."""
         return self.enemy_manager.get_enemy_at_position(position)
     
-    def auto_save(self) -> None:
-        """Auto-save the current game state."""
-        SaveGameManager.save_game(self)
     
     def _load_from_save(self) -> bool:
         """Load game state from save file."""
@@ -2581,18 +2572,24 @@ class Game:
     
     def _restore_player_state(self, player_data: Dict[str, Any]) -> None:
         """Restore player state from save data."""
-        self.player.x = player_data["x"]
-        self.player.y = player_data["y"]
-        self.player.cpu = player_data["cpu"]
-        self.player.max_cpu = player_data["max_cpu"]
-        self.player.heat = player_data["heat"]
-        self.player.detection = player_data["detection"]
-        self.player.ram_total = player_data["ram_total"]
-        self.player.temporary_effects = player_data["temporary_effects"]
+        self.player.x = player_data.get("x", 1)
+        self.player.y = player_data.get("y", 1)
+        self.player.cpu = player_data.get("cpu", 100)
+        self.player.max_cpu = player_data.get("max_cpu", 100)
+        self.player.heat = player_data.get("heat", 0)
+        self.player.detection = player_data.get("detection", 0)
+        self.player.ram_total = player_data.get("ram_total", 8)
+        self.player.temporary_effects = player_data.get("temporary_effects", {
+            'speed_boost_turns': 0,
+            'enhanced_vision_turns': 0,
+            'exploit_efficiency_turns': 0,
+            'data_mimic_turns': 0
+        })
         
-        # Restore inventory
-        self.player.inventory_manager.equipped_exploits = player_data["equipped_exploits"]
-        self.player.inventory_manager.items = self._deserialize_inventory(player_data["inventory_items"])
+        # Restore inventory with defaults
+        self.player.inventory_manager.equipped_exploits = player_data.get("equipped_exploits", [])
+        inventory_items = player_data.get("inventory_items", [])
+        self.player.inventory_manager.items = self._deserialize_inventory(inventory_items)
     
     def _restore_game_effects(self, save_data: Dict[str, Any]) -> None:
         """Restore game effects and environmental state from save data."""
@@ -3059,7 +3056,7 @@ class Game:
     
     def _check_admin_spawn(self):
         """Check if admin avatar should spawn."""
-        if (self.player.detection >= 100 and 
+        if (self.player.detection >= GameConfig.MAX_DETECTION and 
             not self.admin_spawned and 
             not any(e.type == 'admin' for e in self.enemies)):
             self._spawn_admin_avatar()
@@ -3156,9 +3153,9 @@ class Game:
                     return
                 
                 # Check for overheating
-                if self.player.heat >= 100:
+                if self.player.heat >= GameConfig.MAX_HEAT:
                     self.sound_manager.play_sound("player_overheat")
-                    damage = 5 + (self.player.heat - 100)
+                    damage = 5 + (self.player.heat - GameConfig.MAX_HEAT)
                     self.player.take_damage(damage)
                     self.player.heat = 95
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
@@ -4905,7 +4902,7 @@ class UIRenderer:
                 if game.player.temporary_effects['exploit_efficiency_turns'] > 0:
                     heat_cost = int(heat_cost * 0.6)
                 
-                heat_ok = game.player.heat + heat_cost <= 100
+                heat_ok = game.player.heat + heat_cost <= GameConfig.MAX_HEAT
                 color = Colors.GREEN if heat_ok else Colors.RED
                 exploit_text = f"{i+1}.{exploit.name}"
                 
@@ -4925,7 +4922,7 @@ class UIRenderer:
                     if game.player.temporary_effects['exploit_efficiency_turns'] > 0:
                         heat_cost = int(heat_cost * 0.6)
                     
-                    heat_ok = game.player.heat + heat_cost <= 100
+                    heat_ok = game.player.heat + heat_cost <= GameConfig.MAX_HEAT
                     color = Colors.GREEN if heat_ok else Colors.RED
                     exploit_text = f"{i+len(first_line_exploits)+1}.{exploit.name}"  # Continue numbering from where first line left off
                     
@@ -5868,127 +5865,141 @@ class SettingsMenu:
 
 
 
+def initialize_game_systems(settings: GameSettings):
+    """Initialize menu systems and return menu objects."""
+    return {
+        'main_menu': MainMenu(),
+        'settings_menu': SettingsMenu(settings),
+        'help_menu': HelpMenu(),
+        'lore_menu': LoreMenu()
+    }
+
+def handle_menu_navigation(console, context, menus, settings):
+    """Handle the main menu navigation loop."""
+    main_menu = menus['main_menu']
+    main_menu.refresh_options(show_continue=True)
+    current_menu = main_menu
+    
+    while True:
+        current_menu.render(console)
+        context.present(console)
+        
+        for event in tcod.event.wait():
+            if event.type == "QUIT":
+                return None, True  # game=None, should_exit=True
+            elif event.type == "KEYDOWN":
+                action = current_menu.handle_input(event)
+                
+                if action == "exit":
+                    return None, True  # game=None, should_exit=True
+                elif action == "settings":
+                    current_menu = menus['settings_menu']
+                elif action == "help":
+                    current_menu = menus['help_menu']
+                elif action == "lore":
+                    current_menu = menus['lore_menu']
+                elif action == "back":
+                    current_menu = main_menu
+                elif action == "continue":
+                    game = Game(load_save=True, settings=settings)
+                    return game, False
+                elif action == "new_game":
+                    game = Game(load_save=False, settings=settings)
+                    return game, False
+
+def show_welcome_messages(game):
+    """Show initial welcome messages for new games."""
+    if not SaveGameManager.save_exists():
+        game.message_log.add_message("Welcome to Rogue Signal Protocol v1.0!")
+        game.message_log.add_message("Enhanced Edition with sound, settings, and story fragments")
+        game.message_log.add_message("Navigate using stealth")
+        game.message_log.add_message("Reach the gateway (>)")
+        game.message_log.add_message("Hide in shadows (.) to avoid detection")
+        game.message_log.add_message("Press 'L' to view discovered lore")
+        game.message_log.add_message("Starting Corporate Network infiltration...")
+
+def handle_game_input_events(event, game, input_handler):
+    """Handle game input events and return (should_continue, game)."""
+    if event.type == "QUIT":
+        game.auto_save()
+        game.sound_manager.cleanup()
+        return False, None  # Exit program
+    elif event.type == "KEYDOWN":
+        if event.sym == tcod.event.KeySym.ESCAPE:
+            # Check if any UI states are open - close those first
+            if (game.show_story_fragment is not None or 
+                game.show_lore_viewer or 
+                game.show_help or 
+                game.show_inventory or 
+                game.targeting_mode):
+                input_handler._handle_escape()
+            else:
+                # No UI states open, auto-save and go to main menu
+                game.auto_save()
+                return True, None  # Return to main menu
+        else:
+            should_continue = input_handler.handle_keydown(event)
+            if not should_continue:
+                # Player is dead and pressed ESC - return to main menu
+                return True, None
+    return True, game
+
+def handle_error_screen(console, context, error_message, line_no):
+    """Display error screen and wait for user input."""
+    console.clear()
+    console.print(1, 1, f"Error: {str(error_message)[:50]} (line {line_no})", fg=Colors.RED)
+    console.print(1, 2, "Press ESC to exit", fg=Colors.WHITE)
+    context.present(console)
+    
+    for event in tcod.event.wait():
+        if event.type == "QUIT" or (event.type == "KEYDOWN" and event.sym == tcod.event.KeySym.ESCAPE):
+            return True
+    return False
+
 def main():
     """Main game loop with main menu and save/load functionality."""
     try:
         with initialize_tcod_context() as context:
             console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
             
-            # Initialize settings and menus
             settings = GameSettings()
-            main_menu = MainMenu()
-            settings_menu = SettingsMenu(settings)
-            help_menu = HelpMenu()
-            lore_menu = LoreMenu()
-            
+            menus = initialize_game_systems(settings)
             game = None
             
             while True:
                 if game is None:
-                    # Show main menu flow - refresh options to show/hide continue based on save state
-                    main_menu.refresh_options(show_continue=True)
-                    current_menu = main_menu
+                    game, should_exit = handle_menu_navigation(console, context, menus, settings)
+                    if should_exit:
+                        return
                     
-                    while True:
-                        current_menu.render(console)
-                        context.present(console)
-                        
-                        for event in tcod.event.wait():
-                            if event.type == "QUIT":
-                                return
-                            elif event.type == "KEYDOWN":
-                                action = current_menu.handle_input(event)
-                                
-                                if action == "exit":
-                                    return
-                                elif action == "settings":
-                                    current_menu = settings_menu
-                                elif action == "help":
-                                    current_menu = help_menu
-                                elif action == "lore":
-                                    current_menu = lore_menu
-                                elif action == "back":
-                                    current_menu = main_menu
-                                elif action == "continue":
-                                    # Load existing game
-                                    game = Game(load_save=True, settings=settings)
-                                    break
-                                elif action == "new_game":
-                                    # Start new game
-                                    game = Game(load_save=False, settings=settings)
-                                    break
-                        
-                        # If we broke out of the menu loop, start the game
-                        if game is not None:
-                            break
-                    
-                    # Initialize game systems
+                    # Initialize game rendering systems
                     renderer = Renderer()
                     input_handler = InputHandler(game)
-
-                    # Initial welcome messages
-                    if not SaveGameManager.save_exists():  # Only show on new game
-                        game.message_log.add_message("Welcome to Rogue Signal Protocol v1.0!")
-                        game.message_log.add_message("Enhanced Edition with sound, settings, and story fragments")
-                        game.message_log.add_message("Navigate using stealth")
-                        game.message_log.add_message("Reach the gateway (>)")
-                        game.message_log.add_message("Hide in shadows (.) to avoid detection")
-                        game.message_log.add_message("Press 'L' to view discovered lore")
-                        game.message_log.add_message("Starting Corporate Network infiltration...")
+                    show_welcome_messages(game)
 
                 # Main game loop
                 while game is not None:
                     try:
-                        # Update sound system
                         game.sound_manager.update()
-                        
-                        
-                        # Normal game rendering and input
                         renderer.render_game(console, game)
                         context.present(console)
                         
                         # Handle input events
                         for event in tcod.event.wait():
-                            if event.type == "QUIT":
-                                game.auto_save()
-                                game.sound_manager.cleanup()
-                                return
-                            elif event.type == "KEYDOWN":
-                                # Handle escape key
-                                if event.sym == tcod.event.KeySym.ESCAPE:
-                                    # Check if any UI states are open - close those first
-                                    if (game.show_story_fragment is not None or 
-                                        game.show_lore_viewer or 
-                                        game.show_help or 
-                                        game.show_inventory or 
-                                        game.targeting_mode):
-                                        input_handler._handle_escape()
-                                    else:
-                                        # No UI states open, auto-save and go to main menu
-                                        game.auto_save()
-                                        game = None
-                                    break
-                                else:
-                                    should_continue = input_handler.handle_keydown(event)
-                                    if not should_continue:
-                                        # Player is dead and pressed ESC - return to main menu
-                                        game = None
-                                        break
+                            should_continue, game = handle_game_input_events(event, game, input_handler)
+                            if not should_continue:
+                                return  # Exit program
+                            if game is None:
+                                break  # Return to main menu
                         
                     except Exception as e:
-                        # Handle rendering errors gracefully
                         import traceback
                         tb = traceback.extract_tb(e.__traceback__)
                         line_no = tb[-1].lineno if tb else "?"
                         logging.error(f"Rendering error: {e} (line {line_no})")
-                        console.clear()
-                        console.print(1, 1, f"Error: {str(e)[:50]} (line {line_no})", fg=Colors.RED)
-                        console.print(1, 2, "Press ESC to exit", fg=Colors.WHITE)
-                        context.present(console)
                         
-                        for event in tcod.event.wait():
-                            if event.type == "QUIT" or (event.type == "KEYDOWN" and event.sym == tcod.event.KeySym.ESCAPE):
-                                return
+                        if handle_error_screen(console, context, e, line_no):
+                            return
     
     except Exception as e:
         import traceback
