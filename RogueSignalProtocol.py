@@ -4712,13 +4712,18 @@ class InputHandler:
 # ============================================================================
 
 class Renderer:
-    """Handles all game rendering."""
+    """Handles all game rendering with dual-font system."""
     
     def __init__(self):
         self.ui_renderer = UIRenderer()
         self.map_renderer = MapRenderer()
+        
+        # Create separate consoles for different font systems
+        self.game_console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
+        self.ui_console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
+        self.composite_console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
     
-    def render_game(self, console: tcod.console.Console, game: Game):
+    def render_game(self, console: tcod.console.Console, game: Game, context=None):
         """Render the complete game state."""
         console.clear()
         
@@ -4733,8 +4738,19 @@ class Renderer:
         else:
             self._render_main_game_screen(console, game)
     
+    def _render_with_tall_font(self, console: tcod.console.Console, context, render_func):
+        """Render UI screen with tall font (simplified approach)."""
+        # For now, just render normally since we're using tall font as primary
+        render_func()
+        console.blit(self.ui_console)
+    
+    def _render_main_game_screen_dual(self, console: tcod.console.Console, game: Game, context=None):
+        """Render the main game screen (using tall font as primary)."""
+        # For now, just render everything normally with the tall font
+        self._render_main_game_screen(console, game)
+    
     def _render_main_game_screen(self, console: tcod.console.Console, game: Game):
-        """Render the main game screen."""
+        """Render the main game screen (legacy method for compatibility)."""
         self.ui_renderer.render_top_status_bar(console, game)
         self.map_renderer.render_map(console, game)
         self.ui_renderer.render_bottom_panel(console, game)
@@ -5711,33 +5727,53 @@ class MapRenderer:
 # MAIN GAME LOOP AND INITIALIZATION
 # ============================================================================
 
-def initialize_tcod_context():
-    """Initialize tcod context with fallback handling."""
-    tileset = None
+def load_tilesets():
+    """Load both square and tall tilesets for dual-font system."""
+    square_tileset = None
+    tall_tileset = None
+    
     try:
-
-        # Try to load the preferred tileset
-        tileset = tcod.tileset.load_tilesheet(
+        # Load square tileset for game world
+        square_tileset = tcod.tileset.load_tilesheet(
             "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
-        ) 
-        tileset = tcod.tileset.load_truetype_font("Orbitron-VariableFont_wght.ttf", 16, 16)
-
-
+        )
+        logging.info("Loaded square tileset successfully")
     except (FileNotFoundError, ImportError, Exception) as e:
-        import traceback
-        tb = traceback.extract_tb(e.__traceback__)
-        line_no = tb[-1].lineno if tb else "?"
-        logging.error(f"Tileset loading error: {e} (line {line_no})")
+        logging.warning(f"Failed to load square tileset: {e}")
         try:
-            # Try default tileset
-            # Use a simple built-in tileset
-            tileset = None  # Let tcod use its default
+            # Fallback to truetype font for square
+            square_tileset = tcod.tileset.load_truetype_font("Orbitron-VariableFont_wght.ttf", 16, 16)
+            logging.info("Loaded square truetype font as fallback")
         except Exception as e2:
-            tb2 = traceback.extract_tb(e2.__traceback__)
-            line_no2 = tb2[-1].lineno if tb2 else "?"
-            logging.error(f"Default tileset error: {e2} (line {line_no2})")
-            # Use built-in fallback
-            pass
+            logging.error(f"Square font fallback failed: {e2}")
+    
+    try:
+        # Load tall tileset - the file is 160x256 pixels
+        # This suggests either 16x16 grid (10x16 chars) or 10x16 grid (16x16 chars)
+        # Based on filename "terminal10x16", it's likely 16 columns x 16 rows
+        tall_tileset = tcod.tileset.load_tilesheet(
+            "terminal10x16_gs_ro.png", 16, 16, tcod.tileset.CHARMAP_CP437
+        )
+        logging.info("Loaded tall tileset successfully with 16x16 grid")
+            
+    except Exception as e:
+        logging.error(f"Failed to load tall tileset: {e}")
+        # Use square tileset as fallback for tall
+        tall_tileset = square_tileset
+    
+    return square_tileset, tall_tileset
+
+def initialize_tcod_context():
+    """Initialize tcod context with fallback to square font."""
+    square_tileset, tall_tileset = load_tilesets()
+    
+    # Use tall tileset as primary if available, otherwise fall back to square
+    primary_tileset = tall_tileset if tall_tileset and tall_tileset != square_tileset else square_tileset
+    
+    if primary_tileset == tall_tileset:
+        logging.info("Using tall tileset as primary font")
+    else:
+        logging.info("Using square tileset as primary font (tall font failed to load)")
     
     context_args = {
         "columns": GameConfig.SCREEN_WIDTH,
@@ -5747,10 +5783,17 @@ def initialize_tcod_context():
         "sdl_window_flags": 160
     }
     
-    if tileset:
-        context_args["tileset"] = tileset
+    if primary_tileset:
+        context_args["tileset"] = primary_tileset
     
-    return tcod.context.new(**context_args)
+    context = tcod.context.new(**context_args)
+    
+    # Store tilesets for reference
+    context.square_tileset = square_tileset
+    context.tall_tileset = tall_tileset
+    context.primary_tileset = primary_tileset
+    
+    return context
 
 
 # ============================================================================
@@ -6336,6 +6379,8 @@ def handle_menu_navigation(console, context, menus, settings):
     current_menu = main_menu
     
     while True:
+        # For now, use the single tileset system
+        # TODO: Implement proper dual-font support in a future update
         current_menu.render(console)
         context.present(console)
         
@@ -6439,7 +6484,7 @@ def main():
                 while game is not None:
                     try:
                         game.sound_manager.update()
-                        renderer.render_game(console, game)
+                        renderer.render_game(console, game, context)
                         context.present(console)
                         
                         # Handle input events

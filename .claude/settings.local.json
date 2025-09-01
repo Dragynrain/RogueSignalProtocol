@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(del test_screens.py test_inventory_ingame.py)"
     ],
     "deny": [],
     "ask": []
