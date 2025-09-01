@@ -1792,8 +1792,9 @@ class Enemy:
                     blocking_enemy = game._get_enemy_at(new_position)
                     if blocking_enemy and blocking_enemy != self:
                         # Try to swap positions if the other enemy can move to our position
+                        enemy_at_current_pos = game._get_enemy_at(self.position)
                         if (game_map.is_valid_position(self.position) and 
-                            not game._get_enemy_at(self.position, exclude=self)):
+                            (enemy_at_current_pos is None or enemy_at_current_pos == self)):
                             blocking_enemy.position = self.position
                             self.position = new_position
                             return True
