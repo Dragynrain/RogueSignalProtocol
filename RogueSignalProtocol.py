@@ -31,9 +31,86 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
 
 # ============================================================================
-# STORY FRAGMENTS DATA
+# JSON DATA LOADING SYSTEM
 # ============================================================================
 
+class DataLoader:
+    """Handles loading of JSON configuration and game data files."""
+    
+    _story_fragments = None
+    _game_data = None
+    _config = None
+    
+    @classmethod
+    def load_story_fragments(cls) -> List[str]:
+        """Load story fragments from JSON file."""
+        if cls._story_fragments is None:
+            try:
+                with open('story_fragments.json', 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    cls._story_fragments = data['fragments']
+            except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
+                logging.warning(f"Could not load story fragments from JSON: {e}")
+                cls._story_fragments = cls._get_fallback_story_fragments()
+        return cls._story_fragments
+    
+    @classmethod
+    def load_game_data(cls) -> Dict[str, Any]:
+        """Load game data from JSON file."""
+        if cls._game_data is None:
+            try:
+                with open('game_data.json', 'r', encoding='utf-8') as f:
+                    cls._game_data = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                logging.warning(f"Could not load game data from JSON: {e}")
+                cls._game_data = cls._get_fallback_game_data()
+        return cls._game_data
+    
+    @classmethod
+    def load_config(cls) -> Dict[str, Any]:
+        """Load configuration from JSON file."""
+        if cls._config is None:
+            try:
+                with open('config.json', 'r', encoding='utf-8') as f:
+                    cls._config = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                logging.warning(f"Could not load config from JSON: {e}")
+                cls._config = cls._get_fallback_config()
+        return cls._config
+    
+    @classmethod
+    def _get_fallback_story_fragments(cls) -> List[str]:
+        """Fallback story fragments if JSON loading fails."""
+        return [
+            "Emergency fallback story fragment - JSON data could not be loaded.",
+            "This is a backup narrative element to ensure the game remains playable."
+        ]
+    
+    @classmethod
+    def _get_fallback_game_data(cls) -> Dict[str, Any]:
+        """Fallback game data if JSON loading fails."""
+        return {
+            "enemy_types": {"scanner": {"symbol": "S", "cpu": 35, "vision": 5, "movement": "STATIC", "name": "Scanner", "damage": 0}},
+            "exploits": {"shadow_step": {"name": "Shadow Step", "ram": 3, "heat": 30, "range": 6, "category": "stealth", "damage": 0, "targeting": "SINGLE"}},
+            "upgrades": {"ram_boost": {"name": "Memory Expansion", "symbol": "[", "color": "BRIGHT_BLUE", "stat_type": "ram", "bonus_amount": 4}},
+            "network_configs": {"1": {"enemies": 15, "shadow_coverage": 0.15, "name": "Corporate Network", "background_detection": 1}}
+        }
+    
+    @classmethod
+    def _get_fallback_config(cls) -> Dict[str, Any]:
+        """Fallback config if JSON loading fails."""
+        return {
+            "screen": {"width": 80, "height": 50},
+            "map": {"width": 50, "height": 50},
+            "gameplay": {"max_heat": 100, "max_detection": 100}
+        }
+
+# Dynamic story fragments loading
+def get_story_fragments() -> List[str]:
+    """Get story fragments from JSON data."""
+    return DataLoader.load_story_fragments()
+
+# Legacy compatibility - will be removed after refactoring
 STORY_FRAGMENTS = [
     # Fragment 1
     """Email - Subject: Welcome to the Cognitive Resilience Initiative
@@ -696,7 +773,8 @@ class StoryFragmentManager:
     
     def get_next_undiscovered_fragment(self) -> Optional[int]:
         """Get the next fragment index that hasn't been discovered yet."""
-        for i in range(len(STORY_FRAGMENTS)):
+        story_fragments = get_story_fragments()
+        for i in range(len(story_fragments)):
             if i not in self.discovered_fragments:
                 return i
         return None  # All fragments discovered
@@ -706,7 +784,8 @@ class StoryFragmentManager:
         if fragment_index in self.discovered_fragments:
             return False  # Already discovered
             
-        if fragment_index < 0 or fragment_index >= len(STORY_FRAGMENTS):
+        story_fragments = get_story_fragments()
+        if fragment_index < 0 or fragment_index >= len(story_fragments):
             return False  # Invalid fragment index
             
         self.discovered_fragments.append(fragment_index)
@@ -720,15 +799,17 @@ class StoryFragmentManager:
     
     def get_discovered_fragments(self) -> List[Tuple[int, str]]:
         """Get all discovered fragments in order."""
+        story_fragments = get_story_fragments()
         fragments = []
         for fragment_index in sorted(self.discovered_fragments):
-            if fragment_index < len(STORY_FRAGMENTS):
-                fragments.append((fragment_index, STORY_FRAGMENTS[fragment_index]))
+            if fragment_index < len(story_fragments):
+                fragments.append((fragment_index, story_fragments[fragment_index]))
         return fragments
     
     def get_fragment_count(self) -> Tuple[int, int]:
         """Get (discovered_count, total_count) for UI display."""
-        return len(self.discovered_fragments), len(STORY_FRAGMENTS)
+        story_fragments = get_story_fragments()
+        return len(self.discovered_fragments), len(story_fragments)
 
 
 # ============================================================================
@@ -779,31 +860,28 @@ class RoomGenerationConfig:
 
 class GameConfig:
     """Central configuration for game constants."""
-    # Screen dimensions
+    _config_data = None
+    
+    @classmethod
+    def _get_config(cls):
+        """Load config data if not already loaded."""
+        if cls._config_data is None:
+            cls._config_data = DataLoader.load_config()
+        return cls._config_data
+    
+    # Static properties - load once and cache
     SCREEN_WIDTH = 80
     SCREEN_HEIGHT = 50
-    
-    # Map dimensions
     MAP_WIDTH = 50
     MAP_HEIGHT = 50
-    
-    # UI layout
     LOG_WIDTH = 25
-    GAME_AREA_WIDTH = SCREEN_WIDTH - LOG_WIDTH
     PANEL_HEIGHT = 5
-    PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
-    
-    # Game mechanics
     DEFAULT_VISION_RANGE = 10
     MAX_HEAT = 100
-    MAX_DETECTION = 100  # Maximum detection level before admin spawn
-    DETECTION_REDUCTION_ON_LEVEL = 50  # Detection reduction when moving to new level
-    DUNGEON_SEED_RANGE = 1000000  # Range for random dungeon seeds
-    
-    # Sound system
-    DEFAULT_FADE_TIME = 2000  # Default fade in time for music (ms)
-    
-    # UI message positioning
+    MAX_DETECTION = 100
+    DETECTION_REDUCTION_ON_LEVEL = 50
+    DUNGEON_SEED_RANGE = 1000000
+    DEFAULT_FADE_TIME = 2000
     MESSAGE_CENTER_OFFSET_LARGE = 15
     MESSAGE_CENTER_OFFSET_MEDIUM = 12
     MESSAGE_CENTER_OFFSET_SMALL = 8
@@ -811,12 +889,51 @@ class GameConfig:
     MESSAGE_LINE_SPACING = 1
     MESSAGE_BUTTON_SPACING = 3
     
-    # Network configurations
-    NETWORK_CONFIGS = {
-        1: {"enemies": 15, "shadow_coverage": 0.15, "name": "Corporate Network", "background_detection": 1},
-        2: {"enemies": 22, "shadow_coverage": 0.18, "name": "Government System", "background_detection": 2}, 
-        3: {"enemies": 30, "shadow_coverage": 0.16, "name": "Military Backbone", "background_detection": 3}
-    }
+    # Computed properties
+    GAME_AREA_WIDTH = SCREEN_WIDTH - LOG_WIDTH
+    PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
+    
+    @classmethod
+    def load_from_json(cls):
+        """Load configuration values from JSON - called during initialization."""
+        config = cls._get_config()
+        
+        # Update static values from JSON
+        cls.SCREEN_WIDTH = config["screen"]["width"]
+        cls.SCREEN_HEIGHT = config["screen"]["height"]
+        cls.MAP_WIDTH = config["map"]["width"] 
+        cls.MAP_HEIGHT = config["map"]["height"]
+        cls.LOG_WIDTH = config["ui"]["log_width"]
+        cls.PANEL_HEIGHT = config["ui"]["panel_height"]
+        cls.DEFAULT_VISION_RANGE = config["gameplay"]["default_vision_range"]
+        cls.MAX_HEAT = config["gameplay"]["max_heat"]
+        cls.MAX_DETECTION = config["gameplay"]["max_detection"]
+        cls.DETECTION_REDUCTION_ON_LEVEL = config["gameplay"]["detection_reduction_on_level"]
+        cls.DUNGEON_SEED_RANGE = config["gameplay"]["dungeon_seed_range"]
+        cls.DEFAULT_FADE_TIME = config["audio"]["default_fade_time"]
+        cls.MESSAGE_CENTER_OFFSET_LARGE = config["ui"]["message_center_offset_large"]
+        cls.MESSAGE_CENTER_OFFSET_MEDIUM = config["ui"]["message_center_offset_medium"]
+        cls.MESSAGE_CENTER_OFFSET_SMALL = config["ui"]["message_center_offset_small"]
+        cls.MESSAGE_CENTER_OFFSET_TINY = config["ui"]["message_center_offset_tiny"]
+        cls.MESSAGE_LINE_SPACING = config["ui"]["message_line_spacing"]
+        cls.MESSAGE_BUTTON_SPACING = config["ui"]["message_button_spacing"]
+        
+        # Update computed properties
+        cls.GAME_AREA_WIDTH = cls.SCREEN_WIDTH - cls.LOG_WIDTH
+        cls.PANEL_Y = cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT
+    
+    @classmethod
+    def get_network_configs(cls) -> Dict[int, Dict[str, Any]]:
+        """Get network configurations from game data."""
+        game_data = DataLoader.load_game_data()
+        configs = game_data["network_configs"]
+        return {int(k): v for k, v in configs.items()}
+    
+    # Network configurations - loaded dynamically
+    @classmethod
+    def NETWORK_CONFIGS(cls) -> Dict[int, Dict[str, Any]]:
+        """Get network configurations from game data."""
+        return cls.get_network_configs()
 
 class Colors:
     """Modern cyberpunk neon color definitions for the game."""
@@ -1807,7 +1924,8 @@ class GameStateManager:
     
     def get_current_network_config(self) -> Dict[str, Any]:
         """Get configuration for the current network level."""
-        return GameConfig.NETWORK_CONFIGS.get(self.level, GameConfig.NETWORK_CONFIGS[1])
+        network_configs = GameConfig.NETWORK_CONFIGS()
+        return network_configs.get(self.level, network_configs[1])
     
     def should_spawn_admin(self, detection_level: float) -> bool:
         """Determine if admin should spawn based on detection level."""
@@ -2100,7 +2218,8 @@ class LevelGenerator:
     
     def _place_shadow_areas(self, level: int, rooms: List[Tuple[int, int, int, int]]) -> None:
         """Place shadow areas for stealth gameplay."""
-        config = GameConfig.NETWORK_CONFIGS.get(level, GameConfig.NETWORK_CONFIGS[1])
+        network_configs = GameConfig.NETWORK_CONFIGS()
+        config = network_configs.get(level, network_configs[1])
         shadow_coverage = config['shadow_coverage']
         
         total_floor_tiles = sum(w * h for x, y, w, h in rooms)
@@ -2850,7 +2969,8 @@ class Game:
         
         # Passive detection increase (higher on higher levels)
         if self.turn % GameBalance.DETECTION_INCREASE_INTERVAL == 0:
-            config = GameConfig.NETWORK_CONFIGS.get(self.level, {"background_detection": 1})
+            network_configs = GameConfig.NETWORK_CONFIGS()
+            config = network_configs.get(self.level, {"background_detection": 1})
             background_increase = config.get("background_detection", 1)
             self.player.detection = min(100, self.player.detection + background_increase)
     
@@ -3270,11 +3390,12 @@ class Game:
 
     def _generate_procedural_level(self):
         """Generate a procedural level using the new LevelGenerator system."""
-        if self.level not in GameConfig.NETWORK_CONFIGS:
+        network_configs = GameConfig.NETWORK_CONFIGS()
+        if self.level not in network_configs:
             self.message_log.add_message(f"Invalid level: {self.level}")
             return
         
-        config = GameConfig.NETWORK_CONFIGS[self.level]
+        config = network_configs[self.level]
         
         try:
             # Play appropriate background music for the level
@@ -4717,10 +4838,11 @@ class UIRenderer:
         console.clear()
         
         # Get the fragment text
-        if fragment_index < 0 or fragment_index >= len(STORY_FRAGMENTS):
+        story_fragments = get_story_fragments()
+        if fragment_index < 0 or fragment_index >= len(story_fragments):
             return
         
-        fragment_text = STORY_FRAGMENTS[fragment_index]
+        fragment_text = story_fragments[fragment_index]
         
         # Render using shared components
         content_start_y = self._render_screen_header(console, "DATA FRAGMENT RECOVERED")
@@ -5958,6 +6080,9 @@ def handle_error_screen(console, context, error_message, line_no):
 
 def main():
     """Main game loop with main menu and save/load functionality."""
+    # Initialize JSON configuration system
+    GameConfig.load_from_json()
+    
     try:
         with initialize_tcod_context() as context:
             console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
