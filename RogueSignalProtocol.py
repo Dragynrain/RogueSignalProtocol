@@ -11,7 +11,7 @@ import tcod
 import logging
 import random
 import math
-import json3
+import json
 import os
 # ABC removed - simplified inheritance pattern
 from enum import Enum
@@ -986,15 +986,15 @@ class GameUpgrades:
     
     UPGRADES = {
         'ram_boost': UpgradeDefinition(
-            "Memory Expansion", "◈", "BRIGHT_BLUE", "ram", 4,
+            "Memory Expansion", "[", "BRIGHT_BLUE", "ram", 4,
             "Permanently increases RAM capacity by 4"
         ),
         'cpu_boost': UpgradeDefinition(
-            "Processing Core", "⬢", "BRIGHT_GREEN", "cpu", 20,
+            "Processing Core", "]", "BRIGHT_GREEN", "cpu", 20,
             "Permanently increases CPU capacity by 20"
         ),
         'heat_boost': UpgradeDefinition(
-            "Cooling Matrix", "❅", "BRIGHT_CYAN", "heat", 20,
+            "Cooling Matrix", "=", "BRIGHT_CYAN", "heat", 20,
             "Permanently increases heat tolerance by 20"
         )
     }
@@ -2471,6 +2471,9 @@ class Game:
         self.show_help = False
         self.show_story_fragment: Optional[int] = None  # Fragment index to display
         self.show_lore_viewer = False  # L key lore viewer
+        self.lore_viewer_selection = 0  # Selected lore entry index
+        self.lore_viewer_mode = "list"  # "list" or "reading"
+        self.show_pause_menu = False  # ESC key pause menu
         self.inventory_selection = 0
         
         # Targeting system
@@ -2971,6 +2974,8 @@ class Game:
             enemy.state = EnemyState.ALERT
             enemy.alert_timer = 1
             self.message_log.add_message(f"{enemy.type_data.name} investigating")
+            # Alert nearby enemies immediately when first spotted
+            self._alert_nearby_enemies(enemy)
         elif enemy.state == EnemyState.ALERT:
             enemy.alert_timer -= 1
             if enemy.alert_timer <= 0:
@@ -4017,9 +4022,10 @@ class InputHandler:
             return True
         
         if self.game.show_lore_viewer:
-            # Any key closes lore viewer
-            self.game.show_lore_viewer = False
-            return True
+            return self._handle_lore_viewer_input(event)
+        
+        if self.game.show_pause_menu:
+            return self._handle_pause_menu_input(event)
         
         if self.game.show_inventory:
             return self._handle_inventory_input(event)
@@ -4036,6 +4042,10 @@ class InputHandler:
             self.game.show_story_fragment = None
         elif self.game.show_lore_viewer:
             self.game.show_lore_viewer = False
+            self.game.lore_viewer_mode = "list"
+            self.game.lore_viewer_selection = 0
+        elif self.game.show_pause_menu:
+            self.game.show_pause_menu = False
         elif self.game.show_help:
             self.game.show_help = False
         elif self.game.show_inventory:
@@ -4060,6 +4070,55 @@ class InputHandler:
         elif event.sym == tcod.event.KeySym.I:
             self.game.show_inventory = False
         
+        return True
+    
+    def _handle_lore_viewer_input(self, event) -> bool:
+        """Handle input while lore viewer is open."""
+        discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
+        
+        if not discovered_fragments:
+            # No fragments, just allow ESC to close
+            return True
+            
+        if self.game.lore_viewer_mode == "list":
+            # List mode navigation
+            if event.sym in (tcod.event.KeySym.W, tcod.event.KeySym.UP, tcod.event.KeySym.KP_8):
+                self.game.lore_viewer_selection = max(0, self.game.lore_viewer_selection - 1)
+            elif event.sym in (tcod.event.KeySym.S, tcod.event.KeySym.DOWN, tcod.event.KeySym.KP_2):
+                self.game.lore_viewer_selection = min(len(discovered_fragments) - 1, self.game.lore_viewer_selection + 1)
+            elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
+                # Enter reading mode for selected fragment
+                self.game.lore_viewer_mode = "reading"
+        
+        elif self.game.lore_viewer_mode == "reading":
+            # Reading mode - any key returns to list
+            if event.sym != tcod.event.KeySym.ESCAPE:  # Let ESC be handled by main escape handler
+                self.game.lore_viewer_mode = "list"
+        
+        return True
+    
+    def _handle_pause_menu_input(self, event) -> bool:
+        """Handle input while pause menu is open."""
+        if event.sym == tcod.event.KeySym.L:
+            # Open lore viewer
+            self.game.show_pause_menu = False
+            self.game.show_lore_viewer = True
+            self.game.lore_viewer_mode = "list"
+            self.game.lore_viewer_selection = 0
+        elif event.sym == tcod.event.KeySym.I:
+            # Open inventory
+            self.game.show_pause_menu = False
+            self.game.show_inventory = True
+            self.game.inventory_selection = 0
+        elif event.sym == tcod.event.KeySym.H:
+            # Open help
+            self.game.show_pause_menu = False
+            self.game.show_help = True
+        elif event.sym == tcod.event.KeySym.Q:
+            # Quit to main menu
+            self.game.auto_save()
+            return False  # This will exit to main menu
+        # ESC to close is handled by the escape handler
         return True
 
     def _handle_targeting_input(self, event) -> bool:
@@ -4244,6 +4303,8 @@ class Renderer:
             self.ui_renderer.render_story_fragment_screen(console, game, game.show_story_fragment)
         elif game.show_lore_viewer:
             self.ui_renderer.render_lore_viewer_screen(console, game)
+        elif game.show_pause_menu:
+            self.ui_renderer.render_pause_menu_screen(console, game)
         elif game.show_help:
             self.ui_renderer.render_help_screen(console)
         elif game.show_inventory:
@@ -4299,6 +4360,110 @@ class UIRenderer:
         """Render a centered title in the game area."""
         title_x = GameConfig.GAME_AREA_WIDTH // 2 - len(title) // 2
         console.print(title_x, y, title, fg=color)
+    
+    def _render_screen_header(self, console: tcod.console.Console, title: str, subtitle: str = None) -> int:
+        """Render a standardized screen header with title and optional subtitle.
+        Returns the y position after the header for content to start."""
+        # Top border
+        console.print(2, 1, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        
+        # Main title (centered)
+        title_x = GameConfig.SCREEN_WIDTH // 2 - len(title) // 2
+        console.print(title_x, 2, title, fg=Colors.CYAN)
+        
+        # Subtitle if provided
+        if subtitle:
+            subtitle_x = GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2
+            console.print(subtitle_x, 3, subtitle, fg=Colors.WHITE)
+            # Bottom border after subtitle
+            console.print(2, 4, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+            return 6  # Content starts at line 6
+        else:
+            # Bottom border after title
+            console.print(2, 3, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+            return 5  # Content starts at line 5
+    
+    def _render_screen_footer(self, console: tcod.console.Console, instructions: str, additional_line: str = None) -> None:
+        """Render a standardized screen footer with instructions."""
+        footer_y = GameConfig.SCREEN_HEIGHT - 4 if additional_line else GameConfig.SCREEN_HEIGHT - 3
+        
+        # Footer border
+        console.print(2, footer_y, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        
+        # Instructions (centered)
+        instructions_x = GameConfig.SCREEN_WIDTH // 2 - len(instructions) // 2
+        console.print(instructions_x, footer_y + 1, instructions, fg=Colors.YELLOW)
+        
+        # Additional line if provided
+        if additional_line:
+            additional_x = GameConfig.SCREEN_WIDTH // 2 - len(additional_line) // 2
+            console.print(additional_x, footer_y + 2, additional_line, fg=Colors.YELLOW)
+    
+    def _render_content_area_with_word_wrap(self, console: tcod.console.Console, text: str, start_y: int, end_y: int) -> None:
+        """Render text content with word wrapping within the specified y bounds."""
+        lines = text.split('\n')
+        y_offset = start_y
+        max_width = GameConfig.SCREEN_WIDTH - 6  # Leave margins
+        
+        for line in lines:
+            if y_offset >= end_y:
+                console.print(3, y_offset, "... [Text continues]", fg=Colors.YELLOW)
+                break
+                
+            line = line.strip()
+            if not line:
+                y_offset += 1
+                continue
+                
+            # Word wrap long lines
+            if len(line) <= max_width:
+                console.print(3, y_offset, line, fg=Colors.WHITE)
+                y_offset += 1
+            else:
+                words = line.split(' ')
+                current_line = ""
+                
+                for word in words:
+                    if len(current_line + word) + 1 <= max_width:
+                        current_line += (word if not current_line else " " + word)
+                    else:
+                        if current_line:
+                            console.print(3, y_offset, current_line, fg=Colors.WHITE)
+                            y_offset += 1
+                            if y_offset >= end_y:
+                                break
+                        current_line = word
+                
+                if current_line and y_offset < end_y:
+                    console.print(3, y_offset, current_line, fg=Colors.WHITE)
+                    y_offset += 1
+    
+    def _render_overlay_menu(self, console: tcod.console.Console, title: str, options: list, menu_width: int = 30) -> tuple:
+        """Render a centered overlay menu with title and options.
+        Returns (menu_x, menu_y, menu_height) for additional rendering."""
+        menu_height = 6 + len(options)  # Header + options + padding
+        menu_x = (GameConfig.SCREEN_WIDTH - menu_width) // 2
+        menu_y = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
+        
+        # Menu background
+        for y in range(menu_y, menu_y + menu_height):
+            for x in range(menu_x, menu_x + menu_width):
+                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.UI_BG)
+        
+        # Menu borders (top and bottom)
+        for x in range(menu_x, menu_x + menu_width):
+            console.print(x, menu_y, '=', fg=Colors.CYAN, bg=Colors.UI_BG)
+            console.print(x, menu_y + menu_height - 1, '=', fg=Colors.CYAN, bg=Colors.UI_BG)
+        
+        # Title (centered)
+        title_x = menu_x + (menu_width - len(title)) // 2
+        console.print(title_x, menu_y + 2, title, fg=Colors.YELLOW, bg=Colors.UI_BG)
+        
+        # Options
+        for i, option in enumerate(options):
+            console.print(menu_x + 3, menu_y + 4 + i, option, fg=Colors.WHITE, bg=Colors.UI_BG)
+        
+        return menu_x, menu_y, menu_height
     
     def render_help_screen(self, console: tcod.console.Console):
         """Render the help screen using HelpMenu content."""
@@ -4471,51 +4636,13 @@ class UIRenderer:
         
         fragment_text = STORY_FRAGMENTS[fragment_index]
         
-        # Header
-        console.print(2, 1, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
-        console.print(GameConfig.SCREEN_WIDTH // 2 - 10, 2, "DATA FRAGMENT RECOVERED", fg=Colors.CYAN)
-        console.print(2, 3, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        # Render using shared components
+        content_start_y = self._render_screen_header(console, "DATA FRAGMENT RECOVERED")
+        content_end_y = GameConfig.SCREEN_HEIGHT - 6  # Leave room for 2-line footer
         
-        # Display fragment content with word wrapping
-        y_offset = 5
-        max_width = GameConfig.SCREEN_WIDTH - 6
-        lines = []
+        self._render_content_area_with_word_wrap(console, fragment_text, content_start_y, content_end_y)
         
-        # Split into paragraphs first
-        paragraphs = fragment_text.split('\n\n')
-        for paragraph in paragraphs:
-            if not paragraph.strip():
-                lines.append("")
-                continue
-                
-            # Word wrap each paragraph
-            words = paragraph.strip().split()
-            current_line = ""
-            
-            for word in words:
-                if len(current_line + " " + word) <= max_width:
-                    if current_line:
-                        current_line += " " + word
-                    else:
-                        current_line = word
-                else:
-                    if current_line:
-                        lines.append(current_line)
-                    current_line = word
-            
-            if current_line:
-                lines.append(current_line)
-            lines.append("")  # Add blank line between paragraphs
-        
-        # Render the text
-        for i, line in enumerate(lines[:GameConfig.SCREEN_HEIGHT - 10]):
-            console.print(3, y_offset + i, line, fg=Colors.WHITE)
-        
-        # Footer
-        footer_y = GameConfig.SCREEN_HEIGHT - 4
-        console.print(2, footer_y, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
-        console.print(GameConfig.SCREEN_WIDTH // 2 - 15, footer_y + 1, "Press any key to continue...", fg=Colors.YELLOW)
-        console.print(GameConfig.SCREEN_WIDTH // 2 - 12, footer_y + 2, "Press 'L' to view all lore", fg=Colors.YELLOW)
+        self._render_screen_footer(console, "Press any key to continue...", "Press 'L' to view all lore")
     
     def render_lore_viewer_screen(self, console: tcod.console.Console, game: Game):
         """Render the lore viewer showing all discovered fragments."""
@@ -4524,47 +4651,115 @@ class UIRenderer:
         discovered_fragments = game.story_fragment_manager.get_discovered_fragments()
         discovered_count, total_count = game.story_fragment_manager.get_fragment_count()
         
-        # Header
-        console.print(2, 1, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        if game.lore_viewer_mode == "reading" and discovered_fragments:
+            # Reading mode - show full fragment text
+            self._render_lore_reading_mode(console, game, discovered_fragments)
+        else:
+            # List mode - show fragment list with navigation
+            self._render_lore_list_mode(console, game, discovered_fragments, discovered_count, total_count)
+    
+    def _render_lore_list_mode(self, console: tcod.console.Console, game: Game, discovered_fragments, discovered_count: int, total_count: int):
+        """Render the lore viewer list mode."""
         title = f"RECOVERED DATA FRAGMENTS ({discovered_count}/{total_count})"
-        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.CYAN)
-        console.print(2, 3, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        content_start_y = self._render_screen_header(console, title)
         
         if not discovered_fragments:
-            # No fragments discovered yet
-            console.print(GameConfig.SCREEN_WIDTH // 2 - 15, 10, "No data fragments discovered yet.", fg=Colors.YELLOW)
-            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 12, "Reach the Military Network (Level 3) to find them.", fg=Colors.WHITE)
+            # No fragments discovered yet - center the message
+            no_fragments_y = GameConfig.SCREEN_HEIGHT // 2
+            console.print(GameConfig.SCREEN_WIDTH // 2 - 15, no_fragments_y, "No data fragments discovered yet.", fg=Colors.YELLOW)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, no_fragments_y + 2, "Reach the Military Network (Level 3) to find them.", fg=Colors.WHITE)
+            self._render_screen_footer(console, "Press ESC to close")
         else:
             # Show list of discovered fragments with brief previews
-            y_offset = 5
-            max_display_height = GameConfig.SCREEN_HEIGHT - 8
+            y_offset = content_start_y
+            max_display_height = GameConfig.SCREEN_HEIGHT - 6  # Leave room for footer
             
             for i, (fragment_index, fragment_text) in enumerate(discovered_fragments):
                 if y_offset >= max_display_height:
                     console.print(3, y_offset, f"... and {len(discovered_fragments) - i} more fragments", fg=Colors.YELLOW)
                     break
                 
+                # Highlight selected entry
+                is_selected = (i == game.lore_viewer_selection)
+                title_color = Colors.YELLOW if is_selected else Colors.WHITE
+                cursor = ">" if is_selected else " "
+                
                 # Fragment title (first line of the fragment)
                 first_line = fragment_text.split('\n')[0]
-                if len(first_line) > 60:
-                    first_line = first_line[:57] + "..."
+                if len(first_line) > 58:  # Leave room for cursor and number
+                    first_line = first_line[:55] + "..."
                 
-                console.print(3, y_offset, f"{fragment_index + 1:2d}. {first_line}", fg=Colors.WHITE)
+                console.print(2, y_offset, f"{cursor}{fragment_index + 1:2d}. {first_line}", fg=title_color)
                 y_offset += 1
                 
                 # Brief preview (first few words of actual content)
                 content_lines = [line.strip() for line in fragment_text.split('\n') if line.strip()]
                 if len(content_lines) > 1:
                     preview = content_lines[1][:70] + "..." if len(content_lines[1]) > 70 else content_lines[1]
-                    console.print(6, y_offset, preview, fg=(128, 128, 128))
+                    preview_color = (200, 200, 150) if is_selected else (128, 128, 128)
+                    console.print(6, y_offset, preview, fg=preview_color)
                     y_offset += 1
                 
                 y_offset += 1  # Space between entries
+            
+            self._render_screen_footer(console, "Up/Down: Navigate, Enter: Read, ESC: Close")
+    
+    def _render_lore_reading_mode(self, console: tcod.console.Console, game: Game, discovered_fragments):
+        """Render the lore viewer reading mode."""
+        if game.lore_viewer_selection >= len(discovered_fragments):
+            game.lore_viewer_selection = 0
+            
+        fragment_index, fragment_text = discovered_fragments[game.lore_viewer_selection]
         
-        # Footer
-        footer_y = GameConfig.SCREEN_HEIGHT - 3
-        console.print(2, footer_y, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
-        console.print(GameConfig.SCREEN_WIDTH // 2 - 10, footer_y + 1, "Press ESC to close", fg=Colors.YELLOW)
+        title = f"DATA FRAGMENT #{fragment_index + 1}"
+        content_start_y = self._render_screen_header(console, title)
+        content_end_y = GameConfig.SCREEN_HEIGHT - 4  # Leave room for footer
+        
+        self._render_content_area_with_word_wrap(console, fragment_text, content_start_y, content_end_y)
+        
+        self._render_screen_footer(console, "Any key: Back to list, ESC: Close")
+    
+    def render_pause_menu_screen(self, console: tcod.console.Console, game: Game):
+        """Render the pause menu overlay."""
+        # First render the game in background (dimmed)
+        self._render_game_background_dimmed(console, game)
+        
+        # Overlay pause menu using shared component
+        options = [
+            "ESC: Resume Game",
+            "L: View Lore",
+            "I: View Inventory", 
+            "H: Help",
+            "Q: Quit to Main Menu"
+        ]
+        
+        self._render_overlay_menu(console, "GAME PAUSED", options)
+    
+    def _render_game_background_dimmed(self, console: tcod.console.Console, game: Game):
+        """Render the game in background with dimmed colors."""
+        # Temporarily disable UI overlays for background rendering
+        original_states = {
+            'show_pause_menu': game.show_pause_menu,
+            'show_lore_viewer': game.show_lore_viewer,
+            'show_inventory': game.show_inventory,
+            'show_help': game.show_help,
+            'show_story_fragment': game.show_story_fragment
+        }
+        
+        # Clear all UI states for background rendering
+        game.show_pause_menu = False
+        game.show_lore_viewer = False
+        game.show_inventory = False
+        game.show_help = False
+        game.show_story_fragment = None
+        
+        # Render main game screen (simplified for background)
+        self.render_top_status_bar(console, game)
+        # TODO: Add dimmed map rendering here if needed
+        
+        # Restore original states
+        for attr, value in original_states.items():
+            setattr(game, attr, value)
     
     def render_top_status_bar(self, console: tcod.console.Console, game: Game):
         """Render the top status bar."""
@@ -4851,13 +5046,18 @@ class MapRenderer:
             console.print(screen_x, screen_y, '#', fg=(60, 70, 90), bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             # Darker purple shadow areas in memory
-            console.print(screen_x, screen_y, '#', fg=(80, 40, 120), bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '*', fg=(80, 40, 120), bg=Colors.BLACK)
         else:
             # Darker dots for remembered empty spaces
             console.print(screen_x, screen_y, '.', fg=(90, 90, 130), bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a single tile."""
+        # SYMBOL CONVENTIONS:
+        # - Letters (A-Z): Reserved for enemies only (Scanner=S, Patrol=P, Bot=B, etc.)
+        # - ASCII symbols: Used for everything else (walls, items, terrain, etc.)
+        # - NO unicode characters allowed for terminal compatibility
+        
         # Priority order for tile rendering
         if game.game_map.is_wall(world_pos):
             console.print(screen_x, screen_y, '#', fg=Colors.WALL, bg=Colors.BLACK)
@@ -4880,7 +5080,7 @@ class MapRenderer:
             # Story fragment - glowing/pulsing appearance
             console.print(screen_x, screen_y, '?', fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            console.print(screen_x, screen_y, '#', fg=(150, 80, 200), bg=Colors.BLACK)
+            console.print(screen_x, screen_y, '*', fg=(150, 80, 200), bg=Colors.BLACK)
         else:
             console.print(screen_x, screen_y, '.', fg=Colors.FLOOR, bg=Colors.BLACK)
     
@@ -4996,15 +5196,15 @@ class MapRenderer:
                         if i == 0:
                             # Next immediate move - brightest and largest
                             color = (255, 255, 50)
-                            symbol = '"'
+                            symbol = ','
                         elif i == 1:
                             # Second move - slightly dimmer but still bright
                             color = (240, 240, 30)
-                            symbol = '"'
+                            symbol = ','
                         else:
                             # Third+ moves - still bright yellow
                             color = (220, 220, 20)
-                            symbol = '"'
+                            symbol = ','
                         console.print(screen_x, screen_y, symbol, fg=color, bg=bg_color)
     
     def _render_gateway(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
@@ -5451,7 +5651,7 @@ class HelpMenu:
             ("MAP SYMBOLS:", Colors.CYAN),
             ("  @: Player (you)", Colors.PLAYER),
             ("  #: Walls (impassable)", Colors.WHITE),
-            ("  ▓: Shadows (stealth zones)", Colors.FLOOR),
+            ("  *: Shadows (stealth zones, purple)", Colors.FLOOR),
             ("  >: Gateway to next level", Colors.ACID_GREEN),
             ("  ?: Story fragments (lore)", Colors.CYAN),
             ("", Colors.WHITE),
@@ -5466,10 +5666,10 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("ITEMS & PICKUPS:", Colors.CYAN),
-            ("  @: Data patches (boost CPU, RAM, heat capacity)", Colors.ELECTRIC_PURPLE),
-            ("  E: Exploits (combat & utility abilities)", Colors.NEON_PINK),
-            ("  U: Permanent upgrades (permanent stat boosts)", Colors.ELECTRIC_BLUE),
-            ("  ^: CPU recovery nodes (restore health)", Colors.ACID_GREEN),
+            ("  !: Data patches (boost CPU, RAM, heat capacity)", Colors.ELECTRIC_PURPLE),
+            ("  &: Exploits (combat & utility abilities)", Colors.NEON_PINK),
+            ("  [/]/=: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
+            ("  +: CPU recovery nodes (restore health)", Colors.ACID_GREEN),
             ("  ~: Cooling nodes (reduce heat)", Colors.ELECTRIC_BLUE),
             ("", Colors.WHITE),
             
@@ -5478,7 +5678,7 @@ class HelpMenu:
             ("  Detection: Increases when spotted, Admin spawns at threshold", Colors.WHITE),
             ("  CPU: Your health - if it reaches 0, you die permanently", Colors.WHITE),
             ("  RAM: Limits how many exploits you can equip (max 5)", Colors.WHITE),
-            ("  Shadows: Hide in ▓ tiles to avoid enemy detection", Colors.WHITE),
+            ("  Shadows: Hide in purple * tiles to avoid enemy detection", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("COMBAT EXPLOITS:", Colors.CYAN),
@@ -5708,14 +5908,12 @@ def main():
                                         game.show_lore_viewer or 
                                         game.show_help or 
                                         game.show_inventory or 
-                                        game.targeting_mode):
+                                        game.targeting_mode or
+                                        game.show_pause_menu):
                                         input_handler._handle_escape()
                                     else:
-                                        # No UI states open, auto-save and return to main menu
-                                        game.auto_save()
-                                        # Disable continue option when accessed from mid-game
-                                        main_menu.refresh_options(show_continue=False)
-                                        game = None
+                                        # No UI states open, show pause menu
+                                        game.show_pause_menu = True
                                     break
                                 else:
                                     should_continue = input_handler.handle_keydown(event)
