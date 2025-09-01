@@ -2448,7 +2448,6 @@ class Game:
         self.show_help = False
         self.show_story_fragment: Optional[int] = None  # Fragment index to display
         self.show_lore_viewer = False  # L key lore viewer
-        self.show_pause_menu = False  # Pause menu state
         self.inventory_selection = 0
         
         # Targeting system
@@ -2517,6 +2516,10 @@ class Game:
     def _get_enemy_at(self, position: Position) -> Optional[Enemy]:
         """Get enemy at position - for backward compatibility."""
         return self.enemy_manager.get_enemy_at_position(position)
+    
+    def auto_save(self) -> None:
+        """Auto-save the current game state."""
+        SaveGameManager.save_game(self)
     
     def _load_from_save(self) -> bool:
         """Load game state from save file."""
@@ -3269,20 +3272,44 @@ class Game:
             self._place_permanent_upgrades()
             self._place_enemies(config["enemies"])
             
-            # Reset player state to a valid open position
+            # Reset player position to spawn location and adjust stats for new level
+            # Find a valid spawn position (open floor tile)
             spawn_pos = self._find_valid_spawn_position()
-            self._reset_player_state(spawn_pos.x, spawn_pos.y)
-            self.player.detection = max(0, self.player.detection - 20)
-            self.player.heat = max(0, self.player.heat - 30)
+            self.player.x = spawn_pos.x
+            self.player.y = spawn_pos.y
+            
+            # Stat changes for level transition:
+            # - CPU: Preserved (carries over)
+            # - Heat: Preserved (carries over) 
+            # - Detection: Reset to 0 (doesn't carry over)
+            self.player.detection = 0
             
             self.message_log.add_message(f"{config['name']} loaded")
             self.message_log.add_message(f"{len(self.enemies)} security processes")
+            self.message_log.add_message("Network security reset - detection cleared")
             
         finally:
             # Restore random seed
             random.seed()
         
         self.admin_spawned = False
+    
+    def _find_valid_spawn_position(self) -> Position:
+        """Find a valid spawn position for the player (open floor tile)."""
+        # Try to find an open position, starting from a safe area
+        for _ in range(100):  # Maximum attempts to prevent infinite loop
+            x = random.randint(2, GameConfig.MAP_WIDTH - 3)
+            y = random.randint(2, GameConfig.MAP_HEIGHT - 3)
+            pos = Position(x, y)
+            
+            # Check if position is valid (not a wall, not occupied by enemies)
+            if (self.game_map.is_valid_position(pos) and 
+                not self.game_map.is_wall(pos) and
+                not self._get_enemy_at(pos)):
+                return pos
+        
+        # Fallback to default spawn if no valid position found
+        return Position(5, 5)
     
     def _generate_shadows(self, coverage: float):
         """Generate strategic shadow areas for better stealth gameplay."""
@@ -3981,9 +4008,6 @@ class InputHandler:
             self.game.targeting_mode = False
             self.game.targeting_exploit = None
             self.game.message_log.add_message("Targeting cancelled")
-        else:
-            # Show pause menu instead of exiting
-            self.game.show_pause_menu = True
         return True
     
     def _handle_inventory_input(self, event) -> bool:
@@ -5121,6 +5145,15 @@ class MainMenu:
         self.show_warning = False
         self.warning_selection = 0
     
+    def refresh_options(self, show_continue: bool = True) -> None:
+        """Refresh menu options. Set show_continue=False when accessed from mid-game."""
+        if show_continue and SaveGameManager.save_exists():
+            self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Exit"]
+        else:
+            self.options = ["New Game", "Settings", "Help", "Lore", "Exit"]
+        # Reset selection to prevent index out of bounds
+        self.selected_option = 0
+    
     def render(self, console: tcod.console.Console) -> None:
         """Render the main menu."""
         console.clear()
@@ -5539,76 +5572,6 @@ class SettingsMenu:
     
 
 
-class PauseMenu:
-    """Pause menu shown during gameplay when Escape is pressed."""
-    
-    def __init__(self, settings: GameSettings):
-        self.settings = settings
-        self.selected_option = 0
-        self.options = ["Resume", "New Game", "Settings", "Quit to Main Menu"]
-    
-    def render(self, console: tcod.console.Console) -> None:
-        """Render the pause menu overlay."""
-        # Create semi-transparent background
-        for x in range(GameConfig.SCREEN_WIDTH):
-            for y in range(GameConfig.SCREEN_HEIGHT):
-                console.print(x, y, " ", bg=Colors.BLACK)
-        
-        # Title
-        title = "GAME PAUSED"
-        console.print(
-            GameConfig.SCREEN_WIDTH // 2 - len(title) // 2,
-            GameConfig.SCREEN_HEIGHT // 2 - 8,
-            title,
-            Colors.WHITE
-        )
-        
-        # Options
-        start_y = GameConfig.SCREEN_HEIGHT // 2 - 4
-        for i, option in enumerate(self.options):
-            color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
-            console.print(
-                GameConfig.SCREEN_WIDTH // 2 - len(option) // 2,
-                start_y + i * 2,
-                option,
-                color
-            )
-        
-        # Instructions
-        instructions = [
-            "Arrow Keys/WASD: Navigate",
-            "Enter: Select",
-            "Escape: Resume Game"
-        ]
-        
-        for i, instruction in enumerate(instructions):
-            console.print(
-                GameConfig.SCREEN_WIDTH // 2 - len(instruction) // 2,
-                GameConfig.SCREEN_HEIGHT - 6 + i,
-                instruction,
-                Colors.LIGHT_GRAY
-            )
-    
-    def handle_input(self, event) -> str:
-        """Handle pause menu input. Returns action: 'resume', 'new_game', 'settings', 'quit', or ''."""
-        if event.sym in (tcod.event.KeySym.UP, tcod.event.KeySym.W, tcod.event.KeySym.KP_8):
-            self.selected_option = (self.selected_option - 1) % len(self.options)
-        elif event.sym in (tcod.event.KeySym.DOWN, tcod.event.KeySym.S, tcod.event.KeySym.KP_2):
-            self.selected_option = (self.selected_option + 1) % len(self.options)
-        elif event.sym == tcod.event.KeySym.RETURN:
-            option = self.options[self.selected_option]
-            if option == "Resume":
-                return "resume"
-            elif option == "New Game":
-                return "new_game"
-            elif option == "Settings":
-                return "settings"
-            elif option == "Quit to Main Menu":
-                return "quit"
-        elif event.sym == tcod.event.KeySym.ESCAPE:
-            return "resume"
-        
-        return ""
 
 
 def main():
@@ -5623,13 +5586,13 @@ def main():
             settings_menu = SettingsMenu(settings)
             help_menu = HelpMenu()
             lore_menu = LoreMenu()
-            pause_menu = PauseMenu(settings)
             
             game = None
             
             while True:
                 if game is None:
-                    # Show main menu flow
+                    # Show main menu flow - refresh options to show/hide continue based on save state
+                    main_menu.refresh_options(show_continue=True)
                     current_menu = main_menu
                     
                     while True:
@@ -5685,49 +5648,6 @@ def main():
                         # Update sound system
                         game.sound_manager.update()
                         
-                        # Handle pause menu
-                        if game.show_pause_menu:
-                            pause_menu.render(console)
-                            context.present(console)
-                            
-                            for event in tcod.event.wait():
-                                if event.type == "QUIT":
-                                    game.auto_save()
-                                    game.sound_manager.cleanup()
-                                    return
-                                elif event.type == "KEYDOWN":
-                                    action = pause_menu.handle_input(event)
-                                    
-                                    if action == "resume":
-                                        game.show_pause_menu = False
-                                    elif action == "settings":
-                                        # Handle settings from pause menu
-                                        settings_from_pause = True
-                                        while settings_from_pause:
-                                            settings_menu.render(console)
-                                            context.present(console)
-                                            
-                                            for settings_event in tcod.event.wait():
-                                                if settings_event.type == "QUIT":
-                                                    game.auto_save()
-                                                    game.sound_manager.cleanup()
-                                                    return
-                                                elif settings_event.type == "KEYDOWN":
-                                                    settings_action = settings_menu.handle_input(settings_event)
-                                                    if settings_action == "back":
-                                                        settings_from_pause = False
-                                                        break
-                                    elif action == "new_game":
-                                        game.auto_save()
-                                        game = Game(load_save=False, settings=settings)
-                                        renderer = Renderer()
-                                        input_handler = InputHandler(game)
-                                    elif action == "quit":
-                                        game.auto_save()
-                                        game = None  # Return to main menu
-                                        # Reset main menu warning state
-                                        main_menu.show_warning = False
-                            continue
                         
                         # Normal game rendering and input
                         renderer.render_game(console, game)
@@ -5750,8 +5670,11 @@ def main():
                                         game.targeting_mode):
                                         input_handler._handle_escape()
                                     else:
-                                        # No UI states open, show pause menu
-                                        game.show_pause_menu = True
+                                        # No UI states open, auto-save and return to main menu
+                                        game.auto_save()
+                                        # Disable continue option when accessed from mid-game
+                                        main_menu.refresh_options(show_continue=False)
+                                        game = None
                                     break
                                 else:
                                     should_continue = input_handler.handle_keydown(event)
