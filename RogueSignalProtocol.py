@@ -2473,7 +2473,6 @@ class Game:
         self.show_lore_viewer = False  # L key lore viewer
         self.lore_viewer_selection = 0  # Selected lore entry index
         self.lore_viewer_mode = "list"  # "list" or "reading"
-        self.show_pause_menu = False  # ESC key pause menu
         self.inventory_selection = 0
         
         # Targeting system
@@ -4024,9 +4023,6 @@ class InputHandler:
         if self.game.show_lore_viewer:
             return self._handle_lore_viewer_input(event)
         
-        if self.game.show_pause_menu:
-            return self._handle_pause_menu_input(event)
-        
         if self.game.show_inventory:
             return self._handle_inventory_input(event)
         
@@ -4044,8 +4040,6 @@ class InputHandler:
             self.game.show_lore_viewer = False
             self.game.lore_viewer_mode = "list"
             self.game.lore_viewer_selection = 0
-        elif self.game.show_pause_menu:
-            self.game.show_pause_menu = False
         elif self.game.show_help:
             self.game.show_help = False
         elif self.game.show_inventory:
@@ -4097,30 +4091,6 @@ class InputHandler:
         
         return True
     
-    def _handle_pause_menu_input(self, event) -> bool:
-        """Handle input while pause menu is open."""
-        if event.sym == tcod.event.KeySym.L:
-            # Open lore viewer
-            self.game.show_pause_menu = False
-            self.game.show_lore_viewer = True
-            self.game.lore_viewer_mode = "list"
-            self.game.lore_viewer_selection = 0
-        elif event.sym == tcod.event.KeySym.I:
-            # Open inventory
-            self.game.show_pause_menu = False
-            self.game.show_inventory = True
-            self.game.inventory_selection = 0
-        elif event.sym == tcod.event.KeySym.H:
-            # Open help
-            self.game.show_pause_menu = False
-            self.game.show_help = True
-        elif event.sym == tcod.event.KeySym.Q:
-            # Quit to main menu
-            self.game.auto_save()
-            return False  # This will exit to main menu
-        # ESC to close is handled by the escape handler
-        return True
-
     def _handle_targeting_input(self, event) -> bool:
         """Handle input while in targeting mode."""
         # Movement keys - expanded to include numpad and arrows
@@ -4303,8 +4273,6 @@ class Renderer:
             self.ui_renderer.render_story_fragment_screen(console, game, game.show_story_fragment)
         elif game.show_lore_viewer:
             self.ui_renderer.render_lore_viewer_screen(console, game)
-        elif game.show_pause_menu:
-            self.ui_renderer.render_pause_menu_screen(console, game)
         elif game.show_help:
             self.ui_renderer.render_help_screen(console)
         elif game.show_inventory:
@@ -4718,48 +4686,6 @@ class UIRenderer:
         self._render_content_area_with_word_wrap(console, fragment_text, content_start_y, content_end_y)
         
         self._render_screen_footer(console, "Any key: Back to list, ESC: Close")
-    
-    def render_pause_menu_screen(self, console: tcod.console.Console, game: Game):
-        """Render the pause menu overlay."""
-        # First render the game in background (dimmed)
-        self._render_game_background_dimmed(console, game)
-        
-        # Overlay pause menu using shared component
-        options = [
-            "ESC: Resume Game",
-            "L: View Lore",
-            "I: View Inventory", 
-            "H: Help",
-            "Q: Quit to Main Menu"
-        ]
-        
-        self._render_overlay_menu(console, "GAME PAUSED", options)
-    
-    def _render_game_background_dimmed(self, console: tcod.console.Console, game: Game):
-        """Render the game in background with dimmed colors."""
-        # Temporarily disable UI overlays for background rendering
-        original_states = {
-            'show_pause_menu': game.show_pause_menu,
-            'show_lore_viewer': game.show_lore_viewer,
-            'show_inventory': game.show_inventory,
-            'show_help': game.show_help,
-            'show_story_fragment': game.show_story_fragment
-        }
-        
-        # Clear all UI states for background rendering
-        game.show_pause_menu = False
-        game.show_lore_viewer = False
-        game.show_inventory = False
-        game.show_help = False
-        game.show_story_fragment = None
-        
-        # Render main game screen (simplified for background)
-        self.render_top_status_bar(console, game)
-        # TODO: Add dimmed map rendering here if needed
-        
-        # Restore original states
-        for attr, value in original_states.items():
-            setattr(game, attr, value)
     
     def render_top_status_bar(self, console: tcod.console.Console, game: Game):
         """Render the top status bar."""
@@ -5450,10 +5376,6 @@ class MainMenu:
             GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
             "Enter: Select", fg=(128, 128, 128)
         )
-        console.print(
-            GameConfig.SCREEN_WIDTH // 2 - 8, GameConfig.SCREEN_HEIGHT - 4,
-            "ESC: Exit", fg=(128, 128, 128)
-        )
         
         # Story fragments info
         if SaveGameManager.save_exists():
@@ -5551,8 +5473,7 @@ class MainMenu:
                 return "lore"
             elif option == "Exit":
                 return "exit"
-        elif event.sym == tcod.event.KeySym.ESCAPE:
-            return "exit"
+        # ESC disabled on main menu to prevent accidental exit
         
         return ""
     
@@ -5908,12 +5829,12 @@ def main():
                                         game.show_lore_viewer or 
                                         game.show_help or 
                                         game.show_inventory or 
-                                        game.targeting_mode or
-                                        game.show_pause_menu):
+                                        game.targeting_mode):
                                         input_handler._handle_escape()
                                     else:
-                                        # No UI states open, show pause menu
-                                        game.show_pause_menu = True
+                                        # No UI states open, auto-save and go to main menu
+                                        game.auto_save()
+                                        game = None
                                     break
                                 else:
                                     should_continue = input_handler.handle_keydown(event)
