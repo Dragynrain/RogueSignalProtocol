@@ -1547,7 +1547,8 @@ class Player:
         distance = self.position.distance_to(enemy.position)
         
         # Adjacent enemies should ALWAYS be visible (critical for combat feedback)
-        if distance <= 1:
+        # Use 1.5 to account for diagonal adjacency and any floating point precision issues
+        if distance <= 1.5:
             return True
         
         # Check basic vision range
@@ -1810,11 +1811,18 @@ class Enemy:
         
         # If we can't move toward the target, try advancing to next patrol point
         # This prevents getting stuck on one patrol point
-        if not moved and self.position.distance_to(target) > 2:
-            # Skip to next patrol point if we're stuck
-            self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
-            target = self.patrol_points[self.patrol_index]
-            moved = self._move_toward_patrol(target, game_map, player, game)
+        if not moved:
+            # Check if we're blocked by a stationary enemy or obstacle
+            blocking_enemy = game._get_enemy_at(target) if game else None
+            is_blocked_by_stationary = (blocking_enemy and 
+                                      blocking_enemy.type_data.movement == EnemyMovement.STATIC)
+            
+            # Skip to next patrol point if we're stuck, especially if blocked by stationary enemy
+            # or if we've been trying to reach this point for too long
+            if (self.position.distance_to(target) > 1 or is_blocked_by_stationary):
+                self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
+                target = self.patrol_points[self.patrol_index]
+                moved = self._move_toward_patrol(target, game_map, player, game)
         
         return moved
 
@@ -4751,7 +4759,7 @@ class InputHandler:
     def _show_exploit_details(self, exploit_def):
         """Show detailed information about an exploit."""
         self.game.message_log.add_message(f"=== {exploit_def.name} ===")
-        self.game.message_log.add_message(f"Category: {exploit_def.exploit_type.title()}")
+        self.game.message_log.add_message(f"Category: {exploit_def.exploit_class.title()}")
         self.game.message_log.add_message(f"RAM Cost: {exploit_def.ram}")
         self.game.message_log.add_message(f"Heat Cost: {exploit_def.heat}")
         

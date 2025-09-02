@@ -144,3 +144,347 @@ ERROR:RogueSignalProtocol.py:6637 - Rendering error: 'ExploitDefinition' object 
 ERROR:RogueSignalProtocol.py:6637 - Rendering error: 'ExploitDefinition' object has no attribute 'exploit_type' (line 4754)
 ERROR:RogueSignalProtocol.py:6637 - Rendering error: 'ExploitDefinition' object has no attribute 'exploit_type' (line 4754)
 ERROR:RogueSignalProtocol.py:6637 - Rendering error: 'ExploitDefinition' object has no attribute 'exploit_type' (line 4754)
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'item_pickup_data'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'enemy_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'enemy_death'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'enemy_death'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'item_pickup_data'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'item_pickup_exploit'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'ui_menu_open'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'item_pickup_exploit'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'item_pickup_exploit'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'item_pickup_data'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'enemy_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'enemy_death'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'item_pickup_exploit'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'enemy_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'enemy_death'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'level_complete'
+WARNING:RogueSignalProtocol.py:767 - Music file not found: music\level2_infiltration.ogg
+INFO:RogueSignalProtocol.py:449 - Game saved successfully
+INFO:RogueSignalProtocol.py:3094 - Auto-save completed
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'item_pickup_data'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'item_pickup_exploit'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_attack'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'enemy_death'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'player_move'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'item_pickup_data'
+DEBUG:RogueSignalProtocol.py:726 - Sound not loaded - would play: 'ui_menu_open'
+INFO:RogueSignalProtocol.py:449 - Game saved successfully
+INFO:RogueSignalProtocol.py:3094 - Auto-save completed
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
+INFO:RogueSignalProtocol.py:466 - Game loaded successfully
