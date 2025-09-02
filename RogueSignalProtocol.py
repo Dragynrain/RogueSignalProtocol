@@ -4749,12 +4749,12 @@ class Renderer:
     
     def _render_with_tall_font(self, console: tcod.console.Console, context, render_func):
         """Render UI screen with tall font."""
-        # For now, render directly to the main console since dynamic font switching is complex
-        # The tall font setup should be handled at initialization level
+        # Clear the UI console and render to it
+        self.ui_console.clear()
         render_func()
         
-        # Note: True dual-font rendering would require separate contexts or 
-        # more complex tileset management. For now, we'll use single font approach.
+        # Copy the UI console content to the main console
+        self.ui_console.blit(console)
     
     def _render_main_game_screen_dual(self, console: tcod.console.Console, game: Game, context=None):
         """Render the main game screen (using tall font as primary)."""
@@ -5455,14 +5455,15 @@ class MapRenderer:
         """Render a tile from memory with dimmed neon colors."""
         # Only render basic terrain in memory, not dynamic elements
         if game.game_map.is_wall(world_pos):
-            # Dimmed neon wall
-            console.print(screen_x, screen_y, '#', fg=(60, 70, 90), bg=Colors.BLACK)
+            # Smart wall system for remembered walls too
+            wall_char = self._get_smart_wall_character(game.game_map, world_pos.x, world_pos.y)
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=(60, 70, 90), bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            # Darker purple shadow areas in memory
-            console.print(screen_x, screen_y, '*', fg=(80, 40, 120), bg=Colors.BLACK)
+            # Position 8 = ◘ (inverse bullet) for remembered shadows
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(80, 40, 120), bg=Colors.BLACK)
         else:
-            # Darker dots for remembered empty spaces
-            console.print(screen_x, screen_y, '.', fg=(90, 90, 130), bg=Colors.BLACK)
+            # Position 7 = • (bullet) for remembered empty spaces
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=(90, 90, 130), bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a single tile."""
@@ -5473,7 +5474,9 @@ class MapRenderer:
         
         # Priority order for tile rendering
         if game.game_map.is_wall(world_pos):
-            console.print(screen_x, screen_y, '#', fg=Colors.WALL, bg=Colors.BLACK)
+            # Smart wall system - analyze neighbors to pick correct wall piece
+            wall_char = self._get_smart_wall_character(game.game_map, world_pos.x, world_pos.y)
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=Colors.WALL, bg=Colors.BLACK)
         elif game.game_map.is_cooling_node(world_pos):
             # Position 4 = ♦ (diamond) 
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
@@ -5482,9 +5485,10 @@ class MapRenderer:
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.ELECTRIC_BLUE, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
-            color = self._get_patch_color(patch.color)
+            # Use the actual color tuple from the patch, not a mapped color
+            actual_color = getattr(Colors, patch.color.upper(), Colors.WHITE)
             # Position 21 = § (section) for data scraps  
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=color, bg=Colors.BLACK)
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=actual_color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
             console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.permanent_upgrades:
@@ -5503,14 +5507,43 @@ class MapRenderer:
             # Position 7 = • (bullet) for empty space
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=Colors.FLOOR, bg=Colors.BLACK)
     
-    def _get_patch_color(self, color_name: str) -> Tuple[int, int, int]:
-        """Get color tuple for data patch."""
-        color_map = {
-            'crimson': Colors.NEON_PINK, 'azure': Colors.ELECTRIC_BLUE, 'emerald': Colors.ACID_GREEN,
-            'golden': Colors.YELLOW, 'violet': Colors.ELECTRIC_PURPLE, 'silver': Colors.CYAN
-        }
-        return color_map.get(color_name, Colors.CYAN)
     
+    def _get_smart_wall_character(self, game_map, x: int, y: int) -> int:
+        """Get the appropriate wall character based on neighboring walls"""
+        # Check which directions have walls
+        n = game_map.is_wall(Position(x, y - 1))  # North
+        s = game_map.is_wall(Position(x, y + 1))  # South  
+        e = game_map.is_wall(Position(x + 1, y))  # East
+        w = game_map.is_wall(Position(x - 1, y))  # West
+        
+        # Box-drawing character positions (these might need adjustment)
+        if not any([n, s, e, w]):
+            return 219  # █ isolated wall
+        elif n and s and e and w:
+            return 197  # ┼ 4-way cross
+        elif n and s and e and not w:
+            return 195  # ├ T pointing right  
+        elif n and s and not e and w:
+            return 180  # ┤ T pointing left
+        elif n and not s and e and w:
+            return 193  # ┴ T pointing up
+        elif not n and s and e and w:
+            return 194  # ┬ T pointing down
+        elif n and not s and e and not w:
+            return 192  # └ bottom-left corner
+        elif n and not s and not e and w:
+            return 217  # ┘ bottom-right corner
+        elif not n and s and e and not w:
+            return 218  # ┌ top-left corner
+        elif not n and s and not e and w:
+            return 191  # ┐ top-right corner
+        elif n and s and not e and not w:
+            return 179  # │ vertical line
+        elif not n and not s and e and w:
+            return 196  # ─ horizontal line
+        else:
+            return 219  # █ fallback to solid block
+
     def _get_upgrade_color(self, color_name: str) -> Tuple[int, int, int]:
         """Get color tuple for permanent upgrade."""
         color_map = {
