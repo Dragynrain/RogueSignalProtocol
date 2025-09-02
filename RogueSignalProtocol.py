@@ -4728,25 +4728,33 @@ class Renderer:
         self.composite_console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
     
     def render_game(self, console: tcod.console.Console, game: Game, context=None):
-        """Render the complete game state."""
+        """Render the complete game state with dual-font system."""
         console.clear()
         
         if game.show_story_fragment is not None:
-            self.ui_renderer.render_story_fragment_screen(console, game, game.show_story_fragment)
+            self._render_with_tall_font(console, context, 
+                lambda: self.ui_renderer.render_story_fragment_screen(self.ui_console, game, game.show_story_fragment))
         elif game.show_lore_viewer:
-            self.ui_renderer.render_lore_viewer_screen(console, game)
+            self._render_with_tall_font(console, context, 
+                lambda: self.ui_renderer.render_lore_viewer_screen(self.ui_console, game))
         elif game.show_help:
-            self.ui_renderer.render_help_screen(console)
+            self._render_with_tall_font(console, context, 
+                lambda: self.ui_renderer.render_help_screen(self.ui_console))
         elif game.show_inventory:
-            self.ui_renderer.render_inventory_screen(console, game)
+            self._render_with_tall_font(console, context, 
+                lambda: self.ui_renderer.render_inventory_screen(self.ui_console, game))
         else:
+            # Main game screen uses square font for everything
             self._render_main_game_screen(console, game)
     
     def _render_with_tall_font(self, console: tcod.console.Console, context, render_func):
-        """Render UI screen with tall font (simplified approach)."""
-        # For now, just render normally since we're using tall font as primary
+        """Render UI screen with tall font."""
+        # For now, render directly to the main console since dynamic font switching is complex
+        # The tall font setup should be handled at initialization level
         render_func()
-        console.blit(self.ui_console)
+        
+        # Note: True dual-font rendering would require separate contexts or 
+        # more complex tileset management. For now, we'll use single font approach.
     
     def _render_main_game_screen_dual(self, console: tcod.console.Console, game: Game, context=None):
         """Render the main game screen (using tall font as primary)."""
@@ -5467,27 +5475,33 @@ class MapRenderer:
         if game.game_map.is_wall(world_pos):
             console.print(screen_x, screen_y, '#', fg=Colors.WALL, bg=Colors.BLACK)
         elif game.game_map.is_cooling_node(world_pos):
-            console.print(screen_x, screen_y, '~', fg=Colors.CYAN, bg=Colors.BLACK)
+            # Position 4 = ♦ (diamond) 
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_cpu_recovery_node(world_pos):
-            console.print(screen_x, screen_y, '+', fg=Colors.ELECTRIC_BLUE, bg=Colors.BLACK)
+            # Position 3 = ♥ (heart)
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.ELECTRIC_BLUE, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             color = self._get_patch_color(patch.color)
-            console.print(screen_x, screen_y, '!', fg=color, bg=Colors.BLACK)
+            # Position 21 = § (section) for data scraps  
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
             console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.permanent_upgrades:
             upgrade_key = game.game_map.permanent_upgrades[(world_pos.x, world_pos.y)]
             upgrade = GameUpgrades.UPGRADES[upgrade_key]
             color = self._get_upgrade_color(upgrade.color)
-            console.print(screen_x, screen_y, upgrade.symbol, fg=color, bg=Colors.BLACK)
+            # Position 157 = Ø for CPU/heat upgrades (different colors)
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[157]), fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.story_fragments:
-            # Story fragment - glowing/pulsing appearance
-            console.print(screen_x, screen_y, '?', fg=Colors.CYAN, bg=Colors.BLACK)
+            # Position 14 = ♫ (double music note) for lore scraps
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[14]), fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            console.print(screen_x, screen_y, '*', fg=(150, 80, 200), bg=Colors.BLACK)
+            # Position 8 = ◘ (inverse bullet) for shadows
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(150, 80, 200), bg=Colors.BLACK)
         else:
-            console.print(screen_x, screen_y, '.', fg=Colors.FLOOR, bg=Colors.BLACK)
+            # Position 7 = • (bullet) for empty space
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=Colors.FLOOR, bg=Colors.BLACK)
     
     def _get_patch_color(self, color_name: str) -> Tuple[int, int, int]:
         """Get color tuple for data patch."""
@@ -5601,15 +5615,18 @@ class MapRenderer:
                         if i == 0:
                             # Next immediate move - brightest and largest
                             color = (255, 255, 50)
-                            symbol = ','
+                            # Position 9 = ○ (circle) for enemy move intent
+                            symbol = chr(tcod.tileset.CHARMAP_CP437[9])
                         elif i == 1:
                             # Second move - slightly dimmer but still bright
                             color = (240, 240, 30)
-                            symbol = ','
+                            # Position 9 = ○ (circle) for enemy move intent
+                            symbol = chr(tcod.tileset.CHARMAP_CP437[9])
                         else:
                             # Third+ moves - still bright yellow
                             color = (220, 220, 20)
-                            symbol = ','
+                            # Position 9 = ○ (circle) for enemy move intent
+                            symbol = chr(tcod.tileset.CHARMAP_CP437[9])
                         console.print(screen_x, screen_y, symbol, fg=color, bg=bg_color)
     
     def _render_gateway(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
@@ -5685,7 +5702,8 @@ class MapRenderer:
         if (0 <= player_screen_x < GameConfig.GAME_AREA_WIDTH and 
             1 <= player_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
             player_color = self._get_player_color(game.player)
-            console.print(player_screen_x, player_screen_y, '@', fg=player_color, bg=Colors.BLACK)
+            # Position 2 = ☻ (inverse smiley)
+            console.print(player_screen_x, player_screen_y, chr(tcod.tileset.CHARMAP_CP437[2]), fg=player_color, bg=Colors.BLACK)
     
     def _get_player_color(self, player: Player) -> Tuple[int, int, int]:
         """Get player color based on current state."""
@@ -5732,52 +5750,29 @@ class MapRenderer:
 # ============================================================================
 
 def load_tilesets():
-    """Load both square and tall tilesets for dual-font system."""
-    square_tileset = None
-    tall_tileset = None
+    """Load both square and tall tilesets - no fallbacks, missing fonts indicate corrupt installation."""
     
-    try:
-        # Load square tileset for game world
-        square_tileset = tcod.tileset.load_tilesheet(
-            "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
-        )
-        logging.info("Loaded square tileset successfully")
-    except (FileNotFoundError, ImportError, Exception) as e:
-        logging.warning(f"Failed to load square tileset: {e}")
-        try:
-            # Fallback to truetype font for square
-            square_tileset = tcod.tileset.load_truetype_font("Orbitron-VariableFont_wght.ttf", 16, 16)
-            logging.info("Loaded square truetype font as fallback")
-        except Exception as e2:
-            logging.error(f"Square font fallback failed: {e2}")
+    # Load square tileset for game world
+    square_tileset = tcod.tileset.load_tilesheet(
+        "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
+    )
+    logging.info("Loaded square tileset successfully")
     
-    try:
-        # Load tall tileset - the file is 160x256 pixels
-        # This suggests either 16x16 grid (10x16 chars) or 10x16 grid (16x16 chars)
-        # Based on filename "terminal10x16", it's likely 16 columns x 16 rows
-        tall_tileset = tcod.tileset.load_tilesheet(
-            "terminal10x16_gs_ro.png", 16, 16, tcod.tileset.CHARMAP_CP437
-        )
-        logging.info("Loaded tall tileset successfully with 16x16 grid")
-            
-    except Exception as e:
-        logging.error(f"Failed to load tall tileset: {e}")
-        # Use square tileset as fallback for tall
-        tall_tileset = square_tileset
+    # Load tall tileset for UI text
+    tall_tileset = tcod.tileset.load_tilesheet(
+        "terminal10x16_gs_ro.png", 16, 16, tcod.tileset.CHARMAP_CP437
+    )
+    logging.info("Loaded tall tileset successfully")
     
     return square_tileset, tall_tileset
 
 def initialize_tcod_context():
-    """Initialize tcod context with fallback to square font."""
+    """Initialize tcod context with tall font as primary."""
     square_tileset, tall_tileset = load_tilesets()
     
-    # Use tall tileset as primary if available, otherwise fall back to square
-    primary_tileset = tall_tileset if tall_tileset and tall_tileset != square_tileset else square_tileset
-    
-    if primary_tileset == tall_tileset:
-        logging.info("Using tall tileset as primary font")
-    else:
-        logging.info("Using square tileset as primary font (tall font failed to load)")
+    # Use tall tileset as primary
+    primary_tileset = tall_tileset
+    logging.info("Using tall font as primary")
     
     context_args = {
         "columns": GameConfig.SCREEN_WIDTH,
