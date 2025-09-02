@@ -3,7 +3,7 @@
 Rogue Signal Protocol - Enhanced Edition
 A stealth-focused traditional roguelike using Python and tcod
 
-Features cyberpunk-themed infiltration gameplay with permadeath,
+Features cyberpunk-themed exfiltration gameplay with permadeath,
 procedural level generation, and persistent story progression.
 """
 
@@ -522,7 +522,7 @@ class SaveGameManager:
     
     @classmethod
     def _serialize_data_patches(cls, patches: Dict) -> Dict[str, Dict]:
-        """Serialize data patches."""
+        """Serialize data codes."""
         return {
             f"{pos[0]},{pos[1]}": {
                 "color": patch.color,
@@ -991,7 +991,7 @@ class Colors:
     FLOOR = (180, 180, 220)  # Bright light dots for empty spaces
     WALL = (120, 140, 180)  # Light blue-gray walls
     SHADOW = (3, 3, 8)  # Dark shadow areas
-    PLAYER = (20, 255, 255)  # Bright cyan player
+    PLAYER = (144, 238, 144)  # Light green player
     GATEWAY = (255, 220, 20)  # Bright neon yellow
     
     # Enemy colors with neon intensity
@@ -1020,6 +1020,44 @@ class Colors:
     LOG_BG = (8, 12, 20)  # Darker blue background
     LOG_BORDER = (20, 255, 200)  # Cyber teal border
     LIGHT_GRAY = (160, 170, 190)  # Light cyberpunk gray
+
+# ============================================================================
+# GAME CONFIGURATION
+# ============================================================================
+
+class GameConfigLoader:
+    """Load and manage game configuration from JSON files."""
+    
+    @staticmethod
+    def load_config():
+        """Load game configuration from JSON file."""
+        try:
+            config_path = Path(__file__).parent / "game_config.json"
+            if config_path.exists():
+                with open(config_path, 'r') as f:
+                    return json.load(f)
+        except Exception as e:
+            logging.warning(f"Could not load game config: {e}")
+        
+        # Return default config if loading fails
+        return GameConfigLoader._get_default_config()
+    
+    @staticmethod
+    def _get_default_config():
+        """Fallback default configuration."""
+        return {
+            "colors": {
+                "exploits": {
+                    "stealth": [138, 43, 226],
+                    "combat": [255, 20, 60],
+                    "utility": [255, 215, 0],
+                    "emergency": [255, 69, 0]
+                }
+            }
+        }
+
+# Load configuration at startup
+GAME_CONFIG = GameConfigLoader.load_config()
 
 # ============================================================================
 # ENUMS AND DATA CLASSES
@@ -1190,7 +1228,7 @@ class InventoryItem:
         return False
 
 class DataPatch(InventoryItem):
-    """Randomized data patches with unknown effects until used."""
+    """Randomized data codes with unknown effects until used."""
     
     def __init__(self, color: str, effect: str, name: str, description: str = "", quantity: int = 1):
         super().__init__(name, "data_patch", description)
@@ -1200,7 +1238,7 @@ class DataPatch(InventoryItem):
         self.discovered = False
     
     def use(self, player: 'Player', game: 'Game') -> bool:
-        """Apply the data patch effect to the player."""
+        """Apply the data code effect to the player."""
         if self.color not in game.data_patch_effects:
             return False
         
@@ -1314,7 +1352,7 @@ class InventoryManager:
     def add_item(self, item: InventoryItem) -> bool:
         """Add an item to inventory."""
         if isinstance(item, DataPatch):
-            # Look for existing data patch of the same color
+            # Look for existing data code of the same color
             for existing_item in self.items:
                 if (isinstance(existing_item, DataPatch) and 
                     existing_item.color == item.color):
@@ -1326,7 +1364,7 @@ class InventoryManager:
                         return True
             # No existing stack found, add as new item
         
-        # Add non-data-patch items or new data patch colors
+        # Add non-data-code items or new data code colors
         self.items.append(item)
         return True
     
@@ -1346,9 +1384,9 @@ class InventoryManager:
         return items
     
     def get_display_items(self) -> List[InventoryItem]:
-        """Get all items in display order (data patches first, then exploits)."""
+        """Get all items in display order (data codes first, then exploits)."""
         display_items = []
-        # Add data patches first (sorted alphabetically)
+        # Add data codes first (sorted alphabetically)
         display_items.extend(self.get_items_by_type("data_patch"))
         # Add other items (exploits, etc.)
         display_items.extend(self.get_items_by_type("exploit"))
@@ -1923,7 +1961,7 @@ class GameMap:
         return (position.x, position.y) in self.cpu_recovery_nodes
     
     def get_data_patch(self, position: Position) -> Optional[DataPatch]:
-        """Get data patch at position."""
+        """Get data code at position."""
         return self.data_patches.get((position.x, position.y))
     
     def get_exploit_pickup(self, position: Position) -> Optional[ExploitItem]:
@@ -2870,7 +2908,7 @@ class Game:
             except (ValueError, IndexError):
                 continue  # Skip malformed coordinate data
         
-        # Restore data patch effects
+        # Restore data code effects
         self.data_patch_effects = save_data["data_patch_effects"]
     
     def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:
@@ -2912,7 +2950,7 @@ class Game:
         self.game_map.permanent_upgrades.clear()
         self.game_map.story_fragments.clear()
         
-        # Restore data patches
+        # Restore data codes
         for pos_str, patch_data in map_data["data_patches"].items():
             try:
                 coords = pos_str.split(',')
@@ -3023,7 +3061,7 @@ class Game:
                 logging.warning("Auto-save failed")
     
     def _randomize_data_patches(self):
-        """Randomize data patch effects for this game session."""
+        """Randomize data code effects for this game session."""
         colors = ['crimson', 'azure', 'emerald', 'golden', 'violet', 'silver']
         effects = [
             ('restore_cpu', f'Restore {GameBalance.CPU_RESTORE_MIN}-{GameBalance.CPU_RESTORE_MAX} CPU'),
@@ -3518,7 +3556,7 @@ class Game:
         self.level += 1
         if self.level > 3:
             self.sound_manager.play_music("victory.ogg", loops=1)
-            self.message_log.add_message("INFILTRATION COMPLETE!")
+            self.message_log.add_message("EXFILTRATION COMPLETE!")
             self.message_log.add_message(f"Stats: Turns:{self.turn} Det:{int(self.player.detection)}%")
             self.game_over = True
             # Auto-save on game completion
@@ -3730,12 +3768,12 @@ class Game:
                 placed_nodes += 1
     
     def _place_data_patches(self):
-        """Place data patches throughout the level."""
-        # Ensure data patch effects are initialized
+        """Place data codes throughout the level."""
+        # Ensure data code effects are initialized
         if not self.data_patch_effects:
             self._randomize_data_patches()
         
-        patch_count = 12 + self.level * 4  # Much more data patches (was 6 + level * 2)
+        patch_count = 12 + self.level * 4  # Much more data codes (was 6 + level * 2)
         placed_patches = 0
         attempts = 0
         
@@ -3748,7 +3786,7 @@ class Game:
             if self._is_valid_patch_placement(position):
                 color = random.choice(list(self.data_patch_effects.keys()))
                 effect, desc = self.data_patch_effects[color]
-                patch = DataPatch(color, effect, f"{color.title()} Data Patch", desc)
+                patch = DataPatch(color, effect, f"{color.title()} Data Code", desc)
                 self.game_map.data_patches[(x, y)] = patch
                 placed_patches += 1
     
@@ -3767,7 +3805,7 @@ class Game:
             y = random.randint(5, GameConfig.MAP_HEIGHT - 5)
             position = Position(x, y)
             
-            if self._is_valid_patch_placement(position):  # Reuse data patch placement validation
+            if self._is_valid_patch_placement(position):  # Reuse data code placement validation
                 # Choose random exploit
                 exploit_key = random.choice(available_exploits)
                 exploit_def = GameData.EXPLOITS[exploit_key]
@@ -3879,7 +3917,7 @@ class Game:
                 position.distance_to(Position(5, 5)) > 8)
     
     def _is_valid_patch_placement(self, position: Position) -> bool:
-        """Check if position is valid for data patch placement."""
+        """Check if position is valid for data code placement."""
         return (not self.game_map.is_wall(position) and
                 (position.x, position.y) not in self.game_map.data_patches and
                 (position.x, position.y) not in self.game_map.cooling_nodes and
@@ -4691,7 +4729,7 @@ class InputHandler:
         self.game.message_log.add_message(f"Effect: {exploit_def.description}")
     
     def _show_data_patch_details(self, data_patch):
-        """Show detailed information about a data patch."""
+        """Show detailed information about a data code."""
         if data_patch.discovered:
             if data_patch.color in self.game.data_patch_effects:
                 effect_key, desc = self.game.data_patch_effects[data_patch.color]
@@ -4788,7 +4826,7 @@ class Renderer:
         center_y = GameConfig.SCREEN_HEIGHT // 2
         
         console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_TINY, center_y, "MISSION COMPLETE!", fg=Colors.ACID_GREEN)
-        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_LARGE, center_y + GameConfig.MESSAGE_LINE_SPACING, "All networks infiltrated!", fg=Colors.CYBER_TEAL)
+        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_LARGE, center_y + GameConfig.MESSAGE_LINE_SPACING, "All networks exfiltrated!", fg=Colors.CYBER_TEAL)
         console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y + GameConfig.MESSAGE_BUTTON_SPACING, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
     
     def _render_death_message(self, console: tcod.console.Console):
@@ -4993,13 +5031,13 @@ class UIRenderer:
         return y
     
     def _render_data_patches(self, console: tcod.console.Console, game: Game, y: int) -> int:
-        """Render data patches section."""
+        """Render data codes section."""
         data_patches = game.player.inventory_manager.get_items_by_type("data_patch")
-        console.print(2, y, f"DATA PATCHES ({len(data_patches)}):", fg=Colors.CYAN)
+        console.print(2, y, f"DATA CODES ({len(data_patches)}):", fg=Colors.CYAN)
         y += 1
         
         if not data_patches:
-            console.print(4, y, "No data patches collected", fg=Colors.WHITE)
+            console.print(4, y, "No data codes collected", fg=Colors.WHITE)
             y += 1
         else:
             display_items = game.player.inventory_manager.get_display_items()
@@ -5314,7 +5352,7 @@ class UIRenderer:
         
         conditions = []
         
-        # Player temporary effects (from data patches and other sources)
+        # Player temporary effects (from data codes and other sources)
         for effect_name, turns in game.player.temporary_effects.items():
             if turns > 0:
                 display_name = effect_name.replace('_turns', '').replace('_', ' ').title()
@@ -5490,7 +5528,7 @@ class MapRenderer:
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_cpu_recovery_node(world_pos):
             # Position 3 = ♥ (heart)
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.ELECTRIC_BLUE, bg=Colors.BLACK)
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             # Use the actual color tuple from the patch, not a mapped color
@@ -5498,7 +5536,16 @@ class MapRenderer:
             # Position 21 = § (section) for data scraps  
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=actual_color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
-            console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
+            exploit_item = game.game_map.exploit_pickups[(world_pos.x, world_pos.y)]
+            if exploit_item.exploit_key in GameData.EXPLOITS:
+                exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
+                exploit_class = exploit_def.exploit_class
+                # Get color from config, fallback to magenta
+                exploit_colors = GAME_CONFIG.get("colors", {}).get("exploits", {})
+                color_tuple = tuple(exploit_colors.get(exploit_class, [255, 20, 255]))
+                console.print(screen_x, screen_y, '&', fg=color_tuple, bg=Colors.BLACK)
+            else:
+                console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.permanent_upgrades:
             upgrade_key = game.game_map.permanent_upgrades[(world_pos.x, world_pos.y)]
             upgrade = GameUpgrades.UPGRADES[upgrade_key]
@@ -5876,7 +5923,7 @@ class MainMenu:
         """Render the main menu screen."""
         # Title
         title = "ROGUE SIGNAL PROTOCOL"
-        subtitle = "Cyberpunk Stealth Infiltration"
+        subtitle = "Cyberpunk Stealth Exfiltration"
         console.print(
             GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8,
             title, fg=Colors.CYAN
@@ -6221,13 +6268,13 @@ class HelpMenu:
             ("  Navigate network levels using stealth", Colors.WHITE),
             ("  Reach the gateway (>) to advance", Colors.WHITE),
             ("  Avoid detection by enemies and Admin Avatar", Colors.WHITE),
-            ("  Collect data patches, exploits, and upgrades", Colors.WHITE),
+            ("  Collect data codes, exploits, and upgrades", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("MOVEMENT & CONTROLS:", Colors.CYAN),
             ("  Arrow Keys, WASD, or Numpad: Move/Navigate", Colors.WHITE),
             ("  1-9: Use loaded exploits (requires targeting)", Colors.WHITE),
-            ("  I: Inventory (manage data patches & exploits)", Colors.WHITE),
+            ("  I: Inventory (manage data codes & exploits)", Colors.WHITE),
             ("  Tab: Toggle vision overlays", Colors.WHITE),
             ("  L: View discovered lore fragments", Colors.WHITE),
             ("  ESC: Pause menu / Close screens", Colors.WHITE),
@@ -6251,7 +6298,7 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("ITEMS & PICKUPS:", Colors.CYAN),
-            ("  !: Data patches (boost CPU, RAM, heat capacity)", Colors.ELECTRIC_PURPLE),
+            ("  !: Data codes (boost CPU, RAM, heat capacity)", Colors.ELECTRIC_PURPLE),
             ("  &: Exploits (combat & utility abilities)", Colors.NEON_PINK),
             ("  [/]/=: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
             ("  +: CPU recovery nodes (restore health)", Colors.ACID_GREEN),
@@ -6456,7 +6503,7 @@ def show_welcome_messages(game):
         game.message_log.add_message("Reach the gateway (>)")
         game.message_log.add_message("Hide in shadows (.) to avoid detection")
         game.message_log.add_message("Press 'L' to view discovered lore")
-        game.message_log.add_message("Starting Corporate Network infiltration...")
+        game.message_log.add_message("Starting Corporate Network exfiltration...")
 
 def handle_game_input_events(event, game, input_handler):
     """Handle game input events and return (should_continue, game)."""

@@ -1,0 +1,65 @@
+{
+  "colors": {
+    "player": [144, 238, 144],
+    "cpu_recovery": [255, 20, 60],
+    "heat_recovery": [20, 255, 255],
+    "gateway": [255, 220, 20],
+    "floor": [180, 180, 220],
+    "wall": [120, 140, 180],
+    "shadow": [3, 3, 8],
+    "shadow_visible": [80, 40, 120],
+    "shadow_remembered": [50, 20, 80],
+    "data_codes": {
+      "crimson": [220, 20, 60],
+      "azure": [30, 144, 255],
+      "emerald": [50, 205, 50],
+      "golden": [255, 215, 0],
+      "violet": [138, 43, 226],
+      "silver": [192, 192, 192]
+    },
+    "exploits": {
+      "stealth": [138, 43, 226],
+      "combat": [255, 20, 60],
+      "utility": [255, 215, 0],
+      "emergency": [255, 69, 0]
+    },
+    "enemies": {
+      "unaware": [255, 120, 20],
+      "alert": [255, 220, 20],
+      "hostile": [255, 20, 60]
+    },
+    "ui": {
+      "background": [10, 15, 25],
+      "text": [20, 255, 255],
+      "accent": [160, 20, 255],
+      "highlight": [255, 20, 255]
+    }
+  },
+  "symbols": {
+    "player": 2,
+    "cpu_recovery": 3,
+    "heat_recovery": 4,
+    "upgrade": 157,
+    "empty_space": 7,
+    "shadow": 8,
+    "enemy_intent": 9,
+    "lore_scrap": 14,
+    "data_code": 21
+  },
+  "characters": {
+    "exploit_pickup": "&",
+    "walls": {
+      "horizontal": 196,
+      "vertical": 179,
+      "top_left": 218,
+      "top_right": 191,
+      "bottom_left": 192,
+      "bottom_right": 217,
+      "cross": 197,
+      "t_down": 194,
+      "t_up": 193,
+      "t_right": 195,
+      "t_left": 180
+    }
+  }
+}
