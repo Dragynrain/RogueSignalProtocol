@@ -1481,6 +1481,10 @@ class Player:
         """Check if player can see enemy, considering shadow mechanics."""
         distance = self.position.distance_to(enemy.position)
         
+        # Adjacent enemies should ALWAYS be visible (critical for combat feedback)
+        if distance <= 1:
+            return True
+        
         # Check basic vision range
         if distance > self.get_vision_range():
             return False
