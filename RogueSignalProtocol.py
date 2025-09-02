@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rogue Signal Protocol - Enhanced Edition
+Rogue Signal Protocol
 A stealth-focused traditional roguelike using Python and tcod
 
 Features cyberpunk-themed exfiltration gameplay with permadeath,
@@ -9,6 +9,24 @@ procedural level generation, and persistent story progression.
 
 import tcod
 import logging
+import traceback
+
+# =============================================================================
+# PYTHON ERROR LOGGING SYSTEM (SEPARATE FROM IN-GAME SYSTEM LOG)
+# =============================================================================
+# This is for technical errors, debugging, and development info.
+# NOT for gameplay messages like "CPU restored" or "enemy detected" -
+# those go to the MessageLog class for the in-game SYSTEM LOG panel.
+# =============================================================================
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(levelname)s:%(filename)s:%(lineno)d - %(message)s',
+    handlers=[
+        logging.StreamHandler(),  # Console output
+        logging.FileHandler('game_debug.log', mode='w')  # File output
+    ]
+)
 import random
 import math
 import json
@@ -331,7 +349,7 @@ class PersistentStorage:
         if not os.path.exists(cls.SAVE_FILE):
             return {
                 "discovered_story_fragments": [],
-                "version": "1.0"
+                "version": "dev"
             }
         
         try:
@@ -341,7 +359,7 @@ class PersistentStorage:
             logging.warning(f"Failed to load progress file: {e}")
             return {
                 "discovered_story_fragments": [],
-                "version": "1.0"
+                "version": "dev"
             }
     
     @classmethod
@@ -370,7 +388,7 @@ class SaveGameManager:
         try:
             # Gather all game state data
             save_data = {
-                "version": "1.0",
+                "version": "dev",
                 "timestamp": time.time(),
                 
                 # Game state
@@ -1032,8 +1050,9 @@ class GameConfigLoader:
     def load_config():
         """Load game configuration from JSON file."""
         try:
-            config_path = Path(__file__).parent / "game_config.json"
-            if config_path.exists():
+            import os
+            config_path = os.path.join(os.path.dirname(__file__), "game_config.json")
+            if os.path.exists(config_path):
                 with open(config_path, 'r') as f:
                     return json.load(f)
         except Exception as e:
@@ -1119,7 +1138,7 @@ class ExploitDefinition:
     ram: int
     heat: int
     range: int
-    exploit_type: str
+    exploit_class: str  # Changed from exploit_type to match usage
     damage: int = 0  # Damage dealt (0 for non-combat exploits)
     targeting: TargetingMode = TargetingMode.NONE
     description: str = ""
@@ -2018,35 +2037,51 @@ class MessageLog:
         self.messages: List[Tuple[str, Tuple[int, int, int]]] = []
         self.max_messages = max_messages
     
-    def add_message(self, text: str, color: Optional[Tuple[int, int, int]] = None):
+    def add_message(self, text: str, color: Optional[Tuple[int, int, int]] = None, msg_type: Optional[str] = None):
         """Add a message to the log."""
         if not text:
             return
         
         if color is None:
-            color = self._determine_message_color(text)
+            if msg_type:
+                color = self._get_color_by_type(msg_type)
+            else:
+                color = self._determine_message_color(text)
         
         self.messages.append((text, color))
         
         if len(self.messages) > self.max_messages:
             self.messages = self.messages[-self.max_messages:]
     
+    def add_message_typed(self, text: str, msg_type: str):
+        """Add a message with explicit type specification."""
+        self.add_message(text, msg_type=msg_type)
+    
+    def _get_color_by_type(self, msg_type: str) -> Tuple[int, int, int]:
+        """Get color for a specific message type."""
+        message_colors = GAME_CONFIG.get("colors", {}).get("message_log", {})
+        color_values = message_colors.get(msg_type, message_colors.get("default", [144, 238, 144]))
+        return tuple(color_values)
+    
     def _determine_message_color(self, text: str) -> Tuple[int, int, int]:
-        """Determine appropriate color for message based on content."""
+        """Determine appropriate color for message based on content using JSON config."""
         text_lower = text.lower()
-        text_upper = text.upper()
         
-        if ("ADMIN" in text_upper or "CRITICAL" in text_upper or 
-            "eliminated" in text_lower):
-            return Colors.RED
-        elif ("detected" in text_lower or "investigating" in text_lower or 
-              "attracted" in text_lower or "attacks" in text_lower):
-            return Colors.YELLOW
-        elif ("activated" in text_lower or "restored" in text_lower or 
-              "reduced" in text_lower or "active" in text_lower):
-            return Colors.CYAN
-        else:
-            return Colors.GREEN
+        # Get message type patterns from config
+        message_types = GAME_CONFIG.get("message_types", {}).get("patterns", {})
+        message_colors = GAME_CONFIG.get("colors", {}).get("message_log", {})
+        
+        # Check each message type for pattern matches
+        for msg_type, patterns in message_types.items():
+            for pattern in patterns:
+                if pattern.lower() in text_lower:
+                    color_values = message_colors.get(msg_type)
+                    if color_values:
+                        return tuple(color_values)
+        
+        # Return default color if no pattern matches
+        default_color = message_colors.get("default", [144, 238, 144])
+        return tuple(default_color)
     
     def get_recent_messages(self, count: int) -> List[Tuple[str, Tuple[int, int, int]]]:
         """Get the most recent messages."""
@@ -2845,7 +2880,7 @@ class Game:
             self._restore_map_items(save_data["map_state"])
             self._restore_enemies(save_data["enemies"])
             
-            self.message_log.add_message("Game loaded successfully!", Colors.GREEN)
+            self.message_log.add_message_typed("Game loaded successfully!", "success")
             return True
             
         except Exception as e:
@@ -3556,7 +3591,7 @@ class Game:
         self.level += 1
         if self.level > 3:
             self.sound_manager.play_music("victory.ogg", loops=1)
-            self.message_log.add_message("EXFILTRATION COMPLETE!")
+            self.message_log.add_message_typed("EXFILTRATION COMPLETE!", "critical")
             self.message_log.add_message(f"Stats: Turns:{self.turn} Det:{int(self.player.detection)}%")
             self.game_over = True
             # Auto-save on game completion
@@ -3844,7 +3879,7 @@ class Game:
                     self.game_map.story_fragments = {}
                 self.game_map.story_fragments[(x, y)] = story_fragment
                 
-                self.message_log.add_message("Network anomaly detected... Data fragment available", Colors.CYAN)
+                self.message_log.add_message("Network anomaly detected... Data fragment available")
                 break
     
     def _place_permanent_upgrades(self):
@@ -5536,15 +5571,28 @@ class MapRenderer:
             # Position 21 = § (section) for data scraps  
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=actual_color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
-            exploit_item = game.game_map.exploit_pickups[(world_pos.x, world_pos.y)]
-            if exploit_item.exploit_key in GameData.EXPLOITS:
-                exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
-                exploit_class = exploit_def.exploit_class
-                # Get color from config, fallback to magenta
-                exploit_colors = GAME_CONFIG.get("colors", {}).get("exploits", {})
-                color_tuple = tuple(exploit_colors.get(exploit_class, [255, 20, 255]))
-                console.print(screen_x, screen_y, '&', fg=color_tuple, bg=Colors.BLACK)
-            else:
+            try:
+                exploit_item = game.game_map.exploit_pickups[(world_pos.x, world_pos.y)]
+                if exploit_item.exploit_key in GameData.EXPLOITS:
+                    exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
+                    exploit_class = exploit_def.exploit_class
+                    # Get color from config, fallback to magenta
+                    exploit_colors = GAME_CONFIG.get("colors", {}).get("exploits", {})
+                    color_tuple = tuple(exploit_colors.get(exploit_class, [255, 20, 255]))
+                    console.print(screen_x, screen_y, '&', fg=color_tuple, bg=Colors.BLACK)
+                else:
+                    logging.error(f"Unknown exploit key: {exploit_item.exploit_key}")
+                    console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
+            except AttributeError as e:
+                logging.error(f"ExploitDefinition attribute error at {world_pos}: {e}")
+                logging.error(f"Available attributes: {dir(exploit_def) if 'exploit_def' in locals() else 'exploit_def not defined'}")
+                logging.error(traceback.format_exc())
+                # Fallback to default magenta color - don't change appearance due to errors
+                console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
+            except Exception as e:
+                logging.error(f"Unexpected error rendering exploit at {world_pos}: {e}")
+                logging.error(traceback.format_exc())
+                # Fallback to default magenta color - don't change appearance due to errors
                 console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.permanent_upgrades:
             upgrade_key = game.game_map.permanent_upgrades[(world_pos.x, world_pos.y)]
@@ -5865,7 +5913,7 @@ def initialize_tcod_context():
     context_args = {
         "columns": GameConfig.SCREEN_WIDTH,
         "rows": GameConfig.SCREEN_HEIGHT,
-        "title": "Rogue Signal Protocol v51 - Enhanced Combat & Inventory",
+        "title": "Rogue Signal Protocol",
         "vsync": True,
         "sdl_window_flags": 160
     }
@@ -5936,7 +5984,7 @@ class MainMenu:
         # Version and build info
         console.print(
             GameConfig.SCREEN_WIDTH // 2 - 10, 11,
-            "v1.0 - Enhanced Edition", fg=(128, 128, 128)
+            "Development Build", fg=(128, 128, 128)
         )
         
         # Menu options
@@ -6497,13 +6545,13 @@ def handle_menu_navigation(console, context, menus, settings):
 def show_welcome_messages(game):
     """Show initial welcome messages for new games."""
     if not SaveGameManager.save_exists():
-        game.message_log.add_message("Welcome to Rogue Signal Protocol v1.0!")
-        game.message_log.add_message("Enhanced Edition with sound, settings, and story fragments")
+        game.message_log.add_message("Welcome to Rogue Signal Protocol!")
+        game.message_log.add_message("Cyberpunk stealth exfiltration game")
         game.message_log.add_message("Navigate using stealth")
         game.message_log.add_message("Reach the gateway (>)")
         game.message_log.add_message("Hide in shadows (.) to avoid detection")
         game.message_log.add_message("Press 'L' to view discovered lore")
-        game.message_log.add_message("Starting Corporate Network exfiltration...")
+        game.message_log.add_message_typed("Starting Corporate Network exfiltration...", "system")
 
 def handle_game_input_events(event, game, input_handler):
     """Handle game input events and return (should_continue, game)."""

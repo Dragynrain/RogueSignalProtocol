@@ -13,6 +13,11 @@
 - **Testing**: Always test changes with the virtual environment Python
 - **Performance**: Use TCOD's built-in functions (like A* pathfinding) instead of manual implementations
 
+## Logging Systems (CRITICAL DISTINCTION)
+- **Python Error Logging**: Technical errors, exceptions, debug info → console/stderr with line numbers using `logging.error()`, `logging.warning()`, etc.
+- **In-Game System Log**: Gameplay messages like "CPU restored", "enemy detected" → right panel in game UI using `MessageLog.add_message()`
+- **NEVER confuse these two systems** - they serve completely different purposes and audiences
+
 ## Research Guidelines
 - **Documentation**: Always check latest docs, not outdated versions
 - **API Access**: Verify what's actually available in current versions before concluding limitations

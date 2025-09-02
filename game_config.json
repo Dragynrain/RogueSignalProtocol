@@ -23,6 +23,18 @@
       "utility": [255, 215, 0],
       "emergency": [255, 69, 0]
     },
+    "message_log": {
+      "critical": [255, 20, 60],
+      "error": [255, 69, 0],
+      "warning": [255, 215, 0],
+      "alert": [255, 140, 0],
+      "success": [50, 255, 50],
+      "info": [20, 255, 255],
+      "system": [138, 43, 226],
+      "combat": [255, 20, 147],
+      "stealth": [160, 160, 255],
+      "default": [200, 200, 200]
+    },
     "enemies": {
       "unaware": [255, 120, 20],
       "alert": [255, 220, 20],
@@ -33,6 +45,19 @@
       "text": [20, 255, 255],
       "accent": [160, 20, 255],
       "highlight": [255, 20, 255]
+    }
+  },
+  "message_types": {
+    "patterns": {
+      "critical": ["ADMIN", "CRITICAL", "eliminated", "death", "failure", "destroyed", "EXFILTRATION", "COMPLETE"],
+      "error": ["failed", "error", "invalid", "cannot", "unable"],
+      "warning": ["detected", "investigating", "attracted", "attacks", "hostile", "alert"],
+      "alert": ["spawned", "patrolling", "searching", "suspicious"],
+      "success": ["restored", "collected", "equipped", "completed", "success", "gained"],
+      "info": ["activated", "active", "reduced", "boosted", "enhanced", "turns", "temperature"],
+      "system": ["loading", "loaded", "starting", "initializing", "saving", "saved"],
+      "combat": ["damage", "hit", "miss", "attack", "combat", "fight"],
+      "stealth": ["hidden", "invisible", "stealth", "shadow", "mimic", "distraction"]
     }
   },
   "symbols": {
