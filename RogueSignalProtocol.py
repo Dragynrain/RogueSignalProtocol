@@ -1004,6 +1004,14 @@ class Colors:
     VISION_ALERT = (80, 60, 10)  # Yellow glow  
     VISION_HOSTILE = (80, 10, 20)  # Red glow
     
+    # Data patch colors
+    CRIMSON = (220, 20, 60)  # Crimson red
+    AZURE = (30, 144, 255)  # Azure blue
+    EMERALD = (50, 205, 50)  # Emerald green
+    GOLDEN = (255, 215, 0)  # Golden yellow
+    VIOLET = (138, 43, 226)  # Violet purple
+    SILVER = (192, 192, 192)  # Silver gray
+    
     # Modern UI colors
     UI_BG = (10, 15, 25)  # Dark blue-gray background
     UI_TEXT = (20, 255, 255)  # Bright cyan text
@@ -5460,7 +5468,7 @@ class MapRenderer:
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=(60, 70, 90), bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             # Position 8 = ◘ (inverse bullet) for remembered shadows
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(80, 40, 120), bg=Colors.BLACK)
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(50, 20, 80), bg=Colors.BLACK)
         else:
             # Position 7 = • (bullet) for remembered empty spaces
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=(90, 90, 130), bg=Colors.BLACK)
@@ -5502,7 +5510,7 @@ class MapRenderer:
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[14]), fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             # Position 8 = ◘ (inverse bullet) for shadows
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(150, 80, 200), bg=Colors.BLACK)
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(80, 40, 120), bg=Colors.BLACK)
         else:
             # Position 7 = • (bullet) for empty space
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=Colors.FLOOR, bg=Colors.BLACK)
