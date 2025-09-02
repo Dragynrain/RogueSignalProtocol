@@ -3368,9 +3368,12 @@ class Game:
                     alerted_count += 1
                     alerted_enemies.append(enemy)
         
-        # Make alerted enemies start moving immediately toward player
+        # Make alerted enemies start moving immediately toward player (only if they haven't moved yet this turn)
         for enemy in alerted_enemies:
-            enemy.move(self.game_map, self.player, self)
+            # Only move if enemy hasn't already moved this turn
+            if not getattr(enemy, 'has_moved_this_turn', False):
+                did_move = enemy.move(self.game_map, self.player, self)
+                enemy.has_moved_this_turn = did_move
         
         if alerted_count > 0:
             self.message_log.add_message(f"{alerted_count} enemies alerted nearby!")
@@ -5635,7 +5638,7 @@ class MapRenderer:
         
         # Box-drawing character positions (these might need adjustment)
         if not any([n, s, e, w]):
-            return 219  # █ isolated wall
+            return 177  # ▓ isolated wall
         elif n and s and e and w:
             return 197  # ┼ 4-way cross
         elif n and s and e and not w:
@@ -5659,7 +5662,7 @@ class MapRenderer:
         elif not n and not s and e and w:
             return 196  # ─ horizontal line
         else:
-            return 219  # █ fallback to solid block
+            return 177  # ▓ fallback to solid block
 
     def _get_upgrade_color(self, color_name: str) -> Tuple[int, int, int]:
         """Get color tuple for permanent upgrade."""
