@@ -64,7 +64,7 @@ class DataLoader:
         """Load story fragments from JSON file."""
         if cls._story_fragments is None:
             try:
-                with open('story_fragments.json', 'r', encoding='utf-8') as f:
+                with open('story_content.json', 'r', encoding='utf-8') as f:
                     data = json.load(f)
                     cls._story_fragments = data['fragments']
             except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
@@ -89,7 +89,7 @@ class DataLoader:
         """Load configuration from JSON file."""
         if cls._config is None:
             try:
-                with open('config.json', 'r', encoding='utf-8') as f:
+                with open('game_config.json', 'r', encoding='utf-8') as f:
                     cls._config = json.load(f)
             except (FileNotFoundError, json.JSONDecodeError) as e:
                 logging.warning(f"Could not load config from JSON: {e}")
@@ -595,7 +595,7 @@ class SaveGameManager:
 class GameSettings:
     """Manages game settings with persistent storage."""
     
-    SETTINGS_FILE = "rogue_signal_settings.json"
+    SETTINGS_FILE = "user_settings.json"
     
     def __init__(self):
         self.master_volume = 0.7
@@ -1043,40 +1043,8 @@ class Colors:
 # GAME CONFIGURATION
 # ============================================================================
 
-class GameConfigLoader:
-    """Load and manage game configuration from JSON files."""
-    
-    @staticmethod
-    def load_config():
-        """Load game configuration from JSON file."""
-        try:
-            import os
-            config_path = os.path.join(os.path.dirname(__file__), "game_config.json")
-            if os.path.exists(config_path):
-                with open(config_path, 'r') as f:
-                    return json.load(f)
-        except Exception as e:
-            logging.warning(f"Could not load game config: {e}")
-        
-        # Return default config if loading fails
-        return GameConfigLoader._get_default_config()
-    
-    @staticmethod
-    def _get_default_config():
-        """Fallback default configuration."""
-        return {
-            "colors": {
-                "exploits": {
-                    "stealth": [138, 43, 226],
-                    "combat": [255, 20, 60],
-                    "utility": [255, 215, 0],
-                    "emergency": [255, 69, 0]
-                }
-            }
-        }
-
-# Load configuration at startup
-GAME_CONFIG = GameConfigLoader.load_config()
+# Game configuration loaded through DataLoader.load_config()
+# This replaces the old GameConfigLoader system
 
 # ============================================================================
 # ENUMS AND DATA CLASSES
@@ -2067,7 +2035,8 @@ class MessageLog:
     
     def _get_color_by_type(self, msg_type: str) -> Tuple[int, int, int]:
         """Get color for a specific message type."""
-        message_colors = GAME_CONFIG.get("colors", {}).get("message_log", {})
+        config = DataLoader.load_config()
+        message_colors = config.get("colors", {}).get("message_log", {})
         color_values = message_colors.get(msg_type, message_colors.get("default", [144, 238, 144]))
         return tuple(color_values)
     
@@ -2076,8 +2045,9 @@ class MessageLog:
         text_lower = text.lower()
         
         # Get message type patterns from config
-        message_types = GAME_CONFIG.get("message_types", {}).get("patterns", {})
-        message_colors = GAME_CONFIG.get("colors", {}).get("message_log", {})
+        config = DataLoader.load_config()
+        message_types = config.get("message_types", {}).get("patterns", {})
+        message_colors = config.get("colors", {}).get("message_log", {})
         
         # Check each message type for pattern matches
         for msg_type, patterns in message_types.items():
@@ -2192,6 +2162,10 @@ class EnemyManager:
                     if enemy.alert_timer <= 0:
                         enemy.state = EnemyState.UNAWARE
                         enemy.last_seen_player = None
+                        # Resume patrol route from nearest patrol point
+                        if (enemy.type_data.movement == EnemyMovement.LINEAR and 
+                            enemy.patrol_points):
+                            self._resume_patrol_route(enemy)
             
             # Move enemy
             enemy.move(self.game_map, player, game)
@@ -2207,6 +2181,24 @@ class EnemyManager:
         """Remove an enemy from the game."""
         if enemy in self.enemies:
             self.enemies.remove(enemy)
+    
+    def _resume_patrol_route(self, enemy: Enemy) -> None:
+        """Resume patrol route from the nearest patrol point."""
+        if not enemy.patrol_points:
+            return
+        
+        # Find the nearest patrol point to resume from
+        min_distance = float('inf')
+        nearest_index = 0
+        
+        for i, patrol_point in enumerate(enemy.patrol_points):
+            distance = enemy.position.distance_to(patrol_point)
+            if distance < min_distance:
+                min_distance = distance
+                nearest_index = i
+        
+        # Set patrol index to the nearest point
+        enemy.patrol_index = nearest_index
     
     def _generate_patrol_route(self, start: Position) -> List[Position]:
         """Generate larger, more comprehensive patrol routes."""
@@ -3356,6 +3348,7 @@ class Game:
         """Alert nearby enemies when one becomes hostile."""
         alert_range = 8
         alerted_count = 0
+        alerted_enemies = []
         
         for enemy in self.enemies:
             if enemy is alerting_enemy or enemy.state == EnemyState.HOSTILE:
@@ -3368,10 +3361,16 @@ class Game:
                     enemy.alert_timer = 3
                     enemy.last_seen_player = Position(self.player.x, self.player.y)
                     alerted_count += 1
+                    alerted_enemies.append(enemy)
                 elif enemy.state == EnemyState.ALERT:
                     enemy.alert_timer = max(enemy.alert_timer, 3)
                     enemy.last_seen_player = Position(self.player.x, self.player.y)
                     alerted_count += 1
+                    alerted_enemies.append(enemy)
+        
+        # Make alerted enemies start moving immediately toward player
+        for enemy in alerted_enemies:
+            enemy.move(self.game_map, self.player, self)
         
         if alerted_count > 0:
             self.message_log.add_message(f"{alerted_count} enemies alerted nearby!")
@@ -3501,11 +3500,11 @@ class Game:
                     return
                 
                 # Check for overheating
-                if self.player.heat >= GameConfig.MAX_HEAT:
+                if self.player.heat >= self.player.max_heat:
                     self.sound_manager.play_sound("player_overheat")
-                    damage = 5 + (self.player.heat - GameConfig.MAX_HEAT)
+                    damage = 5 + (self.player.heat - self.player.max_heat)
                     self.player.take_damage(damage)
-                    self.player.heat = 95
+                    self.player.heat = max(85, self.player.max_heat - 15)  # Cool down to 15 below max, minimum 85
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
                     if self.player.cpu <= 0:
                         self.sound_manager.play_sound("player_death")
@@ -3984,6 +3983,11 @@ class Game:
     def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
         """Get the next N positions this enemy will move to."""
         if enemy.disabled_turns > 0:
+            return []
+        
+        # If enemy is adjacent to player and can attack, show no movement (will attack instead)
+        player_pos = Position(self.player.x, self.player.y)
+        if enemy.can_attack_player(self.player):
             return []
         
         positions = []
@@ -5268,9 +5272,9 @@ class UIRenderer:
         self._render_screen_footer(console, "Any key: Back to list, ESC: Close")
     
     def render_top_status_bar(self, console: tcod.console.Console, game: Game):
-        """Render the top status bar."""
-        # Clear the top line
-        for x in range(GameConfig.GAME_AREA_WIDTH):
+        """Render the top status bar across the full width."""
+        # Clear the entire top line (full screen width)
+        for x in range(GameConfig.SCREEN_WIDTH):
             console.print(x, 0, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
         
         # Color coding for status values
@@ -5282,7 +5286,7 @@ class UIRenderer:
         # Build status line
         status_parts = [
             f"CPU:{game.player.cpu:3d}/{game.player.max_cpu}",
-            f"Heat:{game.player.heat:3d}°C",
+            f"Heat:{game.player.heat:3d}°C/{game.player.max_heat}°C" if game.player.max_heat > 100 else f"Heat:{game.player.heat:3d}°C",
             f"Det:{int(game.player.detection):3d}%",
             f"RAM:{game.player.ram_used}/{game.player.ram_total}GB",
             f"Turn:{game.turn:4d}",
@@ -5293,7 +5297,8 @@ class UIRenderer:
         
         x_pos = 1
         for part, color in zip(status_parts, colors):
-            if x_pos + len(part) < GameConfig.GAME_AREA_WIDTH - 1:
+            # Allow status bar to extend across full width
+            if x_pos + len(part) < GameConfig.SCREEN_WIDTH - 1:
                 console.print(x_pos, 0, part, fg=color, bg=Colors.UI_BG)
                 x_pos += len(part) + 2
     
@@ -5363,7 +5368,7 @@ class UIRenderer:
                 if game.player.temporary_effects['exploit_efficiency_turns'] > 0:
                     heat_cost = int(heat_cost * 0.6)
                 
-                heat_ok = game.player.heat + heat_cost <= GameConfig.MAX_HEAT
+                heat_ok = game.player.heat + heat_cost <= game.player.max_heat
                 color = Colors.GREEN if heat_ok else Colors.RED
                 exploit_text = f"{i+1}.{exploit.name}"
                 
@@ -5585,7 +5590,8 @@ class MapRenderer:
                     exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
                     exploit_class = exploit_def.exploit_class
                     # Get color from config, fallback to magenta
-                    exploit_colors = GAME_CONFIG.get("colors", {}).get("exploits", {})
+                    config = DataLoader.load_config()
+                    exploit_colors = config.get("colors", {}).get("exploits", {})
                     color_tuple = tuple(exploit_colors.get(exploit_class, [255, 20, 255]))
                     console.print(screen_x, screen_y, '&', fg=color_tuple, bg=Colors.BLACK)
                 else:

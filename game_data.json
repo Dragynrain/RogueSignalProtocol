@@ -3,7 +3,7 @@
     "scanner": {
       "symbol": "S",
       "cpu": 35,
-      "vision": 5,
+      "vision": 4,
       "movement": "STATIC",
       "name": "Scanner",
       "damage": 0,
@@ -30,7 +30,7 @@
     "firewall": {
       "symbol": "F",
       "cpu": 80,
-      "vision": 6,
+      "vision": 5,
       "movement": "STATIC",
       "name": "Firewall",
       "damage": 0,
