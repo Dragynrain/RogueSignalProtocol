@@ -1418,6 +1418,10 @@ class Enemy:
         if self.disabled_turns > 0:
             return False
         
+        # Admin Avatar has perfect tracking - can always see player regardless of conditions
+        if self.type == 'admin':
+            return True
+        
         distance = self.position.distance_to(player.position)
         if distance > self.type_data.vision:
             return False
@@ -2511,8 +2515,7 @@ class TurnProcessor:
             old_heat = player.heat
             player.heat = max(0, player.heat - heat_reduction)
             
-            if old_heat != player.heat:
-                self.message_log.add_message(f"System cooling: -{heat_reduction}°C")
+            # Heat reduction applied silently
     
     def _process_temporary_effects(self, player: Player) -> None:
         """Process and decay temporary effects."""
@@ -3172,7 +3175,7 @@ class Game:
                 self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
                 if self.player.cpu <= 0:
                     self.sound_manager.play_sound("player_death")
-                    self.message_log.add_message("CRITICAL SYSTEM FAILURE!")
+                    self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
                     # Delete save on death (permadeath)
                     SaveGameManager.delete_save()
                     self.message_log.add_message("Save data purged")
@@ -3288,7 +3291,7 @@ class Game:
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
                     if self.player.cpu <= 0:
                         self.sound_manager.play_sound("player_death")
-                        self.message_log.add_message("CRITICAL SYSTEM FAILURE!")
+                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
                         # Delete save on death (permadeath)
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
@@ -4478,6 +4481,10 @@ class InputHandler:
             if 0 <= item_index < len(inventory_items):
                 selected_item = inventory_items[item_index]
                 if selected_item.use(self.game.player, self.game):
+                    # Check if it was a data code - if so, advance turn
+                    if isinstance(selected_item, DataPatch):
+                        self.game.maybe_process_turn()
+                    
                     # Update selection if item was consumed
                     new_equipped_count = len(self.game.player.inventory_manager.equipped_exploits)
                     new_inventory_count = len(self.game.player.inventory_manager.get_display_items())
@@ -4665,8 +4672,8 @@ class Renderer:
         if SaveGameManager.save_exists():
             SaveGameManager.delete_save()
         
-        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y, "SYSTEM FAILURE", fg=Colors.NEON_PINK)
-        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_MEDIUM, center_y + GameConfig.MESSAGE_LINE_SPACING, "Consciousness purged", fg=Colors.RED)
+        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y, "SYSTEM FAILURE", fg=Colors.NEON_PINK, bg=Colors.BLACK)
+        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_MEDIUM, center_y + GameConfig.MESSAGE_LINE_SPACING, "Consciousness purged", fg=Colors.RED, bg=Colors.BLACK)
         console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y + GameConfig.MESSAGE_BUTTON_SPACING, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
 
 class UIRenderer:
@@ -5641,7 +5648,7 @@ class MapRenderer:
             return Colors.BLUE
         elif player.temporary_effects['speed_boost_turns'] > 0:
             return Colors.YELLOW
-        elif player.heat >= 90:
+        elif player.cpu < 30 or player.heat > 80 or player.detection > 75:
             return Colors.RED
         else:
             return Colors.PLAYER
