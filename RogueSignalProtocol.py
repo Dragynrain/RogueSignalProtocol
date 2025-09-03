@@ -990,12 +990,12 @@ class Colors:
     # Core neon palette
     WHITE = (255, 255, 255)
     BLACK = (5, 5, 15)  # Deep space blue-black
-    RED = (255, 20, 60)  # Hot neon pink-red
-    GREEN = (20, 255, 120)  # Electric neon green
-    BLUE = (20, 120, 255)  # Bright electric blue
-    YELLOW = (255, 220, 20)  # Neon yellow
-    CYAN = (20, 255, 255)  # Bright neon cyan
-    MAGENTA = (255, 20, 255)  # Hot neon magenta
+    RED = (220, 20, 60)  # Standardized to Crimson
+    GREEN = (50, 255, 50)  # Standardized to Acid Green
+    BLUE = (0, 191, 255)  # Standardized to Electric Blue
+    YELLOW = (255, 215, 0)  # Standardized to Golden
+    CYAN = (20, 255, 200)  # Standardized to Cyber Teal
+    MAGENTA = (255, 20, 255)  # Standardized magenta
     ORANGE = (255, 120, 20)  # Neon orange
     
     # Extended neon palette
@@ -1009,13 +1009,13 @@ class Colors:
     FLOOR = (180, 180, 220)  # Bright light dots for empty spaces
     WALL = (120, 140, 180)  # Light blue-gray walls
     SHADOW = (3, 3, 8)  # Dark shadow areas
-    PLAYER = (144, 238, 144)  # Light green player
-    GATEWAY = (255, 220, 20)  # Bright neon yellow
+    PLAYER = (50, 255, 50)  # Standardized to Acid Green
+    GATEWAY = (255, 215, 0)  # Standardized to Golden
     
     # Enemy colors with neon intensity
     ENEMY_UNAWARE = (255, 120, 20)  # Neon orange (calm)
-    ENEMY_ALERT = (255, 220, 20)  # Neon yellow (cautious)
-    ENEMY_HOSTILE = (255, 20, 60)  # Hot neon red (aggressive)
+    ENEMY_ALERT = (255, 215, 0)  # Standardized to Golden (cautious)
+    ENEMY_HOSTILE = (220, 20, 60)  # Standardized to Crimson (aggressive)
     
     # Vision overlays with neon glow
     VISION_UNAWARE = (80, 40, 10)  # Orange glow
@@ -1032,9 +1032,9 @@ class Colors:
     
     # Modern UI colors
     UI_BG = (10, 15, 25)  # Dark blue-gray background
-    UI_TEXT = (20, 255, 255)  # Bright cyan text
+    UI_TEXT = (20, 255, 200)  # Standardized to Cyber Teal text
     UI_ACCENT = (160, 20, 255)  # Electric purple accents
-    UI_HIGHLIGHT = (255, 20, 255)  # Hot magenta highlights
+    UI_HIGHLIGHT = (255, 20, 255)  # Standardized magenta highlights
     LOG_BG = (8, 12, 20)  # Darker blue background
     LOG_BORDER = (20, 255, 200)  # Cyber teal border
     LIGHT_GRAY = (160, 170, 190)  # Light cyberpunk gray

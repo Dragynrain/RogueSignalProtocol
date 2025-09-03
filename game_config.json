@@ -45,36 +45,36 @@
     "basic": {
       "white": [255, 255, 255],
       "black": [0, 0, 0],
-      "red": [255, 0, 0],
-      "green": [0, 255, 0],
-      "blue": [0, 0, 255],
-      "yellow": [255, 255, 0],
-      "magenta": [255, 0, 255],
-      "cyan": [0, 255, 255],
+      "red": [220, 20, 60],
+      "green": [50, 255, 50],
+      "blue": [0, 191, 255],
+      "yellow": [255, 215, 0],
+      "magenta": [255, 20, 255],
+      "cyan": [20, 255, 200],
       "light_gray": [192, 192, 192],
       "dark_gray": [128, 128, 128],
       "bright_red": [255, 128, 128],
-      "bright_green": [128, 255, 128],
-      "bright_blue": [128, 128, 255],
-      "bright_yellow": [255, 255, 128],
-      "bright_magenta": [255, 128, 255],
-      "bright_cyan": [128, 255, 255]
+      "bright_green": [50, 255, 50],
+      "bright_blue": [0, 191, 255],
+      "bright_yellow": [255, 215, 0],
+      "bright_magenta": [255, 20, 255],
+      "bright_cyan": [20, 255, 200]
     },
     "game_elements": {
-      "player": [144, 238, 144],
-      "enemy": [255, 0, 0],
+      "player": [50, 255, 50],
+      "enemy": [220, 20, 60],
       "shadow": [3, 3, 8],
       "shadow_visible": [80, 40, 120],
       "shadow_remembered": [50, 20, 80],
       "wall": [120, 140, 180],
       "floor": [180, 180, 220],
-      "gateway": [255, 220, 20],
-      "cpu_recovery": [255, 20, 60],
-      "heat_recovery": [20, 255, 255],
-      "data_patch": [255, 255, 0],
-      "exploit_pickup": [255, 128, 0],
-      "upgrade": [255, 0, 255],
-      "story_fragment": [128, 255, 255]
+      "gateway": [255, 215, 0],
+      "cpu_recovery": [220, 20, 60],
+      "heat_recovery": [20, 255, 200],
+      "data_patch": [255, 215, 0],
+      "exploit_pickup": [255, 120, 20],
+      "upgrade": [255, 20, 255],
+      "story_fragment": [20, 255, 200]
     },
     "data_codes": {
       "crimson": [220, 20, 60],
@@ -86,17 +86,17 @@
     },
     "exploits": {
       "stealth": [138, 43, 226],
-      "combat": [255, 20, 60],
+      "combat": [220, 20, 60],
       "utility": [255, 215, 0],
-      "emergency": [255, 69, 0]
+      "emergency": [255, 120, 20]
     },
     "message_log": {
-      "critical": [255, 20, 60],
-      "error": [255, 69, 0],
+      "critical": [220, 20, 60],
+      "error": [255, 120, 20],
       "warning": [255, 215, 0],
-      "alert": [255, 140, 0],
+      "alert": [255, 120, 20],
       "success": [50, 255, 50],
-      "info": [20, 255, 255],
+      "info": [20, 255, 200],
       "system": [138, 43, 226],
       "combat": [255, 20, 147],
       "stealth": [160, 160, 255],
@@ -104,12 +104,12 @@
     },
     "enemies": {
       "unaware": [255, 120, 20],
-      "alert": [255, 220, 20],
-      "hostile": [255, 20, 60]
+      "alert": [255, 215, 0],
+      "hostile": [220, 20, 60]
     },
     "ui": {
       "background": [10, 15, 25],
-      "text": [20, 255, 255],
+      "text": [20, 255, 200],
       "accent": [160, 20, 255],
       "highlight": [255, 20, 255]
     }
