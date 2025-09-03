@@ -4759,11 +4759,6 @@ class Renderer:
         if SaveGameManager.save_exists():
             SaveGameManager.delete_save()
         
-        # Dim background
-        for x in range(GameConfig.SCREEN_WIDTH):
-            for y in range(GameConfig.SCREEN_HEIGHT):
-                console.print(x, y, ' ', fg=Colors.BLACK, bg=(32, 32, 32))
-        
         # Dialog box dimensions
         dialog_width = 40
         dialog_height = 8
