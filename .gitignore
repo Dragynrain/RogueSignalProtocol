@@ -1,0 +1,26 @@
+# Debug and log files
+game_debug.log
+*.log
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Save game files
+rogue_signal_save.json
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
