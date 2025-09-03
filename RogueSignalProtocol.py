@@ -352,6 +352,7 @@ class SaveGameManager:
                 "disabled_turns": enemy.disabled_turns,
                 "alert_timer": enemy.alert_timer,
                 "patrol_index": enemy.patrol_index,
+                "patrol_stuck_counter": enemy.patrol_stuck_counter,
                 "last_seen_player": {
                     "x": enemy.last_seen_player.x, 
                     "y": enemy.last_seen_player.y
@@ -1395,8 +1396,9 @@ class Enemy:
         # Movement data
         self.patrol_points: List[Position] = []
         self.patrol_index = 0
+        self.patrol_stuck_counter = 0  # Prevents getting stuck on patrol points
         self.last_seen_player: Optional[Position] = None
-        self.random_move_queue: List[Tuple[int, int]] = []
+        self.random_move_queue: List[Tuple[int, int]] = []  # For random movement prediction
     
     @property
     def x(self) -> int:
@@ -1553,184 +1555,168 @@ class Enemy:
             self.move_cooldown = 1  # All moving enemies move every turn
     
     def _ensure_random_move_queue(self):
-        """Ensure the random move queue has at least 3 moves."""
+        """Ensure the random move queue has moves for prediction."""
         directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
-        
-        while len(self.random_move_queue) < 3:
+        while len(self.random_move_queue) < 5:
             self.random_move_queue.append(random.choice(directions))
     
+    
     def _move_random(self, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
-        """Execute random movement pattern with move queue. Returns True if moved."""
-        # Don't seek invisible players unless this is an admin
+        """Random movement (bots) - uses A* when tracking, random walk otherwise."""
+        # Use pathfinding when tracking player (unless player is invisible and this isn't admin)
         if not (player.is_invisible() and self.type != 'admin'):
             if self.state == EnemyState.HOSTILE:
                 return self._move_toward(player.position, game_map, player, game)
             elif self.state == EnemyState.ALERT and self.last_seen_player:
                 return self._move_toward(self.last_seen_player, game_map, player, game)
         
-        # Ensure we have moves queued
+        # Random movement using queued moves for predictable behavior
         self._ensure_random_move_queue()
-        
-        # Execute the next queued move
         if self.random_move_queue:
             dx, dy = self.random_move_queue.pop(0)
-            new_position = Position(self.x + dx, self.y + dy)
-            if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                game_map.is_valid_position(new_position) and
-                not new_position.distance_to(player.position) == 0 and
-                (game is None or not game._get_enemy_at(new_position))):
-                self.position = new_position
+            destination = Position(self.x + dx, self.y + dy)
+            if can_move_to_position(self, destination, game_map, player, game):
+                self.position = destination
                 return True
         
         return False
     
+    
     def _move_patrol(self, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
-        """Execute patrol movement pattern. Returns True if moved."""
-        # Don't seek invisible players unless this is an admin
+        """Follow patrol route or use pathfinding when tracking player."""
+        # Use pathfinding when tracking player (unless player is invisible and this isn't admin)
         if not (player.is_invisible() and self.type != 'admin'):
             if self.state == EnemyState.HOSTILE:
                 return self._move_toward(player.position, game_map, player, game)
             elif self.state == EnemyState.ALERT and self.last_seen_player:
                 return self._move_toward(self.last_seen_player, game_map, player, game)
         
+        # No patrol route defined
         if not self.patrol_points:
             return False
         
-        target = self.patrol_points[self.patrol_index]
+        # Get current patrol target
+        current_target = self.patrol_points[self.patrol_index]
         
-        # Check if we're at the current patrol point (exactly on it)
-        if self.position.x == target.x and self.position.y == target.y:
+        # If we reached the current target, move to next patrol point
+        if self.position.distance_to(current_target) <= 1.0:
             self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
-            target = self.patrol_points[self.patrol_index]
+            current_target = self.patrol_points[self.patrol_index]
         
-        # Try to move toward current target using specialized patrol movement
-        moved = self._move_toward_patrol(target, game_map, player, game)
+        # Try to move toward patrol target
+        moved = pathfind_and_move(self, current_target, game_map, player, game)
         
-        # If we can't move toward the target, try advancing to next patrol point
-        # This prevents getting stuck on one patrol point
+        # Handle getting stuck - skip to next patrol point
         if not moved:
-            # Check if we're blocked by a stationary enemy or obstacle
-            blocking_enemy = game._get_enemy_at(target) if game else None
-            is_blocked_by_stationary = (blocking_enemy and 
-                                      blocking_enemy.type_data.movement == EnemyMovement.STATIC)
-            
-            # Skip to next patrol point if we're stuck, especially if blocked by stationary enemy
-            # or if we've been trying to reach this point for too long
-            if (self.position.distance_to(target) > 1 or is_blocked_by_stationary):
+            self.patrol_stuck_counter += 1
+            if self.patrol_stuck_counter >= 3:
                 self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
-                target = self.patrol_points[self.patrol_index]
-                moved = self._move_toward_patrol(target, game_map, player, game)
+                self.patrol_stuck_counter = 0
+        else:
+            self.patrol_stuck_counter = 0
         
         return moved
 
-    def _move_toward_patrol(self, target: Position, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
-        """Move toward target for patrol movement (allows moving to exact target position). Returns True if moved."""
-        if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-            return False
-        
-        # Calculate movement direction
-        dx = 0 if self.x == target.x else (1 if target.x > self.x else -1)
-        dy = 0 if self.y == target.y else (1 if target.y > self.y else -1)
-        
-        # Try different movement directions in order of preference
-        move_attempts = [
-            (dx, dy), (dx, 0), (0, dy), (dx, -dy), (-dx, dy),
-            (-dx, 0), (0, -dy), (-dx, -dy)
-        ]
-        
-        # First pass: try to move without occupying other enemy positions
-        for try_dx, try_dy in move_attempts:
-            if try_dx == 0 and try_dy == 0:
-                continue
-            
-            new_position = Position(self.x + try_dx, self.y + try_dy)
-            if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                game_map.is_valid_position(new_position) and
-                not new_position.distance_to(player.position) == 0 and
-                (game is None or not game._get_enemy_at(new_position))):
-                self.position = new_position
-                return True
-        
-        # Second pass: if blocked by enemies, try to swap positions
-        if game is not None:
-            for try_dx, try_dy in move_attempts[:4]:  # Only try main directions for swapping
-                if try_dx == 0 and try_dy == 0:
-                    continue
-                
-                new_position = Position(self.x + try_dx, self.y + try_dy)
-                if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                    game_map.is_valid_position(new_position) and
-                    not new_position.distance_to(player.position) == 0):
-                    
-                    # Check if there's an enemy at the target position
-                    blocking_enemy = game._get_enemy_at(new_position)
-                    if blocking_enemy and blocking_enemy != self:
-                        # Try to swap positions if the other enemy can move to our position
-                        enemy_at_current_pos = game._get_enemy_at(self.position)
-                        if (game_map.is_valid_position(self.position) and 
-                            (enemy_at_current_pos is None or enemy_at_current_pos == self)):
-                            blocking_enemy.position = self.position
-                            self.position = new_position
-                            return True
-        
-        return False
     
     def _move_toward(self, target: Position, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
-        """Move one step toward target position. Returns True if moved."""
-        if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+        """Move toward target using TCOD A* pathfinding. Returns True if moved."""
+        if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) or game is None:
             return False
         
         # Don't move if already adjacent to target (can attack instead)
-        current_distance = self.position.distance_to(target)
-        if current_distance <= 1.5:  # Adjacent (including diagonally)
+        if self.position.distance_to(target) <= 1.5:
             return False
         
-        original_position = self.position
-        dx = 0 if self.x == target.x else (1 if target.x > self.x else -1)
-        dy = 0 if self.y == target.y else (1 if target.y > self.y else -1)
-        
-        # Try different movement directions in order of preference
-        move_attempts = [
-            (dx, dy), (dx, 0), (0, dy), (dx, -dy), (-dx, dy),
-            (-dx, 0), (0, -dy), (-dx, -dy)
-        ]
-        
-        # First pass: try to move without occupying other enemy positions
-        for try_dx, try_dy in move_attempts:
-            if try_dx == 0 and try_dy == 0:
-                continue
+        return pathfind_and_move(self, target, game_map, player, game)
+
+# ============================================================================
+# PATHFINDING SYSTEM
+# ============================================================================
+
+def create_pathfinding_cost_map(game_map, game, moving_enemy):
+    """
+    Create cost map for TCOD A* pathfinding.
+    
+    Cost values:
+    - 0 = impassable (walls, invalid terrain)  
+    - 1 = normal walkable tile
+    - 10 = other enemies (high cost but not blocked)
+    """
+    cost_map = tcod.path.numpy_array(
+        dtype=tcod.path.INT32, 
+        width=GameConfig.MAP_WIDTH, 
+        height=GameConfig.MAP_HEIGHT
+    )
+    
+    for x in range(GameConfig.MAP_WIDTH):
+        for y in range(GameConfig.MAP_HEIGHT):
+            tile_pos = Position(x, y)
             
-            new_position = Position(self.x + try_dx, self.y + try_dy)
-            if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                game_map.is_valid_position(new_position) and
-                not new_position.distance_to(player.position) == 0 and
-                (game is None or not game._get_enemy_at(new_position))):
-                self.position = new_position
+            if not game_map.is_valid_position(tile_pos):
+                cost_map[x, y] = 0  # Impassable
+            else:
+                enemy_at_tile = game._get_enemy_at(tile_pos)
+                if enemy_at_tile and enemy_at_tile != moving_enemy:
+                    cost_map[x, y] = 10  # High cost for other enemies
+                else:
+                    cost_map[x, y] = 1   # Normal walkable
+    
+    return cost_map
+
+def pathfind_and_move(enemy, target, game_map, player, game):
+    """
+    Use TCOD A* pathfinding to move enemy one step toward target.
+    
+    Returns True if enemy moved, False otherwise.
+    """
+    try:
+        cost_map = create_pathfinding_cost_map(game_map, game, enemy)
+        
+        # Set up pathfinder and calculate optimal path
+        pathfinder = tcod.path.Pathfinder(cost_map)
+        pathfinder.add_root((enemy.x, enemy.y))
+        optimal_path = pathfinder.path_to((target.x, target.y))
+        
+        # Take the next step along the path
+        if len(optimal_path) >= 2:
+            next_x, next_y = optimal_path[1]  # Skip current position [0]
+            next_position = Position(next_x, next_y)
+            
+            if can_move_to_position(enemy, next_position, game_map, player, game):
+                enemy.position = next_position
                 return True
         
-        # Second pass: if blocked by enemies, try to swap positions or push
-        if game is not None:
-            for try_dx, try_dy in move_attempts[:4]:  # Only try main directions for swapping
-                if try_dx == 0 and try_dy == 0:
-                    continue
-                
-                new_position = Position(self.x + try_dx, self.y + try_dy)
-                if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                    game_map.is_valid_position(new_position) and
-                    not new_position.distance_to(player.position) == 0):
-                    
-                    # Check if there's an enemy at the target position
-                    blocking_enemy = game._get_enemy_at(new_position)
-                    if blocking_enemy and blocking_enemy != self:
-                        # Try to swap positions if the other enemy can move to our position
-                        if (game_map.is_valid_position(self.position) and 
-                            blocking_enemy.type_data.movement != EnemyMovement.STATIC):
-                            # Simple position swap
-                            blocking_enemy.position = self.position
-                            self.position = new_position
-                            return True
-        
         return False
+    
+    except Exception:
+        return False  # Pathfinding failed, don't move
+
+def can_move_to_position(enemy, destination, game_map, player, game):
+    """
+    Check if enemy can move to the destination position.
+    
+    Handles position swapping with non-static enemies.
+    Returns True if movement is possible, False otherwise.
+    """
+    # Basic validity checks
+    if not destination.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+        return False
+    if not game_map.is_valid_position(destination):
+        return False
+    if destination.distance_to(player.position) == 0:
+        return False  # Can't move onto player
+    
+    # Handle enemy collisions
+    blocking_enemy = game._get_enemy_at(destination)
+    if blocking_enemy and blocking_enemy != enemy:
+        # Swap positions with non-static enemies
+        if blocking_enemy.type_data.movement != EnemyMovement.STATIC:
+            blocking_enemy.position = enemy.position
+            return True
+        else:
+            return False  # Blocked by static enemy
+    
+    return True  # Position is clear
 
 # ============================================================================
 # GAME MAP
@@ -1960,6 +1946,16 @@ class EnemyManager:
         # Set up patrol route for patrol enemies
         if enemy.type == 'patrol':
             enemy.patrol_points = self._generate_patrol_route(position)
+        elif enemy.type == 'virus':
+            # Give virus enemies random movement types for variety
+            virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.LINEAR, EnemyMovement.SEEK]
+            virus_movement_weights = [2, 3, 2, 2]  # Equal chance for each movement type
+            chosen_movement = random.choices(virus_movement_types, weights=virus_movement_weights)[0]
+            enemy.type_data.movement = chosen_movement
+            
+            # Generate patrol route if virus got LINEAR movement
+            if chosen_movement == EnemyMovement.LINEAR:
+                enemy.patrol_points = self._generate_patrol_route(position)
             
         self.enemies.append(enemy)
         return enemy
@@ -2026,8 +2022,16 @@ class EnemyManager:
                 min_distance = distance
                 nearest_index = i
         
-        # Set patrol index to the nearest point
-        enemy.patrol_index = nearest_index
+        # If already at or very close to the nearest point, advance to next point
+        nearest_point = enemy.patrol_points[nearest_index]
+        if enemy.position.distance_to(nearest_point) <= 1.5:
+            enemy.patrol_index = (nearest_index + 1) % len(enemy.patrol_points)
+        else:
+            # Set patrol index to the nearest point
+            enemy.patrol_index = nearest_index
+        
+        # Reset stuck counter when resuming patrol route
+        enemy.patrol_stuck_counter = 0
     
     def _generate_patrol_route(self, start: Position) -> List[Position]:
         """Generate larger, more comprehensive patrol routes."""
@@ -2914,6 +2918,7 @@ class Game:
             enemy.disabled_turns = enemy_data["disabled_turns"]
             enemy.alert_timer = enemy_data["alert_timer"]
             enemy.patrol_index = enemy_data["patrol_index"]
+            enemy.patrol_stuck_counter = enemy_data.get("patrol_stuck_counter", 0)
             
             if enemy_data["last_seen_player"]:
                 enemy.last_seen_player = Position(
@@ -3336,8 +3341,10 @@ class Game:
         
         target_enemy = self._get_enemy_at(new_position)
         if target_enemy:
-            # Bump attack the enemy
+            # Bump attack the enemy - this should process the turn
             self._perform_bump_attack(target_enemy)
+            # Handle speed boost and turn processing
+            self.maybe_process_turn()
         else:
             # Try to move player
             if self.player.move(dx, dy, self.game_map):
@@ -3364,12 +3371,12 @@ class Game:
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
                         return
+                
+                # Handle speed boost and turn processing only if move was successful
+                self.maybe_process_turn()
             else:
-                # Movement blocked
+                # Movement blocked - don't process turn
                 self.message_log.add_message("Wall blocks movement")
-        
-        # Handle speed boost and turn processing
-        self.maybe_process_turn()
 
     def maybe_process_turn(self):
         """Process turn only if speed boost doesn't allow another action."""
@@ -3795,6 +3802,16 @@ class Game:
                 
                 if enemy_type == 'patrol':
                     enemy.patrol_points = self.enemy_manager._generate_patrol_route(position)
+                elif enemy_type == 'virus':
+                    # Give virus enemies random movement types for variety
+                    virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.LINEAR, EnemyMovement.SEEK]
+                    virus_movement_weights = [2, 3, 2, 2]  # Equal chance for each movement type
+                    chosen_movement = random.choices(virus_movement_types, weights=virus_movement_weights)[0]
+                    enemy.type_data.movement = chosen_movement
+                    
+                    # Generate patrol route if virus got LINEAR movement
+                    if chosen_movement == EnemyMovement.LINEAR:
+                        enemy.patrol_points = self.enemy_manager._generate_patrol_route(position)
                 
                 self.enemies.append(enemy)
                 placed_enemies += 1
@@ -3861,47 +3878,39 @@ class Game:
         if not enemy.patrol_points:
             return []
         
+        # If enemy is tracking player, predict toward player
+        if enemy.state == EnemyState.HOSTILE:
+            return self._predict_movement_with_pathfinding(enemy, self.player.position, steps)
+        elif enemy.state == EnemyState.ALERT and enemy.last_seen_player:
+            return self._predict_movement_with_pathfinding(enemy, enemy.last_seen_player, steps)
+        
+        # Otherwise predict toward current patrol target
+        patrol_target = enemy.patrol_points[enemy.patrol_index]
+        return self._predict_movement_with_pathfinding(enemy, patrol_target, steps)
+    
+    def _predict_random_movement(self, enemy: Enemy, steps: int) -> List[Position]:
+        """Predict next positions for random movement using move queue."""
+        if enemy.state == EnemyState.HOSTILE:
+            return self._predict_movement_with_pathfinding(enemy, self.player.position, steps)
+        elif enemy.state == EnemyState.ALERT and enemy.last_seen_player:
+            return self._predict_movement_with_pathfinding(enemy, enemy.last_seen_player, steps)
+        
+        # Predict using random move queue
+        enemy._ensure_random_move_queue()
         positions = []
         current_pos = Position(enemy.x, enemy.y)
-        current_index = enemy.patrol_index
         
-        for step in range(steps):
-            target = enemy.patrol_points[current_index]
+        for i in range(min(steps, len(enemy.random_move_queue))):
+            dx, dy = enemy.random_move_queue[i]
+            next_pos = Position(current_pos.x + dx, current_pos.y + dy)
             
-            if current_pos.distance_to(target) <= 1:
-                current_index = (current_index + 1) % len(enemy.patrol_points)
-                target = enemy.patrol_points[current_index]
-            
-            next_pos = self._get_next_move_toward(current_pos, target)
-            if next_pos and next_pos != current_pos:
+            if (next_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                self.game_map.is_valid_position(next_pos) and
+                not next_pos.distance_to(self.player.position) == 0):
                 positions.append(next_pos)
                 current_pos = next_pos
             else:
-                break
-        
-        return positions
-    
-    def _predict_random_movement(self, enemy: Enemy, steps: int) -> List[Position]:
-        """Predict next positions for random movement (show possible moves)."""
-        if enemy.state == EnemyState.HOSTILE:
-            return self._predict_seek_movement(enemy, steps)
-        
-        # For random movement, show the queued moves
-        enemy._ensure_random_move_queue()
-        current_pos = Position(enemy.x, enemy.y)
-        positions = []
-        
-        for i, (dx, dy) in enumerate(enemy.random_move_queue[:steps]):
-            new_pos = Position(current_pos.x + dx, current_pos.y + dy)
-            if (new_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                self.game_map.is_valid_position(new_pos) and
-                not new_pos.distance_to(self.player.position) == 0 and
-                not self._get_enemy_at(new_pos)):
-                positions.append(new_pos)
-                current_pos = new_pos
-            else:
-                # If this move is blocked, stop predicting further moves
-                break
+                break  # Stop if move is blocked
         
         return positions
     
@@ -3910,52 +3919,36 @@ class Game:
         if not enemy.last_seen_player:
             return []
         
-        return self._predict_movement_toward_target(enemy, enemy.last_seen_player, steps)
+        return self._predict_movement_with_pathfinding(enemy, enemy.last_seen_player, steps)
     
     def _predict_track_movement(self, enemy: Enemy, steps: int) -> List[Position]:
         """Predict next positions for track movement."""
-        return self._predict_movement_toward_target(enemy, self.player.position, steps)
+        return self._predict_movement_with_pathfinding(enemy, self.player.position, steps)
     
-    def _predict_movement_toward_target(self, enemy: Enemy, target: Position, steps: int) -> List[Position]:
-        """Predict movement toward a specific target."""
-        positions = []
-        current_pos = Position(enemy.x, enemy.y)
-        
-        for step in range(steps):
-            next_pos = self._get_next_move_toward(current_pos, target)
-            if next_pos and next_pos != current_pos:
-                positions.append(next_pos)
-                current_pos = next_pos
-            else:
-                break
-        
-        return positions
-    
-    def _get_next_move_toward(self, start: Position, target: Position) -> Optional[Position]:
-        """Get the next move position toward target."""
-        if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-            return None
-        
-        dx = 0 if start.x == target.x else (1 if target.x > start.x else -1)
-        dy = 0 if start.y == target.y else (1 if target.y > start.y else -1)
-        
-        # Try different movement directions in order of preference
-        move_attempts = [
-            (dx, dy), (dx, 0), (0, dy), (dx, -dy), (-dx, dy),
-            (-dx, 0), (0, -dy), (-dx, -dy)
-        ]
-        
-        for try_dx, try_dy in move_attempts:
-            if try_dx == 0 and try_dy == 0:
-                continue
+    def _predict_movement_with_pathfinding(self, enemy: Enemy, target: Position, steps: int) -> List[Position]:
+        """Predict enemy movement using TCOD pathfinding."""
+        try:
+            # Create cost map for prediction
+            cost_map = create_pathfinding_cost_map(self.game_map, self, enemy)
             
-            new_position = Position(start.x + try_dx, start.y + try_dy)
-            if (new_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                self.game_map.is_valid_position(new_position) and
-                not new_position.distance_to(self.player.position) == 0):
-                return new_position
+            # Create pathfinder and find path
+            pathfinder = tcod.path.Pathfinder(cost_map)
+            pathfinder.add_root((enemy.x, enemy.y))
+            path = pathfinder.path_to((target.x, target.y))
+            
+            # Return the next few steps in the path (excluding current position)
+            if len(path) > 1:
+                predicted_positions = []
+                for i in range(1, min(len(path), steps + 1)):
+                    x, y = path[i]
+                    predicted_positions.append(Position(x, y))
+                return predicted_positions
+            
+        except Exception:
+            # If pathfinding fails, return empty list
+            pass
         
-        return None
+        return []
 
 # ============================================================================
 # EXPLOIT SYSTEM
@@ -5253,10 +5246,9 @@ class UIRenderer:
         
         equipped_exploits = game.player.inventory_manager.equipped_exploits[:5]
         
-        # Dynamically fit exploits on lines based on available space
+        # Fixed layout: exploits 1,2,3 on first line, 4,5 on second line
         line1_exploits = []
         line2_exploits = []
-        x_pos = 11
         
         for i, exploit_key in enumerate(equipped_exploits):
             if exploit_key in GameData.EXPLOITS:
@@ -5269,12 +5261,10 @@ class UIRenderer:
                 color = Colors.GREEN if heat_ok else Colors.RED
                 exploit_text = f"{i+1}.{exploit.name}"
                 
-                # Try to fit on first line
-                if len(line1_exploits) == 0 or x_pos + len(exploit_text) + 2 <= GameConfig.GAME_AREA_WIDTH:
+                # First 3 exploits go on first line, remaining on second line
+                if i < 3:
                     line1_exploits.append((exploit_key, exploit_text, color, i+1))
-                    x_pos += len(exploit_text) + 2
                 else:
-                    # Move to second line
                     line2_exploits.append((exploit_key, exploit_text, color, i+1))
         
         # Render first line exploits
