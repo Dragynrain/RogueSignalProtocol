@@ -779,8 +779,17 @@ class Colors:
     ELECTRIC_PURPLE = (160, 20, 255)  # Electric purple
     NEON_PINK = (255, 20, 147)  # Hot pink
     ACID_GREEN = (50, 255, 50)  # Acid green
+    DARK_GREEN = (20, 120, 20)  # Dark green for virus effect
     ELECTRIC_BLUE = (0, 191, 255)  # Electric blue
     CYBER_TEAL = (20, 255, 200)  # Cyber teal
+    
+    # Data code colors (from config)
+    CRIMSON = (220, 20, 60)
+    AZURE = (30, 144, 255) 
+    EMERALD = (50, 205, 50)
+    GOLDEN = (255, 215, 0)
+    VIOLET = (138, 43, 226)
+    SILVER = (192, 192, 192)
     
     # Game-specific colors with neon theme
     FLOOR = (180, 180, 220)  # Bright light dots for empty spaces
@@ -902,6 +911,7 @@ class GameData:
         'bot': EnemyTypeDefinition('B', 25, 3, EnemyMovement.RANDOM, "Bot", 8),  # More HP, better vision, light damage
         'firewall': EnemyTypeDefinition('F', 80, 6, EnemyMovement.STATIC, "Firewall", 0),  # Massive HP, huge vision, no attack
         'hunter': EnemyTypeDefinition('H', 50, 6, EnemyMovement.SEEK, "Hunter", 22),  # Elite threat - good vision, high damage
+        'virus': EnemyTypeDefinition('V', 35, 4, EnemyMovement.SEEK, "Virus", 0),  # No direct damage - applies venom instead
         'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.TRACK, "Admin Avatar", 45)  # Boss-level but not impossible
     }
     
@@ -923,6 +933,8 @@ class GameData:
                                         "Reveals ALL enemies, vision ranges, & movement paths (5 turns)"),  # No damage, intel
         'log_wiper': ExploitDefinition("Log Wiper", 2, 20, 0, "utility", 0, TargetingMode.NONE,
                                      "Significantly reduces detection level (-50%)"),  # No damage, counter-detection
+        'antivirus': ExploitDefinition("Antivirus", 2, 25, 0, "utility", 0, TargetingMode.NONE,
+                                     "Purges all negative status effects (virus, etc.)"),  # Status cleansing
         'emp_burst': ExploitDefinition("EMP Burst", 4, 50, 3, "emergency", 20, TargetingMode.AREA,
                                      "Area attack (20 damage) that disables all nearby enemies")  # Moderate area damage + disable
     }
@@ -1042,15 +1054,15 @@ class DataPatch(InventoryItem):
             game.message_log.add_message(f"Detection: -{actual_reduction:.1f}%")
         
         elif effect_key == 'speed_boost':
-            player.speed_boost_turns = 10
+            player.temporary_effects['speed_boost_turns'] = 10
             game.message_log.add_message("Speed boost active (10 turns)")
         
         elif effect_key == 'enhanced_vision':
-            player.enhanced_vision_turns = 15
+            player.temporary_effects['enhanced_vision_turns'] = 15
             game.message_log.add_message("Enhanced vision active (15 turns)")
         
         elif effect_key == 'exploit_efficiency':
-            player.exploit_efficiency_turns = 8
+            player.temporary_effects['exploit_efficiency_turns'] = 8
             game.message_log.add_message("Exploit efficiency active (8 turns)")
         
         return True
@@ -1227,7 +1239,8 @@ class Player:
             'data_mimic_turns': 0,
             'speed_boost_turns': 0,
             'enhanced_vision_turns': 0,
-            'exploit_efficiency_turns': 0
+            'exploit_efficiency_turns': 0,
+            'virus_turns': 0
         }
         self.speed_moves_remaining = 0
         
@@ -1448,8 +1461,12 @@ class Enemy:
     
     def can_attack_player(self, player: Player) -> bool:
         """Check if enemy can attack player (adjacent including diagonally)."""
-        # Can't attack if no damage or disabled
-        if self.type_data.damage <= 0 or self.disabled_turns > 0:
+        # Can't attack if disabled
+        if self.disabled_turns > 0:
+            return False
+            
+        # Can't attack if no damage, unless it's a virus (which applies status effects)
+        if self.type_data.damage <= 0 and self.type != 'virus':
             return False
             
         dx = abs(self.position.x - player.position.x)
@@ -1460,7 +1477,24 @@ class Enemy:
     
     def attack_player(self, player: Player) -> int:
         """Attack the player and return damage dealt."""
-        return player.take_damage(self.type_data.damage)
+        if self.type == 'virus':
+            # Virus applies virus damage instead of direct damage
+            virus_duration = 4  # Base duration
+            current_virus = player.temporary_effects.get('virus_turns', 0)
+            
+            # Each attack adds to the duration (stacks)
+            player.temporary_effects['virus_turns'] = current_virus + virus_duration
+            
+            # Cap maximum virus duration to prevent infinite stacking
+            max_virus_duration = 12
+            player.temporary_effects['virus_turns'] = min(
+                player.temporary_effects['virus_turns'], 
+                max_virus_duration
+            )
+            
+            return 0  # No immediate damage
+        else:
+            return player.take_damage(self.type_data.damage)
     
     def take_damage(self, damage: int) -> bool:
         """Take damage and return True if destroyed."""
@@ -2523,15 +2557,30 @@ class TurnProcessor:
         
         for effect_name in effects_to_update:
             if player.temporary_effects[effect_name] > 0:
+                # Handle virus damage over time BEFORE decrementing counter
+                if effect_name == 'virus_turns':
+                    virus_damage = 3  # Moderate damage per turn
+                    actual_damage = player.take_damage(virus_damage)
+                    self.message_log.add_message(f"Virus damage: {actual_damage} CPU damage")
+                    
+                    # Check for death from virus
+                    if player.cpu <= 0:
+                        self.sound_manager.play_sound("player_death")
+                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
+                        SaveGameManager.delete_save()
+                        self.message_log.add_message("Save data purged")
+                        return  # Exit early if player dies
+                
+                # Now decrement the counter
                 player.temporary_effects[effect_name] -= 1
                 
                 if player.temporary_effects[effect_name] == 0:
                     if effect_name == 'exploit_efficiency_turns':
                         self.message_log.add_message("Exploit efficiency boost expired")
-                    elif effect_name == 'stealth_boost_turns':
-                        self.message_log.add_message("Stealth boost expired")
                     elif effect_name == 'data_mimic_turns':
                         self.message_log.add_message("Data Mimic invisibility expired")
+                    elif effect_name == 'virus_turns':
+                        self.message_log.add_message("Virus purged from system")
     
     def _process_detection_increase(self, player: Player) -> None:
         """Handle periodic detection level increases."""
@@ -2542,8 +2591,7 @@ class TurnProcessor:
             old_detection = player.detection
             player.detection = min(100, player.detection + detection_increase)
             
-            if player.detection != old_detection:
-                self.message_log.add_message(f"Network security tightening: +{detection_increase}% detection")
+            # Detection increases silently in background
 
 
 
@@ -2699,7 +2747,8 @@ class Game:
             'speed_boost_turns': 0,
             'enhanced_vision_turns': 0,
             'exploit_efficiency_turns': 0,
-            'data_mimic_turns': 0
+            'data_mimic_turns': 0,
+            'virus_turns': 0
         })
         
         # Restore inventory with defaults
@@ -3172,7 +3221,12 @@ class Game:
             if enemy.can_attack_player(self.player) and not getattr(enemy, 'has_moved_this_turn', False):
                 self.sound_manager.play_sound("enemy_attack")
                 damage = enemy.attack_player(self.player)
-                self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
+                
+                if enemy.type == 'virus':
+                    virus_turns = self.player.temporary_effects.get('virus_turns', 0)
+                    self.message_log.add_message(f"{enemy.type_data.name} applies virus damage ({virus_turns} turns)")
+                else:
+                    self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
                 if self.player.cpu <= 0:
                     self.sound_manager.play_sound("player_death")
                     self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
@@ -3707,9 +3761,9 @@ class Game:
     
     def _place_enemies(self, enemy_count: int):
         """Place enemies throughout the level with increased density."""
-        enemy_types = ['scanner', 'patrol', 'bot', 'firewall', 'hunter']
+        enemy_types = ['scanner', 'patrol', 'bot', 'firewall', 'hunter', 'virus']
         # Adjust weights for challenging gameplay
-        enemy_weights = [4, 3, 2, 2, 2]  # More scanners and firewalls for detection challenge
+        enemy_weights = [4, 3, 2, 2, 2, 1]  # More scanners and firewalls for detection challenge, virus is rare
         
         # Increase enemy density significantly
         actual_enemy_count = int(enemy_count * 1.6)  # 60% more enemies
@@ -3994,6 +4048,8 @@ class ExploitSystem:
             return self._execute_network_scan()
         elif exploit_key == 'log_wiper':
             return self._execute_log_wiper()
+        elif exploit_key == 'antivirus':
+            return self._execute_antivirus()
         elif exploit_key == 'emp_burst':
             return self._execute_emp_burst(target, exploit.range)
         
@@ -4118,6 +4174,28 @@ class ExploitSystem:
         self.game.player.detection = max(0, self.game.player.detection - 30)
         actual_reduction = old_detection - self.game.player.detection
         self.game.message_log.add_message(f"Detection: -{actual_reduction:.1f}%")
+        return True
+    
+    def _execute_antivirus(self) -> bool:
+        """Execute antivirus exploit - purges negative status effects."""
+        self.game.sound_manager.play_sound("exploit_antivirus")
+        
+        # Check if player has any negative effects to cure
+        negative_effects = ['virus_turns']
+        effects_cured = []
+        
+        for effect in negative_effects:
+            if self.game.player.temporary_effects.get(effect, 0) > 0:
+                effects_cured.append(effect)
+                self.game.player.temporary_effects[effect] = 0
+        
+        if effects_cured:
+            if 'virus_turns' in effects_cured:
+                self.game.message_log.add_message("Virus purged from system")
+            self.game.message_log.add_message("System cleansed of negative effects")
+        else:
+            self.game.message_log.add_message("No negative effects detected")
+        
         return True
     
     def _execute_emp_burst(self, target: Position, exploit_range: int) -> bool:
@@ -5191,27 +5269,65 @@ class UIRenderer:
         for effect_name, turns in game.player.temporary_effects.items():
             if turns > 0:
                 display_name = effect_name.replace('_turns', '').replace('_', ' ').title()
-                conditions.append(f"{display_name}({turns})")
+                condition_text = f"{display_name}({turns})"
+                
+                # Color conditions based on their type
+                if effect_name == 'data_mimic_turns':
+                    color = Colors.BLUE  # Invisible effect
+                elif effect_name == 'speed_boost_turns':
+                    color = self._get_data_code_color_for_effect(game, 'speed_boost', Colors.YELLOW)
+                elif effect_name == 'enhanced_vision_turns':
+                    color = self._get_data_code_color_for_effect(game, 'enhanced_vision', Colors.ELECTRIC_BLUE)
+                elif effect_name == 'exploit_efficiency_turns':
+                    color = self._get_data_code_color_for_effect(game, 'exploit_efficiency', Colors.ELECTRIC_PURPLE)
+                elif effect_name == 'virus_turns':
+                    color = Colors.DARK_GREEN  # Virus effect
+                else:
+                    color = Colors.WHITE  # Default color for other effects
+                
+                conditions.append((condition_text, color))
         
         # Network scan effect
         if game.game_state.network_scan_turns > 0:
-            conditions.append(f"Network Scan({game.game_state.network_scan_turns})")
+            conditions.append((f"Network Scan({game.game_state.network_scan_turns})", Colors.ELECTRIC_PURPLE))
         
         # Speed moves remaining (from speed boost)
         if game.player.speed_moves_remaining > 0:
-            conditions.append(f"Speed Moves({game.player.speed_moves_remaining})")
-        
-        # Any other temporary game-wide effects could be added here
+            conditions.append((f"Speed Moves({game.player.speed_moves_remaining})", Colors.YELLOW))
         
         if conditions:
-            conditions_text = "Conditions: " + " ".join(conditions)
-            # Truncate if too long for the line
-            max_width = GameConfig.GAME_AREA_WIDTH - 2
-            if len(conditions_text) > max_width:
-                conditions_text = conditions_text[:max_width-3] + "..."
-            console.print(1, y, conditions_text, fg=Colors.CYAN, bg=Colors.UI_BG)
+            # Print the "Conditions:" label
+            x = 1
+            console.print(x, y, "Conditions: ", fg=Colors.CYAN, bg=Colors.UI_BG)
+            x += len("Conditions: ")
+            
+            # Print each condition with its appropriate color
+            for i, (condition_text, color) in enumerate(conditions):
+                if i > 0:
+                    console.print(x, y, " ", fg=Colors.CYAN, bg=Colors.UI_BG)
+                    x += 1
+                console.print(x, y, condition_text, fg=color, bg=Colors.UI_BG)
+                x += len(condition_text)
         else:
             console.print(1, y, "Conditions: None", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
+    
+    def _get_data_code_color_for_effect(self, game: Game, effect_key: str, fallback_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
+        """Get the data code color for a specific effect based on the current game's randomization."""
+        color_map = {
+            'crimson': Colors.CRIMSON,
+            'azure': Colors.AZURE, 
+            'emerald': Colors.EMERALD,
+            'golden': Colors.GOLDEN,
+            'violet': Colors.VIOLET,
+            'silver': Colors.SILVER
+        }
+        
+        # Find which color has this effect in the current game
+        for color_name, (effect, _) in game.data_patch_effects.items():
+            if effect == effect_key:
+                return color_map.get(color_name, fallback_color)
+        
+        return fallback_color
     
     
     def render_system_log(self, console: tcod.console.Console, game: Game):
@@ -5644,7 +5760,9 @@ class MapRenderer:
     
     def _get_player_color(self, player: Player) -> Tuple[int, int, int]:
         """Get player color based on current state."""
-        if player.is_invisible():
+        if player.temporary_effects['virus_turns'] > 0:
+            return Colors.DARK_GREEN
+        elif player.is_invisible():
             return Colors.BLUE
         elif player.temporary_effects['speed_boost_turns'] > 0:
             return Colors.YELLOW
@@ -6143,6 +6261,7 @@ class HelpMenu:
             ("  B: Bot (25hp, 3 vision, random movement, 8 dmg)", Colors.ORANGE),
             ("  F: Firewall (80hp, 6 vision, static, no attack)", Colors.RED),
             ("  H: Hunter (50hp, 6 vision, seeks players, 22 dmg)", Colors.RED),
+            ("  V: Virus (35hp, 4 vision, seeks players, virus attack)", Colors.RED),
             ("  A: Admin Avatar (250hp, 8 vision, perfect tracking, 45 dmg)", Colors.RED),
             ("", Colors.WHITE),
             
@@ -6175,6 +6294,12 @@ class HelpMenu:
             ("  Noise Maker: Create distraction (8 turn duration)", Colors.WHITE),
             ("  Network Scan: Reveal all enemies, vision & paths (5 turns)", Colors.WHITE),
             ("  Log Wiper: Reduce detection level (-50%)", Colors.WHITE),
+            ("  Antivirus: Purges negative status effects (virus)", Colors.WHITE),
+            ("", Colors.WHITE),
+            
+            ("STATUS EFFECTS:", Colors.CYAN),
+            ("  Virus: 3 CPU damage per turn, cured with Antivirus", Colors.WHITE),
+            ("  Virus attacks stack virus duration (max 12 turns)", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("SURVIVAL TIPS:", Colors.CYAN),
@@ -6183,6 +6308,7 @@ class HelpMenu:
             ("  Plan exploit usage - heat management is critical", Colors.WHITE),
             ("  Use CPU nodes when low on health", Colors.WHITE),
             ("  Admin Avatar spawns at high detection - be careful!", Colors.WHITE),
+            ("  Virus enemies apply virus damage - keep Antivirus exploit handy!", Colors.WHITE),
             ("  Save cooling nodes for emergencies", Colors.WHITE),
         ]
 
