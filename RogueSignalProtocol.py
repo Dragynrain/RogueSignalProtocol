@@ -4754,17 +4754,42 @@ class Renderer:
         console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y + GameConfig.MESSAGE_BUTTON_SPACING, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
     
     def _render_death_message(self, console: tcod.console.Console):
-        """Render death message."""
-        center_x = GameConfig.GAME_AREA_WIDTH // 2
-        center_y = GameConfig.SCREEN_HEIGHT // 2
-        
+        """Render death message with frame and black backgrounds."""
         # Ensure save is deleted on death (permadeath)
         if SaveGameManager.save_exists():
             SaveGameManager.delete_save()
         
-        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y, "SYSTEM FAILURE", fg=Colors.NEON_PINK, bg=Colors.BLACK)
-        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_MEDIUM, center_y + GameConfig.MESSAGE_LINE_SPACING, "Consciousness purged", fg=Colors.RED, bg=Colors.BLACK)
-        console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y + GameConfig.MESSAGE_BUTTON_SPACING, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
+        # Dim background
+        for x in range(GameConfig.SCREEN_WIDTH):
+            for y in range(GameConfig.SCREEN_HEIGHT):
+                console.print(x, y, ' ', fg=Colors.BLACK, bg=(32, 32, 32))
+        
+        # Dialog box dimensions
+        dialog_width = 40
+        dialog_height = 8
+        start_x = (GameConfig.SCREEN_WIDTH - dialog_width) // 2
+        start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
+        
+        # Draw dialog background
+        for x in range(start_x, start_x + dialog_width):
+            for y in range(start_y, start_y + dialog_height):
+                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
+        
+        # Draw border
+        for x in range(start_x, start_x + dialog_width):
+            console.print(x, start_y, '=', fg=Colors.NEON_PINK, bg=Colors.BLACK)
+            console.print(x, start_y + dialog_height - 1, '=', fg=Colors.NEON_PINK, bg=Colors.BLACK)
+        for y in range(start_y, start_y + dialog_height):
+            console.print(start_x, y, '|', fg=Colors.NEON_PINK, bg=Colors.BLACK)
+            console.print(start_x + dialog_width - 1, y, '|', fg=Colors.NEON_PINK, bg=Colors.BLACK)
+        
+        # Death messages centered in dialog
+        msg_center_x = start_x + dialog_width // 2
+        msg_y = start_y + 2
+        
+        console.print(msg_center_x - 6, msg_y, "SYSTEM FAILURE", fg=Colors.NEON_PINK, bg=Colors.BLACK)
+        console.print(msg_center_x - 8, msg_y + 1, "Consciousness purged", fg=Colors.RED, bg=Colors.BLACK)
+        console.print(msg_center_x - 7, msg_y + 3, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
 
 class UIRenderer:
     """Renders UI elements."""
