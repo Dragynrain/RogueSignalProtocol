@@ -5,7 +5,8 @@
       "Bash(timeout:*)",
       "Bash(del test_screens.py test_inventory_ingame.py)",
       "WebSearch",
-      "WebFetch(domain:python-tcod.readthedocs.io)"
+      "WebFetch(domain:python-tcod.readthedocs.io)",
+      "Bash(sed:*)"
     ],
     "deny": [],
     "ask": []

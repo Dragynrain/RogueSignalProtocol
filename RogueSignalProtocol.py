@@ -1,43 +1,31 @@
 #!/usr/bin/env python3
 """
-Rogue Signal Protocol
-A stealth-focused traditional roguelike using Python and tcod
-
-Features cyberpunk-themed exfiltration gameplay with permadeath,
-procedural level generation, and persistent story progression.
+Rogue Signal Protocol - A cyberpunk stealth roguelike
 """
 
 import tcod
 import logging
 import traceback
-
-# =============================================================================
-# PYTHON ERROR LOGGING SYSTEM (SEPARATE FROM IN-GAME SYSTEM LOG)
-# =============================================================================
-# This is for technical errors, debugging, and development info.
-# NOT for gameplay messages like "CPU restored" or "enemy detected" -
-# those go to the MessageLog class for the in-game SYSTEM LOG panel.
-# =============================================================================
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(levelname)s:%(filename)s:%(lineno)d - %(message)s',
-    handlers=[
-        logging.StreamHandler(),  # Console output
-        logging.FileHandler('game_debug.log', mode='w')  # File output
-    ]
-)
 import random
 import math
 import json
 import os
-# ABC removed - simplified inheritance pattern
+import time
 from enum import Enum
 from dataclasses import dataclass
 from typing import List, Tuple, Optional, Dict, Any, Set
-import time
 
-# Audio imports
+# Setup logging for technical errors and debugging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(levelname)s:%(filename)s:%(lineno)d - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler('game_debug.log', mode='w')
+    ]
+)
+
+# Audio system
 try:
     import pygame
     AUDIO_AVAILABLE = True
@@ -45,12 +33,7 @@ except ImportError:
     AUDIO_AVAILABLE = False
     logging.warning("pygame not available. Sound will be disabled.")
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(levelname)s:%(name)s:%(message)s')
-
-# ============================================================================
-# JSON DATA LOADING SYSTEM
-# ============================================================================
+# JSON Data Loading System
 
 class DataLoader:
     """Handles loading of JSON configuration and game data files."""
@@ -128,8 +111,7 @@ def get_story_fragments() -> List[str]:
     """Get story fragments from JSON data."""
     return DataLoader.load_story_fragments()
 
-# Legacy compatibility - will be removed after refactoring
-STORY_FRAGMENTS = [
+# Removed unused STORY_FRAGMENTS constant (data now loaded from JSON)
     # Fragment 1
     """Email - Subject: Welcome to the Cognitive Resilience Initiative
 
