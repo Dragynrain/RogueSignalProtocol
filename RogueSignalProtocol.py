@@ -3496,8 +3496,6 @@ class Game:
             self.admin_spawned = False
             
             self.message_log.add_message(f"{config['name']} loaded")
-            self.message_log.add_message(f"{len(self.enemies)} security processes")
-            self.message_log.add_message("Network security reset - detection cleared")
             
         finally:
             # Restore random seed
@@ -6471,14 +6469,8 @@ def handle_menu_navigation(console, context, menus, settings):
 
 def show_welcome_messages(game):
     """Show initial welcome messages for new games."""
-    if not SaveGameManager.save_exists():
-        game.message_log.add_message("Welcome to Rogue Signal Protocol!")
-        game.message_log.add_message("Cyberpunk stealth exfiltration game")
-        game.message_log.add_message("Navigate using stealth")
-        game.message_log.add_message("Reach the gateway (>)")
-        game.message_log.add_message("Hide in shadows (.) to avoid detection")
-        game.message_log.add_message("Press 'L' to view discovered lore")
-        game.message_log.add_message_typed("Starting Corporate Network exfiltration...", "system")
+    # Welcome messages removed to reduce startup spam
+    pass
 
 def handle_game_input_events(event, game, input_handler):
     """Handle game input events and return (should_continue, game)."""
