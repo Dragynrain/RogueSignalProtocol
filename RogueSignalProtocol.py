@@ -1465,6 +1465,10 @@ class Enemy:
         if self.disabled_turns > 0:
             return False
             
+        # Can't attack invisible players unless this is an admin
+        if player.is_invisible() and self.type != 'admin':
+            return False
+            
         # Can't attack if no damage, unless it's a virus (which applies status effects)
         if self.type_data.damage <= 0 and self.type != 'virus':
             return False
@@ -1525,11 +1529,17 @@ class Enemy:
         elif self.type_data.movement == EnemyMovement.LINEAR and self.patrol_points:
             return self._move_patrol(game_map, player, game)
         elif self.type_data.movement == EnemyMovement.SEEK:
+            # Don't seek invisible players unless this is an admin
+            if player.is_invisible() and self.type != 'admin':
+                return False
             if self.state == EnemyState.HOSTILE and self.last_seen_player:
                 return self._move_toward(self.last_seen_player, game_map, player, game)
             elif self.state == EnemyState.ALERT and self.last_seen_player:
                 return self._move_toward(self.last_seen_player, game_map, player, game)
         elif self.type_data.movement == EnemyMovement.TRACK:
+            # Don't track invisible players unless this is an admin
+            if player.is_invisible() and self.type != 'admin':
+                return False
             if self.state == EnemyState.HOSTILE:
                 return self._move_toward(player.position, game_map, player, game)
         
@@ -1551,10 +1561,12 @@ class Enemy:
     
     def _move_random(self, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
         """Execute random movement pattern with move queue. Returns True if moved."""
-        if self.state == EnemyState.HOSTILE:
-            return self._move_toward(player.position, game_map, player, game)
-        elif self.state == EnemyState.ALERT and self.last_seen_player:
-            return self._move_toward(self.last_seen_player, game_map, player, game)
+        # Don't seek invisible players unless this is an admin
+        if not (player.is_invisible() and self.type != 'admin'):
+            if self.state == EnemyState.HOSTILE:
+                return self._move_toward(player.position, game_map, player, game)
+            elif self.state == EnemyState.ALERT and self.last_seen_player:
+                return self._move_toward(self.last_seen_player, game_map, player, game)
         
         # Ensure we have moves queued
         self._ensure_random_move_queue()
@@ -1574,10 +1586,12 @@ class Enemy:
     
     def _move_patrol(self, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
         """Execute patrol movement pattern. Returns True if moved."""
-        if self.state == EnemyState.HOSTILE:
-            return self._move_toward(player.position, game_map, player, game)
-        elif self.state == EnemyState.ALERT and self.last_seen_player:
-            return self._move_toward(self.last_seen_player, game_map, player, game)
+        # Don't seek invisible players unless this is an admin
+        if not (player.is_invisible() and self.type != 'admin'):
+            if self.state == EnemyState.HOSTILE:
+                return self._move_toward(player.position, game_map, player, game)
+            elif self.state == EnemyState.ALERT and self.last_seen_player:
+                return self._move_toward(self.last_seen_player, game_map, player, game)
         
         if not self.patrol_points:
             return False
