@@ -2979,7 +2979,7 @@ class Game:
         self.game_map.story_fragments.clear()  # Clear story fragments
         self.game_map.explored_tiles.clear()  # Clear memory system
         self.game_map.last_known_enemy_positions.clear()  # Clear enemy memory
-        self.enemies.clear()
+        self.enemy_manager.enemies.clear()
     
     def _create_border_walls(self):
         """Create walls around the map border."""
@@ -3419,7 +3419,7 @@ class Game:
         if target_enemy.take_damage(total_damage):
             # Enemy destroyed
             self.sound_manager.play_sound("enemy_death")
-            self.enemies.remove(target_enemy)
+            self.enemy_manager.remove_enemy(target_enemy)
             self.player.cpu = min(self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)  # Small CPU recovery
             self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")
         else:
@@ -3447,10 +3447,7 @@ class Game:
     
     def _get_enemy_at(self, position: Position) -> Optional[Enemy]:
         """Get enemy at specified position."""
-        for enemy in self.enemies:
-            if enemy.position.distance_to(position) == 0:
-                return enemy
-        return None
+        return self.enemy_manager.get_enemy_at_position(position)
     
     def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
         """Get the next N positions this enemy will move to."""
@@ -3672,9 +3669,11 @@ class Game:
     
     def _place_data_patches(self):
         """Place codes throughout the level."""
-        # Ensure code effects are initialized
+        # Code effects should already be initialized at game start
+        # If somehow empty, this is an error - don't place patches
         if not self.data_patch_effects:
-            self._randomize_data_patches()
+            logging.error("Code effects not initialized - skipping patch placement")
+            return
         
         patch_count = 12 + self.level * 4  # Much more codes (was 6 + level * 2)
         placed_patches = 0
@@ -3818,7 +3817,7 @@ class Game:
                     if chosen_movement == EnemyMovement.LINEAR:
                         enemy.patrol_points = self.enemy_manager._generate_patrol_route(position)
                 
-                self.enemies.append(enemy)
+                self.enemy_manager.enemies.append(enemy)
                 placed_enemies += 1
     
     
