@@ -2603,6 +2603,8 @@ class TurnProcessor:
                         self.message_log.add_message("Exploit efficiency boost expired")
                     elif effect_name == 'data_mimic_turns':
                         self.message_log.add_message("Data Mimic invisibility expired")
+                    elif effect_name == 'speed_boost_turns':
+                        self.message_log.add_message("Speed boost expired")
                     elif effect_name == 'virus_turns':
                         self.message_log.add_message("Virus purged from system")
     
@@ -3023,6 +3025,10 @@ class Game:
     
     def process_turn(self):
         """Process one complete game turn using the new system architecture."""
+        # Grant speed boost moves at start of turn
+        if self.player.temporary_effects['speed_boost_turns'] > 0 and self.player.speed_moves_remaining == 0:
+            self.player.speed_moves_remaining = 1  # Grant 1 extra move per turn
+        
         # Process turn using the dedicated turn processor
         self.turn_processor.process_turn(self.player)
         
@@ -3133,13 +3139,25 @@ class Game:
             del self.game_map.story_fragments[player_pos]
     
     def _update_enemies(self):
-        """Update all enemy states and actions."""
+        """Update all enemy states and actions in structured phases."""
+        # Reset movement flags at start of enemy turn
+        for enemy in self.enemies:
+            enemy.has_moved_this_turn = False
+            
+        # PHASE 1: Awareness and Communication
+        # All enemies detect player, update states, and communicate with nearby enemies
         self._update_enemy_awareness()
+        
+        # PHASE 2: Movement  
+        # All enemies move based on their current awareness state
         self._move_enemies()
+        
+        # PHASE 3: Attacks
+        # All enemies attack if they are in range (move OR attack, not both)
         self._process_enemy_attacks()
     
     def _update_enemy_awareness(self):
-        """Update enemy awareness states."""
+        """PHASE 1: Update enemy awareness states and handle communication."""
         for enemy in self.enemies[:]:
             old_state = enemy.state
             
@@ -3223,25 +3241,22 @@ class Game:
                     alerted_count += 1
                     alerted_enemies.append(enemy)
         
-        # Make alerted enemies start moving immediately toward player (only if they haven't moved yet this turn)
-        for enemy in alerted_enemies:
-            # Only move if enemy hasn't already moved this turn
-            if not getattr(enemy, 'has_moved_this_turn', False):
-                did_move = enemy.move(self.game_map, self.player, self)
-                enemy.has_moved_this_turn = did_move
+        # Don't move alerted enemies immediately - they will move in the movement phase
+        # This ensures proper phase separation: awareness -> movement -> attacks
         
         if alerted_count > 0:
             self.message_log.add_message(f"{alerted_count} enemies alerted nearby!")
     
     def _move_enemies(self):
-        """Move all enemies according to their AI."""
+        """PHASE 2: Move all enemies according to their current awareness state."""
         for enemy in self.enemies:
-            # Only mark as moved if enemy actually moved
-            did_move = enemy.move(self.game_map, self.player, self)
-            enemy.has_moved_this_turn = did_move
+            # Only move enemies that haven't moved this turn
+            if not getattr(enemy, 'has_moved_this_turn', False):
+                did_move = enemy.move(self.game_map, self.player, self)
+                enemy.has_moved_this_turn = did_move
     
     def _process_enemy_attacks(self):
-        """Process attacks from enemies adjacent to player."""
+        """PHASE 3: Process attacks from enemies adjacent to player."""
         for enemy in self.enemies[:]:
             # Only attack if enemy hasn't moved this turn (move OR attack, not both)
             if enemy.can_attack_player(self.player) and not getattr(enemy, 'has_moved_this_turn', False):
@@ -3260,9 +3275,7 @@ class Game:
                     SaveGameManager.delete_save()
                     self.message_log.add_message("Save data purged")
         
-        # Reset movement flags for next turn
-        for enemy in self.enemies:
-            enemy.has_moved_this_turn = False
+        # Movement flags are reset at the start of _update_enemies()
     
     def _check_admin_spawn(self):
         """Check if admin avatar should spawn."""
@@ -3333,10 +3346,9 @@ class Game:
             self._move_cursor(dx, dy)
             return
         
-        # Handle speed boost: grant 2 moves at start of speed boost turn
-        if self.player.temporary_effects['speed_boost_turns'] > 0 and self.player.speed_moves_remaining == 0:
-            self.player.speed_moves_remaining = 2
-        elif self.player.temporary_effects['speed_boost_turns'] == 0:
+        # Handle speed boost: grant extra moves only when starting a new turn
+        # Don't reset speed moves in the middle of using them
+        if self.player.temporary_effects['speed_boost_turns'] == 0:
             self.player.speed_moves_remaining = 0
         
         # Check for enemy at target position first
@@ -3388,10 +3400,11 @@ class Game:
         # Consume speed move if applicable
         if self.player.speed_moves_remaining > 0:
             self.player.speed_moves_remaining -= 1
+            # Don't process full turn, just grant another move
+            return
         
-        # Only process turn if no speed moves remaining
-        if self.player.speed_moves_remaining == 0:
-            self.process_turn()
+        # Process full turn when no speed moves remaining
+        self.process_turn()
 
     def _perform_bump_attack(self, target_enemy: Enemy):
         """Perform a bump attack on an enemy."""
