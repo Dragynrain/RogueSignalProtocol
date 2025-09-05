@@ -1518,34 +1518,41 @@ class Enemy:
             return False
         
         # Movement cooldown system
-        self.move_cooldown -= 1
         if self.move_cooldown > 0:
+            self.move_cooldown -= 1
             return False
         
-        self._reset_movement_cooldown()
+        # Attempt to move based on movement type
+        moved = False
         
         if self.type_data.movement == EnemyMovement.STATIC:
-            return False
+            moved = False
         elif self.type_data.movement == EnemyMovement.RANDOM:
-            return self._move_random(game_map, player, game)
+            moved = self._move_random(game_map, player, game)
         elif self.type_data.movement == EnemyMovement.LINEAR and self.patrol_points:
-            return self._move_patrol(game_map, player, game)
+            moved = self._move_patrol(game_map, player, game)
         elif self.type_data.movement == EnemyMovement.SEEK:
             # Don't seek invisible players unless this is an admin
             if player.is_invisible() and self.type != 'admin':
-                return False
-            if self.state == EnemyState.HOSTILE and self.last_seen_player:
-                return self._move_toward(self.last_seen_player, game_map, player, game)
-            elif self.state == EnemyState.ALERT and self.last_seen_player:
-                return self._move_toward(self.last_seen_player, game_map, player, game)
+                moved = False
+            elif self.state == EnemyState.HOSTILE and self.last_seen_player:
+                moved = self._move_toward(self.last_seen_player, game_map, player, game)
+            else:
+                moved = False
         elif self.type_data.movement == EnemyMovement.TRACK:
             # Don't track invisible players unless this is an admin
             if player.is_invisible() and self.type != 'admin':
-                return False
-            if self.state == EnemyState.HOSTILE:
-                return self._move_toward(player.position, game_map, player, game)
+                moved = False
+            elif self.state == EnemyState.HOSTILE:
+                moved = self._move_toward(player.position, game_map, player, game)
+            else:
+                moved = False
         
-        return False
+        # Reset cooldown after attempting movement
+        if moved:
+            self._reset_movement_cooldown()
+        
+        return moved
     
     def _reset_movement_cooldown(self):
         """Reset movement cooldown based on enemy type."""
@@ -1603,8 +1610,27 @@ class Enemy:
             self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
             current_target = self.patrol_points[self.patrol_index]
         
-        # Try to move toward patrol target
+        # Try to move toward patrol target using pathfinding
         moved = pathfind_and_move(self, current_target, game_map, player, game)
+        
+        # If pathfinding failed, try simple direction movement as fallback
+        if not moved:
+            dx = 0
+            dy = 0
+            if current_target.x > self.position.x:
+                dx = 1
+            elif current_target.x < self.position.x:
+                dx = -1
+            if current_target.y > self.position.y:
+                dy = 1
+            elif current_target.y < self.position.y:
+                dy = -1
+            
+            if dx != 0 or dy != 0:
+                destination = Position(self.position.x + dx, self.position.y + dy)
+                if can_move_to_position(self, destination, game_map, player, game):
+                    self.position = destination
+                    moved = True
         
         # Handle getting stuck - skip to next patrol point
         if not moved:
@@ -1627,7 +1653,29 @@ class Enemy:
         if self.position.distance_to(target) <= 1.5:
             return False
         
-        return pathfind_and_move(self, target, game_map, player, game)
+        # Try pathfinding first
+        moved = pathfind_and_move(self, target, game_map, player, game)
+        
+        # If pathfinding failed, try simple direction movement as fallback
+        if not moved:
+            dx = 0
+            dy = 0
+            if target.x > self.position.x:
+                dx = 1
+            elif target.x < self.position.x:
+                dx = -1
+            if target.y > self.position.y:
+                dy = 1
+            elif target.y < self.position.y:
+                dy = -1
+            
+            if dx != 0 or dy != 0:
+                destination = Position(self.position.x + dx, self.position.y + dy)
+                if can_move_to_position(self, destination, game_map, player, game):
+                    self.position = destination
+                    moved = True
+        
+        return moved
 
 # ============================================================================
 # PATHFINDING SYSTEM
@@ -1972,31 +2020,7 @@ class EnemyManager:
             if enemy.disabled_turns > 0:
                 continue
                 
-            # Update enemy state based on player visibility
-            if enemy.can_see_player(player, self.game_map):
-                if enemy.state == EnemyState.UNAWARE:
-                    enemy.state = EnemyState.ALERT
-                    enemy.alert_timer = 5
-                    self.message_log.add_message(f"{enemy.type_data.name} detected movement!")
-                elif enemy.state == EnemyState.ALERT:
-                    enemy.state = EnemyState.HOSTILE
-                    self.message_log.add_message(f"{enemy.type_data.name} is now hostile!")
-                
-                enemy.last_seen_player = Position(player.x, player.y)
-            else:
-                # Handle state decay when player not visible
-                if enemy.state == EnemyState.HOSTILE and enemy.alert_timer <= 0:
-                    enemy.state = EnemyState.ALERT
-                    enemy.alert_timer = 10
-                elif enemy.state == EnemyState.ALERT:
-                    enemy.alert_timer -= 1
-                    if enemy.alert_timer <= 0:
-                        enemy.state = EnemyState.UNAWARE
-                        enemy.last_seen_player = None
-                        # Resume patrol route from nearest patrol point
-                        if (enemy.type_data.movement == EnemyMovement.LINEAR and 
-                            enemy.patrol_points):
-                            self._resume_patrol_route(enemy)
+            # Enemy state is now handled by the main game's _process_enemies method
             
             # Move enemy
             enemy.move(self.game_map, player, game)
@@ -3182,14 +3206,16 @@ class Game:
         if enemy.state == EnemyState.UNAWARE:
             enemy.state = EnemyState.ALERT
             enemy.alert_timer = 1
+            enemy.last_seen_player = Position(self.player.x, self.player.y)  # Set position when first spotted
             self.message_log.add_message(f"{enemy.type_data.name} investigating")
             # Alert nearby enemies immediately when first spotted
             self._alert_nearby_enemies(enemy)
         elif enemy.state == EnemyState.ALERT:
+            # Update last seen position while still seeing player
+            enemy.last_seen_player = Position(self.player.x, self.player.y)
             enemy.alert_timer -= 1
             if enemy.alert_timer <= 0:
                 enemy.state = EnemyState.HOSTILE
-                enemy.last_seen_player = Position(self.player.x, self.player.y)
                 detection_increase = 8 if enemy.type == 'admin' else 5  # Reduced from 15/10
                 self.player.detection = min(100, self.player.detection + detection_increase)
                 self.message_log.add_message(f"{enemy.type_data.name} detected you!")
