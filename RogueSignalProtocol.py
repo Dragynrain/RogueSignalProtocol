@@ -317,7 +317,7 @@ class SaveGameManager:
     
     @classmethod
     def _serialize_data_patches(cls, patches: Dict) -> Dict[str, Dict]:
-        """Serialize data codes."""
+        """Serialize codes."""
         return {
             f"{pos[0]},{pos[1]}": {
                 "color": patch.color,
@@ -784,7 +784,7 @@ class Colors:
     ELECTRIC_BLUE = (0, 191, 255)  # Electric blue
     CYBER_TEAL = (20, 255, 200)  # Cyber teal
     
-    # Data code colors (from config)
+    # Code colors (from config)
     CRIMSON = (220, 20, 60)
     AZURE = (30, 144, 255) 
     EMERALD = (50, 205, 50)
@@ -1005,7 +1005,7 @@ class InventoryItem:
         return False
 
 class DataPatch(InventoryItem):
-    """Randomized data codes with unknown effects until used."""
+    """Randomized codes with unknown effects until used."""
     
     def __init__(self, color: str, effect: str, name: str, description: str = "", quantity: int = 1):
         super().__init__(name, "data_patch", description)
@@ -1015,7 +1015,7 @@ class DataPatch(InventoryItem):
         self.discovered = False
     
     def use(self, player: 'Player', game: 'Game') -> bool:
-        """Apply the data code effect to the player."""
+        """Apply the code effect to the player."""
         if self.color not in game.data_patch_effects:
             return False
         
@@ -1129,7 +1129,7 @@ class InventoryManager:
     def add_item(self, item: InventoryItem) -> bool:
         """Add an item to inventory."""
         if isinstance(item, DataPatch):
-            # Look for existing data code of the same color
+            # Look for existing code of the same color
             for existing_item in self.items:
                 if (isinstance(existing_item, DataPatch) and 
                     existing_item.color == item.color):
@@ -1141,7 +1141,7 @@ class InventoryManager:
                         return True
             # No existing stack found, add as new item
         
-        # Add non-data-code items or new data code colors
+        # Add non-code items or new code colors
         self.items.append(item)
         return True
     
@@ -1161,9 +1161,9 @@ class InventoryManager:
         return items
     
     def get_display_items(self) -> List[InventoryItem]:
-        """Get all items in display order (data codes first, then exploits)."""
+        """Get all items in display order (codes first, then exploits)."""
         display_items = []
-        # Add data codes first (sorted alphabetically)
+        # Add codes first (sorted alphabetically)
         display_items.extend(self.get_items_by_type("data_patch"))
         # Add other items (exploits, etc.)
         display_items.extend(self.get_items_by_type("exploit"))
@@ -1701,6 +1701,8 @@ def can_move_to_position(enemy, destination, game_map, player, game):
     # Basic validity checks
     if not destination.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
         return False
+    if game_map.is_wall(destination):
+        return False  # Can't move onto walls
     if not game_map.is_valid_position(destination):
         return False
     if destination.distance_to(player.position) == 0:
@@ -1771,7 +1773,7 @@ class GameMap:
         return (position.x, position.y) in self.cpu_recovery_nodes
     
     def get_data_patch(self, position: Position) -> Optional[DataPatch]:
-        """Get data code at position."""
+        """Get code at position."""
         return self.data_patches.get((position.x, position.y))
     
     def get_exploit_pickup(self, position: Position) -> Optional[ExploitItem]:
@@ -1941,6 +1943,10 @@ class EnemyManager:
     
     def spawn_enemy(self, position: Position, enemy_type: str) -> Enemy:
         """Spawn a new enemy at the specified position."""
+        # Validate position is not on a wall
+        if self.game_map.is_wall(position):
+            raise ValueError(f"Cannot spawn enemy on wall at {position}")
+        
         enemy = Enemy(position, enemy_type)
         
         # Set up patrol route for patrol enemies
@@ -2633,6 +2639,7 @@ class Game:
         self.show_patrol_predictions = False
         self.show_inventory = False
         self.show_help = False
+        self.show_gateway_confirmation = False  # Gateway confirmation dialog
         self.show_story_fragment: Optional[int] = None  # Fragment index to display
         self.show_lore_viewer = False  # L key lore viewer
         self.lore_viewer_selection = 0  # Selected lore entry index
@@ -2790,7 +2797,7 @@ class Game:
             except (ValueError, IndexError):
                 continue  # Skip malformed coordinate data
         
-        # Restore data code effects
+        # Restore code effects
         self.data_patch_effects = save_data["data_patch_effects"]
     
     def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:
@@ -2832,7 +2839,7 @@ class Game:
         self.game_map.permanent_upgrades.clear()
         self.game_map.story_fragments.clear()
         
-        # Restore data codes
+        # Restore codes
         for pos_str, patch_data in map_data["data_patches"].items():
             try:
                 coords = pos_str.split(',')
@@ -2944,7 +2951,7 @@ class Game:
                 logging.warning("Auto-save failed")
     
     def _randomize_data_patches(self):
-        """Randomize data code effects for this game session."""
+        """Randomize code effects for this game session."""
         colors = ['crimson', 'azure', 'emerald', 'golden', 'violet', 'silver']
         effects = [
             ('restore_cpu', f'Restore {GameBalance.CPU_RESTORE_MIN}-{GameBalance.CPU_RESTORE_MAX} CPU'),
@@ -3271,10 +3278,9 @@ class Game:
         
         spawn_position = self._find_admin_spawn_position()
         if spawn_position:
-            admin = Enemy(spawn_position, 'admin')
+            admin = self.enemy_manager.spawn_enemy(spawn_position, 'admin')
             admin.state = EnemyState.HOSTILE
             admin.last_seen_player = Position(self.player.x, self.player.y)
-            self.enemies.append(admin)
             self.admin_spawned = True
             self.message_log.add_message("*** ADMIN AVATAR SPAWNED! ***")
     
@@ -3352,9 +3358,8 @@ class Game:
                 # Check for gateway
                 if (self.game_map.gateway and 
                     self.player.position.distance_to(self.game_map.gateway) == 0):
-                    self.sound_manager.play_sound("level_complete")
-                    self.message_log.add_message("Gateway reached! Next network...")
-                    self.next_level()
+                    self.sound_manager.play_sound("ui_menu_open")
+                    self.show_gateway_confirmation = True
                     return
                 
                 # Check for overheating
@@ -3666,12 +3671,12 @@ class Game:
                 placed_nodes += 1
     
     def _place_data_patches(self):
-        """Place data codes throughout the level."""
-        # Ensure data code effects are initialized
+        """Place codes throughout the level."""
+        # Ensure code effects are initialized
         if not self.data_patch_effects:
             self._randomize_data_patches()
         
-        patch_count = 12 + self.level * 4  # Much more data codes (was 6 + level * 2)
+        patch_count = 12 + self.level * 4  # Much more codes (was 6 + level * 2)
         placed_patches = 0
         attempts = 0
         
@@ -3684,7 +3689,7 @@ class Game:
             if self._is_valid_patch_placement(position):
                 color = random.choice(list(self.data_patch_effects.keys()))
                 effect, desc = self.data_patch_effects[color]
-                patch = DataPatch(color, effect, f"{color.title()} Data Code", desc)
+                patch = DataPatch(color, effect, f"{color.title()} Code", desc)
                 self.game_map.data_patches[(x, y)] = patch
                 placed_patches += 1
     
@@ -3703,7 +3708,7 @@ class Game:
             y = random.randint(5, GameConfig.MAP_HEIGHT - 5)
             position = Position(x, y)
             
-            if self._is_valid_patch_placement(position):  # Reuse data code placement validation
+            if self._is_valid_patch_placement(position):  # Reuse code placement validation
                 # Choose random exploit
                 exploit_key = random.choice(available_exploits)
                 exploit_def = GameData.EXPLOITS[exploit_key]
@@ -3825,7 +3830,7 @@ class Game:
                 position.distance_to(Position(5, 5)) > 8)
     
     def _is_valid_patch_placement(self, position: Position) -> bool:
-        """Check if position is valid for data code placement."""
+        """Check if position is valid for code placement."""
         return (not self.game_map.is_wall(position) and
                 (position.x, position.y) not in self.game_map.data_patches and
                 (position.x, position.y) not in self.game_map.cooling_nodes and
@@ -4349,6 +4354,9 @@ class InputHandler:
         if self.game.show_lore_viewer:
             return self._handle_lore_viewer_input(event)
         
+        if self.game.show_gateway_confirmation:
+            return self._handle_gateway_confirmation_input(event)
+        
         if self.game.show_inventory:
             return self._handle_inventory_input(event)
         
@@ -4368,12 +4376,29 @@ class InputHandler:
             self.game.lore_viewer_selection = 0
         elif self.game.show_help:
             self.game.show_help = False
+        elif self.game.show_gateway_confirmation:
+            self.game.show_gateway_confirmation = False
         elif self.game.show_inventory:
             self.game.show_inventory = False
         elif self.game.targeting_mode:
             self.game.targeting_mode = False
             self.game.targeting_exploit = None
             self.game.message_log.add_message("Targeting cancelled")
+        return True
+    
+    def _handle_gateway_confirmation_input(self, event) -> bool:
+        """Handle input for gateway confirmation dialog."""
+        if UniversalInputHandler.is_confirm_key(event) or event.sym == tcod.event.KeySym.Y:
+            # Yes - proceed to next level
+            self.game.show_gateway_confirmation = False
+            self.game.sound_manager.play_sound("level_complete")
+            self.game.message_log.add_message("Gateway reached! Next network...")
+            self.game.next_level()
+        elif event.sym == tcod.event.KeySym.N or UniversalInputHandler.is_escape_key(event):
+            # No - cancel and don't waste turn
+            self.game.show_gateway_confirmation = False
+            self.game.message_log.add_message("Staying in current network")
+        
         return True
     
     def _handle_inventory_input(self, event) -> bool:
@@ -4564,7 +4589,7 @@ class InputHandler:
             if 0 <= item_index < len(inventory_items):
                 selected_item = inventory_items[item_index]
                 if selected_item.use(self.game.player, self.game):
-                    # Check if it was a data code - if so, advance turn
+                    # Check if it was a code - if so, advance turn
                     if isinstance(selected_item, DataPatch):
                         self.game.maybe_process_turn()
                     
@@ -4646,7 +4671,7 @@ class InputHandler:
         self.game.message_log.add_message(f"Effect: {exploit_def.description}")
     
     def _show_data_patch_details(self, data_patch):
-        """Show detailed information about a data code."""
+        """Show detailed information about a code."""
         if data_patch.discovered:
             if data_patch.color in self.game.data_patch_effects:
                 effect_key, desc = self.game.data_patch_effects[data_patch.color]
@@ -4731,6 +4756,10 @@ class Renderer:
         self.ui_renderer.render_bottom_panel(console, game)
         self.ui_renderer.render_system_log(console, game)
         
+        # Render overlay dialogs
+        if game.show_gateway_confirmation:
+            self._render_gateway_confirmation(console)
+        
         # Render game over/death messages
         if game.game_over:
             self._render_victory_message(console)
@@ -4745,6 +4774,43 @@ class Renderer:
         console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_TINY, center_y, "MISSION COMPLETE!", fg=Colors.ACID_GREEN)
         console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_LARGE, center_y + GameConfig.MESSAGE_LINE_SPACING, "All networks exfiltrated!", fg=Colors.CYBER_TEAL)
         console.print(center_x - GameConfig.MESSAGE_CENTER_OFFSET_SMALL, center_y + GameConfig.MESSAGE_BUTTON_SPACING, "Press ESC to exit", fg=Colors.ELECTRIC_PURPLE)
+    
+    def _render_gateway_confirmation(self, console: tcod.console.Console):
+        """Render gateway confirmation dialog."""
+        center_x = GameConfig.GAME_AREA_WIDTH // 2
+        center_y = GameConfig.SCREEN_HEIGHT // 2
+        
+        # Background box
+        box_width = 30
+        box_height = 6
+        start_x = center_x - box_width // 2
+        start_y = center_y - box_height // 2
+        
+        # Draw background
+        for y in range(start_y, start_y + box_height):
+            for x in range(start_x, start_x + box_width):
+                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.UI_BG)
+        
+        # Draw border
+        for x in range(start_x, start_x + box_width):
+            console.print(x, start_y, '─', fg=Colors.CYAN, bg=Colors.UI_BG)
+            console.print(x, start_y + box_height - 1, '─', fg=Colors.CYAN, bg=Colors.UI_BG)
+        for y in range(start_y, start_y + box_height):
+            console.print(start_x, y, '│', fg=Colors.CYAN, bg=Colors.UI_BG)
+            console.print(start_x + box_width - 1, y, '│', fg=Colors.CYAN, bg=Colors.UI_BG)
+        
+        # Corner characters
+        console.print(start_x, start_y, '┌', fg=Colors.CYAN, bg=Colors.UI_BG)
+        console.print(start_x + box_width - 1, start_y, '┐', fg=Colors.CYAN, bg=Colors.UI_BG)
+        console.print(start_x, start_y + box_height - 1, '└', fg=Colors.CYAN, bg=Colors.UI_BG)
+        console.print(start_x + box_width - 1, start_y + box_height - 1, '┘', fg=Colors.CYAN, bg=Colors.UI_BG)
+        
+        # Title and message
+        console.print(center_x - 7, start_y + 1, "NETWORK GATEWAY", fg=Colors.YELLOW, bg=Colors.UI_BG)
+        console.print(center_x - 12, start_y + 2, "Proceed to next network?", fg=Colors.WHITE, bg=Colors.UI_BG)
+        
+        # Options
+        console.print(center_x - 8, start_y + 4, "Y: Yes  N/ESC: No", fg=Colors.CYAN, bg=Colors.UI_BG)
     
     def _render_death_message(self, console: tcod.console.Console):
         """Render death message with frame and black backgrounds."""
@@ -4968,13 +5034,13 @@ class UIRenderer:
         return y
     
     def _render_data_patches(self, console: tcod.console.Console, game: Game, y: int) -> int:
-        """Render data codes section."""
+        """Render codes section."""
         data_patches = game.player.inventory_manager.get_items_by_type("data_patch")
-        console.print(2, y, f"DATA CODES ({len(data_patches)}):", fg=Colors.CYAN)
+        console.print(2, y, f"CODES ({len(data_patches)}):", fg=Colors.CYAN)
         y += 1
         
         if not data_patches:
-            console.print(4, y, "No data codes collected", fg=Colors.WHITE)
+            console.print(4, y, "No codes collected", fg=Colors.WHITE)
             y += 1
         else:
             display_items = game.player.inventory_manager.get_display_items()
@@ -5287,7 +5353,7 @@ class UIRenderer:
         
         conditions = []
         
-        # Player temporary effects (from data codes and other sources)
+        # Player temporary effects (from codes and other sources)
         for effect_name, turns in game.player.temporary_effects.items():
             if turns > 0:
                 display_name = effect_name.replace('_turns', '').replace('_', ' ').title()
@@ -5334,7 +5400,7 @@ class UIRenderer:
             console.print(1, y, "Conditions: None", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
     
     def _get_data_code_color_for_effect(self, game: Game, effect_key: str, fallback_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
-        """Get the data code color for a specific effect based on the current game's randomization."""
+        """Get the code color for a specific effect based on the current game's randomization."""
         color_map = {
             'crimson': Colors.CRIMSON,
             'azure': Colors.AZURE, 
@@ -5551,18 +5617,16 @@ class MapRenderer:
     
     
     def _get_smart_wall_character(self, game_map, x: int, y: int) -> int:
-        """Get the appropriate wall character based on neighboring walls"""
+        """Get the appropriate wall character based on neighboring walls."""
         # Check which directions have walls
         n = game_map.is_wall(Position(x, y - 1))  # North
         s = game_map.is_wall(Position(x, y + 1))  # South  
         e = game_map.is_wall(Position(x + 1, y))  # East
         w = game_map.is_wall(Position(x - 1, y))  # West
         
-        # Box-drawing character positions (these might need adjustment)
-        if not any([n, s, e, w]):
-            return 177  # ▓ isolated wall
-        elif n and s and e and w:
-            return 197  # ┼ 4-way cross
+        # Use proper box-drawing characters from game config
+        if n and s and e and w:
+            return 197  # ┼ cross (4-way intersection)
         elif n and s and e and not w:
             return 195  # ├ T pointing right  
         elif n and s and not e and w:
@@ -5583,8 +5647,18 @@ class MapRenderer:
             return 179  # │ vertical line
         elif not n and not s and e and w:
             return 196  # ─ horizontal line
+        # Handle single-connection walls (stubs)
+        elif n and not s and not e and not w:
+            return 179  # │ vertical stub pointing up
+        elif not n and s and not e and not w:
+            return 179  # │ vertical stub pointing down  
+        elif not n and not s and e and not w:
+            return 196  # ─ horizontal stub pointing right
+        elif not n and not s and not e and w:
+            return 196  # ─ horizontal stub pointing left
+        # Isolated wall - use a different character instead of solid block
         else:
-            return 177  # ▓ fallback to solid block
+            return 254  # ■ small solid square instead of full block
 
     def _get_upgrade_color(self, color_name: str) -> Tuple[int, int, int]:
         """Get color tuple for permanent upgrade."""
@@ -6257,13 +6331,13 @@ class HelpMenu:
             ("  Navigate network levels using stealth", Colors.WHITE),
             ("  Reach the gateway (>) to advance", Colors.WHITE),
             ("  Avoid detection by enemies and Admin Avatar", Colors.WHITE),
-            ("  Collect data codes, exploits, and upgrades", Colors.WHITE),
+            ("  Collect codes, exploits, and upgrades", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("MOVEMENT & CONTROLS:", Colors.CYAN),
             ("  Arrow Keys, WASD, or Numpad: Move/Navigate", Colors.WHITE),
             ("  1-9: Use loaded exploits (requires targeting)", Colors.WHITE),
-            ("  I: Inventory (manage data codes & exploits)", Colors.WHITE),
+            ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
             ("  Tab: Toggle vision overlays", Colors.WHITE),
             ("  L: View discovered lore fragments", Colors.WHITE),
             ("  ESC: Pause menu / Close screens", Colors.WHITE),
@@ -6288,7 +6362,7 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("ITEMS & PICKUPS:", Colors.CYAN),
-            ("  !: Data codes (boost CPU, RAM, heat capacity)", Colors.ELECTRIC_PURPLE),
+            ("  !: Codes (boost CPU, RAM, heat capacity)", Colors.ELECTRIC_PURPLE),
             ("  &: Exploits (combat & utility abilities)", Colors.NEON_PINK),
             ("  [/]/=: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
             ("  +: CPU recovery nodes (restore health)", Colors.ACID_GREEN),
