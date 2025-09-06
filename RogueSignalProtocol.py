@@ -4844,53 +4844,29 @@ class InputHandler:
 # ============================================================================
 
 class Renderer:
-    """Handles all game rendering with dual-font system."""
+    """Handles all game rendering."""
     
     def __init__(self):
         self.ui_renderer = UIRenderer()
         self.map_renderer = MapRenderer()
-        
-        # Create separate consoles for different font systems
-        self.game_console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
-        self.ui_console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
-        self.composite_console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
     
     def render_game(self, console: tcod.console.Console, game: Game, context=None):
-        """Render the complete game state with dual-font system."""
+        """Render the complete game state."""
         console.clear()
         
         if game.show_story_fragment is not None:
-            self._render_with_tall_font(console, context, 
-                lambda: self.ui_renderer.render_story_fragment_screen(self.ui_console, game, game.show_story_fragment))
+            self.ui_renderer.render_story_fragment_screen(console, game, game.show_story_fragment)
         elif game.show_lore_viewer:
-            self._render_with_tall_font(console, context, 
-                lambda: self.ui_renderer.render_lore_viewer_screen(self.ui_console, game))
+            self.ui_renderer.render_lore_viewer_screen(console, game)
         elif game.show_help:
-            self._render_with_tall_font(console, context, 
-                lambda: self.ui_renderer.render_help_screen(self.ui_console))
+            self.ui_renderer.render_help_screen(console)
         elif game.show_inventory:
-            self._render_with_tall_font(console, context, 
-                lambda: self.ui_renderer.render_inventory_screen(self.ui_console, game))
+            self.ui_renderer.render_inventory_screen(console, game)
         else:
-            # Main game screen uses square font for everything
             self._render_main_game_screen(console, game)
     
-    def _render_with_tall_font(self, console: tcod.console.Console, context, render_func):
-        """Render UI screen with tall font."""
-        # Clear the UI console and render to it
-        self.ui_console.clear()
-        render_func()
-        
-        # Copy the UI console content to the main console
-        self.ui_console.blit(console)
-    
-    def _render_main_game_screen_dual(self, console: tcod.console.Console, game: Game, context=None):
-        """Render the main game screen (using tall font as primary)."""
-        # For now, just render everything normally with the tall font
-        self._render_main_game_screen(console, game)
-    
     def _render_main_game_screen(self, console: tcod.console.Console, game: Game):
-        """Render the main game screen (legacy method for compatibility)."""
+        """Render the main game screen."""
         self.ui_renderer.render_top_status_bar(console, game)
         self.map_renderer.render_map(console, game)
         self.ui_renderer.render_bottom_panel(console, game)
@@ -4901,7 +4877,7 @@ class Renderer:
             self._render_gateway_confirmation(console)
         
         # Render game over/death messages
-        if game.game_over:
+        if game.game_over and game.level > 3:
             self._render_victory_message(console)
         elif game.player.cpu <= 0:
             self._render_death_message(console)
@@ -6040,30 +6016,22 @@ class MapRenderer:
 # MAIN GAME LOOP AND INITIALIZATION
 # ============================================================================
 
-def load_tilesets():
-    """Load both square and tall tilesets - no fallbacks, missing fonts indicate corrupt installation."""
+def load_tileset():
+    """Load terminal tileset - no fallbacks, missing font indicates corrupt installation."""
     
-    # Load square tileset for game world
-    square_tileset = tcod.tileset.load_tilesheet(
-        "dejavu10x10_gs_tc.png", 32, 8, tcod.tileset.CHARMAP_TCOD
-    )
-    logging.info("Loaded square tileset successfully")
-    
-    # Load tall tileset for UI text
-    tall_tileset = tcod.tileset.load_tilesheet(
+    # Load terminal tileset
+    tileset = tcod.tileset.load_tilesheet(
         "terminal10x16_gs_ro.png", 16, 16, tcod.tileset.CHARMAP_CP437
     )
-    logging.info("Loaded tall tileset successfully")
+    logging.info("Loaded terminal tileset successfully")
     
-    return square_tileset, tall_tileset
+    return tileset
 
 def initialize_tcod_context():
-    """Initialize tcod context with tall font as primary."""
-    square_tileset, tall_tileset = load_tilesets()
+    """Initialize tcod context with terminal font."""
+    tileset = load_tileset()
     
-    # Use tall tileset as primary
-    primary_tileset = tall_tileset
-    logging.info("Using tall font as primary")
+    logging.info("Using terminal font")
     
     context_args = {
         "columns": GameConfig.SCREEN_WIDTH,
@@ -6073,15 +6041,10 @@ def initialize_tcod_context():
         "sdl_window_flags": 160
     }
     
-    if primary_tileset:
-        context_args["tileset"] = primary_tileset
+    if tileset:
+        context_args["tileset"] = tileset
     
     context = tcod.context.new(**context_args)
-    
-    # Store tilesets for reference
-    context.square_tileset = square_tileset
-    context.tall_tileset = tall_tileset
-    context.primary_tileset = primary_tileset
     
     return context
 
@@ -6677,8 +6640,7 @@ def handle_menu_navigation(console, context, menus, settings):
     current_menu = main_menu
     
     while True:
-        # For now, use the single tileset system
-        # TODO: Implement proper dual-font support in a future update
+        # Using terminal font for all rendering
         current_menu.render(console)
         context.present(console)
         
