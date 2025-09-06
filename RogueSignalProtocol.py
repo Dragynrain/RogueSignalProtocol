@@ -1603,7 +1603,7 @@ class Enemy:
         if self.type_data.movement == EnemyMovement.STATIC:
             self.move_cooldown = 999  # Static enemies never move
         else:
-            self.move_cooldown = 1  # All moving enemies move every turn
+            self.move_cooldown = 0  # All moving enemies can move next turn
     
     def _ensure_random_move_queue(self):
         """Ensure the random move queue has moves for prediction."""
@@ -2352,6 +2352,113 @@ class LevelGenerator:
                 if (shadow_x, shadow_y) not in self.game_map.walls:
                     self.game_map.shadows.add((shadow_x, shadow_y))
                     placed_shadows += 1
+    
+    def _connect_rooms_mst(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+        """Connect rooms using minimum spanning tree approach."""
+        if len(rooms) < 2:
+            return
+            
+        connected = [rooms[0]]  # Start with first room
+        unconnected = rooms[1:]
+        
+        while unconnected:
+            min_distance = float('inf')
+            closest_pair = None
+            
+            for connected_room in connected:
+                cx = connected_room[0] + connected_room[2] // 2
+                cy = connected_room[1] + connected_room[3] // 2
+                
+                for i, unconnected_room in enumerate(unconnected):
+                    ux = unconnected_room[0] + unconnected_room[2] // 2
+                    uy = unconnected_room[1] + unconnected_room[3] // 2
+                    
+                    distance = abs(cx - ux) + abs(cy - uy)
+                    if distance < min_distance:
+                        min_distance = distance
+                        closest_pair = (connected_room, unconnected_room, i)
+            
+            if closest_pair:
+                room1, room2, index = closest_pair
+                self._create_corridor_between_rooms(room1, room2)
+                connected.append(room2)
+                unconnected.pop(index)
+    
+    def _add_extra_paths(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+        """Add extra corridors for multiple paths."""
+        if len(rooms) < 3:
+            return
+        
+        extra_connections = min(random.randint(2, 4), len(rooms) // 2)
+        for _ in range(extra_connections):
+            room1 = random.choice(rooms)
+            room2 = random.choice(rooms)
+            if room1 != room2:
+                self._create_corridor_between_rooms(room1, room2)
+    
+    def _create_corridor_between_rooms(self, room1: Tuple[int, int, int, int], room2: Tuple[int, int, int, int]) -> None:
+        """Create L-shaped corridor between two rooms."""
+        x1 = room1[0] + room1[2] // 2
+        y1 = room1[1] + room1[3] // 2
+        x2 = room2[0] + room2[2] // 2
+        y2 = room2[1] + room2[3] // 2
+        
+        # Create L-shaped corridor
+        if random.choice([True, False]):
+            # Horizontal then vertical
+            for x in range(min(x1, x2), max(x1, x2) + 1):
+                if 0 <= x < GameConfig.MAP_WIDTH and 0 <= y1 < GameConfig.MAP_HEIGHT:
+                    self.game_map.walls.discard((x, y1))
+            for y in range(min(y1, y2), max(y1, y2) + 1):
+                if 0 <= x2 < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT:
+                    self.game_map.walls.discard((x2, y))
+        else:
+            # Vertical then horizontal
+            for y in range(min(y1, y2), max(y1, y2) + 1):
+                if 0 <= x1 < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT:
+                    self.game_map.walls.discard((x1, y))
+            for x in range(min(x1, x2), max(x1, x2) + 1):
+                if 0 <= x < GameConfig.MAP_WIDTH and 0 <= y2 < GameConfig.MAP_HEIGHT:
+                    self.game_map.walls.discard((x, y2))
+    
+    def _add_cover_elements_new(self) -> None:
+        """Add small cover elements in open areas."""
+        # Add small wall segments for cover in larger open areas
+        for y in range(5, GameConfig.MAP_HEIGHT - 5, 8):
+            for x in range(5, GameConfig.MAP_WIDTH - 5, 8):
+                if random.random() < 0.3:  # 30% chance
+                    # Check if area is mostly open
+                    open_tiles = 0
+                    for dy in range(-2, 3):
+                        for dx in range(-2, 3):
+                            check_pos = (x + dx, y + dy)
+                            if check_pos not in self.game_map.walls:
+                                open_tiles += 1
+                    
+                    # If mostly open, add small cover element
+                    if open_tiles > 15:
+                        if random.choice([True, False]):
+                            # Small horizontal wall
+                            for dx in range(2):
+                                if 0 <= x + dx < GameConfig.MAP_WIDTH:
+                                    self.game_map.walls.add((x + dx, y))
+                        else:
+                            # Small vertical wall
+                            for dy in range(2):
+                                if 0 <= y + dy < GameConfig.MAP_HEIGHT:
+                                    self.game_map.walls.add((x, y + dy))
+    
+    def _ensure_border_walls_new(self) -> None:
+        """Ensure map has solid border walls."""
+        # Top and bottom walls
+        for x in range(GameConfig.MAP_WIDTH):
+            self.game_map.walls.add((x, 0))
+            self.game_map.walls.add((x, GameConfig.MAP_HEIGHT - 1))
+        
+        # Left and right walls
+        for y in range(GameConfig.MAP_HEIGHT):
+            self.game_map.walls.add((0, y))
+            self.game_map.walls.add((GameConfig.MAP_WIDTH - 1, y))
     
     def _place_special_tiles(self, level: int) -> None:
         """Place cooling nodes, CPU recovery nodes, and other special tiles."""
