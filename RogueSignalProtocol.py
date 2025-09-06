@@ -1097,16 +1097,31 @@ class DataPatch(InventoryItem):
             game.message_log.add_message(f"Detection: -{actual_reduction:.1f}%")
         
         elif effect_key == 'speed_boost':
-            player.temporary_effects['speed_boost_turns'] = 10
-            game.message_log.add_message("Speed boost active (10 turns)")
+            current_turns = player.temporary_effects.get('speed_boost_turns', 0)
+            new_turns = max(current_turns + 10, 10)  # Add 10 turns, minimum 10
+            player.temporary_effects['speed_boost_turns'] = new_turns
+            if current_turns > 0:
+                game.message_log.add_message(f"Speed boost extended ({new_turns} turns)")
+            else:
+                game.message_log.add_message("Speed boost active (10 turns)")
         
         elif effect_key == 'enhanced_vision':
-            player.temporary_effects['enhanced_vision_turns'] = 15
-            game.message_log.add_message("Enhanced vision active (15 turns)")
+            current_turns = player.temporary_effects.get('enhanced_vision_turns', 0)
+            new_turns = max(current_turns + 15, 15)  # Add 15 turns, minimum 15
+            player.temporary_effects['enhanced_vision_turns'] = new_turns
+            if current_turns > 0:
+                game.message_log.add_message(f"Enhanced vision extended ({new_turns} turns)")
+            else:
+                game.message_log.add_message("Enhanced vision active (15 turns)")
         
         elif effect_key == 'exploit_efficiency':
-            player.temporary_effects['exploit_efficiency_turns'] = 8
-            game.message_log.add_message("Exploit efficiency active (8 turns)")
+            current_turns = player.temporary_effects.get('exploit_efficiency_turns', 0)
+            new_turns = max(current_turns + 8, 8)  # Add 8 turns, minimum 8
+            player.temporary_effects['exploit_efficiency_turns'] = new_turns
+            if current_turns > 0:
+                game.message_log.add_message(f"Exploit efficiency extended ({new_turns} turns)")
+            else:
+                game.message_log.add_message("Exploit efficiency active (8 turns)")
         
         return True
 
@@ -1584,8 +1599,11 @@ class Enemy:
             else:
                 moved = False
         elif self.type_data.movement == EnemyMovement.TRACK:
+            # Admin Avatar always tracks player regardless of state or invisibility
+            if self.type == 'admin':
+                moved = self._move_toward(player.position, game_map, player, game)
             # Don't track invisible players unless this is an admin
-            if player.is_invisible() and self.type != 'admin':
+            elif player.is_invisible() and self.type != 'admin':
                 moved = False
             elif self.state == EnemyState.HOSTILE:
                 moved = self._move_toward(player.position, game_map, player, game)
@@ -1614,6 +1632,10 @@ class Enemy:
     
     def _move_random(self, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
         """Random movement (bots) - uses A* when tracking, random walk otherwise."""
+        # Admin Avatar always tracks player regardless of state or invisibility
+        if self.type == 'admin':
+            return self._move_toward(player.position, game_map, player, game)
+        
         # Use pathfinding when tracking player (unless player is invisible and this isn't admin)
         if not (player.is_invisible() and self.type != 'admin'):
             if self.state == EnemyState.HOSTILE:
@@ -1635,6 +1657,10 @@ class Enemy:
     
     def _move_patrol(self, game_map: 'GameMap', player: Player, game: 'Game' = None) -> bool:
         """Follow patrol route or use pathfinding when tracking player."""
+        # Admin Avatar always tracks player regardless of state or invisibility
+        if self.type == 'admin':
+            return self._move_toward(player.position, game_map, player, game)
+        
         # Use pathfinding when tracking player (unless player is invisible and this isn't admin)
         if not (player.is_invisible() and self.type != 'admin'):
             if self.state == EnemyState.HOSTILE:
@@ -2577,6 +2603,7 @@ class TurnProcessor:
                         self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
+                        self.game_state.game_over = True
                         return  # Exit early if player dies
                 
                 # Now decrement the counter
@@ -3240,6 +3267,7 @@ class Game:
                     # Delete save on death (permadeath)
                     SaveGameManager.delete_save()
                     self.message_log.add_message("Save data purged")
+                    self.game_over = True
         
         # Movement flags are reset at the start of _update_enemies()
     
@@ -3353,6 +3381,7 @@ class Game:
                         # Delete save on death (permadeath)
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
+                        self.game_over = True
                         return
                 
                 # Handle speed boost and turn processing only if move was successful
@@ -3668,8 +3697,22 @@ class Game:
                 color = random.choice(list(self.data_patch_effects.keys()))
                 effect, desc = self.data_patch_effects[color]
                 patch = DataPatch(color, effect, f"{color.title()} Code", desc)
+                
+                # Check if player has already discovered this color effect
+                # by looking at existing inventory items
+                patch.discovered = self._is_code_color_discovered(color)
+                
                 self.game_map.data_patches[(x, y)] = patch
                 placed_patches += 1
+    
+    def _is_code_color_discovered(self, color: str) -> bool:
+        """Check if player has already discovered what this code color does."""
+        # Check existing inventory items for any discovered patch of this color
+        for item in self.player.inventory_manager.items:
+            if (hasattr(item, 'color') and hasattr(item, 'discovered') and
+                item.color == color and item.discovered):
+                return True
+        return False
     
     def _place_exploit_pickups(self):
         """Place random exploit pickups throughout the level."""
