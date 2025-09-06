@@ -190,13 +190,16 @@ class SaveGameManager:
                     "speed_moves_remaining": game.player.speed_moves_remaining,
                     "temporary_effects": dict(game.player.temporary_effects),
                     "equipped_exploits": game.player.inventory_manager.equipped_exploits.copy(),
+                    "max_equipped_exploits": game.player.inventory_manager.max_equipped_exploits,
                     "inventory_items": cls._serialize_inventory(game.player.inventory_manager.items)
                 },
                 
                 # Game effects and state
-                "network_scan_turns": game.game_state.network_scan_turns,
-                "noise_locations": [{"x": pos.x, "y": pos.y} for pos in game.game_state.noise_locations],
-                "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in game.game_state.distraction_points.items()},
+                "game_effects": {
+                    "network_scan_turns": game.game_state.network_scan_turns,
+                    "noise_locations": [{"x": pos.x, "y": pos.y} for pos in game.game_state.noise_locations],
+                    "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in game.game_state.distraction_points.items()}
+                },
                 
                 # Map state (items and special locations only - layout regenerated)
                 "map_state": {
@@ -205,18 +208,27 @@ class SaveGameManager:
                     "permanent_upgrades": {f"{pos[0]},{pos[1]}": upgrade_key for pos, upgrade_key in game.game_map.permanent_upgrades.items()},
                     "story_fragments": {f"{pos[0]},{pos[1]}": fragment.fragment_index for pos, fragment in game.game_map.story_fragments.items()},
                     "gateway": {"x": game.game_map.gateway.x, "y": game.game_map.gateway.y} if game.game_map.gateway else None,
-                    "explored_tiles": [f"{x},{y}" for x, y in game.game_map.explored_tiles]
+                    "explored_tiles": [f"{x},{y}" for x, y in game.game_map.explored_tiles],
+                    "last_known_enemy_positions": {str(enemy_id): {"x": pos.x, "y": pos.y, "turn": turn} for enemy_id, (pos, turn) in game.game_map.last_known_enemy_positions.items()}
                 },
                 
                 # Enemies
                 "enemies": cls._serialize_enemies(game.enemies),
+                "enemy_next_id": getattr(Enemy, '_next_id', 1),
                 
                 # Data patch effects for this run
                 "data_patch_effects": game.data_patch_effects,
+                "discovered_code_effects": game.discovered_code_effects,
+                
+                # Overclocking state
+                "overclock_confirmation": getattr(game, 'overclock_confirmation', False),
+                "overclock_exploit": getattr(game, 'overclock_exploit', None),
                 
                 # UI state (optional - for better user experience)
                 "ui_state": {
-                    "show_patrol_predictions": game.show_patrol_predictions
+                    "show_patrol_predictions": game.show_patrol_predictions,
+                    "inventory_selection": game.inventory_selection,
+                    "lore_viewer_selection": game.lore_viewer_selection
                 }
             }
             
@@ -343,6 +355,7 @@ class SaveGameManager:
         serialized = []
         for enemy in enemies:
             enemy_data = {
+                "id": enemy.id,
                 "type": enemy.type,
                 "x": enemy.position.x,
                 "y": enemy.position.y,
@@ -353,6 +366,7 @@ class SaveGameManager:
                 "alert_timer": enemy.alert_timer,
                 "patrol_index": enemy.patrol_index,
                 "patrol_stuck_counter": enemy.patrol_stuck_counter,
+                "random_move_queue": getattr(enemy, 'random_move_queue', []),
                 "last_seen_player": {
                     "x": enemy.last_seen_player.x, 
                     "y": enemy.last_seen_player.y
@@ -664,6 +678,15 @@ class GameBalance:
     CPU_RESTORE_MIN: int = 30
     CPU_RESTORE_MAX: int = 40
     HEAT_REDUCTION_INSTANT: int = 40
+    
+    # Enemy detection values
+    ADMIN_DETECTION_INITIAL: int = 5
+    ADMIN_DETECTION_CONTINUOUS: int = 1
+    ENEMY_DETECTION_ALERT_TO_HOSTILE: int = 3
+    ENEMY_DETECTION_CONTINUOUS_HOSTILE: float = 0.3
+    
+    # Memory system constants
+    ENEMY_MEMORY_TURNS: int = 20
 
 
 @dataclass  
@@ -1068,11 +1091,18 @@ class DataPatch(InventoryItem):
         
         effect_key, description = game.data_patch_effects[self.color]
         
-        if not self.discovered:
+        # Check if this color effect has been discovered in this game session
+        is_known = self.color in game.discovered_code_effects
+        
+        if not is_known:
+            # Mark this color effect as discovered for this game session
+            game.discovered_code_effects[self.color] = effect_key
             self.discovered = True
             game.message_log.add_message(f"Used {self.name}: {description}")
         else:
-            game.message_log.add_message(f"Used {self.name}")
+            # Effect is known, show it was already identified
+            self.discovered = True
+            game.message_log.add_message(f"Used {self.name} ({description})")
         
         return self._apply_effect(effect_key, player, game)
     
@@ -1178,7 +1208,6 @@ class InventoryManager:
         self.player = player
         self.items: List[InventoryItem] = []
         # Start with one random exploit
-        import random
         all_exploits = list(GameData.EXPLOITS.keys())
         self.equipped_exploits: List[str] = [random.choice(all_exploits)]
         self.max_equipped_exploits = 5
@@ -1576,8 +1605,8 @@ class Enemy:
             self.disabled_turns -= 1
             return False
         
-        # Movement cooldown system
-        if self.move_cooldown > 0:
+        # Movement cooldown system - Admin Avatar ignores cooldown
+        if self.move_cooldown > 0 and self.type != 'admin':
             self.move_cooldown -= 1
             return False
         
@@ -1620,6 +1649,8 @@ class Enemy:
         """Reset movement cooldown based on enemy type."""
         if self.type_data.movement == EnemyMovement.STATIC:
             self.move_cooldown = 999  # Static enemies never move
+        elif self.type == 'admin':
+            self.move_cooldown = 0  # Admin Avatar always moves every turn
         else:
             self.move_cooldown = 0  # All moving enemies can move next turn
     
@@ -1675,10 +1706,13 @@ class Enemy:
         # Get current patrol target
         current_target = self.patrol_points[self.patrol_index]
         
-        # If we reached the current target, move to next patrol point
-        if self.position.distance_to(current_target) <= 1.0:
+        # If we reached the current target or it's on a wall, move to next patrol point
+        if (self.position.distance_to(current_target) <= 1.0 or 
+            game_map.is_wall(current_target)):
             self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
             current_target = self.patrol_points[self.patrol_index]
+            # Reset stuck counter when successfully advancing
+            self.patrol_stuck_counter = 0
         
         # Try to move toward patrol target using pathfinding
         moved = pathfind_and_move(self, current_target, game_map, player, game)
@@ -1702,12 +1736,17 @@ class Enemy:
                     self.position = destination
                     moved = True
         
-        # Handle getting stuck - skip to next patrol point
+        # Handle getting stuck - skip to next patrol point more aggressively
         if not moved:
             self.patrol_stuck_counter += 1
-            if self.patrol_stuck_counter >= 3:
+            if self.patrol_stuck_counter >= 2:  # Reduced from 3 to 2 for faster recovery
+                # Skip to next patrol point if stuck
                 self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
                 self.patrol_stuck_counter = 0
+                # Try to move to the new target immediately
+                new_target = self.patrol_points[self.patrol_index]
+                if not game_map.is_wall(new_target):
+                    moved = pathfind_and_move(self, new_target, game_map, player, game)
         else:
             self.patrol_stuck_counter = 0
         
@@ -2155,17 +2194,27 @@ class EnemyManager:
                 
                 if (new_pos.is_valid(GameConfig.MAP_WIDTH - 3, GameConfig.MAP_HEIGHT - 3) and
                     new_pos.x >= 3 and new_pos.y >= 3 and
-                    self.game_map.is_valid_position(new_pos)):
+                    self.game_map.is_valid_position(new_pos) and
+                    not self.game_map.is_wall(new_pos)):  # Don't include walls in patrol routes
                     route.append(new_pos)
                     current = new_pos
                     break
         
-        # Ensure minimum route length
+        # Ensure minimum route length with valid positions
         if len(route) < 3:
-            if start.x < GameConfig.MAP_WIDTH - 5:
-                route.append(Position(start.x + 3, start.y))
-            if start.y < GameConfig.MAP_HEIGHT - 5:
-                route.append(Position(start.x, start.y + 3))
+            # Try to add valid positions around the start
+            potential_points = [
+                Position(start.x + 3, start.y),
+                Position(start.x - 3, start.y), 
+                Position(start.x, start.y + 3),
+                Position(start.x, start.y - 3)
+            ]
+            for point in potential_points:
+                if (point.is_valid(GameConfig.MAP_WIDTH - 1, GameConfig.MAP_HEIGHT - 1) and
+                    self.game_map.is_valid_position(point) and
+                    not self.game_map.is_wall(point) and
+                    len(route) < 4):  # Limit to reasonable size
+                    route.append(point)
         
         return route
 
@@ -2326,22 +2375,24 @@ class LevelGenerator:
     
     def _connect_two_rooms(self, room1: Tuple[int, int, int, int], room2: Tuple[int, int, int, int]) -> None:
         """Connect two rooms with an L-shaped corridor."""
-        x1, y1, w1, h1 = room1
-        x2, y2, w2, h2 = room2
+        room1_x, room1_y, room1_width, room1_height = room1
+        room2_x, room2_y, room2_width, room2_height = room2
         
-        # Get room centers
-        center1_x, center1_y = x1 + w1 // 2, y1 + h1 // 2
-        center2_x, center2_y = x2 + w2 // 2, y2 + h2 // 2
+        # Get room centers for corridor connection points
+        room1_center_x = room1_x + room1_width // 2
+        room1_center_y = room1_y + room1_height // 2
+        room2_center_x = room2_x + room2_width // 2 
+        room2_center_y = room2_y + room2_height // 2
         
         # Create L-shaped corridor
         if random.choice([True, False]):
             # Horizontal first, then vertical
-            self._carve_corridor(center1_x, center1_y, center2_x, center1_y)
-            self._carve_corridor(center2_x, center1_y, center2_x, center2_y)
+            self._carve_corridor(room1_center_x, room1_center_y, room2_center_x, room1_center_y)
+            self._carve_corridor(room2_center_x, room1_center_y, room2_center_x, room2_center_y)
         else:
             # Vertical first, then horizontal  
-            self._carve_corridor(center1_x, center1_y, center1_x, center2_y)
-            self._carve_corridor(center1_x, center2_y, center2_x, center2_y)
+            self._carve_corridor(room1_center_x, room1_center_y, room1_center_x, room2_center_y)
+            self._carve_corridor(room1_center_x, room2_center_y, room2_center_x, room2_center_y)
     
     def _carve_corridor(self, x1: int, y1: int, x2: int, y2: int) -> None:
         """Carve a corridor between two points."""
@@ -2664,8 +2715,13 @@ class Game:
         self.targeting_exploit: Optional[str] = None
         self.cursor_position = Position(0, 0)
         
+        # Overclocking system
+        self.overclock_confirmation = False
+        self.overclock_exploit: Optional[str] = None
+        
         # Data patch system
         self.data_patch_effects: Dict[str, Tuple[str, str]] = {}
+        self.discovered_code_effects: Dict[str, str] = {}  # color -> effect_name mapping
         
         # Story fragment system
         self.story_fragment_manager = StoryFragmentManager()
@@ -2746,6 +2802,10 @@ class Game:
             self._restore_map_items(save_data["map_state"])
             self._restore_enemies(save_data["enemies"])
             
+            # Restore Enemy class counter
+            if "enemy_next_id" in save_data:
+                Enemy._next_id = save_data["enemy_next_id"]
+            
             self.message_log.add_message_typed("Game loaded successfully!", "success")
             return True
             
@@ -2791,28 +2851,45 @@ class Game:
         
         # Restore inventory with defaults
         self.player.inventory_manager.equipped_exploits = player_data.get("equipped_exploits", [])
+        self.player.inventory_manager.max_equipped_exploits = player_data.get("max_equipped_exploits", 5)
         inventory_items = player_data.get("inventory_items", [])
         self.player.inventory_manager.items = self._deserialize_inventory(inventory_items)
     
     def _restore_game_effects(self, save_data: Dict[str, Any]) -> None:
         """Restore game effects and environmental state from save data."""
-        self.game_state.network_scan_turns = save_data["network_scan_turns"]
-        self.game_state.noise_locations = [Position(loc["x"], loc["y"]) for loc in save_data["noise_locations"]]
+        # Handle both old and new save format for backward compatibility
+        if "game_effects" in save_data:
+            effects_data = save_data["game_effects"]
+        else:
+            # Backward compatibility with old format
+            effects_data = save_data
+        
+        self.game_state.network_scan_turns = effects_data.get("network_scan_turns", 0)
+        self.game_state.noise_locations = [
+            Position(loc["x"], loc["y"]) for loc in effects_data.get("noise_locations", [])
+        ]
         
         # Restore distraction points with error handling
         self.game_state.distraction_points = {}
-        for pos_str, turns in save_data["distraction_points"].items():
+        for pos_str, turns in effects_data.get("distraction_points", {}).items():
             position = parse_coordinate_string(pos_str)
             if position:  # Skip malformed coordinate data
                 self.game_state.distraction_points[position] = turns
         
         # Restore code effects
         self.data_patch_effects = save_data["data_patch_effects"]
+        self.discovered_code_effects = save_data.get("discovered_code_effects", {})
+        
+        # Restore overclocking state
+        self.overclock_confirmation = save_data.get("overclock_confirmation", False)
+        self.overclock_exploit = save_data.get("overclock_exploit", None)
     
     def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:
         """Restore UI state from save data."""
         ui_state = save_data.get("ui_state", {})
         self.show_patrol_predictions = ui_state.get("show_patrol_predictions", False)
+        self.inventory_selection = ui_state.get("inventory_selection", 0)
+        self.lore_viewer_selection = ui_state.get("lore_viewer_selection", 0)
     
     def _deserialize_inventory(self, items_data: List[Dict]) -> List:
         """Deserialize inventory items from save data."""
@@ -2902,6 +2979,15 @@ class Game:
         # Restore gateway
         if map_data["gateway"]:
             self.game_map.gateway = Position(map_data["gateway"]["x"], map_data["gateway"]["y"])
+        
+        # Restore last known enemy positions
+        if "last_known_enemy_positions" in map_data:
+            self.game_map.last_known_enemy_positions.clear()
+            for enemy_id_str, pos_data in map_data["last_known_enemy_positions"].items():
+                enemy_id = int(enemy_id_str)
+                position = Position(pos_data["x"], pos_data["y"])
+                turn_seen = pos_data["turn"]
+                self.game_map.last_known_enemy_positions[enemy_id] = (position, turn_seen)
     
     def _restore_enemies(self, enemies_data: List[Dict]) -> None:
         """Restore enemies from save data."""
@@ -2911,6 +2997,10 @@ class Game:
             position = Position(enemy_data["x"], enemy_data["y"])
             enemy = Enemy(position, enemy_data["type"])
             
+            # Restore enemy ID if provided
+            if "id" in enemy_data:
+                enemy.id = enemy_data["id"]
+            
             # Restore enemy state
             enemy.cpu = enemy_data["cpu"]
             enemy.state = EnemyState(enemy_data["state"])
@@ -2919,6 +3009,7 @@ class Game:
             enemy.alert_timer = enemy_data["alert_timer"]
             enemy.patrol_index = enemy_data["patrol_index"]
             enemy.patrol_stuck_counter = enemy_data.get("patrol_stuck_counter", 0)
+            enemy.random_move_queue = enemy_data.get("random_move_queue", [])
             
             if enemy_data["last_seen_player"]:
                 enemy.last_seen_player = Position(
@@ -2945,6 +3036,9 @@ class Game:
     
     def _randomize_data_patches(self):
         """Randomize code effects for this game session."""
+        # Clear discovered effects when starting new game
+        self.discovered_code_effects.clear()
+        
         colors = ['crimson', 'azure', 'emerald', 'golden', 'violet', 'silver']
         effects = [
             ('restore_cpu', f'Restore {GameBalance.CPU_RESTORE_MIN}-{GameBalance.CPU_RESTORE_MAX} CPU'),
@@ -3157,11 +3251,11 @@ class Game:
                 enemy.state = EnemyState.HOSTILE
                 enemy.last_seen_player = Position(self.player.x, self.player.y)
                 if old_state != EnemyState.HOSTILE:
-                    detection_increase = 8
+                    detection_increase = GameBalance.ADMIN_DETECTION_INITIAL
                     self.player.detection = min(100, self.player.detection + detection_increase)
                     self.message_log.add_message(f"{enemy.type_data.name} detected you!")
                 else:
-                    detection_increase = 2
+                    detection_increase = GameBalance.ADMIN_DETECTION_CONTINUOUS
                     self.player.detection = min(100, self.player.detection + detection_increase)
             elif enemy.can_see_player(self.player, self.game_map):
                 self._handle_enemy_sees_player(enemy)
@@ -3183,14 +3277,14 @@ class Game:
             enemy.alert_timer -= 1
             if enemy.alert_timer <= 0:
                 enemy.state = EnemyState.HOSTILE
-                detection_increase = 8 if enemy.type == 'admin' else 5  # Reduced from 15/10
+                detection_increase = GameBalance.ADMIN_DETECTION_INITIAL if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_ALERT_TO_HOSTILE
                 self.player.detection = min(100, self.player.detection + detection_increase)
                 self.message_log.add_message(f"{enemy.type_data.name} detected you!")
                 # Alert nearby enemies when this enemy becomes hostile
                 self._alert_nearby_enemies(enemy)
         elif enemy.state == EnemyState.HOSTILE:
             enemy.last_seen_player = Position(self.player.x, self.player.y)
-            detection_increase = 2 if enemy.type == 'admin' else 0.5  # Reduced from 3/1
+            detection_increase = GameBalance.ADMIN_DETECTION_CONTINUOUS if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_CONTINUOUS_HOSTILE
             self.player.detection = min(100, self.player.detection + detection_increase)
     
     def _handle_enemy_loses_player(self, enemy: Enemy):
@@ -3453,9 +3547,6 @@ class Game:
         new_y = max(0, min(GameConfig.MAP_HEIGHT - 1, self.cursor_position.y + dy))
         self.cursor_position = Position(new_x, new_y)
     
-    def _get_enemy_at(self, position: Position) -> Optional[Enemy]:
-        """Get enemy at specified position."""
-        return self.enemy_manager.get_enemy_at_position(position)
     
     def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
         """Get the next N positions this enemy will move to."""
@@ -3485,6 +3576,9 @@ class Game:
 
     def _generate_procedural_level(self):
         """Generate a procedural level using the new LevelGenerator system."""
+        # Clear all map data and enemies first
+        self._clear_map()
+        
         network_configs = GameConfig.NETWORK_CONFIGS()
         if self.level not in network_configs:
             self.message_log.add_message(f"Invalid level: {self.level}")
@@ -3707,12 +3801,8 @@ class Game:
     
     def _is_code_color_discovered(self, color: str) -> bool:
         """Check if player has already discovered what this code color does."""
-        # Check existing inventory items for any discovered patch of this color
-        for item in self.player.inventory_manager.items:
-            if (hasattr(item, 'color') and hasattr(item, 'discovered') and
-                item.color == color and item.discovered):
-                return True
-        return False
+        # Check the global discovered effects for this game session
+        return color in self.discovered_code_effects
     
     def _place_exploit_pickups(self):
         """Place random exploit pickups throughout the level."""
@@ -3860,16 +3950,31 @@ class Game:
     
     def _is_valid_enemy_placement(self, position: Position) -> bool:
         """Check if position is valid for enemy placement."""
-        # Extra safety check: ensure we're not placing on walls
+        # First ensure position is valid
+        if not self.game_map.is_valid_position(position):
+            return False
+        
+        # Critical: ensure we're not placing on walls or obstacles
         if self.game_map.is_wall(position):
             return False
         
-        return (self.game_map.is_valid_position(position) and
-                position.distance_to(Position(5, 5)) > 12 and
-                not self._get_enemy_at(position) and
-                (position.x, position.y) not in self.game_map.data_patches and
-                (position.x, position.y) not in self.game_map.cooling_nodes and
-                (position.x, position.y) not in self.game_map.cpu_recovery_nodes)
+        # Check minimum distance from player spawn
+        if position.distance_to(Position(5, 5)) <= 12:
+            return False
+        
+        # Ensure no other enemy is already at this position
+        if self._get_enemy_at(position):
+            return False
+        
+        # Check for overlapping with items and features
+        pos_tuple = (position.x, position.y)
+        if (pos_tuple in self.game_map.data_patches or
+            pos_tuple in self.game_map.cooling_nodes or
+            pos_tuple in self.game_map.cpu_recovery_nodes or
+            pos_tuple in self.game_map.exploit_pickups):
+            return False
+        
+        return True
     
     
     def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
@@ -3994,12 +4099,26 @@ class ExploitSystem:
         
         exploit = GameData.EXPLOITS[exploit_key]
         
-        # Check heat limit
+        # Check heat limit - allow overclocking with confirmation
         heat_cost = self._calculate_heat_cost(exploit)
         if self.game.player.heat + heat_cost > 100:
-            self.game.sound_manager.play_sound("exploit_failed")
-            self.game.message_log.add_message("System too hot! Cannot use")
-            return False
+            # Calculate overclock damage
+            overclock_damage = (self.game.player.heat + heat_cost) - 100
+            if (hasattr(self.game, 'overclock_confirmation') and self.game.overclock_confirmation and 
+                hasattr(self.game, 'overclock_exploit') and self.game.overclock_exploit == exploit_key):
+                # Confirmed, apply overclock damage
+                self.game.overclock_confirmation = False
+                actual_damage = self.game.player.take_damage(overclock_damage)
+                self.game.message_log.add_message(f"OVERCLOCKING: {actual_damage} CPU damage!")
+                # Set heat to 100 (not over)
+                self.game.player.heat = 100
+            else:
+                # Need confirmation
+                self.game.sound_manager.play_sound("exploit_failed")
+                self.game.message_log.add_message(f"Overclocking required: {overclock_damage} CPU damage. Press exploit key again to confirm.")
+                self.game.overclock_confirmation = True
+                self.game.overclock_exploit = exploit_key
+                return False
         
         # Check if exploit requires targeting
 
@@ -5832,7 +5951,7 @@ class MapRenderer:
                     break
             
             # Only show ghost if enemy is not currently visible and was seen recently
-            if not currently_visible and turn_seen > game.turn - 20:  # Show ghost for 20 turns
+            if not currently_visible and turn_seen > game.turn - GameBalance.ENEMY_MEMORY_TURNS:
                 screen_x = position.x - camera_offset.x
                 screen_y = position.y - camera_offset.y + 1
                 
@@ -6019,8 +6138,8 @@ class MainMenu:
         
         # Version and build info
         console.print(
-            GameConfig.SCREEN_WIDTH // 2 - 10, 11,
-            "Development Build", fg=(128, 128, 128)
+            GameConfig.SCREEN_WIDTH // 2 - 13, 11,
+            "Alpha Build by Adam Forster", fg=(128, 128, 128)
         )
         
         # Menu options
