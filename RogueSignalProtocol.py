@@ -869,9 +869,9 @@ class Colors:
     ENEMY_HOSTILE = (220, 20, 60)  # Standardized to Crimson (aggressive)
     
     # Vision overlays with neon glow
-    VISION_UNAWARE = (80, 40, 10)  # Orange glow
-    VISION_ALERT = (80, 60, 10)  # Yellow glow  
-    VISION_HOSTILE = (80, 10, 20)  # Red glow
+    VISION_UNAWARE = (80, 80, 10)  # Yellow glow (default state)
+    VISION_ALERT = (80, 50, 10)  # Orange glow (getting suspicious)  
+    VISION_HOSTILE = (80, 10, 10)  # Red glow (fully alert and tracking)
     
     # Data patch colors
     CRIMSON = (220, 20, 60)  # Crimson red
@@ -2749,11 +2749,13 @@ class TurnProcessor:
                     virus_damage = GameConfig.VIRUS_DAMAGE_PER_TURN
                     actual_damage = player.take_damage(virus_damage)
                     self.message_log.add_message(f"Virus damage: {actual_damage} CPU damage")
+                    self.sound_manager.play_sound("virus_damage")
                     
                     # Check for death from virus
                     if player.cpu <= 0:
                         self.sound_manager.play_sound("player_death")
                         self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
+                        self.sound_manager.play_sound("critical_system_failure")
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
                         self.game_state.game_over = True
@@ -3285,6 +3287,7 @@ class Game:
             self.player.heat = max(0, self.player.heat - 20)
             if old_heat > self.player.heat:
                 self.message_log.add_message(f"Cooling node: -{old_heat - self.player.heat}°C")
+                self.sound_manager.play_sound("node_activate")
         
         # CPU recovery node
         if self.game_map.is_cpu_recovery_node(self.player.position):
@@ -3292,6 +3295,7 @@ class Game:
             self.player.cpu += recovery
             if recovery > 0:
                 self.message_log.add_message(f"CPU recovery: +{recovery}")
+                self.sound_manager.play_sound("node_activate")
         
         # Ghost node (detection reduction)
         if self.game_map.is_ghost_node(self.player.position):
@@ -3299,6 +3303,7 @@ class Game:
             self.player.detection = max(0, self.player.detection - GameBalance.GHOST_NODE_DETECTION_REDUCTION)
             if old_detection > self.player.detection:
                 self.message_log.add_message(f"Ghost node: -{old_detection - self.player.detection:.1f}% detection")
+                self.sound_manager.play_sound("node_activate")
         
         # Data patch
         if player_pos in self.game_map.data_patches:
@@ -3384,6 +3389,7 @@ class Game:
             enemy.alert_timer = 1
             enemy.last_seen_player = Position(self.player.x, self.player.y)  # Set position when first spotted
             self.message_log.add_message(f"{enemy.type_data.name} investigating")
+            self.sound_manager.play_sound("enemy_alert")
             # Alert nearby enemies immediately when first spotted
             self._alert_nearby_enemies(enemy)
         elif enemy.state == EnemyState.ALERT:
@@ -3393,14 +3399,19 @@ class Game:
             if enemy.alert_timer <= 0:
                 enemy.state = EnemyState.HOSTILE
                 detection_increase = GameBalance.ADMIN_DETECTION_INITIAL if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_ALERT_TO_HOSTILE
+                old_detection = self.player.detection
                 self.player.detection = min(100, self.player.detection + detection_increase)
                 self.message_log.add_message(f"{enemy.type_data.name} detected you!")
+                self.sound_manager.play_sound("enemy_hostile")
+                self._check_detection_threshold_warnings(old_detection, self.player.detection)
                 # Alert nearby enemies when this enemy becomes hostile
                 self._alert_nearby_enemies(enemy)
         elif enemy.state == EnemyState.HOSTILE:
             enemy.last_seen_player = Position(self.player.x, self.player.y)
             detection_increase = GameBalance.ADMIN_DETECTION_CONTINUOUS if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_CONTINUOUS_HOSTILE
+            old_detection = self.player.detection
             self.player.detection = min(100, self.player.detection + detection_increase)
+            self._check_detection_threshold_warnings(old_detection, self.player.detection)
     
     def _handle_enemy_loses_player(self, enemy: Enemy):
         """Handle when enemy loses sight of player."""
@@ -3419,6 +3430,15 @@ class Game:
                     enemy.last_seen_player = None
                     self.message_log.add_message(f"{enemy.type_data.name} lost track")
     
+    def _check_detection_threshold_warnings(self, old_detection: float, new_detection: float):
+        """Check and play warning sounds for detection threshold crossings."""
+        if old_detection < 75 <= new_detection:
+            self.sound_manager.play_sound("detection_threshold")
+            self.message_log.add_message("WARNING: High detection level!", "warning")
+        elif old_detection < 90 <= new_detection:
+            self.sound_manager.play_sound("detection_threshold")
+            self.message_log.add_message("CRITICAL: Admin spawn imminent!", "critical")
+
     def _alert_nearby_enemies(self, alerting_enemy: Enemy):
         """Alert nearby enemies when one becomes hostile."""
         alert_range = 8
@@ -3448,6 +3468,7 @@ class Game:
         
         if alerted_count > 0:
             self.message_log.add_message(f"{alerted_count} enemies alerted nearby!")
+            self.sound_manager.play_sound("enemies_alerted")
     
     def _move_enemies(self):
         """PHASE 2: Move all enemies according to their current awareness state."""
@@ -3468,11 +3489,13 @@ class Game:
                 if enemy.type == 'virus':
                     virus_turns = self.player.temporary_effects.get('virus_turns', 0)
                     self.message_log.add_message(f"{enemy.type_data.name} applies virus damage ({virus_turns} turns)")
+                    self.sound_manager.play_sound("virus_infection")
                 else:
                     self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
                 if self.player.cpu <= 0:
                     self.sound_manager.play_sound("player_death")
                     self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
+                    self.sound_manager.play_sound("critical_system_failure")
                     # Delete save on death (permadeath)
                     SaveGameManager.delete_save()
                     self.message_log.add_message("Save data purged")
@@ -3499,6 +3522,7 @@ class Game:
             admin.last_seen_player = Position(self.player.x, self.player.y)
             self.admin_spawned = True
             self.message_log.add_message("*** ADMIN AVATAR SPAWNED! ***")
+            self.sound_manager.play_sound("admin_spawn")
     
     def _find_admin_spawn_position(self) -> Optional[Position]:
         """Find a suitable spawn position for admin avatar near player and visible."""
@@ -3594,6 +3618,7 @@ class Game:
                     if self.player.cpu <= 0:
                         self.sound_manager.play_sound("player_death")
                         self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
+                        self.sound_manager.play_sound("critical_system_failure")
                         # Delete save on death (permadeath)
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
@@ -4234,6 +4259,7 @@ class ExploitSystem:
                 self.game.overclock_confirmation = False
                 actual_damage = self.game.player.take_damage(overclock_damage)
                 self.game.message_log.add_message(f"OVERCLOCKING: {actual_damage} CPU damage!")
+                self.game.sound_manager.play_sound("overclocking")
                 # Set heat to 100 (not over)
                 self.game.player.heat = 100
             else:
@@ -6661,28 +6687,29 @@ class HelpMenu:
             
             ("MAP SYMBOLS:", Colors.CYAN),
             ("  @: Player (you)", Colors.PLAYER),
-            ("  #: Walls (impassable)", Colors.WHITE),
-            ("  *: Shadows (stealth zones, purple)", Colors.FLOOR),
-            ("  >: Gateway to next level", Colors.ACID_GREEN),
+            ("  #: Walls (impassable)", Colors.WALL),
+            ("  *: Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
+            ("  >: Gateway to next level", Colors.GATEWAY),
             ("  ?: Story fragments (lore)", Colors.CYAN),
             ("", Colors.WHITE),
             
             ("ENEMY TYPES (HP, Vision, Behavior, Damage):", Colors.CYAN),
-            ("  S: Scanner (35hp, 5 vision, static, no attack)", Colors.ORANGE),
-            ("  P: Patrol (40hp, 4 vision, linear routes, 15 dmg)", Colors.ORANGE),
-            ("  B: Bot (25hp, 3 vision, random movement, 8 dmg)", Colors.ORANGE),
-            ("  F: Firewall (80hp, 6 vision, static, no attack)", Colors.RED),
-            ("  H: Hunter (50hp, 6 vision, seeks players, 22 dmg)", Colors.RED),
-            ("  V: Virus (35hp, 4 vision, seeks players, virus attack)", Colors.RED),
-            ("  A: Admin Avatar (250hp, 8 vision, perfect tracking, 45 dmg)", Colors.RED),
+            ("  S: Scanner (35hp, 4 vision, static, no attack)", Colors.ENEMY_UNAWARE),
+            ("  P: Patrol (40hp, 4 vision, linear routes, 15 dmg)", Colors.ENEMY_UNAWARE),
+            ("  B: Bot (25hp, 3 vision, random movement, 8 dmg)", Colors.ENEMY_UNAWARE),
+            ("  F: Firewall (80hp, 5 vision, static, no attack)", Colors.ENEMY_ALERT),
+            ("  H: Hunter (50hp, 6 vision, seeks players, 22 dmg)", Colors.ENEMY_HOSTILE),
+            ("  V: Virus (35hp, 4 vision, seeks players, virus attack)", Colors.ENEMY_HOSTILE),
+            ("  I: Inhibitor (30hp, 4 vision, random, slows movement)", Colors.ENEMY_UNAWARE),
+            ("  A: Admin Avatar (250hp, 8 vision, perfect tracking, 45 dmg)", Colors.ENEMY_HOSTILE),
             ("", Colors.WHITE),
             
             ("ITEMS & PICKUPS:", Colors.CYAN),
-            ("  !: Codes (boost CPU, RAM, heat capacity)", Colors.ELECTRIC_PURPLE),
+            ("  !: Code Patches (grant random bonuses, restore stats)", Colors.ELECTRIC_PURPLE),
             ("  &: Exploits (combat & utility abilities)", Colors.NEON_PINK),
             ("  [/]/=: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
-            ("  ♥: CPU recovery nodes (restore health)", Colors.RED),
-            ("  ♦: Cooling nodes (reduce heat)", Colors.CYAN),
+            ("  ♥: CPU recovery nodes (restore health)", Colors.CRIMSON),
+            ("  ♦: Cooling nodes (reduce heat)", Colors.GOLDEN),
             ("  ♠: Ghost nodes (reduce detection)", Colors.ELECTRIC_PURPLE),
             ("", Colors.WHITE),
             
@@ -6708,6 +6735,8 @@ class HelpMenu:
             ("  Network Scan: Reveal all enemies, vision & paths (5 turns)", Colors.WHITE),
             ("  Log Wiper: Reduce detection level (-30%)", Colors.WHITE),
             ("  Antivirus: Purges negative status effects (virus, slow)", Colors.WHITE),
+            ("  Memory Leak: 3x3 area makes enemies forget player location", Colors.WHITE),
+            ("  Port Scan: Reveals all special nodes (♥♦♠) on the map", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("STATUS EFFECTS:", Colors.CYAN),
