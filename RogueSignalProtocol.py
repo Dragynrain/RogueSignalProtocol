@@ -669,6 +669,7 @@ class GameBalance:
     
     # Node effects
     COOLING_NODE_EFFECT: int = 20
+    GHOST_NODE_DETECTION_REDUCTION: float = 3.0  # Detection reduction per turn
     CPU_RECOVERY_AMOUNT: int = 20
     
     # Combat rewards
@@ -704,6 +705,7 @@ class RoomGenerationConfig:
     # Special tile placement
     COOLING_NODES_PER_LEVEL: int = 3
     CPU_NODES_PER_LEVEL: int = 2
+    GHOST_NODES_PER_LEVEL: int = 2
     DATA_PATCHES_PER_LEVEL: int = 4
     EXPLOIT_PICKUPS_PER_LEVEL: int = 3
     PERMANENT_UPGRADES_PER_LEVEL: int = 1
@@ -949,6 +951,7 @@ class GameData:
         'firewall': EnemyTypeDefinition('F', 80, 6, EnemyMovement.STATIC, "Firewall", 0),  # Massive HP, huge vision, no attack
         'hunter': EnemyTypeDefinition('H', 50, 6, EnemyMovement.SEEK, "Hunter", 22),  # Elite threat - good vision, high damage
         'virus': EnemyTypeDefinition('V', 35, 4, EnemyMovement.SEEK, "Virus", 0),  # No direct damage - applies venom instead
+        'inhibitor': EnemyTypeDefinition('I', 30, 4, EnemyMovement.RANDOM, "Inhibitor", 5),  # Low damage, slows player movement
         'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.TRACK, "Admin Avatar", 45)  # Boss-level but not impossible
     }
     
@@ -1127,22 +1130,41 @@ class DataPatch(InventoryItem):
             game.message_log.add_message(f"Detection: -{actual_reduction:.1f}%")
         
         elif effect_key == 'speed_boost':
-            current_turns = player.temporary_effects.get('speed_boost_turns', 0)
-            new_turns = max(current_turns + 10, 10)  # Add 10 turns, minimum 10
-            player.temporary_effects['speed_boost_turns'] = new_turns
-            if current_turns > 0:
-                game.message_log.add_message(f"Speed boost extended ({new_turns} turns)")
+            current_speed = player.temporary_effects.get('speed_boost_turns', 0)
+            current_slow = player.temporary_effects.get('movement_slowed_turns', 0)
+            
+            if current_speed > 0:
+                game.message_log.add_message("Speed boost already active")
             else:
-                game.message_log.add_message("Speed boost active (10 turns)")
+                speed_to_add = 5
+                
+                if current_slow > 0:
+                    # Offset against existing slow
+                    if speed_to_add >= current_slow:
+                        # Speed boost overcomes all slow
+                        player.temporary_effects['movement_slowed_turns'] = 0
+                        player.temporary_effects['speed_boost_turns'] = speed_to_add - current_slow
+                        game.message_log.add_message(f"Speed boost active ({speed_to_add - current_slow} turns)")
+                        if current_slow > 0:
+                            game.message_log.add_message("Movement inhibition cancelled")
+                    else:
+                        # Slow overcomes all speed boost
+                        player.temporary_effects['speed_boost_turns'] = 0
+                        player.temporary_effects['movement_slowed_turns'] = current_slow - speed_to_add
+                        game.message_log.add_message("Speed boost countered by inhibition")
+                else:
+                    # No slow, add speed normally
+                    player.temporary_effects['speed_boost_turns'] = speed_to_add
+                    game.message_log.add_message(f"Speed boost active ({speed_to_add} turns)")
         
         elif effect_key == 'enhanced_vision':
             current_turns = player.temporary_effects.get('enhanced_vision_turns', 0)
-            new_turns = max(current_turns + 15, 15)  # Add 15 turns, minimum 15
+            new_turns = max(current_turns + 5, 5)  # Add 5 turns, minimum 5
             player.temporary_effects['enhanced_vision_turns'] = new_turns
             if current_turns > 0:
                 game.message_log.add_message(f"Enhanced vision extended ({new_turns} turns)")
             else:
-                game.message_log.add_message("Enhanced vision active (15 turns)")
+                game.message_log.add_message("Enhanced vision active (5 turns)")
         
         elif effect_key == 'exploit_efficiency':
             current_turns = player.temporary_effects.get('exploit_efficiency_turns', 0)
@@ -1325,6 +1347,7 @@ class Player:
         self.temporary_effects = {
             'data_mimic_turns': 0,
             'speed_boost_turns': 0,
+            'movement_slowed_turns': 0,
             'enhanced_vision_turns': 0,
             'exploit_efficiency_turns': 0,
             'virus_turns': 0
@@ -1587,6 +1610,28 @@ class Enemy:
             )
             
             return 0  # No immediate damage
+        elif self.type == 'inhibitor':
+            # Inhibitor adds 1 slow turn - offset against any speed boost
+            slow_to_add = 1
+            current_speed = player.temporary_effects['speed_boost_turns']
+            
+            if current_speed > 0:
+                # Cancel speed moves immediately
+                player.speed_moves_remaining = 0
+                
+                if current_speed >= slow_to_add:
+                    # Speed boost absorbs all slow
+                    player.temporary_effects['speed_boost_turns'] = current_speed - slow_to_add
+                else:
+                    # Some slow remains after canceling speed
+                    player.temporary_effects['speed_boost_turns'] = 0
+                    player.temporary_effects['movement_slowed_turns'] = slow_to_add - current_speed
+            else:
+                # No speed boost, add slow normally
+                player.temporary_effects['movement_slowed_turns'] += slow_to_add
+            
+            # Apply light damage
+            return player.take_damage(self.type_data.damage)
         else:
             return player.take_damage(self.type_data.damage)
     
@@ -1895,6 +1940,7 @@ class GameMap:
         # Feature sets
         self.cooling_nodes: Set[Tuple[int, int]] = set()
         self.cpu_recovery_nodes: Set[Tuple[int, int]] = set()
+        self.ghost_nodes: Set[Tuple[int, int]] = set()
         
         # Items
         self.data_patches: Dict[Tuple[int, int], DataPatch] = {}
@@ -1928,6 +1974,10 @@ class GameMap:
     def is_cpu_recovery_node(self, position: Position) -> bool:
         """Check if position contains a CPU recovery node."""
         return (position.x, position.y) in self.cpu_recovery_nodes
+    
+    def is_ghost_node(self, position: Position) -> bool:
+        """Check if position contains a ghost node (detection reduction)."""
+        return (position.x, position.y) in self.ghost_nodes
     
     def get_data_patch(self, position: Position) -> Optional[DataPatch]:
         """Get code at position."""
@@ -2245,6 +2295,7 @@ class LevelGenerator:
         self.game_map.shadows.clear()
         self.game_map.cooling_nodes.clear()
         self.game_map.cpu_recovery_nodes.clear()
+        self.game_map.ghost_nodes.clear()
         self.game_map.data_patches.clear()
         self.game_map.exploit_pickups.clear()
         self.game_map.permanent_upgrades.clear()
@@ -2544,19 +2595,29 @@ class LevelGenerator:
         if not floor_positions:
             return
         
+        # Get level-specific counts from network config
+        config = GameConfig.get_network_configs()[level]
+        
         # Place cooling nodes
-        for _ in range(RoomGenerationConfig.COOLING_NODES_PER_LEVEL):
+        for _ in range(config.get('cooling_nodes', 3)):
             if floor_positions:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.cooling_nodes.add(pos)
         
         # Place CPU recovery nodes  
-        for _ in range(RoomGenerationConfig.CPU_NODES_PER_LEVEL):
+        for _ in range(config.get('cpu_nodes', 2)):
             if floor_positions:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.cpu_recovery_nodes.add(pos)
+        
+        # Place ghost nodes (detection reduction)
+        for _ in range(config.get('ghost_nodes', 2)):
+            if floor_positions:
+                pos = random.choice(floor_positions)
+                floor_positions.remove(pos)
+                self.game_map.ghost_nodes.add(pos)
     
     def _place_gateway(self) -> None:
         """Place the exit gateway far from spawn but with some randomness."""
@@ -2667,6 +2728,8 @@ class TurnProcessor:
                         self.message_log.add_message("Data Mimic invisibility expired")
                     elif effect_name == 'speed_boost_turns':
                         self.message_log.add_message("Speed boost expired")
+                    elif effect_name == 'movement_slowed_turns':
+                        self.message_log.add_message("Movement returns to normal")
                     elif effect_name == 'virus_turns':
                         self.message_log.add_message("Virus purged from system")
     
@@ -2843,6 +2906,7 @@ class Game:
         # Temporary effects with defaults
         self.player.temporary_effects = player_data.get("temporary_effects", {
             'speed_boost_turns': 0,
+            'movement_slowed_turns': 0,
             'enhanced_vision_turns': 0,
             'exploit_efficiency_turns': 0,
             'data_mimic_turns': 0,
@@ -3044,8 +3108,8 @@ class Game:
             ('restore_cpu', f'Restore {GameBalance.CPU_RESTORE_MIN}-{GameBalance.CPU_RESTORE_MAX} CPU'),
             ('reduce_heat', f'Reduce heat by {GameBalance.HEAT_REDUCTION_INSTANT}°C instantly'),
             ('reduce_detection', '-25% detection level'),
-            ('speed_boost', 'Temporary speed boost (10 turns)'),
-            ('enhanced_vision', 'Enhanced vision (15 turns)'),
+            ('speed_boost', 'Temporary speed boost (5 turns)'),
+            ('enhanced_vision', 'Enhanced vision (5 turns)'),
             ('exploit_efficiency', 'Exploit efficiency (8 turns)')
         ]
         
@@ -3060,6 +3124,7 @@ class Game:
         self.game_map.shadows.clear()
         self.game_map.cooling_nodes.clear()
         self.game_map.cpu_recovery_nodes.clear()
+        self.game_map.ghost_nodes.clear()
         self.game_map.data_patches.clear()
         self.game_map.exploit_pickups.clear()
         self.game_map.permanent_upgrades.clear()  # Clear permanent upgrades
@@ -3184,6 +3249,13 @@ class Game:
             self.player.cpu += recovery
             if recovery > 0:
                 self.message_log.add_message(f"CPU recovery: +{recovery}")
+        
+        # Ghost node (detection reduction)
+        if self.game_map.is_ghost_node(self.player.position):
+            old_detection = self.player.detection
+            self.player.detection = max(0, self.player.detection - GameBalance.GHOST_NODE_DETECTION_REDUCTION)
+            if old_detection > self.player.detection:
+                self.message_log.add_message(f"Ghost node: -{old_detection - self.player.detection:.1f}% detection")
         
         # Data patch
         if player_pos in self.game_map.data_patches:
@@ -3433,6 +3505,13 @@ class Game:
         if self.targeting_mode:
             self._move_cursor(dx, dy)
             return
+        
+        # Check if movement is slowed
+        if self.player.temporary_effects['movement_slowed_turns'] > 0:
+            # Player can only move every other turn when slowed
+            if self.turn % 2 == 1:  # Odd turns are blocked
+                self.message_log.add_message("Movement inhibited")
+                return
         
         # Handle speed boost: grant extra moves only when starting a new turn
         # Don't reset speed moves in the middle of using them
@@ -3896,9 +3975,9 @@ class Game:
     
     def _place_enemies(self, enemy_count: int):
         """Place enemies throughout the level with increased density."""
-        enemy_types = ['scanner', 'patrol', 'bot', 'firewall', 'hunter', 'virus']
+        enemy_types = ['scanner', 'patrol', 'bot', 'firewall', 'hunter', 'virus', 'inhibitor']
         # Adjust weights for challenging gameplay
-        enemy_weights = [4, 3, 2, 2, 2, 1]  # More scanners and firewalls for detection challenge, virus is rare
+        enemy_weights = [4, 3, 2, 2, 2, 1, 2]  # More scanners and firewalls for detection challenge, virus is rare
         
         # Increase enemy density significantly
         actual_enemy_count = int(enemy_count * 1.6)  # 60% more enemies
@@ -3938,6 +4017,7 @@ class Game:
         return (not self.game_map.is_wall(position) and
                 (position.x, position.y) not in self.game_map.cooling_nodes and
                 (position.x, position.y) not in self.game_map.cpu_recovery_nodes and
+                (position.x, position.y) not in self.game_map.ghost_nodes and
                 position.distance_to(Position(5, 5)) > 8)
     
     def _is_valid_patch_placement(self, position: Position) -> bool:
@@ -3946,6 +4026,7 @@ class Game:
                 (position.x, position.y) not in self.game_map.data_patches and
                 (position.x, position.y) not in self.game_map.cooling_nodes and
                 (position.x, position.y) not in self.game_map.cpu_recovery_nodes and
+                (position.x, position.y) not in self.game_map.ghost_nodes and
                 position.distance_to(Position(5, 5)) > 5)
     
     def _is_valid_enemy_placement(self, position: Position) -> bool:
@@ -4331,7 +4412,7 @@ class ExploitSystem:
         self.game.sound_manager.play_sound("exploit_antivirus")
         
         # Check if player has any negative effects to cure
-        negative_effects = ['virus_turns']
+        negative_effects = ['virus_turns', 'movement_slowed_turns']
         effects_cured = []
         
         for effect in negative_effects:
@@ -4342,6 +4423,8 @@ class ExploitSystem:
         if effects_cured:
             if 'virus_turns' in effects_cured:
                 self.game.message_log.add_message("Virus purged from system")
+            if 'movement_slowed_turns' in effects_cured:
+                self.game.message_log.add_message("Movement inhibition removed")
             self.game.message_log.add_message("System cleansed of negative effects")
         else:
             self.game.message_log.add_message("No negative effects detected")
@@ -5480,6 +5563,8 @@ class UIRenderer:
                     color = Colors.BLUE  # Invisible effect
                 elif effect_name == 'speed_boost_turns':
                     color = self._get_data_code_color_for_effect(game, 'speed_boost', Colors.YELLOW)
+                elif effect_name == 'movement_slowed_turns':
+                    color = Colors.ORANGE  # Movement slowed effect
                 elif effect_name == 'enhanced_vision_turns':
                     color = self._get_data_code_color_for_effect(game, 'enhanced_vision', Colors.ELECTRIC_BLUE)
                 elif effect_name == 'exploit_efficiency_turns':
@@ -5684,6 +5769,9 @@ class MapRenderer:
         elif game.game_map.is_cpu_recovery_node(world_pos):
             # Position 3 = ♥ (heart)
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
+        elif game.game_map.is_ghost_node(world_pos):
+            # Position 6 = ♠ (spade)
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             # Use the actual color tuple from the patch, not a mapped color
@@ -6468,8 +6556,9 @@ class HelpMenu:
             ("  !: Codes (boost CPU, RAM, heat capacity)", Colors.ELECTRIC_PURPLE),
             ("  &: Exploits (combat & utility abilities)", Colors.NEON_PINK),
             ("  [/]/=: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
-            ("  +: CPU recovery nodes (restore health)", Colors.ACID_GREEN),
-            ("  ~: Cooling nodes (reduce heat)", Colors.ELECTRIC_BLUE),
+            ("  ♥: CPU recovery nodes (restore health)", Colors.RED),
+            ("  ♦: Cooling nodes (reduce heat)", Colors.CYAN),
+            ("  ♠: Ghost nodes (reduce detection)", Colors.ELECTRIC_PURPLE),
             ("", Colors.WHITE),
             
             ("CORE MECHANICS:", Colors.CYAN),
@@ -6492,13 +6581,15 @@ class HelpMenu:
             ("  Data Mimic: Become invisible (5 turns)", Colors.WHITE),
             ("  Noise Maker: Create distraction (8 turn duration)", Colors.WHITE),
             ("  Network Scan: Reveal all enemies, vision & paths (5 turns)", Colors.WHITE),
-            ("  Log Wiper: Reduce detection level (-50%)", Colors.WHITE),
-            ("  Antivirus: Purges negative status effects (virus)", Colors.WHITE),
+            ("  Log Wiper: Reduce detection level (-30%)", Colors.WHITE),
+            ("  Antivirus: Purges negative status effects (virus, slow)", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("STATUS EFFECTS:", Colors.CYAN),
             ("  Virus: 3 CPU damage per turn, cured with Antivirus", Colors.WHITE),
             ("  Virus attacks stack virus duration (max 12 turns)", Colors.WHITE),
+            ("  Movement Slowed: Can only move every other turn", Colors.WHITE),
+            ("  Speed Boost and Movement Slow offset each other turn-for-turn", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("SURVIVAL TIPS:", Colors.CYAN),
@@ -6506,8 +6597,10 @@ class HelpMenu:
             ("  Monitor heat and detection levels constantly", Colors.WHITE),
             ("  Plan exploit usage - heat management is critical", Colors.WHITE),
             ("  Use CPU nodes when low on health", Colors.WHITE),
+            ("  Use Ghost nodes to reduce detection continuously", Colors.WHITE),
             ("  Admin Avatar spawns at high detection - be careful!", Colors.WHITE),
             ("  Virus enemies apply virus damage - keep Antivirus exploit handy!", Colors.WHITE),
+            ("  Inhibitor enemies add 1 slow turn that offsets speed boosts!", Colors.WHITE),
             ("  Save cooling nodes for emergencies", Colors.WHITE),
         ]
 
