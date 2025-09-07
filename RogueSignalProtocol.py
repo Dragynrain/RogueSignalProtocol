@@ -939,6 +939,16 @@ class Position:
     def __str__(self) -> str:
         """String representation for debugging."""
         return f"{self.x},{self.y}"
+    
+    def __hash__(self) -> int:
+        """Make Position hashable for use as dictionary keys."""
+        return hash((self.x, self.y))
+    
+    def __eq__(self, other) -> bool:
+        """Equality comparison for Position objects."""
+        if not isinstance(other, Position):
+            return False
+        return self.x == other.x and self.y == other.y
 
 @dataclass
 class EnemyTypeDefinition:
@@ -5779,7 +5789,11 @@ class MapRenderer:
             import traceback
             tb = traceback.extract_tb(e.__traceback__)
             line_no = tb[-1].lineno if tb else "?"
-            console.print(1, 1, f"Map Error: {str(e)[:50]} (line {line_no})", fg=Colors.RED, bg=Colors.BLACK)
+            error_msg = f"Map Error: {str(e)[:50]} (line {line_no})"
+            console.print(1, 1, error_msg, fg=Colors.RED, bg=Colors.BLACK)
+            # Also log to console and file
+            logging.error(f"Map rendering error: {e}")
+            logging.error(traceback.format_exc())
     
     def _calculate_camera_offset(self, player: Player) -> Position:
         """Calculate camera offset to center on player."""
