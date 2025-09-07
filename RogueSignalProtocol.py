@@ -6686,11 +6686,12 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("MAP SYMBOLS:", Colors.CYAN),
-            ("  @: Player (you)", Colors.PLAYER),
-            ("  #: Walls (impassable)", Colors.WALL),
-            ("  *: Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
+            ("  ☻: Player (you)", Colors.PLAYER),
+            ("  •: Empty floor (passable)", Colors.FLOOR),
+            ("  ┌┐└┘┬┴├┤┼─│: Walls (impassable)", Colors.WALL),
+            ("  ◘: Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
             ("  >: Gateway to next level", Colors.GATEWAY),
-            ("  ?: Story fragments (lore)", Colors.CYAN),
+            ("  ♫: Story fragments (lore)", Colors.CYAN),
             ("", Colors.WHITE),
             
             ("ENEMY TYPES (HP, Vision, Behavior, Damage):", Colors.CYAN),
@@ -6705,11 +6706,11 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("ITEMS & PICKUPS:", Colors.CYAN),
-            ("  !: Code Patches (grant random bonuses, restore stats)", Colors.ELECTRIC_PURPLE),
+            ("  §: Code Patches (grant random bonuses, restore stats)", Colors.ELECTRIC_PURPLE),
             ("  &: Exploits (combat & utility abilities)", Colors.NEON_PINK),
-            ("  [/]/=: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
-            ("  ♥: CPU recovery nodes (restore health)", Colors.CRIMSON),
-            ("  ♦: Cooling nodes (reduce heat)", Colors.GOLDEN),
+            ("  Ø: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
+            ("  ♥: CPU recovery nodes (restore health)", Colors.RED),
+            ("  ♦: Cooling nodes (reduce heat)", Colors.CYAN),
             ("  ♠: Ghost nodes (reduce detection)", Colors.ELECTRIC_PURPLE),
             ("", Colors.WHITE),
             
