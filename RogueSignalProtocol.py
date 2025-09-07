@@ -133,7 +133,9 @@ class PersistentStorage:
             with open(cls.SAVE_FILE, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except (json.JSONDecodeError, IOError) as e:
+            import traceback
             logging.warning(f"Failed to load progress file: {e}")
+            logging.warning(traceback.format_exc())
             return {
                 "discovered_story_fragments": [],
                 "version": "dev"
@@ -146,7 +148,9 @@ class PersistentStorage:
             with open(cls.SAVE_FILE, 'w', encoding='utf-8') as f:
                 json.dump(progress_data, f, indent=2, ensure_ascii=False)
         except IOError as e:
+            import traceback
             logging.error(f"Failed to save progress file: {e}")
+            logging.error(traceback.format_exc())
 
 
 class SaveGameManager:
@@ -239,7 +243,9 @@ class SaveGameManager:
             return True
             
         except Exception as e:
+            import traceback
             logging.error(f"Failed to save game: {e}")
+            logging.error(traceback.format_exc())
             return False
     
     @classmethod
@@ -256,7 +262,9 @@ class SaveGameManager:
             return save_data
             
         except Exception as e:
+            import traceback
             logging.error(f"Failed to load game: {e}")
+            logging.error(traceback.format_exc())
             return None
     
     @classmethod
@@ -268,7 +276,9 @@ class SaveGameManager:
                 logging.info("Save file deleted")
             return True
         except Exception as e:
+            import traceback
             logging.error(f"Failed to delete save: {e}")
+            logging.error(traceback.format_exc())
             return False
     
     @classmethod
@@ -291,7 +301,9 @@ class SaveGameManager:
                 dt = datetime.datetime.fromtimestamp(stat_result.st_mtime)
                 return dt.strftime("%Y-%m-%d %H:%M:%S")
         except Exception as e:
+            import traceback
             logging.warning(f"Could not get save timestamp: {e}")
+            logging.warning(traceback.format_exc())
             return "Unknown"
     
     @classmethod
@@ -407,7 +419,9 @@ class GameSettings:
                     self.music_volume = settings_data.get("music_volume", 0.5)
                     self.graphics_mode = settings_data.get("graphics_mode", "ascii")
         except Exception as e:
+            import traceback
             logging.warning(f"Failed to load settings: {e}")
+            logging.warning(traceback.format_exc())
     
     def save_settings(self) -> None:
         """Save settings to file."""
@@ -421,7 +435,9 @@ class GameSettings:
             with open(self.SETTINGS_FILE, 'w') as f:
                 json.dump(settings_data, f, indent=2)
         except Exception as e:
+            import traceback
             logging.error(f"Failed to save settings: {e}")
+            logging.error(traceback.format_exc())
     
     def _set_volume_attribute(self, volume_type: str, volume: float):
         """Generic volume setter for any volume type."""
@@ -486,7 +502,9 @@ class SoundManager:
                 pygame.mixer.set_num_channels(self.max_channels)
                 logging.info(f"Sound system initialized with {self.max_channels} channels")
             except Exception as e:
+                import traceback
                 logging.warning(f"Failed to initialize sound system: {e}")
+                logging.warning(traceback.format_exc())
                 self.enabled = False
     
     def update_volumes(self):
@@ -507,7 +525,9 @@ class SoundManager:
             else:
                 logging.warning(f"Sound file not found: {sound_path}")
         except Exception as e:
+            import traceback
             logging.error(f"Failed to load sound {sound_id}: {e}")
+            logging.error(traceback.format_exc())
     
     def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
         """Play a loaded sound effect with channel management"""
@@ -534,7 +554,9 @@ class SoundManager:
             else:
                 return sound.play()  # Fallback to default behavior
         except Exception as e:
+            import traceback
             logging.error(f"Failed to play sound {sound_id}: {e}")
+            logging.error(traceback.format_exc())
             return None
     
     def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0):
@@ -558,7 +580,9 @@ class SoundManager:
             else:
                 logging.warning(f"Music file not found: {music_path}")
         except Exception as e:
+            import traceback
             logging.error(f"Failed to play music {filename}: {e}")
+            logging.error(traceback.format_exc())
     
     def stop_music(self, fade_out_ms: int = 0):
         """Stop background music"""
@@ -573,7 +597,9 @@ class SoundManager:
             self.music_playing = False
             self.current_music = None
         except Exception as e:
+            import traceback
             logging.error(f"Failed to stop music: {e}")
+            logging.error(traceback.format_exc())
     
     def pause_music(self):
         """Pause background music"""
@@ -2878,7 +2904,9 @@ class Game:
             return True
             
         except Exception as e:
+            import traceback
             logging.error(f"Failed to restore game state: {e}")
+            logging.error(traceback.format_exc())
             return False
     
     def _restore_game_state(self, save_data: Dict[str, Any]) -> None:
