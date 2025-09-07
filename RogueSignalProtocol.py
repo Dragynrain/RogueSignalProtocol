@@ -976,7 +976,11 @@ class GameData:
         'antivirus': ExploitDefinition("Antivirus", 2, 25, 0, "utility", 0, TargetingMode.NONE,
                                      "Purges all negative status effects (virus, etc.)"),  # Status cleansing
         'emp_burst': ExploitDefinition("EMP Burst", 4, 50, 3, "emergency", 20, TargetingMode.AREA,
-                                     "Area attack (20 damage) that disables all nearby enemies")  # Moderate area damage + disable
+                                     "Area attack (20 damage) that disables all nearby enemies"),  # Moderate area damage + disable
+        'memory_leak': ExploitDefinition("Memory Leak", 2, 30, 1, "combat", 0, TargetingMode.AREA,
+                                        "Target enemies forget they saw you (3x3 area)"),  # Non-lethal area crowd control
+        'port_scan': ExploitDefinition("Port Scan", 1, 15, 0, "utility", 0, TargetingMode.NONE,
+                                     "Reveals all cooling nodes, CPU nodes, and ghost nodes on the level")  # Cheap utility
     }
 
 # ============================================================================
@@ -2109,6 +2113,7 @@ class GameStateManager:
         self.network_scan_turns: int = 0
         self.noise_locations: List[Position] = []
         self.distraction_points: Dict[Position, int] = {}
+        self.revealed_special_nodes: Set[Tuple[int, int]] = set()
     
     def advance_turn(self) -> None:
         """Advance to the next turn."""
@@ -4283,6 +4288,10 @@ class ExploitSystem:
             return self._execute_antivirus()
         elif exploit_key == 'emp_burst':
             return self._execute_emp_burst(target, exploit.range)
+        elif exploit_key == 'memory_leak':
+            return self._execute_memory_leak(target)
+        elif exploit_key == 'port_scan':
+            return self._execute_port_scan()
         
         return False
     
@@ -4442,6 +4451,50 @@ class ExploitSystem:
                 enemy.alert_timer = 0
                 enemies_hit.append(enemy)
         self.game.message_log.add_message(f"EMP: {len(enemies_hit)} disabled")
+        return True
+    
+    def _execute_memory_leak(self, target: Position) -> bool:
+        """Execute memory leak exploit - makes enemies forget they saw the player."""
+        self.game.sound_manager.play_sound("exploit_memory_leak")
+        enemies_affected = []
+        
+        # Affect all enemies in 3x3 area (range 1 = adjacent + diagonal)
+        for enemy in self.game.enemies[:]:
+            if enemy.position.distance_to(target) <= 1:
+                # Reset enemy state and memory
+                enemy.state = EnemyState.PATROL
+                enemy.last_seen_player = None
+                enemy.alert_timer = 0
+                enemies_affected.append(enemy)
+        
+        if enemies_affected:
+            self.game.message_log.add_message(f"Memory Leak: {len(enemies_affected)} enemies confused")
+        else:
+            self.game.message_log.add_message("No enemies in range")
+        return True
+    
+    def _execute_port_scan(self) -> bool:
+        """Execute port scan exploit - reveals all special nodes on the level."""
+        self.game.sound_manager.play_sound("exploit_port_scan")
+        
+        # Add all special nodes to revealed set (we'll implement this tracking)
+        if not hasattr(self.game.game_state, 'revealed_special_nodes'):
+            self.game.game_state.revealed_special_nodes = set()
+        
+        # Reveal all cooling nodes
+        for node_pos in self.game.game_map.cooling_nodes:
+            self.game.game_state.revealed_special_nodes.add(node_pos)
+            
+        # Reveal all CPU recovery nodes  
+        for node_pos in self.game.game_map.cpu_recovery_nodes:
+            self.game.game_state.revealed_special_nodes.add(node_pos)
+            
+        # Reveal all ghost nodes
+        for node_pos in self.game.game_map.ghost_nodes:
+            self.game.game_state.revealed_special_nodes.add(node_pos)
+        
+        total_revealed = len(self.game.game_state.revealed_special_nodes)
+        self.game.message_log.add_message(f"Port Scan: {total_revealed} special nodes revealed")
         return True
 # INPUT HANDLING
 # ============================================================================
@@ -5739,6 +5792,20 @@ class MapRenderer:
     
     def _render_remembered_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a tile from memory with dimmed neon colors."""
+        # Check if this position has a revealed special node
+        if world_pos in game.game_state.revealed_special_nodes:
+            node_type = game.game_state.revealed_special_nodes[world_pos]
+            if node_type == "cooling":
+                # Position 3 = ♥ for cooling nodes, darker red
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=(80, 20, 20), bg=Colors.BLACK)
+            elif node_type == "cpu":
+                # Position 4 = ♦ for CPU nodes, darker yellow
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=(80, 80, 20), bg=Colors.BLACK)
+            elif node_type == "ghost":
+                # Position 6 = ♠ for ghost nodes, darker purple
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(60, 20, 80), bg=Colors.BLACK)
+            return
+        
         # Only render basic terrain in memory, not dynamic elements
         if game.game_map.is_wall(world_pos):
             # Smart wall system for remembered walls too
@@ -6083,10 +6150,14 @@ class MapRenderer:
             1 <= cursor_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
             console.print(cursor_screen_x, cursor_screen_y, 'X', fg=Colors.RED, bg=Colors.BLACK)
         
-        # Show range indicator
+        # Show range indicator and area effect
         if game.targeting_exploit in GameData.EXPLOITS:
             exploit = GameData.EXPLOITS[game.targeting_exploit]
             self._render_targeting_range(console, game.player.position, exploit.range, camera_offset)
+            
+            # Show area effect for AREA targeting mode
+            if exploit.targeting == TargetingMode.AREA:
+                self._render_targeting_area(console, game.cursor_position, camera_offset)
     
     def _render_targeting_range(self, console: tcod.console.Console, center: Position, range_val: int, camera_offset: Position):
         """Render targeting range indicator."""
@@ -6099,6 +6170,18 @@ class MapRenderer:
                     if (0 <= range_screen_x < GameConfig.GAME_AREA_WIDTH and 
                         1 <= range_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                         self._safely_overlay_tile(console, range_screen_x, range_screen_y, (40, 40, 40))
+    
+    def _render_targeting_area(self, console: tcod.console.Console, center: Position, camera_offset: Position):
+        """Render 3x3 area effect indicator for area targeting."""
+        for dx in range(-1, 2):  # -1, 0, 1 for 3x3 area
+            for dy in range(-1, 2):
+                area_screen_x = center.x - camera_offset.x + dx
+                area_screen_y = center.y - camera_offset.y + dy + 1
+                
+                if (0 <= area_screen_x < GameConfig.GAME_AREA_WIDTH and 
+                    1 <= area_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                    # Use a brighter overlay to distinguish from range indicator
+                    self._safely_overlay_tile(console, area_screen_x, area_screen_y, (60, 60, 20))
 
 # ============================================================================
 # MAIN GAME LOOP AND INITIALIZATION
