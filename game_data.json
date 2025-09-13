@@ -61,7 +61,7 @@
       "movement": "RANDOM",
       "name": "Inhibitor",
       "damage": 5,
-      "description": "Low damage, slows player movement and counters speed boosts"
+      "description": "Low damage, slows player movement"
     },
     "admin": {
       "symbol": "A",
