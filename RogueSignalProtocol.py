@@ -1530,7 +1530,7 @@ class Player:
         """Get current vision range including bonuses."""
         base_range = self.base_vision_range
         if self.temporary_effects['enhanced_vision_turns'] > 0:
-            base_range += 5
+            base_range += 2
         return base_range
     
     def can_see_through_walls(self) -> bool:
@@ -1757,8 +1757,8 @@ class Enemy:
                 # No speed boost, add slow normally
                 player.temporary_effects['movement_slowed_turns'] += slow_to_add
             
-            # Apply light damage
-            return player.take_damage(self.type_data.damage)
+            # Inhibitor only slows, doesn't deal damage
+            return 0
         else:
             return player.take_damage(self.type_data.damage)
     
@@ -3852,13 +3852,13 @@ class Game:
         config = network_configs[self.level]
         
         try:
-            # Play appropriate background music for the level
+            # Play appropriate background music for the level (loops infinitely)
             if self.level == 1:
-                self.sound_manager.play_music("level1_stealth.mp3", fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+                self.sound_manager.play_music("level1_stealth.mp3", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
             elif self.level == 2:
-                self.sound_manager.play_music("level2_infiltration.mp3", fade_in_ms=GameConfig.DEFAULT_FADE_TIME) 
+                self.sound_manager.play_music("level2_infiltration.mp3", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME) 
             elif self.level == 3:
-                self.sound_manager.play_music("level3_core.mp3", fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+                self.sound_manager.play_music("level3_core.mp3", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
             
             # Use the new LevelGenerator system
             self.level_generator.generate_level(self.level, self.game_state.dungeon_seed)
@@ -4263,11 +4263,9 @@ class Game:
         elif enemy.type_data.movement == EnemyMovement.RANDOM:
             positions = self._predict_random_movement(enemy, steps)
         elif enemy.type_data.movement == EnemyMovement.SEEK:
-            if enemy.state == EnemyState.HOSTILE and enemy.last_seen_player:
-                positions = self._predict_seek_movement(enemy, steps)
+            positions = self._predict_seek_movement(enemy, steps)
         elif enemy.type_data.movement == EnemyMovement.TRACK:
-            if enemy.state == EnemyState.HOSTILE:
-                positions = self._predict_track_movement(enemy, steps)
+            positions = self._predict_track_movement(enemy, steps)
         
         return positions
     
@@ -4281,10 +4279,10 @@ class Game:
             return self._predict_movement_with_pathfinding(enemy, self.player.position, steps)
         elif enemy.state == EnemyState.ALERT and enemy.last_seen_player:
             return self._predict_movement_with_pathfinding(enemy, enemy.last_seen_player, steps)
-        
-        # Otherwise predict toward current patrol target
-        patrol_target = enemy.patrol_points[enemy.patrol_index]
-        return self._predict_movement_with_pathfinding(enemy, patrol_target, steps)
+        else:
+            # For unaware enemies, predict toward current patrol target
+            patrol_target = enemy.patrol_points[enemy.patrol_index]
+            return self._predict_movement_with_pathfinding(enemy, patrol_target, steps)
     
     def _predict_random_movement(self, enemy: Enemy, steps: int) -> List[Position]:
         """Predict next positions for random movement using move queue."""
@@ -4292,36 +4290,77 @@ class Game:
             return self._predict_movement_with_pathfinding(enemy, self.player.position, steps)
         elif enemy.state == EnemyState.ALERT and enemy.last_seen_player:
             return self._predict_movement_with_pathfinding(enemy, enemy.last_seen_player, steps)
-        
-        # Predict using random move queue
-        enemy._ensure_random_move_queue()
-        positions = []
-        current_pos = Position(enemy.x, enemy.y)
-        
-        for i in range(min(steps, len(enemy.random_move_queue))):
-            dx, dy = enemy.random_move_queue[i]
-            next_pos = Position(current_pos.x + dx, current_pos.y + dy)
+        else:
+            # For unaware enemies, predict using random move queue
+            enemy._ensure_random_move_queue()
+            positions = []
+            current_pos = Position(enemy.x, enemy.y)
             
-            if (next_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                self.game_map.is_valid_position(next_pos) and
-                not next_pos.distance_to(self.player.position) == 0):
-                positions.append(next_pos)
-                current_pos = next_pos
-            else:
-                break  # Stop if move is blocked
-        
-        return positions
+            for i in range(min(steps, len(enemy.random_move_queue))):
+                dx, dy = enemy.random_move_queue[i]
+                next_pos = Position(current_pos.x + dx, current_pos.y + dy)
+                
+                if (next_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                    self.game_map.is_valid_position(next_pos) and
+                    not next_pos.distance_to(self.player.position) == 0):
+                    positions.append(next_pos)
+                    current_pos = next_pos
+                else:
+                    break  # Stop if move is blocked
+            
+            return positions
     
     def _predict_seek_movement(self, enemy: Enemy, steps: int) -> List[Position]:
         """Predict next positions for seek movement."""
-        if not enemy.last_seen_player:
-            return []
-        
-        return self._predict_movement_with_pathfinding(enemy, enemy.last_seen_player, steps)
+        if enemy.state == EnemyState.HOSTILE:
+            return self._predict_movement_with_pathfinding(enemy, self.player.position, steps)
+        elif enemy.state == EnemyState.ALERT and enemy.last_seen_player:
+            return self._predict_movement_with_pathfinding(enemy, enemy.last_seen_player, steps)
+        else:
+            # For unaware enemies, predict random movement using queue system
+            enemy._ensure_random_move_queue()
+            positions = []
+            current_pos = Position(enemy.x, enemy.y)
+            
+            for i in range(min(steps, len(enemy.random_move_queue))):
+                dx, dy = enemy.random_move_queue[i]
+                next_pos = Position(current_pos.x + dx, current_pos.y + dy)
+                
+                if (next_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                    self.game_map.is_valid_position(next_pos) and
+                    not next_pos.distance_to(self.player.position) == 0):
+                    positions.append(next_pos)
+                    current_pos = next_pos
+                else:
+                    break  # Stop if move is blocked
+            
+            return positions
     
     def _predict_track_movement(self, enemy: Enemy, steps: int) -> List[Position]:
         """Predict next positions for track movement."""
-        return self._predict_movement_with_pathfinding(enemy, self.player.position, steps)
+        if enemy.state == EnemyState.HOSTILE:
+            return self._predict_movement_with_pathfinding(enemy, self.player.position, steps)
+        elif enemy.state == EnemyState.ALERT and enemy.last_seen_player:
+            return self._predict_movement_with_pathfinding(enemy, enemy.last_seen_player, steps)
+        else:
+            # For unaware enemies, predict random movement using queue system
+            enemy._ensure_random_move_queue()
+            positions = []
+            current_pos = Position(enemy.x, enemy.y)
+            
+            for i in range(min(steps, len(enemy.random_move_queue))):
+                dx, dy = enemy.random_move_queue[i]
+                next_pos = Position(current_pos.x + dx, current_pos.y + dy)
+                
+                if (next_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                    self.game_map.is_valid_position(next_pos) and
+                    not next_pos.distance_to(self.player.position) == 0):
+                    positions.append(next_pos)
+                    current_pos = next_pos
+                else:
+                    break  # Stop if move is blocked
+            
+            return positions
     
     def _predict_movement_with_pathfinding(self, enemy: Enemy, target: Position, steps: int) -> List[Position]:
         """Predict enemy movement using TCOD pathfinding."""
@@ -5979,8 +6018,9 @@ class MapRenderer:
     def _render_remembered_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a tile from memory with dimmed neon colors."""
         # Check if this position has a revealed special node
-        if world_pos in game.game_state.revealed_special_nodes:
-            node_type = game.game_state.revealed_special_nodes[world_pos]
+        pos_tuple = (world_pos.x, world_pos.y)
+        if pos_tuple in game.game_state.revealed_special_nodes:
+            node_type = game.game_state.revealed_special_nodes[pos_tuple]
             if node_type == "cooling":
                 # Position 3 = ♥ for cooling nodes, darker red
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=(80, 20, 20), bg=Colors.BLACK)
@@ -6018,40 +6058,49 @@ class MapRenderer:
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=Colors.WALL, bg=Colors.BLACK)
         elif game.game_map.is_cooling_node(world_pos):
             # Position 4 = ♦ (diamond) 
-            # Show in full color if discovered or currently visible, darker if not
             pos_tuple = (world_pos.x, world_pos.y)
-            if (hasattr(game.game_state, 'revealed_special_nodes') and 
-                pos_tuple in game.game_state.revealed_special_nodes) or \
-               (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
-                game.game_map.has_line_of_sight(game.player.position, world_pos)):
+            is_currently_visible = (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
+                                   game.game_map.has_line_of_sight(game.player.position, world_pos))
+            is_discovered = (hasattr(game.game_state, 'revealed_special_nodes') and 
+                           pos_tuple in game.game_state.revealed_special_nodes)
+            
+            if is_currently_visible:
+                # Full color when currently visible
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
-            else:
-                # Darker cyan for undiscovered cooling node
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=(0, 60, 60), bg=Colors.BLACK)
+            elif is_discovered:
+                # Faded color when discovered but not currently visible
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=(0, 120, 120), bg=Colors.BLACK)
+            # Don't render undiscovered special nodes
         elif game.game_map.is_cpu_recovery_node(world_pos):
             # Position 3 = ♥ (heart)
-            # Show in full color if discovered or currently visible, darker if not
             pos_tuple = (world_pos.x, world_pos.y)
-            if (hasattr(game.game_state, 'revealed_special_nodes') and 
-                pos_tuple in game.game_state.revealed_special_nodes) or \
-               (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
-                game.game_map.has_line_of_sight(game.player.position, world_pos)):
+            is_currently_visible = (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
+                                   game.game_map.has_line_of_sight(game.player.position, world_pos))
+            is_discovered = (hasattr(game.game_state, 'revealed_special_nodes') and 
+                           pos_tuple in game.game_state.revealed_special_nodes)
+            
+            if is_currently_visible:
+                # Full color when currently visible
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
-            else:
-                # Darker red for undiscovered CPU node
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=(60, 0, 0), bg=Colors.BLACK)
+            elif is_discovered:
+                # Faded color when discovered but not currently visible
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=(120, 0, 0), bg=Colors.BLACK)
+            # Don't render undiscovered special nodes
         elif game.game_map.is_ghost_node(world_pos):
             # Position 6 = ♠ (spade)
-            # Show in full color if discovered or currently visible, darker if not
             pos_tuple = (world_pos.x, world_pos.y)
-            if (hasattr(game.game_state, 'revealed_special_nodes') and 
-                pos_tuple in game.game_state.revealed_special_nodes) or \
-               (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
-                game.game_map.has_line_of_sight(game.player.position, world_pos)):
+            is_currently_visible = (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
+                                   game.game_map.has_line_of_sight(game.player.position, world_pos))
+            is_discovered = (hasattr(game.game_state, 'revealed_special_nodes') and 
+                           pos_tuple in game.game_state.revealed_special_nodes)
+            
+            if is_currently_visible:
+                # Full color when currently visible
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
-            else:
-                # Darker purple for undiscovered ghost node
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(40, 0, 60), bg=Colors.BLACK)
+            elif is_discovered:
+                # Faded color when discovered but not currently visible
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(80, 0, 120), bg=Colors.BLACK)
+            # Don't render undiscovered special nodes
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             # Use the actual color tuple from the patch, not a mapped color
@@ -6101,8 +6150,8 @@ class MapRenderer:
             upgrade_key = game.game_map.permanent_upgrades[(world_pos.x, world_pos.y)]
             upgrade = GameUpgrades.UPGRADES[upgrade_key]
             color = self._get_upgrade_color(upgrade.color)
-            # Position 157 = Ø for CPU/heat upgrades (different colors)
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[157]), fg=color, bg=Colors.BLACK)
+            # Position 9 = ○ for permanent upgrades (different colors)  
+            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[9]), fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.story_fragments:
             # Position 14 = ♫ (double music note) for lore scraps
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[14]), fg=Colors.CYAN, bg=Colors.BLACK)
@@ -6867,7 +6916,7 @@ class HelpMenu:
             ("ITEMS & PICKUPS:", Colors.CYAN),
             ("  §: Code Patches (grant random bonuses, restore stats)", Colors.ELECTRIC_PURPLE),
             ("  &: Exploits (combat & utility abilities)", Colors.NEON_PINK),
-            ("  Ø: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
+            ("  ○: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
             ("  ♥: CPU recovery nodes (restore health)", Colors.RED),
             ("  ♦: Cooling nodes (reduce heat)", Colors.CYAN),
             ("  ♠: Ghost nodes (reduce detection)", Colors.ELECTRIC_PURPLE),
@@ -7046,6 +7095,10 @@ def handle_menu_navigation(console, context, menus, settings):
     main_menu.refresh_options(show_continue=True)
     current_menu = main_menu
     
+    # Start main menu music
+    menu_sound_manager = SoundManager(settings)
+    menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000)
+    
     while True:
         # Using terminal font for all rendering
         current_menu.render(console)
@@ -7053,11 +7106,13 @@ def handle_menu_navigation(console, context, menus, settings):
         
         for event in tcod.event.wait():
             if event.type == "QUIT":
+                menu_sound_manager.cleanup()
                 return None, True  # game=None, should_exit=True
             elif event.type == "KEYDOWN":
                 action = current_menu.handle_input(event)
                 
                 if action == "exit":
+                    menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True
                 elif action == "settings":
                     current_menu = menus['settings_menu']
@@ -7068,9 +7123,11 @@ def handle_menu_navigation(console, context, menus, settings):
                 elif action == "back":
                     current_menu = main_menu
                 elif action == "continue":
+                    menu_sound_manager.stop_music(fade_out_ms=1000)  # Fade out menu music
                     game = Game(load_save=True, settings=settings)
                     return game, False
                 elif action == "new_game":
+                    menu_sound_manager.stop_music(fade_out_ms=1000)  # Fade out menu music
                     game = Game(load_save=False, settings=settings)
                     return game, False
 
