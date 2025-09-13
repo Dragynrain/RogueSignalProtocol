@@ -134,8 +134,8 @@
       "targeting": "AREA",
       "description": "Area attack (30 damage) that disables enemies for 4 turns"
     },
-    "network_scan": {
-      "name": "Network Scan",
+    "threat_scan": {
+      "name": "Threat Scan",
       "ram": 3,
       "heat": 20,
       "range": 0,
@@ -143,6 +143,16 @@
       "damage": 0,
       "targeting": "NONE",
       "description": "Reveals ALL enemies, vision ranges, & movement paths (5 turns)"
+    },
+    "network_scan": {
+      "name": "Network Scan",
+      "ram": 1,
+      "heat": 15,
+      "range": 0,
+      "category": "utility",
+      "damage": 0,
+      "targeting": "NONE",
+      "description": "Reveals all cooling nodes, CPU nodes, and ghost nodes on the level"
     },
     "log_wiper": {
       "name": "Log Wiper",
