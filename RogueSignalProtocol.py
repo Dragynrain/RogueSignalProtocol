@@ -230,7 +230,6 @@ class SaveGameManager:
                 
                 # UI state (optional - for better user experience)
                 "ui_state": {
-                    "show_patrol_predictions": game.show_patrol_predictions,
                     "inventory_selection": game.inventory_selection,
                     "lore_viewer_selection": game.lore_viewer_selection
                 }
@@ -524,14 +523,15 @@ class SoundManager:
         # Define all sound effects that should be loaded
         sound_files = {
             # Movement and actions
-            "footstep": "footstep.wav",
-            "door_open": "door_open.wav",
-            "switch_toggle": "switch_toggle.wav",
+            "player_move": "player_move.wav",
+            "player_attack": "player_attack.wav",
+            "stealth_attack": "stealth_attack.wav",
             
             # Combat and alerts
-            "enemy_hit": "enemy_hit.wav",
+            "enemy_attack": "enemy_attack.wav",
             "enemy_death": "enemy_death.wav",
             "enemy_alert": "enemy_alert.wav",
+            "enemy_hostile": "enemy_hostile.wav",
             "admin_spawn": "admin_spawn.wav",
             "enemies_alerted": "enemies_alerted.wav",
             
@@ -547,8 +547,12 @@ class SoundManager:
             
             # Player status
             "player_death": "player_death.wav",
+            "player_overheat": "player_overheat.wav",
             "virus_damage": "virus_damage.wav",
+            "virus_infection": "virus_infection.wav",
             "critical_system_failure": "critical_system_failure.wav",
+            "detection_threshold": "detection_threshold.wav",
+            "overclocking": "overclocking.wav",
             
             # Exploits
             "exploit_shadow_step": "exploit_shadow_step.wav",
@@ -562,11 +566,12 @@ class SoundManager:
             "exploit_memory_leak": "exploit_memory_leak.wav",
             "exploit_network_scan": "exploit_network_scan.wav",
             "exploit_failed": "exploit_failed.wav",
+            "exploit_data_mimic": "exploit_data_mimic.wav",
+            "exploit_noise_maker": "exploit_noise_maker.wav",
+            "exploit_targeting": "exploit_targeting.wav",
             
             # UI and system
-            "ui_select": "ui_select.wav",
-            "ui_confirm": "ui_confirm.wav",
-            "ui_cancel": "ui_cancel.wav",
+            "ui_menu_open": "ui_menu_open.wav",
             "level_complete": "level_complete.wav",
         }
         
@@ -605,16 +610,33 @@ class SoundManager:
             final_volume = self.settings.sfx_volume * self.settings.master_volume * volume_modifier
             sound.set_volume(final_volume)
             
-            # Find available channel or use priority to override
+            # Find available channel or intelligently manage channel usage
             channel = pygame.mixer.find_channel()
-            if channel is None and priority > 0:
-                # Force stop lowest priority channel if needed
-                channel = pygame.mixer.Channel(0)  # Use first channel
+            
+            if channel is None:
+                # All channels busy - handle based on priority
+                if priority > 5:
+                    # High priority: force stop oldest channel
+                    channel = pygame.mixer.Channel(0)
+                    channel.stop()
+                elif priority > 0:
+                    # Medium priority: find and replace a channel playing a lower/equal priority sound
+                    # For now, just use a rotating channel assignment
+                    import random
+                    channel_id = random.randint(0, self.max_channels - 1)
+                    channel = pygame.mixer.Channel(channel_id)
+                    channel.stop()
+                else:
+                    # Low priority: try to replace channel 0 but don't queue
+                    # This prevents sound queuing which causes delays
+                    channel = pygame.mixer.Channel(0)
+                    # Don't stop it, just try to play - pygame will handle the overlap better than queuing
             
             if channel:
                 return channel.play(sound)
             else:
-                return sound.play()  # Fallback to default behavior
+                # This should rarely happen now, but fallback to direct play
+                return sound.play()
         except Exception as e:
             import traceback
             logging.error(f"Failed to play sound {sound_id}: {e}")
@@ -2214,7 +2236,7 @@ class GameStateManager:
         self.threat_scan_turns: int = 0
         self.noise_locations: List[Position] = []
         self.distraction_points: Dict[Position, int] = {}
-        self.revealed_special_nodes: Set[Tuple[int, int]] = set()
+        self.revealed_special_nodes: Dict[Tuple[int, int], str] = {}  # position -> node_type
     
     def advance_turn(self) -> None:
         """Advance to the next turn."""
@@ -2871,7 +2893,6 @@ class Game:
         self.sound_manager.preload_sounds()
         
         # UI state
-        self.show_patrol_predictions = False
         self.show_inventory = False
         self.show_help = False
         self.show_gateway_confirmation = False  # Gateway confirmation dialog
@@ -3064,7 +3085,6 @@ class Game:
     def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:
         """Restore UI state from save data."""
         ui_state = save_data.get("ui_state", {})
-        self.show_patrol_predictions = ui_state.get("show_patrol_predictions", False)
         self.inventory_selection = ui_state.get("inventory_selection", 0)
         self.lore_viewer_selection = ui_state.get("lore_viewer_selection", 0)
     
@@ -3300,8 +3320,8 @@ class Game:
         if old_cpu > self.player.cpu and self.player.temporary_effects.get('virus_turns', 0) > 0:
             self.sound_manager.play_sound("virus_damage")
             if self.player.cpu <= 0:
-                self.sound_manager.play_sound("player_death")
-                self.sound_manager.play_sound("critical_system_failure")
+                self.sound_manager.play_sound("player_death", priority=10)
+                self.sound_manager.play_sound("critical_system_failure", priority=10)
         
         # Handle threat scan effect
         self._update_threat_scan()
@@ -3363,9 +3383,20 @@ class Game:
         
         should_play_sound = is_on_node and self.last_node_position != player_pos
         
-        # Update last node position
+        # Update last node position and track discoveries
         if is_on_node:
             self.last_node_position = player_pos
+            
+            # Mark special nodes as discovered when first stepped on
+            if not hasattr(self.game_state, 'revealed_special_nodes'):
+                self.game_state.revealed_special_nodes = {}
+            
+            if self.game_map.is_cooling_node(self.player.position):
+                self.game_state.revealed_special_nodes[player_pos] = "cooling"
+            elif self.game_map.is_cpu_recovery_node(self.player.position):
+                self.game_state.revealed_special_nodes[player_pos] = "cpu"
+            elif self.game_map.is_ghost_node(self.player.position):
+                self.game_state.revealed_special_nodes[player_pos] = "ghost"
         else:
             self.last_node_position = None
         
@@ -3559,7 +3590,7 @@ class Game:
         
         if alerted_count > 0:
             self.message_log.add_message(f"{alerted_count} enemies alerted nearby!")
-            self.sound_manager.play_sound("enemies_alerted")
+            self.sound_manager.play_sound("enemies_alerted", priority=6)
     
     def _move_enemies(self):
         """PHASE 2: Move all enemies according to their current awareness state."""
@@ -3584,9 +3615,9 @@ class Game:
                 else:
                     self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
                 if self.player.cpu <= 0:
-                    self.sound_manager.play_sound("player_death")
+                    self.sound_manager.play_sound("player_death", priority=10)
                     self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
-                    self.sound_manager.play_sound("critical_system_failure")
+                    self.sound_manager.play_sound("critical_system_failure", priority=10)
                     # Delete save on death (permadeath)
                     SaveGameManager.delete_save()
                     self.message_log.add_message("Save data purged")
@@ -3613,7 +3644,7 @@ class Game:
             admin.last_seen_player = Position(self.player.x, self.player.y)
             self.admin_spawned = True
             self.message_log.add_message("*** ADMIN AVATAR SPAWNED! ***")
-            self.sound_manager.play_sound("admin_spawn")
+            self.sound_manager.play_sound("admin_spawn", priority=8)
     
     def _find_admin_spawn_position(self) -> Optional[Position]:
         """Find a suitable spawn position for admin avatar near player and visible."""
@@ -3695,15 +3726,15 @@ class Game:
                 
                 # Check for overheating
                 if self.player.heat >= self.player.max_heat:
-                    self.sound_manager.play_sound("player_overheat")
+                    self.sound_manager.play_sound("player_overheat", priority=8)
                     damage = 5 + (self.player.heat - self.player.max_heat)
                     self.player.take_damage(damage)
                     self.player.heat = max(85, self.player.max_heat - 15)  # Cool down to 15 below max, minimum 85
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
                     if self.player.cpu <= 0:
-                        self.sound_manager.play_sound("player_death")
+                        self.sound_manager.play_sound("player_death", priority=10)
                         self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
-                        self.sound_manager.play_sound("critical_system_failure")
+                        self.sound_manager.play_sound("critical_system_failure", priority=10)
                         # Delete save on death (permadeath)
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
@@ -4632,21 +4663,21 @@ class ExploitSystem:
         """Execute network scan exploit - reveals all special nodes on the level."""
         self.game.sound_manager.play_sound("exploit_network_scan")
         
-        # Add all special nodes to revealed set (we'll implement this tracking)
+        # Add all special nodes to revealed dict
         if not hasattr(self.game.game_state, 'revealed_special_nodes'):
-            self.game.game_state.revealed_special_nodes = set()
+            self.game.game_state.revealed_special_nodes = {}
         
         # Reveal all cooling nodes
         for node_pos in self.game.game_map.cooling_nodes:
-            self.game.game_state.revealed_special_nodes.add(node_pos)
+            self.game.game_state.revealed_special_nodes[node_pos] = "cooling"
             
         # Reveal all CPU recovery nodes  
         for node_pos in self.game.game_map.cpu_recovery_nodes:
-            self.game.game_state.revealed_special_nodes.add(node_pos)
+            self.game.game_state.revealed_special_nodes[node_pos] = "cpu"
             
         # Reveal all ghost nodes
         for node_pos in self.game.game_map.ghost_nodes:
-            self.game.game_state.revealed_special_nodes.add(node_pos)
+            self.game.game_state.revealed_special_nodes[node_pos] = "ghost"
         
         total_revealed = len(self.game.game_state.revealed_special_nodes)
         self.game.message_log.add_message(f"Port Scan: {total_revealed} special nodes revealed")
@@ -5991,13 +6022,37 @@ class MapRenderer:
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=Colors.WALL, bg=Colors.BLACK)
         elif game.game_map.is_cooling_node(world_pos):
             # Position 4 = ♦ (diamond) 
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
+            # Show in full color if discovered or currently visible, darker if not
+            pos_tuple = (world_pos.x, world_pos.y)
+            if (hasattr(game.game_state, 'revealed_special_nodes') and 
+                pos_tuple in game.game_state.revealed_special_nodes) or \
+               game.player.can_see_position(world_pos, game.game_map):
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
+            else:
+                # Darker cyan for undiscovered cooling node
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=(0, 60, 60), bg=Colors.BLACK)
         elif game.game_map.is_cpu_recovery_node(world_pos):
             # Position 3 = ♥ (heart)
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
+            # Show in full color if discovered or currently visible, darker if not
+            pos_tuple = (world_pos.x, world_pos.y)
+            if (hasattr(game.game_state, 'revealed_special_nodes') and 
+                pos_tuple in game.game_state.revealed_special_nodes) or \
+               game.player.can_see_position(world_pos, game.game_map):
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
+            else:
+                # Darker red for undiscovered CPU node
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=(60, 0, 0), bg=Colors.BLACK)
         elif game.game_map.is_ghost_node(world_pos):
             # Position 6 = ♠ (spade)
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
+            # Show in full color if discovered or currently visible, darker if not
+            pos_tuple = (world_pos.x, world_pos.y)
+            if (hasattr(game.game_state, 'revealed_special_nodes') and 
+                pos_tuple in game.game_state.revealed_special_nodes) or \
+               game.player.can_see_position(world_pos, game.game_map):
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
+            else:
+                # Darker purple for undiscovered ghost node
+                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(40, 0, 60), bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             # Use the actual color tuple from the patch, not a mapped color
@@ -6173,8 +6228,8 @@ class MapRenderer:
             # Show patrol routes for visible enemies OR if Threat Scan is active
             can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
             
-            # Show movement intentions only for visible enemies or during threat scan
-            if can_see_enemy or threat_scan_active:
+            # Show movement intentions for all visible enemies (permanent ability)
+            if can_see_enemy:
                 next_positions = game.get_enemy_next_positions(enemy, 3)
                 
                 for i, point in enumerate(next_positions):
