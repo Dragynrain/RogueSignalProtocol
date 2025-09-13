@@ -3822,7 +3822,7 @@ class Game:
         self.level += 1
         if self.level > 3:
             self.sound_manager.play_music("victory.ogg", loops=1)
-            self.message_log.add_message_typed("EXFILTRATION COMPLETE!", "critical")
+            self.message_log.add_message_typed("YOU HAVE ESCAPED!", "critical")
             self.message_log.add_message(f"Stats: Turns:{self.turn} Det:{int(self.player.detection)}%")
             self.game_over = True
             # Auto-save on game completion
