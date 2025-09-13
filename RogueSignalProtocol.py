@@ -3854,11 +3854,11 @@ class Game:
         try:
             # Play appropriate background music for the level
             if self.level == 1:
-                self.sound_manager.play_music("level1_stealth.ogg", fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+                self.sound_manager.play_music("level1_stealth.mp3", fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
             elif self.level == 2:
-                self.sound_manager.play_music("level2_infiltration.ogg", fade_in_ms=GameConfig.DEFAULT_FADE_TIME) 
+                self.sound_manager.play_music("level2_infiltration.mp3", fade_in_ms=GameConfig.DEFAULT_FADE_TIME) 
             elif self.level == 3:
-                self.sound_manager.play_music("level3_core.ogg", fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+                self.sound_manager.play_music("level3_core.mp3", fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
             
             # Use the new LevelGenerator system
             self.level_generator.generate_level(self.level, self.game_state.dungeon_seed)
