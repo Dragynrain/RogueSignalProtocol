@@ -200,7 +200,7 @@ class SaveGameManager:
                 
                 # Game effects and state
                 "game_effects": {
-                    "network_scan_turns": game.game_state.network_scan_turns,
+                    "threat_scan_turns": game.game_state.threat_scan_turns,
                     "noise_locations": [{"x": pos.x, "y": pos.y} for pos in game.game_state.noise_locations],
                     "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in game.game_state.distraction_points.items()}
                 },
@@ -487,6 +487,10 @@ class GameSettings:
 class SoundManager:
     """Manages sound effects and background music using pygame."""
     
+    # Centralized audio directory configuration
+    SOUND_DIRECTORY = "sound"
+    MUSIC_DIRECTORY = "music"
+    
     def __init__(self, settings: GameSettings = None):
         self.settings = settings or GameSettings()
         self.enabled = AUDIO_AVAILABLE
@@ -518,7 +522,7 @@ class SoundManager:
             return
         
         try:
-            sound_path = os.path.join("sounds", filename)
+            sound_path = os.path.join(self.SOUND_DIRECTORY, filename)
             if os.path.exists(sound_path):
                 self.sounds[sound_id] = pygame.mixer.Sound(sound_path)
                 logging.info(f"Loaded sound: {sound_id}")
@@ -566,7 +570,7 @@ class SoundManager:
             return
         
         try:
-            music_path = os.path.join("music", filename)
+            music_path = os.path.join(self.MUSIC_DIRECTORY, filename)
             if os.path.exists(music_path):
                 pygame.mixer.music.load(music_path)
                 pygame.mixer.music.set_volume(self.settings.music_volume * self.settings.master_volume)
@@ -701,7 +705,7 @@ class GameBalance:
     # Combat rewards
     ENEMY_ELIMINATION_CPU_REWARD: int = 5
     
-    # Data patch effects
+    # Code patch effects
     CPU_RESTORE_MIN: int = 30
     CPU_RESTORE_MAX: int = 40
     HEAT_REDUCTION_INSTANT: int = 40
@@ -873,7 +877,7 @@ class Colors:
     VISION_ALERT = (80, 50, 10)  # Orange glow (getting suspicious)  
     VISION_HOSTILE = (80, 10, 10)  # Red glow (fully alert and tracking)
     
-    # Data patch colors
+    # Code patch colors
     CRIMSON = (220, 20, 60)  # Crimson red
     AZURE = (30, 144, 255)  # Azure blue
     EMERALD = (50, 205, 50)  # Emerald green
@@ -1005,7 +1009,7 @@ class GameData:
                                           "Ranged attack (25 damage, 5 tile range)"),  # Moderate ranged damage
         'system_crash': ExploitDefinition("System Crash", 4, 45, 3, "combat", 30, TargetingMode.AREA,
                                         "Area attack (30 damage) that disables enemies for 4 turns"),  # Area damage
-        'network_scan': ExploitDefinition("Network Scan", 3, 20, 0, "utility", 0, TargetingMode.NONE,
+        'threat_scan': ExploitDefinition("Threat Scan", 3, 20, 0, "utility", 0, TargetingMode.NONE,
                                         "Reveals ALL enemies, vision ranges, & movement paths (5 turns)"),  # No damage, intel
         'log_wiper': ExploitDefinition("Log Wiper", 2, 20, 0, "utility", 0, TargetingMode.NONE,
                                      "Significantly reduces detection level (-50%)"),  # No damage, counter-detection
@@ -1015,7 +1019,7 @@ class GameData:
                                      "Area attack (20 damage) that disables all nearby enemies"),  # Moderate area damage + disable
         'memory_leak': ExploitDefinition("Memory Leak", 2, 30, 1, "combat", 0, TargetingMode.AREA,
                                         "Target enemies forget they saw you (3x3 area)"),  # Non-lethal area crowd control
-        'port_scan': ExploitDefinition("Port Scan", 1, 15, 0, "utility", 0, TargetingMode.NONE,
+        'network_scan': ExploitDefinition("Network Scan", 1, 15, 0, "utility", 0, TargetingMode.NONE,
                                      "Reveals all cooling nodes, CPU nodes, and ghost nodes on the level")  # Cheap utility
     }
 
@@ -1126,6 +1130,9 @@ class DataPatch(InventoryItem):
         """Apply the code effect to the player."""
         if self.color not in game.data_patch_effects:
             return False
+        
+        # Play code usage sound
+        game.sound_manager.play_sound("item_use_code")
         
         # Use one from the stack
         self.quantity -= 1
@@ -2146,7 +2153,7 @@ class GameStateManager:
         self.dungeon_seed: int = random.randint(1, GameConfig.DUNGEON_SEED_RANGE)
         
         # Game effects
-        self.network_scan_turns: int = 0
+        self.threat_scan_turns: int = 0
         self.noise_locations: List[Position] = []
         self.distraction_points: Dict[Position, int] = {}
         self.revealed_special_nodes: Set[Tuple[int, int]] = set()
@@ -2155,9 +2162,9 @@ class GameStateManager:
         """Advance to the next turn."""
         self.turn += 1
         
-        # Update network scan effect
-        if self.network_scan_turns > 0:
-            self.network_scan_turns -= 1
+        # Update threat scan effect
+        if self.threat_scan_turns > 0:
+            self.threat_scan_turns -= 1
             
         # Decay distraction points
         expired_distractions = []
@@ -2749,13 +2756,10 @@ class TurnProcessor:
                     virus_damage = GameConfig.VIRUS_DAMAGE_PER_TURN
                     actual_damage = player.take_damage(virus_damage)
                     self.message_log.add_message(f"Virus damage: {actual_damage} CPU damage")
-                    self.sound_manager.play_sound("virus_damage")
                     
                     # Check for death from virus
                     if player.cpu <= 0:
-                        self.sound_manager.play_sound("player_death")
                         self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
-                        self.sound_manager.play_sound("critical_system_failure")
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
                         self.game_state.game_over = True
@@ -2825,7 +2829,7 @@ class Game:
         self.overclock_confirmation = False
         self.overclock_exploit: Optional[str] = None
         
-        # Data patch system
+        # Code patch system
         self.data_patch_effects: Dict[str, Tuple[str, str]] = {}
         self.discovered_code_effects: Dict[str, str] = {}  # color -> effect_name mapping
         
@@ -2973,7 +2977,7 @@ class Game:
             # Backward compatibility with old format
             effects_data = save_data
         
-        self.game_state.network_scan_turns = effects_data.get("network_scan_turns", 0)
+        self.game_state.threat_scan_turns = effects_data.get("threat_scan_turns", 0)
         self.game_state.noise_locations = [
             Position(loc["x"], loc["y"]) for loc in effects_data.get("noise_locations", [])
         ]
@@ -3225,11 +3229,18 @@ class Game:
             self.player.speed_moves_remaining = 1  # Grant 1 extra move per turn
         
         # Process turn using the dedicated turn processor
+        old_cpu = self.player.cpu
         self.turn_processor.process_turn(self.player)
         
+        # Handle sound effects for virus damage
+        if old_cpu > self.player.cpu and self.player.temporary_effects.get('virus_turns', 0) > 0:
+            self.sound_manager.play_sound("virus_damage")
+            if self.player.cpu <= 0:
+                self.sound_manager.play_sound("player_death")
+                self.sound_manager.play_sound("critical_system_failure")
         
-        # Handle network scan effect
-        self._update_network_scan()
+        # Handle threat scan effect
+        self._update_threat_scan()
         
         # Process special tiles
         self._process_special_tiles()
@@ -3250,10 +3261,10 @@ class Game:
             background_increase = config.get("background_detection", 1)
             self.player.detection = min(100, self.player.detection + background_increase)
     
-    def _update_network_scan(self):
-        """Update network scan effect."""
-        if self.game_state.network_scan_turns > 0:
-            self.game_state.network_scan_turns -= 1
+    def _update_threat_scan(self):
+        """Update threat scan effect."""
+        if self.game_state.threat_scan_turns > 0:
+            self.game_state.threat_scan_turns -= 1
     
     def _update_memory_system(self):
         """Update the hybrid fog of war memory system."""
@@ -3308,7 +3319,7 @@ class Game:
         # Data patch
         if player_pos in self.game_map.data_patches:
             patch = self.game_map.data_patches[player_pos]
-            self.sound_manager.play_sound("item_pickup_data")
+            self.sound_manager.play_sound("item_pickup_code")
             self.player.inventory_manager.add_item(patch)
             self.message_log.add_message(f"Found {patch.name}")
             del self.game_map.data_patches[player_pos]
@@ -4344,8 +4355,8 @@ class ExploitSystem:
             return self._execute_buffer_overflow(target)
         elif exploit_key == 'system_crash':
             return self._execute_system_crash(target, exploit.range)
-        elif exploit_key == 'network_scan':
-            return self._execute_network_scan()
+        elif exploit_key == 'threat_scan':
+            return self._execute_threat_scan()
         elif exploit_key == 'log_wiper':
             return self._execute_log_wiper()
         elif exploit_key == 'antivirus':
@@ -4354,8 +4365,8 @@ class ExploitSystem:
             return self._execute_emp_burst(target, exploit.range)
         elif exploit_key == 'memory_leak':
             return self._execute_memory_leak(target)
-        elif exploit_key == 'port_scan':
-            return self._execute_port_scan()
+        elif exploit_key == 'network_scan':
+            return self._execute_network_scan()
         
         return False
     
@@ -4454,12 +4465,12 @@ class ExploitSystem:
         self.game.message_log.add_message(f"System crash: {len(enemies_hit)} disabled")
         return True
     
-    def _execute_network_scan(self) -> bool:
-        """Execute enhanced network scan exploit."""
-        self.game.sound_manager.play_sound("exploit_network_scan")
-        self.game.game_state.network_scan_turns = 5  # Extended duration for tactical advantage
+    def _execute_threat_scan(self) -> bool:
+        """Execute threat scan exploit."""
+        self.game.sound_manager.play_sound("exploit_threat_scan")
+        self.game.game_state.threat_scan_turns = 5  # Extended duration for tactical advantage
         
-        # Network scan reveals entire map layout
+        # Threat scan reveals entire map layout
         for x in range(GameConfig.MAP_WIDTH):
             for y in range(GameConfig.MAP_HEIGHT):
                 self.game.game_map.explored_tiles.add((x, y))
@@ -4537,9 +4548,9 @@ class ExploitSystem:
             self.game.message_log.add_message("No enemies in range")
         return True
     
-    def _execute_port_scan(self) -> bool:
-        """Execute port scan exploit - reveals all special nodes on the level."""
-        self.game.sound_manager.play_sound("exploit_port_scan")
+    def _execute_network_scan(self) -> bool:
+        """Execute network scan exploit - reveals all special nodes on the level."""
+        self.game.sound_manager.play_sound("exploit_network_scan")
         
         # Add all special nodes to revealed set (we'll implement this tracking)
         if not hasattr(self.game.game_state, 'revealed_special_nodes'):
@@ -5020,7 +5031,7 @@ class InputHandler:
                 if data_patch.quantity > 1:
                     self.game.message_log.add_message(f"Quantity: {data_patch.quantity}")
             else:
-                self.game.message_log.add_message("Data patch effect unknown")
+                self.game.message_log.add_message("Code effect unknown")
         else:
             self.game.message_log.add_message(f"=== {data_patch.name} ===")
             self.game.message_log.add_message("Effect: Unknown until used")
@@ -5693,9 +5704,9 @@ class UIRenderer:
                 
                 conditions.append((condition_text, color))
         
-        # Network scan effect
-        if game.game_state.network_scan_turns > 0:
-            conditions.append((f"Network Scan({game.game_state.network_scan_turns})", Colors.ELECTRIC_PURPLE))
+        # Threat scan effect
+        if game.game_state.threat_scan_turns > 0:
+            conditions.append((f"Threat Scan({game.game_state.threat_scan_turns})", Colors.ELECTRIC_PURPLE))
         
         # Speed moves remaining (from speed boost)
         if game.player.speed_moves_remaining > 0:
@@ -5910,8 +5921,12 @@ class MapRenderer:
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             # Use the actual color tuple from the patch, not a mapped color
-            actual_color = getattr(Colors, patch.color.upper(), Colors.WHITE)
-            # Position 21 = § (section) for data scraps  
+            color_name = patch.color.upper() if isinstance(patch.color, str) else str(patch.color).upper()
+            actual_color = getattr(Colors, color_name, Colors.WHITE)
+            # Ensure we have a valid color tuple
+            if not isinstance(actual_color, tuple) or len(actual_color) != 3:
+                actual_color = Colors.WHITE
+            # Position 21 = § (section) for code fragments  
             console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=actual_color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
             try:
@@ -6013,20 +6028,20 @@ class MapRenderer:
         if game.player.is_invisible():
             return
         
-        network_scan_active = game.game_state.network_scan_turns > 0
+        threat_scan_active = game.game_state.threat_scan_turns > 0
         
         for enemy in game.enemies:
             if enemy.disabled_turns > 0:
                 continue
             
-            # Show vision overlays for visible enemies OR if Network Scan is active
+            # Show vision overlays for visible enemies OR if Threat Scan is active
             can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
             
-            if can_see_enemy or network_scan_active:
+            if can_see_enemy or threat_scan_active:
                 overlay_color = self._get_vision_overlay_color(enemy.state)
                 
-                # If revealed by network scan, make overlay more translucent
-                if network_scan_active and not can_see_enemy:
+                # If revealed by threat scan, make overlay more translucent
+                if threat_scan_active and not can_see_enemy:
                     overlay_color = tuple(c // 2 for c in overlay_color)  # Make it dimmer
                 
                 self._render_enemy_vision_range(console, enemy, camera_offset, overlay_color)
@@ -6072,14 +6087,14 @@ class MapRenderer:
     def _render_patrol_routes(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render next 3 predicted moves for all moving enemies."""
         
-        network_scan_active = game.game_state.network_scan_turns > 0
+        threat_scan_active = game.game_state.threat_scan_turns > 0
         
         for enemy in game.enemies:
-            # Show patrol routes for visible enemies OR if Network Scan is active
+            # Show patrol routes for visible enemies OR if Threat Scan is active
             can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
             
-            # Show movement intentions only for visible enemies or during network scan
-            if can_see_enemy or network_scan_active:
+            # Show movement intentions only for visible enemies or during threat scan
+            if can_see_enemy or threat_scan_active:
                 next_positions = game.get_enemy_next_positions(enemy, 3)
                 
                 for i, point in enumerate(next_positions):
@@ -6168,13 +6183,13 @@ class MapRenderer:
             
             if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
                 1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                # Check if Network Scan is active (shows all enemies)
-                network_scan_active = game.game_state.network_scan_turns > 0
+                # Check if Threat Scan is active (shows all enemies)
+                threat_scan_active = game.game_state.threat_scan_turns > 0
                 can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
                 
-                if can_see_enemy or network_scan_active:
-                    if network_scan_active and not can_see_enemy:
-                        # Network scan reveals enemy with special highlighting
+                if can_see_enemy or threat_scan_active:
+                    if threat_scan_active and not can_see_enemy:
+                        # Threat scan reveals enemy with special highlighting
                         console.print(screen_x, screen_y, enemy.type_data.symbol, 
                                     fg=Colors.CYAN, bg=(20, 0, 20))  # Cyan text on dark purple bg
                     else:
