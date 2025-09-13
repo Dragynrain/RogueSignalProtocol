@@ -516,6 +516,64 @@ class SoundManager:
         if self.enabled:
             pygame.mixer.music.set_volume(self.settings.music_volume * self.settings.master_volume)
     
+    def preload_sounds(self):
+        """Preload all sound effects at startup"""
+        if not self.enabled:
+            return
+            
+        # Define all sound effects that should be loaded
+        sound_files = {
+            # Movement and actions
+            "footstep": "footstep.wav",
+            "door_open": "door_open.wav",
+            "switch_toggle": "switch_toggle.wav",
+            
+            # Combat and alerts
+            "enemy_hit": "enemy_hit.wav",
+            "enemy_death": "enemy_death.wav",
+            "enemy_alert": "enemy_alert.wav",
+            "admin_spawn": "admin_spawn.wav",
+            "enemies_alerted": "enemies_alerted.wav",
+            
+            # Item interactions
+            "item_pickup_code": "item_pickup_code.wav",
+            "item_pickup_exploit": "item_pickup_exploit.wav",
+            "item_pickup_upgrade": "item_pickup_upgrade.wav",
+            "item_pickup_story": "item_pickup_story.wav",
+            "item_use_code": "item_use_code.wav",
+            
+            # Environmental
+            "node_activate": "node_activate.wav",
+            
+            # Player status
+            "player_death": "player_death.wav",
+            "virus_damage": "virus_damage.wav",
+            "critical_system_failure": "critical_system_failure.wav",
+            
+            # Exploits
+            "exploit_shadow_step": "exploit_shadow_step.wav",
+            "exploit_buffer_overflow": "exploit_buffer_overflow.wav",
+            "exploit_code_injection": "exploit_code_injection.wav",
+            "exploit_system_crash": "exploit_system_crash.wav",
+            "exploit_threat_scan": "exploit_threat_scan.wav",
+            "exploit_log_wiper": "exploit_log_wiper.wav",
+            "exploit_antivirus": "exploit_antivirus.wav",
+            "exploit_emp_burst": "exploit_emp_burst.wav",
+            "exploit_memory_leak": "exploit_memory_leak.wav",
+            "exploit_network_scan": "exploit_network_scan.wav",
+            "exploit_failed": "exploit_failed.wav",
+            
+            # UI and system
+            "ui_select": "ui_select.wav",
+            "ui_confirm": "ui_confirm.wav",
+            "ui_cancel": "ui_cancel.wav",
+            "level_complete": "level_complete.wav",
+        }
+        
+        # Load each sound file
+        for sound_id, filename in sound_files.items():
+            self.load_sound(sound_id, filename)
+    
     def load_sound(self, sound_id: str, filename: str):
         """Load a sound effect from file"""
         if not self.enabled:
@@ -2808,6 +2866,9 @@ class Game:
         self.level_generator = LevelGenerator(self.game_map)
         self.turn_processor = TurnProcessor(self.game_state, self.message_log)
         self.sound_manager = SoundManager(settings)
+        
+        # Preload all sound effects
+        self.sound_manager.preload_sounds()
         
         # UI state
         self.show_patrol_predictions = False
