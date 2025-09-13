@@ -1967,9 +1967,8 @@ def create_pathfinding_cost_map(game_map, game, moving_enemy):
     Create cost map for TCOD A* pathfinding.
     
     Cost values:
-    - 0 = impassable (walls, invalid terrain)  
+    - 0 = impassable (walls, other enemies, invalid terrain)  
     - 1 = normal walkable tile
-    - 10 = other enemies (high cost but not blocked)
     """
     cost_map = tcod.path.numpy_array(
         dtype=tcod.path.INT32, 
@@ -1986,7 +1985,7 @@ def create_pathfinding_cost_map(game_map, game, moving_enemy):
             else:
                 enemy_at_tile = game._get_enemy_at(tile_pos)
                 if enemy_at_tile and enemy_at_tile != moving_enemy:
-                    cost_map[x, y] = 10  # High cost for other enemies
+                    cost_map[x, y] = 0  # Impassable - other enemies block movement
                 else:
                     cost_map[x, y] = 1   # Normal walkable
     
@@ -2040,12 +2039,9 @@ def can_move_to_position(enemy, destination, game_map, player, game):
     # Handle enemy collisions
     blocking_enemy = game._get_enemy_at(destination)
     if blocking_enemy and blocking_enemy != enemy:
-        # Swap positions with non-static enemies
-        if blocking_enemy.type_data.movement != EnemyMovement.STATIC:
-            blocking_enemy.position = enemy.position
-            return True
-        else:
-            return False  # Blocked by static enemy
+        # Don't allow movement onto other enemies - let pathfinding find alternate routes
+        # This prevents the swapping behavior that causes enemies to get stuck
+        return False
     
     return True  # Position is clear
 
@@ -6026,7 +6022,8 @@ class MapRenderer:
             pos_tuple = (world_pos.x, world_pos.y)
             if (hasattr(game.game_state, 'revealed_special_nodes') and 
                 pos_tuple in game.game_state.revealed_special_nodes) or \
-               game.player.can_see_position(world_pos, game.game_map):
+               (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
+                game.game_map.has_line_of_sight(game.player.position, world_pos)):
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
             else:
                 # Darker cyan for undiscovered cooling node
@@ -6037,7 +6034,8 @@ class MapRenderer:
             pos_tuple = (world_pos.x, world_pos.y)
             if (hasattr(game.game_state, 'revealed_special_nodes') and 
                 pos_tuple in game.game_state.revealed_special_nodes) or \
-               game.player.can_see_position(world_pos, game.game_map):
+               (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
+                game.game_map.has_line_of_sight(game.player.position, world_pos)):
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
             else:
                 # Darker red for undiscovered CPU node
@@ -6048,7 +6046,8 @@ class MapRenderer:
             pos_tuple = (world_pos.x, world_pos.y)
             if (hasattr(game.game_state, 'revealed_special_nodes') and 
                 pos_tuple in game.game_state.revealed_special_nodes) or \
-               game.player.can_see_position(world_pos, game.game_map):
+               (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
+                game.game_map.has_line_of_sight(game.player.position, world_pos)):
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
             else:
                 # Darker purple for undiscovered ghost node
@@ -6072,7 +6071,17 @@ class MapRenderer:
                     # Get color from config, fallback to magenta
                     config = DataLoader.load_config()
                     exploit_colors = config.get("colors", {}).get("exploits", {})
-                    color_tuple = tuple(exploit_colors.get(exploit_class, [255, 20, 255]))
+                    color_data = exploit_colors.get(exploit_class, [255, 20, 255])
+                    
+                    # Validate color data and convert to tuple
+                    try:
+                        if isinstance(color_data, (list, tuple)) and len(color_data) == 3:
+                            color_tuple = tuple(int(c) for c in color_data)
+                        else:
+                            color_tuple = Colors.MAGENTA
+                    except (ValueError, TypeError):
+                        color_tuple = Colors.MAGENTA
+                    
                     console.print(screen_x, screen_y, '&', fg=color_tuple, bg=Colors.BLACK)
                 else:
                     logging.error(f"Unknown exploit key: {exploit_item.exploit_key}")
