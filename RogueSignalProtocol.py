@@ -2876,6 +2876,9 @@ class Game:
         self.show_help = False
         self.show_gateway_confirmation = False  # Gateway confirmation dialog
         self.show_story_fragment: Optional[int] = None  # Fragment index to display
+        
+        # Track when player first steps on nodes to avoid repeated sounds
+        self.last_node_position: Optional[Tuple[int, int]] = None
         self.show_lore_viewer = False  # L key lore viewer
         self.lore_viewer_selection = 0  # Selected lore entry index
         self.lore_viewer_mode = "list"  # "list" or "reading"
@@ -3353,13 +3356,27 @@ class Game:
         """Process effects of special tiles at player position."""
         player_pos = (self.player.x, self.player.y)
         
+        # Check if player is on any special node and if it's a new position
+        is_on_node = (self.game_map.is_cooling_node(self.player.position) or 
+                     self.game_map.is_cpu_recovery_node(self.player.position) or 
+                     self.game_map.is_ghost_node(self.player.position))
+        
+        should_play_sound = is_on_node and self.last_node_position != player_pos
+        
+        # Update last node position
+        if is_on_node:
+            self.last_node_position = player_pos
+        else:
+            self.last_node_position = None
+        
         # Cooling node
         if self.game_map.is_cooling_node(self.player.position):
             old_heat = self.player.heat
             self.player.heat = max(0, self.player.heat - 20)
             if old_heat > self.player.heat:
                 self.message_log.add_message(f"Cooling node: -{old_heat - self.player.heat}°C")
-                self.sound_manager.play_sound("node_activate")
+                if should_play_sound:
+                    self.sound_manager.play_sound("node_activate")
         
         # CPU recovery node
         if self.game_map.is_cpu_recovery_node(self.player.position):
@@ -3367,7 +3384,8 @@ class Game:
             self.player.cpu += recovery
             if recovery > 0:
                 self.message_log.add_message(f"CPU recovery: +{recovery}")
-                self.sound_manager.play_sound("node_activate")
+                if should_play_sound:
+                    self.sound_manager.play_sound("node_activate")
         
         # Ghost node (detection reduction)
         if self.game_map.is_ghost_node(self.player.position):
@@ -3375,7 +3393,8 @@ class Game:
             self.player.detection = max(0, self.player.detection - GameBalance.GHOST_NODE_DETECTION_REDUCTION)
             if old_detection > self.player.detection:
                 self.message_log.add_message(f"Ghost node: -{old_detection - self.player.detection:.1f}% detection")
-                self.sound_manager.play_sound("node_activate")
+                if should_play_sound:
+                    self.sound_manager.play_sound("node_activate")
         
         # Data patch
         if player_pos in self.game_map.data_patches:
@@ -3645,12 +3664,6 @@ class Game:
             self._move_cursor(dx, dy)
             return
         
-        # Check if movement is slowed
-        if self.player.temporary_effects['movement_slowed_turns'] > 0:
-            # Player can only move every other turn when slowed
-            if self.turn % 2 == 1:  # Odd turns are blocked
-                self.message_log.add_message("Movement inhibited")
-                return
         
         # Handle speed boost: grant extra moves only when starting a new turn
         # Don't reset speed moves in the middle of using them
@@ -3713,6 +3726,12 @@ class Game:
         
         # Process full turn when no speed moves remaining
         self.process_turn()
+        
+        # If player has movement inhibition, enemies get an extra turn
+        if self.player.temporary_effects['movement_slowed_turns'] > 0:
+            self.message_log.add_message("Movement inhibition causes enemy advantage")
+            # Process only enemy updates for the extra turn
+            self._update_enemies()
 
     def _perform_bump_attack(self, target_enemy: Enemy):
         """Perform a bump attack on an enemy."""
