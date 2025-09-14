@@ -6614,6 +6614,7 @@ class MainMenu:
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
+        # Images removed - TCOD is console-based, not for large background graphics
     
     def refresh_options(self, show_continue: bool = True) -> None:
         """Refresh menu options. Set show_continue=False when accessed from mid-game."""
@@ -6639,26 +6640,33 @@ class MainMenu:
     
     def _render_main_menu(self, console: tcod.console.Console) -> None:
         """Render the main menu screen."""
-        # Title
+        
+        # TCOD is a console-based library, not designed for large background images
+        # For true graphics, we would need tcod.sdl.render, but that's complex
+        # For now, we'll use the traditional centered menu with optional ASCII art
+        
+        self._render_enhanced_menu(console)
+    
+    def _render_enhanced_menu(self, console: tcod.console.Console) -> None:
+        """Render an enhanced centered menu with ASCII art decoration."""
+        # Title with some ASCII art decoration
         title = "ROGUE SIGNAL PROTOCOL"
         subtitle = "Cyberpunk Stealth Exfiltration"
-        console.print(
-            GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8,
-            title, fg=Colors.CYAN
-        )
-        console.print(
-            GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9,
-            subtitle, fg=Colors.CYAN
-        )
+        
+        # Add some simple ASCII art decoration
+        console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 6, "=" * 40, fg=Colors.CYAN)
+        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN)
+        console.print(GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN)
+        console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 10, "=" * 40, fg=Colors.CYAN)
         
         # Version and build info
         console.print(
-            GameConfig.SCREEN_WIDTH // 2 - 13, 11,
+            GameConfig.SCREEN_WIDTH // 2 - 13, 12,
             "Alpha Build by Adam Forster", fg=(128, 128, 128)
         )
         
         # Menu options
-        start_y = 16
+        start_y = 17
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             prefix = "> " if i == self.selected_option else "  "
@@ -6698,6 +6706,7 @@ class MainMenu:
                 GameConfig.SCREEN_WIDTH // 2 - 12, GameConfig.SCREEN_HEIGHT - 2,
                 f"Story Fragments: {discovered}/{total}", fg=Colors.CYAN
             )
+    
     
     def _render_warning_dialog(self, console: tcod.console.Console) -> None:
         """Render save deletion warning dialog."""

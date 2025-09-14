@@ -23,3 +23,5 @@
 - **ALWAYS use the latest version of python-tcod library**
 - When encountering API errors, check documentation first before attempting complex fixes
 - Modern TCOD uses SimpleGraph and boolean cost arrays, not numpy_array functions
+- **TCOD 19.x cannot render pixels to text consoles** - use draw_semigraphics for image display
+- Load images with tcod.image.load() for numpy arrays, use console.draw_semigraphics() for display
