@@ -2,5 +2,5 @@
   "master_volume": 0.7,
   "sfx_volume": 0.8,
   "music_volume": 0.5,
-  "graphics_mode": "ascii"
+  "graphics_mode": "graphics"
 }
