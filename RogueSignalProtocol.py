@@ -259,7 +259,7 @@ class SaveGameManager:
                     return False
                 time.sleep(0.1)  # Brief delay before retry
                 
-            except (json.JSONEncodeError, TypeError) as e:
+            except (ValueError, TypeError) as e:
                 logging.error(f"Data serialization error (no retry): {e}")
                 return False
                 
@@ -1953,7 +1953,7 @@ class Enemy:
                 self.movement_queue.append(next_pos)
                 
         elif self.type_data.movement == EnemyMovement.SEEK:
-            # SEEK movement - always use A* pathfinding to target
+            # SEEK movement - use A* pathfinding when have target, random movement otherwise
             target = None
             if self.can_see_player(player, game_map):
                 # Update last seen position
@@ -1961,11 +1961,15 @@ class Enemy:
                 target = player.position
             elif self.last_seen_player:
                 target = self.last_seen_player
-            else:
-                return
                 
             if target:
                 self._pathfind_to_target(target, game_map, game)
+            else:
+                # No target known - move randomly like other enemies do when unaware
+                directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+                dx, dy = random.choice(directions)
+                next_pos = Position(self.x + dx, self.y + dy)
+                self.movement_queue.append(next_pos)
                 
         elif self.type_data.movement == EnemyMovement.TRACK:
             # TRACK movement - similar to SEEK but more persistent
@@ -2026,6 +2030,19 @@ class Enemy:
         if can_move_to_position(self, next_position, game_map, player, game):
             self.position = next_position
             self.movement_queue.pop(0)  # Remove completed move
+            
+            # Check if patrol enemy reached their patrol point
+            if (self.type_data.movement == EnemyMovement.LINEAR and 
+                self.patrol_points and
+                self.state != EnemyState.HOSTILE):  # Only patrol when not hostile
+                
+                current_target = self.patrol_points[self.patrol_index]
+                if self.position.distance_to(current_target) <= GameConfig.ADJACENT_THRESHOLD:
+                    # Reached patrol point, advance to next one
+                    self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
+                    # Clear movement queue to force pathfinding to new target
+                    self.movement_queue.clear()
+                    
             return True
         else:
             # Move is blocked, clear queue to force recalculation
@@ -3603,7 +3620,7 @@ class Game:
         """Handle when enemy sees the player."""
         if enemy.state == EnemyState.UNAWARE:
             enemy.state = EnemyState.ALERT
-            enemy.alert_timer = 1
+            enemy.alert_timer = 0  # Immediate transition to hostile next turn
             enemy.last_seen_player = Position(self.player.x, self.player.y)  # Set position when first spotted
             self.message_log.add_message(f"{enemy.type_data.name} investigating")
             self.sound_manager.play_sound("enemy_alert")
@@ -3612,7 +3629,7 @@ class Game:
         elif enemy.state == EnemyState.ALERT:
             # Update last seen position while still seeing player
             enemy.last_seen_player = Position(self.player.x, self.player.y)
-            enemy.alert_timer -= 1
+            # Immediately transition to hostile when still seeing player
             if enemy.alert_timer <= 0:
                 enemy.state = EnemyState.HOSTILE
                 detection_increase = GameBalance.ADMIN_DETECTION_INITIAL if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_ALERT_TO_HOSTILE
