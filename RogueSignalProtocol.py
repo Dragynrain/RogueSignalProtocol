@@ -6598,11 +6598,25 @@ def initialize_tcod_context():
     
     context = tcod.context.new(**context_args)
     
-    # Validate SDL renderer availability
+    # Validate SDL renderer availability and set up console rendering
     if hasattr(context, 'sdl_renderer') and context.sdl_renderer:
         logging.info("SDL renderer available for graphics mode")
+        
+        # Create console rendering objects for proper SDL + console mixing
+        try:
+            from tcod import render as tcod_render
+            atlas = tcod_render.SDLTilesetAtlas(context.sdl_renderer, tileset)
+            console_render = tcod_render.SDLConsoleRender(atlas)
+            
+            # Attach console render to context for later use
+            context.console_render = console_render
+            logging.info("Console texture rendering initialized successfully")
+        except Exception as e:
+            logging.warning(f"Failed to initialize console rendering: {e}")
+            context.console_render = None
     else:
         logging.warning("SDL renderer unavailable - graphics mode will be disabled")
+        context.console_render = None
     
     return context
 
@@ -6673,6 +6687,14 @@ class MenuBackground:
         self.error_count = 0  # Track consecutive errors for adaptive fallback
         self.last_error_time = 0  # Track error frequency
         
+    def reset_background_system(self):
+        """Reset background system errors and re-enable graphics."""
+        self.error_count = 0
+        self.enabled = True
+        self.last_error_time = 0
+        print("Background graphics system reset and re-enabled")
+        logging.info("Background graphics system reset and re-enabled")
+
     def should_load_background(self):
         """Check if background should be loaded based on graphics mode."""
         return (self.settings.graphics_mode == "graphics" and 
@@ -6700,25 +6722,37 @@ class MenuBackground:
         
         error_msg = error_messages.get(error_type, 'Unknown background error')
         
-        # Log with appropriate level based on severity
+        # Show ALL errors to console AND log them
+        error_display = f"GRAPHICS ERROR #{self.error_count}: {error_msg}: {details}"
+        print(error_display)  # Always show to console
+        
         if error_type in ['sdl_unavailable', 'memory_error']:
-            logging.error(f"{error_msg}: {details}")
+            logging.error(error_display)
             if exception:
-                logging.error(f"Exception details: {str(exception)}")
+                exception_msg = f"Exception details: {str(exception)}"
+                print(exception_msg)
+                logging.error(exception_msg)
         else:
-            logging.warning(f"{error_msg}: {details}")
-            if exception and logging.getLogger().isEnabledFor(logging.DEBUG):
-                logging.debug(f"Exception details: {str(exception)}")
+            logging.warning(error_display)
+            if exception:
+                exception_msg = f"Exception details: {str(exception)}"
+                print(exception_msg)
+                logging.debug(exception_msg)
         
         # Adaptive error handling based on error type and frequency
         if error_type in ['sdl_unavailable', 'memory_error']:
             # Permanent disable for session-level issues
             self.enabled = False
-            logging.info("Background graphics disabled for this session due to system limitations")
+            disable_msg = "Background graphics disabled for this session due to system limitations"
+            print(disable_msg)
+            logging.info(disable_msg)
             return False
         elif self.error_count >= 10:
             # Too many errors - disable for session
             self.enabled = False
+            disable_msg = f"Background graphics disabled after {self.error_count} consecutive errors"
+            print(disable_msg)
+            logging.warning(disable_msg)
             logging.warning(f"Background graphics disabled after {self.error_count} consecutive errors")
             return False
         elif error_type in ['file_not_found', 'corrupted_file', 'format_error']:
@@ -7097,13 +7131,14 @@ class MenuBackground:
         return diagnostics
         
     def render_background(self, console):
-        """Render background image if loaded and graphics mode enabled."""
+        """Render background image using SDL renderer."""
         if (not self.should_load_background() or 
             not self.background_texture or 
             not self.image_size):
             return
             
         try:
+            # Render the actual PNG background to SDL renderer
             current_window_size = self.window_manager.get_window_pixel_dimensions()
             
             # Calculate background rectangle with aspect ratio preservation
@@ -7116,15 +7151,80 @@ class MenuBackground:
             dest_rect = bg_rect  # Already in (x, y, w, h) format
             
             # Render texture using TCOD's copy method
-            # TCOD SDL renderer uses different parameter names
             renderer.copy(
                 texture=self.background_texture,
                 dest=dest_rect  # Scale to calculated rectangle
             )
             
+            # Background rendered to SDL successfully
+            
         except Exception as e:
-            logging.error(f"Background rendering failed: {e}")
-            # Don't disable completely - might be temporary issue
+            self._handle_background_error('texture_failed', f"SDL background rendering failed", e)
+    
+    def _render_console_background(self, console):
+        """Render a visible cyberpunk background pattern to the console."""
+        # Create a more visible cyberpunk background with side panels
+        
+        # Fill left side with cyberpunk pattern (positions 0-25)
+        self._render_side_panel(console, 0, 25)
+        
+        # Fill right side with cyberpunk pattern (positions 55-80) 
+        self._render_side_panel(console, 55, console.width)
+        
+        # Add top/bottom borders
+        self._render_borders(console)
+        
+        # Add some scattered elements in the center for atmosphere
+        self._render_center_atmosphere(console)
+    
+    def _render_side_panel(self, console, start_x, end_x):
+        """Render cyberpunk pattern in a side panel."""
+        import random
+        random.seed(42)  # Consistent pattern
+        
+        patterns = ['▓', '▒', '░', '·', '▪', '▫']
+        colors = [
+            (0, 80, 120),    # Cyan blue
+            (0, 120, 180),   # Bright blue  
+            (80, 0, 120),    # Purple
+            (120, 0, 180),   # Bright purple
+            (0, 180, 120),   # Teal
+        ]
+        
+        for y in range(console.height):
+            for x in range(start_x, min(end_x, console.width)):
+                # Higher density for side panels
+                if random.random() < 0.25:  # 25% density
+                    pattern_char = random.choice(patterns)
+                    fg_color = random.choice(colors)
+                    # Use dark background to make pattern visible
+                    console.print(x, y, pattern_char, fg=fg_color, bg=(5, 5, 15))
+                else:
+                    # Fill with dark background
+                    console.print(x, y, ' ', fg=(0, 0, 0), bg=(5, 5, 15))
+    
+    def _render_borders(self, console):
+        """Add cyberpunk-style borders."""
+        border_color = (0, 150, 200)  # Bright cyan
+        
+        # Top border
+        for x in range(console.width):
+            console.print(x, 0, '═', fg=border_color, bg=(5, 5, 15))
+        
+        # Bottom border  
+        for x in range(console.width):
+            console.print(x, console.height - 1, '═', fg=border_color, bg=(5, 5, 15))
+    
+    def _render_center_atmosphere(self, console):
+        """Add subtle atmospheric elements to center area."""
+        import random
+        random.seed(123)  # Different seed for center
+        
+        # Very subtle dots in center area (positions 26-54)
+        for y in range(2, console.height - 2):
+            for x in range(26, 54):
+                if random.random() < 0.02:  # Very low density - 2%
+                    console.print(x, y, '·', fg=(0, 60, 100), bg=(0, 0, 0))
         
     def reload_if_mode_changed(self):
         """Reload or unload background based on current graphics mode."""
@@ -7220,23 +7320,60 @@ class MainMenu:
     
     def render(self, console: tcod.console.Console) -> None:
         """Render the main menu with optional background."""
-        console.clear()
-        
         # CRITICAL RENDERING ORDER:
         # 1. Background texture renders directly to SDL renderer
         # 2. Console content renders on top during context.present()
-        # 3. This ensures text appears over background
+        # 3. Console must be transparent to show background through
         
-        # Render background first (if available and graphics mode)
-        if self.background:
-            self.background.render_background(console)  # Renders to SDL renderer
+        # Check if we have a background to show
+        has_background = (self.background and 
+                         self.background.should_load_background() and 
+                         self.background.background_texture)
+        
+        # Background rendering is now handled in main loop before console rendering
+        
+        # Clear console strategically for graphics mode
+        has_background = (self.background and 
+                         self.background.should_load_background() and 
+                         self.background.background_texture)
+        
+        if has_background:
+            # Graphics mode: make left side transparent for SDL background
+            self._clear_text_areas_only(console)
+        else:
+            # ASCII mode: normal clear
+            console.clear()
         
         if self.show_warning:
             self._render_warning_dialog(console)  # Renders to console
         else:
             self._render_main_menu(console)  # Renders to console
+    
+    def _clear_text_areas_only(self, console):
+        """Clear only the text menu area on the right, make left side transparent for SDL graphics."""
+        layout = self._get_menu_layout_params()
         
-        # NOTE: context.present(console) will composite console over background
+        if layout['use_background_layout']:
+            # For side-by-side rendering: make left side transparent, clear right side for text
+            text_start_x = layout['menu_x'] - 5  # Small margin before menu
+            
+            # Make left side transparent so SDL graphics show through
+            for y in range(console.height):
+                for x in range(0, text_start_x):
+                    # Set background alpha to 0 (fully transparent)
+                    console.rgba[x, y] = (
+                        ord(' '),           # Empty character
+                        (255, 255, 255, 0), # Transparent foreground
+                        (0, 0, 0, 0)        # Transparent background
+                    )
+            
+            # Clear only the right side for text menu (opaque)
+            for y in range(console.height):
+                for x in range(text_start_x, console.width):
+                    console.print(x, y, ' ', fg=(255, 255, 255), bg=(0, 0, 0))
+        else:
+            # ASCII mode: clear entire console
+            console.clear()
     
     def _render_main_menu(self, console: tcod.console.Console) -> None:
         """Render the main menu screen."""
@@ -7249,10 +7386,11 @@ class MainMenu:
     
     def _get_menu_layout_params(self):
         """Calculate menu positioning based on graphics mode, window state, and optimal visibility."""
-        if (self.background and 
-            self.background.should_load_background() and 
-            self.background.background_texture):
-            
+        has_background = (self.background and 
+                         self.background.should_load_background() and 
+                         self.background.background_texture)
+        
+        if has_background:
             # Graphics mode with background - calculate optimal positioning
             return self._calculate_background_aware_layout()
         else:
@@ -7310,8 +7448,7 @@ class MainMenu:
         }
         
         # Debug logging for layout calculations
-        logging.debug(f"Background layout: zone={layout_zone}, aspect={aspect_ratio:.2f}, "
-                     f"size={window_width}x{window_height}, menu_x={text_x_offset}")
+        # Background layout calculated successfully
         
         return layout_params
     
@@ -7952,9 +8089,34 @@ def handle_menu_navigation(console, context, menus, settings):
     menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000)
     
     while True:
-        # Using terminal font for all rendering
+        # Render console content first
         current_menu.render(console)
-        context.present(console)
+        
+        # CORRECTED RENDERING: Use SDL renderer when available for graphics mode
+        graphics_available = (context.sdl_renderer and hasattr(context, 'console_render') and 
+                            context.console_render and hasattr(current_menu, 'background') and 
+                            current_menu.background and current_menu.background.should_load_background())
+        
+        if graphics_available:
+            # Graphics mode: render everything through SDL
+            context.sdl_renderer.clear()
+            
+            # Render background graphics to SDL first
+            current_menu.background.render_background(console)
+            
+            # Render console content as texture to SDL
+            console_texture = context.console_render.render(console)
+            
+            # Render full console texture to preserve internal character positioning
+            # The console has transparent areas on the left side for background graphics
+            context.sdl_renderer.copy(console_texture)
+            
+            # Present everything through SDL
+            context.sdl_renderer.present()
+            
+        else:
+            # ASCII mode or fallback: normal console presentation
+            context.present(console)
         
         for event in tcod.event.wait():
             if event.type == "QUIT":
@@ -8039,6 +8201,7 @@ def main():
             
             # Create background manager (loads conditionally based on graphics mode)
             menu_background = MenuBackground(context, settings)
+            menu_background.reset_background_system()  # Reset any previous errors
             menu_background.load_random_background()  # Only loads if graphics mode enabled
             
             # Pass background to initialize_game_systems
