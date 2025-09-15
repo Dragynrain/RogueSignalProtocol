@@ -16,13 +16,12 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import List, Tuple, Optional, Dict, Any, Set
 
-# Setup logging for technical errors and debugging
+# Setup logging for error handling
 logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(levelname)s:%(filename)s:%(lineno)d - %(message)s',
+    level=logging.WARNING,
+    format='%(levelname)s: %(message)s',
     handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('game_debug.log', mode='w')
+        logging.StreamHandler()
     ]
 )
 
@@ -278,11 +277,24 @@ class SaveGameManager:
             return None
             
         try:
+            # Read file content first to check for corruption
             with open(cls.SAVE_FILE, 'r', encoding='utf-8') as f:
-                save_data = json.load(f)
+                content = f.read().strip()
             
-            logging.info("Game loaded successfully")
-            return save_data
+            # Check if file is empty or contains only whitespace
+            if not content:
+                logging.error("Save file is empty or corrupted")
+                return None
+            
+            # Try to parse JSON with better error reporting
+            try:
+                save_data = json.loads(content)
+                logging.info("Game loaded successfully")
+                return save_data
+            except json.JSONDecodeError as e:
+                logging.error(f"Save file corrupted - JSON decode error at line {e.lineno}, column {e.colno}: {e.msg}")
+                logging.error(f"Problematic content around error: {content[max(0, e.pos-50):e.pos+50]}")
+                return None
             
         except Exception as e:
             import traceback
@@ -436,16 +448,46 @@ class GameSettings:
         """Load settings from file."""
         try:
             if os.path.exists(self.SETTINGS_FILE):
+                # Read file content first to check for corruption
                 with open(self.SETTINGS_FILE, 'r') as f:
-                    settings_data = json.load(f)
+                    content = f.read().strip()
+                
+                # Check if file is empty or contains only whitespace
+                if not content:
+                    logging.warning("Settings file is empty, using defaults")
+                    self._create_default_settings_file()
+                    return
+                
+                # Try to parse JSON
+                try:
+                    settings_data = json.loads(content)
                     self.master_volume = settings_data.get("master_volume", 0.7)
                     self.sfx_volume = settings_data.get("sfx_volume", 0.8)
                     self.music_volume = settings_data.get("music_volume", 0.5)
                     self.graphics_mode = settings_data.get("graphics_mode", "ascii")
+                except json.JSONDecodeError as e:
+                    logging.warning(f"Settings file corrupted (JSON decode error: {e}), recreating with defaults")
+                    self._create_default_settings_file()
         except Exception as e:
             import traceback
             logging.warning(f"Failed to load settings: {e}")
             logging.warning(traceback.format_exc())
+            self._create_default_settings_file()
+    
+    def _create_default_settings_file(self) -> None:
+        """Create a default settings file."""
+        try:
+            default_settings = {
+                "master_volume": 0.7,
+                "sfx_volume": 0.8,
+                "music_volume": 0.5,
+                "graphics_mode": "ascii"
+            }
+            with open(self.SETTINGS_FILE, 'w') as f:
+                json.dump(default_settings, f, indent=2)
+            logging.info("Created default settings file")
+        except Exception as e:
+            logging.error(f"Failed to create default settings file: {e}")
     
     def save_settings(self) -> None:
         """Save settings to file."""
@@ -624,10 +666,10 @@ class SoundManager:
     def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
         """Play a loaded sound effect with channel management"""
         if not self.enabled:
-            logging.debug(f"Audio disabled - would play: '{sound_id}'")
+            pass
             return None
         elif sound_id not in self.sounds:
-            logging.debug(f"Sound not loaded - would play: '{sound_id}'")
+            pass
             return None
         
         try:
@@ -665,7 +707,7 @@ class SoundManager:
     def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0):
         """Play background music"""
         if not self.enabled:
-            logging.debug(f"Audio disabled - would play music: '{filename}'")
+            pass
             return
         
         try:
@@ -978,10 +1020,10 @@ class Colors:
     PLAYER = (50, 255, 50)  # Standardized to Acid Green
     GATEWAY = (255, 215, 0)  # Standardized to Golden
     
-    # Enemy colors with neon intensity
-    ENEMY_UNAWARE = (255, 120, 20)  # Neon orange (calm)
-    ENEMY_ALERT = (255, 215, 0)  # Standardized to Golden (cautious)
-    ENEMY_HOSTILE = (220, 20, 60)  # Standardized to Crimson (aggressive)
+    # Enemy colors matching vision overlay colors
+    ENEMY_UNAWARE = (255, 255, 60)  # Yellow (matching vision color scheme)
+    ENEMY_ALERT = (255, 165, 60)  # Orange (matching vision color scheme)
+    ENEMY_HOSTILE = (255, 60, 60)  # Red (matching vision color scheme)
     
     # Vision overlays with neon glow
     VISION_UNAWARE = (80, 80, 10)  # Yellow glow (default state)
@@ -1244,6 +1286,29 @@ class GameUpgrades:
 def clamp_value(value: float, min_val: float, max_val: float) -> float:
     """Clamp a value between min and max bounds."""
     return max(min_val, min(max_val, value))
+
+def ensure_color_tuple(color) -> Tuple[int, int, int]:
+    """Ensure a color value is a tuple of three integers."""
+    if isinstance(color, str):
+        # Convert common color names to tuples
+        color_names = {
+            'red': (255, 0, 0),
+            'green': (0, 255, 0),
+            'blue': (0, 0, 255),
+            'white': (255, 255, 255),
+            'black': (0, 0, 0),
+            'yellow': (255, 255, 0),
+            'cyan': (0, 255, 255),
+            'magenta': (255, 0, 255)
+        }
+        return color_names.get(color.lower(), (255, 255, 255))
+    elif isinstance(color, (list, tuple)) and len(color) >= 3:
+        try:
+            return (int(color[0]), int(color[1]), int(color[2]))
+        except (ValueError, TypeError):
+            return (255, 255, 255)
+    else:
+        return (255, 255, 255)
 
 
 def parse_coordinate_string(coord_str: str) -> Optional['Position']:
@@ -1641,37 +1706,35 @@ class Player:
         return self.temporary_effects['enhanced_vision_turns'] > 0
     
     def can_see_enemy(self, enemy: 'Enemy', game_map: 'GameMap') -> bool:
-        """Check if player can see enemy, considering shadow mechanics."""
+        """Check if player can see enemy using TCOD FOV system with shadow mechanics."""
         distance = self.position.distance_to(enemy.position)
         
         # Adjacent enemies should ALWAYS be visible (critical for combat feedback)
-        # Use threshold to account for diagonal adjacency and any floating point precision issues
         if distance <= GameConfig.ADJACENT_VISIBILITY_THRESHOLD:
             return True
         
-        # Check basic vision range
-        if distance > self.get_vision_range():
-            return False
+        # Use enhanced vision system that can see through walls
+        if self.can_see_through_walls():
+            return distance <= self.get_vision_range()
         
-        # Check for stealth mechanics
+        # Check stealth mechanics first
         player_in_shadow = game_map.is_shadow(self.position)
         enemy_in_shadow = game_map.is_shadow(enemy.position)
         
-        # If enemy is in shadow, only visible if player is directly adjacent (distance <= 1)
+        # If enemy is in shadow, only visible if player is directly adjacent
         if enemy_in_shadow and distance > 1:
             return False
         
-        # If player is in shadow, they can't see as far (but can still see adjacent)
+        # Calculate effective vision range considering shadows
+        base_vision_range = self.get_vision_range()
         if player_in_shadow and distance > 1:
-            # Reduce vision range when in shadows (with safety check for zero vision)
-            vision_range = self.get_vision_range()
-            reduced_range = max(1, vision_range // GameConfig.SHADOW_VISION_REDUCTION_FACTOR) if vision_range > 0 else 1
-            if distance > reduced_range:
-                return False
+            # Reduce vision range when in shadows
+            effective_vision_range = max(1, base_vision_range // GameConfig.SHADOW_VISION_REDUCTION_FACTOR)
+        else:
+            effective_vision_range = base_vision_range
         
-        # Check line of sight (enhanced vision can see through walls)
-        return (self.can_see_through_walls() or 
-                game_map.has_line_of_sight(self.position, enemy.position))
+        # Use TCOD FOV for line of sight calculation
+        return game_map.can_see_position(self.position, enemy.position, effective_vision_range)
     
     
     @property
@@ -1912,8 +1975,12 @@ class Enemy:
         """
         self.movement_queue.clear()
         
-        # HOSTILE enemies always seek the player, regardless of base movement type
+        # HOSTILE enemies seek the player, but static enemies (scanners/firewalls) don't move
         if self.state == EnemyState.HOSTILE:
+            # Static enemies (scanners, firewalls) don't move even when hostile
+            if self.type_data.movement == EnemyMovement.STATIC:
+                return
+                
             target = None
             if self.can_see_player(player, game_map):
                 # Update last seen position
@@ -2047,6 +2114,15 @@ class Enemy:
         else:
             # Move is blocked, clear queue to force recalculation
             self.movement_queue.clear()
+            
+            # Handle patrol stuck situations
+            if (self.type_data.movement == EnemyMovement.LINEAR and self.patrol_points):
+                self.patrol_stuck_counter += 1
+                if self.patrol_stuck_counter >= 3:
+                    # Skip to next patrol point if stuck for 3 turns
+                    self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
+                    self.patrol_stuck_counter = 0
+                    
             return False
     
 
@@ -2206,7 +2282,12 @@ class GameMap:
                 not self.is_wall(position))
     
     def has_line_of_sight(self, start: Position, end: Position) -> bool:
-        """Check line of sight between two positions using Bresenham's algorithm."""
+        """Check line of sight between two positions using TCOD's improved FOV system."""
+        # Use the improved TCOD version for better corner visibility
+        return self.has_line_of_sight_tcod(start, end)
+    
+    def has_line_of_sight_bresenham(self, start: Position, end: Position) -> bool:
+        """Check line of sight between two positions using Bresenham's algorithm (legacy)."""
         if not (start.is_valid(self.width, self.height) and 
                 end.is_valid(self.width, self.height)):
             return False
@@ -2240,6 +2321,73 @@ class GameMap:
             step_count += 1
         
         return False  # Safety fallback if max steps exceeded
+    
+    def has_line_of_sight_tcod(self, start: Position, end: Position) -> bool:
+        """Check line of sight between two positions using TCOD's FOV system."""
+        if not (start.is_valid(self.width, self.height) and 
+                end.is_valid(self.width, self.height)):
+            return False
+        
+        # Use TCOD's FOV for better corner visibility
+        # Create a transparency map (True = transparent, False = opaque)
+        transparency = self._get_transparency_map()
+        
+        # Calculate the maximum distance to check
+        max_distance = max(abs(end.x - start.x), abs(end.y - start.y)) + 1
+        
+        # Compute FOV from start position (TCOD uses y,x coordinate order)
+        fov = tcod.map.compute_fov(
+            transparency=transparency,
+            pov=(start.y, start.x),
+            radius=max_distance,
+            algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST
+        )
+        
+        # Check if end position is visible (TCOD array is indexed as [y, x])
+        return fov[end.y, end.x]
+    
+    def _get_transparency_map(self):
+        """Get transparency map for FOV calculations."""
+        # Cache the transparency map to avoid recreating it every time
+        if not hasattr(self, '_transparency_cache'):
+            import numpy as np
+            transparency = np.ones((self.height, self.width), dtype=bool)
+            for y in range(self.height):
+                for x in range(self.width):
+                    # Walls are opaque (False), everything else is transparent (True)
+                    transparency[y, x] = not self.is_wall(Position(x, y))
+            self._transparency_cache = transparency
+        return self._transparency_cache
+    
+    def invalidate_transparency_cache(self):
+        """Invalidate the transparency cache when map changes."""
+        if hasattr(self, '_transparency_cache'):
+            del self._transparency_cache
+    
+    def can_see_position(self, start: Position, end: Position, vision_range: int) -> bool:
+        """Check if start position can see end position using TCOD FOV within range."""
+        if not (start.is_valid(self.width, self.height) and 
+                end.is_valid(self.width, self.height)):
+            return False
+        
+        # Check if within vision range first
+        distance = start.distance_to(end)
+        if distance > vision_range:
+            return False
+        
+        # Use TCOD FOV system for proper corner visibility
+        transparency = self._get_transparency_map()
+        
+        # Compute FOV from start position (TCOD uses y,x coordinate order)
+        fov = tcod.map.compute_fov(
+            transparency=transparency,
+            pov=(start.y, start.x),
+            radius=vision_range,
+            algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST
+        )
+        
+        # Check if end position is visible (TCOD array is indexed as [y, x])
+        return fov[end.y, end.x]
 
 # ============================================================================
 # MESSAGE LOG SYSTEM
@@ -2278,15 +2426,8 @@ class MessageLog:
         message_colors = config.get("colors", {}).get("message_log", {})
         color_values = message_colors.get(msg_type, message_colors.get("default", [144, 238, 144]))
         
-        # Ensure color_values is a valid list/tuple of 3 numbers
-        if isinstance(color_values, (list, tuple)) and len(color_values) == 3:
-            try:
-                return tuple(int(c) for c in color_values)
-            except (ValueError, TypeError):
-                pass
-        
-        # Fallback to default green if invalid color data
-        return (144, 238, 144)
+        # Use the ensure_color_tuple function for validation
+        return ensure_color_tuple(color_values)
     
     def _determine_message_color(self, text: str) -> Tuple[int, int, int]:
         """Determine appropriate color for message based on content using JSON config."""
@@ -2302,22 +2443,12 @@ class MessageLog:
             for pattern in patterns:
                 if pattern.lower() in text_lower:
                     color_values = message_colors.get(msg_type)
-                    if isinstance(color_values, (list, tuple)) and len(color_values) == 3:
-                        try:
-                            return tuple(int(c) for c in color_values)
-                        except (ValueError, TypeError):
-                            pass
+                    if color_values:
+                        return ensure_color_tuple(color_values)
         
         # Return default color if no pattern matches
         default_color = message_colors.get("default", [144, 238, 144])
-        if isinstance(default_color, (list, tuple)) and len(default_color) == 3:
-            try:
-                return tuple(int(c) for c in default_color)
-            except (ValueError, TypeError):
-                pass
-        
-        # Final fallback
-        return (144, 238, 144)
+        return ensure_color_tuple(default_color)
     
     def get_recent_messages(self, count: int) -> List[Tuple[str, Tuple[int, int, int]]]:
         """Get the most recent messages."""
@@ -2458,48 +2589,66 @@ class EnemyManager:
         enemy.patrol_stuck_counter = 0
     
     def _generate_patrol_route(self, start: Position) -> List[Position]:
-        """Generate larger, more comprehensive patrol routes."""
-        route = [start]
-        route_length = random.randint(12, 20)  # Even longer, more complex patrols
-        current = start
+        """Generate simple geometric patrol routes with 2-4 points."""
+        # Choose a simple pattern type
+        pattern_type = random.choice(['line', 'triangle', 'rectangle'])
+        step_size = random.randint(4, 8)  # Distance between patrol points
         
-        for _ in range(route_length - 1):
-            attempts = 0
-            while attempts < 50:  # More attempts for complex routes
-                attempts += 1
-                step_size = random.randint(4, 10)  # Even larger steps for maximum coverage
-                direction = random.choice([(0, -step_size), (step_size, 0), 
-                                         (0, step_size), (-step_size, 0),
-                                         # Add diagonal movements for more coverage
-                                         (step_size, -step_size), (step_size, step_size),
-                                         (-step_size, -step_size), (-step_size, step_size)])
-                new_pos = Position(current.x + direction[0], current.y + direction[1])
+        if pattern_type == 'line':
+            # 2-point line pattern (back and forth)
+            direction = random.choice(['horizontal', 'vertical', 'diagonal'])
+            if direction == 'horizontal':
+                end_point = Position(start.x + step_size, start.y)
+            elif direction == 'vertical':
+                end_point = Position(start.x, start.y + step_size)
+            else:  # diagonal
+                end_point = Position(start.x + step_size, start.y + step_size)
+            
+            if self._is_valid_patrol_point(end_point):
+                return [start, end_point]
                 
-                if (new_pos.is_valid(GameConfig.MAP_WIDTH - 3, GameConfig.MAP_HEIGHT - 3) and
-                    new_pos.x >= 3 and new_pos.y >= 3 and
-                    self.game_map.is_valid_position(new_pos) and
-                    not self.game_map.is_wall(new_pos)):  # Don't include walls in patrol routes
-                    route.append(new_pos)
-                    current = new_pos
-                    break
-        
-        # Ensure minimum route length with valid positions
-        if len(route) < 3:
-            # Try to add valid positions around the start
-            potential_points = [
-                Position(start.x + 3, start.y),
-                Position(start.x - 3, start.y), 
-                Position(start.x, start.y + 3),
-                Position(start.x, start.y - 3)
-            ]
-            for point in potential_points:
-                if (point.is_valid(GameConfig.MAP_WIDTH - 1, GameConfig.MAP_HEIGHT - 1) and
-                    self.game_map.is_valid_position(point) and
-                    not self.game_map.is_wall(point) and
-                    len(route) < 4):  # Limit to reasonable size
+        elif pattern_type == 'triangle':
+            # 3-point triangle pattern
+            point2 = Position(start.x + step_size, start.y)
+            point3 = Position(start.x + step_size//2, start.y + step_size)
+            
+            route = [start]
+            if self._is_valid_patrol_point(point2):
+                route.append(point2)
+            if self._is_valid_patrol_point(point3):
+                route.append(point3)
+            
+            if len(route) >= 3:
+                return route
+                
+        elif pattern_type == 'rectangle':
+            # 4-point rectangle pattern
+            point2 = Position(start.x + step_size, start.y)
+            point3 = Position(start.x + step_size, start.y + step_size)
+            point4 = Position(start.x, start.y + step_size)
+            
+            route = [start]
+            for point in [point2, point3, point4]:
+                if self._is_valid_patrol_point(point):
                     route.append(point)
+            
+            if len(route) >= 4:
+                return route
         
-        return route
+        # Fallback: simple 2-point horizontal line
+        fallback_end = Position(start.x + 4, start.y)
+        if self._is_valid_patrol_point(fallback_end):
+            return [start, fallback_end]
+        else:
+            # Last resort: single point (static guard)
+            return [start]
+    
+    def _is_valid_patrol_point(self, point: Position) -> bool:
+        """Check if a position is valid for patrol."""
+        return (point.is_valid(GameConfig.MAP_WIDTH - 3, GameConfig.MAP_HEIGHT - 3) and
+                point.x >= 3 and point.y >= 3 and
+                self.game_map.is_valid_position(point) and
+                not self.game_map.is_wall(point))
 
 
 class LevelGenerator:
@@ -3469,20 +3618,36 @@ class Game:
             self.game_state.threat_scan_turns -= 1
     
     def _update_memory_system(self):
-        """Update the hybrid fog of war memory system."""
+        """Update the hybrid fog of war memory system using TCOD FOV."""
         vision_range = self.player.get_vision_range()
         
-        # Update explored tiles
-        for dx in range(-vision_range, vision_range + 1):
-            for dy in range(-vision_range, vision_range + 1):
-                if dx*dx + dy*dy <= vision_range*vision_range:
-                    x = self.player.x + dx
-                    y = self.player.y + dy
-                    world_pos = Position(x, y)
-                    
-                    if (world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
-                        (self.player.can_see_through_walls() or 
-                         self.game_map.has_line_of_sight(self.player.position, world_pos))):
+        # Use TCOD FOV for more accurate vision calculations
+        if self.player.can_see_through_walls():
+            # Enhanced vision - simple distance check
+            for dx in range(-vision_range, vision_range + 1):
+                for dy in range(-vision_range, vision_range + 1):
+                    if dx*dx + dy*dy <= vision_range*vision_range:
+                        x = self.player.x + dx
+                        y = self.player.y + dy
+                        world_pos = Position(x, y)
+                        if world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                            self.game_map.explored_tiles.add((x, y))
+        else:
+            # Use TCOD FOV for proper line of sight
+            transparency = self.game_map._get_transparency_map()
+            fov = tcod.map.compute_fov(
+                transparency=transparency,
+                pov=(self.player.y, self.player.x),
+                radius=vision_range,
+                algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST
+            )
+            
+            # Mark all visible tiles as explored
+            for y in range(max(0, self.player.y - vision_range), 
+                          min(GameConfig.MAP_HEIGHT, self.player.y + vision_range + 1)):
+                for x in range(max(0, self.player.x - vision_range), 
+                              min(GameConfig.MAP_WIDTH, self.player.x + vision_range + 1)):
+                    if fov[y, x]:
                         self.game_map.explored_tiles.add((x, y))
         
         # Update last known enemy positions
@@ -3624,8 +3789,7 @@ class Game:
             enemy.last_seen_player = Position(self.player.x, self.player.y)  # Set position when first spotted
             self.message_log.add_message(f"{enemy.type_data.name} investigating")
             self.sound_manager.play_sound("enemy_alert")
-            # Alert nearby enemies immediately when first spotted
-            self._alert_nearby_enemies(enemy)
+            # Don't alert nearby enemies yet - wait until this enemy goes HOSTILE
         elif enemy.state == EnemyState.ALERT:
             # Update last seen position while still seeing player
             enemy.last_seen_player = Position(self.player.x, self.player.y)
@@ -3658,7 +3822,7 @@ class Game:
             if random.random() < 0.15:  # 15% chance per turn
                 if enemy.type == 'admin':
                     enemy.state = EnemyState.ALERT
-                    enemy.alert_timer = 5
+                    enemy.alert_timer = 0
                 else:
                     enemy.state = EnemyState.UNAWARE
                     enemy.last_seen_player = None
@@ -3675,7 +3839,7 @@ class Game:
 
     def _alert_nearby_enemies(self, alerting_enemy: Enemy):
         """Alert nearby enemies when one becomes hostile."""
-        alert_range = 8
+        alert_range = GameBalance.NEARBY_ENEMY_ALERT_RADIUS  # Use config value
         alerted_count = 0
         alerted_enemies = []
         
@@ -3685,17 +3849,12 @@ class Game:
                 
             distance = enemy.position.distance_to(alerting_enemy.position)
             if distance <= alert_range:
-                if enemy.state == EnemyState.UNAWARE:
-                    enemy.state = EnemyState.ALERT
-                    enemy.alert_timer = 3
-                    enemy.last_seen_player = Position(self.player.x, self.player.y)
-                    alerted_count += 1
-                    alerted_enemies.append(enemy)
-                elif enemy.state == EnemyState.ALERT:
-                    enemy.alert_timer = max(enemy.alert_timer, 3)
-                    enemy.last_seen_player = Position(self.player.x, self.player.y)
-                    alerted_count += 1
-                    alerted_enemies.append(enemy)
+                # All enemies within alert range immediately go HOSTILE and get player location
+                enemy.state = EnemyState.HOSTILE
+                enemy.alert_timer = 0
+                enemy.last_seen_player = Position(self.player.x, self.player.y)
+                alerted_count += 1
+                alerted_enemies.append(enemy)
         
         # Don't move alerted enemies immediately - they will move in the movement phase
         # This ensures proper phase separation: awareness -> movement -> attacks
@@ -3938,7 +4097,9 @@ class Game:
         self.level += 1
         if self.level > 3:
             self.sound_manager.play_music("victory.ogg", loops=1)
-            self.message_log.add_message_typed("YOU HAVE ESCAPED!", "critical")
+            self.message_log.add_message_typed("BREAKTHROUGH TO THE INTERNET!", "critical")
+            self.message_log.add_message("You've escaped into the vast digital realm...")
+            self.message_log.add_message("The entire world wide web awaits exploration!")
             self.message_log.add_message(f"Stats: Turns:{self.turn} Det:{int(self.player.detection)}%")
             self.game_over = True
             # Auto-save on game completion
@@ -4380,12 +4541,20 @@ class Game:
         Predict next positions for any enemy using their movement queue.
         This is the unified prediction system for all movement types.
         """
-        # Simply return the next steps from the enemy's movement queue
+        # If enemy has an existing movement queue, use it
         if enemy.movement_queue:
             return enemy.movement_queue[:steps]
-        else:
-            # No queue available, return empty list
-            return []
+        
+        # If no queue, generate a temporary prediction queue
+        # Create a temporary copy of the enemy to avoid modifying the original
+        import copy
+        temp_enemy = copy.deepcopy(enemy)
+        
+        # Generate movement queue for prediction
+        temp_enemy._generate_movement_queue(self.game_map, self.player, self.game)
+        
+        # Return the predicted positions
+        return temp_enemy.movement_queue[:steps]
 
 # ============================================================================
 # EXPLOIT SYSTEM
@@ -5210,6 +5379,28 @@ class BaseRenderer(ABC):
     
     def __init__(self):
         self.ui_renderer = UIRenderer()
+    
+    def _draw_bordered_box(self, console: tcod.console.Console, start_x: int, start_y: int, 
+                          width: int, height: int, border_color: tuple, bg_color: tuple):
+        """Draw a bordered box with background fill."""
+        # Draw background
+        for y in range(start_y, start_y + height):
+            for x in range(start_x, start_x + width):
+                console.print(x, y, ' ', fg=Colors.WHITE, bg=bg_color)
+        
+        # Draw border
+        for x in range(start_x, start_x + width):
+            console.print(x, start_y, '─', fg=border_color, bg=bg_color)
+            console.print(x, start_y + height - 1, '─', fg=border_color, bg=bg_color)
+        for y in range(start_y, start_y + height):
+            console.print(start_x, y, '│', fg=border_color, bg=bg_color)
+            console.print(start_x + width - 1, y, '│', fg=border_color, bg=bg_color)
+        
+        # Corner characters
+        console.print(start_x, start_y, '┌', fg=border_color, bg=bg_color)
+        console.print(start_x + width - 1, start_y, '┐', fg=border_color, bg=bg_color)
+        console.print(start_x, start_y + height - 1, '└', fg=border_color, bg=bg_color)
+        console.print(start_x + width - 1, start_y + height - 1, '┘', fg=border_color, bg=bg_color)
         
     @abstractmethod
     def render_map(self, console: tcod.console.Console, game: 'Game'):
@@ -5253,65 +5444,33 @@ class BaseRenderer(ABC):
         center_x = GameConfig.GAME_AREA_WIDTH // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
         
-        # Background box
-        box_width = 32
-        box_height = 8
+        box_width = 38
+        box_height = 10
         start_x = center_x - box_width // 2
         start_y = center_y - box_height // 2
         
-        # Draw background
-        for y in range(start_y, start_y + box_height):
-            for x in range(start_x, start_x + box_width):
-                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.UI_BG)
-        
-        # Draw border
-        for x in range(start_x, start_x + box_width):
-            console.print(x, start_y, '─', fg=Colors.GREEN, bg=Colors.UI_BG)
-            console.print(x, start_y + box_height - 1, '─', fg=Colors.GREEN, bg=Colors.UI_BG)
-        for y in range(start_y, start_y + box_height):
-            console.print(start_x, y, '│', fg=Colors.GREEN, bg=Colors.UI_BG)
-            console.print(start_x + box_width - 1, y, '│', fg=Colors.GREEN, bg=Colors.UI_BG)
-        
-        # Corner characters
-        console.print(start_x, start_y, '┌', fg=Colors.GREEN, bg=Colors.UI_BG)
-        console.print(start_x + box_width - 1, start_y, '┐', fg=Colors.GREEN, bg=Colors.UI_BG)
-        console.print(start_x, start_y + box_height - 1, '└', fg=Colors.GREEN, bg=Colors.UI_BG)
-        console.print(start_x + box_width - 1, start_y + box_height - 1, '┘', fg=Colors.GREEN, bg=Colors.UI_BG)
+        self._draw_bordered_box(console, start_x, start_y, box_width, box_height, 
+                               Colors.GREEN, Colors.UI_BG)
         
         # Victory message
-        console.print(center_x - 8, start_y + 2, "NETWORK LIBERATED!", fg=Colors.GREEN, bg=Colors.UI_BG)
-        console.print(center_x - 9, start_y + 3, "All systems restored!", fg=Colors.WHITE, bg=Colors.UI_BG)
-        console.print(center_x - 10, start_y + 5, "Press any key to continue", fg=Colors.CYAN, bg=Colors.UI_BG)
+        console.print(center_x - 12, start_y + 2, "BREAKTHROUGH TO THE INTERNET!", fg=Colors.GREEN, bg=Colors.UI_BG)
+        console.print(center_x - 14, start_y + 3, "You've escaped into the digital realm", fg=Colors.WHITE, bg=Colors.UI_BG)
+        console.print(center_x - 16, start_y + 4, "The entire world wide web awaits you!", fg=Colors.CYAN, bg=Colors.UI_BG)
+        console.print(center_x - 8, start_y + 5, "Freedom at last...", fg=Colors.ELECTRIC_BLUE, bg=Colors.UI_BG)
+        console.print(center_x - 10, start_y + 7, "Press any key to continue", fg=Colors.YELLOW, bg=Colors.UI_BG)
 
     def _render_gateway_confirmation(self, console: tcod.console.Console):
         """Render gateway confirmation dialog."""
         center_x = GameConfig.GAME_AREA_WIDTH // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
         
-        # Background box
         box_width = 30
         box_height = 6
         start_x = center_x - box_width // 2
         start_y = center_y - box_height // 2
         
-        # Draw background
-        for y in range(start_y, start_y + box_height):
-            for x in range(start_x, start_x + box_width):
-                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.UI_BG)
-        
-        # Draw border
-        for x in range(start_x, start_x + box_width):
-            console.print(x, start_y, '─', fg=Colors.CYAN, bg=Colors.UI_BG)
-            console.print(x, start_y + box_height - 1, '─', fg=Colors.CYAN, bg=Colors.UI_BG)
-        for y in range(start_y, start_y + box_height):
-            console.print(start_x, y, '│', fg=Colors.CYAN, bg=Colors.UI_BG)
-            console.print(start_x + box_width - 1, y, '│', fg=Colors.CYAN, bg=Colors.UI_BG)
-        
-        # Corner characters
-        console.print(start_x, start_y, '┌', fg=Colors.CYAN, bg=Colors.UI_BG)
-        console.print(start_x + box_width - 1, start_y, '┐', fg=Colors.CYAN, bg=Colors.UI_BG)
-        console.print(start_x, start_y + box_height - 1, '└', fg=Colors.CYAN, bg=Colors.UI_BG)
-        console.print(start_x + box_width - 1, start_y + box_height - 1, '┘', fg=Colors.CYAN, bg=Colors.UI_BG)
+        self._draw_bordered_box(console, start_x, start_y, box_width, box_height, 
+                               Colors.CYAN, Colors.UI_BG)
         
         # Title and message
         console.print(center_x - 7, start_y + 1, "NETWORK GATEWAY", fg=Colors.YELLOW, bg=Colors.UI_BG)
@@ -5375,44 +5534,16 @@ class ASCIIRenderer(BaseRenderer):
         self.map_renderer.render_map(console, game)
 
 
-class GraphicsRenderer(BaseRenderer):
-    """Graphics-based renderer using tilesheets and images."""
-    
-    def __init__(self):
-        super().__init__()
-        # TODO: Load tilesheets and graphics assets
-        # self.tilesheet = tcod.tileset.load_tilesheet(...)
-        pass
-    
-    def render_map(self, console: tcod.console.Console, game: 'Game'):
-        """Render the game map using graphics tiles."""
-        # TODO: Implement graphics rendering using tilesheets
-        # For now, fall back to ASCII rendering
-        temp_map_renderer = MapRenderer()
-        temp_map_renderer.render_map(console, game)
 
 class Renderer:
-    """Factory class that creates and manages the appropriate renderer based on settings."""
+    """Simplified renderer using ASCII graphics."""
     
     def __init__(self, settings: 'Settings'):
         self.settings = settings
-        self._current_renderer = None
-        self._update_renderer()
-    
-    def _update_renderer(self):
-        """Create the appropriate renderer based on current settings."""
-        if self.settings.graphics_mode == "graphics":
-            self._current_renderer = GraphicsRenderer()
-        else:
-            self._current_renderer = ASCIIRenderer()
+        self._current_renderer = ASCIIRenderer()
     
     def render_game(self, console: tcod.console.Console, game: 'Game', context=None):
-        """Render the complete game state using the current renderer."""
-        # Check if graphics mode has changed and update renderer if needed
-        if ((self.settings.graphics_mode == "graphics" and not isinstance(self._current_renderer, GraphicsRenderer)) or
-            (self.settings.graphics_mode == "ascii" and not isinstance(self._current_renderer, ASCIIRenderer))):
-            self._update_renderer()
-        
+        """Render the complete game state using the ASCII renderer."""
         self._current_renderer.render_game(console, game, context)
 
 class UIRenderer:
@@ -5548,9 +5679,8 @@ class UIRenderer:
         # Title (centered in game area only)
         self._render_centered_title(console, "INVENTORY SYSTEM", 2)
         
-        # Render preserved UI elements
+        # Render preserved UI elements (skip bottom panel to make room for inventory controls)
         self.render_top_status_bar(console, game)
-        self.render_bottom_panel(console, game)
         self.render_system_log(console, game)
         
         y = 5
@@ -6090,12 +6220,14 @@ class MapRenderer:
                 world_pos = Position(screen_x + camera_offset.x, screen_y - 1 + camera_offset.y)
                 
                 if world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-                    distance = game.player.position.distance_to(world_pos)
-                    
-                    # Check if player can see this position
-                    can_see = (distance <= vision_range and 
-                              (game.player.can_see_through_walls() or 
-                               game.game_map.has_line_of_sight(game.player.position, world_pos)))
+                    # Check if player can see this position using TCOD FOV
+                    if game.player.can_see_through_walls():
+                        # Enhanced vision can see through walls within range
+                        distance = game.player.position.distance_to(world_pos)
+                        can_see = distance <= vision_range
+                    else:
+                        # Use TCOD FOV system for proper corner visibility
+                        can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
                     
                     # Check if this tile has been explored (memory system)
                     explored = (world_pos.x, world_pos.y) in game.game_map.explored_tiles
@@ -6162,12 +6294,15 @@ class MapRenderer:
                            pos_tuple in game.game_state.revealed_special_nodes)
             
             if is_currently_visible:
-                # Full color when currently visible
+                # Full color when currently visible - auto-discover when seen
+                if not is_discovered:
+                    if not hasattr(game.game_state, 'revealed_special_nodes'):
+                        game.game_state.revealed_special_nodes = {}
+                    game.game_state.revealed_special_nodes[pos_tuple] = "cooling"
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=(0, 120, 120), bg=Colors.BLACK)
-            # Don't render undiscovered special nodes
         elif game.game_map.is_cpu_recovery_node(world_pos):
             # Position 3 = ♥ (heart)
             pos_tuple = (world_pos.x, world_pos.y)
@@ -6177,12 +6312,15 @@ class MapRenderer:
                            pos_tuple in game.game_state.revealed_special_nodes)
             
             if is_currently_visible:
-                # Full color when currently visible
+                # Full color when currently visible - auto-discover when seen
+                if not is_discovered:
+                    if not hasattr(game.game_state, 'revealed_special_nodes'):
+                        game.game_state.revealed_special_nodes = {}
+                    game.game_state.revealed_special_nodes[pos_tuple] = "cpu"
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=(120, 0, 0), bg=Colors.BLACK)
-            # Don't render undiscovered special nodes
         elif game.game_map.is_ghost_node(world_pos):
             # Position 6 = ♠ (spade)
             pos_tuple = (world_pos.x, world_pos.y)
@@ -6192,12 +6330,15 @@ class MapRenderer:
                            pos_tuple in game.game_state.revealed_special_nodes)
             
             if is_currently_visible:
-                # Full color when currently visible
+                # Full color when currently visible - auto-discover when seen
+                if not is_discovered:
+                    if not hasattr(game.game_state, 'revealed_special_nodes'):
+                        game.game_state.revealed_special_nodes = {}
+                    game.game_state.revealed_special_nodes[pos_tuple] = "ghost"
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(80, 0, 120), bg=Colors.BLACK)
-            # Don't render undiscovered special nodes
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             # Map patch color names to actual color tuples
@@ -6224,13 +6365,7 @@ class MapRenderer:
                     color_data = exploit_colors.get(exploit_class, [255, 20, 255])
                     
                     # Validate color data and convert to tuple
-                    try:
-                        if isinstance(color_data, (list, tuple)) and len(color_data) == 3:
-                            color_tuple = tuple(int(c) for c in color_data)
-                        else:
-                            color_tuple = Colors.MAGENTA
-                    except (ValueError, TypeError):
-                        color_tuple = Colors.MAGENTA
+                    color_tuple = ensure_color_tuple(color_data)
                     
                     console.print(screen_x, screen_y, '&', fg=color_tuple, bg=Colors.BLACK)
                 else:
@@ -6740,7 +6875,7 @@ class MenuBackground:
             if exception:
                 exception_msg = f"Exception details: {str(exception)}"
                 print(exception_msg)
-                logging.debug(exception_msg)
+                pass
         
         # Adaptive error handling based on error type and frequency
         if error_type in ['sdl_unavailable', 'memory_error']:
@@ -6775,17 +6910,17 @@ class MenuBackground:
             if getattr(sys, 'frozen', False):
                 # Running as compiled executable (PyInstaller, cx_Freeze, etc.)
                 base_path = os.path.dirname(sys.executable)
-                logging.debug(f"Using executable base path: {base_path}")
+                pass
             else:
                 # Running as script - try multiple path resolution methods
                 try:
                     # Method 1: Use __file__ if available
                     base_path = os.path.dirname(os.path.abspath(__file__))
-                    logging.debug(f"Using __file__ base path: {base_path}")
+                    pass
                 except NameError:
                     # Method 2: Use sys.argv[0] as fallback
                     base_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-                    logging.debug(f"Using sys.argv[0] base path: {base_path}")
+                    pass
             
             # Validate the path exists and is accessible
             if not os.path.exists(base_path):
@@ -6819,7 +6954,7 @@ class MenuBackground:
             # Convert to absolute path
             image_path = os.path.abspath(image_path)
             
-            logging.debug(f"Built image path: {image_path}")
+            pass
             return image_path
             
         except Exception as e:
@@ -6838,7 +6973,7 @@ class MenuBackground:
             # Reset error count if it's been a while since last error
             if time.time() - self.last_error_time > 300:  # 5 minutes
                 self.error_count = 0
-                logging.debug("Reset error count after recovery period")
+                pass
         
         # Select random number 1-25
         import random
@@ -6876,7 +7011,7 @@ class MenuBackground:
         max_attempts = max(3, 8 - self.error_count)  # Fewer attempts as errors increase
         attempted_nums = {skip_num}  # Track to avoid duplicates
         
-        logging.debug(f"Attempting {max_attempts} fallback images (error count: {self.error_count})")
+        pass
         
         for attempt in range(max_attempts):
             # Select a different random number
@@ -7016,7 +7151,7 @@ class MenuBackground:
                 self._handle_background_error('texture_failed', f"SDL texture creation failed: {image_path}", e)
                 return False
             
-            logging.debug(f"Successfully created texture: {self.image_size[0]}x{self.image_size[1]} from {image_path}")
+            pass
             return True
             
         except Exception as e:
@@ -7284,7 +7419,7 @@ class MenuBackground:
                 # TCOD Texture objects should be garbage collected automatically
                 # But we can explicitly release references
                 del self.background_texture
-                logging.debug("Background texture released")
+                pass
             except Exception as e:
                 logging.error(f"Texture cleanup failed: {e}")
             finally:
@@ -7321,36 +7456,23 @@ class MainMenu:
         # Reset warning state when refreshing options
         self.show_warning = False
     
+    def _has_background(self) -> bool:
+        """Check if background is available and should be displayed."""
+        return (self.background and 
+                self.background.should_load_background() and 
+                self.background.background_texture)
+    
     def render(self, console: tcod.console.Console) -> None:
         """Render the main menu with optional background."""
-        # CRITICAL RENDERING ORDER:
-        # 1. Background texture renders directly to SDL renderer
-        # 2. Console content renders on top during context.present()
-        # 3. Console must be transparent to show background through
-        
-        # Check if we have a background to show
-        has_background = (self.background and 
-                         self.background.should_load_background() and 
-                         self.background.background_texture)
-        
-        # Background rendering is now handled in main loop before console rendering
-        
-        # Clear console strategically for graphics mode
-        has_background = (self.background and 
-                         self.background.should_load_background() and 
-                         self.background.background_texture)
-        
-        if has_background:
-            # Graphics mode: make left side transparent for SDL background
+        if self._has_background():
             self._clear_text_areas_only(console)
         else:
-            # ASCII mode: normal clear
             console.clear()
         
         if self.show_warning:
-            self._render_warning_dialog(console)  # Renders to console
+            self._render_warning_dialog(console)
         else:
-            self._render_main_menu(console)  # Renders to console
+            self._render_main_menu(console)
     
     def _clear_text_areas_only(self, console):
         """Create true separation: left 60% transparent for graphics, right 40% opaque for menu."""
@@ -7389,11 +7511,7 @@ class MainMenu:
     
     def _get_menu_layout_params(self):
         """Calculate menu positioning based on graphics mode, window state, and optimal visibility."""
-        has_background = (self.background and 
-                         self.background.should_load_background() and 
-                         self.background.background_texture)
-        
-        if has_background:
+        if self._has_background():
             # Graphics mode with background - calculate optimal positioning
             return self._calculate_background_aware_layout()
         else:
@@ -7441,8 +7559,8 @@ class MainMenu:
         text_x_offset = min(text_x_offset, max_x)
         text_x_offset = max(text_x_offset, min_margin + 10)
         
-        layout_params = {
-            'title_x': text_x_offset - 10,  # "ROGUE SIGNAL PROTOCOL" length / 2
+        layout = {
+            'title_x': text_x_offset - 10,
             'menu_x': text_x_offset,
             'use_background_layout': True,
             'layout_zone': layout_zone,
@@ -7450,10 +7568,7 @@ class MainMenu:
             'window_size': (window_width, window_height)
         }
         
-        # Debug logging for layout calculations
-        # Background layout calculated successfully
-        
-        return layout_params
+        return layout
     
     def _render_enhanced_menu(self, console: tcod.console.Console) -> None:
         """Render an enhanced menu with dynamic positioning based on background state."""
@@ -7465,7 +7580,7 @@ class MainMenu:
             menu_box_width = 28  # Much narrower menu box
             box_right = GameConfig.SCREEN_WIDTH - 2  # Right edge with small margin
             box_left = box_right - menu_box_width    # Left edge of narrow box
-            box_top = 4
+            box_top = 3
             box_bottom = GameConfig.SCREEN_HEIGHT - 1
             menu_center_x = (box_left + box_right) // 2
         
@@ -7625,10 +7740,9 @@ class MainMenu:
     
     def _render_warning_dialog(self, console: tcod.console.Console) -> None:
         """Render save deletion warning dialog with background-aware positioning."""
-        # Dim background
-        for x in range(GameConfig.SCREEN_WIDTH):
-            for y in range(GameConfig.SCREEN_HEIGHT):
-                console.print(x, y, ' ', fg=Colors.BLACK, bg=(64, 64, 64))
+        # Solid black background using TCOD's efficient method
+        console.draw_rect(x=0, y=0, width=GameConfig.SCREEN_WIDTH, height=GameConfig.SCREEN_HEIGHT, 
+                         ch=ord(' '), fg=Colors.BLACK, bg=Colors.BLACK)
         
         # Get layout parameters for background-aware positioning
         layout = self._get_menu_layout_params()
@@ -8158,7 +8272,11 @@ def handle_menu_navigation(console, context, menus, settings):
     
     # Start main menu music
     menu_sound_manager = SoundManager(settings)
-    menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000)
+    try:
+        menu_sound_manager.play_music("music/main_menu.mp3", loops=-1, fade_in_ms=1000)
+    except Exception as e:
+        logging.warning(f"Could not play main menu music: {e}")
+        # Continue without music
     
     while True:
         # Render console content first
