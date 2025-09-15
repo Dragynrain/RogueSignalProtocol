@@ -6580,7 +6580,7 @@ def load_tileset():
     return tileset
 
 def initialize_tcod_context():
-    """Initialize tcod context with terminal font."""
+    """Initialize tcod context with terminal font and SDL validation."""
     tileset = load_tileset()
     
     logging.info("Using terminal font")
@@ -6590,7 +6590,7 @@ def initialize_tcod_context():
         "rows": GameConfig.SCREEN_HEIGHT,
         "title": "Rogue Signal Protocol",
         "vsync": True,
-        "sdl_window_flags": 160
+        "sdl_window_flags": 160  # Resizable window
     }
     
     if tileset:
@@ -6598,7 +6598,231 @@ def initialize_tcod_context():
     
     context = tcod.context.new(**context_args)
     
+    # Validate SDL renderer availability
+    if hasattr(context, 'sdl_renderer') and context.sdl_renderer:
+        logging.info("SDL renderer available for graphics mode")
+    else:
+        logging.warning("SDL renderer unavailable - graphics mode will be disabled")
+    
     return context
+
+
+# ============================================================================
+# DYNAMIC GRAPHICS SYSTEM
+# ============================================================================
+
+class WindowManager:
+    """Manages dynamic window sizing and pixel dimension calculations."""
+    
+    def __init__(self, context):
+        self.context = context
+        self._cached_dimensions = None
+        self._last_check_time = 0
+        
+    def get_window_pixel_dimensions(self):
+        """Get current window pixel dimensions with caching."""
+        # Cache dimensions for 0.1 seconds to avoid excessive SDL calls
+        current_time = time.time()
+        if (self._cached_dimensions is None or 
+            current_time - self._last_check_time > 0.1):
+            
+            # Get actual window size via SDL
+            window = self.context.sdl_window
+            if window:
+                width, height = window.size
+                self._cached_dimensions = (width, height)
+                self._last_check_time = current_time
+            else:
+                # Fallback to estimated dimensions
+                self._cached_dimensions = (800, 600)  # Conservative estimate
+                
+        return self._cached_dimensions
+    
+    def calculate_background_rect(self, image_size):
+        """Calculate rectangle for background image with 1:1 aspect ratio preserved."""
+        window_width, window_height = self.get_window_pixel_dimensions()
+        img_width, img_height = image_size
+        
+        # Calculate scale to fit while maintaining 1:1 aspect ratio
+        scale_x = window_width / img_width
+        scale_y = window_height / img_height
+        scale = min(scale_x, scale_y)  # Use smaller scale to fit entirely
+        
+        # Calculate centered position
+        scaled_width = int(img_width * scale)
+        scaled_height = int(img_height * scale)
+        x = (window_width - scaled_width) // 2
+        y = (window_height - scaled_height) // 2
+        
+        return (x, y, scaled_width, scaled_height)
+
+
+class MenuBackground:
+    """Handles high-resolution background images for main menu with conditional loading."""
+    
+    def __init__(self, context, settings):
+        self.context = context
+        self.settings = settings
+        self.window_manager = WindowManager(context)
+        self.background_texture = None
+        self.current_image_path = None
+        self.enabled = True
+        self.last_window_size = None
+        self.image_size = None  # Store original image dimensions
+        
+    def should_load_background(self):
+        """Check if background should be loaded based on graphics mode."""
+        return (self.settings.graphics_mode == "graphics" and 
+                self.enabled and 
+                self.context.sdl_renderer is not None)
+        
+    def load_random_background(self):
+        """Load one random menu background only if graphics mode is enabled."""
+        if not self.should_load_background():
+            logging.info("Background loading skipped - ASCII mode or SDL unavailable")
+            return False
+            
+        # Select random number 1-25
+        import random
+        import os
+        
+        selected_num = random.randint(1, 25)
+        
+        # Cross-platform path handling
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        image_path = os.path.join(base_path, "main_menu", f"main_menu_{selected_num}.png")
+        
+        try:
+            # Try to load the selected image
+            success = self._load_image_file(image_path)
+            if success:
+                self.current_image_path = image_path
+                logging.info(f"Loaded background: main_menu_{selected_num}.png")
+                return True
+            else:
+                # Fallback: try other images
+                return self._load_fallback_image(selected_num)
+                
+        except Exception as e:
+            logging.error(f"Background loading failed: {e}")
+            return self._load_fallback_image(selected_num)
+    
+    def _load_fallback_image(self, skip_num):
+        """Try loading alternative images if primary fails."""
+        import os
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        
+        # Try up to 5 other random images
+        import random
+        for _ in range(5):
+            fallback_num = random.randint(1, 25)
+            if fallback_num == skip_num:
+                continue
+                
+            fallback_path = os.path.join(base_path, "main_menu", f"main_menu_{fallback_num}.png")
+            if self._load_image_file(fallback_path):
+                self.current_image_path = fallback_path
+                logging.info(f"Loaded fallback background: main_menu_{fallback_num}.png")
+                return True
+        
+        # All attempts failed
+        logging.warning("All background images failed to load - disabling backgrounds")
+        self.enabled = False
+        return False
+    
+    def _load_image_file(self, image_path):
+        """Load a single image file as SDL texture using PIL → numpy → TCOD."""
+        import os
+        if not os.path.exists(image_path):
+            return False
+            
+        try:
+            # Use PIL → numpy → renderer.upload_texture() method
+            from PIL import Image
+            import numpy as np
+            
+            # Load image with PIL
+            pil_image = Image.open(image_path)
+            
+            # Store original dimensions
+            self.image_size = pil_image.size  # (width, height)
+            
+            # Convert to RGB if needed (some PNGs might be RGBA)
+            if pil_image.mode != 'RGB':
+                pil_image = pil_image.convert('RGB')
+            
+            # Convert to numpy array (height, width, channels) format
+            pixels = np.array(pil_image, dtype=np.uint8)
+            
+            # Get SDL renderer
+            renderer = self.context.sdl_renderer
+            if not renderer:
+                logging.error("SDL renderer not available")
+                return False
+                
+            # Create texture using TCOD's upload_texture method
+            self.background_texture = renderer.upload_texture(pixels)
+            
+            logging.debug(f"Created texture: {self.image_size[0]}x{self.image_size[1]}")
+            return True
+            
+        except Exception as e:
+            logging.error(f"Texture creation failed for {image_path}: {e}")
+            return False
+        
+    def render_background(self, console):
+        """Render background image if loaded and graphics mode enabled."""
+        if (not self.should_load_background() or 
+            not self.background_texture or 
+            not self.image_size):
+            return
+            
+        try:
+            current_window_size = self.window_manager.get_window_pixel_dimensions()
+            
+            # Calculate background rectangle with aspect ratio preservation
+            bg_rect = self.window_manager.calculate_background_rect(self.image_size)
+            
+            # Use TCOD renderer.copy() method for texture rendering
+            renderer = self.context.sdl_renderer
+            
+            # Destination rectangle (x, y, width, height)
+            dest_rect = bg_rect  # Already in (x, y, w, h) format
+            
+            # Render texture using TCOD's copy method
+            # TCOD SDL renderer uses different parameter names
+            renderer.copy(
+                texture=self.background_texture,
+                dest=dest_rect  # Scale to calculated rectangle
+            )
+            
+        except Exception as e:
+            logging.error(f"Background rendering failed: {e}")
+            # Don't disable completely - might be temporary issue
+        
+    def reload_if_mode_changed(self):
+        """Reload or unload background based on current graphics mode."""
+        if self.settings.graphics_mode == "graphics" and not self.background_texture:
+            # Mode switched to graphics - load background
+            self.load_random_background()
+        elif self.settings.graphics_mode == "ascii" and self.background_texture:
+            # Mode switched to ASCII - free memory
+            self.cleanup()
+            
+    def cleanup(self):
+        """Free background texture memory."""
+        if self.background_texture:
+            try:
+                # TCOD Texture objects should be garbage collected automatically
+                # But we can explicitly release references
+                del self.background_texture
+                logging.debug("Background texture released")
+            except Exception as e:
+                logging.error(f"Texture cleanup failed: {e}")
+            finally:
+                self.background_texture = None
+                self.current_image_path = None
+                self.image_size = None
 
 
 # ============================================================================
@@ -6608,13 +6832,13 @@ def initialize_tcod_context():
 class MainMenu:
     """Main menu for New Game/Continue options."""
     
-    def __init__(self):
+    def __init__(self, background=None):
         self.selected_option = 0
         self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Lore", "Exit"]
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
-        # Images removed - TCOD is console-based, not for large background graphics
+        self.background = background
     
     def refresh_options(self, show_continue: bool = True) -> None:
         """Refresh menu options. Set show_continue=False when accessed from mid-game."""
@@ -6630,13 +6854,24 @@ class MainMenu:
         self.show_warning = False
     
     def render(self, console: tcod.console.Console) -> None:
-        """Render the main menu."""
+        """Render the main menu with optional background."""
         console.clear()
         
+        # CRITICAL RENDERING ORDER:
+        # 1. Background texture renders directly to SDL renderer
+        # 2. Console content renders on top during context.present()
+        # 3. This ensures text appears over background
+        
+        # Render background first (if available and graphics mode)
+        if self.background:
+            self.background.render_background(console)  # Renders to SDL renderer
+        
         if self.show_warning:
-            self._render_warning_dialog(console)
+            self._render_warning_dialog(console)  # Renders to console
         else:
-            self._render_main_menu(console)
+            self._render_main_menu(console)  # Renders to console
+        
+        # NOTE: context.present(console) will composite console over background
     
     def _render_main_menu(self, console: tcod.console.Console) -> None:
         """Render the main menu screen."""
@@ -6647,31 +6882,79 @@ class MainMenu:
         
         self._render_enhanced_menu(console)
     
+    def _get_menu_layout_params(self):
+        """Calculate menu positioning based on graphics mode and window state."""
+        if (self.background and 
+            self.background.should_load_background() and 
+            self.background.background_texture):
+            
+            # Graphics mode with background - position text for visibility
+            # Use right side positioning to avoid background center
+            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.75)
+            return {
+                'title_x': text_x_offset - 10,  # "ROGUE SIGNAL PROTOCOL" length / 2
+                'menu_x': text_x_offset,
+                'use_background_layout': True
+            }
+        else:
+            # ASCII mode or no background - center everything
+            return {
+                'title_x': GameConfig.SCREEN_WIDTH // 2,
+                'menu_x': GameConfig.SCREEN_WIDTH // 2,
+                'use_background_layout': False
+            }
+    
     def _render_enhanced_menu(self, console: tcod.console.Console) -> None:
-        """Render an enhanced centered menu with ASCII art decoration."""
+        """Render an enhanced menu with dynamic positioning based on background state."""
+        # Get layout parameters
+        layout = self._get_menu_layout_params()
+        
         # Title with some ASCII art decoration
         title = "ROGUE SIGNAL PROTOCOL"
         subtitle = "Cyberpunk Stealth Exfiltration"
         
-        # Add some simple ASCII art decoration
-        console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 6, "=" * 40, fg=Colors.CYAN)
-        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN)
-        console.print(GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN)
-        console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 10, "=" * 40, fg=Colors.CYAN)
+        if layout['use_background_layout']:
+            # Background mode - right side positioning
+            console.print(layout['menu_x'] - 20, 6, "=" * 40, fg=Colors.CYAN)
+            console.print(layout['title_x'], 8, title, fg=Colors.CYAN)
+            console.print(layout['menu_x'] - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN)
+            console.print(layout['menu_x'] - 20, 10, "=" * 40, fg=Colors.CYAN)
+        else:
+            # ASCII mode - centered positioning
+            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 6, "=" * 40, fg=Colors.CYAN)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 10, "=" * 40, fg=Colors.CYAN)
         
         # Version and build info
-        console.print(
-            GameConfig.SCREEN_WIDTH // 2 - 13, 12,
-            "Alpha Build by Adam Forster", fg=(128, 128, 128)
-        )
+        if layout['use_background_layout']:
+            # Background mode - position on right side
+            console.print(
+                layout['menu_x'] - 13, 12,
+                "Alpha Build by Adam Forster", fg=(128, 128, 128)
+            )
+        else:
+            # ASCII mode - centered
+            console.print(
+                GameConfig.SCREEN_WIDTH // 2 - 13, 12,
+                "Alpha Build by Adam Forster", fg=(128, 128, 128)
+            )
         
         # Menu options
         start_y = 17
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             prefix = "> " if i == self.selected_option else "  "
+            
+            if layout['use_background_layout']:
+                # Background mode - right side positioning
+                x_pos = layout['menu_x'] - len(option) // 2 - 1
+            else:
+                # ASCII mode - centered
+                x_pos = GameConfig.SCREEN_WIDTH // 2 - len(option) // 2 - 1
+                
             console.print(
-                GameConfig.SCREEN_WIDTH // 2 - len(option) // 2 - 1, start_y + i * 2,
+                x_pos, start_y + i * 2,
                 f"{prefix}{option}", fg=color
             )
         
@@ -6679,14 +6962,26 @@ class MainMenu:
         if SaveGameManager.save_exists():
             save_timestamp = SaveGameManager.get_save_timestamp()
             if save_timestamp:
-                console.print(
-                    GameConfig.SCREEN_WIDTH // 2 - 15, start_y + len(self.options) * 2 + 2,
-                    "Save file found - Continue to resume", fg=Colors.GREEN
-                )
-                console.print(
-                    GameConfig.SCREEN_WIDTH // 2 - 12, start_y + len(self.options) * 2 + 3,
-                    f"Last saved: {save_timestamp}", fg=Colors.LIGHT_GRAY
-                )
+                if layout['use_background_layout']:
+                    # Background mode positioning
+                    console.print(
+                        layout['menu_x'] - 15, start_y + len(self.options) * 2 + 2,
+                        "Save file found - Continue to resume", fg=Colors.GREEN
+                    )
+                    console.print(
+                        layout['menu_x'] - 12, start_y + len(self.options) * 2 + 3,
+                        f"Last saved: {save_timestamp}", fg=Colors.LIGHT_GRAY
+                    )
+                else:
+                    # ASCII mode - centered
+                    console.print(
+                        GameConfig.SCREEN_WIDTH // 2 - 15, start_y + len(self.options) * 2 + 2,
+                        "Save file found - Continue to resume", fg=Colors.GREEN
+                    )
+                    console.print(
+                        GameConfig.SCREEN_WIDTH // 2 - 12, start_y + len(self.options) * 2 + 3,
+                        f"Last saved: {save_timestamp}", fg=Colors.LIGHT_GRAY
+                    )
         
         # Controls
         console.print(
@@ -7194,10 +7489,10 @@ class SettingsMenu:
 
 
 
-def initialize_game_systems(settings: GameSettings):
+def initialize_game_systems(settings: GameSettings, menu_background=None):
     """Initialize menu systems and return menu objects."""
     return {
-        'main_menu': MainMenu(),
+        'main_menu': MainMenu(background=menu_background),  # Pass background here
         'settings_menu': SettingsMenu(settings),
         'help_menu': HelpMenu(),
         'lore_menu': LoreMenu()
@@ -7298,13 +7593,25 @@ def main():
             console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
             
             settings = GameSettings()
-            menus = initialize_game_systems(settings)
+            
+            # Create background manager (loads conditionally based on graphics mode)
+            menu_background = MenuBackground(context, settings)
+            menu_background.load_random_background()  # Only loads if graphics mode enabled
+            
+            # Pass background to initialize_game_systems
+            menus = initialize_game_systems(settings, menu_background)
+            
             game = None
             
             while True:
+                # Check for graphics mode changes and reload accordingly
+                menu_background.reload_if_mode_changed()
+                
                 if game is None:
                     game, should_exit = handle_menu_navigation(console, context, menus, settings)
                     if should_exit:
+                        # Cleanup background before exit
+                        menu_background.cleanup()
                         return
                     
                     # Initialize game rendering systems
