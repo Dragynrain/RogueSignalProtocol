@@ -6653,20 +6653,23 @@ class WindowManager:
         return self._cached_dimensions
     
     def calculate_background_rect(self, image_size):
-        """Calculate rectangle for background image with 1:1 aspect ratio preserved."""
+        """Calculate rectangle for background image constrained to left portion only."""
         window_width, window_height = self.get_window_pixel_dimensions()
         img_width, img_height = image_size
         
-        # Calculate scale to fit while maintaining 1:1 aspect ratio
-        scale_x = window_width / img_width
-        scale_y = window_height / img_height
-        scale = min(scale_x, scale_y)  # Use smaller scale to fit entirely
+        # CONSTRAINT: Limit graphics to left 60% of screen width for true separation
+        graphics_area_width = int(window_width * 0.6)  # Graphics get 60% of width
         
-        # Calculate centered position
+        # Calculate scale to fit within LEFT AREA ONLY (not full screen)
+        scale_x = graphics_area_width / img_width  # Scale to fit in left area width
+        scale_y = window_height / img_height
+        scale = min(scale_x, scale_y)  # Use smaller scale to fit entirely in left area
+        
+        # Position within left area only
         scaled_width = int(img_width * scale)
         scaled_height = int(img_height * scale)
-        x = (window_width - scaled_width) // 2
-        y = (window_height - scaled_height) // 2
+        x = 0  # Left-align within graphics area
+        y = (window_height - scaled_height) // 2  # Center vertically
         
         return (x, y, scaled_width, scaled_height)
 
@@ -7350,16 +7353,16 @@ class MainMenu:
             self._render_main_menu(console)  # Renders to console
     
     def _clear_text_areas_only(self, console):
-        """Clear only the text menu area on the right, make left side transparent for SDL graphics."""
+        """Create true separation: left 60% transparent for graphics, right 40% opaque for menu."""
         layout = self._get_menu_layout_params()
         
         if layout['use_background_layout']:
-            # For side-by-side rendering: make left side transparent, clear right side for text
-            text_start_x = layout['menu_x'] - 5  # Small margin before menu
+            # ENFORCED SEPARATION: 60% graphics area, 40% menu area
+            graphics_boundary = int(console.width * 0.6)  # Hard boundary at 60%
             
-            # Make left side transparent so SDL graphics show through
+            # Left 60%: Make transparent for SDL graphics
             for y in range(console.height):
-                for x in range(0, text_start_x):
+                for x in range(0, graphics_boundary):
                     # Set background alpha to 0 (fully transparent)
                     console.rgba[x, y] = (
                         ord(' '),           # Empty character
@@ -7367,9 +7370,9 @@ class MainMenu:
                         (0, 0, 0, 0)        # Transparent background
                     )
             
-            # Clear only the right side for text menu (opaque)
+            # Right 40%: Clear for text menu (opaque)
             for y in range(console.height):
-                for x in range(text_start_x, console.width):
+                for x in range(graphics_boundary, console.width):
                     console.print(x, y, ' ', fg=(255, 255, 255), bg=(0, 0, 0))
         else:
             # ASCII mode: clear entire console
@@ -7417,19 +7420,19 @@ class MainMenu:
         # Calculate dynamic positioning based on window aspect ratio and size
         aspect_ratio = window_width / window_height if window_height > 0 else 1.0
         
-        # For wide windows (aspect > 1.2), use right-side positioning
-        # For tall/square windows (aspect <= 1.2), use upper positioning
+        # Position menu to avoid overlap with left-aligned background graphics
+        # Since image is left-aligned, menu needs to be positioned far right
         if aspect_ratio > 1.2:
-            # Wide window - use right side positioning
-            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.75)
+            # Wide window - use far right positioning to avoid image overlap
+            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.85)  # Move further right
             layout_zone = 'right'
         elif aspect_ratio < 0.8:
-            # Very tall window - use upper center positioning
-            text_x_offset = GameConfig.SCREEN_WIDTH // 2
+            # Very tall window - still avoid left side overlap
+            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.8)   # Right side, not center
             layout_zone = 'upper'
         else:
-            # Square-ish window - use right-center positioning
-            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.68)
+            # Square-ish window - use far right positioning
+            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.82)  # Move further right
             layout_zone = 'right_center'
         
         # Ensure minimum margins
@@ -7457,16 +7460,44 @@ class MainMenu:
         # Get layout parameters
         layout = self._get_menu_layout_params()
         
+        # Calculate narrow menu box coordinates for graphics mode
+        if layout['use_background_layout']:
+            menu_box_width = 28  # Much narrower menu box
+            box_right = GameConfig.SCREEN_WIDTH - 2  # Right edge with small margin
+            box_left = box_right - menu_box_width    # Left edge of narrow box
+            box_top = 4
+            box_bottom = GameConfig.SCREEN_HEIGHT - 1
+            menu_center_x = (box_left + box_right) // 2
+        
         # Title with some ASCII art decoration
         title = "ROGUE SIGNAL PROTOCOL"
         subtitle = "Cyberpunk Stealth Exfiltration"
         
         if layout['use_background_layout']:
-            # Background mode - right side positioning
-            console.print(layout['menu_x'] - 20, 6, "=" * 40, fg=Colors.CYAN)
-            console.print(layout['title_x'], 8, title, fg=Colors.CYAN)
-            console.print(layout['menu_x'] - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN)
-            console.print(layout['menu_x'] - 20, 10, "=" * 40, fg=Colors.CYAN)
+            
+            # Draw narrow containing box border
+            for y in range(box_top, box_bottom + 1):
+                console.print(box_left, y, "│", fg=Colors.CYAN)
+                console.print(box_right, y, "│", fg=Colors.CYAN)
+            for x in range(box_left, box_right + 1):
+                console.print(x, box_top, "─", fg=Colors.CYAN)
+                console.print(x, box_bottom, "─", fg=Colors.CYAN)
+            # Box corners
+            console.print(box_left, box_top, "┌", fg=Colors.CYAN)
+            console.print(box_right, box_top, "┐", fg=Colors.CYAN)
+            console.print(box_left, box_bottom, "└", fg=Colors.CYAN)
+            console.print(box_right, box_bottom, "┘", fg=Colors.CYAN)
+            
+            # Title content within narrow box - split into multiple lines to fit
+            menu_center_x = (box_left + box_right) // 2
+            console.print(menu_center_x - 10, 6, "=" * 20, fg=Colors.CYAN)
+            # Split title into two lines
+            console.print(menu_center_x - 6, 8, "ROGUE SIGNAL", fg=Colors.CYAN)
+            console.print(menu_center_x - 4, 9, "PROTOCOL", fg=Colors.CYAN)
+            # Split subtitle into two lines
+            console.print(menu_center_x - 8, 11, "Cyberpunk Stealth", fg=Colors.CYAN)
+            console.print(menu_center_x - 6, 12, "Exfiltration", fg=Colors.CYAN)
+            console.print(menu_center_x - 10, 13, "=" * 20, fg=Colors.CYAN)
         else:
             # ASCII mode - centered positioning
             console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 6, "=" * 40, fg=Colors.CYAN)
@@ -7474,12 +7505,19 @@ class MainMenu:
             console.print(GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN)
             console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 10, "=" * 40, fg=Colors.CYAN)
         
-        # Version and build info
+        # Version and build info  
         if layout['use_background_layout']:
-            # Background mode - position on right side
+            # Background mode - position within narrow box
+            menu_center_x = (box_left + box_right) // 2
+            build_info = "Alpha Build"
+            author_info = "by Adam Forster"
             console.print(
-                layout['menu_x'] - 13, 12,
-                "Alpha Build by Adam Forster", fg=(128, 128, 128)
+                menu_center_x - len(build_info) // 2, 15,
+                build_info, fg=(128, 128, 128)
+            )
+            console.print(
+                menu_center_x - len(author_info) // 2, 16,
+                author_info, fg=(128, 128, 128)
             )
         else:
             # ASCII mode - centered
@@ -7489,14 +7527,15 @@ class MainMenu:
             )
         
         # Menu options
-        start_y = 17
+        start_y = 21
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             prefix = "> " if i == self.selected_option else "  "
             
             if layout['use_background_layout']:
-                # Background mode - right side positioning
-                x_pos = layout['menu_x'] - len(option) // 2 - 1
+                # Background mode - centered within narrow box
+                menu_center_x = (box_left + box_right) // 2
+                x_pos = menu_center_x - len(option) // 2 - 1
             else:
                 # ASCII mode - centered
                 x_pos = GameConfig.SCREEN_WIDTH // 2 - len(option) // 2 - 1
@@ -7511,14 +7550,22 @@ class MainMenu:
             save_timestamp = SaveGameManager.get_save_timestamp()
             if save_timestamp:
                 if layout['use_background_layout']:
-                    # Background mode positioning
+                    # Background mode - position within narrow box
+                    menu_center_x = (box_left + box_right) // 2
+                    save_text = "Save found"
+                    continue_text = "Continue to resume"
                     console.print(
-                        layout['menu_x'] - 15, start_y + len(self.options) * 2 + 2,
-                        "Save file found - Continue to resume", fg=Colors.GREEN
+                        menu_center_x - len(save_text) // 2, start_y + len(self.options) * 2 + 2,
+                        save_text, fg=Colors.GREEN
                     )
                     console.print(
-                        layout['menu_x'] - 12, start_y + len(self.options) * 2 + 3,
-                        f"Last saved: {save_timestamp}", fg=Colors.LIGHT_GRAY
+                        menu_center_x - len(continue_text) // 2, start_y + len(self.options) * 2 + 3,
+                        continue_text, fg=Colors.GREEN
+                    )
+                    saved_text = f"Saved: {save_timestamp[:16]}"
+                    console.print(
+                        menu_center_x - len(saved_text) // 2, start_y + len(self.options) * 2 + 4,
+                        saved_text, fg=Colors.LIGHT_GRAY
                     )
                 else:
                     # ASCII mode - centered
@@ -7531,24 +7578,49 @@ class MainMenu:
                         f"Last saved: {save_timestamp}", fg=Colors.LIGHT_GRAY
                     )
         
-        # Controls
-        console.print(
-            GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
-            "UP/DOWN or W/S: Navigate", fg=(128, 128, 128)
-        )
-        console.print(
-            GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
-            "Enter: Select", fg=(128, 128, 128)
-        )
+        # Controls - position based on layout mode
+        if layout['use_background_layout']:
+            # Background mode - position within narrow box
+            menu_center_x = (box_left + box_right) // 2
+            nav_text = "↕/W/S: Navigate"
+            select_text = "Enter: Select"
+            console.print(
+                menu_center_x - len(nav_text) // 2, GameConfig.SCREEN_HEIGHT - 6,
+                nav_text, fg=(128, 128, 128)
+            )
+            console.print(
+                menu_center_x - len(select_text) // 2, GameConfig.SCREEN_HEIGHT - 5,
+                select_text, fg=(128, 128, 128)
+            )
+        else:
+            # ASCII mode - centered
+            console.print(
+                GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
+                "UP/DOWN or W/S: Navigate", fg=(128, 128, 128)
+            )
+            console.print(
+                GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
+                "Enter: Select", fg=(128, 128, 128)
+            )
         
-        # Story fragments info
+        # Story fragments info - position based on layout mode
         if SaveGameManager.save_exists():
             story_manager = StoryFragmentManager()
             discovered, total = story_manager.get_fragment_count()
-            console.print(
-                GameConfig.SCREEN_WIDTH // 2 - 12, GameConfig.SCREEN_HEIGHT - 2,
-                f"Story Fragments: {discovered}/{total}", fg=Colors.CYAN
-            )
+            if layout['use_background_layout']:
+                # Background mode - position within narrow box
+                menu_center_x = (box_left + box_right) // 2
+                fragment_text = f"Fragments: {discovered}/{total}"
+                console.print(
+                    menu_center_x - len(fragment_text) // 2, GameConfig.SCREEN_HEIGHT - 2,
+                    fragment_text, fg=Colors.CYAN
+                )
+            else:
+                # ASCII mode - centered
+                console.print(
+                    GameConfig.SCREEN_WIDTH // 2 - 12, GameConfig.SCREEN_HEIGHT - 2,
+                    f"Story Fragments: {discovered}/{total}", fg=Colors.CYAN
+                )
     
     
     def _render_warning_dialog(self, console: tcod.console.Console) -> None:
