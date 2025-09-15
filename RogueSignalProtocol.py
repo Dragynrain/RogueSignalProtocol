@@ -6883,26 +6883,72 @@ class MainMenu:
         self._render_enhanced_menu(console)
     
     def _get_menu_layout_params(self):
-        """Calculate menu positioning based on graphics mode and window state."""
+        """Calculate menu positioning based on graphics mode, window state, and optimal visibility."""
         if (self.background and 
             self.background.should_load_background() and 
             self.background.background_texture):
             
-            # Graphics mode with background - position text for visibility
-            # Use right side positioning to avoid background center
-            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.75)
-            return {
-                'title_x': text_x_offset - 10,  # "ROGUE SIGNAL PROTOCOL" length / 2
-                'menu_x': text_x_offset,
-                'use_background_layout': True
-            }
+            # Graphics mode with background - calculate optimal positioning
+            return self._calculate_background_aware_layout()
         else:
             # ASCII mode or no background - center everything
             return {
                 'title_x': GameConfig.SCREEN_WIDTH // 2,
                 'menu_x': GameConfig.SCREEN_WIDTH // 2,
-                'use_background_layout': False
+                'use_background_layout': False,
+                'layout_zone': 'center'
             }
+    
+    def _calculate_background_aware_layout(self):
+        """Calculate sophisticated layout for background mode based on window dimensions."""
+        # Get actual window dimensions if available
+        window_width, window_height = 800, 800  # Default fallback
+        
+        if (self.background and 
+            self.background.window_manager):
+            try:
+                window_width, window_height = self.background.window_manager.get_window_pixel_dimensions()
+            except:
+                pass  # Use defaults if window detection fails
+        
+        # Calculate dynamic positioning based on window aspect ratio and size
+        aspect_ratio = window_width / window_height if window_height > 0 else 1.0
+        
+        # For wide windows (aspect > 1.2), use right-side positioning
+        # For tall/square windows (aspect <= 1.2), use upper positioning
+        if aspect_ratio > 1.2:
+            # Wide window - use right side positioning
+            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.75)
+            layout_zone = 'right'
+        elif aspect_ratio < 0.8:
+            # Very tall window - use upper center positioning
+            text_x_offset = GameConfig.SCREEN_WIDTH // 2
+            layout_zone = 'upper'
+        else:
+            # Square-ish window - use right-center positioning
+            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.68)
+            layout_zone = 'right_center'
+        
+        # Ensure minimum margins
+        min_margin = 5
+        max_x = GameConfig.SCREEN_WIDTH - min_margin - 20  # 20 chars for longest menu option
+        text_x_offset = min(text_x_offset, max_x)
+        text_x_offset = max(text_x_offset, min_margin + 10)
+        
+        layout_params = {
+            'title_x': text_x_offset - 10,  # "ROGUE SIGNAL PROTOCOL" length / 2
+            'menu_x': text_x_offset,
+            'use_background_layout': True,
+            'layout_zone': layout_zone,
+            'window_aspect': aspect_ratio,
+            'window_size': (window_width, window_height)
+        }
+        
+        # Debug logging for layout calculations
+        logging.debug(f"Background layout: zone={layout_zone}, aspect={aspect_ratio:.2f}, "
+                     f"size={window_width}x{window_height}, menu_x={text_x_offset}")
+        
+        return layout_params
     
     def _render_enhanced_menu(self, console: tcod.console.Console) -> None:
         """Render an enhanced menu with dynamic positioning based on background state."""
@@ -7004,17 +7050,43 @@ class MainMenu:
     
     
     def _render_warning_dialog(self, console: tcod.console.Console) -> None:
-        """Render save deletion warning dialog."""
+        """Render save deletion warning dialog with background-aware positioning."""
         # Dim background
         for x in range(GameConfig.SCREEN_WIDTH):
             for y in range(GameConfig.SCREEN_HEIGHT):
                 console.print(x, y, ' ', fg=Colors.BLACK, bg=(64, 64, 64))
         
+        # Get layout parameters for background-aware positioning
+        layout = self._get_menu_layout_params()
+        
         # Dialog box
         dialog_width = 50
         dialog_height = 18
-        start_x = (GameConfig.SCREEN_WIDTH - dialog_width) // 2
-        start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
+        
+        if layout['use_background_layout']:
+            # Position dialog to work with background layout based on layout zone
+            layout_zone = layout.get('layout_zone', 'right')
+            
+            if layout_zone == 'right':
+                # Wide window - place dialog to the left of menu area
+                start_x = max(5, layout['menu_x'] - dialog_width - 5)
+                start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
+            elif layout_zone == 'upper':
+                # Tall window - place dialog in lower center
+                start_x = (GameConfig.SCREEN_WIDTH - dialog_width) // 2
+                start_y = int(GameConfig.SCREEN_HEIGHT * 0.6)
+            else:  # 'right_center'
+                # Square window - place dialog to the left-center
+                start_x = max(5, layout['menu_x'] - dialog_width - 8)
+                start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
+            
+            # Ensure dialog fits within screen bounds
+            start_x = max(1, min(start_x, GameConfig.SCREEN_WIDTH - dialog_width - 1))
+            start_y = max(1, min(start_y, GameConfig.SCREEN_HEIGHT - dialog_height - 1))
+        else:
+            # ASCII mode - center the dialog
+            start_x = (GameConfig.SCREEN_WIDTH - dialog_width) // 2
+            start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
         
         # Draw dialog background
         for x in range(start_x, start_x + dialog_width):
