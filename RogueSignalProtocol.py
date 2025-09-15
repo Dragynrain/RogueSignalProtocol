@@ -6669,6 +6669,7 @@ class MenuBackground:
         self.enabled = True
         self.last_window_size = None
         self.image_size = None  # Store original image dimensions
+        self.last_known_mode = settings.graphics_mode  # Track mode changes
         
     def should_load_background(self):
         """Check if background should be loaded based on graphics mode."""
@@ -6802,12 +6803,35 @@ class MenuBackground:
         
     def reload_if_mode_changed(self):
         """Reload or unload background based on current graphics mode."""
-        if self.settings.graphics_mode == "graphics" and not self.background_texture:
+        current_mode = self.settings.graphics_mode
+        has_texture = self.background_texture is not None
+        mode_changed = current_mode != self.last_known_mode
+        
+        if mode_changed:
+            logging.info(f"Graphics mode change detected: {self.last_known_mode} -> {current_mode}")
+            self.last_known_mode = current_mode
+        
+        if current_mode == "graphics" and not has_texture:
             # Mode switched to graphics - load background
+            if mode_changed:
+                logging.info("Graphics mode enabled - loading background")
             self.load_random_background()
-        elif self.settings.graphics_mode == "ascii" and self.background_texture:
+        elif current_mode == "ascii" and has_texture:
             # Mode switched to ASCII - free memory
+            if mode_changed:
+                logging.info("ASCII mode enabled - cleaning up background")
             self.cleanup()
+        
+        # Force layout recalculation on next render by clearing cached dimensions
+        if hasattr(self, 'window_manager') and self.window_manager:
+            self.window_manager._cached_dimensions = None
+    
+    def force_reload(self):
+        """Force immediate background reload regardless of current state."""
+        logging.info("Forcing background reload")
+        self.cleanup()  # Clean up current background
+        if self.settings.graphics_mode == "graphics":
+            self.load_random_background()  # Load new background if in graphics mode
             
     def cleanup(self):
         """Free background texture memory."""
@@ -7452,8 +7476,9 @@ class HelpMenu:
 class SettingsMenu:
     """Settings menu for audio, graphics, and help options."""
     
-    def __init__(self, settings: GameSettings):
+    def __init__(self, settings: GameSettings, menu_background=None):
         self.settings = settings
+        self.menu_background = menu_background  # Reference to background manager
         self.selected_option = 0
         self.options = [
             {"name": "Master Volume", "type": "volume", "key": "master"},
@@ -7556,6 +7581,11 @@ class SettingsMenu:
                 current_mode = self.settings.graphics_mode
                 new_mode = "graphics" if current_mode == "ascii" else "ascii"
                 self.settings.set_graphics_mode(new_mode)
+                
+                # Immediately update background to reflect the change
+                if self.menu_background:
+                    self.menu_background.reload_if_mode_changed()
+                    logging.info(f"Graphics mode changed to {new_mode} - background updated")
     
 
 
@@ -7565,7 +7595,7 @@ def initialize_game_systems(settings: GameSettings, menu_background=None):
     """Initialize menu systems and return menu objects."""
     return {
         'main_menu': MainMenu(background=menu_background),  # Pass background here
-        'settings_menu': SettingsMenu(settings),
+        'settings_menu': SettingsMenu(settings, menu_background),  # Pass background for immediate updates
         'help_menu': HelpMenu(),
         'lore_menu': LoreMenu()
     }
