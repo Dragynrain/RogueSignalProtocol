@@ -114,9 +114,8 @@ class PersistentStorage:
             with open(filepath, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except FileNotFoundError:
-            error_msg = f"Save file not found: {filename}"
-            print(error_msg)
-            logging.warning(error_msg)
+            # This is normal for new games - just use debug logging
+            logging.debug(f"Save file not found: {filename} (this is normal for new games)")
             return {}
         except json.JSONDecodeError as e:
             error_msg = f"Invalid JSON in save file {filename}: {e}"

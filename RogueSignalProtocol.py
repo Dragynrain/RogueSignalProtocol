@@ -3477,7 +3477,7 @@ class ExploitSystem:
     
     def use_exploit(self, exploit_key: str) -> bool:
         """Attempt to use an exploit."""
-        if not self.game.player.inventory_manager.can_equip_exploit(exploit_key):
+        if exploit_key not in self.game.player.inventory_manager.equipped_exploits:
             self.game.message_log.add_message("Exploit not equipped")
             return False
         
@@ -3922,12 +3922,10 @@ class InputHandler:
         Returns:
             True if game should continue, False if should exit
         """        
-        # Dead/game over state - only allow escape to exit
+        # Dead/game over state - any key should exit to main menu
         if self.game.player.cpu <= 0 or self.game.game_over:
-            if event.sym == tcod.event.KeySym.ESCAPE:
-                # Exit to main menu instead of showing pause menu when dead
-                return False
-            return True
+            # Exit to main menu instead of showing pause menu when dead
+            return False
         
         # Modal screens - handle non-escape keys
         if self.game.show_help:
@@ -5128,8 +5126,10 @@ class MapRenderer:
         """Calculate camera offset to center on player."""
         camera_x = max(0, min(GameConfig.MAP_WIDTH - GameConfig.GAME_AREA_WIDTH, 
                              player.x - GameConfig.GAME_AREA_WIDTH // 2))
-        camera_y = max(0, min(GameConfig.MAP_HEIGHT - (GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT - 1), 
-                             player.y - (GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT - 1) // 2))
+        # Viewable height is from screen row 1 to (SCREEN_HEIGHT - PANEL_HEIGHT - 1)
+        viewable_height = GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT - 1
+        camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewable_height, 
+                             player.y - viewable_height // 2))
         return Position(camera_x, camera_y)
     
     def _render_terrain(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
@@ -6706,24 +6706,24 @@ class MainMenu:
             layout_zone = layout.get('layout_zone', 'right')
             
             if layout_zone == 'right':
-                # Wide window - place dialog to the left of menu area
-                start_x = max(5, layout['menu_x'] - dialog_width - 5)
+                # Wide window - place dialog on the right side of screen
+                start_x = GameConfig.SCREEN_WIDTH - dialog_width - 2
                 start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
             elif layout_zone == 'upper':
-                # Tall window - place dialog in lower center
-                start_x = (GameConfig.SCREEN_WIDTH - dialog_width) // 2
+                # Tall window - place dialog on the right side
+                start_x = GameConfig.SCREEN_WIDTH - dialog_width - 2
                 start_y = int(GameConfig.SCREEN_HEIGHT * 0.6)
             else:  # 'right_center'
-                # Square window - place dialog to the left-center
-                start_x = max(5, layout['menu_x'] - dialog_width - 8)
+                # Square window - place dialog on the right side
+                start_x = GameConfig.SCREEN_WIDTH - dialog_width - 2
                 start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
             
             # Ensure dialog fits within screen bounds
             start_x = max(1, min(start_x, GameConfig.SCREEN_WIDTH - dialog_width - 1))
             start_y = max(1, min(start_y, GameConfig.SCREEN_HEIGHT - dialog_height - 1))
         else:
-            # ASCII mode - center the dialog
-            start_x = (GameConfig.SCREEN_WIDTH - dialog_width) // 2
+            # ASCII mode - place dialog on the right side
+            start_x = GameConfig.SCREEN_WIDTH - dialog_width - 2
             start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
         
         # Draw dialog background - black background for dialog area only

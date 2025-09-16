@@ -82,6 +82,8 @@ class Player:
             logging.error(f"MOVEMENT OUT OF BOUNDS: intended=({intended_x}, {intended_y}), "
                          f"GameConfig bounds=({GameConfig.MAP_WIDTH}, {GameConfig.MAP_HEIGHT}), "
                          f"game_map bounds=({game_map.width}, {game_map.height})")
+            logging.error(f"GameConfig SCREEN values: ({GameConfig.SCREEN_WIDTH}, {GameConfig.SCREEN_HEIGHT})")
+            logging.error(f"GameConfig PANEL_Y: {GameConfig.PANEL_Y}")
             return False
         
         # Now create the position and validate it
@@ -282,7 +284,7 @@ class Enemy:
         if is_player_in_shadow and distance_to_player > adjacent_threshold:
             return False
 
-        return game_map.has_line_of_sight(self.position, player.position)
+        return game_map.can_see_position(self.position, player.position, max_vision_range)
     
     def can_attack_player(self, player: Player) -> bool:
         """Check if enemy can attack player (adjacent including diagonally)."""
