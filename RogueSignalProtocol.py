@@ -257,11 +257,25 @@ class SaveGameManager:
                 }
             }
             
-                with open(cls.SAVE_FILE, 'w', encoding='utf-8') as f:
+            # Write to temporary file first, then atomic rename for safety
+            temp_file = cls.SAVE_FILE + '.tmp'
+            try:
+                with open(temp_file, 'w', encoding='utf-8') as f:
                     json.dump(save_data, f, indent=2, ensure_ascii=False)
+                
+                # Atomic rename to prevent corruption
+                import shutil
+                shutil.move(temp_file, cls.SAVE_FILE)
                 
                 logging.info("Game saved successfully")
                 return True
+            finally:
+                # Clean up temp file if it exists
+                if os.path.exists(temp_file):
+                    try:
+                        os.remove(temp_file)
+                    except:
+                        pass
                 
             except (IOError, OSError) as e:
                 logging.warning(f"Save attempt {attempt + 1} failed with I/O error: {e}")
@@ -757,8 +771,7 @@ class GameBalance:
     
     # Node effects
     COOLING_NODE_EFFECT: int = 20
-    GHOST_NODE_DETECTION_REDUCTION: float = 5.0  # Detection reduction per turn
-    GHOST_NODE_DURATION: int = 10  # Duration in turns
+    GHOST_NODE_DETECTION_REDUCTION: float = 5.0  # Detection reduction per turn on ghost node
     CPU_RECOVERY_AMOUNT: int = 20
     
     # Combat rewards
@@ -1867,10 +1880,6 @@ class TurnProcessor:
                         self.game_state.game_over = True
                         return  # Exit early if player dies
                 
-                # Handle ghost node detection reduction over time BEFORE decrementing counter
-                elif effect_name == 'ghost_node_turns':
-                    player.detection = max(0, player.detection - GameBalance.GHOST_NODE_DETECTION_REDUCTION)
-                
                 # Now decrement the counter
                 player.temporary_effects[effect_name] -= 1
                 
@@ -1885,8 +1894,6 @@ class TurnProcessor:
                         self.message_log.add_message("Movement returns to normal")
                     elif effect_name == 'virus_turns':
                         self.message_log.add_message("Virus purged from system")
-                    elif effect_name == 'ghost_node_turns':
-                        self.message_log.add_message("Ghost node effect expired")
     
     def _process_detection_increase(self, player: Player) -> None:
         """Handle periodic detection level increases."""
@@ -2503,12 +2510,12 @@ class Game:
             if recovery > 0 and should_play_sound:
                 self.sound_manager.play_sound("node_activate")
         
-        # Ghost node (detection reduction over time)
+        # Ghost node (detection reduction while standing on it)
         if self.game_map.is_ghost_node(self.player.position):
-            if self.player.temporary_effects['ghost_node_turns'] == 0:
-                self.player.temporary_effects['ghost_node_turns'] = GameBalance.GHOST_NODE_DURATION
-                if should_play_sound:
-                    self.sound_manager.play_sound("node_activate")
+            # Reduce detection instantly while standing on the node
+            self.player.detection = max(0, self.player.detection - GameBalance.GHOST_NODE_DETECTION_REDUCTION)
+            if should_play_sound:
+                self.sound_manager.play_sound("node_activate")
         
         # Data patch
         if player_pos in self.game_map.data_patches:
