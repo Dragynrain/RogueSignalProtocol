@@ -4,6 +4,7 @@ Rogue Signal Protocol - A cyberpunk stealth roguelike
 """
 
 import tcod
+from tcod import libtcodpy
 import logging
 import traceback
 import random
@@ -1394,7 +1395,12 @@ class DataPatch(InventoryItem):
         if not is_known:
             # Mark this color effect as discovered for this game session
             game.discovered_code_effects[self.color] = effect_key
-            self.discovered = True
+            
+            # Update all data patches of this color in player's inventory to be discovered
+            for item in player.inventory_manager.items:
+                if isinstance(item, DataPatch) and item.color == self.color:
+                    item.discovered = True
+                    
             game.message_log.add_message(f"Used {self.name}: {description}")
         else:
             # Effect is known, show it was already identified
@@ -1971,91 +1977,53 @@ class Enemy:
     def _generate_movement_queue(self, game_map: 'GameMap', player: Player, game: 'Game'):
         """
         Generate movement queue based on enemy state and type.
-        HOSTILE enemies always seek the player regardless of base movement type.
+        Always ensures exactly 3 valid moves in the queue for all movement types except STATIC.
         """
         self.movement_queue.clear()
         
-        # HOSTILE enemies seek the player, but static enemies (scanners/firewalls) don't move
-        if self.state == EnemyState.HOSTILE:
-            # Static enemies (scanners, firewalls) don't move even when hostile
-            if self.type_data.movement == EnemyMovement.STATIC:
-                return
-                
-            target = None
-            if self.can_see_player(player, game_map):
-                # Update last seen position
-                self.last_seen_player = player.position
-                target = player.position
-            elif self.last_seen_player:
-                target = self.last_seen_player
-            else:
-                return
-                
-            if target:
-                self._pathfind_to_target(target, game_map, game)
+        # Static enemies never move, regardless of state
+        if self.type_data.movement == EnemyMovement.STATIC:
             return
         
-        # Non-hostile movement follows base movement type
-        if self.type_data.movement == EnemyMovement.STATIC:
-            # Static enemies don't move
-            return
-            
-        elif self.type_data.movement == EnemyMovement.RANDOM:
-            # Generate one random move
-            directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
-            dx, dy = random.choice(directions)
-            next_pos = Position(self.x + dx, self.y + dy)
-            self.movement_queue.append(next_pos)
-                
-        elif self.type_data.movement == EnemyMovement.LINEAR:
-            # Patrol movement - path to next patrol point
-            if self.patrol_points:
-                target = self.patrol_points[self.patrol_index]
-                self._pathfind_to_target(target, game_map, game)
-            else:
-                # No patrol points, random movement
-                directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
-                dx, dy = random.choice(directions)
-                next_pos = Position(self.x + dx, self.y + dy)
-                self.movement_queue.append(next_pos)
-                
-        elif self.type_data.movement == EnemyMovement.SEEK:
-            # SEEK movement - use A* pathfinding when have target, random movement otherwise
-            target = None
-            if self.can_see_player(player, game_map):
-                # Update last seen position
-                self.last_seen_player = player.position
-                target = player.position
-            elif self.last_seen_player:
-                target = self.last_seen_player
-                
-            if target:
-                self._pathfind_to_target(target, game_map, game)
-            else:
-                # No target known - move randomly like other enemies do when unaware
-                directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
-                dx, dy = random.choice(directions)
-                next_pos = Position(self.x + dx, self.y + dy)
-                self.movement_queue.append(next_pos)
-                
-        elif self.type_data.movement == EnemyMovement.TRACK:
-            # TRACK movement - similar to SEEK but more persistent
+        # Determine target based on state and movement type
+        target = None
+        use_pathfinding = False
+        
+        if self.state == EnemyState.HOSTILE:
+            # HOSTILE enemies seek the player
             if self.can_see_player(player, game_map):
                 self.last_seen_player = player.position
                 target = player.position
+                use_pathfinding = True
             elif self.last_seen_player:
                 target = self.last_seen_player
-            else:
-                return
-                
-            self._pathfind_to_target(target, game_map, game)
+                use_pathfinding = True
+        elif self.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.TRACK]:
+            # SEEK/TRACK movement types target player when they can see them
+            if self.can_see_player(player, game_map):
+                self.last_seen_player = player.position
+                target = player.position
+                use_pathfinding = True
+            elif self.last_seen_player and self.type_data.movement == EnemyMovement.TRACK:
+                # TRACK is more persistent than SEEK
+                target = self.last_seen_player
+                use_pathfinding = True
+        elif self.type_data.movement == EnemyMovement.LINEAR and self.patrol_points:
+            # LINEAR movement with patrol points
+            target = self.patrol_points[self.patrol_index]
+            use_pathfinding = True
+        
+        # Generate the movement queue
+        if use_pathfinding and target:
+            self._generate_pathfinding_queue(target, game_map, game)
+        else:
+            self._generate_random_queue(game_map, game)
+        
+        # Ensure we always have exactly 3 moves (if possible)
+        self._ensure_queue_length(game_map, game)
     
-    
-    def _pathfind_to_target(self, target: Position, game_map: 'GameMap', game: 'Game'):
-        """
-        Use TCOD A* pathfinding to find the next single step toward target.
-        This is the core pathfinding method for SEEK movement.
-        """
+    def _generate_pathfinding_queue(self, target: Position, game_map: 'GameMap', game: 'Game'):
+        """Generate movement queue using pathfinding to target, ensuring 3 valid moves."""
         try:
             # Create cost map
             cost_map = create_pathfinding_cost_map(game_map, game, self)
@@ -2068,13 +2036,89 @@ class Enemy:
             # Calculate path
             path = pathfinder.path_to((target.x, target.y))
             
-            if len(path) > 1:
-                # Only add the NEXT single step to queue
-                x, y = path[1]
-                self.movement_queue.append(Position(x, y))
-                
+            # Add up to 3 moves from the path
+            for i in range(1, min(len(path), 4)):  # Skip current position, take next 3
+                x, y = path[i]
+                next_pos = Position(x, y)
+                if self._is_valid_enemy_move(next_pos, game_map, game):
+                    self.movement_queue.append(next_pos)
+                    
         except Exception:
-            pass
+            # If pathfinding fails, fall back to random movement
+            self._generate_random_queue(game_map, game)
+    
+    def _generate_random_queue(self, game_map: 'GameMap', game: 'Game'):
+        """Generate 3 random valid moves."""
+        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+        current_pos = Position(self.x, self.y)
+        attempts = 0
+        max_attempts = 24  # 8 directions * 3 moves
+        
+        while len(self.movement_queue) < 3 and attempts < max_attempts:
+            # Shuffle directions for better randomness
+            random.shuffle(directions)
+            
+            for dx, dy in directions:
+                if len(self.movement_queue) >= 3:
+                    break
+                    
+                next_pos = Position(current_pos.x + dx, current_pos.y + dy)
+                if self._is_valid_enemy_move(next_pos, game_map, game):
+                    self.movement_queue.append(next_pos)
+                    current_pos = next_pos
+                    break
+            attempts += 1
+    
+    def _ensure_queue_length(self, game_map: 'GameMap', game: 'Game'):
+        """Ensure the movement queue has exactly 3 moves, filling with random moves if needed."""
+        while len(self.movement_queue) < 3:
+            # Try to add more random moves from the last position in queue
+            if self.movement_queue:
+                last_pos = self.movement_queue[-1]
+            else:
+                last_pos = Position(self.x, self.y)
+            
+            # Try all directions to find a valid move
+            directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+            random.shuffle(directions)
+            
+            move_added = False
+            for dx, dy in directions:
+                next_pos = Position(last_pos.x + dx, last_pos.y + dy)
+                if self._is_valid_enemy_move(next_pos, game_map, game):
+                    # Check if this position is already in the queue to avoid cycles
+                    if next_pos not in [Position(self.x, self.y)] + self.movement_queue:
+                        self.movement_queue.append(next_pos)
+                        move_added = True
+                        break
+            
+            # If we can't find any valid moves, break to avoid infinite loop
+            if not move_added:
+                break
+    
+    def _is_valid_enemy_move(self, position: Position, game_map: 'GameMap', game: 'Game') -> bool:
+        """Check if a position is valid for enemy movement."""
+        # Basic position validation
+        if not game_map.is_valid_position(position):
+            return False
+        
+        # Can't move to player position
+        if position.x == game.player.x and position.y == game.player.y:
+            return False
+        
+        # Can't move to a position occupied by another enemy
+        for other_enemy in game.enemies:
+            if other_enemy != self and other_enemy.x == position.x and other_enemy.y == position.y:
+                return False
+        
+        return True
+    
+    def _pathfind_to_target(self, target: Position, game_map: 'GameMap', game: 'Game'):
+        """
+        Legacy method - now redirects to the new pathfinding queue generation.
+        Use TCOD A* pathfinding to find the next single step toward target.
+        """
+        self._generate_pathfinding_queue(target, game_map, game)
     
     def _execute_next_move(self, game_map: 'GameMap', player: Player, game: 'Game') -> bool:
         """
@@ -2340,7 +2384,7 @@ class GameMap:
             transparency=transparency,
             pov=(start.y, start.x),
             radius=max_distance,
-            algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST
+            algorithm=libtcodpy.FOV_SYMMETRIC_SHADOWCAST
         )
         
         # Check if end position is visible (TCOD array is indexed as [y, x])
@@ -2383,7 +2427,7 @@ class GameMap:
             transparency=transparency,
             pov=(start.y, start.x),
             radius=vision_range,
-            algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST
+            algorithm=libtcodpy.FOV_SYMMETRIC_SHADOWCAST
         )
         
         # Check if end position is visible (TCOD array is indexed as [y, x])
@@ -2670,6 +2714,9 @@ class LevelGenerator:
         # Place special tiles and items
         self._place_special_tiles(level)
         self._place_gateway()
+        
+        # Final invalidation to ensure FOV calculations use the correct wall layout
+        self.game_map.invalidate_transparency_cache()
     
     def _clear_level_data(self) -> None:
         """Clear all existing level data."""
@@ -2684,6 +2731,8 @@ class LevelGenerator:
         self.game_map.story_fragments.clear()
         self.game_map.explored_tiles.clear()
         self.game_map.last_known_enemy_positions.clear()
+        # Invalidate transparency cache for FOV calculations
+        self.game_map.invalidate_transparency_cache()
     
     def _generate_procedural_level(self, level: int) -> None:
         """Generate the basic level structure using improved algorithm from dungeon-gen-v3.py"""
@@ -3254,6 +3303,7 @@ class Game:
             self._restore_game_state(save_data)
             self._restore_player_state(save_data["player"])
             self._restore_game_effects(save_data)
+            self._sync_code_discovered_status()
             self._restore_ui_state(save_data)
             
             # Generate level layout for map structure
@@ -3347,6 +3397,13 @@ class Game:
         # Restore overclocking state
         self.overclock_confirmation = save_data.get("overclock_confirmation", False)
         self.overclock_exploit = save_data.get("overclock_exploit", None)
+    
+    def _sync_code_discovered_status(self) -> None:
+        """Sync discovered status of inventory data patches with global discovered effects."""
+        for item in self.player.inventory_manager.items:
+            if isinstance(item, DataPatch):
+                # Update discovered status based on global discovered effects
+                item.discovered = item.color in self.discovered_code_effects
     
     def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:
         """Restore UI state from save data."""
@@ -3532,6 +3589,8 @@ class Game:
         self.game_map.explored_tiles.clear()  # Clear memory system
         self.game_map.last_known_enemy_positions.clear()  # Clear enemy memory
         self.enemy_manager.enemies.clear()
+        # Invalidate transparency cache for FOV calculations
+        self.game_map.invalidate_transparency_cache()
     
     def _create_border_walls(self):
         """Create walls around the map border."""
@@ -3541,6 +3600,8 @@ class Game:
         for y in range(GameConfig.MAP_HEIGHT):
             self.game_map.walls.add((0, y))
             self.game_map.walls.add((GameConfig.MAP_WIDTH - 1, y))
+        # Invalidate transparency cache after walls are modified
+        self.game_map.invalidate_transparency_cache()
         
     def _find_valid_spawn_position(self) -> Position:
         """Find player spawn position in top-left area."""
@@ -3639,7 +3700,7 @@ class Game:
                 transparency=transparency,
                 pov=(self.player.y, self.player.x),
                 radius=vision_range,
-                algorithm=tcod.FOV_SYMMETRIC_SHADOWCAST
+                algorithm=libtcodpy.FOV_SYMMETRIC_SHADOWCAST
             )
             
             # Mark all visible tiles as explored
@@ -3839,7 +3900,7 @@ class Game:
 
     def _alert_nearby_enemies(self, alerting_enemy: Enemy):
         """Alert nearby enemies when one becomes hostile."""
-        alert_range = GameBalance.NEARBY_ENEMY_ALERT_RADIUS  # Use config value
+        alert_range = GameConfig.NEARBY_ENEMY_ALERT_RADIUS  # Use config value
         alerted_count = 0
         alerted_enemies = []
         
@@ -4540,20 +4601,22 @@ class Game:
         """
         Predict next positions for any enemy using their movement queue.
         This is the unified prediction system for all movement types.
+        The new movement system guarantees exactly 3 moves for non-static enemies.
         """
-        # If enemy has an existing movement queue, use it
-        if enemy.movement_queue:
+        # If enemy has an existing movement queue with enough moves, use it
+        if enemy.movement_queue and len(enemy.movement_queue) >= steps:
             return enemy.movement_queue[:steps]
         
-        # If no queue, generate a temporary prediction queue
+        # Generate a temporary prediction queue
         # Create a temporary copy of the enemy to avoid modifying the original
         import copy
         temp_enemy = copy.deepcopy(enemy)
         
-        # Generate movement queue for prediction
-        temp_enemy._generate_movement_queue(self.game_map, self.player, self.game)
+        # The new system guarantees 3 moves, so one generation should be sufficient
+        temp_enemy._generate_movement_queue(self.game_map, self.player, self)
         
-        # Return the predicted positions
+        # Return the predicted positions (up to requested steps)
+        # The movement queue should now always have the moves we need
         return temp_enemy.movement_queue[:steps]
 
 # ============================================================================
@@ -5518,7 +5581,7 @@ class BaseRenderer(ABC):
         console.print(center_x - 8, start_y + 2, "CONNECTION SEVERED", fg=Colors.RED, bg=Colors.BLACK)
         console.print(center_x - 10, start_y + 4, "Your neural link has been", fg=Colors.WHITE, bg=Colors.BLACK)
         console.print(center_x - 11, start_y + 5, "permanently disconnected.", fg=Colors.WHITE, bg=Colors.BLACK)
-        console.print(center_x - 11, start_y + 6, "The resistance continues...", fg=Colors.GRAY, bg=Colors.BLACK)
+        console.print(center_x - 11, start_y + 6, "The resistance continues...", fg=Colors.LIGHT_GRAY, bg=Colors.BLACK)
         console.print(center_x - 10, start_y + 9, "Press any key to restart", fg=Colors.CYAN, bg=Colors.BLACK)
 
 
@@ -6259,6 +6322,10 @@ class MapRenderer:
             elif node_type == "ghost":
                 # Position 6 = ♠ for ghost nodes, faded purple
                 console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(80, 0, 120), bg=Colors.BLACK)
+            elif node_type == "gateway":
+                # Gateway in memory - darker yellow
+                darker_yellow = (180, 150, 0)
+                console.print(screen_x, screen_y, '>', fg=darker_yellow, bg=Colors.BLACK)
             return
         
         # Only render basic terrain in memory, not dynamic elements
@@ -6580,8 +6647,24 @@ class MapRenderer:
             can_see = (distance <= vision_range and 
                       (game.player.can_see_through_walls() or 
                        game.game_map.has_line_of_sight(game.player.position, game.game_map.gateway)))
+            
             if can_see:
+                # Gateway is currently visible - render in full brightness and remember it
                 console.print(screen_x, screen_y, '>', fg=Colors.GATEWAY, bg=Colors.BLACK)
+                # Add to memory system
+                if not hasattr(game.game_state, 'revealed_special_nodes'):
+                    game.game_state.revealed_special_nodes = {}
+                gateway_pos = (game.game_map.gateway.x, game.game_map.gateway.y)
+                game.game_state.revealed_special_nodes[gateway_pos] = "gateway"
+            else:
+                # Check if gateway was previously seen (in memory)
+                gateway_pos = (game.game_map.gateway.x, game.game_map.gateway.y)
+                if (hasattr(game.game_state, 'revealed_special_nodes') and 
+                    gateway_pos in game.game_state.revealed_special_nodes and
+                    game.game_state.revealed_special_nodes[gateway_pos] == "gateway"):
+                    # Render remembered gateway in darker yellow
+                    darker_yellow = (180, 150, 0)  # Darker version of gateway color
+                    console.print(screen_x, screen_y, '>', fg=darker_yellow, bg=Colors.BLACK)
     
     def _render_enemies(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render all enemies and their last known positions."""
@@ -7740,10 +7823,6 @@ class MainMenu:
     
     def _render_warning_dialog(self, console: tcod.console.Console) -> None:
         """Render save deletion warning dialog with background-aware positioning."""
-        # Solid black background using TCOD's efficient method
-        console.draw_rect(x=0, y=0, width=GameConfig.SCREEN_WIDTH, height=GameConfig.SCREEN_HEIGHT, 
-                         ch=ord(' '), fg=Colors.BLACK, bg=Colors.BLACK)
-        
         # Get layout parameters for background-aware positioning
         layout = self._get_menu_layout_params()
         
@@ -7776,10 +7855,10 @@ class MainMenu:
             start_x = (GameConfig.SCREEN_WIDTH - dialog_width) // 2
             start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
         
-        # Draw dialog background
-        for x in range(start_x, start_x + dialog_width):
-            for y in range(start_y, start_y + dialog_height):
-                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
+        # Draw dialog background - black background for dialog area only
+        console.draw_rect(x=start_x, y=start_y, width=dialog_width, height=dialog_height,
+                         ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0), 
+                         bg_blend=tcod.constants.BKGND_SET)
         
         # Draw border
         for x in range(start_x, start_x + dialog_width):
@@ -7908,7 +7987,7 @@ class LoreMenu:
         if not discovered_fragments:
             console.print(2, 5, "No lore fragments discovered yet.", fg=Colors.WHITE)
             console.print(2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
-            console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to main menu", fg=Colors.LIGHT_GRAY)
+            console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
             return
         
         start_y = 5
@@ -8035,7 +8114,7 @@ class HelpMenu:
                 y += 1
         
         # Back instruction
-        console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to main menu", fg=Colors.LIGHT_GRAY)
+        console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
     
     def handle_input(self, event) -> str:
         """Handle help menu input. Returns 'back' on any key press."""
@@ -8273,7 +8352,7 @@ def handle_menu_navigation(console, context, menus, settings):
     # Start main menu music
     menu_sound_manager = SoundManager(settings)
     try:
-        menu_sound_manager.play_music("music/main_menu.mp3", loops=-1, fade_in_ms=1000)
+        menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000)
     except Exception as e:
         logging.warning(f"Could not play main menu music: {e}")
         # Continue without music

@@ -9,9 +9,9 @@
 
 ## Technical Standards
 - **Code Style**: Follow existing patterns, avoid complex OOP, prefer functional approaches
-- **Error Handling**: Use proper logging instead of print statements
+- **Error Handling**: Use proper logging and always print errors to the console
 - **Testing**: Always test changes with the virtual environment Python
-- **Performance**: Use TCOD's built-in functions (like A* pathfinding) instead of manual implementations
+- **Performance**: Use TCOD's built-in functions (like A* pathfinding and vision system) instead of manual implementations
 
 ## Logging Systems (CRITICAL DISTINCTION)
 - **Python Error Logging**: Technical errors, exceptions, debug info → console/stderr with line numbers using `logging.error()`, `logging.warning()`, etc.
@@ -19,9 +19,8 @@
 - **NEVER confuse these two systems** - they serve completely different purposes and audiences
 
 ## Research Guidelines
-- **Documentation**: Always check latest docs, not outdated versions
+- **Documentation**: Always check latest docs, not outdated versions especially for TCOD
 - **API Access**: Verify what's actually available in current versions before concluding limitations
-- **Timing Issues**: Consider initialization order when SDL/TCOD functions don't work as expected
 
 ## Game Design Rules
 - **Enemy Behavior**: Enemies should immediately alert nearby enemies when spotting player
