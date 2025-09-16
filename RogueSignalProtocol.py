@@ -49,6 +49,42 @@ except ImportError:
 # See: data_loading.py, game_config.py, game_entities.py, etc.
 
 # ============================================================================
+# SAFE CONSOLE WRAPPER
+# ============================================================================
+
+def safe_console_print(console, x, y, char, fg=None, bg=None):
+    """Safe wrapper for console.print that ensures colors are valid tuples."""
+    import logging
+    
+    # Ensure fg color is valid
+    if fg is not None:
+        if isinstance(fg, str):
+            logging.error(f"STRING FG COLOR PASSED TO CONSOLE: {repr(fg)} at ({x}, {y})")
+            fg = ensure_color_tuple(fg)
+        elif not isinstance(fg, (list, tuple)) or len(fg) < 3:
+            logging.error(f"INVALID FG COLOR PASSED TO CONSOLE: {repr(fg)} at ({x}, {y})")
+            fg = ensure_color_tuple(fg)
+    
+    # Ensure bg color is valid
+    if bg is not None:
+        if isinstance(bg, str):
+            logging.error(f"STRING BG COLOR PASSED TO CONSOLE: {repr(bg)} at ({x}, {y})")
+            bg = ensure_color_tuple(bg)
+        elif not isinstance(bg, (list, tuple)) or len(bg) < 3:
+            logging.error(f"INVALID BG COLOR PASSED TO CONSOLE: {repr(bg)} at ({x}, {y})")
+            bg = ensure_color_tuple(bg)
+    
+    # Make the actual console call
+    if fg is not None and bg is not None:
+        console.print(x, y, char, fg=fg, bg=bg)
+    elif fg is not None:
+        console.print(x, y, char, fg=fg)
+    elif bg is not None:
+        console.print(x, y, char, bg=bg)
+    else:
+        console.print(x, y, char)
+
+# ============================================================================
 # SAVE/LOAD SYSTEM
 # ============================================================================
 
@@ -3364,7 +3400,7 @@ class ExploitSystem:
     
     def use_exploit(self, exploit_key: str) -> bool:
         """Attempt to use an exploit."""
-        if not self.game.player.inventory_manager.can_use_exploit(exploit_key):
+        if not self.game.player.inventory_manager.can_equip_exploit(exploit_key):
             self.game.message_log.add_message("Exploit not equipped")
             return False
         
@@ -5168,11 +5204,11 @@ class MapRenderer:
                 exploit_item = game.game_map.exploit_pickups[(world_pos.x, world_pos.y)]
                 if exploit_item.exploit_key in GameData.EXPLOITS:
                     exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
-                    exploit_class = exploit_def.exploit_class
+                    exploit_category = exploit_def.category  # Fixed: was exploit_class, should be category
                     # Get color from config, fallback to magenta
                     config = DataLoader.load_config()
                     exploit_colors = config.get("colors", {}).get("exploits", {})
-                    color_data = exploit_colors.get(exploit_class, [255, 20, 255])
+                    color_data = exploit_colors.get(exploit_category, [255, 20, 255])
                     
                     # Validate color data and convert to tuple
                     color_tuple = ensure_color_tuple(color_data)
