@@ -69,14 +69,21 @@ class Player:
     def move(self, dx: int, dy: int, game_map) -> bool:
         """Move player with boundary and collision checking."""
         self.last_position = Position(self.x, self.y)
-        new_position = Position(
-            max(0, min(GameConfig.MAP_WIDTH - 1, self.x + dx)),
-            max(0, min(GameConfig.MAP_HEIGHT - 1, self.y + dy))
-        )
         
-        if game_map.is_valid_position(new_position):
-            self.position = new_position
+        # Calculate the intended destination without clamping
+        intended_position = Position(self.x + dx, self.y + dy)
+        
+        # Check if we're trying to move out of bounds
+        if not intended_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+            # This would be an out-of-bounds move
+            return False
+        
+        # The intended position is in bounds, now check if it's a valid move
+        if game_map.is_valid_position(intended_position):
+            self.position = intended_position
             return True
+        
+        # Position is blocked by a wall or other obstacle
         return False
     
     def update_effects(self) -> None:

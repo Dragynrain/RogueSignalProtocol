@@ -258,17 +258,12 @@ def ensure_color_tuple(color) -> Tuple[int, int, int]:
     """Ensure color is a valid RGB tuple."""
     if isinstance(color, str):
         # Handle string color names - convert to Colors class attributes
-        import logging
-        logging.warning(f"String color passed to ensure_color_tuple: {color}")
         color_name = color.upper()
         if hasattr(Colors, color_name):
             return getattr(Colors, color_name)
         else:
-            logging.error(f"Unknown color name: {color}")
             return Colors.WHITE
     elif isinstance(color, (list, tuple)) and len(color) >= 3:
         return (int(color[0]), int(color[1]), int(color[2]))
     else:
-        import logging
-        logging.error(f"Invalid color type passed to ensure_color_tuple: {color} (type: {type(color)})")
         return Colors.WHITE  # Default fallback
