@@ -189,7 +189,7 @@
     "ram_boost": {
       "name": "Memory Expansion",
       "symbol": "[",
-      "color": "BRIGHT_BLUE",
+      "color": [100, 149, 237],
       "stat_type": "ram",
       "bonus_amount": 4,
       "description": "Permanently increases RAM capacity by 4"
@@ -197,7 +197,7 @@
     "cpu_boost": {
       "name": "Processing Core",
       "symbol": "]",
-      "color": "BRIGHT_GREEN",
+      "color": [50, 255, 50],
       "stat_type": "cpu",
       "bonus_amount": 20,
       "description": "Permanently increases CPU capacity by 20"
@@ -205,7 +205,7 @@
     "heat_boost": {
       "name": "Cooling Matrix",
       "symbol": "=",
-      "color": "BRIGHT_CYAN",
+      "color": [20, 255, 200],
       "stat_type": "heat",
       "bonus_amount": 20,
       "description": "Permanently increases heat tolerance by 20"

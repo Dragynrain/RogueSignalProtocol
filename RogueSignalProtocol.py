@@ -84,7 +84,7 @@ def safe_console_print(console, x, y, char, fg=None, bg=None):
             error_msg = (
                 f"TCOD ColorRGB ERROR: {color_name} is string '{color}' instead of RGB tuple\n"
                 f"Called from: {caller_info}\n"
-                f"Position: ({x}, {y}), Character: '{char}'\n"
+                f"Console position: ({x}, {y}), Character: '{char}'\n"
                 f"Full stack trace:\n{stack_trace}"
             )
             logging.error(error_msg)
@@ -106,8 +106,7 @@ def safe_console_print(console, x, y, char, fg=None, bg=None):
         # Unknown color format
         error_msg = (
             f"TCOD ColorRGB ERROR: Invalid {color_name} format: {color} (type: {type(color)})\n"
-            f"Called from: {caller_info}\n"
-            f"Position: ({x}, {y}), Character: '{char}'"
+            f"Called from: {caller_info}"
         )
         logging.error(error_msg)
         print(f"\n{'='*80}\n{error_msg}\n{'='*80}\n")
@@ -129,7 +128,10 @@ def safe_console_print(console, x, y, char, fg=None, bg=None):
             console.print(x, y, char)
             
     except Exception as e:
-        # Catch any TCOD errors and provide comprehensive information
+        # Catch any TCOD errors and provide comprehensive information with full stack trace
+        stack_trace = ''.join(traceback.format_stack())
+        caller_info = "Unknown"
+        
         frame = inspect.currentframe()
         try:
             caller_frame = frame.f_back
@@ -138,28 +140,25 @@ def safe_console_print(console, x, y, char, fg=None, bg=None):
                 line_number = caller_frame.f_lineno
                 function_name = caller_frame.f_code.co_name
                 caller_info = f"{filename}:{line_number} in {function_name}()"
-            else:
-                caller_info = "Unknown caller"
         finally:
             del frame
-        
-        stack_trace = ''.join(traceback.format_stack()[:-1])
+            
         error_msg = (
-            f"TCOD CONSOLE.PRINT ERROR: {str(e)}\n"
+            f"CONSOLE PRINT ERROR: {str(e)}\n"
             f"Called from: {caller_info}\n"
             f"Position: ({x}, {y}), Character: '{char}'\n"
-            f"Foreground: {fg} (type: {type(fg)})\n"
-            f"Background: {bg} (type: {type(bg)})\n"
+            f"FG Color: {fg} (type: {type(fg)})\n"
+            f"BG Color: {bg} (type: {type(bg)})\n"
             f"Full stack trace:\n{stack_trace}"
         )
         logging.error(error_msg)
         print(f"\n{'='*80}\n{error_msg}\n{'='*80}\n")
         
-        # Try to render with default colors as fallback
+        # Try fallback rendering
         try:
             console.print(x, y, char, fg=Colors.WHITE, bg=Colors.BLACK)
-        except Exception as fallback_error:
-            logging.error(f"Even fallback rendering failed: {fallback_error}")
+        except:
+            pass  # Give up if even fallback fails
 
 # ============================================================================
 # SAVE/LOAD SYSTEM
@@ -4249,7 +4248,7 @@ class InputHandler:
     def _show_exploit_details(self, exploit_def):
         """Show detailed information about an exploit."""
         self.game.message_log.add_message(f"=== {exploit_def.name} ===")
-        self.game.message_log.add_message(f"Category: {exploit_def.exploit_class.title()}")
+        self.game.message_log.add_message(f"Category: {exploit_def.category.title()}")
         self.game.message_log.add_message(f"RAM Cost: {exploit_def.ram}")
         self.game.message_log.add_message(f"Heat Cost: {exploit_def.heat}")
         
