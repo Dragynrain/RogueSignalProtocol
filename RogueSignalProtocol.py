@@ -17,6 +17,17 @@ from enum import Enum
 from dataclasses import dataclass
 from typing import List, Tuple, Optional, Dict, Any, Set
 
+# Import refactored modules
+from data_loading import DataLoader, PersistentStorage, get_story_fragments
+from game_config import GameSettings, GameConfig, GameBalance, RoomGenerationConfig, clamp_value
+from game_entities import Position, Colors, EnemyState, EnemyMovement, TargetingMode
+from game_entities import clamp, safe_divide, validate_coordinates, calculate_manhattan_distance
+from game_entities import get_adjacent_positions, format_position_key, parse_position_key
+from game_entities import parse_coordinate_string, validate_position_bounds, ensure_color_tuple
+from game_data import GameData, GameUpgrades
+from game_inventory import InventoryItem, DataPatch, ExploitItem, StoryFragment, InventoryManager
+from game_characters import Player, Enemy, create_pathfinding_cost_map, pathfind_and_move, can_move_to_position
+
 # Setup logging for error handling
 logging.basicConfig(
     level=logging.WARNING,
@@ -34,125 +45,12 @@ except ImportError:
     AUDIO_AVAILABLE = False
     logging.warning("pygame not available. Sound will be disabled.")
 
-# JSON Data Loading System
-
-class DataLoader:
-    """Handles loading of JSON configuration and game data files."""
-    
-    _story_fragments = None
-    _game_data = None
-    _config = None
-    
-    @classmethod
-    def load_story_fragments(cls) -> List[str]:
-        """Load story fragments from JSON file."""
-        if cls._story_fragments is None:
-            try:
-                with open('story_content.json', 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    cls._story_fragments = data['fragments']
-            except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-                logging.warning(f"Could not load story fragments from JSON: {e}")
-                cls._story_fragments = cls._get_fallback_story_fragments()
-        return cls._story_fragments
-    
-    @classmethod
-    def load_game_data(cls) -> Dict[str, Any]:
-        """Load game data from JSON file."""
-        if cls._game_data is None:
-            try:
-                with open('game_data.json', 'r', encoding='utf-8') as f:
-                    cls._game_data = json.load(f)
-            except (FileNotFoundError, json.JSONDecodeError) as e:
-                logging.warning(f"Could not load game data from JSON: {e}")
-                cls._game_data = cls._get_fallback_game_data()
-        return cls._game_data
-    
-    @classmethod
-    def load_config(cls) -> Dict[str, Any]:
-        """Load configuration from JSON file."""
-        if cls._config is None:
-            try:
-                with open('game_config.json', 'r', encoding='utf-8') as f:
-                    cls._config = json.load(f)
-            except (FileNotFoundError, json.JSONDecodeError) as e:
-                logging.warning(f"Could not load config from JSON: {e}")
-                cls._config = cls._get_fallback_config()
-        return cls._config
-    
-    @classmethod
-    def _get_fallback_story_fragments(cls) -> List[str]:
-        """Fallback story fragments if JSON loading fails."""
-        return [
-            "Emergency fallback story fragment - JSON data could not be loaded.",
-            "This is a backup narrative element to ensure the game remains playable."
-        ]
-    
-    @classmethod
-    def _get_fallback_game_data(cls) -> Dict[str, Any]:
-        """Fallback game data if JSON loading fails."""
-        return {
-            "enemy_types": {"scanner": {"symbol": "S", "cpu": 35, "vision": 5, "movement": "STATIC", "name": "Scanner", "damage": 0}},
-            "exploits": {"shadow_step": {"name": "Shadow Step", "ram": 3, "heat": 30, "range": 6, "category": "stealth", "damage": 0, "targeting": "SINGLE"}},
-            "upgrades": {"ram_boost": {"name": "Memory Expansion", "symbol": "[", "color": (100, 149, 237), "stat_type": "ram", "bonus_amount": 4}},
-            "network_configs": {"1": {"enemies": 15, "shadow_coverage": 0.15, "name": "Corporate Network", "background_detection": 1}}
-        }
-    
-    @classmethod
-    def _get_fallback_config(cls) -> Dict[str, Any]:
-        """Fallback config if JSON loading fails."""
-        return {
-            "screen": {"width": 80, "height": 50},
-            "map": {"width": 50, "height": 50},
-            "gameplay": {"max_heat": 100, "max_detection": 100}
-        }
-
-# Dynamic story fragments loading
-def get_story_fragments() -> List[str]:
-    """Get story fragments from JSON data."""
-    return DataLoader.load_story_fragments()
+# The DataLoader and other classes have been moved to separate modules
+# See: data_loading.py, game_config.py, game_entities.py, etc.
 
 # ============================================================================
-# PERSISTENT DATA STORAGE
+# SAVE/LOAD SYSTEM
 # ============================================================================
-
-class PersistentStorage:
-    """Handles persistent data storage for game progress like story fragments."""
-    
-    SAVE_FILE = "rogue_signal_progress.json"
-    
-    @classmethod
-    def load_progress(cls) -> Dict[str, Any]:
-        """Load persistent game progress from file."""
-        if not os.path.exists(cls.SAVE_FILE):
-            return {
-                "discovered_story_fragments": [],
-                "version": "dev"
-            }
-        
-        try:
-            with open(cls.SAVE_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            import traceback
-            logging.warning(f"Failed to load progress file: {e}")
-            logging.warning(traceback.format_exc())
-            return {
-                "discovered_story_fragments": [],
-                "version": "dev"
-            }
-    
-    @classmethod
-    def save_progress(cls, progress_data: Dict[str, Any]) -> None:
-        """Save persistent game progress to file."""
-        try:
-            with open(cls.SAVE_FILE, 'w', encoding='utf-8') as f:
-                json.dump(progress_data, f, indent=2, ensure_ascii=False)
-        except IOError as e:
-            import traceback
-            logging.error(f"Failed to save progress file: {e}")
-            logging.error(traceback.format_exc())
-
 
 class SaveGameManager:
     """Manages complete game save/load operations."""
@@ -794,7 +692,14 @@ class StoryFragmentManager:
     """Manages story fragment discovery and display."""
     
     def __init__(self):
-        self.progress_data = PersistentStorage.load_progress()
+        # Initialize progress data with defaults (PersistentStorage moved to data_loading module)
+        storage = PersistentStorage()
+        self.progress_data = storage.load_data("rogue_signal_progress.json")
+        if not self.progress_data:
+            self.progress_data = {
+                "discovered_story_fragments": [],
+                "version": "dev"
+            }
         self.discovered_fragments: List[int] = self.progress_data.get("discovered_story_fragments", [])
     
     def get_next_undiscovered_fragment(self) -> Optional[int]:
@@ -819,7 +724,8 @@ class StoryFragmentManager:
         
         # Save progress immediately
         self.progress_data["discovered_story_fragments"] = self.discovered_fragments
-        PersistentStorage.save_progress(self.progress_data)
+        storage = PersistentStorage()
+        storage.save_data("rogue_signal_progress.json", self.progress_data)
         
         return True
     
