@@ -1290,7 +1290,9 @@ def clamp_value(value: float, min_val: float, max_val: float) -> float:
 
 def ensure_color_tuple(color) -> Tuple[int, int, int]:
     """Ensure a color value is a tuple of three integers."""
-    if isinstance(color, str):
+    if color is None:
+        return (255, 255, 255)
+    elif isinstance(color, str):
         # Convert common color names to tuples
         color_names = {
             'red': (255, 0, 0),
@@ -1300,16 +1302,34 @@ def ensure_color_tuple(color) -> Tuple[int, int, int]:
             'black': (0, 0, 0),
             'yellow': (255, 255, 0),
             'cyan': (0, 255, 255),
-            'magenta': (255, 0, 255)
+            'magenta': (255, 0, 255),
+            'crimson': (220, 20, 60),
+            'azure': (30, 144, 255),
+            'emerald': (50, 205, 50),
+            'golden': (255, 215, 0),
+            'violet': (138, 43, 226),
+            'silver': (192, 192, 192)
         }
         return color_names.get(color.lower(), (255, 255, 255))
     elif isinstance(color, (list, tuple)) and len(color) >= 3:
         try:
-            return (int(color[0]), int(color[1]), int(color[2]))
+            # Clamp values to valid RGB range (0-255)
+            r = max(0, min(255, int(color[0])))
+            g = max(0, min(255, int(color[1])))
+            b = max(0, min(255, int(color[2])))
+            return (r, g, b)
         except (ValueError, TypeError):
             return (255, 255, 255)
     else:
         return (255, 255, 255)
+
+def safe_console_print(console, x: int, y: int, text: str, fg=None, bg=None, **kwargs):
+    """Safe wrapper for console.print that ensures colors are tuples."""
+    if fg is not None:
+        fg = ensure_color_tuple(fg)
+    if bg is not None:
+        bg = ensure_color_tuple(bg)
+    return console.print(x, y, text, fg=fg, bg=bg, **kwargs)
 
 
 def parse_coordinate_string(coord_str: str) -> Optional['Position']:
@@ -5446,6 +5466,10 @@ class BaseRenderer(ABC):
     def _draw_bordered_box(self, console: tcod.console.Console, start_x: int, start_y: int, 
                           width: int, height: int, border_color: tuple, bg_color: tuple):
         """Draw a bordered box with background fill."""
+        # Ensure colors are tuples to prevent TCOD ColorRGB errors
+        border_color = ensure_color_tuple(border_color)
+        bg_color = ensure_color_tuple(bg_color)
+        
         # Draw background
         for y in range(start_y, start_y + height):
             for x in range(start_x, start_x + width):
@@ -6609,6 +6633,9 @@ class MapRenderer:
                             bg_color = current_bg if current_bg != (0, 0, 0) else Colors.BLACK
                         except (IndexError, AttributeError):
                             bg_color = Colors.BLACK
+                        
+                        # Ensure bg_color is a proper tuple to prevent TCOD ColorRGB errors
+                        bg_color = ensure_color_tuple(bg_color)
                         
                         # Check if background is bright (sum of RGB values > 30 indicates brighter area)
                         bg_brightness = sum(bg_color) if bg_color != Colors.BLACK else 0
