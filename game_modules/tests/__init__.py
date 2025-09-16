@@ -1,6 +1,5 @@
 """Unit testing framework for game modules."""
 
-from .test_runner import TestRunner, TestCase, TestSuite
-from .test_utilities import MockFactory, TestHelper
+from .test_core_modules import run_core_tests
 
-__all__ = ['TestRunner', 'TestCase', 'TestSuite', 'MockFactory', 'TestHelper']
+__all__ = ['run_core_tests']
