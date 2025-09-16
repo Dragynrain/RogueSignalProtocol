@@ -6708,77 +6708,74 @@ class MainMenu:
         if SaveGameManager.save_exists():
             save_timestamp = SaveGameManager.get_save_timestamp()
             if save_timestamp:
-                if layout['use_background_layout']:
+                if box['use_background_layout']:
                     # Background mode - position within narrow box
-                    menu_center_x = (box_left + box_right) // 2
                     save_text = "Save found"
                     continue_text = "Continue to resume"
                     console.print(
-                        menu_center_x - len(save_text) // 2, start_y + len(self.options) * 2 + 2,
-                        save_text, fg=Colors.GREEN
+                        box['center_x'] - len(save_text) // 2, start_y + len(self.options) * 2 + 2,
+                        save_text, fg=Colors.GREEN, bg=Colors.BLACK
                     )
                     console.print(
-                        menu_center_x - len(continue_text) // 2, start_y + len(self.options) * 2 + 3,
-                        continue_text, fg=Colors.GREEN
+                        box['center_x'] - len(continue_text) // 2, start_y + len(self.options) * 2 + 3,
+                        continue_text, fg=Colors.GREEN, bg=Colors.BLACK
                     )
                     saved_text = f"Saved: {save_timestamp[:16]}"
                     console.print(
-                        menu_center_x - len(saved_text) // 2, start_y + len(self.options) * 2 + 4,
-                        saved_text, fg=Colors.LIGHT_GRAY
+                        box['center_x'] - len(saved_text) // 2, start_y + len(self.options) * 2 + 4,
+                        saved_text, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK
                     )
                 else:
                     # ASCII mode - centered
                     console.print(
                         GameConfig.SCREEN_WIDTH // 2 - 15, start_y + len(self.options) * 2 + 2,
-                        "Save file found - Continue to resume", fg=Colors.GREEN
+                        "Save file found - Continue to resume", fg=Colors.GREEN, bg=Colors.BLACK
                     )
                     console.print(
                         GameConfig.SCREEN_WIDTH // 2 - 12, start_y + len(self.options) * 2 + 3,
-                        f"Last saved: {save_timestamp}", fg=Colors.LIGHT_GRAY
+                        f"Last saved: {save_timestamp}", fg=Colors.LIGHT_GRAY, bg=Colors.BLACK
                     )
         
         # Controls - position based on layout mode
-        if layout['use_background_layout']:
+        if box['use_background_layout']:
             # Background mode - position within narrow box
-            menu_center_x = (box_left + box_right) // 2
             nav_text = "↕/W/S: Navigate"
             select_text = "Enter: Select"
             console.print(
-                menu_center_x - len(nav_text) // 2, GameConfig.SCREEN_HEIGHT - 6,
-                nav_text, fg=(128, 128, 128)
+                box['center_x'] - len(nav_text) // 2, GameConfig.SCREEN_HEIGHT - 6,
+                nav_text, fg=(128, 128, 128), bg=Colors.BLACK
             )
             console.print(
-                menu_center_x - len(select_text) // 2, GameConfig.SCREEN_HEIGHT - 5,
-                select_text, fg=(128, 128, 128)
+                box['center_x'] - len(select_text) // 2, GameConfig.SCREEN_HEIGHT - 5,
+                select_text, fg=(128, 128, 128), bg=Colors.BLACK
             )
         else:
             # ASCII mode - centered
             console.print(
                 GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
-                "UP/DOWN or W/S: Navigate", fg=(128, 128, 128)
+                "UP/DOWN or W/S: Navigate", fg=(128, 128, 128), bg=Colors.BLACK
             )
             console.print(
                 GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
-                "Enter: Select", fg=(128, 128, 128)
+                "Enter: Select", fg=(128, 128, 128), bg=Colors.BLACK
             )
         
         # Story fragments info - position based on layout mode
         if SaveGameManager.save_exists():
             story_manager = StoryFragmentManager()
             discovered, total = story_manager.get_fragment_count()
-            if layout['use_background_layout']:
+            if box['use_background_layout']:
                 # Background mode - position within narrow box
-                menu_center_x = (box_left + box_right) // 2
                 fragment_text = f"Fragments: {discovered}/{total}"
                 console.print(
-                    menu_center_x - len(fragment_text) // 2, GameConfig.SCREEN_HEIGHT - 2,
-                    fragment_text, fg=Colors.CYAN
+                    box['center_x'] - len(fragment_text) // 2, GameConfig.SCREEN_HEIGHT - 2,
+                    fragment_text, fg=Colors.CYAN, bg=Colors.BLACK
                 )
             else:
                 # ASCII mode - centered
                 console.print(
                     GameConfig.SCREEN_WIDTH // 2 - 12, GameConfig.SCREEN_HEIGHT - 2,
-                    f"Story Fragments: {discovered}/{total}", fg=Colors.CYAN
+                    f"Story Fragments: {discovered}/{total}", fg=Colors.CYAN, bg=Colors.BLACK
                 )
     
     
