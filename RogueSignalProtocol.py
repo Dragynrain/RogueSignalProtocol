@@ -626,8 +626,8 @@ class SoundManager:
             logging.error(traceback.format_exc())
             return None
     
-    def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0):
-        """Play background music"""
+    def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0, volume_multiplier: float = 1.0):
+        """Play background music with optional volume multiplier"""
         if not self.enabled:
             pass
             return
@@ -636,14 +636,16 @@ class SoundManager:
             music_path = os.path.join(self.MUSIC_DIRECTORY, filename)
             if os.path.exists(music_path):
                 pygame.mixer.music.load(music_path)
-                pygame.mixer.music.set_volume(self.settings.music_volume * self.settings.master_volume)
+                # Apply volume multiplier for per-track volume adjustments
+                volume = self.settings.music_volume * self.settings.master_volume * volume_multiplier
+                pygame.mixer.music.set_volume(min(1.0, volume))  # Cap at 1.0
                 if fade_in_ms > 0:
                     pygame.mixer.music.play(loops, fade_ms=fade_in_ms)
                 else:
                     pygame.mixer.music.play(loops)
                 self.current_music = filename
                 self.music_playing = True
-                logging.info(f"Playing music: {filename}")
+                logging.info(f"Playing music: {filename} (volume: {volume:.2f})")
             else:
                 logging.warning(f"Music file not found: {music_path}")
         except Exception as e:
@@ -1752,34 +1754,53 @@ class LevelGenerator:
     
     def _place_special_tiles(self, level: int) -> None:
         """Place cooling nodes, CPU recovery nodes, and other special tiles."""
+        import logging
         floor_positions = self._get_all_floor_positions()
         
         if not floor_positions:
+            logging.warning(f"No floor positions available for level {level} special node placement")
             return
         
         # Get level-specific counts from network config
         config = GameConfig.get_network_configs()[level]
         
+        # Debug logging for level 3
+        if level == 3:
+            logging.info(f"Level 3 special node placement - config: {config}")
+            logging.info(f"Available floor positions: {len(floor_positions)}")
+        
         # Place cooling nodes
-        for _ in range(config.get('cooling_nodes', 3)):
+        cooling_count = config.get('cooling_nodes', 3)
+        for i in range(cooling_count):
             if floor_positions:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.cooling_nodes.add(pos)
+                if level == 3:
+                    logging.info(f"Placed cooling node {i+1}/{cooling_count} at {pos}")
         
         # Place CPU recovery nodes  
-        for _ in range(config.get('cpu_nodes', 2)):
+        cpu_count = config.get('cpu_nodes', 2)
+        for i in range(cpu_count):
             if floor_positions:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.cpu_recovery_nodes.add(pos)
+                if level == 3:
+                    logging.info(f"Placed CPU node {i+1}/{cpu_count} at {pos}")
         
         # Place ghost nodes (detection reduction)
-        for _ in range(config.get('ghost_nodes', 2)):
+        ghost_count = config.get('ghost_nodes', 2)
+        for i in range(ghost_count):
             if floor_positions:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.ghost_nodes.add(pos)
+                if level == 3:
+                    logging.info(f"Placed ghost node {i+1}/{ghost_count} at {pos}")
+                    
+        if level == 3:
+            logging.info(f"Level 3 special nodes placed - Cooling: {len(self.game_map.cooling_nodes)}, CPU: {len(self.game_map.cpu_recovery_nodes)}, Ghost: {len(self.game_map.ghost_nodes)}")
     
     def _place_gateway(self) -> None:
         """Place the exit gateway far from spawn but with some randomness."""
@@ -2143,7 +2164,7 @@ class Game:
             if item_data["type"] == "data_patch":
                 from RogueSignalProtocol import DataPatch
                 item = DataPatch(
-                    color=item_data["color"],
+                    color=ensure_color_tuple(item_data["color"]),
                     effect=item_data["effect"],
                     name=item_data["name"],
                     quantity=item_data.get("quantity", 1)
@@ -2177,7 +2198,7 @@ class Game:
                 continue
             x, y = position.x, position.y
             patch = DataPatch(
-                color=patch_data["color"],
+                color=ensure_color_tuple(patch_data["color"]),
                 effect=patch_data["effect"],
                 name=patch_data["name"],
                 quantity=patch_data["quantity"]
@@ -3164,7 +3185,7 @@ class Game:
             if self._is_valid_patch_placement(position):
                 color = random.choice(list(self.data_patch_effects.keys()))
                 effect, desc = self.data_patch_effects[color]
-                patch = DataPatch(color, effect, f"{color.title()} Code", desc)
+                patch = DataPatch(ensure_color_tuple(color), effect, f"{color.title()} Code", desc)
                 
                 # Check if player has already discovered this color effect
                 # by looking at existing inventory items
@@ -3706,16 +3727,23 @@ class ExploitSystem:
         self.game.sound_manager.play_sound("exploit_threat_scan")
         self.game.game_state.threat_scan_turns = 5  # Extended duration for tactical advantage
         
-        # Threat scan reveals entire map layout
-        for x in range(GameConfig.MAP_WIDTH):
-            for y in range(GameConfig.MAP_HEIGHT):
-                self.game.game_map.explored_tiles.add((x, y))
-        
-        # Update all enemy positions in memory
+        # Threat scan reveals only enemy positions and immediate surroundings, not entire map
+        enemy_count = 0
         for enemy in self.game.enemies:
+            # Update enemy position in memory
             self.game.game_map.last_known_enemy_positions[enemy.id] = (enemy.position, self.game.turn)
+            
+            # Reveal a small area around each enemy (3x3) to show their local context
+            for dx in range(-1, 2):
+                for dy in range(-1, 2):
+                    reveal_x = enemy.position.x + dx
+                    reveal_y = enemy.position.y + dy
+                    if (0 <= reveal_x < GameConfig.MAP_WIDTH and 
+                        0 <= reveal_y < GameConfig.MAP_HEIGHT):
+                        self.game.game_map.explored_tiles.add((reveal_x, reveal_y))
+            enemy_count += 1
         
-        self.game.message_log.add_message("FULL NETWORK SCAN ACTIVE - All systems revealed!")
+        self.game.message_log.add_message(f"THREAT SCAN ACTIVE - {enemy_count} hostiles detected!")
         return True
 
     def _execute_log_wiper(self) -> bool:
@@ -5049,13 +5077,13 @@ class UIRenderer:
         for y in range(GameConfig.SCREEN_HEIGHT):
             console.print(GameConfig.GAME_AREA_WIDTH, y, '|', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
-        # Log header
-        console.print(GameConfig.GAME_AREA_WIDTH + 1, 0, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
-        console.print(GameConfig.GAME_AREA_WIDTH + 1, 1, "-" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+        # Log header - moved down one line to avoid covering status bar
+        console.print(GameConfig.GAME_AREA_WIDTH + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
+        console.print(GameConfig.GAME_AREA_WIDTH + 1, 2, "-" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
-        # Clear log area
+        # Clear log area - start from line 3 to account for header repositioning
         for x in range(GameConfig.GAME_AREA_WIDTH + 1, GameConfig.SCREEN_WIDTH):
-            for y in range(2, GameConfig.SCREEN_HEIGHT):
+            for y in range(3, GameConfig.SCREEN_HEIGHT):
                 console.print(x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
         
         # Process and display messages
@@ -5064,11 +5092,11 @@ class UIRenderer:
     def _render_log_messages(self, console: tcod.console.Console, game: Game):
         """Render log messages with proper wrapping."""
         wrapped_lines = self._wrap_messages(game.message_log.messages)
-        log_height = GameConfig.SCREEN_HEIGHT - 2
+        log_height = GameConfig.SCREEN_HEIGHT - 3  # Adjusted for header repositioning
         visible_lines = wrapped_lines[-log_height:] if len(wrapped_lines) > log_height else wrapped_lines
         
         for i, (line, color) in enumerate(visible_lines):
-            y_pos = 2 + i
+            y_pos = 3 + i  # Start from line 3 to avoid header
             if y_pos < GameConfig.SCREEN_HEIGHT:
                 console.print(GameConfig.GAME_AREA_WIDTH + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
     
@@ -7521,7 +7549,7 @@ def handle_menu_navigation(console, context, menus, settings):
     # Start main menu music
     menu_sound_manager = SoundManager(settings)
     try:
-        menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000)
+        menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000, volume_multiplier=1.3)
     except Exception as e:
         logging.warning(f"Could not play main menu music: {e}")
         # Continue without music
