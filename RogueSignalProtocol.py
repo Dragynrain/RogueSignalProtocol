@@ -191,91 +191,91 @@ class SaveGameManager:
             try:
                 # Gather all game state data
                 save_data = {
-                "version": "dev",
-                "timestamp": time.time(),
-                
-                # Game state
-                "level": game.level,
-                "turn": game.turn,
-                "game_over": game.game_over,
-                "admin_spawned": game.admin_spawned,
-                "dungeon_seed": game.game_state.dungeon_seed,
-                
-                # Player state
-                "player": {
-                    "x": game.player.x,
-                    "y": game.player.y,
-                    "last_x": game.player.last_position.x,
-                    "last_y": game.player.last_position.y,
-                    "cpu": game.player.cpu,
-                    "max_cpu": game.player.max_cpu,
-                    "heat": game.player.heat,
-                    "max_heat": game.player.max_heat,
-                    "detection": game.player.detection,
-                    "ram_total": game.player.ram_total,
-                    "speed_moves_remaining": game.player.speed_moves_remaining,
-                    "temporary_effects": dict(game.player.temporary_effects),
-                    "equipped_exploits": game.player.inventory_manager.equipped_exploits.copy(),
-                    "max_equipped_exploits": game.player.inventory_manager.max_equipped_exploits,
-                    "inventory_items": cls._serialize_inventory(game.player.inventory_manager.items)
-                },
-                
-                # Game effects and state
-                "game_effects": {
-                    "threat_scan_turns": game.game_state.threat_scan_turns,
-                    "noise_locations": [{"x": pos.x, "y": pos.y} for pos in game.game_state.noise_locations],
-                    "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in game.game_state.distraction_points.items()}
-                },
-                
-                # Map state (items and special locations only - layout regenerated)
-                "map_state": {
-                    "data_patches": cls._serialize_data_patches(game.game_map.data_patches),
-                    "exploit_pickups": cls._serialize_exploit_pickups(game.game_map.exploit_pickups),
-                    "permanent_upgrades": {f"{pos[0]},{pos[1]}": upgrade_key for pos, upgrade_key in game.game_map.permanent_upgrades.items()},
-                    "story_fragments": {f"{pos[0]},{pos[1]}": fragment.fragment_index for pos, fragment in game.game_map.story_fragments.items()},
-                    "gateway": {"x": game.game_map.gateway.x, "y": game.game_map.gateway.y} if game.game_map.gateway else None,
-                    "explored_tiles": [f"{x},{y}" for x, y in game.game_map.explored_tiles],
-                    "last_known_enemy_positions": {str(enemy_id): {"x": pos.x, "y": pos.y, "turn": turn} for enemy_id, (pos, turn) in game.game_map.last_known_enemy_positions.items()}
-                },
-                
-                # Enemies
-                "enemies": cls._serialize_enemies(game.enemies),
-                "enemy_next_id": getattr(Enemy, '_next_id', 1),
-                
-                # Data patch effects for this run
-                "data_patch_effects": game.data_patch_effects,
-                "discovered_code_effects": game.discovered_code_effects,
-                
-                # Overclocking state
-                "overclock_confirmation": getattr(game, 'overclock_confirmation', False),
-                "overclock_exploit": getattr(game, 'overclock_exploit', None),
-                
-                # UI state (optional - for better user experience)
-                "ui_state": {
-                    "inventory_selection": game.inventory_selection,
-                    "lore_viewer_selection": game.lore_viewer_selection
+                    "version": "dev",
+                    "timestamp": time.time(),
+                    
+                    # Game state
+                    "level": game.level,
+                    "turn": game.turn,
+                    "game_over": game.game_over,
+                    "admin_spawned": game.admin_spawned,
+                    "dungeon_seed": game.game_state.dungeon_seed,
+                    
+                    # Player state
+                    "player": {
+                        "x": game.player.x,
+                        "y": game.player.y,
+                        "last_x": game.player.last_position.x,
+                        "last_y": game.player.last_position.y,
+                        "cpu": game.player.cpu,
+                        "max_cpu": game.player.max_cpu,
+                        "heat": game.player.heat,
+                        "max_heat": game.player.max_heat,
+                        "detection": game.player.detection,
+                        "ram_total": game.player.ram_total,
+                        "speed_moves_remaining": game.player.speed_moves_remaining,
+                        "temporary_effects": dict(game.player.temporary_effects),
+                        "equipped_exploits": game.player.inventory_manager.equipped_exploits.copy(),
+                        "max_equipped_exploits": game.player.inventory_manager.max_equipped_exploits,
+                        "inventory_items": cls._serialize_inventory(game.player.inventory_manager.items)
+                    },
+                    
+                    # Game effects and state
+                    "game_effects": {
+                        "threat_scan_turns": game.game_state.threat_scan_turns,
+                        "noise_locations": [{"x": pos.x, "y": pos.y} for pos in game.game_state.noise_locations],
+                        "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in game.game_state.distraction_points.items()}
+                    },
+                    
+                    # Map state (items and special locations only - layout regenerated)
+                    "map_state": {
+                        "data_patches": cls._serialize_data_patches(game.game_map.data_patches),
+                        "exploit_pickups": cls._serialize_exploit_pickups(game.game_map.exploit_pickups),
+                        "permanent_upgrades": {f"{pos[0]},{pos[1]}": upgrade_key for pos, upgrade_key in game.game_map.permanent_upgrades.items()},
+                        "story_fragments": {f"{pos[0]},{pos[1]}": fragment.fragment_index for pos, fragment in game.game_map.story_fragments.items()},
+                        "gateway": {"x": game.game_map.gateway.x, "y": game.game_map.gateway.y} if game.game_map.gateway else None,
+                        "explored_tiles": [f"{x},{y}" for x, y in game.game_map.explored_tiles],
+                        "last_known_enemy_positions": {str(enemy_id): {"x": pos.x, "y": pos.y, "turn": turn} for enemy_id, (pos, turn) in game.game_map.last_known_enemy_positions.items()}
+                    },
+                    
+                    # Enemies
+                    "enemies": cls._serialize_enemies(game.enemies),
+                    "enemy_next_id": getattr(Enemy, '_next_id', 1),
+                    
+                    # Data patch effects for this run
+                    "data_patch_effects": game.data_patch_effects,
+                    "discovered_code_effects": game.discovered_code_effects,
+                    
+                    # Overclocking state
+                    "overclock_confirmation": getattr(game, 'overclock_confirmation', False),
+                    "overclock_exploit": getattr(game, 'overclock_exploit', None),
+                    
+                    # UI state (optional - for better user experience)
+                    "ui_state": {
+                        "inventory_selection": game.inventory_selection,
+                        "lore_viewer_selection": game.lore_viewer_selection
+                    }
                 }
-            }
             
-            # Write to temporary file first, then atomic rename for safety
-            temp_file = cls.SAVE_FILE + '.tmp'
-            try:
-                with open(temp_file, 'w', encoding='utf-8') as f:
-                    json.dump(save_data, f, indent=2, ensure_ascii=False)
-                
-                # Atomic rename to prevent corruption
-                import shutil
-                shutil.move(temp_file, cls.SAVE_FILE)
-                
-                logging.info("Game saved successfully")
-                return True
-            finally:
-                # Clean up temp file if it exists
-                if os.path.exists(temp_file):
-                    try:
-                        os.remove(temp_file)
-                    except:
-                        pass
+                # Write to temporary file first, then atomic rename for safety
+                temp_file = cls.SAVE_FILE + '.tmp'
+                try:
+                    with open(temp_file, 'w', encoding='utf-8') as f:
+                        json.dump(save_data, f, indent=2, ensure_ascii=False)
+                    
+                    # Atomic rename to prevent corruption
+                    import shutil
+                    shutil.move(temp_file, cls.SAVE_FILE)
+                    
+                    logging.info("Game saved successfully")
+                    return True
+                finally:
+                    # Clean up temp file if it exists
+                    if os.path.exists(temp_file):
+                        try:
+                            os.remove(temp_file)
+                        except:
+                            pass
                 
             except (IOError, OSError) as e:
                 logging.warning(f"Save attempt {attempt + 1} failed with I/O error: {e}")
@@ -6484,6 +6484,112 @@ class MainMenu:
                 'layout_zone': 'center'
             }
     
+    def _render_right_side_box(self, console: tcod.console.Console, height: int, border_color: tuple, y_offset: int = 0):
+        """Render a right-side menu box with consistent positioning and styling.
+        
+        Args:
+            console: The console to render to
+            height: Height of the box
+            border_color: Color for the box border
+            y_offset: Vertical offset for positioning (0 = centered)
+            
+        Returns:
+            dict: Box dimensions and positions for content rendering
+        """
+        layout = self._get_menu_layout_params()
+        
+        if layout['use_background_layout']:
+            # Graphics mode - narrow box on right side
+            box_width = 28
+            box_right = GameConfig.SCREEN_WIDTH - 2
+            box_left = box_right - box_width
+            
+            if y_offset == 0:
+                # Centered positioning
+                box_top = (GameConfig.SCREEN_HEIGHT - height) // 2
+            else:
+                # Custom offset
+                box_top = y_offset
+                
+            box_bottom = box_top + height - 1
+            
+            # Ensure box fits within screen bounds
+            box_top = max(1, min(box_top, GameConfig.SCREEN_HEIGHT - height - 1))
+            box_bottom = box_top + height - 1
+            
+            # Draw black background
+            console.draw_rect(x=box_left, y=box_top, width=box_width, height=height,
+                             ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0), 
+                             bg_blend=tcod.constants.BKGND_SET)
+            
+            # Draw border with Unicode box characters
+            for y in range(box_top, box_bottom + 1):
+                console.print(box_left, y, "│", fg=border_color, bg=Colors.BLACK)
+                console.print(box_right, y, "│", fg=border_color, bg=Colors.BLACK)
+            for x in range(box_left, box_right + 1):
+                console.print(x, box_top, "─", fg=border_color, bg=Colors.BLACK)
+                console.print(x, box_bottom, "─", fg=border_color, bg=Colors.BLACK)
+            # Box corners
+            console.print(box_left, box_top, "┌", fg=border_color, bg=Colors.BLACK)
+            console.print(box_right, box_top, "┐", fg=border_color, bg=Colors.BLACK)
+            console.print(box_left, box_bottom, "└", fg=border_color, bg=Colors.BLACK)
+            console.print(box_right, box_bottom, "┘", fg=border_color, bg=Colors.BLACK)
+            
+            return {
+                'left': box_left,
+                'right': box_right,
+                'top': box_top,
+                'bottom': box_bottom,
+                'width': box_width,
+                'height': height,
+                'center_x': (box_left + box_right) // 2,
+                'content_left': box_left + 1,
+                'content_right': box_right - 1,
+                'content_top': box_top + 1,
+                'content_width': box_width - 2,
+                'use_background_layout': True
+            }
+        else:
+            # ASCII mode - larger centered box
+            box_width = 50
+            box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
+            box_right = box_left + box_width - 1
+            
+            if y_offset == 0:
+                box_top = (GameConfig.SCREEN_HEIGHT - height) // 2
+            else:
+                box_top = y_offset
+                
+            box_bottom = box_top + height - 1
+            
+            # Draw black background
+            console.draw_rect(x=box_left, y=box_top, width=box_width, height=height,
+                             ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0), 
+                             bg_blend=tcod.constants.BKGND_SET)
+            
+            # Draw simple ASCII border
+            for x in range(box_left, box_left + box_width):
+                console.print(x, box_top, '=', fg=border_color, bg=Colors.BLACK)
+                console.print(x, box_bottom, '=', fg=border_color, bg=Colors.BLACK)
+            for y in range(box_top, box_bottom + 1):
+                console.print(box_left, y, '|', fg=border_color, bg=Colors.BLACK)
+                console.print(box_right, y, '|', fg=border_color, bg=Colors.BLACK)
+            
+            return {
+                'left': box_left,
+                'right': box_right,
+                'top': box_top,
+                'bottom': box_bottom,
+                'width': box_width,
+                'height': height,
+                'center_x': (box_left + box_right) // 2,
+                'content_left': box_left + 2,
+                'content_right': box_right - 2,
+                'content_top': box_top + 1,
+                'content_width': box_width - 4,
+                'use_background_layout': False
+            }
+    
     def _calculate_background_aware_layout(self):
         """Calculate sophisticated layout for background mode based on window dimensions."""
         # Get actual window dimensions if available
@@ -6533,73 +6639,51 @@ class MainMenu:
     
     def _render_enhanced_menu(self, console: tcod.console.Console) -> None:
         """Render an enhanced menu with dynamic positioning based on background state."""
-        # Get layout parameters
-        layout = self._get_menu_layout_params()
+        # Calculate menu height based on content
+        menu_height = GameConfig.SCREEN_HEIGHT - 4  # Full height for main menu
         
-        # Calculate narrow menu box coordinates for graphics mode
-        if layout['use_background_layout']:
-            menu_box_width = 28  # Much narrower menu box
-            box_right = GameConfig.SCREEN_WIDTH - 2  # Right edge with small margin
-            box_left = box_right - menu_box_width    # Left edge of narrow box
-            box_top = 3
-            box_bottom = GameConfig.SCREEN_HEIGHT - 1
-            menu_center_x = (box_left + box_right) // 2
+        # Render the right-side box using common method
+        box = self._render_right_side_box(console, menu_height, Colors.CYAN, y_offset=3)
         
         # Title with some ASCII art decoration
         title = "ROGUE SIGNAL PROTOCOL"
         subtitle = "Cyberpunk Stealth Exfiltration"
         
-        if layout['use_background_layout']:
-            
-            # Draw narrow containing box border
-            for y in range(box_top, box_bottom + 1):
-                console.print(box_left, y, "│", fg=Colors.CYAN)
-                console.print(box_right, y, "│", fg=Colors.CYAN)
-            for x in range(box_left, box_right + 1):
-                console.print(x, box_top, "─", fg=Colors.CYAN)
-                console.print(x, box_bottom, "─", fg=Colors.CYAN)
-            # Box corners
-            console.print(box_left, box_top, "┌", fg=Colors.CYAN)
-            console.print(box_right, box_top, "┐", fg=Colors.CYAN)
-            console.print(box_left, box_bottom, "└", fg=Colors.CYAN)
-            console.print(box_right, box_bottom, "┘", fg=Colors.CYAN)
-            
+        if box['use_background_layout']:
             # Title content within narrow box - split into multiple lines to fit
-            menu_center_x = (box_left + box_right) // 2
-            console.print(menu_center_x - 10, 6, "=" * 20, fg=Colors.CYAN)
+            console.print(box['center_x'] - 10, 6, "=" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
             # Split title into two lines
-            console.print(menu_center_x - 6, 8, "ROGUE SIGNAL", fg=Colors.CYAN)
-            console.print(menu_center_x - 4, 9, "PROTOCOL", fg=Colors.CYAN)
+            console.print(box['center_x'] - 6, 8, "ROGUE SIGNAL", fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(box['center_x'] - 4, 9, "PROTOCOL", fg=Colors.CYAN, bg=Colors.BLACK)
             # Split subtitle into two lines
-            console.print(menu_center_x - 8, 11, "Cyberpunk Stealth", fg=Colors.CYAN)
-            console.print(menu_center_x - 6, 12, "Exfiltration", fg=Colors.CYAN)
-            console.print(menu_center_x - 10, 13, "=" * 20, fg=Colors.CYAN)
+            console.print(box['center_x'] - 8, 11, "Cyberpunk Stealth", fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(box['center_x'] - 6, 12, "Exfiltration", fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(box['center_x'] - 10, 13, "=" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
         else:
             # ASCII mode - centered positioning
-            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 6, "=" * 40, fg=Colors.CYAN)
-            console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN)
-            console.print(GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN)
-            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 10, "=" * 40, fg=Colors.CYAN)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 6, "=" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 10, "=" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
         
         # Version and build info  
-        if layout['use_background_layout']:
+        if box['use_background_layout']:
             # Background mode - position within narrow box
-            menu_center_x = (box_left + box_right) // 2
             build_info = "Alpha Build"
             author_info = "by Adam Forster"
             console.print(
-                menu_center_x - len(build_info) // 2, 15,
-                build_info, fg=(128, 128, 128)
+                box['center_x'] - len(build_info) // 2, 15,
+                build_info, fg=(128, 128, 128), bg=Colors.BLACK
             )
             console.print(
-                menu_center_x - len(author_info) // 2, 16,
-                author_info, fg=(128, 128, 128)
+                box['center_x'] - len(author_info) // 2, 16,
+                author_info, fg=(128, 128, 128), bg=Colors.BLACK
             )
         else:
             # ASCII mode - centered
             console.print(
                 GameConfig.SCREEN_WIDTH // 2 - 13, 12,
-                "Alpha Build by Adam Forster", fg=(128, 128, 128)
+                "Alpha Build by Adam Forster", fg=(128, 128, 128), bg=Colors.BLACK
             )
         
         # Menu options
@@ -6608,17 +6692,16 @@ class MainMenu:
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             prefix = "> " if i == self.selected_option else "  "
             
-            if layout['use_background_layout']:
+            if box['use_background_layout']:
                 # Background mode - centered within narrow box
-                menu_center_x = (box_left + box_right) // 2
-                x_pos = menu_center_x - len(option) // 2 - 1
+                x_pos = box['center_x'] - len(option) // 2 - 1
             else:
                 # ASCII mode - centered
                 x_pos = GameConfig.SCREEN_WIDTH // 2 - len(option) // 2 - 1
                 
             console.print(
                 x_pos, start_y + i * 2,
-                f"{prefix}{option}", fg=color
+                f"{prefix}{option}", fg=color, bg=Colors.BLACK
             )
         
         # Save file info
@@ -6701,79 +6784,73 @@ class MainMenu:
     
     def _render_warning_dialog(self, console: tcod.console.Console) -> None:
         """Render save deletion warning dialog with background-aware positioning."""
-        # Get layout parameters for background-aware positioning
-        layout = self._get_menu_layout_params()
+        # Calculate dialog height
+        dialog_height = 22
         
-        # Dialog box
-        dialog_width = 50
-        dialog_height = 18
-        
-        if layout['use_background_layout']:
-            # Position dialog to work with background layout based on layout zone
-            layout_zone = layout.get('layout_zone', 'right')
-            
-            if layout_zone == 'right':
-                # Wide window - place dialog on the right side of screen
-                start_x = GameConfig.SCREEN_WIDTH - dialog_width - 2
-                start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
-            elif layout_zone == 'upper':
-                # Tall window - place dialog on the right side
-                start_x = GameConfig.SCREEN_WIDTH - dialog_width - 2
-                start_y = int(GameConfig.SCREEN_HEIGHT * 0.6)
-            else:  # 'right_center'
-                # Square window - place dialog on the right side
-                start_x = GameConfig.SCREEN_WIDTH - dialog_width - 2
-                start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
-            
-            # Ensure dialog fits within screen bounds
-            start_x = max(1, min(start_x, GameConfig.SCREEN_WIDTH - dialog_width - 1))
-            start_y = max(1, min(start_y, GameConfig.SCREEN_HEIGHT - dialog_height - 1))
-        else:
-            # ASCII mode - place dialog on the right side
-            start_x = GameConfig.SCREEN_WIDTH - dialog_width - 2
-            start_y = (GameConfig.SCREEN_HEIGHT - dialog_height) // 2
-        
-        # Draw dialog background - black background for dialog area only
-        console.draw_rect(x=start_x, y=start_y, width=dialog_width, height=dialog_height,
-                         ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0), 
-                         bg_blend=tcod.constants.BKGND_SET)
-        
-        # Draw border
-        for x in range(start_x, start_x + dialog_width):
-            console.print(x, start_y, '=', fg=Colors.RED, bg=Colors.BLACK)
-            console.print(x, start_y + dialog_height - 1, '=', fg=Colors.RED, bg=Colors.BLACK)
-        for y in range(start_y, start_y + dialog_height):
-            console.print(start_x, y, '|', fg=Colors.RED, bg=Colors.BLACK)
-            console.print(start_x + dialog_width - 1, y, '|', fg=Colors.RED, bg=Colors.BLACK)
+        # Render the right-side box using common method
+        box = self._render_right_side_box(console, dialog_height, Colors.RED)
         
         # Title
-        console.print(start_x + dialog_width // 2 - 7, start_y + 2, "WARNING", fg=Colors.RED, bg=Colors.BLACK)
+        console.print(box['center_x'] - 3, box['top'] + 2, "WARNING", fg=Colors.RED, bg=Colors.BLACK)
         
-        # Message
-        messages = [
-            "Starting a new game will delete your",
-            "current save file permanently.",
-            "",
-            "This will erase all progress including:",
-            "• Current level and character state",
-            "• Inventory and upgrades", 
-            "• Story fragments remain safe",
-            "",
-            "Are you sure you want to continue?"
-        ]
+        # Message - adjust for narrow box
+        if box['use_background_layout']:
+            # Narrow box - break text into shorter lines
+            messages = [
+                "Starting a new game",
+                "will delete your save",
+                "file permanently.",
+                "",
+                "This will erase:",
+                "• Current level",
+                "• Character state", 
+                "• Inventory/upgrades",
+                "• Story fragments",
+                "  remain safe",
+                "",
+                "Are you sure you",
+                "want to continue?"
+            ]
+        else:
+            # ASCII mode - use original longer lines
+            messages = [
+                "Starting a new game will delete your",
+                "current save file permanently.",
+                "",
+                "This will erase all progress including:",
+                "• Current level and character state",
+                "• Inventory and upgrades", 
+                "• Story fragments remain safe",
+                "",
+                "Are you sure you want to continue?"
+            ]
         
         for i, msg in enumerate(messages):
-            console.print(start_x + 2, start_y + 4 + i, msg, fg=Colors.WHITE, bg=Colors.BLACK)
+            msg_x = box['content_left'] + 1 if len(msg) <= box['content_width'] else box['content_left']
+            console.print(msg_x, box['top'] + 4 + i, msg, fg=Colors.WHITE, bg=Colors.BLACK)
         
         # Options
         options = ["Yes, Delete Save", "No, Go Back"]
+        options_start_y = box['bottom'] - 4
+        
         for i, option in enumerate(options):
             color = Colors.RED if i == self.warning_selection and i == 0 else Colors.YELLOW if i == self.warning_selection else Colors.WHITE
             prefix = "> " if i == self.warning_selection else "  "
+            
+            if box['use_background_layout']:
+                # Narrow box - shorter option text and center alignment
+                short_options = ["Yes, Delete", "No, Go Back"]
+                option_text = short_options[i]
+                option_x = box['center_x'] - len(option_text) // 2 - 1
+            else:
+                # ASCII mode - use full option text
+                option_text = option
+                option_x = box['center_x'] - len(option_text) // 2 - 1
+            
             console.print(
-                start_x + dialog_width // 2 - len(option) // 2 - 1, 
-                start_y + dialog_height - 3 + i,
-                f"{prefix}{option}", fg=color, bg=Colors.BLACK
+                option_x, 
+                options_start_y + i,
+                f"{prefix}{option_text}", fg=color, bg=Colors.BLACK
             )
     
     def handle_input(self, event) -> str:
@@ -7100,6 +7177,7 @@ class SettingsMenu:
     def __init__(self, settings: GameSettings, menu_background=None):
         self.settings = settings
         self.menu_background = menu_background  # Reference to background manager
+        self.background = menu_background  # Alias for consistency with MainMenu
         self.selected_option = 0
         self.options = [
             {"name": "Master Volume", "type": "volume", "key": "master"},
@@ -7110,58 +7188,275 @@ class SettingsMenu:
             {"name": "Back", "type": "action"}
         ]
     
+    def _has_background(self) -> bool:
+        """Check if we have a valid background."""
+        return (self.background and 
+                hasattr(self.background, 'is_active') and 
+                self.background.is_active())
+    
+    def _get_menu_layout_params(self):
+        """Calculate menu positioning based on graphics mode, window state, and optimal visibility."""
+        if self._has_background():
+            # Graphics mode with background - calculate optimal positioning
+            return self._calculate_background_aware_layout()
+        else:
+            # ASCII mode or no background - center everything
+            return {
+                'title_x': GameConfig.SCREEN_WIDTH // 2,
+                'menu_x': GameConfig.SCREEN_WIDTH // 2,
+                'use_background_layout': False,
+                'layout_zone': 'center'
+            }
+    
+    def _calculate_background_aware_layout(self):
+        """Calculate sophisticated layout for background mode based on window dimensions."""
+        # Get actual window dimensions if available
+        window_width, window_height = 800, 800  # Default fallback
+        
+        if (self.background and 
+            self.background.window_manager):
+            try:
+                window_width, window_height = self.background.window_manager.get_window_pixel_dimensions()
+            except:
+                pass  # Use defaults if window detection fails
+        
+        # Calculate dynamic positioning based on window aspect ratio and size
+        aspect_ratio = window_width / window_height if window_height > 0 else 1.0
+        
+        # Position menu to avoid overlap with left-aligned background graphics
+        # Since image is left-aligned, menu needs to be positioned far right
+        if aspect_ratio > 1.2:
+            # Wide window - use far right positioning to avoid image overlap
+            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.85)  # Move further right
+            layout_zone = 'right'
+        elif aspect_ratio < 0.8:
+            # Very tall window - still avoid left side overlap
+            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.8)   # Right side, not center
+            layout_zone = 'upper'
+        else:
+            # Square-ish window - use far right positioning
+            text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.82)  # Move further right
+            layout_zone = 'right_center'
+        
+        # Ensure minimum margins
+        min_margin = 5
+        max_x = GameConfig.SCREEN_WIDTH - min_margin - 20  # 20 chars for longest menu option
+        text_x_offset = min(text_x_offset, max_x)
+        text_x_offset = max(text_x_offset, min_margin + 10)
+        
+        layout = {
+            'title_x': text_x_offset - 10,
+            'menu_x': text_x_offset,
+            'use_background_layout': True,
+            'layout_zone': layout_zone,
+            'window_aspect': aspect_ratio,
+            'window_size': (window_width, window_height)
+        }
+        
+        return layout
+    
+    def _render_right_side_box(self, console: tcod.console.Console, height: int, border_color: tuple, y_offset: int = 0):
+        """Render a right-side menu box with consistent positioning and styling.
+        
+        Args:
+            console: The console to render to
+            height: Height of the box
+            border_color: Color for the box border
+            y_offset: Vertical offset for positioning (0 = centered)
+            
+        Returns:
+            dict: Box dimensions and positions for content rendering
+        """
+        layout = self._get_menu_layout_params()
+        
+        if layout['use_background_layout']:
+            # Graphics mode - narrow box on right side
+            box_width = 28
+            box_right = GameConfig.SCREEN_WIDTH - 2
+            box_left = box_right - box_width
+            
+            if y_offset == 0:
+                # Centered positioning
+                box_top = (GameConfig.SCREEN_HEIGHT - height) // 2
+            else:
+                # Custom offset
+                box_top = y_offset
+                
+            box_bottom = box_top + height - 1
+            
+            # Ensure box fits within screen bounds
+            box_top = max(1, min(box_top, GameConfig.SCREEN_HEIGHT - height - 1))
+            box_bottom = box_top + height - 1
+            
+            # Draw black background
+            console.draw_rect(x=box_left, y=box_top, width=box_width, height=height,
+                             ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0), 
+                             bg_blend=tcod.constants.BKGND_SET)
+            
+            # Draw border with Unicode box characters
+            for y in range(box_top, box_bottom + 1):
+                console.print(box_left, y, "│", fg=border_color, bg=Colors.BLACK)
+                console.print(box_right, y, "│", fg=border_color, bg=Colors.BLACK)
+            for x in range(box_left, box_right + 1):
+                console.print(x, box_top, "─", fg=border_color, bg=Colors.BLACK)
+                console.print(x, box_bottom, "─", fg=border_color, bg=Colors.BLACK)
+            # Box corners
+            console.print(box_left, box_top, "┌", fg=border_color, bg=Colors.BLACK)
+            console.print(box_right, box_top, "┐", fg=border_color, bg=Colors.BLACK)
+            console.print(box_left, box_bottom, "└", fg=border_color, bg=Colors.BLACK)
+            console.print(box_right, box_bottom, "┘", fg=border_color, bg=Colors.BLACK)
+            
+            return {
+                'left': box_left,
+                'right': box_right,
+                'top': box_top,
+                'bottom': box_bottom,
+                'width': box_width,
+                'height': height,
+                'center_x': (box_left + box_right) // 2,
+                'content_left': box_left + 1,
+                'content_right': box_right - 1,
+                'content_top': box_top + 1,
+                'content_width': box_width - 2,
+                'use_background_layout': True
+            }
+        else:
+            # ASCII mode - larger centered box
+            box_width = 50
+            box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
+            box_right = box_left + box_width - 1
+            
+            if y_offset == 0:
+                box_top = (GameConfig.SCREEN_HEIGHT - height) // 2
+            else:
+                box_top = y_offset
+                
+            box_bottom = box_top + height - 1
+            
+            # Draw black background
+            console.draw_rect(x=box_left, y=box_top, width=box_width, height=height,
+                             ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0), 
+                             bg_blend=tcod.constants.BKGND_SET)
+            
+            # Draw simple ASCII border
+            for x in range(box_left, box_left + box_width):
+                console.print(x, box_top, '=', fg=border_color, bg=Colors.BLACK)
+                console.print(x, box_bottom, '=', fg=border_color, bg=Colors.BLACK)
+            for y in range(box_top, box_bottom + 1):
+                console.print(box_left, y, '|', fg=border_color, bg=Colors.BLACK)
+                console.print(box_right, y, '|', fg=border_color, bg=Colors.BLACK)
+            
+            return {
+                'left': box_left,
+                'right': box_right,
+                'top': box_top,
+                'bottom': box_bottom,
+                'width': box_width,
+                'height': height,
+                'center_x': (box_left + box_right) // 2,
+                'content_left': box_left + 2,
+                'content_right': box_right - 2,
+                'content_top': box_top + 1,
+                'content_width': box_width - 4,
+                'use_background_layout': False
+            }
+    
     def render(self, console: tcod.console.Console) -> None:
         """Render the settings menu."""
         console.clear()
         
+        # Calculate menu height
+        menu_height = 25  # Enough for title, options, and instructions
+        
+        # Render the right-side box using common method
+        box = self._render_right_side_box(console, menu_height, Colors.WHITE)
         
         # Title
         title = "SETTINGS"
-        console.print(
-            GameConfig.SCREEN_WIDTH // 2 - len(title) // 2,
-            5,
-            title,
-            Colors.WHITE
-        )
+        if box['use_background_layout']:
+            console.print(box['center_x'] - len(title) // 2, box['top'] + 2, title, fg=Colors.WHITE, bg=Colors.BLACK)
+        else:
+            console.print(box['center_x'] - len(title) // 2, box['top'] + 2, title, fg=Colors.WHITE, bg=Colors.BLACK)
         
         # Options
-        start_y = 10
+        start_y = box['top'] + 5
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
+            option_y = start_y + i * 2
             
-            # Option name
-            console.print(10, start_y + i * 2, option["name"], fg=color)
-            
-            # Option value
-            if option["type"] == "volume":
-                volume_percent = self.settings.get_volume_percent(option["key"])
-                bar_length = 20
-                filled_length = int(bar_length * volume_percent / 100)
+            if box['use_background_layout']:
+                # Narrow box layout
+                name_x = box['content_left'] + 1
                 
-                # Volume bar
-                bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
-                console.print(30, start_y + i * 2, f"{bar} {volume_percent}%", fg=color)
+                # Option name (truncate if needed for narrow box)
+                name = option["name"]
+                if len(name) > 15:  # Truncate for narrow box
+                    name = name[:12] + "..."
+                console.print(name_x, option_y, name, fg=color, bg=Colors.BLACK)
                 
-            elif option["type"] == "toggle":
-                if option["key"] == "graphics_mode":
-                    current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "ASCII"
-                    console.print(30, start_y + i * 2, f"< {current_value} >", fg=color)
+                # Option value
+                if option["type"] == "volume":
+                    volume_percent = self.settings.get_volume_percent(option["key"])
+                    bar_length = 8  # Shorter bar for narrow box
+                    filled_length = int(bar_length * volume_percent / 100)
+                    
+                    # Volume bar - more compact
+                    bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
+                    console.print(name_x, option_y + 1, f"{bar} {volume_percent}%", fg=color, bg=Colors.BLACK)
+                    
+                elif option["type"] == "toggle":
+                    if option["key"] == "graphics_mode":
+                        current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "ASCII"
+                        console.print(name_x, option_y + 1, f"< {current_value} >", fg=color, bg=Colors.BLACK)
+            else:
+                # ASCII mode - wider layout
+                # Option name
+                console.print(box['content_left'] + 2, option_y, option["name"], fg=color, bg=Colors.BLACK)
+                
+                # Option value
+                if option["type"] == "volume":
+                    volume_percent = self.settings.get_volume_percent(option["key"])
+                    bar_length = 20
+                    filled_length = int(bar_length * volume_percent / 100)
+                    
+                    # Volume bar
+                    bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
+                    console.print(box['content_left'] + 18, option_y, f"{bar} {volume_percent}%", fg=color, bg=Colors.BLACK)
+                    
+                elif option["type"] == "toggle":
+                    if option["key"] == "graphics_mode":
+                        current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "ASCII"
+                        console.print(box['content_left'] + 18, option_y, f"< {current_value} >", fg=color, bg=Colors.BLACK)
         
         # Instructions
-        instructions = [
-            "Arrow Keys/WASD: Navigate",
-            "Left/Right or A/D: Adjust volumes/toggle options", 
-            "Enter: Select",
-            "Escape: Back"
-        ]
+        if box['use_background_layout']:
+            # Compact instructions for narrow box
+            instructions = [
+                "↑↓: Navigate",
+                "←→: Adjust", 
+                "Enter: Select",
+                "Esc: Back"
+            ]
+            inst_start_y = box['bottom'] - 6
+        else:
+            # Full instructions for ASCII mode
+            instructions = [
+                "Arrow Keys/WASD: Navigate",
+                "Left/Right or A/D: Adjust volumes/toggle options", 
+                "Enter: Select",
+                "Escape: Back"
+            ]
+            inst_start_y = box['bottom'] - 6
         
         for i, instruction in enumerate(instructions):
-            console.print(
-                GameConfig.SCREEN_WIDTH // 2 - len(instruction) // 2,
-                GameConfig.SCREEN_HEIGHT - 8 + i,
-                instruction,
-                Colors.LIGHT_GRAY
-            )
+            if box['use_background_layout']:
+                # Center in narrow box
+                inst_x = box['center_x'] - len(instruction) // 2
+            else:
+                # Center in wide box
+                inst_x = box['center_x'] - len(instruction) // 2
+            
+            console.print(inst_x, inst_start_y + i, instruction, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK)
     
     def handle_input(self, event) -> str:
         """Handle settings menu input. Returns action: 'back', 'exit', or ''."""
