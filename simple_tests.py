@@ -29,10 +29,10 @@ def test_core_modules():
         result = Colors.interpolate_color(Colors.BLACK, Colors.WHITE, 0.5)
         assert result == (127, 127, 127)
         
-        print("  ✓ Core modules PASSED")
+        print("  [PASS] Core modules PASSED")
         return True
     except Exception as e:
-        print(f"  ✗ Core modules FAILED: {e}")
+        print(f"  [FAIL] Core modules FAILED: {e}")
         return False
 
 def test_event_system():
@@ -62,10 +62,10 @@ def test_event_system():
         assert handler_called
         event_manager.shutdown()
         
-        print("  ✓ Event system PASSED")
+        print("  [PASS] Event system PASSED")
         return True
     except Exception as e:
-        print(f"  ✗ Event system FAILED: {e}")
+        print(f"  [FAIL] Event system FAILED: {e}")
         return False
 
 def test_service_locator():
@@ -84,35 +84,33 @@ def test_service_locator():
         
         ServiceLocator.reset()
         
-        print("  ✓ Service locator PASSED")
+        print("  [PASS] Service locator PASSED")
         return True
     except Exception as e:
-        print(f"  ✗ Service locator FAILED: {e}")
+        print(f"  [FAIL] Service locator FAILED: {e}")
         return False
 
 def test_entity_factory():
-    """Test entity factory."""
-    print("Testing Entity Factory...")
+    """Test refactored entity creation."""
+    print("Testing Refactored Entity Creation...")
     
     try:
-        from game_modules.factories import EntityFactory
-        from game_modules.core import Position
-        
-        factory = EntityFactory()
+        from game_entities import Position
+        from game_characters import Player, Enemy
         
         # Test player creation
-        player = factory.create_player(10, 20)
+        player = Player(10, 20)
         assert player.x == 10 and player.y == 20
         
         # Test enemy creation
         position = Position(5, 5)
-        enemy = factory.create_enemy(position, "scanner")
+        enemy = Enemy(position, "scanner")
         assert enemy.position.x == 5 and enemy.position.y == 5
         
-        print("  ✓ Entity factory PASSED")
+        print("  [PASS] Refactored entity creation PASSED")
         return True
     except Exception as e:
-        print(f"  ✗ Entity factory FAILED: {e}")
+        print(f"  [FAIL] Refactored entity creation FAILED: {e}")
         return False
 
 def run_all_tests():

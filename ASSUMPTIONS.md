@@ -47,3 +47,11 @@
 - Run game using venv Python: `.venv\Scripts\python.exe RogueSignalProtocol.py`
 - Missing venv packages cause ImportError exceptions that may be silently handled
 - Always verify imports work in venv context when troubleshooting environment-specific issues
+
+## Refactoring Guidelines
+- **DO NOT over-engineer solutions or turn this into an enterprise software product**
+- Focus only on what is specifically requested - refactoring existing code for clarity and maintainability
+- Do not add new features, frameworks, or architectural patterns unless explicitly asked
+- Keep solutions simple and maintain the game's original functionality
+- Prioritize readability and simplicity over complex design patterns
+- When refactoring, extract and reorganize existing code rather than creating parallel systems
