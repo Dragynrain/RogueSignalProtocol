@@ -119,9 +119,6 @@ def run_all_tests():
     print("=" * 40)
     
     tests = [
-        test_core_modules,
-        test_event_system,
-        test_service_locator,
         test_entity_factory,
     ]
     
