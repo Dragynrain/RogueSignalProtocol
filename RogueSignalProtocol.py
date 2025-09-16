@@ -2573,8 +2573,13 @@ class Game:
         for enemy in self.enemies:
             # Only move enemies that haven't moved this turn
             if not getattr(enemy, 'has_moved_this_turn', False):
-                did_move = enemy.move(self.game_map, self.player, self)
-                enemy.has_moved_this_turn = did_move
+                # If enemy can attack player, don't move (save the attack for next phase)
+                if enemy.can_attack_player(self.player):
+                    enemy.has_moved_this_turn = False  # Mark as not moved so it can attack
+                else:
+                    # Enemy can't attack, so try to move
+                    did_move = enemy.move(self.game_map, self.player, self)
+                    enemy.has_moved_this_turn = did_move
     
     def _process_enemy_attacks(self):
         """PHASE 3: Process attacks from enemies adjacent to player."""
@@ -3265,6 +3270,14 @@ class Game:
         This is the unified prediction system for all movement types.
         The new movement system guarantees exactly 3 moves for non-static enemies.
         """
+        # For patrol enemies, we need to simulate their movement step by step
+        # to account for patrol point changes
+        if (enemy.type_data.movement == EnemyMovement.LINEAR and 
+            enemy.patrol_points and 
+            enemy.state != EnemyState.HOSTILE):
+            return self._predict_patrol_movement(enemy, steps)
+        
+        # For non-patrol enemies, use the existing queue or generate one
         # If enemy has an existing movement queue with enough moves, use it
         if enemy.movement_queue and len(enemy.movement_queue) >= steps:
             return enemy.movement_queue[:steps]
@@ -3280,6 +3293,52 @@ class Game:
         # Return the predicted positions (up to requested steps)
         # The movement queue should now always have the moves we need
         return temp_enemy.movement_queue[:steps]
+    
+    def _predict_patrol_movement(self, enemy: Enemy, steps: int) -> List[Position]:
+        """
+        Predict patrol enemy movement by simulating step-by-step movement
+        and accounting for patrol point changes.
+        """
+        import copy
+        from game_data import GameData
+        
+        # Create a temporary copy to simulate movement
+        temp_enemy = copy.deepcopy(enemy)
+        predicted_positions = []
+        
+        for step in range(steps):
+            # If no movement queue, generate one
+            if not temp_enemy.movement_queue:
+                current_target = temp_enemy.patrol_points[temp_enemy.patrol_index]
+                path = GameData.pathfind(temp_enemy.position, current_target, self.game_map)
+                if path and len(path) > 1:
+                    # Add next few steps from path to queue
+                    for i in range(1, min(len(path), 4)):  # Add up to 3 moves
+                        temp_enemy.movement_queue.append(path[i])
+                else:
+                    # If pathfinding fails, no movement
+                    break
+            
+            # Get next position from queue
+            if not temp_enemy.movement_queue:
+                break
+                
+            next_pos = temp_enemy.movement_queue[0]
+            predicted_positions.append(next_pos)
+            
+            # Simulate the move
+            temp_enemy.position = next_pos
+            temp_enemy.movement_queue.pop(0)
+            
+            # Check if we reached the patrol point
+            current_target = temp_enemy.patrol_points[temp_enemy.patrol_index]
+            adjacent_threshold = GameConfig.get('adjacent_threshold', 1.5)
+            if temp_enemy.position.distance_to(current_target) <= adjacent_threshold:
+                # Advance to next patrol point and clear queue
+                temp_enemy.patrol_index = (temp_enemy.patrol_index + 1) % len(temp_enemy.patrol_points)
+                temp_enemy.movement_queue.clear()
+        
+        return predicted_positions
 
 # ============================================================================
 # EXPLOIT SYSTEM
