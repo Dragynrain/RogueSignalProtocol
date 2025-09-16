@@ -454,12 +454,24 @@ class Enemy:
         temp_queue = []
         if use_pathfinding and target:
             # Use pathfinding to generate additional moves
-            from game_data import GameData
-            path = GameData.pathfind(self.position, target, game_map)
-            if path and len(path) > 1:
-                # Add the next moves from the path (skip current position)
-                for i in range(1, min(len(path), moves_needed + 1)):
-                    temp_queue.append(path[i])
+            try:
+                cost_map = create_pathfinding_cost_map(game_map, game, self)
+                graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+                pathfinder = tcod.path.Pathfinder(graph)
+                
+                # Start from the last position in the current queue, or current position
+                start_pos = self.movement_queue[-1] if self.movement_queue else self.position
+                pathfinder.add_root((start_pos.x, start_pos.y))
+                path = pathfinder.path_to((target.x, target.y))
+                
+                if path and len(path) > 1:
+                    # Add the next moves from the path (skip current position)
+                    for i in range(1, min(len(path), moves_needed + 1)):
+                        x, y = path[i]
+                        temp_queue.append(Position(x, y))
+            except Exception:
+                # If pathfinding fails, continue to random moves below
+                pass
         
         # Fill remaining slots with random moves if needed
         while len(temp_queue) < moves_needed:

@@ -3310,12 +3310,24 @@ class Game:
             # If no movement queue, generate one
             if not temp_enemy.movement_queue:
                 current_target = temp_enemy.patrol_points[temp_enemy.patrol_index]
-                path = GameData.pathfind(temp_enemy.position, current_target, self.game_map)
-                if path and len(path) > 1:
-                    # Add next few steps from path to queue
-                    for i in range(1, min(len(path), 4)):  # Add up to 3 moves
-                        temp_enemy.movement_queue.append(path[i])
-                else:
+                try:
+                    # Use the same pathfinding logic as in the enemy class
+                    from game_characters import create_pathfinding_cost_map
+                    cost_map = create_pathfinding_cost_map(self.game_map, self, temp_enemy)
+                    graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+                    pathfinder = tcod.path.Pathfinder(graph)
+                    pathfinder.add_root((temp_enemy.position.x, temp_enemy.position.y))
+                    path = pathfinder.path_to((current_target.x, current_target.y))
+                    
+                    if path and len(path) > 1:
+                        # Add next few steps from path to queue
+                        for i in range(1, min(len(path), 4)):  # Add up to 3 moves
+                            x, y = path[i]
+                            temp_enemy.movement_queue.append(Position(x, y))
+                    else:
+                        # If pathfinding fails, no movement
+                        break
+                except Exception:
                     # If pathfinding fails, no movement
                     break
             
