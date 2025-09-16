@@ -263,6 +263,12 @@ class SaveGameManager:
                 logging.error(f"Data serialization error (no retry): {e}")
                 return False
                 
+            except (PermissionError, OSError) as e:
+                logging.error(f"File system error during save: {e}")
+                return False
+            except json.JSONEncodeError as e:
+                logging.error(f"JSON encoding error during save: {e}")
+                return False
             except Exception as e:
                 import traceback
                 logging.error(f"Unexpected save error: {e}")
@@ -297,6 +303,12 @@ class SaveGameManager:
                 logging.error(f"Problematic content around error: {content[max(0, e.pos-50):e.pos+50]}")
                 return None
             
+        except FileNotFoundError:
+            logging.info("No save file found")
+            return None
+        except PermissionError as e:
+            logging.error(f"Permission denied accessing save file: {e}")
+            return None
         except Exception as e:
             import traceback
             logging.error(f"Failed to load game: {e}")
@@ -1829,7 +1841,10 @@ class Enemy:
         self.patrol_stuck_counter = 0  # Prevents getting stuck on patrol points
         self.last_seen_player: Optional[Position] = None
         self.movement_queue: List[Position] = []  # Queue of planned moves for ALL movement types
+        self.last_queue_state = None  # Track state when queue was last generated
+        self.last_queue_target = None  # Track target when queue was last generated
         self.last_target: Optional[Position] = None  # Last target we pathfinded to
+        self.original_patrol_index = 0  # Store original patrol index when becoming hostile
     
     @property
     def x(self) -> int:
@@ -1972,8 +1987,8 @@ class Enemy:
             self.move_cooldown -= 1
             return False
         
-        # If we don't have any queued moves, generate them
-        if not self.movement_queue:
+        # Generate new queue if needed (empty queue or state/target changed)
+        if self._should_regenerate_queue(game_map, player, game):
             self._generate_movement_queue(game_map, player, game)
         
         # Execute next move from queue
@@ -1984,6 +1999,43 @@ class Enemy:
             self._reset_movement_cooldown()
         
         return moved
+    
+    def _should_regenerate_queue(self, game_map: 'GameMap', player: Player, game: 'Game') -> bool:
+        """Determine if the movement queue should be regenerated."""
+        # Always regenerate if queue is empty
+        if not self.movement_queue:
+            return True
+        
+        # Check if enemy state has changed
+        if self.last_queue_state != self.state:
+            return True
+        
+        # For hostile enemies, check if target has changed
+        if self.state == EnemyState.HOSTILE:
+            current_target = None
+            if self.can_see_player(player, game_map):
+                current_target = player.position
+            elif self.last_seen_player:
+                current_target = self.last_seen_player
+            
+            if current_target != self.last_queue_target:
+                return True
+        
+        # For SEEK/TRACK enemies, check if they've acquired or lost a target
+        elif self.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.TRACK]:
+            current_target = None
+            if self.can_see_player(player, game_map):
+                current_target = player.position
+            elif self.last_seen_player and self.type_data.movement == EnemyMovement.TRACK:
+                current_target = self.last_seen_player
+            
+            if current_target != self.last_queue_target:
+                return True
+        
+        # For patrol enemies, the target changes when reaching patrol points 
+        # (handled in _execute_next_move when clearing queue)
+        
+        return False
     
     def _reset_movement_cooldown(self):
         """Reset movement cooldown based on enemy type."""
@@ -2041,6 +2093,10 @@ class Enemy:
         
         # Ensure we always have exactly 3 moves (if possible)
         self._ensure_queue_length(game_map, game)
+        
+        # Track state and target for future queue regeneration decisions
+        self.last_queue_state = self.state
+        self.last_queue_target = target
     
     def _generate_pathfinding_queue(self, target: Position, game_map: 'GameMap', game: 'Game'):
         """Generate movement queue using pathfinding to target, ensuring 3 valid moves."""
@@ -2318,7 +2374,9 @@ class GameMap:
         """Check if position is in shadow."""
         if not position.is_valid(self.width, self.height):
             return False
-        return (position.x, position.y) in self.shadows
+        # Ghost nodes function as shadows in addition to their special effect
+        return ((position.x, position.y) in self.shadows or 
+                (position.x, position.y) in self.ghost_nodes)
     
     def is_cooling_node(self, position: Position) -> bool:
         """Check if position contains a cooling node."""
@@ -3735,6 +3793,32 @@ class Game:
         for enemy in self.enemies:
             if self.player.can_see_enemy(enemy, self.game_map):
                 self.game_map.last_known_enemy_positions[enemy.id] = (enemy.position, self.turn)
+        
+        # Clean up ghost positions where player can see the area but enemy is not there
+        self._cleanup_ghost_positions()
+    
+    def _cleanup_ghost_positions(self):
+        """Remove ghost enemy positions when player can see the area but enemy is not there."""
+        positions_to_remove = []
+        
+        for enemy_id, (ghost_position, turn_seen) in self.game_map.last_known_enemy_positions.items():
+            # Check if player can currently see the ghost position
+            player_vision_range = self.player.get_vision_range()
+            if self.game_map.can_see_position(self.player.position, ghost_position, player_vision_range):
+                # Check if there's actually an enemy at that position
+                enemy_at_position = None
+                for enemy in self.enemies:
+                    if enemy.id == enemy_id and enemy.position.distance_to(ghost_position) == 0:
+                        enemy_at_position = enemy
+                        break
+                
+                # If player can see the position but no enemy is there, remove ghost
+                if not enemy_at_position:
+                    positions_to_remove.append(enemy_id)
+        
+        # Remove the outdated ghost positions
+        for enemy_id in positions_to_remove:
+            del self.game_map.last_known_enemy_positions[enemy_id]
 
     def _process_special_tiles(self):
         """Process effects of special tiles at player position."""
@@ -3876,6 +3960,9 @@ class Game:
             enemy.last_seen_player = Position(self.player.x, self.player.y)
             # Immediately transition to hostile when still seeing player
             if enemy.alert_timer <= 0:
+                # Store patrol information for LINEAR enemies before becoming hostile
+                if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                    enemy.original_patrol_index = enemy.patrol_index
                 enemy.state = EnemyState.HOSTILE
                 detection_increase = GameBalance.ADMIN_DETECTION_INITIAL if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_ALERT_TO_HOSTILE
                 old_detection = self.player.detection
@@ -3898,6 +3985,9 @@ class Game:
             enemy.alert_timer -= 1
             if enemy.alert_timer <= 0:
                 enemy.state = EnemyState.UNAWARE
+                # Restore patrol behavior for LINEAR enemies
+                if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                    enemy.patrol_index = enemy.original_patrol_index
                 self.message_log.add_message(f"{enemy.type_data.name} lost interest")
         elif enemy.state == EnemyState.HOSTILE:
             if random.random() < 0.15:  # 15% chance per turn
@@ -3907,6 +3997,9 @@ class Game:
                 else:
                     enemy.state = EnemyState.UNAWARE
                     enemy.last_seen_player = None
+                    # Restore patrol behavior for LINEAR enemies
+                    if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                        enemy.patrol_index = enemy.original_patrol_index
                     self.message_log.add_message(f"{enemy.type_data.name} lost track")
     
     def _check_detection_threshold_warnings(self, old_detection: float, new_detection: float):
@@ -3930,6 +4023,9 @@ class Game:
                 
             distance = enemy.position.distance_to(alerting_enemy.position)
             if distance <= alert_range:
+                # Store patrol information for LINEAR enemies before becoming hostile
+                if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                    enemy.original_patrol_index = enemy.patrol_index
                 # All enemies within alert range immediately go HOSTILE and get player location
                 enemy.state = EnemyState.HOSTILE
                 enemy.alert_timer = 0
@@ -4148,6 +4244,9 @@ class Game:
         else:
             # Enemy damaged but alive - show remaining health
             self.message_log.add_message(f"{target_enemy.type_data.name} health: {target_enemy.cpu}/{target_enemy.max_cpu}")
+            # Store patrol information for LINEAR enemies before becoming hostile
+            if target_enemy.type_data.movement == EnemyMovement.LINEAR and target_enemy.patrol_points:
+                target_enemy.original_patrol_index = target_enemy.patrol_index
             # Make enemy hostile and aware of player
             target_enemy.state = EnemyState.HOSTILE
             target_enemy.last_seen_player = Position(self.player.x, self.player.y)
@@ -4558,6 +4657,11 @@ class Game:
     
     def _is_valid_special_placement(self, position: Position) -> bool:
         """Check if position is valid for special node placement."""
+        # Ensure not on borders where walls will be placed
+        if (position.x == 0 or position.x == GameConfig.MAP_WIDTH - 1 or 
+            position.y == 0 or position.y == GameConfig.MAP_HEIGHT - 1):
+            return False
+            
         return (not self.game_map.is_wall(position) and
                 (position.x, position.y) not in self.game_map.cooling_nodes and
                 (position.x, position.y) not in self.game_map.cpu_recovery_nodes and
@@ -4566,6 +4670,11 @@ class Game:
     
     def _is_valid_patch_placement(self, position: Position) -> bool:
         """Check if position is valid for code placement."""
+        # Ensure not on borders where walls will be placed
+        if (position.x == 0 or position.x == GameConfig.MAP_WIDTH - 1 or 
+            position.y == 0 or position.y == GameConfig.MAP_HEIGHT - 1):
+            return False
+            
         return (not self.game_map.is_wall(position) and
                 (position.x, position.y) not in self.game_map.data_patches and
                 (position.x, position.y) not in self.game_map.cooling_nodes and
@@ -4577,6 +4686,11 @@ class Game:
         """Check if position is valid for enemy placement."""
         # First ensure position is valid
         if not self.game_map.is_valid_position(position):
+            return False
+        
+        # Ensure not on borders where walls will be placed
+        if (position.x == 0 or position.x == GameConfig.MAP_WIDTH - 1 or 
+            position.y == 0 or position.y == GameConfig.MAP_HEIGHT - 1):
             return False
         
         # Critical: ensure we're not placing on walls or obstacles
@@ -4820,6 +4934,9 @@ class ExploitSystem:
                 self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
             else:
                 self.game.message_log.add_message(f"{target_enemy.type_data.name} damaged")
+                # Store patrol information for LINEAR enemies before becoming hostile
+                if target_enemy.type_data.movement == EnemyMovement.LINEAR and target_enemy.patrol_points:
+                    target_enemy.original_patrol_index = target_enemy.patrol_index
                 target_enemy.state = EnemyState.HOSTILE
                 target_enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
             return True
@@ -4841,6 +4958,9 @@ class ExploitSystem:
                     self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
                 else:
                     self.game.message_log.add_message(f"{target_enemy.type_data.name} damaged")
+                    # Store patrol information for LINEAR enemies before becoming hostile
+                    if target_enemy.type_data.movement == EnemyMovement.LINEAR and target_enemy.patrol_points:
+                        target_enemy.original_patrol_index = target_enemy.patrol_index
                     target_enemy.state = EnemyState.HOSTILE
                     target_enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
                 return True
