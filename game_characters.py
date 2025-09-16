@@ -70,20 +70,34 @@ class Player:
         """Move player with boundary and collision checking."""
         self.last_position = Position(self.x, self.y)
         
-        # Calculate the intended destination without clamping
-        intended_position = Position(self.x + dx, self.y + dy)
+        # Calculate the intended destination (unclamped)
+        intended_x = self.x + dx
+        intended_y = self.y + dy
         
-        # Check if we're trying to move out of bounds
-        if not intended_position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-            # This would be an out-of-bounds move
+        # Check for out-of-bounds movement first
+        if (intended_x < 0 or intended_x >= GameConfig.MAP_WIDTH or 
+            intended_y < 0 or intended_y >= GameConfig.MAP_HEIGHT):
+            # Debug boundary issue
+            import logging
+            logging.error(f"MOVEMENT OUT OF BOUNDS: intended=({intended_x}, {intended_y}), "
+                         f"GameConfig bounds=({GameConfig.MAP_WIDTH}, {GameConfig.MAP_HEIGHT}), "
+                         f"game_map bounds=({game_map.width}, {game_map.height})")
             return False
         
-        # The intended position is in bounds, now check if it's a valid move
-        if game_map.is_valid_position(intended_position):
-            self.position = intended_position
+        # Now create the position and validate it
+        new_position = Position(intended_x, intended_y)
+        
+        if game_map.is_valid_position(new_position):
+            self.position = new_position
             return True
         
-        # Position is blocked by a wall or other obstacle
+        # Position is blocked by a wall or other obstacle - debug this
+        import logging
+        is_in_bounds = new_position.is_valid(game_map.width, game_map.height)
+        is_wall = game_map.is_wall(new_position) if is_in_bounds else True
+        logging.error(f"MOVEMENT BLOCKED: pos=({new_position.x}, {new_position.y}), "
+                     f"in_bounds={is_in_bounds}, is_wall={is_wall}, "
+                     f"map_size=({game_map.width}, {game_map.height})")
         return False
     
     def update_effects(self) -> None:
@@ -111,7 +125,7 @@ class Player:
         distance = self.position.distance_to(enemy.position)
         
         # Adjacent enemies should ALWAYS be visible (critical for combat feedback)
-        if distance <= GameConfig.get('adjacent_visibility_threshold', 1.5):
+        if distance <= getattr(GameConfig, 'adjacent_visibility_threshold', 1.5):
             return True
         
         # Use enhanced vision system that can see through walls
@@ -130,7 +144,7 @@ class Player:
         base_vision_range = self.get_vision_range()
         if player_in_shadow and distance > 1:
             # Reduce vision range when in shadows
-            reduction_factor = GameConfig.get('shadow_vision_reduction_factor', 3)
+            reduction_factor = getattr(GameConfig, 'shadow_vision_reduction_factor', 3)
             effective_vision_range = max(1, base_vision_range // reduction_factor)
         else:
             effective_vision_range = base_vision_range
@@ -157,8 +171,8 @@ class Player:
             
         upgrade = GameUpgrades.UPGRADES[upgrade_key]
         
-        max_ram = GameConfig.get('max_ram_capacity', 32)
-        max_cpu = GameConfig.get('max_cpu_capacity', 200)
+        max_ram = getattr(GameConfig, 'max_ram_capacity', 32)
+        max_cpu = getattr(GameConfig, 'max_cpu_capacity', 200)
         
         if upgrade.stat_type == 'ram':
             self.ram_total = min(max_ram, self.ram_total + upgrade.bonus_amount)
@@ -264,7 +278,7 @@ class Enemy:
         is_player_in_shadow = game_map.is_shadow(player.position)
         
         # Player in shadow: only visible if enemy is directly adjacent
-        adjacent_threshold = GameConfig.get('adjacent_threshold', 1.5)
+        adjacent_threshold = getattr(GameConfig, 'adjacent_threshold', 1.5)
         if is_player_in_shadow and distance_to_player > adjacent_threshold:
             return False
 
@@ -294,14 +308,14 @@ class Enemy:
         """Attack the player and return damage dealt."""
         if self.type == 'virus':
             # Virus applies virus damage instead of direct damage
-            virus_duration = GameConfig.get('virus_base_duration', 3)
+            virus_duration = getattr(GameConfig, 'virus_base_duration', 3)
             current_virus = player.temporary_effects.get('virus_turns', 0)
             
             # Each attack adds to the duration (stacks)
             player.temporary_effects['virus_turns'] = current_virus + virus_duration
             
             # Cap maximum virus duration to prevent infinite stacking
-            max_virus_duration = GameConfig.get('virus_max_duration', 10)
+            max_virus_duration = getattr(GameConfig, 'virus_max_duration', 10)
             player.temporary_effects['virus_turns'] = min(
                 player.temporary_effects['virus_turns'], 
                 max_virus_duration
@@ -442,7 +456,7 @@ class Enemy:
             self.patrol_points and 
             self.state != EnemyState.HOSTILE):
             current_patrol_target = self.patrol_points[self.patrol_index]
-            adjacent_threshold = GameConfig.get('adjacent_threshold', 1.5)
+            adjacent_threshold = getattr(GameConfig, 'adjacent_threshold', 1.5)
             if self.position.distance_to(current_patrol_target) <= adjacent_threshold:
                 return True
         
@@ -678,7 +692,7 @@ class Enemy:
                 self.state != EnemyState.HOSTILE):  # Only patrol when not hostile
                 
                 current_target = self.patrol_points[self.patrol_index]
-                adjacent_threshold = GameConfig.get('adjacent_threshold', 1.5)
+                adjacent_threshold = getattr(GameConfig, 'adjacent_threshold', 1.5)
                 if self.position.distance_to(current_target) <= adjacent_threshold:
                     # Reached patrol point, advance to next one
                     self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)

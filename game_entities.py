@@ -187,6 +187,7 @@ class UpgradeDefinition:
     color: Tuple[int, int, int]
     stat_type: str
     bonus_amount: int
+    description: str = ""  # Add missing description field
 
 
 # Utility functions for position handling
