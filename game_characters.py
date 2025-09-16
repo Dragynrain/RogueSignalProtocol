@@ -37,8 +37,7 @@ class Player:
             'movement_slowed_turns': 0,
             'enhanced_vision_turns': 0,
             'exploit_efficiency_turns': 0,
-            'virus_turns': 0,
-            'ghost_node_turns': 0
+            'virus_turns': 0
         }
         self.speed_moves_remaining = 0
         
@@ -74,16 +73,24 @@ class Player:
         intended_x = self.x + dx
         intended_y = self.y + dy
         
-        # Check for out-of-bounds movement first
-        if (intended_x < 0 or intended_x >= GameConfig.MAP_WIDTH or 
-            intended_y < 0 or intended_y >= GameConfig.MAP_HEIGHT):
+        # Check for out-of-bounds movement using actual game map bounds
+        # Use game_map bounds as the authoritative source instead of GameConfig
+        if (intended_x < 0 or intended_x >= game_map.width or 
+            intended_y < 0 or intended_y >= game_map.height):
             # Debug boundary issue
             import logging
             logging.error(f"MOVEMENT OUT OF BOUNDS: intended=({intended_x}, {intended_y}), "
-                         f"GameConfig bounds=({GameConfig.MAP_WIDTH}, {GameConfig.MAP_HEIGHT}), "
-                         f"game_map bounds=({game_map.width}, {game_map.height})")
-            logging.error(f"GameConfig SCREEN values: ({GameConfig.SCREEN_WIDTH}, {GameConfig.SCREEN_HEIGHT})")
-            logging.error(f"GameConfig PANEL_Y: {GameConfig.PANEL_Y}")
+                         f"actual_map_bounds=({game_map.width}, {game_map.height})")
+            # Also log GameConfig values for debugging config loading issues
+            try:
+                logging.error(f"GameConfig values: MAP=({GameConfig.MAP_WIDTH}, {GameConfig.MAP_HEIGHT}), "
+                             f"SCREEN=({GameConfig.SCREEN_WIDTH}, {GameConfig.SCREEN_HEIGHT})")
+                if hasattr(GameConfig, 'PANEL_Y'):
+                    logging.error(f"GameConfig PANEL_Y: {GameConfig.PANEL_Y}")
+                else:
+                    logging.error("GameConfig.PANEL_Y not available - config may not be loaded")
+            except Exception as e:
+                logging.error(f"Error accessing GameConfig: {e}")
             return False
         
         # Now create the position and validate it
@@ -97,8 +104,14 @@ class Player:
         import logging
         is_in_bounds = new_position.is_valid(game_map.width, game_map.height)
         is_wall = game_map.is_wall(new_position) if is_in_bounds else True
+        
+        # Enhanced debugging for movement blocking
+        wall_check = (new_position.x, new_position.y) in game_map.walls if is_in_bounds else "N/A"
+        has_enemy = game._get_enemy_at(new_position) is not None if hasattr(game, '_get_enemy_at') and game else "N/A"
+        
         logging.error(f"MOVEMENT BLOCKED: pos=({new_position.x}, {new_position.y}), "
                      f"in_bounds={is_in_bounds}, is_wall={is_wall}, "
+                     f"wall_in_set={wall_check}, has_enemy={has_enemy}, "
                      f"map_size=({game_map.width}, {game_map.height})")
         return False
     
