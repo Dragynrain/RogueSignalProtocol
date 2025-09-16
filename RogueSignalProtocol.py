@@ -53,36 +53,113 @@ except ImportError:
 # ============================================================================
 
 def safe_console_print(console, x, y, char, fg=None, bg=None):
-    """Safe wrapper for console.print that ensures colors are valid tuples."""
+    """Safe wrapper for console.print that ensures colors are valid tuples with comprehensive error tracking."""
     import logging
+    import traceback
+    import inspect
     
-    # Ensure fg color is valid
-    if fg is not None:
-        if isinstance(fg, str):
-            logging.error(f"STRING FG COLOR PASSED TO CONSOLE: {repr(fg)} at ({x}, {y})")
-            fg = ensure_color_tuple(fg)
-        elif not isinstance(fg, (list, tuple)) or len(fg) < 3:
-            logging.error(f"INVALID FG COLOR PASSED TO CONSOLE: {repr(fg)} at ({x}, {y})")
-            fg = ensure_color_tuple(fg)
+    # Helper function to validate and convert colors with comprehensive error tracking
+    def validate_color(color, color_name):
+        if color is None:
+            return None
+        
+        # Get caller information for better debugging
+        frame = inspect.currentframe()
+        try:
+            # Go up the call stack to find the actual caller
+            caller_frame = frame.f_back.f_back  # safe_console_print -> validate_color -> actual caller
+            if caller_frame:
+                filename = caller_frame.f_code.co_filename.split('\\')[-1]  # Just filename
+                line_number = caller_frame.f_lineno
+                function_name = caller_frame.f_code.co_name
+                caller_info = f"{filename}:{line_number} in {function_name}()"
+            else:
+                caller_info = "Unknown caller"
+        finally:
+            del frame  # Prevent reference cycles
+        
+        if isinstance(color, str):
+            # Get full stack trace for string color errors
+            stack_trace = ''.join(traceback.format_stack()[:-1])  # Exclude current frame
+            error_msg = (
+                f"TCOD ColorRGB ERROR: {color_name} is string '{color}' instead of RGB tuple\n"
+                f"Called from: {caller_info}\n"
+                f"Position: ({x}, {y}), Character: '{char}'\n"
+                f"Full stack trace:\n{stack_trace}"
+            )
+            logging.error(error_msg)
+            print(f"\n{'='*80}\n{error_msg}\n{'='*80}\n")
+            return ensure_color_tuple(color)
+        
+        if isinstance(color, (list, tuple)) and len(color) >= 3:
+            try:
+                # Ensure we have valid integers
+                r, g, b = int(color[0]), int(color[1]), int(color[2])
+                if not (0 <= r <= 255 and 0 <= g <= 255 and 0 <= b <= 255):
+                    logging.error(f"Color values out of range for {color_name}: {color} at {caller_info}")
+                    return Colors.WHITE
+                return (r, g, b)
+            except (ValueError, TypeError) as e:
+                logging.error(f"Invalid color values for {color_name}: {color} - {e} at {caller_info}")
+                return Colors.WHITE
+        
+        # Unknown color format
+        error_msg = (
+            f"TCOD ColorRGB ERROR: Invalid {color_name} format: {color} (type: {type(color)})\n"
+            f"Called from: {caller_info}\n"
+            f"Position: ({x}, {y}), Character: '{char}'"
+        )
+        logging.error(error_msg)
+        print(f"\n{'='*80}\n{error_msg}\n{'='*80}\n")
+        return Colors.WHITE
     
-    # Ensure bg color is valid
-    if bg is not None:
-        if isinstance(bg, str):
-            logging.error(f"STRING BG COLOR PASSED TO CONSOLE: {repr(bg)} at ({x}, {y})")
-            bg = ensure_color_tuple(bg)
-        elif not isinstance(bg, (list, tuple)) or len(bg) < 3:
-            logging.error(f"INVALID BG COLOR PASSED TO CONSOLE: {repr(bg)} at ({x}, {y})")
-            bg = ensure_color_tuple(bg)
-    
-    # Make the actual console call
-    if fg is not None and bg is not None:
-        console.print(x, y, char, fg=fg, bg=bg)
-    elif fg is not None:
-        console.print(x, y, char, fg=fg)
-    elif bg is not None:
-        console.print(x, y, char, bg=bg)
-    else:
-        console.print(x, y, char)
+    try:
+        # Validate colors
+        fg = validate_color(fg, "foreground")
+        bg = validate_color(bg, "background")
+        
+        # Make the actual console call with validated colors
+        if fg is not None and bg is not None:
+            console.print(x, y, char, fg=fg, bg=bg)
+        elif fg is not None:
+            console.print(x, y, char, fg=fg)
+        elif bg is not None:
+            console.print(x, y, char, bg=bg)
+        else:
+            console.print(x, y, char)
+            
+    except Exception as e:
+        # Catch any TCOD errors and provide comprehensive information
+        frame = inspect.currentframe()
+        try:
+            caller_frame = frame.f_back
+            if caller_frame:
+                filename = caller_frame.f_code.co_filename.split('\\')[-1]
+                line_number = caller_frame.f_lineno
+                function_name = caller_frame.f_code.co_name
+                caller_info = f"{filename}:{line_number} in {function_name}()"
+            else:
+                caller_info = "Unknown caller"
+        finally:
+            del frame
+        
+        stack_trace = ''.join(traceback.format_stack()[:-1])
+        error_msg = (
+            f"TCOD CONSOLE.PRINT ERROR: {str(e)}\n"
+            f"Called from: {caller_info}\n"
+            f"Position: ({x}, {y}), Character: '{char}'\n"
+            f"Foreground: {fg} (type: {type(fg)})\n"
+            f"Background: {bg} (type: {type(bg)})\n"
+            f"Full stack trace:\n{stack_trace}"
+        )
+        logging.error(error_msg)
+        print(f"\n{'='*80}\n{error_msg}\n{'='*80}\n")
+        
+        # Try to render with default colors as fallback
+        try:
+            console.print(x, y, char, fg=Colors.WHITE, bg=Colors.BLACK)
+        except Exception as fallback_error:
+            logging.error(f"Even fallback rendering failed: {fallback_error}")
 
 # ============================================================================
 # SAVE/LOAD SYSTEM
@@ -3380,7 +3457,7 @@ class Game:
             
             # Check if we reached the patrol point
             current_target = temp_enemy.patrol_points[temp_enemy.patrol_index]
-            adjacent_threshold = GameConfig.get('adjacent_threshold', 1.5)
+            adjacent_threshold = getattr(GameConfig, 'adjacent_threshold', 1.5)
             if temp_enemy.position.distance_to(current_target) <= adjacent_threshold:
                 # Advance to next patrol point and clear queue
                 temp_enemy.patrol_index = (temp_enemy.patrol_index + 1) % len(temp_enemy.patrol_points)
@@ -4228,21 +4305,21 @@ class BaseRenderer(ABC):
         # Draw background
         for y in range(start_y, start_y + height):
             for x in range(start_x, start_x + width):
-                console.print(x, y, ' ', fg=Colors.WHITE, bg=bg_color)
+                safe_console_print(console, x, y, ' ', fg=Colors.WHITE, bg=bg_color)
         
         # Draw border
         for x in range(start_x, start_x + width):
-            console.print(x, start_y, '─', fg=border_color, bg=bg_color)
-            console.print(x, start_y + height - 1, '─', fg=border_color, bg=bg_color)
+            safe_console_print(console, x, start_y, '─', fg=border_color, bg=bg_color)
+            safe_console_print(console, x, start_y + height - 1, '─', fg=border_color, bg=bg_color)
         for y in range(start_y, start_y + height):
-            console.print(start_x, y, '│', fg=border_color, bg=bg_color)
-            console.print(start_x + width - 1, y, '│', fg=border_color, bg=bg_color)
+            safe_console_print(console, start_x, y, '│', fg=border_color, bg=bg_color)
+            safe_console_print(console, start_x + width - 1, y, '│', fg=border_color, bg=bg_color)
         
         # Corner characters
-        console.print(start_x, start_y, '┌', fg=border_color, bg=bg_color)
-        console.print(start_x + width - 1, start_y, '┐', fg=border_color, bg=bg_color)
-        console.print(start_x, start_y + height - 1, '└', fg=border_color, bg=bg_color)
-        console.print(start_x + width - 1, start_y + height - 1, '┘', fg=border_color, bg=bg_color)
+        safe_console_print(console, start_x, start_y, '┌', fg=border_color, bg=bg_color)
+        safe_console_print(console, start_x + width - 1, start_y, '┐', fg=border_color, bg=bg_color)
+        safe_console_print(console, start_x, start_y + height - 1, '└', fg=border_color, bg=bg_color)
+        safe_console_print(console, start_x + width - 1, start_y + height - 1, '┘', fg=border_color, bg=bg_color)
         
     @abstractmethod
     def render_map(self, console: tcod.console.Console, game: 'Game'):
@@ -5042,7 +5119,7 @@ class MapRenderer:
             tb = traceback.extract_tb(e.__traceback__)
             line_no = tb[-1].lineno if tb else "?"
             error_msg = f"Map Error: {str(e)[:50]} (line {line_no})"
-            console.print(1, 1, error_msg, fg=Colors.RED, bg=Colors.BLACK)
+            safe_console_print(console, 1, 1, error_msg, fg=Colors.RED, bg=Colors.BLACK)
             # Also log to console and file
             logging.error(f"Map rendering error: {e}")
             logging.error(traceback.format_exc())
@@ -5081,10 +5158,10 @@ class MapRenderer:
                         self._render_remembered_tile(console, screen_x, screen_y, world_pos, game)
                     else:
                         # Fog of war
-                        console.print(screen_x, screen_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
+                        safe_console_print(console, screen_x, screen_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
                 else:
                     # Outside map bounds
-                    console.print(screen_x, screen_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
+                    safe_console_print(console, screen_x, screen_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
     
     def _render_remembered_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a tile from memory with dimmed neon colors."""
@@ -5094,17 +5171,17 @@ class MapRenderer:
             node_type = game.game_state.revealed_special_nodes[pos_tuple]
             if node_type == "cooling":
                 # Position 4 = ♦ for cooling nodes, faded cyan
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=(0, 120, 120), bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=(0, 120, 120), bg=Colors.BLACK)
             elif node_type == "cpu":
                 # Position 3 = ♥ for CPU nodes, faded red
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=(120, 0, 0), bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=(120, 0, 0), bg=Colors.BLACK)
             elif node_type == "ghost":
                 # Position 6 = ♠ for ghost nodes, faded purple
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(80, 0, 120), bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(80, 0, 120), bg=Colors.BLACK)
             elif node_type == "gateway":
                 # Gateway in memory - darker yellow
                 darker_yellow = (180, 150, 0)
-                console.print(screen_x, screen_y, '>', fg=darker_yellow, bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, '>', fg=darker_yellow, bg=Colors.BLACK)
             return
         
         # Only render basic terrain in memory, not dynamic elements
@@ -5504,7 +5581,19 @@ class MapRenderer:
             1 <= player_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
             player_color = self._get_player_color(game.player)
             # Position 2 = ☻ (inverse smiley)
-            console.print(player_screen_x, player_screen_y, chr(tcod.tileset.CHARMAP_CP437[2]), fg=player_color, bg=Colors.BLACK)
+            try:
+                console.print(player_screen_x, player_screen_y, chr(tcod.tileset.CHARMAP_CP437[2]), fg=player_color, bg=Colors.BLACK)
+            except Exception as e:
+                import logging
+                logging.error(f"PLAYER RENDER ERROR: {e}, color={player_color}")
+                # Fallback to simple @ character
+                console.print(player_screen_x, player_screen_y, '@', fg=Colors.WHITE, bg=Colors.BLACK)
+        else:
+            # Only log when player is actually off screen - this shouldn't happen often
+            import logging
+            logging.error(f"PLAYER OFF SCREEN: world=({game.player.x}, {game.player.y}), "
+                         f"camera=({camera_offset.x}, {camera_offset.y}), "
+                         f"screen=({player_screen_x}, {player_screen_y})")
     
     def _get_player_color(self, player: Player) -> Tuple[int, int, int]:
         """Get player color based on current state."""
