@@ -107,7 +107,7 @@ class Player:
         
         # Enhanced debugging for movement blocking
         wall_check = (new_position.x, new_position.y) in game_map.walls if is_in_bounds else "N/A"
-        has_enemy = game._get_enemy_at(new_position) is not None if hasattr(game, '_get_enemy_at') and game else "N/A"
+        has_enemy = "N/A"  # Cannot check for enemies without game object reference
         
         logging.error(f"MOVEMENT BLOCKED: pos=({new_position.x}, {new_position.y}), "
                      f"in_bounds={is_in_bounds}, is_wall={is_wall}, "
@@ -606,15 +606,30 @@ class Enemy:
             # Calculate path
             path = pathfinder.path_to((target.x, target.y))
             
+            # Debug logging for hostile enemies with pathfinding issues
+            if self.state == EnemyState.HOSTILE and len(path) <= 1:
+                import logging
+                logging.warning(f"Hostile enemy {self.type_data.name} at ({self.x}, {self.y}) failed to find path to player at ({target.x}, {target.y}). Path length: {len(path)}")
+            
             # Add up to 3 moves from the path
+            path_moves_added = 0
             for i in range(1, min(len(path), 4)):  # Skip current position, take next 3
                 x, y = path[i]
                 next_pos = Position(x, y)
                 if self._is_valid_enemy_move(next_pos, game_map, game):
                     self.movement_queue.append(next_pos)
+                    path_moves_added += 1
                     
-        except Exception:
+            # Debug logging for hostile enemies
+            if self.state == EnemyState.HOSTILE:
+                import logging
+                logging.info(f"Hostile enemy {self.type_data.name} pathfinding: {path_moves_added} moves added to queue targeting ({target.x}, {target.y})")
+                    
+        except Exception as e:
             # If pathfinding fails, fall back to random movement
+            if self.state == EnemyState.HOSTILE:
+                import logging
+                logging.error(f"Hostile enemy {self.type_data.name} pathfinding exception: {e}")
             self._generate_random_queue(game_map, game)
     
     def _generate_random_queue(self, game_map, game):
