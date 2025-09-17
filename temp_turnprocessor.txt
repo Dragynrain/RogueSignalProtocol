@@ -1,0 +1,81 @@
+class TurnProcessor:
+    """Handles turn-based game logic and effects processing."""
+    
+    def __init__(self, game_state: GameStateManager, message_log: MessageLog):
+        self.game_state = game_state
+        self.message_log = message_log
+    
+    def process_turn(self, player: Player) -> None:
+        """Process a complete game turn including heat management and effects."""
+        self.game_state.advance_turn()
+        
+        # Process heat reduction
+        self._process_heat_management(player)
+        
+        # Process temporary effects
+        self._process_temporary_effects(player)
+        
+        # Process detection increase
+        self._process_detection_increase(player)
+    
+    def _process_heat_management(self, player: Player) -> None:
+        """Handle heat reduction over time."""
+        if player.heat > 0:
+            heat_reduction = (GameBalance.HEAT_REDUCTION_BOOSTED 
+                            if player.temporary_effects['exploit_efficiency_turns'] > 0 
+                            else GameBalance.HEAT_REDUCTION_NORMAL)
+            
+            old_heat = player.heat
+            player.heat = max(0, player.heat - heat_reduction)
+            
+            # Heat reduction applied silently
+    
+    def _process_temporary_effects(self, player: Player) -> None:
+        """Process and decay temporary effects."""
+        effects_to_update = list(player.temporary_effects.keys())
+        
+        for effect_name in effects_to_update:
+            if player.temporary_effects[effect_name] > 0:
+                # Handle virus damage over time BEFORE decrementing counter
+                if effect_name == 'virus_turns':
+                    virus_damage = GameConfig.VIRUS_DAMAGE_PER_TURN
+                    actual_damage = player.take_damage(virus_damage)
+                    self.message_log.add_message(f"Virus damage: {actual_damage} CPU damage")
+                    
+                    # Check for death from virus
+                    if player.cpu <= 0:
+                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
+                        SaveGameManager.delete_save()
+                        self.message_log.add_message("Save data purged")
+                        self.game_state.game_over = True
+                        return  # Exit early if player dies
+                
+                # Now decrement the counter
+                player.temporary_effects[effect_name] -= 1
+                
+                if player.temporary_effects[effect_name] == 0:
+                    if effect_name == 'exploit_efficiency_turns':
+                        self.message_log.add_message("Exploit efficiency boost expired")
+                    elif effect_name == 'data_mimic_turns':
+                        self.message_log.add_message("Data Mimic invisibility expired")
+                    elif effect_name == 'speed_boost_turns':
+                        self.message_log.add_message("Speed boost expired")
+                    elif effect_name == 'movement_slowed_turns':
+                        self.message_log.add_message("Movement returns to normal")
+                    elif effect_name == 'virus_turns':
+                        self.message_log.add_message("Virus purged from system")
+    
+    def _process_detection_increase(self, player: Player) -> None:
+        """Handle periodic detection level increases."""
+        if self.game_state.turn % GameBalance.DETECTION_INCREASE_INTERVAL == 0:
+            config = self.game_state.get_current_network_config()
+            detection_increase = config.get('background_detection', 1) * GameBalance.DETECTION_INCREASE_AMOUNT
+            
+            old_detection = player.detection
+            player.detection = min(100, player.detection + detection_increase)
+            
+            # Detection increases silently in background
+
+
+
+class GameEngine:
