@@ -7234,10 +7234,10 @@ class SettingsMenu:
         ]
     
     def _has_background(self) -> bool:
-        """Check if we have a valid background."""
+        """Check if background is available and should be displayed."""
         return (self.background and 
-                hasattr(self.background, 'is_active') and 
-                self.background.is_active())
+                self.background.should_load_background() and 
+                self.background.background_texture)
     
     def _get_menu_layout_params(self):
         """Calculate menu positioning based on graphics mode, window state, and optimal visibility."""
@@ -7406,9 +7406,38 @@ class SettingsMenu:
                 'use_background_layout': False
             }
     
+    def _clear_text_areas_only(self, console):
+        """Create true separation: left 60% transparent for graphics, right 40% opaque for menu."""
+        layout = self._get_menu_layout_params()
+        
+        if layout['use_background_layout']:
+            # ENFORCED SEPARATION: 60% graphics area, 40% menu area
+            graphics_boundary = int(console.width * 0.6)  # Hard boundary at 60%
+            
+            # Left 60%: Make transparent for SDL graphics
+            for y in range(console.height):
+                for x in range(0, graphics_boundary):
+                    # Set background alpha to 0 (fully transparent)
+                    console.rgba[x, y] = (
+                        ord(' '),           # Empty character
+                        (255, 255, 255, 0), # Transparent foreground
+                        (0, 0, 0, 0)        # Transparent background
+                    )
+            
+            # Right 40%: Clear for text menu (opaque)
+            for y in range(console.height):
+                for x in range(graphics_boundary, console.width):
+                    safe_console_print(console, x, y, ' ', fg=(255, 255, 255), bg=(0, 0, 0))
+        else:
+            # ASCII mode: clear entire console
+            console.clear()
+    
     def render(self, console: tcod.console.Console) -> None:
         """Render the settings menu."""
-        console.clear()
+        if self._has_background():
+            self._clear_text_areas_only(console)
+        else:
+            console.clear()
         
         # Calculate menu height
         menu_height = 25  # Enough for title, options, and instructions
