@@ -10,9 +10,6 @@ import os
 from typing import Dict, Any
 
 
-def clamp_value(value: float, min_val: float, max_val: float) -> float:
-    """Clamp a value between min and max bounds."""
-    return max(min_val, min(value, max_val))
 
 
 class GameSettings:
@@ -90,7 +87,8 @@ class GameSettings:
     
     def _set_volume_attribute(self, volume_type: str, volume: float):
         """Generic volume setter for any volume type."""
-        clamped_volume = clamp_value(volume, 0.0, 1.0)
+        from game_entities import clamp
+        clamped_volume = clamp(volume, 0.0, 1.0)
         setattr(self, f"{volume_type}_volume", clamped_volume)
         self.save_settings()
     
@@ -141,17 +139,45 @@ class GameConfig:
     SCREEN_HEIGHT = 50
     
     # Map dimensions
-    MAP_WIDTH = 80
-    MAP_HEIGHT = 40
+    MAP_WIDTH = 50
+    MAP_HEIGHT = 50
     
     # UI layout
     UI_HEIGHT = 10
     SIDEBAR_WIDTH = 25
+    LOG_WIDTH = 25
+    PANEL_HEIGHT = 5
     
     # Game parameters
     DEFAULT_PLAYER_RAM = 8
     DEFAULT_PLAYER_CPU = 100
     MAX_HEAT = 100
+    MAX_DETECTION = 100
+    DETECTION_REDUCTION_ON_LEVEL = 50
+    DUNGEON_SEED_RANGE = 1000000
+    DEFAULT_FADE_TIME = 2000
+    DEFAULT_VISION_RANGE = 10
+    
+    # Message display constants
+    MESSAGE_CENTER_OFFSET_LARGE = 15
+    MESSAGE_CENTER_OFFSET_MEDIUM = 12
+    MESSAGE_CENTER_OFFSET_SMALL = 8
+    MESSAGE_CENTER_OFFSET_TINY = 10
+    MESSAGE_LINE_SPACING = 1
+    MESSAGE_BUTTON_SPACING = 3
+    
+    # Vision mechanics
+    adjacent_visibility_threshold = 1.5
+    shadow_vision_reduction_factor = 3
+    adjacent_threshold = 1.5
+    
+    # Heat system constants
+    virus_base_duration = 3
+    virus_max_duration = 10
+    
+    # Maximum capacities
+    max_ram_capacity = 32
+    max_cpu_capacity = 200
     
     _config_data = None
     
@@ -193,17 +219,61 @@ class GameConfig:
 
 
 class RoomGenerationConfig:
-    """Configuration for room generation."""
+    """Configuration for procedural room generation."""
+    MIN_ROOMS_BASE: int = 12
+    ROOM_LEVEL_MULTIPLIER: int = 3
+    MAX_ROOMS: int = 20
+    MAX_PLACEMENT_ATTEMPTS: int = 400
+    
+    MIN_ROOM_SIZE: int = 3
+    MAX_ROOM_SIZE: int = 8
+    ROOM_PADDING: int = 1
+    
+    # Special tile placement
+    COOLING_NODES_PER_LEVEL: int = 3
+    CPU_NODES_PER_LEVEL: int = 2
+    GHOST_NODES_PER_LEVEL: int = 2
+    DATA_PATCHES_PER_LEVEL: int = 4
+    EXPLOIT_PICKUPS_PER_LEVEL: int = 3
+    PERMANENT_UPGRADES_PER_LEVEL: int = 1
     
     def __init__(self):
-        self.min_room_size = 4
-        self.max_room_size = 10
-        self.max_rooms = 30
-        self.room_attempts = 100
+        self.min_room_size = self.MIN_ROOM_SIZE
+        self.max_room_size = self.MAX_ROOM_SIZE
+        self.max_rooms = self.MAX_ROOMS
+        self.room_attempts = self.MAX_PLACEMENT_ATTEMPTS
 
 
 class GameBalance:
     """Game balance configuration."""
+    
+    # Heat management
+    HEAT_REDUCTION_NORMAL: int = 2
+    HEAT_REDUCTION_BOOSTED: int = 3
+    DETECTION_INCREASE_INTERVAL: int = 25
+    DETECTION_INCREASE_AMOUNT: int = 1
+    
+    # Node effects
+    COOLING_NODE_EFFECT: int = 20
+    GHOST_NODE_DETECTION_REDUCTION: float = 5.0
+    CPU_RECOVERY_AMOUNT: int = 20
+    
+    # Combat rewards
+    ENEMY_ELIMINATION_CPU_REWARD: int = 5
+    
+    # Code patch effects
+    CPU_RESTORE_MIN: int = 30
+    CPU_RESTORE_MAX: int = 40
+    HEAT_REDUCTION_INSTANT: int = 40
+    
+    # Enemy detection values
+    ADMIN_DETECTION_INITIAL: int = 5
+    ADMIN_DETECTION_CONTINUOUS: int = 1
+    ENEMY_DETECTION_ALERT_TO_HOSTILE: int = 3
+    ENEMY_DETECTION_CONTINUOUS_HOSTILE: float = 0.3
+    
+    # Memory system constants
+    ENEMY_MEMORY_TURNS: int = 20
     
     @staticmethod
     def get_exploit_cpu_cost(exploit_name: str) -> int:
