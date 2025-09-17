@@ -136,7 +136,7 @@
     },
     "threat_scan": {
       "name": "Threat Scan",
-      "ram": 3,
+      "ram": 1,
       "heat": 20,
       "range": 0,
       "category": "utility",

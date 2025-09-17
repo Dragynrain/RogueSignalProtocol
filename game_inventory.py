@@ -26,16 +26,16 @@ class InventoryItem:
 class DataPatch(InventoryItem):
     """Randomized codes with unknown effects until used."""
     
-    def __init__(self, color: str, effect: str, name: str, description: str = "", quantity: int = 1):
+    def __init__(self, color_name: str, effect: str, name: str, description: str = "", quantity: int = 1):
         super().__init__(name, "data_patch", description)
-        self.color = color
+        self.color_name = color_name
         self.effect = effect
         self.quantity = quantity
         self.discovered = False
     
     def use(self, player, game) -> bool:
         """Apply the code effect to the player."""
-        if self.color not in game.data_patch_effects:
+        if self.color_name not in game.data_patch_effects:
             return False
         
         # Play code usage sound
