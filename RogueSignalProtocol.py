@@ -404,7 +404,7 @@ class SaveGameManager:
                 
                 if hasattr(item, 'color'):  # DataPatch
                     item_data.update({
-                        "color": item.color,
+                        "color": item.color_name,
                         "effect": item.effect,
                         "quantity": getattr(item, 'quantity', 1),
                         "discovered": getattr(item, 'discovered', False)
@@ -428,7 +428,7 @@ class SaveGameManager:
         """Serialize codes."""
         return {
             f"{pos[0]},{pos[1]}": {
-                "color": patch.color,
+                "color": patch.color_name,
                 "effect": patch.effect,
                 "name": patch.name,
                 "quantity": patch.quantity,
@@ -2161,7 +2161,7 @@ class Game:
         for item in self.player.inventory_manager.items:
             if isinstance(item, DataPatch):
                 # Update discovered status based on global discovered effects
-                item.discovered = item.color in self.discovered_code_effects
+                item.discovered = item.color_name in self.discovered_code_effects
     
     def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:
         """Restore UI state from save data."""
@@ -2176,7 +2176,7 @@ class Game:
             if item_data["type"] == "data_patch":
                 from RogueSignalProtocol import DataPatch
                 item = DataPatch(
-                    color=item_data["color"],
+                    color_name=item_data["color"],
                     effect=item_data["effect"],
                     name=item_data["name"],
                     quantity=item_data.get("quantity", 1)
@@ -2210,7 +2210,7 @@ class Game:
                 continue
             x, y = position.x, position.y
             patch = DataPatch(
-                color=patch_data["color"],
+                color_name=patch_data["color"],
                 effect=patch_data["effect"],
                 name=patch_data["name"],
                 quantity=patch_data["quantity"]
@@ -2346,6 +2346,7 @@ class Game:
         self.game_map.story_fragments.clear()  # Clear story fragments
         self.game_map.explored_tiles.clear()  # Clear memory system
         self.game_map.last_known_enemy_positions.clear()  # Clear enemy memory
+        self.game_state.revealed_special_nodes.clear()  # Clear special node memory
         self.enemy_manager.enemies.clear()
         # Invalidate transparency cache for FOV calculations
         self.game_map.invalidate_transparency_cache()
@@ -3197,7 +3198,7 @@ class Game:
             if self._is_valid_patch_placement(position):
                 color = random.choice(list(self.data_patch_effects.keys()))
                 effect, desc = self.data_patch_effects[color]
-                patch = DataPatch(color, effect, f"{color.title()} Code", desc)
+                patch = DataPatch(color_name=color, effect=effect, name=f"{color.title()} Code", description=desc)
                 
                 # Check if player has already discovered this color effect
                 # by looking at existing inventory items
@@ -4303,8 +4304,8 @@ class InputHandler:
     def _show_data_patch_details(self, data_patch):
         """Show detailed information about a code."""
         if data_patch.discovered:
-            if data_patch.color in self.game.data_patch_effects:
-                effect_key, desc = self.game.data_patch_effects[data_patch.color]
+            if data_patch.color_name in self.game.data_patch_effects:
+                effect_key, desc = self.game.data_patch_effects[data_patch.color_name]
                 self.game.message_log.add_message(f"=== {data_patch.name} ===")
                 self.game.message_log.add_message(f"Effect: {desc}")
                 if data_patch.quantity > 1:
@@ -4918,7 +4919,7 @@ class UIRenderer:
         for part, color in zip(status_parts, colors):
             # Allow status bar to extend across full width
             if x_pos + len(part) < GameConfig.SCREEN_WIDTH - 1:
-                console.print(x_pos, 0, part, fg=color, bg=Colors.UI_BG)
+                console.print(x_pos, GameConfig.SCREEN_HEIGHT - 1, part, fg=color, bg=Colors.UI_BG)
                 x_pos += len(part) + 2
     
     def _get_cpu_color(self, cpu: int) -> Tuple[int, int, int]:
@@ -4956,7 +4957,7 @@ class UIRenderer:
                 console.print(x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
         
         # Panel border
-        border = "+" + "-" * (GameConfig.GAME_AREA_WIDTH - 2) + "+"
+        border = "┌" + "─" * (GameConfig.GAME_AREA_WIDTH - 2) + "┐"
         console.print(0, GameConfig.PANEL_Y, border, fg=Colors.LOG_BORDER, bg=Colors.UI_BG)
         
         # Equipped exploits (2 lines)
@@ -5087,7 +5088,7 @@ class UIRenderer:
         """Render the system log on the right side."""
         # Draw log border
         for y in range(GameConfig.SCREEN_HEIGHT):
-            console.print(GameConfig.GAME_AREA_WIDTH, y, '|', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+            console.print(GameConfig.GAME_AREA_WIDTH, y, '│', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
         # Log header - moved down one line to avoid covering status bar
         console.print(GameConfig.GAME_AREA_WIDTH + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
@@ -5319,14 +5320,12 @@ class MapRenderer:
                 'violet': Colors.VIOLET,
                 'silver': Colors.SILVER
             }
-            # Handle both string colors and tuple colors safely
-            if isinstance(patch.color, str):
-                actual_color = color_map.get(patch.color.lower(), Colors.WHITE)
-            elif isinstance(patch.color, (tuple, list)):
-                # If somehow a tuple color was stored, just use it directly
-                actual_color = ensure_color_tuple(patch.color)
+            # Handle color_name (should always be string)
+            if isinstance(patch.color_name, str):
+                actual_color = color_map.get(patch.color_name.lower(), Colors.WHITE)
             else:
-                # Fallback to white for any other type
+                # This should never happen, but fallback to white
+                logging.warning(f"DataPatch color_name is not string: {patch.color_name} (type: {type(patch.color_name)})")
                 actual_color = Colors.WHITE
             # Position 21 = § (section) for code fragments  
             safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=actual_color, bg=Colors.BLACK)
