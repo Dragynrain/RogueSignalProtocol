@@ -157,6 +157,7 @@ class GameConfig:
     DUNGEON_SEED_RANGE = 1000000
     DEFAULT_FADE_TIME = 2000
     DEFAULT_VISION_RANGE = 10
+    MAX_SAVE_ATTEMPTS = 3
     
     # Message display constants
     MESSAGE_CENTER_OFFSET_LARGE = 15
