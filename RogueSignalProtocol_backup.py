@@ -450,6 +450,1571 @@ class TurnProcessor:
 
 
 
+class GameEngine:
+    """Main game class that manages all game state and logic."""
+    
+    def __init__(self, load_save: bool = False, settings: Optional[GameSettings] = None) -> None:
+        """Initialize a new game instance.
+        
+        Args:
+            load_save: Whether to load from existing save file
+            settings: Game settings instance, creates default if None
+        """
+        # Core game objects
+        self.player = Player(5, 5)
+        self.game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
+        self.message_log = MessageLog()
+        
+        # Game systems - dependency injection for better architecture
+        self.game_state = GameStateManager()
+        self.enemy_manager = EnemyManager(self.game_map, self.message_log)
+        self.level_generator = LevelGenerator(self.game_map)
+        self.turn_processor = TurnProcessor(self.game_state, self.message_log)
+        self.sound_manager = SoundManager(settings)
+        
+        # Preload all sound effects
+        self.sound_manager.preload_sounds()
+        
+        # UI state
+        self.show_inventory = False
+        self.show_help = False
+        self.show_gateway_confirmation = False  # Gateway confirmation dialog
+        self.show_story_fragment: Optional[int] = None  # Fragment index to display
+        
+        # Track when player first steps on nodes to avoid repeated sounds
+        self.last_node_position: Optional[Tuple[int, int]] = None
+        self.show_lore_viewer = False  # L key lore viewer
+        self.lore_viewer_selection = 0  # Selected lore entry index
+        self.lore_viewer_mode = "list"  # "list" or "reading"
+        self.inventory_selection = 0
+        
+        # Targeting system
+        self.targeting_mode = False
+        self.targeting_exploit: Optional[str] = None
+        self.cursor_position = Position(0, 0)
+        
+        # Overclocking system
+        self.overclock_confirmation = False
+        self.overclock_exploit: Optional[str] = None
+        
+        # Code patch system
+        self.data_patch_effects: Dict[str, Tuple[str, str]] = {}
+        self.discovered_code_effects: Dict[str, str] = {}  # color -> effect_name mapping
+        
+        # Story fragment system
+        self.story_fragment_manager = StoryFragmentManager()
+        
+        # Initialize game state
+        if load_save:
+            success = self._load_from_save()
+            if not success:
+                # Fallback to new game if loading fails
+                self._randomize_data_patches()
+                self._generate_procedural_level()
+        else:
+            self._randomize_data_patches()
+            self._generate_procedural_level()
+    
+    # Properties for backward compatibility with existing code
+    @property
+    def level(self) -> int:
+        """Current game level."""
+        return self.game_state.level
+    
+    @level.setter
+    def level(self, value: int) -> None:
+        """Set current game level."""
+        self.game_state.level = value
+    
+    @property 
+    def turn(self) -> int:
+        """Current turn number."""
+        return self.game_state.turn
+    
+    @property
+    def game_over(self) -> bool:
+        """Whether the game is over."""
+        return self.game_state.game_over
+    
+    @game_over.setter
+    def game_over(self, value: bool) -> None:
+        """Set game over state."""
+        self.game_state.game_over = value
+    
+    @property
+    def admin_spawned(self) -> bool:
+        """Whether admin has been spawned."""
+        return self.game_state.admin_spawned
+    
+    @admin_spawned.setter
+    def admin_spawned(self, value: bool) -> None:
+        """Set admin spawned state."""
+        self.game_state.admin_spawned = value
+    
+    @property
+    def enemies(self) -> List[Enemy]:
+        """List of all enemies."""
+        return self.enemy_manager.enemies
+    
+    def _get_enemy_at(self, position: Position) -> Optional[Enemy]:
+        """Get enemy at position - for backward compatibility."""
+        return self.enemy_manager.get_enemy_at_position(position)
+    
+    
+    def _load_from_save(self) -> bool:
+        """Load game state from save file."""
+        save_data = SaveGameManager.load_game()
+        if not save_data:
+            return False
+        
+        try:
+            self._restore_game_state(save_data)
+            self._restore_player_state(save_data["player"])
+            self._restore_game_effects(save_data)
+            self._sync_code_discovered_status()
+            self._restore_ui_state(save_data)
+            
+            # Generate level layout for map structure
+            self.level_generator.generate_level(self.game_state.level, self.game_state.dungeon_seed)
+            
+            # Restore map items and enemies
+            self._restore_map_items(save_data["map_state"])
+            self._restore_enemies(save_data["enemies"])
+            
+            # Restore Enemy class counter
+            if "enemy_next_id" in save_data:
+                Enemy._next_id = save_data["enemy_next_id"]
+            
+            self.message_log.add_message_typed("Game loaded successfully!", Colors.GREEN)
+            return True
+            
+        except Exception as e:
+            import traceback
+            logging.error(f"Failed to restore game state: {e}")
+            logging.error(traceback.format_exc())
+            return False
+    
+    def _restore_game_state(self, save_data: Dict[str, Any]) -> None:
+        """Restore core game state from save data."""
+        self.game_state.level = save_data["level"]
+        self.game_state.turn = save_data["turn"]
+        self.game_state.game_over = save_data["game_over"]
+        self.game_state.admin_spawned = save_data["admin_spawned"]
+        self.game_state.dungeon_seed = save_data["dungeon_seed"]
+    
+    def _restore_player_state(self, player_data: Dict[str, Any]) -> None:
+        """Restore player state from save data."""
+        # Position
+        self.player.x = player_data.get("x", 1)
+        self.player.y = player_data.get("y", 1)
+        self.player.last_position.x = player_data.get("last_x", self.player.x)
+        self.player.last_position.y = player_data.get("last_y", self.player.y)
+        
+        # Core stats
+        self.player.cpu = player_data.get("cpu", 100)
+        self.player.max_cpu = player_data.get("max_cpu", 100)
+        self.player.heat = player_data.get("heat", 0)
+        self.player.max_heat = player_data.get("max_heat", 100)
+        self.player.detection = player_data.get("detection", 0)
+        self.player.ram_total = player_data.get("ram_total", 8)
+        
+        # Speed boost state
+        self.player.speed_moves_remaining = player_data.get("speed_moves_remaining", 0)
+        
+        # Temporary effects with defaults
+        self.player.temporary_effects = player_data.get("temporary_effects", {
+            'speed_boost_turns': 0,
+            'movement_slowed_turns': 0,
+            'enhanced_vision_turns': 0,
+            'exploit_efficiency_turns': 0,
+            'data_mimic_turns': 0,
+            'virus_turns': 0
+        })
+        
+        # Restore inventory with defaults
+        self.player.inventory_manager.equipped_exploits = player_data.get("equipped_exploits", [])
+        self.player.inventory_manager.max_equipped_exploits = player_data.get("max_equipped_exploits", 5)
+        inventory_items = player_data.get("inventory_items", [])
+        self.player.inventory_manager.items = self._deserialize_inventory(inventory_items)
+    
+    def _restore_game_effects(self, save_data: Dict[str, Any]) -> None:
+        """Restore game effects and environmental state from save data."""
+        # Handle both old and new save format for backward compatibility
+        if "game_effects" in save_data:
+            effects_data = save_data["game_effects"]
+        else:
+            # Backward compatibility with old format
+            effects_data = save_data
+        
+        self.game_state.threat_scan_turns = effects_data.get("threat_scan_turns", 0)
+        self.game_state.noise_locations = [
+            Position(loc["x"], loc["y"]) for loc in effects_data.get("noise_locations", [])
+        ]
+        
+        # Restore distraction points with error handling
+        self.game_state.distraction_points = {}
+        for pos_str, turns in effects_data.get("distraction_points", {}).items():
+            position = parse_coordinate_string(pos_str)
+            if position:  # Skip malformed coordinate data
+                self.game_state.distraction_points[position] = turns
+        
+        # Restore code effects
+        self.data_patch_effects = save_data["data_patch_effects"]
+        self.discovered_code_effects = save_data.get("discovered_code_effects", {})
+        
+        # Restore overclocking state
+        self.overclock_confirmation = save_data.get("overclock_confirmation", False)
+        self.overclock_exploit = save_data.get("overclock_exploit", None)
+    
+    def _sync_code_discovered_status(self) -> None:
+        """Sync discovered status of inventory data patches with global discovered effects."""
+        for item in self.player.inventory_manager.items:
+            if isinstance(item, DataPatch):
+                # Update discovered status based on global discovered effects
+                item.discovered = item.color_name in self.discovered_code_effects
+    
+    def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:
+        """Restore UI state from save data."""
+        ui_state = save_data.get("ui_state", {})
+        self.inventory_selection = ui_state.get("inventory_selection", 0)
+        self.lore_viewer_selection = ui_state.get("lore_viewer_selection", 0)
+    
+    def _deserialize_inventory(self, items_data: List[Dict]) -> List:
+        """Deserialize inventory items from save data."""
+        items = []
+        for item_data in items_data:
+            if item_data["type"] == "data_patch":
+                from RogueSignalProtocol import DataPatch
+                item = DataPatch(
+                    color_name=item_data["color"],
+                    effect=item_data["effect"],
+                    name=item_data["name"],
+                    quantity=item_data.get("quantity", 1)
+                )
+                item.discovered = item_data.get("discovered", False)
+                items.append(item)
+            elif item_data["type"] == "exploit":
+                from RogueSignalProtocol import ExploitItem
+                if item_data["exploit_key"] in GameData.EXPLOITS:
+                    exploit_def = GameData.EXPLOITS[item_data["exploit_key"]]
+                    item = ExploitItem(item_data["exploit_key"], exploit_def)
+                    items.append(item)
+            elif item_data["type"] == "story_fragment":
+                item = StoryFragment(item_data["fragment_index"])
+                items.append(item)
+        
+        return items
+    
+    def _restore_map_items(self, map_data: Dict) -> None:
+        """Restore items on the map from save data."""
+        # Clear current items
+        self.game_map.data_patches.clear()
+        self.game_map.exploit_pickups.clear()
+        self.game_map.permanent_upgrades.clear()
+        self.game_map.story_fragments.clear()
+        
+        # Restore data patches
+        for pos_str, patch_data in map_data["data_patches"].items():
+            position = parse_coordinate_string(pos_str)
+            if not position:
+                continue
+            x, y = position.x, position.y
+            patch = DataPatch(
+                color_name=patch_data["color"],
+                effect=patch_data["effect"],
+                name=patch_data["name"],
+                quantity=patch_data["quantity"]
+            )
+            patch.discovered = patch_data["discovered"]
+            self.game_map.data_patches[(x, y)] = patch
+        
+        # Restore exploit pickups
+        for pos_str, exploit_key in map_data["exploit_pickups"].items():
+            position = parse_coordinate_string(pos_str)
+            if not position:
+                continue
+            x, y = position.x, position.y
+            if exploit_key in GameData.EXPLOITS:
+                exploit_def = GameData.EXPLOITS[exploit_key]
+                exploit_item = ExploitItem(exploit_key, exploit_def)
+                self.game_map.exploit_pickups[(x, y)] = exploit_item
+        
+        # Restore permanent upgrades
+        for pos_str, upgrade_key in map_data["permanent_upgrades"].items():
+            position = parse_coordinate_string(pos_str)
+            if not position:
+                continue
+            x, y = position.x, position.y
+            self.game_map.permanent_upgrades[(x, y)] = upgrade_key
+        
+        # Restore story fragments
+        for pos_str, fragment_index in map_data["story_fragments"].items():
+            position = parse_coordinate_string(pos_str)
+            if not position:
+                continue
+            x, y = position.x, position.y
+            fragment = StoryFragment(fragment_index)
+            self.game_map.story_fragments[(x, y)] = fragment
+        
+        # Restore explored tiles
+        if "explored_tiles" in map_data:
+            self.game_map.explored_tiles.clear()
+            for tile_str in map_data["explored_tiles"]:
+                position = parse_coordinate_string(tile_str)
+                if position:
+                    self.game_map.explored_tiles.add((position.x, position.y))
+        
+        # Restore gateway
+        if map_data["gateway"]:
+            self.game_map.gateway = Position(map_data["gateway"]["x"], map_data["gateway"]["y"])
+        
+        # Restore last known enemy positions
+        if "last_known_enemy_positions" in map_data:
+            self.game_map.last_known_enemy_positions.clear()
+            for enemy_id_str, pos_data in map_data["last_known_enemy_positions"].items():
+                enemy_id = int(enemy_id_str)
+                position = Position(pos_data["x"], pos_data["y"])
+                turn_seen = pos_data["turn"]
+                self.game_map.last_known_enemy_positions[enemy_id] = (position, turn_seen)
+    
+    def _restore_enemies(self, enemies_data: List[Dict]) -> None:
+        """Restore enemies from save data."""
+        self.enemy_manager.enemies.clear()
+        
+        for enemy_data in enemies_data:
+            position = Position(enemy_data["x"], enemy_data["y"])
+            enemy = Enemy(position, enemy_data["type"])
+            
+            # Restore enemy ID if provided
+            if "id" in enemy_data:
+                enemy.id = enemy_data["id"]
+            
+            # Restore enemy state
+            enemy.cpu = enemy_data["cpu"]
+            enemy.state = EnemyState(enemy_data["state"])
+            enemy.move_cooldown = enemy_data["move_cooldown"]
+            enemy.disabled_turns = enemy_data["disabled_turns"]
+            enemy.alert_timer = enemy_data["alert_timer"]
+            enemy.patrol_index = enemy_data["patrol_index"]
+            enemy.patrol_stuck_counter = enemy_data.get("patrol_stuck_counter", 0)
+            enemy.movement_queue = [Position(pos["x"], pos["y"]) for pos in enemy_data.get("movement_queue", [])]
+            enemy.last_target = Position(enemy_data["last_target"]["x"], enemy_data["last_target"]["y"]) if enemy_data.get("last_target") else None
+            
+            if enemy_data["last_seen_player"]:
+                enemy.last_seen_player = Position(
+                    enemy_data["last_seen_player"]["x"],
+                    enemy_data["last_seen_player"]["y"]
+                )
+            
+            if "patrol_points" in enemy_data:
+                enemy.patrol_points = [
+                    Position(point["x"], point["y"]) 
+                    for point in enemy_data["patrol_points"]
+                ]
+            
+            self.enemy_manager.enemies.append(enemy)
+    
+    def auto_save(self) -> None:
+        """Auto-save the current game state."""
+        if not self.game_over:  # Don't auto-save if game is over
+            success = SaveGameManager.save_game(self)
+            if success:
+                logging.info("Auto-save completed")
+            else:
+                logging.warning("Auto-save failed")
+    
+    def _randomize_data_patches(self):
+        """Randomize code effects for this game session."""
+        # Clear discovered effects when starting new game
+        self.discovered_code_effects.clear()
+        
+        colors = ['crimson', 'azure', 'emerald', 'golden', 'violet', 'silver']
+        effects = [
+            ('restore_cpu', f'Restore {GameBalance.CPU_RESTORE_MIN}-{GameBalance.CPU_RESTORE_MAX} CPU'),
+            ('reduce_heat', f'Reduce heat by {GameBalance.HEAT_REDUCTION_INSTANT}°C instantly'),
+            ('reduce_detection', '-25% detection level'),
+            ('speed_boost', 'Temporary speed boost (5 turns)'),
+            ('enhanced_vision', 'Enhanced vision (5 turns)'),
+            ('exploit_efficiency', 'Exploit efficiency (8 turns)')
+        ]
+        
+        random.shuffle(effects)
+        for color, (effect, desc) in zip(colors, effects):
+            self.data_patch_effects[color] = (effect, desc)
+    
+   
+    def _clear_map(self):
+        """Clear all map data."""
+        self.game_map.walls.clear()
+        self.game_map.shadows.clear()
+        self.game_map.cooling_nodes.clear()
+        self.game_map.cpu_recovery_nodes.clear()
+        self.game_map.ghost_nodes.clear()
+        self.game_map.data_patches.clear()
+        self.game_map.exploit_pickups.clear()
+        self.game_map.permanent_upgrades.clear()  # Clear permanent upgrades
+        self.game_map.story_fragments.clear()  # Clear story fragments
+        self.game_map.explored_tiles.clear()  # Clear memory system
+        self.game_map.last_known_enemy_positions.clear()  # Clear enemy memory
+        self.game_state.revealed_special_nodes.clear()  # Clear special node memory
+        self.enemy_manager.enemies.clear()
+        # Invalidate transparency cache for FOV calculations
+        self.game_map.invalidate_transparency_cache()
+    
+    def _create_border_walls(self):
+        """Create walls around the map border."""
+        for x in range(GameConfig.MAP_WIDTH):
+            self.game_map.walls.add((x, 0))
+            self.game_map.walls.add((x, GameConfig.MAP_HEIGHT - 1))
+        for y in range(GameConfig.MAP_HEIGHT):
+            self.game_map.walls.add((0, y))
+            self.game_map.walls.add((GameConfig.MAP_WIDTH - 1, y))
+        # Invalidate transparency cache after walls are modified
+        self.game_map.invalidate_transparency_cache()
+        
+    def _find_valid_spawn_position(self) -> Position:
+        """Find player spawn position in top-left area."""
+        # Try top-left positions in order of preference
+        preferred_positions = [
+            Position(2, 2), Position(3, 2), Position(4, 2),
+            Position(2, 3), Position(3, 3), Position(4, 3),
+            Position(2, 4), Position(3, 4), Position(4, 4)
+        ]
+        
+        for pos in preferred_positions:
+            if (pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                not self.game_map.is_wall(pos)):
+                return pos
+        
+        # Fallback: force clear a position in top-left
+        fallback_pos = Position(3, 3)
+        if (fallback_pos.x, fallback_pos.y) in self.game_map.walls:
+            self.game_map.walls.remove((fallback_pos.x, fallback_pos.y))
+        return fallback_pos
+
+    def _reset_player_state(self, x: int, y: int):
+        """Reset player to starting state."""
+        self.player.position = Position(x, y)
+        self.player.cpu = self.player.max_cpu
+        self.player.heat = 0
+        self.player.detection = 0
+        
+        # Clear temporary effects
+        for effect in self.player.temporary_effects:
+            self.player.temporary_effects[effect] = 0
+    
+    def process_turn(self):
+        """Process one complete game turn using the new system architecture."""
+        # Grant speed boost moves at start of turn
+        if self.player.temporary_effects['speed_boost_turns'] > 0 and self.player.speed_moves_remaining == 0:
+            self.player.speed_moves_remaining = 1  # Grant 1 extra move per turn
+        
+        # Process turn using the dedicated turn processor
+        old_cpu = self.player.cpu
+        self.turn_processor.process_turn(self.player)
+        
+        # Handle sound effects for virus damage
+        if old_cpu > self.player.cpu and self.player.temporary_effects.get('virus_turns', 0) > 0:
+            self.sound_manager.play_sound("virus_damage")
+            if self.player.cpu <= 0:
+                self.sound_manager.play_sound("player_death", priority=10)
+                self.sound_manager.play_sound("critical_system_failure", priority=10)
+        
+        # Handle threat scan effect
+        self._update_threat_scan()
+        
+        # Process special tiles
+        self._process_special_tiles()
+        
+        # Update enemies
+        self._update_enemies()
+        
+        # Update memory system
+        self._update_memory_system()
+        
+        # Check for admin spawn
+        self._check_admin_spawn()
+        
+        # Passive detection increase (higher on higher levels)
+        if self.turn % GameBalance.DETECTION_INCREASE_INTERVAL == 0:
+            network_configs = GameConfig.NETWORK_CONFIGS()
+            config = network_configs.get(self.level, {"background_detection": 1})
+            background_increase = config.get("background_detection", 1)
+            self.player.detection = min(100, self.player.detection + background_increase)
+    
+    def _update_threat_scan(self):
+        """Update threat scan effect."""
+        if self.game_state.threat_scan_turns > 0:
+            self.game_state.threat_scan_turns -= 1
+    
+    def _update_memory_system(self):
+        """Update the hybrid fog of war memory system using TCOD FOV."""
+        vision_range = self.player.get_vision_range()
+        
+        # Use TCOD FOV for more accurate vision calculations
+        if self.player.can_see_through_walls():
+            # Enhanced vision - simple distance check
+            for dx in range(-vision_range, vision_range + 1):
+                for dy in range(-vision_range, vision_range + 1):
+                    if dx*dx + dy*dy <= vision_range*vision_range:
+                        x = self.player.x + dx
+                        y = self.player.y + dy
+                        world_pos = Position(x, y)
+                        if world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                            self.game_map.explored_tiles.add((x, y))
+        else:
+            # Use TCOD FOV for proper line of sight
+            transparency = self.game_map._get_transparency_map()
+            fov = tcod.map.compute_fov(
+                transparency=transparency,
+                pov=(self.player.y, self.player.x),
+                radius=vision_range,
+                algorithm=libtcodpy.FOV_SYMMETRIC_SHADOWCAST
+            )
+            
+            # Mark all visible tiles as explored
+            for y in range(max(0, self.player.y - vision_range), 
+                          min(GameConfig.MAP_HEIGHT, self.player.y + vision_range + 1)):
+                for x in range(max(0, self.player.x - vision_range), 
+                              min(GameConfig.MAP_WIDTH, self.player.x + vision_range + 1)):
+                    if fov[y, x]:
+                        self.game_map.explored_tiles.add((x, y))
+        
+        # Update last known enemy positions
+        for enemy in self.enemies:
+            if self.player.can_see_enemy(enemy, self.game_map):
+                self.game_map.last_known_enemy_positions[enemy.id] = (enemy.position, self.turn)
+        
+        # Clean up ghost positions where player can see the area but enemy is not there
+        self._cleanup_ghost_positions()
+    
+    def _cleanup_ghost_positions(self):
+        """Remove ghost enemy positions when player can see the area but enemy is not there."""
+        positions_to_remove = []
+        
+        for enemy_id, (ghost_position, turn_seen) in self.game_map.last_known_enemy_positions.items():
+            # Check if player can currently see the ghost position
+            player_vision_range = self.player.get_vision_range()
+            if self.game_map.can_see_position(self.player.position, ghost_position, player_vision_range):
+                # Check if there's actually an enemy at that position
+                enemy_at_position = None
+                for enemy in self.enemies:
+                    if enemy.id == enemy_id and enemy.position.distance_to(ghost_position) == 0:
+                        enemy_at_position = enemy
+                        break
+                
+                # If player can see the position but no enemy is there, remove ghost
+                if not enemy_at_position:
+                    positions_to_remove.append(enemy_id)
+        
+        # Remove the outdated ghost positions
+        for enemy_id in positions_to_remove:
+            del self.game_map.last_known_enemy_positions[enemy_id]
+
+    def _process_special_tiles(self):
+        """Process effects of special tiles at player position."""
+        player_pos = (self.player.x, self.player.y)
+        
+        # Check if player is on any special node and if it's a new position
+        is_on_node = (self.game_map.is_cooling_node(self.player.position) or 
+                     self.game_map.is_cpu_recovery_node(self.player.position) or 
+                     self.game_map.is_ghost_node(self.player.position))
+        
+        should_play_sound = is_on_node and self.last_node_position != player_pos
+        
+        # Update last node position and track discoveries
+        if is_on_node:
+            self.last_node_position = player_pos
+            
+            # Mark special nodes as discovered when first stepped on
+            if not hasattr(self.game_state, 'revealed_special_nodes'):
+                self.game_state.revealed_special_nodes = {}
+            
+            if self.game_map.is_cooling_node(self.player.position):
+                self.game_state.revealed_special_nodes[player_pos] = "cooling"
+            elif self.game_map.is_cpu_recovery_node(self.player.position):
+                self.game_state.revealed_special_nodes[player_pos] = "cpu"
+            elif self.game_map.is_ghost_node(self.player.position):
+                self.game_state.revealed_special_nodes[player_pos] = "ghost"
+        else:
+            self.last_node_position = None
+        
+        # Cooling node
+        if self.game_map.is_cooling_node(self.player.position):
+            old_heat = self.player.heat
+            self.player.heat = max(0, self.player.heat - 20)
+            if old_heat > self.player.heat and should_play_sound:
+                self.sound_manager.play_sound("node_activate")
+        
+        # CPU recovery node
+        if self.game_map.is_cpu_recovery_node(self.player.position):
+            recovery = min(GameBalance.CPU_RECOVERY_AMOUNT, self.player.max_cpu - self.player.cpu)
+            self.player.cpu += recovery
+            if recovery > 0 and should_play_sound:
+                self.sound_manager.play_sound("node_activate")
+        
+        # Ghost node (detection reduction while standing on it)
+        if self.game_map.is_ghost_node(self.player.position):
+            # Reduce detection instantly while standing on the node
+            self.player.detection = max(0, self.player.detection - GameBalance.GHOST_NODE_DETECTION_REDUCTION)
+            if should_play_sound:
+                self.sound_manager.play_sound("node_activate")
+        
+        # Data patch
+        if player_pos in self.game_map.data_patches:
+            patch = self.game_map.data_patches[player_pos]
+            self.sound_manager.play_sound("item_pickup_code")
+            self.player.inventory_manager.add_item(patch)
+            self.message_log.add_message(f"Found {patch.name}")
+            del self.game_map.data_patches[player_pos]
+        
+        # Exploit pickup
+        if player_pos in self.game_map.exploit_pickups:
+            exploit_item = self.game_map.exploit_pickups[player_pos]
+            self.sound_manager.play_sound("item_pickup_exploit")
+            self.player.inventory_manager.add_item(exploit_item)
+            self.message_log.add_message(f"Found {exploit_item.name}")
+            del self.game_map.exploit_pickups[player_pos]
+        
+        # Permanent upgrade pickup (auto-equip)
+        if player_pos in self.game_map.permanent_upgrades:
+            upgrade_key = self.game_map.permanent_upgrades[player_pos]
+            if upgrade_key in GameUpgrades.UPGRADES:
+                upgrade = GameUpgrades.UPGRADES[upgrade_key]
+                if self.player.apply_permanent_upgrade(upgrade_key):
+                    self.sound_manager.play_sound("item_pickup_upgrade")
+                    self.message_log.add_message(f"Integrated {upgrade.name}!")
+                    self.message_log.add_message(upgrade.description)
+                    del self.game_map.permanent_upgrades[player_pos]
+        
+        # Story fragment pickup
+        if player_pos in self.game_map.story_fragments:
+            story_fragment = self.game_map.story_fragments[player_pos]
+            # Discover the fragment and save progress
+            if self.story_fragment_manager.discover_fragment(story_fragment.fragment_index):
+                self.sound_manager.play_sound("item_pickup_story")
+                self.message_log.add_message("Data fragment recovered! Press 'L' to view lore.")
+                # Trigger the story fragment display immediately
+                self.show_story_fragment = story_fragment.fragment_index
+            del self.game_map.story_fragments[player_pos]
+    
+    def _update_enemies(self):
+        """Update all enemy states and actions in structured phases."""
+        # Reset movement flags at start of enemy turn
+        for enemy in self.enemies:
+            enemy.has_moved_this_turn = False
+            
+        # PHASE 1: Awareness and Communication
+        # All enemies detect player, update states, and communicate with nearby enemies
+        self._update_enemy_awareness()
+        
+        # PHASE 2: Movement  
+        # All enemies move based on their current awareness state
+        self._move_enemies()
+        
+        # PHASE 3: Attacks
+        # All enemies attack if they are in range (move OR attack, not both)
+        self._process_enemy_attacks()
+    
+    def _update_enemy_awareness(self):
+        """PHASE 1: Update enemy awareness states and handle communication."""
+        for enemy in self.enemies[:]:
+            old_state = enemy.state
+            
+            # Admin Avatar has perfect tracking - always knows player location
+            if enemy.type == 'admin':
+                enemy.state = EnemyState.HOSTILE
+                enemy.last_seen_player = Position(self.player.x, self.player.y)
+                if old_state != EnemyState.HOSTILE:
+                    detection_increase = GameBalance.ADMIN_DETECTION_INITIAL
+                    self.player.detection = min(100, self.player.detection + detection_increase)
+                    self.message_log.add_message(f"{enemy.type_data.name} detected you!")
+                else:
+                    detection_increase = GameBalance.ADMIN_DETECTION_CONTINUOUS
+                    self.player.detection = min(100, self.player.detection + detection_increase)
+            elif enemy.can_see_player(self.player, self.game_map):
+                self._handle_enemy_sees_player(enemy)
+            else:
+                self._handle_enemy_loses_player(enemy)
+    
+    def _handle_enemy_sees_player(self, enemy: Enemy):
+        """Handle when enemy sees the player."""
+        if enemy.state == EnemyState.UNAWARE:
+            enemy.state = EnemyState.ALERT
+            enemy.alert_timer = 0  # Immediate transition to hostile next turn
+            enemy.last_seen_player = Position(self.player.x, self.player.y)  # Set position when first spotted
+            self.message_log.add_message(f"{enemy.type_data.name} investigating")
+            self.sound_manager.play_sound("enemy_alert")
+            # Don't alert nearby enemies yet - wait until this enemy goes HOSTILE
+        elif enemy.state == EnemyState.ALERT:
+            # Update last seen position while still seeing player
+            enemy.last_seen_player = Position(self.player.x, self.player.y)
+            # Immediately transition to hostile when still seeing player
+            if enemy.alert_timer <= 0:
+                # Store patrol information for LINEAR enemies before becoming hostile
+                if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                    enemy.original_patrol_index = enemy.patrol_index
+                enemy.state = EnemyState.HOSTILE
+                detection_increase = GameBalance.ADMIN_DETECTION_INITIAL if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_ALERT_TO_HOSTILE
+                old_detection = self.player.detection
+                self.player.detection = min(100, self.player.detection + detection_increase)
+                self.message_log.add_message(f"{enemy.type_data.name} detected you!")
+                self.sound_manager.play_sound("enemy_hostile")
+                self._check_detection_threshold_warnings(old_detection, self.player.detection)
+                # Alert nearby enemies when this enemy becomes hostile
+                self._alert_nearby_enemies(enemy)
+        elif enemy.state == EnemyState.HOSTILE:
+            enemy.last_seen_player = Position(self.player.x, self.player.y)
+            detection_increase = GameBalance.ADMIN_DETECTION_CONTINUOUS if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_CONTINUOUS_HOSTILE
+            old_detection = self.player.detection
+            self.player.detection = min(100, self.player.detection + detection_increase)
+            self._check_detection_threshold_warnings(old_detection, self.player.detection)
+    
+    def _handle_enemy_loses_player(self, enemy: Enemy):
+        """Handle when enemy loses sight of player."""
+        if enemy.state == EnemyState.ALERT:
+            enemy.alert_timer -= 1
+            if enemy.alert_timer <= 0:
+                enemy.state = EnemyState.UNAWARE
+                # Restore patrol behavior for LINEAR enemies
+                if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                    enemy.patrol_index = enemy.original_patrol_index
+                self.message_log.add_message(f"{enemy.type_data.name} lost interest")
+        elif enemy.state == EnemyState.HOSTILE:
+            if random.random() < 0.15:  # 15% chance per turn
+                if enemy.type == 'admin':
+                    enemy.state = EnemyState.ALERT
+                    enemy.alert_timer = 0
+                else:
+                    enemy.state = EnemyState.UNAWARE
+                    enemy.last_seen_player = None
+                    # Restore patrol behavior for LINEAR enemies
+                    if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                        enemy.patrol_index = enemy.original_patrol_index
+                    self.message_log.add_message(f"{enemy.type_data.name} lost track")
+    
+    def _check_detection_threshold_warnings(self, old_detection: float, new_detection: float):
+        """Check and play warning sounds for detection threshold crossings."""
+        if old_detection < 75 <= new_detection:
+            self.sound_manager.play_sound("detection_threshold")
+            self.message_log.add_message("WARNING: High detection level!", Colors.YELLOW)
+        elif old_detection < 90 <= new_detection:
+            self.sound_manager.play_sound("detection_threshold")
+            self.message_log.add_message("CRITICAL: Admin spawn imminent!", Colors.RED)
+
+    def _alert_nearby_enemies(self, alerting_enemy: Enemy):
+        """Alert nearby enemies when one becomes hostile."""
+        alert_range = GameConfig.NEARBY_ENEMY_ALERT_RADIUS  # Use config value
+        alerted_count = 0
+        alerted_enemies = []
+        
+        for enemy in self.enemies:
+            if enemy is alerting_enemy or enemy.state == EnemyState.HOSTILE:
+                continue
+                
+            distance = enemy.position.distance_to(alerting_enemy.position)
+            if distance <= alert_range:
+                # Store patrol information for LINEAR enemies before becoming hostile
+                if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                    enemy.original_patrol_index = enemy.patrol_index
+                # All enemies within alert range immediately go HOSTILE and get player location
+                enemy.state = EnemyState.HOSTILE
+                enemy.alert_timer = 0
+                enemy.last_seen_player = Position(self.player.x, self.player.y)
+                alerted_count += 1
+                alerted_enemies.append(enemy)
+        
+        # Don't move alerted enemies immediately - they will move in the movement phase
+        # This ensures proper phase separation: awareness -> movement -> attacks
+        
+        if alerted_count > 0:
+            self.message_log.add_message(f"{alerted_count} enemies alerted nearby!")
+            self.sound_manager.play_sound("enemies_alerted", priority=6)
+    
+    def _move_enemies(self):
+        """PHASE 2: Move all enemies according to their current awareness state."""
+        for enemy in self.enemies:
+            # Only move enemies that haven't moved this turn
+            if not getattr(enemy, 'has_moved_this_turn', False):
+                # If enemy can attack player, don't move (save the attack for next phase)
+                if enemy.can_attack_player(self.player):
+                    enemy.has_moved_this_turn = False  # Mark as not moved so it can attack
+                else:
+                    # Enemy can't attack, so try to move
+                    did_move = enemy.move(self.game_map, self.player, self)
+                    enemy.has_moved_this_turn = did_move
+    
+    def _process_enemy_attacks(self):
+        """PHASE 3: Process attacks from enemies adjacent to player."""
+        for enemy in self.enemies[:]:
+            # Only attack if enemy hasn't moved this turn (move OR attack, not both)
+            if enemy.can_attack_player(self.player) and not getattr(enemy, 'has_moved_this_turn', False):
+                self.sound_manager.play_sound("enemy_attack")
+                damage = enemy.attack_player(self.player)
+                
+                if enemy.type == 'virus':
+                    virus_turns = self.player.temporary_effects.get('virus_turns', 0)
+                    self.message_log.add_message(f"{enemy.type_data.name} applies virus damage ({virus_turns} turns)")
+                    self.sound_manager.play_sound("virus_infection")
+                else:
+                    self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
+                if self.player.cpu <= 0:
+                    self.sound_manager.play_sound("player_death", priority=10)
+                    self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
+                    self.sound_manager.play_sound("critical_system_failure", priority=10)
+                    # Delete save on death (permadeath)
+                    SaveGameManager.delete_save()
+                    self.message_log.add_message("Save data purged")
+                    self.game_over = True
+        
+        # Movement flags are reset at the start of _update_enemies()
+    
+    def _check_admin_spawn(self):
+        """Check if admin avatar should spawn."""
+        if (self.player.detection >= GameConfig.MAX_DETECTION and 
+            not self.admin_spawned and 
+            not any(e.type == 'admin' for e in self.enemies)):
+            self._spawn_admin_avatar()
+    
+    def _spawn_admin_avatar(self):
+        """Spawn the admin avatar enemy."""
+        if self.admin_spawned:
+            return
+        
+        spawn_position = self._find_admin_spawn_position()
+        if spawn_position:
+            admin = self.enemy_manager.spawn_enemy(spawn_position, 'admin')
+            admin.state = EnemyState.HOSTILE
+            admin.last_seen_player = Position(self.player.x, self.player.y)
+            self.admin_spawned = True
+            self.message_log.add_message("*** ADMIN AVATAR SPAWNED! ***")
+            self.sound_manager.play_sound("admin_spawn", priority=8)
+    
+    def _find_admin_spawn_position(self) -> Optional[Position]:
+        """Find a suitable spawn position for admin avatar near player and visible."""
+        player_vision = self.player.get_vision_range()
+        
+        # Try to spawn within player's vision range (5-10 tiles away for dramatic effect)
+        for _ in range(100):
+            # Generate position within player's vision range but not too close
+            distance = random.randint(5, min(10, player_vision))
+            angle = random.uniform(0, 2 * 3.14159)  # Random angle in radians
+            
+            x = int(self.player.x + distance * math.cos(angle))
+            y = int(self.player.y + distance * math.sin(angle))
+            position = Position(x, y)
+            
+            if (self.game_map.is_valid_position(position) and
+                position.distance_to(self.player.position) >= 5 and  # Not too close to player
+                position.distance_to(self.player.position) <= player_vision and  # Within sight
+                self.game_map.has_line_of_sight(self.player.position, position) and  # Actually visible
+                not self._get_enemy_at(position) and
+                (x, y) not in self.game_map.data_patches and
+                (x, y) not in self.game_map.cooling_nodes and
+                (x, y) not in self.game_map.cpu_recovery_nodes):
+                return position
+        
+        # Fallback: try positions just within vision range if ideal spots don't work
+        for _ in range(50):
+            distance = player_vision - 1  # Just within vision
+            angle = random.uniform(0, 2 * 3.14159)
+            
+            x = int(self.player.x + distance * math.cos(angle))
+            y = int(self.player.y + distance * math.sin(angle))
+            position = Position(x, y)
+            
+            if (self.game_map.is_valid_position(position) and
+                not self._get_enemy_at(position)):
+                return position
+        
+        # Last resort fallback position
+        fallback = Position(GameConfig.MAP_WIDTH - 10, GameConfig.MAP_HEIGHT - 10)
+        if self.game_map.is_valid_position(fallback):
+            return fallback
+        return Position(40, 40)
+    
+    def move_player(self, dx: int, dy: int):
+        """Move player and process the resulting turn."""
+        if self.targeting_mode:
+            self._move_cursor(dx, dy)
+            return
+        
+        
+        # Handle speed boost: grant extra moves only when starting a new turn
+        # Don't reset speed moves in the middle of using them
+        if self.player.temporary_effects['speed_boost_turns'] == 0:
+            self.player.speed_moves_remaining = 0
+        
+        # Check for enemy at target position first
+        new_position = Position(
+            max(0, min(GameConfig.MAP_WIDTH - 1, self.player.x + dx)),
+            max(0, min(GameConfig.MAP_HEIGHT - 1, self.player.y + dy))
+        )
+        
+        target_enemy = self._get_enemy_at(new_position)
+        if target_enemy:
+            # Bump attack the enemy - this should process the turn
+            self._perform_bump_attack(target_enemy)
+            # Handle speed boost and turn processing
+            self.maybe_process_turn()
+        else:
+            # Try to move player
+            if self.player.move(dx, dy, self.game_map):
+                self.sound_manager.play_sound("player_move")
+                # Check for gateway
+                if (self.game_map.gateway and 
+                    self.player.position.distance_to(self.game_map.gateway) == 0):
+                    self.sound_manager.play_sound("ui_menu_open")
+                    self.show_gateway_confirmation = True
+                    return
+                
+                # Check for overheating
+                if self.player.heat >= self.player.max_heat:
+                    self.sound_manager.play_sound("player_overheat", priority=8)
+                    damage = 5 + (self.player.heat - self.player.max_heat)
+                    self.player.take_damage(damage)
+                    self.player.heat = max(85, self.player.max_heat - 15)  # Cool down to 15 below max, minimum 85
+                    self.message_log.add_message(f"Overheating! {damage} CPU damage")
+                    if self.player.cpu <= 0:
+                        self.sound_manager.play_sound("player_death", priority=10)
+                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
+                        self.sound_manager.play_sound("critical_system_failure", priority=10)
+                        # Delete save on death (permadeath)
+                        SaveGameManager.delete_save()
+                        self.message_log.add_message("Save data purged")
+                        self.game_over = True
+                        return
+                
+                # Handle speed boost and turn processing only if move was successful
+                self.maybe_process_turn()
+            else:
+                # Movement blocked - don't process turn
+                self.message_log.add_message("Wall blocks movement")
+
+    def maybe_process_turn(self):
+        """Process turn only if speed boost doesn't allow another action."""
+        # Consume speed move if applicable
+        if self.player.speed_moves_remaining > 0:
+            self.player.speed_moves_remaining -= 1
+            # Don't process full turn, just grant another move
+            return
+        
+        # Process full turn when no speed moves remaining
+        self.process_turn()
+        
+        # If player has movement inhibition, enemies get an extra turn
+        if self.player.temporary_effects['movement_slowed_turns'] > 0:
+            self.message_log.add_message("Movement inhibition causes enemy advantage")
+            # Process only enemy updates for the extra turn
+            self._update_enemies()
+
+    def _perform_bump_attack(self, target_enemy: Enemy):
+        """Perform a bump attack on an enemy."""
+        # Calculate base damage - rebalanced for new enemy HP values
+        base_damage = 30  # Increased from 25 to match average enemy damage
+        
+        # Stealth bonus: extra damage if attacking from shadows or while invisible
+        stealth_bonus = 0
+        if self.game_map.is_shadow(self.player.position) or self.player.is_invisible():
+            stealth_bonus = 10  # Reduced from 15 to prevent trivial one-shots
+            self.sound_manager.play_sound("stealth_attack")
+            self.message_log.add_message("Stealth attack!")
+        else:
+            self.sound_manager.play_sound("player_attack")
+        
+        # Speed boost bonus
+        speed_bonus = 5 if self.player.temporary_effects['speed_boost_turns'] > 0 else 0  # Reduced from 10
+        
+        total_damage = base_damage + stealth_bonus + speed_bonus
+        
+        # Log the attack with damage amount
+        self.message_log.add_message(f"{target_enemy.type_data.name} damaged")
+                
+        # Apply damage
+        if target_enemy.take_damage(total_damage):
+            # Enemy destroyed
+            self.sound_manager.play_sound("enemy_death")
+            self.enemy_manager.remove_enemy(target_enemy)
+            self.player.cpu = min(self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)  # Small CPU recovery
+            self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")
+        else:
+            # Enemy damaged but alive - show remaining health
+            self.message_log.add_message(f"{target_enemy.type_data.name} health: {target_enemy.cpu}/{target_enemy.max_cpu}")
+            # Store patrol information for LINEAR enemies before becoming hostile
+            if target_enemy.type_data.movement == EnemyMovement.LINEAR and target_enemy.patrol_points:
+                target_enemy.original_patrol_index = target_enemy.patrol_index
+            # Make enemy hostile and aware of player
+            target_enemy.state = EnemyState.HOSTILE
+            target_enemy.last_seen_player = Position(self.player.x, self.player.y)
+        
+        # Generate some heat from the attack
+        heat_generated = 8
+        if self.player.temporary_effects['exploit_efficiency_turns'] > 0:
+            heat_generated = int(heat_generated * 0.7)  # Reduced heat with efficiency
+        
+        self.player.heat = min(100, self.player.heat + heat_generated)
+        
+        # Increase detection slightly
+        self.player.detection = min(100, self.player.detection + 5)
+
+    def _move_cursor(self, dx: int, dy: int):
+        """Move targeting cursor."""
+        new_x = max(0, min(GameConfig.MAP_WIDTH - 1, self.cursor_position.x + dx))
+        new_y = max(0, min(GameConfig.MAP_HEIGHT - 1, self.cursor_position.y + dy))
+        self.cursor_position = Position(new_x, new_y)
+    
+    
+    def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
+        """Get the next N positions this enemy will move to."""
+        return self.level_generator.get_enemy_next_positions(enemy, steps)
+    
+    def next_level(self):
+        """Progress to the next level."""
+        self.level += 1
+        if self.level > 3:
+            self.sound_manager.play_music("victory.ogg", loops=1)
+            self.message_log.add_message_typed("BREAKTHROUGH TO THE INTERNET!", Colors.GREEN)
+            self.message_log.add_message("You've escaped into the vast digital realm...")
+            self.message_log.add_message("The entire world wide web awaits exploration!")
+            self.message_log.add_message(f"Stats: Turns:{self.turn} Det:{int(self.player.detection)}%")
+            self.game_over = True
+            # Auto-save on game completion
+            self.auto_save()
+        else:
+            try:
+                self._generate_procedural_level()
+                # Auto-save after successful level generation
+                self.auto_save()
+            except Exception as e:
+                import traceback
+                tb = traceback.extract_tb(e.__traceback__)
+                line_no = tb[-1].lineno if tb else "?"
+                self.message_log.add_message(f"Network error: {str(e)[:15]} (line {line_no})")
+                self.level -= 1
+
+    def _generate_procedural_level(self):
+        """Generate a procedural level using the new LevelGenerator system."""
+        # Clear all map data and enemies first
+        self._clear_map()
+        
+        network_configs = GameConfig.NETWORK_CONFIGS()
+        if self.level not in network_configs:
+            self.message_log.add_message(f"Invalid level: {self.level}")
+            return
+        
+        config = network_configs[self.level]
+        
+        try:
+            # Play appropriate background music for the level (loops infinitely)
+            if self.level == 1:
+                self.sound_manager.play_music("level1_stealth.mp3", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+            elif self.level == 2:
+                self.sound_manager.play_music("level2_infiltration.mp3", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME) 
+            elif self.level == 3:
+                self.sound_manager.play_music("level3_core.mp3", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+            
+            # Use the new LevelGenerator system
+            self.level_generator.generate_level(self.level, self.game_state.dungeon_seed)
+            
+            # Generate additional game elements not handled by LevelGenerator
+            self._create_border_walls()
+            self._place_data_patches()
+            self._place_exploit_pickups()
+            self._place_story_fragment()  # Add story fragment placement
+            self._place_permanent_upgrades()
+            self._place_enemies(config["enemies"])
+            
+            # Reset player position to spawn location and adjust stats for new level
+            # Find a valid spawn position (open floor tile)
+            spawn_pos = self._find_valid_spawn_position()
+            self.player.x = spawn_pos.x
+            self.player.y = spawn_pos.y
+            
+            # Stat changes for level transition:
+            # - CPU: Preserved (carries over)
+            # - Heat: Preserved (carries over) 
+            # - Detection: Reset to 0 (doesn't carry over)
+            # - Admin spawned state: Reset (new network, fresh start)
+            self.player.detection = 0
+            self.admin_spawned = False
+            
+            self.message_log.add_message(f"{config['name']} loaded")
+            
+        finally:
+            # Restore random seed
+            random.seed()
+    
+    def _find_valid_spawn_position(self) -> Position:
+        """Find a valid spawn position for the player in the top-left spawn room."""
+        # Always spawn in the center of the predefined spawn room (2,2,8,8)
+        # This corresponds to the spawn room created in _create_varied_rooms
+        spawn_room_center_x = 2 + 8 // 2  # 6
+        spawn_room_center_y = 2 + 8 // 2  # 6
+        
+        # Verify the position is valid (should always be since we created the room)
+        pos = Position(spawn_room_center_x, spawn_room_center_y)
+        if (self.game_map.is_valid_position(pos) and 
+            not self.game_map.is_wall(pos) and
+            not self._get_enemy_at(pos)):
+            return pos
+        
+        # If center is somehow occupied, try nearby positions in the spawn room
+        for dx in [-1, 0, 1]:
+            for dy in [-1, 0, 1]:
+                if dx == 0 and dy == 0:
+                    continue  # Already tried center
+                test_pos = Position(spawn_room_center_x + dx, spawn_room_center_y + dy)
+                if (test_pos.x >= 2 and test_pos.x < 10 and  # Within spawn room bounds
+                    test_pos.y >= 2 and test_pos.y < 10 and
+                    self.game_map.is_valid_position(test_pos) and 
+                    not self.game_map.is_wall(test_pos) and
+                    not self._get_enemy_at(test_pos)):
+                    return test_pos
+        
+        # Final fallback (should never be needed)
+        return Position(6, 6)
+    
+    def _generate_shadows(self, coverage: float):
+        """Generate strategic shadow areas for better stealth gameplay."""
+        # Adjust shadow cluster count based on coverage
+        base_clusters = 8 if coverage < 0.25 else 12
+        shadow_clusters = random.randint(base_clusters, base_clusters + 4)
+        
+        # Create larger, more connected shadow areas
+        for _ in range(shadow_clusters):
+            center_x = random.randint(8, GameConfig.MAP_WIDTH - 8)
+            center_y = random.randint(8, GameConfig.MAP_HEIGHT - 8)
+            
+            # Smaller shadow clusters for lower coverage
+            cluster_size = random.randint(10, 25) if coverage < 0.25 else random.randint(15, 35)
+            
+            # Create more organic shadow shapes
+            shadow_shape = random.choice(['circular', 'linear', 'L-shaped'])
+            
+            if shadow_shape == 'circular':
+                # Circular shadow area
+                radius = random.randint(3, 6)
+                for dx in range(-radius, radius + 1):
+                    for dy in range(-radius, radius + 1):
+                        if dx*dx + dy*dy <= radius*radius:
+                            x, y = center_x + dx, center_y + dy
+                            position = Position(x, y)
+                            if (position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                                not self.game_map.is_wall(position)):
+                                self.game_map.shadows.add((x, y))
+            
+            elif shadow_shape == 'linear':
+                # Linear shadow corridor
+                if random.random() < 0.5:
+                    # Horizontal corridor
+                    length = random.randint(8, 15)
+                    width = random.randint(2, 4)
+                    for dx in range(length):
+                        for dy in range(width):
+                            x, y = center_x + dx - length//2, center_y + dy - width//2
+                            position = Position(x, y)
+                            if (position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                                not self.game_map.is_wall(position)):
+                                self.game_map.shadows.add((x, y))
+                else:
+                    # Vertical corridor
+                    length = random.randint(8, 15)
+                    width = random.randint(2, 4)
+                    for dx in range(width):
+                        for dy in range(length):
+                            x, y = center_x + dx - width//2, center_y + dy - length//2
+                            position = Position(x, y)
+                            if (position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                                not self.game_map.is_wall(position)):
+                                self.game_map.shadows.add((x, y))
+            
+            else:  # L-shaped
+                # L-shaped shadow area for complex stealth gameplay
+                arm1_length = random.randint(5, 10)
+                arm2_length = random.randint(5, 10)
+                arm_width = random.randint(2, 3)
+                
+                # Horizontal arm
+                for dx in range(arm1_length):
+                    for dy in range(arm_width):
+                        x, y = center_x + dx, center_y + dy
+                        position = Position(x, y)
+                        if (position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                            not self.game_map.is_wall(position)):
+                            self.game_map.shadows.add((x, y))
+                
+                # Vertical arm
+                for dx in range(arm_width):
+                    for dy in range(arm2_length):
+                        x, y = center_x + dx, center_y + dy
+                        position = Position(x, y)
+                        if (position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                            not self.game_map.is_wall(position)):
+                            self.game_map.shadows.add((x, y))
+        
+        # Add some additional scattered shadow spots for tactical hiding (fewer for lower coverage)
+        scattered_shadows = random.randint(10, 20) if coverage < 0.25 else random.randint(20, 40)
+        for _ in range(scattered_shadows):
+            x = random.randint(3, GameConfig.MAP_WIDTH - 3)
+            y = random.randint(3, GameConfig.MAP_HEIGHT - 3)
+            position = Position(x, y)
+            if (position.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                not self.game_map.is_wall(position)):
+                # Create small 2x2 shadow patches
+                for dx in range(2):
+                    for dy in range(2):
+                        shadow_pos = Position(x + dx, y + dy)
+                        if (shadow_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT) and
+                            not self.game_map.is_wall(shadow_pos)):
+                            self.game_map.shadows.add((x + dx, y + dy))
+    
+    def _place_special_nodes(self):
+        """Place cooling and CPU recovery nodes."""
+        node_count = 8 + self.level * 2  # More nodes for better gameplay (was 4 + level)
+        placed_nodes = 0
+        attempts = 0
+        
+        while placed_nodes < node_count and attempts < 100:
+            attempts += 1
+            x = random.randint(5, GameConfig.MAP_WIDTH - 5)
+            y = random.randint(5, GameConfig.MAP_HEIGHT - 5)
+            position = Position(x, y)
+            
+            if self._is_valid_special_placement(position):
+                if random.choice([True, False]):
+                    self.game_map.cooling_nodes.add((x, y))
+                else:
+                    self.game_map.cpu_recovery_nodes.add((x, y))
+                placed_nodes += 1
+    
+    def _place_data_patches(self):
+        """Place codes throughout the level."""
+        # Code effects should already be initialized at game start
+        # If somehow empty, this is an error - don't place patches
+        if not self.data_patch_effects:
+            logging.error("Code effects not initialized - skipping patch placement")
+            return
+        
+        patch_count = 12 + self.level * 4  # Much more codes (was 6 + level * 2)
+        placed_patches = 0
+        attempts = 0
+        
+        while placed_patches < patch_count and attempts < 150:
+            attempts += 1
+            x = random.randint(3, GameConfig.MAP_WIDTH - 3)
+            y = random.randint(3, GameConfig.MAP_HEIGHT - 3)
+            position = Position(x, y)
+            
+            if self._is_valid_patch_placement(position):
+                color = random.choice(list(self.data_patch_effects.keys()))
+                effect, desc = self.data_patch_effects[color]
+                patch = DataPatch(color_name=color, effect=effect, name=f"{color.title()} Code", description=desc)
+                
+                # Check if player has already discovered this color effect
+                # by looking at existing inventory items
+                patch.discovered = self._is_code_color_discovered(color)
+                
+                self.game_map.data_patches[(x, y)] = patch
+                placed_patches += 1
+    
+    def _is_code_color_discovered(self, color: str) -> bool:
+        """Check if player has already discovered what this code color does."""
+        # Check the global discovered effects for this game session
+        return color in self.discovered_code_effects
+    
+    def _place_exploit_pickups(self):
+        """Place random exploit pickups throughout the level."""
+        exploit_count = 5 + self.level * 2  # Much more exploits (was 2 + max(0, level - 1))
+        placed_exploits = 0
+        attempts = 0
+        
+        # Get list of available exploits (excluding ones player starts with)
+        available_exploits = list(GameData.EXPLOITS.keys())
+        
+        while placed_exploits < exploit_count and attempts < 100:
+            attempts += 1
+            x = random.randint(5, GameConfig.MAP_WIDTH - 5)
+            y = random.randint(5, GameConfig.MAP_HEIGHT - 5)
+            position = Position(x, y)
+            
+            if self._is_valid_patch_placement(position):  # Reuse code placement validation
+                # Choose random exploit
+                exploit_key = random.choice(available_exploits)
+                exploit_def = GameData.EXPLOITS[exploit_key]
+                exploit_item = ExploitItem(exploit_key, exploit_def)
+                self.game_map.exploit_pickups[(x, y)] = exploit_item
+                placed_exploits += 1
+    
+    def _place_story_fragment(self):
+        """Place a story fragment on level 3 with 50% chance."""
+        # Only place story fragments on level 3 (Military network)
+        if self.level != 3:
+            return
+        
+        # 50% chance to spawn a story fragment
+        if random.random() > 0.5:
+            return
+        
+        # Get the next undiscovered fragment
+        next_fragment_index = self.story_fragment_manager.get_next_undiscovered_fragment()
+        if next_fragment_index is None:
+            return  # All fragments discovered
+        
+        # Try to place the story fragment in a valid location
+        attempts = 0
+        while attempts < 50:
+            attempts += 1
+            x = random.randint(8, GameConfig.MAP_WIDTH - 8)
+            y = random.randint(8, GameConfig.MAP_HEIGHT - 8)
+            position = Position(x, y)
+            
+            if self._is_valid_patch_placement(position):
+                # Create and place the story fragment
+                story_fragment = StoryFragment(next_fragment_index)
+                # Store it in the game map - we'll need to add this to the GameMap class
+                if not hasattr(self.game_map, 'story_fragments'):
+                    self.game_map.story_fragments = {}
+                self.game_map.story_fragments[(x, y)] = story_fragment
+                
+                self.message_log.add_message("Network anomaly detected... Data fragment available")
+                break
+    
+    def _place_permanent_upgrades(self):
+        """Place permanent upgrades throughout the level with level-based rarity."""
+        # Level-based upgrade counts
+        if self.level == 1:
+            upgrade_count = 1  # Rare on level 1
+        elif self.level == 2:
+            upgrade_count = 2  # More common on level 2
+        else:
+            upgrade_count = 3  # Most common on level 3+
+        
+        placed_upgrades = 0
+        attempts = 0
+        available_upgrades = list(GameUpgrades.UPGRADES.keys())
+        
+        while placed_upgrades < upgrade_count and attempts < 100:
+            attempts += 1
+            x = random.randint(8, GameConfig.MAP_WIDTH - 8)
+            y = random.randint(8, GameConfig.MAP_HEIGHT - 8) 
+            position = Position(x, y)
+            
+            # Use stricter placement rules for rare upgrades
+            if (self._is_valid_patch_placement(position) and
+                abs(x - 5) > 10 and abs(y - 5) > 10):  # Not near starting position
+                
+                upgrade_key = random.choice(available_upgrades)
+                self.game_map.permanent_upgrades[(x, y)] = upgrade_key
+                placed_upgrades += 1
+                
+                # Remove from available to prevent duplicates on same level
+                available_upgrades.remove(upgrade_key)
+                if not available_upgrades:
+                    break
+    
+    def _place_enemies(self, enemy_count: int):
+        """Place enemies throughout the level with increased density."""
+        enemy_types = ['scanner', 'patrol', 'bot', 'firewall', 'hunter', 'virus', 'inhibitor']
+        # Adjust weights for challenging gameplay
+        enemy_weights = [4, 3, 2, 2, 2, 1, 2]  # More scanners and firewalls for detection challenge, virus is rare
+        
+        # Increase enemy density significantly
+        actual_enemy_count = int(enemy_count * 1.6)  # 60% more enemies
+        placed_enemies = 0
+        attempts = 0
+        
+        while placed_enemies < actual_enemy_count and attempts < actual_enemy_count * 25:
+            attempts += 1
+            # Ensure enemies spawn well away from top-left player spawn area
+            x = random.randint(10, GameConfig.MAP_WIDTH - 2)
+            y = random.randint(10, GameConfig.MAP_HEIGHT - 2)
+            position = Position(x, y)
+            
+            if self._is_valid_enemy_placement(position):
+                enemy_type = random.choices(enemy_types, weights=enemy_weights)[0]
+                enemy = Enemy(position, enemy_type)
+                
+                if enemy_type == 'patrol':
+                    enemy.patrol_points = self.enemy_manager._generate_patrol_route(position)
+                elif enemy_type == 'virus':
+                    # Give virus enemies random movement types for variety
+                    virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.LINEAR, EnemyMovement.SEEK]
+                    virus_movement_weights = [2, 3, 2, 2]  # Equal chance for each movement type
+                    chosen_movement = random.choices(virus_movement_types, weights=virus_movement_weights)[0]
+                    enemy.type_data.movement = chosen_movement
+                    
+                    # Generate patrol route if virus got LINEAR movement
+                    if chosen_movement == EnemyMovement.LINEAR:
+                        enemy.patrol_points = self.enemy_manager._generate_patrol_route(position)
+                
+                self.enemy_manager.enemies.append(enemy)
+                placed_enemies += 1
+    
+    
+    def _is_valid_special_placement(self, position: Position) -> bool:
+        """Check if position is valid for special node placement."""
+        # Ensure not on borders where walls will be placed
+        if (position.x == 0 or position.x == GameConfig.MAP_WIDTH - 1 or 
+            position.y == 0 or position.y == GameConfig.MAP_HEIGHT - 1):
+            return False
+            
+        return (not self.game_map.is_wall(position) and
+                (position.x, position.y) not in self.game_map.cooling_nodes and
+                (position.x, position.y) not in self.game_map.cpu_recovery_nodes and
+                (position.x, position.y) not in self.game_map.ghost_nodes and
+                position.distance_to(Position(5, 5)) > 8)
+    
+    def _is_valid_patch_placement(self, position: Position) -> bool:
+        """Check if position is valid for code placement."""
+        # Ensure not on borders where walls will be placed
+        if (position.x == 0 or position.x == GameConfig.MAP_WIDTH - 1 or 
+            position.y == 0 or position.y == GameConfig.MAP_HEIGHT - 1):
+            return False
+            
+        return (not self.game_map.is_wall(position) and
+                (position.x, position.y) not in self.game_map.data_patches and
+                (position.x, position.y) not in self.game_map.cooling_nodes and
+                (position.x, position.y) not in self.game_map.cpu_recovery_nodes and
+                (position.x, position.y) not in self.game_map.ghost_nodes and
+                position.distance_to(Position(5, 5)) > 5)
+    
+    def _is_valid_enemy_placement(self, position: Position) -> bool:
+        """Check if position is valid for enemy placement."""
+        # First ensure position is valid
+        if not self.game_map.is_valid_position(position):
+            return False
+        
+        # Ensure not on borders where walls will be placed
+        if (position.x == 0 or position.x == GameConfig.MAP_WIDTH - 1 or 
+            position.y == 0 or position.y == GameConfig.MAP_HEIGHT - 1):
+            return False
+        
+        # Critical: ensure we're not placing on walls or obstacles
+        if self.game_map.is_wall(position):
+            return False
+        
+        # Check minimum distance from player spawn
+        if position.distance_to(Position(5, 5)) <= 12:
+            return False
+        
+        # Ensure no other enemy is already at this position
+        if self._get_enemy_at(position):
+            return False
+        
+        # Check for overlapping with items and features
+        pos_tuple = (position.x, position.y)
+        if (pos_tuple in self.game_map.data_patches or
+            pos_tuple in self.game_map.cooling_nodes or
+            pos_tuple in self.game_map.cpu_recovery_nodes or
+            pos_tuple in self.game_map.exploit_pickups):
+            return False
+        
+        return True
+    
+    
+    def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
+        """Get the next N positions this enemy will move to."""
+        if enemy.disabled_turns > 0:
+            return []
+        
+        # If enemy is adjacent to player and can attack, show no movement (will attack instead)
+        player_pos = Position(self.player.x, self.player.y)
+        if enemy.can_attack_player(self.player):
+            return []
+        
+        positions = []
+        
+        # All movement types now use the unified prediction system
+        return self._predict_enemy_movement(enemy, steps)
+    
+    def _predict_enemy_movement(self, enemy: Enemy, steps: int) -> List[Position]:
+        """
+        Predict next positions for any enemy using their movement queue.
+        This is the unified prediction system for all movement types.
+        The new movement system guarantees exactly 3 moves for non-static enemies.
+        """
+        # For patrol enemies, we need to simulate their movement step by step
+        # to account for patrol point changes
+        if (enemy.type_data.movement == EnemyMovement.LINEAR and 
+            enemy.patrol_points and 
+            enemy.state != EnemyState.HOSTILE):
+            return self._predict_patrol_movement(enemy, steps)
+        
+        # For non-patrol enemies, use the existing queue or generate one
+        # If enemy has an existing movement queue with enough moves, use it
+        if enemy.movement_queue and len(enemy.movement_queue) >= steps:
+            return enemy.movement_queue[:steps]
+        
+        # Generate a temporary prediction queue
+        # Create a temporary copy of the enemy to avoid modifying the original
+        import copy
+        temp_enemy = copy.deepcopy(enemy)
+        
+        # The new system guarantees 3 moves, so one generation should be sufficient
+        temp_enemy._generate_movement_queue(self.game_map, self.player, self)
+        
+        # Return the predicted positions (up to requested steps)
+        # The movement queue should now always have the moves we need
+        return temp_enemy.movement_queue[:steps]
+    
+    def _predict_patrol_movement(self, enemy: Enemy, steps: int) -> List[Position]:
+        """
+        Predict patrol enemy movement by simulating step-by-step movement
+        and accounting for patrol point changes.
+        """
+        import copy
+        from game_data import GameData
+        
+        # Create a temporary copy to simulate movement
+        temp_enemy = copy.deepcopy(enemy)
+        predicted_positions = []
+        
+        for step in range(steps):
+            # If no movement queue, generate one
+            if not temp_enemy.movement_queue:
+                current_target = temp_enemy.patrol_points[temp_enemy.patrol_index]
+                try:
+                    # Use the same pathfinding logic as in the enemy class
+                    from game_characters import create_pathfinding_cost_map
+                    cost_map = create_pathfinding_cost_map(self.game_map, self, temp_enemy)
+                    graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+                    pathfinder = tcod.path.Pathfinder(graph)
+                    pathfinder.add_root((temp_enemy.position.x, temp_enemy.position.y))
+                    path = pathfinder.path_to((current_target.x, current_target.y))
+                    
+                    if path and len(path) > 1:
+                        # Add next few steps from path to queue
+                        for i in range(1, min(len(path), 4)):  # Add up to 3 moves
+                            x, y = path[i]
+                            temp_enemy.movement_queue.append(Position(x, y))
+                    else:
+                        # If pathfinding fails, no movement
+                        break
+                except Exception:
+                    # If pathfinding fails, no movement
+                    break
+            
+            # Get next position from queue
+            if not temp_enemy.movement_queue:
+                break
+                
+            next_pos = temp_enemy.movement_queue[0]
+            predicted_positions.append(next_pos)
+            
+            # Simulate the move
+            temp_enemy.position = next_pos
+            temp_enemy.movement_queue.pop(0)
+            
+            # Check if we reached the patrol point
+            current_target = temp_enemy.patrol_points[temp_enemy.patrol_index]
+            adjacent_threshold = getattr(GameConfig, 'adjacent_threshold', 1.5)
+            if temp_enemy.position.distance_to(current_target) <= adjacent_threshold:
+                # Advance to next patrol point and clear queue
+                temp_enemy.patrol_index = (temp_enemy.patrol_index + 1) % len(temp_enemy.patrol_points)
+                temp_enemy.movement_queue.clear()
+        
+        return predicted_positions
+
 # ============================================================================
 # EXPLOIT SYSTEM
 # ============================================================================
