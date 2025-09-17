@@ -100,19 +100,7 @@ class Player:
             self.position = new_position
             return True
         
-        # Position is blocked by a wall or other obstacle - debug this
-        import logging
-        is_in_bounds = new_position.is_valid(game_map.width, game_map.height)
-        is_wall = game_map.is_wall(new_position) if is_in_bounds else True
-        
-        # Enhanced debugging for movement blocking
-        wall_check = (new_position.x, new_position.y) in game_map.walls if is_in_bounds else "N/A"
-        has_enemy = "N/A"  # Cannot check for enemies without game object reference
-        
-        logging.error(f"MOVEMENT BLOCKED: pos=({new_position.x}, {new_position.y}), "
-                     f"in_bounds={is_in_bounds}, is_wall={is_wall}, "
-                     f"wall_in_set={wall_check}, has_enemy={has_enemy}, "
-                     f"map_size=({game_map.width}, {game_map.height})")
+        # Position is blocked by a wall or other obstacle - this is normal behavior
         return False
     
     def update_effects(self) -> None:
@@ -606,8 +594,8 @@ class Enemy:
             # Calculate path
             path = pathfinder.path_to((target.x, target.y))
             
-            # Debug logging for hostile enemies with pathfinding issues
-            if self.state == EnemyState.HOSTILE and len(path) <= 1:
+            # Debug logging for hostile enemies with pathfinding issues (only when no path found)
+            if self.state == EnemyState.HOSTILE and len(path) == 0:
                 import logging
                 logging.warning(f"Hostile enemy {self.type_data.name} at ({self.x}, {self.y}) failed to find path to player at ({target.x}, {target.y}). Path length: {len(path)}")
             
@@ -749,10 +737,10 @@ class Enemy:
 def create_pathfinding_cost_map(game_map, game, moving_enemy):
     """Create cost map for TCOD A* pathfinding."""
     import numpy as np
-    cost_map = np.zeros((GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT), dtype=bool)
+    cost_map = np.zeros((game_map.width, game_map.height), dtype=bool)
     
-    for x in range(GameConfig.MAP_WIDTH):
-        for y in range(GameConfig.MAP_HEIGHT):
+    for x in range(game_map.width):
+        for y in range(game_map.height):
             tile_pos = Position(x, y)
             
             if not game_map.is_valid_position(tile_pos):
