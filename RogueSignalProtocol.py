@@ -174,6 +174,18 @@ class SaveGameManager:
         """Check if a save file exists."""
         return os.path.exists(cls.SAVE_FILE)
     
+    @staticmethod
+    def _numpy_converter(obj):
+        """Convert numpy types to native Python types for JSON serialization."""
+        import numpy as np
+        if isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
+    
     @classmethod
     def save_game(cls, game: 'Game') -> bool:
         """Save complete game state to file with robust error handling."""
@@ -260,7 +272,7 @@ class SaveGameManager:
                 temp_file = cls.SAVE_FILE + '.tmp'
                 try:
                     with open(temp_file, 'w', encoding='utf-8') as f:
-                        json.dump(save_data, f, indent=2, ensure_ascii=False)
+                        json.dump(save_data, f, indent=2, ensure_ascii=False, default=cls._numpy_converter)
                     
                     # Atomic rename to prevent corruption
                     import shutil
@@ -2164,7 +2176,7 @@ class Game:
             if item_data["type"] == "data_patch":
                 from RogueSignalProtocol import DataPatch
                 item = DataPatch(
-                    color=ensure_color_tuple(item_data["color"]),
+                    color=item_data["color"],
                     effect=item_data["effect"],
                     name=item_data["name"],
                     quantity=item_data.get("quantity", 1)
@@ -2198,7 +2210,7 @@ class Game:
                 continue
             x, y = position.x, position.y
             patch = DataPatch(
-                color=ensure_color_tuple(patch_data["color"]),
+                color=patch_data["color"],
                 effect=patch_data["effect"],
                 name=patch_data["name"],
                 quantity=patch_data["quantity"]
@@ -3185,7 +3197,7 @@ class Game:
             if self._is_valid_patch_placement(position):
                 color = random.choice(list(self.data_patch_effects.keys()))
                 effect, desc = self.data_patch_effects[color]
-                patch = DataPatch(ensure_color_tuple(color), effect, f"{color.title()} Code", desc)
+                patch = DataPatch(color, effect, f"{color.title()} Code", desc)
                 
                 # Check if player has already discovered this color effect
                 # by looking at existing inventory items
@@ -4453,17 +4465,17 @@ class BaseRenderer(ABC):
         
         # Draw border
         for x in range(start_x, start_x + box_width):
-            console.print(x, start_y, '═', fg=Colors.RED, bg=Colors.BLACK)
-            console.print(x, start_y + box_height - 1, '═', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(x, start_y, '─', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(x, start_y + box_height - 1, '─', fg=Colors.RED, bg=Colors.BLACK)
         for y in range(start_y, start_y + box_height):
-            console.print(start_x, y, '║', fg=Colors.RED, bg=Colors.BLACK)
-            console.print(start_x + box_width - 1, y, '║', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(start_x, y, '│', fg=Colors.RED, bg=Colors.BLACK)
+            console.print(start_x + box_width - 1, y, '│', fg=Colors.RED, bg=Colors.BLACK)
         
         # Corner characters
-        console.print(start_x, start_y, '╔', fg=Colors.RED, bg=Colors.BLACK)
-        console.print(start_x + box_width - 1, start_y, '╗', fg=Colors.RED, bg=Colors.BLACK)
-        console.print(start_x, start_y + box_height - 1, '╚', fg=Colors.RED, bg=Colors.BLACK)
-        console.print(start_x + box_width - 1, start_y + box_height - 1, '╝', fg=Colors.RED, bg=Colors.BLACK)
+        console.print(start_x, start_y, '┌', fg=Colors.RED, bg=Colors.BLACK)
+        console.print(start_x + box_width - 1, start_y, '┐', fg=Colors.RED, bg=Colors.BLACK)
+        console.print(start_x, start_y + box_height - 1, '└', fg=Colors.RED, bg=Colors.BLACK)
+        console.print(start_x + box_width - 1, start_y + box_height - 1, '┘', fg=Colors.RED, bg=Colors.BLACK)
         
         # Death message
         console.print(center_x - 8, start_y + 2, "CONNECTION SEVERED", fg=Colors.RED, bg=Colors.BLACK)
@@ -4515,7 +4527,7 @@ class UIRenderer:
         """Render a standardized screen header with title and optional subtitle.
         Returns the y position after the header for content to start."""
         # Top border
-        console.print(2, 1, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(2, 1, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
         
         # Main title (centered)
         title_x = GameConfig.SCREEN_WIDTH // 2 - len(title) // 2
@@ -4526,11 +4538,11 @@ class UIRenderer:
             subtitle_x = GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2
             console.print(subtitle_x, 3, subtitle, fg=Colors.WHITE)
             # Bottom border after subtitle
-            console.print(2, 4, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+            console.print(2, 4, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
             return 6  # Content starts at line 6
         else:
             # Bottom border after title
-            console.print(2, 3, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+            console.print(2, 3, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
             return 5  # Content starts at line 5
     
     def _render_screen_footer(self, console: tcod.console.Console, instructions: str, additional_line: str = None) -> None:
@@ -4538,7 +4550,7 @@ class UIRenderer:
         footer_y = GameConfig.SCREEN_HEIGHT - 4 if additional_line else GameConfig.SCREEN_HEIGHT - 3
         
         # Footer border
-        console.print(2, footer_y, "=" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        console.print(2, footer_y, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
         
         # Instructions (centered)
         instructions_x = GameConfig.SCREEN_WIDTH // 2 - len(instructions) // 2
@@ -4603,7 +4615,7 @@ class UIRenderer:
         # Menu borders (top and bottom)
         for x in range(menu_x, menu_x + menu_width):
             console.print(x, menu_y, '=', fg=Colors.CYAN, bg=Colors.UI_BG)
-            console.print(x, menu_y + menu_height - 1, '=', fg=Colors.CYAN, bg=Colors.UI_BG)
+            console.print(x, menu_y + menu_height - 1, '─', fg=Colors.CYAN, bg=Colors.UI_BG)
         
         # Title (centered)
         title_x = menu_x + (menu_width - len(title)) // 2
@@ -5079,7 +5091,7 @@ class UIRenderer:
         
         # Log header - moved down one line to avoid covering status bar
         console.print(GameConfig.GAME_AREA_WIDTH + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
-        console.print(GameConfig.GAME_AREA_WIDTH + 1, 2, "-" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+        console.print(GameConfig.GAME_AREA_WIDTH + 1, 2, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
         # Clear log area - start from line 3 to account for header repositioning
         for x in range(GameConfig.GAME_AREA_WIDTH + 1, GameConfig.SCREEN_WIDTH):
@@ -5307,9 +5319,17 @@ class MapRenderer:
                 'violet': Colors.VIOLET,
                 'silver': Colors.SILVER
             }
-            actual_color = color_map.get(patch.color.lower(), Colors.WHITE)
+            # Handle both string colors and tuple colors safely
+            if isinstance(patch.color, str):
+                actual_color = color_map.get(patch.color.lower(), Colors.WHITE)
+            elif isinstance(patch.color, (tuple, list)):
+                # If somehow a tuple color was stored, just use it directly
+                actual_color = ensure_color_tuple(patch.color)
+            else:
+                # Fallback to white for any other type
+                actual_color = Colors.WHITE
             # Position 21 = § (section) for code fragments  
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=actual_color, bg=Colors.BLACK)
+            safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=actual_color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
             try:
                 exploit_item = game.game_map.exploit_pickups[(world_pos.x, world_pos.y)]
@@ -6335,11 +6355,11 @@ class MenuBackground:
         
         # Top border
         for x in range(console.width):
-            console.print(x, 0, '═', fg=border_color, bg=(5, 5, 15))
+            console.print(x, 0, '─', fg=border_color, bg=(5, 5, 15))
         
         # Bottom border  
         for x in range(console.width):
-            console.print(x, console.height - 1, '═', fg=border_color, bg=(5, 5, 15))
+            console.print(x, console.height - 1, '─', fg=border_color, bg=(5, 5, 15))
     
     def _render_center_atmosphere(self, console):
         """Add subtle atmospheric elements to center area."""
@@ -6678,20 +6698,20 @@ class MainMenu:
         
         if box['use_background_layout']:
             # Title content within narrow box - split into multiple lines to fit
-            console.print(box['center_x'] - 10, 6, "=" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(box['center_x'] - 10, 6, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
             # Split title into two lines
             console.print(box['center_x'] - 6, 8, "ROGUE SIGNAL", fg=Colors.CYAN, bg=Colors.BLACK)
             console.print(box['center_x'] - 4, 9, "PROTOCOL", fg=Colors.CYAN, bg=Colors.BLACK)
             # Split subtitle into two lines
             console.print(box['center_x'] - 8, 11, "Cyberpunk Stealth", fg=Colors.CYAN, bg=Colors.BLACK)
             console.print(box['center_x'] - 6, 12, "Exfiltration", fg=Colors.CYAN, bg=Colors.BLACK)
-            console.print(box['center_x'] - 10, 13, "=" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(box['center_x'] - 10, 13, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
         else:
             # ASCII mode - centered positioning
-            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 6, "=" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 6, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
             console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN, bg=Colors.BLACK)
             console.print(GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN, bg=Colors.BLACK)
-            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 10, "=" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
+            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 10, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
         
         # Version and build info  
         if box['use_background_layout']:
