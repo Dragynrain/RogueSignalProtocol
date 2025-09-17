@@ -46,18 +46,18 @@ class DataPatch(InventoryItem):
         if self.quantity <= 0:
             player.inventory_manager.remove_item(self)
         
-        effect_key, description = game.data_patch_effects[self.color]
+        effect_key, description = game.data_patch_effects[self.color_name]
         
         # Check if this color effect has been discovered in this game session
-        is_known = self.color in game.discovered_code_effects
+        is_known = self.color_name in game.discovered_code_effects
         
         if not is_known:
             # Mark this color effect as discovered for this game session
-            game.discovered_code_effects[self.color] = effect_key
+            game.discovered_code_effects[self.color_name] = effect_key
             
             # Update all data patches of this color in player's inventory to be discovered
             for item in player.inventory_manager.items:
-                if isinstance(item, DataPatch) and item.color == self.color:
+                if isinstance(item, DataPatch) and item.color_name == self.color_name:
                     item.discovered = True
                     
             game.message_log.add_message(f"Used {self.name}: {description}")
@@ -196,7 +196,7 @@ class InventoryManager:
             # Look for existing code of the same color
             for existing_item in self.items:
                 if (isinstance(existing_item, DataPatch) and 
-                    existing_item.color == item.color):
+                    existing_item.color_name == item.color_name):
                         # Found matching color, add to existing stack
                         existing_item.quantity += item.quantity
                         # If the new patch is discovered, mark the stack as discovered
