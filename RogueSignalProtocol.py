@@ -27,6 +27,9 @@ from game_entities import (Position, Colors, EnemyState, EnemyMovement, Targetin
 from game_data import GameData, GameUpgrades
 from game_inventory import InventoryItem, DataPatch, ExploitItem, StoryFragment, InventoryManager
 from game_characters import Player, Enemy, create_pathfinding_cost_map, pathfind_and_move, can_move_to_position
+from game_audio import SoundManager
+from game_save import SaveGameManager
+from game_story import StoryFragmentManager
 
 # Setup logging for error handling
 logging.basicConfig(
@@ -37,13 +40,7 @@ logging.basicConfig(
     ]
 )
 
-# Audio system
-try:
-    import pygame
-    AUDIO_AVAILABLE = True
-except ImportError:
-    AUDIO_AVAILABLE = False
-    logging.warning("pygame not available. Sound will be disabled.")
+# Audio system moved to game_audio.py
 
 # The DataLoader and other classes have been moved to separate modules
 # See: data_loading.py, game_config.py, game_entities.py, etc.
@@ -162,612 +159,10 @@ def render_char_safe(console, x, y, char, fg=None, bg=None):
             pass  # Give up if even fallback fails
 
 # ============================================================================
-# SAVE/LOAD SYSTEM
-# ============================================================================
-
-class SaveGameManager:
-    """Manages complete game save/load operations."""
-    
-    SAVE_FILE = "rogue_signal_save.json"
-    
-    @classmethod
-    def save_exists(cls) -> bool:
-        """Check if a save file exists."""
-        return os.path.exists(cls.SAVE_FILE)
-    
-    @staticmethod
-    def _numpy_converter(obj):
-        """Convert numpy types to native Python types for JSON serialization."""
-        import numpy as np
-        if isinstance(obj, np.integer):
-            return int(obj)
-        elif isinstance(obj, np.floating):
-            return float(obj)
-        elif isinstance(obj, np.ndarray):
-            return obj.tolist()
-        raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
-    
-    @classmethod
-    def save_game(cls, game: 'Game') -> bool:
-        """Save complete game state to file with robust error handling."""
-        if game is None:
-            logging.error("Cannot save: game object is None")
-            return False
-        
-        if game.player is None:
-            logging.error("Cannot save: player object is None") 
-            return False
-            
-        # Attempt save with retry logic
-        for attempt in range(GameConfig.MAX_SAVE_ATTEMPTS):
-            try:
-                # Gather all game state data
-                save_data = {
-                    "version": "dev",
-                    "timestamp": time.time(),
-                    
-                    # Game state
-                    "level": game.level,
-                    "turn": game.turn,
-                    "game_over": game.game_over,
-                    "admin_spawned": game.admin_spawned,
-                    "dungeon_seed": game.game_state.dungeon_seed,
-                    
-                    # Player state
-                    "player": {
-                        "x": game.player.x,
-                        "y": game.player.y,
-                        "last_x": game.player.last_position.x,
-                        "last_y": game.player.last_position.y,
-                        "cpu": game.player.cpu,
-                        "max_cpu": game.player.max_cpu,
-                        "heat": game.player.heat,
-                        "max_heat": game.player.max_heat,
-                        "detection": game.player.detection,
-                        "ram_total": game.player.ram_total,
-                        "speed_moves_remaining": game.player.speed_moves_remaining,
-                        "temporary_effects": dict(game.player.temporary_effects),
-                        "equipped_exploits": game.player.inventory_manager.equipped_exploits.copy(),
-                        "max_equipped_exploits": game.player.inventory_manager.max_equipped_exploits,
-                        "inventory_items": cls._serialize_inventory(game.player.inventory_manager.items)
-                    },
-                    
-                    # Game effects and state
-                    "game_effects": {
-                        "threat_scan_turns": game.game_state.threat_scan_turns,
-                        "noise_locations": [{"x": pos.x, "y": pos.y} for pos in game.game_state.noise_locations],
-                        "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in game.game_state.distraction_points.items()}
-                    },
-                    
-                    # Map state (items and special locations only - layout regenerated)
-                    "map_state": {
-                        "data_patches": cls._serialize_data_patches(game.game_map.data_patches),
-                        "exploit_pickups": cls._serialize_exploit_pickups(game.game_map.exploit_pickups),
-                        "permanent_upgrades": {f"{pos[0]},{pos[1]}": upgrade_key for pos, upgrade_key in game.game_map.permanent_upgrades.items()},
-                        "story_fragments": {f"{pos[0]},{pos[1]}": fragment.fragment_index for pos, fragment in game.game_map.story_fragments.items()},
-                        "gateway": {"x": game.game_map.gateway.x, "y": game.game_map.gateway.y} if game.game_map.gateway else None,
-                        "explored_tiles": [f"{x},{y}" for x, y in game.game_map.explored_tiles],
-                        "last_known_enemy_positions": {str(enemy_id): {"x": pos.x, "y": pos.y, "turn": turn} for enemy_id, (pos, turn) in game.game_map.last_known_enemy_positions.items()}
-                    },
-                    
-                    # Enemies
-                    "enemies": cls._serialize_enemies(game.enemies),
-                    "enemy_next_id": getattr(Enemy, '_next_id', 1),
-                    
-                    # Data patch effects for this run
-                    "data_patch_effects": game.data_patch_effects,
-                    "discovered_code_effects": game.discovered_code_effects,
-                    
-                    # Overclocking state
-                    "overclock_confirmation": getattr(game, 'overclock_confirmation', False),
-                    "overclock_exploit": getattr(game, 'overclock_exploit', None),
-                    
-                    # UI state (optional - for better user experience)
-                    "ui_state": {
-                        "inventory_selection": game.inventory_selection,
-                        "lore_viewer_selection": game.lore_viewer_selection
-                    }
-                }
-            
-                # Write to temporary file first, then atomic rename for safety
-                temp_file = cls.SAVE_FILE + '.tmp'
-                try:
-                    with open(temp_file, 'w', encoding='utf-8') as f:
-                        json.dump(save_data, f, indent=2, ensure_ascii=False, default=cls._numpy_converter)
-                    
-                    # Atomic rename to prevent corruption
-                    import shutil
-                    shutil.move(temp_file, cls.SAVE_FILE)
-                    
-                    logging.info("Game saved successfully")
-                    return True
-                finally:
-                    # Clean up temp file if it exists
-                    if os.path.exists(temp_file):
-                        try:
-                            os.remove(temp_file)
-                        except:
-                            pass
-                
-            except (IOError, OSError) as e:
-                logging.warning(f"Save attempt {attempt + 1} failed with I/O error: {e}")
-                if attempt == GameConfig.MAX_SAVE_ATTEMPTS - 1:
-                    logging.error("All save attempts failed")
-                    return False
-                time.sleep(0.1)  # Brief delay before retry
-                
-            except (ValueError, TypeError) as e:
-                logging.error(f"Data serialization error (no retry): {e}")
-                return False
-                
-            except (PermissionError, OSError) as e:
-                logging.error(f"File system error during save: {e}")
-                return False
-            except json.JSONEncodeError as e:
-                logging.error(f"JSON encoding error during save: {e}")
-                return False
-            except Exception as e:
-                import traceback
-                logging.error(f"Unexpected save error: {e}")
-                logging.error(traceback.format_exc())
-                return False
-                
-        return False  # Should never reach here
-    
-    @classmethod
-    def load_game(cls) -> Optional[Dict[str, Any]]:
-        """Load complete game state from file."""
-        if not cls.save_exists():
-            return None
-            
-        try:
-            # Read file content first to check for corruption
-            with open(cls.SAVE_FILE, 'r', encoding='utf-8') as f:
-                content = f.read().strip()
-            
-            # Check if file is empty or contains only whitespace
-            if not content:
-                logging.error("Save file is empty or corrupted")
-                return None
-            
-            # Try to parse JSON with better error reporting
-            try:
-                save_data = json.loads(content)
-                logging.info("Game loaded successfully")
-                return save_data
-            except json.JSONDecodeError as e:
-                logging.error(f"Save file corrupted - JSON decode error at line {e.lineno}, column {e.colno}: {e.msg}")
-                logging.error(f"Problematic content around error: {content[max(0, e.pos-50):e.pos+50]}")
-                return None
-            
-        except FileNotFoundError:
-            logging.info("No save file found")
-            return None
-        except PermissionError as e:
-            logging.error(f"Permission denied accessing save file: {e}")
-            return None
-        except Exception as e:
-            import traceback
-            logging.error(f"Failed to load game: {e}")
-            logging.error(traceback.format_exc())
-            return None
-    
-    @classmethod
-    def delete_save(cls) -> bool:
-        """Delete the save file."""
-        try:
-            if cls.save_exists():
-                os.remove(cls.SAVE_FILE)
-                logging.info("Save file deleted")
-            return True
-        except Exception as e:
-            import traceback
-            logging.error(f"Failed to delete save: {e}")
-            logging.error(traceback.format_exc())
-            return False
-    
-    @classmethod
-    def get_save_timestamp(cls) -> Optional[str]:
-        """Get formatted timestamp of save file."""
-        if not cls.save_exists():
-            return None
-        
-        try:
-            save_data = cls.load_game()
-            if save_data and "timestamp" in save_data:
-                import datetime
-                timestamp = save_data["timestamp"]
-                dt = datetime.datetime.fromtimestamp(timestamp)
-                return dt.strftime("%Y-%m-%d %H:%M:%S")
-            else:
-                # Fallback to file modification time
-                import datetime
-                stat_result = os.stat(cls.SAVE_FILE)
-                dt = datetime.datetime.fromtimestamp(stat_result.st_mtime)
-                return dt.strftime("%Y-%m-%d %H:%M:%S")
-        except Exception as e:
-            import traceback
-            logging.warning(f"Could not get save timestamp: {e}")
-            logging.warning(traceback.format_exc())
-            return "Unknown"
-    
-    @classmethod
-    def _serialize_inventory(cls, items: List) -> List[Dict[str, Any]]:
-        """Serialize inventory items."""
-        serialized = []
-        for item in items:
-            if hasattr(item, 'item_type'):
-                item_data = {
-                    "type": item.item_type,
-                    "name": item.name,
-                    "description": item.description
-                }
-                
-                if hasattr(item, 'color'):  # DataPatch
-                    item_data.update({
-                        "color": item.color_name,
-                        "effect": item.effect,
-                        "quantity": getattr(item, 'quantity', 1),
-                        "discovered": getattr(item, 'discovered', False)
-                    })
-                elif hasattr(item, 'exploit_key'):  # ExploitItem
-                    item_data.update({
-                        "exploit_key": item.exploit_key,
-                        "ram_cost": item.ram_cost
-                    })
-                elif hasattr(item, 'fragment_index'):  # StoryFragment
-                    item_data.update({
-                        "fragment_index": item.fragment_index
-                    })
-                
-                serialized.append(item_data)
-        
-        return serialized
-    
-    @classmethod
-    def _serialize_data_patches(cls, patches: Dict) -> Dict[str, Dict]:
-        """Serialize codes."""
-        return {
-            f"{pos[0]},{pos[1]}": {
-                "color": patch.color_name,
-                "effect": patch.effect,
-                "name": patch.name,
-                "quantity": patch.quantity,
-                "discovered": patch.discovered
-            }
-            for pos, patch in patches.items()
-        }
-    
-    @classmethod
-    def _serialize_exploit_pickups(cls, exploits: Dict) -> Dict[str, str]:
-        """Serialize exploit pickups."""
-        return {
-            f"{pos[0]},{pos[1]}": exploit.exploit_key 
-            for pos, exploit in exploits.items()
-        }
-    
-    @classmethod
-    def _serialize_enemies(cls, enemies: List) -> List[Dict[str, Any]]:
-        """Serialize enemy data."""
-        serialized = []
-        for enemy in enemies:
-            enemy_data = {
-                "id": enemy.id,
-                "type": enemy.type,
-                "x": enemy.position.x,
-                "y": enemy.position.y,
-                "cpu": enemy.cpu,
-                "state": enemy.state.value,
-                "move_cooldown": enemy.move_cooldown,
-                "disabled_turns": enemy.disabled_turns,
-                "alert_timer": enemy.alert_timer,
-                "patrol_index": enemy.patrol_index,
-                "patrol_stuck_counter": enemy.patrol_stuck_counter,
-                "movement_queue": [{"x": pos.x, "y": pos.y} for pos in getattr(enemy, 'movement_queue', [])],
-                "last_target": {"x": enemy.last_target.x, "y": enemy.last_target.y} if enemy.last_target else None,
-                "last_seen_player": {
-                    "x": enemy.last_seen_player.x, 
-                    "y": enemy.last_seen_player.y
-                } if enemy.last_seen_player else None
-            }
-            
-            if enemy.patrol_points:
-                enemy_data["patrol_points"] = [
-                    {"x": point.x, "y": point.y} 
-                    for point in enemy.patrol_points
-                ]
-            
-            serialized.append(enemy_data)
-        
-        return serialized
+# SaveGameManager class moved to game_save.py
 
 
-# GameSettings class moved to game_config.py
-
-
-class SoundManager:
-    """Manages sound effects and background music using pygame."""
-    
-    # Centralized audio directory configuration
-    SOUND_DIRECTORY = "sound"
-    MUSIC_DIRECTORY = "music"
-    
-    def __init__(self, settings: GameSettings = None):
-        self.settings = settings or GameSettings()
-        self.enabled = AUDIO_AVAILABLE
-        self.sounds = {}
-        self.current_music = None
-        self.music_playing = False
-        self.max_channels = 16  # Allow more simultaneous sound effects
-        
-        if self.enabled:
-            try:
-                pygame.mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=512)
-                pygame.mixer.init()
-                pygame.mixer.set_num_channels(self.max_channels)
-                logging.info(f"Sound system initialized with {self.max_channels} channels")
-            except Exception as e:
-                import traceback
-                logging.warning(f"Failed to initialize sound system: {e}")
-                logging.warning(traceback.format_exc())
-                self.enabled = False
-    
-    def update_volumes(self):
-        """Update volumes from settings"""
-        if self.enabled:
-            pygame.mixer.music.set_volume(self.settings.music_volume * self.settings.master_volume)
-    
-    def preload_sounds(self):
-        """Preload all sound effects at startup"""
-        if not self.enabled:
-            return
-            
-        # Define all sound effects that should be loaded
-        sound_files = {
-            # Movement and actions
-            "player_move": "player_move.wav",
-            "player_attack": "player_attack.wav",
-            "stealth_attack": "stealth_attack.wav",
-            
-            # Combat and alerts
-            "enemy_attack": "enemy_attack.wav",
-            "enemy_death": "enemy_death.wav",
-            "enemy_alert": "enemy_alert.wav",
-            "enemy_hostile": "enemy_hostile.wav",
-            "admin_spawn": "admin_spawn.wav",
-            "enemies_alerted": "enemies_alerted.wav",
-            
-            # Item interactions
-            "item_pickup_code": "item_pickup_code.wav",
-            "item_pickup_exploit": "item_pickup_exploit.wav",
-            "item_pickup_upgrade": "item_pickup_upgrade.wav",
-            "item_pickup_story": "item_pickup_story.wav",
-            "item_use_code": "item_use_code.wav",
-            
-            # Environmental
-            "node_activate": "node_activate.wav",
-            
-            # Player status
-            "player_death": "player_death.wav",
-            "player_overheat": "player_overheat.wav",
-            "virus_damage": "virus_damage.wav",
-            "virus_infection": "virus_infection.wav",
-            "critical_system_failure": "critical_system_failure.wav",
-            "detection_threshold": "detection_threshold.wav",
-            "overclocking": "overclocking.wav",
-            
-            # Exploits
-            "exploit_shadow_step": "exploit_shadow_step.wav",
-            "exploit_buffer_overflow": "exploit_buffer_overflow.wav",
-            "exploit_code_injection": "exploit_code_injection.wav",
-            "exploit_system_crash": "exploit_system_crash.wav",
-            "exploit_threat_scan": "exploit_threat_scan.wav",
-            "exploit_log_wiper": "exploit_log_wiper.wav",
-            "exploit_antivirus": "exploit_antivirus.wav",
-            "exploit_emp_burst": "exploit_emp_burst.wav",
-            "exploit_memory_leak": "exploit_memory_leak.wav",
-            "exploit_network_scan": "exploit_network_scan.wav",
-            "exploit_failed": "exploit_failed.wav",
-            "exploit_data_mimic": "exploit_data_mimic.wav",
-            "exploit_noise_maker": "exploit_noise_maker.wav",
-            "exploit_targeting": "exploit_targeting.wav",
-            
-            # UI and system
-            "ui_menu_open": "ui_menu_open.wav",
-            "level_complete": "level_complete.wav",
-        }
-        
-        # Load each sound file
-        for sound_id, filename in sound_files.items():
-            self.load_sound(sound_id, filename)
-    
-    def load_sound(self, sound_id: str, filename: str):
-        """Load a sound effect from file"""
-        if not self.enabled:
-            return
-        
-        try:
-            sound_path = os.path.join(self.SOUND_DIRECTORY, filename)
-            if os.path.exists(sound_path):
-                self.sounds[sound_id] = pygame.mixer.Sound(sound_path)
-                logging.info(f"Loaded sound: {sound_id}")
-            else:
-                logging.warning(f"Sound file not found: {sound_path}")
-        except Exception as e:
-            import traceback
-            logging.error(f"Failed to load sound {sound_id}: {e}")
-            logging.error(traceback.format_exc())
-    
-    def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
-        """Play a loaded sound effect with channel management"""
-        if not self.enabled:
-            pass
-            return None
-        elif sound_id not in self.sounds:
-            pass
-            return None
-        
-        try:
-            sound = self.sounds[sound_id]
-            final_volume = self.settings.sfx_volume * self.settings.master_volume * volume_modifier
-            sound.set_volume(final_volume)
-            
-            # Find available channel for simultaneous playback
-            channel = pygame.mixer.find_channel()
-            
-            if channel is None:
-                # All channels busy - handle based on priority
-                if priority >= 8:
-                    # Critical priority: stop oldest channel (channel 0)
-                    channel = pygame.mixer.Channel(0)
-                    channel.stop()
-                elif priority >= 5:
-                    # High priority: stop a random channel
-                    import random
-                    channel_id = random.randint(0, self.max_channels - 1)
-                    channel = pygame.mixer.Channel(channel_id)
-                    channel.stop()
-                else:
-                    # Normal/Low priority: just play on any channel, let pygame handle mixing
-                    # This allows multiple sounds to play simultaneously without stopping each other
-                    return sound.play()
-            
-            return channel.play(sound)
-        except Exception as e:
-            import traceback
-            logging.error(f"Failed to play sound {sound_id}: {e}")
-            logging.error(traceback.format_exc())
-            return None
-    
-    def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0, volume_multiplier: float = 1.0):
-        """Play background music with optional volume multiplier"""
-        if not self.enabled:
-            pass
-            return
-        
-        try:
-            music_path = os.path.join(self.MUSIC_DIRECTORY, filename)
-            if os.path.exists(music_path):
-                pygame.mixer.music.load(music_path)
-                # Apply volume multiplier for per-track volume adjustments
-                volume = self.settings.music_volume * self.settings.master_volume * volume_multiplier
-                pygame.mixer.music.set_volume(min(1.0, volume))  # Cap at 1.0
-                if fade_in_ms > 0:
-                    pygame.mixer.music.play(loops, fade_ms=fade_in_ms)
-                else:
-                    pygame.mixer.music.play(loops)
-                self.current_music = filename
-                self.music_playing = True
-                logging.info(f"Playing music: {filename} (volume: {volume:.2f})")
-            else:
-                logging.warning(f"Music file not found: {music_path}")
-        except Exception as e:
-            import traceback
-            logging.error(f"Failed to play music {filename}: {e}")
-            logging.error(traceback.format_exc())
-    
-    def stop_music(self, fade_out_ms: int = 0):
-        """Stop background music"""
-        if not self.enabled:
-            return
-        
-        try:
-            if fade_out_ms > 0:
-                pygame.mixer.music.fadeout(fade_out_ms)
-            else:
-                pygame.mixer.music.stop()
-            self.music_playing = False
-            self.current_music = None
-        except Exception as e:
-            import traceback
-            logging.error(f"Failed to stop music: {e}")
-            logging.error(traceback.format_exc())
-    
-    def pause_music(self):
-        """Pause background music"""
-        if self.enabled:
-            pygame.mixer.music.pause()
-    
-    def unpause_music(self):
-        """Resume paused background music"""
-        if self.enabled:
-            pygame.mixer.music.unpause()
-    
-    def is_music_playing(self) -> bool:
-        """Check if music is currently playing"""
-        if not self.enabled:
-            return False
-        return pygame.mixer.music.get_busy()
-    
-    def update(self):
-        """Update sound system (call each frame)"""
-        if self.enabled and self.music_playing and not pygame.mixer.music.get_busy():
-            # Music stopped playing
-            self.music_playing = False
-            self.current_music = None
-    
-    def cleanup(self):
-        """Clean up sound system"""
-        if self.enabled:
-            pygame.mixer.music.stop()
-            pygame.mixer.stop()
-            pygame.mixer.quit()
-
-
-class StoryFragmentManager:
-    """Manages story fragment discovery and display."""
-    
-    def __init__(self):
-        # Initialize progress data with defaults (PersistentStorage moved to data_loading module)
-        storage = PersistentStorage()
-        self.progress_data = storage.load_data("rogue_signal_progress.json")
-        if not self.progress_data:
-            self.progress_data = {
-                "discovered_story_fragments": [],
-                "version": "dev"
-            }
-        self.discovered_fragments: List[int] = self.progress_data.get("discovered_story_fragments", [])
-    
-    def get_next_undiscovered_fragment(self) -> Optional[int]:
-        """Get the next fragment index that hasn't been discovered yet."""
-        story_fragments = get_story_fragments()
-        for i in range(len(story_fragments)):
-            if i not in self.discovered_fragments:
-                return i
-        return None  # All fragments discovered
-    
-    def discover_fragment(self, fragment_index: int) -> bool:
-        """Discover a new story fragment and save progress."""
-        if fragment_index in self.discovered_fragments:
-            return False  # Already discovered
-            
-        story_fragments = get_story_fragments()
-        if fragment_index < 0 or fragment_index >= len(story_fragments):
-            return False  # Invalid fragment index
-            
-        self.discovered_fragments.append(fragment_index)
-        self.discovered_fragments.sort()  # Keep in order
-        
-        # Save progress immediately
-        self.progress_data["discovered_story_fragments"] = self.discovered_fragments
-        storage = PersistentStorage()
-        storage.save_data("rogue_signal_progress.json", self.progress_data)
-        
-        return True
-    
-    def get_discovered_fragments(self) -> List[Tuple[int, str]]:
-        """Get all discovered fragments in order."""
-        story_fragments = get_story_fragments()
-        fragments = []
-        for fragment_index in sorted(self.discovered_fragments):
-            if fragment_index < len(story_fragments):
-                fragments.append((fragment_index, story_fragments[fragment_index]))
-        return fragments
-    
-    def get_fragment_count(self) -> Tuple[int, int]:
-        """Get (discovered_count, total_count) for UI display."""
-        story_fragments = get_story_fragments()
-        return len(self.discovered_fragments), len(story_fragments)
+# StoryFragmentManager class moved to game_story.py
 
 
 # ============================================================================
@@ -814,7 +209,6 @@ class GameConfig:
     # Safety and validation constants
     MIN_MAP_DIMENSION = 10
     MAX_ENEMIES_PER_LEVEL = 50
-    MAX_SAVE_ATTEMPTS = 3
     MIN_SOUND_VOLUME = 0.0
     MAX_SOUND_VOLUME = 1.0
     
@@ -1282,7 +676,7 @@ class EnemyManager:
         self.enemies.append(enemy)
         return enemy
     
-    def update_all_enemies(self, player: Player, game_state: GameStateManager, game: 'Game') -> None:
+    def update_all_enemies(self, player: Player, game_state: GameStateManager, game: 'GameEngine') -> None:
         """Update AI and movement for all enemies."""
         for enemy in self.enemies[:]:  # Use slice copy for safe iteration
             if enemy.disabled_turns > 0:
@@ -4321,11 +3715,11 @@ class BaseRenderer(ABC):
         render_char_safe(console, start_x + width - 1, start_y + height - 1, '┘', fg=border_color, bg=bg_color)
         
     @abstractmethod
-    def render_map(self, console: tcod.console.Console, game: 'Game'):
+    def render_map(self, console: tcod.console.Console, game: 'GameEngine'):
         """Render the game map using the specific rendering method."""
         pass
     
-    def render_game(self, console: tcod.console.Console, game: 'Game', context=None):
+    def render_game(self, console: tcod.console.Console, game: 'GameEngine', context=None):
         """Render the complete game state."""
         console.clear()
         
@@ -4340,7 +3734,7 @@ class BaseRenderer(ABC):
         else:
             self._render_main_game_screen(console, game)
     
-    def _render_main_game_screen(self, console: tcod.console.Console, game: 'Game'):
+    def _render_main_game_screen(self, console: tcod.console.Console, game: 'GameEngine'):
         """Render the main game screen."""
         self.ui_renderer.render_top_status_bar(console, game)
         self.render_map(console, game)
@@ -4448,7 +3842,7 @@ class ASCIIRenderer(BaseRenderer):
         super().__init__()
         self.map_renderer = MapRenderer()
     
-    def render_map(self, console: tcod.console.Console, game: 'Game'):
+    def render_map(self, console: tcod.console.Console, game: 'GameEngine'):
         """Render the game map using ASCII characters."""
         self.map_renderer.render_map(console, game)
 
@@ -4461,7 +3855,7 @@ class Renderer:
         self.settings = settings
         self._current_renderer = ASCIIRenderer()
     
-    def render_game(self, console: tcod.console.Console, game: 'Game', context=None):
+    def render_game(self, console: tcod.console.Console, game: 'GameEngine', context=None):
         """Render the complete game state using the ASCII renderer."""
         self._current_renderer.render_game(console, game, context)
 
