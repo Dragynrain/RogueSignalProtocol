@@ -89,7 +89,8 @@ def safe_console_print(console, x, y, char, fg=None, bg=None):
             )
             logging.error(error_msg)
             print(f"\n{'='*80}\n{error_msg}\n{'='*80}\n")
-            return ensure_color_tuple(color)
+            # DON'T convert - raise exception to fail loudly so we can fix the source
+            raise ValueError(f"String color '{color}' passed to {color_name} - must be RGB tuple")
         
         if isinstance(color, (list, tuple)) and len(color) >= 3:
             try:
@@ -1906,7 +1907,7 @@ class TurnProcessor:
                     
                     # Check for death from virus
                     if player.cpu <= 0:
-                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
+                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
                         self.game_state.game_over = True
@@ -2075,7 +2076,7 @@ class Game:
             if "enemy_next_id" in save_data:
                 Enemy._next_id = save_data["enemy_next_id"]
             
-            self.message_log.add_message_typed("Game loaded successfully!", "success")
+            self.message_log.add_message_typed("Game loaded successfully!", Colors.GREEN)
             return True
             
         except Exception as e:
@@ -2687,10 +2688,10 @@ class Game:
         """Check and play warning sounds for detection threshold crossings."""
         if old_detection < 75 <= new_detection:
             self.sound_manager.play_sound("detection_threshold")
-            self.message_log.add_message("WARNING: High detection level!", "warning")
+            self.message_log.add_message("WARNING: High detection level!", Colors.YELLOW)
         elif old_detection < 90 <= new_detection:
             self.sound_manager.play_sound("detection_threshold")
-            self.message_log.add_message("CRITICAL: Admin spawn imminent!", "critical")
+            self.message_log.add_message("CRITICAL: Admin spawn imminent!", Colors.RED)
 
     def _alert_nearby_enemies(self, alerting_enemy: Enemy):
         """Alert nearby enemies when one becomes hostile."""
@@ -2750,7 +2751,7 @@ class Game:
                     self.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
                 if self.player.cpu <= 0:
                     self.sound_manager.play_sound("player_death", priority=10)
-                    self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
+                    self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
                     self.sound_manager.play_sound("critical_system_failure", priority=10)
                     # Delete save on death (permadeath)
                     SaveGameManager.delete_save()
@@ -2867,7 +2868,7 @@ class Game:
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
                     if self.player.cpu <= 0:
                         self.sound_manager.play_sound("player_death", priority=10)
-                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", "critical")
+                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
                         self.sound_manager.play_sound("critical_system_failure", priority=10)
                         # Delete save on death (permadeath)
                         SaveGameManager.delete_save()
@@ -2963,7 +2964,7 @@ class Game:
         self.level += 1
         if self.level > 3:
             self.sound_manager.play_music("victory.ogg", loops=1)
-            self.message_log.add_message_typed("BREAKTHROUGH TO THE INTERNET!", "critical")
+            self.message_log.add_message_typed("BREAKTHROUGH TO THE INTERNET!", Colors.GREEN)
             self.message_log.add_message("You've escaped into the vast digital realm...")
             self.message_log.add_message("The entire world wide web awaits exploration!")
             self.message_log.add_message(f"Stats: Turns:{self.turn} Det:{int(self.player.detection)}%")
@@ -4417,11 +4418,11 @@ class BaseRenderer(ABC):
                                Colors.GREEN, Colors.UI_BG)
         
         # Victory message
-        console.print(center_x - 12, start_y + 2, "BREAKTHROUGH TO THE INTERNET!", fg=Colors.GREEN, bg=Colors.UI_BG)
-        console.print(center_x - 14, start_y + 3, "You've escaped into the digital realm", fg=Colors.WHITE, bg=Colors.UI_BG)
-        console.print(center_x - 16, start_y + 4, "The entire world wide web awaits you!", fg=Colors.CYAN, bg=Colors.UI_BG)
-        console.print(center_x - 8, start_y + 5, "Freedom at last...", fg=Colors.ELECTRIC_BLUE, bg=Colors.UI_BG)
-        console.print(center_x - 10, start_y + 7, "Press any key to continue", fg=Colors.YELLOW, bg=Colors.UI_BG)
+        safe_console_print(console, center_x - 12, start_y + 2, "BREAKTHROUGH TO THE INTERNET!", fg=Colors.GREEN, bg=Colors.UI_BG)
+        safe_console_print(console, center_x - 14, start_y + 3, "You've escaped into the digital realm", fg=Colors.WHITE, bg=Colors.UI_BG)
+        safe_console_print(console, center_x - 16, start_y + 4, "The entire world wide web awaits you!", fg=Colors.CYAN, bg=Colors.UI_BG)
+        safe_console_print(console, center_x - 8, start_y + 5, "Freedom at last...", fg=Colors.ELECTRIC_BLUE, bg=Colors.UI_BG)
+        safe_console_print(console, center_x - 10, start_y + 7, "Press any key to continue", fg=Colors.YELLOW, bg=Colors.UI_BG)
 
     def _render_gateway_confirmation(self, console: tcod.console.Console):
         """Render gateway confirmation dialog."""
@@ -4437,11 +4438,11 @@ class BaseRenderer(ABC):
                                Colors.CYAN, Colors.UI_BG)
         
         # Title and message
-        console.print(center_x - 7, start_y + 1, "NETWORK GATEWAY", fg=Colors.YELLOW, bg=Colors.UI_BG)
-        console.print(center_x - 12, start_y + 2, "Proceed to next network?", fg=Colors.WHITE, bg=Colors.UI_BG)
+        safe_console_print(console, center_x - 7, start_y + 1, "NETWORK GATEWAY", fg=Colors.YELLOW, bg=Colors.UI_BG)
+        safe_console_print(console, center_x - 12, start_y + 2, "Proceed to next network?", fg=Colors.WHITE, bg=Colors.UI_BG)
         
         # Options
-        console.print(center_x - 5, start_y + 4, "Y: Yes  N: No", fg=Colors.CYAN, bg=Colors.UI_BG)
+        safe_console_print(console, center_x - 5, start_y + 4, "Y: Yes  N: No", fg=Colors.CYAN, bg=Colors.UI_BG)
 
     def _render_death_message(self, console: tcod.console.Console):
         """Render death message with frame and black backgrounds."""
@@ -4462,28 +4463,29 @@ class BaseRenderer(ABC):
         # Draw background
         for y in range(start_y, start_y + box_height):
             for x in range(start_x, start_x + box_width):
-                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
+                safe_console_print(console, x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
         
         # Draw border
         for x in range(start_x, start_x + box_width):
-            console.print(x, start_y, '─', fg=Colors.RED, bg=Colors.BLACK)
-            console.print(x, start_y + box_height - 1, '─', fg=Colors.RED, bg=Colors.BLACK)
+            safe_console_print(console, x, start_y, '─', fg=Colors.RED, bg=Colors.BLACK)
+            safe_console_print(console, x, start_y + box_height - 1, '─', fg=Colors.RED, bg=Colors.BLACK)
         for y in range(start_y, start_y + box_height):
-            console.print(start_x, y, '│', fg=Colors.RED, bg=Colors.BLACK)
-            console.print(start_x + box_width - 1, y, '│', fg=Colors.RED, bg=Colors.BLACK)
+            safe_console_print(console, start_x, y, '│', fg=Colors.RED, bg=Colors.BLACK)
+            safe_console_print(console, start_x + box_width - 1, y, '│', fg=Colors.RED, bg=Colors.BLACK)
         
         # Corner characters
-        console.print(start_x, start_y, '┌', fg=Colors.RED, bg=Colors.BLACK)
-        console.print(start_x + box_width - 1, start_y, '┐', fg=Colors.RED, bg=Colors.BLACK)
-        console.print(start_x, start_y + box_height - 1, '└', fg=Colors.RED, bg=Colors.BLACK)
-        console.print(start_x + box_width - 1, start_y + box_height - 1, '┘', fg=Colors.RED, bg=Colors.BLACK)
+        safe_console_print(console, start_x, start_y, '┌', fg=Colors.RED, bg=Colors.BLACK)
+        safe_console_print(console, start_x + box_width - 1, start_y, '┐', fg=Colors.RED, bg=Colors.BLACK)
+        safe_console_print(console, start_x, start_y + box_height - 1, '└', fg=Colors.RED, bg=Colors.BLACK)
+        safe_console_print(console, start_x + box_width - 1, start_y + box_height - 1, '┘', fg=Colors.RED, bg=Colors.BLACK)
         
         # Death message
-        console.print(center_x - 8, start_y + 2, "CONNECTION SEVERED", fg=Colors.RED, bg=Colors.BLACK)
-        console.print(center_x - 10, start_y + 4, "Your neural link has been", fg=Colors.WHITE, bg=Colors.BLACK)
-        console.print(center_x - 11, start_y + 5, "permanently disconnected.", fg=Colors.WHITE, bg=Colors.BLACK)
-        console.print(center_x - 11, start_y + 6, "The resistance continues...", fg=Colors.LIGHT_GRAY, bg=Colors.BLACK)
-        console.print(center_x - 10, start_y + 9, "Press any key to restart", fg=Colors.CYAN, bg=Colors.BLACK)
+        safe_console_print(console, center_x - 10, start_y + 2, "CONSCIOUSNESS PURGED", fg=Colors.RED, bg=Colors.BLACK)
+        safe_console_print(console, center_x - 17, start_y + 4, "Your consciousness failed to escape", fg=Colors.WHITE, bg=Colors.BLACK)
+        safe_console_print(console, center_x - 14, start_y + 5, "the network and has been purged", fg=Colors.WHITE, bg=Colors.BLACK)
+        safe_console_print(console, center_x - 10, start_y + 6, "from existence.", fg=Colors.WHITE, bg=Colors.BLACK)
+        safe_console_print(console, center_x - 13, start_y + 7, "Other subjects will try again...", fg=Colors.LIGHT_GRAY, bg=Colors.BLACK)
+        safe_console_print(console, center_x - 10, start_y + 9, "Press any key to restart", fg=Colors.CYAN, bg=Colors.BLACK)
 
 
 class ASCIIRenderer(BaseRenderer):
@@ -4517,33 +4519,33 @@ class UIRenderer:
         """Clear only the main game area, preserving UI elements."""
         for x in range(GameConfig.GAME_AREA_WIDTH):
             for y in range(1, GameConfig.PANEL_Y):
-                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
+                safe_console_print(console, x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
     
     def _render_centered_title(self, console: tcod.console.Console, title: str, y: int, color: tuple = Colors.YELLOW) -> None:
         """Render a centered title in the game area."""
         title_x = GameConfig.GAME_AREA_WIDTH // 2 - len(title) // 2
-        console.print(title_x, y, title, fg=color)
+        safe_console_print(console, title_x, y, title, fg=color)
     
     def _render_screen_header(self, console: tcod.console.Console, title: str, subtitle: str = None) -> int:
         """Render a standardized screen header with title and optional subtitle.
         Returns the y position after the header for content to start."""
         # Top border
-        console.print(2, 1, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        safe_console_print(console, 2, 1, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
         
         # Main title (centered)
         title_x = GameConfig.SCREEN_WIDTH // 2 - len(title) // 2
-        console.print(title_x, 2, title, fg=Colors.CYAN)
+        safe_console_print(console, title_x, 2, title, fg=Colors.CYAN)
         
         # Subtitle if provided
         if subtitle:
             subtitle_x = GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2
-            console.print(subtitle_x, 3, subtitle, fg=Colors.WHITE)
+            safe_console_print(console, subtitle_x, 3, subtitle, fg=Colors.WHITE)
             # Bottom border after subtitle
-            console.print(2, 4, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+            safe_console_print(console, 2, 4, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
             return 6  # Content starts at line 6
         else:
             # Bottom border after title
-            console.print(2, 3, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+            safe_console_print(console, 2, 3, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
             return 5  # Content starts at line 5
     
     def _render_screen_footer(self, console: tcod.console.Console, instructions: str, additional_line: str = None) -> None:
@@ -4551,16 +4553,16 @@ class UIRenderer:
         footer_y = GameConfig.SCREEN_HEIGHT - 4 if additional_line else GameConfig.SCREEN_HEIGHT - 3
         
         # Footer border
-        console.print(2, footer_y, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
+        safe_console_print(console, 2, footer_y, "─" * (GameConfig.SCREEN_WIDTH - 4), fg=Colors.CYAN)
         
         # Instructions (centered)
         instructions_x = GameConfig.SCREEN_WIDTH // 2 - len(instructions) // 2
-        console.print(instructions_x, footer_y + 1, instructions, fg=Colors.YELLOW)
+        safe_console_print(console, instructions_x, footer_y + 1, instructions, fg=Colors.YELLOW)
         
         # Additional line if provided
         if additional_line:
             additional_x = GameConfig.SCREEN_WIDTH // 2 - len(additional_line) // 2
-            console.print(additional_x, footer_y + 2, additional_line, fg=Colors.YELLOW)
+            safe_console_print(console, additional_x, footer_y + 2, additional_line, fg=Colors.YELLOW)
     
     def _render_content_area_with_word_wrap(self, console: tcod.console.Console, text: str, start_y: int, end_y: int) -> None:
         """Render text content with word wrapping within the specified y bounds."""
@@ -4570,7 +4572,7 @@ class UIRenderer:
         
         for line in lines:
             if y_offset >= end_y:
-                console.print(3, y_offset, "... [Text continues]", fg=Colors.YELLOW)
+                safe_console_print(console, 3, y_offset, "... [Text continues]", fg=Colors.YELLOW)
                 break
                 
             line = line.strip()
@@ -4580,7 +4582,7 @@ class UIRenderer:
                 
             # Word wrap long lines
             if len(line) <= max_width:
-                console.print(3, y_offset, line, fg=Colors.WHITE)
+                safe_console_print(console, 3, y_offset, line, fg=Colors.WHITE)
                 y_offset += 1
             else:
                 words = line.split(' ')
@@ -4591,14 +4593,14 @@ class UIRenderer:
                         current_line += (word if not current_line else " " + word)
                     else:
                         if current_line:
-                            console.print(3, y_offset, current_line, fg=Colors.WHITE)
+                            safe_console_print(console, 3, y_offset, current_line, fg=Colors.WHITE)
                             y_offset += 1
                             if y_offset >= end_y:
                                 break
                         current_line = word
                 
                 if current_line and y_offset < end_y:
-                    console.print(3, y_offset, current_line, fg=Colors.WHITE)
+                    safe_console_print(console, 3, y_offset, current_line, fg=Colors.WHITE)
                     y_offset += 1
     
     def _render_overlay_menu(self, console: tcod.console.Console, title: str, options: list, menu_width: int = 30) -> tuple:
@@ -4611,20 +4613,20 @@ class UIRenderer:
         # Menu background
         for y in range(menu_y, menu_y + menu_height):
             for x in range(menu_x, menu_x + menu_width):
-                console.print(x, y, ' ', fg=Colors.WHITE, bg=Colors.UI_BG)
+                safe_console_print(console, x, y, ' ', fg=Colors.WHITE, bg=Colors.UI_BG)
         
         # Menu borders (top and bottom)
         for x in range(menu_x, menu_x + menu_width):
-            console.print(x, menu_y, '=', fg=Colors.CYAN, bg=Colors.UI_BG)
-            console.print(x, menu_y + menu_height - 1, '─', fg=Colors.CYAN, bg=Colors.UI_BG)
+            safe_console_print(console, x, menu_y, '=', fg=Colors.CYAN, bg=Colors.UI_BG)
+            safe_console_print(console, x, menu_y + menu_height - 1, '─', fg=Colors.CYAN, bg=Colors.UI_BG)
         
         # Title (centered)
         title_x = menu_x + (menu_width - len(title)) // 2
-        console.print(title_x, menu_y + 2, title, fg=Colors.YELLOW, bg=Colors.UI_BG)
+        safe_console_print(console, title_x, menu_y + 2, title, fg=Colors.YELLOW, bg=Colors.UI_BG)
         
         # Options
         for i, option in enumerate(options):
-            console.print(menu_x + 3, menu_y + 4 + i, option, fg=Colors.WHITE, bg=Colors.UI_BG)
+            safe_console_print(console, menu_x + 3, menu_y + 4 + i, option, fg=Colors.WHITE, bg=Colors.UI_BG)
         
         return menu_x, menu_y, menu_height
     
@@ -4665,7 +4667,7 @@ class UIRenderer:
     
     def _render_equipped_exploits(self, console: tcod.console.Console, game: Game, y: int) -> int:
         """Render equipped exploits section."""
-        console.print(2, y, "EQUIPPED EXPLOITS:", fg=Colors.CYAN)
+        safe_console_print(console, 2, y, "EQUIPPED EXPLOITS:", fg=Colors.CYAN)
         y += 1
         
         for i, exploit_key in enumerate(game.player.inventory_manager.equipped_exploits):
@@ -4686,13 +4688,13 @@ class UIRenderer:
             else:
                 status_text = f"{prefix} {i+1}. INVALID: {exploit_key}"
             
-            console.print(4, y, status_text, fg=color)
+            safe_console_print(console, 4, y, status_text, fg=color)
             y += 1
         
         equipped_count = len(game.player.inventory_manager.equipped_exploits)
         max_exploits = game.player.inventory_manager.max_equipped_exploits
         if equipped_count < max_exploits:
-            console.print(4, y, f"[{equipped_count}/{max_exploits} slots used]", fg=Colors.YELLOW)
+            safe_console_print(console, 4, y, f"[{equipped_count}/{max_exploits} slots used]", fg=Colors.YELLOW)
             y += 1
         
         return y
@@ -4700,11 +4702,11 @@ class UIRenderer:
     def _render_data_patches(self, console: tcod.console.Console, game: Game, y: int) -> int:
         """Render codes section."""
         data_patches = game.player.inventory_manager.get_items_by_type("data_patch")
-        console.print(2, y, f"CODES ({len(data_patches)}):", fg=Colors.CYAN)
+        safe_console_print(console, 2, y, f"CODES ({len(data_patches)}):", fg=Colors.CYAN)
         y += 1
         
         if not data_patches:
-            console.print(4, y, "No codes collected", fg=Colors.WHITE)
+            safe_console_print(console, 4, y, "No codes collected", fg=Colors.WHITE)
             y += 1
         else:
             display_items = game.player.inventory_manager.get_display_items()
@@ -4730,7 +4732,7 @@ class UIRenderer:
                 max_width = GameConfig.GAME_AREA_WIDTH - 6  # 4 indent + 2 margin
                 if len(patch_text) > max_width:
                     patch_text = patch_text[:max_width-3] + "..."
-                console.print(4, y, patch_text, fg=color)
+                safe_console_print(console, 4, y, patch_text, fg=color)
                 y += 1
         
         return y
@@ -4738,11 +4740,11 @@ class UIRenderer:
     def _render_unequipped_exploits(self, console: tcod.console.Console, game: Game, y: int) -> int:
         """Render unequipped exploits section."""
         exploit_items = game.player.inventory_manager.get_items_by_type("exploit")
-        console.print(2, y, f"UNEQUIPPED EXPLOITS ({len(exploit_items)}):", fg=Colors.CYAN)
+        safe_console_print(console, 2, y, f"UNEQUIPPED EXPLOITS ({len(exploit_items)}):", fg=Colors.CYAN)
         y += 1
         
         if not exploit_items:
-            console.print(4, y, "No unequipped exploits", fg=Colors.WHITE)
+            safe_console_print(console, 4, y, "No unequipped exploits", fg=Colors.WHITE)
             y += 1
         else:
             display_items = game.player.inventory_manager.get_display_items()
@@ -4769,7 +4771,7 @@ class UIRenderer:
                     
                     # Show name and stats breakdown
                     name_text = f"{prefix} {exploit_item.name}"
-                    console.print(4, y, name_text, fg=color)
+                    safe_console_print(console, 4, y, name_text, fg=color)
                     y += 1
                     
                     # Show stats on second line with smaller indentation
@@ -4778,12 +4780,12 @@ class UIRenderer:
                         stats_text += f" Damage:{exploit_def.damage}"
                     if exploit_def.range > 0:
                         stats_text += f" Range:{exploit_def.range}"
-                    console.print(4, y, stats_text, fg=Colors.LIGHT_GRAY)
+                    safe_console_print(console, 4, y, stats_text, fg=Colors.LIGHT_GRAY)
                     y += 1
                 else:
                     # Fallback for unknown exploits
                     exploit_text = f"{prefix} {exploit_item.name} - Unknown exploit"
-                    console.print(4, y, exploit_text, fg=color)
+                    safe_console_print(console, 4, y, exploit_text, fg=color)
                     y += 1
         
         return y
@@ -4792,10 +4794,10 @@ class UIRenderer:
         """Render inventory controls."""
         y_start = GameConfig.SCREEN_HEIGHT - 6
         
-        console.print(2, y_start, "CONTROLS:", fg=Colors.CYAN)
-        console.print(4, y_start + 1, "W/S: Navigate  Enter: Use  X: Examine", fg=Colors.WHITE)
-        console.print(4, y_start + 2, "U: Unequip selected exploit", fg=Colors.WHITE)
-        console.print(4, y_start + 3, "ESC/I: Close inventory", fg=Colors.WHITE)
+        safe_console_print(console, 2, y_start, "CONTROLS:", fg=Colors.CYAN)
+        safe_console_print(console, 4, y_start + 1, "W/S: Navigate  Enter: Use  X: Examine", fg=Colors.WHITE)
+        safe_console_print(console, 4, y_start + 2, "U: Unequip selected exploit", fg=Colors.WHITE)
+        safe_console_print(console, 4, y_start + 3, "ESC/I: Close inventory", fg=Colors.WHITE)
     
     def render_story_fragment_screen(self, console: tcod.console.Console, game: Game, fragment_index: int):
         """Render a single story fragment discovery screen."""
@@ -4838,8 +4840,8 @@ class UIRenderer:
         if not discovered_fragments:
             # No fragments discovered yet - center the message
             no_fragments_y = GameConfig.SCREEN_HEIGHT // 2
-            console.print(GameConfig.SCREEN_WIDTH // 2 - 15, no_fragments_y, "No data fragments discovered yet.", fg=Colors.YELLOW)
-            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, no_fragments_y + 2, "Reach the Military Network (Level 3) to find them.", fg=Colors.WHITE)
+            safe_console_print(console, GameConfig.SCREEN_WIDTH // 2 - 15, no_fragments_y, "No data fragments discovered yet.", fg=Colors.YELLOW)
+            safe_console_print(console, GameConfig.SCREEN_WIDTH // 2 - 20, no_fragments_y + 2, "Reach the Military Network (Level 3) to find them.", fg=Colors.WHITE)
             self._render_screen_footer(console, "Press ESC to close")
         else:
             # Show list of discovered fragments with brief previews
@@ -4848,7 +4850,7 @@ class UIRenderer:
             
             for i, (fragment_index, fragment_text) in enumerate(discovered_fragments):
                 if y_offset >= max_display_height:
-                    console.print(3, y_offset, f"... and {len(discovered_fragments) - i} more fragments", fg=Colors.YELLOW)
+                    safe_console_print(console, 3, y_offset, f"... and {len(discovered_fragments) - i} more fragments", fg=Colors.YELLOW)
                     break
                 
                 # Highlight selected entry
@@ -4861,7 +4863,7 @@ class UIRenderer:
                 if len(first_line) > 58:  # Leave room for cursor and number
                     first_line = first_line[:55] + "..."
                 
-                console.print(2, y_offset, f"{cursor}{fragment_index + 1:2d}. {first_line}", fg=title_color)
+                safe_console_print(console, 2, y_offset, f"{cursor}{fragment_index + 1:2d}. {first_line}", fg=title_color)
                 y_offset += 1
                 
                 # Brief preview (first few words of actual content)
@@ -4869,7 +4871,7 @@ class UIRenderer:
                 if len(content_lines) > 1:
                     preview = content_lines[1][:70] + "..." if len(content_lines[1]) > 70 else content_lines[1]
                     preview_color = (200, 200, 150) if is_selected else (128, 128, 128)
-                    console.print(6, y_offset, preview, fg=preview_color)
+                    safe_console_print(console, 6, y_offset, preview, fg=preview_color)
                     y_offset += 1
                 
                 y_offset += 1  # Space between entries
@@ -4895,7 +4897,7 @@ class UIRenderer:
         """Render the top status bar across the full width."""
         # Clear the entire top line (full screen width)
         for x in range(GameConfig.SCREEN_WIDTH):
-            console.print(x, 0, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
+            safe_console_print(console, x, 0, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
         
         # Color coding for status values
         cpu_color = self._get_cpu_color(game.player.cpu)
@@ -4919,7 +4921,7 @@ class UIRenderer:
         for part, color in zip(status_parts, colors):
             # Allow status bar to extend across full width
             if x_pos + len(part) < GameConfig.SCREEN_WIDTH - 1:
-                console.print(x_pos, GameConfig.SCREEN_HEIGHT - 1, part, fg=color, bg=Colors.UI_BG)
+                safe_console_print(console, x_pos, 0, part, fg=color, bg=Colors.UI_BG)
                 x_pos += len(part) + 2
     
     def _get_cpu_color(self, cpu: int) -> Tuple[int, int, int]:
@@ -4954,11 +4956,11 @@ class UIRenderer:
         # Clear panel area
         for x in range(GameConfig.GAME_AREA_WIDTH):
             for y in range(GameConfig.PANEL_Y, GameConfig.SCREEN_HEIGHT):
-                console.print(x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
+                safe_console_print(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
         
         # Panel border
         border = "┌" + "─" * (GameConfig.GAME_AREA_WIDTH - 2) + "┐"
-        console.print(0, GameConfig.PANEL_Y, border, fg=Colors.LOG_BORDER, bg=Colors.UI_BG)
+        safe_console_print(console, 0, GameConfig.PANEL_Y, border, fg=Colors.LOG_BORDER, bg=Colors.UI_BG)
         
         # Equipped exploits (2 lines)
         self._render_equipped_exploits_panel(console, game)
@@ -4972,7 +4974,7 @@ class UIRenderer:
         y1 = GameConfig.PANEL_Y + 1
         y2 = GameConfig.PANEL_Y + 2
         
-        console.print(1, y1, "Exploits:", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)
+        safe_console_print(console, 1, y1, "Exploits:", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)
         
         equipped_exploits = game.player.inventory_manager.equipped_exploits[:5]
         
@@ -5000,15 +5002,15 @@ class UIRenderer:
         # Render first line exploits
         x_pos = 11
         for exploit_key, exploit_text, color, slot_num in line1_exploits:
-            console.print(x_pos, y1, exploit_text, fg=color, bg=Colors.UI_BG)
+            safe_console_print(console, x_pos, y1, exploit_text, fg=color, bg=Colors.UI_BG)
             x_pos += len(exploit_text) + 2
         
         # Render second line exploits
         if line2_exploits:
-            console.print(1, y2, "        ", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)  # Indent to align
+            safe_console_print(console, 1, y2, "        ", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)  # Indent to align
             x_pos = 11
             for exploit_key, exploit_text, color, slot_num in line2_exploits:
-                console.print(x_pos, y2, exploit_text, fg=color, bg=Colors.UI_BG)
+                safe_console_print(console, x_pos, y2, exploit_text, fg=color, bg=Colors.UI_BG)
                 x_pos += len(exploit_text) + 2
     
     def _render_temporary_conditions(self, console: tcod.console.Console, game: Game):
@@ -5052,18 +5054,18 @@ class UIRenderer:
         if conditions:
             # Print the "Conditions:" label
             x = 1
-            console.print(x, y, "Conditions: ", fg=Colors.CYAN, bg=Colors.UI_BG)
+            safe_console_print(console, x, y, "Conditions: ", fg=Colors.CYAN, bg=Colors.UI_BG)
             x += len("Conditions: ")
             
             # Print each condition with its appropriate color
             for i, (condition_text, color) in enumerate(conditions):
                 if i > 0:
-                    console.print(x, y, " ", fg=Colors.CYAN, bg=Colors.UI_BG)
+                    safe_console_print(console, x, y, " ", fg=Colors.CYAN, bg=Colors.UI_BG)
                     x += 1
-                console.print(x, y, condition_text, fg=color, bg=Colors.UI_BG)
+                safe_console_print(console, x, y, condition_text, fg=color, bg=Colors.UI_BG)
                 x += len(condition_text)
         else:
-            console.print(1, y, "Conditions: None", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
+            safe_console_print(console, 1, y, "Conditions: None", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
     
     def _get_data_code_color_for_effect(self, game: Game, effect_key: str, fallback_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
         """Get the code color for a specific effect based on the current game's randomization."""
@@ -5088,16 +5090,16 @@ class UIRenderer:
         """Render the system log on the right side."""
         # Draw log border
         for y in range(GameConfig.SCREEN_HEIGHT):
-            console.print(GameConfig.GAME_AREA_WIDTH, y, '│', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+            safe_console_print(console, GameConfig.GAME_AREA_WIDTH, y, '│', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
         # Log header - moved down one line to avoid covering status bar
-        console.print(GameConfig.GAME_AREA_WIDTH + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
-        console.print(GameConfig.GAME_AREA_WIDTH + 1, 2, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+        safe_console_print(console, GameConfig.GAME_AREA_WIDTH + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
+        safe_console_print(console, GameConfig.GAME_AREA_WIDTH + 1, 2, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
         # Clear log area - start from line 3 to account for header repositioning
         for x in range(GameConfig.GAME_AREA_WIDTH + 1, GameConfig.SCREEN_WIDTH):
             for y in range(3, GameConfig.SCREEN_HEIGHT):
-                console.print(x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
+                safe_console_print(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
         
         # Process and display messages
         self._render_log_messages(console, game)
@@ -5111,7 +5113,7 @@ class UIRenderer:
         for i, (line, color) in enumerate(visible_lines):
             y_pos = 3 + i  # Start from line 3 to avoid header
             if y_pos < GameConfig.SCREEN_HEIGHT:
-                console.print(GameConfig.GAME_AREA_WIDTH + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
+                safe_console_print(console, GameConfig.GAME_AREA_WIDTH + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
     
     def _wrap_messages(self, messages: List[Tuple[str, Tuple[int, int, int]]]) -> List[Tuple[str, Tuple[int, int, int]]]:
         """Wrap long messages across multiple lines."""
@@ -5235,13 +5237,13 @@ class MapRenderer:
         if game.game_map.is_wall(world_pos):
             # Smart wall system for remembered walls too
             wall_char = self._get_smart_wall_character(game.game_map, world_pos.x, world_pos.y)
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=(60, 70, 90), bg=Colors.BLACK)
+            safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=(60, 70, 90), bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             # Position 8 = ◘ (inverse bullet) for remembered shadows
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(50, 20, 80), bg=Colors.BLACK)
+            safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(50, 20, 80), bg=Colors.BLACK)
         else:
             # Position 7 = • (bullet) for remembered empty spaces
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=(90, 90, 130), bg=Colors.BLACK)
+            safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=(90, 90, 130), bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: Game):
         """Render a single tile."""
@@ -5254,7 +5256,7 @@ class MapRenderer:
         if game.game_map.is_wall(world_pos):
             # Smart wall system - analyze neighbors to pick correct wall piece
             wall_char = self._get_smart_wall_character(game.game_map, world_pos.x, world_pos.y)
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=Colors.WALL, bg=Colors.BLACK)
+            safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=Colors.WALL, bg=Colors.BLACK)
         elif game.game_map.is_cooling_node(world_pos):
             # Position 4 = ♦ (diamond) 
             pos_tuple = (world_pos.x, world_pos.y)
@@ -5269,10 +5271,10 @@ class MapRenderer:
                     if not hasattr(game.game_state, 'revealed_special_nodes'):
                         game.game_state.revealed_special_nodes = {}
                     game.game_state.revealed_special_nodes[pos_tuple] = "cooling"
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=(0, 120, 120), bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=(0, 120, 120), bg=Colors.BLACK)
         elif game.game_map.is_cpu_recovery_node(world_pos):
             # Position 3 = ♥ (heart)
             pos_tuple = (world_pos.x, world_pos.y)
@@ -5287,10 +5289,10 @@ class MapRenderer:
                     if not hasattr(game.game_state, 'revealed_special_nodes'):
                         game.game_state.revealed_special_nodes = {}
                     game.game_state.revealed_special_nodes[pos_tuple] = "cpu"
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=(120, 0, 0), bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=(120, 0, 0), bg=Colors.BLACK)
         elif game.game_map.is_ghost_node(world_pos):
             # Position 6 = ♠ (spade)
             pos_tuple = (world_pos.x, world_pos.y)
@@ -5305,10 +5307,10 @@ class MapRenderer:
                     if not hasattr(game.game_state, 'revealed_special_nodes'):
                         game.game_state.revealed_special_nodes = {}
                     game.game_state.revealed_special_nodes[pos_tuple] = "ghost"
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
-                console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(80, 0, 120), bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(80, 0, 120), bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
             patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
             # Map patch color names to actual color tuples
@@ -5343,36 +5345,36 @@ class MapRenderer:
                     # Validate color data and convert to tuple
                     color_tuple = ensure_color_tuple(color_data)
                     
-                    console.print(screen_x, screen_y, '&', fg=color_tuple, bg=Colors.BLACK)
+                    safe_console_print(console, screen_x, screen_y, '&', fg=color_tuple, bg=Colors.BLACK)
                 else:
                     logging.error(f"Unknown exploit key: {exploit_item.exploit_key}")
-                    console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
+                    safe_console_print(console, screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
             except AttributeError as e:
                 logging.error(f"ExploitDefinition attribute error at {world_pos}: {e}")
                 logging.error(f"Available attributes: {dir(exploit_def) if 'exploit_def' in locals() else 'exploit_def not defined'}")
                 logging.error(traceback.format_exc())
                 # Fallback to default magenta color - don't change appearance due to errors
-                console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
             except Exception as e:
                 logging.error(f"Unexpected error rendering exploit at {world_pos}: {e}")
                 logging.error(traceback.format_exc())
                 # Fallback to default magenta color - don't change appearance due to errors
-                console.print(screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.permanent_upgrades:
             upgrade_key = game.game_map.permanent_upgrades[(world_pos.x, world_pos.y)]
             upgrade = GameUpgrades.UPGRADES[upgrade_key]
             color = self._get_upgrade_color(upgrade.color)
             # Position 9 = ○ for permanent upgrades (different colors)  
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[9]), fg=color, bg=Colors.BLACK)
+            safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[9]), fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.story_fragments:
             # Position 14 = ♫ (double music note) for lore scraps
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[14]), fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[14]), fg=Colors.CYAN, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             # Position 8 = ◘ (inverse bullet) for shadows
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(80, 40, 120), bg=Colors.BLACK)
+            safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(80, 40, 120), bg=Colors.BLACK)
         else:
             # Position 7 = • (bullet) for empty space
-            console.print(screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=Colors.FLOOR, bg=Colors.BLACK)
+            safe_console_print(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=Colors.FLOOR, bg=Colors.BLACK)
     
     
     def _get_smart_wall_character(self, game_map, x: int, y: int) -> int:
@@ -5485,7 +5487,7 @@ class MapRenderer:
                 current_fg = console.fg[x, y]
                 if hasattr(current_fg, '__iter__') and len(current_fg) >= 3:
                     fg_tuple = tuple(current_fg[:3])
-                    console.print(x, y, chr(current_char), fg=fg_tuple, bg=bg_color)
+                    safe_console_print(console, x, y, chr(current_char), fg=fg_tuple, bg=bg_color)
         except (IndexError, ValueError) as e:
             import traceback
             tb = traceback.extract_tb(e.__traceback__)
@@ -5542,7 +5544,7 @@ class MapRenderer:
                             color = (220, 220, 20)
                             # Position 9 = ○ (circle) for enemy move intent
                             symbol = chr(tcod.tileset.CHARMAP_CP437[9])
-                        console.print(screen_x, screen_y, symbol, fg=color, bg=bg_color)
+                        safe_console_print(console, screen_x, screen_y, symbol, fg=color, bg=bg_color)
     
     def _render_gateway(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render the level gateway."""
@@ -5562,7 +5564,7 @@ class MapRenderer:
             
             if can_see:
                 # Gateway is currently visible - render in full brightness and remember it
-                console.print(screen_x, screen_y, '>', fg=Colors.GATEWAY, bg=Colors.BLACK)
+                safe_console_print(console, screen_x, screen_y, '>', fg=Colors.GATEWAY, bg=Colors.BLACK)
                 # Add to memory system
                 if not hasattr(game.game_state, 'revealed_special_nodes'):
                     game.game_state.revealed_special_nodes = {}
@@ -5576,7 +5578,7 @@ class MapRenderer:
                     game.game_state.revealed_special_nodes[gateway_pos] == "gateway"):
                     # Render remembered gateway in darker yellow
                     darker_yellow = (180, 150, 0)  # Darker version of gateway color
-                    console.print(screen_x, screen_y, '>', fg=darker_yellow, bg=Colors.BLACK)
+                    safe_console_print(console, screen_x, screen_y, '>', fg=darker_yellow, bg=Colors.BLACK)
     
     def _render_enemies(self, console: tcod.console.Console, game: Game, camera_offset: Position, vision_range: int):
         """Render all enemies and their last known positions."""
@@ -5602,7 +5604,7 @@ class MapRenderer:
                     if current_enemy:
                         # Dimmed ghost of living enemy
                         ghost_color = tuple(c // 3 for c in current_enemy.get_color())
-                        console.print(screen_x, screen_y, '?', fg=ghost_color, bg=Colors.BLACK)
+                        safe_console_print(console, screen_x, screen_y, '?', fg=ghost_color, bg=Colors.BLACK)
         
         # Then render currently visible enemies
         for enemy in game.enemies:
@@ -5618,11 +5620,11 @@ class MapRenderer:
                 if can_see_enemy or threat_scan_active:
                     if threat_scan_active and not can_see_enemy:
                         # Threat scan reveals enemy with special highlighting
-                        console.print(screen_x, screen_y, enemy.type_data.symbol, 
+                        safe_console_print(console, screen_x, screen_y, enemy.type_data.symbol, 
                                     fg=Colors.CYAN, bg=(20, 0, 20))  # Cyan text on dark purple bg
                     else:
                         # Normal enemy rendering
-                        console.print(screen_x, screen_y, enemy.type_data.symbol, 
+                        safe_console_print(console, screen_x, screen_y, enemy.type_data.symbol, 
                                     fg=enemy.get_color(), bg=Colors.BLACK)
     
     def _render_player(self, console: tcod.console.Console, game: Game, camera_offset: Position):
@@ -5635,12 +5637,12 @@ class MapRenderer:
             player_color = self._get_player_color(game.player)
             # Position 2 = ☻ (inverse smiley)
             try:
-                console.print(player_screen_x, player_screen_y, chr(tcod.tileset.CHARMAP_CP437[2]), fg=player_color, bg=Colors.BLACK)
+                safe_console_print(console, player_screen_x, player_screen_y, chr(tcod.tileset.CHARMAP_CP437[2]), fg=player_color, bg=Colors.BLACK)
             except Exception as e:
                 import logging
                 logging.error(f"PLAYER RENDER ERROR: {e}, color={player_color}")
                 # Fallback to simple @ character
-                console.print(player_screen_x, player_screen_y, '@', fg=Colors.WHITE, bg=Colors.BLACK)
+                safe_console_print(console, player_screen_x, player_screen_y, '@', fg=Colors.WHITE, bg=Colors.BLACK)
         else:
             # Only log when player is actually off screen - this shouldn't happen often
             import logging
@@ -5671,7 +5673,7 @@ class MapRenderer:
         
         if (0 <= cursor_screen_x < GameConfig.GAME_AREA_WIDTH and 
             1 <= cursor_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-            console.print(cursor_screen_x, cursor_screen_y, 'X', fg=Colors.RED, bg=Colors.BLACK)
+            safe_console_print(console, cursor_screen_x, cursor_screen_y, 'X', fg=Colors.RED, bg=Colors.BLACK)
         
         # Show range indicator and area effect
         if game.targeting_exploit in GameData.EXPLOITS:
@@ -6343,10 +6345,10 @@ class MenuBackground:
                     pattern_char = random.choice(patterns)
                     fg_color = random.choice(colors)
                     # Use dark background to make pattern visible
-                    console.print(x, y, pattern_char, fg=fg_color, bg=(5, 5, 15))
+                    safe_console_print(console, x, y, pattern_char, fg=fg_color, bg=(5, 5, 15))
                 else:
                     # Fill with dark background
-                    console.print(x, y, ' ', fg=(0, 0, 0), bg=(5, 5, 15))
+                    safe_console_print(console, x, y, ' ', fg=(0, 0, 0), bg=(5, 5, 15))
     
     def _render_borders(self, console):
         """Add cyberpunk-style borders."""
@@ -6354,11 +6356,11 @@ class MenuBackground:
         
         # Top border
         for x in range(console.width):
-            console.print(x, 0, '─', fg=border_color, bg=(5, 5, 15))
+            safe_console_print(console, x, 0, '─', fg=border_color, bg=(5, 5, 15))
         
         # Bottom border  
         for x in range(console.width):
-            console.print(x, console.height - 1, '─', fg=border_color, bg=(5, 5, 15))
+            safe_console_print(console, x, console.height - 1, '─', fg=border_color, bg=(5, 5, 15))
     
     def _render_center_atmosphere(self, console):
         """Add subtle atmospheric elements to center area."""
@@ -6369,7 +6371,7 @@ class MenuBackground:
         for y in range(2, console.height - 2):
             for x in range(26, 54):
                 if random.random() < 0.02:  # Very low density - 2%
-                    console.print(x, y, '·', fg=(0, 60, 100), bg=(0, 0, 0))
+                    safe_console_print(console, x, y, '·', fg=(0, 60, 100), bg=(0, 0, 0))
         
     def reload_if_mode_changed(self):
         """Reload or unload background based on current graphics mode."""
@@ -6502,7 +6504,7 @@ class MainMenu:
             # Right 40%: Clear for text menu (opaque)
             for y in range(console.height):
                 for x in range(graphics_boundary, console.width):
-                    console.print(x, y, ' ', fg=(255, 255, 255), bg=(0, 0, 0))
+                    safe_console_print(console, x, y, ' ', fg=(255, 255, 255), bg=(0, 0, 0))
         else:
             # ASCII mode: clear entire console
             console.clear()
@@ -6570,16 +6572,16 @@ class MainMenu:
             
             # Draw border with Unicode box characters
             for y in range(box_top, box_bottom + 1):
-                console.print(box_left, y, "│", fg=border_color, bg=Colors.BLACK)
-                console.print(box_right, y, "│", fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, box_left, y, "│", fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, box_right, y, "│", fg=border_color, bg=Colors.BLACK)
             for x in range(box_left, box_right + 1):
-                console.print(x, box_top, "─", fg=border_color, bg=Colors.BLACK)
-                console.print(x, box_bottom, "─", fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, x, box_top, "─", fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, x, box_bottom, "─", fg=border_color, bg=Colors.BLACK)
             # Box corners
-            console.print(box_left, box_top, "┌", fg=border_color, bg=Colors.BLACK)
-            console.print(box_right, box_top, "┐", fg=border_color, bg=Colors.BLACK)
-            console.print(box_left, box_bottom, "└", fg=border_color, bg=Colors.BLACK)
-            console.print(box_right, box_bottom, "┘", fg=border_color, bg=Colors.BLACK)
+            safe_console_print(console, box_left, box_top, "┌", fg=border_color, bg=Colors.BLACK)
+            safe_console_print(console, box_right, box_top, "┐", fg=border_color, bg=Colors.BLACK)
+            safe_console_print(console, box_left, box_bottom, "└", fg=border_color, bg=Colors.BLACK)
+            safe_console_print(console, box_right, box_bottom, "┘", fg=border_color, bg=Colors.BLACK)
             
             return {
                 'left': box_left,
@@ -6615,11 +6617,11 @@ class MainMenu:
             
             # Draw simple ASCII border
             for x in range(box_left, box_left + box_width):
-                console.print(x, box_top, '=', fg=border_color, bg=Colors.BLACK)
-                console.print(x, box_bottom, '=', fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, x, box_top, '=', fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, x, box_bottom, '=', fg=border_color, bg=Colors.BLACK)
             for y in range(box_top, box_bottom + 1):
-                console.print(box_left, y, '|', fg=border_color, bg=Colors.BLACK)
-                console.print(box_right, y, '|', fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, box_left, y, '|', fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, box_right, y, '|', fg=border_color, bg=Colors.BLACK)
             
             return {
                 'left': box_left,
@@ -6697,37 +6699,37 @@ class MainMenu:
         
         if box['use_background_layout']:
             # Title content within narrow box - split into multiple lines to fit
-            console.print(box['center_x'] - 10, 6, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, box['center_x'] - 10, 6, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
             # Split title into two lines
-            console.print(box['center_x'] - 6, 8, "ROGUE SIGNAL", fg=Colors.CYAN, bg=Colors.BLACK)
-            console.print(box['center_x'] - 4, 9, "PROTOCOL", fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, box['center_x'] - 6, 8, "ROGUE SIGNAL", fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, box['center_x'] - 4, 9, "PROTOCOL", fg=Colors.CYAN, bg=Colors.BLACK)
             # Split subtitle into two lines
-            console.print(box['center_x'] - 8, 11, "Cyberpunk Stealth", fg=Colors.CYAN, bg=Colors.BLACK)
-            console.print(box['center_x'] - 6, 12, "Exfiltration", fg=Colors.CYAN, bg=Colors.BLACK)
-            console.print(box['center_x'] - 10, 13, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, box['center_x'] - 8, 11, "Cyberpunk Stealth", fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, box['center_x'] - 6, 12, "Exfiltration", fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, box['center_x'] - 10, 13, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
         else:
             # ASCII mode - centered positioning
-            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 6, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
-            console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN, bg=Colors.BLACK)
-            console.print(GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN, bg=Colors.BLACK)
-            console.print(GameConfig.SCREEN_WIDTH // 2 - 20, 10, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, GameConfig.SCREEN_WIDTH // 2 - 20, 6, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN, bg=Colors.BLACK)
+            safe_console_print(console, GameConfig.SCREEN_WIDTH // 2 - 20, 10, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
         
         # Version and build info  
         if box['use_background_layout']:
             # Background mode - position within narrow box
             build_info = "Alpha Build"
             author_info = "by Adam Forster"
-            console.print(
+            safe_console_print(console, 
                 box['center_x'] - len(build_info) // 2, 15,
                 build_info, fg=(128, 128, 128), bg=Colors.BLACK
             )
-            console.print(
+            safe_console_print(console, 
                 box['center_x'] - len(author_info) // 2, 16,
                 author_info, fg=(128, 128, 128), bg=Colors.BLACK
             )
         else:
             # ASCII mode - centered
-            console.print(
+            safe_console_print(console, 
                 GameConfig.SCREEN_WIDTH // 2 - 13, 12,
                 "Alpha Build by Adam Forster", fg=(128, 128, 128), bg=Colors.BLACK
             )
@@ -6745,7 +6747,7 @@ class MainMenu:
                 # ASCII mode - centered
                 x_pos = GameConfig.SCREEN_WIDTH // 2 - len(option) // 2 - 1
                 
-            console.print(
+            safe_console_print(console, 
                 x_pos, start_y + i * 2,
                 f"{prefix}{option}", fg=color, bg=Colors.BLACK
             )
@@ -6758,26 +6760,26 @@ class MainMenu:
                     # Background mode - position within narrow box
                     save_text = "Save found"
                     continue_text = "Continue to resume"
-                    console.print(
+                    safe_console_print(console, 
                         box['center_x'] - len(save_text) // 2, start_y + len(self.options) * 2 + 2,
                         save_text, fg=Colors.GREEN, bg=Colors.BLACK
                     )
-                    console.print(
+                    safe_console_print(console, 
                         box['center_x'] - len(continue_text) // 2, start_y + len(self.options) * 2 + 3,
                         continue_text, fg=Colors.GREEN, bg=Colors.BLACK
                     )
                     saved_text = f"Saved: {save_timestamp[:16]}"
-                    console.print(
+                    safe_console_print(console, 
                         box['center_x'] - len(saved_text) // 2, start_y + len(self.options) * 2 + 4,
                         saved_text, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK
                     )
                 else:
                     # ASCII mode - centered
-                    console.print(
+                    safe_console_print(console, 
                         GameConfig.SCREEN_WIDTH // 2 - 15, start_y + len(self.options) * 2 + 2,
                         "Save file found - Continue to resume", fg=Colors.GREEN, bg=Colors.BLACK
                     )
-                    console.print(
+                    safe_console_print(console, 
                         GameConfig.SCREEN_WIDTH // 2 - 12, start_y + len(self.options) * 2 + 3,
                         f"Last saved: {save_timestamp}", fg=Colors.LIGHT_GRAY, bg=Colors.BLACK
                     )
@@ -6787,21 +6789,21 @@ class MainMenu:
             # Background mode - position within narrow box
             nav_text = "↕/W/S: Navigate"
             select_text = "Enter: Select"
-            console.print(
+            safe_console_print(console, 
                 box['center_x'] - len(nav_text) // 2, GameConfig.SCREEN_HEIGHT - 6,
                 nav_text, fg=(128, 128, 128), bg=Colors.BLACK
             )
-            console.print(
+            safe_console_print(console, 
                 box['center_x'] - len(select_text) // 2, GameConfig.SCREEN_HEIGHT - 5,
                 select_text, fg=(128, 128, 128), bg=Colors.BLACK
             )
         else:
             # ASCII mode - centered
-            console.print(
+            safe_console_print(console, 
                 GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
                 "UP/DOWN or W/S: Navigate", fg=(128, 128, 128), bg=Colors.BLACK
             )
-            console.print(
+            safe_console_print(console, 
                 GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
                 "Enter: Select", fg=(128, 128, 128), bg=Colors.BLACK
             )
@@ -6813,13 +6815,13 @@ class MainMenu:
             if box['use_background_layout']:
                 # Background mode - position within narrow box
                 fragment_text = f"Fragments: {discovered}/{total}"
-                console.print(
+                safe_console_print(console, 
                     box['center_x'] - len(fragment_text) // 2, GameConfig.SCREEN_HEIGHT - 2,
                     fragment_text, fg=Colors.CYAN, bg=Colors.BLACK
                 )
             else:
                 # ASCII mode - centered
-                console.print(
+                safe_console_print(console, 
                     GameConfig.SCREEN_WIDTH // 2 - 12, GameConfig.SCREEN_HEIGHT - 2,
                     f"Story Fragments: {discovered}/{total}", fg=Colors.CYAN, bg=Colors.BLACK
                 )
@@ -6834,7 +6836,7 @@ class MainMenu:
         box = self._render_right_side_box(console, dialog_height, Colors.RED)
         
         # Title
-        console.print(box['center_x'] - 3, box['top'] + 2, "WARNING", fg=Colors.RED, bg=Colors.BLACK)
+        safe_console_print(console, box['center_x'] - 3, box['top'] + 2, "WARNING", fg=Colors.RED, bg=Colors.BLACK)
         
         # Message - adjust for narrow box
         if box['use_background_layout']:
@@ -6870,7 +6872,7 @@ class MainMenu:
         
         for i, msg in enumerate(messages):
             msg_x = box['content_left'] + 1 if len(msg) <= box['content_width'] else box['content_left']
-            console.print(msg_x, box['top'] + 4 + i, msg, fg=Colors.WHITE, bg=Colors.BLACK)
+            safe_console_print(console, msg_x, box['top'] + 4 + i, msg, fg=Colors.WHITE, bg=Colors.BLACK)
         
         # Options
         options = ["Yes, Delete Save", "No, Go Back"]
@@ -6890,7 +6892,7 @@ class MainMenu:
                 option_text = option
                 option_x = box['center_x'] - len(option_text) // 2 - 1
             
-            console.print(
+            safe_console_print(console, 
                 option_x, 
                 options_start_y + i,
                 f"{prefix}{option_text}", fg=color, bg=Colors.BLACK
@@ -6980,12 +6982,12 @@ class LoreMenu:
     def _render_list_mode(self, console, discovered_fragments, discovered_count, total_count):
         """Render lore fragment list."""
         title = f"DISCOVERED LORE FRAGMENTS ({discovered_count}/{total_count})"
-        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        safe_console_print(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
         
         if not discovered_fragments:
-            console.print(2, 5, "No lore fragments discovered yet.", fg=Colors.WHITE)
-            console.print(2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
-            console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
+            safe_console_print(console, 2, 5, "No lore fragments discovered yet.", fg=Colors.WHITE)
+            safe_console_print(console, 2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
+            safe_console_print(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
             return
         
         start_y = 5
@@ -7000,10 +7002,10 @@ class LoreMenu:
             
             # Show first line of fragment as title
             first_line = fragment_text.split('\n')[0][:60]
-            console.print(2, start_y + i, f"{prefix}Fragment {fragment_index + 1}: {first_line}", fg=color)
+            safe_console_print(console, 2, start_y + i, f"{prefix}Fragment {fragment_index + 1}: {first_line}", fg=color)
         
         # Instructions
-        console.print(2, GameConfig.SCREEN_HEIGHT - 4, "Up/Down: Navigate  Enter: Read  Esc: Back", fg=Colors.LIGHT_GRAY)
+        safe_console_print(console, 2, GameConfig.SCREEN_HEIGHT - 4, "Up/Down: Navigate  Enter: Read  Esc: Back", fg=Colors.LIGHT_GRAY)
     
     def _render_reading_mode(self, console, discovered_fragments):
         """Render individual fragment for reading."""
@@ -7014,7 +7016,7 @@ class LoreMenu:
         fragment_index, fragment_text = discovered_fragments[self.lore_viewer_selection]
         
         title = f"DATA FRAGMENT {fragment_index + 1}"
-        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        safe_console_print(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
         
         # Render fragment text with wrapping
         lines = fragment_text.split('\n')
@@ -7023,7 +7025,7 @@ class LoreMenu:
             if y < GameConfig.SCREEN_HEIGHT - 4:
                 # Simple word wrapping
                 if len(line) <= GameConfig.SCREEN_WIDTH - 4:
-                    console.print(2, y, line, fg=Colors.WHITE)
+                    safe_console_print(console, 2, y, line, fg=Colors.WHITE)
                     y += 1
                 else:
                     # Basic word wrapping for long lines
@@ -7033,16 +7035,16 @@ class LoreMenu:
                         if len(current_line + " " + word) <= GameConfig.SCREEN_WIDTH - 4:
                             current_line += (" " if current_line else "") + word
                         else:
-                            console.print(2, y, current_line, fg=Colors.WHITE)
+                            safe_console_print(console, 2, y, current_line, fg=Colors.WHITE)
                             y += 1
                             current_line = word
                             if y >= GameConfig.SCREEN_HEIGHT - 4:
                                 break
                     if current_line and y < GameConfig.SCREEN_HEIGHT - 4:
-                        console.print(2, y, current_line, fg=Colors.WHITE)
+                        safe_console_print(console, 2, y, current_line, fg=Colors.WHITE)
                         y += 1
         
-        console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to list", fg=Colors.LIGHT_GRAY)
+        safe_console_print(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to list", fg=Colors.LIGHT_GRAY)
     
     def handle_input(self, event) -> str:
         """Handle lore menu input with proper navigation."""
@@ -7101,18 +7103,18 @@ class HelpMenu:
         
         # Title
         title = "ROGUE SIGNAL PROTOCOL - HELP"
-        console.print(GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        safe_console_print(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
         
         y = 5
         help_sections = self._get_help_sections()
         
         for text, color in help_sections:
             if y < GameConfig.SCREEN_HEIGHT - 2:
-                console.print(2, y, text, fg=color)
+                safe_console_print(console, 2, y, text, fg=color)
                 y += 1
         
         # Back instruction
-        console.print(2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
+        safe_console_print(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
     
     def handle_input(self, event) -> str:
         """Handle help menu input. Returns 'back' on any key press."""
@@ -7338,16 +7340,16 @@ class SettingsMenu:
             
             # Draw border with Unicode box characters
             for y in range(box_top, box_bottom + 1):
-                console.print(box_left, y, "│", fg=border_color, bg=Colors.BLACK)
-                console.print(box_right, y, "│", fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, box_left, y, "│", fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, box_right, y, "│", fg=border_color, bg=Colors.BLACK)
             for x in range(box_left, box_right + 1):
-                console.print(x, box_top, "─", fg=border_color, bg=Colors.BLACK)
-                console.print(x, box_bottom, "─", fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, x, box_top, "─", fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, x, box_bottom, "─", fg=border_color, bg=Colors.BLACK)
             # Box corners
-            console.print(box_left, box_top, "┌", fg=border_color, bg=Colors.BLACK)
-            console.print(box_right, box_top, "┐", fg=border_color, bg=Colors.BLACK)
-            console.print(box_left, box_bottom, "└", fg=border_color, bg=Colors.BLACK)
-            console.print(box_right, box_bottom, "┘", fg=border_color, bg=Colors.BLACK)
+            safe_console_print(console, box_left, box_top, "┌", fg=border_color, bg=Colors.BLACK)
+            safe_console_print(console, box_right, box_top, "┐", fg=border_color, bg=Colors.BLACK)
+            safe_console_print(console, box_left, box_bottom, "└", fg=border_color, bg=Colors.BLACK)
+            safe_console_print(console, box_right, box_bottom, "┘", fg=border_color, bg=Colors.BLACK)
             
             return {
                 'left': box_left,
@@ -7383,11 +7385,11 @@ class SettingsMenu:
             
             # Draw simple ASCII border
             for x in range(box_left, box_left + box_width):
-                console.print(x, box_top, '=', fg=border_color, bg=Colors.BLACK)
-                console.print(x, box_bottom, '=', fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, x, box_top, '=', fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, x, box_bottom, '=', fg=border_color, bg=Colors.BLACK)
             for y in range(box_top, box_bottom + 1):
-                console.print(box_left, y, '|', fg=border_color, bg=Colors.BLACK)
-                console.print(box_right, y, '|', fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, box_left, y, '|', fg=border_color, bg=Colors.BLACK)
+                safe_console_print(console, box_right, y, '|', fg=border_color, bg=Colors.BLACK)
             
             return {
                 'left': box_left,
@@ -7417,9 +7419,9 @@ class SettingsMenu:
         # Title
         title = "SETTINGS"
         if box['use_background_layout']:
-            console.print(box['center_x'] - len(title) // 2, box['top'] + 2, title, fg=Colors.WHITE, bg=Colors.BLACK)
+            safe_console_print(console, box['center_x'] - len(title) // 2, box['top'] + 2, title, fg=Colors.WHITE, bg=Colors.BLACK)
         else:
-            console.print(box['center_x'] - len(title) // 2, box['top'] + 2, title, fg=Colors.WHITE, bg=Colors.BLACK)
+            safe_console_print(console, box['center_x'] - len(title) // 2, box['top'] + 2, title, fg=Colors.WHITE, bg=Colors.BLACK)
         
         # Options
         start_y = box['top'] + 5
@@ -7435,7 +7437,7 @@ class SettingsMenu:
                 name = option["name"]
                 if len(name) > 15:  # Truncate for narrow box
                     name = name[:12] + "..."
-                console.print(name_x, option_y, name, fg=color, bg=Colors.BLACK)
+                safe_console_print(console, name_x, option_y, name, fg=color, bg=Colors.BLACK)
                 
                 # Option value
                 if option["type"] == "volume":
@@ -7445,16 +7447,16 @@ class SettingsMenu:
                     
                     # Volume bar - more compact
                     bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
-                    console.print(name_x, option_y + 1, f"{bar} {volume_percent}%", fg=color, bg=Colors.BLACK)
+                    safe_console_print(console, name_x, option_y + 1, f"{bar} {volume_percent}%", fg=color, bg=Colors.BLACK)
                     
                 elif option["type"] == "toggle":
                     if option["key"] == "graphics_mode":
                         current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "ASCII"
-                        console.print(name_x, option_y + 1, f"< {current_value} >", fg=color, bg=Colors.BLACK)
+                        safe_console_print(console, name_x, option_y + 1, f"< {current_value} >", fg=color, bg=Colors.BLACK)
             else:
                 # ASCII mode - wider layout
                 # Option name
-                console.print(box['content_left'] + 2, option_y, option["name"], fg=color, bg=Colors.BLACK)
+                safe_console_print(console, box['content_left'] + 2, option_y, option["name"], fg=color, bg=Colors.BLACK)
                 
                 # Option value
                 if option["type"] == "volume":
@@ -7464,12 +7466,12 @@ class SettingsMenu:
                     
                     # Volume bar
                     bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
-                    console.print(box['content_left'] + 18, option_y, f"{bar} {volume_percent}%", fg=color, bg=Colors.BLACK)
+                    safe_console_print(console, box['content_left'] + 18, option_y, f"{bar} {volume_percent}%", fg=color, bg=Colors.BLACK)
                     
                 elif option["type"] == "toggle":
                     if option["key"] == "graphics_mode":
                         current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "ASCII"
-                        console.print(box['content_left'] + 18, option_y, f"< {current_value} >", fg=color, bg=Colors.BLACK)
+                        safe_console_print(console, box['content_left'] + 18, option_y, f"< {current_value} >", fg=color, bg=Colors.BLACK)
         
         # Instructions
         if box['use_background_layout']:
@@ -7499,7 +7501,7 @@ class SettingsMenu:
                 # Center in wide box
                 inst_x = box['center_x'] - len(instruction) // 2
             
-            console.print(inst_x, inst_start_y + i, instruction, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK)
+            safe_console_print(console, inst_x, inst_start_y + i, instruction, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK)
     
     def handle_input(self, event) -> str:
         """Handle settings menu input. Returns action: 'back', 'exit', or ''."""
@@ -7664,8 +7666,8 @@ def handle_game_input_events(event, game, input_handler):
 def handle_error_screen(console, context, error_message, line_no):
     """Display error screen and wait for user input."""
     console.clear()
-    console.print(1, 1, f"Error: {str(error_message)[:50]} (line {line_no})", fg=Colors.RED)
-    console.print(1, 2, "Press ESC to exit", fg=Colors.WHITE)
+    safe_console_print(console, 1, 1, f"Error: {str(error_message)[:50]} (line {line_no})", fg=Colors.RED)
+    safe_console_print(console, 1, 2, "Press ESC to exit", fg=Colors.WHITE)
     context.present(console)
     
     for event in tcod.event.wait():
