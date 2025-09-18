@@ -85,7 +85,7 @@ class EnemyState(Enum):
 class EnemyMovement(Enum):
     """Enemy movement patterns."""
     STATIC = "static"
-    LINEAR = "linear"
+    PATROL = "patrol"
     RANDOM = "random"
     SEEK = "seek"
     TRACK = "track"

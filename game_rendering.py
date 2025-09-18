@@ -90,7 +90,7 @@ class BaseRenderer(ABC):
     
     def _render_victory_message(self, console: tcod.console.Console):
         """Render victory message."""
-        center_x = GameConfig.GAME_AREA_WIDTH // 2
+        center_x = GameConfig.GAME_AREA_WIDTH() // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
         
         box_width = 38
@@ -110,7 +110,7 @@ class BaseRenderer(ABC):
 
     def _render_gateway_confirmation(self, console: tcod.console.Console):
         """Render gateway confirmation dialog."""
-        center_x = GameConfig.GAME_AREA_WIDTH // 2
+        center_x = GameConfig.GAME_AREA_WIDTH() // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
         
         box_width = 30
@@ -135,7 +135,7 @@ class BaseRenderer(ABC):
         if os.path.exists(save_path):
             os.remove(save_path)
         
-        center_x = GameConfig.GAME_AREA_WIDTH // 2
+        center_x = GameConfig.GAME_AREA_WIDTH() // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
         
         # Background box
@@ -201,13 +201,13 @@ class UIRenderer:
     
     def _clear_game_area(self, console: tcod.console.Console) -> None:
         """Clear only the main game area, preserving UI elements."""
-        for x in range(GameConfig.GAME_AREA_WIDTH):
-            for y in range(1, GameConfig.PANEL_Y):
+        for x in range(GameConfig.GAME_AREA_WIDTH()):
+            for y in range(1, GameConfig.PANEL_Y()):
                 render_char_safe(console, x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
     
     def _render_centered_title(self, console: tcod.console.Console, title: str, y: int, color: tuple = Colors.YELLOW) -> None:
         """Render a centered title in the game area."""
-        title_x = GameConfig.GAME_AREA_WIDTH // 2 - len(title) // 2
+        title_x = GameConfig.GAME_AREA_WIDTH() // 2 - len(title) // 2
         render_char_safe(console, title_x, y, title, fg=color)
     
     def _render_screen_header(self, console: tcod.console.Console, title: str, subtitle: str = None) -> int:
@@ -340,7 +340,7 @@ class UIRenderer:
         y += 2
         
         # Data patches section
-        y = self._render_data_patches(console, game, y)
+        y = self._render_code_hacks(console, game, y)
         y += 2
         
         # Unequipped exploits section
@@ -383,20 +383,20 @@ class UIRenderer:
         
         return y
     
-    def _render_data_patches(self, console: tcod.console.Console, game, y: int) -> int:
+    def _render_code_hacks(self, console: tcod.console.Console, game, y: int) -> int:
         """Render codes section."""
-        data_patches = game.player.inventory_manager.get_items_by_type("data_patch")
-        render_char_safe(console, 2, y, f"CODES ({len(data_patches)}):", fg=Colors.CYAN)
+        code_hacks = game.player.inventory_manager.get_items_by_type("data_patch")
+        render_char_safe(console, 2, y, f"CODES ({len(code_hacks)}):", fg=Colors.CYAN)
         y += 1
         
-        if not data_patches:
+        if not code_hacks:
             render_char_safe(console, 4, y, "No codes collected", fg=Colors.WHITE)
             y += 1
         else:
             display_items = game.player.inventory_manager.get_display_items()
             equipped_count = len(game.player.inventory_manager.equipped_exploits)
             
-            for i, patch in enumerate(data_patches):
+            for i, patch in enumerate(code_hacks):
                 display_index = display_items.index(patch)
                 # Adjust selection index to account for equipped exploits
                 adjusted_selection_index = display_index + equipped_count
@@ -413,7 +413,7 @@ class UIRenderer:
                 patch_text = f"{prefix} {patch.name}{quantity_text} - {description}"
                 
                 # Truncate text to fit in game area
-                max_width = GameConfig.GAME_AREA_WIDTH - 6  # 4 indent + 2 margin
+                max_width = GameConfig.GAME_AREA_WIDTH() - 6  # 4 indent + 2 margin
                 if len(patch_text) > max_width:
                     patch_text = patch_text[:max_width-3] + "..."
                 render_char_safe(console, 4, y, patch_text, fg=color)
@@ -638,13 +638,13 @@ class UIRenderer:
     def render_bottom_panel(self, console: tcod.console.Console, game):
         """Render the bottom information panel."""
         # Clear panel area
-        for x in range(GameConfig.GAME_AREA_WIDTH):
-            for y in range(GameConfig.PANEL_Y, GameConfig.SCREEN_HEIGHT):
+        for x in range(GameConfig.GAME_AREA_WIDTH()):
+            for y in range(GameConfig.PANEL_Y(), GameConfig.SCREEN_HEIGHT):
                 render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
         
         # Panel border
-        border = "┌" + "─" * (GameConfig.GAME_AREA_WIDTH - 2) + "┐"
-        render_char_safe(console, 0, GameConfig.PANEL_Y, border, fg=Colors.LOG_BORDER, bg=Colors.UI_BG)
+        border = "┌" + "─" * (GameConfig.GAME_AREA_WIDTH() - 2) + "┐"
+        render_char_safe(console, 0, GameConfig.PANEL_Y(), border, fg=Colors.LOG_BORDER, bg=Colors.UI_BG)
         
         # Equipped exploits (2 lines)
         self._render_equipped_exploits_panel(console, game)
@@ -655,8 +655,8 @@ class UIRenderer:
     
     def _render_equipped_exploits_panel(self, console: tcod.console.Console, game):
         """Render equipped exploits in bottom panel using 2 lines."""
-        y1 = GameConfig.PANEL_Y + 1
-        y2 = GameConfig.PANEL_Y + 2
+        y1 = GameConfig.PANEL_Y() + 1
+        y2 = GameConfig.PANEL_Y() + 2
         
         render_char_safe(console, 1, y1, "Exploits:", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)
         
@@ -699,7 +699,7 @@ class UIRenderer:
     
     def _render_temporary_conditions(self, console: tcod.console.Console, game):
         """Render all temporary conditions with turn counts remaining."""
-        y = GameConfig.PANEL_Y + 3
+        y = GameConfig.PANEL_Y() + 3
         
         conditions = []
         
@@ -774,14 +774,14 @@ class UIRenderer:
         """Render the system log on the right side."""
         # Draw log border
         for y in range(GameConfig.SCREEN_HEIGHT):
-            render_char_safe(console, GameConfig.GAME_AREA_WIDTH, y, '│', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+            render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '│', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
         # Log header - moved down one line to avoid covering status bar
-        render_char_safe(console, GameConfig.GAME_AREA_WIDTH + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
-        render_char_safe(console, GameConfig.GAME_AREA_WIDTH + 1, 2, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
+        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 2, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
         # Clear log area - start from line 3 to account for header repositioning
-        for x in range(GameConfig.GAME_AREA_WIDTH + 1, GameConfig.SCREEN_WIDTH):
+        for x in range(GameConfig.GAME_AREA_WIDTH() + 1, GameConfig.SCREEN_WIDTH):
             for y in range(3, GameConfig.SCREEN_HEIGHT):
                 render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
         
@@ -797,7 +797,7 @@ class UIRenderer:
         for i, (line, color) in enumerate(visible_lines):
             y_pos = 3 + i  # Start from line 3 to avoid header
             if y_pos < GameConfig.SCREEN_HEIGHT:
-                render_char_safe(console, GameConfig.GAME_AREA_WIDTH + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
+                render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
     
     def _wrap_messages(self, messages: List[Tuple[str, Tuple[int, int, int]]]) -> List[Tuple[str, Tuple[int, int, int]]]:
         """Wrap long messages across multiple lines."""
@@ -858,8 +858,8 @@ class MapRenderer:
     
     def _calculate_camera_offset(self, player) -> Position:
         """Calculate camera offset to center on player."""
-        camera_x = max(0, min(GameConfig.MAP_WIDTH - GameConfig.GAME_AREA_WIDTH, 
-                             player.x - GameConfig.GAME_AREA_WIDTH // 2))
+        camera_x = max(0, min(GameConfig.MAP_WIDTH - GameConfig.GAME_AREA_WIDTH(), 
+                             player.x - GameConfig.GAME_AREA_WIDTH() // 2))
         # Viewable height is from screen row 1 to (SCREEN_HEIGHT - PANEL_HEIGHT - 1)
         viewable_height = GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT - 1
         camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewable_height, 
@@ -868,7 +868,7 @@ class MapRenderer:
     
     def _render_terrain(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
         """Render basic terrain (floors, walls, items)."""
-        for screen_x in range(GameConfig.GAME_AREA_WIDTH):
+        for screen_x in range(GameConfig.GAME_AREA_WIDTH()):
             for screen_y in range(1, GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                 world_pos = Position(screen_x + camera_offset.x, screen_y - 1 + camera_offset.y)
                 
@@ -996,8 +996,8 @@ class MapRenderer:
             elif is_discovered:
                 # Faded color when discovered but not currently visible
                 render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=(80, 0, 120), bg=Colors.BLACK)
-        elif (world_pos.x, world_pos.y) in game.game_map.data_patches:
-            patch = game.game_map.data_patches[(world_pos.x, world_pos.y)]
+        elif (world_pos.x, world_pos.y) in game.game_map.code_hacks:
+            patch = game.game_map.code_hacks[(world_pos.x, world_pos.y)]
             # Map patch color names to actual color tuples
             color_map = {
                 'crimson': Colors.CRIMSON,
@@ -1012,7 +1012,7 @@ class MapRenderer:
                 actual_color = color_map.get(patch.color_name.lower(), Colors.WHITE)
             else:
                 # This should never happen, but fallback to white
-                logging.warning(f"DataPatch color_name is not string: {patch.color_name} (type: {type(patch.color_name)})")
+                logging.warning(f"CodeHack color_name is not string: {patch.color_name} (type: {type(patch.color_name)})")
                 actual_color = Colors.WHITE
             # Position 21 = § (section) for code fragments  
             render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=actual_color, bg=Colors.BLACK)
@@ -1161,7 +1161,7 @@ class MapRenderer:
                     screen_x = enemy.x - camera_offset.x + dx
                     screen_y = enemy.y - camera_offset.y + dy + 1
                     
-                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
+                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and 
                         1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                         self._safely_overlay_tile(console, screen_x, screen_y, overlay_color)
     
@@ -1197,7 +1197,7 @@ class MapRenderer:
                 for i, point in enumerate(next_positions):
                     screen_x = point.x - camera_offset.x
                     screen_y = point.y - camera_offset.y + 1
-                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
+                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and 
                         1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                         # Preserve existing background color if present (e.g., vision overlay)
                         try:
@@ -1240,7 +1240,7 @@ class MapRenderer:
         screen_x = game.game_map.gateway.x - camera_offset.x
         screen_y = game.game_map.gateway.y - camera_offset.y + 1
         
-        if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
+        if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and 
             1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
             distance = game.player.position.distance_to(game.game_map.gateway)
             # Check if player can see the gateway (respecting walls)
@@ -1286,7 +1286,7 @@ class MapRenderer:
                 screen_x = position.x - camera_offset.x
                 screen_y = position.y - camera_offset.y + 1
                 
-                if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
+                if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and 
                     1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                     if current_enemy:
                         # Dimmed ghost of living enemy
@@ -1298,7 +1298,7 @@ class MapRenderer:
             screen_x = enemy.x - camera_offset.x
             screen_y = enemy.y - camera_offset.y + 1
             
-            if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH and 
+            if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and 
                 1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                 # Check if Threat Scan is active (shows all enemies)
                 threat_scan_active = game.game_state.threat_scan_turns > 0
@@ -1319,7 +1319,7 @@ class MapRenderer:
         player_screen_x = game.player.x - camera_offset.x
         player_screen_y = game.player.y - camera_offset.y + 1
         
-        if (0 <= player_screen_x < GameConfig.GAME_AREA_WIDTH and 
+        if (0 <= player_screen_x < GameConfig.GAME_AREA_WIDTH() and 
             1 <= player_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
             player_color = self._get_player_color(game.player)
             # Position 2 = ☻ (inverse smiley)
@@ -1358,7 +1358,7 @@ class MapRenderer:
         cursor_screen_x = game.cursor_position.x - camera_offset.x
         cursor_screen_y = game.cursor_position.y - camera_offset.y + 1
         
-        if (0 <= cursor_screen_x < GameConfig.GAME_AREA_WIDTH and 
+        if (0 <= cursor_screen_x < GameConfig.GAME_AREA_WIDTH() and 
             1 <= cursor_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
             render_char_safe(console, cursor_screen_x, cursor_screen_y, 'X', fg=Colors.RED, bg=Colors.BLACK)
         
@@ -1379,7 +1379,7 @@ class MapRenderer:
                     range_screen_x = center.x - camera_offset.x + dx
                     range_screen_y = center.y - camera_offset.y + dy + 1
                     
-                    if (0 <= range_screen_x < GameConfig.GAME_AREA_WIDTH and 
+                    if (0 <= range_screen_x < GameConfig.GAME_AREA_WIDTH() and 
                         1 <= range_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                         self._safely_overlay_tile(console, range_screen_x, range_screen_y, (40, 40, 40))
     
@@ -1390,7 +1390,7 @@ class MapRenderer:
                 area_screen_x = center.x - camera_offset.x + dx
                 area_screen_y = center.y - camera_offset.y + dy + 1
                 
-                if (0 <= area_screen_x < GameConfig.GAME_AREA_WIDTH and 
+                if (0 <= area_screen_x < GameConfig.GAME_AREA_WIDTH() and 
                     1 <= area_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                     # Use a brighter overlay to distinguish from range indicator
                     self._safely_overlay_tile(console, area_screen_x, area_screen_y, (60, 60, 20))

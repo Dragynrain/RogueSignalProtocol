@@ -167,9 +167,9 @@ class ExploitSystem:
         self.game.sound_manager.play_sound("exploit_noise_maker")
         attracted = 0
         for enemy in self.game.enemies:
-            if (enemy.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.RANDOM, EnemyMovement.LINEAR] and
+            if (enemy.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.RANDOM, EnemyMovement.PATROL] and
                 enemy.position.distance_to(target) <= 10):
-                if enemy.type_data.movement == EnemyMovement.LINEAR:
+                if enemy.type_data.movement == EnemyMovement.PATROL:
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = 3
                 else:
@@ -193,8 +193,8 @@ class ExploitSystem:
                 self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
             else:
                 self.game.message_log.add_message(f"{target_enemy.type_data.name} damaged")
-                # Store patrol information for LINEAR enemies before becoming hostile
-                if target_enemy.type_data.movement == EnemyMovement.LINEAR and target_enemy.patrol_points:
+                # Store patrol information for PATROL enemies before becoming hostile
+                if target_enemy.type_data.movement == EnemyMovement.PATROL and target_enemy.patrol_points:
                     target_enemy.original_patrol_index = target_enemy.patrol_index
                 target_enemy.state = EnemyState.HOSTILE
                 target_enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
@@ -217,8 +217,8 @@ class ExploitSystem:
                     self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
                 else:
                     self.game.message_log.add_message(f"{target_enemy.type_data.name} damaged")
-                    # Store patrol information for LINEAR enemies before becoming hostile
-                    if target_enemy.type_data.movement == EnemyMovement.LINEAR and target_enemy.patrol_points:
+                    # Store patrol information for PATROL enemies before becoming hostile
+                    if target_enemy.type_data.movement == EnemyMovement.PATROL and target_enemy.patrol_points:
                         target_enemy.original_patrol_index = target_enemy.patrol_index
                     target_enemy.state = EnemyState.HOSTILE
                     target_enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
@@ -321,7 +321,7 @@ class ExploitSystem:
         for enemy in self.game.enemies[:]:
             if enemy.position.distance_to(target) <= 1:
                 # Reset enemy state and memory
-                enemy.state = EnemyState.PATROL
+                enemy.state = EnemyState.UNAWARE
                 enemy.last_seen_player = None
                 enemy.alert_timer = 0
                 enemies_affected.append(enemy)

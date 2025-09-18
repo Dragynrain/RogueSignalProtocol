@@ -23,11 +23,11 @@ class InventoryItem:
         return False
 
 
-class DataPatch(InventoryItem):
-    """Randomized codes with unknown effects until used."""
+class CodeHack(InventoryItem):
+    """Randomized code hacks with unknown effects until used."""
     
     def __init__(self, color_name: str, effect: str, name: str, description: str = "", quantity: int = 1):
-        super().__init__(name, "data_patch", description)
+        super().__init__(name, "code_hack", description)
         self.color_name = color_name
         self.effect = effect
         self.quantity = quantity
@@ -55,9 +55,9 @@ class DataPatch(InventoryItem):
             # Mark this color effect as discovered for this game session
             game.discovered_code_effects[self.color_name] = effect_key
             
-            # Update all data patches of this color in player's inventory to be discovered
+            # Update all code hacks of this color in player's inventory to be discovered
             for item in player.inventory_manager.items:
-                if isinstance(item, DataPatch) and item.color_name == self.color_name:
+                if isinstance(item, CodeHack) and item.color_name == self.color_name:
                     item.discovered = True
                     
             game.message_log.add_message(f"Used {self.name}: {description}")
@@ -192,10 +192,10 @@ class InventoryManager:
     
     def add_item(self, item: InventoryItem) -> bool:
         """Add an item to inventory."""
-        if isinstance(item, DataPatch):
+        if isinstance(item, CodeHack):
             # Look for existing code of the same color
             for existing_item in self.items:
-                if (isinstance(existing_item, DataPatch) and 
+                if (isinstance(existing_item, CodeHack) and 
                     existing_item.color_name == item.color_name):
                         # Found matching color, add to existing stack
                         existing_item.quantity += item.quantity

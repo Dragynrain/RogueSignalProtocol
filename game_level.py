@@ -12,7 +12,7 @@ from typing import List, Tuple, Optional, Dict, Set
 # Import required classes and configs
 from game_config import GameConfig, RoomGenerationConfig
 from game_entities import Position
-from game_inventory import DataPatch, ExploitItem, StoryFragment
+from game_inventory import CodeHack, ExploitItem, StoryFragment
 
 
 class LevelGenerator:
@@ -45,7 +45,7 @@ class LevelGenerator:
         self.game_map.cooling_nodes.clear()
         self.game_map.cpu_recovery_nodes.clear()
         self.game_map.ghost_nodes.clear()
-        self.game_map.data_patches.clear()
+        self.game_map.code_hacks.clear()
         self.game_map.exploit_pickups.clear()
         self.game_map.permanent_upgrades.clear()
         self.game_map.story_fragments.clear()

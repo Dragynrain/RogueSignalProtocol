@@ -3,7 +3,8 @@
     "allow": [
       "Bash(.venv/Scripts/python.exe RogueSignalProtocol.py:*)",
       "Bash(.venv/Scripts/python.exe:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(.venv\\Scripts\\python.exe:*)"
     ],
     "deny": [],
     "ask": []

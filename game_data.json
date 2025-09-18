@@ -13,7 +13,7 @@
       "symbol": "P",
       "cpu": 40,
       "vision": 4,
-      "movement": "LINEAR",
+      "movement": "PATROL",
       "name": "Patrol",
       "damage": 15,
       "description": "Larger coverage, moderate damage"

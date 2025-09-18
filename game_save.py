@@ -91,7 +91,7 @@ class SaveGameManager:
                     
                     # Map state (items and special locations only - layout regenerated)
                     "map_state": {
-                        "data_patches": cls._serialize_data_patches(game.game_map.data_patches),
+                        "code_hacks": cls._serialize_code_hacks(game.game_map.code_hacks),
                         "exploit_pickups": cls._serialize_exploit_pickups(game.game_map.exploit_pickups),
                         "permanent_upgrades": {f"{pos[0]},{pos[1]}": upgrade_key for pos, upgrade_key in game.game_map.permanent_upgrades.items()},
                         "story_fragments": {f"{pos[0]},{pos[1]}": fragment.fragment_index for pos, fragment in game.game_map.story_fragments.items()},
@@ -105,7 +105,7 @@ class SaveGameManager:
                     "enemy_next_id": getattr(Enemy, '_next_id', 1),
                     
                     # Data patch effects for this run
-                    "data_patch_effects": game.data_patch_effects,
+                    "code_hack_effects": game.code_hack_effects,
                     "discovered_code_effects": game.discovered_code_effects,
                     
                     # Overclocking state
@@ -253,7 +253,7 @@ class SaveGameManager:
                     "description": item.description
                 }
                 
-                if hasattr(item, 'color'):  # DataPatch
+                if hasattr(item, 'color_name'):  # CodeHack
                     item_data.update({
                         "color": item.color_name,
                         "effect": item.effect,
@@ -275,7 +275,7 @@ class SaveGameManager:
         return serialized
     
     @classmethod
-    def _serialize_data_patches(cls, patches: Dict) -> Dict[str, Dict]:
+    def _serialize_code_hacks(cls, patches: Dict) -> Dict[str, Dict]:
         """Serialize codes."""
         return {
             f"{pos[0]},{pos[1]}": {

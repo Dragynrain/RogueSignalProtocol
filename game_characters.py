@@ -448,7 +448,7 @@ class Enemy:
                 current_target = player.position
             elif self.last_seen_player and self.type_data.movement == EnemyMovement.TRACK:
                 current_target = self.last_seen_player
-        elif self.type_data.movement == EnemyMovement.LINEAR and self.patrol_points:
+        elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
             current_target = self.patrol_points[self.patrol_index]
         
         # Only regenerate if target actually changed (not just None -> None)
@@ -456,7 +456,7 @@ class Enemy:
             return True
         
         # For patrol enemies, check if they reached their destination
-        if (self.type_data.movement == EnemyMovement.LINEAR and 
+        if (self.type_data.movement == EnemyMovement.PATROL and 
             self.patrol_points and 
             self.state != EnemyState.HOSTILE):
             current_patrol_target = self.patrol_points[self.patrol_index]
@@ -564,8 +564,8 @@ class Enemy:
                 # TRACK is more persistent than SEEK
                 target = self.last_seen_player
                 use_pathfinding = True
-        elif self.type_data.movement == EnemyMovement.LINEAR and self.patrol_points:
-            # LINEAR movement with patrol points
+        elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
+            # PATROL movement with patrol points
             target = self.patrol_points[self.patrol_index]
             use_pathfinding = True
         
@@ -702,7 +702,7 @@ class Enemy:
             self.movement_queue.pop(0)  # Remove completed move
             
             # Check if patrol enemy reached their patrol point
-            if (self.type_data.movement == EnemyMovement.LINEAR and 
+            if (self.type_data.movement == EnemyMovement.PATROL and 
                 self.patrol_points and
                 self.state != EnemyState.HOSTILE):  # Only patrol when not hostile
                 
@@ -720,7 +720,7 @@ class Enemy:
             self.movement_queue.clear()
             
             # Handle patrol stuck situations
-            if (self.type_data.movement == EnemyMovement.LINEAR and self.patrol_points):
+            if (self.type_data.movement == EnemyMovement.PATROL and self.patrol_points):
                 self.patrol_stuck_counter += 1
                 if self.patrol_stuck_counter >= 3:
                     # Skip to next patrol point if stuck for 3 turns
