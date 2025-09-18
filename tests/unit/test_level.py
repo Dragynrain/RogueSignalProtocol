@@ -12,6 +12,7 @@ from game_map import GameMap
 from game_entities import Position
 from game_config import GameConfig, RoomGenerationConfig
 from game_inventory import CodeHack, ExploitItem, StoryFragment
+from tests.fixtures.mock_factories import MockGameMapFactory
 
 
 class TestGameMap:
@@ -517,6 +518,295 @@ class TestLevelGeneration:
                     
                     # Rooms should avoid spawn area (first 12 coordinates)
                     assert x >= 12 or y >= 12, "Room should avoid spawn area"
+
+
+class TestEnemySpawning:
+    """Test enemy spawn point validity as handled by the game engine."""
+    
+    def test_enemy_placement_validation(self):
+        """Test that enemy placement validation works correctly."""
+        from game_engine import GameEngine
+        from game_map import GameMap
+        
+        # Create a real game map for proper testing
+        game_map = GameMap(50, 40)
+        mock_player = Mock()
+        mock_player.x = 5
+        mock_player.y = 5
+        
+        # Prevent automatic level generation during initialization
+        with patch.object(GameEngine, '_generate_procedural_level'):
+            engine = GameEngine(game_map=game_map)
+            engine.player = mock_player
+            
+            # Test valid positions (far from spawn and not on borders)
+            # Spawn is hardcoded to (5,5) with 12-tile minimum distance
+            valid_pos = Position(20, 20)  # Distance >12 from (5,5), not on border
+            assert engine._is_valid_enemy_placement(valid_pos) is True
+            
+            # Test wall positions (should be invalid)
+            engine.game_map.walls.add((25, 25))
+            wall_pos = Position(25, 25)
+            assert engine._is_valid_enemy_placement(wall_pos) is False
+            
+            # Test border positions (should be invalid)
+            border_pos = Position(0, 10)  # On left border
+            assert engine._is_valid_enemy_placement(border_pos) is False
+            
+            # Test too close to hardcoded spawn (5,5) - should be invalid
+            close_pos = Position(10, 10)  # Distance = 7.07 from (5,5), which is < 12
+            assert engine._is_valid_enemy_placement(close_pos) is False
+    
+    def test_enemy_spawn_avoids_walls(self):
+        """Test that enemy spawning avoids wall positions."""
+        from game_engine import GameEngine
+        from game_map import GameMap
+        
+        # Create a real game map for proper testing
+        game_map = GameMap(50, 40)
+        mock_player = Mock()
+        mock_player.x = 1
+        mock_player.y = 1
+        
+        # Add walls to test avoidance
+        game_map.walls.update([(20, 20), (21, 20), (22, 20)])
+        
+        # Prevent automatic level generation during initialization
+        with patch.object(GameEngine, '_generate_procedural_level'):
+            engine = GameEngine(game_map=game_map)
+            engine.player = mock_player
+            
+            # Test that wall positions are invalid
+            for x, y in [(20, 20), (21, 20), (22, 20)]:
+                wall_pos = Position(x, y)
+                assert engine._is_valid_enemy_placement(wall_pos) is False
+            
+            # Test that adjacent non-wall positions are valid (if far from spawn)
+            open_pos = Position(25, 25)  # Far from spawn (5,5) and not a wall
+            assert engine._is_valid_enemy_placement(open_pos) is True
+    
+    def test_enemy_spawn_minimum_distance_from_spawn(self):
+        """Test that enemies spawn with minimum distance from hardcoded spawn."""
+        from game_engine import GameEngine
+        from game_map import GameMap
+        
+        # Create a real game map for proper testing
+        game_map = GameMap(50, 40)
+        mock_player = Mock()
+        mock_player.x = 10
+        mock_player.y = 10
+        
+        # Prevent automatic level generation during initialization
+        with patch.object(GameEngine, '_generate_procedural_level'):
+            engine = GameEngine(game_map=game_map)
+            engine.player = mock_player
+            
+            # Test positions too close to hardcoded spawn (5,5) - should be invalid
+            # The minimum distance check is: position.distance_to(Position(5, 5)) <= 12
+            close_positions = [
+                Position(6, 6),   # Distance = ~1.4 from (5,5)
+                Position(10, 10), # Distance = ~7.07 from (5,5)
+                Position(15, 5),  # Distance = 10 from (5,5)
+                Position(17, 5),  # Distance = 12 from (5,5) - exactly at threshold
+            ]
+            
+            for pos in close_positions:
+                is_valid = engine._is_valid_enemy_placement(pos)
+                distance = pos.distance_to(Position(5, 5))
+                if distance <= 12:
+                    assert is_valid is False, f"Position {pos} at distance {distance} should be invalid"
+            
+            # Test position far enough from spawn (should be valid)
+            # Need to be >12 distance from (5,5) and not on borders
+            far_pos = Position(20, 20)  # Distance = ~21.2 from (5,5)
+            assert engine._is_valid_enemy_placement(far_pos) is True
+
+
+class TestStairPlacement:
+    """Test stair placement logic for level transitions."""
+    
+    def test_gateway_placement_valid_position(self):
+        """Test that gateway is placed in valid positions."""
+        from game_map import GameMap
+        
+        # Create a real game map with some open floor
+        game_map = GameMap(50, 40)
+        generator = LevelGenerator(game_map)
+        
+        # Mock floor positions to simulate available space
+        with patch.object(generator, '_get_all_floor_positions') as mock_floor:
+            mock_floor.return_value = [(30, 30), (35, 35), (40, 35)]
+            
+            generator._place_gateway()
+            
+            assert game_map.gateway is not None
+            assert isinstance(game_map.gateway, Position)
+            
+            # Gateway should be one of the mocked positions
+            gateway_tuple = (game_map.gateway.x, game_map.gateway.y)
+            assert gateway_tuple in [(30, 30), (35, 35), (40, 35)]
+    
+    def test_gateway_placement_prefers_far_positions(self):
+        """Test that gateway placement prefers positions far from spawn."""
+        from game_map import GameMap
+        
+        game_map = GameMap(50, 40)
+        generator = LevelGenerator(game_map)
+        
+        # Mock floor positions with mix of near/far positions
+        # Spawn area is (5,5), so distance > 30 is preferred
+        floor_positions = [
+            (10, 10),   # Close to spawn (~7 distance)
+            (20, 20),   # Medium distance (~21 distance)
+            (40, 35),   # Far from spawn (~42 distance)
+            (45, 38)    # Very far from spawn (~47 distance)
+        ]
+        
+        with patch.object(generator, '_get_all_floor_positions') as mock_floor:
+            mock_floor.return_value = floor_positions
+            
+            generator._place_gateway()
+            
+            assert game_map.gateway is not None
+            
+            # Gateway should be one of the far positions (distance > 30)
+            spawn_pos = Position(5, 5)
+            distance = game_map.gateway.distance_to(spawn_pos)
+            assert distance > 30, f"Gateway at {game_map.gateway} too close to spawn (distance: {distance})"
+    
+    def test_gateway_placement_fallback_behavior(self):
+        """Test gateway placement fallback when no far positions available."""
+        from game_map import GameMap
+        
+        game_map = GameMap(50, 40)
+        generator = LevelGenerator(game_map)
+        
+        # Mock floor positions with only medium-distance positions
+        floor_positions = [(20, 20), (25, 25), (15, 25)]  # All within 30 distance
+        
+        with patch.object(generator, '_get_all_floor_positions') as mock_floor:
+            mock_floor.return_value = floor_positions
+            
+            generator._place_gateway()
+            
+            assert game_map.gateway is not None
+            
+            # Gateway should still be placed even without far positions
+            gateway_tuple = (game_map.gateway.x, game_map.gateway.y)
+            assert gateway_tuple in floor_positions
+
+
+class TestAccessibilityValidation:
+    """Test room connectivity and accessibility features."""
+    
+    def test_rooms_connected_with_mst(self):
+        """Test that rooms are connected using minimum spanning tree."""
+        from game_map import GameMap
+        
+        game_map = GameMap(50, 40)
+        generator = LevelGenerator(game_map)
+        
+        # Fill map with walls first (simulate initial state)
+        for x in range(50):
+            for y in range(40):
+                game_map.walls.add((x, y))
+        
+        # Create test rooms
+        rooms = [(10, 10, 8, 6), (25, 15, 10, 8), (15, 25, 12, 7)]
+        
+        # Carve out the rooms first
+        for room in rooms:
+            x, y, width, height = room
+            for rx in range(x, x + width):
+                for ry in range(y, y + height):
+                    game_map.walls.discard((rx, ry))
+        
+        # Track initial wall count
+        initial_walls = len(game_map.walls)
+        
+        # Connect rooms
+        generator._connect_rooms_mst(rooms)
+        
+        # Should have fewer walls after corridors are carved
+        final_walls = len(game_map.walls)
+        assert final_walls < initial_walls, "Corridors should carve through walls"
+    
+    def test_two_rooms_connection(self):
+        """Test that two rooms can be connected with corridors."""
+        from game_map import GameMap
+        
+        game_map = GameMap(50, 40)
+        generator = LevelGenerator(game_map)
+        
+        # Fill map with walls
+        for x in range(50):
+            for y in range(40):
+                game_map.walls.add((x, y))
+        
+        room1 = (10, 10, 8, 6)
+        room2 = (25, 20, 8, 6)
+        
+        # Carve out the rooms
+        for room in [room1, room2]:
+            x, y, width, height = room
+            for rx in range(x, x + width):
+                for ry in range(y, y + height):
+                    game_map.walls.discard((rx, ry))
+        
+        initial_walls = len(game_map.walls)
+        
+        # Connect the two rooms
+        generator._connect_two_rooms(room1, room2)
+        
+        # Should have carved a corridor between them
+        final_walls = len(game_map.walls)
+        assert final_walls < initial_walls, "Corridor should connect the rooms"
+    
+    def test_room_center_calculation(self):
+        """Test room center calculation for corridor connections."""
+        from game_map import GameMap
+        
+        game_map = GameMap(50, 40)
+        generator = LevelGenerator(game_map)
+        
+        room = (10, 15, 8, 6)  # x=10, y=15, width=8, height=6
+        expected_center_x = 10 + 8 // 2  # 14
+        expected_center_y = 15 + 6 // 2  # 18
+        
+        # The center calculation is used internally in _connect_two_rooms
+        # We can verify it works by checking the corridor carving pattern
+        with patch.object(generator, '_carve_corridor') as mock_carve:
+            generator._connect_two_rooms(room, (30, 30, 6, 6))
+            
+            # Verify that carve_corridor was called with room centers
+            assert mock_carve.call_count == 2  # L-shaped corridor has 2 segments
+            
+            # Check that the calls involve the expected room center
+            calls = mock_carve.call_args_list
+            first_call_args = calls[0][0]
+            
+            # One of the corridor endpoints should be the room center
+            assert (first_call_args[0] == expected_center_x and first_call_args[1] == expected_center_y) or \
+                   (first_call_args[2] == expected_center_x and first_call_args[3] == expected_center_y)
+    
+    def test_corridor_carving(self):
+        """Test corridor carving between points."""
+        from game_map import GameMap
+        
+        game_map = GameMap(50, 40)
+        generator = LevelGenerator(game_map)
+        
+        # Fill area with walls
+        for x in range(20, 31):
+            for y in range(10, 21):
+                game_map.walls.add((x, y))
+        
+        # Carve horizontal corridor
+        generator._carve_corridor(20, 15, 30, 15)
+        
+        # Check that walls were removed along the corridor
+        for x in range(20, 31):
+            assert (x, 15) not in game_map.walls, f"Wall at ({x}, 15) should be removed"
 
 
 class TestMapIntegration:
