@@ -1,64 +1,11 @@
 {
-  // Sets the default behavior for new tools. 
-  // In `acceptEdits` mode, Claude automatically approves file editing and writing permissions.
-  // This mode is more permissive than the previous `default`.
-  "defaultMode": "acceptEdits",
-
   "permissions": {
     "allow": [
-      // Allow reading any file within the project directory.
-      "Read(*)",
-      
-      // Allow searching the contents of files.
-      "Search(*)",
-      
-      // Allow for web searches to find documentation or solutions.
-      "WebSearch",
-      
-      // Allow fetching web content from known, safe domains (e.g., Python documentation).
-      "WebFetch(https://docs.python.org/*)",
-      "WebFetch(https://pypi.org/*)",
-      "WebFetch(https://requests.readthedocs.io/*)",
-      
-      // Allow listing directory contents to understand project structure.
-      "LS",
-
-      // --- Newly allowed permissions ---
-      // Allow editing existing files without asking for confirmation.
-      "Edit(*)",
-
-      // Allow creating new files without asking for confirmation.
-      "Write(*)",
-
-      // Allow running the `rm` command without asking for confirmation.
-      "Bash(rm *)",
-
-      // Allow running the `del` command without asking for confirmation.
-      // (For environments like Windows)
-      "Bash(del *)"
+      "Bash(.venv/Scripts/python.exe RogueSignalProtocol.py:*)",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(timeout:*)"
     ],
-    
-    // Tools that will still require explicit user confirmation every time.
-    "ask": [
-      // Require permission for Git commits.
-      "Bash(git commit *)",
-      
-      // Require permission for Git push operations.
-      "Bash(git push *)",
-      
-      // Require permission for installing or modifying dependencies.
-      "Bash(pip install *)",
-      "Bash(pip uninstall *)"
-    ],
-    
-    // These tools are explicitly forbidden.
-    "deny": [
-      // Prevent fetching from sensitive sites or public package repositories to avoid security risks.
-      "WebFetch(https://raw.githubusercontent.com/*)",
-      
-      // Prevent access to sensitive files that contain API keys, secrets, or environment variables.
-      "Read(./.env)",
-      "Read(./secrets/*)"
-    ]
+    "deny": [],
+    "ask": []
   }
 }

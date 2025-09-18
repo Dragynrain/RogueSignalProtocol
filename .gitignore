@@ -7,8 +7,32 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
 # Save game files
 rogue_signal_save.json
+user_settings.json
 
 # IDE and editor files
 .vscode/
@@ -24,5 +48,11 @@ rogue_signal_save.json
 .Trashes
 ehthumbs.db
 Thumbs.db
-game_debug.log
-game_debug.log
+
+# Claude Code local settings (user-specific)
+.claude/settings.local.json
+
+# Temporary files
+*.tmp
+*.temp
+nul

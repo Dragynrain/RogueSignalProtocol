@@ -350,11 +350,6 @@ class LevelGenerator:
         # Get level-specific counts from network config
         config = GameConfig.get_network_configs()[level]
         
-        # Debug logging for level 3
-        if level == 3:
-            logging.info(f"Level 3 special node placement - config: {config}")
-            logging.info(f"Available floor positions: {len(floor_positions)}")
-        
         # Place cooling nodes
         cooling_count = config.get('cooling_nodes', 3)
         for i in range(cooling_count):

@@ -4,8 +4,10 @@ Player and Enemy character classes.
 Extracted from RogueSignalProtocol.py for better organization.
 """
 
+import logging
 import random
 import tcod
+import numpy as np
 from typing import List, Tuple, Optional
 from game_entities import Position, Colors, EnemyState, EnemyMovement
 from game_config import GameConfig
@@ -42,6 +44,7 @@ class Player:
         self.speed_moves_remaining = 0
         
         # Inventory system - imported later to avoid circular imports
+        # Delayed import to avoid circular dependency
         from game_inventory import InventoryManager
         self.inventory_manager = InventoryManager(self)
     
@@ -74,23 +77,10 @@ class Player:
         intended_y = self.y + dy
         
         # Check for out-of-bounds movement using actual game map bounds
-        # Use game_map bounds as the authoritative source instead of GameConfig
         if (intended_x < 0 or intended_x >= game_map.width or 
             intended_y < 0 or intended_y >= game_map.height):
-            # Debug boundary issue
-            import logging
-            logging.error(f"MOVEMENT OUT OF BOUNDS: intended=({intended_x}, {intended_y}), "
-                         f"actual_map_bounds=({game_map.width}, {game_map.height})")
-            # Also log GameConfig values for debugging config loading issues
-            try:
-                logging.error(f"GameConfig values: MAP=({GameConfig.MAP_WIDTH}, {GameConfig.MAP_HEIGHT}), "
-                             f"SCREEN=({GameConfig.SCREEN_WIDTH}, {GameConfig.SCREEN_HEIGHT})")
-                if hasattr(GameConfig, 'PANEL_Y'):
-                    logging.error(f"GameConfig PANEL_Y: {GameConfig.PANEL_Y}")
-                else:
-                    logging.error("GameConfig.PANEL_Y not available - config may not be loaded")
-            except Exception as e:
-                logging.error(f"Error accessing GameConfig: {e}")
+            logging.warning(f"Movement out of bounds: intended=({intended_x}, {intended_y}), "
+                           f"map_bounds=({game_map.width}, {game_map.height})")
             return False
         
         # Now create the position and validate it
@@ -167,7 +157,8 @@ class Player:
     
     def apply_permanent_upgrade(self, upgrade_key: str) -> bool:
         """Apply a permanent upgrade to the player."""
-        from game_data import GameUpgrades  # Import here to avoid circular imports
+        # Delayed import to avoid circular dependency  
+        from game_data import GameUpgrades
         
         if upgrade_key not in GameUpgrades.UPGRADES:
             return False
@@ -207,6 +198,7 @@ class Enemy:
         self.type = enemy_type
         
         # Load type data - imported here to avoid circular imports
+        # Delayed import to avoid circular dependency
         from game_data import GameData
         self.type_data = GameData.ENEMY_TYPES[enemy_type]
         
@@ -427,16 +419,24 @@ class Enemy:
             self.move_cooldown = 0  # All moving enemies can move next turn
     
     def _needs_full_queue_regeneration(self, player: Player, game_map) -> bool:
-        """Determine if the movement queue needs full regeneration or just extension."""
+        """
+        Determine if the movement queue needs full regeneration or just extension.
+        
+        Full regeneration is needed when:
+        - Queue is empty
+        - Enemy state changed (e.g., unaware -> alert -> hostile)
+        - Target changed (e.g., different player position, different patrol point)
+        - Patrol enemy reached their current destination
+        """
         # Empty queue always needs full regeneration
         if not self.movement_queue:
             return True
         
-        # State change requires full regeneration
+        # State change requires full regeneration (behavior might change)
         if self.last_queue_state != self.state:
             return True
         
-        # Target change requires full regeneration
+        # Determine current target based on enemy state and movement type
         current_target = None
         if self.state == EnemyState.HOSTILE:
             if self.can_see_player(player, game_map):
@@ -451,7 +451,8 @@ class Enemy:
         elif self.type_data.movement == EnemyMovement.LINEAR and self.patrol_points:
             current_target = self.patrol_points[self.patrol_index]
         
-        if current_target != self.last_queue_target:
+        # Only regenerate if target actually changed (not just None -> None)
+        if current_target != self.last_queue_target and not (current_target is None and self.last_queue_target is None):
             return True
         
         # For patrol enemies, check if they reached their destination
@@ -499,9 +500,16 @@ class Enemy:
         
         # Fill remaining slots with random moves if needed
         while len(temp_queue) < moves_needed:
-            current_pos = self.movement_queue[-1] if self.movement_queue else self.position
+            # Use the last position in the temp queue, or the last position in movement queue, or current position
+            if temp_queue:
+                current_pos = temp_queue[-1]
+            elif self.movement_queue:
+                current_pos = self.movement_queue[-1]
+            else:
+                current_pos = self.position
+            
             random_move = self._get_random_adjacent_position(current_pos, game_map, game)
-            if random_move and random_move not in temp_queue:
+            if random_move and random_move not in temp_queue and random_move not in self.movement_queue:
                 temp_queue.append(random_move)
             else:
                 break  # Can't find more valid moves
@@ -511,7 +519,6 @@ class Enemy:
     
     def _get_random_adjacent_position(self, from_pos: Position, game_map, game) -> Optional[Position]:
         """Get a random valid adjacent position from the given position."""
-        import random
         directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
         random.shuffle(directions)
         
@@ -594,30 +601,20 @@ class Enemy:
             # Calculate path
             path = pathfinder.path_to((target.x, target.y))
             
-            # Debug logging for hostile enemies with pathfinding issues (only when no path found)
-            if self.state == EnemyState.HOSTILE and len(path) == 0:
-                import logging
-                logging.warning(f"Hostile enemy {self.type_data.name} at ({self.x}, {self.y}) failed to find path to player at ({target.x}, {target.y}). Path length: {len(path)}")
+            # Log only critical pathfinding failures
+            if len(path) == 0:
+                logging.warning(f"Enemy {self.type_data.name} could not find path to target ({target.x}, {target.y})")
             
             # Add up to 3 moves from the path
-            path_moves_added = 0
             for i in range(1, min(len(path), 4)):  # Skip current position, take next 3
                 x, y = path[i]
                 next_pos = Position(x, y)
                 if self._is_valid_enemy_move(next_pos, game_map, game):
                     self.movement_queue.append(next_pos)
-                    path_moves_added += 1
-                    
-            # Debug logging for hostile enemies
-            if self.state == EnemyState.HOSTILE:
-                import logging
-                logging.info(f"Hostile enemy {self.type_data.name} pathfinding: {path_moves_added} moves added to queue targeting ({target.x}, {target.y})")
                     
         except Exception as e:
             # If pathfinding fails, fall back to random movement
-            if self.state == EnemyState.HOSTILE:
-                import logging
-                logging.error(f"Hostile enemy {self.type_data.name} pathfinding exception: {e}")
+            logging.error(f"Enemy {self.type_data.name} pathfinding failed: {e}")
             self._generate_random_queue(game_map, game)
     
     def _generate_random_queue(self, game_map, game):
@@ -736,7 +733,6 @@ class Enemy:
 # Pathfinding helper functions
 def create_pathfinding_cost_map(game_map, game, moving_enemy):
     """Create cost map for TCOD A* pathfinding."""
-    import numpy as np
     cost_map = np.zeros((game_map.width, game_map.height), dtype=bool)
     
     for x in range(game_map.width):
