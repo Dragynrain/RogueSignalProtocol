@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Read(./**/*.py)",
+	  "Read(./**/*.py)",
       "Edit(./**/*.py)",
       "Write(./**/*.py)",
       "Read(./**/*.json)",
@@ -39,38 +39,28 @@
 	  "Timeout(*)",
       "WebFetch(*)",
       "WebSearch(*)"
+      "Bash(.venv/Scripts/python.exe RogueSignalProtocol.py:*)",
+      "Bash(.venv/Scripts/python.exe:*)",
+      "Bash(timeout:*)",
+      "Bash(.venv\\Scripts\\python.exe:*)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest *",
+	  "Bash(\".venv\\Scripts\\python.exe\" -m pytest *"
     ],
-    "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)", 
-      "Read(./secrets/**)",
-      "Edit(./.env)",
-      "Edit(./.env.*)",
-      "Write(./.env)",
-      "Write(./.env.*)",
-      "Bash(rm -rf *)",
-      "Bash(del /Q *)",
-      "Bash(format *)",
-      "Bash(curl *)",
-      "Bash(wget *)",
-      "Read(./.git/config)",
-      "Edit(./.git/config)"
-    ],
+    "deny": [],
     "ask": [
-      "Bash(git add *)",
+	  "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git push *)",
       "Bash(pip install *)",
       "Bash(npm install *)",
       "Write(./requirements.txt)",
       "Edit(./requirements.txt)",
-      "Bash(.venv/Scripts/pip.exe uninstall *)"
-    ],
+      "Bash(.venv/Scripts/pip.exe uninstall *)"],
     "additionalDirectories": [
       "./.claude/",
       "./artifacts/",
       "./dist/"
     ],
-    "defaultMode": "acceptEdits"
-  }
+    "defaultMode": "acceptEdits"  
+  }  
 }
