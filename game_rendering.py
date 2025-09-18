@@ -1,468 +1,23 @@
 #!/usr/bin/env python3
 """
-Rogue Signal Protocol - A cyberpunk stealth roguelike
+Game Rendering System - Split from RogueSignalProtocol.py
+Contains all rendering classes and functionality.
 """
 
 import tcod
-from tcod import libtcodpy
+import os
 import logging
 import traceback
-import random
-import math
-import json
-import os
-import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Tuple, Optional
 
-# Import refactored modules
-from data_loading import DataLoader, PersistentStorage, get_story_fragments
-from game_config import GameSettings, GameConfig, GameBalance, RoomGenerationConfig
-from game_entities import (Position, Colors, EnemyState, EnemyMovement, TargetingMode,
-                          ExploitDefinition, EnemyTypeDefinition, clamp, safe_divide,
-                          validate_coordinates, calculate_manhattan_distance,
-                          get_adjacent_positions, format_position_key, parse_position_key,
-                          parse_coordinate_string, validate_position_bounds, ensure_color_tuple)
+from game_config import GameConfig
+from game_entities import Position, Colors, EnemyState, TargetingMode, ensure_color_tuple
 from game_data import GameData, GameUpgrades
-from game_inventory import InventoryItem, DataPatch, ExploitItem, StoryFragment, InventoryManager
-from game_characters import Player, Enemy, create_pathfinding_cost_map, pathfind_and_move, can_move_to_position
-from game_audio import SoundManager
-from game_save import SaveGameManager
-from game_story import StoryFragmentManager
-from game_ui import render_char_safe, WindowManager, UniversalInputHandler
-from game_menus import MenuBackground, MainMenu, LoreMenu, HelpMenu, SettingsMenu
-from game_level import LevelGenerator
-from game_enemies import EnemyManager
-from game_combat import ExploitSystem
-from game_map import GameMap
-from game_input import InputHandler
-from game_engine import GameEngine
+from game_ui import render_char_safe
+from game_menus import HelpMenu
+from data_loading import get_story_fragments
 
-# Setup logging for error handling
-logging.basicConfig(
-    level=logging.WARNING,
-    format='%(levelname)s: %(message)s',
-    handlers=[
-        logging.StreamHandler()
-    ]
-)
-
-# Audio system moved to game_audio.py
-
-# The DataLoader and other classes have been moved to separate modules
-# See: data_loading.py, game_config.py, game_entities.py, etc.
-
-# ============================================================================
-# SAFE CONSOLE WRAPPER - moved to game_ui.py
-# ============================================================================
-
-# ============================================================================
-# SaveGameManager class moved to game_save.py
-
-
-# StoryFragmentManager class moved to game_story.py
-
-
-# ============================================================================
-# CONSTANTS AND CONFIGURATION
-# ============================================================================
-
-# GameBalance class moved to game_config.py
-
-
-# RoomGenerationConfig class moved to game_config.py
-
-
-class GameConfig:
-    """Central configuration for game constants."""
-    _config_data = None
-    
-    @classmethod
-    def _get_config(cls):
-        """Load config data if not already loaded."""
-        if cls._config_data is None:
-            cls._config_data = DataLoader.load_config()
-        return cls._config_data
-    
-    # Static properties - load once and cache
-    SCREEN_WIDTH = 80
-    SCREEN_HEIGHT = 50
-    MAP_WIDTH = 50
-    MAP_HEIGHT = 50
-    LOG_WIDTH = 25
-    PANEL_HEIGHT = 5
-    DEFAULT_VISION_RANGE = 10
-    MAX_HEAT = 100
-    MAX_DETECTION = 100
-    DETECTION_REDUCTION_ON_LEVEL = 50
-    DUNGEON_SEED_RANGE = 1000000
-    DEFAULT_FADE_TIME = 2000
-    MESSAGE_CENTER_OFFSET_LARGE = 15
-    MESSAGE_CENTER_OFFSET_MEDIUM = 12
-    MESSAGE_CENTER_OFFSET_SMALL = 8
-    MESSAGE_CENTER_OFFSET_TINY = 10
-    MESSAGE_LINE_SPACING = 1
-    MESSAGE_BUTTON_SPACING = 3
-    
-    # Safety and validation constants
-    MIN_MAP_DIMENSION = 10
-    MAX_ENEMIES_PER_LEVEL = 50
-    MIN_SOUND_VOLUME = 0.0
-    MAX_SOUND_VOLUME = 1.0
-    
-    # Pathfinding constants
-    PATHFINDING_MAX_ATTEMPTS = 100
-    ADJACENT_THRESHOLD = 1
-    
-    # Gameplay Constants (extracted from magic numbers)
-    ADJACENT_VISIBILITY_THRESHOLD = 1.5  # Distance threshold for adjacent enemies
-    VIRUS_BASE_DURATION = 4  # Base turns for virus effect
-    VIRUS_MAX_DURATION = 12  # Maximum turns for virus effect
-    VIRUS_DAMAGE_PER_TURN = 3  # Damage dealt by virus each turn
-    MAX_RAM_CAPACITY = 20  # Maximum RAM upgrade limit
-    MAX_CPU_CAPACITY = 200  # Maximum CPU upgrade limit  
-    ALERT_TIMER_INITIAL = 1  # Initial alert timer when enemy spots player
-    NEARBY_ENEMY_ALERT_RADIUS = 8  # Radius for alerting nearby enemies
-    SHADOW_VISION_REDUCTION_FACTOR = 2  # Vision range divisor in shadows
-    ENHANCED_VISION_WALL_PENETRATION = True  # Whether enhanced vision sees through walls
-    NETWORK_SCAN_REVEALS_ALL = True  # Whether network scan shows all enemies
-    
-    # Computed properties
-    GAME_AREA_WIDTH = SCREEN_WIDTH - LOG_WIDTH
-    PANEL_Y = SCREEN_HEIGHT - PANEL_HEIGHT
-    
-    @classmethod
-    def load_from_json(cls):
-        """Load configuration values from JSON - called during initialization."""
-        config = cls._get_config()
-        
-        # Update static values from JSON
-        cls.SCREEN_WIDTH = config["screen"]["width"]
-        cls.SCREEN_HEIGHT = config["screen"]["height"]
-        cls.MAP_WIDTH = config["map"]["width"] 
-        cls.MAP_HEIGHT = config["map"]["height"]
-        cls.LOG_WIDTH = config["ui"]["log_width"]
-        cls.PANEL_HEIGHT = config["ui"]["panel_height"]
-        cls.DEFAULT_VISION_RANGE = config["gameplay"]["default_vision_range"]
-        cls.MAX_HEAT = config["gameplay"]["max_heat"]
-        cls.MAX_DETECTION = config["gameplay"]["max_detection"]
-        cls.DETECTION_REDUCTION_ON_LEVEL = config["gameplay"]["detection_reduction_on_level"]
-        cls.DUNGEON_SEED_RANGE = config["gameplay"]["dungeon_seed_range"]
-        cls.DEFAULT_FADE_TIME = config["audio"]["default_fade_time"]
-        cls.MESSAGE_CENTER_OFFSET_LARGE = config["ui"]["message_center_offset_large"]
-        cls.MESSAGE_CENTER_OFFSET_MEDIUM = config["ui"]["message_center_offset_medium"]
-        cls.MESSAGE_CENTER_OFFSET_SMALL = config["ui"]["message_center_offset_small"]
-        cls.MESSAGE_CENTER_OFFSET_TINY = config["ui"]["message_center_offset_tiny"]
-        cls.MESSAGE_LINE_SPACING = config["ui"]["message_line_spacing"]
-        cls.MESSAGE_BUTTON_SPACING = config["ui"]["message_button_spacing"]
-        
-        # Update computed properties
-        cls.GAME_AREA_WIDTH = cls.SCREEN_WIDTH - cls.LOG_WIDTH
-        cls.PANEL_Y = cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT
-    
-    @classmethod
-    def get_network_configs(cls) -> Dict[int, Dict[str, Any]]:
-        """Get network configurations from game data."""
-        game_data = DataLoader.load_game_data()
-        configs = game_data["network_configs"]
-        return {int(k): v for k, v in configs.items()}
-    
-    # Network configurations - loaded dynamically
-    @classmethod
-    def NETWORK_CONFIGS(cls) -> Dict[int, Dict[str, Any]]:
-        """Get network configurations from game data."""
-        return cls.get_network_configs()
-
-class Colors:
-    """Modern cyberpunk neon color definitions for the game."""
-    # Core neon palette
-    WHITE = (255, 255, 255)
-    BLACK = (5, 5, 15)  # Deep space blue-black
-    RED = (220, 20, 60)  # Standardized to Crimson
-    GREEN = (50, 255, 50)  # Standardized to Acid Green
-    BLUE = (0, 191, 255)  # Standardized to Electric Blue
-    YELLOW = (255, 215, 0)  # Standardized to Golden
-    CYAN = (20, 255, 200)  # Standardized to Cyber Teal
-    MAGENTA = (255, 20, 255)  # Standardized magenta
-    ORANGE = (255, 120, 20)  # Neon orange
-    
-    # Extended neon palette
-    ELECTRIC_PURPLE = (160, 20, 255)  # Electric purple
-    NEON_PINK = (255, 20, 147)  # Hot pink
-    ACID_GREEN = (50, 255, 50)  # Acid green
-    DARK_GREEN = (20, 120, 20)  # Dark green for virus effect
-    ELECTRIC_BLUE = (0, 191, 255)  # Electric blue
-    CYBER_TEAL = (20, 255, 200)  # Cyber teal
-    
-    # Code colors (from config)
-    CRIMSON = (220, 20, 60)
-    AZURE = (30, 144, 255) 
-    EMERALD = (50, 205, 50)
-    GOLDEN = (255, 215, 0)
-    VIOLET = (138, 43, 226)
-    SILVER = (192, 192, 192)
-    
-    # Game-specific colors with neon theme
-    FLOOR = (180, 180, 220)  # Bright light dots for empty spaces
-    WALL = (120, 140, 180)  # Light blue-gray walls
-    SHADOW = (3, 3, 8)  # Dark shadow areas
-    PLAYER = (50, 255, 50)  # Standardized to Acid Green
-    GATEWAY = (255, 215, 0)  # Standardized to Golden
-    
-    # Enemy colors matching vision overlay colors
-    ENEMY_UNAWARE = (255, 255, 60)  # Yellow (matching vision color scheme)
-    ENEMY_ALERT = (255, 165, 60)  # Orange (matching vision color scheme)
-    ENEMY_HOSTILE = (255, 60, 60)  # Red (matching vision color scheme)
-    
-    # Vision overlays with neon glow
-    VISION_UNAWARE = (80, 80, 10)  # Yellow glow (default state)
-    VISION_ALERT = (80, 50, 10)  # Orange glow (getting suspicious)  
-    VISION_HOSTILE = (80, 10, 10)  # Red glow (fully alert and tracking)
-    
-    # Code patch colors
-    CRIMSON = (220, 20, 60)  # Crimson red
-    AZURE = (30, 144, 255)  # Azure blue
-    EMERALD = (50, 205, 50)  # Emerald green
-    GOLDEN = (255, 215, 0)  # Golden yellow
-    VIOLET = (138, 43, 226)  # Violet purple
-    SILVER = (192, 192, 192)  # Silver gray
-    
-    # Modern UI colors
-    UI_BG = (10, 15, 25)  # Dark blue-gray background
-    UI_TEXT = (20, 255, 200)  # Standardized to Cyber Teal text
-    UI_ACCENT = (160, 20, 255)  # Electric purple accents
-    UI_HIGHLIGHT = (255, 20, 255)  # Standardized magenta highlights
-    LOG_BG = (8, 12, 20)  # Darker blue background
-    LOG_BORDER = (20, 255, 200)  # Cyber teal border
-    LIGHT_GRAY = (160, 170, 190)  # Light cyberpunk gray
-
-# ============================================================================
-# GAME CONFIGURATION
-# ============================================================================
-
-# Game configuration loaded through DataLoader.load_config()
-# This replaces the old GameConfigLoader system
-
-# Duplicate classes moved to separate modules
-# See: game_config.py, game_entities.py, game_data.py, game_inventory.py, game_characters.py
-
-# ============================================================================
-# MESSAGE LOG SYSTEM
-# ============================================================================
-
-class MessageLog:
-    """Manages game messages and logging."""
-    
-    def __init__(self, max_messages: int = 100):
-        self.messages: List[Tuple[str, Tuple[int, int, int]]] = []
-        self.max_messages = max_messages
-    
-    def add_message(self, text: str, color: Optional[Tuple[int, int, int]] = None, msg_type: Optional[str] = None):
-        """Add a message to the log."""
-        if not text:
-            return
-        
-        if color is None:
-            if msg_type:
-                color = self._get_color_by_type(msg_type)
-            else:
-                color = self._determine_message_color(text)
-        
-        self.messages.append((text, color))
-        
-        if len(self.messages) > self.max_messages:
-            self.messages = self.messages[-self.max_messages:]
-    
-    def add_message_typed(self, text: str, msg_type: str):
-        """Add a message with explicit type specification."""
-        self.add_message(text, msg_type=msg_type)
-    
-    def _get_color_by_type(self, msg_type: str) -> Tuple[int, int, int]:
-        """Get color for a specific message type."""
-        config = DataLoader.load_config()
-        message_colors = config.get("colors", {}).get("message_log", {})
-        color_values = message_colors.get(msg_type, message_colors.get("default", [144, 238, 144]))
-        
-        # Use the ensure_color_tuple function for validation
-        return ensure_color_tuple(color_values)
-    
-    def _determine_message_color(self, text: str) -> Tuple[int, int, int]:
-        """Determine appropriate color for message based on content using JSON config."""
-        text_lower = text.lower()
-        
-        # Get message type patterns from config
-        config = DataLoader.load_config()
-        message_types = config.get("message_types", {}).get("patterns", {})
-        message_colors = config.get("colors", {}).get("message_log", {})
-        
-        # Check each message type for pattern matches
-        for msg_type, patterns in message_types.items():
-            for pattern in patterns:
-                if pattern.lower() in text_lower:
-                    color_values = message_colors.get(msg_type)
-                    if color_values:
-                        return ensure_color_tuple(color_values)
-        
-        # Return default color if no pattern matches
-        default_color = message_colors.get("default", [144, 238, 144])
-        return ensure_color_tuple(default_color)
-    
-    def get_recent_messages(self, count: int) -> List[Tuple[str, Tuple[int, int, int]]]:
-        """Get the most recent messages."""
-        return self.messages[-count:] if len(self.messages) > count else self.messages
-
-# ============================================================================
-# GAME SYSTEMS - EXTRACTED FROM MONOLITHIC GAME CLASS
-# ============================================================================
-
-class GameStateManager:
-    """Manages core game state like level, turn, and game status."""
-    
-    def __init__(self):
-        self.level: int = 1
-        self.turn: int = 0
-        self.game_over: bool = False
-        self.admin_spawned: bool = False
-        self.dungeon_seed: int = random.randint(1, GameConfig.DUNGEON_SEED_RANGE)
-        
-        # Game effects
-        self.threat_scan_turns: int = 0
-        self.noise_locations: List[Position] = []
-        self.distraction_points: Dict[Position, int] = {}
-        self.revealed_special_nodes: Dict[Tuple[int, int], str] = {}  # position -> node_type
-    
-    def advance_turn(self) -> None:
-        """Advance to the next turn."""
-        self.turn += 1
-        
-        # Update threat scan effect
-        if self.threat_scan_turns > 0:
-            self.threat_scan_turns -= 1
-            
-        # Decay distraction points
-        expired_distractions = []
-        for position, turns_remaining in self.distraction_points.items():
-            if turns_remaining <= 1:
-                expired_distractions.append(position)
-            else:
-                self.distraction_points[position] = turns_remaining - 1
-                
-        for position in expired_distractions:
-            del self.distraction_points[position]
-    
-    def get_current_network_config(self) -> Dict[str, Any]:
-        """Get configuration for the current network level."""
-        network_configs = GameConfig.NETWORK_CONFIGS()
-        return network_configs.get(self.level, network_configs[1])
-    
-    def should_spawn_admin(self, detection_level: float) -> bool:
-        """Determine if admin should spawn based on detection level."""
-        if self.admin_spawned:
-            return False
-            
-        return detection_level >= GameConfig.MAX_DETECTION
-
-
-# EnemyManager class has been moved to game_enemies.py
-
-
-# LevelGenerator class has been moved to game_level.py
-
-
-class TurnProcessor:
-    """Handles turn-based game logic and effects processing."""
-    
-    def __init__(self, game_state: GameStateManager, message_log: MessageLog):
-        self.game_state = game_state
-        self.message_log = message_log
-    
-    def process_turn(self, player: Player) -> None:
-        """Process a complete game turn including heat management and effects."""
-        self.game_state.advance_turn()
-        
-        # Process heat reduction
-        self._process_heat_management(player)
-        
-        # Process temporary effects
-        self._process_temporary_effects(player)
-        
-        # Process detection increase
-        self._process_detection_increase(player)
-    
-    def _process_heat_management(self, player: Player) -> None:
-        """Handle heat reduction over time."""
-        if player.heat > 0:
-            heat_reduction = (GameBalance.HEAT_REDUCTION_BOOSTED 
-                            if player.temporary_effects['exploit_efficiency_turns'] > 0 
-                            else GameBalance.HEAT_REDUCTION_NORMAL)
-            
-            old_heat = player.heat
-            player.heat = max(0, player.heat - heat_reduction)
-            
-            # Heat reduction applied silently
-    
-    def _process_temporary_effects(self, player: Player) -> None:
-        """Process and decay temporary effects."""
-        effects_to_update = list(player.temporary_effects.keys())
-        
-        for effect_name in effects_to_update:
-            if player.temporary_effects[effect_name] > 0:
-                # Handle virus damage over time BEFORE decrementing counter
-                if effect_name == 'virus_turns':
-                    virus_damage = GameConfig.VIRUS_DAMAGE_PER_TURN
-                    actual_damage = player.take_damage(virus_damage)
-                    self.message_log.add_message(f"Virus damage: {actual_damage} CPU damage")
-                    
-                    # Check for death from virus
-                    if player.cpu <= 0:
-                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
-                        SaveGameManager.delete_save()
-                        self.message_log.add_message("Save data purged")
-                        self.game_state.game_over = True
-                        return  # Exit early if player dies
-                
-                # Now decrement the counter
-                player.temporary_effects[effect_name] -= 1
-                
-                if player.temporary_effects[effect_name] == 0:
-                    if effect_name == 'exploit_efficiency_turns':
-                        self.message_log.add_message("Exploit efficiency boost expired")
-                    elif effect_name == 'data_mimic_turns':
-                        self.message_log.add_message("Data Mimic invisibility expired")
-                    elif effect_name == 'speed_boost_turns':
-                        self.message_log.add_message("Speed boost expired")
-                    elif effect_name == 'movement_slowed_turns':
-                        self.message_log.add_message("Movement returns to normal")
-                    elif effect_name == 'virus_turns':
-                        self.message_log.add_message("Virus purged from system")
-    
-    def _process_detection_increase(self, player: Player) -> None:
-        """Handle periodic detection level increases."""
-        if self.game_state.turn % GameBalance.DETECTION_INCREASE_INTERVAL == 0:
-            config = self.game_state.get_current_network_config()
-            detection_increase = config.get('background_detection', 1) * GameBalance.DETECTION_INCREASE_AMOUNT
-            
-            old_detection = player.detection
-            player.detection = min(100, player.detection + detection_increase)
-            
-            # Detection increases silently in background
-
-
-
-# ============================================================================
-# EXPLOIT SYSTEM
-# ============================================================================
-
-# ExploitSystem moved to game_combat.py
-# InputHandler moved to game_input.py
-
-# ============================================================================
-# Input handling moved to game_input.py
-
-# ============================================================================
-# RENDERING SYSTEM
-# ============================================================================
 
 class BaseRenderer(ABC):
     """Abstract base class for all renderers."""
@@ -497,11 +52,11 @@ class BaseRenderer(ABC):
         render_char_safe(console, start_x + width - 1, start_y + height - 1, '┘', fg=border_color, bg=bg_color)
         
     @abstractmethod
-    def render_map(self, console: tcod.console.Console, game: 'GameEngine'):
+    def render_map(self, console: tcod.console.Console, game):
         """Render the game map using the specific rendering method."""
         pass
     
-    def render_game(self, console: tcod.console.Console, game: 'GameEngine', context=None):
+    def render_game(self, console: tcod.console.Console, game, context=None):
         """Render the complete game state."""
         console.clear()
         
@@ -516,7 +71,7 @@ class BaseRenderer(ABC):
         else:
             self._render_main_game_screen(console, game)
     
-    def _render_main_game_screen(self, console: tcod.console.Console, game: 'GameEngine'):
+    def _render_main_game_screen(self, console: tcod.console.Console, game):
         """Render the main game screen."""
         self.ui_renderer.render_top_status_bar(console, game)
         self.render_map(console, game)
@@ -624,22 +179,22 @@ class ASCIIRenderer(BaseRenderer):
         super().__init__()
         self.map_renderer = MapRenderer()
     
-    def render_map(self, console: tcod.console.Console, game: 'GameEngine'):
+    def render_map(self, console: tcod.console.Console, game):
         """Render the game map using ASCII characters."""
         self.map_renderer.render_map(console, game)
-
 
 
 class Renderer:
     """Simplified renderer using ASCII graphics."""
     
-    def __init__(self, settings: 'Settings'):
+    def __init__(self, settings):
         self.settings = settings
         self._current_renderer = ASCIIRenderer()
     
-    def render_game(self, console: tcod.console.Console, game: 'GameEngine', context=None):
+    def render_game(self, console: tcod.console.Console, game, context=None):
         """Render the complete game state using the ASCII renderer."""
         self._current_renderer.render_game(console, game, context)
+
 
 class UIRenderer:
     """Renders UI elements."""
@@ -766,7 +321,7 @@ class UIRenderer:
         help_menu.render(console)
     
     
-    def render_inventory_screen(self, console: tcod.console.Console, game: GameEngine):
+    def render_inventory_screen(self, console: tcod.console.Console, game):
         """Render the inventory screen."""
         # Clear only the main game area, preserve UI elements
         self._clear_game_area(console)
@@ -794,7 +349,7 @@ class UIRenderer:
         # Controls
         self._render_inventory_controls(console)
     
-    def _render_equipped_exploits(self, console: tcod.console.Console, game: GameEngine, y: int) -> int:
+    def _render_equipped_exploits(self, console: tcod.console.Console, game, y: int) -> int:
         """Render equipped exploits section."""
         render_char_safe(console, 2, y, "EQUIPPED EXPLOITS:", fg=Colors.CYAN)
         y += 1
@@ -828,7 +383,7 @@ class UIRenderer:
         
         return y
     
-    def _render_data_patches(self, console: tcod.console.Console, game: GameEngine, y: int) -> int:
+    def _render_data_patches(self, console: tcod.console.Console, game, y: int) -> int:
         """Render codes section."""
         data_patches = game.player.inventory_manager.get_items_by_type("data_patch")
         render_char_safe(console, 2, y, f"CODES ({len(data_patches)}):", fg=Colors.CYAN)
@@ -866,7 +421,7 @@ class UIRenderer:
         
         return y
     
-    def _render_unequipped_exploits(self, console: tcod.console.Console, game: GameEngine, y: int) -> int:
+    def _render_unequipped_exploits(self, console: tcod.console.Console, game, y: int) -> int:
         """Render unequipped exploits section."""
         exploit_items = game.player.inventory_manager.get_items_by_type("exploit")
         render_char_safe(console, 2, y, f"UNEQUIPPED EXPLOITS ({len(exploit_items)}):", fg=Colors.CYAN)
@@ -928,7 +483,7 @@ class UIRenderer:
         render_char_safe(console, 4, y_start + 2, "U: Unequip selected exploit", fg=Colors.WHITE)
         render_char_safe(console, 4, y_start + 3, "ESC/I: Close inventory", fg=Colors.WHITE)
     
-    def render_story_fragment_screen(self, console: tcod.console.Console, game: GameEngine, fragment_index: int):
+    def render_story_fragment_screen(self, console: tcod.console.Console, game, fragment_index: int):
         """Render a single story fragment discovery screen."""
         console.clear()
         
@@ -947,7 +502,7 @@ class UIRenderer:
         
         self._render_screen_footer(console, "Press any key to continue...", "Press 'L' to view all lore")
     
-    def render_lore_viewer_screen(self, console: tcod.console.Console, game: GameEngine):
+    def render_lore_viewer_screen(self, console: tcod.console.Console, game):
         """Render the lore viewer showing all discovered fragments."""
         console.clear()
         
@@ -961,7 +516,7 @@ class UIRenderer:
             # List mode - show fragment list with navigation
             self._render_lore_list_mode(console, game, discovered_fragments, discovered_count, total_count)
     
-    def _render_lore_list_mode(self, console: tcod.console.Console, game: GameEngine, discovered_fragments, discovered_count: int, total_count: int):
+    def _render_lore_list_mode(self, console: tcod.console.Console, game, discovered_fragments, discovered_count: int, total_count: int):
         """Render the lore viewer list mode."""
         title = f"RECOVERED DATA FRAGMENTS ({discovered_count}/{total_count})"
         content_start_y = self._render_screen_header(console, title)
@@ -1007,7 +562,7 @@ class UIRenderer:
             
             self._render_screen_footer(console, "Up/Down: Navigate, Enter: Read, ESC: Close")
     
-    def _render_lore_reading_mode(self, console: tcod.console.Console, game: GameEngine, discovered_fragments):
+    def _render_lore_reading_mode(self, console: tcod.console.Console, game, discovered_fragments):
         """Render the lore viewer reading mode."""
         if game.lore_viewer_selection >= len(discovered_fragments):
             game.lore_viewer_selection = 0
@@ -1022,7 +577,7 @@ class UIRenderer:
         
         self._render_screen_footer(console, "Any key: Back to list, ESC: Close")
     
-    def render_top_status_bar(self, console: tcod.console.Console, game: GameEngine):
+    def render_top_status_bar(self, console: tcod.console.Console, game):
         """Render the top status bar across the full width."""
         # Clear the entire top line (full screen width)
         for x in range(GameConfig.SCREEN_WIDTH):
@@ -1080,7 +635,7 @@ class UIRenderer:
         else:
             return Colors.GREEN
     
-    def render_bottom_panel(self, console: tcod.console.Console, game: GameEngine):
+    def render_bottom_panel(self, console: tcod.console.Console, game):
         """Render the bottom information panel."""
         # Clear panel area
         for x in range(GameConfig.GAME_AREA_WIDTH):
@@ -1098,7 +653,7 @@ class UIRenderer:
         self._render_temporary_conditions(console, game)
     
     
-    def _render_equipped_exploits_panel(self, console: tcod.console.Console, game: GameEngine):
+    def _render_equipped_exploits_panel(self, console: tcod.console.Console, game):
         """Render equipped exploits in bottom panel using 2 lines."""
         y1 = GameConfig.PANEL_Y + 1
         y2 = GameConfig.PANEL_Y + 2
@@ -1142,7 +697,7 @@ class UIRenderer:
                 render_char_safe(console, x_pos, y2, exploit_text, fg=color, bg=Colors.UI_BG)
                 x_pos += len(exploit_text) + 2
     
-    def _render_temporary_conditions(self, console: tcod.console.Console, game: GameEngine):
+    def _render_temporary_conditions(self, console: tcod.console.Console, game):
         """Render all temporary conditions with turn counts remaining."""
         y = GameConfig.PANEL_Y + 3
         
@@ -1196,7 +751,7 @@ class UIRenderer:
         else:
             render_char_safe(console, 1, y, "Conditions: None", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
     
-    def _get_data_code_color_for_effect(self, game: GameEngine, effect_key: str, fallback_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
+    def _get_data_code_color_for_effect(self, game, effect_key: str, fallback_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
         """Get the code color for a specific effect based on the current game's randomization."""
         color_map = {
             'crimson': Colors.CRIMSON,
@@ -1215,7 +770,7 @@ class UIRenderer:
         return fallback_color
     
     
-    def render_system_log(self, console: tcod.console.Console, game: GameEngine):
+    def render_system_log(self, console: tcod.console.Console, game):
         """Render the system log on the right side."""
         # Draw log border
         for y in range(GameConfig.SCREEN_HEIGHT):
@@ -1233,7 +788,7 @@ class UIRenderer:
         # Process and display messages
         self._render_log_messages(console, game)
     
-    def _render_log_messages(self, console: tcod.console.Console, game: GameEngine):
+    def _render_log_messages(self, console: tcod.console.Console, game):
         """Render log messages with proper wrapping."""
         wrapped_lines = self._wrap_messages(game.message_log.messages)
         log_height = GameConfig.SCREEN_HEIGHT - 3  # Adjusted for header repositioning
@@ -1271,10 +826,11 @@ class UIRenderer:
         
         return wrapped_lines
 
+
 class MapRenderer:
     """Renders the game map and entities."""
     
-    def render_map(self, console: tcod.console.Console, game: GameEngine):
+    def render_map(self, console: tcod.console.Console, game):
         """Render the complete game map."""
         try:
             camera_offset = self._calculate_camera_offset(game.player)
@@ -1300,7 +856,7 @@ class MapRenderer:
             logging.error(f"Map rendering error: {e}")
             logging.error(traceback.format_exc())
     
-    def _calculate_camera_offset(self, player: Player) -> Position:
+    def _calculate_camera_offset(self, player) -> Position:
         """Calculate camera offset to center on player."""
         camera_x = max(0, min(GameConfig.MAP_WIDTH - GameConfig.GAME_AREA_WIDTH, 
                              player.x - GameConfig.GAME_AREA_WIDTH // 2))
@@ -1310,7 +866,7 @@ class MapRenderer:
                              player.y - viewable_height // 2))
         return Position(camera_x, camera_y)
     
-    def _render_terrain(self, console: tcod.console.Console, game: GameEngine, camera_offset: Position, vision_range: int):
+    def _render_terrain(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
         """Render basic terrain (floors, walls, items)."""
         for screen_x in range(GameConfig.GAME_AREA_WIDTH):
             for screen_y in range(1, GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
@@ -1341,7 +897,7 @@ class MapRenderer:
                     # Outside map bounds
                     render_char_safe(console, screen_x, screen_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
     
-    def _render_remembered_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: GameEngine):
+    def _render_remembered_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game):
         """Render a tile from memory with dimmed neon colors."""
         # Check if this position has a revealed special node
         pos_tuple = (world_pos.x, world_pos.y)
@@ -1374,7 +930,7 @@ class MapRenderer:
             # Position 7 = • (bullet) for remembered empty spaces
             render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=(90, 90, 130), bg=Colors.BLACK)
     
-    def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game: GameEngine):
+    def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game):
         """Render a single tile."""
         # SYMBOL CONVENTIONS:
         # - Letters (A-Z): Reserved for enemies only (Scanner=S, Patrol=P, Bot=B, etc.)
@@ -1467,6 +1023,7 @@ class MapRenderer:
                     exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
                     exploit_category = exploit_def.category  # Fixed: was exploit_class, should be category
                     # Get color from config, fallback to magenta
+                    from data_loading import DataLoader
                     config = DataLoader.load_config()
                     exploit_colors = config.get("colors", {}).get("exploits", {})
                     color_data = exploit_colors.get(exploit_category, [255, 20, 255])
@@ -1559,7 +1116,7 @@ class MapRenderer:
         }
         return color_map.get(color_name, Colors.WHITE)
     
-    def _render_vision_overlays(self, console: tcod.console.Console, game: GameEngine, camera_offset: Position, vision_range: int):
+    def _render_vision_overlays(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
         """Render enemy vision range overlays."""
         if game.player.is_invisible():
             return
@@ -1591,7 +1148,7 @@ class MapRenderer:
         else:
             return Colors.VISION_UNAWARE
     
-    def _render_enemy_vision_range(self, console: tcod.console.Console, enemy: Enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map):
+    def _render_enemy_vision_range(self, console: tcod.console.Console, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map):
         """Render vision range for a single enemy."""
         # Enemies have full vision range regardless of whether they're in shadow
         # The shadow mechanic only affects whether they can see players IN shadow
@@ -1624,7 +1181,7 @@ class MapRenderer:
             # Silent fail for overlay errors, but could log line_no if needed for debugging
             pass
     
-    def _render_patrol_routes(self, console: tcod.console.Console, game: GameEngine, camera_offset: Position, vision_range: int):
+    def _render_patrol_routes(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
         """Render next 3 predicted moves for all moving enemies."""
         
         threat_scan_active = game.game_state.threat_scan_turns > 0
@@ -1675,7 +1232,7 @@ class MapRenderer:
                             symbol = chr(tcod.tileset.CHARMAP_CP437[9])
                         render_char_safe(console, screen_x, screen_y, symbol, fg=color, bg=bg_color)
     
-    def _render_gateway(self, console: tcod.console.Console, game: GameEngine, camera_offset: Position, vision_range: int):
+    def _render_gateway(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
         """Render the level gateway."""
         if not game.game_map.gateway:
             return
@@ -1709,7 +1266,7 @@ class MapRenderer:
                     darker_yellow = (180, 150, 0)  # Darker version of gateway color
                     render_char_safe(console, screen_x, screen_y, '>', fg=darker_yellow, bg=Colors.BLACK)
     
-    def _render_enemies(self, console: tcod.console.Console, game: GameEngine, camera_offset: Position, vision_range: int):
+    def _render_enemies(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
         """Render all enemies and their last known positions."""
         # First, render last known positions as ghosts
         for enemy_id, (position, turn_seen) in game.game_map.last_known_enemy_positions.items():
@@ -1724,6 +1281,7 @@ class MapRenderer:
                     break
             
             # Only show ghost if enemy is not currently visible and was seen recently
+            from game_config import GameBalance
             if not currently_visible and turn_seen > game.turn - GameBalance.ENEMY_MEMORY_TURNS:
                 screen_x = position.x - camera_offset.x
                 screen_y = position.y - camera_offset.y + 1
@@ -1756,7 +1314,7 @@ class MapRenderer:
                         render_char_safe(console, screen_x, screen_y, enemy.type_data.symbol, 
                                     fg=enemy.get_color(), bg=Colors.BLACK)
     
-    def _render_player(self, console: tcod.console.Console, game: GameEngine, camera_offset: Position):
+    def _render_player(self, console: tcod.console.Console, game, camera_offset: Position):
         """Render the player character."""
         player_screen_x = game.player.x - camera_offset.x
         player_screen_y = game.player.y - camera_offset.y + 1
@@ -1779,7 +1337,7 @@ class MapRenderer:
                          f"camera=({camera_offset.x}, {camera_offset.y}), "
                          f"screen=({player_screen_x}, {player_screen_y})")
     
-    def _get_player_color(self, player: Player) -> Tuple[int, int, int]:
+    def _get_player_color(self, player) -> Tuple[int, int, int]:
         """Get player color based on current state."""
         if player.temporary_effects['virus_turns'] > 0:
             return Colors.DARK_GREEN
@@ -1792,7 +1350,7 @@ class MapRenderer:
         else:
             return Colors.PLAYER
     
-    def _render_targeting_cursor(self, console: tcod.console.Console, game: GameEngine, camera_offset: Position):
+    def _render_targeting_cursor(self, console: tcod.console.Console, game, camera_offset: Position):
         """Render targeting cursor and range indicator."""
         if not game.targeting_mode:
             return
@@ -1836,314 +1394,3 @@ class MapRenderer:
                     1 <= area_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                     # Use a brighter overlay to distinguish from range indicator
                     self._safely_overlay_tile(console, area_screen_x, area_screen_y, (60, 60, 20))
-
-# ============================================================================
-# MAIN GAME LOOP AND INITIALIZATION
-# ============================================================================
-
-def load_tileset():
-    """Load terminal tileset - no fallbacks, missing font indicates corrupt installation."""
-    
-    # Load terminal tileset
-    tileset = tcod.tileset.load_tilesheet(
-        "terminal10x16_gs_ro.png", 16, 16, tcod.tileset.CHARMAP_CP437
-    )
-    logging.info("Loaded terminal tileset successfully")
-    
-    return tileset
-
-def initialize_tcod_context():
-    """Initialize tcod context with terminal font and SDL validation."""
-    tileset = load_tileset()
-    
-    logging.info("Using terminal font")
-    
-    context_args = {
-        "columns": GameConfig.SCREEN_WIDTH,
-        "rows": GameConfig.SCREEN_HEIGHT,
-        "title": "Rogue Signal Protocol",
-        "vsync": True,
-        "sdl_window_flags": 160  # Resizable window
-    }
-    
-    if tileset:
-        context_args["tileset"] = tileset
-    
-    context = tcod.context.new(**context_args)
-    
-    # Validate SDL renderer availability and set up console rendering
-    if hasattr(context, 'sdl_renderer') and context.sdl_renderer:
-        logging.info("SDL renderer available for graphics mode")
-        
-        # Create console rendering objects for proper SDL + console mixing
-        try:
-            from tcod import render as tcod_render
-            atlas = tcod_render.SDLTilesetAtlas(context.sdl_renderer, tileset)
-            console_render = tcod_render.SDLConsoleRender(atlas)
-            
-            # Attach console render to context for later use
-            context.console_render = console_render
-            logging.info("Console texture rendering initialized successfully")
-        except Exception as e:
-            logging.warning(f"Failed to initialize console rendering: {e}")
-            context.console_render = None
-    else:
-        logging.warning("SDL renderer unavailable - graphics mode will be disabled")
-        context.console_render = None
-    
-    return context
-
-
-# ============================================================================
-# DYNAMIC GRAPHICS SYSTEM
-# ============================================================================
-
-class WindowManager:
-    """Manages dynamic window sizing and pixel dimension calculations."""
-    
-    def __init__(self, context):
-        self.context = context
-        self._cached_dimensions = None
-        self._last_check_time = 0
-        
-    def get_window_pixel_dimensions(self):
-        """Get current window pixel dimensions with caching."""
-        # Cache dimensions for 0.1 seconds to avoid excessive SDL calls
-        current_time = time.time()
-        if (self._cached_dimensions is None or 
-            current_time - self._last_check_time > 0.1):
-            
-            # Get actual window size via SDL
-            window = self.context.sdl_window
-            if window:
-                width, height = window.size
-                self._cached_dimensions = (width, height)
-                self._last_check_time = current_time
-            else:
-                # Fallback to estimated dimensions
-                self._cached_dimensions = (800, 600)  # Conservative estimate
-                
-        return self._cached_dimensions
-    
-    def calculate_background_rect(self, image_size):
-        """Calculate rectangle for background image constrained to left portion only."""
-        window_width, window_height = self.get_window_pixel_dimensions()
-        img_width, img_height = image_size
-        
-        # CONSTRAINT: Limit graphics to left 60% of screen width for true separation
-        graphics_area_width = int(window_width * 0.6)  # Graphics get 60% of width
-        
-        # Calculate scale to fit within LEFT AREA ONLY (not full screen)
-        scale_x = graphics_area_width / img_width  # Scale to fit in left area width
-        scale_y = window_height / img_height
-        scale = min(scale_x, scale_y)  # Use smaller scale to fit entirely in left area
-        
-        # Position within left area only
-        scaled_width = int(img_width * scale)
-        scaled_height = int(img_height * scale)
-        x = 0  # Left-align within graphics area
-        y = (window_height - scaled_height) // 2  # Center vertically
-        
-        return (x, y, scaled_width, scaled_height)
-
-
-def initialize_game_systems(settings: GameSettings, menu_background=None):
-    """Initialize menu systems and return menu objects."""
-    return {
-        'main_menu': MainMenu(background=menu_background),  # Pass background here
-        'settings_menu': SettingsMenu(settings, menu_background),  # Pass background for immediate updates
-        'help_menu': HelpMenu(),
-        'lore_menu': LoreMenu()
-    }
-
-def handle_menu_navigation(console, context, menus, settings):
-    """Handle the main menu navigation loop."""
-    main_menu = menus['main_menu']
-    main_menu.refresh_options(show_continue=True)
-    current_menu = main_menu
-    
-    # Start main menu music
-    menu_sound_manager = SoundManager(settings)
-    try:
-        menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000, volume_multiplier=1.3)
-    except Exception as e:
-        logging.warning(f"Could not play main menu music: {e}")
-        # Continue without music
-    
-    while True:
-        # Render console content first
-        current_menu.render(console)
-        
-        # CORRECTED RENDERING: Use SDL renderer when available for graphics mode
-        graphics_available = (context.sdl_renderer and hasattr(context, 'console_render') and 
-                            context.console_render and hasattr(current_menu, 'background') and 
-                            current_menu.background and current_menu.background.should_load_background())
-        
-        if graphics_available:
-            # Graphics mode: render everything through SDL
-            context.sdl_renderer.clear()
-            
-            # Render background graphics to SDL first
-            current_menu.background.render_background(console)
-            
-            # Render console content as texture to SDL
-            console_texture = context.console_render.render(console)
-            
-            # Render full console texture to preserve internal character positioning
-            # The console has transparent areas on the left side for background graphics
-            context.sdl_renderer.copy(console_texture)
-            
-            # Present everything through SDL
-            context.sdl_renderer.present()
-            
-        else:
-            # ASCII mode or fallback: normal console presentation
-            context.present(console)
-        
-        for event in tcod.event.wait():
-            if event.type == "QUIT":
-                menu_sound_manager.cleanup()
-                return None, True  # game=None, should_exit=True
-            elif event.type == "KEYDOWN":
-                action = current_menu.handle_input(event)
-                
-                if action == "exit":
-                    menu_sound_manager.cleanup()
-                    return None, True  # game=None, should_exit=True
-                elif action == "settings":
-                    current_menu = menus['settings_menu']
-                elif action == "help":
-                    current_menu = menus['help_menu']
-                elif action == "lore":
-                    current_menu = menus['lore_menu']
-                elif action == "back":
-                    current_menu = main_menu
-                elif action == "continue":
-                    menu_sound_manager.stop_music(fade_out_ms=1000)  # Fade out menu music
-                    game = GameEngine(load_save=True, settings=settings)
-                    return game, False
-                elif action == "new_game":
-                    menu_sound_manager.stop_music(fade_out_ms=1000)  # Fade out menu music
-                    game = GameEngine(load_save=False, settings=settings)
-                    return game, False
-
-def show_welcome_messages(game):
-    """Show initial welcome messages for new games."""
-    # Welcome messages removed to reduce startup spam
-    pass
-
-def handle_game_input_events(event, game, input_handler):
-    """Handle game input events and return (should_continue, game)."""
-    if event.type == "QUIT":
-        game.auto_save()
-        game.sound_manager.cleanup()
-        return False, None  # Exit program
-    elif event.type == "KEYDOWN":
-        if event.sym == tcod.event.KeySym.ESCAPE:
-            # Check if any UI states are open - close those first
-            if (game.show_story_fragment is not None or 
-                game.show_lore_viewer or 
-                game.show_help or 
-                game.show_inventory or 
-                game.targeting_mode):
-                input_handler._handle_escape()
-            else:
-                # No UI states open, auto-save and go to main menu
-                game.auto_save()
-                return True, None  # Return to main menu
-        else:
-            should_continue = input_handler.handle_keydown(event)
-            if not should_continue:
-                # Player is dead and pressed ESC - return to main menu
-                return True, None
-    return True, game
-
-def handle_error_screen(console, context, error_message, line_no):
-    """Display error screen and wait for user input."""
-    console.clear()
-    render_char_safe(console, 1, 1, f"Error: {str(error_message)[:50]} (line {line_no})", fg=Colors.RED)
-    render_char_safe(console, 1, 2, "Press ESC to exit", fg=Colors.WHITE)
-    context.present(console)
-    
-    for event in tcod.event.wait():
-        if event.type == "QUIT" or (event.type == "KEYDOWN" and event.sym == tcod.event.KeySym.ESCAPE):
-            return True
-    return False
-
-def main():
-    """Main game loop with main menu and save/load functionality."""
-    # Initialize JSON configuration system
-    GameConfig.load_from_json()
-    
-    try:
-        with initialize_tcod_context() as context:
-            console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
-            
-            settings = GameSettings()
-            
-            # Create background manager (loads conditionally based on graphics mode)
-            menu_background = MenuBackground(context, settings)
-            menu_background.reset_background_system()  # Reset any previous errors
-            menu_background.load_random_background()  # Only loads if graphics mode enabled
-            
-            # Pass background to initialize_game_systems
-            menus = initialize_game_systems(settings, menu_background)
-            
-            game = None
-            
-            while True:
-                # Check for graphics mode changes and reload accordingly
-                menu_background.reload_if_mode_changed()
-                
-                if game is None:
-                    game, should_exit = handle_menu_navigation(console, context, menus, settings)
-                    if should_exit:
-                        # Cleanup background before exit
-                        menu_background.cleanup()
-                        return
-                    
-                    # Initialize game rendering systems
-                    renderer = Renderer(settings)
-                    input_handler = InputHandler(game)
-                    show_welcome_messages(game)
-
-                # Main game loop
-                while game is not None:
-                    try:
-                        game.sound_manager.update()
-                        renderer.render_game(console, game, context)
-                        context.present(console)
-                        
-                        # Handle input events
-                        for event in tcod.event.wait():
-                            should_continue, game = handle_game_input_events(event, game, input_handler)
-                            if not should_continue:
-                                return  # Exit program
-                            if game is None:
-                                break  # Return to main menu
-                        
-                    except Exception as e:
-                        import traceback
-                        tb = traceback.extract_tb(e.__traceback__)
-                        line_no = tb[-1].lineno if tb else "?"
-                        logging.error(f"Rendering error: {e} (line {line_no})")
-                        
-                        if handle_error_screen(console, context, e, line_no):
-                            return
-    
-    except Exception as e:
-        import traceback
-        tb = traceback.extract_tb(e.__traceback__)
-        line_no = tb[-1].lineno if tb else "?"
-        logging.critical(f"Critical error: {e} (line {line_no})")
-        traceback.print_exc()
-
-if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        logging.info("Game interrupted by user")
-    except Exception as e:
-        logging.critical(f"Fatal error: {e}")
-        import traceback
-        traceback.print_exc()

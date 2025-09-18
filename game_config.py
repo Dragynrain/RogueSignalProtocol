@@ -8,6 +8,7 @@ import json
 import logging
 import os
 from typing import Dict, Any
+from data_loading import DataLoader
 
 
 
@@ -180,6 +181,10 @@ class GameConfig:
     max_ram_capacity = 32
     max_cpu_capacity = 200
     
+    # Enemy and virus constants
+    NEARBY_ENEMY_ALERT_RADIUS = 8  # Radius for alerting nearby enemies
+    VIRUS_DAMAGE_PER_TURN = 3  # Damage dealt by virus each turn
+    
     _config_data = None
     
     @classmethod
@@ -217,6 +222,18 @@ class GameConfig:
                 pass
         
         return default
+    
+    @classmethod
+    def get_network_configs(cls) -> Dict[int, Dict[str, Any]]:
+        """Get network configurations from game data."""
+        game_data = DataLoader.load_game_data()
+        configs = game_data["network_configs"]
+        return {int(k): v for k, v in configs.items()}
+    
+    @classmethod
+    def NETWORK_CONFIGS(cls) -> Dict[int, Dict[str, Any]]:
+        """Get network configurations from game data."""
+        return cls.get_network_configs()
 
 
 class RoomGenerationConfig:

@@ -1346,7 +1346,7 @@ class HelpMenu:
             ("  ☻: Player (you)", Colors.PLAYER),
             ("  •: Empty floor (passable)", Colors.FLOOR),
             ("  ┌┐└┘┬┴├┤┼─│: Walls (impassable)", Colors.WALL),
-            ("  ◘: Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
+            ("  *: Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
             ("  >: Gateway to next level", Colors.GATEWAY),
             ("  ♫: Story fragments (lore)", Colors.CYAN),
             ("", Colors.WHITE),
