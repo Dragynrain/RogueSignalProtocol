@@ -1,6 +1,6 @@
 {
-  "master_volume": 0.5,
-  "sfx_volume": 0.8,
-  "music_volume": 0.0,
+  "master_volume": 1.0,
+  "sfx_volume": 0.0,
+  "music_volume": 1.0,
   "graphics_mode": "graphics"
 }
