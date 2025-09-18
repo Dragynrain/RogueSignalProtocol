@@ -5,7 +5,8 @@
       "Bash(.venv/Scripts/python.exe:*)",
       "Bash(timeout:*)",
       "Bash(.venv\\Scripts\\python.exe:*)",
-      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/ -v)"
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/ -v)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/ -v --tb=short)"
     ],
     "deny": [],
     "ask": []
