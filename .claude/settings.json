@@ -16,7 +16,7 @@
       "Read(./game_debug.log)",
       "Read(./user_settings.json)",
       "Bash(python RogueSignalProtocol.py)",
-      "Bash(.venv\\Scripts\\python.exe RogueSignalProtocol.py)",
+      "Bash(.venv\\Scripts\\python.exe RogueSignalProtocol.py *)",
       "Bash(.venv\\Scripts\\python.exe *)",
       "Bash(git status)",
       "Bash(git diff)",
@@ -33,6 +33,7 @@
       "MultiEdit(./**/*.py)",
       "MultiEdit(./**/*.json)",
       "TodoWrite(*)",
+	  "Timeout(*)",
       "WebFetch(*)",
       "WebSearch(*)"
     ],
