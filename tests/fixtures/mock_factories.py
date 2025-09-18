@@ -467,3 +467,183 @@ class MockTestScenarios:
             'game_map': game_map,
             'description': 'Enhanced vision player exploring map with obstacles'
         }
+
+
+class MockSaveDataFactory:
+    """Factory for creating mock save data for testing persistence systems."""
+    
+    @staticmethod
+    def create_basic_save_data() -> Dict[str, Any]:
+        """Create basic save data structure."""
+        return {
+            "version": "dev",
+            "timestamp": 1640995200.0,  # 2022-01-01 00:00:00
+            "level": 1,
+            "turn": 1,
+            "game_over": False,
+            "admin_spawned": False,
+            "dungeon_seed": 12345,
+            "player": {
+                "x": 10,
+                "y": 10,
+                "last_x": 9,
+                "last_y": 9,
+                "cpu": 50,
+                "max_cpu": 100,
+                "heat": 30,
+                "max_heat": 100,
+                "detection": 0,
+                "ram_total": 20,
+                "speed_moves_remaining": 0,
+                "temporary_effects": {},
+                "equipped_exploits": ["shadow_step"],
+                "max_equipped_exploits": 5,
+                "inventory_items": []
+            },
+            "game_effects": {
+                "threat_scan_turns": 0,
+                "noise_locations": [],
+                "distraction_points": {}
+            },
+            "map_state": {
+                "code_hacks": {},
+                "exploit_pickups": {},
+                "permanent_upgrades": {},
+                "story_fragments": {},
+                "gateway": {"x": 45, "y": 25},
+                "explored_tiles": [],
+                "last_known_enemy_positions": {}
+            },
+            "enemies": [],
+            "enemy_next_id": 1,
+            "code_hack_effects": {},
+            "discovered_code_effects": {},
+            "overclock_confirmation": False,
+            "overclock_exploit": None,
+            "ui_state": {
+                "inventory_selection": 0,
+                "lore_viewer_selection": 0
+            }
+        }
+    
+    @staticmethod
+    def create_complex_save_data() -> Dict[str, Any]:
+        """Create complex save data with multiple systems active."""
+        save_data = MockSaveDataFactory.create_basic_save_data()
+        save_data.update({
+            "level": 3,
+            "turn": 45,
+            "player": {
+                **save_data["player"],
+                "cpu": 35,
+                "heat": 60,
+                "detection": 25,
+                "temporary_effects": {"enhanced_vision_turns": 3},
+                "equipped_exploits": ["shadow_step", "code_injection"],
+                "inventory_items": [
+                    {
+                        "type": "code_hack",
+                        "name": "Red Code",
+                        "color": "red",
+                        "effect": "restore_cpu",
+                        "quantity": 2,
+                        "discovered": True
+                    }
+                ]
+            },
+            "enemies": [
+                {
+                    "id": 1,
+                    "type": "patrol",
+                    "x": 15,
+                    "y": 15,
+                    "cpu": 40,
+                    "state": "alert",
+                    "move_cooldown": 0,
+                    "disabled_turns": 0,
+                    "alert_timer": 2,
+                    "patrol_index": 1,
+                    "patrol_stuck_counter": 0,
+                    "movement_queue": [{"x": 20, "y": 15}],
+                    "last_target": None,
+                    "last_seen_player": {"x": 12, "y": 12},
+                    "patrol_points": [
+                        {"x": 15, "y": 15},
+                        {"x": 20, "y": 15},
+                        {"x": 20, "y": 20},
+                        {"x": 15, "y": 20}
+                    ]
+                }
+            ],
+            "discovered_code_effects": {
+                "red": "restore_cpu",
+                "blue": "reduce_heat"
+            }
+        })
+        return save_data
+    
+    @staticmethod
+    def create_corrupted_save_data() -> str:
+        """Create intentionally corrupted JSON for testing error handling."""
+        return '{"version": "dev", "level": 1, "incomplete": true'  # Missing closing brace
+    
+    @staticmethod
+    def create_empty_save_data() -> str:
+        """Create empty save data for testing edge cases."""
+        return ""
+
+
+class MockLevelGeneratorFactory:
+    """Factory for creating mock level generator objects."""
+    
+    @staticmethod
+    def create_basic_generator() -> Mock:
+        """Create a basic level generator mock."""
+        mock_generator = Mock()
+        mock_generator.width = 50
+        mock_generator.height = 30
+        mock_generator.rooms = []
+        mock_generator.carve_room = Mock(return_value=True)
+        mock_generator.find_room_position = Mock(return_value=(10, 10))
+        mock_generator.rooms_overlap = Mock(return_value=False)
+        mock_generator.place_special_tiles = Mock()
+        mock_generator.generate_map = Mock(return_value=MockGameMapFactory.create_basic_map())
+        return mock_generator
+    
+    @staticmethod
+    def create_generator_with_rooms(room_count: int) -> Mock:
+        """Create a level generator with specific number of rooms."""
+        mock_generator = MockLevelGeneratorFactory.create_basic_generator()
+        
+        # Create mock rooms
+        rooms = []
+        for i in range(room_count):
+            room = Mock()
+            room.x = 5 + (i * 10)
+            room.y = 5 + (i * 5)
+            room.width = 8
+            room.height = 6
+            rooms.append(room)
+        
+        mock_generator.rooms = rooms
+        return mock_generator
+
+
+class MockConfigFactory:
+    """Factory for creating mock configuration objects."""
+    
+    @staticmethod
+    def create_test_config() -> Mock:
+        """Create a test configuration with realistic values."""
+        mock_config = Mock()
+        mock_config.MAP_WIDTH = 50
+        mock_config.MAP_HEIGHT = 30
+        mock_config.MIN_ROOMS = 8
+        mock_config.MAX_ROOMS = 15
+        mock_config.ROOM_MIN_SIZE = 6
+        mock_config.ROOM_MAX_SIZE = 12
+        mock_config.ENEMY_BASE_COUNT = 2
+        mock_config.ENEMY_SCALING_FACTOR = 0.8
+        mock_config.MAX_SAVE_ATTEMPTS = 3
+        mock_config.SAVE_RETRY_DELAY = 0.1
+        return mock_config
