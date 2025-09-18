@@ -4,7 +4,8 @@
       "Bash(.venv/Scripts/python.exe RogueSignalProtocol.py:*)",
       "Bash(.venv/Scripts/python.exe:*)",
       "Bash(timeout:*)",
-      "Bash(.venv\\Scripts\\python.exe:*)"
+      "Bash(.venv\\Scripts\\python.exe:*)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/ -v)"
     ],
     "deny": [],
     "ask": []
