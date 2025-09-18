@@ -9,7 +9,21 @@
       "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/ -v --tb=short)",
       "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_inventory.py -v)",
       "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_enemies.py -v)",
-      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_inventory.py tests/unit/test_enemies.py tests/unit/test_save.py tests/unit/test_level.py -v --tb=short)"
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_inventory.py tests/unit/test_enemies.py tests/unit/test_save.py tests/unit/test_level.py -v --tb=short)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_combat.py -v --tb=short)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_combat.py::TestSpecificExploits::test_memory_leak_area_effect -v --tb=long)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_combat.py::TestExploitSystem::test_use_exploit_targeting_mode -v)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_combat.py -v)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_combat.py::TestDamageCalculations -v)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_combat.py::TestDamageCalculations -v --tb=short)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_level.py::TestEnemySpawning tests/unit/test_level.py::TestStairPlacement tests/unit/test_level.py::TestAccessibilityValidation -v --tb=short)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_level.py::TestEnemySpawning -v)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_level.py::TestEnemySpawning::test_enemy_placement_validation -v -s)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_level.py::TestStairPlacement -v)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_level.py::TestAccessibilityValidation -v)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_level.py -v --tb=short)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_save.py::TestSaveFileDeletion tests/unit/test_save.py::TestUpgradePersistence -v --tb=short)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_inventory.py::TestUpgradeSystem tests/unit/test_inventory.py::TestInventoryCapacity tests/unit/test_inventory.py::TestItemDiscoveryPickup tests/unit/test_inventory.py::TestInventorySerialization -v --tb=short)"
     ],
     "deny": [],
     "ask": []

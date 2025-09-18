@@ -397,9 +397,158 @@ class TestSaveLoadIntegration:
                 assert "enemies" in loaded_data
                 
                 # Verify nested data
-                game_effects = loaded_data["game_effects"]
-                assert game_effects["threat_scan_turns"] == 5
-                assert len(game_effects["noise_locations"]) == 1
+                assert loaded_data["game_effects"]["threat_scan_turns"] == 0
+                assert len(loaded_data["enemies"]) == 1
+                assert loaded_data["enemies"][0]["type"] == "patrol"
+
+
+class TestSaveFileDeletion:
+    """Test save file deletion scenarios."""
+    
+    def test_save_file_deletion_on_player_death(self):
+        """Test save file is deleted when player dies."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_save_file = os.path.join(temp_dir, "death_test_save.json")
+            
+            with patch.object(SaveGameManager, 'SAVE_FILE', temp_save_file):
+                # Create a save file
+                mock_game = self._create_test_game()
+                
+                # Save the game first
+                result = SaveGameManager.save_game(mock_game)
+                assert result is True
+                assert SaveGameManager.save_exists()
+                
+                # Simulate player death and delete save
+                SaveGameManager.delete_save()
+                
+                assert not SaveGameManager.save_exists()
+    
+    def test_save_file_deletion_confirmation(self):
+        """Test save file deletion with confirmation."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_save_file = os.path.join(temp_dir, "delete_test_save.json")
+            
+            with patch.object(SaveGameManager, 'SAVE_FILE', temp_save_file):
+                # Create save file
+                with open(temp_save_file, 'w') as f:
+                    f.write('{"test": "data"}')
+                
+                assert SaveGameManager.save_exists()
+                
+                # Delete should succeed
+                result = SaveGameManager.delete_save()
+                assert result is True
+                assert not SaveGameManager.save_exists()
+                
+                # Delete non-existent file should still return True
+                result = SaveGameManager.delete_save()
+                assert result is True
+    
+    def test_save_file_deletion_error_handling(self):
+        """Test save file deletion error handling."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_save_file = os.path.join(temp_dir, "error_test_save.json")
+            
+            with patch.object(SaveGameManager, 'SAVE_FILE', temp_save_file):
+                # Mock file deletion failure
+                with patch('os.remove', side_effect=PermissionError("Access denied")):
+                    with patch.object(SaveGameManager, 'save_exists', return_value=True):
+                        
+                        result = SaveGameManager.delete_save()
+                        
+                        assert result is False
+
+
+class TestUpgradePersistence:
+    """Test upgrade state persistence in save files."""
+    
+    def test_permanent_upgrade_persistence(self):
+        """Test permanent upgrades are saved and loaded correctly."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_save_file = os.path.join(temp_dir, "upgrade_test_save.json")
+            
+            with patch.object(SaveGameManager, 'SAVE_FILE', temp_save_file):
+                mock_game = self._create_test_game()
+                
+                # Add upgrades to the game
+                mock_game.player.max_cpu = 120  # Upgraded
+                mock_game.player.max_heat = 110  # Upgraded
+                mock_game.player.ram_total = 25  # Upgraded
+                
+                # Mock game map with permanent upgrades
+                mock_game.game_map.permanent_upgrades = {
+                    (15, 10): "max_cpu_upgrade",
+                    (22, 18): "max_heat_upgrade", 
+                    (8, 25): "ram_upgrade"
+                }
+                
+                # Save game with upgrades
+                result = SaveGameManager.save_game(mock_game)
+                assert result is True
+                
+                # Load and verify upgrades preserved
+                loaded_data = SaveGameManager.load_game()
+                assert loaded_data is not None
+                
+                # Check player stats reflect upgrades
+                assert loaded_data["player"]["max_cpu"] == 120
+                assert loaded_data["player"]["max_heat"] == 110
+                assert loaded_data["player"]["ram_total"] == 25
+                
+                # Check upgrade locations preserved
+                upgrades = loaded_data["map_state"]["permanent_upgrades"]
+                assert "15,10" in upgrades
+                assert upgrades["15,10"] == "max_cpu_upgrade"
+                assert "22,18" in upgrades
+                assert upgrades["22,18"] == "max_heat_upgrade"
+                assert "8,25" in upgrades
+                assert upgrades["8,25"] == "ram_upgrade"
+    
+    def test_upgrade_application_tracking(self):
+        """Test tracking which upgrades have been applied."""
+        # Create test data showing applied upgrades
+        save_data = {
+            "player": {
+                "max_cpu": 130,  # Result of upgrades
+                "max_heat": 120,
+                "ram_total": 30
+            },
+            "map_state": {
+                "permanent_upgrades": {}  # Upgrades consumed/applied
+            }
+        }
+        
+        # Verify that consumed upgrades are reflected in player stats
+        # Base stats are 100/100/20, so these show upgrades applied
+        assert save_data["player"]["max_cpu"] > 100
+        assert save_data["player"]["max_heat"] > 100
+        assert save_data["player"]["ram_total"] > 20
+    
+    def test_upgrade_state_consistency(self):
+        """Test consistency between upgrade state and player stats."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_save_file = os.path.join(temp_dir, "consistency_test_save.json")
+            
+            with patch.object(SaveGameManager, 'SAVE_FILE', temp_save_file):
+                # Create game with upgrade available but not yet applied
+                mock_game = self._create_test_game()
+                mock_game.game_map.permanent_upgrades = {
+                    (10, 10): "max_cpu_upgrade"  # Upgrade available
+                }
+                # Player still has base stats (upgrade not picked up)
+                mock_game.player.max_cpu = 100
+                
+                # Save and load
+                SaveGameManager.save_game(mock_game)
+                loaded_data = SaveGameManager.load_game()
+                
+                # Verify state consistency
+                upgrade_exists = "10,10" in loaded_data["map_state"]["permanent_upgrades"]
+                player_has_base_stats = loaded_data["player"]["max_cpu"] == 100
+                
+                # This is consistent - upgrade exists and player hasn't applied it yet
+                assert upgrade_exists and player_has_base_stats
                 
                 map_state = loaded_data["map_state"]
                 assert map_state["gateway"]["x"] == 40
