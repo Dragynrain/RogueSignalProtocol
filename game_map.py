@@ -6,7 +6,7 @@ import tcod
 from tcod import libtcodpy
 from typing import Set, Tuple, Dict, Optional
 from game_entities import Position
-from game_inventory import DataPatch, ExploitItem, StoryFragment
+from game_inventory import CodeHack, ExploitItem, StoryFragment
 
 
 class GameMap:
@@ -26,7 +26,7 @@ class GameMap:
         self.ghost_nodes: Set[Tuple[int, int]] = set()
         
         # Items
-        self.data_patches: Dict[Tuple[int, int], DataPatch] = {}
+        self.code_hacks: Dict[Tuple[int, int], CodeHack] = {}
         self.exploit_pickups: Dict[Tuple[int, int], ExploitItem] = {}
         self.permanent_upgrades: Dict[Tuple[int, int], str] = {}  # position -> upgrade_key
         self.story_fragments: Dict[Tuple[int, int], StoryFragment] = {}  # position -> story_fragment
@@ -64,9 +64,9 @@ class GameMap:
         """Check if position contains a ghost node (detection reduction)."""
         return (position.x, position.y) in self.ghost_nodes
     
-    def get_data_patch(self, position: Position) -> Optional[DataPatch]:
+    def get_data_patch(self, position: Position) -> Optional[CodeHack]:
         """Get code at position."""
-        return self.data_patches.get((position.x, position.y))
+        return self.code_hacks.get((position.x, position.y))
     
     def get_exploit_pickup(self, position: Position) -> Optional[ExploitItem]:
         """Get exploit pickup at position."""

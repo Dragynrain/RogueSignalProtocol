@@ -15,13 +15,15 @@
       "Write(./**/*.txt)",
       "Read(./game_debug.log)",
       "Read(./user_settings.json)",
+	  "Bash(dir *",
       "Bash(python RogueSignalProtocol.py)",
-      "Bash(.venv\\Scripts\\python.exe RogueSignalProtocol.py *)",
-      "Bash(.venv\\Scripts\\python.exe *)",
+	  "Bash(.venv/Scripts/pip.exe list",
+      "Bash(.venv/Scripts/python.exe RogueSignalProtocol.py *)",
+      "Bash(.venv/Scripts/python.exe *)",
       "Bash(git status)",
       "Bash(git diff)",
       "Bash(git log --oneline -10)",
-      "Bash(.venv\\Scripts\\pip.exe install *)",
+      "Bash(.venv/Scripts/pip.exe install *)",
       "Bash(dir)",
       "Bash(ls)",
       "Bash(find . -name *.py)",
@@ -61,7 +63,7 @@
       "Bash(npm install *)",
       "Write(./requirements.txt)",
       "Edit(./requirements.txt)",
-      "Bash(.venv\\Scripts\\pip.exe uninstall *)"
+      "Bash(.venv/Scripts/pip.exe uninstall *)"
     ],
     "additionalDirectories": [
       "./.claude/",

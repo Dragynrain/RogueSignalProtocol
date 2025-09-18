@@ -149,6 +149,17 @@ class GameConfig:
     LOG_WIDTH = 25
     PANEL_HEIGHT = 5
     
+    # Calculated layout properties
+    @classmethod
+    def GAME_AREA_WIDTH(cls):
+        """Calculate game area width (screen width minus log width)."""
+        return cls.SCREEN_WIDTH - cls.LOG_WIDTH
+    
+    @classmethod
+    def PANEL_Y(cls):
+        """Calculate panel Y position (screen height minus panel height)."""
+        return cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT
+    
     # Game parameters
     DEFAULT_PLAYER_RAM = 8
     DEFAULT_PLAYER_CPU = 100
@@ -273,7 +284,7 @@ class GameBalance:
     
     # Node effects
     COOLING_NODE_EFFECT: int = 20
-    GHOST_NODE_DETECTION_REDUCTION: float = 5.0
+    GHOST_NODE_DETECTION_REDUCTION_PERCENT: float = 20.0  # 20% reduction per turn
     CPU_RECOVERY_AMOUNT: int = 20
     
     # Combat rewards

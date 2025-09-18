@@ -22,7 +22,7 @@ from game_entities import (Position, Colors, EnemyState, EnemyMovement,
                           validate_coordinates, calculate_manhattan_distance,
                           parse_coordinate_string, validate_position_bounds, ensure_color_tuple)
 from game_data import GameData, GameUpgrades
-from game_inventory import InventoryItem, DataPatch, ExploitItem, StoryFragment, InventoryManager
+from game_inventory import InventoryItem, CodeHack, ExploitItem, StoryFragment, InventoryManager
 from game_characters import Player, Enemy, create_pathfinding_cost_map, pathfind_and_move, can_move_to_position
 from game_audio import SoundManager
 from game_save import SaveGameManager
@@ -115,7 +115,7 @@ class GameEngine:
         self.overclock_exploit: Optional[str] = None
         
         # Code patch system
-        self.data_patch_effects: Dict[str, Tuple[str, str]] = {}
+        self.code_hack_effects: Dict[str, Tuple[str, str]] = {}
         self.discovered_code_effects: Dict[str, str] = {}
         
         # Story fragment system
@@ -126,10 +126,10 @@ class GameEngine:
             success = self._load_from_save()
             if not success:
                 # Fallback to new game if loading fails
-                self._randomize_data_patches()
+                self._randomize_code_hacks()
                 self._generate_procedural_level()
         else:
-            self._randomize_data_patches()
+            self._randomize_code_hacks()
             self._generate_procedural_level()
             
         # Initialize InputHandler after GameEngine is fully set up (requires self reference)
@@ -277,8 +277,8 @@ class GameEngine:
             if position:  # Skip malformed coordinate data
                 self.game_state.distraction_points[position] = turns
         
-        # Restore code effects
-        self.data_patch_effects = save_data["data_patch_effects"]
+        # Restore code effects (backward compatibility)
+        self.code_hack_effects = save_data.get("code_hack_effects", save_data.get("data_patch_effects", {}))
         self.discovered_code_effects = save_data.get("discovered_code_effects", {})
         
         # Restore overclocking state
@@ -286,9 +286,9 @@ class GameEngine:
         self.overclock_exploit = save_data.get("overclock_exploit", None)
     
     def _sync_code_discovered_status(self) -> None:
-        """Sync discovered status of inventory data patches with global discovered effects."""
+        """Sync discovered status of inventory code hacks with global discovered effects."""
         for item in self.player.inventory_manager.items:
-            if isinstance(item, DataPatch):
+            if isinstance(item, CodeHack):
                 # Update discovered status based on global discovered effects
                 item.discovered = item.color_name in self.discovered_code_effects
     
@@ -302,8 +302,8 @@ class GameEngine:
         """Deserialize inventory items from save data."""
         items = []
         for item_data in items_data:
-            if item_data["type"] == "data_patch":
-                item = DataPatch(
+            if item_data["type"] == "code_hack":
+                item = CodeHack(
                     color_name=item_data["color"],
                     effect=item_data["effect"],
                     name=item_data["name"],
@@ -325,25 +325,26 @@ class GameEngine:
     def _restore_map_items(self, map_data: Dict) -> None:
         """Restore items on the map from save data."""
         # Clear current items
-        self.game_map.data_patches.clear()
+        self.game_map.code_hacks.clear()
         self.game_map.exploit_pickups.clear()
         self.game_map.permanent_upgrades.clear()
         self.game_map.story_fragments.clear()
         
-        # Restore data patches
-        for pos_str, patch_data in map_data["data_patches"].items():
+        # Restore code hacks (backward compatibility)
+        code_hacks_data = map_data.get("code_hacks", map_data.get("data_patches", {}))
+        for pos_str, patch_data in code_hacks_data.items():
             position = parse_coordinate_string(pos_str)
             if not position:
                 continue
             x, y = position.x, position.y
-            patch = DataPatch(
+            patch = CodeHack(
                 color_name=patch_data["color"],
                 effect=patch_data["effect"],
                 name=patch_data["name"],
                 quantity=patch_data["quantity"]
             )
             patch.discovered = patch_data["discovered"]
-            self.game_map.data_patches[(x, y)] = patch
+            self.game_map.code_hacks[(x, y)] = patch
         
         # Restore exploit pickups
         for pos_str, exploit_key in map_data["exploit_pickups"].items():
@@ -440,7 +441,7 @@ class GameEngine:
             else:
                 logging.warning("Auto-save failed")
     
-    def _randomize_data_patches(self):
+    def _randomize_code_hacks(self):
         """Randomize code effects for this game session."""
         # Clear discovered effects when starting new game
         self.discovered_code_effects.clear()
@@ -457,7 +458,7 @@ class GameEngine:
         
         random.shuffle(effects)
         for color, (effect, desc) in zip(colors, effects):
-            self.data_patch_effects[color] = (effect, desc)
+            self.code_hack_effects[color] = (effect, desc)
     
     def _clear_map(self):
         """Clear all map data."""
@@ -466,7 +467,7 @@ class GameEngine:
         self.game_map.cooling_nodes.clear()
         self.game_map.cpu_recovery_nodes.clear()
         self.game_map.ghost_nodes.clear()
-        self.game_map.data_patches.clear()
+        self.game_map.code_hacks.clear()
         self.game_map.exploit_pickups.clear()
         self.game_map.permanent_upgrades.clear()
         self.game_map.story_fragments.clear()
@@ -671,18 +672,22 @@ class GameEngine:
         
         # Ghost node (detection reduction while standing on it)
         if self.game_map.is_ghost_node(self.player.position):
-            # Reduce detection instantly while standing on the node
-            self.player.detection = max(0, self.player.detection - GameBalance.GHOST_NODE_DETECTION_REDUCTION)
+            # Reduce detection by fixed amount per turn while standing on the node
+            reduction_amount = 20
+            old_detection = self.player.detection
+            self.player.detection = max(0, self.player.detection - reduction_amount)
+            actual_reduction = old_detection - self.player.detection
+            self.message_log.add_message(f"Ghost node: Detection reduced by {actual_reduction:.1f}")
             if should_play_sound:
                 self.sound_manager.play_sound("node_activate")
         
-        # Data patch
-        if player_pos in self.game_map.data_patches:
-            patch = self.game_map.data_patches[player_pos]
+        # Code hack
+        if player_pos in self.game_map.code_hacks:
+            patch = self.game_map.code_hacks[player_pos]
             self.sound_manager.play_sound("item_pickup_code")
             self.player.inventory_manager.add_item(patch)
             self.message_log.add_message(f"Found {patch.name}")
-            del self.game_map.data_patches[player_pos]
+            del self.game_map.code_hacks[player_pos]
         
         # Exploit pickup
         if player_pos in self.game_map.exploit_pickups:
@@ -767,8 +772,8 @@ class GameEngine:
             enemy.last_seen_player = Position(self.player.x, self.player.y)
             # Immediately transition to hostile when still seeing player
             if enemy.alert_timer <= 0:
-                # Store patrol information for LINEAR enemies before becoming hostile
-                if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                # Store patrol information for PATROL enemies before becoming hostile
+                if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
                     enemy.original_patrol_index = enemy.patrol_index
                 enemy.state = EnemyState.HOSTILE
                 detection_increase = GameBalance.ADMIN_DETECTION_INITIAL if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_ALERT_TO_HOSTILE
@@ -794,8 +799,8 @@ class GameEngine:
             enemy.alert_timer -= 1
             if enemy.alert_timer <= 0:
                 enemy.state = EnemyState.UNAWARE
-                # Restore patrol behavior for LINEAR enemies
-                if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                # Restore patrol behavior for PATROL enemies
+                if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
                     enemy.patrol_index = enemy.original_patrol_index
                 self.message_log.add_message(f"{enemy.type_data.name} lost interest")
         elif enemy.state == EnemyState.HOSTILE:
@@ -806,8 +811,8 @@ class GameEngine:
                 else:
                     enemy.state = EnemyState.UNAWARE
                     enemy.last_seen_player = None
-                    # Restore patrol behavior for LINEAR enemies
-                    if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                    # Restore patrol behavior for PATROL enemies
+                    if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
                         enemy.patrol_index = enemy.original_patrol_index
                     self.message_log.add_message(f"{enemy.type_data.name} lost track")
     
@@ -832,8 +837,8 @@ class GameEngine:
                 
             distance = enemy.position.distance_to(alerting_enemy.position)
             if distance <= alert_range:
-                # Store patrol information for LINEAR enemies before becoming hostile
-                if enemy.type_data.movement == EnemyMovement.LINEAR and enemy.patrol_points:
+                # Store patrol information for PATROL enemies before becoming hostile
+                if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
                     enemy.original_patrol_index = enemy.patrol_index
                 # All enemies within alert range immediately go HOSTILE and get player location
                 enemy.state = EnemyState.HOSTILE
@@ -927,7 +932,7 @@ class GameEngine:
                 position.distance_to(self.player.position) <= player_vision and  # Within sight
                 self.game_map.has_line_of_sight(self.player.position, position) and  # Actually visible
                 not self._get_enemy_at(position) and
-                (x, y) not in self.game_map.data_patches and
+                (x, y) not in self.game_map.code_hacks and
                 (x, y) not in self.game_map.cooling_nodes and
                 (x, y) not in self.game_map.cpu_recovery_nodes):
                 return position
@@ -1057,8 +1062,8 @@ class GameEngine:
         else:
             # Enemy damaged but alive - show remaining health
             self.message_log.add_message(f"{target_enemy.type_data.name} health: {target_enemy.cpu}/{target_enemy.max_cpu}")
-            # Store patrol information for LINEAR enemies before becoming hostile
-            if target_enemy.type_data.movement == EnemyMovement.LINEAR and target_enemy.patrol_points:
+            # Store patrol information for PATROL enemies before becoming hostile
+            if target_enemy.type_data.movement == EnemyMovement.PATROL and target_enemy.patrol_points:
                 target_enemy.original_patrol_index = target_enemy.patrol_index
             # Make enemy hostile and aware of player
             target_enemy.state = EnemyState.HOSTILE
@@ -1103,7 +1108,7 @@ class GameEngine:
         """
         # For patrol enemies, we need to simulate their movement step by step
         # to account for patrol point changes
-        if (enemy.type_data.movement == EnemyMovement.LINEAR and 
+        if (enemy.type_data.movement == EnemyMovement.PATROL and 
             enemy.patrol_points and 
             enemy.state != EnemyState.HOSTILE):
             return self._predict_patrol_movement(enemy, steps)
@@ -1141,17 +1146,17 @@ class GameEngine:
             if not temp_enemy.movement_queue:
                 current_target = temp_enemy.patrol_points[temp_enemy.patrol_index]
                 try:
-                    # Use the same pathfinding logic as in the enemy class
+                    # Calculate path without moving the enemy
                     cost_map = create_pathfinding_cost_map(self.game_map, self, temp_enemy)
-                    path = pathfind_and_move(
-                        temp_enemy,
-                        current_target,
-                        self.game_map,
-                        self.player,
-                        self
-                    )
+                    import tcod
+                    graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+                    pathfinder = tcod.path.Pathfinder(graph)
+                    pathfinder.add_root((temp_enemy.x, temp_enemy.y))
+                    path = pathfinder.path_to((current_target.x, current_target.y))
+                    
                     if path and len(path) > 1:
-                        temp_enemy.movement_queue = path[1:]  # Exclude current position
+                        # Convert tuples to Position objects and exclude current position
+                        temp_enemy.movement_queue = [Position(x, y) for x, y in path[1:]]
                     else:
                         # No valid path, try next patrol point
                         temp_enemy.patrol_index = (temp_enemy.patrol_index + 1) % len(temp_enemy.patrol_points)
@@ -1225,7 +1230,7 @@ class GameEngine:
             
             # Generate additional game elements not handled by LevelGenerator
             self._create_border_walls()
-            self._place_data_patches()
+            self._place_code_hacks()
             self._place_exploit_pickups()
             self._place_story_fragment()  # Add story fragment placement
             self._place_permanent_upgrades()
@@ -1281,11 +1286,11 @@ class GameEngine:
         # Final fallback (should never be needed)
         return Position(6, 6)
     
-    def _place_data_patches(self):
+    def _place_code_hacks(self):
         """Place codes throughout the level."""
         # Code effects should already be initialized at game start
         # If somehow empty, this is an error - don't place patches
-        if not self.data_patch_effects:
+        if not self.code_hack_effects:
             logging.error("Code effects not initialized - skipping patch placement")
             return
         
@@ -1300,15 +1305,15 @@ class GameEngine:
             position = Position(x, y)
             
             if self._is_valid_patch_placement(position):
-                color = random.choice(list(self.data_patch_effects.keys()))
-                effect, desc = self.data_patch_effects[color]
-                patch = DataPatch(color_name=color, effect=effect, name=f"{color.title()} Code", description=desc)
+                color = random.choice(list(self.code_hack_effects.keys()))
+                effect, desc = self.code_hack_effects[color]
+                patch = CodeHack(color_name=color, effect=effect, name=f"{color.title()} Code", description=desc)
                 
                 # Check if player has already discovered this color effect
                 # by looking at existing inventory items
                 patch.discovered = self._is_code_color_discovered(color)
                 
-                self.game_map.data_patches[(x, y)] = patch
+                self.game_map.code_hacks[(x, y)] = patch
                 placed_patches += 1
     
     def _is_code_color_discovered(self, color: str) -> bool:
@@ -1432,13 +1437,13 @@ class GameEngine:
                     enemy.patrol_points = self.enemy_manager._generate_patrol_route(position)
                 elif enemy_type == 'virus':
                     # Give virus enemies random movement types for variety
-                    virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.LINEAR, EnemyMovement.SEEK]
+                    virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.PATROL, EnemyMovement.SEEK]
                     virus_movement_weights = [2, 3, 2, 2]  # Equal chance for each movement type
                     chosen_movement = random.choices(virus_movement_types, weights=virus_movement_weights)[0]
                     enemy.type_data.movement = chosen_movement
                     
                     # Generate patrol route if virus got LINEAR movement
-                    if chosen_movement == EnemyMovement.LINEAR:
+                    if chosen_movement == EnemyMovement.PATROL:
                         enemy.patrol_points = self.enemy_manager._generate_patrol_route(position)
                 
                 self.enemy_manager.enemies.append(enemy)
@@ -1452,7 +1457,7 @@ class GameEngine:
             return False
             
         return (not self.game_map.is_wall(position) and
-                (position.x, position.y) not in self.game_map.data_patches and
+                (position.x, position.y) not in self.game_map.code_hacks and
                 (position.x, position.y) not in self.game_map.cooling_nodes and
                 (position.x, position.y) not in self.game_map.cpu_recovery_nodes and
                 (position.x, position.y) not in self.game_map.ghost_nodes and
@@ -1483,7 +1488,7 @@ class GameEngine:
         
         # Check for overlapping with items and features
         pos_tuple = (position.x, position.y)
-        if (pos_tuple in self.game_map.data_patches or
+        if (pos_tuple in self.game_map.code_hacks or
             pos_tuple in self.game_map.cooling_nodes or
             pos_tuple in self.game_map.cpu_recovery_nodes or
             pos_tuple in self.game_map.exploit_pickups):

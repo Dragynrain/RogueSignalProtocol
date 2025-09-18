@@ -6,7 +6,7 @@ import tcod
 import tcod.event
 from game_combat import ExploitSystem
 from game_data import GameData
-from game_inventory import DataPatch, ExploitItem
+from game_inventory import CodeHack, ExploitItem
 from game_ui import UniversalInputHandler
 
 
@@ -278,7 +278,7 @@ class InputHandler:
                 selected_item = inventory_items[item_index]
                 if selected_item.use(self.game.player, self.game):
                     # Check if it was a code - if so, advance turn
-                    if isinstance(selected_item, DataPatch):
+                    if isinstance(selected_item, CodeHack):
                         self.game.maybe_process_turn()
                     
                     # Update selection if item was consumed
