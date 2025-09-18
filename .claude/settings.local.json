@@ -6,7 +6,10 @@
       "Bash(timeout:*)",
       "Bash(.venv\\Scripts\\python.exe:*)",
       "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/ -v)",
-      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/ -v --tb=short)"
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/ -v --tb=short)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_inventory.py -v)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_enemies.py -v)",
+      "Bash(\".venv\\Scripts\\python.exe\" -m pytest tests/unit/test_inventory.py tests/unit/test_enemies.py tests/unit/test_save.py tests/unit/test_level.py -v --tb=short)"
     ],
     "deny": [],
     "ask": []
