@@ -3,6 +3,7 @@
 ## Running Unit Tests and Python commands
 - **uv for tests**: always run tests using uv run pytest ...
 - **uv for python**: always run one-off python commands (debugging, testing imports etc) using uv run python ...
+- **uv path**: Commands should start with just 'uv ' (no cd directory changes or .venv path prefixes needed)
 
 ## Bash Command Guidelines
 - **Quotes**: ALWAYS use quotes around file paths with spaces: `cd "path with spaces"` not `cd path with spaces`
