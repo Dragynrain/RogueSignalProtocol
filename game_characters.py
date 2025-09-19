@@ -489,7 +489,7 @@ class Enemy:
                 pathfinder.add_root((start_pos.x, start_pos.y))
                 path = pathfinder.path_to((target.x, target.y))
                 
-                if path and len(path) > 1:
+                if len(path) > 1:
                     # Add the next moves from the path (skip current position)
                     for i in range(1, min(len(path), moves_needed + 1)):
                         x, y = path[i]

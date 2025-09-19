@@ -4,6 +4,12 @@
 - **uv for tests**: always run tests using uv run pytest ...
 - **uv for python**: always run one-off python commands (debugging, testing imports etc) using uv run python ...
 
+## Bash Command Guidelines
+- **Quotes**: ALWAYS use quotes around file paths with spaces: `cd "path with spaces"` not `cd path with spaces`
+- **Windows vs Unix Commands**: Use proper Windows commands - `rm` not `del`, `ls` not `dir`
+- **File Operations**: Use `rm` for deletion, `ls` for listing, `mkdir` for directories
+- **Path Separators**: Use forward slashes in paths even on Windows when possible
+
 ## Project-Specific Rules
 - **Symbol Conventions**: Letters (A-Z) are ONLY for enemies. Everything else must use ASCII symbols (not unicode)
 - **Version References**: Always reference the LATEST version of dependencies (especially python-tcod)
@@ -15,6 +21,7 @@
 - **Code Style**: Follow existing patterns, avoid complex OOP, prefer functional approaches
 - **Error Handling**: Use proper logging and always print errors to the console
 - **Testing**: Always test changes with the virtual environment Python
+- **Unit Test Updates**: When making code changes, ALWAYS update corresponding unit tests to maintain coverage
 - **Performance**: Use TCOD's built-in functions (like A* pathfinding and vision system) instead of manual implementations
 
 ## Logging Systems (CRITICAL DISTINCTION)
