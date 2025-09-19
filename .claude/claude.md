@@ -155,20 +155,94 @@
 - `game_map.py` - Map data structure, tile management 
 - `game_story.py` - Story fragment management, lore system 
 
-## Development Workflow Checklist
+## Test-Driven Development Workflow
 
-### During Development  
+### TDD Process (Red-Green-Refactor)
+1. **RED**: Write a failing test first
+2. **GREEN**: Write minimal code to make test pass  
+3. **REFACTOR**: Improve code while keeping tests green
+
+### Quick Test Commands
+```bash
+# Fast feedback during development
+python test_commands.py quick
+
+# Full test suite before committing
+python test_commands.py full
+
+# Auto-run tests on file changes
+python test_commands.py watch
+
+# Test only files you changed
+python test_commands.py changed
+```
+
+### Writing Tests - Use Test Builders
+```python
+# Use fluent builders for clean, readable tests
+from tests.fixtures.test_builders import player, enemy, scenario
+
+def test_new_feature():
+    # Arrange - use builders for clear test setup
+    test_player = player().with_cpu(100).at_position(5, 5).build()
+    test_enemy = enemy().hostile().at_position(10, 10).build()
+    
+    # Act - call the function being tested
+    result = new_feature_function(test_player, test_enemy)
+    
+    # Assert - verify expected behavior
+    assert result.success is True
+    assert result.damage > 0
+```
+
+### Bug Fix Process
+1. **Write failing test that reproduces the bug**:
+```python
+def test_bug_player_stuck_in_wall():
+    # Reproduce the exact bug scenario
+    player = player().at_position(5, 5).build()
+    wall_at_same_position = True
+    
+    # This should fail initially, confirming bug exists
+    result = movement_system.move_player(player, Direction.NORTH)
+    assert result.success is False
+    assert "wall" in result.error_message.lower()
+```
+
+2. **Confirm test fails** (reproduces bug)
+3. **Fix the code** to make test pass
+4. **Verify test passes** (bug is fixed)
+5. **Run full test suite** to ensure no regressions
+
+### Development Workflow Checklist
+
+#### Before Starting Any Feature/Fix
+- Run `python test_commands.py watch` for automatic feedback
+- Write the test first (RED phase)
+
+#### During Development  
+- Keep tests running in watch mode
+- Write minimal code to pass tests (GREEN phase)  
+- Refactor with confidence knowing tests will catch breaks
 - Update help text if symbols change
 - Use TCOD built-in functions when available
 - Add proper error handling with logging
 
-### After Changes
-- Test game functionality 
+#### After Changes
+- Run `python test_commands.py full` to ensure all tests pass
+- Check that coverage hasn't decreased significantly
+- Test game functionality manually
 - Update documentation if needed
+
+#### Before Committing
+- Ensure all tests pass: `python test_commands.py full`
+- Verify performance hasn't regressed
+- Check that new code has corresponding tests
 
 ### Research Protocol
 - Check latest official documentation first
 - Verify API availability in current version
+- Write tests to verify API behavior works as expected
 
 ## Refactoring Guidelines
 - **DO NOT over-engineer solutions or turn this into an enterprise software product**
