@@ -25,6 +25,13 @@ valid_map_positions = st.builds(
     y=st.integers(min_value=0, max_value=39)
 )
 
+# Positions well within bounds for adjacent testing
+inner_map_positions = st.builds(
+    Position,
+    x=st.integers(min_value=5, max_value=95),
+    y=st.integers(min_value=5, max_value=95)
+)
+
 map_dimensions = st.tuples(
     st.integers(min_value=1, max_value=200),  # width
     st.integers(min_value=1, max_value=200)   # height
@@ -154,36 +161,44 @@ class TestManhattanDistance:
 class TestAdjacentPositions:
     """Property-based tests for adjacent position generation."""
     
-    @given(positions)
+    @given(inner_map_positions)
     def test_adjacent_positions_count(self, pos):
-        """Should always return exactly 4 adjacent positions."""
-        adjacent = get_adjacent_positions(pos)
-        assert len(adjacent) == 4
+        """Should return exactly 8 adjacent positions when well within bounds."""
+        adjacent = get_adjacent_positions(pos, 100, 100)  # Use large map for testing
+        # For positions well within bounds, should always be 8
+        assert len(adjacent) == 8
     
-    @given(positions)
-    def test_adjacent_positions_distance_one(self, pos):
-        """All adjacent positions should be exactly distance 1 away."""
-        adjacent = get_adjacent_positions(pos)
+    @given(inner_map_positions)
+    def test_adjacent_positions_distance_one_or_diagonal(self, pos):
+        """Adjacent positions should be distance 1 (orthogonal) or sqrt(2) (diagonal)."""
+        adjacent = get_adjacent_positions(pos, 100, 100)
         
         for adj_pos in adjacent:
-            distance = calculate_manhattan_distance(pos, adj_pos)
-            assert distance == 1
+            manhattan_distance = calculate_manhattan_distance(pos, adj_pos)
+            # Adjacent positions are either orthogonal (distance 1) or diagonal (distance 2 in Manhattan)
+            assert manhattan_distance in [1, 2]
     
-    @given(positions)
+    @given(inner_map_positions)
     def test_adjacent_positions_unique(self, pos):
         """All adjacent positions should be unique."""
-        adjacent = get_adjacent_positions(pos)
+        adjacent = get_adjacent_positions(pos, 100, 100)
         assert len(set(adjacent)) == len(adjacent)
     
-    @given(positions)
+    @given(inner_map_positions)
     def test_adjacent_positions_correct_offsets(self, pos):
-        """Adjacent positions should have correct coordinate offsets."""
-        adjacent = get_adjacent_positions(pos)
+        """Adjacent positions should have valid coordinate offsets."""
+        adjacent = get_adjacent_positions(pos, 100, 100)
         
-        expected_offsets = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        # Expected offsets include orthogonal and diagonal moves
+        expected_offsets = [
+            (0, 1), (0, -1), (1, 0), (-1, 0),  # Orthogonal
+            (1, 1), (1, -1), (-1, 1), (-1, -1)  # Diagonal
+        ]
         actual_offsets = [(adj.x - pos.x, adj.y - pos.y) for adj in adjacent]
         
-        assert set(actual_offsets) == set(expected_offsets)
+        # All actual offsets should be in the expected set
+        for offset in actual_offsets:
+            assert offset in expected_offsets
 
 
 class PositionStateMachine(RuleBasedStateMachine):
@@ -260,7 +275,7 @@ class TestGameBoundaryProperties:
         # Standard map dimensions
         width, height = 80, 40
         
-        adjacent = get_adjacent_positions(pos)
+        adjacent = get_adjacent_positions(pos, width, height)
         
         # At least some adjacent positions should be valid if pos is not on edge
         valid_adjacent = [

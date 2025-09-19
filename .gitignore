@@ -56,3 +56,23 @@ Thumbs.db
 *.tmp
 *.temp
 nul
+
+# Testing and CI files
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Benchmark results
+benchmark.json
+.benchmarks/
+
+# Mutation testing
+.mutmut-cache
+mutmut-cache.db

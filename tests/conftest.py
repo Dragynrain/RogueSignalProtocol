@@ -6,19 +6,19 @@ pytest configuration and common fixtures for RogueSignalProtocol testing.
 import pytest
 import sys
 import os
-from typing import Dict, Any
 
 # Add the project root to Python path so we can import game modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from game_entities import Position, EnemyState, EnemyMovement, TargetingMode
+from game_entities import Position, EnemyState
 from game_entities import EnemyTypeDefinition, ExploitDefinition, UpgradeDefinition
 
 # Import mock factories for testing
-from tests.fixtures.mock_factories import (
+from .fixtures.mock_factories import (
     MockPlayerFactory, MockEnemyFactory, MockGameMapFactory, 
-    MockGameFactory, MockInventoryFactory, MockExploitFactory,
-    MockSystemFactory, MockTestScenarios
+    MockGameFactory, MockInventoryFactory,
+    MockSystemFactory, MockTestScenarios,
+    player, enemy, game_state, scenario
 )
 
 

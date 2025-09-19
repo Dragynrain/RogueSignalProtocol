@@ -30,9 +30,14 @@
       "Bash(\".venv/Scripts/python.exe\" -m pytest)",
       "Bash(\".venv/Scripts/python.exe\" -m pytest :*)",
       "Bash(.venv\\Scripts\\python.exe :*)",
-      "Bash(\".venv/Scripts/python.exe\" :*)",	  
-	  "Bash(uv run:*)",
-      "WebFetch(domain:docs.claude.com)"
+      "Bash(\".venv/Scripts/python.exe\" :*)",
+      "Bash(uv run:*)",
+      "WebFetch(domain:docs.claude.com)",
+      "Bash(find:*)",
+      "Bash(.venvScriptspython.exe -m pytest tests/unit/test_inventory.py::TestInventoryItem::test_inventory_item_use_default -v)",
+      "Bash(\".venv\\Scripts\\python.exe\" mutmut_config.py results)",
+      "Bash(\".venv\\Scripts\\pip.exe\" list)",
+      "Bash(\".venv\\Scripts\\mutmut.exe\" show)"
     ],
     "deny": [],
     "ask": [

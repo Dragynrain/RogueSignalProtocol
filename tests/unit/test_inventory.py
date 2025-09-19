@@ -13,6 +13,7 @@ from game_inventory import (
 )
 from game_entities import ExploitDefinition
 from game_data import GameData, GameBalance
+from ..fixtures.mock_factories import MockPlayerFactory
 
 
 class TestInventoryItem:
@@ -35,7 +36,7 @@ class TestInventoryItem:
     def test_inventory_item_use_default(self):
         """Test default use method returns False."""
         item = InventoryItem("Unusable", "test")
-        mock_player = Mock()
+        mock_player = MockPlayerFactory.create_basic_player()
         mock_game = Mock()
         assert item.use(mock_player, mock_game) is False
 
