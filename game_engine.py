@@ -885,6 +885,7 @@ class GameEngine:
                     self.sound_manager.play_sound("player_death", priority=10)
                     self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
                     self.sound_manager.play_sound("critical_system_failure", priority=10)
+                    self.sound_manager.stop_music(fade_out_ms=500)  # Stop level music on death
                     # Delete save on death (permadeath)
                     SaveGameManager.delete_save()
                     self.message_log.add_message("Save data purged")
@@ -1001,6 +1002,7 @@ class GameEngine:
                         self.sound_manager.play_sound("player_death", priority=10)
                         self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
                         self.sound_manager.play_sound("critical_system_failure", priority=10)
+                        self.sound_manager.stop_music(fade_out_ms=500)  # Stop level music on death
                         # Delete save on death (permadeath)
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
@@ -1154,7 +1156,7 @@ class GameEngine:
                     pathfinder.add_root((temp_enemy.x, temp_enemy.y))
                     path = pathfinder.path_to((current_target.x, current_target.y))
                     
-                    if path and len(path) > 1:
+                    if len(path) > 1:
                         # Convert tuples to Position objects and exclude current position
                         temp_enemy.movement_queue = [Position(x, y) for x, y in path[1:]]
                     else:

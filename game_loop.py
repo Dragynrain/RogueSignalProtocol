@@ -138,10 +138,11 @@ def handle_menu_navigation(console, context, menus, settings):
     main_menu.refresh_options(show_continue=True)
     current_menu = main_menu
     
-    # Start main menu music
+    # Start main menu music only if no music is already playing
     menu_sound_manager = SoundManager(settings)
     try:
-        menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000, volume_multiplier=1.3)
+        if not menu_sound_manager.is_music_playing():
+            menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000, volume_multiplier=1.3)
     except Exception as e:
         logging.warning(f"Could not play main menu music: {e}")
         # Continue without music

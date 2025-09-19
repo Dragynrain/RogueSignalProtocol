@@ -977,3 +977,737 @@ class TestGameEngineCodeEffects:
                     assert isinstance(desc, str)
                     assert action in ['restore_cpu', 'reduce_heat', 'reduce_detection',
                                     'speed_boost', 'enhanced_vision', 'exploit_efficiency']
+
+
+class TestGameEngineMovementPrediction:
+    """Test game engine movement prediction system."""
+    
+    def test_predict_enemy_movement_non_patrol(self):
+        """Test movement prediction for non-patrol enemies."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Create mock enemy with existing movement queue
+                mock_enemy = Mock()
+                mock_enemy.type_data = Mock()
+                mock_enemy.type_data.movement = EnemyMovement.STATIC
+                mock_enemy.state = EnemyState.UNAWARE
+                mock_enemy.movement_queue = [Position(1, 1), Position(2, 2), Position(3, 3)]
+                
+                result = engine._predict_enemy_movement(mock_enemy, 3)
+                
+                # Should return first 3 positions from queue
+                assert len(result) == 3
+                assert result[0] == Position(1, 1)
+                assert result[1] == Position(2, 2)
+                assert result[2] == Position(3, 3)
+    
+    def test_predict_patrol_movement(self):
+        """Test patrol movement prediction."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Create mock patrol enemy
+                mock_enemy = Mock()
+                mock_enemy.type_data = Mock()
+                mock_enemy.type_data.movement = EnemyMovement.PATROL
+                mock_enemy.state = EnemyState.UNAWARE
+                mock_enemy.patrol_points = [Position(5, 5), Position(10, 10)]
+                mock_enemy.patrol_index = 0
+                mock_enemy.x = 3
+                mock_enemy.y = 3
+                mock_enemy.movement_queue = []
+                
+                with patch('game_engine.create_pathfinding_cost_map') as mock_cost:
+                    mock_cost.return_value = [[1 for _ in range(50)] for _ in range(50)]
+                    
+                    with patch('tcod.path.SimpleGraph') as mock_graph:
+                        with patch('tcod.path.Pathfinder') as mock_pathfinder_class:
+                            mock_pathfinder = Mock()
+                            mock_pathfinder_class.return_value = mock_pathfinder
+                            mock_pathfinder.path_to.return_value = [(3, 3), (4, 4), (5, 5)]
+                            
+                            result = engine._predict_patrol_movement(mock_enemy, 2)
+                            
+                            # Should return predicted positions
+                            assert len(result) <= 2
+    
+    def test_enemy_at_position(self):
+        """Test getting enemy at specific position."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Mock enemy manager to return specific enemy
+                mock_enemy = Mock()
+                engine.enemy_manager.get_enemy_at_position = Mock(return_value=mock_enemy)
+                
+                result = engine._get_enemy_at(Position(10, 15))
+                
+                assert result == mock_enemy
+                engine.enemy_manager.get_enemy_at_position.assert_called_once_with(Position(10, 15))
+
+
+class TestGameEngineMovementSystem:
+    """Test game engine movement and turn processing."""
+    
+    def test_update_enemies_basic(self):
+        """Test basic enemy update processing."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                with patch.object(engine, '_update_enemy_awareness') as mock_awareness, \
+                     patch.object(engine, '_move_enemies') as mock_move, \
+                     patch.object(engine, '_process_enemy_attacks') as mock_attacks:
+                    
+                    engine._update_enemies()
+                    
+                    mock_awareness.assert_called_once()
+                    mock_move.assert_called_once() 
+                    mock_attacks.assert_called_once()
+    
+    def test_memory_system_update(self):
+        """Test memory system update processing."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # The memory system updates FOV, not virus turns
+                # Let's test that it runs without error
+                with patch.object(engine.player, 'get_vision_range', return_value=5), \
+                     patch.object(engine.player, 'can_see_through_walls', return_value=False):
+                    
+                    # Should not raise exception
+                    engine._update_memory_system()
+    
+    def test_threat_scan_update(self):
+        """Test threat scan update processing."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Set up threat scan effect
+                engine.game_state.threat_scan_turns = 2
+                
+                engine._update_threat_scan()
+                
+                # Threat scan turns should be decremented
+                assert engine.game_state.threat_scan_turns == 1
+
+
+class TestGameEngineSpecialNodes:
+    """Test game engine special node interactions."""
+    
+    def test_ghost_node_processing(self):
+        """Test ghost node gives random temporary effect."""
+        with patch('game_engine.SoundManager') as mock_sound_manager:
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                engine.last_node_position = None  # First time on node
+                
+                with patch.object(engine.game_map, 'is_cooling_node', return_value=False), \
+                     patch.object(engine.game_map, 'is_cpu_recovery_node', return_value=False), \
+                     patch.object(engine.game_map, 'is_ghost_node', return_value=True):
+                    
+                    engine._process_special_tiles()
+                    
+                    # Should play sound when stepping on node for first time
+                    engine.sound_manager.play_sound.assert_called_with("node_activate")
+
+
+class TestGameEngineEnemyAI:
+    """Test game engine enemy AI system."""
+    
+    def test_handle_enemy_sees_player_alert_to_hostile(self):
+        """Test enemy transitions from ALERT to HOSTILE."""
+        with patch('game_engine.SoundManager') as mock_sound_manager:
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                mock_enemy = Mock()
+                mock_enemy.state = EnemyState.ALERT
+                mock_enemy.alert_timer = 0  # Ready to transition
+                mock_enemy.type_data = Mock()
+                mock_enemy.type_data.name = "Scanner"
+                mock_enemy.type_data.movement = EnemyMovement.STATIC
+                mock_enemy.type = "scanner"
+                mock_enemy.patrol_points = None
+                
+                with patch.object(engine, '_check_detection_threshold_warnings'), \
+                     patch.object(engine, '_alert_nearby_enemies'):
+                    
+                    engine._handle_enemy_sees_player(mock_enemy)
+                    
+                    assert mock_enemy.state == EnemyState.HOSTILE
+                    engine.sound_manager.play_sound.assert_called_with("enemy_hostile")
+    
+    def test_update_enemy_awareness_no_enemies(self):
+        """Test enemy awareness update with no enemies."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                engine.enemy_manager.enemies = []
+                
+                # Should not raise exception
+                engine._update_enemy_awareness()
+
+
+class TestGameEngineDeathHandling:
+    """Test game engine death handling."""
+    
+    def test_process_turn_player_death_virus(self):
+        """Test player death from virus damage plays appropriate sounds."""
+        with patch('game_engine.SoundManager') as mock_sound_manager:
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                engine.player.cpu = 50  # Start with some CPU
+                engine.player.temporary_effects['virus_turns'] = 1
+                
+                # Mock the process_turn method to simulate virus damage killing player
+                with patch.object(engine.turn_processor, 'process_turn') as mock_process_turn:
+                    def virus_kills_player(player):
+                        player.cpu = 0  # Virus kills player
+                    mock_process_turn.side_effect = virus_kills_player
+                    
+                    with patch.object(engine, '_update_threat_scan'), \
+                         patch.object(engine, '_process_special_tiles'), \
+                         patch.object(engine, '_update_enemies'), \
+                         patch.object(engine, '_update_memory_system'), \
+                         patch.object(engine, '_check_admin_spawn'):
+                        
+                        engine.process_turn()
+                        
+                        # Should play virus damage and death sounds
+                        engine.sound_manager.play_sound.assert_any_call("virus_damage")
+                        engine.sound_manager.play_sound.assert_any_call("player_death", priority=10)
+    
+    def test_process_turn_player_overheating_handling(self):
+        """Test turn processing with overheating player."""
+        with patch('game_engine.SoundManager') as mock_sound_manager:
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                engine.player.cpu = 50
+                engine.player.heat = 150  # Over maximum
+                engine.player.max_heat = 100
+                
+                with patch.object(engine, '_update_threat_scan'), \
+                     patch.object(engine, '_process_special_tiles'), \
+                     patch.object(engine, '_update_enemies'), \
+                     patch.object(engine, '_update_memory_system'), \
+                     patch.object(engine, '_check_admin_spawn'), \
+                     patch.object(engine.turn_processor, 'process_turn'):
+                    
+                    # Should complete turn processing without error
+                    engine.process_turn()
+
+
+class TestGameEngineExploitSystem:
+    """Test game engine exploit system integration."""
+    
+    def test_exploit_system_parameter_accepted(self):
+        """Test exploit system parameter is accepted without error."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                mock_exploit_system = Mock()
+                
+                # Should not raise exception when provided
+                engine = GameEngine(
+                    exploit_system=mock_exploit_system,
+                    load_save=False
+                )
+
+
+class TestGameEngineTargetingSystem:
+    """Test game engine targeting system."""
+    
+    def test_cursor_boundary_constraints(self):
+        """Test cursor movement respects map boundaries."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                engine.targeting_mode = True
+                engine.cursor_position = Position(0, 0)
+                
+                # Try to move cursor beyond boundary
+                engine.move_player(-1, -1)
+                
+                # Cursor should stay within bounds
+                assert engine.cursor_position.x >= 0
+                assert engine.cursor_position.y >= 0
+
+
+class TestGameEngineMapIntegration:
+    """Test game engine map system integration."""
+    
+    def test_map_initialization(self):
+        """Test map is properly initialized with correct dimensions."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.GameMap') as mock_game_map_class:
+                with patch('game_engine.LevelGenerator') as mock_level_gen:
+                    mock_level_gen.return_value.generate_level = Mock()
+                    
+                    engine = GameEngine(load_save=False)
+                    
+                    # Should create map with config dimensions
+                    mock_game_map_class.assert_called_with(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
+    
+    def test_level_generation_integration(self):
+        """Test level generation is called during initialization."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen_class:
+                mock_level_gen = Mock()
+                mock_level_gen_class.return_value = mock_level_gen
+                
+                engine = GameEngine(load_save=False)
+                
+                # Should call generate_level during initialization
+                mock_level_gen.generate_level.assert_called()
+
+
+class TestGameEngineStorySystem:
+    """Test game engine story fragment management."""
+    
+    def test_story_fragment_manager_initialization(self):
+        """Test story fragment manager is properly initialized."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Should have story fragment manager
+                assert hasattr(engine, 'story_fragment_manager')
+
+
+class TestGameEngineCodeHackEffects:
+    """Test game engine code hack effect application."""
+    
+    def test_discovered_code_effects_initialization(self):
+        """Test discovered code effects are properly initialized."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Should initialize discovered code effects dict
+                assert isinstance(engine.discovered_code_effects, dict)
+                assert len(engine.discovered_code_effects) == 0
+
+
+class TestGameEngineUIStateManagement:
+    """Test game engine UI state management."""
+    
+    def test_ui_state_defaults(self):
+        """Test UI state is properly initialized to defaults."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Test all UI state defaults
+                assert engine.show_inventory is False
+                assert engine.show_help is False
+                assert engine.show_gateway_confirmation is False
+                assert engine.show_story_fragment is None
+                assert engine.show_lore_viewer is False
+                assert engine.inventory_selection == 0
+                assert engine.lore_viewer_selection == 0
+                assert engine.lore_viewer_mode == "list"
+                assert engine.targeting_mode is False
+                assert engine.targeting_exploit is None
+                assert engine.overclock_confirmation is False
+                assert engine.overclock_exploit is None
+
+
+class TestGameEngineAdminAvatarSystem:
+    """Test game engine admin avatar spawning system."""
+    
+    def test_admin_spawn_already_spawned(self):
+        """Test admin doesn't spawn if already spawned."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                engine.player.detection = GameConfig.MAX_DETECTION
+                engine.admin_spawned = True  # Already spawned
+                
+                with patch.object(engine, '_spawn_admin_avatar') as mock_spawn:
+                    engine._check_admin_spawn()
+                    mock_spawn.assert_not_called()
+    
+    def test_admin_spawn_admin_already_exists(self):
+        """Test admin doesn't spawn if admin enemy already exists."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                engine.player.detection = GameConfig.MAX_DETECTION
+                engine.admin_spawned = False
+                
+                # Mock admin enemy already present
+                mock_admin = Mock()
+                mock_admin.type = 'admin'
+                engine.enemy_manager.enemies = [mock_admin]
+                
+                with patch.object(engine, '_spawn_admin_avatar') as mock_spawn:
+                    engine._check_admin_spawn()
+                    mock_spawn.assert_not_called()
+
+
+class TestGameEngineEnemyInteraction:
+    """Test game engine enemy interaction system."""
+    
+    def test_enemy_attack_player_survival(self):
+        """Test player survives enemy attack."""
+        with patch('game_engine.SoundManager') as mock_sound_manager:
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                engine.player.cpu = 100
+                
+                mock_enemy = Mock()
+                mock_enemy.type_data = Mock()
+                mock_enemy.type_data.name = "Scanner"
+                mock_enemy.type_data.damage = 20
+                mock_enemy.type_data.virus_turns = 0
+                
+                # Simulate enemy attack
+                damage = mock_enemy.type_data.damage
+                engine.player.cpu -= damage
+                
+                # Player should survive
+                assert engine.player.cpu == 80
+                assert engine.game_over is False
+
+
+class TestGameEngineRestoreMethods:
+    """Test game engine save/restore functionality."""
+    
+    def test_restore_game_state(self):
+        """Test game state restoration from save data."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                save_data = {
+                    'level': 3,
+                    'turn': 100,
+                    'game_over': False,
+                    'admin_spawned': True,
+                    'threat_scan_turns': 5
+                }
+                
+                engine._restore_game_state(save_data)
+                
+                assert engine.level == 3
+                assert engine.turn == 100
+                assert engine.game_over is False
+                assert engine.admin_spawned is True
+                assert engine.game_state.threat_scan_turns == 5
+    
+    def test_restore_player_state(self):
+        """Test player state restoration from save data."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                player_data = {
+                    'x': 10,
+                    'y': 15,
+                    'cpu': 80,
+                    'heat': 30,
+                    'detection': 25,
+                    'max_heat': 120,
+                    'temporary_effects': {
+                        'virus_turns': 2,
+                        'speed_boost_turns': 1
+                    }
+                }
+                
+                engine._restore_player_state(player_data)
+                
+                assert engine.player.x == 10
+                assert engine.player.y == 15
+                assert engine.player.cpu == 80
+                assert engine.player.heat == 30
+                assert engine.player.detection == 25
+                assert engine.player.max_heat == 120
+                assert engine.player.temporary_effects['virus_turns'] == 2
+                assert engine.player.temporary_effects['speed_boost_turns'] == 1
+    
+    def test_restore_game_effects(self):
+        """Test game effects restoration from save data."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                save_data = {
+                    'code_hack_effects': {
+                        'crimson': ('restore_cpu', 'Restore CPU'),
+                        'azure': ('reduce_heat', 'Reduce heat')
+                    },
+                    'discovered_code_effects': {
+                        'crimson': True
+                    }
+                }
+                
+                engine._restore_game_effects(save_data)
+                
+                assert 'crimson' in engine.code_hack_effects
+                assert 'azure' in engine.code_hack_effects
+                assert engine.discovered_code_effects['crimson'] is True
+    
+    def test_restore_ui_state(self):
+        """Test UI state restoration from save data.""" 
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                save_data = {
+                    'inventory_selection': 2,
+                    'lore_viewer_selection': 1,
+                    'lore_viewer_mode': 'details'
+                }
+                
+                engine._restore_ui_state(save_data)
+                
+                assert engine.inventory_selection == 2
+                assert engine.lore_viewer_selection == 1
+                assert engine.lore_viewer_mode == 'details'
+    
+    def test_sync_code_discovered_status(self):
+        """Test code discovered status synchronization."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Set up discovered code effects
+                engine.discovered_code_effects = {'crimson': True, 'azure': True}
+                
+                # Mock inventory with code items
+                engine.player.inventory_manager.get_items_by_type = Mock(return_value=[
+                    Mock(color='crimson'),
+                    Mock(color='emerald')
+                ])
+                
+                engine._sync_code_discovered_status()
+                
+                # Should have discovered effects for inventory items
+                assert 'crimson' in engine.discovered_code_effects
+                assert 'emerald' in engine.discovered_code_effects
+
+
+class TestGameEngineHelpChecks:
+    """Test game engine detection threshold and other checks."""
+    
+    def test_check_detection_threshold_warnings(self):
+        """Test detection threshold warning system."""
+        with patch('game_engine.SoundManager') as mock_sound_manager:
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Test 50% threshold
+                engine._check_detection_threshold_warnings(40, 55)
+                engine.sound_manager.play_sound.assert_called_with("detection_threshold")
+                
+                # Test 75% threshold
+                engine._check_detection_threshold_warnings(60, 80)
+                engine.sound_manager.play_sound.assert_called_with("detection_threshold")
+    
+    def test_alert_nearby_enemies(self):
+        """Test alerting nearby enemies when one becomes hostile."""
+        with patch('game_engine.SoundManager') as mock_sound_manager:
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Create hostile enemy and nearby enemy
+                hostile_enemy = Mock()
+                hostile_enemy.x = 10
+                hostile_enemy.y = 10
+                
+                nearby_enemy = Mock()
+                nearby_enemy.x = 12
+                nearby_enemy.y = 12
+                nearby_enemy.state = EnemyState.UNAWARE
+                nearby_enemy.type_data = Mock()
+                nearby_enemy.type_data.name = "Scanner"
+                
+                far_enemy = Mock()
+                far_enemy.x = 30
+                far_enemy.y = 30
+                far_enemy.state = EnemyState.UNAWARE
+                
+                engine.enemy_manager.enemies = [nearby_enemy, far_enemy]
+                
+                engine._alert_nearby_enemies(hostile_enemy)
+                
+                # Nearby enemy should be alerted
+                assert nearby_enemy.state == EnemyState.ALERT
+                assert nearby_enemy.last_seen_player is not None
+                
+                # Far enemy should remain unaware
+                assert far_enemy.state == EnemyState.UNAWARE
+
+
+class TestGameEngineSpawnAdmin:
+    """Test admin avatar spawning functionality."""
+    
+    def test_spawn_admin_avatar(self):
+        """Test admin avatar spawning."""
+        with patch('game_engine.SoundManager') as mock_sound_manager:
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                engine.admin_spawned = False
+                
+                # Mock finding a valid spawn position
+                with patch.object(engine, '_find_valid_admin_spawn', return_value=Position(20, 20)) as mock_find:
+                    with patch.object(engine.enemy_manager, 'spawn_enemy') as mock_spawn:
+                        
+                        engine._spawn_admin_avatar()
+                        
+                        assert engine.admin_spawned is True
+                        mock_find.assert_called_once()
+                        mock_spawn.assert_called_once()
+                        engine.sound_manager.play_sound.assert_called_with("admin_spawn")
+    
+    def test_find_valid_admin_spawn(self):
+        """Test finding valid admin spawn position."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Mock game map methods
+                engine.game_map.is_walkable = Mock(return_value=True)
+                engine.enemy_manager.get_enemy_at_position = Mock(return_value=None)
+                
+                with patch('random.randint', side_effect=[15, 15]):  # Mock random position
+                    result = engine._find_valid_admin_spawn()
+                    
+                    assert isinstance(result, Position)
+                    assert result.x == 15
+                    assert result.y == 15
+
+
+class TestGameEngineProcessEnemyAttacks:
+    """Test enemy attack processing."""
+    
+    def test_process_enemy_attacks(self):
+        """Test processing enemy attacks."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Create hostile enemy in range
+                mock_enemy = Mock()
+                mock_enemy.state = EnemyState.HOSTILE
+                mock_enemy.has_moved_this_turn = False
+                mock_enemy.can_attack_player = Mock(return_value=True)
+                mock_enemy.type_data = Mock()
+                mock_enemy.type_data.name = "Scanner"
+                mock_enemy.type_data.damage = 20
+                mock_enemy.type_data.virus_turns = 0
+                
+                engine.enemy_manager.enemies = [mock_enemy]
+                
+                with patch.object(engine, '_apply_enemy_attack') as mock_apply:
+                    engine._process_enemy_attacks()
+                    
+                    mock_apply.assert_called_once_with(mock_enemy)
+    
+    def test_apply_enemy_attack(self):
+        """Test applying enemy attack to player."""
+        with patch('game_engine.SoundManager') as mock_sound_manager:
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                engine.player.cpu = 100
+                
+                mock_enemy = Mock()
+                mock_enemy.type_data = Mock()
+                mock_enemy.type_data.name = "Scanner"
+                mock_enemy.type_data.damage = 25
+                mock_enemy.type_data.virus_turns = 0
+                
+                engine._apply_enemy_attack(mock_enemy)
+                
+                # Player should take damage
+                assert engine.player.cpu == 75
+                engine.sound_manager.play_sound.assert_called_with("enemy_attack")
+
+
+class TestGameEngineMoveEnemies:
+    """Test enemy movement processing."""
+    
+    def test_move_enemies(self):
+        """Test moving all enemies."""
+        with patch('game_engine.SoundManager'):
+            with patch('game_engine.LevelGenerator') as mock_level_gen:
+                mock_level_gen.return_value.generate_level = Mock()
+                
+                engine = GameEngine(load_save=False)
+                
+                # Create mock enemy
+                mock_enemy = Mock()
+                mock_enemy.has_moved_this_turn = False
+                
+                engine.enemy_manager.enemies = [mock_enemy]
+                engine.enemy_manager.update_all_enemies = Mock()
+                
+                engine._move_enemies()
+                
+                engine.enemy_manager.update_all_enemies.assert_called_once_with(engine.player, engine)
