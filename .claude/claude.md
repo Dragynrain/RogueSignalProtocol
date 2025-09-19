@@ -1,5 +1,9 @@
 # Claude Code Instructions & Guidelines
 
+## Running Unit Tests and Python commands
+- **uv for tests**: always run tests using uv run pytest ...
+- **uv for python**: always run one-off python commands (debugging, testing imports etc) using uv run python ...
+
 ## Project-Specific Rules
 - **Symbol Conventions**: Letters (A-Z) are ONLY for enemies. Everything else must use ASCII symbols (not unicode)
 - **Version References**: Always reference the LATEST version of dependencies (especially python-tcod)

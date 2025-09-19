@@ -554,6 +554,10 @@ class Enemy:
             elif self.last_seen_player:
                 target = self.last_seen_player
                 use_pathfinding = True
+            elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
+                # HOSTILE patrol enemies return to patrol when they lose the player
+                target = self.patrol_points[self.patrol_index]
+                use_pathfinding = True
         elif self.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.TRACK]:
             # SEEK/TRACK movement types target player when they can see them
             if self.can_see_player(player, game_map):

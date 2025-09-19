@@ -654,12 +654,9 @@ class TestEnemyAI:
 class TestPathfinding:
     """Test pathfinding helper functions."""
     
-    @patch('numpy.zeros')
-    def test_create_pathfinding_cost_map(self, mock_zeros):
+    def test_create_pathfinding_cost_map(self):
         """Test pathfinding cost map creation."""
-        # Mock the numpy array
-        mock_cost_map = Mock()
-        mock_zeros.return_value = mock_cost_map
+        import numpy as np
         
         mock_map = Mock()
         mock_map.width = 10
@@ -673,9 +670,13 @@ class TestPathfinding:
         
         cost_map = create_pathfinding_cost_map(mock_map, mock_game, mock_enemy)
         
-        # Should return the mocked cost map
-        assert cost_map == mock_cost_map
-        mock_zeros.assert_called_once()
+        # Should be a numpy array with correct shape
+        assert isinstance(cost_map, np.ndarray)
+        assert cost_map.shape == (10, 10)
+        assert cost_map.dtype == bool
+        
+        # All positions should be walkable (True) since mock_map.is_valid_position returns True
+        assert np.all(cost_map == True)
     
     def test_can_move_to_position_valid(self):
         """Test valid movement position checking."""

@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-	  "Read(./**/*.py)",
+      "Read(./**/*.py)",
       "Edit(./**/*.py)",
       "Write(./**/*.py)",
       "Read(./**/*.json)",
@@ -15,52 +15,41 @@
       "Write(./**/*.txt)",
       "Read(./game_debug.log)",
       "Read(./user_settings.json)",
-	  "Bash(dir *",
-      "Bash(python RogueSignalProtocol.py)",
-	  "Bash(.venv/Scripts/pip.exe list",
-      "Bash(.venv/Scripts/python.exe RogueSignalProtocol.py *)",
-      "Bash(.venv/Scripts/python.exe *)",
-	  "Bash(cd \"C:/Projects/RogueSignalProtocol\" && \".venv/Scripts/python.exe\" *)",
-      "Bash(git status)",
-      "Bash(git diff)",
-      "Bash(git log --oneline -10)",
-      "Bash(.venv/Scripts/pip.exe install *)",
-      "Bash(dir)",
-      "Bash(ls)",
-      "Bash(find . -name *.py)",
-      "Bash(wc -l *.py)",
-      "Bash(taskkill /F /PID *)",
-      "Bash(pkill *)",
       "Grep(*)",
       "Glob(*)",
       "MultiEdit(./**/*.py)",
       "MultiEdit(./**/*.json)",
       "TodoWrite(*)",
-	  "Timeout(*)",
-      "WebFetch(*)",
-      "WebSearch(*)"
-      "Bash(.venv/Scripts/python.exe RogueSignalProtocol.py:*)",
-      "Bash(.venv/Scripts/python.exe:*)",
-      "Bash(timeout:*)",
-      "Bash(.venv\\Scripts\\python.exe:*)",
-      "Bash(\".venv\\Scripts\\python.exe\" -m pytest *",
-	  "Bash(\".venv\\Scripts\\python.exe\" -m pytest *"
+      "Timeout(*)",
+      "Bash(.venv\\Scripts\\:*)",
+      "Bash(python:*)",
+      "Bash(pytest:*)",
+      "Bash:*",
+      "Bash(.venv\\Scripts\\python.exe -m pytest)",
+      "Bash(.venv\\Scripts\\python.exe -m pytest :*)",
+      "Bash(\".venv/Scripts/python.exe\" -m pytest)",
+      "Bash(\".venv/Scripts/python.exe\" -m pytest :*)",
+      "Bash(.venv\\Scripts\\python.exe :*)",
+      "Bash(\".venv/Scripts/python.exe\" :*)",	  
+	  "Bash(uv run:*)",
+      "WebFetch(domain:docs.claude.com)"
     ],
     "deny": [],
     "ask": [
-	  "Bash(git add *)",
-      "Bash(git commit *)",
-      "Bash(git push *)",
-      "Bash(pip install *)",
-      "Bash(npm install *)",
+      "Bash(git add :*)",
+      "Bash(git commit :*)",
+      "Bash(git push :*)",
+      "Bash(pip install :*)",
+      "Bash(npm install :*)",
       "Write(./requirements.txt)",
       "Edit(./requirements.txt)",
-      "Bash(.venv/Scripts/pip.exe uninstall *)"],
+      "Bash(.venv/Scripts/pip.exe uninstall :*)"
+    ],
+    "defaultMode": "acceptEdits",
     "additionalDirectories": [
       "./.claude/",
       "./artifacts/",
       "./dist/"
-    ],
-    "defaultMode": "acceptEdits"  
-  }  
+    ]
+  }
 }

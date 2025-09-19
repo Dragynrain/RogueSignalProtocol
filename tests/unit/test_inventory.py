@@ -946,7 +946,7 @@ class TestItemDiscoveryPickup:
         manager = InventoryManager(mock_player)
         
         # Add undiscovered code hack
-        code = CodeHack("green", "reduce_detection", "Green Code", discovered=False)
+        code = CodeHack("green", "reduce_detection", "Green Code")
         manager.add_item(code)
         
         # Simulate discovery (e.g., when first used)
@@ -975,20 +975,14 @@ class TestItemDiscoveryPickup:
     def test_exploit_pickup_integration(self):
         """Test exploit pickup and inventory integration."""
         mock_player = Mock()
+        mock_player.ram_total = 100  # Set up mock player with enough RAM
         manager = InventoryManager(mock_player)
         
-        # Simulate finding and picking up exploit
-        exploit_def = ExploitDefinition(
-            name="Found Exploit",
-            description="Found in dungeon",
-            category="combat",
-            targeting="target",
-            ram=12,
-            heat=8,
-            range=3,
-            damage=25
-        )
-        found_exploit = ExploitItem("found_exploit", exploit_def)
+        # Simulate finding and picking up exploit (use real exploit)
+        from game_data import GameData
+        exploit_key = "code_injection"  # Use a real exploit
+        exploit_def = GameData.EXPLOITS[exploit_key]
+        found_exploit = ExploitItem(exploit_key, exploit_def)
         
         # Add to inventory (simulates pickup)
         result = manager.add_item(found_exploit)
@@ -998,7 +992,7 @@ class TestItemDiscoveryPickup:
         # Should be able to equip it
         equip_result = manager.equip_exploit(found_exploit)
         assert equip_result is True
-        assert "found_exploit" in manager.equipped_exploits
+        assert "code_injection" in manager.equipped_exploits
 
 
 class TestInventorySerialization:
@@ -1010,7 +1004,8 @@ class TestInventorySerialization:
         manager = InventoryManager(mock_player)
         
         # Add various items
-        code = CodeHack("red", "restore_cpu", "Red Code", quantity=3, discovered=True)
+        code = CodeHack("red", "restore_cpu", "Red Code", quantity=3)
+        code.discovered = True
         manager.add_item(code)
         
         fragment = StoryFragment(2)
@@ -1053,8 +1048,10 @@ class TestInventorySerialization:
         manager = InventoryManager(mock_player)
         
         # Set up complex inventory state
-        code1 = CodeHack("blue", "reduce_heat", "Blue Code", quantity=2, discovered=True)
-        code2 = CodeHack("yellow", "speed_boost", "Yellow Code", quantity=1, discovered=False)
+        code1 = CodeHack("blue", "reduce_heat", "Blue Code", quantity=2)
+        code1.discovered = True
+        code2 = CodeHack("yellow", "speed_boost", "Yellow Code", quantity=1)
+        # code2.discovered remains False (default)
         manager.add_item(code1)
         manager.add_item(code2)
         
