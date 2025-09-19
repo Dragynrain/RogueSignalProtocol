@@ -102,7 +102,7 @@ class TestMainMenu:
     
     @patch.object(MainMenu, '_has_background')
     @patch.object(MainMenu, '_clear_text_areas_only')
-    @patch.object(MainMenu, '_render_full_screen')
+    @patch.object(MainMenu, '_render_main_menu')
     def test_render_with_background(self, mock_render_full, mock_clear_text, mock_has_bg):
         """Test render method with background."""
         mock_has_bg.return_value = True
@@ -111,10 +111,10 @@ class TestMainMenu:
         self.main_menu.render(mock_console)
         
         mock_clear_text.assert_called_once_with(mock_console)
-        mock_render_full.assert_not_called()
+        mock_render_full.assert_called_once_with(mock_console)
     
     @patch.object(MainMenu, '_has_background')
-    @patch.object(MainMenu, '_render_full_screen')
+    @patch.object(MainMenu, '_render_main_menu')
     def test_render_without_background(self, mock_render_full, mock_has_bg):
         """Test render method without background."""
         mock_has_bg.return_value = False
