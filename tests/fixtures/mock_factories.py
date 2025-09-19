@@ -5,12 +5,11 @@ Provides standardized mock objects for testing across the RogueSignalProtocol te
 """
 
 import random
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 from typing import List, Dict, Any, Optional
-from game_entities import Position, EnemyState, EnemyMovement, TargetingMode
-from game_entities import EnemyTypeDefinition, ExploitDefinition, UpgradeDefinition
+from game_entities import Position, EnemyState, TargetingMode
+from game_entities import ExploitDefinition
 from game_data import GameData
-from game_characters import Player, Enemy
 
 
 class MockPlayerFactory:
@@ -647,3 +646,239 @@ class MockConfigFactory:
         mock_config.MAX_SAVE_ATTEMPTS = 3
         mock_config.SAVE_RETRY_DELAY = 0.1
         return mock_config
+
+
+# Fluent builder pattern functions (consolidated from test_builders.py)
+def player():
+    """Create a fluent player builder."""
+    return FluentPlayerBuilder()
+
+def enemy():
+    """Create a fluent enemy builder."""
+    return FluentEnemyBuilder()
+
+def game_state():
+    """Create a fluent game state builder."""
+    return FluentGameStateBuilder()
+
+def scenario():
+    """Create a fluent scenario builder."""
+    return FluentScenarioBuilder()
+
+
+class FluentPlayerBuilder:
+    """Fluent builder for creating player mocks with chained methods."""
+    
+    def __init__(self):
+        self._cpu = 100
+        self._heat = 0
+        self._detection = 0
+        self._position = Position(5, 5)
+        self._temporary_effects = {}
+        
+    def with_cpu(self, cpu: int):
+        """Set player CPU."""
+        self._cpu = cpu
+        return self
+        
+    def with_heat(self, heat: int):
+        """Set player heat level."""
+        self._heat = heat
+        return self
+        
+    def with_detection(self, detection: int):
+        """Set player detection level."""
+        self._detection = detection
+        return self
+        
+    def at_position(self, x: int, y: int):
+        """Set player position."""
+        self._position = Position(x, y)
+        return self
+        
+    def with_low_cpu(self):
+        """Set player to low CPU."""
+        self._cpu = 25
+        return self
+        
+    def with_high_heat(self):
+        """Set player to high heat."""
+        self._heat = 80
+        return self
+        
+    def critically_damaged(self):
+        """Set player to critical state."""
+        self._cpu = 10
+        self._heat = 90
+        self._detection = 95
+        return self
+        
+    def build(self) -> Mock:
+        """Build the player mock."""
+        player = MockPlayerFactory.create_basic_player(self._position.x, self._position.y)
+        player.cpu = self._cpu
+        player.heat = self._heat
+        player.detection = self._detection
+        player.temporary_effects = self._temporary_effects.copy()
+        return player
+
+
+class FluentEnemyBuilder:
+    """Fluent builder for creating enemy mocks with chained methods."""
+    
+    def __init__(self):
+        self._x = 10
+        self._y = 10
+        self._enemy_type = "scanner"
+        self._cpu = 100
+        self._state = EnemyState.UNAWARE
+        
+    def of_type(self, enemy_type: str):
+        """Set enemy type."""
+        self._enemy_type = enemy_type
+        return self
+        
+    def at_position(self, x: int, y: int):
+        """Set enemy position."""
+        self._x = x
+        self._y = y
+        return self
+        
+    def with_cpu(self, cpu: int):
+        """Set enemy CPU."""
+        self._cpu = cpu
+        return self
+        
+    def in_state(self, state: EnemyState):
+        """Set enemy state."""
+        self._state = state
+        return self
+        
+    def hostile(self):
+        """Make enemy hostile."""
+        self._state = EnemyState.HOSTILE
+        return self
+        
+    def alert(self):
+        """Make enemy alert."""
+        self._state = EnemyState.ALERT
+        return self
+        
+    def disabled(self):
+        """Make enemy disabled."""
+        self._cpu = 0
+        return self
+        
+    def build(self) -> Mock:
+        """Build the enemy mock."""
+        enemy = MockEnemyFactory.create_basic_enemy(self._enemy_type, self._x, self._y)
+        enemy.cpu = self._cpu
+        enemy.state = self._state
+        return enemy
+
+
+class FluentGameStateBuilder:
+    """Fluent builder for creating game state mocks."""
+    
+    def __init__(self):
+        self._level = 1
+        self._turn = 0
+        self._player = None
+        self._enemies = []
+        
+    def at_level(self, level: int):
+        """Set game level."""
+        self._level = level
+        return self
+        
+    def at_turn(self, turn: int):
+        """Set turn number."""
+        self._turn = turn
+        return self
+        
+    def with_player(self, player):
+        """Set player object."""
+        self._player = player
+        return self
+        
+    def with_enemies(self, enemies: List):
+        """Set enemies list."""
+        self._enemies = enemies.copy()
+        return self
+        
+    def early_game(self):
+        """Set early game state."""
+        self._level = 1
+        self._turn = 10
+        return self
+        
+    def mid_game(self):
+        """Set mid game state."""
+        self._level = 3
+        self._turn = 150
+        return self
+        
+    def late_game(self):
+        """Set late game state."""
+        self._level = 5
+        self._turn = 300
+        return self
+        
+    def build(self) -> Mock:
+        """Build the game state mock."""
+        game = MockGameFactory.create_basic_game()
+        game.level = self._level
+        game.turn = self._turn
+        if self._player:
+            game.player = self._player
+        game.enemies = self._enemies
+        return game
+
+
+class FluentScenarioBuilder:
+    """Fluent builder for creating complete test scenarios."""
+    
+    def __init__(self):
+        self._scenario_type = "basic"
+        self._player_builder = FluentPlayerBuilder()
+        self._enemy_builders = []
+        
+    def player_vs_single_enemy(self):
+        """Create player vs single enemy scenario."""
+        self._scenario_type = "player_vs_enemy"
+        self._enemy_builders = [FluentEnemyBuilder().hostile().at_position(15, 15)]
+        return self
+        
+    def player_surrounded(self):
+        """Create player surrounded by enemies scenario."""
+        self._scenario_type = "surrounded"
+        self._enemy_builders = [
+            FluentEnemyBuilder().hostile().at_position(4, 5),
+            FluentEnemyBuilder().hostile().at_position(6, 5),
+            FluentEnemyBuilder().hostile().at_position(5, 4),
+            FluentEnemyBuilder().hostile().at_position(5, 6)
+        ]
+        return self
+        
+    def stealth_mission(self):
+        """Create stealth scenario."""
+        self._scenario_type = "stealth"
+        self._player_builder.with_low_cpu().with_high_heat()
+        self._enemy_builders = [
+            FluentEnemyBuilder().in_state(EnemyState.UNAWARE).at_position(20, 10),
+            FluentEnemyBuilder().in_state(EnemyState.UNAWARE).at_position(30, 15)
+        ]
+        return self
+        
+    def build(self) -> Dict[str, Any]:
+        """Build complete scenario."""
+        player = self._player_builder.build()
+        enemies = [builder.build() for builder in self._enemy_builders]
+        game = FluentGameStateBuilder().with_player(player).with_enemies(enemies).build()
+        
+        return {
+            "type": self._scenario_type,
+            "player": player,
+            "enemies": enemies,
+            "game": game
+        }

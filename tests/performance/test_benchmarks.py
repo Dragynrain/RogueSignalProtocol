@@ -13,7 +13,7 @@ from game_characters import Player, Enemy
 from game_engine import GameEngine
 from game_level import LevelGenerator
 from game_combat import ExploitSystem
-from tests.fixtures.test_builders import player, enemy, scenario
+from ..fixtures.mock_factories import player, enemy, scenario, MockGameMapFactory, MockGameFactory
 
 
 class TestPathfindingBenchmarks:
@@ -33,8 +33,8 @@ class TestPathfindingBenchmarks:
         """Benchmark adjacent position generation."""
         pos = Position(25, 25)
         
-        result = benchmark(get_adjacent_positions, pos)
-        assert len(result) == 4
+        result = benchmark(get_adjacent_positions, pos, 100, 100)
+        assert len(result) == 8  # 8 adjacent positions including diagonals
     
     @pytest.mark.performance
     def test_large_distance_calculation_batch(self, benchmark):
@@ -88,7 +88,8 @@ class TestLevelGenerationBenchmarks:
     def test_small_level_generation(self, benchmark):
         """Benchmark small level generation (40x30)."""
         def generate_level():
-            generator = LevelGenerator()
+            game_map = MockGameMapFactory.create_basic_map(40, 30)
+            generator = LevelGenerator(game_map)
             return generator.generate_level(40, 30, seed=12345)
         
         result = benchmark(generate_level)
@@ -98,7 +99,8 @@ class TestLevelGenerationBenchmarks:
     def test_standard_level_generation(self, benchmark):
         """Benchmark standard level generation (80x40)."""
         def generate_level():
-            generator = LevelGenerator()
+            game_map = MockGameMapFactory.create_basic_map(80, 40)
+            generator = LevelGenerator(game_map)
             return generator.generate_level(80, 40, seed=12345)
         
         result = benchmark(generate_level)
@@ -109,7 +111,8 @@ class TestLevelGenerationBenchmarks:
     def test_large_level_generation(self, benchmark):
         """Benchmark large level generation (160x80)."""
         def generate_level():
-            generator = LevelGenerator()
+            game_map = MockGameMapFactory.create_basic_map(160, 80)
+            generator = LevelGenerator(game_map)
             return generator.generate_level(160, 80, seed=12345)
         
         result = benchmark(generate_level)
@@ -123,7 +126,8 @@ class TestCombatBenchmarks:
     def test_exploit_system_creation(self, benchmark):
         """Benchmark exploit system initialization."""
         def create_exploit_system():
-            return ExploitSystem()
+            mock_game = MockGameFactory.create_basic_game()
+            return ExploitSystem(mock_game)
         
         result = benchmark(create_exploit_system)
         assert result is not None
@@ -131,7 +135,8 @@ class TestCombatBenchmarks:
     @pytest.mark.performance
     def test_single_exploit_calculation(self, benchmark):
         """Benchmark single exploit damage calculation."""
-        exploit_system = ExploitSystem()
+        mock_game = MockGameFactory.create_basic_game()
+        exploit_system = ExploitSystem(mock_game)
         mock_player = player().build()
         mock_enemy = enemy().build()
         
@@ -146,7 +151,8 @@ class TestCombatBenchmarks:
     @pytest.mark.performance
     def test_multiple_exploit_calculations(self, benchmark):
         """Benchmark multiple exploit calculations."""
-        exploit_system = ExploitSystem()
+        mock_game = MockGameFactory.create_basic_game()
+        exploit_system = ExploitSystem(mock_game)
         mock_player = player().build()
         enemies = [enemy().build() for _ in range(10)]
         

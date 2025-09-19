@@ -7,15 +7,13 @@ Provides fixtures, sample data, and data generators for testing.
 import json
 import os
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any, Optional
 from dataclasses import dataclass, asdict
 import tempfile
 
-from game_entities import Position
-
 
 @dataclass
-class TestGameData:
+class GameTestData:
     """Container for test game data."""
     maps: Dict[str, Any]
     enemies: Dict[str, Any]
@@ -33,7 +31,7 @@ class TestGameData:
         return cls(**data)
 
 
-class TestDataManager:
+class GameTestDataManager:
     """Manages test data loading, generation, and persistence."""
     
     def __init__(self, data_dir: Optional[str] = None):
@@ -209,9 +207,9 @@ class TestDataManager:
             }
         }
     
-    def get_all_test_data(self) -> TestGameData:
+    def get_all_test_data(self) -> GameTestData:
         """Get all test data as a structured object."""
-        return TestGameData(
+        return GameTestData(
             maps=self.get_sample_map_data(),
             enemies=self.get_sample_enemy_data(),
             exploits=self.get_sample_exploit_data(),
@@ -223,7 +221,7 @@ class TestDataManager:
         """Save test data to file."""
         file_path = self.data_dir / filename
         
-        if isinstance(data, TestGameData):
+        if isinstance(data, GameTestData):
             data = data.to_dict()
         
         with open(file_path, 'w') as f:
@@ -264,10 +262,10 @@ class TestDataManager:
             pass
 
 
-class TestScenarioGenerator:
+class GameTestScenarioGenerator:
     """Generates test scenarios with varying complexity."""
     
-    def __init__(self, data_manager: TestDataManager):
+    def __init__(self, data_manager: GameTestDataManager):
         self.data_manager = data_manager
     
     def generate_empty_level(self, width: int = 10, height: int = 8) -> Dict[str, Any]:
@@ -347,10 +345,10 @@ class TestScenarioGenerator:
 
 
 # Global test data manager instance
-_test_data_manager = TestDataManager()
+_test_data_manager = GameTestDataManager()
 
 # Convenience functions for easy access
-def get_test_data() -> TestGameData:
+def get_test_data() -> GameTestData:
     """Get all test data."""
     return _test_data_manager.get_all_test_data()
 
@@ -371,7 +369,7 @@ def cleanup_temp_file(file_path: str) -> None:
     _test_data_manager.cleanup_temporary_file(file_path)
 
 # Test data generators
-scenario_generator = TestScenarioGenerator(_test_data_manager)
+scenario_generator = GameTestScenarioGenerator(_test_data_manager)
 
 def generate_test_level(**kwargs) -> Dict[str, Any]:
     """Generate test level."""
