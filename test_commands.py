@@ -11,17 +11,17 @@ from pathlib import Path
 
 def run_command(cmd, description=""):
     """Run a command and handle output."""
-    print(f"\n🔍 {description}")
+    print(f"\n[SEARCH] {description}")
     print(f"Running: {' '.join(cmd)}")
     print("-" * 60)
     
     result = subprocess.run(cmd, capture_output=False, text=True)
     
     if result.returncode != 0:
-        print(f"❌ Command failed with exit code {result.returncode}")
+        print(f"[FAIL] Command failed with exit code {result.returncode}")
         return False
     else:
-        print(f"✅ {description} completed successfully")
+        print(f"[OK] {description} completed successfully")
         return True
 
 def quick_tests():
@@ -68,14 +68,14 @@ def test_changed_files():
         )
         
         if result.returncode != 0:
-            print("❌ Could not get changed files from git")
+            print("[FAIL] Could not get changed files from git")
             return False
             
         changed_files = [f for f in result.stdout.strip().split('\n') 
                         if f.endswith('.py') and not f.startswith('tests/')]
         
         if not changed_files:
-            print("ℹ️  No Python files changed")
+            print("[INFO] No Python files changed")
             return True
             
         # Find corresponding test files
@@ -86,7 +86,7 @@ def test_changed_files():
                 test_files.append(test_file)
         
         if not test_files:
-            print("ℹ️  No corresponding test files found")
+            print("[INFO] No corresponding test files found")
             return True
             
         cmd = [
@@ -96,7 +96,7 @@ def test_changed_files():
         return run_command(cmd, f"Tests for changed files: {', '.join(changed_files)}")
         
     except Exception as e:
-        print(f"❌ Error running tests for changed files: {e}")
+        print(f"[FAIL] Error running tests for changed files: {e}")
         return False
 
 def test_coverage_report():
@@ -109,7 +109,7 @@ def test_coverage_report():
     success = run_command(cmd, "Generate coverage report")
     
     if success:
-        print("\n📊 Coverage report generated in htmlcov/index.html")
+        print("\n[INFO] Coverage report generated in htmlcov/index.html")
     
     return success
 
@@ -131,7 +131,7 @@ def test_watch():
         class TestHandler(FileSystemEventHandler):
             def on_modified(self, event):
                 if event.src_path.endswith('.py'):
-                    print(f"\n📝 File changed: {event.src_path}")
+                    print(f"\n[CHANGE] File changed: {event.src_path}")
                     if event.src_path.startswith('tests/'):
                         test_specific_file(event.src_path)
                     else:
@@ -141,25 +141,25 @@ def test_watch():
         observer.schedule(TestHandler(), '.', recursive=True)
         observer.start()
         
-        print("👀 Watching for file changes... Press Ctrl+C to stop")
+        print("[WATCH] Watching for file changes... Press Ctrl+C to stop")
         try:
             while True:
                 pass
         except KeyboardInterrupt:
             observer.stop()
-            print("\n🛑 Stopped watching")
+            print("\n[STOP] Stopped watching")
         
         observer.join()
         
     except ImportError:
-        print("❌ watchdog not installed. Install with: pip install watchdog")
+        print("[FAIL] watchdog not installed. Install with: pip install watchdog")
         return False
 
 def main():
     """Main CLI interface."""
     if len(sys.argv) < 2:
         print("""
-🧪 RogueSignalProtocol Test Runner
+[TEST] RogueSignalProtocol Test Runner
 
 Usage: python test_commands.py <command>
 
@@ -195,7 +195,7 @@ Examples:
         success = commands[command]()
         sys.exit(0 if success else 1)
     else:
-        print(f"❌ Unknown command: {command}")
+        print(f"[FAIL] Unknown command: {command}")
         print("Available commands:", ', '.join(commands.keys()))
         sys.exit(1)
 

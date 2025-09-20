@@ -401,5 +401,5 @@ class TestHandleErrorScreen:
         # Verify error message call (should be first call)
         error_call = mock_render.call_args_list[0]
         assert "Error:" in error_call[0][3]  # Check message contains "Error:"
-        assert error_call[1]['fg'] == (255, 0, 0)  # Check red color
+        assert error_call[1]['fg'] == (220, 20, 60)  # Check crimson red color
         assert result is True
