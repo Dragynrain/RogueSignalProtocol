@@ -1497,3 +1497,80 @@ class GameEngine:
             return False
         
         return True
+    
+    def get_game_state_for_save(self) -> dict:
+        """Get the current game state as a dictionary for saving.
+        
+        This method extracts all necessary game state information
+        that would be saved to a save file, primarily for testing purposes.
+        """
+        import time
+        from game_save import SaveGameManager
+        from game_characters import Enemy
+        
+        return {
+            "version": "dev",
+            "timestamp": time.time(),
+            
+            # Game state
+            "level": self.level,
+            "turn": self.turn,
+            "game_over": self.game_over,
+            "admin_spawned": self.admin_spawned,
+            "dungeon_seed": self.game_state.dungeon_seed,
+            
+            # Player state
+            "player": {
+                "x": self.player.x,
+                "y": self.player.y,
+                "last_x": self.player.last_position.x,
+                "last_y": self.player.last_position.y,
+                "cpu": self.player.cpu,
+                "max_cpu": self.player.max_cpu,
+                "heat": self.player.heat,
+                "max_heat": self.player.max_heat,
+                "detection": self.player.detection,
+                "ram_total": self.player.ram_total,
+                "speed_moves_remaining": self.player.speed_moves_remaining,
+                "temporary_effects": dict(self.player.temporary_effects),
+                "equipped_exploits": self.player.inventory_manager.equipped_exploits.copy(),
+                "max_equipped_exploits": self.player.inventory_manager.max_equipped_exploits,
+                "inventory_items": SaveGameManager._serialize_inventory(self.player.inventory_manager.items)
+            },
+            
+            # Game effects and state
+            "game_effects": {
+                "threat_scan_turns": self.game_state.threat_scan_turns,
+                "noise_locations": [{"x": pos.x, "y": pos.y} for pos in self.game_state.noise_locations],
+                "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in self.game_state.distraction_points.items()}
+            },
+            
+            # Map state (items and special locations only - layout regenerated)
+            "map_state": {
+                "code_hacks": SaveGameManager._serialize_code_hacks(self.game_map.code_hacks),
+                "exploit_pickups": SaveGameManager._serialize_exploit_pickups(self.game_map.exploit_pickups),
+                "permanent_upgrades": {f"{pos[0]},{pos[1]}": upgrade_key for pos, upgrade_key in self.game_map.permanent_upgrades.items()},
+                "story_fragments": {f"{pos[0]},{pos[1]}": fragment.fragment_index for pos, fragment in self.game_map.story_fragments.items()},
+                "gateway": {"x": self.game_map.gateway.x, "y": self.game_map.gateway.y} if self.game_map.gateway else None,
+                "explored_tiles": [f"{x},{y}" for x, y in self.game_map.explored_tiles],
+                "last_known_enemy_positions": {str(enemy_id): {"x": pos.x, "y": pos.y, "turn": turn} for enemy_id, (pos, turn) in self.game_map.last_known_enemy_positions.items()}
+            },
+            
+            # Enemies
+            "enemies": SaveGameManager._serialize_enemies(self.enemies),
+            "enemy_next_id": getattr(Enemy, '_next_id', 1),
+            
+            # Data patch effects for this run
+            "code_hack_effects": self.code_hack_effects,
+            "discovered_code_effects": self.discovered_code_effects,
+            
+            # Overclocking state
+            "overclock_confirmation": getattr(self, 'overclock_confirmation', False),
+            "overclock_exploit": getattr(self, 'overclock_exploit', None),
+            
+            # UI state (optional - for better user experience)
+            "ui_state": {
+                "inventory_selection": self.inventory_selection,
+                "lore_viewer_selection": self.lore_viewer_selection
+            }
+        }

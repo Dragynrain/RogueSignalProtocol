@@ -208,7 +208,7 @@ class TestTurnProcessor:
     
     def test_process_heat_management_minimum_zero(self):
         """Test that heat doesn't go below zero."""
-        self.mock_player.heat = 3  # Less than normal reduction
+        self.mock_player.heat = 1  # Less than normal reduction
         self.mock_player.near_cooling_node = False
         
         self.turn_processor._process_heat_management(self.mock_player, self.mock_message_log)
