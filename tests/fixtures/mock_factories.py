@@ -179,10 +179,13 @@ class MockGameMapFactory:
         mock_map.explored_tiles = set()
         mock_map.last_known_enemy_positions = {}
         
-        # Special nodes
-        mock_map.cooling_nodes = []
-        mock_map.cpu_recovery_nodes = []
-        mock_map.ghost_nodes = []
+        # Add walls attribute for LevelGenerator
+        mock_map.walls = set()
+        
+        # Special nodes (these need to be sets for .add() method)
+        mock_map.cooling_nodes = set()
+        mock_map.cpu_recovery_nodes = set()
+        mock_map.ghost_nodes = set()
         
         return mock_map
     
