@@ -81,92 +81,129 @@ class TestGameStateBenchmarks:
         assert result["type"] == "player_vs_enemy"
 
 
-class TestLevelGenerationBenchmarks:
-    """Benchmarks for level generation performance."""
+class TestRealLevelGenerationBenchmarks:
+    """Benchmarks for level generation performance with real objects."""
     
     @pytest.mark.performance
-    def test_small_level_generation(self, benchmark):
-        """Benchmark small level generation (40x30)."""
+    def test_small_level_generation_real(self, benchmark):
+        """Benchmark small level generation with real GameMap (40x30)."""
+        from game_map import GameMap
+        from game_level import LevelGenerator
+        
         def generate_level():
-            game_map = MockGameMapFactory.create_basic_map(40, 30)
+            game_map = GameMap(40, 30)  # Real GameMap, not mock
             generator = LevelGenerator(game_map)
-            return generator.generate_level(40, 30, seed=12345)
+            generator.generate_level(level=1, seed=12345)
+            return game_map  # Return the real map for verification
         
         result = benchmark(generate_level)
-        assert result is not None
+        # Verify actual level generation occurred
+        assert len(result.walls) > 0, "Real level should have walls"
+        assert result.gateway is not None, "Real level should have gateway"
     
     @pytest.mark.performance
-    def test_standard_level_generation(self, benchmark):
-        """Benchmark standard level generation (80x40)."""
+    def test_standard_level_generation_real(self, benchmark):
+        """Benchmark standard level generation with real GameMap (80x40)."""
+        from game_map import GameMap
+        from game_level import LevelGenerator
+        
         def generate_level():
-            game_map = MockGameMapFactory.create_basic_map(80, 40)
+            game_map = GameMap(80, 40)  # Real GameMap, not mock
             generator = LevelGenerator(game_map)
-            return generator.generate_level(80, 40, seed=12345)
+            generator.generate_level(level=2, seed=12345)
+            return game_map
         
         result = benchmark(generate_level)
-        assert result is not None
+        # Verify actual level generation occurred
+        assert len(result.walls) > 50, "Standard level should have substantial content"
+        assert result.gateway is not None, "Standard level should have gateway"
     
     @pytest.mark.performance
     @pytest.mark.slow
-    def test_large_level_generation(self, benchmark):
-        """Benchmark large level generation (160x80)."""
+    def test_large_level_generation_real(self, benchmark):
+        """Benchmark large level generation with real GameMap (160x80)."""
+        from game_map import GameMap
+        from game_level import LevelGenerator
+        
         def generate_level():
-            game_map = MockGameMapFactory.create_basic_map(160, 80)
+            game_map = GameMap(160, 80)  # Real GameMap, not mock
             generator = LevelGenerator(game_map)
-            return generator.generate_level(160, 80, seed=12345)
+            generator.generate_level(level=3, seed=12345)
+            return game_map
         
         result = benchmark(generate_level)
-        assert result is not None
+        # Verify actual level generation occurred
+        assert len(result.walls) > 200, "Large level should have extensive content"
+        assert result.gateway is not None, "Large level should have gateway"
 
 
-class TestCombatBenchmarks:
-    """Benchmarks for combat system performance."""
+class TestRealCombatBenchmarks:
+    """Benchmarks for combat system performance with real objects."""
     
     @pytest.mark.performance
-    def test_exploit_system_creation(self, benchmark):
-        """Benchmark exploit system initialization."""
-        def create_exploit_system():
-            mock_game = MockGameFactory.create_basic_game()
+    def test_real_player_creation(self, benchmark):
+        """Benchmark real Player object creation and initialization."""
+        from game_characters import Player
+        
+        def create_player():
+            player = Player(10, 10)
+            # Verify player is properly initialized
+            assert player.cpu == 100
+            assert player.heat == 0
+            assert hasattr(player, 'inventory_manager')
+            return player
+        
+        result = benchmark(create_player)
+        assert result is not None
+    
+    @pytest.mark.performance
+    def test_real_exploit_system_creation(self, benchmark):
+        """Benchmark ExploitSystem with real Player."""
+        from game_characters import Player
+        from game_combat import ExploitSystem
+        from game_state import MessageLog
+        from unittest.mock import Mock
+        
+        def create_real_exploit_system():
+            # Create real player and real message log
+            player = Player(5, 5)
+            message_log = MessageLog()
+            
+            # Mock minimal game object
+            mock_game = Mock()
+            mock_game.player = player
+            mock_game.message_log = message_log
+            mock_game.sound_manager = Mock()
+            
             return ExploitSystem(mock_game)
         
-        result = benchmark(create_exploit_system)
+        result = benchmark(create_real_exploit_system)
         assert result is not None
+        assert hasattr(result.game.player, 'inventory_manager')
     
     @pytest.mark.performance
-    def test_single_exploit_calculation(self, benchmark):
-        """Benchmark single exploit damage calculation."""
-        mock_game = MockGameFactory.create_basic_game()
-        exploit_system = ExploitSystem(mock_game)
-        mock_player = player().build()
-        mock_enemy = enemy().build()
+    def test_real_inventory_operations(self, benchmark):
+        """Benchmark real inventory operations."""
+        from game_characters import Player
         
-        def calculate_exploit():
-            return exploit_system.calculate_exploit_damage(
-                "buffer_overflow", mock_player, mock_enemy
-            )
+        def inventory_operations():
+            player = Player(15, 15)
+            
+            # Perform multiple inventory operations
+            player.inventory_manager.add_exploit("buffer_overflow")
+            player.inventory_manager.add_exploit("system_crash")
+            player.inventory_manager.add_exploit("threat_scan")
+            
+            player.inventory_manager.equip_exploit("buffer_overflow")
+            player.inventory_manager.equip_exploit("system_crash")
+            
+            # Check equipped status
+            equipped = player.inventory_manager.equipped_exploits
+            
+            return len(equipped)
         
-        result = benchmark(calculate_exploit)
-        assert isinstance(result, (int, type(None)))
-    
-    @pytest.mark.performance
-    def test_multiple_exploit_calculations(self, benchmark):
-        """Benchmark multiple exploit calculations."""
-        mock_game = MockGameFactory.create_basic_game()
-        exploit_system = ExploitSystem(mock_game)
-        mock_player = player().build()
-        enemies = [enemy().build() for _ in range(10)]
-        
-        def calculate_multiple_exploits():
-            results = []
-            for enemy_obj in enemies:
-                damage = exploit_system.calculate_exploit_damage(
-                    "buffer_overflow", mock_player, enemy_obj
-                )
-                results.append(damage)
-            return results
-        
-        result = benchmark(calculate_multiple_exploits)
-        assert len(result) == 10
+        result = benchmark(inventory_operations)
+        assert result >= 2  # Should have equipped at least 2 exploits
 
 
 class TestMemoryBenchmarks:
