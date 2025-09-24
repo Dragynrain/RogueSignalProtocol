@@ -44,7 +44,14 @@
       "Bash(\".venv/Scripts/uv.exe\" run python --version)",
       "Bash(\".venv/Scripts/uv.exe\" run pytest --version)",
       "Bash(\".venv/Scripts/uv.exe\" run pytest tests/unit/test_inventory.py::TestInventoryItem::test_inventory_item_use_default -v)",
-      "Bash(\".venv/Scripts/uv.exe\" run mutmut --version)"
+      "Bash(\".venv/Scripts/uv.exe\" run mutmut --version)",
+      "Bash(for f in tests/unit/test_*.py)",
+      "Bash(done)",
+      "Bash(for f in game_*.py)",
+      "Bash(do testname=\"tests/unit/test_$f#game_.py\")",
+      "Bash(if [ ! -f \"$testname\" ])",
+      "Bash(then echo \"Missing test: $testname for $f\")",
+      "Bash(fi)"
     ],
     "deny": [],
     "ask": [
