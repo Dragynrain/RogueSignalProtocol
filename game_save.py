@@ -153,7 +153,7 @@ class SaveGameManager:
             except (PermissionError, OSError) as e:
                 logging.error(f"File system error during save: {e}")
                 return False
-            except json.JSONEncodeError as e:
+            except TypeError as e:
                 logging.error(f"JSON encoding error during save: {e}")
                 return False
             except Exception as e:
