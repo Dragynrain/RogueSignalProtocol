@@ -1,43 +1,71 @@
-#!/usr/bin/env python3
 """
-Simple test fixtures for basic game testing.
-Focus on core game mechanics only.
+Simple test fixtures that create real game objects quickly.
+No complex builder patterns - just create what you need.
 """
 
 from game_characters import Player, Enemy
+from game_entities import Position
+from game_map import GameMap
+from tests.fixtures.real_game_data import create_real_enemy, create_test_map_with_real_tiles
 
 
-def create_test_player(x=10, y=10, cpu=100):
-    """Create a player for testing."""
-    player = Player(x, y)
-    player.cpu = cpu
-    return player
+def player(x=10, y=10, cpu=100):
+    """Create a simple test player."""
+    p = Player(x, y)
+    p.cpu = cpu
+    p.max_cpu = cpu  # Set max_cpu to match
+    return p
 
 
-def create_test_enemy(x=15, y=15, enemy_type="scanner", cpu=50):
-    """Create an enemy for testing."""
-    enemy = Enemy(x, y, enemy_type)
-    if hasattr(enemy, 'cpu'):
-        enemy.cpu = cpu
-    return enemy
+def enemy(enemy_type="scanner", x=5, y=5):
+    """Create a simple test enemy using real GameData."""
+    return create_real_enemy(enemy_type, Position(x, y))
 
 
-def create_test_level_data():
-    """Create basic level data for testing."""
+def test_map(width=20, height=20):
+    """Create a simple test map."""
+    return create_test_map_with_real_tiles(width, height)
+
+
+def game_scenario():
+    """Create a complete game scenario for testing."""
     return {
-        "width": 80,
-        "height": 40,
-        "walls": [(0, 0), (0, 1), (1, 0)],  # Sample wall positions
-        "floors": [(5, 5), (10, 10), (15, 15)]  # Sample floor positions
+        'player': player(),
+        'enemies': [enemy(), enemy("patrol", 15, 15)],
+        'map': test_map()
     }
 
 
-def create_test_game_state():
-    """Create basic game state for testing."""
+def combat_scenario():
+    """Create a scenario for combat testing."""
+    test_player = player(10, 10, 100)
+    test_enemy = enemy("scanner", 11, 10)  # Adjacent for combat
     return {
-        "player": create_test_player(),
-        "enemies": [create_test_enemy()],
-        "level": 1,
-        "turn": 1,
-        "game_over": False
+        'player': test_player,
+        'enemy': test_enemy,
+        'map': test_map(30, 30)
+    }
+
+
+def vision_scenario():
+    """Create a scenario for vision/detection testing."""
+    test_player = player(5, 5)
+    scanner = enemy("scanner", 10, 5)  # Same row, different column
+    patrol = enemy("patrol", 20, 20)   # Far away
+    return {
+        'player': test_player,
+        'enemies': [scanner, patrol],
+        'map': test_map(40, 40)
+    }
+
+
+def movement_scenario():
+    """Create a scenario for movement testing."""
+    test_player = player(15, 15)
+    moving_enemy = enemy("bot", 10, 10)  # RANDOM movement
+    patrolling_enemy = enemy("patrol", 5, 5)  # PATROL movement
+    return {
+        'player': test_player,
+        'enemies': [moving_enemy, patrolling_enemy],
+        'map': test_map(30, 30)
     }

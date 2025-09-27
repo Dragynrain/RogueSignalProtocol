@@ -50,7 +50,7 @@ def integration_tests():
     ]
     return run_command(cmd, "Integration tests")
 
-def test_specific_file(file_path):
+def run_specific_file(file_path):
     """Run tests for a specific file."""
     cmd = [
         ".venv/Scripts/python.exe", "-m", "pytest",
@@ -58,7 +58,7 @@ def test_specific_file(file_path):
     ]
     return run_command(cmd, f"Tests for {file_path}")
 
-def test_changed_files():
+def run_changed_files():
     """Run tests for recently changed files (requires git)."""
     try:
         # Get changed Python files
@@ -99,7 +99,7 @@ def test_changed_files():
         print(f"[FAIL] Error running tests for changed files: {e}")
         return False
 
-def test_coverage_report():
+def run_coverage_report():
     """Generate detailed coverage report."""
     cmd = [
         ".venv/Scripts/python.exe", "-m", "pytest",
@@ -113,7 +113,7 @@ def test_coverage_report():
     
     return success
 
-def test_performance():
+def run_performance():
     """Run performance benchmarks."""
     cmd = [
         ".venv/Scripts/python.exe", "-m", "pytest",
@@ -121,7 +121,7 @@ def test_performance():
     ]
     return run_command(cmd, "Performance benchmarks")
 
-def test_watch():
+def run_watch():
     """Watch for file changes and run tests automatically."""
     try:
         import watchdog
@@ -133,7 +133,7 @@ def test_watch():
                 if event.src_path.endswith('.py'):
                     print(f"\n[CHANGE] File changed: {event.src_path}")
                     if event.src_path.startswith('tests/'):
-                        test_specific_file(event.src_path)
+                        run_specific_file(event.src_path)
                     else:
                         quick_tests()
         
@@ -185,10 +185,10 @@ Examples:
         'quick': quick_tests,
         'full': full_tests, 
         'integration': integration_tests,
-        'coverage': test_coverage_report,
-        'changed': test_changed_files,
-        'performance': test_performance,
-        'watch': test_watch
+        'coverage': run_coverage_report,
+        'changed': run_changed_files,
+        'performance': run_performance,
+        'watch': run_watch
     }
     
     if command in commands:
