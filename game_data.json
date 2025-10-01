@@ -249,9 +249,81 @@
       "permanent_upgrades": 2
     }
   },
+  "balance": {
+    "player_stats": {
+      "starting_cpu": 100,
+      "max_cpu": 100,
+      "starting_heat": 0,
+      "max_heat": 100,
+      "starting_detection": 0,
+      "starting_ram": 8,
+      "base_vision_range": 15
+    },
+    "temporary_effects": {
+      "data_mimic_duration": 5,
+      "speed_boost_duration": 5,
+      "enhanced_vision_duration": 5,
+      "exploit_efficiency_duration": 8,
+      "exploit_efficiency_multiplier": 0.6,
+      "virus_base_duration": 3,
+      "virus_max_duration": 10,
+      "virus_damage_per_turn": 2,
+      "movement_slow_duration": 3
+    },
+    "combat": {
+      "overheat_damage_per_point": 1,
+      "enemy_elimination_cpu_reward": 5,
+      "alert_timer_short": 2,
+      "alert_timer_long": 3,
+      "disable_duration_system_crash": 4,
+      "disable_duration_emp": 6,
+      "firewall_damage_bonus": 5,
+      "buffer_overflow_melee_damage": 50
+    },
+    "code_patches": {
+      "cpu_restore_min": 15,
+      "cpu_restore_max": 35,
+      "heat_reduction_instant": 30,
+      "detection_reduction": 25,
+      "speed_boost_turns": 5
+    },
+    "detection_system": {
+      "threshold_alert": 75,
+      "threshold_hostile": 100,
+      "increase_interval": 10,
+      "increase_amount": 5,
+      "level_completion_reduction": 50
+    },
+    "heat_system": {
+      "reduction_normal": 3,
+      "reduction_boosted": 8,
+      "overheat_threshold": 100,
+      "recovery_threshold": 95
+    },
+    "upgrade_caps": {
+      "max_ram": 20,
+      "max_cpu": 200,
+      "max_heat": 200
+    },
+    "ai_behavior": {
+      "enemy_memory_turns": 15,
+      "patrol_stuck_threshold": 3,
+      "noise_maker_duration": 8,
+      "distraction_radius": 10,
+      "admin_spawn_cooldown": 3
+    }
+  },
+  "item_effects": {
+    "cpu_recovery_small": 10,
+    "cpu_recovery_medium": 20,
+    "cpu_recovery_large": 30,
+    "heat_recovery_amount": 15,
+    "story_fragment_discovery_bonus": 5
+  },
   "metadata": {
-    "version": "1.0",
+    "version": "1.1", 
     "description": "Game data definitions for Rogue Signal Protocol",
-    "last_updated": "2025-01-01"
+    "last_updated": "2025-01-01",
+    "balance_version": "1.0"
   }
 }

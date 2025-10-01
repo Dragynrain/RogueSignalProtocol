@@ -7,6 +7,7 @@ Extracted from RogueSignalProtocol.py for better organization.
 from dataclasses import dataclass
 from typing import Dict, Tuple
 from game_entities import EnemyTypeDefinition, ExploitDefinition, UpgradeDefinition, EnemyMovement, TargetingMode
+from data_loading import DataLoader
 
 
 class GameData:
@@ -70,28 +71,53 @@ class GameUpgrades:
 
 
 class GameBalance:
-    """Game balance configuration and constants."""
+    """Game balance configuration loaded from JSON data."""
     
-    # CPU restoration from data patches
-    CPU_RESTORE_MIN = 15
-    CPU_RESTORE_MAX = 35
+    @classmethod
+    def get_balance(cls):
+        """Get balance configuration from JSON data."""
+        return DataLoader.get_balance_config()
     
-    # Heat reduction amounts
-    HEAT_REDUCTION_INSTANT = 30
+    @classmethod
+    def get_player_stat(cls, stat_name: str, default_value=None):
+        """Get player stat from balance config."""
+        balance = cls.get_balance()
+        return balance.get('player_stats', {}).get(stat_name, default_value)
     
-    # Detection system
-    DETECTION_THRESHOLD_ALERT = 75
-    DETECTION_THRESHOLD_HOSTILE = 100
+    @classmethod
+    def get_combat_value(cls, value_name: str, default_value=None):
+        """Get combat value from balance config."""
+        balance = cls.get_balance()
+        return balance.get('combat', {}).get(value_name, default_value)
     
-    # Effect durations
-    SPEED_BOOST_DURATION = 5
-    ENHANCED_VISION_DURATION = 5
-    EXPLOIT_EFFICIENCY_DURATION = 8
+    @classmethod
+    def get_code_patch_value(cls, value_name: str, default_value=None):
+        """Get code patch value from balance config."""
+        balance = cls.get_balance()
+        return balance.get('code_patches', {}).get(value_name, default_value)
     
-    # Virus system
-    VIRUS_BASE_DURATION = 3
-    VIRUS_MAX_DURATION = 10
-    VIRUS_DAMAGE_PER_TURN = 2
+    @classmethod
+    def get_temporary_effect_value(cls, value_name: str, default_value=None):
+        """Get temporary effect value from balance config."""
+        balance = cls.get_balance()
+        return balance.get('temporary_effects', {}).get(value_name, default_value)
+    
+    # Legacy properties for backward compatibility
+    @property
+    def CPU_RESTORE_MIN(self):
+        return self.get_code_patch_value('cpu_restore_min', 15)
+    
+    @property
+    def CPU_RESTORE_MAX(self):
+        return self.get_code_patch_value('cpu_restore_max', 35)
+    
+    @property
+    def HEAT_REDUCTION_INSTANT(self):
+        return self.get_code_patch_value('heat_reduction_instant', 30)
+    
+    @property
+    def ENEMY_ELIMINATION_CPU_REWARD(self):
+        return self.get_combat_value('enemy_elimination_cpu_reward', 5)
     
     @staticmethod
     def get_exploit_cpu_cost(exploit_name: str) -> int:
