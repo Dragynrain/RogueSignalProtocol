@@ -12,7 +12,7 @@ from game_characters import Player, Enemy
 from game_map import GameMap
 from game_entities import Position
 from game_config import GameConfig
-from tests.fixtures.simple_fixtures import create_test_player
+from tests.fixtures.simple_fixtures import player
 
 
 class TestVisionLineOfSight:
@@ -21,7 +21,7 @@ class TestVisionLineOfSight:
     def setup_method(self):
         """Setup common test objects."""
         self.game_map = GameMap(20, 20)  # Smaller map for easier testing
-        self.player = create_test_player(x=10, y=10)
+        self.player = player(x=10, y=10)
         
         # Clear the map (no walls initially)
         self.game_map.walls.clear()
@@ -34,13 +34,13 @@ class TestPlayerVisionRange(TestVisionLineOfSight):
     
     def test_base_vision_range(self):
         """Player has correct base vision range."""
-        player = create_test_player()
+        player = player()
         assert player.base_vision_range == 15
         assert player.get_vision_range() == 15
     
     def test_enhanced_vision_bonus(self):
         """Enhanced vision temporary effect increases range."""
-        player = create_test_player()
+        player = player()
         
         # Enable enhanced vision
         player.temporary_effects['enhanced_vision_turns'] = 5
@@ -49,7 +49,7 @@ class TestPlayerVisionRange(TestVisionLineOfSight):
     
     def test_enhanced_vision_allows_wall_sight(self):
         """Enhanced vision allows seeing through walls."""
-        player = create_test_player()
+        player = player()
         
         # No enhanced vision - cannot see through walls
         assert not player.can_see_through_walls()

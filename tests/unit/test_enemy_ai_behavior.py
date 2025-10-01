@@ -10,7 +10,7 @@ from unittest.mock import Mock, patch, MagicMock
 from game_characters import Enemy, Player
 from game_entities import Position, EnemyState, EnemyMovement
 from game_enemies import EnemyManager
-from tests.fixtures.simple_fixtures import create_test_player
+from tests.fixtures.simple_fixtures import player
 
 
 # Mock the pathfinding function to prevent import errors
@@ -35,7 +35,7 @@ class TestEnemyAIBehavior:
         self.mock_message_log = Mock()
         self.mock_game = Mock()
         
-        self.player = create_test_player(x=10, y=10)
+        self.player = player(x=10, y=10)
         self.player.is_invisible = Mock(return_value=False)
         
         # Setup mock game properties that enemies need
@@ -172,7 +172,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = create_test_player(x=8, y=8)  # Within vision range
+            player = player(x=8, y=8)  # Within vision range
             
             # Mock clear line of sight
             self.mock_game_map.can_see_position.return_value = True
@@ -186,7 +186,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=5, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = create_test_player(x=15, y=15)  # Beyond vision range
+            player = player(x=15, y=15)  # Beyond vision range
             
             result = enemy.can_see_player(player, self.mock_game_map)
             assert result is False
@@ -197,7 +197,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = create_test_player(x=7, y=7)  # Within range
+            player = player(x=7, y=7)  # Within range
             player.is_invisible = Mock(return_value=True)
             
             result = enemy.can_see_player(player, self.mock_game_map)
@@ -209,7 +209,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'admin': Mock(movement=EnemyMovement.SEEK, cpu=100, vision=10, damage=20)
         }):
             enemy = Enemy(Position(5, 5), "admin")
-            player = create_test_player(x=50, y=50)  # Very far away
+            player = player(x=50, y=50)  # Very far away
             player.is_invisible = Mock(return_value=True)  # Invisible
             
             result = enemy.can_see_player(player, self.mock_game_map)
@@ -221,7 +221,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Position(5, 5)
-            player = create_test_player(x=8, y=8)  # Within vision range but not adjacent
+            player = player(x=8, y=8)  # Within vision range but not adjacent
             
             # Mock player is in shadow
             self.mock_game_map.is_shadow.return_value = True
@@ -236,7 +236,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = create_test_player(x=6, y=6)  # Adjacent
+            player = player(x=6, y=6)  # Adjacent
             
             # Mock player is in shadow
             self.mock_game_map.is_shadow.return_value = True
@@ -338,7 +338,7 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = create_test_player(x=6, y=6)  # Adjacent
+            player = player(x=6, y=6)  # Adjacent
             
             result = enemy.can_attack_player(player)
             assert result is True
@@ -349,7 +349,7 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = create_test_player(x=10, y=10)  # Not adjacent
+            player = player(x=10, y=10)  # Not adjacent
             
             result = enemy.can_attack_player(player)
             assert result is False
@@ -361,7 +361,7 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
             enemy.disabled_turns = 3
-            player = create_test_player(x=6, y=6)  # Adjacent
+            player = player(x=6, y=6)  # Adjacent
             
             result = enemy.can_attack_player(player)
             assert result is False
@@ -374,7 +374,7 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
         }):
             regular_enemy = Enemy(Position(5, 5), "test_enemy")
             admin_enemy = Enemy(Position(7, 7), "admin")
-            player = create_test_player(x=6, y=6)  # Adjacent
+            player = player(x=6, y=6)  # Adjacent
             player.is_invisible = Mock(return_value=True)
             
             assert regular_enemy.can_attack_player(player) is False
@@ -390,7 +390,7 @@ class TestVirusAndSpecialEnemies(TestEnemyAIBehavior):
             'virus': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0)
         }):
             enemy = Enemy(Position(5, 5), "virus")
-            player = create_test_player()
+            player = player()
             
             damage = enemy.attack_player(player)
             
@@ -403,7 +403,7 @@ class TestVirusAndSpecialEnemies(TestEnemyAIBehavior):
             'inhibitor': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0)
         }):
             enemy = Enemy(Position(5, 5), "inhibitor")
-            player = create_test_player()
+            player = player()
             
             damage = enemy.attack_player(player)
             

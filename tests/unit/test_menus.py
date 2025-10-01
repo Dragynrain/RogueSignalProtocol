@@ -10,7 +10,7 @@ import tcod
 import tcod.event
 
 # Import actual menu classes
-from game_menu_main import MainMenu
+from game_menus import MainMenu
 from game_menu_help_lore import LoreMenu, HelpMenu
 from game_save import SaveGameManager
 

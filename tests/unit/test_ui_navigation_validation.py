@@ -9,7 +9,7 @@ from unittest.mock import Mock, MagicMock, patch
 import tcod
 from typing import Dict, Any, List
 
-from game_ui import UIManager, WindowManager, UniversalInputHandler, render_char_safe
+from game_ui import WindowManager, UniversalInputHandler, render_char_safe
 from game_input import InputHandler
 from game_entities import Colors, Position
 from game_config import GameConfig, GameSettings
