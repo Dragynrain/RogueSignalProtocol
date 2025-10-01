@@ -56,6 +56,7 @@ class ColorManager:
             self._colors['UI_TEXT'] = tuple(ui.get('text', [20, 255, 200]))
             self._colors['UI_ACCENT'] = tuple(ui.get('accent', [160, 20, 255]))
             self._colors['UI_HIGHLIGHT'] = tuple(ui.get('highlight', [255, 20, 255]))
+            self._colors['ELECTRIC_PURPLE'] = tuple(ui.get('electric_purple', [160, 20, 255]))
             
             # Message log colors
             log_colors = color_config.get('message_log', {})
