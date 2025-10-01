@@ -43,6 +43,18 @@ class DataLoader:
         return cls._game_data
     
     @classmethod
+    def get_balance_config(cls) -> Dict[str, Any]:
+        """Get balance configuration from game data."""
+        game_data = cls.load_game_data()
+        return game_data.get('balance', cls._get_fallback_balance())
+    
+    @classmethod
+    def get_item_effects(cls) -> Dict[str, Any]:
+        """Get item effects configuration from game data."""
+        game_data = cls.load_game_data()
+        return game_data.get('item_effects', cls._get_fallback_item_effects())
+    
+    @classmethod
     def load_config(cls) -> Dict[str, Any]:
         """Load configuration from JSON file."""
         if cls._config is None:
@@ -53,6 +65,27 @@ class DataLoader:
                 logging.warning(f"Could not load config from JSON: {e}")
                 cls._config = cls._get_fallback_config()
         return cls._config
+    
+    @classmethod
+    def load_user_settings(cls) -> Dict[str, Any]:
+        """Load user settings from JSON file."""
+        try:
+            with open('user_settings.json', 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logging.debug(f"Could not load user settings from JSON: {e}")
+            return cls._get_default_user_settings()
+    
+    @classmethod
+    def save_user_settings(cls, settings: Dict[str, Any]) -> bool:
+        """Save user settings to JSON file."""
+        try:
+            with open('user_settings.json', 'w', encoding='utf-8') as f:
+                json.dump(settings, f, indent=2, ensure_ascii=False)
+            return True
+        except Exception as e:
+            logging.error(f"Failed to save user settings: {e}")
+            return False
     
     @classmethod
     def _get_fallback_story_fragments(cls) -> List[str]:
@@ -79,6 +112,53 @@ class DataLoader:
             "gameplay": {"difficulty": "normal", "auto_save": True},
             "graphics": {"ascii_mode": False, "colorblind_mode": False},
             "audio": {"master_volume": 0.7, "music_enabled": True, "sound_enabled": True}
+        }
+    
+    @classmethod
+    def _get_default_user_settings(cls) -> Dict[str, Any]:
+        """Default user settings if file doesn't exist."""
+        return {
+            "master_volume": 0.7,
+            "sfx_volume": 1.0,
+            "music_volume": 0.7,
+            "graphics_mode": "terminal"
+        }
+    
+    @classmethod
+    def _get_fallback_balance(cls) -> Dict[str, Any]:
+        """Fallback balance configuration if JSON loading fails."""
+        return {
+            "player_stats": {
+                "starting_cpu": 100,
+                "max_cpu": 100,
+                "starting_heat": 0,
+                "max_heat": 100,
+                "starting_detection": 0,
+                "starting_ram": 8,
+                "base_vision_range": 15
+            },
+            "temporary_effects": {
+                "data_mimic_duration": 5,
+                "exploit_efficiency_multiplier": 0.6
+            },
+            "combat": {
+                "enemy_elimination_cpu_reward": 5
+            },
+            "code_patches": {
+                "cpu_restore_min": 15,
+                "cpu_restore_max": 35,
+                "heat_reduction_instant": 30
+            }
+        }
+    
+    @classmethod
+    def _get_fallback_item_effects(cls) -> Dict[str, Any]:
+        """Fallback item effects configuration if JSON loading fails."""
+        return {
+            "cpu_recovery_small": 10,
+            "cpu_recovery_medium": 20,
+            "cpu_recovery_large": 30,
+            "heat_recovery_amount": 15
         }
 
 

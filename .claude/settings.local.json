@@ -33,6 +33,7 @@
       "Bash(.venv\\Scripts\\python.exe :*)",
       "Bash(\".venv/Scripts/python.exe\" :*)",
       "Bash(uv run:*)",
+	  "Bash(uv run:*)",
       "Bash(uv:*)",
 	  "Bash(uv run pytest tests/ -v --tb=short)",
       "WebFetch(domain:docs.claude.com)",
