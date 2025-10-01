@@ -7,7 +7,7 @@ from unittest.mock import Mock, MagicMock
 from game_entities import Position
 
 
-class TestGameEngineBuilder:
+class GameEngineBuilder:
     """Builder for creating test GameEngine instances."""
     
     def __init__(self):
@@ -59,7 +59,7 @@ class TestGameEngineBuilder:
         return self._engine
 
 
-class TestPlayerBuilder:
+class PlayerBuilder:
     """Builder for creating test Player instances."""
     
     def __init__(self):
@@ -102,7 +102,7 @@ class TestPlayerBuilder:
         return self._player
 
 
-class TestEnemyBuilder:
+class EnemyBuilder:
     """Builder for creating test Enemy instances."""
     
     def __init__(self):
@@ -167,7 +167,7 @@ class TestEnemyBuilder:
         return self._enemy
 
 
-class TestScenarioBuilder:
+class ScenarioBuilder:
     """Builder for creating test scenarios with multiple components."""
     
     def __init__(self):
@@ -181,14 +181,14 @@ class TestScenarioBuilder:
     def with_engine(self, engine_builder=None):
         """Add engine to scenario."""
         if engine_builder is None:
-            engine_builder = TestGameEngineBuilder()
+            engine_builder = GameEngineBuilder()
         self._scenario['engine'] = engine_builder.build()
         return self
     
     def with_player(self, player_builder=None):
         """Add player to scenario."""
         if player_builder is None:
-            player_builder = TestPlayerBuilder()
+            player_builder = PlayerBuilder()
         self._scenario['player'] = player_builder.build()
         return self
     
@@ -210,16 +210,16 @@ class TestScenarioBuilder:
 # Convenience functions for quick test setup
 def player():
     """Quick player builder."""
-    return TestPlayerBuilder()
+    return PlayerBuilder()
 
 def enemy():
     """Quick enemy builder."""
-    return TestEnemyBuilder()
+    return EnemyBuilder()
 
 def engine():
     """Quick engine builder."""
-    return TestGameEngineBuilder()
+    return GameEngineBuilder()
 
 def scenario():
     """Quick scenario builder."""
-    return TestScenarioBuilder()
+    return ScenarioBuilder()
