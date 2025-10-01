@@ -512,7 +512,7 @@ class GameEngine:
             ('restore_cpu', f'Restore {GameBalance.CPU_RESTORE_MIN}-{GameBalance.CPU_RESTORE_MAX} CPU'),
             ('reduce_heat', f'Reduce heat by {GameBalance.HEAT_REDUCTION_INSTANT}°C instantly'),
             ('reduce_detection', '-25% detection level'),
-            ('speed_boost', 'Temporary speed boost (5 turns)'),
+            ('speed_boost', 'Speed boost: 2 moves per turn (3 enemy turns)'),
             ('enhanced_vision', 'Enhanced vision (5 turns)'),
             ('exploit_efficiency', 'Exploit efficiency (8 turns)')
         ]
@@ -585,7 +585,7 @@ class GameEngine:
         """Process one complete game turn using the new system architecture."""
         # Grant speed boost moves at start of turn
         if self.player.temporary_effects['speed_boost_turns'] > 0 and self.player.speed_moves_remaining == 0:
-            self.player.speed_moves_remaining = 1  # Grant 1 extra move per turn
+            self.player.speed_moves_remaining = 2  # Grant 2 moves per enemy turn
         
         # Process turn using the dedicated turn processor
         old_cpu = self.player.cpu
@@ -1092,10 +1092,11 @@ class GameEngine:
         # Process full turn when no speed moves remaining
         self.process_turn()
         
-        # If player has movement inhibition, enemies get an extra turn
+        # If player has movement inhibition, enemies get 2 extra moves (2 moves per 1 player move)
         if self.player.temporary_effects['movement_slowed_turns'] > 0:
-            self.message_log.add_message("Movement inhibition causes enemy advantage")
-            # Process only enemy updates for the extra turn
+            self.message_log.add_message("Movement inhibition: Enemies get double moves")
+            # Process enemy updates twice for the double move advantage
+            self._update_enemies()
             self._update_enemies()
 
     def _perform_bump_attack(self, target_enemy: Enemy):

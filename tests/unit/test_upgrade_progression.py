@@ -125,7 +125,7 @@ class TestTemporaryEffects(unittest.TestCase):
         result = code_hack._apply_effect('speed_boost', self.player, self.mock_game)
         
         self.assertTrue(result)
-        self.assertEqual(self.player.temporary_effects['speed_boost_turns'], 5)
+        self.assertEqual(self.player.temporary_effects['speed_boost_turns'], 3)
 
     def test_enhanced_vision_effect_application(self):
         """Test enhanced vision temporary effect gets applied correctly."""
@@ -149,13 +149,13 @@ class TestTemporaryEffects(unittest.TestCase):
         
         # Apply first speed boost
         code_hack._apply_effect('speed_boost', self.player, self.mock_game)
-        self.assertEqual(self.player.temporary_effects['speed_boost_turns'], 5)
+        self.assertEqual(self.player.temporary_effects['speed_boost_turns'], 3)
         
         # Try to apply second speed boost
         code_hack._apply_effect('speed_boost', self.player, self.mock_game)
         
         # Should still be 5, not 10
-        self.assertEqual(self.player.temporary_effects['speed_boost_turns'], 5)
+        self.assertEqual(self.player.temporary_effects['speed_boost_turns'], 3)
 
     def test_enhanced_vision_stacking_extends_duration(self):
         """Test enhanced vision extends duration when applied multiple times."""
@@ -197,7 +197,7 @@ class TestTemporaryEffects(unittest.TestCase):
         
         # Speed boost should overcome slow and provide net benefit
         self.assertEqual(self.player.temporary_effects['movement_slowed_turns'], 0)
-        self.assertEqual(self.player.temporary_effects['speed_boost_turns'], 2)  # 5 - 3
+        self.assertEqual(self.player.temporary_effects['speed_boost_turns'], 0)  # 3 - 3
 
 
 class TestEffectExpiration(unittest.TestCase):

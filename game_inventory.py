@@ -91,19 +91,20 @@ class CodeHack(InventoryItem):
         elif effect_key == 'speed_boost':
             current_speed = player.temporary_effects.get('speed_boost_turns', 0)
             current_slow = player.temporary_effects.get('movement_slowed_turns', 0)
-            
+
             if current_speed > 0:
                 game.message_log.add_message("Speed boost already active")
             else:
-                speed_to_add = 5
-                
+                # New system: 3 enemy turns (6 player turns total - 2 moves per enemy turn)
+                speed_to_add = 3
+
                 if current_slow > 0:
                     # Offset against existing slow
                     if speed_to_add >= current_slow:
                         # Speed boost overcomes all slow
                         player.temporary_effects['movement_slowed_turns'] = 0
                         player.temporary_effects['speed_boost_turns'] = speed_to_add - current_slow
-                        game.message_log.add_message(f"Speed boost active ({speed_to_add - current_slow} turns)")
+                        game.message_log.add_message(f"Speed boost active ({speed_to_add - current_slow} enemy turns)")
                         if current_slow > 0:
                             game.message_log.add_message("Movement inhibition cancelled")
                     else:
@@ -114,7 +115,7 @@ class CodeHack(InventoryItem):
                 else:
                     # No slow, add speed normally
                     player.temporary_effects['speed_boost_turns'] = speed_to_add
-                    game.message_log.add_message(f"Speed boost active ({speed_to_add} turns)")
+                    game.message_log.add_message(f"Speed boost active ({speed_to_add} enemy turns)")
         
         elif effect_key == 'enhanced_vision':
             current_turns = player.temporary_effects.get('enhanced_vision_turns', 0)

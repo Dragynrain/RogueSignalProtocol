@@ -285,7 +285,7 @@
       "cpu_restore_max": 35,
       "heat_reduction_instant": 30,
       "detection_reduction": 25,
-      "speed_boost_turns": 5
+      "speed_boost_turns": 3
     },
     "detection_system": {
       "threshold_alert": 75,
