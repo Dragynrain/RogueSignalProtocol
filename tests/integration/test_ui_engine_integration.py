@@ -154,7 +154,7 @@ class TestInputEngineIntegration:
         
         # Set up player with equipped exploit
         from game_inventory import InventoryManager
-        self.engine.player.inventory_manager = InventoryManager()
+        self.engine.player.inventory_manager = InventoryManager(self.engine.player)
         self.engine.player.inventory_manager.equipped_exploits = {"shadow_step": True}
         self.engine.player.heat = 30
         self.engine.player.temporary_effects = {'exploit_efficiency_turns': 0}
@@ -397,7 +397,7 @@ class TestAudioEngineIntegration:
         
         # Set up exploit
         from game_inventory import InventoryManager
-        self.engine.player.inventory_manager = InventoryManager()
+        self.engine.player.inventory_manager = InventoryManager(self.engine.player)
         self.engine.player.inventory_manager.equipped_exploits = {"shadow_step": True}
         self.engine.player.heat = 30
         self.engine.player.temporary_effects = {'exploit_efficiency_turns': 0}

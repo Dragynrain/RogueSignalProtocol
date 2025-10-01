@@ -99,7 +99,7 @@ class TestSaveLoadSystemIntegration:
             exploit_item = ExploitItem("buffer_overflow")
             story_fragment = StoryFragment(1)
             
-            engine1.player.inventory_manager = InventoryManager()
+            engine1.player.inventory_manager = InventoryManager(engine1.player)
             engine1.player.inventory_manager.inventory = [code_hack, exploit_item, story_fragment]
             engine1.player.inventory_manager.equipped_exploits = {"buffer_overflow": True}
             
@@ -186,8 +186,8 @@ class TestSaveLoadSystemIntegration:
             enemy1.state = EnemyState.HOSTILE
             enemy1.movement_type = EnemyMovement.SEEK
             enemy1.target_position = Position(5, 5)
-            enemy1.health = 80
-            enemy1.max_health = 100
+            enemy1.cpu = 80
+            enemy1.max_cpu = 100
             
             enemy2 = Mock(spec=Enemy)
             enemy2.position = Position(20, 25)
@@ -196,8 +196,8 @@ class TestSaveLoadSystemIntegration:
             enemy2.movement_type = EnemyMovement.LINEAR
             enemy2.patrol_points = [Position(20, 25), Position(25, 25)]
             enemy2.patrol_index = 1
-            enemy2.health = 150
-            enemy2.max_health = 150
+            enemy2.cpu = 150
+            enemy2.max_cpu = 150
             
             engine1.enemy_manager.enemies = [enemy1, enemy2]
             

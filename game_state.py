@@ -6,6 +6,7 @@ Contains MessageLog, GameStateManager, and TurnProcessor classes.
 
 import random
 from typing import List, Tuple, Optional, Dict, Any
+from dataclasses import dataclass
 
 from game_config import GameConfig, GameBalance
 from game_entities import Position, Colors, ensure_color_tuple
@@ -13,11 +14,19 @@ from data_loading import DataLoader
 from game_save import SaveGameManager
 
 
+@dataclass
+class Message:
+    """Represents a single message in the game log."""
+    text: str
+    color: Tuple[int, int, int]
+    msg_type: Optional[str] = None
+
+
 class MessageLog:
     """Manages game messages and logging."""
     
     def __init__(self, max_messages: int = 100):
-        self.messages: List[Tuple[str, Tuple[int, int, int]]] = []
+        self.messages: List[Message] = []
         self.max_messages = max_messages
     
     def add_message(self, text: str, color: Optional[Tuple[int, int, int]] = None, msg_type: Optional[str] = None):
@@ -31,7 +40,8 @@ class MessageLog:
             else:
                 color = self._determine_message_color(text)
         
-        self.messages.append((text, color))
+        message = Message(text=text, color=color, msg_type=msg_type)
+        self.messages.append(message)
         
         if len(self.messages) > self.max_messages:
             self.messages = self.messages[-self.max_messages:]
@@ -70,7 +80,7 @@ class MessageLog:
         default_color = message_colors.get("default", [144, 238, 144])
         return ensure_color_tuple(default_color)
     
-    def get_recent_messages(self, count: int) -> List[Tuple[str, Tuple[int, int, int]]]:
+    def get_recent_messages(self, count: int) -> List[Message]:
         """Get the most recent messages."""
         return self.messages[-count:] if len(self.messages) > count else self.messages
 

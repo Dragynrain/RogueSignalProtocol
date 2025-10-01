@@ -36,9 +36,9 @@ class TestMessageLog:
         log.add_message("Test message")
         
         assert len(log.messages) == 1
-        assert log.messages[0][0] == "Test message"
-        assert isinstance(log.messages[0][1], tuple)  # Color tuple
-        assert len(log.messages[0][1]) == 3  # RGB values
+        assert log.messages[0].text == "Test message"
+        assert isinstance(log.messages[0].color, tuple)  # Color tuple
+        assert len(log.messages[0].color) == 3  # RGB values
     
     def test_add_message_with_color(self):
         """add_message respects explicit color parameter."""
@@ -48,7 +48,7 @@ class TestMessageLog:
         log.add_message("Colored message", color=test_color)
         
         assert len(log.messages) == 1
-        assert log.messages[0][1] == test_color
+        assert log.messages[0].color == test_color
     
     def test_add_message_with_type(self):
         """add_message handles message types correctly."""
@@ -79,9 +79,9 @@ class TestMessageLog:
         
         assert len(log.messages) == 3
         # Should keep the most recent messages
-        assert log.messages[0][0] == "Message 2"
-        assert log.messages[1][0] == "Message 3"
-        assert log.messages[2][0] == "Message 4"
+        assert log.messages[0].text == "Message 2"
+        assert log.messages[1].text == "Message 3"
+        assert log.messages[2].text == "Message 4"
     
     def test_get_recent_messages(self):
         """get_recent_messages returns correct number of messages."""
@@ -94,9 +94,9 @@ class TestMessageLog:
         recent = log.get_recent_messages(3)
         
         assert len(recent) == 3
-        assert recent[0][0] == "Message 2"
-        assert recent[1][0] == "Message 3"
-        assert recent[2][0] == "Message 4"
+        assert recent[0].text == "Message 2"
+        assert recent[1].text == "Message 3"
+        assert recent[2].text == "Message 4"
     
     def test_get_recent_messages_fewer_than_requested(self):
         """get_recent_messages handles requests for more messages than available."""
@@ -107,7 +107,7 @@ class TestMessageLog:
         recent = log.get_recent_messages(5)  # Request more than available
         
         assert len(recent) == 1
-        assert recent[0][0] == "Only message"
+        assert recent[0].text == "Only message"
     
     def test_message_color_determination(self):
         """_determine_message_color chooses appropriate colors."""
@@ -515,8 +515,8 @@ class TestGameLogicIntegration:
         
         assert gsm.turn == 2
         assert len(message_log.messages) == 2
-        assert "Turn 1" in message_log.messages[0][0]
-        assert "Turn 2" in message_log.messages[1][0]
+        assert "Turn 1" in message_log.messages[0].text
+        assert "Turn 2" in message_log.messages[1].text
     
     def test_turn_processor_with_real_player(self):
         """TurnProcessor works with real Player object."""

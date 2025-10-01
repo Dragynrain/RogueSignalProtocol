@@ -30,7 +30,7 @@ class TestCombatCharacterInteraction:
         self.exploit_system = ExploitSystem(self.engine)
         
         # Set up player with inventory
-        self.engine.player.inventory_manager = InventoryManager()
+        self.engine.player.inventory_manager = InventoryManager(self.engine.player)
         self.engine.player.heat = 30
         self.engine.player.temporary_effects = {'exploit_efficiency_turns': 0}
     
@@ -40,8 +40,8 @@ class TestCombatCharacterInteraction:
         enemy = Mock(spec=Enemy)
         enemy.position = Position(15, 15)
         enemy.take_damage = Mock(return_value=50)
-        enemy.health = 100
-        enemy.max_health = 100
+        enemy.cpu = 100
+        enemy.max_cpu = 100
         self.engine.enemy_manager.enemies = [enemy]
         
         # Set up exploit
@@ -72,7 +72,7 @@ class TestCombatCharacterInteraction:
         enemy = Mock(spec=Enemy)
         enemy.position = Position(11, 10)
         enemy.take_damage = Mock(return_value=25)
-        enemy.health = 100
+        enemy.cpu = 100
         self.engine.enemy_manager.enemies = [enemy]
         
         # Position player
@@ -94,15 +94,15 @@ class TestCombatCharacterInteraction:
         # Add enemy that will die
         enemy = Mock(spec=Enemy)
         enemy.position = Position(15, 15)
-        enemy.health = 10
-        enemy.max_health = 100
+        enemy.cpu = 10
+        enemy.max_cpu = 100
         enemy.state = EnemyState.HOSTILE
         enemy.take_damage = Mock(return_value=10)
         
         # Mock enemy death
         def mock_damage(damage):
-            enemy.health -= damage
-            if enemy.health <= 0:
+            enemy.cpu -= damage
+            if enemy.cpu <= 0:
                 enemy.state = EnemyState.DEAD
             return damage
         
@@ -127,7 +127,7 @@ class TestCombatCharacterInteraction:
             self.exploit_system.execute_exploit("system_crash", enemy.position)
             
             # Enemy should be marked as dead
-            assert enemy.health <= 0
+            assert enemy.cpu <= 0
             assert enemy.state == EnemyState.DEAD
     
     def test_combat_affects_enemy_ai_state(self):
@@ -137,7 +137,7 @@ class TestCombatCharacterInteraction:
         enemy.position = Position(15, 15)
         enemy.state = EnemyState.PATROL
         enemy.take_damage = Mock(return_value=20)
-        enemy.health = 80
+        enemy.cpu = 80
         self.engine.enemy_manager.enemies = [enemy]
         
         # Set up non-lethal exploit
@@ -171,7 +171,7 @@ class TestCombatPlayerIntegration:
             self.engine = GameEngine(load_save=False)
         
         self.exploit_system = ExploitSystem(self.engine)
-        self.engine.player.inventory_manager = InventoryManager()
+        self.engine.player.inventory_manager = InventoryManager(self.engine.player)
     
     def test_exploit_heat_affects_player_state(self):
         """Exploit usage correctly affects player heat state."""
@@ -283,7 +283,7 @@ class TestCombatEnemyManagementIntegration:
             self.engine = GameEngine(load_save=False)
         
         self.exploit_system = ExploitSystem(self.engine)
-        self.engine.player.inventory_manager = InventoryManager()
+        self.engine.player.inventory_manager = InventoryManager(self.engine.player)
     
     def test_area_exploit_affects_multiple_enemies(self):
         """Area exploits affect multiple enemies in range."""
@@ -374,12 +374,12 @@ class TestCombatEnemyManagementIntegration:
         # Add enemy that will die
         dead_enemy = Mock(spec=Enemy)
         dead_enemy.position = Position(15, 15)
-        dead_enemy.health = 0
+        dead_enemy.cpu = 0
         dead_enemy.state = EnemyState.DEAD
         
         alive_enemy = Mock(spec=Enemy)
         alive_enemy.position = Position(20, 20)
-        alive_enemy.health = 100
+        alive_enemy.cpu = 100
         alive_enemy.state = EnemyState.PATROL
         
         self.engine.enemy_manager.enemies = [dead_enemy, alive_enemy]
@@ -402,7 +402,7 @@ class TestCombatCharacterStateIntegration:
             self.engine = GameEngine(load_save=False)
         
         self.exploit_system = ExploitSystem(self.engine)
-        self.engine.player.inventory_manager = InventoryManager()
+        self.engine.player.inventory_manager = InventoryManager(self.engine.player)
     
     def test_player_state_consistency_after_combat(self):
         """Player state remains consistent after combat actions."""
@@ -440,14 +440,14 @@ class TestCombatCharacterStateIntegration:
         """Enemy state remains consistent after taking damage."""
         enemy = Mock(spec=Enemy)
         enemy.position = Position(15, 15)
-        enemy.health = 100
-        enemy.max_health = 100
+        enemy.cpu = 100
+        enemy.max_cpu = 100
         enemy.state = EnemyState.PATROL
         
         # Mock damage application
         def apply_damage(damage):
-            enemy.health = max(0, enemy.health - damage)
-            if enemy.health <= 0:
+            enemy.cpu = max(0, enemy.cpu - damage)
+            if enemy.cpu <= 0:
                 enemy.state = EnemyState.DEAD
             elif enemy.state == EnemyState.PATROL:
                 enemy.state = EnemyState.HOSTILE  # Becomes hostile when damaged
@@ -472,7 +472,7 @@ class TestCombatCharacterStateIntegration:
             
             assert result is True
             # Enemy should be damaged and state changed
-            assert enemy.health < 100
+            assert enemy.cpu < 100
             assert enemy.state == EnemyState.HOSTILE
     
     def test_turn_processing_integration_after_combat(self):
@@ -509,7 +509,7 @@ class TestCombatCharacterErrorIntegration:
             self.engine = GameEngine(load_save=False)
         
         self.exploit_system = ExploitSystem(self.engine)
-        self.engine.player.inventory_manager = InventoryManager()
+        self.engine.player.inventory_manager = InventoryManager(self.engine.player)
     
     def test_invalid_enemy_position_error_handling(self):
         """Invalid enemy positions are handled gracefully in combat."""

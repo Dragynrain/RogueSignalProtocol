@@ -32,9 +32,9 @@ class TestMessageLog:
         log.add_message("Test message")
         
         assert len(log.messages) == 1
-        assert log.messages[0][0] == "Test message"
-        assert isinstance(log.messages[0][1], tuple)
-        assert len(log.messages[0][1]) == 3  # RGB tuple
+        assert log.messages[0].text == "Test message"
+        assert isinstance(log.messages[0].color, tuple)
+        assert len(log.messages[0].color) == 3  # RGB tuple
     
     def test_add_message_with_color(self):
         """Test adding a message with explicit color."""
@@ -43,8 +43,8 @@ class TestMessageLog:
         log.add_message("Red message", color=red_color)
         
         assert len(log.messages) == 1
-        assert log.messages[0][0] == "Red message"
-        assert log.messages[0][1] == red_color
+        assert log.messages[0].text == "Red message"
+        assert log.messages[0].color == red_color
     
     def test_add_message_with_type(self):
         """Test adding a message with message type."""
@@ -62,8 +62,8 @@ class TestMessageLog:
             log.add_message("Error occurred", msg_type="error")
             
             assert len(log.messages) == 1
-            assert log.messages[0][0] == "Error occurred"
-            assert log.messages[0][1] == (255, 0, 0)
+            assert log.messages[0].text == "Error occurred"
+            assert log.messages[0].color == (255, 0, 0)
     
     def test_add_message_typed_helper(self):
         """Test the add_message_typed convenience method."""
@@ -72,7 +72,7 @@ class TestMessageLog:
             log.add_message_typed("Success message", "success")
             
             assert len(log.messages) == 1
-            assert log.messages[0][0] == "Success message"
+            assert log.messages[0].text == "Success message"
             mock_color.assert_called_once_with("success")
     
     def test_empty_message_ignored(self):
@@ -93,9 +93,9 @@ class TestMessageLog:
         
         # Should only keep the last 3 messages
         assert len(log.messages) == 3
-        assert log.messages[0][0] == "Message 2"
-        assert log.messages[1][0] == "Message 3" 
-        assert log.messages[2][0] == "Message 4"
+        assert log.messages[0].text == "Message 2"
+        assert log.messages[1].text == "Message 3" 
+        assert log.messages[2].text == "Message 4"
     
     def test_get_recent_messages(self):
         """Test retrieving recent messages."""
@@ -106,13 +106,13 @@ class TestMessageLog:
         # Get last 3 messages
         recent = log.get_recent_messages(3)
         assert len(recent) == 3
-        assert recent[0][0] == "Message 2"
-        assert recent[2][0] == "Message 4"
+        assert recent[0].text == "Message 2"
+        assert recent[2].text == "Message 4"
         
         # Request more than available
         all_messages = log.get_recent_messages(10)
         assert len(all_messages) == 5
-        assert all_messages[0][0] == "Message 0"
+        assert all_messages[0].text == "Message 0"
     
     def test_color_determination_by_content(self):
         """Test automatic color determination based on message content."""
@@ -136,15 +136,15 @@ class TestMessageLog:
             
             # Test error pattern matching
             log.add_message("Critical system failure")
-            assert log.messages[0][1] == (255, 0, 0)
+            assert log.messages[0].color == (255, 0, 0)
             
             # Test success pattern matching
             log.add_message("CPU restored successfully")
-            assert log.messages[1][1] == (0, 255, 0)
+            assert log.messages[1].color == (0, 255, 0)
             
             # Test default for unmatched content
             log.add_message("Random message")
-            assert log.messages[2][1] == (144, 238, 144)
+            assert log.messages[2].color == (144, 238, 144)
     
     def test_get_color_by_type(self):
         """Test getting color by explicit message type."""
@@ -409,10 +409,10 @@ class TestMessageLogIntegration:
             log.add_message("Operation completed successfully")
             
             # Colors should be valid RGB tuples that render_char_safe can use
-            for message, color in log.messages:
-                assert isinstance(color, tuple)
-                assert len(color) == 3
-                assert all(0 <= c <= 255 for c in color)
+            for message in log.messages:
+                assert isinstance(message.color, tuple)
+                assert len(message.color) == 3
+                assert all(0 <= c <= 255 for c in message.color)
     
     def test_message_log_ui_rendering_compatibility(self):
         """Test that MessageLog output is compatible with UI rendering."""
@@ -424,9 +424,9 @@ class TestMessageLogIntegration:
         log.add_message("Warning message", color=(255, 255, 0))
         
         # Test that all messages can be rendered without errors
-        for i, (text, color) in enumerate(log.get_recent_messages(10)):
+        for i, message in enumerate(log.get_recent_messages(10)):
             # This should not raise any exceptions
-            render_char_safe(mock_console, 0, i, text[0] if text else ' ', fg=color)
+            render_char_safe(mock_console, 0, i, message.text[0] if message.text else ' ', fg=message.color)
             
         # Verify render_char_safe was called for each message
         assert mock_console.print.call_count == len(log.messages)

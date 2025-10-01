@@ -50,7 +50,7 @@ class EnemyManager:
         self.enemies.append(enemy)
         return enemy
     
-    def update_all_enemies(self, player: Player, game_state: 'GameStateManager', game: 'GameEngine') -> None:
+    def update_all_enemies(self, player: Player, game_state: 'GameStateManager', game_engine: 'GameEngine') -> None:
         """Update AI and movement for all enemies."""
         for enemy in self.enemies[:]:  # Use slice copy for safe iteration
             if enemy.disabled_turns > 0:
@@ -59,7 +59,7 @@ class EnemyManager:
             # Enemy state is now handled by the main game's _process_enemies method
             
             # Move enemy
-            enemy.move(self.game_map, player, game)
+            enemy.move(self.game_map, player, game_engine)
     
     def get_enemy_at_position(self, position: Position) -> Optional[Enemy]:
         """Get enemy at the specified position."""

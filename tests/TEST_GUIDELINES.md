@@ -84,9 +84,9 @@ def test_message_logging():
     message_log = MessageLog()
     message_log.add_message("Test message")
     
-    # Handle real message format: (text, color) tuple
+    # Handle real message format: Message object with .text and .color attributes
     assert len(message_log.messages) > 0
-    message_text = message_log.messages[-1][0]
+    message_text = message_log.messages[-1].text
     assert "Test message" in message_text
 ```
 
@@ -230,7 +230,7 @@ def test_exploit_insufficient_cpu():
     result = exploit_system.use_exploit('shadow_step')
     
     assert result is False
-    message_text = game.message_log.messages[-1][0]
+    message_text = game.message_log.messages[-1].text
     assert "insufficient" in message_text.lower()
 ```
 
