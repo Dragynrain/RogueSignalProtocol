@@ -119,9 +119,9 @@ class Player:
         """Check if player can see through walls."""
         return self.temporary_effects['enhanced_vision_turns'] > 0
     
-    def can_see_enemy(self, enemy: 'Enemy', game_map) -> bool:
+    def can_see_enemy(self, enemy_target: 'Enemy', game_map) -> bool:
         """Check if player can see enemy using TCOD FOV system with shadow mechanics."""
-        distance = self.position.distance_to(enemy.position)
+        distance = self.position.distance_to(enemy_target.position)
         
         # Adjacent enemies should ALWAYS be visible (critical for combat feedback)
         if distance <= getattr(GameConfig, 'adjacent_visibility_threshold', 1.5):
@@ -130,10 +130,10 @@ class Player:
         # Use enhanced vision system that can see through walls
         if self.can_see_through_walls():
             return distance <= self.get_vision_range()
-        
+
         # Check stealth mechanics first
         player_in_shadow = game_map.is_shadow(self.position)
-        enemy_in_shadow = game_map.is_shadow(enemy.position)
+        enemy_in_shadow = game_map.is_shadow(enemy_target.position)
         
         # If enemy is in shadow, only visible if player is directly adjacent
         if enemy_in_shadow and distance > 1:
@@ -357,7 +357,7 @@ class Enemy:
         self.cpu -= damage
         return self.cpu <= 0
     
-    def move(self, game_map, player: Player, game=None) -> bool:
+    def move(self, game_map, player: Player, game_engine=None) -> bool:
         """Simple queue-based movement system."""
         # Skip movement if disabled or on cooldown
         if self.disabled_turns > 0:
@@ -369,11 +369,11 @@ class Enemy:
             return False
         
         # Generate new queue if needed (empty queue or state/target changed)
-        if self._should_regenerate_queue(game_map, player, game):
-            self._generate_movement_queue(game_map, player, game)
-        
+        if self._should_regenerate_queue(game_map, player, game_engine):
+            self._generate_movement_queue(game_map, player, game_engine)
+
         # Execute next move from queue
-        moved = self._execute_next_move(game_map, player, game)
+        moved = self._execute_next_move(game_map, player, game_engine)
         
         # Reset cooldown after successful movement
         if moved:
@@ -381,7 +381,7 @@ class Enemy:
         
         return moved
     
-    def _should_regenerate_queue(self, game_map, player: Player, game) -> bool:
+    def _should_regenerate_queue(self, game_map, player: Player, game_engine) -> bool:
         """Determine if the movement queue should be regenerated."""
         # Always regenerate if queue is empty
         if not self.movement_queue:
@@ -472,7 +472,7 @@ class Enemy:
         
         return False
     
-    def _extend_movement_queue(self, target: Optional[Position], use_pathfinding: bool, game_map, game):
+    def _extend_movement_queue(self, target: Optional[Position], use_pathfinding: bool, game_map, game_engine):
         """Extend the existing movement queue to maintain 3 moves."""
         # Calculate how many moves we need to add
         desired_queue_length = 3
@@ -486,7 +486,7 @@ class Enemy:
         if use_pathfinding and target:
             # Use pathfinding to generate additional moves
             try:
-                cost_map = create_pathfinding_cost_map(game_map, game, self)
+                cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
                 graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
                 pathfinder = tcod.path.Pathfinder(graph)
                 
@@ -523,7 +523,7 @@ class Enemy:
         # Add the new moves to the queue
         self.movement_queue.extend(temp_queue)
     
-    def _get_random_adjacent_position(self, from_pos: Position, game_map, game) -> Optional[Position]:
+    def _get_random_adjacent_position(self, from_pos: Position, game_map, game_engine) -> Optional[Position]:
         """Get a random valid adjacent position from the given position."""
         directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
         random.shuffle(directions)
@@ -535,7 +535,7 @@ class Enemy:
         
         return None  # No valid adjacent positions found
     
-    def _generate_movement_queue(self, game_map, player: Player, game):
+    def _generate_movement_queue(self, game_map, player: Player, game_engine):
         """Generate movement queue based on enemy state and type."""
         # Only clear queue if state/target changed significantly, otherwise maintain it
         needs_full_regeneration = self._needs_full_queue_regeneration(player, game_map)
@@ -597,7 +597,7 @@ class Enemy:
         self.last_queue_state = self.state
         self.last_queue_target = target
     
-    def _generate_pathfinding_queue(self, target: Position, game_map, game):
+    def _generate_pathfinding_queue(self, target: Position, game_map, game_engine):
         """Generate movement queue using pathfinding to target, ensuring 3 valid moves."""
         try:
             # Create cost map
@@ -627,7 +627,7 @@ class Enemy:
             logging.error(f"Enemy {self.type_data.name} pathfinding failed: {e}")
             self._generate_random_queue(game_map, game)
     
-    def _generate_random_queue(self, game_map, game):
+    def _generate_random_queue(self, game_map, game_engine):
         """Generate 3 random valid moves."""
         directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
         current_pos = Position(self.x, self.y)
@@ -649,7 +649,7 @@ class Enemy:
                     break
             attempts += 1
     
-    def _ensure_queue_length(self, game_map, game):
+    def _ensure_queue_length(self, game_map, game_engine):
         """Ensure the movement queue has exactly 3 moves, filling with random moves if needed."""
         while len(self.movement_queue) < 3:
             # Try to add more random moves from the last position in queue
@@ -676,24 +676,24 @@ class Enemy:
             if not move_added:
                 break
     
-    def _is_valid_enemy_move(self, position: Position, game_map, game) -> bool:
+    def _is_valid_enemy_move(self, position: Position, game_map, game_engine) -> bool:
         """Check if a position is valid for enemy movement."""
         # Basic position validation
         if not game_map.is_valid_position(position):
             return False
         
         # Can't move to player position
-        if position.x == game.player.x and position.y == game.player.y:
+        if position.x == game_engine.player.x and position.y == game_engine.player.y:
             return False
         
         # Can't move to a position occupied by another enemy
-        for other_enemy in game.enemies:
+        for other_enemy in game_engine.enemies:
             if other_enemy != self and other_enemy.x == position.x and other_enemy.y == position.y:
                 return False
         
         return True
     
-    def _execute_next_move(self, game_map, player: Player, game) -> bool:
+    def _execute_next_move(self, game_map, player: Player, game_engine) -> bool:
         """Execute the next move from the movement queue."""
         if not self.movement_queue:
             return False
@@ -741,7 +741,7 @@ class Enemy:
 
 
 # Pathfinding helper functions
-def create_pathfinding_cost_map(game_map, game, moving_enemy):
+def create_pathfinding_cost_map(game_map, game_engine, moving_enemy):
     """Create cost map for TCOD A* pathfinding."""
     cost_map = np.zeros((game_map.width, game_map.height), dtype=bool)
     
@@ -752,7 +752,7 @@ def create_pathfinding_cost_map(game_map, game, moving_enemy):
             if not game_map.is_valid_position(tile_pos):
                 cost_map[x, y] = False  # Impassable
             else:
-                enemy_at_tile = game._get_enemy_at(tile_pos)
+                enemy_at_tile = game_engine._get_enemy_at(tile_pos)
                 if enemy_at_tile and enemy_at_tile != moving_enemy:
                     cost_map[x, y] = False  # Impassable - other enemies block movement
                 else:
@@ -761,10 +761,10 @@ def create_pathfinding_cost_map(game_map, game, moving_enemy):
     return cost_map
 
 
-def pathfind_and_move(enemy, target, game_map, player, game):
+def pathfind_and_move(enemy, target, game_map, player, game_engine):
     """Use TCOD A* pathfinding to move enemy one step toward target."""
     try:
-        cost_map = create_pathfinding_cost_map(game_map, game, enemy)
+        cost_map = create_pathfinding_cost_map(game_map, game_engine, enemy)
         
         # Set up pathfinder and calculate optimal path using modern TCOD API  
         graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
@@ -786,7 +786,7 @@ def pathfind_and_move(enemy, target, game_map, player, game):
         return False
 
 
-def can_move_to_position(enemy, destination, game_map, player, game):
+def can_move_to_position(enemy, destination, game_map, player, game_engine):
     """Check if enemy can move to the specified position."""
     # Basic position validation
     if not game_map.is_valid_position(destination):
@@ -797,7 +797,7 @@ def can_move_to_position(enemy, destination, game_map, player, game):
         return False
     
     # Can't move to a position occupied by another enemy
-    for other_enemy in game.enemies:
+    for other_enemy in game_engine.enemies:
         if other_enemy != enemy and other_enemy.x == destination.x and other_enemy.y == destination.y:
             return False
     

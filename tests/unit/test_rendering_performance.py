@@ -169,8 +169,8 @@ class TestRenderingPerformanceBenchmarks:
             enemy.enemy_type = enemy_types[i % len(enemy_types)]
             enemy.state = states[i % len(states)]
             enemy.movement_type = movements[i % len(movements)]
-            enemy.health = 100 - (i % 50)
-            enemy.max_health = 100
+            enemy.cpu = 100 - (i % 50)
+            enemy.max_cpu = 100
             enemies.append(enemy)
         
         return enemies

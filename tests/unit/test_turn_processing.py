@@ -11,6 +11,7 @@ from game_characters import Player, Enemy
 from game_entities import Position, EnemyState
 from game_config import GameConfig
 from tests.fixtures.simple_fixtures import player
+from tests.fixtures.mock_helpers import create_mock_game_map, create_mock_game_state, create_test_player, setup_game_engine_mocks
 
 
 class TestTurnProcessing:
@@ -18,27 +19,17 @@ class TestTurnProcessing:
     
     def setup_method(self):
         """Set up test environment."""
-        # Create a minimal mock game engine for testing
-        self.mock_game_map = Mock()
-        self.mock_game_map.width = 80
-        self.mock_game_map.height = 40
-        self.mock_game_map.is_valid_position = Mock(return_value=True)
-        self.mock_game_map.is_wall = Mock(return_value=False)
-        
-        self.mock_message_log = Mock()
-        self.mock_sound_manager = Mock()
-        
         # Create game engine with mocked dependencies
         with patch('game_engine.GameMap'), \
              patch('game_engine.MessageLog'), \
              patch('game_engine.SoundManager'):
             self.game_engine = GameEngine()
-            self.game_engine.game_map = self.mock_game_map
-            self.game_engine.message_log = self.mock_message_log
-            self.game_engine.sound_manager = self.mock_sound_manager
-            
-            # Set up player
-            self.game_engine.player = player()
+
+            # Set up proper mocks using the helper
+            setup_game_engine_mocks(self.game_engine)
+
+            # Set up player with proper temporary effects
+            self.game_engine.player = create_test_player()
             self.game_engine.enemies = []
             self.game_engine.turn = 0
     
@@ -52,23 +43,23 @@ class TestTurnProcessing:
     
     def test_player_turn_processing(self):
         """Test player-specific turn processing."""
-        # Set up player with temporary effects
-        self.game_engine.player.temporary_effects = {
-            'stealth': 3,
-            'overclock': 1,
-            'speed': 2
-        }
+        # Set up player with temporary effects using correct effect names
+        self.game_engine.player.temporary_effects.update({
+            'data_mimic_turns': 3,
+            'virus_turns': 1,
+            'speed_boost_turns': 2
+        })
         self.game_engine.player.heat = 50
-        
-        initial_stealth = self.game_engine.player.temporary_effects['stealth']
-        initial_overclock = self.game_engine.player.temporary_effects['overclock']
-        
+
+        initial_data_mimic = self.game_engine.player.temporary_effects['data_mimic_turns']
+        initial_virus = self.game_engine.player.temporary_effects['virus_turns']
+
         self.game_engine.process_turn()
-        
+
         # Temporary effects should decrease
-        assert self.game_engine.player.temporary_effects['stealth'] == initial_stealth - 1
-        assert self.game_engine.player.temporary_effects['overclock'] == initial_overclock - 1
-        
+        assert self.game_engine.player.temporary_effects['data_mimic_turns'] == initial_data_mimic - 1
+        assert self.game_engine.player.temporary_effects['virus_turns'] == initial_virus - 1
+
         # Heat should decrease (natural cooling)
         assert self.game_engine.player.heat < 50
     

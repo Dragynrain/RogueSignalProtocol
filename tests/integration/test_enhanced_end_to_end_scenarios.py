@@ -35,7 +35,7 @@ class TestCompleteGameplayJourneys:
             engine.player.detection = 0.0
             
             # Add stealth exploits to inventory
-            engine.player.inventory_manager = InventoryManager()
+            engine.player.inventory_manager = InventoryManager(engine.player)
             engine.player.inventory_manager.equipped_exploits = {
                 "shadow_step": True,
                 "data_mimic": True
@@ -85,7 +85,7 @@ class TestCompleteGameplayJourneys:
             engine = GameEngine(load_save=False)
             
             # Aggressive playthrough: high detection, combat exploits
-            engine.player.inventory_manager = InventoryManager()
+            engine.player.inventory_manager = InventoryManager(engine.player)
             engine.player.inventory_manager.equipped_exploits = {
                 "buffer_overflow": True,
                 "system_crash": True,
@@ -98,7 +98,7 @@ class TestCompleteGameplayJourneys:
                 enemy.position = Position(10 + i * 5, 10)
                 enemy.state = EnemyState.HOSTILE
                 enemy.take_damage = Mock(return_value=50)
-                enemy.health = 100
+                enemy.cpu = 100
                 engine.enemy_manager.enemies.append(enemy)
             
             # Simulate aggressive combat
@@ -320,7 +320,7 @@ class TestCriticalGameplayScenarios:
             engine.player.heat = 95
             
             # Try to use high-heat exploit (should require overclocking)
-            engine.player.inventory_manager = InventoryManager()
+            engine.player.inventory_manager = InventoryManager(engine.player)
             engine.player.inventory_manager.equipped_exploits = {"system_crash": True}
             engine.player.temporary_effects = {'exploit_efficiency_turns': 0}
             
