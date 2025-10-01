@@ -8,7 +8,7 @@ import tcod.event
 from unittest.mock import Mock, MagicMock, patch
 
 # Import test fixtures
-from tests.fixtures.simple_fixtures import create_test_player
+from tests.fixtures.simple_fixtures import player
 
 # Import game modules
 from game_input import InputHandler
@@ -21,7 +21,7 @@ def create_mock_game():
     game = Mock()
     
     # Player
-    game.player = create_test_player()
+    game.player = player()
     game.player.inventory_manager = Mock()
     game.player.inventory_manager.equipped_exploits = []
     game.player.inventory_manager.get_display_items = Mock(return_value=[])

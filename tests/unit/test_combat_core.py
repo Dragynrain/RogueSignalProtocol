@@ -294,6 +294,8 @@ class TestTargetValidation:
         self.mock_game.player = self.mock_player
         self.mock_player.x = 10
         self.mock_player.y = 10
+        self.mock_player.position = Position(10, 10)
+        self.mock_game.message_log = Mock()
         
         self.exploit_system = ExploitSystem(self.mock_game)
     
@@ -306,8 +308,7 @@ class TestTargetValidation:
         # Target too far away
         target = Position(20, 20)
         
-        with patch.object(self.exploit_system, '_is_in_range', return_value=False), \
-             patch.object(self.mock_game.message_log, 'add_message') as mock_message:
+        with patch.object(self.mock_game.message_log, 'add_message') as mock_message:
             
             result = self.exploit_system._validate_target(mock_exploit, target)
             
@@ -322,11 +323,10 @@ class TestTargetValidation:
         
         target = Position(12, 12)
         
-        with patch.object(self.exploit_system, '_is_in_range', return_value=True):
-            
-            result = self.exploit_system._validate_target(mock_exploit, target)
-            
-            assert result is True
+        # Target close enough (distance ~2.8, range is 5)
+        result = self.exploit_system._validate_target(mock_exploit, target)
+        
+        assert result is True
 
 
 class TestSpecificExploitMechanics:

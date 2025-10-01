@@ -20,7 +20,13 @@ from game_engine import GameEngine
 from game_characters import Player, Enemy
 from game_config import GameConfig
 from game_entities import Position
-from tests.performance.test_movement_constants import Direction
+# Direction enum for movement testing
+from enum import Enum
+class Direction(Enum):
+    NORTH = (0, -1)
+    SOUTH = (0, 1)
+    EAST = (1, 0)
+    WEST = (-1, 0)
 from tests.fixtures.test_builders import TestGameEngineBuilder, TestPlayerBuilder, TestEnemyBuilder
 
 
@@ -436,17 +442,17 @@ class TestWindowsSystemIntegration:
                     # Game should work in all security contexts
                     dx, dy = Direction.NORTH.value
                 engine.move_player(dx, dy)
-                    engine.process_enemy_turns()
-                    
-                    # Some operations might be restricted in certain contexts
-                    try:
-                        engine.save_game()
-                    except PermissionError:
-                        # Permission errors are acceptable in restricted contexts
-                        if not context['elevated']:
-                            pass  # Expected in non-elevated context
-                        else:
-                            raise
+                engine.process_enemy_turns()
+                
+                # Some operations might be restricted in certain contexts
+                try:
+                    engine.save_game()
+                except PermissionError:
+                    # Permission errors are acceptable in restricted contexts
+                    if not context['elevated']:
+                        pass  # Expected in non-elevated context
+                    else:
+                        raise
                 
             except Exception as e:
                 assert False, f"Security context test failed for {context}: {e}"

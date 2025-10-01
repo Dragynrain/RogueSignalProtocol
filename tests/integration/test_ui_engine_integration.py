@@ -13,9 +13,9 @@ from game_characters import Player, Enemy
 from game_entities import Position, EnemyState
 from game_state import MessageLog
 from game_input import InputHandler
-from game_ui import UIManager
-from game_rendering import GameRenderer
-from game_menus import MenuManager
+# UIManager removed - not part of current architecture
+from game_rendering import BaseRenderer
+# MenuManager not found - using MainMenu for test
 from game_audio import SoundManager
 
 

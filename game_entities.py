@@ -10,69 +10,143 @@ from enum import Enum
 from typing import List, Tuple, Optional
 
 
-class Colors:
-    """Modern cyberpunk neon color definitions for the game."""
-    # Core neon palette
-    WHITE = (255, 255, 255)
-    BLACK = (5, 5, 15)  # Deep space blue-black
-    RED = (220, 20, 60)  # Standardized to Crimson
-    GREEN = (50, 255, 50)  # Standardized to Acid Green
-    BLUE = (0, 191, 255)  # Standardized to Electric Blue
-    YELLOW = (255, 215, 0)  # Standardized to Golden
-    CYAN = (20, 255, 200)  # Standardized to Cyber Teal
-    MAGENTA = (255, 20, 255)  # Standardized magenta
-    ORANGE = (255, 120, 20)  # Neon orange
+class ColorManager:
+    """JSON-driven color management for the game."""
     
-    # Extended neon palette
-    ELECTRIC_PURPLE = (160, 20, 255)  # Electric purple
-    NEON_PINK = (255, 20, 147)  # Hot pink
-    ACID_GREEN = (50, 255, 50)  # Acid green
-    DARK_GREEN = (20, 120, 20)  # Dark green for virus effect
-    ELECTRIC_BLUE = (0, 191, 255)  # Electric blue
-    CYBER_TEAL = (20, 255, 200)  # Cyber teal
+    _instance = None
+    _colors = None
     
-    # Code colors (from config)
-    CRIMSON = (220, 20, 60)
-    AZURE = (30, 144, 255) 
-    EMERALD = (50, 205, 50)
-    GOLDEN = (255, 215, 0)
-    VIOLET = (138, 43, 226)
-    SILVER = (192, 192, 192)
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._load_colors()
+        return cls._instance
     
-    # Game-specific colors with neon theme
-    FLOOR = (180, 180, 220)  # Bright light dots for empty spaces
-    WALL = (120, 140, 180)  # Light blue-gray walls
-    SHADOW = (3, 3, 8)  # Dark shadow areas
-    PLAYER = (50, 255, 50)  # Standardized to Acid Green
-    GATEWAY = (255, 215, 0)  # Standardized to Golden
+    def _load_colors(self):
+        """Load colors from JSON configuration."""
+        try:
+            from data_loading import DataLoader
+            config = DataLoader.load_config()
+            self._colors = {}
+            
+            # Load all color categories from JSON
+            color_config = config.get('colors', {})
+            
+            # Basic colors
+            for name, rgb in color_config.get('basic', {}).items():
+                self._colors[name.upper()] = tuple(rgb)
+            
+            # Game element colors  
+            for name, rgb in color_config.get('game_elements', {}).items():
+                self._colors[name.upper()] = tuple(rgb)
+            
+            # Data code colors
+            for name, rgb in color_config.get('data_codes', {}).items():
+                self._colors[name.upper()] = tuple(rgb)
+            
+            # Enemy state colors
+            enemies = color_config.get('enemies', {})
+            self._colors['ENEMY_UNAWARE'] = tuple(enemies.get('unaware', [255, 120, 20]))
+            self._colors['ENEMY_ALERT'] = tuple(enemies.get('alert', [255, 215, 0]))
+            self._colors['ENEMY_HOSTILE'] = tuple(enemies.get('hostile', [220, 20, 60]))
+            
+            # UI colors
+            ui = color_config.get('ui', {})
+            self._colors['UI_BG'] = tuple(ui.get('background', [10, 15, 25]))
+            self._colors['UI_TEXT'] = tuple(ui.get('text', [20, 255, 200]))
+            self._colors['UI_ACCENT'] = tuple(ui.get('accent', [160, 20, 255]))
+            self._colors['UI_HIGHLIGHT'] = tuple(ui.get('highlight', [255, 20, 255]))
+            
+            # Message log colors
+            log_colors = color_config.get('message_log', {})
+            for name, rgb in log_colors.items():
+                self._colors[name.upper()] = tuple(rgb)
+            
+            # Vision overlay colors (derived from enemy colors with darker tint)
+            self._colors['VISION_UNAWARE'] = self._darken_color(self._colors['ENEMY_UNAWARE'], 0.3)
+            self._colors['VISION_ALERT'] = self._darken_color(self._colors['ENEMY_ALERT'], 0.3)
+            self._colors['VISION_HOSTILE'] = self._darken_color(self._colors['ENEMY_HOSTILE'], 0.3)
+            
+            # Additional derived colors for compatibility
+            self._colors['LOG_BG'] = (8, 12, 20)
+            self._colors['LOG_BORDER'] = self._colors['UI_TEXT']
+            self._colors['LIGHT_GRAY'] = self._colors.get('LIGHT_GRAY', (160, 170, 190))
+            
+        except Exception as e:
+            import logging
+            logging.error(f"Failed to load colors from JSON: {e}")
+            self._load_fallback_colors()
     
-    # Enemy colors matching vision overlay colors
-    ENEMY_UNAWARE = (255, 255, 60)  # Yellow (matching vision color scheme)
-    ENEMY_ALERT = (255, 165, 60)  # Orange (matching vision color scheme)
-    ENEMY_HOSTILE = (255, 60, 60)  # Red (matching vision color scheme)
+    def _darken_color(self, color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
+        """Darken a color by the given factor."""
+        return (
+            int(color[0] * factor),
+            int(color[1] * factor), 
+            int(color[2] * factor)
+        )
     
-    # Vision overlays with neon glow
-    VISION_UNAWARE = (80, 80, 10)  # Yellow glow (default state)
-    VISION_ALERT = (80, 50, 10)  # Orange glow (getting suspicious)  
-    VISION_HOSTILE = (80, 10, 10)  # Red glow (fully alert and tracking)
+    def _load_fallback_colors(self):
+        """Load fallback colors if JSON loading fails."""
+        self._colors = {
+            'WHITE': (255, 255, 255),
+            'BLACK': (0, 0, 0),
+            'RED': (220, 20, 60),
+            'GREEN': (50, 255, 50),
+            'BLUE': (0, 191, 255),
+            'YELLOW': (255, 215, 0),
+            'CYAN': (20, 255, 200),
+            'MAGENTA': (255, 20, 255),
+            'PLAYER': (50, 255, 50),
+            'ENEMY_UNAWARE': (255, 120, 20),
+            'ENEMY_ALERT': (255, 215, 0),
+            'ENEMY_HOSTILE': (220, 20, 60),
+            'UI_BG': (10, 15, 25),
+            'UI_TEXT': (20, 255, 200),
+        }
     
-    # Modern UI colors
-    UI_BG = (10, 15, 25)  # Dark blue-gray background
-    UI_TEXT = (20, 255, 200)  # Standardized to Cyber Teal text
-    UI_ACCENT = (160, 20, 255)  # Electric purple accents
-    UI_HIGHLIGHT = (255, 20, 255)  # Standardized magenta highlights
-    LOG_BG = (8, 12, 20)  # Darker blue background
-    LOG_BORDER = (20, 255, 200)  # Cyber teal border
-    LIGHT_GRAY = (160, 170, 190)  # Light cyberpunk gray
-
+    def get_color(self, name: str) -> Tuple[int, int, int]:
+        """Get color by name."""
+        return self._colors.get(name.upper(), (255, 255, 255))
+    
     @staticmethod
     def interpolate_color(color1: Tuple[int, int, int], color2: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
         """Interpolate between two colors by the given factor (0.0 to 1.0)."""
-        factor = max(0.0, min(1.0, factor))  # Clamp factor
+        factor = max(0.0, min(1.0, factor))
         r = int(color1[0] + (color2[0] - color1[0]) * factor)
         g = int(color1[1] + (color2[1] - color1[1]) * factor)
         b = int(color1[2] + (color2[2] - color1[2]) * factor)
         return (r, g, b)
+
+
+class Colors:
+    """Backward-compatible color access using ColorManager."""
+    
+    _manager = None
+    
+    def __init__(self):
+        if Colors._manager is None:
+            Colors._manager = ColorManager()
+    
+    def __getattr__(self, name: str):
+        if Colors._manager is None:
+            Colors._manager = ColorManager()
+        return Colors._manager.get_color(name)
+    
+    @classmethod
+    def get_color(cls, name: str) -> Tuple[int, int, int]:
+        """Get color by name."""
+        if cls._manager is None:
+            cls._manager = ColorManager()
+        return cls._manager.get_color(name)
+    
+    @staticmethod
+    def interpolate_color(color1: Tuple[int, int, int], color2: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
+        """Interpolate between two colors by the given factor (0.0 to 1.0)."""
+        return ColorManager.interpolate_color(color1, color2, factor)
+
+
+# Create a singleton instance for backward compatibility
+Colors = Colors()
 
 
 class EnemyState(Enum):

@@ -17,6 +17,12 @@ class Player:
     """Player character with stats, position, and abilities."""
     
     def __init__(self, x: int, y: int):
+        """Initialize player character at the specified position.
+        
+        Args:
+            x: Initial X coordinate on the game map
+            y: Initial Y coordinate on the game map
+        """
         # Position and movement
         self.position = Position(x, y)
         self.last_position = Position(x, y)

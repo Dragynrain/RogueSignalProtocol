@@ -6,6 +6,7 @@ Extracted from RogueSignalProtocol.py for better organization.
 
 import os
 import logging
+import traceback
 
 # Audio system
 try:
@@ -27,6 +28,11 @@ class SoundManager:
     MUSIC_DIRECTORY = "music"
     
     def __init__(self, settings: GameSettings = None):
+        """Initialize the sound manager with game settings.
+        
+        Args:
+            settings: Game settings containing audio preferences. Creates default if None.
+        """
         self.settings = settings or GameSettings()
         self.enabled = AUDIO_AVAILABLE
         self.sounds = {}
@@ -41,7 +47,6 @@ class SoundManager:
                 pygame.mixer.set_num_channels(self.max_channels)
                 logging.info(f"Sound system initialized with {self.max_channels} channels")
             except Exception as e:
-                import traceback
                 logging.warning(f"Failed to initialize sound system: {e}")
                 logging.warning(traceback.format_exc())
                 self.enabled = False
@@ -128,7 +133,6 @@ class SoundManager:
             else:
                 logging.warning(f"Sound file not found: {sound_path}")
         except Exception as e:
-            import traceback
             logging.error(f"Failed to load sound {sound_id}: {e}")
             logging.error(traceback.format_exc())
     
@@ -168,7 +172,6 @@ class SoundManager:
             
             return channel.play(sound)
         except Exception as e:
-            import traceback
             logging.error(f"Failed to play sound {sound_id}: {e}")
             logging.error(traceback.format_exc())
             return None
@@ -196,7 +199,6 @@ class SoundManager:
             else:
                 logging.warning(f"Music file not found: {music_path}")
         except Exception as e:
-            import traceback
             logging.error(f"Failed to play music {filename}: {e}")
             logging.error(traceback.format_exc())
     
@@ -213,7 +215,6 @@ class SoundManager:
             self.music_playing = False
             self.current_music = None
         except Exception as e:
-            import traceback
             logging.error(f"Failed to stop music: {e}")
             logging.error(traceback.format_exc())
     

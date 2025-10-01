@@ -61,52 +61,7 @@ logging.basicConfig(
 # GameConfig imported from game_config.py - no duplication needed
 
 
-class Colors:
-    """Color constants for the game."""
-    
-    # Basic colors
-    BLACK = (0, 0, 0)
-    WHITE = (255, 255, 255)
-    RED = (255, 0, 0)
-    GREEN = (0, 255, 0)
-    BLUE = (0, 0, 255)
-    YELLOW = (255, 255, 0)
-    CYAN = (0, 255, 255)
-    MAGENTA = (255, 0, 255)
-    
-    # Game-specific colors 
-    PLAYER = (100, 149, 237)  # Cornflower blue
-    WALL = (128, 128, 128)    # Gray
-    FLOOR = (64, 64, 64)      # Dark gray
-    ENEMY = (255, 69, 0)      # Red orange
-    LIGHT_GRAY = (192, 192, 192)
-    DARK_GREEN = (0, 100, 0)
-    ORANGE = (255, 165, 0)
-    
-    # Vision overlays
-    VISION_UNAWARE = (50, 50, 0)     # Dark yellow
-    VISION_ALERT = (80, 40, 0)       # Orange-brown
-    VISION_HOSTILE = (80, 0, 0)      # Dark red
-    
-    # Cyberpunk/neon colors
-    ELECTRIC_BLUE = (0, 191, 255)
-    ELECTRIC_PURPLE = (191, 0, 255)
-    ACID_GREEN = (50, 205, 50)
-    GATEWAY = (255, 215, 0)  # Gold
-    
-    # Data patch colors
-    CRIMSON = (220, 20, 60)
-    AZURE = (0, 127, 255) 
-    EMERALD = (80, 200, 120)
-    GOLDEN = (255, 215, 0)
-    VIOLET = (138, 43, 226)
-    SILVER = (192, 192, 192)
-    
-    # UI colors
-    UI_BG = (20, 20, 20)
-    UI_TEXT = (200, 200, 200)
-    LOG_BORDER = (100, 100, 100)
-    LOG_BG = (10, 10, 10)
+# Colors are now handled by the JSON-driven ColorManager in game_entities.py
 
 
 if __name__ == "__main__":

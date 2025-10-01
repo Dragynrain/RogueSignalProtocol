@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Menu Background System - Split from game_menus.py
+Menu Background System - Extracted from game_menus.py
 Handles high-resolution background images for main menu with conditional loading.
 """
 
@@ -9,8 +9,11 @@ import logging
 import time
 import os
 import random
+import sys
 
-from game_config import GameSettings
+# Import game modules
+from game_config import GameSettings, GameConfig
+from game_entities import Colors
 from game_ui import render_char_safe, WindowManager
 
 
@@ -46,7 +49,6 @@ class MenuBackground:
     
     def _handle_background_error(self, error_type, details, exception=None):
         """Centralized error handling for background operations with adaptive recovery."""
-        import time
         
         current_time = time.time()
         self.error_count += 1
@@ -107,8 +109,6 @@ class MenuBackground:
     
     def _get_image_base_path(self):
         """Get base path for images with enhanced cross-platform support."""
-        import os
-        import sys
         
         try:
             # Get directory containing the script with multiple fallback strategies
@@ -145,7 +145,6 @@ class MenuBackground:
     
     def _build_image_path(self, image_number):
         """Build cross-platform image path with comprehensive validation."""
-        import os
         
         try:
             base_path = self._get_image_base_path()
@@ -174,14 +173,12 @@ class MenuBackground:
             
         # Reset error count on successful mode (if we get this far, SDL is working)
         if self.error_count > 0 and hasattr(self, 'last_error_time'):
-            import time
             # Reset error count if it's been a while since last error
             if time.time() - self.last_error_time > 300:  # 5 minutes
                 self.error_count = 0
                 pass
         
         # Select random number 1-25
-        import random
         selected_num = random.randint(1, 25)
         
         try:
@@ -210,7 +207,6 @@ class MenuBackground:
     
     def _load_fallback_image_enhanced(self, skip_num):
         """Enhanced fallback system with adaptive retry strategies."""
-        import random
         
         # Calculate retry attempts based on error history
         max_attempts = max(3, 8 - self.error_count)  # Fewer attempts as errors increase
@@ -254,7 +250,6 @@ class MenuBackground:
     
     def _load_image_file_enhanced(self, image_path):
         """Enhanced image loading with comprehensive error handling and memory management."""
-        import os
         
         # Validate file existence and accessibility
         if not os.path.exists(image_path):
@@ -370,10 +365,7 @@ class MenuBackground:
     
     def get_system_diagnostics(self):
         """Provide comprehensive system diagnostics for troubleshooting."""
-        import os
-        import sys
         import platform
-        import time
         
         diagnostics = {
             'timestamp': time.time(),
@@ -522,7 +514,6 @@ class MenuBackground:
     
     def _render_side_panel(self, console, start_x, end_x):
         """Render cyberpunk pattern in a side panel."""
-        import random
         random.seed(42)  # Consistent pattern
         
         patterns = ['▓', '▒', '░', '·', '▪', '▫']
@@ -560,7 +551,6 @@ class MenuBackground:
     
     def _render_center_atmosphere(self, console):
         """Add subtle atmospheric elements to center area."""
-        import random
         random.seed(123)  # Different seed for center
         
         # Very subtle dots in center area (positions 26-54)
@@ -608,7 +598,6 @@ class MenuBackground:
             return True
         
         # Optionally log periodically (every hour) for monitoring
-        import time
         if hasattr(self, '_last_health_log'):
             return time.time() - self._last_health_log > 3600  # 1 hour
         else:

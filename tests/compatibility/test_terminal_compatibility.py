@@ -19,7 +19,13 @@ from game_characters import Player, Enemy
 from game_config import GameConfig
 from game_entities import Position
 from tests.fixtures.test_builders import TestGameEngineBuilder, TestPlayerBuilder, TestEnemyBuilder
-from tests.performance.test_movement_constants import Direction
+# Direction enum for movement testing
+from enum import Enum
+class Direction(Enum):
+    NORTH = (0, -1)
+    SOUTH = (0, 1)
+    EAST = (1, 0)
+    WEST = (-1, 0)
 
 
 class TestTerminalCharacterSupport:

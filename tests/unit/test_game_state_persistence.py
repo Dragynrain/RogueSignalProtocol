@@ -17,7 +17,7 @@ from game_characters import Player, Enemy
 from game_entities import Position, EnemyState
 from game_state import GameStateManager, MessageLog
 from game_inventory import InventoryManager
-from tests.fixtures.simple_fixtures import create_test_player
+from tests.fixtures.simple_fixtures import player
 
 
 class TestSaveDataIntegrity:
@@ -50,7 +50,7 @@ class TestSaveDataIntegrity:
         game.game_state.distraction_points = {Position(5, 5): 3}
         
         # Player
-        game.player = create_test_player(x=20, y=25, cpu=85)
+        game.player = player(x=20, y=25, cpu=85)
         game.player.max_cpu = 120
         game.player.heat = 15
         game.player.max_heat = 100
@@ -296,7 +296,7 @@ class TestCorruptionRecovery:
     def test_io_error_recovery(self):
         """Test recovery from I/O errors during save."""
         game = Mock()
-        game.player = create_test_player()
+        game.player = player()
         
         with patch('builtins.open', side_effect=IOError("Disk full")):
             result = SaveGameManager.save_game(game)
