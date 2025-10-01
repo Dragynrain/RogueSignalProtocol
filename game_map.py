@@ -64,7 +64,7 @@ class GameMap:
         """Check if position contains a ghost node (detection reduction)."""
         return (position.x, position.y) in self.ghost_nodes
     
-    def get_data_patch(self, position: Position) -> Optional[CodeHack]:
+    def get_code_hack(self, position: Position) -> Optional[CodeHack]:
         """Get code at position."""
         return self.code_hacks.get((position.x, position.y))
     

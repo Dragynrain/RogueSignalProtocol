@@ -25,7 +25,7 @@ from game_entities import (Position, Colors, EnemyState, EnemyMovement, Targetin
                           get_adjacent_positions, format_position_key, parse_position_key,
                           parse_coordinate_string, validate_position_bounds, ensure_color_tuple)
 from game_data import GameData, GameUpgrades
-from game_inventory import InventoryItem, DataPatch, ExploitItem, StoryFragment, InventoryManager
+from game_inventory import InventoryItem, CodeHack, ExploitItem, StoryFragment, InventoryManager
 from game_characters import Player, Enemy, create_pathfinding_cost_map, pathfind_and_move, can_move_to_position
 from game_audio import SoundManager
 from game_save import SaveGameManager
@@ -785,7 +785,7 @@ class UIRenderer:
         y += 2
         
         # Data patches section
-        y = self._render_data_patches(console, game, y)
+        y = self._render_code_hacks(console, game, y)
         y += 2
         
         # Unequipped exploits section
@@ -828,20 +828,20 @@ class UIRenderer:
         
         return y
     
-    def _render_data_patches(self, console: tcod.console.Console, game: GameEngine, y: int) -> int:
+    def _render_code_hacks(self, console: tcod.console.Console, game: GameEngine, y: int) -> int:
         """Render codes section."""
-        data_patches = game.player.inventory_manager.get_items_by_type("data_patch")
-        render_char_safe(console, 2, y, f"CODES ({len(data_patches)}):", fg=Colors.CYAN)
+        code_hacks = game.player.inventory_manager.get_items_by_type("code_hack")
+        render_char_safe(console, 2, y, f"CODES ({len(code_hacks)}):", fg=Colors.CYAN)
         y += 1
-        
-        if not data_patches:
+
+        if not code_hacks:
             render_char_safe(console, 4, y, "No codes collected", fg=Colors.WHITE)
             y += 1
         else:
             display_items = game.player.inventory_manager.get_display_items()
             equipped_count = len(game.player.inventory_manager.equipped_exploits)
             
-            for i, patch in enumerate(data_patches):
+            for i, patch in enumerate(code_hacks):
                 display_index = display_items.index(patch)
                 # Adjust selection index to account for equipped exploits
                 adjusted_selection_index = display_index + equipped_count
@@ -1456,7 +1456,7 @@ class MapRenderer:
                 actual_color = color_map.get(patch.color_name.lower(), Colors.WHITE)
             else:
                 # This should never happen, but fallback to white
-                logging.warning(f"DataPatch color_name is not string: {patch.color_name} (type: {type(patch.color_name)})")
+                logging.warning(f"CodeHack color_name is not string: {patch.color_name} (type: {type(patch.color_name)})")
                 actual_color = Colors.WHITE
             # Position 21 = § (section) for code fragments  
             render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=actual_color, bg=Colors.BLACK)

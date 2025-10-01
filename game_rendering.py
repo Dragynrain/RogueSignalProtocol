@@ -385,7 +385,7 @@ class UIRenderer:
     
     def _render_code_hacks(self, console: tcod.console.Console, game, y: int) -> int:
         """Render codes section."""
-        code_hacks = game.player.inventory_manager.get_items_by_type("data_patch")
+        code_hacks = game.player.inventory_manager.get_items_by_type("code_hack")
         render_char_safe(console, 2, y, f"CODES ({len(code_hacks)}):", fg=Colors.CYAN)
         y += 1
         

@@ -131,7 +131,7 @@ class GameSaveLoadManager:
                 game_state.distraction_points[position] = turns
 
         # Restore code effects (backward compatibility)
-        self.game_engine.code_hack_effects = save_data.get("code_hack_effects", save_data.get("data_patch_effects", {}))
+        self.game_engine.code_hack_effects = save_data.get("code_hack_effects", {})
         self.game_engine.discovered_code_effects = save_data.get("discovered_code_effects", {})
 
     def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:

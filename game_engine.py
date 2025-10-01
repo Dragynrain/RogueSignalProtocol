@@ -191,6 +191,11 @@ class GameEngine:
     def enemies(self, value: List[Enemy]) -> None:
         """Set the enemies list."""
         self.enemy_manager.enemies = value
+
+    @property
+    def data_patch_effects(self) -> Dict[str, Tuple[str, str]]:
+        """Alias for code_hack_effects for backward compatibility."""
+        return self.code_hack_effects
     
     def _get_enemy_at(self, position: Position) -> Optional[Enemy]:
         """Get enemy at position - for backward compatibility."""
@@ -334,7 +339,7 @@ class GameEngine:
                 self.game_state.distraction_points[position] = turns
         
         # Restore code effects (backward compatibility)
-        self.code_hack_effects = save_data.get("code_hack_effects", save_data.get("data_patch_effects", {}))
+        self.code_hack_effects = save_data.get("code_hack_effects", {})
         self.discovered_code_effects = save_data.get("discovered_code_effects", {})
         
         # Restore overclocking state
@@ -387,7 +392,7 @@ class GameEngine:
         self.game_map.story_fragments.clear()
         
         # Restore code hacks (backward compatibility)
-        code_hacks_data = map_data.get("code_hacks", map_data.get("data_patches", {}))
+        code_hacks_data = map_data.get("code_hacks", {})
         for pos_str, patch_data in code_hacks_data.items():
             position = parse_coordinate_string(pos_str)
             if not position:
