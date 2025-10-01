@@ -139,68 +139,53 @@ class SoundManager:
     def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
         """Play a loaded sound effect with channel management"""
         if not self.enabled:
-            pass
             return None
-        elif sound_id not in self.sounds:
-            pass
-            return None
-        
-        try:
-            sound = self.sounds[sound_id]
-            final_volume = self.settings.sfx_volume * self.settings.master_volume * volume_modifier
-            sound.set_volume(final_volume)
-            
-            # Find available channel for simultaneous playback
-            channel = pygame.mixer.find_channel()
-            
-            if channel is None:
-                # All channels busy - handle based on priority
-                if priority >= 8:
-                    # Critical priority: stop oldest channel (channel 0)
-                    channel = pygame.mixer.Channel(0)
-                    channel.stop()
-                elif priority >= 5:
-                    # High priority: stop a random channel
-                    import random
-                    channel_id = random.randint(0, self.max_channels - 1)
-                    channel = pygame.mixer.Channel(channel_id)
-                    channel.stop()
-                else:
-                    # Normal/Low priority: just play on any channel, let pygame handle mixing
-                    # This allows multiple sounds to play simultaneously without stopping each other
-                    return sound.play()
-            
-            return channel.play(sound)
-        except Exception as e:
-            logging.error(f"Failed to play sound {sound_id}: {e}")
-            logging.debug(traceback.format_exc())
-            return None
+
+        sound = self.sounds[sound_id]  # Let it fail if sound doesn't exist
+        final_volume = self.settings.sfx_volume * self.settings.master_volume * volume_modifier
+        sound.set_volume(final_volume)
+
+        # Find available channel for simultaneous playback
+        channel = pygame.mixer.find_channel()
+
+        if channel is None:
+            # All channels busy - handle based on priority
+            if priority >= 8:
+                # Critical priority: stop oldest channel (channel 0)
+                channel = pygame.mixer.Channel(0)
+                channel.stop()
+            elif priority >= 5:
+                # High priority: stop a random channel
+                import random
+                channel_id = random.randint(0, self.max_channels - 1)
+                channel = pygame.mixer.Channel(channel_id)
+                channel.stop()
+            else:
+                # Normal/Low priority: just play on any channel, let pygame handle mixing
+                return sound.play()
+
+        return channel.play(sound)
     
     def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0, volume_multiplier: float = 1.0):
         """Play background music with optional volume multiplier"""
         if not self.enabled:
-            pass
             return
-        
-        try:
-            music_path = os.path.join(self.MUSIC_DIRECTORY, filename)
-            if os.path.exists(music_path):
-                pygame.mixer.music.load(music_path)
-                # Apply volume multiplier for per-track volume adjustments
-                volume = self.settings.music_volume * self.settings.master_volume * volume_multiplier
-                pygame.mixer.music.set_volume(min(1.0, volume))  # Cap at 1.0
-                if fade_in_ms > 0:
-                    pygame.mixer.music.play(loops, fade_ms=fade_in_ms)
-                else:
-                    pygame.mixer.music.play(loops)
-                self.current_music = filename
-                self.music_playing = True
-                logging.info(f"Playing music: {filename} (volume: {volume:.2f})")
-            else:
-                logging.warning(f"Music file not found: {music_path}")
-        except Exception as e:
-            logging.error(f"Failed to play music {filename}: {e}")
-            logging.debug(traceback.format_exc())
+
+        music_path = os.path.join(self.MUSIC_DIRECTORY, filename)
+        pygame.mixer.music.load(music_path)  # Let it fail if file doesn't exist
+
+        # Apply volume multiplier for per-track volume adjustments
+        volume = self.settings.music_volume * self.settings.master_volume * volume_multiplier
+        pygame.mixer.music.set_volume(min(1.0, volume))  # Cap at 1.0
+
+        if fade_in_ms > 0:
+            pygame.mixer.music.play(loops, fade_ms=fade_in_ms)
+        else:
+            pygame.mixer.music.play(loops)
+
+        self.current_music = filename
+        self.music_playing = True
+        logging.info(f"Playing music: {filename} (volume: {volume:.2f})")
     
     def stop_music(self, fade_out_ms: int = 0):
         """Stop background music"""

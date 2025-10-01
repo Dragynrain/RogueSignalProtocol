@@ -21,49 +21,37 @@ class DataLoader:
     def load_story_fragments(cls) -> List[str]:
         """Load story fragments from JSON file."""
         if cls._story_fragments is None:
-            try:
-                with open('story_content.json', 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    cls._story_fragments = data['fragments']
-            except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-                logging.warning(f"Could not load story fragments from JSON: {e}")
-                cls._story_fragments = cls._get_fallback_story_fragments()
+            with open('story_content.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                cls._story_fragments = data['fragments']
         return cls._story_fragments
     
     @classmethod
     def load_game_data(cls) -> Dict[str, Any]:
         """Load game data from JSON file."""
         if cls._game_data is None:
-            try:
-                with open('game_data.json', 'r', encoding='utf-8') as f:
-                    cls._game_data = json.load(f)
-            except (FileNotFoundError, json.JSONDecodeError) as e:
-                logging.warning(f"Could not load game data from JSON: {e}")
-                cls._game_data = cls._get_fallback_game_data()
+            with open('game_data.json', 'r', encoding='utf-8') as f:
+                cls._game_data = json.load(f)
         return cls._game_data
     
     @classmethod
     def get_balance_config(cls) -> Dict[str, Any]:
         """Get balance configuration from game data."""
         game_data = cls.load_game_data()
-        return game_data.get('balance', cls._get_fallback_balance())
+        return game_data['balance']
     
     @classmethod
     def get_item_effects(cls) -> Dict[str, Any]:
         """Get item effects configuration from game data."""
         game_data = cls.load_game_data()
-        return game_data.get('item_effects', cls._get_fallback_item_effects())
+        return game_data['item_effects']
     
     @classmethod
     def load_config(cls) -> Dict[str, Any]:
         """Load configuration from JSON file."""
         if cls._config is None:
-            try:
-                with open('game_config.json', 'r', encoding='utf-8') as f:
-                    cls._config = json.load(f)
-            except (FileNotFoundError, json.JSONDecodeError) as e:
-                logging.warning(f"Could not load config from JSON: {e}")
-                cls._config = cls._get_fallback_config()
+            with open('game_config.json', 'r', encoding='utf-8') as f:
+                cls._config = json.load(f)
         return cls._config
     
     @classmethod
@@ -88,77 +76,13 @@ class DataLoader:
             return False
     
     @classmethod
-    def _get_fallback_story_fragments(cls) -> List[str]:
-        """Fallback story fragments if JSON loading fails."""
-        return [
-            "Emergency fallback story fragment - JSON data could not be loaded.",
-            "This is a backup narrative element to ensure the game remains playable."
-        ]
-    
-    @classmethod
-    def _get_fallback_game_data(cls) -> Dict[str, Any]:
-        """Fallback game data if JSON loading fails."""
-        return {
-            "enemy_types": {"scanner": {"symbol": "S", "cpu": 35, "vision": 5, "movement": "STATIC", "name": "Scanner", "damage": 0}},
-            "exploits": {"shadow_step": {"name": "Shadow Step", "ram": 3, "heat": 30, "range": 6, "category": "stealth", "damage": 0, "targeting": "SINGLE"}},
-            "upgrades": {"ram_boost": {"name": "Memory Expansion", "symbol": "[", "color": (100, 149, 237), "stat_type": "ram", "bonus_amount": 4}},
-            "network_configs": {"1": {"enemies": 15, "shadow_coverage": 0.15, "name": "Corporate Network", "background_detection": 1}}
-        }
-    
-    @classmethod
-    def _get_fallback_config(cls) -> Dict[str, Any]:
-        """Fallback configuration if JSON loading fails."""
-        return {
-            "gameplay": {"difficulty": "normal", "auto_save": True},
-            "graphics": {"ascii_mode": False, "colorblind_mode": False},
-            "audio": {"master_volume": 0.7, "music_enabled": True, "sound_enabled": True}
-        }
-    
-    @classmethod
     def _get_default_user_settings(cls) -> Dict[str, Any]:
-        """Default user settings if file doesn't exist."""
+        """Default user settings if file doesn't exist - this is the only legitimate fallback."""
         return {
             "master_volume": 0.7,
             "sfx_volume": 1.0,
             "music_volume": 0.7,
             "graphics_mode": "terminal"
-        }
-    
-    @classmethod
-    def _get_fallback_balance(cls) -> Dict[str, Any]:
-        """Fallback balance configuration if JSON loading fails."""
-        return {
-            "player_stats": {
-                "starting_cpu": 100,
-                "max_cpu": 100,
-                "starting_heat": 0,
-                "max_heat": 100,
-                "starting_detection": 0,
-                "starting_ram": 8,
-                "base_vision_range": 15
-            },
-            "temporary_effects": {
-                "data_mimic_duration": 5,
-                "exploit_efficiency_multiplier": 0.6
-            },
-            "combat": {
-                "enemy_elimination_cpu_reward": 5
-            },
-            "code_patches": {
-                "cpu_restore_min": 15,
-                "cpu_restore_max": 35,
-                "heat_reduction_instant": 30
-            }
-        }
-    
-    @classmethod
-    def _get_fallback_item_effects(cls) -> Dict[str, Any]:
-        """Fallback item effects configuration if JSON loading fails."""
-        return {
-            "cpu_recovery_small": 10,
-            "cpu_recovery_medium": 20,
-            "cpu_recovery_large": 30,
-            "heat_recovery_amount": 15
         }
 
 
@@ -189,23 +113,13 @@ class PersistentStorage:
     
     def load_data(self, filename: str) -> Dict[str, Any]:
         """Load data from JSON file."""
+        filepath = os.path.join(self.base_dir, filename)
         try:
-            filepath = os.path.join(self.base_dir, filename)
             with open(filepath, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except FileNotFoundError:
-            # This is normal for new games - just use debug logging
-            logging.debug(f"Save file not found: {filename} (this is normal for new games)")
-            return {}
-        except json.JSONDecodeError as e:
-            error_msg = f"Invalid JSON in save file {filename}: {e}"
-            print(error_msg)
-            logging.error(error_msg)
-            return {}
-        except Exception as e:
-            error_msg = f"Failed to load data from {filename}: {e}"
-            print(error_msg)
-            logging.error(error_msg)
+            # This is normal for new games - return empty dict
+            logging.debug(f"Save file not found: {filename} (normal for new games)")
             return {}
     
     def file_exists(self, filename: str) -> bool:
@@ -215,11 +129,8 @@ class PersistentStorage:
     
     def list_save_files(self) -> List[str]:
         """List all save files in the directory."""
-        try:
-            files = [f for f in os.listdir(self.base_dir) if f.endswith('.json')]
-            return sorted(files)
-        except Exception:
-            return []
+        files = [f for f in os.listdir(self.base_dir) if f.endswith('.json')]
+        return sorted(files)
 
 
 def get_story_fragments() -> List[str]:

@@ -201,12 +201,12 @@ class TestSoundPlayback(unittest.TestCase):
         self.assertIsNone(result)
     
     def test_play_sound_not_loaded(self):
-        """Test playing a sound that wasn't loaded."""
+        """Test playing a sound that wasn't loaded raises KeyError."""
         self.sound_manager.enabled = True
-        
-        result = self.sound_manager.play_sound("missing_sound")
-        
-        self.assertIsNone(result)
+
+        # Should raise KeyError instead of hiding the error
+        with self.assertRaises(KeyError):
+            self.sound_manager.play_sound("missing_sound")
     
     @patch('game_audio.AUDIO_AVAILABLE', True)
     @patch('pygame.mixer.find_channel')
@@ -284,20 +284,20 @@ class TestSoundPlayback(unittest.TestCase):
     
     @patch('game_audio.AUDIO_AVAILABLE', True)
     @patch('pygame.mixer.find_channel')
-    @patch('logging.error')
-    def test_play_sound_exception(self, mock_log, mock_find_channel):
-        """Test sound playback handles exceptions gracefully."""
+    def test_play_sound_exception(self, mock_find_channel):
+        """Test sound playback raises exceptions instead of hiding them."""
         mock_sound = Mock()
         mock_sound.set_volume.side_effect = Exception("Playback error")
         mock_find_channel.return_value = Mock()
-        
+
         self.sound_manager.enabled = True
         self.sound_manager.sounds["error_sound"] = mock_sound
-        
-        result = self.sound_manager.play_sound("error_sound")
-        
-        self.assertIsNone(result)
-        mock_log.assert_called()
+
+        # Should raise the exception instead of hiding it
+        with self.assertRaises(Exception) as context:
+            self.sound_manager.play_sound("error_sound")
+
+        self.assertIn("Playback error", str(context.exception))
 
 
 class TestMusicPlayback(unittest.TestCase):
