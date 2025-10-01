@@ -47,7 +47,7 @@ from game_loop import main, initialize_tcod_context, WindowManager as LoopWindow
 
 # Setup detailed logging for comprehensive debugging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.WARNING,
     format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s',
     handlers=[
         logging.StreamHandler()

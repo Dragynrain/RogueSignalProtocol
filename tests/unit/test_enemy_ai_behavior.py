@@ -172,12 +172,12 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = player(x=8, y=8)  # Within vision range
+            test_player = player(x=8, y=8)  # Within vision range
             
             # Mock clear line of sight
             self.mock_game_map.can_see_position.return_value = True
             
-            result = enemy.can_see_player(player, self.mock_game_map)
+            result = enemy.can_see_player(test_player, self.mock_game_map)
             assert result is True
     
     def test_cannot_see_player_beyond_vision_range(self):
@@ -186,9 +186,9 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=5, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = player(x=15, y=15)  # Beyond vision range
+            test_player = player(x=15, y=15)  # Beyond vision range
             
-            result = enemy.can_see_player(player, self.mock_game_map)
+            result = enemy.can_see_player(test_player, self.mock_game_map)
             assert result is False
     
     def test_cannot_see_invisible_player(self):
@@ -197,10 +197,10 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = player(x=7, y=7)  # Within range
-            player.is_invisible = Mock(return_value=True)
+            test_player = player(x=7, y=7)  # Within range
+            test_player.is_invisible = Mock(return_value=True)
             
-            result = enemy.can_see_player(player, self.mock_game_map)
+            result = enemy.can_see_player(test_player, self.mock_game_map)
             assert result is False
     
     def test_admin_can_always_see_player(self):
@@ -209,10 +209,10 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'admin': Mock(movement=EnemyMovement.SEEK, cpu=100, vision=10, damage=20)
         }):
             enemy = Enemy(Position(5, 5), "admin")
-            player = player(x=50, y=50)  # Very far away
-            player.is_invisible = Mock(return_value=True)  # Invisible
+            test_player = player(x=50, y=50)  # Very far away
+            test_player.is_invisible = Mock(return_value=True)  # Invisible
             
-            result = enemy.can_see_player(player, self.mock_game_map)
+            result = enemy.can_see_player(test_player, self.mock_game_map)
             assert result is True
     
     def test_player_in_shadow_stealth_mechanics(self):
@@ -221,13 +221,13 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Position(5, 5)
-            player = player(x=8, y=8)  # Within vision range but not adjacent
+            test_player = player(x=8, y=8)  # Within vision range but not adjacent
             
             # Mock player is in shadow
             self.mock_game_map.is_shadow.return_value = True
             
             enemy_obj = Enemy(enemy, "test_enemy")
-            result = enemy_obj.can_see_player(player, self.mock_game_map)
+            result = enemy_obj.can_see_player(test_player, self.mock_game_map)
             assert result is False
     
     def test_adjacent_enemy_sees_player_in_shadow(self):
@@ -236,12 +236,12 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = player(x=6, y=6)  # Adjacent
+            test_player = player(x=6, y=6)  # Adjacent
             
             # Mock player is in shadow
             self.mock_game_map.is_shadow.return_value = True
             
-            result = enemy.can_see_player(player, self.mock_game_map)
+            result = enemy.can_see_player(test_player, self.mock_game_map)
             assert result is True  # Adjacent enemies can see through shadows
 
 
@@ -338,9 +338,9 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = player(x=6, y=6)  # Adjacent
+            test_player = player(x=6, y=6)  # Adjacent
             
-            result = enemy.can_attack_player(player)
+            result = enemy.can_attack_player(test_player)
             assert result is True
     
     def test_cannot_attack_distant_player(self):
@@ -349,9 +349,9 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
-            player = player(x=10, y=10)  # Not adjacent
+            test_player = player(x=10, y=10)  # Not adjacent
             
-            result = enemy.can_attack_player(player)
+            result = enemy.can_attack_player(test_player)
             assert result is False
     
     def test_disabled_enemy_cannot_attack(self):
@@ -361,9 +361,9 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
             enemy.disabled_turns = 3
-            player = player(x=6, y=6)  # Adjacent
+            test_player = player(x=6, y=6)  # Adjacent
             
-            result = enemy.can_attack_player(player)
+            result = enemy.can_attack_player(test_player)
             assert result is False
     
     def test_cannot_attack_invisible_player_except_admin(self):
@@ -374,11 +374,11 @@ class TestEnemyAttackBehavior(TestEnemyAIBehavior):
         }):
             regular_enemy = Enemy(Position(5, 5), "test_enemy")
             admin_enemy = Enemy(Position(7, 7), "admin")
-            player = player(x=6, y=6)  # Adjacent
-            player.is_invisible = Mock(return_value=True)
-            
-            assert regular_enemy.can_attack_player(player) is False
-            assert admin_enemy.can_attack_player(player) is True
+            test_player = player(x=6, y=6)  # Adjacent
+            test_player.is_invisible = Mock(return_value=True)
+
+            assert regular_enemy.can_attack_player(test_player) is False
+            assert admin_enemy.can_attack_player(test_player) is True
 
 
 class TestVirusAndSpecialEnemies(TestEnemyAIBehavior):
@@ -390,12 +390,12 @@ class TestVirusAndSpecialEnemies(TestEnemyAIBehavior):
             'virus': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0)
         }):
             enemy = Enemy(Position(5, 5), "virus")
-            player = player()
+            test_player = player()
             
-            damage = enemy.attack_player(player)
+            damage = enemy.attack_player(test_player)
             
             assert damage == 0  # No immediate damage
-            assert player.temporary_effects.get('virus_turns', 0) > 0
+            assert test_player.temporary_effects.get('virus_turns', 0) > 0
     
     def test_inhibitor_enemy_applies_slow_effect(self):
         """Inhibitor enemy applies movement slow effect."""
@@ -403,12 +403,12 @@ class TestVirusAndSpecialEnemies(TestEnemyAIBehavior):
             'inhibitor': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0)
         }):
             enemy = Enemy(Position(5, 5), "inhibitor")
-            player = player()
+            test_player = player()
             
-            damage = enemy.attack_player(player)
+            damage = enemy.attack_player(test_player)
             
             assert damage == 0  # No immediate damage
-            assert player.temporary_effects.get('movement_slowed_turns', 0) > 0
+            assert test_player.temporary_effects.get('movement_slowed_turns', 0) > 0
 
 
 class TestEnemyManager(TestEnemyAIBehavior):

@@ -25,6 +25,15 @@
 - **Unit Test Updates**: When making code changes, ALWAYS update corresponding unit tests to maintain coverage
 - **Performance**: Use TCOD's built-in functions (like A* pathfinding and vision system) instead of manual implementations
 
+## Test-Driven Development & Quality Assurance (CRITICAL)
+- **ALWAYS update tests during refactoring** - API changes MUST be reflected in tests immediately
+- **Test Synchronization**: When changing function signatures, object attributes, or return formats, update ALL related tests in the same commit
+- **Integration over Unit Tests**: Prefer integration tests that test real game behavior over heavily mocked unit tests
+- **Test Real Behavior**: Write tests that verify actual game functionality, not mock interactions
+- **Use Test Builders**: Leverage existing test builders and factories in `tests/fixtures/` for consistent, readable test setup
+- **Avoid Over-Mocking**: If a test has more mocks than real objects, consider if it's testing the right thing
+- **Post-Refactor Verification**: After any refactoring, run full test suite and fix ALL broken tests before considering the refactor complete
+
 ## Logging Systems (CRITICAL DISTINCTION)
 - **Python Error Logging**: Technical errors, exceptions, debug info → console/stderr with line numbers using `logging.error()`, `logging.warning()`, etc.
 - **In-Game System Log**: Gameplay messages like "CPU restored", "enemy detected" → right panel in game UI using `MessageLog.add_message()`

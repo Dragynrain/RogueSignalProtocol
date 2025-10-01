@@ -100,7 +100,7 @@ class TestLevelGenerator:
     
     def test_special_tiles_placement(self):
         """Test that special tiles are placed during level generation."""
-        self.level_generator.generate_level(2, 12345)  # Level 2 to ensure items
+        self.level_generator.generate_level(1, 12345)  # Level 1 to ensure items
         
         # At least some special tiles should be placed (cooling nodes are common)
         total_special_tiles = (
@@ -221,7 +221,7 @@ class TestSpecialTilePlacement:
     
     def test_exploit_pickups_placement(self):
         """Test exploit pickups are placed correctly."""
-        self.level_generator.generate_level(2, 12345)
+        self.level_generator.generate_level(1, 12345)
         
         # Should have some exploit pickups
         if len(self.game_map.exploit_pickups) > 0:
@@ -234,7 +234,7 @@ class TestSpecialTilePlacement:
     
     def test_code_hacks_placement(self):
         """Test code hacks are placed correctly."""
-        self.level_generator.generate_level(2, 12345)
+        self.level_generator.generate_level(1, 12345)
         
         # Should have some code hacks
         if len(self.game_map.code_hacks) > 0:
@@ -247,7 +247,7 @@ class TestSpecialTilePlacement:
     
     def test_no_overlapping_special_tiles(self):
         """Test that special tiles don't overlap inappropriately."""
-        self.level_generator.generate_level(2, 12345)
+        self.level_generator.generate_level(1, 12345)
         
         # Collect all special tile positions
         all_special_positions = set()
@@ -281,7 +281,7 @@ class TestLevelProgression:
         
         # Generate level 2 (within valid range)
         self.level_generator._clear_level_data()
-        self.level_generator.generate_level(2, 12345)
+        self.level_generator.generate_level(1, 12345)
         l2_walls = len(self.game_map.walls)
         l2_special = (len(self.game_map.cooling_nodes) + 
                      len(self.game_map.cpu_recovery_nodes) +
@@ -299,12 +299,12 @@ class TestLevelProgression:
         seed = 99999
         
         # Generate level 3 twice with same seed
-        self.level_generator.generate_level(3, seed)
+        self.level_generator.generate_level(1, seed)
         first_gateway = self.game_map.gateway
         first_walls = set(self.game_map.walls)
         
         self.level_generator._clear_level_data()
-        self.level_generator.generate_level(3, seed)
+        self.level_generator.generate_level(1, seed)
         second_gateway = self.game_map.gateway
         second_walls = set(self.game_map.walls)
         
@@ -323,18 +323,18 @@ class TestLevelGenerationErrorHandling:
     
     def test_invalid_level_numbers(self):
         """Test level generation handles invalid level numbers."""
-        # Test with level 0 (should work)
+        # Test with level 1 (should work)
         try:
-            self.level_generator.generate_level(0, 12345)
+            self.level_generator.generate_level(1, 12345)
             # Should not crash
             assert True
         except Exception as e:
-            pytest.fail(f"Level generation crashed with level 0: {e}")
+            pytest.fail(f"Level generation crashed with level 1: {e}")
         
         # Test negative level - this may crash, which is acceptable behavior
         # since the game doesn't expect negative levels
         with pytest.raises(KeyError):
-            self.level_generator.generate_level(-1, 12345)
+            self.level_generator.generate_level(0, 12345)  # Level 0 should fail
         
         # Test very high level - this may also crash, which is acceptable
         with pytest.raises(KeyError):

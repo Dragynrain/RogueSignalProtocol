@@ -34,29 +34,29 @@ class TestPlayerVisionRange(TestVisionLineOfSight):
     
     def test_base_vision_range(self):
         """Player has correct base vision range."""
-        player = player()
-        assert player.base_vision_range == 15
-        assert player.get_vision_range() == 15
+        test_player = player()
+        assert test_player.base_vision_range == 15
+        assert test_player.get_vision_range() == 15
     
     def test_enhanced_vision_bonus(self):
         """Enhanced vision temporary effect increases range."""
-        player = player()
+        test_player = player()
         
         # Enable enhanced vision
-        player.temporary_effects['enhanced_vision_turns'] = 5
-        
-        assert player.get_vision_range() == 17  # Base 15 + 2 bonus
+        test_player.temporary_effects['enhanced_vision_turns'] = 5
+
+        assert test_player.get_vision_range() == 17  # Base 15 + 2 bonus
     
     def test_enhanced_vision_allows_wall_sight(self):
         """Enhanced vision allows seeing through walls."""
-        player = player()
-        
+        test_player = player()
+
         # No enhanced vision - cannot see through walls
-        assert not player.can_see_through_walls()
-        
+        assert not test_player.can_see_through_walls()
+
         # With enhanced vision - can see through walls
-        player.temporary_effects['enhanced_vision_turns'] = 5
-        assert player.can_see_through_walls()
+        test_player.temporary_effects['enhanced_vision_turns'] = 5
+        assert test_player.can_see_through_walls()
     
     def test_vision_range_with_enemy_in_range(self):
         """Player can see enemy within vision range."""
