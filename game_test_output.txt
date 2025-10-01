@@ -1,0 +1,7 @@
+C:\Projects\RogueSignalProtocol\.venv\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+WARNING: SYSTEM:App name: SDL Application
+WARNING: SYSTEM:App version: <unspecified>
+WARNING: SYSTEM:App ID: <unspecified>
+WARNING: SYSTEM:SDL revision: release-3.2.16-0-gc9a6709bd (libsdl.org)
+WARNING: RENDER:Created renderer: direct3d11

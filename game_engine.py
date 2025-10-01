@@ -266,7 +266,7 @@ class GameEngine:
             
         except Exception as e:
             logging.error(f"Failed to restore game state: {e}")
-            logging.error(traceback.format_exc())
+            logging.debug(traceback.format_exc())
             return False
     
     def _restore_game_state(self, save_data: Dict[str, Any]) -> None:

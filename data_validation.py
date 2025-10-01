@@ -368,10 +368,14 @@ class DataValidator:
 
 def main():
     """Run data validation and print report."""
-    # Configure logging to show validation messages
+    # Configure detailed logging for comprehensive debugging
     logging.basicConfig(
         level=logging.INFO,
-        format='%(levelname)s: %(message)s'
+        format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s',
+        handlers=[
+            logging.StreamHandler()
+        ],
+        datefmt='%Y-%m-%d %H:%M:%S'
     )
     
     validator = DataValidator()
