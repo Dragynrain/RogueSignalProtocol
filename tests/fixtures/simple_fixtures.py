@@ -17,6 +17,11 @@ def player(x=10, y=10, cpu=100):
     return p
 
 
+def create_real_player(x=10, y=10, cpu=100):
+    """Create a real player for testing (alias for compatibility)."""
+    return player(x, y, cpu)
+
+
 def enemy(enemy_type="scanner", x=5, y=5):
     """Create a simple test enemy using real GameData."""
     return create_real_enemy(enemy_type, Position(x, y))

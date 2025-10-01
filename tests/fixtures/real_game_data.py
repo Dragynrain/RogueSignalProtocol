@@ -24,3 +24,7 @@ def create_test_map_with_real_tiles(width: int = 80, height: int = 50) -> GameMa
 def get_real_exploit_data() -> dict:
     """Return actual exploit definitions for testing."""
     return GameData.EXPLOITS  # Real data, not mocked
+
+def get_real_game_data():
+    """Return a GameData instance with real data for testing."""
+    return GameData()
