@@ -11,7 +11,7 @@ import traceback
 
 from game_config import GameConfig, GameSettings
 from game_entities import Colors
-from game_ui import render_char_safe
+from game_ui import render_char_safe, WindowManager
 from game_audio import SoundManager
 from game_menus import MenuBackground, MainMenu, SettingsMenu, HelpMenu, LoreMenu
 from game_engine import GameEngine
@@ -73,53 +73,6 @@ def initialize_tcod_context():
     return context
 
 
-class WindowManager:
-    """Manages dynamic window sizing and pixel dimension calculations."""
-    
-    def __init__(self, context):
-        self.context = context
-        self._cached_dimensions = None
-        self._last_check_time = 0
-        
-    def get_window_pixel_dimensions(self):
-        """Get current window pixel dimensions with caching."""
-        # Cache dimensions for 0.1 seconds to avoid excessive SDL calls
-        current_time = time.time()
-        if (self._cached_dimensions is None or 
-            current_time - self._last_check_time > 0.1):
-            
-            # Get actual window size via SDL
-            window = self.context.sdl_window
-            if window:
-                width, height = window.size
-                self._cached_dimensions = (width, height)
-                self._last_check_time = current_time
-            else:
-                # Fallback to estimated dimensions
-                self._cached_dimensions = (800, 600)  # Conservative estimate
-                
-        return self._cached_dimensions
-    
-    def calculate_background_rect(self, image_size):
-        """Calculate rectangle for background image constrained to left portion only."""
-        window_width, window_height = self.get_window_pixel_dimensions()
-        img_width, img_height = image_size
-        
-        # CONSTRAINT: Limit graphics to left 60% of screen width for true separation
-        graphics_area_width = int(window_width * 0.6)  # Graphics get 60% of width
-        
-        # Calculate scale to fit within LEFT AREA ONLY (not full screen)
-        scale_x = graphics_area_width / img_width  # Scale to fit in left area width
-        scale_y = window_height / img_height
-        scale = min(scale_x, scale_y)  # Use smaller scale to fit entirely in left area
-        
-        # Position within left area only
-        scaled_width = int(img_width * scale)
-        scaled_height = int(img_height * scale)
-        x = 0  # Left-align within graphics area
-        y = (window_height - scaled_height) // 2  # Center vertically
-        
-        return (x, y, scaled_width, scaled_height)
 
 
 def initialize_game_systems(settings: GameSettings, menu_background=None):

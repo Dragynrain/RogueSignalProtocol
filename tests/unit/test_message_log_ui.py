@@ -193,39 +193,35 @@ class TestRenderCharSafe:
         render_char_safe(self.mock_console, 5, 10, '@', fg=fg_color, bg=bg_color)
         self.mock_console.print.assert_called_once_with(5, 10, '@', fg=fg_color, bg=bg_color)
     
-    def test_invalid_string_color_logs_error_and_uses_fallback(self):
-        """Test that string colors log errors and use fallback rendering."""
-        # String colors should not raise exception but should use fallback rendering
-        render_char_safe(self.mock_console, 5, 10, '@', fg="red")
-        
-        # Should have attempted fallback rendering
-        self.mock_console.print.assert_called_once_with(5, 10, '@', fg=Colors.WHITE, bg=Colors.BLACK)
+    def test_invalid_string_color_raises_error(self):
+        """Test that string colors raise proper errors."""
+        # String colors should raise ValueError
+        import pytest
+        with pytest.raises(ValueError, match="String color 'red' not allowed"):
+            render_char_safe(self.mock_console, 5, 10, '@', fg="red")
     
-    def test_invalid_color_format_uses_fallback(self):
-        """Test that invalid color formats use white fallback."""
+    def test_invalid_color_format_raises_error(self):
+        """Test that invalid color formats raise proper errors."""
         # Test with invalid color format
-        render_char_safe(self.mock_console, 5, 10, '@', fg=123)
-        self.mock_console.print.assert_called_once_with(5, 10, '@', fg=Colors.WHITE)
+        import pytest
+        with pytest.raises(ValueError, match="Invalid color format"):
+            render_char_safe(self.mock_console, 5, 10, '@', fg=123)
     
-    def test_color_values_out_of_range_uses_fallback(self):
-        """Test that out-of-range color values use fallback."""
+    def test_color_values_out_of_range_raises_error(self):
+        """Test that out-of-range color values raise proper errors."""
         bad_color = (300, -50, 256)  # Out of 0-255 range
-        render_char_safe(self.mock_console, 5, 10, '@', fg=bad_color)
-        self.mock_console.print.assert_called_once_with(5, 10, '@', fg=Colors.WHITE)
+        import pytest
+        with pytest.raises(ValueError, match="Color values must be 0-255"):
+            render_char_safe(self.mock_console, 5, 10, '@', fg=bad_color)
     
-    def test_console_error_uses_fallback(self):
-        """Test that console errors use fallback rendering."""
+    def test_console_error_bubbles_up(self):
+        """Test that console errors are not caught and bubble up."""
         self.mock_console.print.side_effect = Exception("TCOD Error")
-        
-        # Should not raise exception and should try fallback
-        render_char_safe(self.mock_console, 5, 10, '@', fg=(255, 0, 0))
-        
-        # Should have attempted both original and fallback calls
-        assert self.mock_console.print.call_count == 2
-        # Last call should be fallback
-        final_call = self.mock_console.print.call_args_list[-1]
-        assert final_call[0] == (5, 10, '@')
-        assert final_call[1] == {'fg': Colors.WHITE, 'bg': Colors.BLACK}
+
+        # Should raise the exception instead of hiding it
+        import pytest
+        with pytest.raises(Exception, match="TCOD Error"):
+            render_char_safe(self.mock_console, 5, 10, '@', fg=(255, 0, 0))
 
 
 class TestWindowManager:
