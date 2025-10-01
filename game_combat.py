@@ -335,23 +335,29 @@ class ExploitSystem:
     def _execute_network_scan(self) -> bool:
         """Execute network scan exploit - reveals all special nodes on the level."""
         self.game.sound_manager.play_sound("exploit_network_scan")
-        
+
         # Add all special nodes to revealed dict
         if not hasattr(self.game.game_state, 'revealed_special_nodes'):
             self.game.game_state.revealed_special_nodes = {}
-        
+
+        # Count nodes on the map for debugging
+        cooling_count = len(self.game.game_map.cooling_nodes)
+        cpu_count = len(self.game.game_map.cpu_recovery_nodes)
+        ghost_count = len(self.game.game_map.ghost_nodes)
+
         # Reveal all cooling nodes
         for node_pos in self.game.game_map.cooling_nodes:
             self.game.game_state.revealed_special_nodes[node_pos] = "cooling"
-            
-        # Reveal all CPU recovery nodes  
+
+        # Reveal all CPU recovery nodes
         for node_pos in self.game.game_map.cpu_recovery_nodes:
             self.game.game_state.revealed_special_nodes[node_pos] = "cpu"
-            
+
         # Reveal all ghost nodes
         for node_pos in self.game.game_map.ghost_nodes:
             self.game.game_state.revealed_special_nodes[node_pos] = "ghost"
-        
+
         total_revealed = len(self.game.game_state.revealed_special_nodes)
-        self.game.message_log.add_message(f"Port Scan: {total_revealed} special nodes revealed")
+        self.game.message_log.add_message(f"Network Scan: {cooling_count} cooling, {cpu_count} CPU, {ghost_count} ghost nodes found")
+        self.game.message_log.add_message(f"Total {total_revealed} special nodes revealed")
         return True
