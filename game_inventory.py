@@ -219,7 +219,7 @@ class InventoryManager:
     def get_items_by_type(self, item_type: str) -> List[InventoryItem]:
         """Get all items of a specific type."""
         items = [item for item in self.items if item.item_type == item_type]
-        if item_type == "data_patch":
+        if item_type == "code_hack":
             items.sort(key=lambda x: x.name.lower())
         return items
     
@@ -227,11 +227,11 @@ class InventoryManager:
         """Get all items in display order (codes first, then exploits)."""
         display_items = []
         # Add codes first (sorted alphabetically)
-        display_items.extend(self.get_items_by_type("data_patch"))
+        display_items.extend(self.get_items_by_type("code_hack"))
         # Add other items (exploits, etc.)
         display_items.extend(self.get_items_by_type("exploit"))
         # Add any other item types
-        display_items.extend([item for item in self.items if item.item_type not in ["data_patch", "exploit"]])
+        display_items.extend([item for item in self.items if item.item_type not in ["code_hack", "exploit"]])
         return display_items
     
     def equip_exploit(self, exploit_item: ExploitItem) -> bool:

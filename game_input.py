@@ -335,7 +335,7 @@ class InputHandler:
                 self._show_exploit_details(exploit_def)
             elif hasattr(selected_item, 'color') and hasattr(selected_item, 'effect'):
                 # Data patch
-                self._show_data_patch_details(selected_item)
+                self._show_code_hack_details(selected_item)
             else:
                 # Generic item
                 self.game.message_log.add_message(f"=== {selected_item.name} ===")
@@ -358,22 +358,22 @@ class InputHandler:
         self.game.message_log.add_message(f"Targeting: {exploit_def.targeting.name}")
         self.game.message_log.add_message(f"Effect: {exploit_def.description}")
     
-    def _show_data_patch_details(self, data_patch):
+    def _show_code_hack_details(self, code_hack):
         """Show detailed information about a code."""
-        if data_patch.discovered:
-            if data_patch.color_name in self.game.data_patch_effects:
-                effect_key, desc = self.game.data_patch_effects[data_patch.color_name]
-                self.game.message_log.add_message(f"=== {data_patch.name} ===")
+        if code_hack.discovered:
+            if code_hack.color_name in self.game.data_patch_effects:
+                effect_key, desc = self.game.data_patch_effects[code_hack.color_name]
+                self.game.message_log.add_message(f"=== {code_hack.name} ===")
                 self.game.message_log.add_message(f"Effect: {desc}")
-                if data_patch.quantity > 1:
-                    self.game.message_log.add_message(f"Quantity: {data_patch.quantity}")
+                if code_hack.quantity > 1:
+                    self.game.message_log.add_message(f"Quantity: {code_hack.quantity}")
             else:
                 self.game.message_log.add_message("Code effect unknown")
         else:
-            self.game.message_log.add_message(f"=== {data_patch.name} ===")
+            self.game.message_log.add_message(f"=== {code_hack.name} ===")
             self.game.message_log.add_message("Effect: Unknown until used")
-            if data_patch.quantity > 1:
-                self.game.message_log.add_message(f"Quantity: {data_patch.quantity}")
+            if code_hack.quantity > 1:
+                self.game.message_log.add_message(f"Quantity: {code_hack.quantity}")
     
     def _open_inventory(self):
         """Open the inventory screen."""

@@ -190,19 +190,19 @@ class TestFeatureNodes:
 class TestItemRetrieval:
     """Test item retrieval methods."""
     
-    def test_get_data_patch(self):
-        """get_data_patch retrieves code hacks correctly."""
+    def test_get_code_hack(self):
+        """get_code_hack retrieves code hacks correctly."""
         game_map = GameMap(50, 30)
         pos = Position(12, 8)
         
         # No code hack initially
-        assert game_map.get_data_patch(pos) is None
+        assert game_map.get_code_hack(pos) is None
         
         # Add code hack
         mock_code_hack = Mock(spec=CodeHack)
         game_map.code_hacks[(12, 8)] = mock_code_hack
         
-        retrieved_hack = game_map.get_data_patch(pos)
+        retrieved_hack = game_map.get_code_hack(pos)
         assert retrieved_hack is mock_code_hack
     
     def test_get_exploit_pickup(self):
@@ -234,11 +234,11 @@ class TestItemRetrieval:
         game_map.exploit_pickups[(20, 20)] = mock_exploit
         
         # Items should be retrievable at their respective positions
-        assert game_map.get_data_patch(pos1) is mock_code_hack
+        assert game_map.get_code_hack(pos1) is mock_code_hack
         assert game_map.get_exploit_pickup(pos2) is mock_exploit
         
         # And not at other positions
-        assert game_map.get_data_patch(pos2) is None
+        assert game_map.get_code_hack(pos2) is None
         assert game_map.get_exploit_pickup(pos1) is None
 
 
@@ -534,7 +534,7 @@ class TestMapIntegration:
         assert game_map.is_wall(Position(10, 10)) is True
         assert game_map.is_shadow(Position(5, 5)) is True
         assert game_map.is_cooling_node(Position(20, 20)) is True
-        assert game_map.get_data_patch(Position(15, 15)) is mock_code_hack
+        assert game_map.get_code_hack(Position(15, 15)) is mock_code_hack
         assert game_map.gateway.x == 55
         assert len(game_map.explored_tiles) == 25
     
