@@ -48,7 +48,7 @@ class SoundManager:
                 logging.info(f"Sound system initialized with {self.max_channels} channels")
             except Exception as e:
                 logging.warning(f"Failed to initialize sound system: {e}")
-                logging.warning(traceback.format_exc())
+                logging.debug(traceback.format_exc())
                 self.enabled = False
     
     def update_volumes(self):
@@ -134,7 +134,7 @@ class SoundManager:
                 logging.warning(f"Sound file not found: {sound_path}")
         except Exception as e:
             logging.error(f"Failed to load sound {sound_id}: {e}")
-            logging.error(traceback.format_exc())
+            logging.debug(traceback.format_exc())
     
     def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
         """Play a loaded sound effect with channel management"""
@@ -173,7 +173,7 @@ class SoundManager:
             return channel.play(sound)
         except Exception as e:
             logging.error(f"Failed to play sound {sound_id}: {e}")
-            logging.error(traceback.format_exc())
+            logging.debug(traceback.format_exc())
             return None
     
     def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0, volume_multiplier: float = 1.0):
@@ -200,7 +200,7 @@ class SoundManager:
                 logging.warning(f"Music file not found: {music_path}")
         except Exception as e:
             logging.error(f"Failed to play music {filename}: {e}")
-            logging.error(traceback.format_exc())
+            logging.debug(traceback.format_exc())
     
     def stop_music(self, fade_out_ms: int = 0):
         """Stop background music"""
@@ -216,7 +216,7 @@ class SoundManager:
             self.current_music = None
         except Exception as e:
             logging.error(f"Failed to stop music: {e}")
-            logging.error(traceback.format_exc())
+            logging.debug(traceback.format_exc())
     
     def pause_music(self):
         """Pause background music"""

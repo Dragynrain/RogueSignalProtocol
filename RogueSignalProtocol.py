@@ -45,13 +45,14 @@ from game_state import MessageLog, GameStateManager, TurnProcessor
 from game_rendering import BaseRenderer, ASCIIRenderer, Renderer, UIRenderer, MapRenderer
 from game_loop import main, initialize_tcod_context, WindowManager as LoopWindowManager
 
-# Setup logging for error handling
+# Setup detailed logging for comprehensive debugging
 logging.basicConfig(
-    level=logging.WARNING,
-    format='%(levelname)s: %(message)s',
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s',
     handlers=[
         logging.StreamHandler()
-    ]
+    ],
+    datefmt='%Y-%m-%d %H:%M:%S'
 )
 
 

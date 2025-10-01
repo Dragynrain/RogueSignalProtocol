@@ -85,8 +85,7 @@ class Player:
         # Check for out-of-bounds movement using actual game map bounds
         if (intended_x < 0 or intended_x >= game_map.width or 
             intended_y < 0 or intended_y >= game_map.height):
-            logging.warning(f"Movement out of bounds: intended=({intended_x}, {intended_y}), "
-                           f"map_bounds=({game_map.width}, {game_map.height})")
+            logging.warning(f"Movement out of bounds: intended=({intended_x}, {intended_y}), map_bounds=({game_map.width}, {game_map.height})")
             return False
         
         # Now create the position and validate it
@@ -149,7 +148,7 @@ class Player:
             effective_vision_range = base_vision_range
         
         # Use TCOD FOV for line of sight calculation
-        return game_map.can_see_position(self.position, enemy.position, effective_vision_range)
+        return game_map.can_see_position(self.position, enemy_target.position, effective_vision_range)
     
     @property
     def max_heat(self) -> int:
@@ -514,7 +513,7 @@ class Enemy:
             else:
                 current_pos = self.position
             
-            random_move = self._get_random_adjacent_position(current_pos, game_map, game)
+            random_move = self._get_random_adjacent_position(current_pos, game_map, game_engine)
             if random_move and random_move not in temp_queue and random_move not in self.movement_queue:
                 temp_queue.append(random_move)
             else:
@@ -530,7 +529,7 @@ class Enemy:
         
         for dx, dy in directions:
             next_pos = Position(from_pos.x + dx, from_pos.y + dy)
-            if self._is_valid_enemy_move(next_pos, game_map, game):
+            if self._is_valid_enemy_move(next_pos, game_map, game_engine):
                 return next_pos
         
         return None  # No valid adjacent positions found
@@ -583,15 +582,15 @@ class Enemy:
         if needs_full_regeneration:
             # Full regeneration - build entire queue from scratch
             if use_pathfinding and target:
-                self._generate_pathfinding_queue(target, game_map, game)
+                self._generate_pathfinding_queue(target, game_map, game_engine)
             else:
-                self._generate_random_queue(game_map, game)
+                self._generate_random_queue(game_map, game_engine)
             
             # Ensure we always have exactly 3 moves (if possible)
-            self._ensure_queue_length(game_map, game)
+            self._ensure_queue_length(game_map, game_engine)
         else:
             # Extend existing queue - just add moves to reach 3 total
-            self._extend_movement_queue(target, use_pathfinding, game_map, game)
+            self._extend_movement_queue(target, use_pathfinding, game_map, game_engine)
         
         # Track state and target for future queue regeneration decisions
         self.last_queue_state = self.state
@@ -601,7 +600,7 @@ class Enemy:
         """Generate movement queue using pathfinding to target, ensuring 3 valid moves."""
         try:
             # Create cost map
-            cost_map = create_pathfinding_cost_map(game_map, game, self)
+            cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
             
             # Set up pathfinder
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
@@ -619,13 +618,13 @@ class Enemy:
             for i in range(1, min(len(path), 4)):  # Skip current position, take next 3
                 x, y = path[i]
                 next_pos = Position(x, y)
-                if self._is_valid_enemy_move(next_pos, game_map, game):
+                if self._is_valid_enemy_move(next_pos, game_map, game_engine):
                     self.movement_queue.append(next_pos)
                     
         except Exception as e:
             # If pathfinding fails, fall back to random movement
             logging.error(f"Enemy {self.type_data.name} pathfinding failed: {e}")
-            self._generate_random_queue(game_map, game)
+            self._generate_random_queue(game_map, game_engine)
     
     def _generate_random_queue(self, game_map, game_engine):
         """Generate 3 random valid moves."""
@@ -643,7 +642,7 @@ class Enemy:
                     break
                     
                 next_pos = Position(current_pos.x + dx, current_pos.y + dy)
-                if self._is_valid_enemy_move(next_pos, game_map, game):
+                if self._is_valid_enemy_move(next_pos, game_map, game_engine):
                     self.movement_queue.append(next_pos)
                     current_pos = next_pos
                     break
@@ -665,7 +664,7 @@ class Enemy:
             move_added = False
             for dx, dy in directions:
                 next_pos = Position(last_pos.x + dx, last_pos.y + dy)
-                if self._is_valid_enemy_move(next_pos, game_map, game):
+                if self._is_valid_enemy_move(next_pos, game_map, game_engine):
                     # Check if this position is already in the queue to avoid cycles
                     if next_pos not in [Position(self.x, self.y)] + self.movement_queue:
                         self.movement_queue.append(next_pos)
@@ -707,7 +706,7 @@ class Enemy:
             return False  # No movement, but this is expected behavior
         
         # Check if we can move to this position
-        if can_move_to_position(self, next_position, game_map, player, game):
+        if can_move_to_position(self, next_position, game_map, player, game_engine):
             self.position = next_position
             self.movement_queue.pop(0)  # Remove completed move
             
@@ -777,7 +776,7 @@ def pathfind_and_move(enemy, target, game_map, player, game_engine):
             next_x, next_y = optimal_path[1]  # Skip current position [0]
             next_position = Position(next_x, next_y)
             
-            if can_move_to_position(enemy, next_position, game_map, player, game):
+            if can_move_to_position(enemy, next_position, game_map, player, game_engine):
                 enemy.position = next_position
                 return True
         

@@ -52,7 +52,7 @@ class GameSettings:
         except Exception as e:
             import traceback
             logging.warning(f"Failed to load settings: {e}")
-            logging.warning(traceback.format_exc())
+            logging.debug(traceback.format_exc())
             self._create_default_settings_file()
     
     def _create_default_settings_file(self) -> None:
@@ -84,7 +84,7 @@ class GameSettings:
         except Exception as e:
             import traceback
             logging.error(f"Failed to save settings: {e}")
-            logging.error(traceback.format_exc())
+            logging.debug(traceback.format_exc())
     
     def _set_volume_attribute(self, volume_type: str, volume: float):
         """Generic volume setter for any volume type."""

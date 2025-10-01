@@ -111,7 +111,8 @@
       "background": [10, 15, 25],
       "text": [20, 255, 200],
       "accent": [160, 20, 255],
-      "highlight": [255, 20, 255]
+      "highlight": [255, 20, 255],
+      "electric_purple": [160, 20, 255]
     }
   },
   "message_types": {

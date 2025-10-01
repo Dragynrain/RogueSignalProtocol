@@ -799,17 +799,22 @@ class UIRenderer:
             if y_pos < GameConfig.SCREEN_HEIGHT:
                 render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
     
-    def _wrap_messages(self, messages: List[Tuple[str, Tuple[int, int, int]]]) -> List[Tuple[str, Tuple[int, int, int]]]:
+    def _wrap_messages(self, messages: List) -> List[Tuple[str, Tuple[int, int, int]]]:
         """Wrap long messages across multiple lines."""
         wrapped_lines = []
         max_msg_width = GameConfig.LOG_WIDTH - 2
-        
-        for message, color in messages:
-            if len(message) <= max_msg_width:
-                wrapped_lines.append((message, color))
+
+        for message in messages:
+            # Handle both Message objects and tuple formats
+            if hasattr(message, 'text') and hasattr(message, 'color'):
+                text, color = message.text, message.color
+            else:
+                text, color = message
+            if len(text) <= max_msg_width:
+                wrapped_lines.append((text, color))
             else:
                 # Wrap long messages
-                words = message.split(' ')
+                words = text.split(' ')
                 current_line = ""
                 
                 for word in words:
