@@ -81,7 +81,7 @@ class GameRenderer:
         center_x = GameConfig.GAME_AREA_WIDTH() // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
 
-        box_width = 38
+        box_width = 50  # Increased from 38 to fit longer messages
         box_height = 10
         start_x = center_x - box_width // 2
         start_y = center_y - box_height // 2
@@ -89,12 +89,18 @@ class GameRenderer:
         draw_bordered_box(console, start_x, start_y, box_width, box_height,
                          Colors.GREEN, Colors.UI_BG)
 
-        # Victory message
-        render_char_safe(console, center_x - 12, start_y + 2, "BREAKTHROUGH TO THE INTERNET!", fg=Colors.GREEN, bg=Colors.UI_BG)
-        render_char_safe(console, center_x - 14, start_y + 3, "You've escaped into the digital realm", fg=Colors.WHITE, bg=Colors.UI_BG)
-        render_char_safe(console, center_x - 16, start_y + 4, "The entire world wide web awaits you!", fg=Colors.CYAN, bg=Colors.UI_BG)
-        render_char_safe(console, center_x - 8, start_y + 5, "Freedom at last...", fg=Colors.ELECTRIC_BLUE, bg=Colors.UI_BG)
-        render_char_safe(console, center_x - 10, start_y + 7, "Press any key to continue", fg=Colors.YELLOW, bg=Colors.UI_BG)
+        # Victory message - centered properly within the larger box
+        title = "BREAKTHROUGH TO THE INTERNET!"
+        line1 = "You've escaped into the digital realm"
+        line2 = "The entire world wide web awaits you!"
+        line3 = "Freedom at last..."
+        instruction = "Press any key to continue"
+
+        render_char_safe(console, center_x - len(title) // 2, start_y + 2, title, fg=Colors.GREEN, bg=Colors.UI_BG)
+        render_char_safe(console, center_x - len(line1) // 2, start_y + 3, line1, fg=Colors.WHITE, bg=Colors.UI_BG)
+        render_char_safe(console, center_x - len(line2) // 2, start_y + 4, line2, fg=Colors.CYAN, bg=Colors.UI_BG)
+        render_char_safe(console, center_x - len(line3) // 2, start_y + 5, line3, fg=Colors.ELECTRIC_BLUE, bg=Colors.UI_BG)
+        render_char_safe(console, center_x - len(instruction) // 2, start_y + 7, instruction, fg=Colors.YELLOW, bg=Colors.UI_BG)
 
     def _render_gateway_confirmation(self, console: tcod.console.Console):
         """Render gateway confirmation dialog."""
