@@ -150,12 +150,11 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
                 enemy.patrol_points = [Position(10, 10), Position(15, 15), Position(5, 5)]
                 enemy.patrol_index = 0
                 
-                with patch.object(enemy, '_generate_pathfinding_queue') as mock_path:
+                with patch.object(enemy, '_generate_intelligent_patrol_queue') as mock_patrol:
                     enemy.move(self.mock_game_map, self.player, self.mock_game)
-                    
-                    # Should pathfind to current patrol point
-                    expected_target = enemy.patrol_points[0]
-                    mock_path.assert_called_once_with(expected_target, self.mock_game_map, self.mock_game)
+
+                    # Should use intelligent patrol queue generation
+                    mock_patrol.assert_called_once_with(self.mock_game_map, self.mock_game)
 
 
 class TestEnemyStateTransitions(TestEnemyAIBehavior):
