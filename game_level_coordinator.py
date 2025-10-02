@@ -75,6 +75,10 @@ class GameLevelCoordinator:
 
     def progress_to_next_level(self):
         """Progress to the next level."""
+        # Don't progress if game is already over
+        if self.game_engine.game_over:
+            return
+
         self.game_engine.level += 1
         if self.game_engine.level > 3:
             self.game_engine.sound_manager.play_music("victory.ogg", loops=1)
