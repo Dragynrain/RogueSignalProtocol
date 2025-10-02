@@ -12,7 +12,7 @@ import os
 # Add the project root directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from game_core import GameStateManager, TurnProcessor
+from game_state import GameStateManager, TurnProcessor
 from game_entities import Colors
 from game_config import GameBalance
 

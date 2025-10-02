@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from game_characters import Player, Enemy
 from game_entities import Position, EnemyState
-from game_core import GameStateManager, TurnProcessor
+from game_state import GameStateManager, TurnProcessor
 from game_map import GameMap
 from game_save import SaveGameManager
 from game_config import GameConfig

@@ -136,8 +136,8 @@ class SaveGameManager:
                     if os.path.exists(temp_file):
                         try:
                             os.remove(temp_file)
-                        except:
-                            pass
+                        except (OSError, FileNotFoundError):
+                            pass  # Temp file cleanup failure is not critical
                 
             except (IOError, OSError) as e:
                 logging.warning(f"Save attempt {attempt + 1} failed with I/O error: {e}")

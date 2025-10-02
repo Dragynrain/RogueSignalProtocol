@@ -541,8 +541,8 @@ class Enemy:
                     for i in range(1, min(len(path), moves_needed + 1)):
                         x, y = path[i]
                         temp_queue.append(Position(x, y))
-            except Exception:
-                # If pathfinding fails, continue to random moves below
+            except (AttributeError, IndexError, ValueError, TypeError):
+                # If pathfinding fails due to invalid data, continue to random moves below
                 pass
         
         # Fill remaining slots with random moves if needed
