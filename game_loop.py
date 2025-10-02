@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Game Loop and Initialization - Split from RogueSignalProtocol.py
+Game Loop and Initialization
 Contains main game loop, window management, and initialization functions.
 """
 
@@ -15,7 +15,7 @@ from game_ui import render_char_safe, WindowManager
 from game_audio import SoundManager
 from game_menus import MenuBackground, MainMenu, SettingsMenu, HelpMenu, LoreMenu
 from game_engine import GameEngine
-from game_rendering import Renderer
+from game_rendering import GameRenderer
 from game_input import InputHandler
 
 
@@ -237,7 +237,7 @@ def main():
                         return
                     
                     # Initialize game rendering systems
-                    renderer = Renderer(settings)
+                    renderer = GameRenderer(settings)
                     input_handler = InputHandler(game)
                     show_welcome_messages(game)
 

@@ -741,45 +741,55 @@ class Enemy:
 
 # Pathfinding helper functions
 def create_pathfinding_cost_map(game_map, game_engine, moving_enemy):
-    """Create cost map for TCOD A* pathfinding."""
-    cost_map = np.zeros((game_map.width, game_map.height), dtype=bool)
-    
-    for x in range(game_map.width):
-        for y in range(game_map.height):
-            tile_pos = Position(x, y)
-            
-            if not game_map.is_valid_position(tile_pos):
-                cost_map[x, y] = False  # Impassable
-            else:
-                enemy_at_tile = game_engine._get_enemy_at(tile_pos)
-                if enemy_at_tile and enemy_at_tile != moving_enemy:
-                    cost_map[x, y] = False  # Impassable - other enemies block movement
-                else:
-                    cost_map[x, y] = True   # Walkable
-    
+    """Create cost map for TCOD A* pathfinding with optimizations."""
+    # Start with base terrain map (cached in game_map)
+    cost_map = game_map.get_walkability_map().copy()
+
+    # Efficiently mark enemy positions as impassable
+    enemy_positions = {(enemy.x, enemy.y) for enemy in game_engine.enemies if enemy != moving_enemy}
+    for x, y in enemy_positions:
+        if 0 <= x < game_map.width and 0 <= y < game_map.height:
+            cost_map[x, y] = False
+
     return cost_map
 
 
 def pathfind_and_move(enemy, target, game_map, player, game_engine):
-    """Use TCOD A* pathfinding to move enemy one step toward target."""
+    """Use TCOD A* pathfinding to move enemy one step toward target with caching."""
     try:
-        cost_map = create_pathfinding_cost_map(game_map, game_engine, enemy)
-        
-        # Set up pathfinder and calculate optimal path using modern TCOD API  
-        graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-        pathfinder = tcod.path.Pathfinder(graph)
-        pathfinder.add_root((enemy.x, enemy.y))
-        optimal_path = pathfinder.path_to((target.x, target.y))
-        
+        # Use cached pathfinder if available
+        if not hasattr(game_engine, '_pathfinder_cache'):
+            game_engine._pathfinder_cache = {}
+
+        # Create cache key based on enemy positions and target
+        enemy_positions = tuple(sorted((e.x, e.y) for e in game_engine.enemies if e != enemy))
+        cache_key = (enemy.x, enemy.y, target.x, target.y, enemy_positions)
+
+        # Check cache first
+        if cache_key in game_engine._pathfinder_cache:
+            optimal_path = game_engine._pathfinder_cache[cache_key]
+        else:
+            # Calculate new path and cache it
+            cost_map = create_pathfinding_cost_map(game_map, game_engine, enemy)
+            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+            pathfinder = tcod.path.Pathfinder(graph)
+            pathfinder.add_root((enemy.x, enemy.y))
+            optimal_path = pathfinder.path_to((target.x, target.y))
+
+            # Cache the result (limit cache size to prevent memory issues)
+            if len(game_engine._pathfinder_cache) > 100:
+                game_engine._pathfinder_cache.clear()
+            game_engine._pathfinder_cache[cache_key] = optimal_path
+
         # Take the next step along the path
         if len(optimal_path) >= 2:
             next_x, next_y = optimal_path[1]  # Skip current position [0]
             next_position = Position(next_x, next_y)
-            
+
             if can_move_to_position(enemy, next_position, game_map, player, game_engine):
                 enemy.position = next_position
                 return True
-        
+
         return False
     except Exception:
         return False

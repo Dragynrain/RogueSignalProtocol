@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Game Rendering System - Split from RogueSignalProtocol.py
+Game Rendering System
 Contains all rendering classes and functionality.
 """
 
@@ -8,58 +8,46 @@ import tcod
 import os
 import logging
 import traceback
-from abc import ABC, abstractmethod
 from typing import List, Tuple, Optional
 
 from game_config import GameConfig
 from game_entities import Position, Colors, EnemyState, TargetingMode, ensure_color_tuple
 from game_data import GameData, GameUpgrades
-from game_ui import render_char_safe
 from game_menus import HelpMenu
 from data_loading import get_story_fragments
 
 
-class BaseRenderer(ABC):
-    """Abstract base class for all renderers."""
-    
-    def __init__(self):
+# Import render_char_safe from game_ui to avoid circular imports
+from game_ui import render_char_safe
+
+
+def draw_bordered_box(console: tcod.console.Console, start_x: int, start_y: int,
+                     width: int, height: int, border_color: tuple, bg_color: tuple):
+    """Draw a bordered box with background fill - extracted utility function."""
+    # Ensure colors are tuples to prevent TCOD ColorRGB errors
+    border_color = ensure_color_tuple(border_color)
+    bg_color = ensure_color_tuple(bg_color)
+
+    # Use TCOD's built-in box drawing for efficiency
+    console.draw_rect(start_x, start_y, width, height, ord(' '), fg=Colors.WHITE, bg=bg_color)
+
+    # Draw border using TCOD's box drawing
+    console.draw_frame(start_x, start_y, width, height,
+                      fg=border_color, bg=bg_color, clear=False)
+
+
+class GameRenderer:
+    """Unified game renderer - consolidates all rendering functionality."""
+
+    def __init__(self, settings=None):
+        self.settings = settings
         self.ui_renderer = UIRenderer()
-    
-    def _draw_bordered_box(self, console: tcod.console.Console, start_x: int, start_y: int, 
-                          width: int, height: int, border_color: tuple, bg_color: tuple):
-        """Draw a bordered box with background fill."""
-        # Ensure colors are tuples to prevent TCOD ColorRGB errors
-        border_color = ensure_color_tuple(border_color)
-        bg_color = ensure_color_tuple(bg_color)
-        
-        # Draw background
-        for y in range(start_y, start_y + height):
-            for x in range(start_x, start_x + width):
-                render_char_safe(console, x, y, ' ', fg=Colors.WHITE, bg=bg_color)
-        
-        # Draw border
-        for x in range(start_x, start_x + width):
-            render_char_safe(console, x, start_y, '─', fg=border_color, bg=bg_color)
-            render_char_safe(console, x, start_y + height - 1, '─', fg=border_color, bg=bg_color)
-        for y in range(start_y, start_y + height):
-            render_char_safe(console, start_x, y, '│', fg=border_color, bg=bg_color)
-            render_char_safe(console, start_x + width - 1, y, '│', fg=border_color, bg=bg_color)
-        
-        # Corner characters
-        render_char_safe(console, start_x, start_y, '┌', fg=border_color, bg=bg_color)
-        render_char_safe(console, start_x + width - 1, start_y, '┐', fg=border_color, bg=bg_color)
-        render_char_safe(console, start_x, start_y + height - 1, '└', fg=border_color, bg=bg_color)
-        render_char_safe(console, start_x + width - 1, start_y + height - 1, '┘', fg=border_color, bg=bg_color)
-        
-    @abstractmethod
-    def render_map(self, console: tcod.console.Console, game):
-        """Render the game map using the specific rendering method."""
-        pass
-    
+        self.map_renderer = MapRenderer()
+
     def render_game(self, console: tcod.console.Console, game, context=None):
         """Render the complete game state."""
         console.clear()
-        
+
         if game.show_story_fragment is not None:
             self.ui_renderer.render_story_fragment_screen(console, game, game.show_story_fragment)
         elif game.show_lore_viewer:
@@ -70,37 +58,37 @@ class BaseRenderer(ABC):
             self.ui_renderer.render_inventory_screen(console, game)
         else:
             self._render_main_game_screen(console, game)
-    
+
     def _render_main_game_screen(self, console: tcod.console.Console, game):
         """Render the main game screen."""
         self.ui_renderer.render_top_status_bar(console, game)
-        self.render_map(console, game)
+        self.map_renderer.render_map(console, game)
         self.ui_renderer.render_bottom_panel(console, game)
         self.ui_renderer.render_system_log(console, game)
-        
+
         # Render overlay dialogs
         if game.show_gateway_confirmation:
             self._render_gateway_confirmation(console)
-        
+
         # Render game over/death messages
         if game.game_over and game.level > 3:
             self._render_victory_message(console)
         elif game.player.cpu <= 0:
             self._render_death_message(console)
-    
+
     def _render_victory_message(self, console: tcod.console.Console):
         """Render victory message."""
         center_x = GameConfig.GAME_AREA_WIDTH() // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
-        
+
         box_width = 38
         box_height = 10
         start_x = center_x - box_width // 2
         start_y = center_y - box_height // 2
-        
-        self._draw_bordered_box(console, start_x, start_y, box_width, box_height, 
-                               Colors.GREEN, Colors.UI_BG)
-        
+
+        draw_bordered_box(console, start_x, start_y, box_width, box_height,
+                         Colors.GREEN, Colors.UI_BG)
+
         # Victory message
         render_char_safe(console, center_x - 12, start_y + 2, "BREAKTHROUGH TO THE INTERNET!", fg=Colors.GREEN, bg=Colors.UI_BG)
         render_char_safe(console, center_x - 14, start_y + 3, "You've escaped into the digital realm", fg=Colors.WHITE, bg=Colors.UI_BG)
@@ -112,19 +100,19 @@ class BaseRenderer(ABC):
         """Render gateway confirmation dialog."""
         center_x = GameConfig.GAME_AREA_WIDTH() // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
-        
+
         box_width = 30
         box_height = 6
         start_x = center_x - box_width // 2
         start_y = center_y - box_height // 2
-        
-        self._draw_bordered_box(console, start_x, start_y, box_width, box_height, 
-                               Colors.CYAN, Colors.UI_BG)
-        
+
+        draw_bordered_box(console, start_x, start_y, box_width, box_height,
+                         Colors.CYAN, Colors.UI_BG)
+
         # Title and message
         render_char_safe(console, center_x - 7, start_y + 1, "NETWORK GATEWAY", fg=Colors.YELLOW, bg=Colors.UI_BG)
         render_char_safe(console, center_x - 12, start_y + 2, "Proceed to next network?", fg=Colors.WHITE, bg=Colors.UI_BG)
-        
+
         # Options
         render_char_safe(console, center_x - 5, start_y + 4, "Y: Yes  N: No", fg=Colors.CYAN, bg=Colors.UI_BG)
 
@@ -134,35 +122,20 @@ class BaseRenderer(ABC):
         save_path = "save_game.json"
         if os.path.exists(save_path):
             os.remove(save_path)
-        
+
         center_x = GameConfig.GAME_AREA_WIDTH() // 2
         center_y = GameConfig.SCREEN_HEIGHT // 2
-        
-        # Background box
+
+        # Background box with border
         box_width = 40
         box_height = 12
         start_x = center_x - box_width // 2
         start_y = center_y - box_height // 2
-        
-        # Draw background
-        for y in range(start_y, start_y + box_height):
-            for x in range(start_x, start_x + box_width):
-                render_char_safe(console, x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
-        
-        # Draw border
-        for x in range(start_x, start_x + box_width):
-            render_char_safe(console, x, start_y, '─', fg=Colors.RED, bg=Colors.BLACK)
-            render_char_safe(console, x, start_y + box_height - 1, '─', fg=Colors.RED, bg=Colors.BLACK)
-        for y in range(start_y, start_y + box_height):
-            render_char_safe(console, start_x, y, '│', fg=Colors.RED, bg=Colors.BLACK)
-            render_char_safe(console, start_x + box_width - 1, y, '│', fg=Colors.RED, bg=Colors.BLACK)
-        
-        # Corner characters
-        render_char_safe(console, start_x, start_y, '┌', fg=Colors.RED, bg=Colors.BLACK)
-        render_char_safe(console, start_x + box_width - 1, start_y, '┐', fg=Colors.RED, bg=Colors.BLACK)
-        render_char_safe(console, start_x, start_y + box_height - 1, '└', fg=Colors.RED, bg=Colors.BLACK)
-        render_char_safe(console, start_x + box_width - 1, start_y + box_height - 1, '┘', fg=Colors.RED, bg=Colors.BLACK)
-        
+
+        # Use TCOD's efficient drawing
+        console.draw_rect(start_x, start_y, box_width, box_height, ord(' '), fg=Colors.WHITE, bg=Colors.BLACK)
+        console.draw_frame(start_x, start_y, box_width, box_height, fg=Colors.RED, bg=Colors.BLACK, clear=False)
+
         # Death message
         render_char_safe(console, center_x - 10, start_y + 2, "CONSCIOUSNESS PURGED", fg=Colors.RED, bg=Colors.BLACK)
         render_char_safe(console, center_x - 17, start_y + 4, "Your consciousness failed to escape", fg=Colors.WHITE, bg=Colors.BLACK)
@@ -172,28 +145,8 @@ class BaseRenderer(ABC):
         render_char_safe(console, center_x - 10, start_y + 9, "Press any key to restart", fg=Colors.CYAN, bg=Colors.BLACK)
 
 
-class ASCIIRenderer(BaseRenderer):
-    """ASCII-based renderer using the current MapRenderer."""
-    
-    def __init__(self):
-        super().__init__()
-        self.map_renderer = MapRenderer()
-    
-    def render_map(self, console: tcod.console.Console, game):
-        """Render the game map using ASCII characters."""
-        self.map_renderer.render_map(console, game)
-
-
-class Renderer:
-    """Simplified renderer using ASCII graphics."""
-    
-    def __init__(self, settings):
-        self.settings = settings
-        self._current_renderer = ASCIIRenderer()
-    
-    def render_game(self, console: tcod.console.Console, game, context=None):
-        """Render the complete game state using the ASCII renderer."""
-        self._current_renderer.render_game(console, game, context)
+# Legacy alias for backward compatibility
+Renderer = GameRenderer
 
 
 class UIRenderer:

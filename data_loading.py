@@ -21,17 +21,25 @@ class DataLoader:
     def load_story_fragments(cls) -> List[str]:
         """Load story fragments from JSON file."""
         if cls._story_fragments is None:
-            with open('story_content.json', 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                cls._story_fragments = data['fragments']
+            try:
+                with open('story_content.json', 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    cls._story_fragments = data['fragments']
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                logging.warning(f"Could not load story fragments: {e}, using fallback")
+                cls._story_fragments = cls._get_fallback_story_fragments()
         return cls._story_fragments
     
     @classmethod
     def load_game_data(cls) -> Dict[str, Any]:
         """Load game data from JSON file."""
         if cls._game_data is None:
-            with open('game_data.json', 'r', encoding='utf-8') as f:
-                cls._game_data = json.load(f)
+            try:
+                with open('game_data.json', 'r', encoding='utf-8') as f:
+                    cls._game_data = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                logging.warning(f"Could not load game data: {e}, using fallback")
+                cls._game_data = cls._get_fallback_game_data()
         return cls._game_data
     
     @classmethod
@@ -50,8 +58,12 @@ class DataLoader:
     def load_config(cls) -> Dict[str, Any]:
         """Load configuration from JSON file."""
         if cls._config is None:
-            with open('game_config.json', 'r', encoding='utf-8') as f:
-                cls._config = json.load(f)
+            try:
+                with open('game_config.json', 'r', encoding='utf-8') as f:
+                    cls._config = json.load(f)
+            except (FileNotFoundError, json.JSONDecodeError) as e:
+                logging.warning(f"Could not load config: {e}, using fallback")
+                cls._config = cls._get_fallback_config()
         return cls._config
     
     @classmethod
@@ -85,6 +97,120 @@ class DataLoader:
             "graphics_mode": "terminal"
         }
 
+    @classmethod
+    def _get_fallback_story_fragments(cls) -> List[str]:
+        """Fallback story fragments for testing and error recovery."""
+        return [
+            "FALLBACK DATA SYSTEM INITIALIZATION COMPLETE",
+            "Network protocols established. Beginning data extraction sequence.",
+            "WARNING: Unauthorized access detected. Activating security measures.",
+            "Data fragment corrupted. Unable to reconstruct original message.",
+            "Emergency backup protocols engaged. System stability at 67%."
+        ]
+
+    @classmethod
+    def _get_fallback_game_data(cls) -> Dict[str, Any]:
+        """Fallback game data for testing and error recovery."""
+        return {
+            "enemy_types": {
+                "Scanner": {
+                    "symbol": "S",
+                    "vision": 8,
+                    "movement": "RANDOM",
+                    "color": [255, 100, 100]
+                },
+                "Patrol": {
+                    "symbol": "P",
+                    "vision": 6,
+                    "movement": "LINEAR",
+                    "color": [255, 150, 50]
+                }
+            },
+            "exploits": {
+                "buffer_overflow": {
+                    "name": "Buffer Overflow",
+                    "damage": 15,
+                    "heat": 20,
+                    "ram": 2,
+                    "range": 3
+                },
+                "shadow_step": {
+                    "name": "Shadow Step",
+                    "damage": 0,
+                    "heat": 10,
+                    "ram": 1,
+                    "range": 0
+                }
+            },
+            "upgrades": {
+                "enhanced_cpu": {
+                    "name": "Enhanced CPU",
+                    "description": "Increases maximum CPU",
+                    "color": "BRIGHT_BLUE"
+                },
+                "cooling_system": {
+                    "name": "Cooling System",
+                    "description": "Increases heat capacity",
+                    "color": "BRIGHT_CYAN"
+                }
+            },
+            "network_configs": {
+                "1": {
+                    "security_level": 1,
+                    "admin_chance": 0.1,
+                    "patrol_density": 1,
+                    "shadow_coverage": 0.15,
+                    "room_count": {"min": 4, "max": 7},
+                    "enemy_count": {"min": 2, "max": 4}
+                },
+                "2": {
+                    "security_level": 2,
+                    "admin_chance": 0.2,
+                    "patrol_density": 2,
+                    "shadow_coverage": 0.20,
+                    "room_count": {"min": 5, "max": 8},
+                    "enemy_count": {"min": 3, "max": 6}
+                }
+            },
+            "balance": {
+                "player_start_cpu": 100,
+                "heat_reduction_normal": 2,
+                "detection_threshold": 100
+            },
+            "item_effects": {
+                "crimson": {"effect": "speed_boost", "duration": 5},
+                "azure": {"effect": "enhanced_vision", "duration": 10}
+            }
+        }
+
+    @classmethod
+    def _get_fallback_config(cls) -> Dict[str, Any]:
+        """Fallback configuration for testing and error recovery."""
+        return {
+            "gameplay": {
+                "difficulty": "normal",
+                "permadeath": True,
+                "tutorial_enabled": True
+            },
+            "graphics": {
+                "ascii_mode": True,
+                "terminal_mode": True,
+                "window_title": "Rogue Signal Protocol"
+            },
+            "audio": {
+                "master_volume": 0.7,
+                "sfx_volume": 1.0,
+                "music_volume": 0.7,
+                "audio_enabled": True
+            },
+            "colors": {
+                "ui": {
+                    "background": [30, 30, 30],
+                    "border": [100, 100, 100]
+                }
+            }
+        }
+
 
 class PersistentStorage:
     """Handles persistent storage and game saves."""
@@ -106,9 +232,9 @@ class PersistentStorage:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             return True
         except Exception as e:
-            error_msg = f"Failed to save data to {filename}: {e}"
-            print(error_msg)
-            logging.error(error_msg)
+            from game_errors import GameErrorHandler
+            GameErrorHandler.handle_error(e, f"PersistentStorage.save_data({filename})",
+                                        "Failed to save game data")
             return False
     
     def load_data(self, filename: str) -> Dict[str, Any]:
@@ -120,6 +246,10 @@ class PersistentStorage:
         except FileNotFoundError:
             # This is normal for new games - return empty dict
             logging.debug(f"Save file not found: {filename} (normal for new games)")
+            return {}
+        except json.JSONDecodeError as e:
+            # Handle corrupted save files
+            logging.warning(f"Invalid JSON in save file {filename}: {e}")
             return {}
     
     def file_exists(self, filename: str) -> bool:

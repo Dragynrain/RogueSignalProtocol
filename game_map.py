@@ -159,28 +159,55 @@ class GameMap:
         """Invalidate the transparency cache when map changes."""
         if hasattr(self, '_transparency_cache'):
             del self._transparency_cache
+        if hasattr(self, '_walkability_cache'):
+            del self._walkability_cache
+
+    def get_walkability_map(self):
+        """Get walkability map for pathfinding (cached for performance)."""
+        if not hasattr(self, '_walkability_cache'):
+            import numpy as np
+            walkability = np.zeros((self.width, self.height), dtype=bool)
+            for x in range(self.width):
+                for y in range(self.height):
+                    pos = Position(x, y)
+                    walkability[x, y] = self.is_valid_position(pos)
+            self._walkability_cache = walkability
+        return self._walkability_cache
     
     def can_see_position(self, start: Position, end: Position, vision_range: int) -> bool:
-        """Check if start position can see end position using TCOD FOV within range."""
-        if not (start.is_valid(self.width, self.height) and 
+        """Check if start position can see end position using TCOD FOV within range (optimized with caching)."""
+        if not (start.is_valid(self.width, self.height) and
                 end.is_valid(self.width, self.height)):
             return False
-        
-        # Check if within vision range first
+
+        # Check if within vision range first (faster early exit)
         distance = start.distance_to(end)
         if distance > vision_range:
             return False
-        
-        # Use TCOD FOV system for proper corner visibility
-        transparency = self._get_transparency_map()
-        
-        # Compute FOV from start position (TCOD uses y,x coordinate order)
-        fov = tcod.map.compute_fov(
-            transparency=transparency,
-            pov=(start.y, start.x),
-            radius=vision_range,
-            algorithm=libtcodpy.FOV_SYMMETRIC_SHADOWCAST
-        )
-        
+
+        # Cache FOV computations to avoid repeated calculations
+        fov_cache_key = (start.x, start.y, vision_range)
+        if not hasattr(self, '_fov_cache'):
+            self._fov_cache = {}
+
+        if fov_cache_key not in self._fov_cache:
+            # Use TCOD FOV system for proper corner visibility
+            transparency = self._get_transparency_map()
+
+            # Compute FOV from start position (TCOD uses y,x coordinate order)
+            fov = tcod.map.compute_fov(
+                transparency=transparency,
+                pov=(start.y, start.x),
+                radius=vision_range,
+                algorithm=libtcodpy.FOV_SYMMETRIC_SHADOWCAST
+            )
+
+            # Limit cache size to prevent memory issues
+            if len(self._fov_cache) > 50:
+                self._fov_cache.clear()
+            self._fov_cache[fov_cache_key] = fov
+        else:
+            fov = self._fov_cache[fov_cache_key]
+
         # Check if end position is visible (TCOD array is indexed as [y, x])
         return fov[end.y, end.x]
