@@ -833,6 +833,12 @@ class Enemy:
                         target == game_engine.player.position):
                         break
 
+                    # Also stop if the next position in the path would be the player position
+                    # This prevents queueing moves that attempt to go "through" the player
+                    if (i + 1 < len(path) and target == game_engine.player.position and
+                        path[i + 1][0] == target.x and path[i + 1][1] == target.y):
+                        break
+
         except Exception as e:
             # If pathfinding fails, fall back to random movement
             logging.error(f"Enemy {self.type_data.name} pathfinding failed: {e}")

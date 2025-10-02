@@ -589,8 +589,8 @@ class GameEngine:
         old_cpu = self.player.cpu
         self.turn_processor.process_turn(self.player)
 
-        # For backward compatibility with tests, call legacy methods
-        self._process_player_turn()
+        # For backward compatibility with tests, call legacy methods (but not player effects)
+        # Note: player effects are now handled by turn_processor to avoid double-decrementing
         self._process_enemies_turn()
         self._process_environmental_effects()
 
@@ -1287,8 +1287,9 @@ class GameEngine:
             self.message_log.add_message("The entire world wide web awaits exploration!")
             self.message_log.add_message(f"Stats: Turns:{self.turn} Det:{int(self.player.detection)}%")
             self.game_over = True
-            # Auto-save on game completion
-            self.auto_save()
+            # Delete save on game completion (no continuing after winning)
+            SaveGameManager.delete_save()
+            self.message_log.add_message("Mission complete - save data purged")
         else:
             try:
                 self._generate_procedural_level()
