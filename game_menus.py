@@ -444,29 +444,29 @@ class MainMenu:
             # Narrow box - break text into shorter lines
             messages = [
                 "Starting a new game",
-                "will delete your save",
-                "file permanently.",
+                "will delete your",
+                "current progress.",
                 "",
-                "This will erase:",
+                "You will lose:",
                 "• Current level",
-                "• Character state", 
-                "• Inventory/upgrades",
-                "• Story fragments",
-                "  remain safe",
+                "• Character stats",
+                "• Equipment",
                 "",
-                "Are you sure you",
-                "want to continue?"
+                "Story fragments",
+                "are never lost.",
+                "",
+                "Continue?"
             ]
         else:
             # ASCII mode - use original longer lines
             messages = [
                 "Starting a new game will delete your",
-                "current save file permanently.",
+                "current progress permanently.",
                 "",
-                "This will erase all progress including:",
-                "• Current level and character state",
-                "• Inventory and upgrades", 
-                "• Story fragments remain safe",
+                "You will lose your current level,",
+                "character stats, and equipment.",
+                "",
+                "Story fragments are never lost.",
                 "",
                 "Are you sure you want to continue?"
             ]
