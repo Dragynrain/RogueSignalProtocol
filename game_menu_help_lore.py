@@ -254,7 +254,7 @@ class HelpMenu:
             ("  Shadow Step: Teleport to shadow zones (6 tile range)", Colors.WHITE),
             ("  Data Mimic: Become invisible (5 turns)", Colors.WHITE),
             ("  Noise Maker: Create distraction (8 turn duration)", Colors.WHITE),
-            ("  Network Scan: Reveal all enemies, vision & paths (5 turns)", Colors.WHITE),
+            ("  Network Scan: Reveal all cooling, CPU, and ghost nodes", Colors.WHITE),
             ("  Log Wiper: Reduce detection level (-30%)", Colors.WHITE),
             ("  Antivirus: Purges negative status effects (virus, slow)", Colors.WHITE),
             ("  Memory Leak: 3x3 area makes enemies forget player location", Colors.WHITE),

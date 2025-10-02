@@ -247,37 +247,38 @@ class TestGhostNodeMessageSpamPrevention(unittest.TestCase):
         # First time stepping on ghost node
         self.engine._process_special_tiles()
 
-        # Should have ghost node message
+        # Ghost node messages have been removed per user request
+        # Verify detection was reduced but no message appears
         messages = [msg.text for msg in self.engine.message_log.messages]
         ghost_messages = [msg for msg in messages if "Ghost node" in msg]
-        self.assertEqual(len(ghost_messages), 1, "Should have exactly one ghost node message")
+        self.assertEqual(len(ghost_messages), 0, "Ghost node messages should not appear (removed per user request)")
 
         # Clear message log and process again (still on same node)
         self.engine.message_log.messages.clear()
         self.engine._process_special_tiles()
 
-        # Should NOT have new ghost node message (no detection reduction occurred)
+        # Should still NOT have ghost node message
         messages = [msg.text for msg in self.engine.message_log.messages]
         ghost_messages = [msg for msg in messages if "Ghost node" in msg]
-        self.assertEqual(len(ghost_messages), 0, "Should not spam ghost node messages")
+        self.assertEqual(len(ghost_messages), 0, "Ghost node messages should never appear")
 
     def test_ghost_node_message_shows_when_detection_actually_reduced(self):
-        """Test that ghost node message shows when detection is actually reduced."""
+        """Test that ghost node reduces detection but doesn't show messages (removed per user request)."""
         # Set player detection to a value that can be reduced
         self.player.detection = 50.0
 
         # Clear message log
         self.engine.message_log.messages.clear()
 
-        # Process special tiles - should reduce detection and show message
+        # Process special tiles - should reduce detection but not show message
         self.engine._process_special_tiles()
 
-        # Should have ghost node message
+        # Should NOT have ghost node message (removed per user request)
         messages = [msg.text for msg in self.engine.message_log.messages]
         ghost_messages = [msg for msg in messages if "Ghost node" in msg]
-        self.assertEqual(len(ghost_messages), 1, "Should show message when detection reduced")
+        self.assertEqual(len(ghost_messages), 0, "Ghost node messages should not appear (removed per user request)")
 
-        # Verify detection was actually reduced
+        # Verify detection was actually reduced (functionality still works)
         self.assertLess(self.player.detection, 50.0, "Detection should have been reduced")
 
 

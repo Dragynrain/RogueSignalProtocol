@@ -97,8 +97,9 @@ class TestTurnProcessorExtended(unittest.TestCase):
     
     def setUp(self):
         self.game_state = Mock()
-        self.game_state.turn_count = 0
-        self.turn_processor = TurnProcessor(self.game_state)
+        self.game_state.turn = 0
+        self.message_log = Mock()
+        self.turn_processor = TurnProcessor(self.game_state, self.message_log)
         
     def test_heat_management_with_near_cooling_node(self):
         """Test heat management when player is near cooling node."""
@@ -197,7 +198,7 @@ class TestTurnProcessorExtended(unittest.TestCase):
         message_log = Mock()
         
         # Set turn count to trigger detection increase
-        self.game_state.turn_count = GameBalance.DETECTION_INCREASE_INTERVAL
+        self.game_state.turn = GameBalance.DETECTION_INCREASE_INTERVAL
         
         self.turn_processor._process_detection_increase(player, message_log)
         
@@ -216,7 +217,7 @@ class TestTurnProcessorExtended(unittest.TestCase):
         message_log = Mock()
         
         # Set turn count to NOT trigger detection increase
-        self.game_state.turn_count = GameBalance.DETECTION_INCREASE_INTERVAL - 1
+        self.game_state.turn = GameBalance.DETECTION_INCREASE_INTERVAL - 1
         
         self.turn_processor._process_detection_increase(player, message_log)
         
@@ -232,7 +233,7 @@ class TestTurnProcessorExtended(unittest.TestCase):
         message_log = Mock()
         
         # Set turn count to trigger detection increase
-        self.game_state.turn_count = GameBalance.DETECTION_INCREASE_INTERVAL
+        self.game_state.turn = GameBalance.DETECTION_INCREASE_INTERVAL
         
         self.turn_processor._process_detection_increase(player, message_log)
         
@@ -247,7 +248,8 @@ class TestCoreIntegrationExtended(unittest.TestCase):
     def test_state_manager_and_turn_processor_integration(self):
         """Test that GameStateManager and TurnProcessor work together properly."""
         state_manager = GameStateManager()
-        turn_processor = TurnProcessor(state_manager)
+        message_log = Mock()
+        turn_processor = TurnProcessor(state_manager, message_log)
         
         # Create mock player and message log
         player = Mock()
@@ -260,13 +262,13 @@ class TestCoreIntegrationExtended(unittest.TestCase):
         message_log = Mock()
         
         # Set turn count to trigger detection increase
-        state_manager.turn_count = GameBalance.DETECTION_INCREASE_INTERVAL
+        state_manager.turn = GameBalance.DETECTION_INCREASE_INTERVAL
         
         # Process turn
         turn_processor.process_turn(player, message_log)
         
         # Verify state manager was updated
-        self.assertEqual(state_manager.turn_count, GameBalance.DETECTION_INCREASE_INTERVAL + 1)
+        self.assertEqual(state_manager.turn, GameBalance.DETECTION_INCREASE_INTERVAL + 1)
         
         # Verify all effects were processed
         self.assertTrue(message_log.add_message.called)
