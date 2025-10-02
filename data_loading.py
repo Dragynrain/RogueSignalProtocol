@@ -156,20 +156,28 @@ class DataLoader:
             },
             "network_configs": {
                 "1": {
-                    "security_level": 1,
-                    "admin_chance": 0.1,
-                    "patrol_density": 1,
+                    "enemies": 8,
                     "shadow_coverage": 0.15,
-                    "room_count": {"min": 4, "max": 7},
-                    "enemy_count": {"min": 2, "max": 4}
+                    "name": "Corporate Network",
+                    "background_detection": 1,
+                    "cooling_nodes": 3,
+                    "cpu_nodes": 2,
+                    "ghost_nodes": 2,
+                    "data_patches": 4,
+                    "exploit_pickups": 3,
+                    "permanent_upgrades": 1
                 },
                 "2": {
-                    "security_level": 2,
-                    "admin_chance": 0.2,
-                    "patrol_density": 2,
+                    "enemies": 12,
                     "shadow_coverage": 0.20,
-                    "room_count": {"min": 5, "max": 8},
-                    "enemy_count": {"min": 3, "max": 6}
+                    "name": "Government System",
+                    "background_detection": 2,
+                    "cooling_nodes": 3,
+                    "cpu_nodes": 2,
+                    "ghost_nodes": 2,
+                    "data_patches": 4,
+                    "exploit_pickups": 3,
+                    "permanent_upgrades": 1
                 }
             },
             "balance": {

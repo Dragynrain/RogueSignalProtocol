@@ -9,8 +9,8 @@ import random
 import tcod
 import numpy as np
 from typing import List, Tuple, Optional
-from game_entities import Position, Colors, EnemyState, EnemyMovement
-from game_config import GameConfig
+from game_entities import Position, Colors, EnemyState, EnemyMovement, PositionValidator
+from game_config import GameConfig, GameBalance
 
 
 class Player:
@@ -82,20 +82,18 @@ class Player:
         intended_x = self.x + dx
         intended_y = self.y + dy
         
-        # Check for out-of-bounds movement using actual game map bounds
-        if (intended_x < 0 or intended_x >= game_map.width or 
-            intended_y < 0 or intended_y >= game_map.height):
-            logging.warning(f"Movement out of bounds: intended=({intended_x}, {intended_y}), map_bounds=({game_map.width}, {game_map.height})")
-            return False
-        
-        # Now create the position and validate it
+        # Create the position and validate it using centralized utilities
         new_position = Position(intended_x, intended_y)
-        
-        if game_map.is_valid_position(new_position):
+
+        # Use centralized validation
+        if PositionValidator.is_basic_valid_position(new_position, game_map):
             self.position = new_position
             return True
-        
-        # Position is blocked by a wall or other obstacle - this is normal behavior
+
+        # Log boundary violations for debugging
+        if not PositionValidator.is_within_bounds(new_position, game_map.width, game_map.height):
+            logging.warning(f"Movement out of bounds: intended=({intended_x}, {intended_y}), map_bounds=({game_map.width}, {game_map.height})")
+
         return False
     
     def update_effects(self) -> None:
@@ -278,7 +276,7 @@ class Enemy:
         is_player_in_shadow = game_map.is_shadow(player.position)
         
         # Player in shadow: only visible if enemy is directly adjacent
-        adjacent_threshold = getattr(GameConfig, 'adjacent_threshold', 1.5)
+        adjacent_threshold = GameBalance.ADJACENT_DISTANCE_THRESHOLD
         if is_player_in_shadow and distance_to_player > adjacent_threshold:
             return False
 
@@ -420,7 +418,7 @@ class Enemy:
     def _extend_queue_if_needed(self, game_map, player: Player, game_engine):
         """Extend movement queue if it's getting short, maintaining the same movement pattern."""
         # Only extend if queue has fewer than 3 moves
-        if len(self.movement_queue) >= 3:
+        if len(self.movement_queue) >= GameBalance.MAX_MOVEMENT_QUEUE_SIZE:
             return
 
         # Don't extend if enemy is static
@@ -509,7 +507,7 @@ class Enemy:
             self.patrol_points and 
             self.state != EnemyState.HOSTILE):
             current_patrol_target = self.patrol_points[self.patrol_index]
-            adjacent_threshold = getattr(GameConfig, 'adjacent_threshold', 1.5)
+            adjacent_threshold = GameBalance.ADJACENT_DISTANCE_THRESHOLD
             if self.position.distance_to(current_patrol_target) <= adjacent_threshold:
                 return True
         
@@ -701,7 +699,7 @@ class Enemy:
                     self.movement_queue.append(next_pos)
 
             # For the final move(s), position strategically for next target
-            if len(self.movement_queue) < 3:
+            if len(self.movement_queue) < GameBalance.MAX_MOVEMENT_QUEUE_SIZE:
                 self._add_strategic_positioning_moves(current_target, next_target, game_map, game_engine)
 
         except Exception as e:
@@ -730,7 +728,7 @@ class Enemy:
                         self.movement_queue.append(next_pos)
 
             # Fill remaining slots with random moves if needed
-            while len(self.movement_queue) < 3:
+            while len(self.movement_queue) < GameBalance.MAX_MOVEMENT_QUEUE_SIZE:
                 if self.movement_queue:
                     last_pos = self.movement_queue[-1]
                 else:
@@ -767,7 +765,7 @@ class Enemy:
         ]
 
         for strategic_pos in strategic_positions:
-            if len(self.movement_queue) >= 3:
+            if len(self.movement_queue) >= GameBalance.MAX_MOVEMENT_QUEUE_SIZE:
                 break
 
             if (self._is_valid_enemy_move(strategic_pos, game_map, game_engine) and
@@ -777,7 +775,7 @@ class Enemy:
 
     def _extend_patrol_queue(self, current_target: Position, next_target: Position, game_map, game_engine):
         """Extend existing patrol queue intelligently."""
-        while len(self.movement_queue) < 3:
+        while len(self.movement_queue) < GameBalance.MAX_MOVEMENT_QUEUE_SIZE:
             # If queue is short, add moves toward current target or next target as appropriate
             if self.movement_queue:
                 last_planned_pos = self.movement_queue[-1]
@@ -795,7 +793,7 @@ class Enemy:
             self._extend_movement_queue(target_for_extension, True, game_map, game_engine)
 
             # Safety break to avoid infinite loop
-            if len(self.movement_queue) >= 3:
+            if len(self.movement_queue) >= GameBalance.MAX_MOVEMENT_QUEUE_SIZE:
                 break
 
     def _generate_pathfinding_queue(self, target: Position, game_map, game_engine):
@@ -841,12 +839,12 @@ class Enemy:
         attempts = 0
         max_attempts = 24  # 8 directions * 3 moves
         
-        while len(self.movement_queue) < 3 and attempts < max_attempts:
+        while len(self.movement_queue) < GameBalance.MAX_MOVEMENT_QUEUE_SIZE and attempts < max_attempts:
             # Shuffle directions for better randomness
             random.shuffle(directions)
             
             for dx, dy in directions:
-                if len(self.movement_queue) >= 3:
+                if len(self.movement_queue) >= GameBalance.MAX_MOVEMENT_QUEUE_SIZE:
                     break
                     
                 next_pos = Position(current_pos.x + dx, current_pos.y + dy)
@@ -864,7 +862,7 @@ class Enemy:
             self.movement_queue[-1].is_adjacent_to(target)):
             return
 
-        while len(self.movement_queue) < 3:
+        while len(self.movement_queue) < GameBalance.MAX_MOVEMENT_QUEUE_SIZE:
             # Try to add more random moves from the last position in queue
             if self.movement_queue:
                 last_pos = self.movement_queue[-1]
@@ -896,20 +894,9 @@ class Enemy:
     
     def _is_valid_enemy_move(self, position: Position, game_map, game_engine) -> bool:
         """Check if a position is valid for enemy movement."""
-        # Basic position validation
-        if not game_map.is_valid_position(position):
-            return False
-        
-        # Can't move to player position
-        if position.x == game_engine.player.x and position.y == game_engine.player.y:
-            return False
-        
-        # Can't move to a position occupied by another enemy
-        for other_enemy in game_engine.enemies:
-            if other_enemy != self and other_enemy.x == position.x and other_enemy.y == position.y:
-                return False
-        
-        return True
+        return PositionValidator.is_valid_for_enemy_movement(
+            position, game_map, game_engine.enemies, game_engine.player.position, self
+        )
     
     def _execute_next_move(self, game_map, player: Player, game_engine) -> bool:
         """Execute the next move from the movement queue."""
@@ -935,7 +922,7 @@ class Enemy:
                 self.state != EnemyState.HOSTILE):  # Only patrol when not hostile
                 
                 current_target = self.patrol_points[self.patrol_index]
-                adjacent_threshold = getattr(GameConfig, 'adjacent_threshold', 1.5)
+                adjacent_threshold = GameBalance.ADJACENT_DISTANCE_THRESHOLD
                 if self.position.distance_to(current_target) <= adjacent_threshold:
                     # Reached patrol point, advance to next one
                     self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
@@ -950,8 +937,8 @@ class Enemy:
             # Handle patrol stuck situations
             if (self.type_data.movement == EnemyMovement.PATROL and self.patrol_points):
                 self.patrol_stuck_counter += 1
-                if self.patrol_stuck_counter >= 3:
-                    # Skip to next patrol point if stuck for 3 turns
+                if self.patrol_stuck_counter >= GameBalance.PATROL_STUCK_THRESHOLD:
+                    # Skip to next patrol point if stuck for too many turns
                     self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
                     self.patrol_stuck_counter = 0
                     

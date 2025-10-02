@@ -19,7 +19,7 @@ from typing import List, Tuple, Optional, Dict, Any
 
 # Import all necessary modules
 from game_config import GameSettings, GameConfig, GameBalance
-from game_entities import (Position, Colors, EnemyState, EnemyMovement, 
+from game_entities import (Position, Colors, EnemyState, EnemyMovement, PositionValidator, 
                           validate_coordinates, calculate_manhattan_distance,
                           parse_coordinate_string, validate_position_bounds, ensure_color_tuple)
 from game_data import GameData, GameUpgrades
@@ -988,20 +988,20 @@ class GameEngine:
         for _ in range(100):
             # Generate position within player's vision range but not too close
             distance = random.randint(5, min(10, player_vision))
-            angle = random.uniform(0, 2 * 3.14159)  # Random angle in radians
-            
-            x = int(self.player.x + distance * math.cos(angle))
-            y = int(self.player.y + distance * math.sin(angle))
-            position = Position(x, y)
+            angle = random.uniform(0, 2 * math.pi)  # Random angle in radians
+
+            spawn_x = int(self.player.x + distance * math.cos(angle))
+            spawn_y = int(self.player.y + distance * math.sin(angle))
+            position = Position(spawn_x, spawn_y)
             
             if (self.game_map.is_valid_position(position) and
                 position.distance_to(self.player.position) >= 5 and  # Not too close to player
                 position.distance_to(self.player.position) <= player_vision and  # Within sight
                 self.game_map.has_line_of_sight(self.player.position, position) and  # Actually visible
                 not self._get_enemy_at(position) and
-                (x, y) not in self.game_map.code_hacks and
-                (x, y) not in self.game_map.cooling_nodes and
-                (x, y) not in self.game_map.cpu_recovery_nodes):
+                (spawn_x, spawn_y) not in self.game_map.code_hacks and
+                (spawn_x, spawn_y) not in self.game_map.cooling_nodes and
+                (spawn_x, spawn_y) not in self.game_map.cpu_recovery_nodes):
                 return position
         
         # Fallback: try positions just within vision range if ideal spots don't work
@@ -1172,8 +1172,29 @@ class GameEngine:
     def _predict_enemy_movement(self, enemy: Enemy, steps: int) -> List[Position]:
         """
         Predict next positions for any enemy using their movement queue.
-        This is the unified prediction system for all movement types.
-        The new movement system guarantees exactly 3 moves for non-static enemies.
+
+        This system works by:
+        1. Checking if enemy has existing valid movement queue
+        2. If queue is empty/invalid, generates new movement sequence
+        3. For patrol enemies, simulates step-by-step movement accounting for patrol point transitions
+        4. Returns up to 'steps' predicted positions for UI display
+
+        The movement queue system guarantees exactly 3 moves for non-static enemies,
+        enabling consistent and predictable movement prediction for tactical gameplay.
+
+        Args:
+            enemy: The enemy to predict movement for
+            steps: Number of future positions to predict (typically 3)
+
+        Returns:
+            List of Position objects representing predicted movement path
+
+        Movement Types Handled:
+            - STATIC: No movement (empty list)
+            - RANDOM: Random valid adjacent positions
+            - SEEK: Pathfinding toward player if visible
+            - TRACK: Pathfinding toward last known player position
+            - PATROL: Following predefined patrol route with point transitions
         """
         # For patrol enemies, we need to simulate their movement step by step
         # to account for patrol point changes
@@ -1520,50 +1541,15 @@ class GameEngine:
     
     def _is_valid_patch_placement(self, position: Position) -> bool:
         """Check if position is valid for code placement."""
-        # Ensure not on borders where walls will be placed
-        if (position.x == 0 or position.x == GameConfig.MAP_WIDTH - 1 or 
-            position.y == 0 or position.y == GameConfig.MAP_HEIGHT - 1):
-            return False
-            
-        return (not self.game_map.is_wall(position) and
-                (position.x, position.y) not in self.game_map.code_hacks and
-                (position.x, position.y) not in self.game_map.cooling_nodes and
-                (position.x, position.y) not in self.game_map.cpu_recovery_nodes and
-                (position.x, position.y) not in self.game_map.ghost_nodes and
-                position.distance_to(Position(5, 5)) > 5)
+        return PositionValidator.is_valid_for_placement(
+            position, self.game_map, min_distance_from_spawn=5.0, check_existing_items=True
+        )
     
     def _is_valid_enemy_placement(self, position: Position) -> bool:
         """Check if position is valid for enemy placement."""
-        # First ensure position is valid
-        if not self.game_map.is_valid_position(position):
-            return False
-        
-        # Ensure not on borders where walls will be placed
-        if (position.x == 0 or position.x == GameConfig.MAP_WIDTH - 1 or 
-            position.y == 0 or position.y == GameConfig.MAP_HEIGHT - 1):
-            return False
-        
-        # Critical: ensure we're not placing on walls or obstacles
-        if self.game_map.is_wall(position):
-            return False
-        
-        # Check minimum distance from player spawn
-        if position.distance_to(Position(5, 5)) <= 12:
-            return False
-        
-        # Ensure no other enemy is already at this position
-        if self._get_enemy_at(position):
-            return False
-        
-        # Check for overlapping with items and features
-        pos_tuple = (position.x, position.y)
-        if (pos_tuple in self.game_map.code_hacks or
-            pos_tuple in self.game_map.cooling_nodes or
-            pos_tuple in self.game_map.cpu_recovery_nodes or
-            pos_tuple in self.game_map.exploit_pickups):
-            return False
-        
-        return True
+        return PositionValidator.is_valid_for_enemy_placement(
+            position, self.game_map, self.enemies, self.player.position, check_existing_items=True
+        )
     
     def get_game_state_for_save(self) -> dict:
         """Get the current game state as a dictionary for saving.

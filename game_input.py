@@ -10,6 +10,37 @@ from game_inventory import CodeHack, ExploitItem
 from game_ui import UniversalInputHandler
 
 
+class InputMappings:
+    """Shared input mapping definitions to avoid duplication."""
+
+    # Standard movement mapping for all input contexts
+    MOVEMENT_MAP = {
+        # WASD + QEZC (original)
+        tcod.event.KeySym.W: (0, -1),
+        tcod.event.KeySym.Q: (-1, -1),
+        tcod.event.KeySym.E: (1, -1),
+        tcod.event.KeySym.D: (1, 0),
+        tcod.event.KeySym.C: (1, 1),
+        tcod.event.KeySym.S: (0, 1),
+        tcod.event.KeySym.Z: (-1, 1),
+        tcod.event.KeySym.A: (-1, 0),
+        # Arrow keys
+        tcod.event.KeySym.UP: (0, -1),
+        tcod.event.KeySym.DOWN: (0, 1),
+        tcod.event.KeySym.LEFT: (-1, 0),
+        tcod.event.KeySym.RIGHT: (1, 0),
+        # Numpad
+        tcod.event.KeySym.KP_8: (0, -1),
+        tcod.event.KeySym.KP_9: (1, -1),
+        tcod.event.KeySym.KP_6: (1, 0),
+        tcod.event.KeySym.KP_3: (1, 1),
+        tcod.event.KeySym.KP_2: (0, 1),
+        tcod.event.KeySym.KP_1: (-1, 1),
+        tcod.event.KeySym.KP_4: (-1, 0),
+        tcod.event.KeySym.KP_7: (-1, -1)
+    }
+
+
 class InputHandler:
     """Handles all user input and translates it to game actions."""
     
@@ -155,35 +186,9 @@ class InputHandler:
     
     def _handle_targeting_input(self, event) -> bool:
         """Handle input while in targeting mode."""
-        # Movement keys - expanded to include numpad and arrows
-        movement_map = {
-            # WASD + QEZC (original)
-            tcod.event.KeySym.W: (0, -1),
-            tcod.event.KeySym.Q: (-1, -1),
-            tcod.event.KeySym.E: (1, -1),
-            tcod.event.KeySym.D: (1, 0),
-            tcod.event.KeySym.C: (1, 1),
-            tcod.event.KeySym.S: (0, 1),
-            tcod.event.KeySym.Z: (-1, 1),
-            tcod.event.KeySym.A: (-1, 0),
-            # Arrow keys
-            tcod.event.KeySym.UP: (0, -1),
-            tcod.event.KeySym.DOWN: (0, 1),
-            tcod.event.KeySym.LEFT: (-1, 0),
-            tcod.event.KeySym.RIGHT: (1, 0),
-            # Numpad
-            tcod.event.KeySym.KP_8: (0, -1),
-            tcod.event.KeySym.KP_9: (1, -1),
-            tcod.event.KeySym.KP_6: (1, 0),
-            tcod.event.KeySym.KP_3: (1, 1),
-            tcod.event.KeySym.KP_2: (0, 1),
-            tcod.event.KeySym.KP_1: (-1, 1),
-            tcod.event.KeySym.KP_4: (-1, 0),
-            tcod.event.KeySym.KP_7: (-1, -1)
-        }
-        
-        if event.sym in movement_map:
-            dx, dy = movement_map[event.sym]
+        # Movement keys - use shared mapping to avoid duplication
+        if event.sym in InputMappings.MOVEMENT_MAP:
+            dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
             self.game._move_cursor(dx, dy)
         elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
             self.exploit_system.execute_exploit(
@@ -195,35 +200,9 @@ class InputHandler:
     
     def _handle_gameplay_input(self, event) -> bool:
         """Handle input during normal gameplay."""
-        # Movement keys - expanded to include numpad and arrows
-        movement_map = {
-            # WASD + QEZC (original)
-            tcod.event.KeySym.W: (0, -1),
-            tcod.event.KeySym.Q: (-1, -1),
-            tcod.event.KeySym.E: (1, -1),
-            tcod.event.KeySym.D: (1, 0),
-            tcod.event.KeySym.C: (1, 1),
-            tcod.event.KeySym.S: (0, 1),
-            tcod.event.KeySym.Z: (-1, 1),
-            tcod.event.KeySym.A: (-1, 0),
-            # Arrow keys
-            tcod.event.KeySym.UP: (0, -1),
-            tcod.event.KeySym.DOWN: (0, 1),
-            tcod.event.KeySym.LEFT: (-1, 0),
-            tcod.event.KeySym.RIGHT: (1, 0),
-            # Numpad
-            tcod.event.KeySym.KP_8: (0, -1),
-            tcod.event.KeySym.KP_9: (1, -1),
-            tcod.event.KeySym.KP_6: (1, 0),
-            tcod.event.KeySym.KP_3: (1, 1),
-            tcod.event.KeySym.KP_2: (0, 1),
-            tcod.event.KeySym.KP_1: (-1, 1),
-            tcod.event.KeySym.KP_4: (-1, 0),
-            tcod.event.KeySym.KP_7: (-1, -1)
-        }
-        
-        if event.sym in movement_map:
-            dx, dy = movement_map[event.sym]
+        # Movement keys - use shared mapping to avoid duplication
+        if event.sym in InputMappings.MOVEMENT_MAP:
+            dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
             self.game.move_player(dx, dy)
         
         # Wait/rest

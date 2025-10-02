@@ -343,3 +343,94 @@ def ensure_color_tuple(color) -> Tuple[int, int, int]:
         return (int(color[0]), int(color[1]), int(color[2]))
     else:
         return Colors.WHITE  # Default fallback
+
+
+class PositionValidator:
+    """Centralized position validation utilities to avoid code duplication."""
+
+    @staticmethod
+    def is_within_bounds(position: Position, width: int, height: int) -> bool:
+        """Check if position is within map bounds."""
+        return 0 <= position.x < width and 0 <= position.y < height
+
+    @staticmethod
+    def is_not_on_border(position: Position, width: int, height: int) -> bool:
+        """Check if position is not on the map border."""
+        return (position.x != 0 and position.x != width - 1 and
+                position.y != 0 and position.y != height - 1)
+
+    @staticmethod
+    def is_basic_valid_position(position: Position, game_map) -> bool:
+        """Basic position validation - within bounds and not a wall."""
+        return (PositionValidator.is_within_bounds(position, game_map.width, game_map.height) and
+                game_map.is_valid_position(position))
+
+    @staticmethod
+    def is_valid_for_placement(position: Position, game_map, min_distance_from_spawn: float = 5.0,
+                              check_existing_items: bool = False) -> bool:
+        """Check if position is valid for item/node placement."""
+        from game_config import GameConfig  # Import here to avoid circular dependency
+
+        # Not on borders where walls will be placed
+        if not PositionValidator.is_not_on_border(position, GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+            return False
+
+        # Basic validation (within bounds, not a wall)
+        if not PositionValidator.is_basic_valid_position(position, game_map):
+            return False
+
+        # Not too close to spawn position
+        spawn_position = Position(5, 5)  # Standard spawn location
+        if position.distance_to(spawn_position) <= min_distance_from_spawn:
+            return False
+
+        # Check for existing items if requested
+        if check_existing_items:
+            pos_tuple = (position.x, position.y)
+            if (hasattr(game_map, 'code_hacks') and pos_tuple in game_map.code_hacks or
+                hasattr(game_map, 'cooling_nodes') and pos_tuple in game_map.cooling_nodes or
+                hasattr(game_map, 'cpu_recovery_nodes') and pos_tuple in game_map.cpu_recovery_nodes or
+                hasattr(game_map, 'ghost_nodes') and pos_tuple in game_map.ghost_nodes or
+                hasattr(game_map, 'exploit_pickups') and pos_tuple in game_map.exploit_pickups):
+                return False
+
+        return True
+
+    @staticmethod
+    def is_valid_for_enemy_placement(position: Position, game_map, enemies_list, player_position: Position,
+                                   check_existing_items: bool = True) -> bool:
+        """Check if position is valid for enemy placement."""
+        # Basic placement validation with item checking
+        if not PositionValidator.is_valid_for_placement(position, game_map,
+                                                       min_distance_from_spawn=12.0,
+                                                       check_existing_items=check_existing_items):
+            return False
+
+        # Can't place on player position
+        if position.x == player_position.x and position.y == player_position.y:
+            return False
+
+        # Can't place on existing enemy positions
+        for enemy in enemies_list:
+            if enemy.x == position.x and enemy.y == position.y:
+                return False
+
+        return True
+
+    @staticmethod
+    def is_valid_for_enemy_movement(position: Position, game_map, enemies_list, player_position: Position, current_enemy) -> bool:
+        """Check if position is valid for enemy movement."""
+        # Basic position validation
+        if not PositionValidator.is_basic_valid_position(position, game_map):
+            return False
+
+        # Can't move to player position
+        if position.x == player_position.x and position.y == player_position.y:
+            return False
+
+        # Can't move to a position occupied by another enemy
+        for other_enemy in enemies_list:
+            if other_enemy != current_enemy and other_enemy.x == position.x and other_enemy.y == position.y:
+                return False
+
+        return True

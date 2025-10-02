@@ -297,6 +297,16 @@ class GameBalance:
     
     # Enemy detection values
     ADMIN_DETECTION_INITIAL: int = 5
+
+    # Movement and positioning constants
+    ADJACENT_DISTANCE_THRESHOLD: float = 1.5
+    PATROL_STUCK_THRESHOLD: int = 3
+    MAX_MOVEMENT_QUEUE_SIZE: int = 3
+    PATHFINDING_TIMEOUT_ATTEMPTS: int = 100
+
+    # Vision and detection constants
+    ENHANCED_VISION_BONUS: int = 2
+    SHADOW_VISION_REDUCTION_FACTOR: int = 3
     ADMIN_DETECTION_CONTINUOUS: int = 1
     ENEMY_DETECTION_ALERT_TO_HOSTILE: int = 3
     ENEMY_DETECTION_CONTINUOUS_HOSTILE: float = 0.3

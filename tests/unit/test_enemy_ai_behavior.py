@@ -476,11 +476,11 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
                 enemy.patrol_points = [Position(10, 10), Position(15, 15), Position(5, 5)]
                 enemy.patrol_index = 0
                 
-                with patch.object(enemy, '_generate_pathfinding_queue') as mock_path:
+                with patch.object(enemy, '_generate_intelligent_patrol_queue') as mock_patrol:
                     enemy._generate_movement_queue(self.mock_game_map, self.player, self.mock_game)
-                    
-                    # Should target first patrol point
-                    mock_path.assert_called_once_with(Position(10, 10), self.mock_game_map, self.mock_game)
+
+                    # Should use intelligent patrol generation
+                    mock_patrol.assert_called_once_with(self.mock_game_map, self.mock_game)
     
     def test_patrol_enemy_becomes_hostile_interrupts_patrol(self):
         """Patrol enemy becoming HOSTILE interrupts patrol to seek player."""
@@ -515,11 +515,11 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
                 
                 # Mock enemy cannot see player
                 with patch.object(enemy, 'can_see_player', return_value=False):
-                    with patch.object(enemy, '_generate_pathfinding_queue') as mock_path:
+                    with patch.object(enemy, '_generate_intelligent_patrol_queue') as mock_patrol:
                         enemy._generate_movement_queue(self.mock_game_map, self.player, self.mock_game)
-                        
-                        # Should return to current patrol point
-                        mock_path.assert_called_once_with(Position(15, 15), self.mock_game_map, self.mock_game)
+
+                        # Should use intelligent patrol generation
+                        mock_patrol.assert_called_once_with(self.mock_game_map, self.mock_game)
 
 
 if __name__ == "__main__":
