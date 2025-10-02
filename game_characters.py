@@ -516,6 +516,11 @@ class Enemy:
             random_move = self._get_random_adjacent_position(current_pos, game_map, game_engine)
             if random_move and random_move not in temp_queue and random_move not in self.movement_queue:
                 temp_queue.append(random_move)
+
+                # If this move gets us adjacent to the player, stop adding moves
+                if (target and random_move.is_adjacent_to(target) and
+                    target == game_engine.player.position):
+                    break
             else:
                 break  # Can't find more valid moves
         
@@ -586,8 +591,8 @@ class Enemy:
             else:
                 self._generate_random_queue(game_map, game_engine)
             
-            # Ensure we always have exactly 3 moves (if possible)
-            self._ensure_queue_length(game_map, game_engine)
+            # Ensure we always have up to 3 moves (but stop if adjacent to target)
+            self._ensure_queue_length(game_map, game_engine, target)
         else:
             # Extend existing queue - just add moves to reach 3 total
             self._extend_movement_queue(target, use_pathfinding, game_map, game_engine)
@@ -614,12 +619,18 @@ class Enemy:
             if len(path) == 0:
                 logging.warning(f"Enemy {self.type_data.name} could not find path to target ({target.x}, {target.y})")
             
-            # Add up to 3 moves from the path
+            # Add up to 3 moves from the path, but stop if we'd be adjacent to target
             for i in range(1, min(len(path), 4)):  # Skip current position, take next 3
                 x, y = path[i]
                 next_pos = Position(x, y)
                 if self._is_valid_enemy_move(next_pos, game_map, game_engine):
                     self.movement_queue.append(next_pos)
+
+                    # If this move gets us adjacent to the player, stop adding moves
+                    # (enemy will attack instead of moving further)
+                    if (target and next_pos.is_adjacent_to(target) and
+                        target == game_engine.player.position):
+                        break
                     
         except Exception as e:
             # If pathfinding fails, fall back to random movement
@@ -648,8 +659,14 @@ class Enemy:
                     break
             attempts += 1
     
-    def _ensure_queue_length(self, game_map, game_engine):
-        """Ensure the movement queue has exactly 3 moves, filling with random moves if needed."""
+    def _ensure_queue_length(self, game_map, game_engine, target: Optional[Position] = None):
+        """Ensure the movement queue has up to 3 moves, but stop if adjacent to target."""
+        # If the last move in the queue is already adjacent to the player, don't add more moves
+        if (self.movement_queue and target and
+            target == game_engine.player.position and
+            self.movement_queue[-1].is_adjacent_to(target)):
+            return
+
         while len(self.movement_queue) < 3:
             # Try to add more random moves from the last position in queue
             if self.movement_queue:
@@ -669,6 +686,11 @@ class Enemy:
                     if next_pos not in [Position(self.x, self.y)] + self.movement_queue:
                         self.movement_queue.append(next_pos)
                         move_added = True
+
+                        # If this move gets us adjacent to the player, stop adding moves
+                        if (target and next_pos.is_adjacent_to(target) and
+                            target == game_engine.player.position):
+                            return
                         break
             
             # If we can't find any valid moves, break to avoid infinite loop

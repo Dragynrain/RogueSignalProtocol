@@ -210,3 +210,68 @@ class TestMovementQueueStateTracking:
             # If we couldn't reach 3 moves, ensure it's due to valid constraints (no more valid moves)
             # This is acceptable behavior when enemy is constrained by map geometry
             print(f"Warning: Queue only extended to {new_length} moves (acceptable if map constrains movement)")
+
+class TestMovementQueueAttackProximity:
+    """Test movement queue behavior when enemies can attack within 3 moves."""
+
+    def test_queue_stops_when_adjacent_to_player(self):
+        """Enemy queue stops when it would be adjacent to player (attack position)."""
+        from game_engine import GameEngine
+
+        # Create real game setup
+        player = Player(10, 10)
+        game_map = create_test_map_with_real_tiles()
+        game_engine = GameEngine()
+        game_engine.player = player
+        game_engine.game_map = game_map
+
+        # Enemy 2 moves away should only show 1 move (to adjacent position)
+        enemy = create_real_enemy("hunter", Position(12, 10))  # 2 moves away horizontally
+        enemy.state = EnemyState.HOSTILE
+        game_engine.enemies = [enemy]
+
+        predicted_moves = game_engine.get_enemy_next_positions(enemy, steps=3)
+
+        assert len(predicted_moves) == 1, "Enemy 2 moves away should show only 1 move"
+        assert predicted_moves[0].is_adjacent_to(player.position), "Move should get enemy adjacent to player"
+
+    def test_queue_shows_full_3_moves_when_far_away(self):
+        """Enemy far from player shows full 3-move queue."""
+        from game_engine import GameEngine
+
+        # Create real game setup
+        player = Player(10, 10)
+        game_map = create_test_map_with_real_tiles()
+        game_engine = GameEngine()
+        game_engine.player = player
+        game_engine.game_map = game_map
+
+        # Enemy 5+ moves away should show 3 moves
+        enemy = create_real_enemy("hunter", Position(15, 10))  # 5 moves away
+        enemy.state = EnemyState.HOSTILE
+        game_engine.enemies = [enemy]
+
+        predicted_moves = game_engine.get_enemy_next_positions(enemy, steps=3)
+
+        assert len(predicted_moves) == 3, "Enemy far away should show full 3 moves"
+
+    def test_adjacent_enemy_shows_no_moves(self):
+        """Enemy adjacent to player shows no movement (will attack)."""
+        from game_engine import GameEngine
+
+        # Create real game setup
+        player = Player(10, 10)
+        game_map = create_test_map_with_real_tiles()
+        game_engine = GameEngine()
+        game_engine.player = player
+        game_engine.game_map = game_map
+
+        # Adjacent enemy should show no moves
+        enemy = create_real_enemy("hunter", Position(11, 10))  # Adjacent
+        enemy.state = EnemyState.HOSTILE
+        game_engine.enemies = [enemy]
+
+        predicted_moves = game_engine.get_enemy_next_positions(enemy, steps=3)
+
+        assert len(predicted_moves) == 0, "Adjacent enemy should show no moves (will attack)"
+        assert enemy.can_attack_player(player) is True, "Enemy should be able to attack player"
