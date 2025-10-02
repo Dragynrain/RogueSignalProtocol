@@ -370,6 +370,9 @@ class Enemy:
         # Generate new queue if needed (empty queue or state/target changed)
         if self._should_regenerate_queue(game_map, player, game_engine):
             self._generate_movement_queue(game_map, player, game_engine)
+        else:
+            # If queue is getting short but state/target unchanged, extend it
+            self._extend_queue_if_needed(game_map, player, game_engine)
 
         # Execute next move from queue
         moved = self._execute_next_move(game_map, player, game_engine)
@@ -413,7 +416,48 @@ class Enemy:
                 return True
         
         return False
-    
+
+    def _extend_queue_if_needed(self, game_map, player: Player, game_engine):
+        """Extend movement queue if it's getting short, maintaining the same movement pattern."""
+        # Only extend if queue has fewer than 3 moves
+        if len(self.movement_queue) >= 3:
+            return
+
+        # Don't extend if enemy is static
+        if self.type_data.movement == EnemyMovement.STATIC:
+            return
+
+        # Determine current target and movement pattern
+        target = None
+        use_pathfinding = False
+
+        if self.state == EnemyState.HOSTILE:
+            if self.can_see_player(player, game_map):
+                target = player.position
+                use_pathfinding = True
+            elif self.last_seen_player:
+                target = self.last_seen_player
+                use_pathfinding = True
+            elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
+                target = self.patrol_points[self.patrol_index]
+                use_pathfinding = True
+        elif self.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.TRACK]:
+            if self.can_see_player(player, game_map):
+                target = player.position
+                use_pathfinding = True
+            elif self.last_seen_player and self.type_data.movement == EnemyMovement.TRACK:
+                target = self.last_seen_player
+                use_pathfinding = True
+        elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
+            # Use intelligent patrol queue extension
+            current_target = self.patrol_points[self.patrol_index]
+            next_target = self.patrol_points[(self.patrol_index + 1) % len(self.patrol_points)]
+            self._extend_patrol_queue(current_target, next_target, game_map, game_engine)
+            return
+
+        # Extend the queue using the same logic as before
+        self._extend_movement_queue(target, use_pathfinding, game_map, game_engine)
+
     def _reset_movement_cooldown(self):
         """Reset movement cooldown based on enemy type."""
         if self.type_data.movement == EnemyMovement.STATIC:
@@ -566,8 +610,8 @@ class Enemy:
                 use_pathfinding = True
             elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
                 # HOSTILE patrol enemies return to patrol when they lose the player
-                target = self.patrol_points[self.patrol_index]
-                use_pathfinding = True
+                self._generate_intelligent_patrol_queue(game_map, game_engine)
+                return  # Skip normal pathfinding
         elif self.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.TRACK]:
             # SEEK/TRACK movement types target player when they can see them
             if self.can_see_player(player, game_map):
@@ -579,9 +623,9 @@ class Enemy:
                 target = self.last_seen_player
                 use_pathfinding = True
         elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
-            # PATROL movement with patrol points
-            target = self.patrol_points[self.patrol_index]
-            use_pathfinding = True
+            # PATROL movement with intelligent route planning
+            self._generate_intelligent_patrol_queue(game_map, game_engine)
+            return  # Skip normal pathfinding - patrol uses custom logic
         
         # Generate or extend the movement queue
         if needs_full_regeneration:
@@ -600,7 +644,160 @@ class Enemy:
         # Track state and target for future queue regeneration decisions
         self.last_queue_state = self.state
         self.last_queue_target = target
-    
+
+    def _generate_intelligent_patrol_queue(self, game_map, game_engine):
+        """Generate intelligent patrol movement queue that considers the full patrol route."""
+        if not self.patrol_points:
+            return
+
+        current_target = self.patrol_points[self.patrol_index]
+        next_target = self.patrol_points[(self.patrol_index + 1) % len(self.patrol_points)]
+
+        # Determine if we need full regeneration or just extension
+        needs_full_regeneration = self._needs_full_queue_regeneration(None, game_map)
+
+        if needs_full_regeneration:
+            self.movement_queue.clear()
+
+            # Calculate distance to current patrol point
+            distance_to_current = self.position.distance_to(current_target)
+
+            # If we're very close to current target, plan route to next target
+            if distance_to_current <= 2.0:
+                self._generate_patrol_route_to_next_point(current_target, next_target, game_map, game_engine)
+            else:
+                # Plan route to current target, but consider next target for final moves
+                self._generate_patrol_route_to_current_point(current_target, next_target, game_map, game_engine)
+        else:
+            # Extend existing queue
+            self._extend_patrol_queue(current_target, next_target, game_map, game_engine)
+
+        # Track target for regeneration decisions
+        self.last_queue_target = current_target
+
+    def _generate_patrol_route_to_current_point(self, current_target: Position, next_target: Position, game_map, game_engine):
+        """Generate route to current patrol point, but position for efficient transition to next point."""
+        try:
+            # Create cost map
+            cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
+            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+            pathfinder = tcod.path.Pathfinder(graph)
+            pathfinder.add_root((self.x, self.y))
+
+            # Calculate path to current target
+            path = pathfinder.path_to((current_target.x, current_target.y))
+
+            if len(path) <= 1:
+                # Already at target, plan for next target
+                self._generate_patrol_route_to_next_point(current_target, next_target, game_map, game_engine)
+                return
+
+            # Add most of the path to current target
+            moves_to_add = min(len(path) - 1, 2)  # Save room for strategic positioning
+            for i in range(1, moves_to_add + 1):
+                x, y = path[i]
+                next_pos = Position(x, y)
+                if self._is_valid_enemy_move(next_pos, game_map, game_engine):
+                    self.movement_queue.append(next_pos)
+
+            # For the final move(s), position strategically for next target
+            if len(self.movement_queue) < 3:
+                self._add_strategic_positioning_moves(current_target, next_target, game_map, game_engine)
+
+        except Exception as e:
+            logging.error(f"Patrol pathfinding failed: {e}")
+            # Fallback to simple movement
+            self._generate_random_queue(game_map, game_engine)
+
+    def _generate_patrol_route_to_next_point(self, current_target: Position, next_target: Position, game_map, game_engine):
+        """Generate route directly to next patrol point since we're close to current."""
+        try:
+            # Create cost map
+            cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
+            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+            pathfinder = tcod.path.Pathfinder(graph)
+            pathfinder.add_root((self.x, self.y))
+
+            # Calculate path to next target
+            path = pathfinder.path_to((next_target.x, next_target.y))
+
+            if len(path) > 1:
+                # Add up to 3 moves toward next target
+                for i in range(1, min(len(path), 4)):
+                    x, y = path[i]
+                    next_pos = Position(x, y)
+                    if self._is_valid_enemy_move(next_pos, game_map, game_engine):
+                        self.movement_queue.append(next_pos)
+
+            # Fill remaining slots with random moves if needed
+            while len(self.movement_queue) < 3:
+                if self.movement_queue:
+                    last_pos = self.movement_queue[-1]
+                else:
+                    last_pos = self.position
+
+                random_move = self._get_random_adjacent_position(last_pos, game_map, game_engine)
+                if random_move and random_move not in self.movement_queue:
+                    self.movement_queue.append(random_move)
+                else:
+                    break
+
+        except Exception as e:
+            logging.error(f"Patrol next-point pathfinding failed: {e}")
+            self._generate_random_queue(game_map, game_engine)
+
+    def _add_strategic_positioning_moves(self, current_target: Position, next_target: Position, game_map, game_engine):
+        """Add moves that position the enemy strategically for transition to next patrol point."""
+        # Calculate direction from current to next target
+        dx = next_target.x - current_target.x
+        dy = next_target.y - current_target.y
+
+        # Normalize direction
+        if dx != 0:
+            dx = dx // abs(dx)
+        if dy != 0:
+            dy = dy // abs(dy)
+
+        # Try to position on the side of current target that's toward next target
+        strategic_positions = [
+            Position(current_target.x + dx, current_target.y + dy),  # Diagonal toward next
+            Position(current_target.x + dx, current_target.y),       # Horizontal toward next
+            Position(current_target.x, current_target.y + dy),       # Vertical toward next
+            Position(current_target.x - dx, current_target.y - dy),  # Opposite direction
+        ]
+
+        for strategic_pos in strategic_positions:
+            if len(self.movement_queue) >= 3:
+                break
+
+            if (self._is_valid_enemy_move(strategic_pos, game_map, game_engine) and
+                strategic_pos not in self.movement_queue and
+                strategic_pos != self.position):
+                self.movement_queue.append(strategic_pos)
+
+    def _extend_patrol_queue(self, current_target: Position, next_target: Position, game_map, game_engine):
+        """Extend existing patrol queue intelligently."""
+        while len(self.movement_queue) < 3:
+            # If queue is short, add moves toward current target or next target as appropriate
+            if self.movement_queue:
+                last_planned_pos = self.movement_queue[-1]
+                distance_to_current = last_planned_pos.distance_to(current_target)
+
+                # If close to current target, start planning for next
+                if distance_to_current <= 2.0:
+                    target_for_extension = next_target
+                else:
+                    target_for_extension = current_target
+            else:
+                target_for_extension = current_target
+
+            # Add one move toward the target
+            self._extend_movement_queue(target_for_extension, True, game_map, game_engine)
+
+            # Safety break to avoid infinite loop
+            if len(self.movement_queue) >= 3:
+                break
+
     def _generate_pathfinding_queue(self, target: Position, game_map, game_engine):
         """Generate movement queue using pathfinding to target, ensuring 3 valid moves."""
         try:

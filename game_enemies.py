@@ -119,40 +119,67 @@ class EnemyManager:
                 return [start, end_point]
                 
         elif pattern_type == 'triangle':
-            # 3-point triangle pattern
-            point2 = Position(start.x + step_size, start.y)
-            point3 = Position(start.x + step_size//2, start.y + step_size)
-            
-            route = [start]
-            if self._is_valid_patrol_point(point2):
-                route.append(point2)
-            if self._is_valid_patrol_point(point3):
-                route.append(point3)
-            
-            if len(route) >= 3:
-                return route
+            # 3-point triangle pattern - try multiple orientations
+            triangle_patterns = [
+                # Standard triangle
+                (Position(start.x + step_size, start.y), Position(start.x + step_size//2, start.y + step_size)),
+                # Inverted triangle
+                (Position(start.x + step_size, start.y), Position(start.x + step_size//2, start.y - step_size)),
+                # Left-pointing triangle
+                (Position(start.x, start.y + step_size), Position(start.x - step_size//2, start.y + step_size//2)),
+                # Right-pointing triangle
+                (Position(start.x, start.y + step_size), Position(start.x + step_size//2, start.y + step_size//2)),
+            ]
+
+            for point2, point3 in triangle_patterns:
+                route = [start]
+                if self._is_valid_patrol_point(point2):
+                    route.append(point2)
+                if self._is_valid_patrol_point(point3):
+                    route.append(point3)
+
+                if len(route) >= 3:
+                    return route
                 
         elif pattern_type == 'rectangle':
-            # 4-point rectangle pattern
-            point2 = Position(start.x + step_size, start.y)
-            point3 = Position(start.x + step_size, start.y + step_size)
-            point4 = Position(start.x, start.y + step_size)
-            
-            route = [start]
-            for point in [point2, point3, point4]:
-                if self._is_valid_patrol_point(point):
-                    route.append(point)
-            
-            if len(route) >= 4:
-                return route
+            # 4-point rectangle pattern - try different sizes
+            rectangle_sizes = [step_size, step_size // 2, step_size * 2 // 3]
+
+            for size in rectangle_sizes:
+                point2 = Position(start.x + size, start.y)
+                point3 = Position(start.x + size, start.y + size)
+                point4 = Position(start.x, start.y + size)
+
+                route = [start]
+                for point in [point2, point3, point4]:
+                    if self._is_valid_patrol_point(point):
+                        route.append(point)
+
+                if len(route) >= 4:
+                    return route
+
+                # Try smaller rectangle if full size failed
+                if len(route) >= 3:
+                    return route
         
-        # Fallback: simple 2-point horizontal line
-        fallback_end = Position(start.x + 4, start.y)
-        if self._is_valid_patrol_point(fallback_end):
-            return [start, fallback_end]
-        else:
-            # Last resort: single point (static guard)
-            return [start]
+        # Fallback: try multiple simple 2-point patterns
+        fallback_patterns = [
+            Position(start.x + 4, start.y),      # Horizontal right
+            Position(start.x - 4, start.y),      # Horizontal left
+            Position(start.x, start.y + 4),      # Vertical down
+            Position(start.x, start.y - 4),      # Vertical up
+            Position(start.x + 3, start.y + 3),  # Diagonal down-right
+            Position(start.x - 3, start.y - 3),  # Diagonal up-left
+            Position(start.x + 2, start.y),      # Shorter horizontal
+            Position(start.x, start.y + 2),      # Shorter vertical
+        ]
+
+        for fallback_end in fallback_patterns:
+            if self._is_valid_patrol_point(fallback_end):
+                return [start, fallback_end]
+
+        # Last resort: single point (static guard)
+        return [start]
     
     def _is_valid_patrol_point(self, point: Position) -> bool:
         """Check if a position is valid for patrol."""
