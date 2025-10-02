@@ -260,3 +260,8 @@ def test_bug_player_stuck_in_wall():
 - Keep solutions simple and maintain the game's original functionality
 - Prioritize readability and simplicity over complex design patterns
 - When refactoring, extract and reorganize existing code rather than creating parallel systems
+
+## Git Commit Guidelines
+- **NEVER use Co-Authored-By**: Do not include "Co-Authored-By: Claude <noreply@anthropic.com>" in commit messages
+- **NEVER use Claude Code attribution**: Do not include "🤖 Generated with [Claude Code](https://claude.ai/code)" in commit messages
+- Keep commit messages clean and focused on the technical changes made

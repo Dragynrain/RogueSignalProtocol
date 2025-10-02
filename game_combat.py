@@ -357,15 +357,7 @@ class ExploitSystem:
         for node_pos in self.game.game_map.ghost_nodes:
             self.game.game_state.revealed_special_nodes[node_pos] = "ghost"
 
-        # Reveal gateway/stairway if it exists
-        gateway_revealed = False
-        if self.game.game_map.gateway:
-            gateway_pos = (self.game.game_map.gateway.x, self.game.game_map.gateway.y)
-            self.game.game_state.revealed_special_nodes[gateway_pos] = "gateway"
-            gateway_revealed = True
-
         total_revealed = len(self.game.game_state.revealed_special_nodes)
-        gateway_text = ", 1 gateway" if gateway_revealed else ""
-        self.game.message_log.add_message(f"Network Scan: {cooling_count} cooling, {cpu_count} CPU, {ghost_count} ghost nodes{gateway_text} found")
+        self.game.message_log.add_message(f"Network Scan: {cooling_count} cooling, {cpu_count} CPU, {ghost_count} ghost nodes found")
         self.game.message_log.add_message(f"Total {total_revealed} special nodes revealed")
         return True

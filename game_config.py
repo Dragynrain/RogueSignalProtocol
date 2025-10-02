@@ -295,8 +295,7 @@ class GameBalance:
     CPU_RESTORE_MAX: int = 40
     HEAT_REDUCTION_INSTANT: int = 40
     
-    # Enemy detection values
-    ADMIN_DETECTION_INITIAL: int = 5
+    # Enemy detection values - now loaded from JSON
 
     # Movement and positioning constants
     ADJACENT_DISTANCE_THRESHOLD: float = 1.5
@@ -307,7 +306,6 @@ class GameBalance:
     # Vision and detection constants
     ENHANCED_VISION_BONUS: int = 2
     SHADOW_VISION_REDUCTION_FACTOR: int = 3
-    ADMIN_DETECTION_CONTINUOUS: int = 1
     ENEMY_DETECTION_ALERT_TO_HOSTILE: int = 3
     ENEMY_DETECTION_CONTINUOUS_HOSTILE: float = 0.3
     

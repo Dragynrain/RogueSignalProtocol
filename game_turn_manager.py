@@ -13,6 +13,7 @@ import logging
 from typing import List, Optional
 
 from game_config import GameConfig, GameBalance
+from data_loading import DataLoader
 from game_entities import Position, Colors, EnemyState, EnemyMovement
 from game_inventory import StoryFragment
 from game_data import GameUpgrades
@@ -288,12 +289,8 @@ class GameTurnManager:
                 enemy.state = EnemyState.HOSTILE
                 enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
                 if old_state != EnemyState.HOSTILE:
-                    detection_increase = GameBalance.ADMIN_DETECTION_INITIAL
-                    self.game_engine.player.detection = min(100, self.game_engine.player.detection + detection_increase)
                     self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
-                else:
-                    detection_increase = GameBalance.ADMIN_DETECTION_CONTINUOUS
-                    self.game_engine.player.detection = min(100, self.game_engine.player.detection + detection_increase)
+                # Admins don't increase detection - detection only summons admins, not the other way around
             elif enemy.can_see_player(self.game_engine.player, self.game_engine.game_map):
                 self._handle_enemy_sees_player(enemy)
             else:
@@ -317,7 +314,8 @@ class GameTurnManager:
                 if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
                     enemy.original_patrol_index = enemy.patrol_index
                 enemy.state = EnemyState.HOSTILE
-                detection_increase = GameBalance.ADMIN_DETECTION_INITIAL if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_ALERT_TO_HOSTILE
+                ai_config = DataLoader.get_ai_behavior_config()
+                detection_increase = ai_config.get('enemy_detection_alert_to_hostile', GameBalance.ENEMY_DETECTION_ALERT_TO_HOSTILE)
                 old_detection = self.game_engine.player.detection
                 self.game_engine.player.detection = min(100, self.game_engine.player.detection + detection_increase)
                 self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
@@ -327,7 +325,8 @@ class GameTurnManager:
                 self._alert_nearby_enemies(enemy)
         elif enemy.state == EnemyState.HOSTILE:
             enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
-            detection_increase = GameBalance.ADMIN_DETECTION_CONTINUOUS if enemy.type == 'admin' else GameBalance.ENEMY_DETECTION_CONTINUOUS_HOSTILE
+            ai_config = DataLoader.get_ai_behavior_config()
+            detection_increase = ai_config.get('enemy_detection_continuous_hostile', GameBalance.ENEMY_DETECTION_CONTINUOUS_HOSTILE)
             old_detection = self.game_engine.player.detection
             # Continue alerting nearby enemies every turn while this enemy can see the player
             self._alert_nearby_enemies(enemy)
