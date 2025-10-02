@@ -10,7 +10,7 @@ import random
 
 # Import actual core classes
 from game_state import GameStateManager, MessageLog, TurnProcessor
-from game_core import GameStateManager as CoreGameStateManager, TurnProcessor as CoreTurnProcessor
+# game_core module was removed - using only game_state implementations
 from game_entities import Position, Colors
 from game_characters import Player
 from game_config import GameBalance
@@ -222,12 +222,12 @@ class TestGameStateManager:
         assert len(gsm.revealed_special_nodes) == 2
 
 
-class TestCoreGameStateManager:
+class TestCoreGameStateManagerRemoved:
     """Test the core GameStateManager from game_core.py."""
     
     def test_core_game_state_initialization(self):
         """Core GameStateManager initializes correctly."""
-        core_gsm = CoreGameStateManager()
+        core_gsm = GameStateManager()
         
         assert core_gsm.current_level == 1
         assert core_gsm.turn_count == 0
@@ -237,7 +237,7 @@ class TestCoreGameStateManager:
     
     def test_advance_turn_core(self):
         """Core advance_turn increments turn counter."""
-        core_gsm = CoreGameStateManager()
+        core_gsm = GameStateManager()
         
         core_gsm.advance_turn()
         
@@ -245,7 +245,7 @@ class TestCoreGameStateManager:
     
     def test_reset_for_new_level(self):
         """reset_for_new_level updates level and resets state."""
-        core_gsm = CoreGameStateManager()
+        core_gsm = GameStateManager()
         core_gsm.turn_count = 50
         core_gsm.admin_spawned_this_level = True
         
@@ -257,7 +257,7 @@ class TestCoreGameStateManager:
     
     def test_get_current_network_config(self):
         """get_current_network_config generates and caches network configs."""
-        core_gsm = CoreGameStateManager()
+        core_gsm = GameStateManager()
         
         config = core_gsm.get_current_network_config()
         
@@ -272,7 +272,7 @@ class TestCoreGameStateManager:
     
     def test_network_config_scaling(self):
         """Network config scales with level appropriately."""
-        core_gsm = CoreGameStateManager()
+        core_gsm = GameStateManager()
         core_gsm.current_level = 5
         
         config = core_gsm.get_current_network_config()
@@ -286,10 +286,10 @@ class TestCoreGameStateManager:
     
     def test_should_spawn_admin_logic(self):
         """should_spawn_admin follows correct logic."""
-        core_gsm = CoreGameStateManager()
+        core_gsm = GameStateManager()
         
         # Mock random to control admin spawning
-        with patch('game_core.random.random') as mock_random:
+        with patch('random.random') as mock_random:
             # Set high chance to spawn
             mock_random.return_value = 0.1  # Low random value
             core_gsm.network_configs[1] = {'admin_chance': 0.5}
@@ -301,7 +301,7 @@ class TestCoreGameStateManager:
     
     def test_should_spawn_admin_prevents_double_spawn(self):
         """should_spawn_admin prevents spawning admin twice per level."""
-        core_gsm = CoreGameStateManager()
+        core_gsm = GameStateManager()
         core_gsm.admin_spawned_this_level = True
         
         result = core_gsm.should_spawn_admin()
@@ -310,9 +310,9 @@ class TestCoreGameStateManager:
     
     def test_should_spawn_admin_low_chance(self):
         """should_spawn_admin respects low spawn chances."""
-        core_gsm = CoreGameStateManager()
+        core_gsm = GameStateManager()
         
-        with patch('game_core.random.random') as mock_random:
+        with patch('random.random') as mock_random:
             # Set low chance to spawn
             mock_random.return_value = 0.9  # High random value
             core_gsm.network_configs[1] = {'admin_chance': 0.1}
@@ -466,20 +466,20 @@ class TestTurnProcessor:
             assert mock_player.detection == 100  # Capped at 100
 
 
-class TestCoreTurnProcessor:
+class TestCoreTurnProcessorRemoved:
     """Test the core TurnProcessor from game_core.py."""
     
     def test_core_turn_processor_initialization(self):
         """Core TurnProcessor initializes correctly."""
-        core_gsm = CoreGameStateManager()
-        core_processor = CoreTurnProcessor(core_gsm)
+        core_gsm = GameStateManager()
+        core_processor = TurnProcessor(core_gsm, MessageLog())
         
         assert core_processor.game_state is core_gsm
     
     def test_core_process_turn(self):
         """Core process_turn calls all sub-processes."""
-        core_gsm = CoreGameStateManager()
-        core_processor = CoreTurnProcessor(core_gsm)
+        core_gsm = GameStateManager()
+        core_processor = TurnProcessor(core_gsm, MessageLog())
         mock_player = Mock()
         mock_message_log = Mock()
         
