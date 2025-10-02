@@ -24,8 +24,15 @@ class SoundManager:
     """Manages sound effects and background music using pygame."""
     
     # Centralized audio directory configuration
-    SOUND_DIRECTORY = "sound"
-    MUSIC_DIRECTORY = "music"
+    @property
+    def SOUND_DIRECTORY(self):
+        from game_config import GameConfig
+        return GameConfig.get('audio.sound_directory', 'sound')
+
+    @property
+    def MUSIC_DIRECTORY(self):
+        from game_config import GameConfig
+        return GameConfig.get('audio.music_directory', 'music')
     
     def __init__(self, settings: GameSettings = None):
         """Initialize the sound manager with game settings.

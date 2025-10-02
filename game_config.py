@@ -134,87 +134,92 @@ class GameSettings:
 
 class GameConfig:
     """Game configuration constants and settings."""
-    
-    # Screen dimensions  
+
+    _config_data = None
+
+    # Initialize class attributes with defaults first
     SCREEN_WIDTH = 80
     SCREEN_HEIGHT = 50
-    
-    # Map dimensions
     MAP_WIDTH = 50
     MAP_HEIGHT = 50
-    
-    # UI layout
     UI_HEIGHT = 10
     SIDEBAR_WIDTH = 25
     LOG_WIDTH = 25
     PANEL_HEIGHT = 5
-    
-    # Calculated layout properties
-    @classmethod
-    def GAME_AREA_WIDTH(cls):
-        """Calculate game area width (screen width minus log width)."""
-        return cls.SCREEN_WIDTH - cls.LOG_WIDTH
-    
-    @classmethod
-    def PANEL_Y(cls):
-        """Calculate panel Y position (screen height minus panel height)."""
-        return cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT
-    
-    # Game parameters
     DEFAULT_PLAYER_RAM = 8
     DEFAULT_PLAYER_CPU = 100
     MAX_HEAT = 100
     MAX_DETECTION = 100
     DETECTION_REDUCTION_ON_LEVEL = 50
     DUNGEON_SEED_RANGE = 1000000
-    DEFAULT_FADE_TIME = 2000
     DEFAULT_VISION_RANGE = 10
     MAX_SAVE_ATTEMPTS = 3
-    
-    # Message display constants
+    NEARBY_ENEMY_ALERT_RADIUS = 8
+    VIRUS_DAMAGE_PER_TURN = 3
+    DEFAULT_FADE_TIME = 2000
     MESSAGE_CENTER_OFFSET_LARGE = 15
     MESSAGE_CENTER_OFFSET_MEDIUM = 12
     MESSAGE_CENTER_OFFSET_SMALL = 8
     MESSAGE_CENTER_OFFSET_TINY = 10
     MESSAGE_LINE_SPACING = 1
     MESSAGE_BUTTON_SPACING = 3
-    
-    # Vision mechanics
-    adjacent_visibility_threshold = 1.5
-    shadow_vision_reduction_factor = 3
-    adjacent_threshold = 1.5
-    
-    # Heat system constants
-    virus_base_duration = 3
-    virus_max_duration = 10
-    
-    # Maximum capacities
-    max_ram_capacity = 32
-    max_cpu_capacity = 200
-    
-    # Enemy and virus constants
-    NEARBY_ENEMY_ALERT_RADIUS = 8  # Radius for alerting nearby enemies
-    VIRUS_DAMAGE_PER_TURN = 3  # Damage dealt by virus each turn
-    
-    _config_data = None
-    
+
     @classmethod
     def load_from_json(cls):
         """Load configuration from JSON file."""
         try:
             with open('game_config.json', 'r', encoding='utf-8') as f:
                 cls._config_data = json.load(f)
-                
-            # Update class attributes if values exist in JSON
-            if 'display' in cls._config_data:
-                display_config = cls._config_data['display']
-                cls.SCREEN_WIDTH = display_config.get('screen_width', cls.SCREEN_WIDTH)
-                cls.SCREEN_HEIGHT = display_config.get('screen_height', cls.SCREEN_HEIGHT)
-                cls.MAP_WIDTH = display_config.get('map_width', cls.MAP_WIDTH)
-                cls.MAP_HEIGHT = display_config.get('map_height', cls.MAP_HEIGHT)
-                
+
+            # Update class attributes for backward compatibility
+            cls.SCREEN_WIDTH = cls.get('display.screen_width', cls.SCREEN_WIDTH)
+            cls.SCREEN_HEIGHT = cls.get('display.screen_height', cls.SCREEN_HEIGHT)
+            cls.MAP_WIDTH = cls.get('display.map_width', cls.MAP_WIDTH)
+            cls.MAP_HEIGHT = cls.get('display.map_height', cls.MAP_HEIGHT)
+            cls.UI_HEIGHT = cls.get('display.ui_height', cls.UI_HEIGHT)
+            cls.SIDEBAR_WIDTH = cls.get('display.sidebar_width', cls.SIDEBAR_WIDTH)
+            cls.LOG_WIDTH = cls.get('display.log_width', cls.LOG_WIDTH)
+            cls.PANEL_HEIGHT = cls.get('display.panel_height', cls.PANEL_HEIGHT)
+            cls.DEFAULT_PLAYER_RAM = cls.get('gameplay.default_player_ram', cls.DEFAULT_PLAYER_RAM)
+            cls.DEFAULT_PLAYER_CPU = cls.get('gameplay.default_player_cpu', cls.DEFAULT_PLAYER_CPU)
+            cls.MAX_HEAT = cls.get('gameplay.max_heat', cls.MAX_HEAT)
+            cls.MAX_DETECTION = cls.get('gameplay.max_detection', cls.MAX_DETECTION)
+            cls.DETECTION_REDUCTION_ON_LEVEL = cls.get('gameplay.detection_reduction_on_level', cls.DETECTION_REDUCTION_ON_LEVEL)
+            cls.DUNGEON_SEED_RANGE = cls.get('gameplay.dungeon_seed_range', cls.DUNGEON_SEED_RANGE)
+            cls.DEFAULT_VISION_RANGE = cls.get('gameplay.default_vision_range', cls.DEFAULT_VISION_RANGE)
+            cls.MAX_SAVE_ATTEMPTS = cls.get('gameplay.max_save_attempts', cls.MAX_SAVE_ATTEMPTS)
+            cls.NEARBY_ENEMY_ALERT_RADIUS = cls.get('gameplay.nearby_enemy_alert_radius', cls.NEARBY_ENEMY_ALERT_RADIUS)
+            cls.VIRUS_DAMAGE_PER_TURN = cls.get('gameplay.virus_damage_per_turn', cls.VIRUS_DAMAGE_PER_TURN)
+            cls.DEFAULT_FADE_TIME = cls.get('audio.default_fade_time', cls.DEFAULT_FADE_TIME)
+            cls.MESSAGE_CENTER_OFFSET_LARGE = cls.get('ui.message_center_offset_large', cls.MESSAGE_CENTER_OFFSET_LARGE)
+            cls.MESSAGE_CENTER_OFFSET_MEDIUM = cls.get('ui.message_center_offset_medium', cls.MESSAGE_CENTER_OFFSET_MEDIUM)
+            cls.MESSAGE_CENTER_OFFSET_SMALL = cls.get('ui.message_center_offset_small', cls.MESSAGE_CENTER_OFFSET_SMALL)
+            cls.MESSAGE_CENTER_OFFSET_TINY = cls.get('ui.message_center_offset_tiny', cls.MESSAGE_CENTER_OFFSET_TINY)
+            cls.MESSAGE_LINE_SPACING = cls.get('ui.message_line_spacing', cls.MESSAGE_LINE_SPACING)
+            cls.MESSAGE_BUTTON_SPACING = cls.get('ui.message_button_spacing', cls.MESSAGE_BUTTON_SPACING)
+
         except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
             logging.warning(f"Could not load game config from JSON: {e}, using defaults")
+            # Keep existing values if JSON loading fails
+
+    @classmethod
+    def _ensure_loaded(cls):
+        """Ensure config data is loaded."""
+        if cls._config_data is None:
+            cls.load_from_json()
+
+    # Calculated layout properties
+    @classmethod
+    def GAME_AREA_WIDTH(cls):
+        """Calculate game area width (screen width minus log width)."""
+        cls._ensure_loaded()
+        return cls.SCREEN_WIDTH - cls.LOG_WIDTH
+
+    @classmethod
+    def PANEL_Y(cls):
+        """Calculate panel Y position (screen height minus panel height)."""
+        cls._ensure_loaded()
+        return cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT
     
     @classmethod
     def get(cls, key: str, default=None):
@@ -249,23 +254,39 @@ class GameConfig:
 
 class RoomGenerationConfig:
     """Configuration for procedural room generation."""
-    MIN_ROOMS_BASE: int = 12
-    ROOM_LEVEL_MULTIPLIER: int = 3
-    MAX_ROOMS: int = 20
-    MAX_PLACEMENT_ATTEMPTS: int = 400
-    
-    MIN_ROOM_SIZE: int = 3
-    MAX_ROOM_SIZE: int = 8
-    ROOM_PADDING: int = 1
-    
-    # Special tile placement
-    COOLING_NODES_PER_LEVEL: int = 3
-    CPU_NODES_PER_LEVEL: int = 2
-    GHOST_NODES_PER_LEVEL: int = 2
-    DATA_PATCHES_PER_LEVEL: int = 4
-    EXPLOIT_PICKUPS_PER_LEVEL: int = 3
-    PERMANENT_UPGRADES_PER_LEVEL: int = 1
-    
+
+    # Set class attributes with defaults
+    MIN_ROOMS_BASE = 12
+    ROOM_LEVEL_MULTIPLIER = 3
+    MAX_ROOMS = 20
+    MAX_PLACEMENT_ATTEMPTS = 400
+    MIN_ROOM_SIZE = 3
+    MAX_ROOM_SIZE = 8
+    ROOM_PADDING = 1
+    COOLING_NODES_PER_LEVEL = 3
+    CPU_NODES_PER_LEVEL = 2
+    GHOST_NODES_PER_LEVEL = 2
+    DATA_PATCHES_PER_LEVEL = 4
+    EXPLOIT_PICKUPS_PER_LEVEL = 3
+    PERMANENT_UPGRADES_PER_LEVEL = 1
+
+    @classmethod
+    def load_from_json(cls):
+        """Load room generation config from JSON."""
+        cls.MIN_ROOMS_BASE = GameConfig.get('room_generation.min_rooms_base', 12)
+        cls.ROOM_LEVEL_MULTIPLIER = GameConfig.get('room_generation.room_level_multiplier', 3)
+        cls.MAX_ROOMS = GameConfig.get('room_generation.max_rooms', 20)
+        cls.MAX_PLACEMENT_ATTEMPTS = GameConfig.get('room_generation.max_placement_attempts', 400)
+        cls.MIN_ROOM_SIZE = GameConfig.get('room_generation.min_room_size', 3)
+        cls.MAX_ROOM_SIZE = GameConfig.get('room_generation.max_room_size', 8)
+        cls.ROOM_PADDING = GameConfig.get('room_generation.room_padding', 1)
+        cls.COOLING_NODES_PER_LEVEL = GameConfig.get('room_generation.cooling_nodes_per_level', 3)
+        cls.CPU_NODES_PER_LEVEL = GameConfig.get('room_generation.cpu_nodes_per_level', 2)
+        cls.GHOST_NODES_PER_LEVEL = GameConfig.get('room_generation.ghost_nodes_per_level', 2)
+        cls.DATA_PATCHES_PER_LEVEL = GameConfig.get('room_generation.data_patches_per_level', 4)
+        cls.EXPLOIT_PICKUPS_PER_LEVEL = GameConfig.get('room_generation.exploit_pickups_per_level', 3)
+        cls.PERMANENT_UPGRADES_PER_LEVEL = GameConfig.get('room_generation.permanent_upgrades_per_level', 1)
+
     def __init__(self):
         self.min_room_size = self.MIN_ROOM_SIZE
         self.max_room_size = self.MAX_ROOM_SIZE
@@ -275,66 +296,73 @@ class RoomGenerationConfig:
 
 class GameBalance:
     """Game balance configuration."""
-    
-    # Heat management
-    HEAT_REDUCTION_NORMAL: int = 2
-    HEAT_REDUCTION_BOOSTED: int = 3
-    DETECTION_INCREASE_INTERVAL: int = 25
-    DETECTION_INCREASE_AMOUNT: int = 1
-    
-    # Node effects
-    COOLING_NODE_EFFECT: int = 20
-    GHOST_NODE_DETECTION_REDUCTION_PERCENT: float = 20.0  # 20% reduction per turn
-    CPU_RECOVERY_AMOUNT: int = 20
-    
-    # Combat rewards
-    ENEMY_ELIMINATION_CPU_REWARD: int = 5
-    
-    # Code patch effects
-    CPU_RESTORE_MIN: int = 30
-    CPU_RESTORE_MAX: int = 40
-    HEAT_REDUCTION_INSTANT: int = 40
-    
-    # Enemy detection values - now loaded from JSON
 
-    # Movement and positioning constants
-    ADJACENT_DISTANCE_THRESHOLD: float = 1.5
-    PATROL_STUCK_THRESHOLD: int = 3
-    MAX_MOVEMENT_QUEUE_SIZE: int = 3
-    PATHFINDING_TIMEOUT_ATTEMPTS: int = 100
+    # Set class attributes with defaults
+    HEAT_REDUCTION_NORMAL = 2
+    HEAT_REDUCTION_BOOSTED = 3
+    DETECTION_INCREASE_INTERVAL = 25
+    DETECTION_INCREASE_AMOUNT = 1
+    COOLING_NODE_EFFECT = 20
+    GHOST_NODE_DETECTION_REDUCTION_PERCENT = 20.0
+    CPU_RECOVERY_AMOUNT = 20
+    ENEMY_ELIMINATION_CPU_REWARD = 5
+    CPU_RESTORE_MIN = 30
+    CPU_RESTORE_MAX = 40
+    HEAT_REDUCTION_INSTANT = 40
+    ADJACENT_DISTANCE_THRESHOLD = 1.5
+    PATROL_STUCK_THRESHOLD = 3
+    MAX_MOVEMENT_QUEUE_SIZE = 3
+    PATHFINDING_TIMEOUT_ATTEMPTS = 100
+    ENHANCED_VISION_BONUS = 2
+    SHADOW_VISION_REDUCTION_FACTOR = 3
+    ENEMY_DETECTION_ALERT_TO_HOSTILE = 3
+    ENEMY_DETECTION_CONTINUOUS_HOSTILE = 0.3
+    ENEMY_MEMORY_TURNS = 20
 
-    # Vision and detection constants
-    ENHANCED_VISION_BONUS: int = 2
-    SHADOW_VISION_REDUCTION_FACTOR: int = 3
-    ENEMY_DETECTION_ALERT_TO_HOSTILE: int = 3
-    ENEMY_DETECTION_CONTINUOUS_HOSTILE: float = 0.3
-    
-    # Memory system constants
-    ENEMY_MEMORY_TURNS: int = 20
-    
+    @classmethod
+    def load_from_json(cls):
+        """Load balance config from JSON."""
+        cls.HEAT_REDUCTION_NORMAL = GameConfig.get('balance.heat_reduction_normal', 2)
+        cls.HEAT_REDUCTION_BOOSTED = GameConfig.get('balance.heat_reduction_boosted', 3)
+        cls.DETECTION_INCREASE_INTERVAL = GameConfig.get('balance.detection_increase_interval', 25)
+        cls.DETECTION_INCREASE_AMOUNT = GameConfig.get('balance.detection_increase_amount', 1)
+        cls.COOLING_NODE_EFFECT = GameConfig.get('balance.cooling_node_effect', 20)
+        cls.GHOST_NODE_DETECTION_REDUCTION_PERCENT = GameConfig.get('balance.ghost_node_detection_reduction_percent', 20.0)
+        cls.CPU_RECOVERY_AMOUNT = GameConfig.get('balance.cpu_recovery_amount', 20)
+        cls.ENEMY_ELIMINATION_CPU_REWARD = GameConfig.get('balance.enemy_elimination_cpu_reward', 5)
+        cls.CPU_RESTORE_MIN = GameConfig.get('balance.cpu_restore_min', 30)
+        cls.CPU_RESTORE_MAX = GameConfig.get('balance.cpu_restore_max', 40)
+        cls.HEAT_REDUCTION_INSTANT = GameConfig.get('balance.heat_reduction_instant', 40)
+        cls.ADJACENT_DISTANCE_THRESHOLD = GameConfig.get('balance.adjacent_distance_threshold', 1.5)
+        cls.PATROL_STUCK_THRESHOLD = GameConfig.get('balance.patrol_stuck_threshold', 3)
+        cls.MAX_MOVEMENT_QUEUE_SIZE = GameConfig.get('balance.max_movement_queue_size', 3)
+        cls.PATHFINDING_TIMEOUT_ATTEMPTS = GameConfig.get('balance.pathfinding_timeout_attempts', 100)
+        cls.ENHANCED_VISION_BONUS = GameConfig.get('balance.enhanced_vision_bonus', 2)
+        cls.SHADOW_VISION_REDUCTION_FACTOR = GameConfig.get('balance.shadow_vision_reduction_factor', 3)
+        cls.ENEMY_DETECTION_ALERT_TO_HOSTILE = GameConfig.get('balance.enemy_detection_alert_to_hostile', 3)
+        cls.ENEMY_DETECTION_CONTINUOUS_HOSTILE = GameConfig.get('balance.enemy_detection_continuous_hostile', 0.3)
+        cls.ENEMY_MEMORY_TURNS = GameConfig.get('balance.enemy_memory_turns', 20)
+
     @staticmethod
     def get_exploit_cpu_cost(exploit_name: str) -> int:
         """Get CPU cost for an exploit."""
-        cpu_costs = {
-            "shadow_step": 10,
-            "buffer_overflow": 15,
-            "code_injection": 20,
-            "system_crash": 25,
-            "threat_scan": 5,
-            "log_wiper": 12,
-            "antivirus": 18,
-            "emp_burst": 30,
-            "memory_leak": 8
-        }
-        return cpu_costs.get(exploit_name, 10)
-    
+        from data_loading import DataLoader
+        game_data = DataLoader.load_game_data()
+        costs = game_data.get('exploit_cpu_costs', {})
+        return costs.get(exploit_name, 10)
+
     @staticmethod
     def get_enemy_difficulty_multiplier(difficulty: str) -> float:
         """Get difficulty multiplier for enemies."""
-        multipliers = {
-            "easy": 0.8,
-            "normal": 1.0,
-            "hard": 1.3,
-            "nightmare": 1.6
-        }
+        from data_loading import DataLoader
+        game_data = DataLoader.load_game_data()
+        multipliers = game_data.get('difficulty_multipliers', {
+            "easy": 0.8, "normal": 1.0, "hard": 1.3, "nightmare": 1.6
+        })
         return multipliers.get(difficulty, 1.0)
+
+
+# Load configurations when module is imported
+GameConfig.load_from_json()
+RoomGenerationConfig.load_from_json()
+GameBalance.load_from_json()

@@ -1,15 +1,15 @@
 {
-  "screen": {
-    "width": 80,
-    "height": 50
-  },
-  "map": {
-    "width": 50,
-    "height": 50
+  "display": {
+    "screen_width": 80,
+    "screen_height": 50,
+    "map_width": 50,
+    "map_height": 50,
+    "ui_height": 10,
+    "sidebar_width": 25,
+    "log_width": 25,
+    "panel_height": 5
   },
   "ui": {
-    "log_width": 22,
-    "panel_height": 5,
     "message_center_offset_large": 15,
     "message_center_offset_medium": 12,
     "message_center_offset_small": 8,
@@ -18,28 +18,63 @@
     "message_button_spacing": 3
   },
   "gameplay": {
-    "default_vision_range": 10,
+    "default_player_ram": 8,
+    "default_player_cpu": 100,
     "max_heat": 100,
     "max_detection": 100,
     "detection_reduction_on_level": 50,
-    "dungeon_seed_range": 1000000
+    "dungeon_seed_range": 1000000,
+    "default_vision_range": 10,
+    "max_save_attempts": 3,
+    "adjacent_visibility_threshold": 1.5,
+    "shadow_vision_reduction_factor": 3,
+    "virus_base_duration": 3,
+    "virus_max_duration": 10,
+    "max_ram_capacity": 32,
+    "max_cpu_capacity": 200,
+    "nearby_enemy_alert_radius": 8,
+    "virus_damage_per_turn": 3
   },
   "audio": {
-    "default_fade_time": 2000
+    "default_fade_time": 2000,
+    "sound_directory": "sound",
+    "music_directory": "music"
   },
   "room_generation": {
-    "min_rooms": 8,
-    "max_rooms": 12,
-    "min_room_size": 5,
-    "max_room_size": 12,
-    "room_padding": 2,
-    "max_placement_attempts": 50
+    "min_rooms_base": 12,
+    "room_level_multiplier": 3,
+    "max_rooms": 20,
+    "max_placement_attempts": 400,
+    "min_room_size": 3,
+    "max_room_size": 8,
+    "room_padding": 1,
+    "cooling_nodes_per_level": 3,
+    "cpu_nodes_per_level": 2,
+    "ghost_nodes_per_level": 2,
+    "data_patches_per_level": 4,
+    "exploit_pickups_per_level": 3,
+    "permanent_upgrades_per_level": 1
   },
   "balance": {
-    "overheat_base_damage": 5,
-    "overheat_recovery_heat": 95,
-    "detection_spawn_threshold": 100,
-    "admin_spawn_cooldown": 3
+    "heat_reduction_normal": 2,
+    "heat_reduction_boosted": 3,
+    "detection_increase_interval": 25,
+    "detection_increase_amount": 1,
+    "cooling_node_effect": 20,
+    "ghost_node_detection_reduction_percent": 20.0,
+    "cpu_recovery_amount": 20,
+    "enemy_elimination_cpu_reward": 5,
+    "cpu_restore_min": 30,
+    "cpu_restore_max": 40,
+    "heat_reduction_instant": 40,
+    "adjacent_distance_threshold": 1.5,
+    "patrol_stuck_threshold": 3,
+    "max_movement_queue_size": 3,
+    "pathfinding_timeout_attempts": 100,
+    "enhanced_vision_bonus": 2,
+    "enemy_detection_alert_to_hostile": 3,
+    "enemy_detection_continuous_hostile": 0.3,
+    "enemy_memory_turns": 20
   },
   "colors": {
     "basic": {
