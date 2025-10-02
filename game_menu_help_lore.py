@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Help and Lore Menus - Split from game_menus.py
+Help and Lore Menus
 Contains HelpMenu and LoreMenu classes for game information and story fragments.
 """
 

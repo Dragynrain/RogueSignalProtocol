@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Game State Management - Split from RogueSignalProtocol.py
+Game State Management
 Contains MessageLog, GameStateManager, and TurnProcessor classes.
 """
 

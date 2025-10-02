@@ -172,20 +172,31 @@ class SoundManager:
             return
 
         music_path = os.path.join(self.MUSIC_DIRECTORY, filename)
-        pygame.mixer.music.load(music_path)  # Let it fail if file doesn't exist
 
-        # Apply volume multiplier for per-track volume adjustments
-        volume = self.settings.music_volume * self.settings.master_volume * volume_multiplier
-        pygame.mixer.music.set_volume(min(1.0, volume))  # Cap at 1.0
+        # Check if file exists first
+        if not os.path.exists(music_path):
+            logging.warning(f"Music file not found: {music_path}")
+            return
 
-        if fade_in_ms > 0:
-            pygame.mixer.music.play(loops, fade_ms=fade_in_ms)
-        else:
-            pygame.mixer.music.play(loops)
+        try:
+            pygame.mixer.music.load(music_path)
 
-        self.current_music = filename
-        self.music_playing = True
-        logging.info(f"Playing music: {filename} (volume: {volume:.2f})")
+            # Apply volume multiplier for per-track volume adjustments
+            volume = self.settings.music_volume * self.settings.master_volume * volume_multiplier
+            pygame.mixer.music.set_volume(min(1.0, volume))  # Cap at 1.0
+
+            if fade_in_ms > 0:
+                pygame.mixer.music.play(loops, fade_ms=fade_in_ms)
+            else:
+                pygame.mixer.music.play(loops)
+
+            self.current_music = filename
+            self.music_playing = True
+            logging.info(f"Playing music: {filename} (volume: {volume:.2f})")
+        except Exception as e:
+            logging.error(f"Failed to play music {filename}: {e}")
+            self.current_music = None
+            self.music_playing = False
     
     def stop_music(self, fade_out_ms: int = 0):
         """Stop background music"""
