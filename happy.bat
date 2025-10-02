@@ -1,1 +1,0 @@
-happy --claude-arg --dangerously-skip-permissions
