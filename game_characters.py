@@ -801,19 +801,25 @@ class Enemy:
         try:
             # Create cost map
             cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
-            
+
             # Set up pathfinder
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
             pathfinder.add_root((self.x, self.y))
-            
+
             # Calculate path
             path = pathfinder.path_to((target.x, target.y))
-            
-            # Log only critical pathfinding failures
+
+            # If we can't reach the target directly, find the closest accessible position
             if len(path) == 0:
-                logging.warning(f"Enemy {self.type_data.name} could not find path to target ({target.x}, {target.y})")
-            
+                closest_position = self._find_closest_accessible_position(target, pathfinder, game_map, game_engine)
+                if closest_position:
+                    path = pathfinder.path_to((closest_position.x, closest_position.y))
+                    logging.debug(f"Enemy {self.type_data.name} path blocked, moving to closest position instead")
+
+                if len(path) == 0:
+                    logging.warning(f"Enemy {self.type_data.name} could not find any path to target area")
+
             # Add up to 3 moves from the path, but stop if we'd be adjacent to target
             for i in range(1, min(len(path), 4)):  # Skip current position, take next 3
                 x, y = path[i]
@@ -826,12 +832,32 @@ class Enemy:
                     if (target and next_pos.is_adjacent_to(target) and
                         target == game_engine.player.position):
                         break
-                    
+
         except Exception as e:
             # If pathfinding fails, fall back to random movement
             logging.error(f"Enemy {self.type_data.name} pathfinding failed: {e}")
             self._generate_random_queue(game_map, game_engine)
     
+    def _find_closest_accessible_position(self, target: Position, pathfinder, game_map, game_engine) -> Optional[Position]:
+        """Find the closest position to target that is accessible via pathfinding."""
+        # Search in expanding rings around the target
+        for radius in range(1, 8):  # Search up to 8 tiles away
+            # Check all positions at this radius from the target
+            for dx in range(-radius, radius + 1):
+                for dy in range(-radius, radius + 1):
+                    # Only check positions on the perimeter of this radius
+                    if abs(dx) != radius and abs(dy) != radius:
+                        continue
+
+                    candidate_pos = Position(target.x + dx, target.y + dy)
+
+                    # Check if this position is valid and accessible
+                    if (self._is_valid_enemy_move(candidate_pos, game_map, game_engine) and
+                        len(pathfinder.path_to((candidate_pos.x, candidate_pos.y))) > 0):
+                        return candidate_pos
+
+        return None
+
     def _generate_random_queue(self, game_map, game_engine):
         """Generate 3 random valid moves."""
         directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]

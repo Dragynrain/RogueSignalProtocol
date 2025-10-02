@@ -212,9 +212,7 @@ class GameEngine:
             if hasattr(enemy, 'move_cooldown'):
                 if enemy.move_cooldown > 0:
                     enemy.move_cooldown -= 1
-            if hasattr(enemy, 'disabled_turns'):
-                if enemy.disabled_turns > 0:
-                    enemy.disabled_turns -= 1
+            # Note: disabled_turns is decremented in the enemy's move() method to avoid double-decrementing
 
     def _process_enemies_turn(self):
         """Process enemies turn (plural) - for backward compatibility."""
@@ -743,9 +741,13 @@ class GameEngine:
             old_detection = self.player.detection
             self.player.detection = max(0, self.player.detection - reduction_amount)
             actual_reduction = old_detection - self.player.detection
-            self.message_log.add_message(f"Ghost node: Detection reduced by {actual_reduction:.1f}")
-            if should_play_sound:
-                self.sound_manager.play_sound("node_activate")
+
+            # Only show message when first stepping on the node or when there's actual reduction
+            if (self.last_node_position != self.player.position or
+                (self.last_node_position == self.player.position and actual_reduction > 0)):
+                self.message_log.add_message(f"Ghost node: Detection reduced by {actual_reduction:.1f}")
+                if should_play_sound:
+                    self.sound_manager.play_sound("node_activate")
         
         # Code hack
         if player_pos in self.game_map.code_hacks:
