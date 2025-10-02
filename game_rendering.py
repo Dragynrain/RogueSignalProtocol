@@ -1017,8 +1017,9 @@ class MapRenderer:
             # Position 9 = ○ for permanent upgrades (different colors)  
             render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[9]), fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.story_fragments:
-            # Position 14 = ♫ (double music note) for lore scraps
-            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[14]), fg=Colors.CYAN, bg=Colors.BLACK)
+            # Position 14 = ♫ (double music note) for lore scraps with cycling colors
+            fragment_color = self._get_story_fragment_color(game.turn)
+            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[14]), fg=fragment_color, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             # Position 8 = ◘ (inverse bullet) for shadows
             render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(80, 40, 120), bg=Colors.BLACK)
@@ -1079,7 +1080,36 @@ class MapRenderer:
             'BRIGHT_CYAN': Colors.CYAN
         }
         return color_map.get(color_name, Colors.WHITE)
-    
+
+    def _get_story_fragment_color(self, turn: int) -> Tuple[int, int, int]:
+        """Get cycling color for story fragment based on game turn."""
+        import math
+
+        # Define our cyberpunk color palette for cycling
+        cyberpunk_colors = [
+            Colors.ELECTRIC_BLUE,    # Electric blue
+            Colors.ELECTRIC_PURPLE,  # Electric purple
+            Colors.ACID_GREEN,       # Acid green
+            Colors.YELLOW,           # Golden yellow
+            Colors.CRIMSON,          # Crimson red
+            Colors.CYAN,             # Cyan
+            Colors.VIOLET,           # Violet
+            Colors.EMERALD           # Emerald green
+        ]
+
+        # Cycle through colors every 5 turns for a nice pulsing effect
+        color_index = (turn // 5) % len(cyberpunk_colors)
+        base_color = cyberpunk_colors[color_index]
+
+        # Add a subtle brightness pulse within each color phase
+        pulse_phase = (turn % 5) / 5.0
+        pulse_intensity = 0.7 + 0.3 * math.sin(pulse_phase * 2 * math.pi)
+
+        # Apply the pulse to the color brightness
+        pulsed_color = tuple(int(c * pulse_intensity) for c in base_color)
+
+        return pulsed_color
+
     def _render_vision_overlays(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
         """Render enemy vision range overlays."""
         if game.player.is_invisible():
