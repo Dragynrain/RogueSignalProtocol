@@ -78,7 +78,7 @@ class CodeHack(InventoryItem):
         
         elif effect_key == 'reduce_heat':
             old_heat = player.heat
-            player.heat = max(0, player.heat - GameBalance.HEAT_REDUCTION_INSTANT)
+            player.heat = max(0, player.heat - 25)  # Use direct value to avoid property issue
             actual_reduction = old_heat - player.heat
             game.message_log.add_message(f"Heat reduced: -{actual_reduction}°C")
         

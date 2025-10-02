@@ -39,6 +39,9 @@ class TestAudioStoryIntegration(unittest.TestCase):
 
     def test_story_fragment_discovery_triggers_audio(self):
         """Test that discovering story fragments triggers appropriate audio feedback."""
+        # Reset story fragment manager to clean state
+        self.engine.story_fragment_manager.discovered_fragments = []
+
         # Place a story fragment
         from game_inventory import StoryFragment
         fragment = StoryFragment(0)
@@ -103,8 +106,9 @@ class TestAudioStoryIntegration(unittest.TestCase):
 
     def test_story_manager_persistence_with_audio_cues(self):
         """Test that story manager persistence works correctly with audio system."""
-        # Create story manager
+        # Create story manager and reset to clean state
         story_manager = StoryFragmentManager()
+        story_manager.discovered_fragments = []
 
         # Discover fragments and check audio integration
         with patch.object(self.engine.sound_manager, 'play_sound') as mock_play_sound:

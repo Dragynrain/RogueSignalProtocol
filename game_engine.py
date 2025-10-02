@@ -70,6 +70,8 @@ class GameEngine:
         self.game_map = game_map or GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
         self.level_generator = level_generator or LevelGenerator(self.game_map)
         self.enemy_manager = enemy_manager or EnemyManager(self.game_map, None)  # Will set message_log below
+        # ExploitSystem will be initialized after self is fully constructed
+        self._exploit_system_param = exploit_system
         self.sound_manager = sound_manager or SoundManager(settings)
 
         # Initialize core game objects
@@ -121,6 +123,9 @@ class GameEngine:
 
         # Initialize save/load manager
         self.save_load_manager = GameSaveLoadManager(self)
+
+        # Initialize ExploitSystem after game engine is mostly constructed
+        self.exploit_system = self._exploit_system_param or ExploitSystem(self)
 
         # Initialize game state
         if load_save:
@@ -231,6 +236,10 @@ class GameEngine:
     def _generate_procedural_level(self):
         """Generate procedural level - for backward compatibility."""
         self.level_coordinator.generate_procedural_level()
+
+    def _update_enemy_awareness(self):
+        """Update enemy awareness - for backward compatibility."""
+        self.turn_manager._update_enemy_awareness()
 
     def auto_save(self) -> None:
         """Auto-save the current game state."""

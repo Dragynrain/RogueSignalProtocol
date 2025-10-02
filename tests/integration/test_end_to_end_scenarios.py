@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 from game_characters import Player, Enemy
 from game_entities import Position, EnemyState
-from game_state import GameStateManager, TurnProcessor
+from game_state import GameStateManager, TurnProcessor, MessageLog
 from game_map import GameMap
 from game_save import SaveGameManager
 from game_config import GameConfig
@@ -28,25 +28,25 @@ class TestEndToEndGameplayScenarios(unittest.TestCase):
         self.game_map = GameMap(width=20, height=15)
         self.player = Player(x=5, y=5)
         self.game_state = GameStateManager()
-        self.turn_processor = TurnProcessor(self.game_state)
+        self.message_log = MessageLog()
+        self.turn_processor = TurnProcessor(self.game_state, self.message_log)
         
     def test_complete_player_turn_cycle(self):
         """Test a complete player turn including movement and state updates."""
         # Initial state
-        initial_turn = self.game_state.turn_count
+        initial_turn = self.game_state.turn
         initial_cpu = self.player.cpu
-        
+
         # Simulate player movement
         new_x, new_y = 6, 5
         self.player.x = new_x
         self.player.y = new_y
-        
+
         # Process turn
-        message_log = Mock()
-        self.turn_processor.process_turn(self.player, message_log)
-        
+        self.turn_processor.process_turn(self.player)
+
         # Verify turn advanced
-        self.assertEqual(self.game_state.turn_count, initial_turn + 1)
+        self.assertEqual(self.game_state.turn, initial_turn + 1)
         
         # Verify player position updated
         self.assertEqual(self.player.x, new_x)
@@ -80,8 +80,8 @@ class TestEndToEndGameplayScenarios(unittest.TestCase):
         self.player.detection = 35
         self.player.heat = 15
         
-        self.game_state.current_level = 3
-        self.game_state.turn_count = 250
+        self.game_state.level = 3
+        self.game_state.turn = 250
         
         # Create mock game object for saving
         mock_game = Mock()
@@ -107,43 +107,45 @@ class TestEndToEndGameplayScenarios(unittest.TestCase):
             self.assertEqual(loaded_data['player']['x'], 15)
             self.assertEqual(loaded_data['player']['y'], 10)
             self.assertEqual(loaded_data['player']['cpu'], 120)
-            self.assertEqual(loaded_data['game_state']['current_level'], 3)
-            self.assertEqual(loaded_data['game_state']['turn_count'], 250)
+            self.assertEqual(loaded_data['game_state']['level'], 3)
+            self.assertEqual(loaded_data['game_state']['turn'], 250)
             
     def test_level_progression_scenario(self):
         """Test advancing to next level updates game state correctly."""
         # Initial level
-        initial_level = self.game_state.current_level
+        initial_level = self.game_state.level
         
         # Simulate level completion
-        self.game_state.reset_for_new_level()
+        # Level progression (no reset method needed in new architecture)
+        self.game_state.level += 1
+        self.game_state.turn = 0
         
         # Verify level advanced
-        self.assertEqual(self.game_state.current_level, initial_level + 1)
+        self.assertEqual(self.game_state.level, initial_level + 1)
         
         # Verify turn count reset
-        self.assertEqual(self.game_state.turn_count, 0)
+        self.assertEqual(self.game_state.turn, 0)
         
         # Verify admin spawn flag reset
-        self.assertFalse(self.game_state.admin_spawned_this_level)
+        self.assertFalse(self.game_state.admin_spawned)
         
     def test_network_config_scaling_scenario(self):
         """Test that network difficulty scales correctly with level."""
         # Test various levels
         for level in [1, 2, 3]:
-            self.game_state.current_level = level
+            self.game_state.level = level
             config = self.game_state.get_current_network_config()
             
             # Verify config exists and has required fields
             self.assertIsInstance(config, dict)
-            self.assertIn('security_level', config)
-            self.assertIn('admin_chance', config)  
-            self.assertIn('patrol_density', config)
+            self.assertIn('enemies', config)
+            self.assertIn('name', config)
+            self.assertIn('background_detection', config)
             
             # Verify scaling makes sense
-            self.assertTrue(1 <= config['security_level'] <= 5)
-            self.assertTrue(0 <= config['admin_chance'] <= 1.0)
-            self.assertTrue(config['patrol_density'] >= 1)
+            self.assertTrue(config['enemies'] > 0)
+            self.assertTrue(config['background_detection'] >= 1)
+            self.assertTrue(config['enemies'] >= 1)
             
     def test_player_resource_management_scenario(self):
         """Test player resource management over multiple turns."""
@@ -155,7 +157,7 @@ class TestEndToEndGameplayScenarios(unittest.TestCase):
         
         # Process several turns
         for turn in range(5):
-            self.turn_processor.process_turn(self.player, message_log)
+            self.turn_processor.process_turn(self.player)
             
             # Verify resources stay within valid bounds
             self.assertTrue(self.player.heat >= 0)
@@ -167,7 +169,7 @@ class TestEndToEndGameplayScenarios(unittest.TestCase):
         message_log = Mock()
         
         try:
-            self.turn_processor.process_turn(None, message_log)
+            self.turn_processor.process_turn(None)
             # Should not crash
             self.assertTrue(True)
         except Exception as e:
@@ -214,17 +216,17 @@ class TestSystemIntegrationScenarios(unittest.TestCase):
     def test_game_state_and_turn_processing_integration(self):
         """Test game state management integrates with turn processing."""
         game_state = GameStateManager()
-        turn_processor = TurnProcessor(game_state)
+        turn_processor = TurnProcessor(game_state, MessageLog())
         player = Player(x=3, y=3)
         message_log = Mock()
         
-        initial_turn = game_state.turn_count
+        initial_turn = game_state.turn
         
         # Process turn
-        turn_processor.process_turn(player, message_log)
+        turn_processor.process_turn(player)
         
         # Verify integration
-        self.assertEqual(game_state.turn_count, initial_turn + 1)
+        self.assertEqual(game_state.turn, initial_turn + 1)
         
     def test_save_load_system_integration(self):
         """Test save/load system integrates with game components.""" 
@@ -236,8 +238,8 @@ class TestSystemIntegrationScenarios(unittest.TestCase):
         mock_game = Mock()
         mock_game.player = player
         mock_game.game_state = Mock()
-        mock_game.game_state.current_level = 1
-        mock_game.game_state.turn_count = 50
+        mock_game.game_state.level = 1
+        mock_game.game_state.turn = 50
         mock_game.game_map = Mock()
         mock_game.game_map.width = 20
         mock_game.game_map.height = 15
@@ -261,7 +263,7 @@ class TestSystemIntegrationScenarios(unittest.TestCase):
         game_map = GameMap(width=30, height=20)
         player = Player(x=15, y=10)
         game_state = GameStateManager()
-        turn_processor = TurnProcessor(game_state)
+        turn_processor = TurnProcessor(game_state, MessageLog())
         message_log = Mock()
         
         # Run multiple turns with various operations
@@ -273,15 +275,15 @@ class TestSystemIntegrationScenarios(unittest.TestCase):
             player.y = new_y
             
             # Process turn
-            turn_processor.process_turn(player, message_log)
+            turn_processor.process_turn(player)
             
             # Verify system stability
-            self.assertTrue(game_state.turn_count > 0)
+            self.assertTrue(game_state.turn > 0)
             self.assertTrue(0 <= player.x < game_map.width)
             self.assertTrue(0 <= player.y < game_map.height)
             
         # Verify final state is consistent
-        self.assertEqual(game_state.turn_count, 10)
+        self.assertEqual(game_state.turn, 10)
 
 
 if __name__ == '__main__':

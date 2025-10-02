@@ -216,8 +216,7 @@ class GameTurnManager:
             actual_reduction = old_detection - self.game_engine.player.detection
 
             # Only show message when first stepping on the node or when there's actual reduction
-            if (self.game_engine.last_node_position != self.game_engine.player.position or
-                (self.game_engine.last_node_position == self.game_engine.player.position and actual_reduction > 0)):
+            if (should_play_sound or actual_reduction > 0):
                 self.game_engine.message_log.add_message(f"Ghost node: Detection reduced by {actual_reduction:.1f}")
                 if should_play_sound:
                     self.game_engine.sound_manager.play_sound("node_activate")

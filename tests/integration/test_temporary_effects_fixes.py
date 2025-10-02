@@ -106,7 +106,7 @@ class TestTemporaryEffectsDecayFixes(unittest.TestCase):
         enemy.disabled_turns = 0  # Should be 0 after 4 turns
         # Reset position and try to move
         enemy.x, enemy.y = 10, 10
-        self.engine.game_map.tiles.fill(0)  # Clear floor for movement
+        self.engine.game_map.walls.clear()  # Clear walls for movement
         result = enemy.move(self.engine.game_map, self.player, self.engine)
         # This should succeed (return True) if enemy has valid moves in queue
         # Or False if no valid moves, but disabled_turns should be 0
