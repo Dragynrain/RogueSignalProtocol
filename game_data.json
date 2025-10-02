@@ -310,7 +310,9 @@
       "patrol_stuck_threshold": 3,
       "noise_maker_duration": 8,
       "distraction_radius": 10,
-      "admin_spawn_cooldown": 3
+      "admin_spawn_cooldown": 3,
+      "enemy_detection_alert_to_hostile": 1.5,
+      "enemy_detection_continuous_hostile": 0.15
     }
   },
   "item_effects": {

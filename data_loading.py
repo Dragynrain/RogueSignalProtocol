@@ -53,6 +53,12 @@ class DataLoader:
         """Get item effects configuration from game data."""
         game_data = cls.load_game_data()
         return game_data['item_effects']
+
+    @classmethod
+    def get_ai_behavior_config(cls) -> Dict[str, Any]:
+        """Get AI behavior configuration from game data."""
+        game_data = cls.load_game_data()
+        return game_data['balance']['ai_behavior']
     
     @classmethod
     def load_config(cls) -> Dict[str, Any]:
