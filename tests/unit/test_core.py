@@ -229,10 +229,10 @@ class TestCoreGameStateManagerRemoved:
         """Core GameStateManager initializes correctly."""
         core_gsm = GameStateManager()
         
-        assert core_gsm.current_level == 1
-        assert core_gsm.turn_count == 0
+        assert core_gsm.level == 1
+        assert core_gsm.turn == 0
         assert core_gsm.game_paused is False
-        assert core_gsm.admin_spawned_this_level is False
+        assert core_gsm.admin_spawned is False
         assert core_gsm.network_configs == {}
     
     def test_advance_turn_core(self):
@@ -241,19 +241,19 @@ class TestCoreGameStateManagerRemoved:
         
         core_gsm.advance_turn()
         
-        assert core_gsm.turn_count == 1
+        assert core_gsm.turn == 1
     
     def test_reset_for_new_level(self):
         """reset_for_new_level updates level and resets state."""
         core_gsm = GameStateManager()
-        core_gsm.turn_count = 50
-        core_gsm.admin_spawned_this_level = True
+        core_gsm.turn = 50
+        core_gsm.admin_spawned = True
         
         core_gsm.reset_for_new_level()
         
-        assert core_gsm.current_level == 2
-        assert core_gsm.turn_count == 0
-        assert core_gsm.admin_spawned_this_level is False
+        assert core_gsm.level == 2
+        assert core_gsm.turn == 0
+        assert core_gsm.admin_spawned is False
     
     def test_get_current_network_config(self):
         """get_current_network_config generates and caches network configs."""
@@ -273,7 +273,7 @@ class TestCoreGameStateManagerRemoved:
     def test_network_config_scaling(self):
         """Network config scales with level appropriately."""
         core_gsm = GameStateManager()
-        core_gsm.current_level = 5
+        core_gsm.level = 5
         
         config = core_gsm.get_current_network_config()
         
@@ -297,12 +297,12 @@ class TestCoreGameStateManagerRemoved:
             result = core_gsm.should_spawn_admin()
             
             assert result is True
-            assert core_gsm.admin_spawned_this_level is True
+            assert core_gsm.admin_spawned is True
     
     def test_should_spawn_admin_prevents_double_spawn(self):
         """should_spawn_admin prevents spawning admin twice per level."""
         core_gsm = GameStateManager()
-        core_gsm.admin_spawned_this_level = True
+        core_gsm.admin_spawned = True
         
         result = core_gsm.should_spawn_admin()
         
@@ -320,7 +320,7 @@ class TestCoreGameStateManagerRemoved:
             result = core_gsm.should_spawn_admin()
             
             assert result is False
-            assert core_gsm.admin_spawned_this_level is False
+            assert core_gsm.admin_spawned is False
 
 
 class TestTurnProcessor:
@@ -487,15 +487,15 @@ class TestCoreTurnProcessorRemoved:
              patch.object(core_processor, '_process_temporary_effects') as mock_effects, \
              patch.object(core_processor, '_process_detection_increase') as mock_detection:
             
-            core_processor.process_turn(mock_player, mock_message_log)
-            
+            core_processor.process_turn(mock_player)
+
             # Should advance game state
-            assert core_gsm.turn_count == 1
-            
+            assert core_gsm.turn == 1
+
             # Should call all processing methods
-            mock_heat.assert_called_once_with(mock_player, mock_message_log)
-            mock_effects.assert_called_once_with(mock_player, mock_message_log)
-            mock_detection.assert_called_once_with(mock_player, mock_message_log)
+            mock_heat.assert_called_once_with(mock_player)
+            mock_effects.assert_called_once_with(mock_player)
+            mock_detection.assert_called_once_with(mock_player)
 
 
 class TestGameLogicIntegration:
