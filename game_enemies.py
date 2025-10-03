@@ -37,12 +37,11 @@ class EnemyManager:
         if enemy.type == 'patrol':
             enemy.patrol_points = self._generate_patrol_route(position)
         elif enemy.type == 'virus':
-            # Give virus enemies random movement types for variety
-            virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.PATROL, EnemyMovement.SEEK]
-            virus_movement_weights = [2, 3, 2, 2]  # Equal chance for each movement type
-            chosen_movement = random.choices(virus_movement_types, weights=virus_movement_weights)[0]
+            # Virus enemies mimic other infected enemies - randomly pick base movement type
+            virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.PATROL]
+            chosen_movement = random.choice(virus_movement_types)
             enemy.type_data.movement = chosen_movement
-            
+
             # Generate patrol route if virus got PATROL movement
             if chosen_movement == EnemyMovement.PATROL:
                 enemy.patrol_points = self._generate_patrol_route(position)

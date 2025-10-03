@@ -40,7 +40,7 @@
       "symbol": "H",
       "cpu": 50,
       "vision": 6,
-      "movement": "SEEK",
+      "movement": "RANDOM",
       "name": "Hunter",
       "damage": 22,
       "description": "Elite threat - good vision, high damage"
@@ -49,7 +49,7 @@
       "symbol": "V",
       "cpu": 35,
       "vision": 4,
-      "movement": "SEEK",
+      "movement": "RANDOM",
       "name": "Virus",
       "damage": 0,
       "description": "No direct damage - applies virus effect instead"

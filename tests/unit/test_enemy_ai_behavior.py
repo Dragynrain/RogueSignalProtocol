@@ -108,35 +108,37 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
                     mock_gen.assert_called_once()
     
     def test_seek_movement_targets_visible_player(self):
-        """SEEK enemies target player when they can see them."""
+        """SEEK enemies target player when HOSTILE and can see them."""
         with patch('game_data.GameData.ENEMY_TYPES', {
             'seek_test': Mock(movement=EnemyMovement.SEEK, cpu=50, vision=10, damage=10)
         }):
             with patch('game_characters.create_pathfinding_cost_map', mock_create_pathfinding_cost_map):
                 enemy = Enemy(Position(5, 5), "seek_test")
-                
+                enemy.state = EnemyState.HOSTILE  # SEEK only works when hostile
+
                 # Mock enemy can see player
                 with patch.object(enemy, 'can_see_player', return_value=True):
                     with patch.object(enemy, '_generate_pathfinding_queue') as mock_path:
                         enemy.move(self.mock_game_map, self.player, self.mock_game)
-                        
+
                         # Should attempt pathfinding to player
                         mock_path.assert_called_once_with(self.player.position, self.mock_game_map, self.mock_game)
     
     def test_track_movement_remembers_last_position(self):
-        """TRACK enemies remember and pursue last seen player position."""
+        """TRACK enemies remember and pursue last seen player position when HOSTILE."""
         with patch('game_data.GameData.ENEMY_TYPES', {
             'track_test': Mock(movement=EnemyMovement.TRACK, cpu=50, vision=10, damage=10)
         }):
             with patch('game_characters.create_pathfinding_cost_map', mock_create_pathfinding_cost_map):
                 enemy = Enemy(Position(5, 5), "track_test")
+                enemy.state = EnemyState.HOSTILE  # TRACK only works when hostile
                 enemy.last_seen_player = Position(15, 15)
-                
+
                 # Mock enemy cannot see player currently
                 with patch.object(enemy, 'can_see_player', return_value=False):
                     with patch.object(enemy, '_generate_pathfinding_queue') as mock_path:
                         enemy.move(self.mock_game_map, self.player, self.mock_game)
-                        
+
                         # Should pathfind to last known position
                         mock_path.assert_called_once_with(Position(15, 15), self.mock_game_map, self.mock_game)
     
