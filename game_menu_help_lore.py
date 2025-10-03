@@ -192,16 +192,15 @@ class HelpMenu:
         return [
             ("OBJECTIVE:", Colors.CYAN),
             ("  Navigate network levels using stealth", Colors.WHITE),
-            ("  Reach the gateway (>) to advance", Colors.WHITE),
+            ("  Reach the gateway (>) to advance", Colors.GATEWAY),
             ("  Avoid detection by enemies and Admin Avatar", Colors.WHITE),
             ("  Collect codes, exploits, and upgrades", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("MOVEMENT & CONTROLS:", Colors.CYAN),
             ("  Arrow Keys, WASD, or Numpad: Move/Navigate", Colors.WHITE),
-            ("  1-9: Use loaded exploits (requires targeting)", Colors.WHITE),
+            ("  1-5: Use loaded exploits (requires targeting)", Colors.WHITE),
             ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
-            ("  Tab: Toggle vision overlays", Colors.WHITE),
             ("  L: View discovered lore fragments", Colors.WHITE),
             ("  ESC: Pause menu / Close screens", Colors.WHITE),
             ("", Colors.WHITE),
@@ -258,7 +257,6 @@ class HelpMenu:
             ("  Log Wiper: Reduce detection level (-30%)", Colors.WHITE),
             ("  Antivirus: Purges negative status effects (virus, slow)", Colors.WHITE),
             ("  Memory Leak: 3x3 area makes enemies forget player location", Colors.WHITE),
-            ("  Port Scan: Reveals all special nodes (♥♦♠) on the map", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("STATUS EFFECTS:", Colors.CYAN),

@@ -288,15 +288,16 @@ class MainMenu:
     
     def _render_menu_title(self, console: tcod.console.Console, box: dict) -> None:
         """Render the main menu title and decorations."""
-        title = "ROGUE SIGNAL PROTOCOL"
+        title = "ROGUE SIGNAL PROTOCOL - Version 0.8.0 Alpha"
         subtitle = "Cyberpunk Stealth Exfiltration"
         
         if box['use_background_layout']:
             # Title content within narrow box - split into multiple lines to fit
             render_char_safe(console, box['center_x'] - 10, 6, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
-            # Split title into two lines
-            render_char_safe(console, box['center_x'] - 6, 8, "ROGUE SIGNAL", fg=Colors.CYAN, bg=Colors.BLACK)
-            render_char_safe(console, box['center_x'] - 4, 9, "PROTOCOL", fg=Colors.CYAN, bg=Colors.BLACK)
+            # Split title into multiple lines
+            render_char_safe(console, box['center_x'] - 6, 7, "ROGUE SIGNAL", fg=Colors.CYAN, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 4, 8, "PROTOCOL", fg=Colors.CYAN, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 7, 9, "Version 0.8.0 Alpha", fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
             # Split subtitle into two lines
             render_char_safe(console, box['center_x'] - 8, 11, "Cyberpunk Stealth", fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, box['center_x'] - 6, 12, "Exfiltration", fg=Colors.CYAN, bg=Colors.BLACK)
@@ -310,7 +311,7 @@ class MainMenu:
     
     def _render_version_info(self, console: tcod.console.Console, box: dict) -> None:
         """Render version and build information."""
-        build_info = "Alpha Build"
+        build_info = "Version 0.8.0 Alpha"
         author_info = "by Adam Forster"
         
         if box['use_background_layout']:
@@ -728,16 +729,15 @@ class HelpMenu:
         return [
             ("OBJECTIVE:", Colors.CYAN),
             ("  Navigate network levels using stealth", Colors.WHITE),
-            ("  Reach the gateway (>) to advance", Colors.WHITE),
+            ("  Reach the gateway (>) to advance", Colors.GATEWAY),
             ("  Avoid detection by enemies and Admin Avatar", Colors.WHITE),
             ("  Collect codes, exploits, and upgrades", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("MOVEMENT & CONTROLS:", Colors.CYAN),
             ("  Arrow Keys, WASD, or Numpad: Move/Navigate", Colors.WHITE),
-            ("  1-9: Use loaded exploits (requires targeting)", Colors.WHITE),
+            ("  1-5: Use loaded exploits (requires targeting)", Colors.WHITE),
             ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
-            ("  Tab: Toggle vision overlays", Colors.WHITE),
             ("  L: View discovered lore fragments", Colors.WHITE),
             ("  ESC: Pause menu / Close screens", Colors.WHITE),
             ("", Colors.WHITE),
@@ -794,7 +794,6 @@ class HelpMenu:
             ("  Log Wiper: Reduce detection level (-30%)", Colors.WHITE),
             ("  Antivirus: Purges negative status effects (virus, slow)", Colors.WHITE),
             ("  Memory Leak: 3x3 area makes enemies forget player location", Colors.WHITE),
-            ("  Port Scan: Reveals all special nodes (♥♦♠) on the map", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("STATUS EFFECTS:", Colors.CYAN),

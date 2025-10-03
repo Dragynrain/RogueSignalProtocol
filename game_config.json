@@ -196,7 +196,7 @@
     }
   },
   "welcome_messages": [
-    "Welcome to Rogue Signal Protocol v1.0!",
+    "Welcome to Rogue Signal Protocol v0.8.0 Alpha!",
     "Enhanced Edition with sound, settings, and story fragments",
     "Navigate using stealth",
     "Reach the gateway (>)",
@@ -205,7 +205,7 @@
     "Starting Corporate Network infiltration..."
   ],
   "metadata": {
-    "version": "1.0",
+    "version": "0.8.0 Alpha",
     "description": "Consolidated configuration for Rogue Signal Protocol",
     "last_updated": "2025-01-01"
   }

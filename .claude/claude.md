@@ -283,6 +283,12 @@ def test_bug_player_stuck_in_wall():
 - Prioritize readability and simplicity over complex design patterns
 - When refactoring, extract and reorganize existing code rather than creating parallel systems
 
+## Build and Distribution
+- **KEEP build/ and dist/ folders** - These contain packaged game distributions for public releases
+- build/ contains PyInstaller build artifacts and executable files
+- dist/ contains final distribution packages (.exe, .zip files)
+- These folders are essential for game deployment and should not be deleted
+
 ## Git Commit Guidelines
 - **NEVER use Co-Authored-By**: Do not include "Co-Authored-By: Claude <noreply@anthropic.com>" in commit messages
 - **NEVER use Claude Code attribution**: Do not include "🤖 Generated with [Claude Code](https://claude.ai/code)" in commit messages

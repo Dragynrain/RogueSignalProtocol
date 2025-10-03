@@ -20,7 +20,7 @@ class StoryFragmentManager:
         if not self.progress_data:
             self.progress_data = {
                 "discovered_story_fragments": [],
-                "version": "dev"
+                "version": "0.8.0 Alpha"
             }
         self.discovered_fragments: List[int] = self.progress_data.get("discovered_story_fragments", [])
     

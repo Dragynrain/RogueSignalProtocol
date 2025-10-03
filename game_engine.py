@@ -516,7 +516,7 @@ class GameEngine:
         from game_characters import Enemy
 
         return {
-            "version": "dev",
+            "version": "0.8.0 Alpha",
             "timestamp": time.time(),
 
             # Game state
