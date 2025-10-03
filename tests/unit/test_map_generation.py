@@ -177,18 +177,16 @@ class TestRoomGeneration(TestMapGeneration):
     
     def test_spawn_room_generation(self):
         """Spawn room is generated in correct area."""
-        spawn_room = self.level_generator._generate_spawn_room()
+        # Spawn room is now hardcoded at (2, 2, 8, 8)
+        rooms = self.level_generator._create_varied_rooms(1)
+        spawn_room = rooms[0]
         x, y, width, height = spawn_room
-        
-        # Spawn room should be in top-left area
-        assert x >= 0 and x <= 4
-        assert y >= 0 and y <= 4
-        assert width >= 6 and width <= 10
-        assert height >= 6 and height <= 10
-        
-        # Room should not extend too far
-        assert x + width <= 10
-        assert y + height <= 10
+
+        # Spawn room should be at fixed location
+        assert x == 2
+        assert y == 2
+        assert width == 8
+        assert height == 8
     
     def test_varied_rooms_creation(self):
         """Varied rooms creation includes spawn room and avoids overlap."""
@@ -360,9 +358,9 @@ class TestMapConnectivity(TestMapGeneration):
         # Carve the rooms first
         self.level_generator._carve_room(room1)
         self.level_generator._carve_room(room2)
-        
-        # Connect the rooms
-        self.level_generator._connect_two_rooms(room1, room2)
+
+        # Use _create_corridor_between_rooms (the new method)
+        self.level_generator._create_corridor_between_rooms(room1, room2)
         
         # Verify some corridor was created (check that there's a path)
         # This is a basic test - in practice we'd want to verify actual connectivity
@@ -396,13 +394,12 @@ class TestMapConnectivity(TestMapGeneration):
     def test_extra_paths_addition(self):
         """Extra paths add alternative routes."""
         test_rooms = [(5, 5, 5, 5), (15, 15, 5, 5), (25, 25, 5, 5), (35, 35, 5, 5)]
-        
-        # Mock the individual room connection
-        with patch.object(self.level_generator, '_connect_two_rooms') as mock_connect:
+
+        # Mock the corridor creation method
+        with patch.object(self.level_generator, '_create_corridor_between_rooms') as mock_connect:
             self.level_generator._add_extra_paths(test_rooms)
-            
+
             # Should add some additional connections for variety
-            # (Exact count depends on implementation)
             assert mock_connect.call_count >= 0
 
 

@@ -117,36 +117,27 @@ class Player:
         return self.temporary_effects['enhanced_vision_turns'] > 0
     
     def can_see_enemy(self, enemy_target: 'Enemy', game_map) -> bool:
-        """Check if player can see enemy using TCOD FOV system with shadow mechanics."""
+        """Check if player can see enemy."""
         distance = self.position.distance_to(enemy_target.position)
-        
-        # Adjacent enemies should ALWAYS be visible (critical for combat feedback)
-        if distance <= getattr(GameConfig, 'adjacent_visibility_threshold', 1.5):
-            return True
-        
-        # Use enhanced vision system that can see through walls
-        if self.can_see_through_walls():
-            return distance <= self.get_vision_range()
 
-        # Check stealth mechanics first
-        player_in_shadow = game_map.is_shadow(self.position)
-        enemy_in_shadow = game_map.is_shadow(enemy_target.position)
-        
-        # If enemy is in shadow, only visible if player is directly adjacent
-        if enemy_in_shadow and distance > 1:
+        # Adjacent enemies always visible
+        if distance <= 1.5:
+            return True
+
+        # Enhanced vision sees through walls
+        vision_range = self.get_vision_range()
+        if self.can_see_through_walls():
+            return distance <= vision_range
+
+        # Enemies in shadows only visible when adjacent
+        if game_map.is_shadow(enemy_target.position) and distance > 1:
             return False
-        
-        # Calculate effective vision range considering shadows
-        base_vision_range = self.get_vision_range()
-        if player_in_shadow and distance > 1:
-            # Reduce vision range when in shadows
-            reduction_factor = getattr(GameConfig, 'shadow_vision_reduction_factor', 3)
-            effective_vision_range = max(1, base_vision_range // reduction_factor)
-        else:
-            effective_vision_range = base_vision_range
-        
-        # Use TCOD FOV for line of sight calculation
-        return game_map.can_see_position(self.position, enemy_target.position, effective_vision_range)
+
+        # Reduce vision when player is in shadow
+        if game_map.is_shadow(self.position) and distance > 1:
+            vision_range = max(1, vision_range // 3)
+
+        return game_map.can_see_position(self.position, enemy_target.position, vision_range)
     
     @property
     def max_heat(self) -> int:
@@ -257,30 +248,25 @@ class Enemy:
         """Check if enemy can see player."""
         if self.disabled_turns > 0:
             return False
-        
-        # Admin Avatar has perfect tracking - can always see player regardless of conditions
+
+        # Admin always sees player
         if self.type == 'admin':
             return True
-        
-        distance_to_player = self.position.distance_to(player.position)
-        max_vision_range = self.type_data.vision
-        
-        if distance_to_player > max_vision_range:
+
+        # Check basic range
+        distance = self.position.distance_to(player.position)
+        if distance > self.type_data.vision:
             return False
 
-        # Check if player is invisible (data mimic effect)
+        # Invisible players can't be seen
         if player.is_invisible():
             return False
-        
-        # Check for stealth mechanics with shadows
-        is_player_in_shadow = game_map.is_shadow(player.position)
-        
-        # Player in shadow: only visible if enemy is directly adjacent
-        adjacent_threshold = GameBalance.ADJACENT_DISTANCE_THRESHOLD
-        if is_player_in_shadow and distance_to_player > adjacent_threshold:
+
+        # Players in shadows only visible when adjacent
+        if game_map.is_shadow(player.position) and distance > GameBalance.ADJACENT_DISTANCE_THRESHOLD:
             return False
 
-        return game_map.can_see_position(self.position, player.position, max_vision_range)
+        return game_map.can_see_position(self.position, player.position, self.type_data.vision)
     
     def can_attack_player(self, player: Player) -> bool:
         """Check if enemy can attack player (adjacent including diagonally)."""
@@ -305,45 +291,23 @@ class Enemy:
     def attack_player(self, player: Player) -> int:
         """Attack the player and return damage dealt."""
         if self.type == 'virus':
-            # Virus applies virus damage instead of direct damage
-            virus_duration = getattr(GameConfig, 'virus_base_duration', 3)
-            current_virus = player.temporary_effects.get('virus_turns', 0)
-            
-            # Each attack adds to the duration (stacks)
-            player.temporary_effects['virus_turns'] = current_virus + virus_duration
-            
-            # Cap maximum virus duration to prevent infinite stacking
-            max_virus_duration = getattr(GameConfig, 'virus_max_duration', 10)
-            player.temporary_effects['virus_turns'] = min(
-                player.temporary_effects['virus_turns'], 
-                max_virus_duration
-            )
-            
-            return 0  # No immediate damage
-        elif self.type == 'inhibitor':
-            # Inhibitor adds 1 slow turn - offset against any speed boost
-            slow_to_add = 1
-            current_speed = player.temporary_effects['speed_boost_turns']
-            
-            if current_speed > 0:
-                # Cancel speed moves immediately
-                player.speed_moves_remaining = 0
-                
-                if current_speed >= slow_to_add:
-                    # Speed boost absorbs all slow
-                    player.temporary_effects['speed_boost_turns'] = current_speed - slow_to_add
-                else:
-                    # Some slow remains after canceling speed
-                    player.temporary_effects['speed_boost_turns'] = 0
-                    player.temporary_effects['movement_slowed_turns'] = slow_to_add - current_speed
-            else:
-                # No speed boost, add slow normally
-                player.temporary_effects['movement_slowed_turns'] += slow_to_add
-            
-            # Inhibitor only slows, doesn't deal damage
+            virus_turns = player.temporary_effects.get('virus_turns', 0) + 3
+            player.temporary_effects['virus_turns'] = min(virus_turns, 10)
             return 0
-        else:
-            return player.take_damage(self.type_data.damage)
+
+        if self.type == 'inhibitor':
+            player.speed_moves_remaining = 0
+            current_speed = player.temporary_effects['speed_boost_turns']
+            net_effect = current_speed - 1
+
+            if net_effect >= 0:
+                player.temporary_effects['speed_boost_turns'] = net_effect
+            else:
+                player.temporary_effects['speed_boost_turns'] = 0
+                player.temporary_effects['movement_slowed_turns'] = -net_effect
+            return 0
+
+        return player.take_damage(self.type_data.damage)
     
     def take_damage(self, damage: int) -> bool:
         """Take damage and return True if destroyed."""
@@ -383,27 +347,14 @@ class Enemy:
     
     def _should_regenerate_queue(self, game_map, player: Player, game_engine) -> bool:
         """Determine if the movement queue should be regenerated."""
-        # Always regenerate if queue is empty
-        if not self.movement_queue:
+        if not self.movement_queue or self.last_queue_state != self.state:
             return True
-        
-        # Check if enemy state has changed
-        if self.last_queue_state != self.state:
-            return True
-        
-        # For hostile enemies, check if target has changed
+
+        # Check if hostile target changed
         if self.state == EnemyState.HOSTILE:
-            current_target = None
-            if self.can_see_player(player, game_map):
-                current_target = player.position
-            elif self.last_seen_player:
-                current_target = self.last_seen_player
-            
-            if current_target != self.last_queue_target:
-                return True
-        
-        # SEEK/TRACK only matters when hostile (non-hostile SEEK enemies move randomly)
-        
+            current_target = player.position if self.can_see_player(player, game_map) else self.last_seen_player
+            return current_target != self.last_queue_target
+
         return False
 
     def _extend_queue_if_needed(self, game_map, player: Player, game_engine):
@@ -451,47 +402,26 @@ class Enemy:
             self.move_cooldown = 0  # All moving enemies can move next turn
     
     def _needs_full_queue_regeneration(self, player: Player, game_map) -> bool:
-        """
-        Determine if the movement queue needs full regeneration or just extension.
-        
-        Full regeneration is needed when:
-        - Queue is empty
-        - Enemy state changed (e.g., unaware -> alert -> hostile)
-        - Target changed (e.g., different player position, different patrol point)
-        - Patrol enemy reached their current destination
-        """
-        # Empty queue always needs full regeneration
-        if not self.movement_queue:
+        """Check if queue needs full regeneration."""
+        if not self.movement_queue or self.last_queue_state != self.state:
             return True
-        
-        # State change requires full regeneration (behavior might change)
-        if self.last_queue_state != self.state:
-            return True
-        
-        # Determine current target based on enemy state and movement type
+
+        # Get current target
         current_target = None
         if self.state == EnemyState.HOSTILE:
-            if self.can_see_player(player, game_map):
-                current_target = player.position
-            elif self.last_seen_player:
-                current_target = self.last_seen_player
-        # SEEK/TRACK only works when hostile
+            current_target = player.position if self.can_see_player(player, game_map) else self.last_seen_player
         elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
             current_target = self.patrol_points[self.patrol_index]
-        
-        # Only regenerate if target actually changed (not just None -> None)
-        if current_target != self.last_queue_target and not (current_target is None and self.last_queue_target is None):
+
+        # Regenerate if target changed (excluding None->None)
+        if current_target != self.last_queue_target and (current_target or self.last_queue_target):
             return True
-        
-        # For patrol enemies, check if they reached their destination
-        if (self.type_data.movement == EnemyMovement.PATROL and 
-            self.patrol_points and 
-            self.state != EnemyState.HOSTILE):
-            current_patrol_target = self.patrol_points[self.patrol_index]
-            adjacent_threshold = GameBalance.ADJACENT_DISTANCE_THRESHOLD
-            if self.position.distance_to(current_patrol_target) <= adjacent_threshold:
+
+        # Regenerate if patrol enemy reached destination
+        if self.type_data.movement == EnemyMovement.PATROL and self.patrol_points and self.state != EnemyState.HOSTILE:
+            if self.position.distance_to(self.patrol_points[self.patrol_index]) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
                 return True
-        
+
         return False
     
     def _extend_movement_queue(self, target: Optional[Position], use_pathfinding: bool, game_map, game_engine):

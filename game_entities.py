@@ -28,28 +28,19 @@ class ColorManager:
             from data_loading import DataLoader
             config = DataLoader.load_config()
             self._colors = {}
-            
-            # Load all color categories from JSON
             color_config = config.get('colors', {})
-            
-            # Basic colors
-            for name, rgb in color_config.get('basic', {}).items():
-                self._colors[name.upper()] = tuple(rgb)
-            
-            # Game element colors  
-            for name, rgb in color_config.get('game_elements', {}).items():
-                self._colors[name.upper()] = tuple(rgb)
-            
-            # Data code colors
-            for name, rgb in color_config.get('data_codes', {}).items():
-                self._colors[name.upper()] = tuple(rgb)
-            
-            # Enemy state colors
+
+            # Load all categories
+            for category in ['basic', 'game_elements', 'data_codes', 'message_log']:
+                for name, rgb in color_config.get(category, {}).items():
+                    self._colors[name.upper()] = tuple(rgb)
+
+            # Enemy colors
             enemies = color_config.get('enemies', {})
             self._colors['ENEMY_UNAWARE'] = tuple(enemies.get('unaware', [255, 120, 20]))
             self._colors['ENEMY_ALERT'] = tuple(enemies.get('alert', [255, 215, 0]))
             self._colors['ENEMY_HOSTILE'] = tuple(enemies.get('hostile', [220, 20, 60]))
-            
+
             # UI colors
             ui = color_config.get('ui', {})
             self._colors['UI_BG'] = tuple(ui.get('background', [10, 15, 25]))
@@ -57,22 +48,15 @@ class ColorManager:
             self._colors['UI_ACCENT'] = tuple(ui.get('accent', [160, 20, 255]))
             self._colors['UI_HIGHLIGHT'] = tuple(ui.get('highlight', [255, 20, 255]))
             self._colors['ELECTRIC_PURPLE'] = tuple(ui.get('electric_purple', [160, 20, 255]))
-            
-            # Message log colors
-            log_colors = color_config.get('message_log', {})
-            for name, rgb in log_colors.items():
-                self._colors[name.upper()] = tuple(rgb)
-            
-            # Vision overlay colors (derived from enemy colors with darker tint)
+
+            # Derived colors
             self._colors['VISION_UNAWARE'] = self._darken_color(self._colors['ENEMY_UNAWARE'], 0.3)
             self._colors['VISION_ALERT'] = self._darken_color(self._colors['ENEMY_ALERT'], 0.3)
             self._colors['VISION_HOSTILE'] = self._darken_color(self._colors['ENEMY_HOSTILE'], 0.3)
-            
-            # Additional derived colors for compatibility
             self._colors['LOG_BG'] = (8, 12, 20)
             self._colors['LOG_BORDER'] = self._colors['UI_TEXT']
             self._colors['LIGHT_GRAY'] = self._colors.get('LIGHT_GRAY', (160, 170, 190))
-            
+
         except Exception as e:
             import logging
             logging.error(f"Failed to load colors from JSON: {e}")
@@ -80,11 +64,7 @@ class ColorManager:
     
     def _darken_color(self, color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
         """Darken a color by the given factor."""
-        return (
-            int(color[0] * factor),
-            int(color[1] * factor), 
-            int(color[2] * factor)
-        )
+        return tuple(int(c * factor) for c in color)
     
     def _load_fallback_colors(self):
         """Load fallback colors if JSON loading fails."""

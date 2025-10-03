@@ -180,66 +180,61 @@ class ExploitSystem:
         self.game.message_log.add_message(f"Noise: {attracted} enemies attracted")
         return True
     
+    def _damage_enemy(self, enemy, damage: int) -> bool:
+        """Apply damage to enemy and handle elimination/hostility."""
+        if enemy.take_damage(damage):
+            self.game.enemies.remove(enemy)
+            self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
+            self.game.message_log.add_message(f"Eliminated {enemy.type_data.name}")
+        else:
+            self.game.message_log.add_message(f"{enemy.type_data.name} damaged")
+            if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
+                enemy.original_patrol_index = enemy.patrol_index
+            enemy.state = EnemyState.HOSTILE
+            enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
+        return True
+
     def _execute_code_injection(self, target: Position) -> bool:
         """Execute code injection exploit."""
         self.game.sound_manager.play_sound("exploit_code_injection")
-        target_enemy = self.game._get_enemy_at(target)
-        if target_enemy:
-            damage = 35 if target_enemy.type == 'firewall' else 30
-            
-            if target_enemy.take_damage(damage):
-                self.game.enemies.remove(target_enemy)
-                self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
-                self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
-            else:
-                self.game.message_log.add_message(f"{target_enemy.type_data.name} damaged")
-                # Store patrol information for PATROL enemies before becoming hostile
-                if target_enemy.type_data.movement == EnemyMovement.PATROL and target_enemy.patrol_points:
-                    target_enemy.original_patrol_index = target_enemy.patrol_index
-                target_enemy.state = EnemyState.HOSTILE
-                target_enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
-            return True
-        else:
+        enemy = self.game._get_enemy_at(target)
+        if not enemy:
             self.game.message_log.add_message("No target at location")
             return False
-    
+
+        damage = 35 if enemy.type == 'firewall' else 30
+        return self._damage_enemy(enemy, damage)
+
     def _execute_buffer_overflow(self, target: Position) -> bool:
         """Execute buffer overflow exploit."""
         self.game.sound_manager.play_sound("exploit_buffer_overflow")
-        distance = self.game.player.position.distance_to(target)
-        if distance <= 1:
-            target_enemy = self.game._get_enemy_at(target)
-            if target_enemy:
-                damage = 50
-                if target_enemy.take_damage(damage):
-                    self.game.enemies.remove(target_enemy)
-                    self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
-                    self.game.message_log.add_message(f"Eliminated {target_enemy.type_data.name}")
-                else:
-                    self.game.message_log.add_message(f"{target_enemy.type_data.name} damaged")
-                    # Store patrol information for PATROL enemies before becoming hostile
-                    if target_enemy.type_data.movement == EnemyMovement.PATROL and target_enemy.patrol_points:
-                        target_enemy.original_patrol_index = target_enemy.patrol_index
-                    target_enemy.state = EnemyState.HOSTILE
-                    target_enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
-                return True
-            else:
-                self.game.message_log.add_message("No enemy at target")
-        else:
+        if self.game.player.position.distance_to(target) > 1:
             self.game.message_log.add_message("Must target adjacent enemy")
-        return False
+            return False
+
+        enemy = self.game._get_enemy_at(target)
+        if not enemy:
+            self.game.message_log.add_message("No enemy at target")
+            return False
+
+        return self._damage_enemy(enemy, 50)
     
+    def _disable_area_enemies(self, target: Position, radius: int, duration: int) -> int:
+        """Disable enemies in area and return count."""
+        count = 0
+        for enemy in self.game.enemies:
+            if enemy.position.distance_to(target) <= radius:
+                enemy.disabled_turns = duration
+                enemy.state = EnemyState.UNAWARE
+                enemy.alert_timer = 0
+                count += 1
+        return count
+
     def _execute_system_crash(self, target: Position, exploit_range: int) -> bool:
         """Execute system crash exploit."""
         self.game.sound_manager.play_sound("exploit_system_crash")
-        enemies_hit = []
-        for enemy in self.game.enemies[:]:
-            if enemy.position.distance_to(target) <= exploit_range:
-                enemy.disabled_turns = 4
-                enemy.state = EnemyState.UNAWARE
-                enemy.alert_timer = 0
-                enemies_hit.append(enemy)
-        self.game.message_log.add_message(f"System crash: {len(enemies_hit)} disabled")
+        count = self._disable_area_enemies(target, exploit_range, 4)
+        self.game.message_log.add_message(f"System crash: {count} disabled")
         return True
     
     def _execute_threat_scan(self) -> bool:
@@ -302,34 +297,23 @@ class ExploitSystem:
     def _execute_emp_burst(self, target: Position, exploit_range: int) -> bool:
         """Execute EMP burst exploit."""
         self.game.sound_manager.play_sound("exploit_emp_burst")
-        enemies_hit = []
-        for enemy in self.game.enemies[:]:
-            if enemy.position.distance_to(target) <= exploit_range:
-                enemy.disabled_turns = 6
-                enemy.state = EnemyState.UNAWARE
-                enemy.alert_timer = 0
-                enemies_hit.append(enemy)
-        self.game.message_log.add_message(f"EMP: {len(enemies_hit)} disabled")
+        count = self._disable_area_enemies(target, exploit_range, 6)
+        self.game.message_log.add_message(f"EMP: {count} disabled")
         return True
     
     def _execute_memory_leak(self, target: Position) -> bool:
         """Execute memory leak exploit - makes enemies forget they saw the player."""
         self.game.sound_manager.play_sound("exploit_memory_leak")
-        enemies_affected = []
-        
-        # Affect all enemies in 3x3 area (range 1 = adjacent + diagonal)
-        for enemy in self.game.enemies[:]:
+        count = 0
+        for enemy in self.game.enemies:
             if enemy.position.distance_to(target) <= 1:
-                # Reset enemy state and memory
                 enemy.state = EnemyState.UNAWARE
                 enemy.last_seen_player = None
                 enemy.alert_timer = 0
-                enemies_affected.append(enemy)
-        
-        if enemies_affected:
-            self.game.message_log.add_message(f"Memory Leak: {len(enemies_affected)} enemies confused")
-        else:
-            self.game.message_log.add_message("No enemies in range")
+                count += 1
+
+        msg = f"Memory Leak: {count} enemies confused" if count > 0 else "No enemies in range"
+        self.game.message_log.add_message(msg)
         return True
     
     def _execute_network_scan(self) -> bool:

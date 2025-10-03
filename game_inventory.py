@@ -89,51 +89,41 @@ class CodeHack(InventoryItem):
             game.message_log.add_message(f"Trace Level: -{actual_reduction:.1f}%")
         
         elif effect_key == 'speed_boost':
-            current_speed = player.temporary_effects.get('speed_boost_turns', 0)
+            if player.temporary_effects.get('speed_boost_turns', 0) > 0:
+                game.message_log.add_message("Speed boost already active")
+                return True
+
+            speed_to_add = 3
             current_slow = player.temporary_effects.get('movement_slowed_turns', 0)
 
-            if current_speed > 0:
-                game.message_log.add_message("Speed boost already active")
-            else:
-                # New system: 3 enemy turns (6 player turns total - 2 moves per enemy turn)
-                speed_to_add = 3
-
-                if current_slow > 0:
-                    # Offset against existing slow
-                    if speed_to_add >= current_slow:
-                        # Speed boost overcomes all slow
-                        player.temporary_effects['movement_slowed_turns'] = 0
-                        player.temporary_effects['speed_boost_turns'] = speed_to_add - current_slow
-                        game.message_log.add_message(f"Speed boost active ({speed_to_add - current_slow} enemy turns)")
-                        if current_slow > 0:
-                            game.message_log.add_message("Movement inhibition cancelled")
-                    else:
-                        # Slow overcomes all speed boost
-                        player.temporary_effects['speed_boost_turns'] = 0
-                        player.temporary_effects['movement_slowed_turns'] = current_slow - speed_to_add
-                        game.message_log.add_message("Speed boost countered by inhibition")
+            if current_slow > 0:
+                net_speed = speed_to_add - current_slow
+                if net_speed > 0:
+                    player.temporary_effects['movement_slowed_turns'] = 0
+                    player.temporary_effects['speed_boost_turns'] = net_speed
+                    game.message_log.add_message(f"Speed boost active ({net_speed} enemy turns)")
+                    game.message_log.add_message("Movement inhibition cancelled")
                 else:
-                    # No slow, add speed normally
-                    player.temporary_effects['speed_boost_turns'] = speed_to_add
-                    game.message_log.add_message(f"Speed boost active ({speed_to_add} enemy turns)")
+                    player.temporary_effects['speed_boost_turns'] = 0
+                    player.temporary_effects['movement_slowed_turns'] = -net_speed
+                    game.message_log.add_message("Speed boost countered by inhibition")
+            else:
+                player.temporary_effects['speed_boost_turns'] = speed_to_add
+                game.message_log.add_message(f"Speed boost active ({speed_to_add} enemy turns)")
         
         elif effect_key == 'enhanced_vision':
-            current_turns = player.temporary_effects.get('enhanced_vision_turns', 0)
-            new_turns = max(current_turns + 5, 5)  # Add 5 turns, minimum 5
+            current = player.temporary_effects.get('enhanced_vision_turns', 0)
+            new_turns = max(current + 5, 5)
             player.temporary_effects['enhanced_vision_turns'] = new_turns
-            if current_turns > 0:
-                game.message_log.add_message(f"Enhanced vision extended ({new_turns} turns)")
-            else:
-                game.message_log.add_message("Enhanced vision active (5 turns)")
-        
+            msg = f"Enhanced vision extended ({new_turns} turns)" if current > 0 else "Enhanced vision active (5 turns)"
+            game.message_log.add_message(msg)
+
         elif effect_key == 'exploit_efficiency':
-            current_turns = player.temporary_effects.get('exploit_efficiency_turns', 0)
-            new_turns = max(current_turns + 8, 8)  # Add 8 turns, minimum 8
+            current = player.temporary_effects.get('exploit_efficiency_turns', 0)
+            new_turns = max(current + 8, 8)
             player.temporary_effects['exploit_efficiency_turns'] = new_turns
-            if current_turns > 0:
-                game.message_log.add_message(f"Exploit efficiency extended ({new_turns} turns)")
-            else:
-                game.message_log.add_message("Exploit efficiency active (8 turns)")
+            msg = f"Exploit efficiency extended ({new_turns} turns)" if current > 0 else "Exploit efficiency active (8 turns)"
+            game.message_log.add_message(msg)
         
         return True
 

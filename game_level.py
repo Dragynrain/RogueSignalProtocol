@@ -84,17 +84,10 @@ class LevelGenerator:
     
     def _create_varied_rooms(self, level: int) -> List[Tuple[int, int, int, int]]:
         """Create varied rooms including a guaranteed spawn room in top-left corner."""
-        rooms = []
-        
-        # First, create the spawn room in the top-left corner (always safe and empty)
-        spawn_room = (2, 2, 8, 8)  # Position (2,2) with size 8x8 for a safe spawn area
-        rooms.append(spawn_room)
+        spawn_room = (2, 2, 8, 8)
         self._carve_room(spawn_room)
-        
-        # Generate remaining rooms using the existing logic
-        remaining_rooms = self._generate_rooms_avoiding_existing(level, [spawn_room])
-        rooms.extend(remaining_rooms)
-        
+        rooms = [spawn_room]
+        rooms.extend(self._generate_rooms_avoiding_existing(level, [spawn_room]))
         return rooms
     
     def _carve_room(self, room: Tuple[int, int, int, int]) -> None:
@@ -134,78 +127,19 @@ class LevelGenerator:
         
         return new_rooms
     
-    def _generate_spawn_room(self) -> Tuple[int, int, int, int]:
-        """Generate a varied spawn room in the top-left area."""
-        # Randomize spawn room size and position within safe area
-        room_width = random.randint(6, 10)  # Varied width
-        room_height = random.randint(6, 10)  # Varied height
-        room_x = random.randint(1, 4)  # Small variation in x position
-        room_y = random.randint(1, 4)  # Small variation in y position
-        
-        # Ensure room doesn't go too far (stay in top-left)
-        max_x = min(room_x, 10 - room_width)
-        max_y = min(room_y, 10 - room_height)
-        
-        return (max_x, max_y, room_width, room_height)
     
     def _room_overlaps(self, new_room: Tuple[int, int, int, int], existing_rooms: List[Tuple[int, int, int, int]]) -> bool:
         """Check if a new room overlaps with existing rooms."""
         x1, y1, w1, h1 = new_room
-        
+        pad = RoomGenerationConfig.ROOM_PADDING
+
         for x2, y2, w2, h2 in existing_rooms:
-            if (x1 < x2 + w2 + RoomGenerationConfig.ROOM_PADDING and 
-                x1 + w1 + RoomGenerationConfig.ROOM_PADDING > x2 and
-                y1 < y2 + h2 + RoomGenerationConfig.ROOM_PADDING and
-                y1 + h1 + RoomGenerationConfig.ROOM_PADDING > y2):
+            if (x1 < x2 + w2 + pad and x1 + w1 + pad > x2 and
+                y1 < y2 + h2 + pad and y1 + h1 + pad > y2):
                 return True
         return False
     
 
-    def _connect_rooms_with_corridors(self, rooms: List[Tuple[int, int, int, int]]) -> None:
-        """Connect all rooms with corridors using a minimum spanning tree approach."""
-        if len(rooms) < 2:
-            return
-            
-        # Connect each room to the next one
-        for i in range(len(rooms) - 1):
-            self._connect_two_rooms(rooms[i], rooms[i + 1])
-        
-        # Add some additional connections for more interesting layouts
-        for i in range(0, len(rooms), 3):
-            if i + 2 < len(rooms):
-                self._connect_two_rooms(rooms[i], rooms[i + 2])
-    
-    def _connect_two_rooms(self, room1: Tuple[int, int, int, int], room2: Tuple[int, int, int, int]) -> None:
-        """Connect two rooms with an L-shaped corridor."""
-        room1_x, room1_y, room1_width, room1_height = room1
-        room2_x, room2_y, room2_width, room2_height = room2
-        
-        # Get room centers for corridor connection points
-        room1_center_x = room1_x + room1_width // 2
-        room1_center_y = room1_y + room1_height // 2
-        room2_center_x = room2_x + room2_width // 2 
-        room2_center_y = room2_y + room2_height // 2
-        
-        # Create L-shaped corridor
-        if random.choice([True, False]):
-            # Horizontal first, then vertical
-            self._carve_corridor(room1_center_x, room1_center_y, room2_center_x, room1_center_y)
-            self._carve_corridor(room2_center_x, room1_center_y, room2_center_x, room2_center_y)
-        else:
-            # Vertical first, then horizontal  
-            self._carve_corridor(room1_center_x, room1_center_y, room1_center_x, room2_center_y)
-            self._carve_corridor(room1_center_x, room2_center_y, room2_center_x, room2_center_y)
-    
-    def _carve_corridor(self, x1: int, y1: int, x2: int, y2: int) -> None:
-        """Carve a corridor between two points."""
-        if x1 == x2:  # Vertical corridor
-            for y in range(min(y1, y2), max(y1, y2) + 1):
-                if (x1, y) in self.game_map.walls:
-                    self.game_map.walls.remove((x1, y))
-        else:  # Horizontal corridor
-            for x in range(min(x1, x2), max(x1, x2) + 1):
-                if (x, y1) in self.game_map.walls:
-                    self.game_map.walls.remove((x, y1))
     
     def _place_shadow_areas(self, level: int, rooms: List[Tuple[int, int, int, int]]) -> None:
         """Place shadow areas for stealth gameplay."""
