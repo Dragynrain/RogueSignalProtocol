@@ -166,10 +166,19 @@ class HelpMenu:
         
         y = 5
         help_sections = self._get_help_sections()
-        
+
         for text, color in help_sections:
             if y < GameConfig.SCREEN_HEIGHT - 2:
-                render_char_safe(console, 2, y, text, fg=color)
+                # Special handling for gateway line to color > symbol separately
+                if "gateway to advance" in text.lower():
+                    # Render text before >
+                    render_char_safe(console, 2, y, "  Reach the gateway (", fg=color)
+                    # Render > in gateway color
+                    render_char_safe(console, 2 + len("  Reach the gateway ("), y, ">", fg=Colors.GATEWAY)
+                    # Render text after >
+                    render_char_safe(console, 2 + len("  Reach the gateway (>"), y, ") to advance", fg=color)
+                else:
+                    render_char_safe(console, 2, y, text, fg=color)
                 y += 1
         
         # Back instruction
@@ -192,7 +201,7 @@ class HelpMenu:
         return [
             ("OBJECTIVE:", Colors.CYAN),
             ("  Navigate network levels using stealth", Colors.WHITE),
-            ("  Reach the gateway (>) to advance", Colors.GATEWAY),
+            ("  Reach the gateway to advance", Colors.WHITE),  # Will render > separately
             ("  Avoid detection by enemies and Admin Avatar", Colors.WHITE),
             ("  Collect codes, exploits, and upgrades", Colors.WHITE),
             ("", Colors.WHITE),

@@ -112,9 +112,9 @@ class TestMovementQueueExecution:
         # Mock can_move_to_position to return False (blocked)
         with patch('game_characters.can_move_to_position', return_value=False):
             success = enemy._execute_next_move(game_map, player, mock_game)
-        
+
         assert success == False, "Blocked move should fail"
-        assert len(enemy.movement_queue) == 0, "Blocked move should clear queue"
+        assert len(enemy.movement_queue) == 2, "Blocked move should only remove first move, not clear entire queue"
 
 class TestMovementQueuePrediction:
     """Test movement prediction system that shows queue to player."""
