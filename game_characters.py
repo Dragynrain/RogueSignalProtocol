@@ -402,16 +402,7 @@ class Enemy:
             if current_target != self.last_queue_target:
                 return True
         
-        # For SEEK/TRACK enemies, check if they've acquired or lost a target
-        elif self.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.TRACK]:
-            current_target = None
-            if self.can_see_player(player, game_map):
-                current_target = player.position
-            elif self.last_seen_player and self.type_data.movement == EnemyMovement.TRACK:
-                current_target = self.last_seen_player
-            
-            if current_target != self.last_queue_target:
-                return True
+        # SEEK/TRACK only matters when hostile (non-hostile SEEK enemies move randomly)
         
         return False
 
@@ -439,13 +430,7 @@ class Enemy:
             elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
                 target = self.patrol_points[self.patrol_index]
                 use_pathfinding = True
-        elif self.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.TRACK]:
-            if self.can_see_player(player, game_map):
-                target = player.position
-                use_pathfinding = True
-            elif self.last_seen_player and self.type_data.movement == EnemyMovement.TRACK:
-                target = self.last_seen_player
-                use_pathfinding = True
+        # SEEK/TRACK only works when hostile
         elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
             # Use intelligent patrol queue extension
             current_target = self.patrol_points[self.patrol_index]
@@ -490,11 +475,7 @@ class Enemy:
                 current_target = player.position
             elif self.last_seen_player:
                 current_target = self.last_seen_player
-        elif self.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.TRACK]:
-            if self.can_see_player(player, game_map):
-                current_target = player.position
-            elif self.last_seen_player and self.type_data.movement == EnemyMovement.TRACK:
-                current_target = self.last_seen_player
+        # SEEK/TRACK only works when hostile
         elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
             current_target = self.patrol_points[self.patrol_index]
         
@@ -598,32 +579,31 @@ class Enemy:
         use_pathfinding = False
         
         if self.state == EnemyState.HOSTILE:
-            # HOSTILE enemies seek the player
+            # HOSTILE enemies seek the player (works with all movement types including SEEK)
             if self.can_see_player(player, game_map):
                 self.last_seen_player = player.position
                 target = player.position
                 use_pathfinding = True
             elif self.last_seen_player:
-                target = self.last_seen_player
-                use_pathfinding = True
+                # TRACK enemies persist longer at last known location
+                if self.type_data.movement == EnemyMovement.TRACK:
+                    target = self.last_seen_player
+                    use_pathfinding = True
+                # Other enemies also go to last known but only for a short time
+                else:
+                    target = self.last_seen_player
+                    use_pathfinding = True
             elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
                 # HOSTILE patrol enemies return to patrol when they lose the player
                 self._generate_intelligent_patrol_queue(game_map, game_engine)
                 return  # Skip normal pathfinding
-        elif self.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.TRACK]:
-            # SEEK/TRACK movement types target player when they can see them
-            if self.can_see_player(player, game_map):
-                self.last_seen_player = player.position
-                target = player.position
-                use_pathfinding = True
-            elif self.last_seen_player and self.type_data.movement == EnemyMovement.TRACK:
-                # TRACK is more persistent than SEEK
-                target = self.last_seen_player
-                use_pathfinding = True
+        # When NOT hostile, enemies use their base movement type
         elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
             # PATROL movement with intelligent route planning
             self._generate_intelligent_patrol_queue(game_map, game_engine)
             return  # Skip normal pathfinding - patrol uses custom logic
+        # SEEK, RANDOM, STATIC enemies that are not hostile just do their base behavior
+        # (SEEK without hostile state = RANDOM, STATIC = no movement, RANDOM = random movement)
         
         # Generate or extend the movement queue
         if needs_full_regeneration:
