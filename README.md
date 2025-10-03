@@ -150,8 +150,7 @@ This is an **Alpha release** focusing on core gameplay and feedback collection.
 
 ### Known Limitations
 - Windows-focused (Linux/Mac compatibility planned)
-- Terminal graphics (advanced graphics being considered)
-- Single-player only
+- Terminal graphics (advanced graphics being considered beyond title screens)
 
 ## 🤝 Contributing
 
@@ -174,7 +173,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Built with [python-tcod](https://github.com/libtcod/python-tcod) - Excellent roguelike development library
 - Inspired by classic stealth games and cyberpunk fiction
 - Special thanks to the roguelike development community
-
----
-
-*"In the digital realm, the most dangerous enemy is the system that knows you're there."*
