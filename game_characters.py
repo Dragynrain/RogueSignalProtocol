@@ -934,25 +934,25 @@ class Enemy:
         """Execute the next move from the movement queue."""
         if not self.movement_queue:
             return False
-            
+
         next_position = self.movement_queue[0]
-        
+
         # If next position is the player position, we can't move there
         if next_position.distance_to(player.position) == 0:
             # Clear queue since we've reached our goal (adjacent to player)
             self.movement_queue.clear()
             return False  # No movement, but this is expected behavior
-        
+
         # Check if we can move to this position
         if can_move_to_position(self, next_position, game_map, player, game_engine):
             self.position = next_position
             self.movement_queue.pop(0)  # Remove completed move
-            
+
             # Check if patrol enemy reached their patrol point
-            if (self.type_data.movement == EnemyMovement.PATROL and 
+            if (self.type_data.movement == EnemyMovement.PATROL and
                 self.patrol_points and
                 self.state != EnemyState.HOSTILE):  # Only patrol when not hostile
-                
+
                 current_target = self.patrol_points[self.patrol_index]
                 adjacent_threshold = GameBalance.ADJACENT_DISTANCE_THRESHOLD
                 if self.position.distance_to(current_target) <= adjacent_threshold:
@@ -960,12 +960,13 @@ class Enemy:
                     self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
                     # Clear movement queue to force pathfinding to new target
                     self.movement_queue.clear()
-                    
+
             return True
         else:
-            # Move is blocked, clear queue to force recalculation
-            self.movement_queue.clear()
-            
+            # Move is blocked - only remove the blocked move, don't clear entire queue
+            # The queue will be regenerated next turn if needed via _should_regenerate_queue
+            self.movement_queue.pop(0)  # Remove just the blocked move
+
             # Handle patrol stuck situations
             if (self.type_data.movement == EnemyMovement.PATROL and self.patrol_points):
                 self.patrol_stuck_counter += 1
@@ -973,7 +974,9 @@ class Enemy:
                     # Skip to next patrol point if stuck for too many turns
                     self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
                     self.patrol_stuck_counter = 0
-                    
+                    # Now clear queue to force pathfinding to new patrol point
+                    self.movement_queue.clear()
+
             return False
 
 

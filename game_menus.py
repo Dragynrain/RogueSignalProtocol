@@ -288,47 +288,45 @@ class MainMenu:
     
     def _render_menu_title(self, console: tcod.console.Console, box: dict) -> None:
         """Render the main menu title and decorations."""
-        title = "ROGUE SIGNAL PROTOCOL - Version 0.8.0 Alpha"
+        version = "Version 0.8.0 Alpha"
         subtitle = "Cyberpunk Stealth Exfiltration"
-        
+
         if box['use_background_layout']:
             # Title content within narrow box - split into multiple lines to fit
             render_char_safe(console, box['center_x'] - 10, 6, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
             # Split title into multiple lines
             render_char_safe(console, box['center_x'] - 6, 7, "ROGUE SIGNAL", fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, box['center_x'] - 4, 8, "PROTOCOL", fg=Colors.CYAN, bg=Colors.BLACK)
-            render_char_safe(console, box['center_x'] - 7, 9, "Version 0.8.0 Alpha", fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
+            # Center the version properly in the box
+            version_x = box['center_x'] - len(version) // 2
+            render_char_safe(console, version_x, 9, version, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
             # Split subtitle into two lines
             render_char_safe(console, box['center_x'] - 8, 11, "Cyberpunk Stealth", fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, box['center_x'] - 6, 12, "Exfiltration", fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, box['center_x'] - 10, 13, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
         else:
             # ASCII mode - centered positioning
+            title = "ROGUE SIGNAL PROTOCOL"
             render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 6, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 10, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
     
     def _render_version_info(self, console: tcod.console.Console, box: dict) -> None:
-        """Render version and build information."""
-        build_info = "Version 0.8.0 Alpha"
+        """Render author information."""
         author_info = "by Adam Forster"
-        
+
         if box['use_background_layout']:
             # Background mode - position within narrow box
-            render_char_safe(console, 
-                box['center_x'] - len(build_info) // 2, 15,
-                build_info, fg=(128, 128, 128), bg=Colors.BLACK
-            )
-            render_char_safe(console, 
-                box['center_x'] - len(author_info) // 2, 16,
+            render_char_safe(console,
+                box['center_x'] - len(author_info) // 2, 15,
                 author_info, fg=(128, 128, 128), bg=Colors.BLACK
             )
         else:
             # ASCII mode - centered
-            render_char_safe(console, 
-                GameConfig.SCREEN_WIDTH // 2 - 13, 12,
-                "Alpha Build by Adam Forster", fg=(128, 128, 128), bg=Colors.BLACK
+            render_char_safe(console,
+                GameConfig.SCREEN_WIDTH // 2 - len(author_info) // 2, 11,
+                author_info, fg=(128, 128, 128), bg=Colors.BLACK
             )
     
     def _render_menu_options(self, console: tcod.console.Console, box: dict) -> None:
@@ -693,127 +691,8 @@ class LoreMenu:
                 self.lore_viewer_selection = min(len(discovered_fragments) - 1, self.lore_viewer_selection + 1)
 
 
-class HelpMenu:
-    """Help menu displaying game information."""
-    
-    def __init__(self):
-        pass
-    
-    def render(self, console: tcod.console.Console) -> None:
-        """Render the help screen."""
-        console.clear()
-        
-        # Title
-        title = "ROGUE SIGNAL PROTOCOL - HELP"
-        render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
-        
-        y = 5
-        help_sections = self._get_help_sections()
-        
-        for text, color in help_sections:
-            if y < GameConfig.SCREEN_HEIGHT - 2:
-                render_char_safe(console, 2, y, text, fg=color)
-                y += 1
-        
-        # Back instruction
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
-    
-    def handle_input(self, event) -> str:
-        """Handle help menu input. Returns 'back' on any key press."""
-        if UniversalInputHandler.handle_any_key_screen(event):
-            return "back"
-        return ""
-    
-    def _get_help_sections(self):
-        """Get help sections with text and colors."""
-        return [
-            ("OBJECTIVE:", Colors.CYAN),
-            ("  Navigate network levels using stealth", Colors.WHITE),
-            ("  Reach the gateway (>) to advance", Colors.GATEWAY),
-            ("  Avoid detection by enemies and Admin Avatar", Colors.WHITE),
-            ("  Collect codes, exploits, and upgrades", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("MOVEMENT & CONTROLS:", Colors.CYAN),
-            ("  Arrow Keys, WASD, or Numpad: Move/Navigate", Colors.WHITE),
-            ("  1-5: Use loaded exploits (requires targeting)", Colors.WHITE),
-            ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
-            ("  L: View discovered lore fragments", Colors.WHITE),
-            ("  ESC: Pause menu / Close screens", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("MAP SYMBOLS:", Colors.CYAN),
-            ("  ☻: Player (you)", Colors.PLAYER),
-            ("  •: Empty floor (passable)", Colors.FLOOR),
-            ("  ┌┐└┘┬┴├┤┼─│: Walls (impassable)", Colors.WALL),
-            ("  *: Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
-            ("  >: Gateway to next level", Colors.GATEWAY),
-            ("  ♫: Story fragments (lore)", Colors.CYAN),
-            ("", Colors.WHITE),
-            
-            ("ENEMY TYPES (HP, Vision, Behavior, Damage):", Colors.CYAN),
-            ("  S: Scanner (35hp, 4 vision, static, no attack)", Colors.ENEMY_UNAWARE),
-            ("  P: Patrol (40hp, 4 vision, linear routes, 15 dmg)", Colors.ENEMY_UNAWARE),
-            ("  B: Bot (25hp, 3 vision, random movement, 8 dmg)", Colors.ENEMY_UNAWARE),
-            ("  F: Firewall (80hp, 5 vision, static, no attack)", Colors.ENEMY_ALERT),
-            ("  H: Hunter (50hp, 6 vision, seeks players, 22 dmg)", Colors.ENEMY_HOSTILE),
-            ("  V: Virus (35hp, 4 vision, seeks players, virus attack)", Colors.ENEMY_HOSTILE),
-            ("  I: Inhibitor (30hp, 4 vision, random, slows movement)", Colors.ENEMY_UNAWARE),
-            ("  A: Admin Avatar (250hp, 8 vision, perfect tracking, 45 dmg)", Colors.ENEMY_HOSTILE),
-            ("", Colors.WHITE),
-            
-            ("ITEMS & PICKUPS:", Colors.CYAN),
-            ("  §: Code Patches (grant random bonuses, restore stats)", Colors.ELECTRIC_PURPLE),
-            ("  &: Exploits (combat & utility abilities)", Colors.NEON_PINK),
-            ("  ○: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
-            ("  ♥: CPU recovery nodes (restore health)", Colors.RED),
-            ("  ♦: Cooling nodes (reduce heat)", Colors.CYAN),
-            ("  ♠: Ghost nodes (reduce detection)", Colors.ELECTRIC_PURPLE),
-            ("", Colors.WHITE),
-            
-            ("CORE MECHANICS:", Colors.CYAN),
-            ("  Heat: Builds from exploit usage, causes damage at 100°C+", Colors.WHITE),
-            ("  Detection: Increases when spotted, Admin spawns at threshold", Colors.WHITE),
-            ("  CPU: Your health - if it reaches 0, you die permanently", Colors.WHITE),
-            ("  RAM: Limits how many exploits you can equip (max 5)", Colors.WHITE),
-            ("  Shadows: Hide in purple * tiles to avoid enemy detection", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("COMBAT EXPLOITS:", Colors.CYAN),
-            ("  Buffer Overflow: 40 dmg melee (1 tile range)", Colors.WHITE),
-            ("  Code Injection: 25 dmg ranged (5 tile range)", Colors.WHITE),
-            ("  System Crash: 30 dmg area (disables enemies 4 turns)", Colors.WHITE),
-            ("  EMP Burst: 20 dmg area (disables all nearby enemies)", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("STEALTH & UTILITY EXPLOITS:", Colors.CYAN),
-            ("  Shadow Step: Teleport to shadow zones (6 tile range)", Colors.WHITE),
-            ("  Data Mimic: Become invisible (5 turns)", Colors.WHITE),
-            ("  Noise Maker: Create distraction (8 turn duration)", Colors.WHITE),
-            ("  Network Scan: Reveal all cooling, CPU, and ghost nodes", Colors.WHITE),
-            ("  Log Wiper: Reduce detection level (-30%)", Colors.WHITE),
-            ("  Antivirus: Purges negative status effects (virus, slow)", Colors.WHITE),
-            ("  Memory Leak: 3x3 area makes enemies forget player location", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("STATUS EFFECTS:", Colors.CYAN),
-            ("  Virus: 3 CPU damage per turn, cured with Antivirus", Colors.WHITE),
-            ("  Virus attacks stack virus duration (max 12 turns)", Colors.WHITE),
-            ("  Movement Slowed: Can only move every other turn", Colors.WHITE),
-            ("  Speed Boost and Movement Slow offset each other turn-for-turn", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("SURVIVAL TIPS:", Colors.CYAN),
-            ("  Use shadows frequently - stealth is key", Colors.WHITE),
-            ("  Monitor heat and detection levels constantly", Colors.WHITE),
-            ("  Plan exploit usage - heat management is critical", Colors.WHITE),
-            ("  Use CPU nodes when low on health", Colors.WHITE),
-            ("  Use Ghost nodes to reduce detection continuously", Colors.WHITE),
-            ("  Admin Avatar spawns at high detection - be careful!", Colors.WHITE),
-            ("  Virus enemies apply virus damage - keep Antivirus exploit handy!", Colors.WHITE),
-            ("  Inhibitor enemies add 1 slow turn that offsets speed boosts!", Colors.WHITE),
-            ("  Save cooling nodes for emergencies", Colors.WHITE),
-        ]
+# HelpMenu is imported from game_menu_help_lore.py and re-exported here
+# Do not create a duplicate class definition
 
 
 class SettingsMenu:

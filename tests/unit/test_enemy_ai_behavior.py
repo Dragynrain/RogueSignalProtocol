@@ -322,10 +322,10 @@ class TestEnemyMovementQueue(TestEnemyAIBehavior):
                 # Mock invalid move using the correct function name
                 with patch('game_characters.can_move_to_position', return_value=False):
                     result = enemy._execute_next_move(self.mock_game_map, self.player, self.mock_game)
-                    
-                    # Move should fail and queue should be cleared
+
+                    # Move should fail and blocked move should be removed (not entire queue)
                     assert result is False
-                    assert len(enemy.movement_queue) == 0  # Queue is cleared on blocked move
+                    assert len(enemy.movement_queue) == 1  # Only first move removed, second remains
 
 
 class TestEnemyAttackBehavior(TestEnemyAIBehavior):

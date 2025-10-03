@@ -152,10 +152,17 @@ class GameStatePersistence:
         items = []
         for item_data in items_data:
             if item_data["type"] == "code_hack":
+                # Get description from game engine's code_hack_effects
+                color = item_data["color"]
+                desc = ""
+                if color in self.game_engine.code_hack_effects:
+                    _, desc = self.game_engine.code_hack_effects[color]
+
                 item = CodeHack(
-                    color_name=item_data["color"],
+                    color_name=color,
                     effect=item_data["effect"],
                     name=item_data["name"],
+                    description=desc,
                     quantity=item_data.get("quantity", 1)
                 )
                 item.discovered = item_data.get("discovered", False)
@@ -188,10 +195,18 @@ class GameStatePersistence:
             if not position:
                 continue
             x, y = position.x, position.y
+
+            # Get description from game engine's code_hack_effects
+            color = patch_data["color"]
+            desc = ""
+            if color in self.game_engine.code_hack_effects:
+                _, desc = self.game_engine.code_hack_effects[color]
+
             patch = CodeHack(
-                color_name=patch_data["color"],
+                color_name=color,
                 effect=patch_data["effect"],
                 name=patch_data["name"],
+                description=desc,
                 quantity=patch_data["quantity"]
             )
             patch.discovered = patch_data["discovered"]
