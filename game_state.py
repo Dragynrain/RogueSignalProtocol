@@ -33,16 +33,12 @@ class MessageLog:
         """Add a message to the log."""
         if not text:
             return
-        
+
         if color is None:
-            if msg_type:
-                color = self._get_color_by_type(msg_type)
-            else:
-                color = self._determine_message_color(text)
-        
-        message = Message(text=text, color=color, msg_type=msg_type)
-        self.messages.append(message)
-        
+            color = self._get_color_by_type(msg_type) if msg_type else self._determine_message_color(text)
+
+        self.messages.append(Message(text=text, color=color, msg_type=msg_type))
+
         if len(self.messages) > self.max_messages:
             self.messages = self.messages[-self.max_messages:]
     
@@ -54,10 +50,7 @@ class MessageLog:
         """Get color for a specific message type."""
         config = DataLoader.load_config()
         message_colors = config.get("colors", {}).get("message_log", {})
-        color_values = message_colors.get(msg_type, message_colors.get("default", [144, 238, 144]))
-        
-        # Use the ensure_color_tuple function for validation
-        return ensure_color_tuple(color_values)
+        return ensure_color_tuple(message_colors.get(msg_type, message_colors.get("default", [144, 238, 144])))
     
     def _determine_message_color(self, text: str) -> Tuple[int, int, int]:
         """Determine appropriate color for message based on content using JSON config."""

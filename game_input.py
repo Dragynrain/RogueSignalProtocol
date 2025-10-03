@@ -89,22 +89,20 @@ class InputHandler:
     
     def _handle_escape(self) -> bool:
         """Handle escape key for UI states."""
-        if self.game.show_story_fragment is not None:
-            self.game.show_story_fragment = None
-        elif self.game.show_lore_viewer:
-            self.game.show_lore_viewer = False
-            self.game.lore_viewer_mode = "list"
-            self.game.lore_viewer_selection = 0
-        elif self.game.show_help:
-            self.game.show_help = False
-        elif self.game.show_gateway_confirmation:
-            self.game.show_gateway_confirmation = False
-        elif self.game.show_inventory:
-            self.game.show_inventory = False
-        elif self.game.targeting_mode:
-            self.game.targeting_mode = False
-            self.game.targeting_exploit = None
-            self.game.message_log.add_message("Targeting cancelled")
+        g = self.game
+        if g.show_story_fragment is not None:
+            g.show_story_fragment = None
+        elif g.show_lore_viewer:
+            g.show_lore_viewer, g.lore_viewer_mode, g.lore_viewer_selection = False, "list", 0
+        elif g.show_help:
+            g.show_help = False
+        elif g.show_gateway_confirmation:
+            g.show_gateway_confirmation = False
+        elif g.show_inventory:
+            g.show_inventory = False
+        elif g.targeting_mode:
+            g.targeting_mode, g.targeting_exploit = False, None
+            g.message_log.add_message("Targeting cancelled")
         return True
     
     def _handle_gateway_confirmation_input(self, event) -> bool:
