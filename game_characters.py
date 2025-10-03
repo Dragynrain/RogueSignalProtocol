@@ -168,8 +168,8 @@ class Player:
             
         upgrade = GameUpgrades.UPGRADES[upgrade_key]
         
-        max_ram = getattr(GameConfig, 'max_ram_capacity', 32)
-        max_cpu = getattr(GameConfig, 'max_cpu_capacity', 200)
+        max_ram = GameConfig.get('gameplay.max_ram_capacity', 32)
+        max_cpu = GameConfig.get('gameplay.max_cpu_capacity', 200)
         
         if upgrade.stat_type == 'ram':
             self.ram_total = min(max_ram, self.ram_total + upgrade.bonus_amount)
