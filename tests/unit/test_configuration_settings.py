@@ -379,23 +379,22 @@ class TestDataLoader:
             assert DataLoader._story_fragments is not None
     
     def test_load_story_fragments_file_not_found(self):
-        """Test story fragment loading with missing file."""
+        """Test story fragment loading with missing file - should raise exception."""
         with patch('builtins.open', side_effect=FileNotFoundError()):
-            fragments = DataLoader.load_story_fragments()
-            
-            # Should return fallback fragments
-            assert isinstance(fragments, list)
-            assert len(fragments) >= 1
-            assert "fallback" in fragments[0].lower()
+            with pytest.raises(FileNotFoundError) as exc_info:
+                DataLoader.load_story_fragments()
+
+            # Should raise exception with descriptive message
+            assert "Required file story_content.json is missing" in str(exc_info.value)
     
     def test_load_story_fragments_invalid_json(self):
-        """Test story fragment loading with invalid JSON."""
+        """Test story fragment loading with invalid JSON - should raise exception."""
         with patch('builtins.open', mock_open(read_data="{ invalid json")):
-            fragments = DataLoader.load_story_fragments()
-            
-            # Should return fallback fragments
-            assert isinstance(fragments, list)
-            assert "fallback" in fragments[0].lower()
+            with pytest.raises(json.JSONDecodeError) as exc_info:
+                DataLoader.load_story_fragments()
+
+            # Should raise exception with descriptive message
+            assert "story_content.json contains invalid JSON" in str(exc_info.value)
     
     def test_load_story_fragments_caching(self):
         """Test that story fragments are cached after first load."""
@@ -428,15 +427,13 @@ class TestDataLoader:
             assert game_data["enemy_types"]["test_enemy"]["symbol"] == "T"
     
     def test_load_game_data_fallback(self):
-        """Test game data loading with fallback data."""
+        """Test game data loading with missing file - should raise exception."""
         with patch('builtins.open', side_effect=FileNotFoundError()):
-            game_data = DataLoader.load_game_data()
-            
-            # Should return fallback data with required keys
-            assert "enemy_types" in game_data
-            assert "exploits" in game_data
-            assert "upgrades" in game_data
-            assert "network_configs" in game_data
+            with pytest.raises(FileNotFoundError) as exc_info:
+                DataLoader.load_game_data()
+
+            # Should raise exception with descriptive message
+            assert "Required file game_data.json is missing" in str(exc_info.value)
     
     def test_load_config_success(self):
         """Test successful configuration loading."""
@@ -454,28 +451,14 @@ class TestDataLoader:
             assert config["audio"]["master_volume"] == 0.8
     
     def test_load_config_fallback(self):
-        """Test configuration loading with fallback data."""
+        """Test configuration loading with missing file - should raise exception."""
         with patch('builtins.open', side_effect=FileNotFoundError()):
-            config = DataLoader.load_config()
-            
-            # Should return fallback config with required sections
-            assert "gameplay" in config
-            assert "graphics" in config
-            assert "audio" in config
+            with pytest.raises(FileNotFoundError) as exc_info:
+                DataLoader.load_config()
+
+            # Should raise exception with descriptive message
+            assert "Required file game_config.json is missing" in str(exc_info.value)
     
-    def test_fallback_data_structure(self):
-        """Test that fallback data has proper structure."""
-        story_fallback = DataLoader._get_fallback_story_fragments()
-        assert isinstance(story_fallback, list)
-        assert len(story_fallback) > 0
-        
-        game_data_fallback = DataLoader._get_fallback_game_data()
-        assert isinstance(game_data_fallback, dict)
-        assert "enemy_types" in game_data_fallback
-        
-        config_fallback = DataLoader._get_fallback_config()
-        assert isinstance(config_fallback, dict)
-        assert "gameplay" in config_fallback
 
 
 class TestPersistentStorage:
@@ -592,11 +575,12 @@ class TestConfigurationIntegration:
             # Should still initialize with defaults
             assert settings.master_volume == 0.7
         
-        # DataLoader should handle JSON errors gracefully
+        # DataLoader should raise exceptions for JSON errors
         with patch('builtins.open', side_effect=json.JSONDecodeError("Invalid", "doc", 0)):
-            data = DataLoader.load_game_data()
-            # Should return fallback data
-            assert isinstance(data, dict)
+            with pytest.raises(json.JSONDecodeError) as exc_info:
+                DataLoader.load_game_data()
+            # Should raise exception with descriptive message
+            assert "game_data.json contains invalid JSON" in str(exc_info.value)
     
     def test_configuration_validation_rules(self):
         """Test validation rules across configuration systems."""
