@@ -246,87 +246,51 @@ class SaveGameManager:
         """Serialize inventory items."""
         serialized = []
         for item in items:
-            if hasattr(item, 'item_type'):
-                item_data = {
-                    "type": item.item_type,
-                    "name": item.name,
-                    "description": item.description
-                }
-                
-                if hasattr(item, 'color_name'):  # CodeHack
-                    item_data.update({
-                        "color": item.color_name,
-                        "effect": item.effect,
-                        "quantity": getattr(item, 'quantity', 1),
-                        "discovered": getattr(item, 'discovered', False)
-                    })
-                elif hasattr(item, 'exploit_key'):  # ExploitItem
-                    item_data.update({
-                        "exploit_key": item.exploit_key,
-                        "ram_cost": item.ram_cost
-                    })
-                elif hasattr(item, 'fragment_index'):  # StoryFragment
-                    item_data.update({
-                        "fragment_index": item.fragment_index
-                    })
-                
-                serialized.append(item_data)
-        
+            if not hasattr(item, 'item_type'):
+                continue
+
+            item_data = {"type": item.item_type, "name": item.name, "description": item.description}
+
+            if hasattr(item, 'color_name'):  # CodeHack
+                item_data.update({"color": item.color_name, "effect": item.effect,
+                                "quantity": getattr(item, 'quantity', 1), "discovered": getattr(item, 'discovered', False)})
+            elif hasattr(item, 'exploit_key'):  # ExploitItem
+                item_data.update({"exploit_key": item.exploit_key, "ram_cost": item.ram_cost})
+            elif hasattr(item, 'fragment_index'):  # StoryFragment
+                item_data["fragment_index"] = item.fragment_index
+
+            serialized.append(item_data)
+
         return serialized
     
     @classmethod
     def _serialize_code_hacks(cls, patches: Dict) -> Dict[str, Dict]:
         """Serialize codes."""
-        return {
-            f"{pos[0]},{pos[1]}": {
-                "color": patch.color_name,
-                "effect": patch.effect,
-                "name": patch.name,
-                "quantity": patch.quantity,
-                "discovered": patch.discovered
-            }
-            for pos, patch in patches.items()
-        }
-    
+        return {f"{pos[0]},{pos[1]}": {"color": p.color_name, "effect": p.effect, "name": p.name,
+                "quantity": p.quantity, "discovered": p.discovered} for pos, p in patches.items()}
+
     @classmethod
     def _serialize_exploit_pickups(cls, exploits: Dict) -> Dict[str, str]:
         """Serialize exploit pickups."""
-        return {
-            f"{pos[0]},{pos[1]}": exploit.exploit_key 
-            for pos, exploit in exploits.items()
-        }
+        return {f"{pos[0]},{pos[1]}": e.exploit_key for pos, e in exploits.items()}
     
     @classmethod
     def _serialize_enemies(cls, enemies: List) -> List[Dict[str, Any]]:
         """Serialize enemy data."""
         serialized = []
-        for enemy in enemies:
+        for e in enemies:
             enemy_data = {
-                "id": enemy.id,
-                "type": enemy.type,
-                "x": enemy.position.x,
-                "y": enemy.position.y,
-                "cpu": enemy.cpu,
-                "state": enemy.state.value,
-                "move_cooldown": enemy.move_cooldown,
-                "disabled_turns": enemy.disabled_turns,
-                "alert_timer": enemy.alert_timer,
-                "patrol_index": enemy.patrol_index,
-                "patrol_stuck_counter": enemy.patrol_stuck_counter,
-                "movement_queue": [{"x": pos.x, "y": pos.y} for pos in getattr(enemy, 'movement_queue', [])],
-                "last_target": {"x": enemy.last_target.x, "y": enemy.last_target.y} if enemy.last_target else None,
-                "last_seen_player": {
-                    "x": enemy.last_seen_player.x, 
-                    "y": enemy.last_seen_player.y
-                } if enemy.last_seen_player else None
+                "id": e.id, "type": e.type, "x": e.position.x, "y": e.position.y, "cpu": e.cpu,
+                "state": e.state.value, "move_cooldown": e.move_cooldown, "disabled_turns": e.disabled_turns,
+                "alert_timer": e.alert_timer, "patrol_index": e.patrol_index, "patrol_stuck_counter": e.patrol_stuck_counter,
+                "movement_queue": [{"x": p.x, "y": p.y} for p in getattr(e, 'movement_queue', [])],
+                "last_target": {"x": e.last_target.x, "y": e.last_target.y} if e.last_target else None,
+                "last_seen_player": {"x": e.last_seen_player.x, "y": e.last_seen_player.y} if e.last_seen_player else None
             }
-            
-            if enemy.patrol_points:
-                enemy_data["patrol_points"] = [
-                    {"x": point.x, "y": point.y} 
-                    for point in enemy.patrol_points
-                ]
-            
+
+            if e.patrol_points:
+                enemy_data["patrol_points"] = [{"x": p.x, "y": p.y} for p in e.patrol_points]
+
             serialized.append(enemy_data)
-        
+
         return serialized

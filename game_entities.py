@@ -250,39 +250,26 @@ def clamp(value: float, min_val: float, max_val: float) -> float:
     """Clamp a value between min and max bounds."""
     return max(min_val, min(value, max_val))
 
-
 def safe_divide(numerator: float, denominator: float, default: float = 0.0) -> float:
     """Safely divide two numbers, returning default if denominator is zero."""
     return numerator / denominator if denominator != 0 else default
-
 
 def validate_coordinates(x: int, y: int, width: int, height: int) -> bool:
     """Validate that coordinates are within bounds."""
     return 0 <= x < width and 0 <= y < height
 
-
 def calculate_manhattan_distance(pos1: Position, pos2: Position) -> int:
     """Calculate Manhattan distance between two positions."""
     return abs(pos1.x - pos2.x) + abs(pos1.y - pos2.y)
 
-
 def get_adjacent_positions(pos: Position, width: int, height: int) -> List[Position]:
     """Get all valid adjacent positions around a given position."""
-    adjacent = []
-    for dx in [-1, 0, 1]:
-        for dy in [-1, 0, 1]:
-            if dx == 0 and dy == 0:
-                continue
-            new_x, new_y = pos.x + dx, pos.y + dy
-            if validate_coordinates(new_x, new_y, width, height):
-                adjacent.append(Position(new_x, new_y))
-    return adjacent
-
+    return [Position(pos.x + dx, pos.y + dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1]
+            if (dx != 0 or dy != 0) and validate_coordinates(pos.x + dx, pos.y + dy, width, height)]
 
 def format_position_key(pos: Position) -> str:
     """Format position as string key for dictionaries."""
     return f"{pos.x},{pos.y}"
-
 
 def parse_position_key(key: str) -> Optional[Position]:
     """Parse string key back to Position."""
@@ -292,18 +279,13 @@ def parse_position_key(key: str) -> Optional[Position]:
     except (ValueError, AttributeError):
         return None
 
-
 def parse_coordinate_string(coord_str: str) -> Optional[Position]:
     """Parse coordinate string like '10,20' to Position."""
     try:
         parts = coord_str.strip().split(',')
-        if len(parts) == 2:
-            x, y = int(parts[0].strip()), int(parts[1].strip())
-            return Position(x, y)
+        return Position(int(parts[0].strip()), int(parts[1].strip())) if len(parts) == 2 else None
     except (ValueError, AttributeError):
-        pass
-    return None
-
+        return None
 
 def validate_position_bounds(position: Position, width: int, height: int) -> bool:
     """Validate that a position is within the given bounds."""
@@ -351,33 +333,21 @@ class PositionValidator:
         """Check if position is valid for item/node placement."""
         from game_config import GameConfig
 
-        # Combined boundary checks for efficiency
-        if not (0 < position.x < GameConfig.MAP_WIDTH - 1 and
-                0 < position.y < GameConfig.MAP_HEIGHT - 1):
+        # Boundary and wall check
+        if not (0 < position.x < GameConfig.MAP_WIDTH - 1 and 0 < position.y < GameConfig.MAP_HEIGHT - 1
+                and game_map.is_valid_position(position)):
             return False
 
-        # Wall check and spawn distance
-        if not game_map.is_valid_position(position):
-            return False
-
-        # Single spawn distance check (faster than creating Position object)
-        spawn_x, spawn_y = 5, 5
-        dx, dy = position.x - spawn_x, position.y - spawn_y
+        # Spawn distance check
+        dx, dy = position.x - 5, position.y - 5
         if dx * dx + dy * dy <= min_distance_from_spawn * min_distance_from_spawn:
             return False
 
-        # Check for existing items (optimized with early returns)
+        # Check existing items
         if check_existing_items:
             pos_tuple = (position.x, position.y)
-            if pos_tuple in game_map.code_hacks:
-                return False
-            if pos_tuple in game_map.cooling_nodes:
-                return False
-            if pos_tuple in game_map.cpu_recovery_nodes:
-                return False
-            if pos_tuple in game_map.ghost_nodes:
-                return False
-            if pos_tuple in game_map.exploit_pickups:
+            if any(pos_tuple in items for items in [game_map.code_hacks, game_map.cooling_nodes,
+                   game_map.cpu_recovery_nodes, game_map.ghost_nodes, game_map.exploit_pickups]):
                 return False
 
         return True
@@ -386,22 +356,9 @@ class PositionValidator:
     def is_valid_for_enemy_placement(position: Position, game_map, enemies_list, player_position: Position,
                                    check_existing_items: bool = True) -> bool:
         """Check if position is valid for enemy placement."""
-        # Can't place on player position (quick check first)
-        if position.x == player_position.x and position.y == player_position.y:
-            return False
-
-        # Basic placement validation
-        if not PositionValidator.is_valid_for_placement(position, game_map,
-                                                       min_distance_from_spawn=12.0,
-                                                       check_existing_items=check_existing_items):
-            return False
-
-        # Check existing enemy positions (optimized with set comprehension)
-        enemy_positions = {(e.x, e.y) for e in enemies_list}
-        if (position.x, position.y) in enemy_positions:
-            return False
-
-        return True
+        return (position.x != player_position.x or position.y != player_position.y) and \
+               PositionValidator.is_valid_for_placement(position, game_map, 12.0, check_existing_items) and \
+               (position.x, position.y) not in {(e.x, e.y) for e in enemies_list}
 
     @staticmethod
     def is_valid_for_enemy_movement(position: Position, game_map, enemies_list, player_position: Position, current_enemy) -> bool:

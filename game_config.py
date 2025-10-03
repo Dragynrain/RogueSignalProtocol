@@ -89,20 +89,16 @@ class GameSettings:
     def _set_volume_attribute(self, volume_type: str, volume: float):
         """Generic volume setter for any volume type."""
         from game_entities import clamp
-        clamped_volume = clamp(volume, 0.0, 1.0)
-        setattr(self, f"{volume_type}_volume", clamped_volume)
+        setattr(self, f"{volume_type}_volume", clamp(volume, 0.0, 1.0))
         self.save_settings()
-    
+
     def set_master_volume(self, volume: float):
-        """Set master volume (0.0 to 1.0)"""
         self._set_volume_attribute("master", volume)
-    
+
     def set_sfx_volume(self, volume: float):
-        """Set SFX volume (0.0 to 1.0)"""
         self._set_volume_attribute("sfx", volume)
-    
+
     def set_music_volume(self, volume: float):
-        """Set music volume (0.0 to 1.0)"""
         self._set_volume_attribute("music", volume)
     
     def set_graphics_mode(self, mode: str):
@@ -113,23 +109,14 @@ class GameSettings:
     
     def get_volume_percent(self, volume_type: str) -> int:
         """Get volume as percentage (0-100)"""
-        if volume_type == "master":
-            return int(self.master_volume * 100)
-        elif volume_type == "sfx":
-            return int(self.sfx_volume * 100)
-        elif volume_type == "music":
-            return int(self.music_volume * 100)
-        return 0
-    
+        volume_map = {"master": self.master_volume, "sfx": self.sfx_volume, "music": self.music_volume}
+        return int(volume_map.get(volume_type, 0) * 100)
+
     def set_volume_percent(self, volume_type: str, percent: int):
         """Set volume from percentage (0-100)"""
-        volume = percent / 100.0
-        if volume_type == "master":
-            self.set_master_volume(volume)
-        elif volume_type == "sfx":
-            self.set_sfx_volume(volume)
-        elif volume_type == "music":
-            self.set_music_volume(volume)
+        setter_map = {"master": self.set_master_volume, "sfx": self.set_sfx_volume, "music": self.set_music_volume}
+        if volume_type in setter_map:
+            setter_map[volume_type](percent / 100.0)
 
 
 class GameConfig:
