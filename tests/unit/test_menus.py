@@ -113,7 +113,7 @@ class TestMainMenu:
             # Should show warning instead of starting new game
             assert menu.show_warning is True
     
-    def test_background_detection(self):
+    def test_background_trace(self):
         """Menu correctly detects if background is available."""
         # Test without background
         menu = MainMenu()

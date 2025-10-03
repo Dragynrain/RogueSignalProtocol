@@ -35,7 +35,7 @@ class CodeHack(InventoryItem):
     
     def use(self, player, game) -> bool:
         """Apply the code effect to the player."""
-        if self.color_name not in game.data_patch_effects:
+        if self.color_name not in game.code_hack_effects:
             return False
         
         # Play code usage sound
@@ -46,7 +46,7 @@ class CodeHack(InventoryItem):
         if self.quantity <= 0:
             player.inventory_manager.remove_item(self)
         
-        effect_key, description = game.data_patch_effects[self.color_name]
+        effect_key, description = game.code_hack_effects[self.color_name]
         
         # Check if this color effect has been discovered in this game session
         is_known = self.color_name in game.discovered_code_effects
@@ -82,11 +82,11 @@ class CodeHack(InventoryItem):
             actual_reduction = old_heat - player.heat
             game.message_log.add_message(f"Heat reduced: -{actual_reduction}°C")
         
-        elif effect_key == 'reduce_detection':
-            old_detection = player.detection
-            player.detection = max(0, player.detection - 25)
-            actual_reduction = old_detection - player.detection
-            game.message_log.add_message(f"Detection: -{actual_reduction:.1f}%")
+        elif effect_key == 'reduce_trace_level':
+            old_trace = player.trace_level
+            player.trace_level = max(0, player.trace_level - 25)
+            actual_reduction = old_trace - player.trace_level
+            game.message_log.add_message(f"Trace Level: -{actual_reduction:.1f}%")
         
         elif effect_key == 'speed_boost':
             current_speed = player.temporary_effects.get('speed_boost_turns', 0)

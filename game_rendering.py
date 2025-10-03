@@ -298,7 +298,7 @@ class UIRenderer:
         y = self._render_equipped_exploits(console, game, y)
         y += 2
         
-        # Data patches section
+        # Code hackes section
         y = self._render_code_hacks(console, game, y)
         y += 2
         
@@ -545,20 +545,20 @@ class UIRenderer:
         # Color coding for status values
         cpu_color = self._get_cpu_color(game.player.cpu)
         heat_color = self._get_heat_color(game.player.heat)
-        detection_color = self._get_detection_color(game.player.detection)
+        trace_color = self._get_trace_color(game.player.trace_level)
         ram_color = Colors.RED if game.player.ram_used > game.player.ram_total else Colors.GREEN
         
         # Build status line
         status_parts = [
             f"CPU:{game.player.cpu:3d}/{game.player.max_cpu}",
             f"Heat:{game.player.heat:3d}°C/{game.player.max_heat}°C" if game.player.max_heat > 100 else f"Heat:{game.player.heat:3d}°C",
-            f"Det:{int(game.player.detection):3d}%",
+            f"Det:{int(game.player.trace_level):3d}%",
             f"RAM:{game.player.ram_used}/{game.player.ram_total}GB",
             f"Turn:{game.turn:4d}",
             "Press ? for help"
         ]
         
-        colors = [cpu_color, heat_color, detection_color, ram_color, Colors.UI_TEXT, Colors.ELECTRIC_PURPLE]
+        colors = [cpu_color, heat_color, trace_color, ram_color, Colors.UI_TEXT, Colors.ELECTRIC_PURPLE]
         
         x_pos = 1
         for part, color in zip(status_parts, colors):
@@ -585,11 +585,11 @@ class UIRenderer:
         else:
             return Colors.GREEN
     
-    def _get_detection_color(self, detection: float) -> Tuple[int, int, int]:
-        """Get color for detection display."""
-        if detection > 75:
+    def _get_trace_color(self, trace_level: float) -> Tuple[int, int, int]:
+        """Get color for trace_level display."""
+        if trace_level > 75:
             return Colors.RED
-        elif detection > 50:
+        elif trace_level > 50:
             return Colors.YELLOW
         else:
             return Colors.GREEN
@@ -722,7 +722,7 @@ class UIRenderer:
         }
         
         # Find which color has this effect in the current game
-        for color_name, (effect, _) in game.data_patch_effects.items():
+        for color_name, (effect, _) in game.code_hack_effects.items():
             if effect == effect_key:
                 return color_map.get(color_name, fallback_color)
         
@@ -1150,7 +1150,7 @@ class MapRenderer:
         
         for dx in range(-actual_vision_range, actual_vision_range + 1):
             for dy in range(-actual_vision_range, actual_vision_range + 1):
-                # Use Euclidean distance to match the actual detection logic
+                # Use Euclidean distance to match the actual trace_level logic
                 if dx*dx + dy*dy <= actual_vision_range*actual_vision_range:
                     screen_x = enemy.x - camera_offset.x + dx
                     screen_y = enemy.y - camera_offset.y + dy + 1
@@ -1339,7 +1339,7 @@ class MapRenderer:
             return Colors.BLUE
         elif player.temporary_effects['speed_boost_turns'] > 0:
             return Colors.YELLOW
-        elif player.cpu < 30 or player.heat > 80 or player.detection > 75:
+        elif player.cpu < 30 or player.heat > 80 or player.trace_level > 75:
             return Colors.RED
         else:
             return Colors.PLAYER

@@ -149,7 +149,7 @@ class GameConfig:
     DEFAULT_PLAYER_RAM = 8
     DEFAULT_PLAYER_CPU = 100
     MAX_HEAT = 100
-    MAX_DETECTION = 100
+    MAX_TRACE_LEVEL = 100
     DETECTION_REDUCTION_ON_LEVEL = 50
     DUNGEON_SEED_RANGE = 1000000
     DEFAULT_VISION_RANGE = 10
@@ -183,8 +183,8 @@ class GameConfig:
             cls.DEFAULT_PLAYER_RAM = cls.get('gameplay.default_player_ram', cls.DEFAULT_PLAYER_RAM)
             cls.DEFAULT_PLAYER_CPU = cls.get('gameplay.default_player_cpu', cls.DEFAULT_PLAYER_CPU)
             cls.MAX_HEAT = cls.get('gameplay.max_heat', cls.MAX_HEAT)
-            cls.MAX_DETECTION = cls.get('gameplay.max_detection', cls.MAX_DETECTION)
-            cls.DETECTION_REDUCTION_ON_LEVEL = cls.get('gameplay.detection_reduction_on_level', cls.DETECTION_REDUCTION_ON_LEVEL)
+            cls.MAX_TRACE_LEVEL = cls.get('gameplay.max_trace_level', cls.MAX_TRACE_LEVEL)
+            cls.DETECTION_REDUCTION_ON_LEVEL = cls.get('gameplay.trace_reduction_on_level', cls.DETECTION_REDUCTION_ON_LEVEL)
             cls.DUNGEON_SEED_RANGE = cls.get('gameplay.dungeon_seed_range', cls.DUNGEON_SEED_RANGE)
             cls.DEFAULT_VISION_RANGE = cls.get('gameplay.default_vision_range', cls.DEFAULT_VISION_RANGE)
             cls.MAX_SAVE_ATTEMPTS = cls.get('gameplay.max_save_attempts', cls.MAX_SAVE_ATTEMPTS)
@@ -266,7 +266,7 @@ class RoomGenerationConfig:
     COOLING_NODES_PER_LEVEL = 3
     CPU_NODES_PER_LEVEL = 2
     GHOST_NODES_PER_LEVEL = 2
-    DATA_PATCHES_PER_LEVEL = 4
+    CODE_HACKS_PER_LEVEL = 4
     EXPLOIT_PICKUPS_PER_LEVEL = 3
     PERMANENT_UPGRADES_PER_LEVEL = 1
 
@@ -283,7 +283,7 @@ class RoomGenerationConfig:
         cls.COOLING_NODES_PER_LEVEL = GameConfig.get('room_generation.cooling_nodes_per_level', 3)
         cls.CPU_NODES_PER_LEVEL = GameConfig.get('room_generation.cpu_nodes_per_level', 2)
         cls.GHOST_NODES_PER_LEVEL = GameConfig.get('room_generation.ghost_nodes_per_level', 2)
-        cls.DATA_PATCHES_PER_LEVEL = GameConfig.get('room_generation.data_patches_per_level', 4)
+        cls.CODE_HACKS_PER_LEVEL = GameConfig.get('room_generation.code_hacks_per_level', 4)
         cls.EXPLOIT_PICKUPS_PER_LEVEL = GameConfig.get('room_generation.exploit_pickups_per_level', 3)
         cls.PERMANENT_UPGRADES_PER_LEVEL = GameConfig.get('room_generation.permanent_upgrades_per_level', 1)
 
@@ -300,8 +300,8 @@ class GameBalance:
     # Set class attributes with defaults
     HEAT_REDUCTION_NORMAL = 2
     HEAT_REDUCTION_BOOSTED = 3
-    DETECTION_INCREASE_INTERVAL = 25
-    DETECTION_INCREASE_AMOUNT = 1
+    TRACE_INCREASE_INTERVAL = 25
+    TRACE_INCREASE_AMOUNT = 1
     COOLING_NODE_EFFECT = 20
     GHOST_NODE_DETECTION_REDUCTION_PERCENT = 20.0
     CPU_RECOVERY_AMOUNT = 20
@@ -315,8 +315,8 @@ class GameBalance:
     PATHFINDING_TIMEOUT_ATTEMPTS = 100
     ENHANCED_VISION_BONUS = 2
     SHADOW_VISION_REDUCTION_FACTOR = 3
-    ENEMY_DETECTION_ALERT_TO_HOSTILE = 3
-    ENEMY_DETECTION_CONTINUOUS_HOSTILE = 0.3
+    ENEMY_TRACE_ALERT_TO_HOSTILE = 3
+    ENEMY_TRACE_CONTINUOUS_HOSTILE = 0.3
     ENEMY_MEMORY_TURNS = 20
 
     @classmethod
@@ -324,10 +324,10 @@ class GameBalance:
         """Load balance config from JSON."""
         cls.HEAT_REDUCTION_NORMAL = GameConfig.get('balance.heat_reduction_normal', 2)
         cls.HEAT_REDUCTION_BOOSTED = GameConfig.get('balance.heat_reduction_boosted', 3)
-        cls.DETECTION_INCREASE_INTERVAL = GameConfig.get('balance.detection_increase_interval', 25)
-        cls.DETECTION_INCREASE_AMOUNT = GameConfig.get('balance.detection_increase_amount', 1)
+        cls.TRACE_INCREASE_INTERVAL = GameConfig.get('balance.trace_increase_interval', 25)
+        cls.TRACE_INCREASE_AMOUNT = GameConfig.get('balance.trace_increase_amount', 1)
         cls.COOLING_NODE_EFFECT = GameConfig.get('balance.cooling_node_effect', 20)
-        cls.GHOST_NODE_DETECTION_REDUCTION_PERCENT = GameConfig.get('balance.ghost_node_detection_reduction_percent', 20.0)
+        cls.GHOST_NODE_DETECTION_REDUCTION_PERCENT = GameConfig.get('balance.ghost_node_trace_reduction_percent', 20.0)
         cls.CPU_RECOVERY_AMOUNT = GameConfig.get('balance.cpu_recovery_amount', 20)
         cls.ENEMY_ELIMINATION_CPU_REWARD = GameConfig.get('balance.enemy_elimination_cpu_reward', 5)
         cls.CPU_RESTORE_MIN = GameConfig.get('balance.cpu_restore_min', 30)
@@ -339,8 +339,8 @@ class GameBalance:
         cls.PATHFINDING_TIMEOUT_ATTEMPTS = GameConfig.get('balance.pathfinding_timeout_attempts', 100)
         cls.ENHANCED_VISION_BONUS = GameConfig.get('balance.enhanced_vision_bonus', 2)
         cls.SHADOW_VISION_REDUCTION_FACTOR = GameConfig.get('balance.shadow_vision_reduction_factor', 3)
-        cls.ENEMY_DETECTION_ALERT_TO_HOSTILE = GameConfig.get('balance.enemy_detection_alert_to_hostile', 3)
-        cls.ENEMY_DETECTION_CONTINUOUS_HOSTILE = GameConfig.get('balance.enemy_detection_continuous_hostile', 0.3)
+        cls.ENEMY_TRACE_ALERT_TO_HOSTILE = GameConfig.get('balance.enemy_trace_alert_to_hostile', 3)
+        cls.ENEMY_TRACE_CONTINUOUS_HOSTILE = GameConfig.get('balance.enemy_trace_continuous_hostile', 0.3)
         cls.ENEMY_MEMORY_TURNS = GameConfig.get('balance.enemy_memory_turns', 20)
 
     @staticmethod

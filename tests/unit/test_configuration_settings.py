@@ -222,7 +222,7 @@ class TestGameConfig:
         assert GameConfig.DEFAULT_PLAYER_RAM == 8
         assert GameConfig.DEFAULT_PLAYER_CPU == 100
         assert GameConfig.MAX_HEAT == 100
-        assert GameConfig.MAX_DETECTION == 100
+        assert GameConfig.MAX_TRACE_LEVEL == 100
         assert GameConfig.DETECTION_REDUCTION_ON_LEVEL == 50
         assert isinstance(GameConfig.DUNGEON_SEED_RANGE, int)
         assert GameConfig.VIRUS_DAMAGE_PER_TURN == 3
@@ -317,8 +317,8 @@ class TestGameBalance:
         """Test heat management balance constants."""
         assert GameBalance.HEAT_REDUCTION_NORMAL == 2
         assert GameBalance.HEAT_REDUCTION_BOOSTED == 3
-        assert isinstance(GameBalance.DETECTION_INCREASE_INTERVAL, int)
-        assert isinstance(GameBalance.DETECTION_INCREASE_AMOUNT, int)
+        assert isinstance(GameBalance.TRACE_INCREASE_INTERVAL, int)
+        assert isinstance(GameBalance.TRACE_INCREASE_AMOUNT, int)
     
     def test_node_effect_constants(self):
         """Test special node effect constants."""
@@ -346,9 +346,9 @@ class TestGameBalance:
         assert GameBalance.HEAT_REDUCTION_BOOSTED > 0
         assert GameBalance.HEAT_REDUCTION_INSTANT > 0
         
-        # Detection values should be reasonable
-        assert 0 < GameBalance.DETECTION_INCREASE_INTERVAL <= 100
-        assert 0 < GameBalance.DETECTION_INCREASE_AMOUNT <= 10
+        # TraceLevel values should be reasonable
+        assert 0 < GameBalance.TRACE_INCREASE_INTERVAL <= 100
+        assert 0 < GameBalance.TRACE_INCREASE_AMOUNT <= 10
         
         # Node effects should be positive
         assert GameBalance.COOLING_NODE_EFFECT > 0

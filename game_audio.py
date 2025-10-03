@@ -99,7 +99,7 @@ class SoundManager:
             "virus_damage": "virus_damage.wav",
             "virus_infection": "virus_infection.wav",
             "critical_system_failure": "critical_system_failure.wav",
-            "detection_threshold": "detection_threshold.wav",
+            "trace_threshold": "trace_threshold.wav",
             "overclocking": "overclocking.wav",
             
             # Exploits

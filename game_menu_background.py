@@ -261,7 +261,7 @@ class MenuBackground:
             self._handle_background_error('permission_error', f"Cannot read image file: {image_path}")
             return False
         
-        # Check file size for memory constraint detection
+        # Check file size for memory constraint trace level
         try:
             file_size = os.path.getsize(image_path)
             if file_size > 50 * 1024 * 1024:  # 50MB limit

@@ -73,7 +73,7 @@ class SaveGameManager:
                         "max_cpu": game.player.max_cpu,
                         "heat": game.player.heat,
                         "max_heat": game.player.max_heat,
-                        "detection": game.player.detection,
+                        "trace level": game.player.trace_level,
                         "ram_total": game.player.ram_total,
                         "speed_moves_remaining": game.player.speed_moves_remaining,
                         "temporary_effects": dict(game.player.temporary_effects),
@@ -104,7 +104,7 @@ class SaveGameManager:
                     "enemies": cls._serialize_enemies(game.enemies),
                     "enemy_next_id": getattr(Enemy, '_next_id', 1),
                     
-                    # Data patch effects for this run
+                    # Code hack effects for this run
                     "code_hack_effects": game.code_hack_effects,
                     "discovered_code_effects": game.discovered_code_effects,
                     

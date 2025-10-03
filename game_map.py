@@ -61,7 +61,7 @@ class GameMap:
         return (position.x, position.y) in self.cpu_recovery_nodes
     
     def is_ghost_node(self, position: Position) -> bool:
-        """Check if position contains a ghost node (detection reduction)."""
+        """Check if position contains a ghost node (trace level reduction)."""
         return (position.x, position.y) in self.ghost_nodes
     
     def get_code_hack(self, position: Position) -> Optional[CodeHack]:

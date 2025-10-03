@@ -21,8 +21,8 @@
     "default_player_ram": 8,
     "default_player_cpu": 100,
     "max_heat": 100,
-    "max_detection": 100,
-    "detection_reduction_on_level": 50,
+    "max_trace_level": 100,
+    "trace_reduction_on_level": 50,
     "dungeon_seed_range": 1000000,
     "default_vision_range": 10,
     "max_save_attempts": 3,
@@ -51,17 +51,17 @@
     "cooling_nodes_per_level": 3,
     "cpu_nodes_per_level": 2,
     "ghost_nodes_per_level": 2,
-    "data_patches_per_level": 4,
+    "code_hacks_per_level": 4,
     "exploit_pickups_per_level": 3,
     "permanent_upgrades_per_level": 1
   },
   "balance": {
     "heat_reduction_normal": 2,
     "heat_reduction_boosted": 3,
-    "detection_increase_interval": 25,
-    "detection_increase_amount": 1,
+    "trace_increase_interval": 25,
+    "trace_increase_amount": 1,
     "cooling_node_effect": 20,
-    "ghost_node_detection_reduction_percent": 20.0,
+    "ghost_node_trace_reduction_percent": 20.0,
     "cpu_recovery_amount": 20,
     "enemy_elimination_cpu_reward": 5,
     "cpu_restore_min": 30,
@@ -73,12 +73,12 @@
     "pathfinding_timeout_attempts": 100,
     "enhanced_vision_bonus": 2,
     "shadow_vision_reduction_factor": 3,
-    "enemy_detection_alert_to_hostile": 3,
-    "enemy_detection_continuous_hostile": 0.3,
+    "enemy_trace_alert_to_hostile": 3,
+    "enemy_trace_continuous_hostile": 0.3,
     "enemy_memory_turns": 20,
     "ai_behavior": {
-      "enemy_detection_alert_to_hostile": 3,
-      "enemy_detection_continuous_hostile": 0.3
+      "enemy_trace_alert_to_hostile": 3,
+      "enemy_trace_continuous_hostile": 0.3
     }
   },
   "colors": {

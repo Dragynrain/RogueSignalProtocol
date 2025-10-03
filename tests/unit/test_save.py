@@ -111,7 +111,7 @@ class TestSaveGameManager:
         mock_player.max_cpu = 100
         mock_player.heat = 25
         mock_player.max_heat = 100
-        mock_player.detection = 5
+        mock_player.trace_level = 5
         mock_player.ram_total = 16
         mock_player.speed_moves_remaining = 2
         mock_player.temporary_effects = {'data_mimic_turns': 3}
@@ -394,7 +394,7 @@ class TestSaveGameIntegration:
         mock_player.max_cpu = 100
         mock_player.heat = 15
         mock_player.max_heat = 100
-        mock_player.detection = 0
+        mock_player.trace_level = 0
         mock_player.ram_total = 8
         mock_player.speed_moves_remaining = 0
         # Ensure temporary_effects is a real dict, not Mock

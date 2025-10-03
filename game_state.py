@@ -125,12 +125,12 @@ class GameStateManager:
         network_configs = GameConfig.NETWORK_CONFIGS()
         return network_configs.get(self.level, network_configs[1])
     
-    def should_spawn_admin(self, detection_level: float) -> bool:
-        """Determine if admin should spawn based on detection level."""
+    def should_spawn_admin(self, trace_level: float) -> bool:
+        """Determine if admin should spawn based on trace level."""
         if self.admin_spawned:
             return False
             
-        return detection_level >= GameConfig.MAX_DETECTION
+        return trace_level >= GameConfig.MAX_TRACE_LEVEL
 
 
 class TurnProcessor:
@@ -150,8 +150,8 @@ class TurnProcessor:
         # Process temporary effects
         self._process_temporary_effects(player)
         
-        # Process detection increase
-        self._process_detection_increase(player)
+        # Process trace level increase
+        self._process_trace_increase(player)
     
     def _process_heat_management(self, player) -> None:
         """Handle heat reduction over time."""
@@ -200,13 +200,13 @@ class TurnProcessor:
                     elif effect_name == 'virus_turns':
                         self.message_log.add_message("Virus purged from system")
     
-    def _process_detection_increase(self, player) -> None:
-        """Handle periodic detection level increases."""
-        if self.game_state.turn % GameBalance.DETECTION_INCREASE_INTERVAL == 0:
+    def _process_trace_increase(self, player) -> None:
+        """Handle periodic trace level increases."""
+        if self.game_state.turn % GameBalance.TRACE_INCREASE_INTERVAL == 0:
             config = self.game_state.get_current_network_config()
-            detection_increase = config.get('background_detection', 1) * GameBalance.DETECTION_INCREASE_AMOUNT
+            trace_increase = config.get('background_trace', 1) * GameBalance.TRACE_INCREASE_AMOUNT
             
-            old_detection = player.detection
-            player.detection = min(100, player.detection + detection_increase)
+            old_trace = player.trace_level
+            player.trace_level = min(100, player.trace_level + trace_increase)
             
-            # Detection increases silently in background
+            # Trace Level increases silently in background

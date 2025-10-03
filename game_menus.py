@@ -233,7 +233,7 @@ class MainMenu:
             try:
                 window_width, window_height = self.background.window_manager.get_window_pixel_dimensions()
             except (AttributeError, TypeError, ValueError):
-                pass  # Use defaults if window detection fails
+                pass  # Use defaults if window trace level fails
         
         # Calculate dynamic positioning based on window aspect ratio and size
         aspect_ratio = window_width / window_height if window_height > 0 else 1.0
@@ -743,7 +743,7 @@ class SettingsMenu:
             try:
                 window_width, window_height = self.background.window_manager.get_window_pixel_dimensions()
             except (AttributeError, TypeError, ValueError):
-                pass  # Use defaults if window detection fails
+                pass  # Use defaults if window trace level fails
         
         # Calculate dynamic positioning based on window aspect ratio and size
         aspect_ratio = window_width / window_height if window_height > 0 else 1.0

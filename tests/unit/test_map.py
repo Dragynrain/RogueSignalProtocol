@@ -140,7 +140,7 @@ class TestTerrainQueries:
 class TestFeatureNodes:
     """Test special feature node checking methods."""
     
-    def test_cooling_node_detection(self):
+    def test_cooling_node_trace_level(self):
         """is_cooling_node correctly identifies cooling nodes."""
         game_map = GameMap(50, 30)
         node_pos = Position(30, 20)
@@ -150,7 +150,7 @@ class TestFeatureNodes:
         game_map.cooling_nodes.add((30, 20))
         assert game_map.is_cooling_node(node_pos) is True
     
-    def test_cpu_recovery_node_detection(self):
+    def test_cpu_recovery_node_trace_level(self):
         """is_cpu_recovery_node correctly identifies CPU recovery nodes."""
         game_map = GameMap(50, 30)
         node_pos = Position(35, 25)
@@ -160,7 +160,7 @@ class TestFeatureNodes:
         game_map.cpu_recovery_nodes.add((35, 25))
         assert game_map.is_cpu_recovery_node(node_pos) is True
     
-    def test_ghost_node_detection(self):
+    def test_ghost_node_trace_level(self):
         """is_ghost_node correctly identifies ghost nodes."""
         game_map = GameMap(50, 30)
         node_pos = Position(40, 18)

@@ -1,6 +1,6 @@
 """
 Integration tests for player movement → enemy vision → enemy alerting chain.
-Tests the complete detection and alerting workflow using real game data.
+Tests the complete trace level and alerting workflow using real game data.
 """
 
 import pytest
@@ -61,7 +61,7 @@ class TestPlayerEnemyVisionChain:
                 can_see = self.scanner1.can_see_player(self.player, self.game_map)
                 
                 if can_see:
-                    # Simulate detection logic
+                    # Simulate trace level logic
                     self.scanner1.state = EnemyState.ALERT
                     self.scanner1.last_seen_player = Position(self.player.x, self.player.y)
         
@@ -119,7 +119,7 @@ class TestPlayerEnemyVisionChain:
                 assert 0 <= pos.x < self.game_map.width, "Move must be within map width"
                 assert 0 <= pos.y < self.game_map.height, "Move must be within map height"
     
-    def test_complete_detection_workflow(self):
+    def test_complete_trace_level_workflow(self):
         """Test the complete workflow from player movement to enemy response."""
         # Step 1: Player starts in safe position
         self.player.x = 5
@@ -181,7 +181,7 @@ class TestPlayerEnemyVisionChain:
         assert can_see is False, "Wall should block enemy vision"
         assert self.scanner1.state == EnemyState.UNAWARE, "Enemy should remain unaware when vision blocked"
     
-    def test_player_invisibility_prevents_detection(self):
+    def test_player_invisibility_prevents_trace_level(self):
         """Test that invisible player is not detected even in enemy vision range."""
         # Position player very close to enemy
         self.player.x = self.scanner1.position.x + 1

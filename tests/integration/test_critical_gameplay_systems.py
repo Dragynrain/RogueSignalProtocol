@@ -3,7 +3,7 @@ Critical gameplay systems integration tests.
 
 Tests the integration of core gameplay systems that are essential for proper game function:
 - Combat system integration with enemy AI and player actions
-- Detection system and enemy alerting chains
+- TraceLevel system and enemy alerting chains
 - Exploit system and its effects on gameplay
 - Inventory and upgrade systems
 - Save/load system with complex game states
@@ -141,8 +141,8 @@ class TestCombatSystemIntegration:
         assert hasattr(engine, 'player')
 
 
-class TestDetectionSystemIntegration:
-    """Test critical detection and enemy alerting system integration."""
+class TestTraceLevelSystemIntegration:
+    """Test critical trace level and enemy alerting system integration."""
 
     def setup_method(self):
         """Set up test fixtures."""
@@ -172,55 +172,55 @@ class TestDetectionSystemIntegration:
 
         return engine
 
-    def test_enemy_detection_system_integration(self):
-        """Test enemy detection system is properly integrated."""
+    def test_enemy_trace_level_system_integration(self):
+        """Test enemy trace level system is properly integrated."""
         engine = self.create_test_engine()
 
         # Set up test scenario
         engine.player.x, engine.player.y = 10, 10
-        engine.player.detection = 20
+        engine.player.trace_level = 20
 
         # Create enemy
         enemy = create_real_enemy("scanner", Position(12, 10))
         engine.enemies = [enemy]
 
-        # Verify detection system integration
-        assert hasattr(engine.player, 'detection')
-        assert isinstance(engine.player.detection, (int, float))
-        assert engine.player.detection >= 0
+        # Verify trace level system integration
+        assert hasattr(engine.player, 'trace_level')
+        assert isinstance(engine.player.trace_level, (int, float))
+        assert engine.player.trace_level >= 0
 
         # Verify enemy vision integration
         assert hasattr(enemy, 'can_see_player')
         assert hasattr(enemy, 'state')
 
-    def test_detection_threshold_system_integration(self):
-        """Test detection threshold system is properly integrated."""
+    def test_trace_threshold_system_integration(self):
+        """Test trace level threshold system is properly integrated."""
         engine = self.create_test_engine()
 
-        # Test detection system exists
-        initial_detection = engine.player.detection
+        # Test trace level system exists
+        initial_trace = engine.player.trace_level
 
         # Process a turn
         engine.process_turn()
 
-        # Verify detection system is working (should be same or change predictably)
-        assert engine.player.detection >= 0  # Detection should never be negative
-        assert isinstance(engine.player.detection, (int, float))  # Should be a number
+        # Verify trace level system is working (should be same or change predictably)
+        assert engine.player.trace_level >= 0  # TraceLevel should never be negative
+        assert isinstance(engine.player.trace_level, (int, float))  # Should be a number
 
-    def test_detection_system_persistence_integration(self):
-        """Test detection system integrates with game state persistence."""
+    def test_trace_level_system_persistence_integration(self):
+        """Test trace level system integrates with game state persistence."""
         engine = self.create_test_engine()
 
-        # Set detection value
-        initial_detection = 75
-        engine.player.detection = initial_detection
+        # Set trace level value
+        initial_trace = 75
+        engine.player.trace_level = initial_trace
 
-        # Verify detection persists in player object
-        assert engine.player.detection == initial_detection
+        # Verify trace level persists in player object
+        assert engine.player.trace_level == initial_trace
 
-        # Verify detection is accessible through game engine
+        # Verify trace level is accessible through game engine
         assert hasattr(engine, 'player')
-        assert hasattr(engine.player, 'detection')
+        assert hasattr(engine.player, 'trace_level')
 
 
 class TestExploitSystemIntegration:
@@ -377,12 +377,12 @@ class TestGameStateIntegration:
         # Set some state
         engine.player.cpu = 75
         engine.player.heat = 30
-        engine.player.detection = 45
+        engine.player.trace_level = 45
 
         # Verify state is accessible
         assert engine.player.cpu == 75
         assert engine.player.heat == 30
-        assert engine.player.detection == 45
+        assert engine.player.trace_level == 45
 
         # Verify persistence systems exist
         assert hasattr(engine, 'save_load_manager')

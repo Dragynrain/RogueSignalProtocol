@@ -57,8 +57,8 @@ class TestGameMapBasics(TestMapGeneration):
         assert len(game_map.exploit_pickups) == 0
         assert game_map.gateway is None
     
-    def test_wall_detection(self):
-        """Wall detection works correctly."""
+    def test_wall_trace_level(self):
+        """Wall trace_level works correctly."""
         game_map = GameMap(10, 10)
         
         # No walls initially
@@ -74,8 +74,8 @@ class TestGameMapBasics(TestMapGeneration):
         assert game_map.is_wall(Position(10, 5))
         assert game_map.is_wall(Position(5, 10))
     
-    def test_shadow_detection(self):
-        """Shadow detection works correctly including ghost nodes."""
+    def test_shadow_trace_level(self):
+        """Shadow trace_level works correctly including ghost nodes."""
         game_map = GameMap(10, 10)
         
         # No shadows initially
@@ -93,8 +93,8 @@ class TestGameMapBasics(TestMapGeneration):
         assert not game_map.is_shadow(Position(-1, 5))
         assert not game_map.is_shadow(Position(10, 5))
     
-    def test_special_node_detection(self):
-        """Special node detection works correctly."""
+    def test_special_node_trace_level(self):
+        """Special node trace_level works correctly."""
         game_map = GameMap(10, 10)
         
         # Add different types of nodes
@@ -111,8 +111,8 @@ class TestGameMapBasics(TestMapGeneration):
         assert game_map.is_ghost_node(Position(4, 4))
         assert not game_map.is_ghost_node(Position(2, 2))
     
-    def test_valid_position_detection(self):
-        """Valid position detection considers walls and boundaries."""
+    def test_valid_position_trace_level(self):
+        """Valid position trace_level considers walls and boundaries."""
         game_map = GameMap(10, 10)
         
         # Valid empty position
@@ -154,8 +154,8 @@ class TestRoomGeneration(TestMapGeneration):
         assert (5, 4) in self.game_map.walls
         assert (5, 13) in self.game_map.walls
     
-    def test_room_overlap_detection(self):
-        """Room overlap detection works correctly."""
+    def test_room_overlap_trace_level(self):
+        """Room overlap trace_level works correctly."""
         existing_rooms = [(5, 5, 10, 8), (20, 20, 6, 6)]
         
         # Test non-overlapping room
@@ -320,7 +320,7 @@ class TestSpecialTileDistribution(TestMapGeneration):
         valid_position = Position(5, 5)
         assert self.game_map.is_valid_position(valid_position)
         
-        # Add a cooling node manually and test detection
+        # Add a cooling node manually and test trace_level
         self.game_map.cooling_nodes.add((5, 5))
         assert self.game_map.is_cooling_node(Position(5, 5))
     
@@ -476,7 +476,7 @@ class TestRoomOverlapPrevention(TestMapGeneration):
     """Test room overlap prevention mechanisms."""
     
     def test_overlap_with_multiple_rooms(self):
-        """Overlap detection works with multiple existing rooms."""
+        """Overlap trace_level works with multiple existing rooms."""
         existing_rooms = [
             (5, 5, 8, 6),
             (20, 20, 6, 8),

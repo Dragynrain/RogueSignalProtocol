@@ -62,9 +62,9 @@ class GameLevelCoordinator:
             # Stat changes for level transition:
             # - CPU: Preserved (carries over)
             # - Heat: Preserved (carries over)
-            # - Detection: Reset to 0 (doesn't carry over)
+            # - Trace Level: Reset to 0 (doesn't carry over)
             # - Admin spawned state: Reset (new network, fresh start)
-            self.game_engine.player.detection = 0
+            self.game_engine.player.trace_level = 0
             self.game_engine.admin_spawned = False
 
             self.game_engine.message_log.add_message(f"{config['name']} loaded")
@@ -85,7 +85,7 @@ class GameLevelCoordinator:
             self.game_engine.message_log.add_message_typed("BREAKTHROUGH TO THE INTERNET!", 'green')
             self.game_engine.message_log.add_message("You've escaped into the vast digital realm...")
             self.game_engine.message_log.add_message("The entire world wide web awaits exploration!")
-            self.game_engine.message_log.add_message(f"Stats: Turns:{self.game_engine.turn} Det:{int(self.game_engine.player.detection)}%")
+            self.game_engine.message_log.add_message(f"Stats: Turns:{self.game_engine.turn} Det:{int(self.game_engine.player.trace_level)}%")
             self.game_engine.game_over = True
             # Delete save on game completion (no continuing after winning)
             SaveGameManager.delete_save()
@@ -289,7 +289,7 @@ class GameLevelCoordinator:
         """Place enemies throughout the level with increased density."""
         enemy_types = ['scanner', 'patrol', 'bot', 'firewall', 'hunter', 'virus', 'inhibitor']
         # Adjust weights for challenging gameplay
-        enemy_weights = [4, 3, 2, 2, 2, 1, 2]  # More scanners and firewalls for detection challenge, virus is rare
+        enemy_weights = [4, 3, 2, 2, 2, 1, 2]  # More scanners and firewalls for trace level challenge, virus is rare
 
         # Increase enemy density significantly
         actual_enemy_count = int(enemy_count * 1.6)  # 60% more enemies

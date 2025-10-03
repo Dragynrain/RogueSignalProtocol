@@ -353,8 +353,8 @@ class TestUniversalInputHandler:
         assert result is True
         assert adjustment_values == [-1, 1]
     
-    def test_confirm_key_detection(self):
-        """Test confirm key detection."""
+    def test_confirm_key_trace_level(self):
+        """Test confirm key trace_level."""
         self.mock_event.sym = tcod.event.KeySym.RETURN
         assert UniversalInputHandler.is_confirm_key(self.mock_event) is True
         
@@ -364,8 +364,8 @@ class TestUniversalInputHandler:
         self.mock_event.sym = tcod.event.KeySym.SPACE
         assert UniversalInputHandler.is_confirm_key(self.mock_event) is False
     
-    def test_escape_key_detection(self):
-        """Test escape key detection."""
+    def test_escape_key_trace_level(self):
+        """Test escape key trace_level."""
         self.mock_event.sym = tcod.event.KeySym.ESCAPE
         assert UniversalInputHandler.is_escape_key(self.mock_event) is True
         

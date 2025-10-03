@@ -248,7 +248,7 @@ class TestGhostNodeMessageSpamPrevention(unittest.TestCase):
         self.engine._process_special_tiles()
 
         # Ghost node messages have been removed per user request
-        # Verify detection was reduced but no message appears
+        # Verify trace level was reduced but no message appears
         messages = [msg.text for msg in self.engine.message_log.messages]
         ghost_messages = [msg for msg in messages if "Ghost node" in msg]
         self.assertEqual(len(ghost_messages), 0, "Ghost node messages should not appear (removed per user request)")
@@ -262,15 +262,15 @@ class TestGhostNodeMessageSpamPrevention(unittest.TestCase):
         ghost_messages = [msg for msg in messages if "Ghost node" in msg]
         self.assertEqual(len(ghost_messages), 0, "Ghost node messages should never appear")
 
-    def test_ghost_node_message_shows_when_detection_actually_reduced(self):
-        """Test that ghost node reduces detection but doesn't show messages (removed per user request)."""
-        # Set player detection to a value that can be reduced
-        self.player.detection = 50.0
+    def test_ghost_node_message_shows_when_trace_level_actually_reduced(self):
+        """Test that ghost node reduces trace level but doesn't show messages (removed per user request)."""
+        # Set player trace level to a value that can be reduced
+        self.player.trace_level = 50.0
 
         # Clear message log
         self.engine.message_log.messages.clear()
 
-        # Process special tiles - should reduce detection but not show message
+        # Process special tiles - should reduce trace level but not show message
         self.engine._process_special_tiles()
 
         # Should NOT have ghost node message (removed per user request)
@@ -278,8 +278,8 @@ class TestGhostNodeMessageSpamPrevention(unittest.TestCase):
         ghost_messages = [msg for msg in messages if "Ghost node" in msg]
         self.assertEqual(len(ghost_messages), 0, "Ghost node messages should not appear (removed per user request)")
 
-        # Verify detection was actually reduced (functionality still works)
-        self.assertLess(self.player.detection, 50.0, "Detection should have been reduced")
+        # Verify trace level was actually reduced (functionality still works)
+        self.assertLess(self.player.trace_level, 50.0, "TraceLevel should have been reduced")
 
 
 if __name__ == '__main__':

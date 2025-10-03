@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Comprehensive Vision and Line-of-Sight Tests - Test Category 3
-Tests for player vision, enemy detection, shadow concealment mechanics,
+Tests for player vision, enemy trace_level, shadow concealment mechanics,
 wall sight-line blocking, and TCOD FOV system integration.
 """
 
@@ -156,7 +156,7 @@ class TestShadowConcealmentMechanics(TestVisionLineOfSight):
             result = self.player.can_see_enemy(enemy, self.game_map)
             assert result == False
     
-    def test_player_invisibility_prevents_enemy_detection(self):
+    def test_player_invisibility_prevents_enemy_trace_level(self):
         """Invisible player (data mimic) cannot be seen by enemies."""
         with patch('game_data.GameData.ENEMY_TYPES', {
             'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
@@ -256,7 +256,7 @@ class TestWallSightLineBlocking(TestVisionLineOfSight):
             self.game_map.walls.add((12, 10))
             self.game_map.invalidate_transparency_cache()
             
-            # Test the wall detection itself
+            # Test the wall trace_level itself
             assert self.game_map.is_wall(Position(12, 10)) == True
             
             # The TCOD FOV system might allow seeing the target position even if it's a wall
@@ -274,8 +274,8 @@ class TestWallSightLineBlocking(TestVisionLineOfSight):
             assert wall_blocks_sight == True  # Wall should block sight to position behind it
 
 
-class TestEnemyDetectionRanges(TestVisionLineOfSight):
-    """Test enemy detection ranges and vision mechanics."""
+class TestEnemyTraceLevelRanges(TestVisionLineOfSight):
+    """Test enemy trace_level ranges and vision mechanics."""
     
     def test_enemy_vision_range_limits(self):
         """Enemy cannot see player beyond their vision range."""
@@ -606,7 +606,7 @@ class TestStealthGameplayValidation(TestVisionLineOfSight):
             assert self.player.can_see_enemy(enemy, self.game_map)
             
             # And adjacent invisible player should still be detectable (adjacency overrides)
-            # Note: this depends on implementation - admin might be needed for invisible detection
+            # Note: this depends on implementation - admin might be needed for invisible trace_level
             # Regular enemies might not detect invisible adjacent players
 
 

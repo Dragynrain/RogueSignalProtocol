@@ -249,7 +249,7 @@ class TestEffectExpiration(unittest.TestCase):
         self.assertEqual(self.player.temporary_effects['enhanced_vision_turns'], 0)
         self.assertEqual(self.player.temporary_effects['exploit_efficiency_turns'], 4)
 
-    def test_data_mimic_detection_method(self):
+    def test_data_mimic_trace_level_method(self):
         """Test is_invisible returns correct state."""
         self.assertFalse(self.player.is_invisible())
         
@@ -259,8 +259,8 @@ class TestEffectExpiration(unittest.TestCase):
         self.player.temporary_effects['data_mimic_turns'] = 0
         self.assertFalse(self.player.is_invisible())
 
-    def test_enhanced_vision_detection_methods(self):
-        """Test enhanced vision detection methods work correctly."""
+    def test_enhanced_vision_trace_level_methods(self):
+        """Test enhanced vision trace level methods work correctly."""
         # Test can_see_through_walls method
         self.assertFalse(self.player.can_see_through_walls())
         

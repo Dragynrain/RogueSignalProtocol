@@ -54,7 +54,7 @@ class TestSaveDataIntegrity:
         game.player.max_cpu = 120
         game.player.heat = 15
         game.player.max_heat = 100
-        game.player.detection = 25
+        game.player.trace_level = 25
         game.player.ram_total = 16
         game.player.speed_moves_remaining = 2
         game.player.temporary_effects = {"stealth": 5, "overclock": 2}
@@ -117,7 +117,7 @@ class TestSaveDataIntegrity:
                 "last_x": 9, "last_y": 9,
                 "cpu": 100, "max_cpu": 100,
                 "heat": 0, "max_heat": 100,
-                "detection": 0, "ram_total": 16,
+                "trace_level": 0, "ram_total": 16,
                 "speed_moves_remaining": 0,
                 "temporary_effects": {},
                 "equipped_exploits": [],
@@ -154,7 +154,7 @@ class TestSaveDataIntegrity:
                 "last_x": 19, "last_y": 24,
                 "cpu": 85, "max_cpu": 120,
                 "heat": 15, "max_heat": 100,
-                "detection": 25, "ram_total": 16,
+                "trace_level": 25, "ram_total": 16,
                 "speed_moves_remaining": 2,
                 "temporary_effects": {"stealth": 5, "overclock": 2},
                 "equipped_exploits": ["exploit1", "exploit2"],
@@ -354,7 +354,7 @@ class TestPartialSaveScenarios:
                 "last_x": 9, "last_y": 9,
                 "cpu": 100, "max_cpu": 100,
                 "heat": 0, "max_heat": 100,
-                "detection": 0, "ram_total": 16,
+                "trace_level": 0, "ram_total": 16,
                 "speed_moves_remaining": 0,
                 "temporary_effects": {},
                 "equipped_exploits": [],
@@ -417,7 +417,7 @@ class TestStateRestorationAccuracy:
                 "max_cpu": 100,
                 "heat": 25,
                 "max_heat": 100,
-                "detection": 15,
+                "trace_level": 15,
                 "ram_total": 16,
                 "speed_moves_remaining": 0,
                 "temporary_effects": {},
@@ -522,7 +522,7 @@ class TestUpgradePersistence:
                 "last_x": 9, "last_y": 9,
                 "cpu": 85, "max_cpu": 120,  # Upgraded max_cpu
                 "heat": 15, "max_heat": 120,  # Upgraded max_heat
-                "detection": 10,
+                "trace_level": 10,
                 "ram_total": 32,  # Upgraded RAM
                 "speed_moves_remaining": 0,
                 "temporary_effects": {},
@@ -564,7 +564,7 @@ class TestUpgradePersistence:
                 "last_x": 9, "last_y": 9,
                 "cpu": 100, "max_cpu": 100,
                 "heat": 0, "max_heat": 100,
-                "detection": 0,
+                "trace_level": 0,
                 "ram_total": 16,
                 "speed_moves_remaining": 0,
                 "temporary_effects": {},
@@ -635,7 +635,7 @@ class TestTemporaryEffectRestoration:
                 "last_x": 9, "last_y": 9,
                 "cpu": 100, "max_cpu": 100,
                 "heat": 0, "max_heat": 100,
-                "detection": 0,
+                "trace_level": 0,
                 "ram_total": 16,
                 "speed_moves_remaining": 3,  # Active speed effect
                 "temporary_effects": {
@@ -699,7 +699,7 @@ class TestTemporaryEffectRestoration:
                 "last_x": 9, "last_y": 9,
                 "cpu": 100, "max_cpu": 100,
                 "heat": 0, "max_heat": 100,
-                "detection": 0,
+                "trace_level": 0,
                 "ram_total": 16,
                 "speed_moves_remaining": 0,
                 "temporary_effects": {},  # No active effects
@@ -735,8 +735,8 @@ class TestSaveGameUtilities:
         SaveGameManager.SAVE_FILE = self.original_save_file
         shutil.rmtree(self.temp_dir, ignore_errors=True)
     
-    def test_save_exists_detection(self):
-        """Test save file existence detection."""
+    def test_save_exists_trace_level(self):
+        """Test save file existence trace_level."""
         # No save file exists initially
         assert not SaveGameManager.save_exists()
         
