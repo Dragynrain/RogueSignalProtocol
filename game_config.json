@@ -72,6 +72,7 @@
     "max_movement_queue_size": 3,
     "pathfinding_timeout_attempts": 100,
     "enhanced_vision_bonus": 2,
+    "shadow_vision_reduction_factor": 3,
     "enemy_detection_alert_to_hostile": 3,
     "enemy_detection_continuous_hostile": 0.3,
     "enemy_memory_turns": 20
