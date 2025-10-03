@@ -4,7 +4,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![Version](https://img.shields.io/badge/version-0.8.0%20Alpha-orange.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
+![License](https://img.shields.io/badge/license-GPL%20v3-blue.svg)
 
 ## 🎮 Game Overview
 
@@ -162,7 +162,17 @@ We welcome contributions! Please feel free to:
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+**GPL v3 Summary**: This software is free and open source. You can use, modify, and distribute it, but any modifications must also be released under GPL v3. This ensures the game remains free and open for everyone.
+
+Key freedoms under GPL v3:
+- ✅ Freedom to run the program for any purpose
+- ✅ Freedom to study how the program works and modify it
+- ✅ Freedom to redistribute copies
+- ✅ Freedom to distribute modified versions
+
+Any derivative works must also be licensed under GPL v3, ensuring the game and its derivatives remain free software forever.
 
 ## 👨‍💻 Author
 

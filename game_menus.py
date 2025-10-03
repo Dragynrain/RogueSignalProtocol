@@ -697,17 +697,18 @@ class LoreMenu:
 
 class SettingsMenu:
     """Settings menu for audio, graphics, and help options."""
-    
-    def __init__(self, settings: GameSettings, menu_background=None):
+
+    def __init__(self, settings: GameSettings, menu_background=None, sound_manager=None):
         self.settings = settings
         self.menu_background = menu_background  # Reference to background manager
         self.background = menu_background  # Alias for consistency with MainMenu
+        self.sound_manager = sound_manager  # For live volume updates and sound previews
         self.selected_option = 0
         self.options = [
             {"name": "Master Volume", "type": "volume", "key": "master"},
             {"name": "SFX Volume", "type": "volume", "key": "sfx"},
             {"name": "Music Volume", "type": "volume", "key": "music"},
-            {"name": "Graphics Mode", "type": "toggle", "key": "graphics_mode", 
+            {"name": "Graphics Mode", "type": "toggle", "key": "graphics_mode",
              "values": ["ASCII", "Graphics"]},
             {"name": "Back", "type": "action"}
         ]
@@ -1038,19 +1039,40 @@ class SettingsMenu:
     def _adjust_setting(self, direction: int):
         """Adjust the currently selected setting."""
         option = self.options[self.selected_option]
-        
+
         if option["type"] == "volume":
             current_percent = self.settings.get_volume_percent(option["key"])
             new_percent = max(0, min(100, current_percent + (direction * 5)))
             self.settings.set_volume_percent(option["key"], new_percent)
-            # Note: Sound manager will be updated when the game is created with these settings
-            
+
+            # Update sound manager volumes immediately for live feedback
+            if self.sound_manager:
+                self.sound_manager.update_volumes()
+
+                # Play a preview sound for the adjusted volume type
+                import random
+                try:
+                    if option["key"] == "sfx":
+                        # Play a random sound effect to preview volume
+                        preview_sounds = [
+                            "player_move", "item_pickup_code", "ui_menu_open",
+                            "node_activate", "exploit_shadow_step"
+                        ]
+                        sound_id = random.choice(preview_sounds)
+                        if sound_id in self.sound_manager.sounds:
+                            self.sound_manager.play_sound(sound_id)
+                    elif option["key"] == "music":
+                        # Update music volume immediately (if music is playing)
+                        pass  # Music volume is already updated by update_volumes()
+                except Exception as e:
+                    logging.debug(f"Could not play volume preview sound: {e}")
+
         elif option["type"] == "toggle":
             if option["key"] == "graphics_mode":
                 current_mode = self.settings.graphics_mode
                 new_mode = "graphics" if current_mode == "ascii" else "ascii"
                 self.settings.set_graphics_mode(new_mode)
-                
+
                 # Immediately update background to reflect the change
                 if self.menu_background:
                     self.menu_background.reload_if_mode_changed()

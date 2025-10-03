@@ -75,26 +75,35 @@ def initialize_tcod_context():
 
 
 
-def initialize_game_systems(settings: GameSettings, menu_background=None):
+def initialize_game_systems(settings: GameSettings, menu_background=None, sound_manager=None):
     """Initialize menu systems and return menu objects."""
     return {
         'main_menu': MainMenu(background=menu_background),  # Pass background here
-        'settings_menu': SettingsMenu(settings, menu_background),  # Pass background for immediate updates
+        'settings_menu': SettingsMenu(settings, menu_background, sound_manager),  # Pass sound manager for live volume updates
         'help_menu': HelpMenu(),
         'lore_menu': LoreMenu()
     }
 
 
-def handle_menu_navigation(console, context, menus, settings):
+def handle_menu_navigation(console, context, menus, settings, menu_sound_manager=None):
     """Handle the main menu navigation loop."""
     main_menu = menus['main_menu']
     main_menu.refresh_options(show_continue=True)
     current_menu = main_menu
-    
+
+    # Create sound manager if not provided
+    if menu_sound_manager is None:
+        menu_sound_manager = SoundManager(settings)
+
     # Start main menu music only if no music is already playing
-    menu_sound_manager = SoundManager(settings)
     try:
-        if not menu_sound_manager.is_music_playing():
+        # Check if ANY music is already playing (including level music from game)
+        # This prevents stopping level music when returning to menu
+        from game_audio import AUDIO_AVAILABLE
+        import pygame
+        music_already_playing = AUDIO_AVAILABLE and pygame.mixer.music.get_busy()
+
+        if not music_already_playing:
             menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000, volume_multiplier=1.3)
     except Exception as e:
         logging.warning(f"Could not play main menu music: {e}")
@@ -219,18 +228,22 @@ def main():
             menu_background = MenuBackground(context, settings)
             menu_background.reset_background_system()  # Reset any previous errors
             menu_background.load_random_background()  # Only loads if graphics mode enabled
-            
-            # Pass background to initialize_game_systems
-            menus = initialize_game_systems(settings, menu_background)
-            
+
+            # Create persistent sound manager for menus
+            menu_sound_manager = SoundManager(settings)
+            menu_sound_manager.preload_sounds()  # Preload for sound previews
+
+            # Pass background and sound manager to initialize_game_systems
+            menus = initialize_game_systems(settings, menu_background, menu_sound_manager)
+
             game = None
-            
+
             while True:
                 # Check for graphics mode changes and reload accordingly
                 menu_background.reload_if_mode_changed()
-                
+
                 if game is None:
-                    game, should_exit = handle_menu_navigation(console, context, menus, settings)
+                    game, should_exit = handle_menu_navigation(console, context, menus, settings, menu_sound_manager)
                     if should_exit:
                         # Cleanup background before exit
                         menu_background.cleanup()
