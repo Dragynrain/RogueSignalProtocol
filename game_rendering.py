@@ -552,13 +552,12 @@ class UIRenderer:
         status_parts = [
             f"CPU:{game.player.cpu:3d}/{game.player.max_cpu}",
             f"Heat:{game.player.heat:3d}°C/{game.player.max_heat}°C" if game.player.max_heat > 100 else f"Heat:{game.player.heat:3d}°C",
-            f"Det:{int(game.player.trace_level):3d}%",
+            f"Threat:{int(game.player.trace_level):3d}%",
             f"RAM:{game.player.ram_used}/{game.player.ram_total}GB",
-            f"Turn:{game.turn:4d}",
             "Press ? for help"
         ]
         
-        colors = [cpu_color, heat_color, trace_color, ram_color, Colors.UI_TEXT, Colors.ELECTRIC_PURPLE]
+        colors = [cpu_color, heat_color, trace_color, ram_color, Colors.ELECTRIC_PURPLE]
         
         x_pos = 1
         for part, color in zip(status_parts, colors):
