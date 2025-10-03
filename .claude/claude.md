@@ -78,18 +78,40 @@
 - **TCOD 19.x cannot render pixels to text consoles** - use draw_semigraphics for image display which is only for small images
 - Load images with tcod.image.load() for numpy arrays, use console.draw_semigraphics() for display
 
-## Error Handling and Debugging
+## Error Handling and Debugging (CRITICAL)
 - **ALWAYS use detailed error handling that logs to console AND logging functions**
 - Never suppress errors or use silent logging.warning() - use `print()` + `logging` together
 - Include specific error details, exception messages, and context in error reports
 - When error handling disables systems, clearly communicate this to the user via console output
-- Example pattern:
+- **MANDATORY error reporting pattern**:
   ```python
   error_msg = f"SYSTEM ERROR: {specific_details}"
   print(error_msg)  # Always visible to user
   logging.error(error_msg)  # Also log for debugging
-  if exception:
-      print(f"Exception: {str(exception)}")
+  print(f"Exception: {str(exception)}")
+  print(f"Exception type: {type(exception).__name__}")
+  # Include traceback for debugging
+  traceback.print_exc()
+  ```
+
+### Configuration Error Handling (CRITICAL)
+- **NO FALLBACK DATA** - Missing configuration must cause immediate failure
+- **NO SILENT FAILURES** - Configuration errors must be immediately visible to users
+- **FAIL FAST** - Raise exceptions immediately when required JSON files or sections are missing
+- **Detailed Context** - Always print available keys/sections when reporting missing ones
+- **Configuration files are NOT optional** - game_data.json, game_config.json, story_content.json are required
+- **User settings fallback is acceptable** - Only user_settings.json may use defaults for first-run scenarios
+- **Example configuration error pattern**:
+  ```python
+  try:
+      return game_data['required_section']
+  except KeyError as e:
+      error_msg = f"CRITICAL CONFIG ERROR: Missing '{key}' section in {filename}"
+      print(error_msg)
+      logging.error(error_msg)
+      print(f"Exception: {str(e)}")
+      print(f"Available sections: {list(game_data.keys())}")
+      raise KeyError(f"Required '{key}' section missing from {filename}") from e
   ```
 
 ## Virtual Environment Dependencies  
