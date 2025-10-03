@@ -7,7 +7,6 @@ Focused on dependency injection and component coordination.
 
 import logging
 import random
-import copy
 from typing import List, Tuple, Optional, Dict, Any
 
 # Import all necessary modules
@@ -199,41 +198,29 @@ class GameEngine:
         """Get enemy at position - for backward compatibility."""
         return self.enemy_manager.get_enemy_at_position(position)
 
-    # Backward compatibility methods for tests
+    # Backward compatibility methods for tests (simplified)
     def _process_player_turn(self):
-        """Process player turn - wrapper around TurnProcessor for backward compatibility."""
+        """Process player turn."""
         self.turn_processor.process_turn(self.player)
 
-    def _process_enemy_turn(self):
-        """Process enemy turns - for backward compatibility."""
-        self.turn_manager._process_enemies_turn()
-
     def _process_enemies_turn(self):
-        """Process enemies turn (plural) - for backward compatibility."""
+        """Process enemies turn."""
         self.turn_manager._process_enemies_turn()
-
-    def _process_player_temporary_effects(self):
-        """Process player temporary effects - wrapper for backward compatibility."""
-        self.player.update_effects()
-
-    def _process_environmental_effects(self):
-        """Process environmental effects - for backward compatibility."""
-        self.turn_manager._process_environmental_effects()
 
     def _process_special_tiles(self):
-        """Process special tiles - for backward compatibility."""
+        """Process special tiles."""
         self.turn_manager._process_special_tiles()
 
     def _update_enemies(self):
-        """Update enemies - for backward compatibility."""
+        """Update enemies."""
         self.turn_manager._update_enemies()
 
     def _generate_procedural_level(self):
-        """Generate procedural level - for backward compatibility."""
+        """Generate procedural level."""
         self.level_coordinator.generate_procedural_level()
 
     def _update_enemy_awareness(self):
-        """Update enemy awareness - for backward compatibility."""
+        """Update enemy awareness."""
         self.turn_manager._update_enemy_awareness()
 
     def auto_save(self) -> None:
@@ -419,32 +406,35 @@ class GameEngine:
     def _predict_enemy_movement(self, enemy: Enemy, steps: int) -> List[Position]:
         """
         Predict next positions for any enemy using their movement queue.
-        Delegates to the appropriate prediction logic based on enemy type.
+        Generates queue if needed for accurate prediction.
         """
         from game_entities import EnemyMovement, EnemyState
 
-        # For patrol enemies, we need to simulate their movement step by step
-        # to account for patrol point changes
+        # For patrol enemies in non-hostile state, simulate step-by-step
         if (enemy.type_data.movement == EnemyMovement.PATROL and
             enemy.patrol_points and
             enemy.state != EnemyState.HOSTILE):
             return self._predict_patrol_movement(enemy, steps)
 
-        # For non-patrol enemies, use the existing queue or generate one
-        # If enemy has an existing movement queue with enough moves, use it
+        # Use existing queue if available and sufficient
         if enemy.movement_queue and len(enemy.movement_queue) >= steps:
             return enemy.movement_queue[:steps]
 
-        # Generate a temporary prediction queue
-        # Create a temporary copy of the enemy to avoid modifying the original
-        temp_enemy = copy.deepcopy(enemy)
+        # Generate temporary queue for prediction without modifying enemy
+        # Store original queue to restore it
+        original_queue = enemy.movement_queue.copy()
+        original_state = enemy.last_queue_state
+        original_target = enemy.last_queue_target
 
-        # The new system guarantees 3 moves, so one generation should be sufficient
-        temp_enemy._generate_movement_queue(self.game_map, self.player, self)
+        enemy._generate_movement_queue(self.game_map, self.player, self)
+        predicted = enemy.movement_queue[:steps]
 
-        # Return the predicted positions (up to requested steps)
-        # The movement queue should now always have the moves we need
-        return temp_enemy.movement_queue[:steps]
+        # Restore original state
+        enemy.movement_queue = original_queue
+        enemy.last_queue_state = original_state
+        enemy.last_queue_target = original_target
+
+        return predicted
 
     def _predict_patrol_movement(self, enemy: Enemy, steps: int) -> List[Position]:
         """

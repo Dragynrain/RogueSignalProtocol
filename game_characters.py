@@ -564,93 +564,80 @@ class Enemy:
     
     def _generate_movement_queue(self, game_map, player: Player, game_engine):
         """Generate movement queue based on enemy state and type."""
-        # Only clear queue if state/target changed significantly, otherwise maintain it
         needs_full_regeneration = self._needs_full_queue_regeneration(player, game_map)
-        
+
         if needs_full_regeneration:
             self.movement_queue.clear()
-        
-        # Static enemies never move, regardless of state
+
+        # Static enemies never move
         if self.type_data.movement == EnemyMovement.STATIC:
             return
-        
-        # Determine target based on state and movement type
-        target = None
-        use_pathfinding = False
-        
-        if self.state == EnemyState.HOSTILE:
-            # HOSTILE enemies seek the player (works with all movement types including SEEK)
-            if self.can_see_player(player, game_map):
-                self.last_seen_player = player.position
-                target = player.position
-                use_pathfinding = True
-            elif self.last_seen_player:
-                # TRACK enemies persist longer at last known location
-                if self.type_data.movement == EnemyMovement.TRACK:
-                    target = self.last_seen_player
-                    use_pathfinding = True
-                # Other enemies also go to last known but only for a short time
-                else:
-                    target = self.last_seen_player
-                    use_pathfinding = True
-            elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
-                # HOSTILE patrol enemies return to patrol when they lose the player
+
+        # Determine target and pathfinding strategy
+        target, use_pathfinding = self._determine_movement_target(player, game_map)
+
+        # Handle patrol movement separately
+        if self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
+            if self.state == EnemyState.HOSTILE and not target:
+                # Return to patrol when hostile but lost player
                 self._generate_intelligent_patrol_queue(game_map, game_engine)
-                return  # Skip normal pathfinding
-        # When NOT hostile, enemies use their base movement type
-        elif self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
-            # PATROL movement with intelligent route planning
-            self._generate_intelligent_patrol_queue(game_map, game_engine)
-            return  # Skip normal pathfinding - patrol uses custom logic
-        # SEEK, RANDOM, STATIC enemies that are not hostile just do their base behavior
-        # (SEEK without hostile state = RANDOM, STATIC = no movement, RANDOM = random movement)
-        
-        # Generate or extend the movement queue
+                return
+            elif self.state != EnemyState.HOSTILE:
+                # Normal patrol behavior
+                self._generate_intelligent_patrol_queue(game_map, game_engine)
+                return
+
+        # Generate or extend queue
         if needs_full_regeneration:
-            # Full regeneration - build entire queue from scratch
             if use_pathfinding and target:
                 self._generate_pathfinding_queue(target, game_map, game_engine)
             else:
                 self._generate_random_queue(game_map, game_engine)
-            
-            # Ensure we always have up to 3 moves (but stop if adjacent to target)
             self._ensure_queue_length(game_map, game_engine, target)
         else:
-            # Extend existing queue - just add moves to reach 3 total
             self._extend_movement_queue(target, use_pathfinding, game_map, game_engine)
-        
-        # Track state and target for future queue regeneration decisions
+
         self.last_queue_state = self.state
         self.last_queue_target = target
 
+    def _determine_movement_target(self, player: Player, game_map) -> tuple[Optional[Position], bool]:
+        """Determine movement target and whether to use pathfinding."""
+        if self.state != EnemyState.HOSTILE:
+            return None, False
+
+        if self.can_see_player(player, game_map):
+            self.last_seen_player = player.position
+            return player.position, True
+
+        if self.last_seen_player:
+            return self.last_seen_player, True
+
+        return None, False
+
     def _generate_intelligent_patrol_queue(self, game_map, game_engine):
-        """Generate intelligent patrol movement queue that considers the full patrol route."""
+        """
+        Generate intelligent patrol movement queue.
+        Anticipates next patrol point to create smoother movement.
+        """
         if not self.patrol_points:
             return
 
         current_target = self.patrol_points[self.patrol_index]
         next_target = self.patrol_points[(self.patrol_index + 1) % len(self.patrol_points)]
-
-        # Determine if we need full regeneration or just extension
         needs_full_regeneration = self._needs_full_queue_regeneration(None, game_map)
 
         if needs_full_regeneration:
             self.movement_queue.clear()
-
-            # Calculate distance to current patrol point
             distance_to_current = self.position.distance_to(current_target)
 
-            # If we're very close to current target, plan route to next target
+            # Plan ahead: if close to current point, route directly to next point
             if distance_to_current <= 2.0:
                 self._generate_patrol_route_to_next_point(current_target, next_target, game_map, game_engine)
             else:
-                # Plan route to current target, but consider next target for final moves
                 self._generate_patrol_route_to_current_point(current_target, next_target, game_map, game_engine)
         else:
-            # Extend existing queue
             self._extend_patrol_queue(current_target, next_target, game_map, game_engine)
 
-        # Track target for regeneration decisions
         self.last_queue_target = current_target
 
     def _generate_patrol_route_to_current_point(self, current_target: Position, next_target: Position, game_map, game_engine):

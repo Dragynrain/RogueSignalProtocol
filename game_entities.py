@@ -369,29 +369,35 @@ class PositionValidator:
     def is_valid_for_placement(position: Position, game_map, min_distance_from_spawn: float = 5.0,
                               check_existing_items: bool = False) -> bool:
         """Check if position is valid for item/node placement."""
-        from game_config import GameConfig  # Import here to avoid circular dependency
+        from game_config import GameConfig
 
-        # Not on borders where walls will be placed
-        if not PositionValidator.is_not_on_border(position, GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+        # Combined boundary checks for efficiency
+        if not (0 < position.x < GameConfig.MAP_WIDTH - 1 and
+                0 < position.y < GameConfig.MAP_HEIGHT - 1):
             return False
 
-        # Basic validation (within bounds, not a wall)
-        if not PositionValidator.is_basic_valid_position(position, game_map):
+        # Wall check and spawn distance
+        if not game_map.is_valid_position(position):
             return False
 
-        # Not too close to spawn position
-        spawn_position = Position(5, 5)  # Standard spawn location
-        if position.distance_to(spawn_position) <= min_distance_from_spawn:
+        # Single spawn distance check (faster than creating Position object)
+        spawn_x, spawn_y = 5, 5
+        dx, dy = position.x - spawn_x, position.y - spawn_y
+        if dx * dx + dy * dy <= min_distance_from_spawn * min_distance_from_spawn:
             return False
 
-        # Check for existing items if requested
+        # Check for existing items (optimized with early returns)
         if check_existing_items:
             pos_tuple = (position.x, position.y)
-            if (hasattr(game_map, 'code_hacks') and pos_tuple in game_map.code_hacks or
-                hasattr(game_map, 'cooling_nodes') and pos_tuple in game_map.cooling_nodes or
-                hasattr(game_map, 'cpu_recovery_nodes') and pos_tuple in game_map.cpu_recovery_nodes or
-                hasattr(game_map, 'ghost_nodes') and pos_tuple in game_map.ghost_nodes or
-                hasattr(game_map, 'exploit_pickups') and pos_tuple in game_map.exploit_pickups):
+            if pos_tuple in game_map.code_hacks:
+                return False
+            if pos_tuple in game_map.cooling_nodes:
+                return False
+            if pos_tuple in game_map.cpu_recovery_nodes:
+                return False
+            if pos_tuple in game_map.ghost_nodes:
+                return False
+            if pos_tuple in game_map.exploit_pickups:
                 return False
 
         return True
@@ -400,20 +406,20 @@ class PositionValidator:
     def is_valid_for_enemy_placement(position: Position, game_map, enemies_list, player_position: Position,
                                    check_existing_items: bool = True) -> bool:
         """Check if position is valid for enemy placement."""
-        # Basic placement validation with item checking
+        # Can't place on player position (quick check first)
+        if position.x == player_position.x and position.y == player_position.y:
+            return False
+
+        # Basic placement validation
         if not PositionValidator.is_valid_for_placement(position, game_map,
                                                        min_distance_from_spawn=12.0,
                                                        check_existing_items=check_existing_items):
             return False
 
-        # Can't place on player position
-        if position.x == player_position.x and position.y == player_position.y:
+        # Check existing enemy positions (optimized with set comprehension)
+        enemy_positions = {(e.x, e.y) for e in enemies_list}
+        if (position.x, position.y) in enemy_positions:
             return False
-
-        # Can't place on existing enemy positions
-        for enemy in enemies_list:
-            if enemy.x == position.x and enemy.y == position.y:
-                return False
 
         return True
 
