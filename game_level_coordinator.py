@@ -85,7 +85,7 @@ class GameLevelCoordinator:
             self.game_engine.message_log.add_message_typed("BREAKTHROUGH TO THE INTERNET!", 'green')
             self.game_engine.message_log.add_message("You've escaped into the vast digital realm...")
             self.game_engine.message_log.add_message("The entire world wide web awaits exploration!")
-            self.game_engine.message_log.add_message(f"Stats: Turns:{self.game_engine.turn} Det:{int(self.game_engine.player.trace_level)}%")
+            self.game_engine.message_log.add_message(f"Stats: Threat:{int(self.game_engine.player.trace_level)}%")
             self.game_engine.game_over = True
             # Delete save on game completion (no continuing after winning)
             SaveGameManager.delete_save()

@@ -49,9 +49,6 @@ class GameTurnManager:
                 self.game_engine.sound_manager.play_sound("player_death", priority=10)
                 self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
 
-        # Handle threat scan effect
-        self._update_threat_scan()
-
         # Process special tiles
         self._process_special_tiles()
 
@@ -81,26 +78,9 @@ class GameTurnManager:
 
     def _process_environmental_effects(self):
         """Process environmental effects - for backward compatibility."""
-        # Update threat scan
-        if self.game_engine.game_state.threat_scan_turns > 0:
-            self.game_engine.game_state.threat_scan_turns -= 1
-
-        # Update distraction points
-        expired_points = []
-        for position, turns_remaining in self.game_engine.game_state.distraction_points.items():
-            turns_remaining -= 1
-            if turns_remaining <= 0:
-                expired_points.append(position)
-            else:
-                self.game_engine.game_state.distraction_points[position] = turns_remaining
-
-        for position in expired_points:
-            del self.game_engine.game_state.distraction_points[position]
-
-    def _update_threat_scan(self):
-        """Update threat scan effect."""
-        if self.game_engine.game_state.threat_scan_turns > 0:
-            self.game_engine.game_state.threat_scan_turns -= 1
+        # Note: threat_scan_turns is now handled in GameStateManager.advance_turn()
+        # Note: distraction_points is now handled in GameStateManager.advance_turn()
+        pass
 
     def _update_memory_system(self):
         """Update the hybrid fog of war memory system using TCOD FOV."""
@@ -434,6 +414,7 @@ class GameTurnManager:
                     SaveGameManager.delete_save()
                     self.game_engine.message_log.add_message("Save data purged")
                     self.game_engine.game_over = True
+                    return  # Exit immediately - no more enemy processing after player death
 
         # Movement flags are reset at the start of _update_enemies()
 
