@@ -106,7 +106,7 @@ class TestSaveDataIntegrity:
         """Test saving complete game state with all components."""
         # Create simple test data instead of complex mock
         test_data = {
-            "version": "dev",
+            "version": "0.8.0 Alpha",
             "timestamp": 1234567890,
             "level": 1,
             "turn": 1,
@@ -143,7 +143,7 @@ class TestSaveDataIntegrity:
         """Test that all critical game data is saved."""
         # Create comprehensive test data
         test_data = {
-            "version": "dev",
+            "version": "0.8.0 Alpha",
             "timestamp": 1234567890,
             "level": 3,
             "turn": 150,
@@ -343,7 +343,7 @@ class TestPartialSaveScenarios:
         """Test saving with minimal required data."""
         # Create minimal test data directly
         minimal_data = {
-            "version": "dev",
+            "version": "0.8.0 Alpha",
             "timestamp": 1234567890,
             "level": 1,
             "turn": 1,

@@ -206,7 +206,7 @@ class TestSaveGameManager:
     def test_load_game_success(self):
         """load_game successfully loads valid save data."""
         test_save_data = {
-            "version": "dev",
+            "version": "0.8.0 Alpha",
             "timestamp": time.time(),
             "level": 3,
             "turn": 50,

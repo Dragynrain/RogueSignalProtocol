@@ -183,6 +183,16 @@
       "damage": 20,
       "targeting": "AREA",
       "description": "Area attack (20 damage) that disables all nearby enemies"
+    },
+    "memory_leak": {
+      "name": "Memory Leak",
+      "ram": 2,
+      "heat": 30,
+      "range": 1,
+      "category": "combat",
+      "damage": 0,
+      "targeting": "AREA",
+      "description": "Target enemies forget they saw you (3x3 area)"
     }
   },
   "upgrades": {
@@ -276,9 +286,9 @@
     }
   },
   "metadata": {
-    "version": "1.1", 
+    "version": "0.8.0 Alpha",
     "description": "Game data definitions for Rogue Signal Protocol",
     "last_updated": "2025-01-01",
-    "balance_version": "1.0"
+    "balance_version": "0.8.0 Alpha"
   }
 }
