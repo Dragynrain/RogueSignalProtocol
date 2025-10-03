@@ -67,23 +67,33 @@ class TestUpgradeApplication(unittest.TestCase):
     def test_cpu_upgrade_respects_max_boundary(self):
         """Test CPU upgrades don't exceed maximum capacity."""
         # Set player close to max
-        with patch.object(GameConfig, 'max_cpu_capacity', 120):
+        def mock_get(key, default):
+            if key == 'gameplay.max_cpu_capacity':
+                return 120  # Set a lower cap for testing
+            return default
+
+        with patch.object(GameConfig, 'get', side_effect=mock_get):
             self.player.cpu = 110
             self.player.max_cpu = 110
-            
+
             result = self.player.apply_permanent_upgrade('cpu_boost')
-            
+
             self.assertTrue(result)
             self.assertEqual(self.player.max_cpu, 120)  # Capped at max
             self.assertEqual(self.player.cpu, 120)
 
     def test_ram_upgrade_respects_max_boundary(self):
         """Test RAM upgrades don't exceed maximum capacity."""
-        with patch.object(GameConfig, 'max_ram_capacity', 10):
+        def mock_get(key, default):
+            if key == 'gameplay.max_ram_capacity':
+                return 10  # Set a lower cap for testing
+            return default
+
+        with patch.object(GameConfig, 'get', side_effect=mock_get):
             self.player.ram_total = 8
-            
+
             result = self.player.apply_permanent_upgrade('ram_boost')
-            
+
             self.assertTrue(result)
             self.assertEqual(self.player.ram_total, 10)  # Capped at max
 
@@ -331,7 +341,12 @@ class TestStatBoundaryEnforcement(unittest.TestCase):
         initial_ram = self.player.ram_total
         
         # Mock a lower max for testing
-        with patch.object(GameConfig, 'max_ram_capacity', 15):
+        def mock_get(key, default):
+            if key == 'gameplay.max_ram_capacity':
+                return 15  # Set a lower cap for testing
+            return default
+
+        with patch.object(GameConfig, 'get', side_effect=mock_get):
             self.player.apply_permanent_upgrade('ram_boost')
             expected_ram = min(15, initial_ram + 4)
             self.assertEqual(self.player.ram_total, expected_ram)
