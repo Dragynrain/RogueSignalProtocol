@@ -370,7 +370,7 @@ class LevelGenerator:
                 if level == 3:
                     logging.info(f"Placed CPU node {i+1}/{cpu_count} at {pos}")
         
-        # Place ghost nodes (detection reduction)
+        # Place ghost nodes (trace level reduction)
         ghost_count = config.get('ghost_nodes', 2)
         for i in range(ghost_count):
             if floor_positions:

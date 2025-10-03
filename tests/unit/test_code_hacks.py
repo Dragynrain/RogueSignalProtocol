@@ -88,32 +88,32 @@ class TestCodeHackEffects(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(self.player.heat, 0)
 
-    def test_reduce_detection_effect(self):
-        """Test that reduce_detection effect reduces player detection."""
-        # Set player detection
-        self.player.detection = 75
+    def test_reduce_trace_level_effect(self):
+        """Test that reduce_trace level effect reduces player trace level."""
+        # Set player trace level
+        self.player.trace_level = 75
 
-        code_hack = CodeHack("green", "reduce_detection", "Green Code", "Reduces detection")
-        result = code_hack._apply_effect('reduce_detection', self.player, self.mock_game)
+        code_hack = CodeHack("green", "reduce_trace level", "Green Code", "Reduces trace level")
+        result = code_hack._apply_effect('reduce_trace_level', self.player, self.mock_game)
 
-        # Should reduce detection by 25
+        # Should reduce trace level by 25
         self.assertTrue(result)
-        self.assertEqual(self.player.detection, 50)
+        self.assertEqual(self.player.trace_level, 50)
         # Should log a message
         call_args = str(self.mock_game.message_log.add_message.call_args)
-        self.assertIn("Detection", call_args)
+        self.assertIn("Trace Level", call_args)
 
-    def test_reduce_detection_minimum_zero(self):
-        """Test that reduce_detection doesn't go below zero."""
-        # Set player detection low
-        self.player.detection = 10
+    def test_reduce_trace_level_minimum_zero(self):
+        """Test that reduce_trace level doesn't go below zero."""
+        # Set player trace level low
+        self.player.trace_level = 10
 
-        code_hack = CodeHack("green", "reduce_detection", "Green Code", "Reduces detection")
-        result = code_hack._apply_effect('reduce_detection', self.player, self.mock_game)
+        code_hack = CodeHack("green", "reduce_trace level", "Green Code", "Reduces trace level")
+        result = code_hack._apply_effect('reduce_trace_level', self.player, self.mock_game)
 
         # Should not go below 0
         self.assertTrue(result)
-        self.assertEqual(self.player.detection, 0)
+        self.assertEqual(self.player.trace_level, 0)
 
     def test_speed_boost_effect(self):
         """Test that speed_boost effect adds speed boost turns."""

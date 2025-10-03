@@ -32,7 +32,7 @@ class Player:
         self.max_cpu = 100
         self.heat = 0
         self._max_heat = 100  # Initialize max heat capacity
-        self.detection = 0
+        self.trace_level = 0.0  # Global trace level (float for fractional increments)
         self.ram_total = 8
         
         # Vision and abilities

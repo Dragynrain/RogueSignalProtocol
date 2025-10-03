@@ -266,25 +266,25 @@ class TestCoreGameStateManagerRemoved:
         # Should have some network configuration data
         assert len(config) > 0
 
-    def test_should_spawn_admin_with_detection_parameter(self):
-        """should_spawn_admin works with detection_level parameter."""
+    def test_should_spawn_admin_with_trace_level_parameter(self):
+        """should_spawn_admin works with trace_level parameter."""
         core_gsm = GameStateManager()
 
-        # Should return True at max detection (doesn't set admin_spawned automatically)
-        result = core_gsm.should_spawn_admin(100)  # Max detection
+        # Should return True at max trace level (doesn't set admin_spawned automatically)
+        result = core_gsm.should_spawn_admin(100)  # Max trace level
         assert result is True
 
-    def test_should_spawn_admin_prevents_double_spawn_with_detection(self):
+    def test_should_spawn_admin_prevents_double_spawn_with_trace_level(self):
         """should_spawn_admin prevents double spawning."""
         core_gsm = GameStateManager()
         core_gsm.admin_spawned = True
 
-        # Should not spawn even at max detection if already spawned
+        # Should not spawn even at max trace level if already spawned
         result = core_gsm.should_spawn_admin(100)
         assert result is False
 
     def test_should_spawn_admin_below_threshold(self):
-        """should_spawn_admin doesn't spawn below max detection."""
+        """should_spawn_admin doesn't spawn below max trace level."""
         core_gsm = GameStateManager()
 
         # Should not spawn below threshold
@@ -316,7 +316,7 @@ class TestTurnProcessor:
         
         with patch.object(processor, '_process_heat_management'), \
              patch.object(processor, '_process_temporary_effects'), \
-             patch.object(processor, '_process_detection_increase'):
+             patch.object(processor, '_process_trace_increase'):
             
             processor.process_turn(mock_player)
             
@@ -395,45 +395,45 @@ class TestTurnProcessor:
         assert mock_player.temporary_effects['data_mimic_turns'] == 0  # Will be 0
         assert mock_player.temporary_effects['exploit_efficiency_turns'] == 4
     
-    def test_detection_increase_processing(self):
-        """_process_detection_increase increases detection periodically."""
+    def test_trace_increase_processing(self):
+        """_process_trace_increase increases trace level periodically."""
         gsm = GameStateManager()
-        gsm.turn = 10  # Set to trigger detection increase
+        gsm.turn = 10  # Set to trigger trace level increase
         message_log = MessageLog()
         processor = TurnProcessor(gsm, message_log)
         
         mock_player = Mock()
-        mock_player.detection = 20
+        mock_player.trace_level = 20
         
         with patch('game_state.GameBalance') as mock_balance, \
              patch.object(gsm, 'get_current_network_config') as mock_config:
-            mock_balance.DETECTION_INCREASE_INTERVAL = 10
-            mock_balance.DETECTION_INCREASE_AMOUNT = 5
-            mock_config.return_value = {'background_detection': 1}
+            mock_balance.TRACE_INCREASE_INTERVAL = 10
+            mock_balance.TRACE_INCREASE_AMOUNT = 5
+            mock_config.return_value = {'background_trace': 1}
             
-            processor._process_detection_increase(mock_player)
+            processor._process_trace_increase(mock_player)
             
-            assert mock_player.detection == 25
+            assert mock_player.trace_level == 25
     
-    def test_detection_caps_at_100(self):
-        """Detection increase caps at 100%."""
+    def test_trace_level_caps_at_100(self):
+        """TraceLevel increase caps at 100%."""
         gsm = GameStateManager()
         gsm.turn = 10
         message_log = MessageLog()
         processor = TurnProcessor(gsm, message_log)
         
         mock_player = Mock()
-        mock_player.detection = 98  # Near maximum
+        mock_player.trace_level = 98  # Near maximum
         
         with patch('game_state.GameBalance') as mock_balance, \
              patch.object(gsm, 'get_current_network_config') as mock_config:
-            mock_balance.DETECTION_INCREASE_INTERVAL = 10
-            mock_balance.DETECTION_INCREASE_AMOUNT = 5
-            mock_config.return_value = {'background_detection': 1}
+            mock_balance.TRACE_INCREASE_INTERVAL = 10
+            mock_balance.TRACE_INCREASE_AMOUNT = 5
+            mock_config.return_value = {'background_trace': 1}
             
-            processor._process_detection_increase(mock_player)
+            processor._process_trace_increase(mock_player)
             
-            assert mock_player.detection == 100  # Capped at 100
+            assert mock_player.trace_level == 100  # Capped at 100
 
 
 class TestCoreTurnProcessorRemoved:
@@ -455,7 +455,7 @@ class TestCoreTurnProcessorRemoved:
         
         with patch.object(core_processor, '_process_heat_management') as mock_heat, \
              patch.object(core_processor, '_process_temporary_effects') as mock_effects, \
-             patch.object(core_processor, '_process_detection_increase') as mock_detection:
+             patch.object(core_processor, '_process_trace_increase') as mock_trace_level:
             
             core_processor.process_turn(mock_player)
 
@@ -465,7 +465,7 @@ class TestCoreTurnProcessorRemoved:
             # Should call all processing methods
             mock_heat.assert_called_once_with(mock_player)
             mock_effects.assert_called_once_with(mock_player)
-            mock_detection.assert_called_once_with(mock_player)
+            mock_trace_level.assert_called_once_with(mock_player)
 
 
 class TestGameLogicIntegration:
@@ -495,7 +495,7 @@ class TestGameLogicIntegration:
         processor = TurnProcessor(gsm, message_log)
         player = Player(10, 10)
         player.heat = 30
-        player.detection = 10
+        player.trace_level = 10
         
         # Process a few turns
         for _ in range(3):
@@ -539,7 +539,7 @@ class TestGameLogicIntegration:
         processor = TurnProcessor(gsm, message_log)
         mock_player = Mock()
         mock_player.heat = 0  # Add heat attribute
-        mock_player.detection = 50  # Add detection attribute
+        mock_player.trace_level = 50  # Add trace level attribute
         mock_player.cpu = 100  # Add cpu attribute for potential virus damage
         mock_player.take_damage = Mock(return_value=0)  # Mock take_damage method
         mock_player.temporary_effects = {

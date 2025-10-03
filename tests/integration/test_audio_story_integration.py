@@ -57,8 +57,8 @@ class TestAudioStoryIntegration(unittest.TestCase):
             # Should have triggered item pickup sound
             mock_play_sound.assert_called()
 
-    def test_enemy_detection_audio_with_story_context(self):
-        """Test that enemy detection audio works correctly when story fragments are present."""
+    def test_enemy_trace_level_audio_with_story_context(self):
+        """Test that enemy trace level audio works correctly when story fragments are present."""
         # Set up enemy and story fragment
         from game_characters import Enemy
         from game_entities import EnemyState
@@ -76,13 +76,13 @@ class TestAudioStoryIntegration(unittest.TestCase):
         self.engine.player.x, self.engine.player.y = 16, 15
 
         with patch.object(self.engine.sound_manager, 'play_sound') as mock_play_sound:
-            # Process enemy turn to trigger detection
+            # Process enemy turn to trigger trace level
             self.engine._update_enemy_awareness()
 
             # Should trigger enemy alert sound
             expected_calls = [call for call in mock_play_sound.call_args_list
                             if 'alert' in str(call) or 'enemy' in str(call)]
-            self.assertGreater(len(expected_calls), 0, "Should trigger enemy detection audio")
+            self.assertGreater(len(expected_calls), 0, "Should trigger enemy trace level audio")
 
     def test_audio_settings_affect_story_discovery(self):
         """Test that audio settings properly control story fragment sounds."""

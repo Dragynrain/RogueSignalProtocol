@@ -269,10 +269,10 @@ class ExploitSystem:
     def _execute_log_wiper(self) -> bool:
         """Execute log wiper exploit."""
         self.game.sound_manager.play_sound("exploit_log_wiper")
-        old_detection = self.game.player.detection
-        self.game.player.detection = max(0, self.game.player.detection - 30)
-        actual_reduction = old_detection - self.game.player.detection
-        self.game.message_log.add_message(f"Detection: -{actual_reduction:.1f}%")
+        old_trace = self.game.player.trace_level
+        self.game.player.trace_level = max(0, self.game.player.trace_level - 30)
+        actual_reduction = old_trace - self.game.player.trace_level
+        self.game.message_log.add_message(f"Trace Level: -{actual_reduction:.1f}%")
         return True
     
     def _execute_antivirus(self) -> bool:

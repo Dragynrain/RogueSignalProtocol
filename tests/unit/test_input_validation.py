@@ -604,14 +604,14 @@ class TestUniversalInputHandlerEdgeCases:
     
     def test_key_validation_methods(self):
         """Test key validation static methods."""
-        # Test escape key detection
+        # Test escape key trace level
         escape_event = create_mock_event(tcod.event.KeySym.ESCAPE)
         assert UniversalInputHandler.is_escape_key(escape_event) is True
         
         non_escape_event = create_mock_event(tcod.event.KeySym.SPACE)
         assert UniversalInputHandler.is_escape_key(non_escape_event) is False
         
-        # Test confirm key detection
+        # Test confirm key trace level
         enter_event = create_mock_event(tcod.event.KeySym.RETURN)
         assert UniversalInputHandler.is_confirm_key(enter_event) is True
         

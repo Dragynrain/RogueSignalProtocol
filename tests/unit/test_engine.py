@@ -104,8 +104,8 @@ def test_game_initialization():
     assert level >= 1
 
 
-def test_collision_detection():
-    """Basic collision detection works."""
+def test_collision_trace_level():
+    """Basic collision trace_level works."""
     player = Player(10, 10)
     pos = Position(10, 10)
     enemy = Enemy(pos, "scanner")  # Same position

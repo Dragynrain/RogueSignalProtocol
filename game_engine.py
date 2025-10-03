@@ -195,11 +195,6 @@ class GameEngine:
         """Set the enemies list."""
         self.enemy_manager.enemies = value
 
-    @property
-    def data_patch_effects(self) -> Dict[str, Tuple[str, str]]:
-        """Alias for code_hack_effects for backward compatibility."""
-        return self.code_hack_effects
-
     def _get_enemy_at(self, position: Position) -> Optional[Enemy]:
         """Get enemy at position - for backward compatibility."""
         return self.enemy_manager.get_enemy_at_position(position)
@@ -259,7 +254,7 @@ class GameEngine:
         effects = [
             ('restore_cpu', f'Restore {GameBalance.CPU_RESTORE_MIN}-{GameBalance.CPU_RESTORE_MAX} CPU'),
             ('reduce_heat', f'Reduce heat by {GameBalance.HEAT_REDUCTION_INSTANT}°C instantly'),
-            ('reduce_detection', '-25% detection level'),
+            ('reduce_trace_level', '-25% trace level'),
             ('speed_boost', 'Speed boost: 2 moves per turn (3 enemy turns)'),
             ('enhanced_vision', 'Enhanced vision (5 turns)'),
             ('exploit_efficiency', 'Exploit efficiency (8 turns)')
@@ -397,8 +392,8 @@ class GameEngine:
 
         self.player.heat = min(100, self.player.heat + heat_generated)
 
-        # Increase detection slightly
-        self.player.detection = min(100, self.player.detection + 5)
+        # Increase trace level slightly
+        self.player.trace_level = min(100, self.player.trace_level + 5)
 
     def _move_cursor(self, dx: int, dy: int):
         """Move targeting cursor."""
@@ -536,7 +531,7 @@ class GameEngine:
                 "max_cpu": self.player.max_cpu,
                 "heat": self.player.heat,
                 "max_heat": self.player.max_heat,
-                "detection": self.player.detection,
+                "trace level": self.player.trace_level,
                 "ram_total": self.player.ram_total,
                 "speed_moves_remaining": self.player.speed_moves_remaining,
                 "temporary_effects": dict(self.player.temporary_effects),
@@ -567,7 +562,7 @@ class GameEngine:
             "enemies": SaveGameManager._serialize_enemies(self.enemies),
             "enemy_next_id": getattr(Enemy, '_next_id', 1),
 
-            # Data patch effects for this run
+            # Code hack effects for this run
             "code_hack_effects": self.code_hack_effects,
             "discovered_code_effects": self.discovered_code_effects,
 

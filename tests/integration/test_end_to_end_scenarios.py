@@ -52,13 +52,13 @@ class TestEndToEndGameplayScenarios(unittest.TestCase):
         self.assertEqual(self.player.x, new_x)
         self.assertEqual(self.player.y, new_y)
         
-    def test_player_enemy_detection_scenario(self):
-        """Test scenario where player comes within enemy detection range."""
+    def test_player_enemy_trace_level_scenario(self):
+        """Test scenario where player comes within enemy trace level range."""
         # Create enemy
         enemy = Enemy(position=Position(10, 5), enemy_type='scanner')
         enemy.vision = 6  # Should detect player at distance 5
         
-        # Position player within detection range
+        # Position player within trace level range
         self.player.x = 5
         self.player.y = 5
         
@@ -77,7 +77,7 @@ class TestEndToEndGameplayScenarios(unittest.TestCase):
         self.player.x = 15
         self.player.y = 10  
         self.player.cpu = 120
-        self.player.detection = 35
+        self.player.trace_level = 35
         self.player.heat = 15
         
         self.game_state.level = 3
@@ -140,11 +140,11 @@ class TestEndToEndGameplayScenarios(unittest.TestCase):
             self.assertIsInstance(config, dict)
             self.assertIn('enemies', config)
             self.assertIn('name', config)
-            self.assertIn('background_detection', config)
+            self.assertIn('background_trace', config)
             
             # Verify scaling makes sense
             self.assertTrue(config['enemies'] > 0)
-            self.assertTrue(config['background_detection'] >= 1)
+            self.assertTrue(config['background_trace'] >= 1)
             self.assertTrue(config['enemies'] >= 1)
             
     def test_player_resource_management_scenario(self):

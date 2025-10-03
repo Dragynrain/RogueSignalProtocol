@@ -207,8 +207,8 @@ class TestGameConstantsAndConfiguration(unittest.TestCase):
         
         # Test that critical constants exist and have reasonable values
         self.assertIsInstance(GameBalance.HEAT_REDUCTION_NORMAL, int)
-        self.assertIsInstance(GameBalance.DETECTION_INCREASE_INTERVAL, int)
-        self.assertTrue(GameBalance.DETECTION_INCREASE_INTERVAL > 0)
+        self.assertIsInstance(GameBalance.TRACE_INCREASE_INTERVAL, int)
+        self.assertTrue(GameBalance.TRACE_INCREASE_INTERVAL > 0)
         self.assertTrue(GameBalance.HEAT_REDUCTION_NORMAL >= 0)
         
     def test_game_config_constants(self):

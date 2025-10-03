@@ -75,7 +75,7 @@ class TestEnemyCreation:
 
 
 class TestEnemyVision:
-    """Test enemy vision and detection systems with real game data."""
+    """Test enemy vision and trace level systems with real game data."""
     
     def test_can_see_player_basic(self):
         """Enemy can_see_player works with clear line of sight using real data."""

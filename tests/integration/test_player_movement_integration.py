@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Integration tests for player movement and map interaction.
-Tests real movement mechanics, collision detection, and map navigation.
+Tests real movement mechanics, collision trace level, and map navigation.
 """
 
 import pytest
@@ -74,26 +74,26 @@ class TestPlayerMovementIntegration:
                     # Movement should be blocked by wall
                     old_pos = self.player.position
                     # Simulate trying to move into wall (would be blocked by game engine)
-                    # For this test, we just verify the wall detection works
-                    assert self.game_map.is_wall(target_pos), "Wall detection should work correctly"
+                    # For this test, we just verify the wall trace level works
+                    assert self.game_map.is_wall(target_pos), "Wall trace level should work correctly"
                     blocked_moves += 1
         
         # Should have attempted movement in all directions
         assert successful_moves + blocked_moves == 4, "Should test all four directions"
         assert successful_moves > 0, "Should have at least one valid move direction"
     
-    def test_player_collision_detection_with_map_features(self):
-        """Test collision detection with various map features."""
+    def test_player_collision_trace_level_with_map_features(self):
+        """Test collision trace level with various map features."""
         # Test wall collision
         wall_positions = list(self.game_map.walls)
         if len(wall_positions) > 0:
             wall_pos = Position(wall_positions[0][0], wall_positions[0][1])
-            assert self.game_map.is_wall(wall_pos), "Wall detection should work"
+            assert self.game_map.is_wall(wall_pos), "Wall trace level should work"
             
             # Player should not be able to occupy wall position
             original_pos = self.player.position
             # In real game, this move would be prevented
-            # We test that the detection works correctly
+            # We test that the trace level works correctly
             assert self.game_map.is_wall(wall_pos) != self.game_map.is_wall(original_pos)
         
         # Test shadow interaction
@@ -104,7 +104,7 @@ class TestPlayerMovementIntegration:
             # Player should be able to move into shadows (for stealth)
             if not self.game_map.is_wall(shadow_pos):
                 self.player.position = shadow_pos
-                assert self.game_map.is_shadow(shadow_pos), "Shadow detection should work"
+                assert self.game_map.is_shadow(shadow_pos), "Shadow trace level should work"
                 # Player gets stealth benefit in shadows
                 in_shadow = self.game_map.is_shadow(self.player.position)
                 assert in_shadow, "Player should be detected as in shadow"

@@ -74,7 +74,7 @@ class TestLevelProgressionCritical:
         initial_turn = engine.turn
         initial_player_stats = {
             'cpu': engine.player.cpu,
-            'detection': engine.player.detection,
+            'trace level': engine.player.trace_level,
             'x': engine.player.x,
             'y': engine.player.y
         }
@@ -93,7 +93,7 @@ class TestLevelProgressionCritical:
 
         # Verify player stats preserved (except position which changes)
         assert engine.player.cpu == initial_player_stats['cpu']
-        assert engine.player.detection == initial_player_stats['detection']
+        assert engine.player.trace_level == initial_player_stats['trace level']
 
         # Verify player position is valid (may or may not change between levels)
         assert 0 <= engine.player.x < GameConfig.MAP_WIDTH
@@ -219,15 +219,15 @@ class TestLevelProgressionCritical:
 
             # Verify config has required keys
             assert "enemies" in config
-            assert "background_detection" in config
+            assert "background_trace" in config
             assert isinstance(config["enemies"], (int, float))
-            assert isinstance(config["background_detection"], (int, float))
+            assert isinstance(config["background_trace"], (int, float))
 
         # Verify progression - later levels should have same or higher difficulty
         assert level_configs[2]["enemies"] >= level_configs[1]["enemies"]
         assert level_configs[3]["enemies"] >= level_configs[2]["enemies"]
-        assert level_configs[2]["background_detection"] >= level_configs[1]["background_detection"]
-        assert level_configs[3]["background_detection"] >= level_configs[2]["background_detection"]
+        assert level_configs[2]["background_trace"] >= level_configs[1]["background_trace"]
+        assert level_configs[3]["background_trace"] >= level_configs[2]["background_trace"]
 
     def test_save_system_integration_during_level_progression(self):
         """Test save system works correctly during level progression."""

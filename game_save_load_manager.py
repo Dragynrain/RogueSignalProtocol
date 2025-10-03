@@ -86,7 +86,7 @@ class GameSaveLoadManager:
         player.max_cpu = player_data.get("max_cpu", 100)
         player.heat = player_data.get("heat", 0)
         player.max_heat = player_data.get("max_heat", 100)
-        player.detection = player_data.get("detection", 0)
+        player.trace_level = player_data.get("trace_level", 0)
         player.ram_total = player_data.get("ram_total", 8)
 
         # Speed boost state

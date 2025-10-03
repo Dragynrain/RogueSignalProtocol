@@ -313,7 +313,7 @@ class InputHandler:
                 exploit_def = GameData.EXPLOITS[selected_item.exploit_key]
                 self._show_exploit_details(exploit_def)
             elif hasattr(selected_item, 'color') and hasattr(selected_item, 'effect'):
-                # Data patch
+                # Code hack
                 self._show_code_hack_details(selected_item)
             else:
                 # Generic item
@@ -340,8 +340,8 @@ class InputHandler:
     def _show_code_hack_details(self, code_hack):
         """Show detailed information about a code."""
         if code_hack.discovered:
-            if code_hack.color_name in self.game.data_patch_effects:
-                effect_key, desc = self.game.data_patch_effects[code_hack.color_name]
+            if code_hack.color_name in self.game.code_hack_effects:
+                effect_key, desc = self.game.code_hack_effects[code_hack.color_name]
                 self.game.message_log.add_message(f"=== {code_hack.name} ===")
                 self.game.message_log.add_message(f"Effect: {desc}")
                 if code_hack.quantity > 1:

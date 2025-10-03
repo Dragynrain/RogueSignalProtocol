@@ -53,7 +53,7 @@ def combat_scenario():
 
 
 def vision_scenario():
-    """Create a scenario for vision/detection testing."""
+    """Create a scenario for vision/trace level testing."""
     test_player = player(5, 5)
     scanner = enemy("scanner", 10, 5)  # Same row, different column
     patrol = enemy("patrol", 20, 20)   # Far away

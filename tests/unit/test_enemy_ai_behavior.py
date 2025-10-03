@@ -158,7 +158,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
 
 
 class TestEnemyStateTransitions(TestEnemyAIBehavior):
-    """Test enemy alert state transitions and player detection."""
+    """Test enemy alert state transitions and player trace level."""
     
     def test_enemy_starts_unaware(self):
         """New enemies start in UNAWARE state."""

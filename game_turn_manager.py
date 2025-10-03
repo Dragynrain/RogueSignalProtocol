@@ -64,12 +64,12 @@ class GameTurnManager:
         # Check for admin spawn
         self._check_admin_spawn()
 
-        # Passive detection increase (higher on higher levels)
-        if self.game_engine.turn % GameBalance.DETECTION_INCREASE_INTERVAL == 0:
+        # Passive trace level increase (higher on higher levels)
+        if self.game_engine.turn % GameBalance.TRACE_INCREASE_INTERVAL == 0:
             network_configs = GameConfig.NETWORK_CONFIGS()
-            config = network_configs.get(self.game_engine.level, {"background_detection": 1})
-            background_increase = config.get("background_detection", 1)
-            self.game_engine.player.detection = min(100, self.game_engine.player.detection + background_increase)
+            config = network_configs.get(self.game_engine.level, {"background_trace": 1})
+            background_increase = config.get("background_trace", 1)
+            self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + background_increase)
 
     def _process_enemies_turn(self):
         """Process enemy turns - for backward compatibility."""
@@ -208,18 +208,18 @@ class GameTurnManager:
             if recovery > 0 and should_play_sound:
                 self.game_engine.sound_manager.play_sound("node_activate")
 
-        # Ghost node (detection reduction while standing on it)
+        # Ghost node (trace level reduction while standing on it)
         if self.game_engine.game_map.is_ghost_node(self.game_engine.player.position):
-            # Reduce detection by fixed amount per turn while standing on the node
+            # Reduce trace level by fixed amount per turn while standing on the node
             reduction_amount = 20
-            old_detection = self.game_engine.player.detection
-            self.game_engine.player.detection = max(0, self.game_engine.player.detection - reduction_amount)
-            actual_reduction = old_detection - self.game_engine.player.detection
+            old_trace = self.game_engine.player.trace_level
+            self.game_engine.player.trace_level = max(0, self.game_engine.player.trace_level - reduction_amount)
+            actual_reduction = old_trace - self.game_engine.player.trace_level
 
             # Only play sound when first stepping on the node or when there's actual reduction
             if (should_play_sound or actual_reduction > 0):
-                # Ghost node detection reduction messages removed per user request
-                # self.game_engine.message_log.add_message(f"Ghost node: Detection reduced by {actual_reduction:.1f}")
+                # Ghost node trace level reduction messages removed per user request
+                # self.game_engine.message_log.add_message(f"Ghost node: Trace Level reduced by {actual_reduction:.1f}")
                 if should_play_sound:
                     self.game_engine.sound_manager.play_sound("node_activate")
 
@@ -290,7 +290,7 @@ class GameTurnManager:
                 enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
                 if old_state != EnemyState.HOSTILE:
                     self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
-                # Admins don't increase detection - detection only summons admins, not the other way around
+                # Admins don't increase trace level - trace level only summons admins, not the other way around
             elif enemy.can_see_player(self.game_engine.player, self.game_engine.game_map):
                 self._handle_enemy_sees_player(enemy)
             else:
@@ -314,24 +314,28 @@ class GameTurnManager:
                 if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
                     enemy.original_patrol_index = enemy.patrol_index
                 enemy.state = EnemyState.HOSTILE
-                ai_config = DataLoader.get_ai_behavior_config()
-                detection_increase = ai_config.get('enemy_detection_alert_to_hostile', GameBalance.ENEMY_DETECTION_ALERT_TO_HOSTILE)
-                old_detection = self.game_engine.player.detection
-                self.game_engine.player.detection = min(100, self.game_engine.player.detection + detection_increase)
+                # Get level-specific trace increase from network config
+                network_configs = GameConfig.NETWORK_CONFIGS()
+                level_config = network_configs.get(self.game_engine.level, network_configs[1])
+                trace_increase = level_config.get('trace_alert_to_hostile', GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE)
+                old_trace = self.game_engine.player.trace_level
+                self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + trace_increase)
                 self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
                 self.game_engine.sound_manager.play_sound("enemy_hostile")
-                self._check_detection_threshold_warnings(old_detection, self.game_engine.player.detection)
+                self._check_trace_threshold_warnings(old_trace, self.game_engine.player.trace_level)
                 # Alert nearby enemies when this enemy becomes hostile
                 self._alert_nearby_enemies(enemy)
         elif enemy.state == EnemyState.HOSTILE:
             enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
-            ai_config = DataLoader.get_ai_behavior_config()
-            detection_increase = ai_config.get('enemy_detection_continuous_hostile', GameBalance.ENEMY_DETECTION_CONTINUOUS_HOSTILE)
-            old_detection = self.game_engine.player.detection
+            # Get level-specific trace increase from network config
+            network_configs = GameConfig.NETWORK_CONFIGS()
+            level_config = network_configs.get(self.game_engine.level, network_configs[1])
+            trace_increase = level_config.get('trace_continuous_hostile', GameBalance.ENEMY_TRACE_CONTINUOUS_HOSTILE)
+            old_trace = self.game_engine.player.trace_level
             # Continue alerting nearby enemies every turn while this enemy can see the player
             self._alert_nearby_enemies(enemy)
-            self.game_engine.player.detection = min(100, self.game_engine.player.detection + detection_increase)
-            self._check_detection_threshold_warnings(old_detection, self.game_engine.player.detection)
+            self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + trace_increase)
+            self._check_trace_threshold_warnings(old_trace, self.game_engine.player.trace_level)
 
     def _handle_enemy_loses_player(self, enemy):
         """Handle when enemy loses sight of player."""
@@ -356,13 +360,13 @@ class GameTurnManager:
                         enemy.patrol_index = enemy.original_patrol_index
                     self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost track")
 
-    def _check_detection_threshold_warnings(self, old_detection: float, new_detection: float):
-        """Check and play warning sounds for detection threshold crossings."""
-        if old_detection < 75 <= new_detection:
-            self.game_engine.sound_manager.play_sound("detection_threshold")
-            self.game_engine.message_log.add_message("WARNING: High detection level!", Colors.YELLOW)
-        elif old_detection < 90 <= new_detection:
-            self.game_engine.sound_manager.play_sound("detection_threshold")
+    def _check_trace_threshold_warnings(self, old_trace: float, new_trace: float):
+        """Check and play warning sounds for trace level threshold crossings."""
+        if old_trace < 75 <= new_trace:
+            self.game_engine.sound_manager.play_sound("trace_threshold")
+            self.game_engine.message_log.add_message("WARNING: High trace level!", Colors.YELLOW)
+        elif old_trace < 90 <= new_trace:
+            self.game_engine.sound_manager.play_sound("trace_threshold")
             self.game_engine.message_log.add_message("CRITICAL: Admin spawn imminent!", Colors.RED)
 
     def _alert_nearby_enemies(self, alerting_enemy):
@@ -435,7 +439,7 @@ class GameTurnManager:
 
     def _check_admin_spawn(self):
         """Check if admin avatar should spawn."""
-        if (self.game_engine.player.detection >= GameConfig.MAX_DETECTION and
+        if (self.game_engine.player.trace_level >= GameConfig.MAX_TRACE_LEVEL and
             not self.game_engine.admin_spawned and
             not any(e.type == 'admin' for e in self.game_engine.enemies)):
             self._spawn_admin_avatar()
