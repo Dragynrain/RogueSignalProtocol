@@ -189,7 +189,11 @@ class DataLoader:
             "balance": {
                 "player_start_cpu": 100,
                 "heat_reduction_normal": 2,
-                "detection_threshold": 100
+                "detection_threshold": 100,
+                "ai_behavior": {
+                    "enemy_detection_alert_to_hostile": 3,
+                    "enemy_detection_continuous_hostile": 0.3
+                }
             },
             "item_effects": {
                 "crimson": {"effect": "speed_boost", "duration": 5},

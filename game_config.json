@@ -75,7 +75,11 @@
     "shadow_vision_reduction_factor": 3,
     "enemy_detection_alert_to_hostile": 3,
     "enemy_detection_continuous_hostile": 0.3,
-    "enemy_memory_turns": 20
+    "enemy_memory_turns": 20,
+    "ai_behavior": {
+      "enemy_detection_alert_to_hostile": 3,
+      "enemy_detection_continuous_hostile": 0.3
+    }
   },
   "colors": {
     "basic": {
