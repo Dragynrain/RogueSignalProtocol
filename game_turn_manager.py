@@ -125,36 +125,26 @@ class GameTurnManager:
 
     def _cleanup_ghost_positions(self):
         """Remove ghost enemy positions when player can see the area but enemy is not there."""
-        positions_to_remove = []
+        vision_range = self.game_engine.player.get_vision_range()
+        gm = self.game_engine.game_map
 
-        for enemy_id, (ghost_position, turn_seen) in self.game_engine.game_map.last_known_enemy_positions.items():
-            # Check if player can currently see the ghost position
-            player_vision_range = self.game_engine.player.get_vision_range()
-            if self.game_engine.game_map.can_see_position(self.game_engine.player.position, ghost_position, player_vision_range):
-                # Check if there's actually an enemy at that position
-                enemy_at_position = None
-                for enemy in self.game_engine.enemies:
-                    if enemy.id == enemy_id and enemy.position.distance_to(ghost_position) == 0:
-                        enemy_at_position = enemy
-                        break
+        positions_to_remove = [
+            enemy_id for enemy_id, (ghost_pos, _) in gm.last_known_enemy_positions.items()
+            if gm.can_see_position(self.game_engine.player.position, ghost_pos, vision_range) and
+               not any(e.id == enemy_id and e.position.distance_to(ghost_pos) == 0 for e in self.game_engine.enemies)
+        ]
 
-                # If player can see the position but no enemy is there, remove ghost
-                if not enemy_at_position:
-                    positions_to_remove.append(enemy_id)
-
-        # Remove the outdated ghost positions
         for enemy_id in positions_to_remove:
-            del self.game_engine.game_map.last_known_enemy_positions[enemy_id]
+            del gm.last_known_enemy_positions[enemy_id]
 
     def _process_special_tiles(self):
         """Process effects of special tiles at player position."""
         player_pos = (self.game_engine.player.x, self.game_engine.player.y)
+        gm = self.game_engine.game_map
+        pp = self.game_engine.player.position
 
         # Check if player is on any special node and if it's a new position
-        is_on_node = (self.game_engine.game_map.is_cooling_node(self.game_engine.player.position) or
-                     self.game_engine.game_map.is_cpu_recovery_node(self.game_engine.player.position) or
-                     self.game_engine.game_map.is_ghost_node(self.game_engine.player.position))
-
+        is_on_node = gm.is_cooling_node(pp) or gm.is_cpu_recovery_node(pp) or gm.is_ghost_node(pp)
         should_play_sound = is_on_node and self.game_engine.last_node_position != player_pos
 
         # Update last node position and track discoveries
@@ -342,12 +332,12 @@ class GameTurnManager:
 
     def _check_trace_threshold_warnings(self, old_trace: float, new_trace: float):
         """Check and play warning sounds for trace level threshold crossings."""
-        if old_trace < 75 <= new_trace:
-            self.game_engine.sound_manager.play_sound("trace_threshold")
-            self.game_engine.message_log.add_message("WARNING: High trace level!", Colors.YELLOW)
-        elif old_trace < 90 <= new_trace:
-            self.game_engine.sound_manager.play_sound("trace_threshold")
-            self.game_engine.message_log.add_message("CRITICAL: Admin spawn imminent!", Colors.RED)
+        thresholds = [(75, "WARNING: High trace level!", Colors.YELLOW), (90, "CRITICAL: Admin spawn imminent!", Colors.RED)]
+        for threshold, msg, color in thresholds:
+            if old_trace < threshold <= new_trace:
+                self.game_engine.sound_manager.play_sound("trace_threshold")
+                self.game_engine.message_log.add_message(msg, color)
+                break
 
     def _alert_nearby_enemies(self, alerting_enemy):
         """Alert nearby enemies when one becomes hostile."""

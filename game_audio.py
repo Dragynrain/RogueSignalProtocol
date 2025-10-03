@@ -26,13 +26,11 @@ class SoundManager:
     # Centralized audio directory configuration
     @property
     def SOUND_DIRECTORY(self):
-        from game_config import GameConfig
-        return GameConfig.get('audio.sound_directory', 'sound')
+        return GameConfig.get('audio.sound_directory', 'sound') if hasattr(self, '_game_config_loaded') else 'sound'
 
     @property
     def MUSIC_DIRECTORY(self):
-        from game_config import GameConfig
-        return GameConfig.get('audio.music_directory', 'music')
+        return GameConfig.get('audio.music_directory', 'music') if hasattr(self, '_game_config_loaded') else 'music'
     
     def __init__(self, settings: GameSettings = None):
         """Initialize the sound manager with game settings.
@@ -131,14 +129,15 @@ class SoundManager:
         """Load a sound effect from file"""
         if not self.enabled:
             return
-        
+
         try:
             sound_path = os.path.join(self.SOUND_DIRECTORY, filename)
-            if os.path.exists(sound_path):
-                self.sounds[sound_id] = pygame.mixer.Sound(sound_path)
-                logging.info(f"Loaded sound: {sound_id}")
-            else:
+            if not os.path.exists(sound_path):
                 logging.warning(f"Sound file not found: {sound_path}")
+                return
+
+            self.sounds[sound_id] = pygame.mixer.Sound(sound_path)
+            logging.info(f"Loaded sound: {sound_id}")
         except Exception as e:
             logging.error(f"Failed to load sound {sound_id}: {e}")
             logging.debug(traceback.format_exc())

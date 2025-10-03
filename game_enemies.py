@@ -62,10 +62,7 @@ class EnemyManager:
     
     def get_enemy_at_position(self, position: Position) -> Optional[Enemy]:
         """Get enemy at the specified position."""
-        for enemy in self.enemies:
-            if enemy.position.x == position.x and enemy.position.y == position.y:
-                return enemy
-        return None
+        return next((e for e in self.enemies if e.position.x == position.x and e.position.y == position.y), None)
     
     def remove_enemy(self, enemy: Enemy) -> None:
         """Remove an enemy from the game."""
@@ -76,26 +73,14 @@ class EnemyManager:
         """Resume patrol route from the nearest patrol point."""
         if not enemy.patrol_points:
             return
-        
-        # Find the nearest patrol point to resume from
-        min_distance = float('inf')
-        nearest_index = 0
-        
-        for i, patrol_point in enumerate(enemy.patrol_points):
-            distance = enemy.position.distance_to(patrol_point)
-            if distance < min_distance:
-                min_distance = distance
-                nearest_index = i
-        
-        # If already at or very close to the nearest point, advance to next point
-        nearest_point = enemy.patrol_points[nearest_index]
-        if enemy.position.distance_to(nearest_point) <= GameConfig.ADJACENT_VISIBILITY_THRESHOLD:
-            enemy.patrol_index = (nearest_index + 1) % len(enemy.patrol_points)
-        else:
-            # Set patrol index to the nearest point
-            enemy.patrol_index = nearest_index
-        
-        # Reset stuck counter when resuming patrol route
+
+        # Find nearest patrol point
+        distances = [(i, enemy.position.distance_to(p)) for i, p in enumerate(enemy.patrol_points)]
+        nearest_index, min_distance = min(distances, key=lambda x: x[1])
+
+        # Advance if already at nearest point
+        enemy.patrol_index = (nearest_index + 1) % len(enemy.patrol_points) \
+                           if min_distance <= GameConfig.ADJACENT_VISIBILITY_THRESHOLD else nearest_index
         enemy.patrol_stuck_counter = 0
     
     def _generate_patrol_route(self, start: Position) -> List[Position]:

@@ -12,87 +12,73 @@ from typing import List, Dict, Any
 
 class DataLoader:
     """Handles loading of JSON configuration and game data files."""
-    
+
     _story_fragments = None
     _game_data = None
     _config = None
+
+    @classmethod
+    def _load_json_file(cls, filename: str, key: str = None) -> Any:
+        """Load JSON file with standardized error handling."""
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data[key] if key else data
+        except FileNotFoundError as e:
+            msg = f"CRITICAL CONFIG ERROR: {filename} not found"
+            print(msg)
+            logging.error(msg)
+            print(f"Exception: {str(e)}")
+            raise FileNotFoundError(f"Required file {filename} is missing") from e
+        except json.JSONDecodeError as e:
+            msg = f"CRITICAL CONFIG ERROR: Invalid JSON in {filename}"
+            print(msg)
+            logging.error(msg)
+            print(f"Exception: {str(e)}")
+            raise json.JSONDecodeError(f"{filename} contains invalid JSON", e.doc, e.pos) from e
+        except KeyError as e:
+            msg = f"CRITICAL CONFIG ERROR: Missing '{key}' key in {filename}"
+            print(msg)
+            logging.error(msg)
+            print(f"Exception: {str(e)}")
+            raise KeyError(f"Required '{key}' section missing from {filename}") from e
     
     @classmethod
     def load_story_fragments(cls) -> List[str]:
         """Load story fragments from JSON file."""
         if cls._story_fragments is None:
-            try:
-                with open('story_content.json', 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    cls._story_fragments = data['fragments']
-            except FileNotFoundError as e:
-                error_msg = f"CRITICAL CONFIG ERROR: story_content.json not found"
-                print(error_msg)
-                logging.error(error_msg)
-                print(f"Exception: {str(e)}")
-                raise FileNotFoundError(f"Required file story_content.json is missing") from e
-            except json.JSONDecodeError as e:
-                error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in story_content.json"
-                print(error_msg)
-                logging.error(error_msg)
-                print(f"Exception: {str(e)}")
-                raise json.JSONDecodeError(f"story_content.json contains invalid JSON", e.doc, e.pos) from e
-            except KeyError as e:
-                error_msg = f"CRITICAL CONFIG ERROR: Missing 'fragments' key in story_content.json"
-                print(error_msg)
-                logging.error(error_msg)
-                print(f"Exception: {str(e)}")
-                raise KeyError(f"Required 'fragments' section missing from story_content.json") from e
+            cls._story_fragments = cls._load_json_file('story_content.json', 'fragments')
         return cls._story_fragments
     
     @classmethod
     def load_game_data(cls) -> Dict[str, Any]:
         """Load game data from JSON file."""
         if cls._game_data is None:
-            try:
-                with open('game_data.json', 'r', encoding='utf-8') as f:
-                    cls._game_data = json.load(f)
-            except FileNotFoundError as e:
-                error_msg = f"CRITICAL CONFIG ERROR: game_data.json not found"
-                print(error_msg)
-                logging.error(error_msg)
-                print(f"Exception: {str(e)}")
-                raise FileNotFoundError(f"Required file game_data.json is missing") from e
-            except json.JSONDecodeError as e:
-                error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in game_data.json"
-                print(error_msg)
-                logging.error(error_msg)
-                print(f"Exception: {str(e)}")
-                raise json.JSONDecodeError(f"game_data.json contains invalid JSON", e.doc, e.pos) from e
+            cls._game_data = cls._load_json_file('game_data.json')
         return cls._game_data
     
     @classmethod
+    def _get_section(cls, section: str, data: Dict) -> Dict[str, Any]:
+        """Get a section from data with error handling."""
+        try:
+            return data[section]
+        except KeyError as e:
+            msg = f"CRITICAL CONFIG ERROR: Missing '{section}' section in game_data.json"
+            print(msg)
+            logging.error(msg)
+            print(f"Exception: {str(e)}")
+            print(f"Available sections: {list(data.keys())}")
+            raise KeyError(f"Required '{section}' section missing from game_data.json") from e
+
+    @classmethod
     def get_balance_config(cls) -> Dict[str, Any]:
         """Get balance configuration from game data."""
-        game_data = cls.load_game_data()
-        try:
-            return game_data['balance']
-        except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Missing 'balance' section in game_data.json"
-            print(error_msg)
-            logging.error(error_msg)
-            print(f"Exception: {str(e)}")
-            print(f"Available sections: {list(game_data.keys())}")
-            raise KeyError(f"Required 'balance' section missing from game_data.json") from e
+        return cls._get_section('balance', cls.load_game_data())
 
     @classmethod
     def get_item_effects(cls) -> Dict[str, Any]:
         """Get item effects configuration from game data."""
-        game_data = cls.load_game_data()
-        try:
-            return game_data['item_effects']
-        except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Missing 'item_effects' section in game_data.json"
-            print(error_msg)
-            logging.error(error_msg)
-            print(f"Exception: {str(e)}")
-            print(f"Available sections: {list(game_data.keys())}")
-            raise KeyError(f"Required 'item_effects' section missing from game_data.json") from e
+        return cls._get_section('item_effects', cls.load_game_data())
 
     @classmethod
     def get_ai_behavior_config(cls) -> Dict[str, Any]:
