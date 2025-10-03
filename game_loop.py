@@ -260,8 +260,17 @@ def main():
                         import traceback
                         tb = traceback.extract_tb(e.__traceback__)
                         line_no = tb[-1].lineno if tb else "?"
-                        logging.error(f"Rendering error: {e} (line {line_no})")
-                        
+                        filename = tb[-1].filename if tb else "unknown"
+
+                        error_msg = f"SYSTEM ERROR: Rendering failure in {filename}:{line_no}"
+                        print(error_msg)  # Always visible to user
+                        logging.error(error_msg)  # Also log for debugging
+                        print(f"Exception: {str(e)}")
+                        print(f"Exception type: {type(e).__name__}")
+
+                        # Print full traceback for debugging
+                        traceback.print_exc()
+
                         if handle_error_screen(console, context, e, line_no):
                             return
     
@@ -269,7 +278,15 @@ def main():
         import traceback
         tb = traceback.extract_tb(e.__traceback__)
         line_no = tb[-1].lineno if tb else "?"
-        logging.critical(f"Critical error: {e} (line {line_no})")
+        filename = tb[-1].filename if tb else "unknown"
+
+        error_msg = f"CRITICAL SYSTEM ERROR: Game initialization/main loop failure in {filename}:{line_no}"
+        print(error_msg)  # Always visible to user
+        logging.critical(error_msg)  # Also log for debugging
+        print(f"Exception: {str(e)}")
+        print(f"Exception type: {type(e).__name__}")
+
+        # Print full traceback for debugging
         traceback.print_exc()
 
 
@@ -277,5 +294,14 @@ if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        logging.critical(f"Unhandled exception: {e}")
+        import traceback
+
+        error_msg = f"CRITICAL UNHANDLED EXCEPTION: Program termination"
+        print(error_msg)  # Always visible to user
+        logging.critical(error_msg)  # Also log for debugging
+        print(f"Exception: {str(e)}")
+        print(f"Exception type: {type(e).__name__}")
+
+        # Print full traceback for debugging
+        traceback.print_exc()
         raise
