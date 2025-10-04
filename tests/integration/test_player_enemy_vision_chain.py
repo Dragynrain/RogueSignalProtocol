@@ -98,26 +98,19 @@ class TestPlayerEnemyVisionChain:
                 assert self.scanner2.state == EnemyState.UNAWARE, "Distant enemies should remain unaware"
     
     def test_alerted_enemies_update_movement_queues(self):
-        """Test that alerted enemies update their movement queues to seek player."""
+        """Test that alerted enemies can calculate moves to seek player."""
         # Alert the enemy
         self.scanner1.state = EnemyState.ALERT
         self.scanner1.last_seen_player = Position(12, 10)
-        
-        # Clear existing queue to force regeneration
-        self.scanner1.movement_queue.clear()
 
-        # Generate new movement queue (should now seek player)
-        self.scanner1._regenerate_queue(self.game_map, self.player, self.game_engine)
-        
-        # Verify queue exists and is valid
-        assert len(self.scanner1.movement_queue) >= 0, "Alert enemy should have movement queue"
-        
-        # If movement queue has moves, verify they're valid
-        if len(self.scanner1.movement_queue) > 0:
-            for pos in self.scanner1.movement_queue:
-                assert not self.game_map.is_wall(pos), f"Move to {pos} must not be a wall"
-                assert 0 <= pos.x < self.game_map.width, "Move must be within map width"
-                assert 0 <= pos.y < self.game_map.height, "Move must be within map height"
+        # Calculate next move (on-demand)
+        next_move = self.scanner1._calculate_next_move(self.player, self.game_map, self.game_engine)
+
+        # Verify calculated move is valid (if one was calculated)
+        if next_move:
+            assert not self.game_map.is_wall(next_move), f"Move to {next_move} must not be a wall"
+            assert 0 <= next_move.x < self.game_map.width, "Move must be within map width"
+            assert 0 <= next_move.y < self.game_map.height, "Move must be within map height"
     
     def test_complete_trace_level_workflow(self):
         """Test the complete workflow from player movement to enemy response."""
@@ -141,22 +134,15 @@ class TestPlayerEnemyVisionChain:
         if can_see:
             self.scanner1.state = EnemyState.ALERT
             self.scanner1.last_seen_player = Position(self.player.x, self.player.y)
-            
-            # Step 5: Generate movement queue for alerted enemy
-            self.scanner1.movement_queue.clear()
-            self.scanner1._regenerate_queue(self.game_map, self.player, self.game_engine)
-        
-        # Step 6: Verify the complete chain worked
+
+        # Step 5: Verify the complete chain worked
         new_distance = Position(self.player.x, self.player.y).distance_to(self.scanner1.position)
         vision_range = self.scanner1.type_data.vision
-        
+
         if new_distance <= vision_range:
             # Player should be detected
             assert self.scanner1.state == EnemyState.ALERT, "Enemy should be alert after detecting player"
             assert self.scanner1.last_seen_player is not None, "Enemy should remember player position"
-            
-            # Movement queue should be updated
-            assert isinstance(self.scanner1.movement_queue, list), "Enemy should have movement queue"
         else:
             # Player is out of range, enemy should remain unaware
             assert self.scanner1.state == EnemyState.UNAWARE, "Enemy should remain unaware if player out of range"

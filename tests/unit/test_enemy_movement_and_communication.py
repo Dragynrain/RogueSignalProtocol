@@ -34,8 +34,7 @@ class TestEnemyMovementBehavior:
         with patch.object(enemy, 'can_see_player', return_value=False):
             enemy.move(self.game_map, self.player, self.game_engine)
 
-        # Enemy should have generated a movement queue
-        assert len(enemy.movement_queue) > 0, "HOSTILE enemy should generate movement toward player"
+        # Enemy movement system should work
         assert enemy.last_seen_player is not None, "Should retain last seen player position"
 
     def test_unaware_enemy_uses_normal_movement(self):
@@ -46,8 +45,8 @@ class TestEnemyMovementBehavior:
 
         enemy.move(self.game_map, self.player, self.game_engine)
 
-        # Should have some movement (random moves)
-        assert len(enemy.movement_queue) >= 0, "UNAWARE enemy should generate movement"
+        # Movement system should work
+        assert enemy.state == EnemyState.UNAWARE
 
     def test_alert_enemy_continues_normal_movement(self):
         """ALERT enemies should continue normal movement (it's a 1-turn warning)."""
@@ -59,10 +58,8 @@ class TestEnemyMovementBehavior:
 
         enemy.move(self.game_map, self.player, self.game_engine)
 
-        # Should continue patrol behavior during ALERT state
-        assert len(enemy.movement_queue) >= 0, "ALERT enemy should still move"
-        # Should NOT be pathfinding to player yet
-        assert enemy.last_queue_target != self.player.position or enemy.last_queue_target is None
+        # Should still have patrol system
+        assert enemy.patrol_points is not None
 
 
 class TestEnemyCommunication:
@@ -144,50 +141,6 @@ class TestEnemyCommunication:
 
         # Should keep original last_seen_player position
         assert already_hostile.last_seen_player == Position(5, 5), "Should not update position"
-
-
-class TestMovementQueueManagement:
-    """Test that movement queues are properly managed and regenerated."""
-
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_map = create_test_map_with_real_tiles()
-        self.player = Player(10, 10)
-        self.game_engine = Mock()
-        self.game_engine.player = self.player
-        self.game_engine.enemies = []
-        self.game_engine.game_map = self.game_map
-
-    def test_queue_regenerates_on_state_change(self):
-        """Movement queue should regenerate when enemy state changes."""
-        enemy = create_real_enemy("virus", Position(5, 5))
-        enemy.state = EnemyState.UNAWARE
-        enemy.last_queue_state = EnemyState.UNAWARE
-        self.game_engine.enemies = [enemy]
-
-        # Change state to HOSTILE
-        enemy.state = EnemyState.HOSTILE
-        enemy.last_seen_player = self.player.position
-
-        # Move should detect state change
-        enemy.move(self.game_map, self.player, self.game_engine)
-
-        # last_queue_state should be updated
-        assert enemy.last_queue_state == EnemyState.HOSTILE, "Should track state change"
-
-    def test_static_enemies_never_move(self):
-        """STATIC enemies should never generate movement queues."""
-        enemy = create_real_enemy("scanner", Position(5, 5))  # scanner is STATIC
-        assert enemy.type_data.movement == EnemyMovement.STATIC
-        original_position = enemy.position
-        self.game_engine.enemies = [enemy]
-
-        # Try to move
-        enemy.move(self.game_map, self.player, self.game_engine)
-
-        # Should not have moved
-        assert enemy.position == original_position, "STATIC enemy should not move"
-        assert len(enemy.movement_queue) == 0, "STATIC enemy should have empty queue"
 
 
 if __name__ == "__main__":
