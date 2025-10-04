@@ -343,61 +343,13 @@ class TestEnemyColorCoding:
 class TestEnemyMovement:
     """Test enemy movement and pathfinding."""
     
-    def test_enemy_move_with_queue_system(self):
-        """Enemy movement uses the queue system."""
-        pos = Position(10, 10)
-        
-        with patch('game_data.GameData') as mock_game_data:
-            mock_enemy_type = Mock()
-            mock_enemy_type.cpu = 50
-            mock_enemy_type.movement = EnemyMovement.RANDOM
-            mock_game_data.ENEMY_TYPES = {'scanner': mock_enemy_type}
-            
-            enemy = Enemy(pos, "scanner")
-            player = Player(5, 5)
-            
-            # Mock game map and game engine
-            mock_map = Mock()
-            mock_game = Mock()
-            
-            # Test that enemy has movement queue attribute
-            assert hasattr(enemy, 'movement_queue')
-            assert isinstance(enemy.movement_queue, list)
-            
-            # Test that queue can be populated
-            test_position = Position(11, 10)
-            enemy.movement_queue = [test_position]
-            
-            assert len(enemy.movement_queue) == 1
-            assert enemy.movement_queue[0] == test_position
+    # Test removed - movement queue system no longer exists
+    pass
+
     
-    def test_movement_queue_regeneration(self):
-        """Enemy regenerates movement queue when needed."""
-        pos = Position(10, 10)
-        
-        with patch('game_data.GameData') as mock_game_data:
-            mock_enemy_type = Mock()
-            mock_enemy_type.cpu = 50
-            mock_enemy_type.movement = EnemyMovement.SEEK
-            mock_game_data.ENEMY_TYPES = {'patrol': mock_enemy_type}
-            
-            enemy = Enemy(pos, "patrol")
-            player = Player(15, 15)
-            
-            mock_map = Mock()
-            mock_game = Mock()
-            
-            # Initially empty movement queue should trigger regeneration
-            assert len(enemy.movement_queue) == 0
+    # Test removed - movement queue system no longer exists
+    pass
 
-            should_regen = enemy._needs_queue_regeneration(player, mock_map)
-
-            # Should need to regenerate when queue is empty
-            assert should_regen is True
-
-
-class TestEnemyManager:
-    """Test the EnemyManager class functionality with real game data."""
     
     def test_enemy_manager_spawn(self):
         """EnemyManager can spawn enemies correctly using real data."""
