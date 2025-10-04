@@ -290,6 +290,10 @@ class SaveGameManager:
             if e.patrol_points:
                 enemy_data["patrol_points"] = [{"x": p.x, "y": p.y} for p in e.patrol_points]
 
+            # Save movement queue
+            if hasattr(e, 'move_queue') and e.move_queue:
+                enemy_data["move_queue"] = [{"x": p.x, "y": p.y} for p in e.move_queue]
+
             serialized.append(enemy_data)
 
         return serialized

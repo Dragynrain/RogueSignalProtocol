@@ -271,6 +271,7 @@ class GameTurnManager:
             # Enemy sees player - escalate state
             if enemy.state == EnemyState.UNAWARE:
                 enemy.state = EnemyState.ALERT
+                enemy.invalidate_move_queue()  # State changed, recalculate path
                 enemy.alert_timer = 0
                 enemy.last_seen_player = player_pos
                 self.game_engine.message_log.add_message(f"{enemy.type_data.name} investigating")
@@ -291,6 +292,7 @@ class GameTurnManager:
                 enemy.alert_timer -= 1
                 if enemy.alert_timer <= 0:
                     enemy.state = EnemyState.UNAWARE
+                    enemy.invalidate_move_queue()  # State changed, recalculate path
                     self._restore_patrol(enemy)
                     self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost interest")
 
@@ -298,9 +300,11 @@ class GameTurnManager:
                 if random.random() < 0.15:
                     if enemy.type == 'admin':
                         enemy.state = EnemyState.ALERT
+                        enemy.invalidate_move_queue()  # State changed
                         enemy.alert_timer = 0
                     else:
                         enemy.state = EnemyState.UNAWARE
+                        enemy.invalidate_move_queue()  # State changed
                         enemy.last_seen_player = None
                         self._restore_patrol(enemy)
                         self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost track")
@@ -309,6 +313,7 @@ class GameTurnManager:
         """Transition enemy to hostile state."""
         self._restore_patrol(enemy)  # Store original patrol index
         enemy.state = EnemyState.HOSTILE
+        enemy.invalidate_move_queue()  # State changed, recalculate path
         self._increase_trace(GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE, 'trace_alert_to_hostile')
         self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
         self.game_engine.sound_manager.play_sound("enemy_hostile")
@@ -354,6 +359,7 @@ class GameTurnManager:
                     enemy.original_patrol_index = enemy.patrol_index
                 # All enemies within alert range immediately go HOSTILE and get player location
                 enemy.state = EnemyState.HOSTILE
+                enemy.invalidate_move_queue()  # State changed, recalculate path
                 enemy.alert_timer = 0
                 enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
                 alerted_count += 1
