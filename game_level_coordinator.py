@@ -67,6 +67,9 @@ class GameLevelCoordinator:
             self.game_engine.player.trace_level = 0
             self.game_engine.admin_spawned = False
 
+            # Sync code hack discovered status with global discovered effects
+            self._sync_code_discovered_status()
+
             self.game_engine.message_log.add_message(f"{config['name']} loaded")
 
         finally:
@@ -194,6 +197,14 @@ class GameLevelCoordinator:
         """Check if player has already discovered what this code color does."""
         # Check the global discovered effects for this game session
         return color in self.game_engine.discovered_code_effects
+
+    def _sync_code_discovered_status(self) -> None:
+        """Sync discovered status of inventory code hacks with global discovered effects."""
+        from game_inventory import CodeHack
+        for item in self.game_engine.player.inventory_manager.items:
+            if isinstance(item, CodeHack):
+                # Update discovered status based on global discovered effects
+                item.discovered = item.color_name in self.game_engine.discovered_code_effects
 
     def _place_exploit_pickups(self):
         """Place random exploit pickups throughout the level."""

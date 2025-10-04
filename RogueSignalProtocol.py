@@ -21,10 +21,9 @@ from typing import List, Tuple, Optional, Dict, Any
 from data_loading import DataLoader, PersistentStorage, get_story_fragments
 from game_config import GameSettings, GameConfig, GameBalance, RoomGenerationConfig
 from game_entities import (Position, EnemyState, EnemyMovement, TargetingMode,
-                          ExploitDefinition, EnemyTypeDefinition, clamp, safe_divide,
-                          validate_coordinates, calculate_manhattan_distance,
-                          get_adjacent_positions, format_position_key, parse_position_key,
-                          parse_coordinate_string, validate_position_bounds, ensure_color_tuple)
+                          ExploitDefinition, EnemyTypeDefinition, clamp,
+                          format_position_key, parse_position_key,
+                          parse_coordinate_string, ensure_color_tuple)
 from game_data import GameData, GameUpgrades
 from game_inventory import InventoryItem, CodeHack, ExploitItem, StoryFragment, InventoryManager
 from game_characters import Player, Enemy, create_pathfinding_cost_map, pathfind_and_move, can_move_to_position

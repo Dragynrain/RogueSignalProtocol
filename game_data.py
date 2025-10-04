@@ -102,22 +102,19 @@ class GameBalance:
         balance = cls.get_balance()
         return balance.get('temporary_effects', {}).get(value_name, default_value)
     
-    # Legacy properties for backward compatibility
-    @property
-    def CPU_RESTORE_MIN(self):
-        return self.get_code_patch_value('cpu_restore_min', 15)
-    
-    @property
-    def CPU_RESTORE_MAX(self):
-        return self.get_code_patch_value('cpu_restore_max', 35)
-    
-    @property
-    def HEAT_REDUCTION_INSTANT(self):
-        return self.get_code_patch_value('heat_reduction_instant', 30)
-    
-    @property
-    def ENEMY_ELIMINATION_CPU_REWARD(self):
-        return self.get_combat_value('enemy_elimination_cpu_reward', 5)
+    # Legacy class attributes for backward compatibility
+    CPU_RESTORE_MIN = 15
+    CPU_RESTORE_MAX = 35
+    HEAT_REDUCTION_INSTANT = 30
+    ENEMY_ELIMINATION_CPU_REWARD = 5
+
+    @classmethod
+    def load_balance_values(cls):
+        """Load balance values from JSON and update class attributes."""
+        cls.CPU_RESTORE_MIN = cls.get_code_patch_value('cpu_restore_min', 15)
+        cls.CPU_RESTORE_MAX = cls.get_code_patch_value('cpu_restore_max', 35)
+        cls.HEAT_REDUCTION_INSTANT = cls.get_code_patch_value('heat_reduction_instant', 30)
+        cls.ENEMY_ELIMINATION_CPU_REWARD = cls.get_combat_value('enemy_elimination_cpu_reward', 5)
     
     @staticmethod
     def get_exploit_cpu_cost(exploit_name: str) -> int:
