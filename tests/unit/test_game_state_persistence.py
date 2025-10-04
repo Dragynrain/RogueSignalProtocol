@@ -87,7 +87,7 @@ class TestSaveDataIntegrity:
         enemy.disabled_turns = 0
         enemy.alert_timer = 0
         enemy.patrol_index = 0
-        enemy.patrol_stuck_counter = 0
+        # patrol_stuck_counter removed in simplified movement system
         enemy.movement_queue = [Position(31, 30), Position(32, 30)]
         enemy.last_target = Position(20, 25)
         enemy.last_seen_player = Position(20, 25)
@@ -167,7 +167,6 @@ class TestSaveDataIntegrity:
                 "state": "HOSTILE",
                 "move_cooldown": 0, "disabled_turns": 0,
                 "alert_timer": 0, "patrol_index": 0,
-                "patrol_stuck_counter": 0,
                 "movement_queue": [{"x": 31, "y": 30}, {"x": 32, "y": 30}],
                 "last_target": {"x": 20, "y": 25},
                 "last_seen_player": {"x": 20, "y": 25}
@@ -454,7 +453,6 @@ class TestStateRestorationAccuracy:
                     "disabled_turns": 0,
                     "alert_timer": 5,
                     "patrol_index": 1,
-                    "patrol_stuck_counter": 0,
                     "movement_queue": [{"x": 26, "y": 30}, {"x": 27, "y": 30}],
                     "last_target": {"x": 20, "y": 25},
                     "last_seen_player": {"x": 20, "y": 25},

@@ -105,9 +105,9 @@ class TestPlayerEnemyVisionChain:
         
         # Clear existing queue to force regeneration
         self.scanner1.movement_queue.clear()
-        
+
         # Generate new movement queue (should now seek player)
-        self.scanner1._generate_movement_queue(self.game_map, self.player, self.game_engine)
+        self.scanner1._regenerate_queue(self.game_map, self.player, self.game_engine)
         
         # Verify queue exists and is valid
         assert len(self.scanner1.movement_queue) >= 0, "Alert enemy should have movement queue"
@@ -144,7 +144,7 @@ class TestPlayerEnemyVisionChain:
             
             # Step 5: Generate movement queue for alerted enemy
             self.scanner1.movement_queue.clear()
-            self.scanner1._generate_movement_queue(self.game_map, self.player, self.game_engine)
+            self.scanner1._regenerate_queue(self.game_map, self.player, self.game_engine)
         
         # Step 6: Verify the complete chain worked
         new_distance = Position(self.player.x, self.player.y).distance_to(self.scanner1.position)

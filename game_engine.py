@@ -389,106 +389,24 @@ class GameEngine:
         self.cursor_position = Position(new_x, new_y)
 
     def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
-        """Get the next N positions this enemy will move to."""
+        """
+        Get predicted next positions for an enemy.
+        Simply returns the first 'steps' positions from their movement queue.
+        The queue is maintained by the enemy's movement system.
+        """
         if enemy.disabled_turns > 0:
             return []
 
         # If enemy is adjacent to player and can attack, show no movement (will attack instead)
-        player_pos = Position(self.player.x, self.player.y)
         if enemy.can_attack_player(self.player):
             return []
 
-        positions = []
+        # Ensure enemy has a movement queue
+        if not enemy.movement_queue:
+            enemy._generate_movement_queue(self.game_map, self.player, self)
 
-        # All movement types now use the unified prediction system
-        return self._predict_enemy_movement(enemy, steps)
-
-    def _predict_enemy_movement(self, enemy: Enemy, steps: int) -> List[Position]:
-        """
-        Predict next positions for any enemy using their movement queue.
-        Generates queue if needed for accurate prediction.
-        """
-        from game_entities import EnemyMovement, EnemyState
-
-        # For patrol enemies in non-hostile state, simulate step-by-step
-        if (enemy.type_data.movement == EnemyMovement.PATROL and
-            enemy.patrol_points and
-            enemy.state != EnemyState.HOSTILE):
-            return self._predict_patrol_movement(enemy, steps)
-
-        # Use existing queue if available and sufficient
-        if enemy.movement_queue and len(enemy.movement_queue) >= steps:
-            return enemy.movement_queue[:steps]
-
-        # Generate temporary queue for prediction without modifying enemy
-        # Store original queue to restore it
-        original_queue = enemy.movement_queue.copy()
-        original_state = enemy.last_queue_state
-        original_target = enemy.last_queue_target
-
-        enemy._generate_movement_queue(self.game_map, self.player, self)
-        predicted = enemy.movement_queue[:steps]
-
-        # Restore original state
-        enemy.movement_queue = original_queue
-        enemy.last_queue_state = original_state
-        enemy.last_queue_target = original_target
-
-        return predicted
-
-    def _predict_patrol_movement(self, enemy: Enemy, steps: int) -> List[Position]:
-        """
-        Predict patrol enemy movement by simulating step-by-step movement
-        and accounting for patrol point changes.
-        """
-        # Create a temporary copy to simulate movement
-        temp_enemy = copy.deepcopy(enemy)
-        predicted_positions = []
-
-        for step in range(steps):
-            # If no movement queue, generate one
-            if not temp_enemy.movement_queue:
-                current_target = temp_enemy.patrol_points[temp_enemy.patrol_index]
-                try:
-                    # Calculate path without moving the enemy
-                    from game_characters import create_pathfinding_cost_map
-                    cost_map = create_pathfinding_cost_map(self.game_map, self, temp_enemy)
-                    import tcod
-                    graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-                    pathfinder = tcod.path.Pathfinder(graph)
-                    pathfinder.add_root((temp_enemy.x, temp_enemy.y))
-                    path = pathfinder.path_to((current_target.x, current_target.y))
-
-                    if len(path) > 1:
-                        # Convert tuples to Position objects and exclude current position
-                        temp_enemy.movement_queue = [Position(x, y) for x, y in path[1:]]
-                    else:
-                        # No valid path, try next patrol point
-                        temp_enemy.patrol_index = (temp_enemy.patrol_index + 1) % len(temp_enemy.patrol_points)
-                        continue
-                except Exception as e:
-                    logging.warning(f"Failed to generate patrol path for enemy: {e}")
-                    break
-
-            # Get next position from queue
-            if temp_enemy.movement_queue:
-                next_pos = temp_enemy.movement_queue.pop(0)
-                predicted_positions.append(next_pos)
-
-                # Update temp enemy position
-                temp_enemy.x = next_pos.x
-                temp_enemy.y = next_pos.y
-
-                # Check if reached patrol point
-                current_target = temp_enemy.patrol_points[temp_enemy.patrol_index]
-                if (temp_enemy.x == current_target.x and temp_enemy.y == current_target.y):
-                    # Reached patrol point, move to next one
-                    temp_enemy.patrol_index = (temp_enemy.patrol_index + 1) % len(temp_enemy.patrol_points)
-                    temp_enemy.movement_queue.clear()  # Clear queue to generate new path
-            else:
-                break
-
-        return predicted_positions
+        # Return up to 'steps' positions from the queue
+        return enemy.movement_queue[:steps]
 
     def next_level(self):
         """Progress to the next level - delegates to LevelCoordinator."""
