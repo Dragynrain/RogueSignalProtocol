@@ -211,6 +211,11 @@ class Enemy:
         self.patrol_index = 0
         self.last_seen_player: Optional[Position] = None
         self.original_patrol_index = 0  # Store original patrol index when becoming hostile
+
+        # Movement queue system - stores next 3 planned moves
+        self.move_queue: List[Position] = []
+        self._queue_target: Optional[Position] = None  # Target when queue was calculated
+        self._queue_state: EnemyState = self.state  # State when queue was calculated
     
     @property
     def x(self) -> int:
@@ -314,8 +319,7 @@ class Enemy:
         return self.cpu <= 0
     
     def move(self, game_map, player: Player, game_engine=None) -> bool:
-        """
-        Calculate and execute next move based on current state."""
+        """Execute next move from queue, recalculating if needed."""
         # Skip movement if disabled or on cooldown
         if self.disabled_turns > 0:
             self.disabled_turns -= 1
@@ -325,10 +329,16 @@ class Enemy:
             self.move_cooldown -= 1
             return False
 
-        # Calculate next move
-        next_position = self._calculate_next_move(player, game_map, game_engine)
+        # Refresh queue if needed
+        if self._should_refresh_queue(player, game_map):
+            self._refresh_move_queue(player, game_map, game_engine)
+
+        # Get next move from queue
+        next_position = self.move_queue.pop(0) if self.move_queue else None
 
         if not next_position or not self._is_move_valid(next_position, game_map, player, game_engine):
+            # Queue is stale, recalculate
+            self.move_queue.clear()
             return False
 
         # Execute the move
@@ -349,7 +359,73 @@ class Enemy:
             self.move_cooldown = 0
 
         return True
-    
+
+    def _should_refresh_queue(self, player, game_map) -> bool:
+        """Check if movement queue needs refreshing."""
+        # Empty queue needs refresh
+        if not self.move_queue:
+            return True
+
+        # State changed - different behavior needed
+        if self._queue_state != self.state:
+            return True
+
+        # Target changed - need new path
+        current_target = self._get_current_target(player, game_map)
+        if current_target != self._queue_target:
+            return True
+
+        return False
+
+    def _refresh_move_queue(self, player, game_map, game_engine):
+        """Recalculate movement queue (up to 3 moves)."""
+        self.move_queue.clear()
+
+        # Update tracking
+        self._queue_state = self.state
+        self._queue_target = self._get_current_target(player, game_map)
+
+        # Static enemies don't move
+        if self.type_data.movement == EnemyMovement.STATIC:
+            return
+
+        # For hostile/patrol enemies, calculate full path and take first 3 steps
+        if self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
+            path = self._calculate_path_to_target(self._queue_target, game_map, game_engine)
+            if path and len(path) > 1:
+                # Take up to 3 steps (skip current position)
+                for i in range(1, min(len(path), 4)):
+                    next_pos = Position(path[i][0], path[i][1])
+                    self.move_queue.append(next_pos)
+                    # Stop if adjacent to target
+                    if self._queue_target and next_pos.is_adjacent_to(self._queue_target):
+                        break
+        # Random movement - just add one random move
+        elif self.type_data.movement == EnemyMovement.RANDOM:
+            next_move = self._calculate_random_move(game_map, player, game_engine)
+            if next_move:
+                self.move_queue.append(next_move)
+
+    def invalidate_move_queue(self):
+        """Mark queue as invalid (called externally when state changes)."""
+        self.move_queue.clear()
+
+    def _calculate_path_to_target(self, target: Optional[Position], game_map, game_engine):
+        """Calculate full path to target using A* pathfinding."""
+        if not target:
+            return None
+
+        try:
+            cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
+            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+            pathfinder = tcod.path.Pathfinder(graph)
+            pathfinder.add_root((self.position.x, self.position.y))
+            path = pathfinder.path_to((target.x, target.y))
+            return path if len(path) > 1 else None
+        except Exception as e:
+            logging.warning(f"Pathfinding failed for {self.type_data.name}: {e}")
+            return None
+
     def _calculate_next_move(self, player, game_map, game_engine) -> Optional[Position]:
         """Calculate the next move based on current state and movement type."""
         if self.type_data.movement == EnemyMovement.STATIC:

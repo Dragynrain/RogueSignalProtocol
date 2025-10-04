@@ -1485,9 +1485,28 @@ class MapRenderer:
                                     fg=Colors.CYAN, bg=(20, 0, 20))  # Cyan text on dark purple bg
                     else:
                         # Normal enemy rendering
-                        render_char_safe(console, screen_x, screen_y, enemy.type_data.symbol, 
+                        render_char_safe(console, screen_x, screen_y, enemy.type_data.symbol,
                                     fg=enemy.get_color(), bg=Colors.BLACK)
-    
+
+                    # Render movement prediction (queue visualization)
+                    if can_see_enemy and hasattr(enemy, 'move_queue') and enemy.move_queue:
+                        self._render_enemy_movement_prediction(console, enemy, camera_offset, game)
+
+    def _render_enemy_movement_prediction(self, console: tcod.console.Console, enemy, camera_offset: Position, game):
+        """Render faint indicators showing where enemy will move."""
+        # Show up to 3 queued moves
+        prediction_color = tuple(c // 2 for c in enemy.get_color())  # Half brightness
+
+        for i, next_pos in enumerate(enemy.move_queue[:3]):
+            screen_x = next_pos.x - camera_offset.x
+            screen_y = next_pos.y - camera_offset.y + 1
+
+            if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
+                1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                # Render dot or small indicator for predicted position
+                # Use '·' (small dot) for movement prediction
+                render_char_safe(console, screen_x, screen_y, '·', fg=prediction_color, bg=Colors.BLACK)
+
     def _render_player(self, console: tcod.console.Console, game, camera_offset: Position):
         """Render the player character."""
         player_screen_x = game.player.x - camera_offset.x

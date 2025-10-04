@@ -294,4 +294,11 @@ class GameStatePersistence:
                     for point in enemy_data["patrol_points"]
                 ]
 
+            # Restore movement queue
+            if "move_queue" in enemy_data:
+                enemy.move_queue = [
+                    Position(point["x"], point["y"])
+                    for point in enemy_data["move_queue"]
+                ]
+
             self.game_engine.enemy_manager.enemies.append(enemy)
