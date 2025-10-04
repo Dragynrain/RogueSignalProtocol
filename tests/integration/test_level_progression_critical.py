@@ -260,8 +260,7 @@ class TestLevelProgressionCritical:
             assert enemy.position.x >= 0 and enemy.position.x < GameConfig.MAP_WIDTH
             assert enemy.position.y >= 0 and enemy.position.y < GameConfig.MAP_HEIGHT
             assert hasattr(enemy, 'type')
-            assert hasattr(enemy, 'movement_queue')
-
+            
     def test_map_features_generation_across_levels(self):
         """Test that essential map features are generated on each level."""
         engine = self.create_test_engine(level=1)

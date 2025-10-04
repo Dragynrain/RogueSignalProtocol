@@ -33,7 +33,6 @@ class TestMenuBackground:
         assert self.menu_background.context is self.mock_context
         assert self.menu_background.settings is self.mock_settings
         assert self.menu_background.enabled is True
-        assert self.menu_background.error_count == 0
         assert self.menu_background.background_texture is None
     
     def test_should_load_background_graphics_mode(self):
@@ -62,51 +61,39 @@ class TestMenuBackground:
     
     def test_error_handling_file_not_found(self):
         """Background handles file not found errors."""
-        result = self.menu_background._handle_background_error(
-            'file_not_found', 
-            'test_image.png', 
+        self.menu_background._handle_background_error(
+            'test_image.png not found',
             FileNotFoundError("File not found")
         )
-        
-        assert self.menu_background.error_count == 1
-        # Should continue trying for file errors
-        assert self.menu_background.enabled is True
-    
+
+        # Simplified error handling just disables
+        assert self.menu_background.enabled is False
+
     def test_error_handling_sdl_unavailable(self):
         """Background handles SDL unavailable errors."""
-        result = self.menu_background._handle_background_error(
-            'sdl_unavailable', 
-            'SDL renderer not available', 
+        self.menu_background._handle_background_error(
+            'SDL renderer not available',
             RuntimeError("SDL error")
         )
-        
-        assert self.menu_background.error_count == 1
-        # Should disable for session-level issues
+
+        # Should disable for errors
         assert self.menu_background.enabled is False
-    
+
     def test_error_handling_excessive_errors(self):
-        """Background disables after too many errors."""
-        # Trigger many errors
-        for i in range(15):
-            self.menu_background._handle_background_error(
-                'texture_failed', 
-                f'Error {i}', 
-                Exception(f"Error {i}")
-            )
-        
-        assert self.menu_background.error_count == 15
+        """Background disables on any error."""
+        # Simplified: any error disables
+        self.menu_background._handle_background_error('Error', Exception("Error"))
+
         assert self.menu_background.enabled is False
-    
+
     def test_reset_background_system(self):
         """Background system can be reset after errors."""
-        # Cause errors
-        self.menu_background.error_count = 10
+        # Disable system
         self.menu_background.enabled = False
-        
+
         # Reset
         self.menu_background.reset_background_system()
-        
-        assert self.menu_background.error_count == 0
+
         assert self.menu_background.enabled is True
 
 
