@@ -250,22 +250,6 @@ def clamp(value: float, min_val: float, max_val: float) -> float:
     """Clamp a value between min and max bounds."""
     return max(min_val, min(value, max_val))
 
-def safe_divide(numerator: float, denominator: float, default: float = 0.0) -> float:
-    """Safely divide two numbers, returning default if denominator is zero."""
-    return numerator / denominator if denominator != 0 else default
-
-def validate_coordinates(x: int, y: int, width: int, height: int) -> bool:
-    """Validate that coordinates are within bounds."""
-    return 0 <= x < width and 0 <= y < height
-
-def calculate_manhattan_distance(pos1: Position, pos2: Position) -> int:
-    """Calculate Manhattan distance between two positions."""
-    return abs(pos1.x - pos2.x) + abs(pos1.y - pos2.y)
-
-def get_adjacent_positions(pos: Position, width: int, height: int) -> List[Position]:
-    """Get all valid adjacent positions around a given position."""
-    return [Position(pos.x + dx, pos.y + dy) for dx in [-1, 0, 1] for dy in [-1, 0, 1]
-            if (dx != 0 or dy != 0) and validate_coordinates(pos.x + dx, pos.y + dy, width, height)]
 
 def format_position_key(pos: Position) -> str:
     """Format position as string key for dictionaries."""
@@ -286,11 +270,6 @@ def parse_coordinate_string(coord_str: str) -> Optional[Position]:
         return Position(int(parts[0].strip()), int(parts[1].strip())) if len(parts) == 2 else None
     except (ValueError, AttributeError):
         return None
-
-def validate_position_bounds(position: Position, width: int, height: int) -> bool:
-    """Validate that a position is within the given bounds."""
-    return position.is_valid(width, height)
-
 
 def ensure_color_tuple(color) -> Tuple[int, int, int]:
     """Ensure color is a valid RGB tuple."""
