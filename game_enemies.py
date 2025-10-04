@@ -81,7 +81,7 @@ class EnemyManager:
         # Advance if already at nearest point
         enemy.patrol_index = (nearest_index + 1) % len(enemy.patrol_points) \
                            if min_distance <= GameConfig.ADJACENT_VISIBILITY_THRESHOLD else nearest_index
-        enemy.patrol_stuck_counter = 0
+        # patrol_stuck_counter removed in simplified movement system
     
     def _generate_patrol_route(self, start: Position) -> List[Position]:
         """Generate simple geometric patrol routes with 2-4 points."""

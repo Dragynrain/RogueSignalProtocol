@@ -280,7 +280,7 @@ class GameStatePersistence:
             enemy.disabled_turns = enemy_data["disabled_turns"]
             enemy.alert_timer = enemy_data["alert_timer"]
             enemy.patrol_index = enemy_data["patrol_index"]
-            enemy.patrol_stuck_counter = enemy_data.get("patrol_stuck_counter", 0)
+            # patrol_stuck_counter removed in simplified movement system
             enemy.movement_queue = [Position(pos["x"], pos["y"]) for pos in enemy_data.get("movement_queue", [])]
             enemy.last_target = Position(enemy_data["last_target"]["x"], enemy_data["last_target"]["y"]) if enemy_data.get("last_target") else None
 

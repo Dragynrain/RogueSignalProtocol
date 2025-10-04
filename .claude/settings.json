@@ -50,7 +50,6 @@
     "defaultMode": "acceptEdits",
     "additionalDirectories": [
       "./.claude/",
-      "./artifacts/",
       "./dist/"
     ]
   }

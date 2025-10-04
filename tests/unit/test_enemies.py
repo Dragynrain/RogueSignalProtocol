@@ -389,9 +389,9 @@ class TestEnemyMovement:
             
             # Initially empty movement queue should trigger regeneration
             assert len(enemy.movement_queue) == 0
-            
-            should_regen = enemy._should_regenerate_queue(mock_map, player, mock_game)
-            
+
+            should_regen = enemy._needs_queue_regeneration(player, mock_map)
+
             # Should need to regenerate when queue is empty
             assert should_regen is True
 
@@ -519,7 +519,18 @@ class TestEnemyAIBehavior:
             # Set movement cooldown
             enemy.move_cooldown = 3
             assert enemy.move_cooldown == 3
-            
-            # Reset cooldown
-            enemy._reset_movement_cooldown()
-            assert enemy.move_cooldown == 0
+
+            # Cooldown decrements when trying to move
+            mock_map = Mock()
+            mock_map.is_valid_position = Mock(return_value=True)
+            mock_player = Mock()
+            mock_player.x = 10
+            mock_player.y = 10
+            mock_game = Mock()
+            mock_game.enemies = [enemy]
+            mock_game.player = mock_player
+
+            # First call should decrement cooldown but not move
+            result = enemy.move(mock_map, mock_player, mock_game)
+            assert enemy.move_cooldown == 2
+            assert result is False  # Did not move
