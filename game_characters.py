@@ -350,9 +350,18 @@ class Enemy:
         self.position = next_position
 
         # Replenish queue: add one new move to back to maintain 3 moves
-        # (unless adjacent to target or queue recalc needed)
+        # Stop adding if adjacent to PLAYER (ready to attack), but keep moving toward patrol points
         current_target = self._get_current_target(player, game_map)
-        if current_target and not self.position.is_adjacent_to(current_target):
+        should_add_move = False
+
+        if current_target:
+            # For hostile enemies targeting player, stop when adjacent
+            if self.state == EnemyState.HOSTILE and self.position.is_adjacent_to(player.position):
+                should_add_move = False
+            else:
+                should_add_move = True
+
+        if should_add_move:
             self._add_next_move_to_queue(player, game_map, game_engine)
 
         # Handle patrol point advancement (only when unaware or alert, not hostile)
@@ -448,9 +457,8 @@ class Enemy:
 
                 if len(path) > 1:
                     next_pos = Position(path[1][0], path[1][1])
-                    # Don't add if would move past/through target
-                    if not next_pos.is_adjacent_to(target) or target == game_engine.player.position:
-                        self.move_queue.append(next_pos)
+                    # Add the move (we already checked adjacency in move() method)
+                    self.move_queue.append(next_pos)
             except Exception as e:
                 logging.warning(f"Failed to add move to queue for {self.type_data.name}: {e}")
 
@@ -566,18 +574,21 @@ class Enemy:
         return None
 
     def _get_current_target(self, player, game_map):
-        """Get the current target position for hostile enemies."""
-        if self.state != EnemyState.HOSTILE:
-            return None
+        """Get the current target position based on enemy state and movement type."""
+        # HOSTILE enemies target player
+        if self.state == EnemyState.HOSTILE:
+            if self.can_see_player(player, game_map):
+                self.last_seen_player = player.position
+                return player.position
+            # Target last known position
+            return self.last_seen_player
 
-        # Only HOSTILE enemies pathfind toward player (ALERT is just a 1-turn warning)
-        # If we can see player, target their current position
-        if self.can_see_player(player, game_map):
-            self.last_seen_player = player.position
-            return player.position
+        # PATROL enemies target current patrol point
+        if self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
+            return self.patrol_points[self.patrol_index]
 
-        # Otherwise target last known position
-        return self.last_seen_player
+        # RANDOM enemies have no fixed target
+        return None
 
     def _is_move_valid(self, position, game_map, player, game_engine) -> bool:
         """Check if a position is valid for movement."""
