@@ -283,7 +283,6 @@ class SaveGameManager:
                 "id": e.id, "type": e.type, "x": e.position.x, "y": e.position.y, "cpu": e.cpu,
                 "state": e.state.value, "move_cooldown": e.move_cooldown, "disabled_turns": e.disabled_turns,
                 "alert_timer": e.alert_timer, "patrol_index": e.patrol_index,
-                "movement_queue": [{"x": p.x, "y": p.y} for p in getattr(e, 'movement_queue', [])],
                 "last_target": {"x": e.last_target.x, "y": e.last_target.y} if getattr(e, 'last_target', None) else None,
                 "last_seen_player": {"x": e.last_seen_player.x, "y": e.last_seen_player.y} if getattr(e, 'last_seen_player', None) else None
             }

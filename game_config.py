@@ -298,7 +298,6 @@ class GameBalance:
     HEAT_REDUCTION_INSTANT = 40
     ADJACENT_DISTANCE_THRESHOLD = 1.5
     PATROL_STUCK_THRESHOLD = 3
-    MAX_MOVEMENT_QUEUE_SIZE = 3
     PATHFINDING_TIMEOUT_ATTEMPTS = 100
     ENHANCED_VISION_BONUS = 2
     SHADOW_VISION_REDUCTION_FACTOR = 3
@@ -322,7 +321,6 @@ class GameBalance:
         cls.HEAT_REDUCTION_INSTANT = GameConfig.get('balance.heat_reduction_instant', 40)
         cls.ADJACENT_DISTANCE_THRESHOLD = GameConfig.get('balance.adjacent_distance_threshold', 1.5)
         cls.PATROL_STUCK_THRESHOLD = GameConfig.get('balance.patrol_stuck_threshold', 3)
-        cls.MAX_MOVEMENT_QUEUE_SIZE = GameConfig.get('balance.max_movement_queue_size', 3)
         cls.PATHFINDING_TIMEOUT_ATTEMPTS = GameConfig.get('balance.pathfinding_timeout_attempts', 100)
         cls.ENHANCED_VISION_BONUS = GameConfig.get('balance.enhanced_vision_bonus', 2)
         cls.SHADOW_VISION_REDUCTION_FACTOR = GameConfig.get('balance.shadow_vision_reduction_factor', 3)

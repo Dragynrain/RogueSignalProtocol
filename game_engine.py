@@ -392,21 +392,33 @@ class GameEngine:
         """
         Get predicted next positions for an enemy.
         Simply returns the first 'steps' positions from their movement queue.
-        The queue is maintained by the enemy's movement system.
+        Calculate predicted moves on-demand instead of using a queue.
         """
-        if enemy.disabled_turns > 0:
+        if enemy.disabled_turns > 0 or enemy.can_attack_player(self.player):
             return []
 
-        # If enemy is adjacent to player and can attack, show no movement (will attack instead)
-        if enemy.can_attack_player(self.player):
-            return []
+        # Calculate predicted path by simulating moves
+        predicted = []
+        current_pos = enemy.position
 
-        # Ensure enemy has a movement queue
-        if not enemy.movement_queue:
-            enemy._generate_movement_queue(self.game_map, self.player, self)
+        for _ in range(steps):
+            # Temporarily set position to predicted position for calculation
+            original_pos = enemy.position
+            enemy.position = current_pos
 
-        # Return up to 'steps' positions from the queue
-        return enemy.movement_queue[:steps]
+            # Calculate next move from this position
+            next_pos = enemy._calculate_next_move(self.player, self.game_map, self)
+
+            # Restore original position
+            enemy.position = original_pos
+
+            if not next_pos:
+                break
+
+            predicted.append(next_pos)
+            current_pos = next_pos
+
+        return predicted
 
     def next_level(self):
         """Progress to the next level - delegates to LevelCoordinator."""
