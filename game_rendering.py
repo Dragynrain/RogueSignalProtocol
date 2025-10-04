@@ -281,33 +281,214 @@ class UIRenderer:
     
     
     def render_inventory_screen(self, console: tcod.console.Console, game):
-        """Render the inventory screen."""
+        """Render the inventory screen with scrolling support."""
         # Clear only the main game area, preserve UI elements
         self._clear_game_area(console)
-        
+
         # Title (centered in game area only)
         self._render_centered_title(console, "INVENTORY SYSTEM", 2)
-        
+
         # Render preserved UI elements (skip bottom panel to make room for inventory controls)
         self.render_top_status_bar(console, game)
         self.render_system_log(console, game)
-        
-        y = 5
-        
-        # Equipped exploits section
-        y = self._render_equipped_exploits(console, game, y)
-        y += 2
-        
-        # Code hackes section
-        y = self._render_code_hacks(console, game, y)
-        y += 2
-        
-        # Unequipped exploits section
-        y = self._render_unequipped_exploits(console, game, y)
-        
+
+        # Calculate available space for content
+        content_start_y = 5
+        controls_y = GameConfig.SCREEN_HEIGHT - 6
+        max_content_height = controls_y - content_start_y - 1  # -1 for spacing
+
+        # Build all inventory lines first
+        inventory_lines = self._build_inventory_lines(game)
+        total_lines = len(inventory_lines)
+
+        # Adjust scroll offset to keep selection visible
+        self._adjust_scroll_for_selection(game, total_lines, max_content_height)
+
+        # Render visible portion
+        y = content_start_y
+        scroll_offset = game.inventory_scroll_offset
+        visible_end = min(scroll_offset + max_content_height, total_lines)
+
+        for i in range(scroll_offset, visible_end):
+            line_data = inventory_lines[i]
+            render_char_safe(console, line_data['x'], y, line_data['text'], fg=line_data['color'])
+            y += 1
+
+        # Show scroll indicators if needed
+        if scroll_offset > 0:
+            render_char_safe(console, GameConfig.GAME_AREA_WIDTH() - 8, content_start_y, "^ MORE ^", fg=Colors.YELLOW)
+        if visible_end < total_lines:
+            render_char_safe(console, GameConfig.GAME_AREA_WIDTH() - 8, controls_y - 2, "v MORE v", fg=Colors.YELLOW)
+
         # Controls
         self._render_inventory_controls(console)
-    
+
+    def _build_inventory_lines(self, game):
+        """Build all inventory display lines with formatting."""
+        lines = []
+
+        # Equipped exploits section
+        lines.append({'x': 2, 'text': "EQUIPPED EXPLOITS:", 'color': Colors.CYAN, 'selectable': False})
+
+        for i, exploit_key in enumerate(game.player.inventory_manager.equipped_exploits):
+            if i == game.inventory_selection:
+                color = Colors.YELLOW
+                prefix = ">"
+            elif exploit_key in GameData.EXPLOITS:
+                color = Colors.GREEN
+                prefix = " "
+            else:
+                color = Colors.RED
+                prefix = " "
+
+            if exploit_key in GameData.EXPLOITS:
+                exploit = GameData.EXPLOITS[exploit_key]
+                text = f"{prefix} {i+1}. {exploit.name}"
+            else:
+                text = f"{prefix} {i+1}. INVALID: {exploit_key}"
+
+            lines.append({'x': 4, 'text': text, 'color': color, 'selectable': True})
+
+        equipped_count = len(game.player.inventory_manager.equipped_exploits)
+        max_exploits = game.player.inventory_manager.max_equipped_exploits
+        if equipped_count < max_exploits:
+            lines.append({'x': 4, 'text': f"[{equipped_count}/{max_exploits} slots used]", 'color': Colors.YELLOW, 'selectable': False})
+
+        lines.append({'x': 2, 'text': "", 'color': Colors.WHITE, 'selectable': False})  # Spacer
+
+        # Code hacks section
+        code_hacks = game.player.inventory_manager.get_items_by_type("code_hack")
+        lines.append({'x': 2, 'text': f"CODES ({len(code_hacks)}):", 'color': Colors.CYAN, 'selectable': False})
+
+        if not code_hacks:
+            lines.append({'x': 4, 'text': "No codes collected", 'color': Colors.WHITE, 'selectable': False})
+        else:
+            display_items = game.player.inventory_manager.get_display_items()
+
+            for i, patch in enumerate(code_hacks):
+                display_index = display_items.index(patch)
+                adjusted_selection_index = display_index + equipped_count
+
+                if adjusted_selection_index == game.inventory_selection:
+                    color = Colors.YELLOW
+                    prefix = ">"
+                else:
+                    color = Colors.WHITE
+                    prefix = " "
+
+                description = patch.description if patch.discovered else "Unknown effect"
+                quantity_text = f" ({patch.quantity})" if patch.quantity > 1 else ""
+                patch_text = f"{prefix} {patch.name}{quantity_text} - {description}"
+
+                max_width = GameConfig.GAME_AREA_WIDTH() - 6
+                if len(patch_text) > max_width:
+                    patch_text = patch_text[:max_width-3] + "..."
+
+                lines.append({'x': 4, 'text': patch_text, 'color': color, 'selectable': True})
+
+        lines.append({'x': 2, 'text': "", 'color': Colors.WHITE, 'selectable': False})  # Spacer
+
+        # Unequipped exploits section
+        exploit_items = game.player.inventory_manager.get_items_by_type("exploit")
+        lines.append({'x': 2, 'text': f"UNEQUIPPED EXPLOITS ({len(exploit_items)}):", 'color': Colors.CYAN, 'selectable': False})
+
+        if not exploit_items:
+            lines.append({'x': 4, 'text': "No unequipped exploits", 'color': Colors.WHITE, 'selectable': False})
+        else:
+            display_items = game.player.inventory_manager.get_display_items()
+
+            for i, exploit_item in enumerate(exploit_items):
+                try:
+                    display_index = display_items.index(exploit_item)
+                    adjusted_selection_index = display_index + equipped_count
+                except ValueError:
+                    adjusted_selection_index = -1
+
+                if adjusted_selection_index == game.inventory_selection:
+                    color = Colors.YELLOW
+                    prefix = ">"
+                else:
+                    color = Colors.WHITE
+                    prefix = " "
+
+                if exploit_item.exploit_key in GameData.EXPLOITS:
+                    exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
+                    name_text = f"{prefix} {exploit_item.name}"
+                    lines.append({'x': 4, 'text': name_text, 'color': color, 'selectable': True})
+
+                    stats_text = f"    RAM:{exploit_def.ram} Heat:{exploit_def.heat}"
+                    if exploit_def.damage > 0:
+                        stats_text += f" Damage:{exploit_def.damage}"
+                    if exploit_def.range > 0:
+                        stats_text += f" Range:{exploit_def.range}"
+                    lines.append({'x': 4, 'text': stats_text, 'color': Colors.LIGHT_GRAY, 'selectable': False})
+                else:
+                    text = f"{prefix} {exploit_item.name} [Unknown]"
+                    lines.append({'x': 4, 'text': text, 'color': color, 'selectable': True})
+
+        return lines
+
+    def _adjust_scroll_for_selection(self, game, total_lines: int, max_visible: int):
+        """Adjust scroll offset to keep selected item visible."""
+        if total_lines <= max_visible:
+            game.inventory_scroll_offset = 0
+            return
+
+        # Find which line the selection is on
+        selection_line = self._find_selection_line(game)
+
+        if selection_line < game.inventory_scroll_offset:
+            # Selection is above viewport, scroll up
+            game.inventory_scroll_offset = selection_line
+        elif selection_line >= game.inventory_scroll_offset + max_visible:
+            # Selection is below viewport, scroll down
+            game.inventory_scroll_offset = selection_line - max_visible + 1
+
+        # Clamp scroll offset
+        max_scroll = max(0, total_lines - max_visible)
+        game.inventory_scroll_offset = max(0, min(game.inventory_scroll_offset, max_scroll))
+
+    def _find_selection_line(self, game) -> int:
+        """Find which line number the current selection is on."""
+        equipped_count = len(game.player.inventory_manager.equipped_exploits)
+        display_items = game.player.inventory_manager.get_display_items()
+
+        # Count lines before selection
+        line_count = 1  # "EQUIPPED EXPLOITS:" header
+
+        if game.inventory_selection < equipped_count:
+            # Selection is in equipped exploits
+            return line_count + game.inventory_selection
+
+        line_count += equipped_count
+        if equipped_count < game.player.inventory_manager.max_equipped_exploits:
+            line_count += 1  # Slots used line
+        line_count += 2  # Spacer + "CODES" header
+
+        # Check if selection is in codes or unequipped exploits
+        code_hacks = game.player.inventory_manager.get_items_by_type("code_hack")
+        if game.inventory_selection < equipped_count + len(code_hacks):
+            # Selection is in code hacks
+            code_index = game.inventory_selection - equipped_count
+            return line_count + code_index
+
+        # Selection is in unequipped exploits
+        line_count += max(1, len(code_hacks))  # Code hacks or "No codes" line
+        line_count += 2  # Spacer + "UNEQUIPPED EXPLOITS" header
+
+        exploit_items = game.player.inventory_manager.get_items_by_type("exploit")
+        exploit_index = game.inventory_selection - equipped_count - len(code_hacks)
+
+        # Account for 2-line exploit display (name + stats)
+        for i in range(min(exploit_index, len(exploit_items))):
+            exploit_item = exploit_items[i]
+            if exploit_item.exploit_key in GameData.EXPLOITS:
+                line_count += 2  # Name + stats
+            else:
+                line_count += 1  # Just name
+
+        return line_count
+
     def _render_equipped_exploits(self, console: tcod.console.Console, game, y: int) -> int:
         """Render equipped exploits section."""
         render_char_safe(console, 2, y, "EQUIPPED EXPLOITS:", fg=Colors.CYAN)

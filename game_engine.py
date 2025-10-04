@@ -103,6 +103,7 @@ class GameEngine:
         self.lore_viewer_selection = 0
         self.lore_viewer_mode = "list"
         self.inventory_selection = 0
+        self.inventory_scroll_offset = 0
 
         # Targeting system
         self.targeting_mode = False
