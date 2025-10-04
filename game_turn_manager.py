@@ -252,83 +252,81 @@ class GameTurnManager:
     def _update_enemy_awareness(self):
         """PHASE 1: Update enemy awareness states and handle communication."""
         for enemy in self.game_engine.enemies[:]:
-            old_state = enemy.state
+            can_see = enemy.can_see_player(self.game_engine.player, self.game_engine.game_map)
 
-            # Admin Avatar has perfect tracking - always knows player location
+            # Admin Avatar has perfect tracking
             if enemy.type == 'admin':
-                enemy.state = EnemyState.HOSTILE
-                enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
-                if old_state != EnemyState.HOSTILE:
+                if enemy.state != EnemyState.HOSTILE:
+                    enemy.state = EnemyState.HOSTILE
                     self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
-                # Admins don't increase trace level - trace level only summons admins, not the other way around
-            elif enemy.can_see_player(self.game_engine.player, self.game_engine.game_map):
-                self._handle_enemy_sees_player(enemy)
+                enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
             else:
-                self._handle_enemy_loses_player(enemy)
+                self._update_enemy_state(enemy, can_see)
 
-    def _handle_enemy_sees_player(self, enemy):
-        """Handle when enemy sees the player."""
-        if enemy.state == EnemyState.UNAWARE:
-            enemy.state = EnemyState.ALERT
-            enemy.alert_timer = 0  # Immediate transition to hostile next turn
-            enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)  # Set position when first spotted
-            self.game_engine.message_log.add_message(f"{enemy.type_data.name} investigating")
-            self.game_engine.sound_manager.play_sound("enemy_alert")
-            # Don't alert nearby enemies yet - wait until this enemy goes HOSTILE
-        elif enemy.state == EnemyState.ALERT:
-            # Update last seen position while still seeing player
-            enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
-            # Immediately transition to hostile when still seeing player
-            if enemy.alert_timer <= 0:
-                # Store patrol information for PATROL enemies before becoming hostile
-                if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
-                    enemy.original_patrol_index = enemy.patrol_index
-                enemy.state = EnemyState.HOSTILE
-                # Get level-specific trace increase from network config
-                network_configs = GameConfig.NETWORK_CONFIGS()
-                level_config = network_configs.get(self.game_engine.level, network_configs[1])
-                trace_increase = level_config.get('trace_alert_to_hostile', GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE)
-                old_trace = self.game_engine.player.trace_level
-                self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + trace_increase)
-                self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
-                self.game_engine.sound_manager.play_sound("enemy_hostile")
-                self._check_trace_threshold_warnings(old_trace, self.game_engine.player.trace_level)
-                # Alert nearby enemies when this enemy becomes hostile
+    def _update_enemy_state(self, enemy, can_see_player):
+        """Update enemy state based on player visibility."""
+        player_pos = Position(self.game_engine.player.x, self.game_engine.player.y)
+
+        if can_see_player:
+            # Enemy sees player - escalate state
+            if enemy.state == EnemyState.UNAWARE:
+                enemy.state = EnemyState.ALERT
+                enemy.alert_timer = 0
+                enemy.last_seen_player = player_pos
+                self.game_engine.message_log.add_message(f"{enemy.type_data.name} investigating")
+                self.game_engine.sound_manager.play_sound("enemy_alert")
+
+            elif enemy.state == EnemyState.ALERT:
+                enemy.last_seen_player = player_pos
+                if enemy.alert_timer <= 0:
+                    self._transition_to_hostile(enemy)
+
+            elif enemy.state == EnemyState.HOSTILE:
+                enemy.last_seen_player = player_pos
+                self._increase_trace(GameBalance.ENEMY_TRACE_CONTINUOUS_HOSTILE, 'trace_continuous_hostile')
                 self._alert_nearby_enemies(enemy)
-        elif enemy.state == EnemyState.HOSTILE:
-            enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
-            # Get level-specific trace increase from network config
-            network_configs = GameConfig.NETWORK_CONFIGS()
-            level_config = network_configs.get(self.game_engine.level, network_configs[1])
-            trace_increase = level_config.get('trace_continuous_hostile', GameBalance.ENEMY_TRACE_CONTINUOUS_HOSTILE)
-            old_trace = self.game_engine.player.trace_level
-            # Continue alerting nearby enemies every turn while this enemy can see the player
-            self._alert_nearby_enemies(enemy)
-            self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + trace_increase)
-            self._check_trace_threshold_warnings(old_trace, self.game_engine.player.trace_level)
-
-    def _handle_enemy_loses_player(self, enemy):
-        """Handle when enemy loses sight of player."""
-        if enemy.state == EnemyState.ALERT:
-            enemy.alert_timer -= 1
-            if enemy.alert_timer <= 0:
-                enemy.state = EnemyState.UNAWARE
-                # Restore patrol behavior for PATROL enemies
-                if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
-                    enemy.patrol_index = enemy.original_patrol_index
-                self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost interest")
-        elif enemy.state == EnemyState.HOSTILE:
-            if random.random() < 0.15:  # 15% chance per turn
-                if enemy.type == 'admin':
-                    enemy.state = EnemyState.ALERT
-                    enemy.alert_timer = 0
-                else:
+        else:
+            # Enemy lost sight - de-escalate state
+            if enemy.state == EnemyState.ALERT:
+                enemy.alert_timer -= 1
+                if enemy.alert_timer <= 0:
                     enemy.state = EnemyState.UNAWARE
-                    enemy.last_seen_player = None
-                    # Restore patrol behavior for PATROL enemies
-                    if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
-                        enemy.patrol_index = enemy.original_patrol_index
-                    self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost track")
+                    self._restore_patrol(enemy)
+                    self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost interest")
+
+            elif enemy.state == EnemyState.HOSTILE:
+                if random.random() < 0.15:
+                    if enemy.type == 'admin':
+                        enemy.state = EnemyState.ALERT
+                        enemy.alert_timer = 0
+                    else:
+                        enemy.state = EnemyState.UNAWARE
+                        enemy.last_seen_player = None
+                        self._restore_patrol(enemy)
+                        self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost track")
+
+    def _transition_to_hostile(self, enemy):
+        """Transition enemy to hostile state."""
+        self._restore_patrol(enemy)  # Store original patrol index
+        enemy.state = EnemyState.HOSTILE
+        self._increase_trace(GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE, 'trace_alert_to_hostile')
+        self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
+        self.game_engine.sound_manager.play_sound("enemy_hostile")
+        self._alert_nearby_enemies(enemy)
+
+    def _increase_trace(self, default_value, config_key):
+        """Increase player trace level."""
+        network_configs = GameConfig.NETWORK_CONFIGS()
+        level_config = network_configs.get(self.game_engine.level, network_configs[1])
+        trace_increase = level_config.get(config_key, default_value)
+        old_trace = self.game_engine.player.trace_level
+        self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + trace_increase)
+        self._check_trace_threshold_warnings(old_trace, self.game_engine.player.trace_level)
+
+    def _restore_patrol(self, enemy):
+        """Store/restore patrol index for patrol enemies."""
+        if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
+            enemy.original_patrol_index = enemy.patrol_index
 
     def _check_trace_threshold_warnings(self, old_trace: float, new_trace: float):
         """Check and play warning sounds for trace level threshold crossings."""
