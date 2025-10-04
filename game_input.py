@@ -173,14 +173,23 @@ class InputHandler:
         # Unhandled key - let other handlers process it
         return False
     
+    def _navigate_list(self, current_index, list_length, direction):
+        """Generic list navigation helper."""
+        if list_length > 0:
+            if direction == -1:
+                return max(0, current_index - 1)
+            else:
+                return min(list_length - 1, current_index + 1)
+        return current_index
+
     def _navigate_lore_viewer(self, direction: int):
         """Navigate lore viewer selection."""
         discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
-        if discovered_fragments:
-            if direction == -1:
-                self.game.lore_viewer_selection = max(0, self.game.lore_viewer_selection - 1)
-            else:
-                self.game.lore_viewer_selection = min(len(discovered_fragments) - 1, self.game.lore_viewer_selection + 1)
+        self.game.lore_viewer_selection = self._navigate_list(
+            self.game.lore_viewer_selection,
+            len(discovered_fragments),
+            direction
+        )
     
     def _handle_targeting_input(self, event) -> bool:
         """Handle input while in targeting mode."""
@@ -215,17 +224,15 @@ class InputHandler:
         elif event.sym == tcod.event.KeySym.SLASH and (event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)):
             self.game.show_help = True
         
-        # Exploit usage (1-5 keys)
-        elif event.sym == tcod.event.KeySym.N1:
-            self._use_exploit_slot(0)
-        elif event.sym == tcod.event.KeySym.N2:
-            self._use_exploit_slot(1)
-        elif event.sym == tcod.event.KeySym.N3:
-            self._use_exploit_slot(2)
-        elif event.sym == tcod.event.KeySym.N4:
-            self._use_exploit_slot(3)
-        elif event.sym == tcod.event.KeySym.N5:
-            self._use_exploit_slot(4)
+        # Exploit usage (1-5 keys) - check as loop
+        else:
+            exploit_keys = {
+                tcod.event.KeySym.N1: 0, tcod.event.KeySym.N2: 1,
+                tcod.event.KeySym.N3: 2, tcod.event.KeySym.N4: 3,
+                tcod.event.KeySym.N5: 4
+            }
+            if event.sym in exploit_keys:
+                self._use_exploit_slot(exploit_keys[event.sym])
         
         return True
     
