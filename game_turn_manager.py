@@ -70,11 +70,9 @@ class GameTurnManager:
 
     def _process_enemies_turn(self):
         """Process enemy turns - for backward compatibility."""
-        for enemy in self.game_engine.enemies:
-            if hasattr(enemy, 'move_cooldown'):
-                if enemy.move_cooldown > 0:
-                    enemy.move_cooldown -= 1
-            # Note: disabled_turns is decremented in the enemy's move() method to avoid double-decrementing
+        # Note: move_cooldown and disabled_turns are both decremented in the enemy's move() method
+        # to avoid double-decrementing. This method kept for backwards compatibility but does nothing.
+        pass
 
     def _process_environmental_effects(self):
         """Process environmental effects - for backward compatibility."""
