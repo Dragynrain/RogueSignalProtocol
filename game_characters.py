@@ -323,18 +323,23 @@ class Enemy:
         # Skip movement if disabled or on cooldown
         if self.disabled_turns > 0:
             self.disabled_turns -= 1
+            logging.debug(f"{self.type} skipping move - disabled_turns={self.disabled_turns}")
             return False
 
         if self.move_cooldown > 0 and self.type != 'admin':
             self.move_cooldown -= 1
+            logging.debug(f"{self.type} skipping move - move_cooldown={self.move_cooldown}")
             return False
 
         # Full refresh if state/target changed or queue empty
         if self._should_refresh_queue(player, game_map):
+            logging.debug(f"{self.type} refreshing queue - queue_len={len(self.move_queue)}")
             self._refresh_move_queue(player, game_map, game_engine)
+            logging.debug(f"{self.type} after refresh - queue_len={len(self.move_queue)}")
 
         # No moves available
         if not self.move_queue:
+            logging.debug(f"{self.type} no moves available in queue")
             return False
 
         # Pop next move from front of queue
