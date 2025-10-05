@@ -415,7 +415,7 @@ class Enemy:
         # For hostile/patrol enemies, calculate full path and take first 3 steps
         if self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
             path = self._calculate_path_to_target(self._queue_target, game_map, game_engine)
-            if path and len(path) > 1:
+            if path is not None and len(path) > 1:
                 # Take up to 3 steps (skip current position)
                 for i in range(1, min(len(path), 4)):
                     next_pos = Position(path[i][0], path[i][1])
@@ -479,7 +479,10 @@ class Enemy:
             pathfinder = tcod.path.Pathfinder(graph)
             pathfinder.add_root((self.position.x, self.position.y))
             path = pathfinder.path_to((target.x, target.y))
-            return path if len(path) > 1 else None
+            # path is a numpy array, check length
+            if len(path) > 1:
+                return path
+            return None
         except Exception as e:
             logging.warning(f"Pathfinding failed for {self.type_data.name}: {e}")
             return None
