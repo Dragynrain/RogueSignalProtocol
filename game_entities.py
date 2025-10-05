@@ -78,9 +78,9 @@ class ColorManager:
             'CYAN': (20, 255, 200),
             'MAGENTA': (255, 20, 255),
             'PLAYER': (50, 255, 50),
-            'ENEMY_UNAWARE': (255, 120, 20),
-            'ENEMY_ALERT': (255, 215, 0),
-            'ENEMY_HOSTILE': (220, 20, 60),
+            'ENEMY_UNAWARE': (255, 255, 0),   # Yellow - unaware
+            'ENEMY_ALERT': (255, 165, 0),      # Orange - alert
+            'ENEMY_HOSTILE': (255, 0, 0),      # Red - hostile
             'UI_BG': (10, 15, 25),
             'UI_TEXT': (20, 255, 200),
         }
