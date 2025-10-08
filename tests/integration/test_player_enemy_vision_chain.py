@@ -103,14 +103,21 @@ class TestPlayerEnemyVisionChain:
         self.scanner1.state = EnemyState.ALERT
         self.scanner1.last_seen_player = Position(12, 10)
 
-        # Calculate next move (on-demand)
-        next_move = self.scanner1._calculate_next_move(self.player, self.game_map, self.game_engine)
+        # Execute movement to test pathfinding
+        initial_pos = self.scanner1.position
+        self.scanner1.move_queue.clear()  # Force refresh
+        moved = self.scanner1.move(self.game_map, self.player, self.game_engine)
 
-        # Verify calculated move is valid (if one was calculated)
-        if next_move:
-            assert not self.game_map.is_wall(next_move), f"Move to {next_move} must not be a wall"
-            assert 0 <= next_move.x < self.game_map.width, "Move must be within map width"
-            assert 0 <= next_move.y < self.game_map.height, "Move must be within map height"
+        # Verify movement behavior is valid
+        if moved:
+            assert not self.game_map.is_wall(self.scanner1.position), f"Enemy moved to wall at {self.scanner1.position}"
+            assert 0 <= self.scanner1.position.x < self.game_map.width, "Enemy must stay within map width"
+            assert 0 <= self.scanner1.position.y < self.game_map.height, "Enemy must stay within map height"
+
+        # Verify movement queue has valid planned moves
+        if self.scanner1.move_queue:
+            next_planned = self.scanner1.move_queue[0]
+            assert not self.game_map.is_wall(next_planned), f"Planned move to {next_planned} must not be a wall"
     
     def test_complete_trace_level_workflow(self):
         """Test the complete workflow from player movement to enemy response."""

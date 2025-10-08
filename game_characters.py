@@ -187,25 +187,24 @@ class Enemy:
     def __init__(self, position: Position, enemy_type: str):
         self.id = Enemy._next_id
         Enemy._next_id += 1
-        
+
         self.position = position
         self.type = enemy_type
-        
+
         # Load type data - imported here to avoid circular imports
-        # Delayed import to avoid circular dependency
         from game_data import GameData
         self.type_data = GameData.ENEMY_TYPES[enemy_type]
-        
+
         # Stats
         self.cpu = self.type_data.cpu
         self.max_cpu = self.type_data.cpu
-        
-        # AI state
-        self.state = EnemyState.UNAWARE
+
+        # AI state - admin starts hostile since it can always see player
+        self.state = EnemyState.HOSTILE if enemy_type == 'admin' else EnemyState.UNAWARE
         self.alert_timer = 0
         self.disabled_turns = 0
         self.move_cooldown = 0
-        
+
         # Movement data
         self.patrol_points: List[Position] = []
         self.patrol_index = 0
@@ -318,89 +317,80 @@ class Enemy:
         self.cpu -= damage
         return self.cpu <= 0
     
-    def move(self, game_map, player: Player, game_engine=None) -> bool:
+    def move(self, game_map, player: Player, game_engine) -> bool:
         """Execute next move from queue, maintaining rolling 3-move queue."""
+        # Check patrol point advancement first
+        if self.type_data.movement == EnemyMovement.PATROL and self.patrol_points and self.state != EnemyState.HOSTILE:
+            current_patrol_target = self.patrol_points[self.patrol_index]
+            if self.position.distance_to(current_patrol_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
+                self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
+                self.move_queue.clear()
+
         # Skip movement if disabled or on cooldown
         if self.disabled_turns > 0:
             self.disabled_turns -= 1
-            logging.debug(f"{self.type} skipping move - disabled_turns={self.disabled_turns}")
             return False
 
         if self.move_cooldown > 0 and self.type != 'admin':
             self.move_cooldown -= 1
-            logging.debug(f"{self.type} skipping move - move_cooldown={self.move_cooldown}")
             return False
 
-        # Full refresh if state/target changed or queue empty
+        # Refresh queue if needed
         if self._should_refresh_queue(player, game_map):
-            logging.debug(f"{self.type} refreshing queue - queue_len={len(self.move_queue)}")
             self._refresh_move_queue(player, game_map, game_engine)
-            logging.debug(f"{self.type} after refresh - queue_len={len(self.move_queue)}")
 
         # No moves available
         if not self.move_queue:
-            logging.debug(f"{self.type} no moves available in queue")
             return False
 
-        # Pop next move from front of queue
+        # Pop and validate next move
         next_position = self.move_queue.pop(0)
-
-        # Validate move before executing
         if not self._is_move_valid(next_position, game_map, player, game_engine):
-            # Path blocked - recalculate entire queue
             self.move_queue.clear()
             return False
 
-        # Execute the move
+        # Execute move
         self.position = next_position
 
-        # Replenish queue: add one new move to back to maintain 3 moves
-        # Stop adding if adjacent to PLAYER (ready to attack), but keep moving toward patrol points
+        # Replenish queue
         current_target = self._get_current_target(player, game_map)
         should_add_move = False
 
-        if current_target:
-            # For hostile enemies targeting player, stop when adjacent
-            if self.state == EnemyState.HOSTILE and self.position.is_adjacent_to(player.position):
-                should_add_move = False
-            else:
-                should_add_move = True
+        if self.type == 'admin' or self.state == EnemyState.HOSTILE:
+            should_add_move = current_target and not self.position.is_adjacent_to(player.position)
+        elif self.type_data.movement == EnemyMovement.RANDOM:
+            should_add_move = True
+        elif current_target:
+            should_add_move = True
 
         if should_add_move:
             self._add_next_move_to_queue(player, game_map, game_engine)
 
-        # Handle patrol point advancement (only when unaware or alert, not hostile)
+        # Handle patrol point advancement (non-hostile only)
         if self.type_data.movement == EnemyMovement.PATROL and self.patrol_points and self.state != EnemyState.HOSTILE:
             current_target = self.patrol_points[self.patrol_index]
             if self.position.distance_to(current_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
                 self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
-                # Patrol point changed, refresh queue for new target
                 self.move_queue.clear()
 
         # Reset cooldown
         if self.type_data.movement == EnemyMovement.STATIC:
             self.move_cooldown = 999
-        elif self.type == 'admin':
-            self.move_cooldown = 0
         else:
             self.move_cooldown = 0
 
         return True
 
     def _should_refresh_queue(self, player, game_map) -> bool:
-        """Check if movement queue needs FULL refresh (recalculate all 3 moves)."""
-        # Empty queue - need initial fill
+        """Check if movement queue needs refresh (recalculate all moves)."""
         if not self.move_queue:
             return True
 
-        # State changed - different behavior needed (e.g., UNAWARE -> HOSTILE)
         if self._queue_state != self.state:
             return True
 
-        # Target changed significantly - need new path
         current_target = self._get_current_target(player, game_map)
         if current_target != self._queue_target:
-            # Target moved - recalculate
             return True
 
         return False
@@ -417,8 +407,8 @@ class Enemy:
         if self.type_data.movement == EnemyMovement.STATIC:
             return
 
-        # For hostile/patrol enemies, calculate full path and take first 3 steps
-        if self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
+        # Admin, hostile enemies, and patrol enemies use pathfinding
+        if self.type == 'admin' or self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
             path = self._calculate_path_to_target(self._queue_target, game_map, game_engine)
             if path is not None and len(path) > 1:
                 # Take up to 3 steps (skip current position)
@@ -428,11 +418,14 @@ class Enemy:
                     # Stop if adjacent to target
                     if self._queue_target and next_pos.is_adjacent_to(self._queue_target):
                         break
-        # Random movement - just add one random move
+        # Random movement - add up to 3 random moves
         elif self.type_data.movement == EnemyMovement.RANDOM:
-            next_move = self._calculate_random_move(game_map, player, game_engine)
-            if next_move:
-                self.move_queue.append(next_move)
+            for i in range(3):
+                next_move = self._calculate_random_move(game_map, player, game_engine)
+                if next_move:
+                    self.move_queue.append(next_move)
+                else:
+                    break
 
     def invalidate_move_queue(self):
         """Mark queue as invalid (called externally when state changes)."""
@@ -444,6 +437,13 @@ class Enemy:
         if len(self.move_queue) >= 3:
             return
 
+        # Random movement doesn't need a target
+        if self.type_data.movement == EnemyMovement.RANDOM and self.type != 'admin':
+            next_move = self._calculate_random_move(game_map, player, game_engine)
+            if next_move:
+                self.move_queue.append(next_move)
+            return
+
         # Calculate from last position in queue
         start_pos = self.move_queue[-1] if self.move_queue else self.position
         target = self._get_current_target(player, game_map)
@@ -451,9 +451,13 @@ class Enemy:
         if not target:
             return
 
-        # For pathfinding enemies, calculate next step along path
-        if self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
+        # For pathfinding enemies (admin, hostile, or patrol), calculate next step along path
+        if self.type == 'admin' or self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
             try:
+                # Check if path would be reasonable before adding to queue
+                direct_distance = start_pos.distance_to(target)
+                max_reasonable_path_length = max(6, int(direct_distance * 3))
+
                 cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
                 graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
                 pathfinder = tcod.path.Pathfinder(graph)
@@ -461,83 +465,47 @@ class Enemy:
                 path = pathfinder.path_to((target.x, target.y))
 
                 if len(path) > 1:
-                    next_pos = Position(path[1][0], path[1][1])
-                    # Add the move (we already checked adjacency in move() method)
-                    self.move_queue.append(next_pos)
+                    # Only add move if path length is reasonable
+                    if len(path) <= max_reasonable_path_length:
+                        next_pos = Position(path[1][0], path[1][1])
+                        self.move_queue.append(next_pos)
+                    else:
+                        # Path too long - skip this move
+                        pass
             except Exception as e:
                 logging.warning(f"Failed to add move to queue for {self.type_data.name}: {e}")
 
-        # Random movement - add one random adjacent move
-        elif self.type_data.movement == EnemyMovement.RANDOM:
-            next_move = self._calculate_random_move(game_map, player, game_engine)
-            if next_move:
-                self.move_queue.append(next_move)
-
     def _calculate_path_to_target(self, target: Optional[Position], game_map, game_engine):
-        """Calculate full path to target using A* pathfinding."""
+        """Calculate full path to target using A* pathfinding with reasonable distance limits."""
         if not target:
             return None
 
         try:
+            # Calculate direct distance to target
+            direct_distance = self.position.distance_to(target)
+
+            # Set maximum reasonable path length - if path is more than 3x direct distance,
+            # enemy should stop rather than take long detours
+            max_reasonable_path_length = max(6, int(direct_distance * 3))
+
             cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
             pathfinder.add_root((self.position.x, self.position.y))
             path = pathfinder.path_to((target.x, target.y))
-            # path is a numpy array, check length
+
+            # Check if path exists and is reasonable
             if len(path) > 1:
+                # If path is too long compared to direct distance, enemy should wait instead
+                if len(path) > max_reasonable_path_length:
+                    return None
                 return path
             return None
         except Exception as e:
             logging.warning(f"Pathfinding failed for {self.type_data.name}: {e}")
             return None
 
-    def _calculate_next_move(self, player, game_map, game_engine) -> Optional[Position]:
-        """Calculate the next move based on current state and movement type."""
-        if self.type_data.movement == EnemyMovement.STATIC:
-            return None
 
-        # Hostile enemies pathfind toward player
-        if self.state == EnemyState.HOSTILE:
-            return self._calculate_hostile_move(player, game_map, game_engine)
-
-        # Non-hostile enemies use their base movement type
-        if self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
-            return self._calculate_patrol_move(game_map, game_engine)
-        elif self.type_data.movement == EnemyMovement.RANDOM:
-            return self._calculate_random_move(game_map, game_engine.player, game_engine)
-
-        return None
-
-    def _calculate_hostile_move(self, player, game_map, game_engine) -> Optional[Position]:
-        """Calculate next move toward player using pathfinding."""
-        target = self._get_current_target(player, game_map)
-
-        if not target:
-            # Hostile but no target - fall back to patrol or random
-            if self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
-                return self._calculate_patrol_move(game_map, game_engine)
-            return self._calculate_random_move(game_map, player, game_engine)
-
-        # Stop if already adjacent
-        if self.position.is_adjacent_to(target):
-            return None
-
-        # Use pathfinding to find next step
-        try:
-            cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
-            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-            pathfinder = tcod.path.Pathfinder(graph)
-            pathfinder.add_root((self.position.x, self.position.y))
-            path = pathfinder.path_to((target.x, target.y))
-
-            if len(path) > 1:
-                return Position(path[1][0], path[1][1])
-        except Exception as e:
-            logging.warning(f"Pathfinding failed for {self.type_data.name}: {e}")
-
-        # Pathfinding failed - try random
-        return self._calculate_random_move(game_map, player, game_engine)
 
     def _calculate_patrol_move(self, game_map, game_engine) -> Optional[Position]:
         """Calculate next move toward current patrol point."""
@@ -566,8 +534,7 @@ class Enemy:
         except Exception as e:
             logging.warning(f"Patrol pathfinding failed for {self.type_data.name}: {e}")
 
-        # Pathfinding failed - try random
-        return self._calculate_random_move(game_map, game_engine.player, game_engine)
+        return None
 
     def _calculate_random_move(self, game_map, player, game_engine) -> Optional[Position]:
         """Calculate a random valid adjacent move."""
@@ -583,6 +550,11 @@ class Enemy:
 
     def _get_current_target(self, player, game_map):
         """Get the current target position based on enemy state and movement type."""
+        # Admin always targets player (can always see them)
+        if self.type == 'admin':
+            self.last_seen_player = player.position
+            return player.position
+
         # HOSTILE enemies target player
         if self.state == EnemyState.HOSTILE:
             if self.can_see_player(player, game_map):
@@ -615,6 +587,7 @@ class Enemy:
 
         return True
 
+
 # Pathfinding helper functions
 def create_pathfinding_cost_map(game_map, game_engine, moving_enemy):
     """Create cost map for TCOD A* pathfinding with optimizations."""
@@ -630,60 +603,3 @@ def create_pathfinding_cost_map(game_map, game_engine, moving_enemy):
     return cost_map
 
 
-def pathfind_and_move(enemy, target, game_map, player, game_engine):
-    """Use TCOD A* pathfinding to move enemy one step toward target with caching."""
-    try:
-        # Use cached pathfinder if available
-        if not hasattr(game_engine, '_pathfinder_cache'):
-            game_engine._pathfinder_cache = {}
-
-        # Create cache key based on enemy positions and target
-        enemy_positions = tuple(sorted((e.x, e.y) for e in game_engine.enemies if e != enemy))
-        cache_key = (enemy.x, enemy.y, target.x, target.y, enemy_positions)
-
-        # Check cache first
-        if cache_key in game_engine._pathfinder_cache:
-            optimal_path = game_engine._pathfinder_cache[cache_key]
-        else:
-            # Calculate new path and cache it
-            cost_map = create_pathfinding_cost_map(game_map, game_engine, enemy)
-            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-            pathfinder = tcod.path.Pathfinder(graph)
-            pathfinder.add_root((enemy.x, enemy.y))
-            optimal_path = pathfinder.path_to((target.x, target.y))
-
-            # Cache the result (limit cache size to prevent memory issues)
-            if len(game_engine._pathfinder_cache) > 100:
-                game_engine._pathfinder_cache.clear()
-            game_engine._pathfinder_cache[cache_key] = optimal_path
-
-        # Take the next step along the path
-        if len(optimal_path) >= 2:
-            next_x, next_y = optimal_path[1]  # Skip current position [0]
-            next_position = Position(next_x, next_y)
-
-            if can_move_to_position(enemy, next_position, game_map, player, game_engine):
-                enemy.position = next_position
-                return True
-
-        return False
-    except Exception:
-        return False
-
-
-def can_move_to_position(enemy, destination, game_map, player, game_engine):
-    """Check if enemy can move to the specified position."""
-    # Basic position validation
-    if not game_map.is_valid_position(destination):
-        return False
-    
-    # Can't move to player position
-    if destination.x == player.x and destination.y == player.y:
-        return False
-    
-    # Can't move to a position occupied by another enemy
-    for other_enemy in game_engine.enemies:
-        if other_enemy != enemy and other_enemy.x == destination.x and other_enemy.y == destination.y:
-            return False
-    
-    return True

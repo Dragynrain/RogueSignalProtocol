@@ -59,13 +59,14 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         enemy.last_seen_player = Position(self.player.x, self.player.y)
         self.engine.enemies = [enemy]
 
-        # Calculate next move toward player
-        next_move = enemy._calculate_next_move(self.player, self.game_map, self.engine)
+        # Force queue refresh and execute movement
+        initial_pos = enemy.position
+        enemy.move_queue.clear()  # Force refresh
+        moved = enemy.move(self.game_map, self.player, self.engine)
 
-        # Verify calculated move doesn't place enemy on player position
-        if next_move:
-            self.assertNotEqual((next_move.x, next_move.y), (self.player.x, self.player.y),
-                              "Enemy calculated a move to player position")
+        # Verify enemy didn't move to player position
+        self.assertNotEqual((enemy.position.x, enemy.position.y), (self.player.x, self.player.y),
+                          "Enemy moved to player position")
 
         # Execute several moves and ensure enemy never moves onto player
         for _ in range(10):
@@ -102,15 +103,23 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         enemy.last_seen_player = Position(self.player.x, self.player.y)
         self.engine.enemies = [enemy]
 
-        # Calculate next move - should find alternative path
-        next_move = enemy._calculate_next_move(self.player, self.game_map, self.engine)
+        # Execute movement - should find alternative path
+        initial_pos = enemy.position
+        enemy.move_queue.clear()  # Force refresh
+        moved = enemy.move(self.game_map, self.player, self.engine)
 
-        # Enemy should find a valid move (alternative path exists)
-        if next_move:
-            self.assertTrue(enemy._is_move_valid(next_move, self.game_map, self.player, self.engine),
-                           f"Calculated move {next_move.x}, {next_move.y} should be valid")
-            self.assertFalse(self.game_map.is_wall(next_move),
-                           "Calculated move should not be a wall")
+        # Enemy should have either moved or have valid planned moves
+        if moved:
+            self.assertFalse(self.game_map.is_wall(enemy.position),
+                           "Enemy should not move to a wall")
+            self.assertNotEqual((enemy.position.x, enemy.position.y), (self.player.x, self.player.y),
+                              "Enemy should not move to player position")
+
+        # Enemy should have planned moves in queue for pathfinding
+        if enemy.move_queue:
+            next_planned = enemy.move_queue[0]
+            self.assertFalse(self.game_map.is_wall(next_planned),
+                           "Planned move should not be a wall")
 
     def test_enemy_movement_prediction_respects_pathfinding(self):
         """Test that movement prediction uses correct pathfinding logic."""
@@ -154,12 +163,9 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         initial_distance = enemy.position.distance_to(Position(self.player.x, self.player.y))
 
         for _ in range(20):  # Try to move 20 times
-            next_move = enemy._calculate_next_move(self.player, self.game_map, self.engine)
-            if not next_move:
+            moved = enemy.move(self.game_map, self.player, self.engine)
+            if not moved:
                 break  # No valid move found
-
-            if enemy._is_move_valid(next_move, self.game_map, self.player, self.engine):
-                enemy.position = next_move
 
         final_distance = enemy.position.distance_to(Position(self.player.x, self.player.y))
 
@@ -187,22 +193,12 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
         self.engine.enemies = [enemy1, enemy2]
 
-        # Both enemies should calculate valid moves
-        move1 = enemy1._calculate_next_move(self.player, self.game_map, self.engine)
-        move2 = enemy2._calculate_next_move(self.player, self.game_map, self.engine)
+        # Execute moves for both enemies
+        enemy1.move_queue.clear()  # Force refresh
+        enemy2.move_queue.clear()  # Force refresh
 
-        # Verify both found valid moves (if they exist)
-        if move1:
-            self.assertTrue(enemy1._is_move_valid(move1, self.game_map, self.player, self.engine),
-                           "Enemy 1 should calculate valid move")
-
-        if move2:
-            self.assertTrue(enemy2._is_move_valid(move2, self.game_map, self.player, self.engine),
-                           "Enemy 2 should calculate valid move")
-
-        # Execute moves for both
-        enemy1.move(self.game_map, self.player, self.engine)
-        enemy2.move(self.game_map, self.player, self.engine)
+        moved1 = enemy1.move(self.game_map, self.player, self.engine)
+        moved2 = enemy2.move(self.game_map, self.player, self.engine)
 
         # Both should have moved closer or stayed in place
         # (valid pathfinding behavior)
