@@ -14,7 +14,7 @@ from game_config import GameSettings, GameConfig, GameBalance
 from game_entities import Position, Colors
 from game_data import GameData, GameUpgrades
 from game_inventory import InventoryItem, CodeHack, ExploitItem, StoryFragment, InventoryManager
-from game_characters import Player, Enemy, can_move_to_position
+from game_characters import Player, Enemy
 from game_audio import SoundManager
 from game_save import SaveGameManager
 from game_story import StoryFragmentManager
@@ -391,35 +391,14 @@ class GameEngine:
 
     def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
         """
-        Get predicted next positions for an enemy.
-        Simply returns the first 'steps' positions from their movement queue.
-        Calculate predicted moves on-demand instead of using a queue.
+        Get predicted next positions for an enemy from their actual movement queue.
+        This shows the player what the enemy is actually planning to do.
         """
-        if enemy.disabled_turns > 0 or enemy.can_attack_player(self.player):
+        if enemy.disabled_turns > 0:
             return []
 
-        # Calculate predicted path by simulating moves
-        predicted = []
-        current_pos = enemy.position
-
-        for _ in range(steps):
-            # Temporarily set position to predicted position for calculation
-            original_pos = enemy.position
-            enemy.position = current_pos
-
-            # Calculate next move from this position
-            next_pos = enemy._calculate_next_move(self.player, self.game_map, self)
-
-            # Restore original position
-            enemy.position = original_pos
-
-            if not next_pos:
-                break
-
-            predicted.append(next_pos)
-            current_pos = next_pos
-
-        return predicted
+        # Return up to 'steps' positions from the actual movement queue
+        return enemy.move_queue[:steps]
 
     def next_level(self):
         """Progress to the next level - delegates to LevelCoordinator."""

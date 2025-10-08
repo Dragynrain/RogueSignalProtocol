@@ -123,13 +123,13 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
                     # Verify enemy has player position as last seen
                     assert enemy.last_seen_player == self.player.position
     
-    def test_track_movement_remembers_last_position(self):
-        """TRACK enemies remember and pursue last seen player position when HOSTILE."""
+    def test_hostile_movement_remembers_last_position(self):
+        """HOSTILE enemies remember and pursue last seen player position."""
         with patch('game_data.GameData.ENEMY_TYPES', {
-            'track_test': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10, name="TrackTest")
+            'hostile_test': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10, name="HostileTest")
         }):
             with patch('game_characters.create_pathfinding_cost_map', mock_create_pathfinding_cost_map):
-                enemy = Enemy(Position(5, 5), "track_test")
+                enemy = Enemy(Position(5, 5), "hostile_test")
                 enemy.state = EnemyState.HOSTILE
                 enemy.last_seen_player = Position(15, 15)
 
