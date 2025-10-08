@@ -259,7 +259,7 @@ class TestMainGameDataStructures(unittest.TestCase):
         
         # Test EnemyMovement enum has expected values
         self.assertTrue(hasattr(EnemyMovement, 'SEEK'))
-        self.assertTrue(hasattr(EnemyMovement, 'TRACK'))
+        self.assertTrue(hasattr(EnemyMovement, 'RANDOM'))
         
     def test_exploit_definition_class(self):
         """Test ExploitDefinition class."""

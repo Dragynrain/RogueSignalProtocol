@@ -26,7 +26,7 @@ from game_entities import (Position, EnemyState, EnemyMovement, TargetingMode,
                           parse_coordinate_string, ensure_color_tuple)
 from game_data import GameData, GameUpgrades
 from game_inventory import InventoryItem, CodeHack, ExploitItem, StoryFragment, InventoryManager
-from game_characters import Player, Enemy, create_pathfinding_cost_map, pathfind_and_move, can_move_to_position
+from game_characters import Player, Enemy, create_pathfinding_cost_map
 from game_audio import SoundManager
 from game_save import SaveGameManager
 from game_story import StoryFragmentManager
@@ -46,10 +46,11 @@ from game_loop import main, initialize_tcod_context, WindowManager as LoopWindow
 
 # Setup detailed logging for comprehensive debugging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,  # Changed to DEBUG to capture all debug messages
     format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s',
     handlers=[
-        logging.StreamHandler()
+        logging.StreamHandler(),
+        logging.FileHandler('game_debug.log', mode='w')  # Write to file, overwrite each session
     ],
     datefmt='%Y-%m-%d %H:%M:%S'
 )

@@ -143,7 +143,6 @@ class EnemyMovement(Enum):
     PATROL = "patrol"
     RANDOM = "random"
     SEEK = "seek"
-    TRACK = "track"
 
 
 class TargetingMode(Enum):

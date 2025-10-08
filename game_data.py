@@ -22,7 +22,7 @@ class GameData:
         'hunter': EnemyTypeDefinition('H', 50, 6, EnemyMovement.RANDOM, "Hunter", 22),  # Elite threat - good vision, high damage
         'virus': EnemyTypeDefinition('V', 35, 4, EnemyMovement.RANDOM, "Virus", 0),  # Base movement (overridden on spawn) - applies virus instead of damage
         'inhibitor': EnemyTypeDefinition('I', 30, 4, EnemyMovement.RANDOM, "Inhibitor", 5),  # Low damage, slows player movement
-        'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.TRACK, "Admin Avatar", 45)  # Boss-level but not impossible
+        'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.STATIC, "Admin Avatar", 45)  # Boss-level - always uses pathfinding behavior regardless of movement type
     }
     
     EXPLOITS = {
