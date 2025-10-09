@@ -79,28 +79,76 @@ class GameBalance:
         return DataLoader.get_balance_config()
     
     @classmethod
-    def get_player_stat(cls, stat_name: str, default_value=None):
-        """Get player stat from balance config."""
+    def get_player_stat(cls, stat_name: str):
+        """Get player stat from balance config - FAILS if not found."""
         balance = cls.get_balance()
-        return balance.get('player_stats', {}).get(stat_name, default_value)
-    
+        try:
+            return balance['player_stats'][stat_name]
+        except KeyError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Player stat '{stat_name}' not found in game_data.json balance.player_stats"
+            print(error_msg)
+            import logging
+            logging.error(error_msg)
+            if 'player_stats' in balance:
+                print(f"Available player stats: {list(balance['player_stats'].keys())}")
+            else:
+                print(f"'player_stats' section missing from balance config")
+                print(f"Available balance sections: {list(balance.keys())}")
+            raise KeyError(f"Player stat not found: {stat_name}") from e
+
     @classmethod
-    def get_combat_value(cls, value_name: str, default_value=None):
-        """Get combat value from balance config."""
+    def get_combat_value(cls, value_name: str):
+        """Get combat value from balance config - FAILS if not found."""
         balance = cls.get_balance()
-        return balance.get('combat', {}).get(value_name, default_value)
-    
+        try:
+            return balance['combat'][value_name]
+        except KeyError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Combat value '{value_name}' not found in game_data.json balance.combat"
+            print(error_msg)
+            import logging
+            logging.error(error_msg)
+            if 'combat' in balance:
+                print(f"Available combat values: {list(balance['combat'].keys())}")
+            else:
+                print(f"'combat' section missing from balance config")
+                print(f"Available balance sections: {list(balance.keys())}")
+            raise KeyError(f"Combat value not found: {value_name}") from e
+
     @classmethod
-    def get_code_hack_value(cls, value_name: str, default_value=None):
-        """Get code hack value from balance config."""
+    def get_code_hack_value(cls, value_name: str):
+        """Get code hack value from balance config - FAILS if not found."""
         balance = cls.get_balance()
-        return balance.get('code_hacks', {}).get(value_name, default_value)
-    
+        try:
+            return balance['code_hacks'][value_name]
+        except KeyError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Code hack value '{value_name}' not found in game_data.json balance.code_hacks"
+            print(error_msg)
+            import logging
+            logging.error(error_msg)
+            if 'code_hacks' in balance:
+                print(f"Available code hack values: {list(balance['code_hacks'].keys())}")
+            else:
+                print(f"'code_hacks' section missing from balance config")
+                print(f"Available balance sections: {list(balance.keys())}")
+            raise KeyError(f"Code hack value not found: {value_name}") from e
+
     @classmethod
-    def get_temporary_effect_value(cls, value_name: str, default_value=None):
-        """Get temporary effect value from balance config."""
+    def get_temporary_effect_value(cls, value_name: str):
+        """Get temporary effect value from balance config - FAILS if not found."""
         balance = cls.get_balance()
-        return balance.get('temporary_effects', {}).get(value_name, default_value)
+        try:
+            return balance['temporary_effects'][value_name]
+        except KeyError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Temporary effect '{value_name}' not found in game_data.json balance.temporary_effects"
+            print(error_msg)
+            import logging
+            logging.error(error_msg)
+            if 'temporary_effects' in balance:
+                print(f"Available temporary effects: {list(balance['temporary_effects'].keys())}")
+            else:
+                print(f"'temporary_effects' section missing from balance config")
+                print(f"Available balance sections: {list(balance.keys())}")
+            raise KeyError(f"Temporary effect value not found: {value_name}") from e
     
     # Legacy class attributes for backward compatibility
     CPU_RESTORE_MIN = 15
@@ -110,35 +158,33 @@ class GameBalance:
 
     @classmethod
     def load_balance_values(cls):
-        """Load balance values from JSON and update class attributes."""
-        cls.CPU_RESTORE_MIN = cls.get_balance().get('cpu_restore_min', 30)
-        cls.CPU_RESTORE_MAX = cls.get_balance().get('cpu_restore_max', 40)
-        cls.HEAT_REDUCTION_INSTANT = cls.get_code_hack_value('heat_reduction_instant', 40)
-        cls.ENEMY_ELIMINATION_CPU_REWARD = cls.get_combat_value('enemy_elimination_cpu_reward', 5)
-    
+        """Load balance values from JSON and update class attributes - NO FALLBACKS."""
+        balance = cls.get_balance()
+        try:
+            cls.CPU_RESTORE_MIN = balance['cpu_restore_min']
+            cls.CPU_RESTORE_MAX = balance['cpu_restore_max']
+        except KeyError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Missing CPU restore values in game_data.json balance section"
+            print(error_msg)
+            import logging
+            logging.error(error_msg)
+            print(f"Available balance keys: {list(balance.keys())}")
+            raise KeyError(f"Required balance value missing: {e}") from e
+
+        # Get from subsections
+        cls.HEAT_REDUCTION_INSTANT = cls.get_code_hack_value('heat_reduction_instant')
+        cls.ENEMY_ELIMINATION_CPU_REWARD = cls.get_combat_value('enemy_elimination_cpu_reward')
+
     @staticmethod
     def get_exploit_cpu_cost(exploit_name: str) -> int:
-        """Get CPU cost for an exploit."""
-        cpu_costs = {
-            "shadow_step": 10,
-            "buffer_overflow": 15,
-            "code_injection": 20,
-            "system_crash": 25,
-            "threat_scan": 5,
-            "log_wiper": 12,
-            "antivirus": 18,
-            "emp_burst": 30,
-            "memory_leak": 8
-        }
-        return cpu_costs.get(exploit_name, 10)
-    
+        """Get CPU cost for an exploit - uses game_data.json."""
+        # Delegate to GameBalance which loads from JSON
+        from game_config import GameBalance
+        return GameBalance.get_exploit_cpu_cost(exploit_name)
+
     @staticmethod
     def get_enemy_difficulty_multiplier(difficulty: str) -> float:
-        """Get difficulty multiplier for enemies."""
-        multipliers = {
-            "easy": 0.8,
-            "normal": 1.0,
-            "hard": 1.3,
-            "nightmare": 1.6
-        }
-        return multipliers.get(difficulty, 1.0)
+        """Get difficulty multiplier for enemies - uses game_data.json."""
+        # Delegate to GameBalance which loads from JSON
+        from game_config import GameBalance
+        return GameBalance.get_enemy_difficulty_multiplier(difficulty)
