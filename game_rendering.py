@@ -1488,10 +1488,6 @@ class MapRenderer:
                         render_char_safe(console, screen_x, screen_y, enemy.type_data.symbol,
                                     fg=enemy.get_color(), bg=Colors.BLACK)
 
-                    # Render movement prediction (queue visualization)
-                    if can_see_enemy and hasattr(enemy, 'move_queue') and enemy.move_queue:
-                        self._render_enemy_movement_prediction(console, enemy, camera_offset, game)
-
     def _render_enemy_movement_prediction(self, console: tcod.console.Console, enemy, camera_offset: Position, game):
         """Render faint indicators showing where enemy will move."""
         # Show up to 3 queued moves

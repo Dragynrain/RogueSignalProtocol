@@ -67,7 +67,7 @@
       "symbol": "A",
       "cpu": 250,
       "vision": 8,
-      "movement": "TRACK",
+      "movement": "ADMIN",
       "name": "Admin Avatar",
       "damage": 45,
       "description": "Boss-level but not impossible"

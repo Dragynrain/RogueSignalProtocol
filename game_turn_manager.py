@@ -270,13 +270,14 @@ class GameTurnManager:
             if enemy.state == EnemyState.UNAWARE:
                 enemy.state = EnemyState.ALERT
                 enemy.invalidate_move_queue()  # State changed, recalculate path
-                enemy.alert_timer = 0
+                enemy.alert_timer = 1  # Give 1 turn grace period before becoming HOSTILE
                 enemy.last_seen_player = player_pos
                 self.game_engine.message_log.add_message(f"{enemy.type_data.name} investigating")
                 self.game_engine.sound_manager.play_sound("enemy_alert")
 
             elif enemy.state == EnemyState.ALERT:
                 enemy.last_seen_player = player_pos
+                enemy.alert_timer -= 1  # Decrement timer each turn they see player
                 if enemy.alert_timer <= 0:
                     self._transition_to_hostile(enemy)
 

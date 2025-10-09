@@ -84,11 +84,16 @@ class EnemyManager:
         # patrol_stuck_counter removed in simplified movement system
     
     def _generate_patrol_route(self, start: Position) -> List[Position]:
-        """Generate simple geometric patrol routes with 2-4 points."""
+        """Generate simple geometric patrol routes with 2-4 points.
+
+        Validates that all points:
+        1. Are within bounds (not in walls)
+        2. Can be reached from each other via pathfinding
+        """
         # Choose a simple pattern type
         pattern_type = random.choice(['line', 'triangle', 'rectangle'])
         step_size = random.randint(4, 8)  # Distance between patrol points
-        
+
         if pattern_type == 'line':
             # 2-point line pattern (back and forth)
             direction = random.choice(['horizontal', 'vertical', 'diagonal'])
@@ -98,10 +103,12 @@ class EnemyManager:
                 end_point = Position(start.x, start.y + step_size)
             else:  # diagonal
                 end_point = Position(start.x + step_size, start.y + step_size)
-            
+
             if self._is_valid_patrol_point(end_point):
-                return [start, end_point]
-                
+                route = [start, end_point]
+                if self._validate_patrol_connectivity(route):
+                    return route
+
         elif pattern_type == 'triangle':
             # 3-point triangle pattern - try multiple orientations
             triangle_patterns = [
@@ -122,9 +129,9 @@ class EnemyManager:
                 if self._is_valid_patrol_point(point3):
                     route.append(point3)
 
-                if len(route) >= 3:
+                if len(route) >= 3 and self._validate_patrol_connectivity(route):
                     return route
-                
+
         elif pattern_type == 'rectangle':
             # 4-point rectangle pattern - try different sizes
             rectangle_sizes = [step_size, step_size // 2, step_size * 2 // 3]
@@ -139,13 +146,13 @@ class EnemyManager:
                     if self._is_valid_patrol_point(point):
                         route.append(point)
 
-                if len(route) >= 4:
+                if len(route) >= 4 and self._validate_patrol_connectivity(route):
                     return route
 
                 # Try smaller rectangle if full size failed
-                if len(route) >= 3:
+                if len(route) >= 3 and self._validate_patrol_connectivity(route):
                     return route
-        
+
         # Fallback: try multiple simple 2-point patterns
         fallback_patterns = [
             Position(start.x + 4, start.y),      # Horizontal right
@@ -160,14 +167,47 @@ class EnemyManager:
 
         for fallback_end in fallback_patterns:
             if self._is_valid_patrol_point(fallback_end):
-                return [start, fallback_end]
+                route = [start, fallback_end]
+                if self._validate_patrol_connectivity(route):
+                    return route
 
         # Last resort: single point (static guard)
         return [start]
-    
+
     def _is_valid_patrol_point(self, point: Position) -> bool:
-        """Check if a position is valid for patrol."""
+        """Check if a position is valid for patrol (within bounds, not a wall)."""
         return (point.is_valid(GameConfig.MAP_WIDTH - 3, GameConfig.MAP_HEIGHT - 3) and
                 point.x >= 3 and point.y >= 3 and
                 self.game_map.is_valid_position(point) and
                 not self.game_map.is_wall(point))
+
+    def _validate_patrol_connectivity(self, route: List[Position]) -> bool:
+        """Verify all patrol points can reach each other via pathfinding."""
+        if len(route) < 2:
+            return True
+
+        import tcod
+
+        try:
+            # Create a simple cost map (just walls vs walkable)
+            cost_map = self.game_map.get_walkability_map().copy()
+
+            # Check each consecutive pair of points
+            for i in range(len(route)):
+                start_point = route[i]
+                end_point = route[(i + 1) % len(route)]  # Wrap around to check full loop
+
+                # Quick pathfinding check
+                graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+                pathfinder = tcod.path.Pathfinder(graph)
+                pathfinder.add_root((start_point.x, start_point.y))
+                path = pathfinder.path_to((end_point.x, end_point.y))
+
+                # If no path exists, route is invalid
+                if len(path) < 2:
+                    return False
+
+            return True
+        except Exception:
+            # If pathfinding fails for any reason, consider route invalid
+            return False

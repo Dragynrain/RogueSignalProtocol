@@ -98,7 +98,7 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
     # Start main menu music only if no music is already playing
     try:
         # Check if ANY music is already playing (including level music from game)
-        # This prevents stopping level music when returning to menu
+        # This allows level music to continue playing when returning to menu
         from game_audio import AUDIO_AVAILABLE
         import pygame
         music_already_playing = AUDIO_AVAILABLE and pygame.mixer.music.get_busy()
@@ -191,6 +191,7 @@ def handle_game_input_events(event, game, input_handler):
             else:
                 # No UI states open, auto-save and go to main menu
                 game.auto_save()
+                # Don't stop level music - let it continue playing in the menu
                 return True, None  # Return to main menu
         else:
             should_continue = input_handler.handle_keydown(event)

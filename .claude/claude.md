@@ -1,15 +1,9 @@
 # Claude Code Instructions & Guidelines
 
-## Running Unit Tests and Python commands
-- **uv for tests**: always run tests using uv run pytest ...
-- **uv for python**: always run one-off python commands (debugging, testing imports etc) using uv run python ...
-- **uv path**: Commands should start with just 'uv ' (no cd directory changes or .venv path prefixes needed)
-
 ## Bash Command Guidelines
 - **Quotes**: ALWAYS use quotes around file paths with spaces: `cd "path with spaces"` not `cd path with spaces`
-- **Windows vs Unix Commands**: Use proper Windows commands - `rm` not `del`, `ls` not `dir`
+- **Windows vs Unix Commands**: Use proper bash commands - `rm` not `del`, `ls` not `dir`
 - **File Operations**: Use `rm` for deletion, `ls` for listing, `mkdir` for directories
-- **Path Separators**: Use forward slashes in paths even on Windows when possible
 
 ## Project-Specific Rules
 - **Symbol Conventions**: Letters (A-Z) are ONLY for enemies. Everything else must use ASCII symbols (not unicode)
@@ -84,15 +78,7 @@
 - Include specific error details, exception messages, and context in error reports
 - When error handling disables systems, clearly communicate this to the user via console output
 - **MANDATORY error reporting pattern**:
-  ```python
-  error_msg = f"SYSTEM ERROR: {specific_details}"
-  print(error_msg)  # Always visible to user
-  logging.error(error_msg)  # Also log for debugging
-  print(f"Exception: {str(exception)}")
-  print(f"Exception type: {type(exception).__name__}")
-  # Include traceback for debugging
-  traceback.print_exc()
-  ```
+- Use good error reporting patterns to always give proper files and line numbers and exception.
 
 ### Configuration Error Handling (CRITICAL)
 - **NO FALLBACK DATA** - Missing configuration must cause immediate failure
@@ -101,18 +87,6 @@
 - **Detailed Context** - Always print available keys/sections when reporting missing ones
 - **Configuration files are NOT optional** - game_data.json, game_config.json, story_content.json are required
 - **User settings fallback is acceptable** - Only user_settings.json may use defaults for first-run scenarios
-- **Example configuration error pattern**:
-  ```python
-  try:
-      return game_data['required_section']
-  except KeyError as e:
-      error_msg = f"CRITICAL CONFIG ERROR: Missing '{key}' section in {filename}"
-      print(error_msg)
-      logging.error(error_msg)
-      print(f"Exception: {str(e)}")
-      print(f"Available sections: {list(game_data.keys())}")
-      raise KeyError(f"Required '{key}' section missing from {filename}") from e
-  ```
 
 ## Virtual Environment Dependencies  
 - **Project uses virtual environment at: `C:\Projects\RogueSignalProtocol\.venv`**
@@ -128,24 +102,6 @@
 - **Single Responsibility**: Each module should have one clear purpose
 - **Separation of Concerns**: Separate rendering, game logic, data management, and UI
 
-
-## Integration Patterns 
-**Current Architecture Analysis:**
-- **Main Script** (RogueSignalProtocol.py) imports all modules and orchestrates game flow
-- **Game Engine** (game_engine.py) is the core game logic hub, imports most other modules
-- **Data Flow**: config → entities → characters/enemies → engine → UI/rendering
-- **Dependency Hierarchy**: 
-  ```
-  RogueSignalProtocol.py (main)
-  ├── game_engine.py (core logic)
-  ├── game_menus.py (UI)
-  ├── game_characters.py (player/enemies)
-  └── [other specialized modules]
-  ```
-- **Circular Dependency Prevention**: Use delayed imports in functions when needed
-- **Module Communication**: Pass objects/references rather than importing between peer modules
-- **Integration Pattern**: New modules should follow existing import hierarchy and avoid cross-dependencies
-
 ## Compatibility Requirements 
 - **Primary Target**: Windows 10/11 with command prompt/PowerShell terminals
 - **Rendering Modes**: 
@@ -158,123 +114,13 @@
   - Monospace font compatibility
 - **Future Considerations**: Linux/Mac support possible but Windows-first development
 
-## Common File Locations (#14)
-**Core Game Logic:**
-- `RogueSignalProtocol.py` - Main game loop, renderers, UI management
-- `game_engine.py` - Core game engine, turn processing, game state
-
-**Game Systems:**
-- `game_characters.py` - Player class, Enemy class, pathfinding utilities
-- `game_level.py` - Level generation, room placement, special tiles
-- `game_combat.py` - Exploit system, targeting, combat mechanics 
-- `game_enemies.py` - Enemy manager, enemy spawning logic 
-
-**Data & Configuration:**
-- `game_config.py` - Game settings, constants, configuration management 
-- `game_data.py` - Enemy definitions, exploit data, upgrade definitions 
-- `game_entities.py` - Position class, enums, utility functions 
-- `data_loading.py` - JSON loading, fallback data, story fragments 
-
-**User Interface:**
-- `game_menus.py` - All menu classes, menu backgrounds, help system 
-- `game_ui.py` - UI rendering utilities, window management, input handling 
-- `game_input.py` - Input processing, key mapping, movement handling 
-
-**Support Systems:**
-- `game_save.py` - Save/load system, game state persistence 
-- `game_inventory.py` - Inventory management, item definitions 
-- `game_audio.py` - Sound management, audio loading, sound effects 
-- `game_map.py` - Map data structure, tile management 
-- `game_story.py` - Story fragment management, lore system 
-
-## Test-Driven Development Workflow
-
-### TDD Process (Red-Green-Refactor)
-1. **RED**: Write a failing test first
-2. **GREEN**: Write minimal code to make test pass  
-3. **REFACTOR**: Improve code while keeping tests green
-
-### Quick Test Commands
-```bash
-# Fast feedback during development
-python test_commands.py quick
-
-# Full test suite before committing
-python test_commands.py full
-
-# Auto-run tests on file changes
-python test_commands.py watch
-
-# Test only files you changed
-python test_commands.py changed
-```
-
-### Writing Tests - Use Test Builders
-```python
-# Use fluent builders for clean, readable tests
-from tests.fixtures.test_builders import player, enemy, scenario
-
-def test_new_feature():
-    # Arrange - use builders for clear test setup
-    test_player = player().with_cpu(100).at_position(5, 5).build()
-    test_enemy = enemy().hostile().at_position(10, 10).build()
-    
-    # Act - call the function being tested
-    result = new_feature_function(test_player, test_enemy)
-    
-    # Assert - verify expected behavior
-    assert result.success is True
-    assert result.damage > 0
-```
-
-### Bug Fix Process
-1. **Write failing test that reproduces the bug**:
-```python
-def test_bug_player_stuck_in_wall():
-    # Reproduce the exact bug scenario
-    player = player().at_position(5, 5).build()
-    wall_at_same_position = True
-    
-    # This should fail initially, confirming bug exists
-    result = movement_system.move_player(player, Direction.NORTH)
-    assert result.success is False
-    assert "wall" in result.error_message.lower()
-```
-
-2. **Confirm test fails** (reproduces bug)
-3. **Fix the code** to make test pass
-4. **Verify test passes** (bug is fixed)
-5. **Run full test suite** to ensure no regressions
-
-### Development Workflow Checklist
-
-#### Before Starting Any Feature/Fix
-- Run `python test_commands.py watch` for automatic feedback
-- Write the test first (RED phase)
-
-#### During Development  
-- Keep tests running in watch mode
-- Write minimal code to pass tests (GREEN phase)  
-- Refactor with confidence knowing tests will catch breaks
-- Update help text if symbols change
-- Use TCOD built-in functions when available
-- Add proper error handling with logging
-
-#### After Changes
-- Run `python test_commands.py full` to ensure all tests pass
-- Check that coverage hasn't decreased significantly
-- Test game functionality manually
-- Update documentation if needed
-
 #### Before Committing
 - Ensure all tests pass: `python test_commands.py full`
-- Verify performance hasn't regressed
 - Check that new code has corresponding tests
 
 ### Research Protocol
 - Check latest official documentation first
 - Verify API availability in current version
-- Write tests to verify API behavior works as expected
 
 ## Refactoring Guidelines
 - **DO NOT over-engineer solutions or turn this into an enterprise software product**
