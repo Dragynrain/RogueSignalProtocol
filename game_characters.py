@@ -324,7 +324,7 @@ class Enemy:
             current_patrol_target = self.patrol_points[self.patrol_index]
             if self.position.distance_to(current_patrol_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
                 self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
-                self.move_queue.clear()
+                self.move_queue.clear()  # Triggers refresh below
 
         # Skip movement if disabled or on cooldown
         if self.disabled_turns > 0:
@@ -335,8 +335,8 @@ class Enemy:
             self.move_cooldown -= 1
             return False
 
-        # Refresh queue if needed
-        if self._should_refresh_queue(player, game_map):
+        # Refresh queue if empty
+        if not self.move_queue:
             self._refresh_move_queue(player, game_map, game_engine)
 
         # No moves available
@@ -346,13 +346,30 @@ class Enemy:
         # Pop and validate next move
         next_position = self.move_queue.pop(0)
         if not self._is_move_valid(next_position, game_map, player, game_engine):
+            # Move blocked - clear queue and refresh
             self.move_queue.clear()
-            return False
+            self._refresh_move_queue(player, game_map, game_engine)
+            # Try again with fresh queue
+            if not self.move_queue:
+                return False
+            next_position = self.move_queue.pop(0)
+            if not self._is_move_valid(next_position, game_map, player, game_engine):
+                self.move_queue.clear()
+                return False
 
         # Execute move
         self.position = next_position
 
-        # Replenish queue
+        # Check if we need to refresh queue due to target change (for tracking enemies)
+        if self.type == 'admin' or self.state == EnemyState.HOSTILE:
+            current_target = self._get_current_target(player, game_map)
+            # If target changed (player moved), refresh entire queue
+            if current_target != self._queue_target:
+                self.move_queue.clear()
+                self._refresh_move_queue(player, game_map, game_engine)
+                return True  # Move successful, queue refreshed
+
+        # Replenish queue (rolling queue - add one move to maintain 3 moves)
         current_target = self._get_current_target(player, game_map)
         should_add_move = False
 
@@ -371,7 +388,7 @@ class Enemy:
             current_target = self.patrol_points[self.patrol_index]
             if self.position.distance_to(current_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
                 self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
-                self.move_queue.clear()
+                self.move_queue.clear()  # Will refresh on next turn
 
         # Reset cooldown
         if self.type_data.movement == EnemyMovement.STATIC:
@@ -380,20 +397,6 @@ class Enemy:
             self.move_cooldown = 0
 
         return True
-
-    def _should_refresh_queue(self, player, game_map) -> bool:
-        """Check if movement queue needs refresh (recalculate all moves)."""
-        if not self.move_queue:
-            return True
-
-        if self._queue_state != self.state:
-            return True
-
-        current_target = self._get_current_target(player, game_map)
-        if current_target != self._queue_target:
-            return True
-
-        return False
 
     def _refresh_move_queue(self, player, game_map, game_engine):
         """Recalculate movement queue (up to 3 moves)."""
