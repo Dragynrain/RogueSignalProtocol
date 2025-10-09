@@ -50,7 +50,13 @@ class SoundManager:
                 pygame.mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=512)
                 pygame.mixer.init()
                 pygame.mixer.set_num_channels(self.max_channels)
+
+                # CRITICAL: Set initial volume from settings immediately after init
+                # pygame.mixer starts at volume 0.0 by default
+                pygame.mixer.music.set_volume(self.settings.music_volume * self.settings.master_volume)
+
                 logging.info(f"Sound system initialized with {self.max_channels} channels")
+                logging.info(f"Initial volume set: master={self.settings.master_volume:.2f}, music={self.settings.music_volume:.2f}")
             except Exception as e:
                 logging.warning(f"Failed to initialize sound system: {e}")
                 logging.debug(traceback.format_exc())
