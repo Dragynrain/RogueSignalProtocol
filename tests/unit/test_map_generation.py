@@ -297,7 +297,7 @@ class TestSpecialTileDistribution(TestMapGeneration):
             mock_config.return_value = {
                 1: {
                     'cooling_nodes': 2,
-                    'cpu_recovery_nodes': 1,
+                    'cpu_nodes': 1,
                     'ghost_nodes': 1
                 }
             }

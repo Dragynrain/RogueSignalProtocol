@@ -58,6 +58,7 @@
 - If an enemy can see the player directly, that becomes their "last known location"
 - Enemy alerts from other enemies are only useful if the enemy cannot currently see the player
 - When an enemy becomes hostile, they should immediately pathfind to their target and populate their movement queue
+- **Alert Timer Must Always Be 1**: The enemy alert_timer is intentionally set to 1 turn. Never increase it to 2 or higher as a "fix" for any problem - it's designed to be 1 turn exactly
 
 ## Code Clarity
 - Use clear, descriptive variable names
@@ -87,6 +88,8 @@
 - **Detailed Context** - Always print available keys/sections when reporting missing ones
 - **Configuration files are NOT optional** - game_data.json, game_config.json, story_content.json are required
 - **User settings fallback is acceptable** - Only user_settings.json may use defaults for first-run scenarios
+- **NO FALLBACK VALUES IN CODE** - Never define fallback class attributes for config values. If a value is missing from JSON, the game should crash with a clear error, not silently use wrong data. This applies to ALL balance values, game constants, and configuration data.
+- **ALL VALUES FROM JSON** - Code hack effects, exploit costs, balance values, etc. must ALL load from JSON with no hardcoded fallbacks
 
 ## Virtual Environment Dependencies  
 - **Project uses virtual environment at: `C:\Projects\RogueSignalProtocol\.venv`**

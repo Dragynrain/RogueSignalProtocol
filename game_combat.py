@@ -208,7 +208,9 @@ class ExploitSystem:
     def _execute_buffer_overflow(self, target: Position) -> bool:
         """Execute buffer overflow exploit."""
         self.game.sound_manager.play_sound("exploit_buffer_overflow")
-        if self.game.player.position.distance_to(target) > 1:
+        # Check if target is within range-1 (including diagonals, distance <= 1.5)
+        distance = self.game.player.position.distance_to(target)
+        if distance > GameBalance.ADJACENT_DISTANCE_THRESHOLD:
             self.game.message_log.add_message("Must target adjacent enemy")
             return False
 

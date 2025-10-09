@@ -291,7 +291,10 @@
       "enemy_trace_continuous_hostile": 0.3
     },
     "cpu_restore_min": 30,
-    "cpu_restore_max": 40
+    "cpu_restore_max": 40,
+    "code_hacks": {
+      "heat_reduction_instant": 40
+    }
   },
   "metadata": {
     "version": "0.8.0 Alpha",
