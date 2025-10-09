@@ -433,39 +433,44 @@ class Enemy:
                     if self._queue_target and next_pos.is_adjacent_to(self._queue_target):
                         break
 
-                # For patrol enemies: if queue reaches the target and there's room for more moves,
-                # add moves toward the next patrol point to maintain smooth movement
+                # For patrol enemies: if queue doesn't have 3 moves, try to extend toward next patrol point
+                # This ensures short patrol routes still show movement predictions
                 if (self.type_data.movement == EnemyMovement.PATROL and
                     self.state != EnemyState.HOSTILE and
                     self.patrol_points and
+                    len(self.patrol_points) >= 2 and  # Only extend if there are multiple patrol points
                     len(self.move_queue) < 3):
-                    # Get next patrol point
-                    next_patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
-                    next_patrol_target = self.patrol_points[next_patrol_index]
 
-                    # If we're close to current target, start pathing to next
-                    if self.move_queue:
-                        last_queued_pos = self.move_queue[-1]
-                        if last_queued_pos.distance_to(self._queue_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
-                            # Calculate path from last queued position to next patrol point
-                            try:
-                                cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
-                                graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-                                pathfinder = tcod.path.Pathfinder(graph)
-                                pathfinder.add_root((last_queued_pos.x, last_queued_pos.y))
-                                next_path = pathfinder.path_to((next_patrol_target.x, next_patrol_target.y))
+                    try:
+                        # Determine starting position for extension
+                        if self.move_queue:
+                            last_queued_pos = self.move_queue[-1]
+                        else:
+                            last_queued_pos = self.position
 
-                                # Add remaining moves to fill queue
-                                if next_path is not None and len(next_path) > 1:
-                                    for i in range(1, min(len(next_path), 3 - len(self.move_queue) + 1)):
-                                        next_pos = Position(next_path[i][0], next_path[i][1])
-                                        if last_queued_pos.is_adjacent_to(next_pos):
-                                            self.move_queue.append(next_pos)
-                                            last_queued_pos = next_pos
-                                        else:
-                                            break
-                            except Exception as e:
-                                logging.warning(f"Failed to extend patrol queue: {e}")
+                        # Get next patrol point
+                        next_patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
+                        next_patrol_target = self.patrol_points[next_patrol_index]
+
+                        # Calculate path from last queued position to next patrol point
+                        cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
+                        graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+                        pathfinder = tcod.path.Pathfinder(graph)
+                        pathfinder.add_root((last_queued_pos.x, last_queued_pos.y))
+                        next_path = pathfinder.path_to((next_patrol_target.x, next_patrol_target.y))
+
+                        # Add remaining moves to fill queue up to 3 total
+                        if next_path is not None and len(next_path) > 1:
+                            moves_to_add = 3 - len(self.move_queue)
+                            for i in range(1, min(len(next_path), moves_to_add + 1)):
+                                next_pos = Position(next_path[i][0], next_path[i][1])
+                                if last_queued_pos.is_adjacent_to(next_pos):
+                                    self.move_queue.append(next_pos)
+                                    last_queued_pos = next_pos
+                                else:
+                                    break
+                    except Exception as e:
+                        logging.warning(f"Failed to extend patrol queue: {e}")
         # Random movement - add up to 3 random moves
         elif self.type_data.movement == EnemyMovement.RANDOM:
             for i in range(3):
@@ -592,12 +597,15 @@ class Enemy:
         return None
 
     def _calculate_random_move(self, game_map, player, game_engine) -> Optional[Position]:
-        """Calculate a random valid adjacent move."""
+        """Calculate a random valid adjacent move from the last queued position or current position."""
+        # Calculate from the last position in queue (for rolling queue behavior)
+        start_pos = self.move_queue[-1] if self.move_queue else self.position
+
         directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
         random.shuffle(directions)
 
         for dx, dy in directions:
-            next_pos = Position(self.position.x + dx, self.position.y + dy)
+            next_pos = Position(start_pos.x + dx, start_pos.y + dy)
             if self._is_move_valid(next_pos, game_map, player, game_engine):
                 return next_pos
 
@@ -645,15 +653,23 @@ class Enemy:
 
 # Pathfinding helper functions
 def create_pathfinding_cost_map(game_map, game_engine, moving_enemy):
-    """Create cost map for TCOD A* pathfinding with optimizations."""
+    """Create cost map for TCOD A* pathfinding with optimizations.
+
+    Enemies are treated as high-cost obstacles (20x) rather than impassable walls,
+    allowing pathfinding around them when needed while preferring clear paths.
+    """
     # Start with base terrain map (cached in game_map)
     cost_map = game_map.get_walkability_map().copy()
 
-    # Efficiently mark enemy positions as impassable
-    enemy_positions = {(enemy.x, enemy.y) for enemy in game_engine.enemies if enemy != moving_enemy}
-    for x, y in enemy_positions:
-        if 0 <= x < game_map.width and 0 <= y < game_map.height:
-            cost_map[x, y] = False
+    # Mark enemy positions as high-cost (20x) but still passable
+    # This allows pathfinding around other enemies while preferring clear paths
+    for enemy in game_engine.enemies:
+        if enemy != moving_enemy:
+            x, y = enemy.x, enemy.y
+            if 0 <= x < game_map.width and 0 <= y < game_map.height:
+                # If the tile is walkable, make it high cost instead of blocking
+                if cost_map[x, y] > 0:
+                    cost_map[x, y] = cost_map[x, y] * 20  # High cost but not impassable
 
     return cost_map
 
