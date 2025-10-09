@@ -95,15 +95,14 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
     if menu_sound_manager is None:
         menu_sound_manager = SoundManager(settings)
 
-    # Start main menu music only if no music is already playing
+    # DO NOT start menu music if level music is already playing
+    # Level music should continue playing when player returns to menu
     try:
-        # Check if ANY music is already playing (including level music from game)
-        # This allows level music to continue playing when returning to menu
         from game_audio import AUDIO_AVAILABLE
         import pygame
-        music_already_playing = AUDIO_AVAILABLE and pygame.mixer.music.get_busy()
 
-        if not music_already_playing:
+        # Only play menu music if NO music is currently playing
+        if AUDIO_AVAILABLE and not pygame.mixer.music.get_busy():
             menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000, volume_multiplier=1.3)
     except Exception as e:
         logging.warning(f"Could not play main menu music: {e}")
@@ -158,11 +157,15 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                 elif action == "back":
                     current_menu = main_menu
                 elif action == "continue":
-                    menu_sound_manager.stop_music(fade_out_ms=1000)  # Fade out menu music
+                    # Don't stop music if it's level music playing from previous session
+                    # Only stop if menu music was actually started (current_music is set)
+                    if menu_sound_manager.current_music is not None:
+                        menu_sound_manager.stop_music(fade_out_ms=1000)
                     game = GameEngine(load_save=True, settings=settings)
                     return game, False
                 elif action == "new_game":
-                    menu_sound_manager.stop_music(fade_out_ms=1000)  # Fade out menu music
+                    # Stop any music for new game - fresh start
+                    menu_sound_manager.stop_music(fade_out_ms=1000)
                     game = GameEngine(load_save=False, settings=settings)
                     return game, False
 
