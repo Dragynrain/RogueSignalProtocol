@@ -329,17 +329,41 @@ class ExploitSystem:
         cpu_count = len(self.game.game_map.cpu_recovery_nodes)
         ghost_count = len(self.game.game_map.ghost_nodes)
 
-        # Reveal all cooling nodes
+        # Reveal all cooling nodes and add to explored tiles
         for node_pos in self.game.game_map.cooling_nodes:
             self.game.game_state.revealed_special_nodes[node_pos] = "cooling"
+            # Add surrounding 3x3 area to explored tiles so node is visible in fog of war
+            for dx in range(-1, 2):
+                for dy in range(-1, 2):
+                    explore_x = node_pos[0] + dx
+                    explore_y = node_pos[1] + dy
+                    if (0 <= explore_x < GameConfig.MAP_WIDTH and
+                        0 <= explore_y < GameConfig.MAP_HEIGHT):
+                        self.game.game_map.explored_tiles.add((explore_x, explore_y))
 
-        # Reveal all CPU recovery nodes
+        # Reveal all CPU recovery nodes and add to explored tiles
         for node_pos in self.game.game_map.cpu_recovery_nodes:
             self.game.game_state.revealed_special_nodes[node_pos] = "cpu"
+            # Add surrounding 3x3 area to explored tiles
+            for dx in range(-1, 2):
+                for dy in range(-1, 2):
+                    explore_x = node_pos[0] + dx
+                    explore_y = node_pos[1] + dy
+                    if (0 <= explore_x < GameConfig.MAP_WIDTH and
+                        0 <= explore_y < GameConfig.MAP_HEIGHT):
+                        self.game.game_map.explored_tiles.add((explore_x, explore_y))
 
-        # Reveal all ghost nodes
+        # Reveal all ghost nodes and add to explored tiles
         for node_pos in self.game.game_map.ghost_nodes:
             self.game.game_state.revealed_special_nodes[node_pos] = "ghost"
+            # Add surrounding 3x3 area to explored tiles
+            for dx in range(-1, 2):
+                for dy in range(-1, 2):
+                    explore_x = node_pos[0] + dx
+                    explore_y = node_pos[1] + dy
+                    if (0 <= explore_x < GameConfig.MAP_WIDTH and
+                        0 <= explore_y < GameConfig.MAP_HEIGHT):
+                        self.game.game_map.explored_tiles.add((explore_x, explore_y))
 
         total_revealed = len(self.game.game_state.revealed_special_nodes)
         self.game.message_log.add_message(f"Network Scan: {cooling_count} cooling, {cpu_count} CPU, {ghost_count} ghost nodes found")

@@ -396,7 +396,14 @@ class GameTurnManager:
                     virus_turns = self.game_engine.player.temporary_effects.get('virus_turns', 0)
                     self.game_engine.message_log.add_message(f"{enemy.type_data.name} applies virus damage ({virus_turns} turns)")
                     self.game_engine.sound_manager.play_sound("virus_infection")
-                else:
+                elif enemy.type == 'inhibitor':
+                    # Inhibitor applies movement slow
+                    slow_turns = self.game_engine.player.temporary_effects.get('movement_slowed_turns', 0)
+                    if slow_turns > 0:
+                        self.game_engine.message_log.add_message(f"{enemy.type_data.name} applies movement slow ({slow_turns} turns)")
+                    else:
+                        self.game_engine.message_log.add_message(f"{enemy.type_data.name} disrupts speed boost")
+                elif damage > 0:
                     self.game_engine.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
                 if self.game_engine.player.cpu <= 0:
                     self.game_engine.sound_manager.play_sound("player_death", priority=10)
