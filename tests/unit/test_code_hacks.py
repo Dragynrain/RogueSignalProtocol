@@ -2,16 +2,27 @@
 """
 Unit tests for code hack effects.
 Tests all code hack types to ensure they function correctly.
+
+IMPROVED: Uses real config values instead of mocking them.
 """
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from game_inventory import CodeHack
 from game_characters import Player
+from game_config import GameConfig, GameBalance
 
 
 class TestCodeHackEffects(unittest.TestCase):
     """Test all code hack effect types."""
+
+    @classmethod
+    def setUpClass(cls):
+        """Set up real config for all tests."""
+        # Load real config once for all tests
+        GameConfig._config_data = None
+        GameConfig.load_from_json()
+        GameBalance.load_from_json()
 
     def setUp(self):
         """Set up test fixtures."""
@@ -20,19 +31,8 @@ class TestCodeHackEffects(unittest.TestCase):
         self.mock_game.message_log = MagicMock()
         self.mock_game.message_log.add_message = MagicMock()
 
-        # Mock GameBalance values to avoid property issues
-        self.game_balance_patcher = patch('game_inventory.GameBalance')
-        self.mock_game_balance = self.game_balance_patcher.start()
-        self.mock_game_balance.CPU_RESTORE_MIN = 30
-        self.mock_game_balance.CPU_RESTORE_MAX = 40
-        self.mock_game_balance.HEAT_REDUCTION_INSTANT = 40
-
-    def tearDown(self):
-        """Clean up patches."""
-        self.game_balance_patcher.stop()
-
     def test_restore_cpu_effect(self):
-        """Test that restore_cpu effect restores player CPU."""
+        """Test that restore_cpu effect restores player CPU using real config values."""
         # Set player CPU below max
         self.player.cpu = 50
         self.player.max_cpu = 100
@@ -40,10 +40,12 @@ class TestCodeHackEffects(unittest.TestCase):
         code_hack = CodeHack("red", "restore_cpu", "Red Code", "Restores CPU")
         result = code_hack._apply_effect('restore_cpu', self.player, self.mock_game)
 
-        # Should restore CPU (amount varies due to random)
+        # Should restore CPU using real balance values from JSON
         self.assertTrue(result)
         self.assertGreater(self.player.cpu, 50)
         self.assertLessEqual(self.player.cpu, 100)
+        # Restored amount should be within real config range
+        self.assertGreaterEqual(self.player.cpu, 50 + GameBalance.CPU_RESTORE_MIN)
         # Should log a message
         self.mock_game.message_log.add_message.assert_called()
         call_args = str(self.mock_game.message_log.add_message.call_args)
@@ -63,16 +65,17 @@ class TestCodeHackEffects(unittest.TestCase):
         self.assertEqual(self.player.cpu, 100)
 
     def test_reduce_heat_effect(self):
-        """Test that reduce_heat effect reduces player heat."""
+        """Test that reduce_heat effect reduces player heat using real config values."""
         # Set player heat
         self.player.heat = 75
 
         code_hack = CodeHack("blue", "reduce_heat", "Blue Code", "Reduces heat")
         result = code_hack._apply_effect('reduce_heat', self.player, self.mock_game)
 
-        # Should reduce heat by 40
+        # Should reduce heat by HEAT_REDUCTION_INSTANT from real config
         self.assertTrue(result)
-        self.assertEqual(self.player.heat, 35)
+        expected_heat = max(0, 75 - GameBalance.HEAT_REDUCTION_INSTANT)
+        self.assertEqual(self.player.heat, expected_heat)
         # Should log a message
         call_args = str(self.mock_game.message_log.add_message.call_args)
         self.assertIn("Heat reduced", call_args)
@@ -117,16 +120,18 @@ class TestCodeHackEffects(unittest.TestCase):
         self.assertEqual(self.player.trace_level, 0)
 
     def test_speed_boost_effect(self):
-        """Test that speed_boost effect adds speed boost turns."""
+        """Test that speed_boost effect adds speed boost turns using real config."""
         # Start with no speed boost
         self.player.temporary_effects['speed_boost_turns'] = 0
 
         code_hack = CodeHack("yellow", "speed_boost", "Yellow Code", "Speed boost")
         result = code_hack._apply_effect('speed_boost', self.player, self.mock_game)
 
-        # Should add 3 turns of speed boost
+        # Should add turns based on real config (speed_boost_turns from game_config.json)
         self.assertTrue(result)
-        self.assertEqual(self.player.temporary_effects['speed_boost_turns'], 3)
+        # Get expected value from real config
+        expected_turns = GameConfig.get('balance.speed_boost_turns', 3)
+        self.assertEqual(self.player.temporary_effects['speed_boost_turns'], expected_turns)
         # Should log a message
         call_args = str(self.mock_game.message_log.add_message.call_args)
         self.assertIn("Speed boost active", call_args)
@@ -161,16 +166,17 @@ class TestCodeHackEffects(unittest.TestCase):
         self.assertEqual(self.player.temporary_effects['speed_boost_turns'], 1)  # 3 - 2 = 1
 
     def test_enhanced_vision_effect(self):
-        """Test that enhanced_vision effect adds vision turns."""
+        """Test that enhanced_vision effect adds vision turns using real config."""
         # Start with no enhanced vision
         self.player.temporary_effects['enhanced_vision_turns'] = 0
 
         code_hack = CodeHack("cyan", "enhanced_vision", "Cyan Code", "Enhanced vision")
         result = code_hack._apply_effect('enhanced_vision', self.player, self.mock_game)
 
-        # Should add 5 turns of enhanced vision
+        # Should add turns based on real config
         self.assertTrue(result)
-        self.assertEqual(self.player.temporary_effects['enhanced_vision_turns'], 5)
+        expected_turns = GameConfig.get('balance.enhanced_vision_turns', 5)
+        self.assertEqual(self.player.temporary_effects['enhanced_vision_turns'], expected_turns)
         # Should log a message
         call_args = str(self.mock_game.message_log.add_message.call_args)
         self.assertIn("Enhanced vision active", call_args)
@@ -191,16 +197,17 @@ class TestCodeHackEffects(unittest.TestCase):
         self.assertIn("extended", call_args)
 
     def test_exploit_efficiency_effect(self):
-        """Test that exploit_efficiency effect adds efficiency turns."""
+        """Test that exploit_efficiency effect adds efficiency turns using real config."""
         # Start with no exploit efficiency
         self.player.temporary_effects['exploit_efficiency_turns'] = 0
 
         code_hack = CodeHack("magenta", "exploit_efficiency", "Magenta Code", "Exploit efficiency")
         result = code_hack._apply_effect('exploit_efficiency', self.player, self.mock_game)
 
-        # Should add 8 turns of exploit efficiency
+        # Should add turns based on real config
         self.assertTrue(result)
-        self.assertEqual(self.player.temporary_effects['exploit_efficiency_turns'], 8)
+        expected_turns = GameConfig.get('balance.exploit_efficiency_turns', 8)
+        self.assertEqual(self.player.temporary_effects['exploit_efficiency_turns'], expected_turns)
         # Should log a message
         call_args = str(self.mock_game.message_log.add_message.call_args)
         self.assertIn("Exploit efficiency active", call_args)
