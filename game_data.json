@@ -289,7 +289,9 @@
     "ai_behavior": {
       "enemy_trace_alert_to_hostile": 3,
       "enemy_trace_continuous_hostile": 0.3
-    }
+    },
+    "cpu_restore_min": 30,
+    "cpu_restore_max": 40
   },
   "metadata": {
     "version": "0.8.0 Alpha",

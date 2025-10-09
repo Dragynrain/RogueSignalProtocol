@@ -153,41 +153,58 @@ class GameConfig:
 
     @classmethod
     def load_from_json(cls):
-        """Load configuration from JSON file."""
+        """Load configuration from JSON file - FAILS if required values missing."""
         try:
             with open('game_config.json', 'r', encoding='utf-8') as f:
                 cls._config_data = json.load(f)
 
-            # Update class attributes for backward compatibility
-            cls.SCREEN_WIDTH = cls.get('display.screen_width', cls.SCREEN_WIDTH)
-            cls.SCREEN_HEIGHT = cls.get('display.screen_height', cls.SCREEN_HEIGHT)
-            cls.MAP_WIDTH = cls.get('display.map_width', cls.MAP_WIDTH)
-            cls.MAP_HEIGHT = cls.get('display.map_height', cls.MAP_HEIGHT)
-            cls.UI_HEIGHT = cls.get('display.ui_height', cls.UI_HEIGHT)
-            cls.SIDEBAR_WIDTH = cls.get('display.sidebar_width', cls.SIDEBAR_WIDTH)
-            cls.LOG_WIDTH = cls.get('display.log_width', cls.LOG_WIDTH)
-            cls.PANEL_HEIGHT = cls.get('display.panel_height', cls.PANEL_HEIGHT)
-            cls.DEFAULT_PLAYER_RAM = cls.get('gameplay.default_player_ram', cls.DEFAULT_PLAYER_RAM)
-            cls.DEFAULT_PLAYER_CPU = cls.get('gameplay.default_player_cpu', cls.DEFAULT_PLAYER_CPU)
-            cls.MAX_HEAT = cls.get('gameplay.max_heat', cls.MAX_HEAT)
-            cls.MAX_TRACE_LEVEL = cls.get('gameplay.max_trace_level', cls.MAX_TRACE_LEVEL)
-            cls.DETECTION_REDUCTION_ON_LEVEL = cls.get('gameplay.trace_reduction_on_level', cls.DETECTION_REDUCTION_ON_LEVEL)
-            cls.DUNGEON_SEED_RANGE = cls.get('gameplay.dungeon_seed_range', cls.DUNGEON_SEED_RANGE)
-            cls.DEFAULT_VISION_RANGE = cls.get('gameplay.default_vision_range', cls.DEFAULT_VISION_RANGE)
-            cls.MAX_SAVE_ATTEMPTS = cls.get('gameplay.max_save_attempts', cls.MAX_SAVE_ATTEMPTS)
-            cls.NEARBY_ENEMY_ALERT_RADIUS = cls.get('gameplay.nearby_enemy_alert_radius', cls.NEARBY_ENEMY_ALERT_RADIUS)
-            cls.VIRUS_DAMAGE_PER_TURN = cls.get('gameplay.virus_damage_per_turn', cls.VIRUS_DAMAGE_PER_TURN)
-            cls.DEFAULT_FADE_TIME = cls.get('audio.default_fade_time', cls.DEFAULT_FADE_TIME)
-            cls.MESSAGE_CENTER_OFFSET_LARGE = cls.get('ui.message_center_offset_large', cls.MESSAGE_CENTER_OFFSET_LARGE)
-            cls.MESSAGE_CENTER_OFFSET_MEDIUM = cls.get('ui.message_center_offset_medium', cls.MESSAGE_CENTER_OFFSET_MEDIUM)
-            cls.MESSAGE_CENTER_OFFSET_SMALL = cls.get('ui.message_center_offset_small', cls.MESSAGE_CENTER_OFFSET_SMALL)
-            cls.MESSAGE_CENTER_OFFSET_TINY = cls.get('ui.message_center_offset_tiny', cls.MESSAGE_CENTER_OFFSET_TINY)
-            cls.MESSAGE_LINE_SPACING = cls.get('ui.message_line_spacing', cls.MESSAGE_LINE_SPACING)
-            cls.MESSAGE_BUTTON_SPACING = cls.get('ui.message_button_spacing', cls.MESSAGE_BUTTON_SPACING)
+            # Update class attributes - NO FALLBACKS, fail if missing
+            cls.SCREEN_WIDTH = cls._get_required('display.screen_width')
+            cls.SCREEN_HEIGHT = cls._get_required('display.screen_height')
+            cls.MAP_WIDTH = cls._get_required('display.map_width')
+            cls.MAP_HEIGHT = cls._get_required('display.map_height')
+            cls.UI_HEIGHT = cls._get_required('display.ui_height')
+            cls.SIDEBAR_WIDTH = cls._get_required('display.sidebar_width')
+            cls.LOG_WIDTH = cls._get_required('display.log_width')
+            cls.PANEL_HEIGHT = cls._get_required('display.panel_height')
+            cls.DEFAULT_PLAYER_RAM = cls._get_required('gameplay.default_player_ram')
+            cls.DEFAULT_PLAYER_CPU = cls._get_required('gameplay.default_player_cpu')
+            cls.MAX_HEAT = cls._get_required('gameplay.max_heat')
+            cls.MAX_TRACE_LEVEL = cls._get_required('gameplay.max_trace_level')
+            cls.DETECTION_REDUCTION_ON_LEVEL = cls._get_required('gameplay.trace_reduction_on_level')
+            cls.DUNGEON_SEED_RANGE = cls._get_required('gameplay.dungeon_seed_range')
+            cls.DEFAULT_VISION_RANGE = cls._get_required('gameplay.default_vision_range')
+            cls.MAX_SAVE_ATTEMPTS = cls._get_required('gameplay.max_save_attempts')
+            cls.NEARBY_ENEMY_ALERT_RADIUS = cls._get_required('gameplay.nearby_enemy_alert_radius')
+            cls.VIRUS_DAMAGE_PER_TURN = cls._get_required('gameplay.virus_damage_per_turn')
+            cls.DEFAULT_FADE_TIME = cls._get_required('audio.default_fade_time')
+            cls.MESSAGE_CENTER_OFFSET_LARGE = cls._get_required('ui.message_center_offset_large')
+            cls.MESSAGE_CENTER_OFFSET_MEDIUM = cls._get_required('ui.message_center_offset_medium')
+            cls.MESSAGE_CENTER_OFFSET_SMALL = cls._get_required('ui.message_center_offset_small')
+            cls.MESSAGE_CENTER_OFFSET_TINY = cls._get_required('ui.message_center_offset_tiny')
+            cls.MESSAGE_LINE_SPACING = cls._get_required('ui.message_line_spacing')
+            cls.MESSAGE_BUTTON_SPACING = cls._get_required('ui.message_button_spacing')
 
-        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-            logging.warning(f"Could not load game config from JSON: {e}, using defaults")
-            # Keep existing values if JSON loading fails
+        except FileNotFoundError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: game_config.json not found"
+            print(error_msg)
+            logging.error(error_msg)
+            print(f"Exception: {str(e)}")
+            raise FileNotFoundError(f"Required file game_config.json is missing") from e
+        except json.JSONDecodeError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in game_config.json"
+            print(error_msg)
+            logging.error(error_msg)
+            print(f"Exception: {str(e)}")
+            raise json.JSONDecodeError(f"game_config.json contains invalid JSON", e.doc, e.pos) from e
+        except KeyError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Missing required config value in game_config.json"
+            print(error_msg)
+            logging.error(error_msg)
+            print(f"Exception: {str(e)}")
+            if cls._config_data:
+                print(f"Available top-level sections: {list(cls._config_data.keys())}")
+            raise KeyError(f"Required configuration value missing from game_config.json: {e}") from e
 
     @classmethod
     def _ensure_loaded(cls):
@@ -209,11 +226,47 @@ class GameConfig:
         return cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT
     
     @classmethod
+    def _get_required(cls, key: str):
+        """Get required configuration value - raises KeyError if missing."""
+        if cls._config_data is None:
+            raise RuntimeError("Config data not loaded - call load_from_json first")
+
+        keys = key.split('.')
+        value = cls._config_data
+        try:
+            for k in keys:
+                value = value[k]
+            return value
+        except (KeyError, TypeError) as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Required key '{key}' not found in game_config.json"
+            print(error_msg)
+            logging.error(error_msg)
+
+            # Provide helpful debug info
+            partial_keys = []
+            partial_value = cls._config_data
+            for k in keys:
+                partial_keys.append(k)
+                try:
+                    partial_value = partial_value[k]
+                except (KeyError, TypeError):
+                    break
+
+            if partial_keys:
+                path_str = '.'.join(partial_keys[:-1]) if len(partial_keys) > 1 else "root"
+                if isinstance(partial_value, dict):
+                    print(f"Available keys at '{path_str}': {list(partial_value.keys())}")
+                else:
+                    print(f"Value at '{path_str}' is {type(partial_value).__name__}, not a dict")
+
+            raise KeyError(f"Required config key missing: {key}") from e
+
+    @classmethod
     def get(cls, key: str, default=None):
-        """Get configuration value by key."""
+        """Get configuration value by key with optional default (use sparingly)."""
         if cls._config_data is None:
             cls.load_from_json()
-        
+
         if cls._config_data:
             keys = key.split('.')
             value = cls._config_data
@@ -223,7 +276,7 @@ class GameConfig:
                 return value
             except (KeyError, TypeError):
                 pass
-        
+
         return default
     
     @classmethod
@@ -259,20 +312,20 @@ class RoomGenerationConfig:
 
     @classmethod
     def load_from_json(cls):
-        """Load room generation config from JSON."""
-        cls.MIN_ROOMS_BASE = GameConfig.get('room_generation.min_rooms_base', 12)
-        cls.ROOM_LEVEL_MULTIPLIER = GameConfig.get('room_generation.room_level_multiplier', 3)
-        cls.MAX_ROOMS = GameConfig.get('room_generation.max_rooms', 20)
-        cls.MAX_PLACEMENT_ATTEMPTS = GameConfig.get('room_generation.max_placement_attempts', 400)
-        cls.MIN_ROOM_SIZE = GameConfig.get('room_generation.min_room_size', 3)
-        cls.MAX_ROOM_SIZE = GameConfig.get('room_generation.max_room_size', 8)
-        cls.ROOM_PADDING = GameConfig.get('room_generation.room_padding', 1)
-        cls.COOLING_NODES_PER_LEVEL = GameConfig.get('room_generation.cooling_nodes_per_level', 3)
-        cls.CPU_NODES_PER_LEVEL = GameConfig.get('room_generation.cpu_nodes_per_level', 2)
-        cls.GHOST_NODES_PER_LEVEL = GameConfig.get('room_generation.ghost_nodes_per_level', 2)
-        cls.CODE_HACKS_PER_LEVEL = GameConfig.get('room_generation.code_hacks_per_level', 4)
-        cls.EXPLOIT_PICKUPS_PER_LEVEL = GameConfig.get('room_generation.exploit_pickups_per_level', 3)
-        cls.PERMANENT_UPGRADES_PER_LEVEL = GameConfig.get('room_generation.permanent_upgrades_per_level', 1)
+        """Load room generation config from JSON - NO FALLBACKS."""
+        cls.MIN_ROOMS_BASE = GameConfig._get_required('room_generation.min_rooms_base')
+        cls.ROOM_LEVEL_MULTIPLIER = GameConfig._get_required('room_generation.room_level_multiplier')
+        cls.MAX_ROOMS = GameConfig._get_required('room_generation.max_rooms')
+        cls.MAX_PLACEMENT_ATTEMPTS = GameConfig._get_required('room_generation.max_placement_attempts')
+        cls.MIN_ROOM_SIZE = GameConfig._get_required('room_generation.min_room_size')
+        cls.MAX_ROOM_SIZE = GameConfig._get_required('room_generation.max_room_size')
+        cls.ROOM_PADDING = GameConfig._get_required('room_generation.room_padding')
+        cls.COOLING_NODES_PER_LEVEL = GameConfig._get_required('room_generation.cooling_nodes_per_level')
+        cls.CPU_NODES_PER_LEVEL = GameConfig._get_required('room_generation.cpu_nodes_per_level')
+        cls.GHOST_NODES_PER_LEVEL = GameConfig._get_required('room_generation.ghost_nodes_per_level')
+        cls.CODE_HACKS_PER_LEVEL = GameConfig._get_required('room_generation.code_hacks_per_level')
+        cls.EXPLOIT_PICKUPS_PER_LEVEL = GameConfig._get_required('room_generation.exploit_pickups_per_level')
+        cls.PERMANENT_UPGRADES_PER_LEVEL = GameConfig._get_required('room_generation.permanent_upgrades_per_level')
 
     def __init__(self):
         self.min_room_size = self.MIN_ROOM_SIZE
@@ -307,44 +360,64 @@ class GameBalance:
 
     @classmethod
     def load_from_json(cls):
-        """Load balance config from JSON."""
-        cls.HEAT_REDUCTION_NORMAL = GameConfig.get('balance.heat_reduction_normal', 2)
-        cls.HEAT_REDUCTION_BOOSTED = GameConfig.get('balance.heat_reduction_boosted', 3)
-        cls.TRACE_INCREASE_INTERVAL = GameConfig.get('balance.trace_increase_interval', 25)
-        cls.TRACE_INCREASE_AMOUNT = GameConfig.get('balance.trace_increase_amount', 1)
-        cls.COOLING_NODE_EFFECT = GameConfig.get('balance.cooling_node_effect', 20)
-        cls.GHOST_NODE_DETECTION_REDUCTION_PERCENT = GameConfig.get('balance.ghost_node_trace_reduction_percent', 20.0)
-        cls.CPU_RECOVERY_AMOUNT = GameConfig.get('balance.cpu_recovery_amount', 20)
-        cls.ENEMY_ELIMINATION_CPU_REWARD = GameConfig.get('balance.enemy_elimination_cpu_reward', 5)
-        cls.CPU_RESTORE_MIN = GameConfig.get('balance.cpu_restore_min', 30)
-        cls.CPU_RESTORE_MAX = GameConfig.get('balance.cpu_restore_max', 40)
-        cls.HEAT_REDUCTION_INSTANT = GameConfig.get('balance.heat_reduction_instant', 40)
-        cls.ADJACENT_DISTANCE_THRESHOLD = GameConfig.get('balance.adjacent_distance_threshold', 1.5)
-        cls.PATROL_STUCK_THRESHOLD = GameConfig.get('balance.patrol_stuck_threshold', 3)
-        cls.PATHFINDING_TIMEOUT_ATTEMPTS = GameConfig.get('balance.pathfinding_timeout_attempts', 100)
-        cls.ENHANCED_VISION_BONUS = GameConfig.get('balance.enhanced_vision_bonus', 2)
-        cls.SHADOW_VISION_REDUCTION_FACTOR = GameConfig.get('balance.shadow_vision_reduction_factor', 3)
-        cls.ENEMY_TRACE_ALERT_TO_HOSTILE = GameConfig.get('balance.enemy_trace_alert_to_hostile', 3)
-        cls.ENEMY_TRACE_CONTINUOUS_HOSTILE = GameConfig.get('balance.enemy_trace_continuous_hostile', 0.3)
-        cls.ENEMY_MEMORY_TURNS = GameConfig.get('balance.enemy_memory_turns', 20)
+        """Load balance config from JSON - NO FALLBACKS."""
+        cls.HEAT_REDUCTION_NORMAL = GameConfig._get_required('balance.heat_reduction_normal')
+        cls.HEAT_REDUCTION_BOOSTED = GameConfig._get_required('balance.heat_reduction_boosted')
+        cls.TRACE_INCREASE_INTERVAL = GameConfig._get_required('balance.trace_increase_interval')
+        cls.TRACE_INCREASE_AMOUNT = GameConfig._get_required('balance.trace_increase_amount')
+        cls.COOLING_NODE_EFFECT = GameConfig._get_required('balance.cooling_node_effect')
+        cls.GHOST_NODE_DETECTION_REDUCTION_PERCENT = GameConfig._get_required('balance.ghost_node_trace_reduction_percent')
+        cls.CPU_RECOVERY_AMOUNT = GameConfig._get_required('balance.cpu_recovery_amount')
+        cls.ENEMY_ELIMINATION_CPU_REWARD = GameConfig._get_required('balance.enemy_elimination_cpu_reward')
+        cls.CPU_RESTORE_MIN = GameConfig._get_required('balance.cpu_restore_min')
+        cls.CPU_RESTORE_MAX = GameConfig._get_required('balance.cpu_restore_max')
+        cls.HEAT_REDUCTION_INSTANT = GameConfig._get_required('balance.heat_reduction_instant')
+        cls.ADJACENT_DISTANCE_THRESHOLD = GameConfig._get_required('balance.adjacent_distance_threshold')
+        cls.PATROL_STUCK_THRESHOLD = GameConfig._get_required('balance.patrol_stuck_threshold')
+        cls.PATHFINDING_TIMEOUT_ATTEMPTS = GameConfig._get_required('balance.pathfinding_timeout_attempts')
+        cls.ENHANCED_VISION_BONUS = GameConfig._get_required('balance.enhanced_vision_bonus')
+        cls.SHADOW_VISION_REDUCTION_FACTOR = GameConfig._get_required('balance.shadow_vision_reduction_factor')
+        cls.ENEMY_TRACE_ALERT_TO_HOSTILE = GameConfig._get_required('balance.enemy_trace_alert_to_hostile')
+        cls.ENEMY_TRACE_CONTINUOUS_HOSTILE = GameConfig._get_required('balance.enemy_trace_continuous_hostile')
+        cls.ENEMY_MEMORY_TURNS = GameConfig._get_required('balance.enemy_memory_turns')
 
     @staticmethod
     def get_exploit_cpu_cost(exploit_name: str) -> int:
-        """Get CPU cost for an exploit."""
+        """Get CPU cost for an exploit - FAILS if not found."""
         from data_loading import DataLoader
         game_data = DataLoader.load_game_data()
-        costs = game_data.get('exploit_cpu_costs', {})
-        return costs.get(exploit_name, 10)
+        try:
+            costs = game_data['exploit_cpu_costs']
+            return costs[exploit_name]
+        except KeyError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Exploit '{exploit_name}' not found in game_data.json exploit_cpu_costs"
+            print(error_msg)
+            logging.error(error_msg)
+            if 'exploit_cpu_costs' in game_data:
+                print(f"Available exploits: {list(game_data['exploit_cpu_costs'].keys())}")
+            else:
+                print(f"'exploit_cpu_costs' section missing from game_data.json")
+                print(f"Available sections: {list(game_data.keys())}")
+            raise KeyError(f"Exploit CPU cost not found for: {exploit_name}") from e
 
     @staticmethod
     def get_enemy_difficulty_multiplier(difficulty: str) -> float:
-        """Get difficulty multiplier for enemies."""
+        """Get difficulty multiplier for enemies - FAILS if not found."""
         from data_loading import DataLoader
         game_data = DataLoader.load_game_data()
-        multipliers = game_data.get('difficulty_multipliers', {
-            "easy": 0.8, "normal": 1.0, "hard": 1.3, "nightmare": 1.6
-        })
-        return multipliers.get(difficulty, 1.0)
+        try:
+            multipliers = game_data['difficulty_multipliers']
+            return multipliers[difficulty]
+        except KeyError as e:
+            error_msg = f"CRITICAL CONFIG ERROR: Difficulty '{difficulty}' not found in game_data.json difficulty_multipliers"
+            print(error_msg)
+            logging.error(error_msg)
+            if 'difficulty_multipliers' in game_data:
+                print(f"Available difficulties: {list(game_data['difficulty_multipliers'].keys())}")
+            else:
+                print(f"'difficulty_multipliers' section missing from game_data.json")
+                print(f"Available sections: {list(game_data.keys())}")
+            raise KeyError(f"Difficulty multiplier not found for: {difficulty}") from e
 
 
 # Load configurations when module is imported

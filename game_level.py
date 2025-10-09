@@ -142,9 +142,27 @@ class LevelGenerator:
 
     
     def _place_shadow_areas(self, level: int, rooms: List[Tuple[int, int, int, int]]) -> None:
-        """Place shadow areas for stealth gameplay."""
+        """Place shadow areas for stealth gameplay - NO FALLBACKS."""
         network_configs = GameConfig.NETWORK_CONFIGS()
-        config = network_configs.get(level, network_configs[1])
+
+        # FAIL if level config not found
+        if level not in network_configs:
+            error_msg = f"CRITICAL CONFIG ERROR: Level {level} not found in network_configs"
+            print(error_msg)
+            logging.error(error_msg)
+            print(f"Available levels: {list(network_configs.keys())}")
+            raise KeyError(f"Network config missing for level: {level}")
+
+        config = network_configs[level]
+
+        # Ensure shadow_coverage exists
+        if 'shadow_coverage' not in config:
+            error_msg = f"CRITICAL CONFIG ERROR: 'shadow_coverage' missing for level {level} in game_data.json network_configs"
+            print(error_msg)
+            logging.error(error_msg)
+            print(f"Available config keys for level {level}: {list(config.keys())}")
+            raise KeyError(f"Required key 'shadow_coverage' missing from level {level} config")
+
         shadow_coverage = config['shadow_coverage']
         
         total_floor_tiles = sum(w * h for x, y, w, h in rooms)
@@ -274,18 +292,36 @@ class LevelGenerator:
             self.game_map.walls.add((GameConfig.MAP_WIDTH - 1, y))
     
     def _place_special_tiles(self, level: int) -> None:
-        """Place cooling nodes, CPU recovery nodes, and other special tiles."""
+        """Place cooling nodes, CPU recovery nodes, and other special tiles - NO FALLBACKS."""
         floor_positions = self._get_all_floor_positions()
-        
+
         if not floor_positions:
             logging.warning(f"No floor positions available for level {level} special node placement")
             return
-        
-        # Get level-specific counts from network config
-        config = GameConfig.get_network_configs()[level]
-        
+
+        # Get level-specific counts from network config - FAIL if missing
+        network_configs = GameConfig.get_network_configs()
+        if level not in network_configs:
+            error_msg = f"CRITICAL CONFIG ERROR: Level {level} not found in network_configs"
+            print(error_msg)
+            logging.error(error_msg)
+            print(f"Available levels: {list(network_configs.keys())}")
+            raise KeyError(f"Network config missing for level: {level}")
+
+        config = network_configs[level]
+
+        # Helper function to get required config value
+        def get_required_config(key: str) -> int:
+            if key not in config:
+                error_msg = f"CRITICAL CONFIG ERROR: '{key}' missing for level {level} in game_data.json network_configs"
+                print(error_msg)
+                logging.error(error_msg)
+                print(f"Available config keys for level {level}: {list(config.keys())}")
+                raise KeyError(f"Required key '{key}' missing from level {level} config")
+            return config[key]
+
         # Place cooling nodes
-        cooling_count = config.get('cooling_nodes', 3)
+        cooling_count = get_required_config('cooling_nodes')
         for i in range(cooling_count):
             if floor_positions:
                 pos = random.choice(floor_positions)
@@ -293,9 +329,9 @@ class LevelGenerator:
                 self.game_map.cooling_nodes.add(pos)
                 if level == 3:
                     logging.info(f"Placed cooling node {i+1}/{cooling_count} at {pos}")
-        
-        # Place CPU recovery nodes  
-        cpu_count = config.get('cpu_nodes', 2)
+
+        # Place CPU recovery nodes
+        cpu_count = get_required_config('cpu_nodes')
         for i in range(cpu_count):
             if floor_positions:
                 pos = random.choice(floor_positions)
@@ -303,9 +339,9 @@ class LevelGenerator:
                 self.game_map.cpu_recovery_nodes.add(pos)
                 if level == 3:
                     logging.info(f"Placed CPU node {i+1}/{cpu_count} at {pos}")
-        
+
         # Place ghost nodes (trace level reduction)
-        ghost_count = config.get('ghost_nodes', 2)
+        ghost_count = get_required_config('ghost_nodes')
         for i in range(ghost_count):
             if floor_positions:
                 pos = random.choice(floor_positions)

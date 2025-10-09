@@ -23,31 +23,70 @@ class ColorManager:
         return cls._instance
     
     def _load_colors(self):
-        """Load colors from JSON configuration."""
+        """Load colors from JSON configuration - NO FALLBACKS."""
+        import logging
+        from data_loading import DataLoader
+
         try:
-            from data_loading import DataLoader
             config = DataLoader.load_config()
             self._colors = {}
-            color_config = config.get('colors', {})
 
-            # Load all categories
+            # Ensure colors section exists
+            if 'colors' not in config:
+                error_msg = "CRITICAL CONFIG ERROR: 'colors' section missing from game_config.json"
+                print(error_msg)
+                logging.error(error_msg)
+                print(f"Available sections: {list(config.keys())}")
+                raise KeyError("Required 'colors' section missing from game_config.json")
+
+            color_config = config['colors']
+
+            # Load all categories - FAIL if missing
+            required_categories = ['basic', 'game_elements', 'data_codes', 'message_log', 'enemies', 'ui']
+            for category in required_categories:
+                if category not in color_config:
+                    error_msg = f"CRITICAL CONFIG ERROR: 'colors.{category}' section missing from game_config.json"
+                    print(error_msg)
+                    logging.error(error_msg)
+                    print(f"Available color categories: {list(color_config.keys())}")
+                    raise KeyError(f"Required color category missing: {category}")
+
+            # Load basic, game_elements, data_codes, message_log categories
             for category in ['basic', 'game_elements', 'data_codes', 'message_log']:
-                for name, rgb in color_config.get(category, {}).items():
+                for name, rgb in color_config[category].items():
                     self._colors[name.upper()] = tuple(rgb)
 
-            # Enemy colors
-            enemies = color_config.get('enemies', {})
-            self._colors['ENEMY_UNAWARE'] = tuple(enemies.get('unaware', [255, 120, 20]))
-            self._colors['ENEMY_ALERT'] = tuple(enemies.get('alert', [255, 215, 0]))
-            self._colors['ENEMY_HOSTILE'] = tuple(enemies.get('hostile', [220, 20, 60]))
+            # Enemy colors - FAIL if missing
+            enemies = color_config['enemies']
+            required_enemy_colors = ['unaware', 'alert', 'hostile']
+            for color_name in required_enemy_colors:
+                if color_name not in enemies:
+                    error_msg = f"CRITICAL CONFIG ERROR: 'colors.enemies.{color_name}' missing from game_config.json"
+                    print(error_msg)
+                    logging.error(error_msg)
+                    print(f"Available enemy colors: {list(enemies.keys())}")
+                    raise KeyError(f"Required enemy color missing: {color_name}")
 
-            # UI colors
-            ui = color_config.get('ui', {})
-            self._colors['UI_BG'] = tuple(ui.get('background', [10, 15, 25]))
-            self._colors['UI_TEXT'] = tuple(ui.get('text', [20, 255, 200]))
-            self._colors['UI_ACCENT'] = tuple(ui.get('accent', [160, 20, 255]))
-            self._colors['UI_HIGHLIGHT'] = tuple(ui.get('highlight', [255, 20, 255]))
-            self._colors['ELECTRIC_PURPLE'] = tuple(ui.get('electric_purple', [160, 20, 255]))
+            self._colors['ENEMY_UNAWARE'] = tuple(enemies['unaware'])
+            self._colors['ENEMY_ALERT'] = tuple(enemies['alert'])
+            self._colors['ENEMY_HOSTILE'] = tuple(enemies['hostile'])
+
+            # UI colors - FAIL if missing
+            ui = color_config['ui']
+            required_ui_colors = ['background', 'text', 'accent', 'highlight', 'electric_purple']
+            for color_name in required_ui_colors:
+                if color_name not in ui:
+                    error_msg = f"CRITICAL CONFIG ERROR: 'colors.ui.{color_name}' missing from game_config.json"
+                    print(error_msg)
+                    logging.error(error_msg)
+                    print(f"Available UI colors: {list(ui.keys())}")
+                    raise KeyError(f"Required UI color missing: {color_name}")
+
+            self._colors['UI_BG'] = tuple(ui['background'])
+            self._colors['UI_TEXT'] = tuple(ui['text'])
+            self._colors['UI_ACCENT'] = tuple(ui['accent'])
+            self._colors['UI_HIGHLIGHT'] = tuple(ui['highlight'])
+            self._colors['ELECTRIC_PURPLE'] = tuple(ui['electric_purple'])
 
             # Derived colors
             self._colors['VISION_UNAWARE'] = self._darken_color(self._colors['ENEMY_UNAWARE'], 0.3)
@@ -55,35 +94,27 @@ class ColorManager:
             self._colors['VISION_HOSTILE'] = self._darken_color(self._colors['ENEMY_HOSTILE'], 0.3)
             self._colors['LOG_BG'] = (8, 12, 20)
             self._colors['LOG_BORDER'] = self._colors['UI_TEXT']
-            self._colors['LIGHT_GRAY'] = self._colors.get('LIGHT_GRAY', (160, 170, 190))
 
+            # LIGHT_GRAY should be in basic colors
+            if 'LIGHT_GRAY' not in self._colors:
+                error_msg = "CRITICAL CONFIG ERROR: 'light_gray' missing from colors.basic in game_config.json"
+                print(error_msg)
+                logging.error(error_msg)
+                raise KeyError("Required color missing: light_gray")
+
+        except KeyError as e:
+            # Re-raise KeyError to fail immediately
+            raise
         except Exception as e:
-            import logging
-            logging.error(f"Failed to load colors from JSON: {e}")
-            self._load_fallback_colors()
+            error_msg = f"CRITICAL CONFIG ERROR: Failed to load colors from game_config.json"
+            print(error_msg)
+            logging.error(error_msg)
+            print(f"Exception: {str(e)}")
+            raise RuntimeError(f"Failed to load colors: {e}") from e
     
     def _darken_color(self, color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
         """Darken a color by the given factor."""
         return tuple(int(c * factor) for c in color)
-    
-    def _load_fallback_colors(self):
-        """Load fallback colors if JSON loading fails."""
-        self._colors = {
-            'WHITE': (255, 255, 255),
-            'BLACK': (0, 0, 0),
-            'RED': (220, 20, 60),
-            'GREEN': (50, 255, 50),
-            'BLUE': (0, 191, 255),
-            'YELLOW': (255, 215, 0),
-            'CYAN': (20, 255, 200),
-            'MAGENTA': (255, 20, 255),
-            'PLAYER': (50, 255, 50),
-            'ENEMY_UNAWARE': (255, 255, 0),   # Yellow - unaware
-            'ENEMY_ALERT': (255, 165, 0),      # Orange - alert
-            'ENEMY_HOSTILE': (255, 0, 0),      # Red - hostile
-            'UI_BG': (10, 15, 25),
-            'UI_TEXT': (20, 255, 200),
-        }
     
     def get_color(self, name: str) -> Tuple[int, int, int]:
         """Get color by name."""

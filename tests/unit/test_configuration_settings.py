@@ -227,46 +227,40 @@ class TestGameConfig:
         assert isinstance(GameConfig.DUNGEON_SEED_RANGE, int)
         assert GameConfig.VIRUS_DAMAGE_PER_TURN == 3
     
-    def test_load_from_json_file_exists(self):
-        """Test loading configuration from JSON file."""
+    def test_load_from_json_file_not_found(self):
+        """Test that missing JSON file raises FileNotFoundError."""
+        with patch('builtins.open', side_effect=FileNotFoundError()):
+            with pytest.raises(FileNotFoundError) as exc_info:
+                GameConfig.load_from_json()
+
+            # Should raise exception with descriptive message
+            assert "Required file game_config.json is missing" in str(exc_info.value)
+
+    def test_load_from_json_invalid_json(self):
+        """Test that invalid JSON raises JSONDecodeError."""
+        with patch('builtins.open', mock_open(read_data="{ invalid json")):
+            with pytest.raises(json.JSONDecodeError) as exc_info:
+                GameConfig.load_from_json()
+
+            # Should raise exception with descriptive message
+            assert "game_config.json contains invalid JSON" in str(exc_info.value)
+
+    def test_load_from_json_missing_required_key(self):
+        """Test that missing required keys raise KeyError with helpful message."""
         mock_config = {
             "display": {
                 "screen_width": 100,
-                "screen_height": 60,
-                "map_width": 70,
-                "map_height": 70
+                "screen_height": 60
+                # Missing map_width, map_height, etc.
             }
         }
-        
+
         with patch('builtins.open', mock_open(read_data=json.dumps(mock_config))):
-            with patch('os.path.exists', return_value=True):
+            with pytest.raises(KeyError) as exc_info:
                 GameConfig.load_from_json()
-                
-                assert GameConfig.SCREEN_WIDTH == 100
-                assert GameConfig.SCREEN_HEIGHT == 60
-                assert GameConfig.MAP_WIDTH == 70
-                assert GameConfig.MAP_HEIGHT == 70
-    
-    def test_load_from_json_file_not_found(self):
-        """Test graceful handling when JSON file doesn't exist."""
-        original_width = GameConfig.SCREEN_WIDTH
-        
-        with patch('builtins.open', side_effect=FileNotFoundError()):
-            GameConfig.load_from_json()
-            
-            # Should maintain original values
-            assert GameConfig.SCREEN_WIDTH == original_width
-    
-    def test_load_from_json_invalid_json(self):
-        """Test graceful handling of invalid JSON."""
-        original_width = GameConfig.SCREEN_WIDTH
-        
-        with patch('builtins.open', mock_open(read_data="{ invalid json")):
-            with patch('os.path.exists', return_value=True):
-                GameConfig.load_from_json()
-                
-                # Should maintain original values
-                assert GameConfig.SCREEN_WIDTH == original_width
+
+            # Should raise exception mentioning the missing key
+            assert "Required config key missing" in str(exc_info.value)
     
     def test_get_configuration_value(self):
         """Test getting configuration values by key."""
