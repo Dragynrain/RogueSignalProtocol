@@ -22,7 +22,7 @@ class GameData:
         'hunter': EnemyTypeDefinition('H', 50, 6, EnemyMovement.RANDOM, "Hunter", 22),  # Elite threat - good vision, high damage
         'virus': EnemyTypeDefinition('V', 35, 4, EnemyMovement.RANDOM, "Virus", 0),  # Base movement (overridden on spawn) - applies virus instead of damage
         'inhibitor': EnemyTypeDefinition('I', 30, 4, EnemyMovement.RANDOM, "Inhibitor", 5),  # Low damage, slows player movement
-        'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.STATIC, "Admin Avatar", 45)  # Boss-level - always uses pathfinding behavior regardless of movement type
+        'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.ADMIN, "Admin Avatar", 45)  # Boss-level - constant seeking with perfect vision
     }
     
     EXPLOITS = {
@@ -91,10 +91,10 @@ class GameBalance:
         return balance.get('combat', {}).get(value_name, default_value)
     
     @classmethod
-    def get_code_patch_value(cls, value_name: str, default_value=None):
-        """Get code patch value from balance config."""
+    def get_code_hack_value(cls, value_name: str, default_value=None):
+        """Get code hack value from balance config."""
         balance = cls.get_balance()
-        return balance.get('code_patches', {}).get(value_name, default_value)
+        return balance.get('code_hacks', {}).get(value_name, default_value)
     
     @classmethod
     def get_temporary_effect_value(cls, value_name: str, default_value=None):
@@ -111,9 +111,9 @@ class GameBalance:
     @classmethod
     def load_balance_values(cls):
         """Load balance values from JSON and update class attributes."""
-        cls.CPU_RESTORE_MIN = cls.get_code_patch_value('cpu_restore_min', 15)
-        cls.CPU_RESTORE_MAX = cls.get_code_patch_value('cpu_restore_max', 35)
-        cls.HEAT_REDUCTION_INSTANT = cls.get_code_patch_value('heat_reduction_instant', 30)
+        cls.CPU_RESTORE_MIN = cls.get_balance().get('cpu_restore_min', 30)
+        cls.CPU_RESTORE_MAX = cls.get_balance().get('cpu_restore_max', 40)
+        cls.HEAT_REDUCTION_INSTANT = cls.get_code_hack_value('heat_reduction_instant', 40)
         cls.ENEMY_ELIMINATION_CPU_REWARD = cls.get_combat_value('enemy_elimination_cpu_reward', 5)
     
     @staticmethod

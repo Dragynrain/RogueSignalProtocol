@@ -143,8 +143,8 @@
       "default": [200, 200, 200]
     },
     "enemies": {
-      "unaware": [255, 120, 20],
-      "alert": [255, 215, 0],
+      "unaware": [255, 255, 0],
+      "alert": [255, 165, 0],
       "hostile": [220, 20, 60]
     },
     "ui": {
@@ -172,7 +172,7 @@
     "player": 2,
     "cpu_recovery": 3,
     "heat_recovery": 4,
-    "upgrade": 157,
+    "upgrade": 15,
     "empty_space": 7,
     "shadow": 8,
     "enemy_intent": 9,
@@ -197,7 +197,6 @@
   },
   "welcome_messages": [
     "Welcome to Rogue Signal Protocol v0.8.0 Alpha!",
-    "Enhanced Edition with sound, settings, and story fragments",
     "Navigate using stealth",
     "Reach the gateway (>)",
     "Hide in shadows (.) to avoid detection",

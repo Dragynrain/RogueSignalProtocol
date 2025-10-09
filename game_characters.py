@@ -411,13 +411,58 @@ class Enemy:
         if self.type == 'admin' or self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
             path = self._calculate_path_to_target(self._queue_target, game_map, game_engine)
             if path is not None and len(path) > 1:
-                # Take up to 3 steps (skip current position)
+                # Add positions to queue, validating adjacency between each step
+                prev_pos = self.position  # Start from current position
+
+                # Take up to 3 steps (skip current position at index 0)
                 for i in range(1, min(len(path), 4)):
                     next_pos = Position(path[i][0], path[i][1])
+
+                    # Ensure this position is adjacent to the previous position
+                    if not prev_pos.is_adjacent_to(next_pos):
+                        # Path has a gap - stop adding moves
+                        break
+
                     self.move_queue.append(next_pos)
-                    # Stop if adjacent to target
+                    prev_pos = next_pos  # Update for next iteration
+
+                    # Stop if adjacent to target (no need to add more moves)
                     if self._queue_target and next_pos.is_adjacent_to(self._queue_target):
                         break
+
+                # For patrol enemies: if queue reaches the target and there's room for more moves,
+                # add moves toward the next patrol point to maintain smooth movement
+                if (self.type_data.movement == EnemyMovement.PATROL and
+                    self.state != EnemyState.HOSTILE and
+                    self.patrol_points and
+                    len(self.move_queue) < 3):
+                    # Get next patrol point
+                    next_patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
+                    next_patrol_target = self.patrol_points[next_patrol_index]
+
+                    # If we're close to current target, start pathing to next
+                    if self.move_queue:
+                        last_queued_pos = self.move_queue[-1]
+                        if last_queued_pos.distance_to(self._queue_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
+                            # Calculate path from last queued position to next patrol point
+                            try:
+                                cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
+                                graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+                                pathfinder = tcod.path.Pathfinder(graph)
+                                pathfinder.add_root((last_queued_pos.x, last_queued_pos.y))
+                                next_path = pathfinder.path_to((next_patrol_target.x, next_patrol_target.y))
+
+                                # Add remaining moves to fill queue
+                                if next_path is not None and len(next_path) > 1:
+                                    for i in range(1, min(len(next_path), 3 - len(self.move_queue) + 1)):
+                                        next_pos = Position(next_path[i][0], next_path[i][1])
+                                        if last_queued_pos.is_adjacent_to(next_pos):
+                                            self.move_queue.append(next_pos)
+                                            last_queued_pos = next_pos
+                                        else:
+                                            break
+                            except Exception as e:
+                                logging.warning(f"Failed to extend patrol queue: {e}")
         # Random movement - add up to 3 random moves
         elif self.type_data.movement == EnemyMovement.RANDOM:
             for i in range(3):
@@ -451,6 +496,10 @@ class Enemy:
         if not target:
             return
 
+        # Don't add more moves if queue already reaches adjacent to target
+        if start_pos.is_adjacent_to(target):
+            return
+
         # For pathfinding enemies (admin, hostile, or patrol), calculate next step along path
         if self.type == 'admin' or self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
             try:
@@ -468,7 +517,10 @@ class Enemy:
                     # Only add move if path length is reasonable
                     if len(path) <= max_reasonable_path_length:
                         next_pos = Position(path[1][0], path[1][1])
-                        self.move_queue.append(next_pos)
+
+                        # Validate adjacency before adding
+                        if start_pos.is_adjacent_to(next_pos):
+                            self.move_queue.append(next_pos)
                     else:
                         # Path too long - skip this move
                         pass

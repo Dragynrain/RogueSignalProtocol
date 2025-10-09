@@ -143,6 +143,8 @@ class EnemyMovement(Enum):
     PATROL = "patrol"
     RANDOM = "random"
     SEEK = "seek"
+    ADMIN = "admin"  # Constant seeking with perfect vision
+    TRACK = "track"  # Legacy tracking behavior
 
 
 class TargetingMode(Enum):

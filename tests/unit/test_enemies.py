@@ -301,9 +301,9 @@ class TestEnemyColorCoding:
             enemy.state = EnemyState.UNAWARE
             
             color = enemy.get_color()
-            
-            # Should be orange for unaware (actual game color)
-            assert color == (255, 120, 20)  # Colors.ENEMY_UNAWARE
+
+            # Should be yellow for unaware (actual game color)
+            assert color == (255, 255, 0)  # Colors.ENEMY_UNAWARE
     
     def test_enemy_color_hostile(self):
         """HOSTILE enemy shows red color."""
@@ -335,9 +335,9 @@ class TestEnemyColorCoding:
             enemy.state = EnemyState.ALERT
             
             color = enemy.get_color()
-            
-            # Should be yellow for alert (actual game color)
-            assert color == (255, 215, 0)  # Colors.ENEMY_ALERT
+
+            # Should be orange for alert (actual game color)
+            assert color == (255, 165, 0)  # Colors.ENEMY_ALERT
 
 
 class TestEnemyMovement:

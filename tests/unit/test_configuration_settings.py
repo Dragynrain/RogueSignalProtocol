@@ -330,8 +330,8 @@ class TestGameBalance:
         """Test combat reward balance constants."""
         assert GameBalance.ENEMY_ELIMINATION_CPU_REWARD == 5
     
-    def test_code_patch_effect_constants(self):
-        """Test code patch effect constants."""
+    def test_code_hack_effect_constants(self):
+        """Test code hack effect constants."""
         assert GameBalance.CPU_RESTORE_MIN == 30
         assert GameBalance.CPU_RESTORE_MAX == 40
         assert GameBalance.HEAT_REDUCTION_INSTANT == 40

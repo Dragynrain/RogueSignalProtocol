@@ -114,7 +114,7 @@ class GameEngine:
         self.overclock_confirmation = False
         self.overclock_exploit: Optional[str] = None
 
-        # Code patch system
+        # Code hack system
         self.code_hack_effects: Dict[str, Tuple[str, str]] = {}
         self.discovered_code_effects: Dict[str, str] = {}
 
