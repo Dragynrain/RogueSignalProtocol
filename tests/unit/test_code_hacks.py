@@ -25,6 +25,7 @@ class TestCodeHackEffects(unittest.TestCase):
         self.mock_game_balance = self.game_balance_patcher.start()
         self.mock_game_balance.CPU_RESTORE_MIN = 30
         self.mock_game_balance.CPU_RESTORE_MAX = 40
+        self.mock_game_balance.HEAT_REDUCTION_INSTANT = 40
 
     def tearDown(self):
         """Clean up patches."""
@@ -69,9 +70,9 @@ class TestCodeHackEffects(unittest.TestCase):
         code_hack = CodeHack("blue", "reduce_heat", "Blue Code", "Reduces heat")
         result = code_hack._apply_effect('reduce_heat', self.player, self.mock_game)
 
-        # Should reduce heat by 25
+        # Should reduce heat by 40
         self.assertTrue(result)
-        self.assertEqual(self.player.heat, 50)
+        self.assertEqual(self.player.heat, 35)
         # Should log a message
         call_args = str(self.mock_game.message_log.add_message.call_args)
         self.assertIn("Heat reduced", call_args)

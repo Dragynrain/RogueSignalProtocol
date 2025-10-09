@@ -78,22 +78,26 @@ class CodeHack(InventoryItem):
         
         elif effect_key == 'reduce_heat':
             old_heat = player.heat
-            player.heat = max(0, player.heat - 25)  # Use direct value to avoid property issue
+            player.heat = max(0, player.heat - GameBalance.HEAT_REDUCTION_INSTANT)
             actual_reduction = old_heat - player.heat
             game.message_log.add_message(f"Heat reduced: -{actual_reduction}°C")
         
         elif effect_key == 'reduce_trace_level':
+            from game_config import GameBalance as ConfigBalance
+            reduction = ConfigBalance._get_required('balance.trace_reduction_code_hack')
             old_trace = player.trace_level
-            player.trace_level = max(0, player.trace_level - 25)
+            player.trace_level = max(0, player.trace_level - reduction)
             actual_reduction = old_trace - player.trace_level
             game.message_log.add_message(f"Trace Level: -{actual_reduction:.1f}%")
         
         elif effect_key == 'speed_boost':
+            from game_config import GameBalance as ConfigBalance
+            speed_to_add = ConfigBalance._get_required('balance.speed_boost_turns')
+
             if player.temporary_effects.get('speed_boost_turns', 0) > 0:
                 game.message_log.add_message("Speed boost already active")
                 return True
 
-            speed_to_add = 3
             current_slow = player.temporary_effects.get('movement_slowed_turns', 0)
 
             if current_slow > 0:
@@ -112,17 +116,21 @@ class CodeHack(InventoryItem):
                 game.message_log.add_message(f"Speed boost active ({speed_to_add} enemy turns)")
         
         elif effect_key == 'enhanced_vision':
+            from game_config import GameBalance as ConfigBalance
+            turns_to_add = ConfigBalance._get_required('balance.enhanced_vision_turns')
             current = player.temporary_effects.get('enhanced_vision_turns', 0)
-            new_turns = max(current + 5, 5)
+            new_turns = max(current + turns_to_add, turns_to_add)
             player.temporary_effects['enhanced_vision_turns'] = new_turns
-            msg = f"Enhanced vision extended ({new_turns} turns)" if current > 0 else "Enhanced vision active (5 turns)"
+            msg = f"Enhanced vision extended ({new_turns} turns)" if current > 0 else f"Enhanced vision active ({turns_to_add} turns)"
             game.message_log.add_message(msg)
 
         elif effect_key == 'exploit_efficiency':
+            from game_config import GameBalance as ConfigBalance
+            turns_to_add = ConfigBalance._get_required('balance.exploit_efficiency_turns')
             current = player.temporary_effects.get('exploit_efficiency_turns', 0)
-            new_turns = max(current + 8, 8)
+            new_turns = max(current + turns_to_add, turns_to_add)
             player.temporary_effects['exploit_efficiency_turns'] = new_turns
-            msg = f"Exploit efficiency extended ({new_turns} turns)" if current > 0 else "Exploit efficiency active (8 turns)"
+            msg = f"Exploit efficiency extended ({new_turns} turns)" if current > 0 else f"Exploit efficiency active ({turns_to_add} turns)"
             game.message_log.add_message(msg)
         
         return True

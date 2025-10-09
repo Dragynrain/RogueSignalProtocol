@@ -150,30 +150,21 @@ class GameBalance:
                 print(f"Available balance sections: {list(balance.keys())}")
             raise KeyError(f"Temporary effect value not found: {value_name}") from e
     
-    # Legacy class attributes for backward compatibility
-    CPU_RESTORE_MIN = 15
-    CPU_RESTORE_MAX = 35
-    HEAT_REDUCTION_INSTANT = 30
-    ENEMY_ELIMINATION_CPU_REWARD = 5
+    # NO FALLBACK VALUES - All values must come from JSON
+    # These properties dynamically fetch from JSON and will raise KeyError if missing
 
     @classmethod
-    def load_balance_values(cls):
-        """Load balance values from JSON and update class attributes - NO FALLBACKS."""
-        balance = cls.get_balance()
-        try:
-            cls.CPU_RESTORE_MIN = balance['cpu_restore_min']
-            cls.CPU_RESTORE_MAX = balance['cpu_restore_max']
-        except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Missing CPU restore values in game_data.json balance section"
-            print(error_msg)
-            import logging
-            logging.error(error_msg)
-            print(f"Available balance keys: {list(balance.keys())}")
-            raise KeyError(f"Required balance value missing: {e}") from e
-
-        # Get from subsections
-        cls.HEAT_REDUCTION_INSTANT = cls.get_code_hack_value('heat_reduction_instant')
-        cls.ENEMY_ELIMINATION_CPU_REWARD = cls.get_combat_value('enemy_elimination_cpu_reward')
+    def __getattr__(cls, name):
+        """Dynamic attribute access for balance values - NO FALLBACKS."""
+        if name == 'CPU_RESTORE_MIN':
+            return cls.get_balance()['cpu_restore_min']
+        elif name == 'CPU_RESTORE_MAX':
+            return cls.get_balance()['cpu_restore_max']
+        elif name == 'HEAT_REDUCTION_INSTANT':
+            return cls.get_code_hack_value('heat_reduction_instant')
+        elif name == 'ENEMY_ELIMINATION_CPU_REWARD':
+            return cls.get_combat_value('enemy_elimination_cpu_reward')
+        raise AttributeError(f"'{cls.__name__}' has no attribute '{name}'")
 
     @staticmethod
     def get_exploit_cpu_cost(exploit_name: str) -> int:

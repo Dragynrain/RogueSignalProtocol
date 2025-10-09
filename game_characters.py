@@ -544,9 +544,12 @@ class Enemy:
             # Calculate direct distance to target
             direct_distance = self.position.distance_to(target)
 
-            # Set maximum reasonable path length - if path is more than 3x direct distance,
-            # enemy should stop rather than take long detours
-            max_reasonable_path_length = max(6, int(direct_distance * 3))
+            # Set maximum reasonable path length - allow longer paths to route around obstacles
+            # For short distances, be more generous to allow routing around other enemies
+            if direct_distance <= 5:
+                max_reasonable_path_length = max(15, int(direct_distance * 5))
+            else:
+                max_reasonable_path_length = max(15, int(direct_distance * 3))
 
             cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
