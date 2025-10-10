@@ -36,14 +36,14 @@ class TestRealConfigIntegration:
         """Verify Player loads real config values correctly."""
         player = Player(10, 10)
 
-        # Should use real values from game_config.json
+        # Should use real values from game_rules.json
         # Player uses ram_total instead of max_ram
         assert player.ram_total == GameConfig.DEFAULT_PLAYER_RAM
         assert player.cpu == GameConfig.DEFAULT_PLAYER_CPU
         assert player.max_cpu == GameConfig.DEFAULT_PLAYER_CPU
 
     def test_all_enemy_types_can_be_created(self):
-        """Verify all enemy types from game_data.json can be instantiated."""
+        """Verify all enemy types from game_content.json can be instantiated."""
         from game_entities import Position
 
         game_data = DataLoader.load_game_data()
@@ -79,8 +79,8 @@ class TestRealConfigIntegration:
 
         mock_game = MockGame()
 
-        # Load balance values from game_config.json (single source of truth)
-        with open('game_config.json', 'r') as f:
+        # Load balance values from game_rules.json (single source of truth)
+        with open('game_rules.json', 'r') as f:
             config_data = json.load(f)
 
         cpu_restore_min = config_data['balance']['cpu_restore_min']
@@ -111,7 +111,7 @@ class TestRealConfigIntegration:
         mock_game = MockGame()
 
         # Load heat reduction value from JSON
-        with open('game_data.json', 'r') as f:
+        with open('game_content.json', 'r') as f:
             game_data = json.load(f)
 
         heat_reduction_instant = game_data['balance']['code_hacks']['heat_reduction_instant']
@@ -146,7 +146,7 @@ class TestRealConfigIntegration:
     def test_room_generation_config_matches_json(self):
         """Verify RoomGenerationConfig loads correct values from JSON."""
         # Get values from JSON directly
-        with open('game_config.json', 'r') as f:
+        with open('game_rules.json', 'r') as f:
             import json
             config_json = json.load(f)
 
@@ -183,7 +183,7 @@ class TestRealConfigIntegration:
             assert len(fragment) > 0
 
     def test_all_exploits_can_be_created(self):
-        """Verify all exploits from game_data.json can be instantiated."""
+        """Verify all exploits from game_content.json can be instantiated."""
         from game_entities import ExploitDefinition
 
         game_data = DataLoader.load_game_data()
@@ -274,7 +274,7 @@ class TestNoFallbackValuesUsed:
         import json
 
         # Load JSON directly
-        with open('game_config.json', 'r') as f:
+        with open('game_rules.json', 'r') as f:
             config_json = json.load(f)
 
         balance = config_json['balance']
@@ -292,7 +292,7 @@ class TestNoFallbackValuesUsed:
         """Verify gameplay values match JSON, not hardcoded defaults."""
         import json
 
-        with open('game_config.json', 'r') as f:
+        with open('game_rules.json', 'r') as f:
             config_json = json.load(f)
 
         gameplay = config_json['gameplay']
@@ -305,24 +305,24 @@ class TestNoFallbackValuesUsed:
         assert GameConfig.VIRUS_DAMAGE_PER_TURN == gameplay['virus_damage_per_turn']
 
     def test_cpu_restore_values_only_in_game_config(self):
-        """Verify CPU restore values exist only in game_config.json (single source of truth)."""
+        """Verify CPU restore values exist only in game_rules.json (single source of truth)."""
         import json
 
         # Load both config files
-        with open('game_config.json', 'r') as f:
+        with open('game_rules.json', 'r') as f:
             config = json.load(f)
-        with open('game_data.json', 'r') as f:
+        with open('game_content.json', 'r') as f:
             data = json.load(f)
 
-        # Should exist in game_config.json
-        assert 'cpu_restore_min' in config['balance'], "cpu_restore_min should be in game_config.json"
-        assert 'cpu_restore_max' in config['balance'], "cpu_restore_max should be in game_config.json"
+        # Should exist in game_rules.json
+        assert 'cpu_restore_min' in config['balance'], "cpu_restore_min should be in game_rules.json"
+        assert 'cpu_restore_max' in config['balance'], "cpu_restore_max should be in game_rules.json"
 
-        # Should NOT exist in game_data.json (removed to prevent duplication)
+        # Should NOT exist in game_content.json (removed to prevent duplication)
         assert 'cpu_restore_min' not in data.get('balance', {}), \
-            "cpu_restore_min should NOT be in game_data.json (duplicates removed)"
+            "cpu_restore_min should NOT be in game_content.json (duplicates removed)"
         assert 'cpu_restore_max' not in data.get('balance', {}), \
-            "cpu_restore_max should NOT be in game_data.json (duplicates removed)"
+            "cpu_restore_max should NOT be in game_content.json (duplicates removed)"
 
 
 class TestEnemyAIUsesRealConfig:
@@ -343,7 +343,7 @@ class TestEnemyAIUsesRealConfig:
 
         # Should match what's in JSON
         import json
-        with open('game_config.json', 'r') as f:
+        with open('game_rules.json', 'r') as f:
             config = json.load(f)
 
         balance = config['balance']
@@ -355,7 +355,7 @@ class TestEnemyAIUsesRealConfig:
         assert GameBalance.ENEMY_MEMORY_TURNS > 0
 
         import json
-        with open('game_config.json', 'r') as f:
+        with open('game_rules.json', 'r') as f:
             config = json.load(f)
 
         assert GameBalance.ENEMY_MEMORY_TURNS == config['balance']['enemy_memory_turns']

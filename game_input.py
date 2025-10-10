@@ -261,22 +261,22 @@ class InputHandler:
             if 0 <= item_index < len(inventory_items):
                 selected_item = inventory_items[item_index]
                 if selected_item.use(self.game.player, self.game):
-                    # Check if it was a code - if so, advance turn
-                    if isinstance(selected_item, CodeHack):
+                    # Check if it was a code or exploit - both consume a turn
+                    if isinstance(selected_item, (CodeHack, ExploitItem)):
                         self.game.maybe_process_turn()
-                    
+
                     # Update selection if item was consumed
                     new_equipped_count = len(self.game.player.inventory_manager.equipped_exploits)
                     new_inventory_count = len(self.game.player.inventory_manager.get_display_items())
                     max_selection = new_equipped_count + new_inventory_count - 1
-                    
+
                     if max_selection >= 0:
                         self.game.inventory_selection = min(self.game.inventory_selection, max_selection)
     
     def _unequip_selected_exploit(self):
         """Unequip the specifically selected exploit."""
         equipped_exploits = self.game.player.inventory_manager.equipped_exploits
-        
+
         if 0 <= self.game.inventory_selection < len(equipped_exploits):
             exploit_key = equipped_exploits[self.game.inventory_selection]
             if self.game.player.inventory_manager.unequip_exploit(exploit_key):
@@ -285,6 +285,8 @@ class InputHandler:
                 exploit_item = ExploitItem(exploit_key, exploit_def)
                 self.game.player.inventory_manager.add_item(exploit_item)
                 self.game.message_log.add_message(f"Unequipped {exploit_def.name}")
+                # Unequipping consumes a turn
+                self.game.maybe_process_turn()
             else:
                 self.game.message_log.add_message("Cannot unequip exploit")
         else:

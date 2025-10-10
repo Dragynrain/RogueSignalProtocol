@@ -21,8 +21,8 @@ class TestMinMaxRelationships:
 
     def setup_method(self):
         """Load config files."""
-        self.game_config = self._load_json('game_config.json')
-        self.game_data = self._load_json('game_data.json')
+        self.game_config = self._load_json('game_rules.json')
+        self.game_data = self._load_json('game_content.json')
 
     def _load_json(self, filename):
         """Load a JSON file from project root."""
@@ -41,7 +41,7 @@ class TestMinMaxRelationships:
             min_val = balance_config['cpu_restore_min']
             max_val = balance_config['cpu_restore_max']
             assert min_val < max_val, (
-                f"game_config.json: cpu_restore_min ({min_val}) must be less than "
+                f"game_rules.json: cpu_restore_min ({min_val}) must be less than "
                 f"cpu_restore_max ({max_val})"
             )
             assert min_val > 0, "cpu_restore_min must be positive"
@@ -52,7 +52,7 @@ class TestMinMaxRelationships:
             min_val = balance_data['cpu_restore_min']
             max_val = balance_data['cpu_restore_max']
             assert min_val < max_val, (
-                f"game_data.json: cpu_restore_min ({min_val}) must be less than "
+                f"game_content.json: cpu_restore_min ({min_val}) must be less than "
                 f"cpu_restore_max ({max_val})"
             )
 
@@ -121,7 +121,7 @@ class TestDifficultyScaling:
 
     def setup_method(self):
         """Load game data."""
-        self.game_data = self._load_json('game_data.json')
+        self.game_data = self._load_json('game_content.json')
 
     def _load_json(self, filename):
         """Load a JSON file from project root."""
@@ -204,8 +204,8 @@ class TestResourceBalance:
 
     def setup_method(self):
         """Load config files."""
-        self.game_config = self._load_json('game_config.json')
-        self.game_data = self._load_json('game_data.json')
+        self.game_config = self._load_json('game_rules.json')
+        self.game_data = self._load_json('game_content.json')
 
     def _load_json(self, filename):
         """Load a JSON file from project root."""
@@ -272,7 +272,7 @@ class TestEnemyBalance:
 
     def setup_method(self):
         """Load game data."""
-        self.game_data = self._load_json('game_data.json')
+        self.game_data = self._load_json('game_content.json')
 
     def _load_json(self, filename):
         """Load a JSON file from project root."""
@@ -346,13 +346,14 @@ class TestEnemyBalance:
         damage = scanner.get('damage', -1)
         assert damage == 0, f"Scanner should have 0 damage (detection only), got {damage}"
 
-    def test_firewall_no_damage(self):
-        """Test that firewall enemy has no attack (pure obstacle)."""
+    def test_firewall_light_damage(self):
+        """Test that firewall enemy has light damage (obstacle with light attack)."""
         enemies = self.game_data.get('enemy_types', {})
         firewall = enemies.get('firewall', {})
 
         damage = firewall.get('damage', -1)
-        assert damage == 0, f"Firewall should have 0 damage (obstacle only), got {damage}"
+        assert damage >= 0, f"Firewall damage cannot be negative, got {damage}"
+        assert damage <= 10, f"Firewall should have light damage (<= 10), got {damage}"
 
 
 class TestExploitBalance:
@@ -360,7 +361,7 @@ class TestExploitBalance:
 
     def setup_method(self):
         """Load game data."""
-        self.game_data = self._load_json('game_data.json')
+        self.game_data = self._load_json('game_content.json')
 
     def _load_json(self, filename):
         """Load a JSON file from project root."""

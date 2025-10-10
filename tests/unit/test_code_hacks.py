@@ -127,7 +127,7 @@ class TestCodeHackEffects(unittest.TestCase):
         code_hack = CodeHack("yellow", "speed_boost", "Yellow Code", "Speed boost")
         result = code_hack._apply_effect('speed_boost', self.player, self.mock_game)
 
-        # Should add turns based on real config (speed_boost_turns from game_config.json)
+        # Should add turns based on real config (speed_boost_turns from game_rules.json)
         self.assertTrue(result)
         # Get expected value from real config
         expected_turns = GameConfig.get('balance.speed_boost_turns', 3)

@@ -129,13 +129,12 @@ class Player:
         if self.can_see_through_walls():
             return distance <= vision_range
 
-        # Enemies in shadows only visible when adjacent
+        # Enemies in shadows only visible when adjacent (shadows block vision coming IN)
         if game_map.is_shadow(enemy_target.position) and distance > 1:
             return False
 
-        # Reduce vision when player is in shadow
-        if game_map.is_shadow(self.position) and distance > 1:
-            vision_range = max(1, vision_range // 3)
+        # Shadows do NOT block vision going OUT - player standing in shadow has normal vision
+        # (Shadows only block vision coming in, not vision going out)
 
         return game_map.can_see_position(self.position, enemy_target.position, vision_range)
     

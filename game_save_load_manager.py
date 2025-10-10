@@ -70,6 +70,7 @@ class GameSaveLoadManager:
         game_state.game_over = save_data.get("game_over", False)
         game_state.admin_spawned = save_data.get("admin_spawned", False)
         game_state.dungeon_seed = save_data.get("dungeon_seed", random.randint(1, GameConfig.DUNGEON_SEED_RANGE))
+        game_state.just_loaded = True  # Set flag to prevent immediate enemy state updates
 
     def _restore_player_state(self, player_data: Dict[str, Any]) -> None:
         """Restore player state from save data."""
@@ -129,6 +130,17 @@ class GameSaveLoadManager:
             position = parse_coordinate_string(pos_str)
             if position:  # Skip malformed coordinate data
                 game_state.distraction_points[position] = turns
+
+        # Restore revealed special nodes
+        game_state.revealed_special_nodes = {}
+        for pos_str, node_type in effects_data.get("revealed_special_nodes", {}).items():
+            pos_parts = pos_str.split(',')
+            if len(pos_parts) == 2:
+                try:
+                    x, y = int(pos_parts[0]), int(pos_parts[1])
+                    game_state.revealed_special_nodes[(x, y)] = node_type
+                except ValueError:
+                    pass  # Skip malformed coordinate data
 
         # Restore code effects (backward compatibility)
         self.game_engine.code_hack_effects = save_data.get("code_hack_effects", {})

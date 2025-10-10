@@ -83,6 +83,7 @@
       "damage": 0,
       "targeting": "SINGLE",
       "effect_radius": 0,
+      "effect_duration": 0,
       "description": "Teleport to any shadow zone within range (6 tiles)"
     },
     "data_mimic": {
@@ -94,6 +95,7 @@
       "damage": 0,
       "targeting": "NONE",
       "effect_radius": 0,
+      "effect_duration": 5,
       "description": "Become invisible to enemies for 5 turns"
     },
     "noise_maker": {
@@ -105,6 +107,7 @@
       "damage": 0,
       "targeting": "SINGLE",
       "effect_radius": 10,
+      "effect_duration": 8,
       "description": "Create distraction that lasts 8 turns at target location"
     },
     "buffer_overflow": {
@@ -116,6 +119,7 @@
       "damage": 40,
       "targeting": "SINGLE",
       "effect_radius": 0,
+      "effect_duration": 0,
       "description": "Devastating melee attack (40 damage, 1 tile range)"
     },
     "code_injection": {
@@ -127,6 +131,7 @@
       "damage": 25,
       "targeting": "SINGLE",
       "effect_radius": 0,
+      "effect_duration": 0,
       "description": "Ranged attack (25 damage, 5 tile range)"
     },
     "system_crash": {
@@ -137,7 +142,7 @@
       "category": "emergency",
       "damage": 30,
       "targeting": "NONE",
-      "stun_duration": 3,
+      "effect_duration": 3,
       "effect_radius": 3,
       "description": "Emergency panic button - crashes and stuns all enemies within 3 spaces for 3 turns"
     },
@@ -150,6 +155,7 @@
       "damage": 0,
       "targeting": "NONE",
       "effect_radius": 0,
+      "effect_duration": 5,
       "description": "Reveals ALL enemies, vision ranges, & movement paths (5 turns)"
     },
     "network_scan": {
@@ -161,6 +167,7 @@
       "damage": 0,
       "targeting": "NONE",
       "effect_radius": 0,
+      "effect_duration": 0,
       "description": "Reveals all cooling nodes, CPU nodes, and ghost nodes on the level"
     },
     "log_wiper": {
@@ -172,6 +179,7 @@
       "damage": 0,
       "targeting": "NONE",
       "effect_radius": 0,
+      "effect_duration": 0,
       "description": "Significantly reduces detection level (-30%)"
     },
     "antivirus": {
@@ -183,6 +191,7 @@
       "damage": 0,
       "targeting": "NONE",
       "effect_radius": 0,
+      "effect_duration": 0,
       "description": "Purges all negative status effects (virus, slow)"
     },
     "denial_of_service": {
@@ -193,7 +202,7 @@
       "category": "combat",
       "damage": 20,
       "targeting": "AREA",
-      "stun_duration": 5,
+      "effect_duration": 5,
       "effect_radius": 1,
       "description": "Targeted area attack (20 damage, radius 1) that disables enemies for 5 turns"
     },
@@ -202,10 +211,11 @@
       "ram": 2,
       "heat": 30,
       "range": 1,
-      "category": "combat",
+      "category": "stealth",
       "damage": 0,
       "targeting": "AREA",
       "effect_radius": 1,
+      "effect_duration": 0,
       "description": "Target enemies forget they saw you (3x3 area)"
     }
   },
