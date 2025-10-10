@@ -95,20 +95,20 @@ class TestShadowConcealment(TestVisionLineOfSight):
 
             assert self.player.can_see_enemy(enemy, self.game_map) == True
 
-    def test_player_in_shadow_reduces_vision_range(self):
-        """Player in shadow has reduced vision range."""
+    def test_player_in_shadow_has_normal_vision_out(self):
+        """Player in shadow has normal outgoing vision (shadows block vision IN, not OUT)."""
         with patch('game_data.GameData.ENEMY_TYPES', {
             'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
         }):
             self.game_map.shadows.add((10, 10))
 
-            # Close enemy - still visible
+            # Close enemy - visible
             enemy_close = Enemy(Position(13, 10), "test_enemy")  # 3 units
             assert self.player.can_see_enemy(enemy_close, self.game_map) == True
 
-            # Distant enemy - not visible due to reduced range
+            # Distant enemy - also visible now (shadows don't block vision going OUT)
             enemy_far = Enemy(Position(17, 10), "test_enemy")  # 7 units
-            assert self.player.can_see_enemy(enemy_far, self.game_map) == False
+            assert self.player.can_see_enemy(enemy_far, self.game_map) == True
 
     def test_ghost_nodes_act_as_shadows(self):
         """Ghost nodes function as shadows for concealment."""

@@ -86,7 +86,8 @@ class SaveGameManager:
                     "game_effects": {
                         "threat_scan_turns": game.game_state.threat_scan_turns,
                         "noise_locations": [{"x": pos.x, "y": pos.y} for pos in game.game_state.noise_locations],
-                        "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in game.game_state.distraction_points.items()}
+                        "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in game.game_state.distraction_points.items()},
+                        "revealed_special_nodes": {f"{pos[0]},{pos[1]}": node_type for pos, node_type in game.game_state.revealed_special_nodes.items()}
                     },
                     
                     # Map state (items and special locations only - layout regenerated)

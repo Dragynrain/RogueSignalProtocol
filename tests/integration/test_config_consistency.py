@@ -21,8 +21,8 @@ class TestConfigRedundancy:
 
     def setup_method(self):
         """Load all config files."""
-        self.game_config = self._load_json('game_config.json')
-        self.game_data = self._load_json('game_data.json')
+        self.game_config = self._load_json('game_rules.json')
+        self.game_data = self._load_json('game_content.json')
         self.story_content = self._load_json('story_content.json')
 
     def _load_json(self, filename):
@@ -55,7 +55,7 @@ class TestConfigRedundancy:
 
         # Assert no duplicates (except ai_behavior which has nested structure)
         assert len(duplicate_details) == 0, (
-            f"Found duplicate balance values in both game_config.json and game_data.json:\n"
+            f"Found duplicate balance values in both game_rules.json and game_content.json:\n"
             f"{json.dumps(duplicate_details, indent=2)}\n"
             f"These values should exist in only ONE file to maintain single source of truth."
         )
@@ -71,8 +71,8 @@ class TestConfigRedundancy:
                 if key in data_ai:
                     assert config_ai[key] == data_ai[key], (
                         f"AI behavior value '{key}' differs:\n"
-                        f"  game_config.json: {config_ai[key]}\n"
-                        f"  game_data.json: {data_ai[key]}\n"
+                        f"  game_rules.json: {config_ai[key]}\n"
+                        f"  game_content.json: {data_ai[key]}\n"
                         f"These should match if duplicated, or exist in only one file."
                     )
 
@@ -106,8 +106,8 @@ class TestConfigRedundancy:
         if config_version and data_version:
             assert config_version == data_version, (
                 f"Version mismatch:\n"
-                f"  game_config.json: {config_version}\n"
-                f"  game_data.json: {data_version}\n"
+                f"  game_rules.json: {config_version}\n"
+                f"  game_content.json: {data_version}\n"
                 f"All config files should have matching versions."
             )
 
@@ -117,8 +117,8 @@ class TestConfigCompleteness:
 
     def setup_method(self):
         """Load all config files."""
-        self.game_config = self._load_json('game_config.json')
-        self.game_data = self._load_json('game_data.json')
+        self.game_config = self._load_json('game_rules.json')
+        self.game_data = self._load_json('game_content.json')
 
     def _load_json(self, filename):
         """Load a JSON file from project root."""
@@ -127,7 +127,7 @@ class TestConfigCompleteness:
             return json.load(f)
 
     def test_game_config_has_required_sections(self):
-        """Test that game_config.json has all required top-level sections."""
+        """Test that game_rules.json has all required top-level sections."""
         required_sections = [
             'display',
             'ui',
@@ -146,11 +146,11 @@ class TestConfigCompleteness:
         missing = [s for s in required_sections if s not in self.game_config]
 
         assert len(missing) == 0, (
-            f"game_config.json is missing required sections: {missing}"
+            f"game_rules.json is missing required sections: {missing}"
         )
 
     def test_game_data_has_required_sections(self):
-        """Test that game_data.json has all required top-level sections."""
+        """Test that game_content.json has all required top-level sections."""
         required_sections = [
             'enemy_types',
             'exploits',
@@ -163,7 +163,7 @@ class TestConfigCompleteness:
         missing = [s for s in required_sections if s not in self.game_data]
 
         assert len(missing) == 0, (
-            f"game_data.json is missing required sections: {missing}"
+            f"game_content.json is missing required sections: {missing}"
         )
 
     def test_all_enemies_have_required_fields(self):
@@ -213,8 +213,8 @@ class TestConfigValueUsage:
 
     def setup_method(self):
         """Load config files."""
-        self.game_config = self._load_json('game_config.json')
-        self.game_data = self._load_json('game_data.json')
+        self.game_config = self._load_json('game_rules.json')
+        self.game_data = self._load_json('game_content.json')
 
     def _load_json(self, filename):
         """Load a JSON file from project root."""
@@ -250,7 +250,7 @@ class TestConfigValueUsage:
         missing = [v for v in required_heat_values if v not in balance]
 
         assert len(missing) == 0, (
-            f"Missing required heat reduction values in game_config.json balance: {missing}"
+            f"Missing required heat reduction values in game_rules.json balance: {missing}"
         )
 
     def test_trace_management_values_exist(self):
@@ -267,7 +267,7 @@ class TestConfigValueUsage:
         missing = [v for v in required_trace_values if v not in balance]
 
         assert len(missing) == 0, (
-            f"Missing required trace values in game_config.json balance: {missing}"
+            f"Missing required trace values in game_rules.json balance: {missing}"
         )
 
     def test_enemy_ai_values_exist(self):
@@ -284,7 +284,7 @@ class TestConfigValueUsage:
         missing = [v for v in required_ai_values if v not in balance]
 
         assert len(missing) == 0, (
-            f"Missing required AI values in game_config.json balance: {missing}"
+            f"Missing required AI values in game_rules.json balance: {missing}"
         )
 
     def test_vision_system_values_exist(self):
@@ -300,7 +300,7 @@ class TestConfigValueUsage:
         missing = [v for v in required_vision_values if v not in balance]
 
         assert len(missing) == 0, (
-            f"Missing required vision values in game_config.json balance: {missing}"
+            f"Missing required vision values in game_rules.json balance: {missing}"
         )
 
 

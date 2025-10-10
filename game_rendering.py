@@ -1197,7 +1197,8 @@ class MapRenderer:
         elif (world_pos.x, world_pos.y) in game.game_map.permanent_upgrades:
             upgrade_key = game.game_map.permanent_upgrades[(world_pos.x, world_pos.y)]
             upgrade = GameUpgrades.UPGRADES[upgrade_key]
-            color = self._get_upgrade_color(upgrade.color)
+            # upgrade.color is already a tuple, use it directly
+            color = ensure_color_tuple(upgrade.color)
             # Position 10 = ◙ (inverse circle) for permanent upgrades (different from movement prediction)
             render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[10]), fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.story_fragments:

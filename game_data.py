@@ -46,25 +46,25 @@ class GameData:
     EXPLOITS = {
         # Rebalanced for strategic resource management with damage values
         'shadow_step': ExploitDefinition("Shadow Step", 3, 30, 6, "stealth", 0, TargetingMode.SINGLE,
-                                       "Teleport to any shadow zone within range (6 tiles)", 0, 0),  # No damage, pure mobility
+                                       "Teleport to any shadow zone within range (6 tiles)", 0, 0),  # No damage, pure mobility, no duration
         'data_mimic': ExploitDefinition("Data Mimic", 2, 25, 0, "stealth", 0, TargetingMode.NONE,
-                                      "Become invisible to enemies for 5 turns", 0, 0),  # No damage, pure stealth
+                                      "Become invisible to enemies for 5 turns", 5, 0),  # No damage, 5 turn duration, pure stealth
         'noise_maker': ExploitDefinition("Noise Maker", 1, 15, 8, "stealth", 0, TargetingMode.SINGLE,
-                                       "Create distraction that lasts 8 turns at target location", 0, 10),  # No damage, distraction with radius 10
+                                       "Create distraction that lasts 8 turns at target location", 8, 10),  # No damage, 8 turn duration, distraction with radius 10
         'buffer_overflow': ExploitDefinition("Buffer Overflow", 2, 30, 1, "combat", 40, TargetingMode.SINGLE,
                                            "Devastating melee attack (40 damage, 1 tile range)", 0, 0),  # High single-target damage
         'code_injection': ExploitDefinition("Code Injection", 2, 20, 5, "combat", 25, TargetingMode.SINGLE,
                                           "Ranged attack (25 damage, 5 tile range)", 0, 0),  # Moderate ranged damage
         'system_crash': ExploitDefinition("System Crash", 3, 50, 0, "emergency", 30, TargetingMode.NONE,
-                                        "Emergency panic button - crashes and stuns all enemies within 3 spaces for 3 turns", 3, 3),  # Emergency untargeted AoE with 3-turn stun, radius 3
+                                        "Emergency panic button - crashes and stuns all enemies within 3 spaces for 3 turns", 3, 3),  # Emergency untargeted AoE with 3-turn stun duration, radius 3
         'threat_scan': ExploitDefinition("Threat Scan", 3, 20, 0, "utility", 0, TargetingMode.NONE,
-                                        "Reveals ALL enemies, vision ranges, & movement paths (5 turns)", 0, 0),  # No damage, intel
+                                        "Reveals ALL enemies, vision ranges, & movement paths (5 turns)", 5, 0),  # No damage, 5 turn duration, intel
         'log_wiper': ExploitDefinition("Log Wiper", 2, 20, 0, "utility", 0, TargetingMode.NONE,
                                      "Significantly reduces trace level (-50%)", 0, 0),  # No damage, counter-trace level
         'antivirus': ExploitDefinition("Antivirus", 2, 25, 0, "utility", 0, TargetingMode.NONE,
                                      "Purges all negative status effects (virus, etc.)", 0, 0),  # Status cleansing
         'denial_of_service': ExploitDefinition("Denial of Service", 3, 40, 4, "combat", 20, TargetingMode.AREA,
-                                     "Targeted area attack (20 damage, radius 1) that disables enemies for 5 turns", 5, 1),  # Moderate area damage + 5-turn stun, radius 1
+                                     "Targeted area attack (20 damage, radius 1) that disables enemies for 5 turns", 5, 1),  # Moderate area damage + 5-turn stun duration, radius 1
         'memory_leak': ExploitDefinition("Memory Leak", 2, 30, 1, "combat", 0, TargetingMode.AREA,
                                         "Target enemies forget they saw you (3x3 area)", 0, 1),  # Non-lethal area crowd control, radius 1
         'network_scan': ExploitDefinition("Network Scan", 1, 15, 0, "utility", 0, TargetingMode.NONE,

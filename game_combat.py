@@ -158,7 +158,8 @@ class ExploitSystem:
     def _execute_data_mimic(self) -> bool:
         """Execute data mimic exploit."""
         self.game.sound_manager.play_sound("exploit_data_mimic")
-        self.game.player.temporary_effects['data_mimic_turns'] = 5
+        exploit = GameData.EXPLOITS['data_mimic']
+        self.game.player.temporary_effects['data_mimic_turns'] = exploit.effect_duration
         self.game.message_log.add_message("Data Mimic active")
         return True
     
@@ -223,11 +224,11 @@ class ExploitSystem:
         return self._damage_enemy(enemy, 50)
     
     def _disable_area_enemies(self, target: Position, radius: int, duration: int) -> int:
-        """Disable enemies in area for the specified duration and return count."""
+        """Disable enemies in area for the specified duration and return count (stun is additive)."""
         count = 0
         for enemy in self.game.enemies:
             if enemy.position.distance_to(target) <= radius:
-                enemy.disabled_turns = duration
+                enemy.disabled_turns += duration  # Additive stun effect
                 enemy.state = EnemyState.UNAWARE
                 enemy.alert_timer = 0
                 count += 1
@@ -242,7 +243,7 @@ class ExploitSystem:
         count = 0
         for enemy in self.game.enemies:
             if enemy.position.distance_to(player_pos) <= exploit.effect_radius:
-                enemy.disabled_turns = exploit.stun_duration
+                enemy.disabled_turns += exploit.effect_duration  # Additive stun effect
                 enemy.state = EnemyState.UNAWARE
                 enemy.alert_timer = 0
                 count += 1
@@ -252,7 +253,8 @@ class ExploitSystem:
     def _execute_threat_scan(self) -> bool:
         """Execute threat scan exploit."""
         self.game.sound_manager.play_sound("exploit_threat_scan")
-        self.game.game_state.threat_scan_turns = 5  # Extended duration for tactical advantage
+        exploit = GameData.EXPLOITS['threat_scan']
+        self.game.game_state.threat_scan_turns = exploit.effect_duration  # Duration from JSON config
         
         # Threat scan reveals only enemy positions and immediate surroundings, not entire map
         enemy_count = 0
@@ -311,7 +313,7 @@ class ExploitSystem:
         self.game.sound_manager.play_sound("exploit_denial_of_service")
         # Denial of Service uses configured effect_radius at the target location
         exploit = GameData.EXPLOITS['denial_of_service']
-        count = self._disable_area_enemies(target, exploit.effect_radius, exploit.stun_duration)
+        count = self._disable_area_enemies(target, exploit.effect_radius, exploit.effect_duration)
         self.game.message_log.add_message(f"DoS: {count} disabled")
         return True
     

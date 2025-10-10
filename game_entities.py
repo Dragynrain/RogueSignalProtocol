@@ -265,7 +265,7 @@ class ExploitDefinition:
     damage: int
     targeting: str
     description: str = ""
-    stun_duration: int = 0  # Duration in turns for stunning effects (0 if not a stun exploit)
+    effect_duration: int = 0  # Duration in turns for effects (stun, invisibility, scan, etc.)
     effect_radius: int = 0  # Radius of effect for area exploits (0 for single-target/no effect)
 
 

@@ -20,28 +20,28 @@ class TestJSONFilesExist:
     """Verify all required JSON files exist and are valid."""
 
     def test_game_config_json_exists(self):
-        """Verify game_config.json exists."""
-        assert os.path.exists('game_config.json'), "Required file game_config.json is missing"
+        """Verify game_rules.json exists."""
+        assert os.path.exists('game_rules.json'), "Required file game_rules.json is missing"
 
     def test_game_data_json_exists(self):
-        """Verify game_data.json exists."""
-        assert os.path.exists('game_data.json'), "Required file game_data.json is missing"
+        """Verify game_content.json exists."""
+        assert os.path.exists('game_content.json'), "Required file game_content.json is missing"
 
     def test_story_content_json_exists(self):
         """Verify story_content.json exists."""
         assert os.path.exists('story_content.json'), "Required file story_content.json is missing"
 
     def test_game_config_json_is_valid(self):
-        """Verify game_config.json contains valid JSON."""
-        with open('game_config.json', 'r', encoding='utf-8') as f:
+        """Verify game_rules.json contains valid JSON."""
+        with open('game_rules.json', 'r', encoding='utf-8') as f:
             data = json.load(f)  # Will raise JSONDecodeError if invalid
-        assert isinstance(data, dict), "game_config.json should contain a JSON object"
+        assert isinstance(data, dict), "game_rules.json should contain a JSON object"
 
     def test_game_data_json_is_valid(self):
-        """Verify game_data.json contains valid JSON."""
-        with open('game_data.json', 'r', encoding='utf-8') as f:
+        """Verify game_content.json contains valid JSON."""
+        with open('game_content.json', 'r', encoding='utf-8') as f:
             data = json.load(f)  # Will raise JSONDecodeError if invalid
-        assert isinstance(data, dict), "game_data.json should contain a JSON object"
+        assert isinstance(data, dict), "game_content.json should contain a JSON object"
 
     def test_story_content_json_is_valid(self):
         """Verify story_content.json contains valid JSON."""
@@ -51,17 +51,17 @@ class TestJSONFilesExist:
 
 
 class TestGameConfigStructure:
-    """Verify game_config.json has all required sections and keys."""
+    """Verify game_rules.json has all required sections and keys."""
 
     @pytest.fixture(scope='class')
     def config_data(self):
-        """Load game_config.json once for all tests."""
-        with open('game_config.json', 'r', encoding='utf-8') as f:
+        """Load game_rules.json once for all tests."""
+        with open('game_rules.json', 'r', encoding='utf-8') as f:
             return json.load(f)
 
     def test_has_display_section(self, config_data):
         """Verify display section exists."""
-        assert 'display' in config_data, "Missing required 'display' section in game_config.json"
+        assert 'display' in config_data, "Missing required 'display' section in game_rules.json"
 
     def test_display_has_required_keys(self, config_data):
         """Verify display section has all required keys."""
@@ -70,11 +70,11 @@ class TestGameConfigStructure:
                         'ui_height', 'sidebar_width', 'log_width', 'panel_height']
 
         for key in required_keys:
-            assert key in display, f"Missing required key 'display.{key}' in game_config.json"
+            assert key in display, f"Missing required key 'display.{key}' in game_rules.json"
 
     def test_has_ui_section(self, config_data):
         """Verify ui section exists."""
-        assert 'ui' in config_data, "Missing required 'ui' section in game_config.json"
+        assert 'ui' in config_data, "Missing required 'ui' section in game_rules.json"
 
     def test_ui_has_required_keys(self, config_data):
         """Verify ui section has all required keys."""
@@ -84,11 +84,11 @@ class TestGameConfigStructure:
                         'message_line_spacing', 'message_button_spacing']
 
         for key in required_keys:
-            assert key in ui, f"Missing required key 'ui.{key}' in game_config.json"
+            assert key in ui, f"Missing required key 'ui.{key}' in game_rules.json"
 
     def test_has_gameplay_section(self, config_data):
         """Verify gameplay section exists."""
-        assert 'gameplay' in config_data, "Missing required 'gameplay' section in game_config.json"
+        assert 'gameplay' in config_data, "Missing required 'gameplay' section in game_rules.json"
 
     def test_gameplay_has_required_keys(self, config_data):
         """Verify gameplay section has all required keys."""
@@ -99,11 +99,11 @@ class TestGameConfigStructure:
                         'virus_damage_per_turn']
 
         for key in required_keys:
-            assert key in gameplay, f"Missing required key 'gameplay.{key}' in game_config.json"
+            assert key in gameplay, f"Missing required key 'gameplay.{key}' in game_rules.json"
 
     def test_has_audio_section(self, config_data):
         """Verify audio section exists."""
-        assert 'audio' in config_data, "Missing required 'audio' section in game_config.json"
+        assert 'audio' in config_data, "Missing required 'audio' section in game_rules.json"
 
     def test_audio_has_required_keys(self, config_data):
         """Verify audio section has all required keys."""
@@ -111,11 +111,11 @@ class TestGameConfigStructure:
         required_keys = ['default_fade_time']
 
         for key in required_keys:
-            assert key in audio, f"Missing required key 'audio.{key}' in game_config.json"
+            assert key in audio, f"Missing required key 'audio.{key}' in game_rules.json"
 
     def test_has_room_generation_section(self, config_data):
         """Verify room_generation section exists."""
-        assert 'room_generation' in config_data, "Missing required 'room_generation' section in game_config.json"
+        assert 'room_generation' in config_data, "Missing required 'room_generation' section in game_rules.json"
 
     def test_room_generation_has_required_keys(self, config_data):
         """Verify room_generation section has all required keys."""
@@ -127,11 +127,11 @@ class TestGameConfigStructure:
                         'exploit_pickups_per_level', 'permanent_upgrades_per_level']
 
         for key in required_keys:
-            assert key in room_gen, f"Missing required key 'room_generation.{key}' in game_config.json"
+            assert key in room_gen, f"Missing required key 'room_generation.{key}' in game_rules.json"
 
     def test_has_balance_section(self, config_data):
         """Verify balance section exists."""
-        assert 'balance' in config_data, "Missing required 'balance' section in game_config.json"
+        assert 'balance' in config_data, "Missing required 'balance' section in game_rules.json"
 
     def test_balance_has_required_keys(self, config_data):
         """Verify balance section has all required keys."""
@@ -147,26 +147,26 @@ class TestGameConfigStructure:
                         'enemy_trace_continuous_hostile', 'enemy_memory_turns']
 
         for key in required_keys:
-            assert key in balance, f"Missing required key 'balance.{key}' in game_config.json"
+            assert key in balance, f"Missing required key 'balance.{key}' in game_rules.json"
 
 
 class TestGameDataStructure:
-    """Verify game_data.json has all required sections and keys."""
+    """Verify game_content.json has all required sections and keys."""
 
     @pytest.fixture(scope='class')
     def game_data(self):
-        """Load game_data.json once for all tests."""
-        with open('game_data.json', 'r', encoding='utf-8') as f:
+        """Load game_content.json once for all tests."""
+        with open('game_content.json', 'r', encoding='utf-8') as f:
             return json.load(f)
 
     def test_has_enemy_types_section(self, game_data):
         """Verify enemy_types section exists."""
-        assert 'enemy_types' in game_data, "Missing required 'enemy_types' section in game_data.json"
+        assert 'enemy_types' in game_data, "Missing required 'enemy_types' section in game_content.json"
 
     def test_enemy_types_not_empty(self, game_data):
         """Verify enemy_types section has entries."""
         enemy_types = game_data['enemy_types']
-        assert len(enemy_types) > 0, "enemy_types section is empty in game_data.json"
+        assert len(enemy_types) > 0, "enemy_types section is empty in game_content.json"
 
     def test_each_enemy_type_has_required_keys(self, game_data):
         """Verify each enemy type has required attributes."""
@@ -175,16 +175,16 @@ class TestGameDataStructure:
 
         for enemy_id, enemy_data in enemy_types.items():
             for key in required_keys:
-                assert key in enemy_data, f"Enemy '{enemy_id}' missing required key '{key}' in game_data.json"
+                assert key in enemy_data, f"Enemy '{enemy_id}' missing required key '{key}' in game_content.json"
 
     def test_has_exploits_section(self, game_data):
         """Verify exploits section exists."""
-        assert 'exploits' in game_data, "Missing required 'exploits' section in game_data.json"
+        assert 'exploits' in game_data, "Missing required 'exploits' section in game_content.json"
 
     def test_exploits_not_empty(self, game_data):
         """Verify exploits section has entries."""
         exploits = game_data['exploits']
-        assert len(exploits) > 0, "exploits section is empty in game_data.json"
+        assert len(exploits) > 0, "exploits section is empty in game_content.json"
 
     def test_each_exploit_has_required_keys(self, game_data):
         """Verify each exploit has required attributes."""
@@ -193,27 +193,27 @@ class TestGameDataStructure:
 
         for exploit_id, exploit_data in exploits.items():
             for key in required_keys:
-                assert key in exploit_data, f"Exploit '{exploit_id}' missing required key '{key}' in game_data.json"
+                assert key in exploit_data, f"Exploit '{exploit_id}' missing required key '{key}' in game_content.json"
 
     def test_has_upgrades_section(self, game_data):
         """Verify upgrades section exists."""
-        assert 'upgrades' in game_data, "Missing required 'upgrades' section in game_data.json"
+        assert 'upgrades' in game_data, "Missing required 'upgrades' section in game_content.json"
 
     def test_upgrades_not_empty(self, game_data):
         """Verify upgrades section has entries."""
         upgrades = game_data['upgrades']
-        assert len(upgrades) > 0, "upgrades section is empty in game_data.json"
+        assert len(upgrades) > 0, "upgrades section is empty in game_content.json"
 
     def test_has_network_configs_section(self, game_data):
         """Verify network_configs section exists."""
-        assert 'network_configs' in game_data, "Missing required 'network_configs' section in game_data.json"
+        assert 'network_configs' in game_data, "Missing required 'network_configs' section in game_content.json"
 
     def test_network_configs_has_all_levels(self, game_data):
         """Verify network configs exist for all 3 levels."""
         network_configs = game_data['network_configs']
 
         for level in ['1', '2', '3']:
-            assert level in network_configs, f"Missing network config for level {level} in game_data.json"
+            assert level in network_configs, f"Missing network config for level {level} in game_content.json"
 
     def test_each_network_config_has_required_keys(self, game_data):
         """Verify each network config has required attributes."""
@@ -225,32 +225,32 @@ class TestGameDataStructure:
 
         for level, config in network_configs.items():
             for key in required_keys:
-                assert key in config, f"Network config level {level} missing required key '{key}' in game_data.json"
+                assert key in config, f"Network config level {level} missing required key '{key}' in game_content.json"
 
     def test_has_difficulty_multipliers_section(self, game_data):
         """Verify difficulty_multipliers section exists."""
-        assert 'difficulty_multipliers' in game_data, "Missing required 'difficulty_multipliers' section in game_data.json"
+        assert 'difficulty_multipliers' in game_data, "Missing required 'difficulty_multipliers' section in game_content.json"
 
     def test_difficulty_multipliers_has_all_levels(self, game_data):
         """Verify difficulty multipliers exist for all difficulty levels."""
         multipliers = game_data['difficulty_multipliers']
 
         for difficulty in ['easy', 'normal', 'hard', 'nightmare']:
-            assert difficulty in multipliers, f"Missing difficulty multiplier for '{difficulty}' in game_data.json"
+            assert difficulty in multipliers, f"Missing difficulty multiplier for '{difficulty}' in game_content.json"
 
     def test_has_balance_section(self, game_data):
-        """Verify balance section exists in game_data.json."""
-        assert 'balance' in game_data, "Missing required 'balance' section in game_data.json"
+        """Verify balance section exists in game_content.json."""
+        assert 'balance' in game_data, "Missing required 'balance' section in game_content.json"
 
     def test_balance_has_ai_behavior(self, game_data):
         """Verify balance.ai_behavior section exists."""
         balance = game_data['balance']
-        assert 'ai_behavior' in balance, "Missing required 'balance.ai_behavior' section in game_data.json"
+        assert 'ai_behavior' in balance, "Missing required 'balance.ai_behavior' section in game_content.json"
 
     def test_balance_has_cpu_restore_values(self, game_data):
-        """Verify balance section exists (cpu_restore values moved to game_config.json)."""
+        """Verify balance section exists (cpu_restore values moved to game_rules.json)."""
         balance = game_data['balance']
-        # NOTE: cpu_restore_min/max moved to game_config.json (single source of truth)
+        # NOTE: cpu_restore_min/max moved to game_rules.json (single source of truth)
         # This test now just verifies the balance section exists
         assert 'ai_behavior' in balance or 'code_hacks' in balance, \
             "Balance section should have ai_behavior or code_hacks subsections"
@@ -258,7 +258,7 @@ class TestGameDataStructure:
     def test_balance_has_code_hacks_section(self, game_data):
         """Verify balance.code_hacks section exists."""
         balance = game_data['balance']
-        assert 'code_hacks' in balance, "Missing required 'balance.code_hacks' section in game_data.json"
+        assert 'code_hacks' in balance, "Missing required 'balance.code_hacks' section in game_content.json"
 
 
 class TestStoryContentStructure:
@@ -340,7 +340,7 @@ class TestConfigRealObjectInstantiation:
         assert RoomGenerationConfig.COOLING_NODES_PER_LEVEL >= 0
 
     def test_data_loader_loads_game_data_successfully(self):
-        """Verify DataLoader can load game_data.json."""
+        """Verify DataLoader can load game_content.json."""
         from data_loading import DataLoader
 
         # Clear cache to force fresh load
@@ -411,7 +411,7 @@ class TestConfigRealObjectInstantiation:
         GameConfig.load_from_json()
         GameBalance.load_from_json()  # CRITICAL: Load balance config too
 
-        # Get cpu_restore_min from GameBalance (now in game_config.json)
+        # Get cpu_restore_min from GameBalance (now in game_rules.json)
         cpu_restore_min = GameBalance.CPU_RESTORE_MIN
 
         # Create code hack
@@ -440,17 +440,7 @@ class TestConfigRealObjectInstantiation:
         assert player.cpu > initial_cpu
         assert player.cpu >= initial_cpu + cpu_restore_min or player.cpu == player.max_cpu
 
-    def test_exploit_cpu_cost_lookup(self):
-        """Verify exploit CPU costs can be looked up from real data."""
-        from game_config import GameBalance
-
-        # Test a few known exploits
-        exploits_to_test = ['shadow_step', 'buffer_overflow', 'threat_scan']
-
-        for exploit_name in exploits_to_test:
-            cost = GameBalance.get_exploit_cpu_cost(exploit_name)
-            assert isinstance(cost, int), f"CPU cost for {exploit_name} should be an integer"
-            assert cost > 0, f"CPU cost for {exploit_name} should be positive"
+    # NOTE: exploit_cpu_costs removed from game design - exploits no longer have CPU costs
 
 
 class TestConfigValueConsistency:
@@ -458,18 +448,18 @@ class TestConfigValueConsistency:
 
     @pytest.fixture(scope='class')
     def config_data(self):
-        """Load game_config.json once for all tests."""
-        with open('game_config.json', 'r', encoding='utf-8') as f:
+        """Load game_rules.json once for all tests."""
+        with open('game_rules.json', 'r', encoding='utf-8') as f:
             return json.load(f)
 
     @pytest.fixture(scope='class')
     def game_data(self):
-        """Load game_data.json once for all tests."""
-        with open('game_data.json', 'r', encoding='utf-8') as f:
+        """Load game_content.json once for all tests."""
+        with open('game_content.json', 'r', encoding='utf-8') as f:
             return json.load(f)
 
     def test_cpu_restore_min_less_than_max(self, config_data):
-        """Verify CPU restore min is less than max (now in game_config.json)."""
+        """Verify CPU restore min is less than max (now in game_rules.json)."""
         balance = config_data['balance']
         assert balance['cpu_restore_min'] < balance['cpu_restore_max'], \
             "cpu_restore_min should be less than cpu_restore_max"

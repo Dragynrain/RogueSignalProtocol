@@ -80,14 +80,15 @@ class MessageLog:
 
 class GameStateManager:
     """Manages core game state like level, turn, and game status."""
-    
+
     def __init__(self):
         self.level: int = 1
         self.turn: int = 0
         self.game_over: bool = False
         self.admin_spawned: bool = False
         self.dungeon_seed: int = random.randint(1, GameConfig.DUNGEON_SEED_RANGE)
-        
+        self.just_loaded: bool = False  # Flag to prevent immediate enemy state updates after load
+
         # Game effects
         self.threat_scan_turns: int = 0
         self.noise_locations: List[Position] = []

@@ -249,6 +249,11 @@ class GameTurnManager:
 
     def _update_enemy_awareness(self):
         """PHASE 1: Update enemy awareness states and handle communication."""
+        # Skip enemy state updates on the first turn after loading to preserve saved states
+        if hasattr(self.game_engine.game_state, 'just_loaded') and self.game_engine.game_state.just_loaded:
+            self.game_engine.game_state.just_loaded = False
+            return
+
         for enemy in self.game_engine.enemies[:]:
             can_see = enemy.can_see_player(self.game_engine.player, self.game_engine.game_map)
 
