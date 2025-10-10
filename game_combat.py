@@ -132,8 +132,8 @@ class ExploitSystem:
             return self._execute_log_wiper()
         elif exploit_key == 'antivirus':
             return self._execute_antivirus()
-        elif exploit_key == 'emp_burst':
-            return self._execute_emp_burst(target, exploit.range)
+        elif exploit_key == 'denial_of_service':
+            return self._execute_denial_of_service(target, exploit.range)
         elif exploit_key == 'memory_leak':
             return self._execute_memory_leak(target)
         elif exploit_key == 'network_scan':
@@ -165,10 +165,11 @@ class ExploitSystem:
     def _execute_noise_maker(self, target: Position) -> bool:
         """Execute noise maker exploit."""
         self.game.sound_manager.play_sound("exploit_noise_maker")
+        exploit = GameData.EXPLOITS['noise_maker']
         attracted = 0
         for enemy in self.game.enemies:
             if (enemy.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.RANDOM, EnemyMovement.PATROL] and
-                enemy.position.distance_to(target) <= 10):
+                enemy.position.distance_to(target) <= exploit.effect_radius):
                 if enemy.type_data.movement == EnemyMovement.PATROL:
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = 3
@@ -222,7 +223,7 @@ class ExploitSystem:
         return self._damage_enemy(enemy, 50)
     
     def _disable_area_enemies(self, target: Position, radius: int, duration: int) -> int:
-        """Disable enemies in area and return count."""
+        """Disable enemies in area for the specified duration and return count."""
         count = 0
         for enemy in self.game.enemies:
             if enemy.position.distance_to(target) <= radius:
@@ -233,9 +234,18 @@ class ExploitSystem:
         return count
 
     def _execute_system_crash(self, target: Position, exploit_range: int) -> bool:
-        """Execute system crash exploit."""
+        """Execute system crash exploit - untargeted AoE around player."""
         self.game.sound_manager.play_sound("exploit_system_crash")
-        count = self._disable_area_enemies(target, exploit_range, 4)
+        # System Crash is an emergency untargeted AoE centered on player
+        exploit = GameData.EXPLOITS['system_crash']
+        player_pos = self.game.player.position
+        count = 0
+        for enemy in self.game.enemies:
+            if enemy.position.distance_to(player_pos) <= exploit.effect_radius:
+                enemy.disabled_turns = exploit.stun_duration
+                enemy.state = EnemyState.UNAWARE
+                enemy.alert_timer = 0
+                count += 1
         self.game.message_log.add_message(f"System crash: {count} disabled")
         return True
     
@@ -296,19 +306,22 @@ class ExploitSystem:
         
         return True
     
-    def _execute_emp_burst(self, target: Position, exploit_range: int) -> bool:
-        """Execute EMP burst exploit."""
-        self.game.sound_manager.play_sound("exploit_emp_burst")
-        count = self._disable_area_enemies(target, exploit_range, 6)
-        self.game.message_log.add_message(f"EMP: {count} disabled")
+    def _execute_denial_of_service(self, target: Position, exploit_range: int) -> bool:
+        """Execute Denial of Service exploit."""
+        self.game.sound_manager.play_sound("exploit_denial_of_service")
+        # Denial of Service uses configured effect_radius at the target location
+        exploit = GameData.EXPLOITS['denial_of_service']
+        count = self._disable_area_enemies(target, exploit.effect_radius, exploit.stun_duration)
+        self.game.message_log.add_message(f"DoS: {count} disabled")
         return True
     
     def _execute_memory_leak(self, target: Position) -> bool:
         """Execute memory leak exploit - makes enemies forget they saw the player."""
         self.game.sound_manager.play_sound("exploit_memory_leak")
+        exploit = GameData.EXPLOITS['memory_leak']
         count = 0
         for enemy in self.game.enemies:
-            if enemy.position.distance_to(target) <= 1:
+            if enemy.position.distance_to(target) <= exploit.effect_radius:
                 enemy.state = EnemyState.UNAWARE
                 enemy.last_seen_player = None
                 enemy.alert_timer = 0

@@ -100,7 +100,7 @@ def validate_game_data():
 
     # Required top-level sections
     required_sections = ['enemy_types', 'exploits', 'upgrades', 'network_configs',
-                         'exploit_cpu_costs', 'difficulty_multipliers', 'balance']
+                         'difficulty_multipliers', 'balance']
     for section in required_sections:
         if section not in data:
             print(f"ERROR: Missing section '{section}' in game_data.json")
@@ -127,15 +127,10 @@ def validate_game_data():
     # Validate exploits
     required_exploits = ['shadow_step', 'data_mimic', 'noise_maker', 'buffer_overflow',
                          'code_injection', 'system_crash', 'threat_scan', 'network_scan',
-                         'log_wiper', 'antivirus', 'emp_burst', 'memory_leak']
+                         'log_wiper', 'antivirus', 'denial_of_service', 'memory_leak']
     for exploit in required_exploits:
         if exploit not in data['exploits']:
             print(f"ERROR: Missing exploit '{exploit}' in game_data.json")
-            return False
-
-        # Check exploit has CPU cost
-        if exploit not in data['exploit_cpu_costs']:
-            print(f"ERROR: Missing CPU cost for exploit '{exploit}' in game_data.json exploit_cpu_costs")
             return False
 
     # Validate network configs for levels 1, 2, 3

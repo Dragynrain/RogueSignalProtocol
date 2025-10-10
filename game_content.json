@@ -3,7 +3,7 @@
     "scanner": {
       "symbol": "S",
       "cpu": 35,
-      "vision": 4,
+      "vision": 5,
       "movement": "STATIC",
       "name": "Scanner",
       "damage": 0,
@@ -15,7 +15,7 @@
       "vision": 4,
       "movement": "PATROL",
       "name": "Patrol",
-      "damage": 15,
+      "damage": 10,
       "description": "Larger coverage, moderate damage"
     },
     "bot": {
@@ -30,11 +30,11 @@
     "firewall": {
       "symbol": "F",
       "cpu": 80,
-      "vision": 5,
+      "vision": 3,
       "movement": "STATIC",
       "name": "Firewall",
-      "damage": 0,
-      "description": "Massive HP, huge vision, no attack"
+      "damage": 5,
+      "description": "Massive HP, huge vision, light damage"
     },
     "hunter": {
       "symbol": "H",
@@ -42,14 +42,14 @@
       "vision": 6,
       "movement": "RANDOM",
       "name": "Hunter",
-      "damage": 22,
+      "damage": 15,
       "description": "Elite threat - good vision, high damage"
     },
     "virus": {
       "symbol": "V",
       "cpu": 35,
       "vision": 4,
-      "movement": "RANDOM",
+      "movement": "VIRUS",
       "name": "Virus",
       "damage": 0,
       "description": "No direct damage - applies virus effect instead"
@@ -60,8 +60,8 @@
       "vision": 4,
       "movement": "RANDOM",
       "name": "Inhibitor",
-      "damage": 5,
-      "description": "Low damage, slows player movement"
+      "damage": 0,
+      "description": "No direct damage - slows player movement instead"
     },
     "admin": {
       "symbol": "A",
@@ -82,6 +82,7 @@
       "category": "stealth",
       "damage": 0,
       "targeting": "SINGLE",
+      "effect_radius": 0,
       "description": "Teleport to any shadow zone within range (6 tiles)"
     },
     "data_mimic": {
@@ -92,6 +93,7 @@
       "category": "stealth",
       "damage": 0,
       "targeting": "NONE",
+      "effect_radius": 0,
       "description": "Become invisible to enemies for 5 turns"
     },
     "noise_maker": {
@@ -102,6 +104,7 @@
       "category": "stealth",
       "damage": 0,
       "targeting": "SINGLE",
+      "effect_radius": 10,
       "description": "Create distraction that lasts 8 turns at target location"
     },
     "buffer_overflow": {
@@ -112,6 +115,7 @@
       "category": "combat",
       "damage": 40,
       "targeting": "SINGLE",
+      "effect_radius": 0,
       "description": "Devastating melee attack (40 damage, 1 tile range)"
     },
     "code_injection": {
@@ -122,17 +126,20 @@
       "category": "combat",
       "damage": 25,
       "targeting": "SINGLE",
+      "effect_radius": 0,
       "description": "Ranged attack (25 damage, 5 tile range)"
     },
     "system_crash": {
       "name": "System Crash",
-      "ram": 4,
-      "heat": 45,
-      "range": 3,
-      "category": "combat",
+      "ram": 3,
+      "heat": 50,
+      "range": 0,
+      "category": "emergency",
       "damage": 30,
-      "targeting": "AREA",
-      "description": "Area attack (30 damage) that disables enemies for 4 turns"
+      "targeting": "NONE",
+      "stun_duration": 3,
+      "effect_radius": 3,
+      "description": "Emergency panic button - crashes and stuns all enemies within 3 spaces for 3 turns"
     },
     "threat_scan": {
       "name": "Threat Scan",
@@ -142,6 +149,7 @@
       "category": "utility",
       "damage": 0,
       "targeting": "NONE",
+      "effect_radius": 0,
       "description": "Reveals ALL enemies, vision ranges, & movement paths (5 turns)"
     },
     "network_scan": {
@@ -152,6 +160,7 @@
       "category": "utility",
       "damage": 0,
       "targeting": "NONE",
+      "effect_radius": 0,
       "description": "Reveals all cooling nodes, CPU nodes, and ghost nodes on the level"
     },
     "log_wiper": {
@@ -162,6 +171,7 @@
       "category": "utility",
       "damage": 0,
       "targeting": "NONE",
+      "effect_radius": 0,
       "description": "Significantly reduces detection level (-30%)"
     },
     "antivirus": {
@@ -172,17 +182,20 @@
       "category": "utility",
       "damage": 0,
       "targeting": "NONE",
+      "effect_radius": 0,
       "description": "Purges all negative status effects (virus, slow)"
     },
-    "emp_burst": {
-      "name": "EMP Burst",
-      "ram": 4,
-      "heat": 50,
-      "range": 3,
-      "category": "emergency",
+    "denial_of_service": {
+      "name": "Denial of Service",
+      "ram": 3,
+      "heat": 40,
+      "range": 4,
+      "category": "combat",
       "damage": 20,
       "targeting": "AREA",
-      "description": "Area attack (20 damage) that disables all nearby enemies"
+      "stun_duration": 5,
+      "effect_radius": 1,
+      "description": "Targeted area attack (20 damage, radius 1) that disables enemies for 5 turns"
     },
     "memory_leak": {
       "name": "Memory Leak",
@@ -192,6 +205,7 @@
       "category": "combat",
       "damage": 0,
       "targeting": "AREA",
+      "effect_radius": 1,
       "description": "Target enemies forget they saw you (3x3 area)"
     }
   },
@@ -207,7 +221,7 @@
     "cpu_boost": {
       "name": "Processing Core",
       "symbol": "]",
-      "color": [50, 255, 50],
+      "color": [255, 50, 20],
       "stat_type": "cpu",
       "bonus_amount": 20,
       "description": "Permanently increases CPU capacity by 20"
@@ -229,12 +243,12 @@
       "background_trace": 1,
       "trace_alert_to_hostile": 1,
       "trace_continuous_hostile": 0.1,
-      "cooling_nodes": 8,
+      "cooling_nodes": 6,
       "cpu_nodes": 6,
       "ghost_nodes": 6,
-      "code_hacks": 10,
+      "code_hacks": 12,
       "exploit_pickups": 4,
-      "permanent_upgrades": 2
+      "permanent_upgrades": 1
     },
     "2": {
       "enemies": 22,
@@ -243,10 +257,10 @@
       "background_trace": 2,
       "trace_alert_to_hostile": 2,
       "trace_continuous_hostile": 0.2,
-      "cooling_nodes": 6,
+      "cooling_nodes": 4,
       "cpu_nodes": 4,
       "ghost_nodes": 4,
-      "code_hacks": 8,
+      "code_hacks": 10,
       "exploit_pickups": 3,
       "permanent_upgrades": 2
     },
@@ -257,27 +271,13 @@
       "background_trace": 3,
       "trace_alert_to_hostile": 3,
       "trace_continuous_hostile": 0.3,
-      "cooling_nodes": 4,
+      "cooling_nodes": 2,
       "cpu_nodes": 2,
       "ghost_nodes": 2,
-      "code_hacks": 6,
+      "code_hacks": 5,
       "exploit_pickups": 2,
-      "permanent_upgrades": 2
+      "permanent_upgrades": 3
     }
-  },
-  "exploit_cpu_costs": {
-    "shadow_step": 10,
-    "buffer_overflow": 15,
-    "code_injection": 20,
-    "system_crash": 25,
-    "threat_scan": 5,
-    "log_wiper": 12,
-    "antivirus": 18,
-    "emp_burst": 30,
-    "memory_leak": 8,
-    "data_mimic": 15,
-    "noise_maker": 10,
-    "network_scan": 8
   },
   "difficulty_multipliers": {
     "easy": 0.8,

@@ -403,7 +403,7 @@ class TestSaveLoadMidGameplay:
             game.player.inventory_manager.equipped_exploits = [
                 "buffer_overflow",
                 "code_injection",
-                "emp_burst"
+                "denial_of_service"
             ]
             game.player.inventory_manager.max_equipped_exploits = 6
 
@@ -418,7 +418,7 @@ class TestSaveLoadMidGameplay:
             assert len(loaded_game.player.inventory_manager.equipped_exploits) == 3, "Equipped exploits count preserved"
             assert "buffer_overflow" in loaded_game.player.inventory_manager.equipped_exploits
             assert "code_injection" in loaded_game.player.inventory_manager.equipped_exploits
-            assert "emp_burst" in loaded_game.player.inventory_manager.equipped_exploits
+            assert "denial_of_service" in loaded_game.player.inventory_manager.equipped_exploits
             assert loaded_game.player.inventory_manager.max_equipped_exploits == 6, "Max equipped preserved"
 
     def test_save_atomic_write_safety(self):
