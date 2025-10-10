@@ -911,11 +911,14 @@ class UIRenderer:
     
     def render_system_log(self, console: tcod.console.Console, game):
         """Render the system log on the right side."""
-        # Draw log border
+        # Draw log border - start from y=0 to contain "Press ? for help" text
         for y in range(GameConfig.SCREEN_HEIGHT):
             render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '│', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
-        
-        # Log header - moved down one line to avoid covering status bar
+
+        # Draw top border to contain the "Press ? for help" text from status bar
+        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 0, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+
+        # Log header
         render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
         render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 2, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
         
