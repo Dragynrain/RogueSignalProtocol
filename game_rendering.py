@@ -722,28 +722,27 @@ class UIRenderer:
         # Clear the entire top line (full screen width)
         for x in range(GameConfig.SCREEN_WIDTH):
             render_char_safe(console, x, 0, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
-        
+
         # Color coding for status values
         cpu_color = self._get_cpu_color(game.player.cpu)
         heat_color = self._get_heat_color(game.player.heat)
         trace_color = self._get_trace_color(game.player.trace_level)
         ram_color = Colors.RED if game.player.ram_used > game.player.ram_total else Colors.GREEN
-        
-        # Build status line
+
+        # Build status line (only left side stats - help text goes in log panel)
         status_parts = [
             f"CPU:{game.player.cpu:3d}/{game.player.max_cpu}",
             f"Heat:{game.player.heat:3d}°C/{game.player.max_heat}°C" if game.player.max_heat > 100 else f"Heat:{game.player.heat:3d}°C",
             f"Trace:{int(game.player.trace_level):3d}%",
-            f"RAM:{game.player.ram_used}/{game.player.ram_total}GB",
-            "Press ? for help"
+            f"RAM:{game.player.ram_used}/{game.player.ram_total}GB"
         ]
-        
-        colors = [cpu_color, heat_color, trace_color, ram_color, Colors.ELECTRIC_PURPLE]
-        
+
+        colors = [cpu_color, heat_color, trace_color, ram_color]
+
         x_pos = 1
         for part, color in zip(status_parts, colors):
-            # Allow status bar to extend across full width
-            if x_pos + len(part) < GameConfig.SCREEN_WIDTH - 1:
+            # Keep status bar in game area only
+            if x_pos + len(part) < GameConfig.GAME_AREA_WIDTH() - 1:
                 render_char_safe(console, x_pos, 0, part, fg=color, bg=Colors.UI_BG)
                 x_pos += len(part) + 2
     
@@ -911,12 +910,14 @@ class UIRenderer:
     
     def render_system_log(self, console: tcod.console.Console, game):
         """Render the system log on the right side."""
-        # Draw log border - start from y=0 to contain "Press ? for help" text
+        # Draw log border
         for y in range(GameConfig.SCREEN_HEIGHT):
             render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '│', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
 
-        # Draw top border to contain the "Press ? for help" text from status bar
-        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 0, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+        # Help text in top-right corner (properly positioned in log panel)
+        help_text = "Press ? for help"
+        help_x = GameConfig.GAME_AREA_WIDTH() + 2  # Leave a space after border
+        render_char_safe(console, help_x, 0, help_text, fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
 
         # Log header
         render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
