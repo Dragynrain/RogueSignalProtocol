@@ -85,7 +85,7 @@ class GameBalance:
         try:
             return balance['player_stats'][stat_name]
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Player stat '{stat_name}' not found in game_data.json balance.player_stats"
+            error_msg = f"CRITICAL CONFIG ERROR: Player stat '{stat_name}' not found in game_content.json balance.player_stats"
             print(error_msg)
             import logging
             logging.error(error_msg)
@@ -103,7 +103,7 @@ class GameBalance:
         try:
             return balance['combat'][value_name]
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Combat value '{value_name}' not found in game_data.json balance.combat"
+            error_msg = f"CRITICAL CONFIG ERROR: Combat value '{value_name}' not found in game_content.json balance.combat"
             print(error_msg)
             import logging
             logging.error(error_msg)
@@ -121,7 +121,7 @@ class GameBalance:
         try:
             return balance['code_hacks'][value_name]
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Code hack value '{value_name}' not found in game_data.json balance.code_hacks"
+            error_msg = f"CRITICAL CONFIG ERROR: Code hack value '{value_name}' not found in game_content.json balance.code_hacks"
             print(error_msg)
             import logging
             logging.error(error_msg)
@@ -139,7 +139,7 @@ class GameBalance:
         try:
             return balance['temporary_effects'][value_name]
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Temporary effect '{value_name}' not found in game_data.json balance.temporary_effects"
+            error_msg = f"CRITICAL CONFIG ERROR: Temporary effect '{value_name}' not found in game_content.json balance.temporary_effects"
             print(error_msg)
             import logging
             logging.error(error_msg)
@@ -168,14 +168,14 @@ class GameBalance:
 
     @staticmethod
     def get_exploit_cpu_cost(exploit_name: str) -> int:
-        """Get CPU cost for an exploit - uses game_data.json."""
+        """Get CPU cost for an exploit - uses game_content.json."""
         # Delegate to GameBalance which loads from JSON
         from game_config import GameBalance
         return GameBalance.get_exploit_cpu_cost(exploit_name)
 
     @staticmethod
     def get_enemy_difficulty_multiplier(difficulty: str) -> float:
-        """Get difficulty multiplier for enemies - uses game_data.json."""
+        """Get difficulty multiplier for enemies - uses game_content.json."""
         # Delegate to GameBalance which loads from JSON
         from game_config import GameBalance
         return GameBalance.get_enemy_difficulty_multiplier(difficulty)

@@ -155,7 +155,7 @@ class GameConfig:
     def load_from_json(cls):
         """Load configuration from JSON file - FAILS if required values missing."""
         try:
-            with open('game_config.json', 'r', encoding='utf-8') as f:
+            with open('game_rules.json', 'r', encoding='utf-8') as f:
                 cls._config_data = json.load(f)
 
             # Update class attributes - NO FALLBACKS, fail if missing
@@ -186,25 +186,25 @@ class GameConfig:
             cls.MESSAGE_BUTTON_SPACING = cls._get_required('ui.message_button_spacing')
 
         except FileNotFoundError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: game_config.json not found"
+            error_msg = f"CRITICAL CONFIG ERROR: game_rules.json not found"
             print(error_msg)
             logging.error(error_msg)
             print(f"Exception: {str(e)}")
-            raise FileNotFoundError(f"Required file game_config.json is missing") from e
+            raise FileNotFoundError(f"Required file game_rules.json is missing") from e
         except json.JSONDecodeError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in game_config.json"
+            error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in game_rules.json"
             print(error_msg)
             logging.error(error_msg)
             print(f"Exception: {str(e)}")
-            raise json.JSONDecodeError(f"game_config.json contains invalid JSON", e.doc, e.pos) from e
+            raise json.JSONDecodeError(f"game_rules.json contains invalid JSON", e.doc, e.pos) from e
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Missing required config value in game_config.json"
+            error_msg = f"CRITICAL CONFIG ERROR: Missing required config value in game_rules.json"
             print(error_msg)
             logging.error(error_msg)
             print(f"Exception: {str(e)}")
             if cls._config_data:
                 print(f"Available top-level sections: {list(cls._config_data.keys())}")
-            raise KeyError(f"Required configuration value missing from game_config.json: {e}") from e
+            raise KeyError(f"Required configuration value missing from game_rules.json: {e}") from e
 
     @classmethod
     def _ensure_loaded(cls):
@@ -238,7 +238,7 @@ class GameConfig:
                 value = value[k]
             return value
         except (KeyError, TypeError) as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Required key '{key}' not found in game_config.json"
+            error_msg = f"CRITICAL CONFIG ERROR: Required key '{key}' not found in game_rules.json"
             print(error_msg)
             logging.error(error_msg)
 
@@ -377,8 +377,8 @@ class GameBalance:
         cls.PATHFINDING_TIMEOUT_ATTEMPTS = GameConfig._get_required('balance.pathfinding_timeout_attempts')
         cls.ENHANCED_VISION_BONUS = GameConfig._get_required('balance.enhanced_vision_bonus')
         cls.SHADOW_VISION_REDUCTION_FACTOR = GameConfig._get_required('balance.shadow_vision_reduction_factor')
-        cls.ENEMY_TRACE_ALERT_TO_HOSTILE = GameConfig._get_required('balance.enemy_trace_alert_to_hostile')
-        cls.ENEMY_TRACE_CONTINUOUS_HOSTILE = GameConfig._get_required('balance.enemy_trace_continuous_hostile')
+        cls.ENEMY_TRACE_ALERT_TO_HOSTILE = GameConfig._get_required('balance.ai_behavior.enemy_trace_alert_to_hostile')
+        cls.ENEMY_TRACE_CONTINUOUS_HOSTILE = GameConfig._get_required('balance.ai_behavior.enemy_trace_continuous_hostile')
         cls.ENEMY_MEMORY_TURNS = GameConfig._get_required('balance.enemy_memory_turns')
 
     @staticmethod
@@ -390,13 +390,13 @@ class GameBalance:
             costs = game_data['exploit_cpu_costs']
             return costs[exploit_name]
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Exploit '{exploit_name}' not found in game_data.json exploit_cpu_costs"
+            error_msg = f"CRITICAL CONFIG ERROR: Exploit '{exploit_name}' not found in game_content.json exploit_cpu_costs"
             print(error_msg)
             logging.error(error_msg)
             if 'exploit_cpu_costs' in game_data:
                 print(f"Available exploits: {list(game_data['exploit_cpu_costs'].keys())}")
             else:
-                print(f"'exploit_cpu_costs' section missing from game_data.json")
+                print(f"'exploit_cpu_costs' section missing from game_content.json")
                 print(f"Available sections: {list(game_data.keys())}")
             raise KeyError(f"Exploit CPU cost not found for: {exploit_name}") from e
 
@@ -409,13 +409,13 @@ class GameBalance:
             multipliers = game_data['difficulty_multipliers']
             return multipliers[difficulty]
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Difficulty '{difficulty}' not found in game_data.json difficulty_multipliers"
+            error_msg = f"CRITICAL CONFIG ERROR: Difficulty '{difficulty}' not found in game_content.json difficulty_multipliers"
             print(error_msg)
             logging.error(error_msg)
             if 'difficulty_multipliers' in game_data:
                 print(f"Available difficulties: {list(game_data['difficulty_multipliers'].keys())}")
             else:
-                print(f"'difficulty_multipliers' section missing from game_data.json")
+                print(f"'difficulty_multipliers' section missing from game_content.json")
                 print(f"Available sections: {list(game_data.keys())}")
             raise KeyError(f"Difficulty multiplier not found for: {difficulty}") from e
 

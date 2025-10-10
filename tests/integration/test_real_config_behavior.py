@@ -95,12 +95,12 @@ class TestRealConfigIntegration:
 
         mock_game = MockGame()
 
-        # Load balance values from JSON directly
-        with open('game_data.json', 'r') as f:
-            game_data = json.load(f)
+        # Load balance values from game_config.json (single source of truth)
+        with open('game_config.json', 'r') as f:
+            config_data = json.load(f)
 
-        cpu_restore_min = game_data['balance']['cpu_restore_min']
-        cpu_restore_max = game_data['balance']['cpu_restore_max']
+        cpu_restore_min = config_data['balance']['cpu_restore_min']
+        cpu_restore_max = config_data['balance']['cpu_restore_max']
 
         # Test CPU restore effect
         player.cpu = 50
@@ -320,8 +320,8 @@ class TestNoFallbackValuesUsed:
         assert GameConfig.MAX_TRACE_LEVEL == gameplay['max_trace_level']
         assert GameConfig.VIRUS_DAMAGE_PER_TURN == gameplay['virus_damage_per_turn']
 
-    def test_cpu_restore_values_in_game_data_match_game_config(self):
-        """Verify CPU restore values are consistent between files."""
+    def test_cpu_restore_values_only_in_game_config(self):
+        """Verify CPU restore values exist only in game_config.json (single source of truth)."""
         import json
 
         # Load both config files
@@ -330,9 +330,15 @@ class TestNoFallbackValuesUsed:
         with open('game_data.json', 'r') as f:
             data = json.load(f)
 
-        # Both should have the same CPU restore values
-        assert config['balance']['cpu_restore_min'] == data['balance']['cpu_restore_min']
-        assert config['balance']['cpu_restore_max'] == data['balance']['cpu_restore_max']
+        # Should exist in game_config.json
+        assert 'cpu_restore_min' in config['balance'], "cpu_restore_min should be in game_config.json"
+        assert 'cpu_restore_max' in config['balance'], "cpu_restore_max should be in game_config.json"
+
+        # Should NOT exist in game_data.json (removed to prevent duplication)
+        assert 'cpu_restore_min' not in data.get('balance', {}), \
+            "cpu_restore_min should NOT be in game_data.json (duplicates removed)"
+        assert 'cpu_restore_max' not in data.get('balance', {}), \
+            "cpu_restore_max should NOT be in game_data.json (duplicates removed)"
 
 
 class TestEnemyAIUsesRealConfig:

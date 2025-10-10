@@ -733,7 +733,7 @@ class UIRenderer:
         status_parts = [
             f"CPU:{game.player.cpu:3d}/{game.player.max_cpu}",
             f"Heat:{game.player.heat:3d}°C/{game.player.max_heat}°C" if game.player.max_heat > 100 else f"Heat:{game.player.heat:3d}°C",
-            f"Threat:{int(game.player.trace_level):3d}%",
+            f"Trace:{int(game.player.trace_level):3d}%",
             f"RAM:{game.player.ram_used}/{game.player.ram_total}GB",
             "Press ? for help"
         ]
