@@ -490,8 +490,8 @@ class Enemy:
         if len(self.move_queue) >= 3:
             return
 
-        # Random movement doesn't need a target
-        if self.type_data.movement == EnemyMovement.RANDOM and self.type != 'admin':
+        # Random movement doesn't need a target (unless hostile or admin - they always pathfind)
+        if self.type_data.movement == EnemyMovement.RANDOM and self.type != 'admin' and self.state != EnemyState.HOSTILE:
             next_move = self._calculate_random_move(game_map, player, game_engine)
             if next_move:
                 self.move_queue.append(next_move)
@@ -658,21 +658,20 @@ class Enemy:
 def create_pathfinding_cost_map(game_map, game_engine, moving_enemy):
     """Create cost map for TCOD A* pathfinding with optimizations.
 
-    Enemies are treated as high-cost obstacles (20x) rather than impassable walls,
-    allowing pathfinding around them when needed while preferring clear paths.
+    Enemies are treated as impassable obstacles (like walls), forcing pathfinding
+    to route around them or get as close as possible and wait.
     """
     # Start with base terrain map (cached in game_map)
     cost_map = game_map.get_walkability_map().copy()
 
-    # Mark enemy positions as high-cost (20x) but still passable
-    # This allows pathfinding around other enemies while preferring clear paths
+    # Mark enemy positions as impassable (cost = 0)
+    # This forces pathfinding to go around other enemies
     for enemy in game_engine.enemies:
         if enemy != moving_enemy:
             x, y = enemy.x, enemy.y
             if 0 <= x < game_map.width and 0 <= y < game_map.height:
-                # If the tile is walkable, make it high cost instead of blocking
-                if cost_map[x, y] > 0:
-                    cost_map[x, y] = cost_map[x, y] * 20  # High cost but not impassable
+                # Mark as impassable (0 cost means wall/blocked)
+                cost_map[x, y] = 0
 
     return cost_map
 
