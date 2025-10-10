@@ -213,14 +213,6 @@ class TestResourceBalance:
         with open(path, 'r', encoding='utf-8') as f:
             return json.load(f)
 
-    def test_exploit_cpu_costs_reasonable(self):
-        """Test that exploit CPU costs are within reasonable ranges."""
-        cpu_costs = self.game_data.get('exploit_cpu_costs', {})
-
-        for exploit_id, cost in cpu_costs.items():
-            assert cost > 0, f"Exploit '{exploit_id}' CPU cost must be positive"
-            assert cost <= 50, f"Exploit '{exploit_id}' CPU cost ({cost}) seems too high"
-
     def test_exploit_heat_costs_reasonable(self):
         """Test that exploit heat costs are reasonable."""
         exploits = self.game_data.get('exploits', {})

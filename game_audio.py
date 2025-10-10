@@ -114,7 +114,7 @@ class SoundManager:
             "exploit_threat_scan": "exploit_threat_scan.wav",
             "exploit_log_wiper": "exploit_log_wiper.wav",
             "exploit_antivirus": "exploit_antivirus.wav",
-            "exploit_emp_burst": "exploit_emp_burst.wav",
+            "exploit_denial_of_service": "exploit_denial_of_service.wav",
             "exploit_memory_leak": "exploit_memory_leak.wav",
             "exploit_network_scan": "exploit_network_scan.wav",
             "exploit_failed": "exploit_failed.wav",

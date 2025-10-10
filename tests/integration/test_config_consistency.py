@@ -156,7 +156,6 @@ class TestConfigCompleteness:
             'exploits',
             'upgrades',
             'network_configs',
-            'exploit_cpu_costs',
             'difficulty_multipliers',
             'metadata'
         ]
@@ -190,20 +189,6 @@ class TestConfigCompleteness:
             assert len(missing) == 0, (
                 f"Exploit '{exploit_id}' is missing fields: {missing}"
             )
-
-    def test_all_exploits_have_cpu_costs(self):
-        """Test that all exploits have CPU cost definitions."""
-        exploits = self.game_data.get('exploits', {})
-        cpu_costs = self.game_data.get('exploit_cpu_costs', {})
-
-        missing_costs = []
-        for exploit_id in exploits.keys():
-            if exploit_id not in cpu_costs:
-                missing_costs.append(exploit_id)
-
-        assert len(missing_costs) == 0, (
-            f"Exploits missing CPU cost definitions: {missing_costs}"
-        )
 
     def test_all_network_configs_have_required_fields(self):
         """Test that all network configurations have required fields."""

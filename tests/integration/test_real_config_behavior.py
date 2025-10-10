@@ -63,22 +63,6 @@ class TestRealConfigIntegration:
             assert hasattr(enemy.type_data, 'vision')
             assert enemy.type_data.vision > 0
 
-    def test_all_exploits_have_cpu_costs(self):
-        """Verify every exploit in game_data.json has a CPU cost."""
-        game_data = DataLoader.load_game_data()
-        exploits = game_data['exploits']
-        cpu_costs = game_data['exploit_cpu_costs']
-
-        for exploit_id in exploits.keys():
-            # Should be able to get CPU cost without error
-            cost = GameBalance.get_exploit_cpu_cost(exploit_id)
-
-            # Cost should match JSON
-            assert cost == cpu_costs[exploit_id]
-            # Cost should be reasonable
-            assert cost > 0
-            assert cost < 100
-
     def test_code_hack_effects_use_real_balance(self):
         """Verify CodeHack effects use real balance values from JSON."""
         import json

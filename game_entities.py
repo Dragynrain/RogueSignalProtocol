@@ -176,6 +176,7 @@ class EnemyMovement(Enum):
     SEEK = "seek"
     ADMIN = "admin"  # Constant seeking with perfect vision
     TRACK = "track"  # Legacy tracking behavior
+    VIRUS = "virus"  # Randomly picks STATIC, PATROL, or RANDOM on spawn
 
 
 class TargetingMode(Enum):
@@ -264,6 +265,8 @@ class ExploitDefinition:
     damage: int
     targeting: str
     description: str = ""
+    stun_duration: int = 0  # Duration in turns for stunning effects (0 if not a stun exploit)
+    effect_radius: int = 0  # Radius of effect for area exploits (0 for single-target/no effect)
 
 
 @dataclass

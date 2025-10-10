@@ -11,46 +11,64 @@ from data_loading import DataLoader
 
 
 class GameData:
-    """Static game data definitions."""
-    
-    ENEMY_TYPES = {
-        # Rebalanced for challenging stealth gameplay
-        'scanner': EnemyTypeDefinition('S', 35, 5, EnemyMovement.STATIC, "Scanner", 0),  # High vision, no attack - pure trace level
-        'patrol': EnemyTypeDefinition('P', 40, 4, EnemyMovement.PATROL, "Patrol", 15),  # Larger coverage, moderate damage
-        'bot': EnemyTypeDefinition('B', 25, 3, EnemyMovement.RANDOM, "Bot", 8),  # More HP, better vision, light damage
-        'firewall': EnemyTypeDefinition('F', 80, 6, EnemyMovement.STATIC, "Firewall", 5),  # Massive HP, huge vision, small attack
-        'hunter': EnemyTypeDefinition('H', 50, 6, EnemyMovement.RANDOM, "Hunter", 22),  # Elite threat - good vision, high damage
-        'virus': EnemyTypeDefinition('V', 35, 4, EnemyMovement.RANDOM, "Virus", 0),  # Base movement (overridden on spawn) - applies virus instead of damage
-        'inhibitor': EnemyTypeDefinition('I', 30, 4, EnemyMovement.RANDOM, "Inhibitor", 5),  # Low damage, slows player movement
-        'admin': EnemyTypeDefinition('A', 250, 8, EnemyMovement.ADMIN, "Admin Avatar", 45)  # Boss-level - constant seeking with perfect vision
-    }
+    """Static game data definitions loaded from JSON."""
+
+    @staticmethod
+    def _load_enemy_types():
+        """Load enemy types from JSON - NO FALLBACKS."""
+        game_data = DataLoader.load_game_data()
+        if 'enemy_types' not in game_data:
+            raise KeyError("CRITICAL: 'enemy_types' section missing from game_content.json")
+
+        enemy_types = {}
+        for enemy_id, data in game_data['enemy_types'].items():
+            # Map movement string to enum
+            movement_str = data['movement'].upper()
+            try:
+                movement = EnemyMovement[movement_str]
+            except KeyError:
+                raise ValueError(f"Unknown movement type '{data['movement']}' for enemy '{enemy_id}'")
+
+            enemy_types[enemy_id] = EnemyTypeDefinition(
+                symbol=data['symbol'],
+                cpu=data['cpu'],
+                vision=data['vision'],
+                movement=movement,
+                name=data['name'],
+                damage=data['damage']
+            )
+
+        return enemy_types
+
+    # Load enemy types on module initialization
+    ENEMY_TYPES = _load_enemy_types.__func__()
     
     EXPLOITS = {
         # Rebalanced for strategic resource management with damage values
         'shadow_step': ExploitDefinition("Shadow Step", 3, 30, 6, "stealth", 0, TargetingMode.SINGLE,
-                                       "Teleport to any shadow zone within range (6 tiles)"),  # No damage, pure mobility
+                                       "Teleport to any shadow zone within range (6 tiles)", 0, 0),  # No damage, pure mobility
         'data_mimic': ExploitDefinition("Data Mimic", 2, 25, 0, "stealth", 0, TargetingMode.NONE,
-                                      "Become invisible to enemies for 5 turns"),  # No damage, pure stealth
+                                      "Become invisible to enemies for 5 turns", 0, 0),  # No damage, pure stealth
         'noise_maker': ExploitDefinition("Noise Maker", 1, 15, 8, "stealth", 0, TargetingMode.SINGLE,
-                                       "Create distraction that lasts 8 turns at target location"),  # No damage, distraction
+                                       "Create distraction that lasts 8 turns at target location", 0, 10),  # No damage, distraction with radius 10
         'buffer_overflow': ExploitDefinition("Buffer Overflow", 2, 30, 1, "combat", 40, TargetingMode.SINGLE,
-                                           "Devastating melee attack (40 damage, 1 tile range)"),  # High single-target damage
+                                           "Devastating melee attack (40 damage, 1 tile range)", 0, 0),  # High single-target damage
         'code_injection': ExploitDefinition("Code Injection", 2, 20, 5, "combat", 25, TargetingMode.SINGLE,
-                                          "Ranged attack (25 damage, 5 tile range)"),  # Moderate ranged damage
-        'system_crash': ExploitDefinition("System Crash", 4, 45, 3, "combat", 30, TargetingMode.AREA,
-                                        "Area attack (30 damage) that disables enemies for 4 turns"),  # Area damage
+                                          "Ranged attack (25 damage, 5 tile range)", 0, 0),  # Moderate ranged damage
+        'system_crash': ExploitDefinition("System Crash", 3, 50, 0, "emergency", 30, TargetingMode.NONE,
+                                        "Emergency panic button - crashes and stuns all enemies within 3 spaces for 3 turns", 3, 3),  # Emergency untargeted AoE with 3-turn stun, radius 3
         'threat_scan': ExploitDefinition("Threat Scan", 3, 20, 0, "utility", 0, TargetingMode.NONE,
-                                        "Reveals ALL enemies, vision ranges, & movement paths (5 turns)"),  # No damage, intel
+                                        "Reveals ALL enemies, vision ranges, & movement paths (5 turns)", 0, 0),  # No damage, intel
         'log_wiper': ExploitDefinition("Log Wiper", 2, 20, 0, "utility", 0, TargetingMode.NONE,
-                                     "Significantly reduces trace level (-50%)"),  # No damage, counter-trace level
+                                     "Significantly reduces trace level (-50%)", 0, 0),  # No damage, counter-trace level
         'antivirus': ExploitDefinition("Antivirus", 2, 25, 0, "utility", 0, TargetingMode.NONE,
-                                     "Purges all negative status effects (virus, etc.)"),  # Status cleansing
-        'emp_burst': ExploitDefinition("EMP Burst", 4, 50, 3, "emergency", 20, TargetingMode.AREA,
-                                     "Area attack (20 damage) that disables all nearby enemies"),  # Moderate area damage + disable
+                                     "Purges all negative status effects (virus, etc.)", 0, 0),  # Status cleansing
+        'denial_of_service': ExploitDefinition("Denial of Service", 3, 40, 4, "combat", 20, TargetingMode.AREA,
+                                     "Targeted area attack (20 damage, radius 1) that disables enemies for 5 turns", 5, 1),  # Moderate area damage + 5-turn stun, radius 1
         'memory_leak': ExploitDefinition("Memory Leak", 2, 30, 1, "combat", 0, TargetingMode.AREA,
-                                        "Target enemies forget they saw you (3x3 area)"),  # Non-lethal area crowd control
+                                        "Target enemies forget they saw you (3x3 area)", 0, 1),  # Non-lethal area crowd control, radius 1
         'network_scan': ExploitDefinition("Network Scan", 1, 15, 0, "utility", 0, TargetingMode.NONE,
-                                     "Reveals all cooling nodes, CPU nodes, and ghost nodes on the level")  # Cheap utility
+                                     "Reveals all cooling nodes, CPU nodes, and ghost nodes on the level", 0, 0)  # Cheap utility
     }
 
 

@@ -195,18 +195,6 @@ class TestGameDataStructure:
             for key in required_keys:
                 assert key in exploit_data, f"Exploit '{exploit_id}' missing required key '{key}' in game_data.json"
 
-    def test_has_exploit_cpu_costs_section(self, game_data):
-        """Verify exploit_cpu_costs section exists."""
-        assert 'exploit_cpu_costs' in game_data, "Missing required 'exploit_cpu_costs' section in game_data.json"
-
-    def test_exploit_cpu_costs_match_exploits(self, game_data):
-        """Verify every exploit has a CPU cost defined."""
-        exploits = game_data['exploits']
-        cpu_costs = game_data['exploit_cpu_costs']
-
-        for exploit_id in exploits.keys():
-            assert exploit_id in cpu_costs, f"Exploit '{exploit_id}' missing from exploit_cpu_costs in game_data.json"
-
     def test_has_upgrades_section(self, game_data):
         """Verify upgrades section exists."""
         assert 'upgrades' in game_data, "Missing required 'upgrades' section in game_data.json"
@@ -363,7 +351,6 @@ class TestConfigRealObjectInstantiation:
         # Verify structure
         assert 'enemy_types' in game_data
         assert 'exploits' in game_data
-        assert 'exploit_cpu_costs' in game_data
         assert 'network_configs' in game_data
 
     def test_data_loader_loads_story_fragments_successfully(self):
