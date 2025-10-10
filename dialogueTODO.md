@@ -16,7 +16,7 @@ Based on user feedback, here are the finalized design decisions:
 
 ### 3. **Overclock Warning Details**
 - **DO the math for the player** - show exact damage calculation
-- Display: "Using this exploit will exceed heat capacity by X. You will take X damage (current CPU: Y/Z)"
+- Display: "Using this exploit will exceed heat capacity by X. You will have remaining CPU: Y/Z)" or "... by X. This will kill you!"
 - Make it clear what the consequence will be with specific numbers
 
 ### 4. **"Don't Show Again" Option**
@@ -26,10 +26,10 @@ Based on user feedback, here are the finalized design decisions:
 - **Save to user_settings.json** under a new `dialogue_preferences` section:
   ```json
   "dialogue_preferences": {
-    "show_overclock_warning": true,
-    "show_inventory_attack_warning": true
+    "show_overclock_warning": true
   }
   ```
+- **Settings Screen**: Add a "Dialogue Settings" section to Settings menu that allows users to re-enable any hidden dialogues. Only show dialogues that have the `has_dont_show_option` flag enabled. Display with checkboxes that toggle the visibility preference.
 
 ### 5. **Movement While Dialogue Active**
 - **Make it configurable** per dialogue type
@@ -39,7 +39,7 @@ Based on user feedback, here are the finalized design decisions:
 
 ### 6. **Visual Integration**
 - **Solid color blocks** (no semi-transparency) for maximum terminal compatibility
-- **Use the existing box drawing system** in the codebase for nice bordered boxes
+- **ASCII-ONLY box drawing** - Use simple ASCII characters (+-|) for borders, NO Unicode box chars
 - **Pause the game** - dialogues should freeze enemy movement and game time
 
 ### 7. **Priority Levels**
@@ -99,12 +99,12 @@ class DialogueConfig:
 class DialogueManager:
     """Manages all game dialogues and warnings."""
 
-    def __init__(self, user_settings):
+    def __init__(self, settings: GameSettings):
         self.active_dialogue: Optional[DialogueType] = None
         self.dialogue_data: Dict[str, Any] = {}  # Context data for current dialogue
         self.dialogue_configs: Dict[DialogueType, DialogueConfig] = {}
         self.dialogue_queue: List[Tuple[DialogueType, Dict[str, Any]]] = []  # Priority queue
-        self.user_settings = user_settings  # Reference to user settings for "don't show" prefs
+        self.settings = settings  # Reference to GameSettings for "don't show" prefs
         self._register_default_dialogues()
 
     def _register_default_dialogues(self):
@@ -112,7 +112,7 @@ class DialogueManager:
         # Overclock warning
         # NOTE: Message will be formatted with context data showing exact calculations
         self.dialogue_configs[DialogueType.OVERCLOCK_WARNING] = DialogueConfig(
-            title="⚠ OVERCLOCK WARNING ⚠",
+            title="*** OVERCLOCK WARNING ***",
             message="Using {exploit_name} will exceed heat capacity by {overheat_amount}. You will take {damage} CPU damage (current: {current_cpu}/{max_cpu})",
             options=["[Y] Use exploit anyway", "[N] Cancel", "[D] Don't show again"],
             default_action="N",
@@ -132,7 +132,7 @@ class DialogueManager:
 
         # Inventory attack warning
         self.dialogue_configs[DialogueType.INVENTORY_ATTACK] = DialogueConfig(
-            title="⚠ UNDER ATTACK ⚠",
+            title="*** UNDER ATTACK ***",
             message="Enemies are attacking! Close inventory immediately!",
             options=["[ESC] Close Inventory"],
             default_action="ESC",
@@ -161,7 +161,7 @@ class DialogueManager:
 
         # Check if user has disabled this dialogue
         if config.user_pref_key:
-            dialogue_prefs = self.user_settings.get('dialogue_preferences', {})
+            dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
             if not dialogue_prefs.get(config.user_pref_key, True):
                 return  # User disabled this dialogue
 
@@ -237,11 +237,11 @@ class DialogueManager:
         """Disable a dialogue type by saving preference to user settings."""
         config = self.dialogue_configs.get(dialogue_type)
         if config and config.user_pref_key:
-            if 'dialogue_preferences' not in self.user_settings:
-                self.user_settings['dialogue_preferences'] = {}
-            self.user_settings['dialogue_preferences'][config.user_pref_key] = False
+            if not hasattr(self.settings, 'dialogue_preferences'):
+                self.settings.dialogue_preferences = {}
+            self.settings.dialogue_preferences[config.user_pref_key] = False
             # Save user settings immediately
-            self._save_user_settings()
+            self.settings.save_settings()
 
     def is_active(self) -> bool:
         """Check if a dialogue is currently active."""
@@ -271,13 +271,7 @@ def render_dialogue(self, console: tcod.console.Console):
     box_x = (GameConfig.SCREEN_WIDTH - box_width) // 2
     box_y = (GameConfig.SCREEN_HEIGHT - box_height) // 2
 
-    # Draw semi-transparent background overlay
-    for y in range(GameConfig.SCREEN_HEIGHT):
-        for x in range(GameConfig.SCREEN_WIDTH):
-            current_bg = console.bg[y, x]
-            darkened = tuple(c // 2 for c in current_bg)
-            console.bg[y, x] = darkened
-
+    # NOTE: No semi-transparent overlay - just draw solid dialogue box on top
     # Draw dialogue box
     self._draw_bordered_box(console, box_x, box_y, box_width, box_height,
                            config.color_scheme["border"], config.color_scheme["background"])
@@ -315,28 +309,28 @@ def render_dialogue(self, console: tcod.console.Console):
                      fg=Colors.BRIGHT_RED)
 
 def _draw_bordered_box(self, console, x, y, width, height, border_color, bg_color):
-    """Draw a bordered box for dialogues."""
+    """Draw a bordered box for dialogues using ASCII-only characters."""
     # Fill background
     for dy in range(height):
         for dx in range(width):
             console.bg[y + dy, x + dx] = bg_color
 
-    # Draw borders (ASCII box drawing)
+    # Draw borders (ASCII ONLY - no Unicode)
     # Top and bottom
     for dx in range(width):
-        console.print(x + dx, y, "─", fg=border_color)
-        console.print(x + dx, y + height - 1, "─", fg=border_color)
+        console.print(x + dx, y, "-", fg=border_color)
+        console.print(x + dx, y + height - 1, "-", fg=border_color)
 
     # Left and right
     for dy in range(height):
-        console.print(x, y + dy, "│", fg=border_color)
-        console.print(x + width - 1, y + dy, "│", fg=border_color)
+        console.print(x, y + dy, "|", fg=border_color)
+        console.print(x + width - 1, y + dy, "|", fg=border_color)
 
     # Corners
-    console.print(x, y, "┌", fg=border_color)
-    console.print(x + width - 1, y, "┐", fg=border_color)
-    console.print(x, y + height - 1, "└", fg=border_color)
-    console.print(x + width - 1, y + height - 1, "┘", fg=border_color)
+    console.print(x, y, "+", fg=border_color)
+    console.print(x + width - 1, y, "+", fg=border_color)
+    console.print(x, y + height - 1, "+", fg=border_color)
+    console.print(x + width - 1, y + height - 1, "+", fg=border_color)
 
 def _wrap_text(self, text: str, max_width: int) -> List[str]:
     """Wrap text to fit within max_width characters."""
@@ -495,12 +489,74 @@ def _process_enemy_attacks(self):
         )
 ```
 
-#### 5. Game Engine Integration (`game_engine.py`)
+#### 5. GameSettings Persistence Integration (`game_config.py`)
+```python
+# Add to GameSettings class:
+
+class GameSettings:
+    """Manages game settings with persistent storage."""
+
+    SETTINGS_FILE = "user_settings.json"
+
+    def __init__(self):
+        self.master_volume = 0.7
+        self.sfx_volume = 0.8
+        self.music_volume = 0.5
+        self.graphics_mode = "ascii"  # "ascii" or "graphics"
+        self.dialogue_preferences = {}  # NEW: Dictionary for dialogue preferences
+        self.load_settings()
+
+    def load_settings(self) -> None:
+        """Load settings from file."""
+        try:
+            if os.path.exists(self.SETTINGS_FILE):
+                # Read file content first to check for corruption
+                with open(self.SETTINGS_FILE, 'r') as f:
+                    content = f.read().strip()
+
+                if not content:
+                    logging.warning("Settings file is empty, using defaults")
+                    self._create_default_settings_file()
+                    return
+
+                try:
+                    settings_data = json.loads(content)
+                    self.master_volume = settings_data.get("master_volume", 0.7)
+                    self.sfx_volume = settings_data.get("sfx_volume", 0.8)
+                    self.music_volume = settings_data.get("music_volume", 0.5)
+                    self.graphics_mode = settings_data.get("graphics_mode", "ascii")
+                    # NEW: Load dialogue preferences with default empty dict
+                    self.dialogue_preferences = settings_data.get("dialogue_preferences", {})
+                except json.JSONDecodeError as e:
+                    logging.warning(f"Settings file corrupted, recreating with defaults")
+                    self._create_default_settings_file()
+        except Exception as e:
+            logging.warning(f"Failed to load settings: {e}")
+            self._create_default_settings_file()
+
+    def save_settings(self) -> None:
+        """Save settings to file."""
+        try:
+            settings_data = {
+                "master_volume": self.master_volume,
+                "sfx_volume": self.sfx_volume,
+                "music_volume": self.music_volume,
+                "graphics_mode": self.graphics_mode,
+                "dialogue_preferences": self.dialogue_preferences  # NEW: Save dialogue prefs
+            }
+            with open(self.SETTINGS_FILE, 'w') as f:
+                json.dump(settings_data, f, indent=2)
+        except Exception as e:
+            logging.error(f"Failed to save settings: {e}")
+```
+
+#### 6. Game Engine Integration (`game_engine.py`)
 ```python
 # In GameEngine.__init__():
 from game_dialogue import DialogueManager
 
-self.dialogue_manager = DialogueManager()
+# Pass settings instance to DialogueManager (settings should be passed to __init__ or created)
+self.dialogue_manager = DialogueManager(settings or GameSettings())
 
 # Modify overclock exploit usage:
 def try_use_exploit(self, exploit_key: str):
@@ -533,49 +589,64 @@ def try_use_exploit(self, exploit_key: str):
 ## Implementation Steps
 
 ### Phase 1: Core Dialogue System (Priority: HIGH)
-1. ✅ Create `game_dialogue.py` with `DialogueManager` class
-2. ✅ Define `DialogueType` enum and `DialogueConfig` dataclass
-3. ✅ Implement dialogue registration system
-4. ✅ Add dialogue manager to `GameEngine`
+1. ⬜ Create `game_dialogue.py` with `DialogueManager` class
+2. ⬜ Define `DialogueType` enum and `DialogueConfig` dataclass
+3. ⬜ Implement dialogue registration system
+4. ⬜ Add dialogue manager to `GameEngine`
+5. ⬜ Add `dialogue_preferences` dict attribute to `GameSettings` class
+6. ⬜ Update `GameSettings.load_settings()` to load `dialogue_preferences` from JSON
+7. ⬜ Update `GameSettings.save_settings()` to save `dialogue_preferences` to JSON
+8. ⬜ Implement "don't show again" preference persistence via GameSettings
 
 ### Phase 2: Rendering (Priority: HIGH)
-1. ✅ Add `render_dialogue()` method to `GameRenderer`
-2. ✅ Implement bordered box drawing helper
-3. ✅ Implement text wrapping helper
-4. ✅ Add dialogue rendering to main render loop (render last, on top of everything)
+1. ⬜ Add `render_dialogue()` method to `GameRenderer`
+2. ⬜ Implement ASCII-only bordered box drawing helper (use +-| characters, NO Unicode)
+3. ⬜ Implement text wrapping helper with edge case handling (long words)
+4. ⬜ Add dialogue rendering to main render loop (render last, on top of everything)
+5. ⬜ Ensure solid color blocks (no semi-transparency) for terminal compatibility
+6. ⬜ Test rendering in both ASCII and graphics modes
 
 ### Phase 3: Input Handling (Priority: HIGH)
-1. ✅ Modify `game_input.py` to check dialogue state first
-2. ✅ Implement `_handle_dialogue_confirm()` and `_handle_dialogue_dismiss()`
-3. ✅ Add dialogue input priority system
+1. ⬜ Modify `game_input.py` to check dialogue state first
+2. ⬜ Implement `_handle_dialogue_confirm()` and `_handle_dialogue_dismiss()`
+3. ⬜ Implement `_handle_dialogue_dont_show_again()`
+4. ⬜ Add dialogue input priority system (dialogue > inventory > gameplay)
+5. ⬜ Add movement key blocking when `DialogueConfig.blocks_movement` is true
 
 ### Phase 4: Overclock Warning Integration (Priority: HIGH)
-1. ✅ Register overclock warning dialogue config
-2. ✅ Modify exploit usage code to show dialogue instead of immediate execution
-3. ✅ Move overclock execution logic to confirmation handler
-4. ✅ Remove old `overclock_confirmation` flag system
-5. ✅ Test with various exploits
+1. ⬜ Locate exploit execution code (search game_combat.py and game_engine.py)
+2. ⬜ Register overclock warning dialogue config with exact damage calculations
+3. ⬜ Modify exploit usage code to show dialogue instead of immediate execution
+4. ⬜ Move overclock execution logic to confirmation handler in game_input.py
+5. ⬜ Remove old `overclock_confirmation` flag system
+6. ⬜ Test with various exploits and damage scenarios
+7. ⬜ Verify "don't show again" functionality works correctly
+8. ⬜ Verify settings persist across game restarts
 
 ### Phase 5: Inventory Attack Warning (Priority: MEDIUM)
-1. ✅ Register inventory attack dialogue config
-2. ✅ Add `_check_inventory_attack()` method
-3. ✅ Show dialogue when attack detected in inventory
-4. ✅ Auto-close inventory on dialogue dismiss
-5. ✅ Test with multiple enemies
+1. ⬜ Register inventory attack dialogue config (no "don't show again" option)
+2. ⬜ Integrate with `game_turn_manager.py` `_process_enemy_attacks()` method
+3. ⬜ Show dialogue when player takes damage while inventory is open
+4. ⬜ Ensure dialogue only shows once per turn even with multiple attackers
+5. ⬜ Auto-close inventory on dialogue dismiss
+6. ⬜ Test with multiple enemies attacking simultaneously
 
-### Phase 6: Migration & Cleanup (Priority: LOW)
+### Phase 6: Settings Screen Integration (Priority: MEDIUM)
+1. ⬜ Check available space in SettingsMenu for integrated dialogue options
+2. ⬜ Add dialogue preference options to SettingsMenu (below existing settings)
+3. ⬜ Implement for BOTH ASCII and graphics mode settings screens
+4. ⬜ Display only dialogues with `has_dont_show_option=True`
+5. ⬜ Implement checkbox/toggle UI for each hideable dialogue
+6. ⬜ Ensure changes save immediately via GameSettings.save_settings()
+7. ⬜ Test re-enabling hidden dialogues through settings
+8. ⬜ Verify layout works in both narrow (graphics) and wide (ASCII) layouts
+
+### Phase 7: Migration & Cleanup (Priority: LOW)
 1. ⬜ Migrate gateway confirmation to new system (optional)
-2. ⬜ Remove old overclock confirmation code
+2. ⬜ Remove old overclock confirmation code from `game_engine.py` and `game_rendering.py`
 3. ⬜ Update tests to use new dialogue system
-4. ⬜ Add dialogue system tests
-
-### Phase 7: Future Enhancements (Priority: LOW)
-1. ⬜ Add dialogue history/log
-2. ⬜ Add support for custom dialogue templates
-3. ⬜ Add animation effects (fade in/out)
-4. ⬜ Add sound effects for different dialogue types
-5. ⬜ Support for multi-page dialogues
-6. ⬜ Add dialogue positioning options (center, top, bottom)
+4. ⬜ Add dialogue system unit tests
+5. ⬜ Add integration tests for dialogue priority and queuing
 
 ## Technical Considerations
 
@@ -625,30 +696,131 @@ def try_use_exploit(self, exploit_key: str):
 
 ### Overclock Warning Dialogue (with exact damage calculation)
 ```
-┌─────────────────────────────────────────────────────────┐
-│              ⚠ OVERCLOCK WARNING ⚠                     │
-│                                                          │
-│  Using Buffer Overflow will exceed heat capacity by 15. │
-│  You will take 15 CPU damage (current: 85/100)          │
-│                                                          │
-│  [Y] Use exploit anyway  [N] Cancel  [D] Don't show again│
-└─────────────────────────────────────────────────────────┘
++------------------------------------------------------------+
+|              *** OVERCLOCK WARNING ***                     |
+|                                                            |
+|  Using Buffer Overflow will exceed heat capacity by 15.   |
+|  You will take 15 CPU damage and have 85/100 remaining.   |
+|                                                            |
+|  [Y] Use exploit anyway  [N] Cancel  [D] Don't show again |
++------------------------------------------------------------+
 ```
 
 ### Inventory Attack Warning (triggered when damage is taken)
 ```
-┌─────────────────────────────────────────────────────────┐
-│                ⚠ UNDER ATTACK ⚠                        │
-│                                                          │
-│  Enemies are attacking! Close inventory immediately!    │
-│                                                          │
-│  Damage taken: 23 CPU from 3 enemies                   │
-│                                                          │
-│                   [ESC] Close Inventory                  │
-└─────────────────────────────────────────────────────────┘
++--------------------------------------------------------+
+|                *** UNDER ATTACK ***                    |
+|                                                        |
+|  Enemies are attacking! Close inventory immediately!  |
+|                                                        |
+|  Damage taken: 23 CPU from 3 enemies                  |
+|                                                        |
+|                   [ESC] Close Inventory               |
++--------------------------------------------------------+
 ```
 
 **Note**: Inventory attack warning appears ONLY when player takes damage while in inventory, not just when enemies are nearby. Shows once per turn even if multiple attacks occur.
+
+## Code Audit & Verification
+
+### ✅ Verified Code Assumptions
+1. **GameEngine Structure** (game_engine.py:113-115):
+   - `overclock_confirmation` flag exists and needs migration
+   - `overclock_exploit` tracks which exploit is being confirmed
+   - These will be replaced by DialogueManager system
+
+2. **GameSettings & user_settings.json** (game_config.py:16-26):
+   - GameSettings class exists with proper save/load functionality
+   - user_settings.json currently has: master_volume, sfx_volume, music_volume, graphics_mode
+   - Perfect place to add `dialogue_preferences` section
+
+3. **SettingsMenu** (game_menus.py:544-861):
+   - Existing SettingsMenu in game_menus.py with proper rendering
+   - Uses options list with type-based rendering (volume, toggle, action)
+   - Can easily add new "dialogue" type for checkbox list
+   - Already has left/right adjustment and background-aware layouts
+
+4. **Box Drawing System** (game_menus.py:591-695):
+   - `_render_right_side_box()` method exists for bordered boxes
+   - **IMPORTANT**: Will need to create ASCII-only version using +-| characters
+   - Returns box dict with positioning info for content rendering
+   - Cannot reuse existing box drawing due to Unicode characters
+
+5. **Enemy Attack Detection** (game_turn_manager.py:392-422):
+   - `_process_enemy_attacks()` method processes all enemy attacks
+   - Perfect integration point for inventory attack warning
+   - Already tracks damage and enemy types
+   - Need to check `game_engine.show_inventory` flag
+
+6. **Input Priority** (game_input.py):
+   - Input handling needs to be updated to check dialogue first
+   - Current priority seems to be: inventory > gameplay
+   - Need to add: dialogue > inventory > gameplay
+
+### ⚠️ Issues Found & Fixes Needed
+
+1. **CRITICAL: Box Drawing Unicode vs ASCII**
+   - **Issue**: Plan originally specified Unicode box chars (┌┐└┘─│) but game uses specific tileset
+   - **Resolution**: NO Unicode anywhere - strict ASCII only including UI elements
+   - **Fix**: Use simple ASCII characters (+-|) for all box drawing in dialogues
+   - **Updated Plan**: Implement ASCII-only box drawing (+ for corners, - for horizontal, | for vertical)
+
+2. **Semi-Transparency Warning**
+   - **Issue**: Plan shows semi-transparent background overlay in rendering code
+   - **Resolution**: Design spec says "solid color blocks (no semi-transparency)"
+   - **Fix**: Remove semi-transparency, use solid black background for dialogue boxes
+
+3. **Settings Integration Unclear**
+   - **Issue**: Plan doesn't specify exact UI for dialogue settings section
+   - **Resolution**: Add clear spec for checkbox-style toggle list
+   - **Fix**: Create new option type "dialogue_checkbox" with per-dialogue toggle
+
+4. **GameSettings.save_settings() Integration**
+   - **Issue**: DialogueManager needs to call save_settings() when preferences change
+   - **Resolution**: DialogueManager should hold reference to GameSettings instance
+   - **Fix**: Pass settings to DialogueManager.__init__ and call save_settings() after updating preferences
+   - **Implementation**: Add dialogue_preferences dict attribute to GameSettings, update load/save methods
+
+5. **Message Text Wrapping**
+   - **Issue**: Plan shows basic word wrapping but doesn't handle long words
+   - **Resolution**: Need to handle edge cases (words longer than box width)
+   - **Fix**: Add character-level breaking for words that exceed max_width
+
+### 📋 Additional Considerations
+
+1. **Exploit System Integration Point**
+   - Current overclock code is likely in `game_combat.py` or `game_engine.py`
+   - Need to verify exact location of exploit execution logic
+   - Ensure dialogue shows BEFORE any CPU damage is applied
+
+2. **Inventory Attack Timing**
+   - Show dialogue WHEN player takes damage (not when enemy gets in range)
+   - Only show ONCE per turn even if multiple enemies attack
+   - Need flag to track "shown_attack_warning_this_turn"
+
+3. **Dialogue Queuing Edge Cases**
+   - **DECISION**: If same dialogue type queued twice, only show once (de-duplicate or update context)
+   - What if player dismisses high-priority dialogue while low-priority queued? (still show low-priority)
+   - What if player closes inventory while attack warning active? (auto-dismiss dialogue)
+
+4. **Save/Load Compatibility**
+   - Don't save dialogue_manager state (recreate on load)
+   - DO save dialogue_preferences in user_settings.json
+   - Old saves without dialogue_preferences should work fine (defaults to True)
+
+5. **Testing Strategy**
+   - Unit tests for DialogueManager (registration, queuing, state)
+   - Integration tests for overclock workflow
+   - Integration tests for inventory attack workflow
+   - Manual tests for UI rendering and input handling
+
+### 🔧 Recommended Implementation Improvements
+
+1. **Simplified Rendering** - Instead of darkening entire screen, just draw dialogue box on top with solid background
+2. **Cleaner Message Formatting** - Use f-strings with named parameters for clarity
+3. **Type Safety** - Add type hints to all DialogueManager methods
+4. **Error Handling** - Gracefully handle missing dialogue configs (log warning, don't crash)
+5. **Accessibility** - Ensure high contrast colors (red warning on dark background)
 
 ## Notes
 - Keep dialogue system simple and focused
@@ -657,3 +829,11 @@ def try_use_exploit(self, exploit_key: str):
 - All dialogue text should be clear and actionable
 - Consider accessibility - clear language, obvious controls
 - Test with keyboard input only (no mouse required)
+- **STRICT ASCII-ONLY for all UI elements** - game uses specific tileset, no Unicode anywhere
+
+## Implementation Answers (from user)
+1. **GameSettings.dialogue_preferences**: Dict attribute with JSON persistence (load/save in GameSettings)
+2. **Dialogue Queue De-duplication**: Only show same dialogue type once (de-duplicate)
+3. **Settings UI Layout**: Integrated into main Settings screen below existing options (both ASCII/graphics)
+4. **Exploit Execution Location**: Search game_combat.py and game_engine.py (found in both via grep)
+5. **Implementation Order**: Follow exact phase order (1→2→3→4→5→6→7)
