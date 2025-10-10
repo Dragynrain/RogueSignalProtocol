@@ -3,6 +3,7 @@ Simple test fixtures that create real game objects quickly.
 No complex builder patterns - just create what you need.
 """
 
+import pytest
 from game_characters import Player, Enemy
 from game_entities import Position
 from game_map import GameMap
@@ -27,7 +28,7 @@ def enemy(enemy_type="scanner", x=5, y=5):
     return create_real_enemy(enemy_type, Position(x, y))
 
 
-def test_map(width=20, height=20):
+def create_test_map(width=20, height=20):
     """Create a simple test map."""
     return create_test_map_with_real_tiles(width, height)
 
@@ -37,7 +38,7 @@ def game_scenario():
     return {
         'player': player(),
         'enemies': [enemy(), enemy("patrol", 15, 15)],
-        'map': test_map()
+        'map': create_test_map()
     }
 
 
@@ -48,7 +49,7 @@ def combat_scenario():
     return {
         'player': test_player,
         'enemy': test_enemy,
-        'map': test_map(30, 30)
+        'map': create_test_map(30, 30)
     }
 
 
@@ -60,7 +61,7 @@ def vision_scenario():
     return {
         'player': test_player,
         'enemies': [scanner, patrol],
-        'map': test_map(40, 40)
+        'map': create_test_map(40, 40)
     }
 
 
@@ -72,5 +73,5 @@ def movement_scenario():
     return {
         'player': test_player,
         'enemies': [moving_enemy, patrolling_enemy],
-        'map': test_map(30, 30)
+        'map': create_test_map(30, 30)
     }

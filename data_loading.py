@@ -54,7 +54,7 @@ class DataLoader:
     def load_game_data(cls) -> Dict[str, Any]:
         """Load game data from JSON file."""
         if cls._game_data is None:
-            cls._game_data = cls._load_json_file('game_data.json')
+            cls._game_data = cls._load_json_file('game_content.json')
         return cls._game_data
     
     @classmethod
@@ -63,12 +63,12 @@ class DataLoader:
         try:
             return data[section]
         except KeyError as e:
-            msg = f"CRITICAL CONFIG ERROR: Missing '{section}' section in game_data.json"
+            msg = f"CRITICAL CONFIG ERROR: Missing '{section}' section in game_content.json"
             print(msg)
             logging.error(msg)
             print(f"Exception: {str(e)}")
             print(f"Available sections: {list(data.keys())}")
-            raise KeyError(f"Required '{section}' section missing from game_data.json") from e
+            raise KeyError(f"Required '{section}' section missing from game_content.json") from e
 
     @classmethod
     def get_balance_config(cls) -> Dict[str, Any]:
@@ -82,41 +82,41 @@ class DataLoader:
 
     @classmethod
     def get_ai_behavior_config(cls) -> Dict[str, Any]:
-        """Get AI behavior configuration from game data."""
-        game_data = cls.load_game_data()
+        """Get AI behavior configuration from game config."""
+        config = cls.load_config()
         try:
-            return game_data['balance']['ai_behavior']
+            return config['balance']['ai_behavior']
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Missing AI behavior config in game_data.json"
+            error_msg = f"CRITICAL CONFIG ERROR: Missing AI behavior config in game_rules.json"
             print(error_msg)
             logging.error(error_msg)
             print(f"Exception: {str(e)}")
-            if 'balance' in game_data:
-                print(f"Available balance keys: {list(game_data['balance'].keys())}")
+            if 'balance' in config:
+                print(f"Available balance keys: {list(config['balance'].keys())}")
             else:
                 print("No 'balance' section found")
-                print(f"Available sections: {list(game_data.keys())}")
-            raise KeyError(f"Required 'balance.ai_behavior' section missing from game_data.json") from e
+                print(f"Available sections: {list(config.keys())}")
+            raise KeyError(f"Required 'balance.ai_behavior' section missing from game_rules.json") from e
     
     @classmethod
     def load_config(cls) -> Dict[str, Any]:
         """Load configuration from JSON file."""
         if cls._config is None:
             try:
-                with open('game_config.json', 'r', encoding='utf-8') as f:
+                with open('game_rules.json', 'r', encoding='utf-8') as f:
                     cls._config = json.load(f)
             except FileNotFoundError as e:
-                error_msg = f"CRITICAL CONFIG ERROR: game_config.json not found"
+                error_msg = f"CRITICAL CONFIG ERROR: game_rules.json not found"
                 print(error_msg)
                 logging.error(error_msg)
                 print(f"Exception: {str(e)}")
-                raise FileNotFoundError(f"Required file game_config.json is missing") from e
+                raise FileNotFoundError(f"Required file game_rules.json is missing") from e
             except json.JSONDecodeError as e:
-                error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in game_config.json"
+                error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in game_rules.json"
                 print(error_msg)
                 logging.error(error_msg)
                 print(f"Exception: {str(e)}")
-                raise json.JSONDecodeError(f"game_config.json contains invalid JSON", e.doc, e.pos) from e
+                raise json.JSONDecodeError(f"game_rules.json contains invalid JSON", e.doc, e.pos) from e
         return cls._config
     
     @classmethod

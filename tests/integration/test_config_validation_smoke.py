@@ -260,10 +260,12 @@ class TestGameDataStructure:
         assert 'ai_behavior' in balance, "Missing required 'balance.ai_behavior' section in game_data.json"
 
     def test_balance_has_cpu_restore_values(self, game_data):
-        """Verify balance has CPU restore values."""
+        """Verify balance section exists (cpu_restore values moved to game_config.json)."""
         balance = game_data['balance']
-        assert 'cpu_restore_min' in balance, "Missing required 'balance.cpu_restore_min' in game_data.json"
-        assert 'cpu_restore_max' in balance, "Missing required 'balance.cpu_restore_max' in game_data.json"
+        # NOTE: cpu_restore_min/max moved to game_config.json (single source of truth)
+        # This test now just verifies the balance section exists
+        assert 'ai_behavior' in balance or 'code_hacks' in balance, \
+            "Balance section should have ai_behavior or code_hacks subsections"
 
     def test_balance_has_code_hacks_section(self, game_data):
         """Verify balance.code_hacks section exists."""
@@ -416,18 +418,14 @@ class TestConfigRealObjectInstantiation:
         from game_inventory import CodeHack
         from game_config import GameConfig, GameBalance
         from game_characters import Player
-        import json
 
         # Ensure config is loaded
         GameConfig._config_data = None
         GameConfig.load_from_json()
         GameBalance.load_from_json()  # CRITICAL: Load balance config too
 
-        # Load balance values from JSON directly
-        with open('game_data.json', 'r') as f:
-            game_data = json.load(f)
-
-        cpu_restore_min = game_data['balance']['cpu_restore_min']
+        # Get cpu_restore_min from GameBalance (now in game_config.json)
+        cpu_restore_min = GameBalance.CPU_RESTORE_MIN
 
         # Create code hack
         code_hack = CodeHack("red", "restore_cpu", "Red Code", "Restores CPU")
@@ -483,9 +481,9 @@ class TestConfigValueConsistency:
         with open('game_data.json', 'r', encoding='utf-8') as f:
             return json.load(f)
 
-    def test_cpu_restore_min_less_than_max(self, game_data):
-        """Verify CPU restore min is less than max."""
-        balance = game_data['balance']
+    def test_cpu_restore_min_less_than_max(self, config_data):
+        """Verify CPU restore min is less than max (now in game_config.json)."""
+        balance = config_data['balance']
         assert balance['cpu_restore_min'] < balance['cpu_restore_max'], \
             "cpu_restore_min should be less than cpu_restore_max"
 

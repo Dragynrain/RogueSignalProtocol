@@ -380,9 +380,6 @@ class GameEngine:
 
         self.player.heat = min(100, self.player.heat + heat_generated)
 
-        # Increase trace level slightly
-        self.player.trace_level = min(100, self.player.trace_level + 5)
-
     def _move_cursor(self, dx: int, dy: int):
         """Move targeting cursor."""
         new_x = max(0, min(GameConfig.MAP_WIDTH - 1, self.cursor_position.x + dx))
