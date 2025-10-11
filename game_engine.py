@@ -32,6 +32,7 @@ from game_save_load_manager import GameSaveLoadManager
 from game_state_persistence import GameStatePersistence
 from game_level_coordinator import GameLevelCoordinator
 from game_turn_manager import GameTurnManager
+from game_dialogue import DialogueManager
 
 
 class GameEngine:
@@ -64,6 +65,9 @@ class GameEngine:
             load_save: Whether to load from existing save file
             settings: Game settings instance, creates default if None
         """
+        # Initialize settings first (needed by other systems)
+        self.settings = settings or GameSettings()
+
         # Initialize core dependencies (with fallbacks if not provided)
         self.game_state = game_state_manager or GameStateManager()
         self.game_map = game_map or GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
@@ -71,7 +75,7 @@ class GameEngine:
         self.enemy_manager = enemy_manager or EnemyManager(self.game_map, None)  # Will set message_log below
         # ExploitSystem will be initialized after self is fully constructed
         self._exploit_system_param = exploit_system
-        self.sound_manager = sound_manager or SoundManager(settings)
+        self.sound_manager = sound_manager or SoundManager(self.settings)
 
         # Initialize core game objects
         self.player = Player(5, 5)
@@ -87,6 +91,9 @@ class GameEngine:
         self.state_persistence = GameStatePersistence(self)
         self.level_coordinator = GameLevelCoordinator(self)
         self.turn_manager = GameTurnManager(self)
+
+        # Initialize dialogue manager with settings for preference persistence
+        self.dialogue_manager = DialogueManager(self.settings)
 
         # Preload all sound effects
         self.sound_manager.preload_sounds()

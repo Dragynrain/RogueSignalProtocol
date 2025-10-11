@@ -556,6 +556,8 @@ class SettingsMenu:
             {"name": "Music Volume", "type": "volume", "key": "music"},
             {"name": "Graphics Mode", "type": "toggle", "key": "graphics_mode",
              "values": ["ASCII", "Graphics"]},
+            {"name": "--- Dialogues ---", "type": "section_header"},
+            {"name": "Overclock Warnings", "type": "dialogue_toggle", "key": "show_overclock_warning"},
             {"name": "Back", "type": "action"}
         ]
     
@@ -700,9 +702,9 @@ class SettingsMenu:
             self._clear_text_areas_only(console)
         else:
             console.clear()
-        
-        # Calculate menu height
-        menu_height = 25  # Enough for title, options, and instructions
+
+        # Calculate menu height (account for all options including dialogue toggles)
+        menu_height = 30  # Increased for dialogue preferences section
         
         # Render the right-side box using common method
         box = self._render_right_side_box(console, menu_height, Colors.WHITE)
@@ -719,50 +721,72 @@ class SettingsMenu:
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             option_y = start_y + i * 2
-            
+
             if box['use_background_layout']:
                 # Narrow box layout
                 name_x = box['content_left'] + 1
-                
+
                 # Option name (truncate if needed for narrow box)
                 name = option["name"]
-                if len(name) > 15:  # Truncate for narrow box
+                if len(name) > 15 and option["type"] != "section_header":  # Truncate for narrow box
                     name = name[:12] + "..."
-                render_char_safe(console, name_x, option_y, name, fg=color, bg=Colors.BLACK)
-                
+
+                # Section headers
+                if option["type"] == "section_header":
+                    render_char_safe(console, name_x, option_y, name, fg=Colors.CYAN, bg=Colors.BLACK)
+                else:
+                    render_char_safe(console, name_x, option_y, name, fg=color, bg=Colors.BLACK)
+
                 # Option value
                 if option["type"] == "volume":
                     volume_percent = self.settings.get_volume_percent(option["key"])
                     bar_length = 8  # Shorter bar for narrow box
                     filled_length = int(bar_length * volume_percent / 100)
-                    
+
                     # Volume bar - more compact
                     bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
                     render_char_safe(console, name_x, option_y + 1, f"{bar} {volume_percent}%", fg=color, bg=Colors.BLACK)
-                    
+
                 elif option["type"] == "toggle":
                     if option["key"] == "graphics_mode":
                         current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "ASCII"
                         render_char_safe(console, name_x, option_y + 1, f"< {current_value} >", fg=color, bg=Colors.BLACK)
+
+                elif option["type"] == "dialogue_toggle":
+                    # Get dialogue preference (default to True if not set)
+                    dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
+                    is_enabled = dialogue_prefs.get(option["key"], True)
+                    status = "[X]" if is_enabled else "[ ]"
+                    render_char_safe(console, name_x, option_y + 1, f"{status} Enabled", fg=color, bg=Colors.BLACK)
             else:
                 # ASCII mode - wider layout
                 # Option name
-                render_char_safe(console, box['content_left'] + 2, option_y, option["name"], fg=color, bg=Colors.BLACK)
-                
+                if option["type"] == "section_header":
+                    render_char_safe(console, box['content_left'] + 2, option_y, option["name"], fg=Colors.CYAN, bg=Colors.BLACK)
+                else:
+                    render_char_safe(console, box['content_left'] + 2, option_y, option["name"], fg=color, bg=Colors.BLACK)
+
                 # Option value
                 if option["type"] == "volume":
                     volume_percent = self.settings.get_volume_percent(option["key"])
                     bar_length = 20
                     filled_length = int(bar_length * volume_percent / 100)
-                    
+
                     # Volume bar
                     bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
                     render_char_safe(console, box['content_left'] + 18, option_y, f"{bar} {volume_percent}%", fg=color, bg=Colors.BLACK)
-                    
+
                 elif option["type"] == "toggle":
                     if option["key"] == "graphics_mode":
                         current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "ASCII"
                         render_char_safe(console, box['content_left'] + 18, option_y, f"< {current_value} >", fg=color, bg=Colors.BLACK)
+
+                elif option["type"] == "dialogue_toggle":
+                    # Get dialogue preference (default to True if not set)
+                    dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
+                    is_enabled = dialogue_prefs.get(option["key"], True)
+                    status = "[X]" if is_enabled else "[ ]"
+                    render_char_safe(console, box['content_left'] + 18, option_y, f"{status} Enabled", fg=color, bg=Colors.BLACK)
         
         # Instructions
         if box['use_background_layout']:
@@ -796,27 +820,49 @@ class SettingsMenu:
     
     def handle_input(self, event) -> str:
         """Handle settings menu input. Returns action: 'back', 'exit', or ''."""
-        
-        # Handle navigation using universal handler
-        if UniversalInputHandler.handle_list_navigation(self, event, len(self.options)):
+
+        # Handle navigation with section header skipping
+        if UniversalInputHandler.handle_list_navigation(self, event, len(self.options), False, self._navigate_skip_headers):
             return ""
-        
+
         # Handle selection
         if UniversalInputHandler.is_confirm_key(event):
             option = self.options[self.selected_option]
             if option["type"] == "action":
                 if option["name"] == "Back":
                     return "back"
-        
+
         # Handle value adjustment using universal handler
         if UniversalInputHandler.handle_value_adjustment(self, event, self._adjust_setting):
             return ""
-        
+
         # Handle escape
         if UniversalInputHandler.is_escape_key(event):
             return "back"
-        
+
         return ""
+
+    def _navigate_skip_headers(self, direction: int):
+        """Navigate options while skipping section headers."""
+        old_selection = self.selected_option
+
+        # Move in the specified direction
+        if direction == -1:
+            self.selected_option = max(0, self.selected_option - 1)
+        else:
+            self.selected_option = min(len(self.options) - 1, self.selected_option + 1)
+
+        # Skip section headers
+        while (self.selected_option != old_selection and
+               self.options[self.selected_option]["type"] == "section_header"):
+            if direction == -1:
+                self.selected_option = max(0, self.selected_option - 1)
+            else:
+                self.selected_option = min(len(self.options) - 1, self.selected_option + 1)
+
+            # Prevent infinite loop if all options are headers
+            if self.selected_option == old_selection:
+                break
     
     def _adjust_setting(self, direction: int):
         """Adjust the currently selected setting."""
@@ -859,4 +905,17 @@ class SettingsMenu:
                 if self.menu_background:
                     self.menu_background.reload_if_mode_changed()
                     logging.info(f"Graphics mode changed to {new_mode} - background updated")
+
+        elif option["type"] == "dialogue_toggle":
+            # Toggle dialogue preference
+            dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
+            current_value = dialogue_prefs.get(option["key"], True)
+            new_value = not current_value
+
+            # Update preference
+            if not hasattr(self.settings, 'dialogue_preferences'):
+                self.settings.dialogue_preferences = {}
+            self.settings.dialogue_preferences[option["key"]] = new_value
+            self.settings.save_settings()
+            logging.info(f"Dialogue preference '{option['key']}' set to {new_value}")
     

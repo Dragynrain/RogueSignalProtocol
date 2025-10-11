@@ -19,13 +19,13 @@ from game_entities import Position
 def create_mock_game():
     """Create a mock game object for testing."""
     game = Mock()
-    
+
     # Player
     game.player = player()
     game.player.inventory_manager = Mock()
     game.player.inventory_manager.equipped_exploits = []
     game.player.inventory_manager.get_display_items = Mock(return_value=[])
-    
+
     # Game state
     game.game_over = False
     game.show_help = False
@@ -39,13 +39,13 @@ def create_mock_game():
     game.inventory_selection = 0
     game.lore_viewer_mode = "list"
     game.lore_viewer_selection = 0
-    
+
     # Mock methods
     game.move_player = Mock()
     game.maybe_process_turn = Mock()
     game.next_level = Mock()
     game._move_cursor = Mock()
-    
+
     # Mock managers
     game.message_log = Mock()
     game.message_log.add_message = Mock()
@@ -53,7 +53,9 @@ def create_mock_game():
     game.sound_manager.play_sound = Mock()
     game.story_fragment_manager = Mock()
     game.story_fragment_manager.get_discovered_fragments = Mock(return_value=[])
-    
+    game.dialogue_manager = Mock()  # Add dialogue_manager mock for new dialogue system
+    game.dialogue_manager.is_active = Mock(return_value=False)  # Dialogue not active by default
+
     return game
 
 

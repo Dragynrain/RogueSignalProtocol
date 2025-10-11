@@ -341,14 +341,14 @@ class TestEnemyAIUsesRealConfig:
         assert GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE > 0
         assert GameBalance.ENEMY_TRACE_CONTINUOUS_HOSTILE >= 0
 
-        # Should match what's in JSON
+        # Should match what's in JSON (moved to ai_behavior subsection)
         import json
         with open('game_rules.json', 'r') as f:
             config = json.load(f)
 
-        balance = config['balance']
-        assert GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE == balance['enemy_trace_alert_to_hostile']
-        assert GameBalance.ENEMY_TRACE_CONTINUOUS_HOSTILE == balance['enemy_trace_continuous_hostile']
+        ai_behavior = config['balance']['ai_behavior']
+        assert GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE == ai_behavior['enemy_trace_alert_to_hostile']
+        assert GameBalance.ENEMY_TRACE_CONTINUOUS_HOSTILE == ai_behavior['enemy_trace_continuous_hostile']
 
     def test_enemy_memory_uses_real_value(self):
         """Verify enemy memory duration uses real config."""

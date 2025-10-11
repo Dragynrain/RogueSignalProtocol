@@ -50,18 +50,22 @@ class InputHandler:
     
     def handle_keydown(self, event: tcod.event.KeyDown) -> bool:
         """Handle keydown events.
-        
+
         Args:
             event: The keyboard event to process
-            
+
         Returns:
             True if game should continue, False if should exit
-        """        
+        """
         # Dead/game over state - any key should exit to main menu
         if self.game.player.cpu <= 0 or self.game.game_over:
             # Exit to main menu instead of showing pause menu when dead
             return False
-        
+
+        # Priority 1: Active dialogue (highest priority overlay)
+        if self.game.dialogue_manager.is_active():
+            return self._handle_dialogue_input(event)
+
         # Modal screens - handle non-escape keys
         if self.game.show_help:
             self.game.show_help = False
@@ -104,7 +108,97 @@ class InputHandler:
             g.targeting_mode, g.targeting_exploit = False, None
             g.message_log.add_message("Targeting cancelled")
         return True
-    
+
+    def _handle_dialogue_input(self, event) -> bool:
+        """Handle input when a dialogue is active."""
+        from game_dialogue import DialogueType
+        from game_entities import Colors
+
+        config = self.game.dialogue_manager.get_active_config()
+        if not config:
+            return True
+
+        # Block movement keys if dialogue blocks movement
+        if config.blocks_movement:
+            movement_keys = {
+                tcod.event.KeySym.UP, tcod.event.KeySym.DOWN, tcod.event.KeySym.LEFT, tcod.event.KeySym.RIGHT,
+                tcod.event.KeySym.W, tcod.event.KeySym.A, tcod.event.KeySym.S, tcod.event.KeySym.D,
+                tcod.event.KeySym.Q, tcod.event.KeySym.E, tcod.event.KeySym.Z, tcod.event.KeySym.C,
+                tcod.event.KeySym.KP_8, tcod.event.KeySym.KP_2, tcod.event.KeySym.KP_4, tcod.event.KeySym.KP_6,
+                tcod.event.KeySym.KP_7, tcod.event.KeySym.KP_9, tcod.event.KeySym.KP_1, tcod.event.KeySym.KP_3,
+                tcod.event.KeySym.SPACE, tcod.event.KeySym.PERIOD, tcod.event.KeySym.KP_5
+            }
+            if event.sym in movement_keys:
+                return True  # Ignore movement while dialogue active
+
+        # Get action from dialogue manager
+        action = self.game.dialogue_manager.handle_input(event.sym)
+
+        if action == "confirm":
+            self._handle_dialogue_confirm()
+        elif action in ["cancel", "dismiss"]:
+            self._handle_dialogue_dismiss()
+        elif action == "dont_show_again":
+            self._handle_dialogue_dont_show_again()
+
+        # Dialogue is active - don't process other inputs
+        return True
+
+    def _handle_dialogue_confirm(self):
+        """Handle dialogue confirmation (user pressed Y)."""
+        from game_dialogue import DialogueType
+
+        dialogue_type = self.game.dialogue_manager.active_dialogue
+
+        if dialogue_type == DialogueType.OVERCLOCK_WARNING:
+            # Player confirmed overclock - execute exploit with damage
+            exploit_key = self.game.dialogue_manager.dialogue_data.get("exploit_key")
+            if exploit_key:
+                # Execute the exploit that will cause overheating
+                self.exploit_system.use_exploit(exploit_key)
+
+        # Close dialogue
+        self.game.dialogue_manager.close_dialogue()
+
+    def _handle_dialogue_dismiss(self):
+        """Handle dialogue dismissal/cancellation (user pressed N or ESC)."""
+        from game_dialogue import DialogueType
+
+        dialogue_type = self.game.dialogue_manager.active_dialogue
+
+        if dialogue_type == DialogueType.INVENTORY_ATTACK:
+            # Keep inventory open - user should be able to continue using inventory
+            # after dismissing the attack warning
+            pass
+        elif dialogue_type == DialogueType.OVERCLOCK_WARNING:
+            # Cancel exploit use - just close dialogue
+            pass
+
+        # Close dialogue
+        self.game.dialogue_manager.close_dialogue()
+
+    def _handle_dialogue_dont_show_again(self):
+        """Handle 'don't show this again' option (user pressed D)."""
+        from game_entities import Colors
+
+        dialogue_type = self.game.dialogue_manager.active_dialogue
+
+        # Disable this dialogue type
+        self.game.dialogue_manager.disable_dialogue(dialogue_type)
+
+        # Add message to log
+        self.game.message_log.add_message(
+            "Dialogue disabled. Re-enable in Settings if needed.",
+            Colors.YELLOW
+        )
+
+        # Close dialogue (also executes the "confirm" action for overclock warning)
+        if dialogue_type:
+            # For overclock warning, pressing D should still execute the exploit
+            self._handle_dialogue_confirm()
+        else:
+            self.game.dialogue_manager.close_dialogue()
+
     def _handle_gateway_confirmation_input(self, event) -> bool:
         """Handle input for gateway confirmation dialog."""
         if UniversalInputHandler.is_confirm_key(event) or event.sym == tcod.event.KeySym.Y:

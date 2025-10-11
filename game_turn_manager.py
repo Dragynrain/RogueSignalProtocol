@@ -391,11 +391,23 @@ class GameTurnManager:
 
     def _process_enemy_attacks(self):
         """PHASE 3: Process attacks from enemies adjacent to player."""
+        # Track attacks this turn for inventory warning (only show once per turn)
+        player_attacked_in_inventory = False
+        total_damage_taken = 0
+        attacking_enemy_count = 0
+
         for enemy in self.game_engine.enemies[:]:
             # Only attack if enemy hasn't moved this turn (move OR attack, not both)
             if enemy.can_attack_player(self.game_engine.player) and not getattr(enemy, 'has_moved_this_turn', False):
                 self.game_engine.sound_manager.play_sound("enemy_attack")
                 damage = enemy.attack_player(self.game_engine.player)
+
+                # Track if player was attacked while in inventory
+                if damage > 0:
+                    total_damage_taken += damage
+                    attacking_enemy_count += 1
+                    if self.game_engine.show_inventory:
+                        player_attacked_in_inventory = True
 
                 if enemy.type == 'virus':
                     virus_turns = self.game_engine.player.temporary_effects.get('virus_turns', 0)
@@ -420,6 +432,15 @@ class GameTurnManager:
                     self.game_engine.message_log.add_message("Save data purged")
                     self.game_engine.game_over = True
                     return  # Exit immediately - no more enemy processing after player death
+
+        # Show inventory attack warning if player was attacked while inventory was open
+        if player_attacked_in_inventory:
+            from game_dialogue import DialogueType
+            self.game_engine.dialogue_manager.show_dialogue(
+                DialogueType.INVENTORY_ATTACK,
+                damage=total_damage_taken,
+                enemy_count=attacking_enemy_count
+            )
 
         # Movement flags are reset at the start of _update_enemies()
 
