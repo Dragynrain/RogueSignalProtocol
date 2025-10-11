@@ -141,6 +141,7 @@ class TestSaveGameIntegration:
         mock_game_state.threat_scan_turns = 0
         mock_game_state.noise_locations = []
         mock_game_state.distraction_points = {}
+        mock_game_state.revealed_special_nodes = {}  # Add missing attribute for save system
         mock_game.game_state = mock_game_state
         
         # Mock map

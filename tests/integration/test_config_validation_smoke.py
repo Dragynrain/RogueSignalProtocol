@@ -143,11 +143,17 @@ class TestGameConfigStructure:
                         'cpu_restore_min', 'cpu_restore_max', 'heat_reduction_instant',
                         'adjacent_distance_threshold', 'patrol_stuck_threshold',
                         'pathfinding_timeout_attempts', 'enhanced_vision_bonus',
-                        'shadow_vision_reduction_factor', 'enemy_trace_alert_to_hostile',
-                        'enemy_trace_continuous_hostile', 'enemy_memory_turns']
+                        'shadow_vision_reduction_factor', 'enemy_memory_turns']
 
         for key in required_keys:
             assert key in balance, f"Missing required key 'balance.{key}' in game_rules.json"
+
+        # AI behavior keys are in a subsection
+        assert 'ai_behavior' in balance, "Missing required 'balance.ai_behavior' subsection in game_rules.json"
+        ai_behavior = balance['ai_behavior']
+        ai_keys = ['enemy_trace_alert_to_hostile', 'enemy_trace_continuous_hostile']
+        for key in ai_keys:
+            assert key in ai_behavior, f"Missing required key 'balance.ai_behavior.{key}' in game_rules.json"
 
 
 class TestGameDataStructure:
@@ -243,9 +249,11 @@ class TestGameDataStructure:
         assert 'balance' in game_data, "Missing required 'balance' section in game_content.json"
 
     def test_balance_has_ai_behavior(self, game_data):
-        """Verify balance.ai_behavior section exists."""
+        """Verify balance section has required structure (ai_behavior in game_rules.json only)."""
         balance = game_data['balance']
-        assert 'ai_behavior' in balance, "Missing required 'balance.ai_behavior' section in game_content.json"
+        # NOTE: ai_behavior moved to game_rules.json, not in game_content.json
+        # This test verifies balance section exists and has expected structure
+        assert 'code_hacks' in balance, "Missing required 'balance.code_hacks' section in game_content.json"
 
     def test_balance_has_cpu_restore_values(self, game_data):
         """Verify balance section exists (cpu_restore values moved to game_rules.json)."""
@@ -439,8 +447,6 @@ class TestConfigRealObjectInstantiation:
         # Verify CPU was restored using real values
         assert player.cpu > initial_cpu
         assert player.cpu >= initial_cpu + cpu_restore_min or player.cpu == player.max_cpu
-
-    # NOTE: exploit_cpu_costs removed from game design - exploits no longer have CPU costs
 
 
 class TestConfigValueConsistency:

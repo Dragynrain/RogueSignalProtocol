@@ -23,6 +23,7 @@ class GameSettings:
         self.sfx_volume = 0.8
         self.music_volume = 0.5
         self.graphics_mode = "ascii"  # "ascii" or "graphics"
+        self.dialogue_preferences = {}  # Stores user preferences for dialogue visibility
         self.load_settings()
     
     def load_settings(self) -> None:
@@ -46,6 +47,8 @@ class GameSettings:
                     self.sfx_volume = settings_data.get("sfx_volume", 0.8)
                     self.music_volume = settings_data.get("music_volume", 0.5)
                     self.graphics_mode = settings_data.get("graphics_mode", "ascii")
+                    # Load dialogue preferences with default empty dict
+                    self.dialogue_preferences = settings_data.get("dialogue_preferences", {})
                 except json.JSONDecodeError as e:
                     logging.warning(f"Settings file corrupted (JSON decode error: {e}), recreating with defaults")
                     self._create_default_settings_file()
@@ -62,7 +65,8 @@ class GameSettings:
                 "master_volume": 0.7,
                 "sfx_volume": 0.8,
                 "music_volume": 0.5,
-                "graphics_mode": "ascii"
+                "graphics_mode": "ascii",
+                "dialogue_preferences": {}
             }
             with open(self.SETTINGS_FILE, 'w') as f:
                 json.dump(default_settings, f, indent=2)
@@ -77,7 +81,8 @@ class GameSettings:
                 "master_volume": self.master_volume,
                 "sfx_volume": self.sfx_volume,
                 "music_volume": self.music_volume,
-                "graphics_mode": self.graphics_mode
+                "graphics_mode": self.graphics_mode,
+                "dialogue_preferences": self.dialogue_preferences
             }
             with open(self.SETTINGS_FILE, 'w') as f:
                 json.dump(settings_data, f, indent=2)
@@ -380,25 +385,6 @@ class GameBalance:
         cls.ENEMY_TRACE_ALERT_TO_HOSTILE = GameConfig._get_required('balance.ai_behavior.enemy_trace_alert_to_hostile')
         cls.ENEMY_TRACE_CONTINUOUS_HOSTILE = GameConfig._get_required('balance.ai_behavior.enemy_trace_continuous_hostile')
         cls.ENEMY_MEMORY_TURNS = GameConfig._get_required('balance.enemy_memory_turns')
-
-    @staticmethod
-    def get_exploit_cpu_cost(exploit_name: str) -> int:
-        """Get CPU cost for an exploit - FAILS if not found."""
-        from data_loading import DataLoader
-        game_data = DataLoader.load_game_data()
-        try:
-            costs = game_data['exploit_cpu_costs']
-            return costs[exploit_name]
-        except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Exploit '{exploit_name}' not found in game_content.json exploit_cpu_costs"
-            print(error_msg)
-            logging.error(error_msg)
-            if 'exploit_cpu_costs' in game_data:
-                print(f"Available exploits: {list(game_data['exploit_cpu_costs'].keys())}")
-            else:
-                print(f"'exploit_cpu_costs' section missing from game_content.json")
-                print(f"Available sections: {list(game_data.keys())}")
-            raise KeyError(f"Exploit CPU cost not found for: {exploit_name}") from e
 
     @staticmethod
     def get_enemy_difficulty_multiplier(difficulty: str) -> float:

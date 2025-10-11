@@ -59,6 +59,10 @@ class GameRenderer:
         else:
             self._render_main_game_screen(console, game)
 
+        # Render dialogue system on top of EVERYTHING (highest priority overlay)
+        if game.dialogue_manager.is_active():
+            self._render_dialogue(console, game)
+
     def _render_main_game_screen(self, console: tcod.console.Console, game):
         """Render the main game screen."""
         self.ui_renderer.render_top_status_bar(console, game)
@@ -69,6 +73,10 @@ class GameRenderer:
         # Render overlay dialogs
         if game.show_gateway_confirmation:
             self._render_gateway_confirmation(console)
+
+        # Render dialogue system (highest priority overlay)
+        if game.dialogue_manager.is_active():
+            self._render_dialogue(console, game)
 
         # Render game over/death messages
         if game.game_over and game.level > 3:
@@ -121,6 +129,101 @@ class GameRenderer:
 
         # Options
         render_char_safe(console, center_x - 5, start_y + 4, "Y: Yes  N: No", fg=Colors.CYAN, bg=Colors.UI_BG)
+
+    def _render_dialogue(self, console: tcod.console.Console, game):
+        """Render active dialogue popup."""
+        config = game.dialogue_manager.get_active_config()
+        if not config:
+            return
+
+        # Calculate dialogue box dimensions - use SCREEN_WIDTH for proper centering
+        box_width = 60
+        box_height = 12
+        center_x = GameConfig.SCREEN_WIDTH // 2
+        center_y = GameConfig.SCREEN_HEIGHT // 2
+        box_x = center_x - box_width // 2
+        box_y = center_y - box_height // 2
+
+        # Ensure colors are tuples
+        from game_entities import ensure_color_tuple
+        border_color = ensure_color_tuple(config.color_scheme["border"])
+        bg_color = ensure_color_tuple(config.color_scheme["background"])
+
+        # Draw dialogue box using TCOD's built-in box drawing
+        console.draw_rect(box_x, box_y, box_width, box_height, ord(' '), fg=Colors.WHITE, bg=bg_color)
+        console.draw_frame(box_x, box_y, box_width, box_height, fg=border_color, bg=bg_color, clear=False)
+
+        # Render title (centered)
+        title_x = box_x + (box_width - len(config.title)) // 2
+        render_char_safe(console, title_x, box_y + 1, config.title,
+                        fg=config.color_scheme["title"], bg=bg_color)
+
+        # Format message with context data
+        try:
+            formatted_message = config.message.format(**game.dialogue_manager.dialogue_data)
+        except KeyError as e:
+            logging.warning(f"Missing dialogue context data key: {e}")
+            formatted_message = config.message
+
+        # Render message (word-wrapped)
+        message_lines = self._wrap_dialogue_text(formatted_message, box_width - 4)
+        message_y = box_y + 3
+        for i, line in enumerate(message_lines):
+            if message_y + i < box_y + box_height - 3:  # Leave room for options
+                render_char_safe(console, box_x + 2, message_y + i, line,
+                               fg=config.color_scheme["message"], bg=bg_color)
+
+        # Render options (centered at bottom)
+        options_y = box_y + box_height - 2
+        options_text = "  ".join(config.options)
+        options_x = box_x + (box_width - len(options_text)) // 2
+        render_char_safe(console, options_x, options_y, options_text,
+                        fg=Colors.WHITE, bg=bg_color)
+
+    def _wrap_dialogue_text(self, text: str, max_width: int) -> List[str]:
+        """
+        Wrap text to fit within max_width characters.
+        Handles edge cases like words longer than max_width by breaking them.
+        """
+        words = text.split()
+        lines = []
+        current_line = []
+        current_length = 0
+
+        for word in words:
+            word_length = len(word)
+
+            # If word itself is longer than max_width, break it into chunks
+            if word_length > max_width:
+                # First, flush current line if any
+                if current_line:
+                    lines.append(" ".join(current_line))
+                    current_line = []
+                    current_length = 0
+
+                # Break the long word into chunks
+                for i in range(0, word_length, max_width):
+                    chunk = word[i:i + max_width]
+                    lines.append(chunk)
+                continue
+
+            # Check if adding this word would exceed max_width
+            space_needed = 1 if current_line else 0  # Space before word
+            if current_length + space_needed + word_length <= max_width:
+                current_line.append(word)
+                current_length += space_needed + word_length
+            else:
+                # Start new line
+                if current_line:
+                    lines.append(" ".join(current_line))
+                current_line = [word]
+                current_length = word_length
+
+        # Add remaining words
+        if current_line:
+            lines.append(" ".join(current_line))
+
+        return lines
 
     def _render_death_message(self, console: tcod.console.Console):
         """Render death message with frame and black backgrounds."""

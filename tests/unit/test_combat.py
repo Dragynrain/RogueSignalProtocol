@@ -97,6 +97,9 @@ class TestExploitSystem:
         mock_player.x = 10
         mock_player.y = 10
         mock_player.heat = 50
+        mock_player.max_heat = 100  # Add max_heat for dialogue system
+        mock_player.cpu = 100  # Add cpu for dialogue system
+        mock_player.max_cpu = 100  # Add max_cpu for dialogue system
         mock_player.position = Position(10, 10)
         mock_player.temporary_effects = {'exploit_efficiency_turns': 0}
         mock_inventory = Mock()
@@ -105,6 +108,7 @@ class TestExploitSystem:
         mock_game.player = mock_player
         mock_game.message_log = Mock()
         mock_game.sound_manager = Mock()
+        mock_game.dialogue_manager = Mock()  # Add dialogue_manager mock
         
         with patch('game_combat.GameData') as mock_game_data:
             # Mock an exploit that requires targeting
@@ -125,10 +129,13 @@ class TestExploitSystem:
             mock_game.message_log.add_message.assert_called_with("Targeting Buffer Overflow")
     
     def test_use_exploit_heat_limit_exceeded(self):
-        """Exploit with heat cost exceeding limit requires overclocking."""
+        """Exploit with heat cost exceeding limit shows overclock dialogue."""
         mock_game = Mock()
         mock_player = Mock()
         mock_player.heat = 90  # High heat
+        mock_player.max_heat = 100  # Add max_heat for dialogue system
+        mock_player.cpu = 100  # Add cpu for dialogue system
+        mock_player.max_cpu = 100  # Add max_cpu for dialogue system
         mock_player.temporary_effects = {'exploit_efficiency_turns': 0}
         mock_inventory = Mock()
         mock_inventory.equipped_exploits = {"system_crash": True}
@@ -136,22 +143,24 @@ class TestExploitSystem:
         mock_game.player = mock_player
         mock_game.message_log = Mock()
         mock_game.sound_manager = Mock()
-        mock_game.overclock_confirmation = False
-        
+        mock_game.dialogue_manager = Mock()  # Add dialogue_manager mock
+
         with patch('game_combat.GameData') as mock_game_data:
             mock_exploit = Mock(spec=ExploitDefinition)
             mock_exploit.heat = 20  # Would exceed 100 heat limit
             mock_exploit.targeting = TargetingMode.NONE
             mock_exploit.range = 0
+            mock_exploit.name = "System Crash"  # Add exploit name for dialogue
             mock_game_data.EXPLOITS = {"system_crash": mock_exploit}
-            
+
             exploit_system = ExploitSystem(mock_game)
-            
+
             result = exploit_system.use_exploit("system_crash")
-            
+
+            # Should return False and show dialogue instead of old confirmation system
             assert result is False
-            assert mock_game.overclock_confirmation is True
-            assert mock_game.overclock_exploit == "system_crash"
+            # Verify dialogue_manager.show_dialogue was called
+            mock_game.dialogue_manager.show_dialogue.assert_called_once()
     
     def test_execute_exploit_invalid(self):
         """Cannot execute unknown exploit."""

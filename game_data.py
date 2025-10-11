@@ -185,13 +185,6 @@ class GameBalance:
         raise AttributeError(f"'{cls.__name__}' has no attribute '{name}'")
 
     @staticmethod
-    def get_exploit_cpu_cost(exploit_name: str) -> int:
-        """Get CPU cost for an exploit - uses game_content.json."""
-        # Delegate to GameBalance which loads from JSON
-        from game_config import GameBalance
-        return GameBalance.get_exploit_cpu_cost(exploit_name)
-
-    @staticmethod
     def get_enemy_difficulty_multiplier(difficulty: str) -> float:
         """Get difficulty multiplier for enemies - uses game_content.json."""
         # Delegate to GameBalance which loads from JSON

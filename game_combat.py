@@ -30,27 +30,32 @@ class ExploitSystem:
         
         exploit = GameData.EXPLOITS[exploit_key]
         
-        # Check heat limit - allow overclocking with confirmation
+        # Check heat limit - show overclock warning dialogue
         heat_cost = self._calculate_heat_cost(exploit)
-        if self.game.player.heat + heat_cost > 100:
+        if self.game.player.heat + heat_cost > self.game.player.max_heat:
             # Calculate overclock damage
-            overclock_damage = (self.game.player.heat + heat_cost) - 100
-            if (hasattr(self.game, 'overclock_confirmation') and self.game.overclock_confirmation and 
-                hasattr(self.game, 'overclock_exploit') and self.game.overclock_exploit == exploit_key):
-                # Confirmed, apply overclock damage
-                self.game.overclock_confirmation = False
-                actual_damage = self.game.player.take_damage(overclock_damage)
-                self.game.message_log.add_message(f"OVERCLOCKING: {actual_damage} CPU damage!")
-                self.game.sound_manager.play_sound("overclocking")
-                # Set heat to 100 (not over)
-                self.game.player.heat = 100
-            else:
-                # Need confirmation
-                self.game.sound_manager.play_sound("exploit_failed")
-                self.game.message_log.add_message(f"Overclocking required: {overclock_damage} CPU damage. Press exploit key again to confirm.")
-                self.game.overclock_confirmation = True
-                self.game.overclock_exploit = exploit_key
-                return False
+            overheat_amount = (self.game.player.heat + heat_cost) - self.game.player.max_heat
+            cpu_damage = overheat_amount  # 1:1 ratio
+
+            # Calculate remaining CPU after damage
+            remaining_cpu = self.game.player.cpu - cpu_damage
+
+            # Show overclock warning dialogue with exact calculations
+            from game_dialogue import DialogueType
+            self.game.dialogue_manager.show_dialogue(
+                DialogueType.OVERCLOCK_WARNING,
+                exploit_key=exploit_key,
+                exploit_name=exploit.name,
+                damage=cpu_damage,
+                overheat_amount=overheat_amount,
+                current_cpu=self.game.player.cpu,
+                max_cpu=self.game.player.max_cpu,
+                remaining_cpu=remaining_cpu
+            )
+
+            # Play warning sound
+            self.game.sound_manager.play_sound("exploit_failed")
+            return False
         
         # Check if exploit requires targeting
 
@@ -71,26 +76,39 @@ class ExploitSystem:
         if exploit_key not in GameData.EXPLOITS:
             self.game.message_log.add_message("Unknown exploit")
             return False
-        
+
         exploit = GameData.EXPLOITS[exploit_key]
 
         # Validate target
         if not self._validate_target(exploit, target):
             return False
-        
+
         # Execute specific exploit
         success = self._execute_specific_exploit(exploit_key, exploit, target)
-        
+
         # Only apply heat cost if the exploit was successful
         if success:
             heat_cost = self._calculate_heat_cost(exploit)
-            self.game.player.heat = min(100, self.game.player.heat + heat_cost)
-        
+            new_heat = self.game.player.heat + heat_cost
+
+            # Check if this will cause overheating
+            if new_heat > self.game.player.max_heat:
+                # Apply overclock damage (confirmed via dialogue)
+                overheat_amount = new_heat - self.game.player.max_heat
+                actual_damage = self.game.player.take_damage(overheat_amount)
+                self.game.message_log.add_message(f"OVERCLOCKING: {actual_damage} CPU damage!")
+                self.game.sound_manager.play_sound("overclocking")
+                # Set heat to max (not over)
+                self.game.player.heat = self.game.player.max_heat
+            else:
+                # Normal heat application
+                self.game.player.heat = new_heat
+
         if success:
             self.game.targeting_mode = False
             self.game.targeting_exploit = None
             self.game.maybe_process_turn()
-        
+
         return success
     
     def _calculate_heat_cost(self, exploit: ExploitDefinition) -> int:
