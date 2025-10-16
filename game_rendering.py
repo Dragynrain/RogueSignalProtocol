@@ -39,10 +39,12 @@ def draw_bordered_box(console: tcod.console.Console, start_x: int, start_y: int,
 class GameRenderer:
     """Unified game renderer - consolidates all rendering functionality."""
 
-    def __init__(self, settings=None):
+    def __init__(self, settings=None, tile_manager=None, context=None):
         self.settings = settings
+        self.tile_manager = tile_manager
+        self.context = context
         self.ui_renderer = UIRenderer()
-        self.map_renderer = MapRenderer()
+        self.map_renderer = MapRenderer(tile_manager=tile_manager, context=context)
 
     def render_game(self, console: tcod.console.Console, game, context=None):
         """Render the complete game state."""
@@ -1070,7 +1072,18 @@ class UIRenderer:
 
 class MapRenderer:
     """Renders the game map and entities."""
-    
+
+    def __init__(self, tile_manager=None, context=None):
+        """
+        Initialize MapRenderer with optional graphics support.
+
+        Args:
+            tile_manager: TileManager instance for sprite loading (None for glyph mode)
+            context: TCOD context with SDL renderer (None for glyph mode)
+        """
+        self.tile_manager = tile_manager
+        self.context = context
+
     def render_map(self, console: tcod.console.Console, game):
         """Render the complete game map."""
         try:

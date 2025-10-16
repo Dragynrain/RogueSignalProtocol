@@ -17,6 +17,7 @@ from game_menus import MenuBackground, MainMenu, SettingsMenu, HelpMenu, LoreMen
 from game_engine import GameEngine
 from game_rendering import GameRenderer
 from game_input import InputHandler
+from game_graphics_tiles import TileManager
 
 
 def load_tileset():
@@ -257,8 +258,19 @@ def main():
                         menu_background.cleanup()
                         return
                     
+                    # Initialize tile manager for graphics mode
+                    tile_manager = None
+                    if settings.graphics_mode == "graphics":
+                        try:
+                            tile_manager = TileManager(context, settings)
+                            tile_manager.preload_common_tiles()
+                            logging.info("TileManager initialized for graphics mode")
+                        except Exception as e:
+                            logging.error(f"Failed to initialize TileManager: {e}")
+                            logging.error("Graphics mode will use glyph fallbacks")
+
                     # Initialize game rendering systems
-                    renderer = GameRenderer(settings)
+                    renderer = GameRenderer(settings, tile_manager=tile_manager, context=context)
                     input_handler = InputHandler(game)
                     show_welcome_messages(game)
 
