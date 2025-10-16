@@ -44,7 +44,7 @@ class TestGameSettings:
         assert settings.master_volume == 0.7
         assert settings.sfx_volume == 0.8
         assert settings.music_volume == 0.5
-        assert settings.graphics_mode == "ascii"
+        assert settings.graphics_mode == "glyph"
 
     def test_load_settings_from_file(self):
         """Test loading settings from existing file."""
@@ -77,7 +77,7 @@ class TestGameSettings:
         assert settings.master_volume == 0.5  # From file
         assert settings.sfx_volume == 0.8     # Default
         assert settings.music_volume == 0.5   # Default
-        assert settings.graphics_mode == "ascii"  # Default
+        assert settings.graphics_mode == "glyph"  # Default
 
     def test_save_settings_creates_file(self):
         """Test saving settings creates proper JSON file."""
@@ -94,7 +94,7 @@ class TestGameSettings:
         assert saved_data["master_volume"] == 0.95
         assert saved_data["sfx_volume"] == 0.85
         assert saved_data["music_volume"] == 0.5
-        assert saved_data["graphics_mode"] == "ascii"
+        assert saved_data["graphics_mode"] == "glyph"
 
     def test_volume_setting_methods(self):
         """Test volume setting methods with bounds checking."""
@@ -132,7 +132,7 @@ class TestGameSettings:
         assert settings.graphics_mode == "graphics"
 
         settings.set_graphics_mode("ascii")
-        assert settings.graphics_mode == "ascii"
+        assert settings.graphics_mode == "glyph"
 
         # Test invalid mode (should not change)
         original_mode = settings.graphics_mode

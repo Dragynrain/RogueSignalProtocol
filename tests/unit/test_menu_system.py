@@ -34,8 +34,8 @@ class TestMenuBackground:
         assert result is True
 
     def test_should_not_load_background_ascii_mode(self):
-        """Should not load background in ASCII mode."""
-        self.mock_settings.graphics_mode = "ascii"
+        """Should not load background in glyph mode."""
+        self.mock_settings.graphics_mode = "glyph"
 
         result = self.menu_background.should_load_background()
         assert result is False

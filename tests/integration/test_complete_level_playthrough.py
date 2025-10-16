@@ -39,7 +39,7 @@ class TestCompleteLevelPlaythrough:
         self.game_settings.master_volume = 0.0
         self.game_settings.sfx_volume = 0.0
         self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "ascii"
+        self.game_settings.graphics_mode = "glyph"
 
     def teardown_method(self):
         """Clean up test fixtures."""
@@ -624,7 +624,7 @@ class TestLevelEnvironmentGeneration:
         self.game_settings.master_volume = 0.0
         self.game_settings.sfx_volume = 0.0
         self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "ascii"
+        self.game_settings.graphics_mode = "glyph"
 
     def create_test_engine(self, level=1):
         """Create a GameEngine instance for testing."""

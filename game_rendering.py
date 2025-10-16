@@ -1175,7 +1175,7 @@ class MapRenderer:
         """Render a single tile."""
         # SYMBOL CONVENTIONS:
         # - Letters (A-Z): Reserved for enemies only (Scanner=S, Patrol=P, Bot=B, etc.)
-        # - ASCII symbols: Used for everything else (walls, items, terrain, etc.)
+        # - CP437 symbols: Used for everything else (walls, items, terrain, etc.)
         # - NO unicode characters allowed for terminal compatibility
         
         # Priority order for tile rendering

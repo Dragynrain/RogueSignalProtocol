@@ -37,7 +37,7 @@ class TestBasicShadowDetection:
         self.game_settings.master_volume = 0.0
         self.game_settings.sfx_volume = 0.0
         self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "ascii"
+        self.game_settings.graphics_mode = "glyph"
 
     def create_test_engine(self):
         """Create a GameEngine instance for testing."""
@@ -179,7 +179,7 @@ class TestInvisibilityMechanics:
         self.game_settings.master_volume = 0.0
         self.game_settings.sfx_volume = 0.0
         self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "ascii"
+        self.game_settings.graphics_mode = "glyph"
 
     def create_test_engine(self):
         """Create a GameEngine instance for testing."""
@@ -280,7 +280,7 @@ class TestEnhancedVisionMechanics:
         self.game_settings.master_volume = 0.0
         self.game_settings.sfx_volume = 0.0
         self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "ascii"
+        self.game_settings.graphics_mode = "glyph"
 
     def create_test_engine(self):
         """Create a GameEngine instance for testing."""
@@ -362,7 +362,7 @@ class TestStealthGameplayScenarios:
         self.game_settings.master_volume = 0.0
         self.game_settings.sfx_volume = 0.0
         self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "ascii"
+        self.game_settings.graphics_mode = "glyph"
 
     def create_test_engine(self):
         """Create a GameEngine instance for testing."""
@@ -557,7 +557,7 @@ class TestDetectionEdgeCases:
         self.game_settings.master_volume = 0.0
         self.game_settings.sfx_volume = 0.0
         self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "ascii"
+        self.game_settings.graphics_mode = "glyph"
 
     def create_test_engine(self):
         """Create a GameEngine instance for testing."""
@@ -656,7 +656,7 @@ class TestStealthWorkflowComplete:
         self.game_settings.master_volume = 0.0
         self.game_settings.sfx_volume = 0.0
         self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "ascii"
+        self.game_settings.graphics_mode = "glyph"
 
     def create_test_engine(self):
         """Create a GameEngine instance for testing."""
