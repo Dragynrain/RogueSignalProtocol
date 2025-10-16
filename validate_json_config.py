@@ -193,6 +193,100 @@ def validate_story_content():
     return True
 
 
+def validate_graphics_tiles():
+    """Validate graphics_tiles.json structure and file references."""
+    print("\nValidating graphics_tiles.json...")
+
+    import os
+
+    try:
+        with open('graphics_tiles.json', 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        print("[SKIP] graphics_tiles.json not found (optional file for graphics mode)")
+        return True  # Optional file, not an error
+
+    # Check for required sections
+    required_sections = ['player', 'enemies', 'terrain', 'items']
+    for section in required_sections:
+        if section not in data:
+            print(f"ERROR: Missing section '{section}' in graphics_tiles.json")
+            print(f"Available sections: {list(data.keys())}")
+            return False
+
+    # Validate player entry
+    if 'file' not in data['player']:
+        print(f"ERROR: Missing 'file' key in player section")
+        return False
+
+    # Check if graphics directory exists
+    graphics_dir = 'graphics'
+    if not os.path.isdir(graphics_dir):
+        print(f"WARNING: Graphics directory '{graphics_dir}' not found")
+        print("[SKIP] Skipping file existence checks")
+        return True  # Don't fail if graphics folder missing (could be dev environment)
+
+    # Validate sprite files exist
+    missing_files = []
+    validated_count = 0
+
+    def check_sprite_file(entity_name, entity_data, category):
+        """Helper to check if sprite file exists."""
+        nonlocal validated_count, missing_files
+
+        if not isinstance(entity_data, dict):
+            print(f"WARNING: '{entity_name}' in {category} is not a dict")
+            return
+
+        if 'file' not in entity_data:
+            print(f"WARNING: '{entity_name}' in {category} missing 'file' key")
+            return
+
+        sprite_file = entity_data['file']
+        sprite_path = os.path.join(graphics_dir, sprite_file)
+
+        if not os.path.exists(sprite_path):
+            missing_files.append((category, entity_name, sprite_file))
+        else:
+            validated_count += 1
+
+    # Check player sprite
+    if isinstance(data['player'], dict) and 'file' in data['player']:
+        check_sprite_file('player', data['player'], 'player')
+
+    # Check enemies
+    if isinstance(data['enemies'], dict):
+        for enemy_name, enemy_data in data['enemies'].items():
+            if not enemy_name.startswith('_'):  # Skip comment fields
+                check_sprite_file(enemy_name, enemy_data, 'enemies')
+
+    # Check terrain
+    if isinstance(data['terrain'], dict):
+        for terrain_name, terrain_data in data['terrain'].items():
+            if not terrain_name.startswith('_'):
+                check_sprite_file(terrain_name, terrain_data, 'terrain')
+
+    # Check items
+    if isinstance(data['items'], dict):
+        for item_name, item_data in data['items'].items():
+            if not item_name.startswith('_'):
+                check_sprite_file(item_name, item_data, 'items')
+
+    # Report results
+    if missing_files:
+        print(f"\nWARNING: {len(missing_files)} sprite files not found:")
+        for category, entity, filename in missing_files[:10]:  # Show first 10
+            print(f"  - {category}.{entity}: {filename}")
+        if len(missing_files) > 10:
+            print(f"  ... and {len(missing_files) - 10} more")
+        print(f"\n[OK] graphics_tiles.json structure is valid ({validated_count} sprites referenced)")
+        print(f"     {len(missing_files)} sprites missing (will use glyph fallbacks)")
+        return True  # Structure valid even if some files missing
+
+    print(f"[OK] graphics_tiles.json is valid ({validated_count} sprites found)")
+    return True
+
+
 def main():
     """Run all validation checks."""
     print("=" * 60)
@@ -238,6 +332,16 @@ def main():
         all_valid = False
     except Exception as e:
         print(f"ERROR: Unexpected error validating story_content.json: {e}")
+        all_valid = False
+
+    try:
+        if not validate_graphics_tiles():
+            all_valid = False
+    except json.JSONDecodeError as e:
+        print(f"ERROR: graphics_tiles.json has invalid JSON syntax: {e}")
+        all_valid = False
+    except Exception as e:
+        print(f"ERROR: Unexpected error validating graphics_tiles.json: {e}")
         all_valid = False
 
     print("\n" + "=" * 60)

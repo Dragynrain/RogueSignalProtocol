@@ -1,0 +1,117 @@
+{
+  "_comment": "Graphics Tile Mapping Configuration",
+  "_description": "Maps game entities to PNG sprite files. Only '01' variants used initially.",
+  "_format": {
+    "file": "PNG filename in graphics/ directory (e.g., 'player01.png')",
+    "tintable": "boolean - true for white sprites (use color_mod), false for colored sprites (use outline boxes)"
+  },
+
+  "player": {
+    "file": "player01.png",
+    "tintable": false,
+    "_comment": "Player sprite is colored, uses outline boxes for status effects (virus, etc.)"
+  },
+
+  "enemies": {
+    "Scanner": {
+      "file": "scanner01.png",
+      "tintable": false,
+      "_comment": "Basic detection enemy"
+    },
+    "Patrol": {
+      "file": "patrol01.png",
+      "tintable": false,
+      "_comment": "Moves on fixed routes"
+    },
+    "Bot": {
+      "file": "bot01.png",
+      "tintable": false,
+      "_comment": "Basic combat enemy"
+    },
+    "Hunter": {
+      "file": "hunter01.png",
+      "tintable": false,
+      "_comment": "Tracks and chases player"
+    },
+    "Virus": {
+      "file": "virus01.png",
+      "tintable": false,
+      "_comment": "Inflicts damage over time"
+    },
+    "Inhibitor": {
+      "file": "inhibitor01.png",
+      "tintable": false,
+      "_comment": "Slows player movement"
+    },
+    "Firewall": {
+      "file": "firewall01.png",
+      "tintable": false,
+      "_comment": "Defensive barrier enemy"
+    },
+    "Admin Avatar": {
+      "file": "avatar01.png",
+      "tintable": false,
+      "_comment": "Boss/elite enemy"
+    }
+  },
+
+  "terrain": {
+    "floor": {
+      "file": "floor01.png",
+      "tintable": false,
+      "_comment": "Basic floor tile"
+    },
+    "wall": {
+      "file": "wall01.png",
+      "tintable": false,
+      "_comment": "Basic wall tile"
+    }
+  },
+
+  "items": {
+    "codehack": {
+      "file": "codehack01.png",
+      "tintable": true,
+      "_comment": "White base sprite - tintable for different code hack types"
+    },
+    "exploit": {
+      "file": "exploit01.png",
+      "tintable": true,
+      "_comment": "White base sprite - tintable for different exploit types"
+    },
+    "cooling_node": {
+      "file": "coolingnode01.png",
+      "tintable": false,
+      "_comment": "Cooling resource node"
+    },
+    "cooling_upgrade": {
+      "file": "coolingupgrade01.png",
+      "tintable": false,
+      "_comment": "Cooling permanent upgrade"
+    },
+    "cpu_node": {
+      "file": "cpunode01.png",
+      "tintable": false,
+      "_comment": "CPU resource node"
+    },
+    "cpu_upgrade": {
+      "file": "cpuupgrade01.png",
+      "tintable": false,
+      "_comment": "CPU permanent upgrade"
+    },
+    "ghost_node": {
+      "file": "ghostnode01.png",
+      "tintable": false,
+      "_comment": "Detection reduction node"
+    }
+  },
+
+  "_missing_sprites": {
+    "_comment": "Entities that will use glyph fallbacks until sprites are created",
+    "gateway": "Exit to next level ('>') - no sprite yet",
+    "targeting_cursor": "Targeting UI ('X') - always rendered as glyph overlay",
+    "movement_prediction": "Movement indicators - always rendered as glyph overlay",
+    "vision_overlays": "FOV shadows/vision - handled by console background colors",
+    "story_fragments": "Story/lore pickups - no sprite yet"
+  }
+}
