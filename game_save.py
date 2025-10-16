@@ -295,6 +295,10 @@ class SaveGameManager:
             if hasattr(e, 'move_queue') and e.move_queue:
                 enemy_data["move_queue"] = [{"x": p.x, "y": p.y} for p in e.move_queue]
 
+            # Save queue target for proper queue invalidation on load
+            if hasattr(e, '_queue_target') and e._queue_target:
+                enemy_data["queue_target"] = {"x": e._queue_target.x, "y": e._queue_target.y}
+
             serialized.append(enemy_data)
 
         return serialized

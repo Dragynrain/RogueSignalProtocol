@@ -215,6 +215,15 @@ class GameSaveLoadManager:
                 enemy.patrol_points = [Position(p["x"], p["y"]) for p in patrol_data]
                 enemy.patrol_index = enemy_data.get("patrol_index", 0)
 
+                # Restore movement queue
+                move_queue_data = enemy_data.get("move_queue", [])
+                enemy.move_queue = [Position(p["x"], p["y"]) for p in move_queue_data]
+
+                # Restore queue target
+                queue_target_data = enemy_data.get("queue_target")
+                if queue_target_data:
+                    enemy._queue_target = Position(queue_target_data["x"], queue_target_data["y"])
+
                 enemy_manager.enemies.append(enemy)
 
             except Exception as e:
@@ -233,27 +242,32 @@ class GameSaveLoadManager:
 
                 if item_type == "code_hack":
                     item = CodeHack(
-                        item_data["name"],
-                        item_data["description"],
-                        item_data["effect_text"],
-                        item_data.get("value", {})
+                        color_name=item_data["color"],
+                        effect=item_data["effect"],
+                        name=item_data["name"],
+                        description=item_data["description"],
+                        quantity=item_data.get("quantity", 1)
                     )
+                    # Restore discovered status
+                    item.discovered = item_data.get("discovered", False)
                 elif item_type == "exploit":
-                    item = ExploitItem(
-                        item_data["name"],
-                        item_data["description"],
-                        item_data["exploit_key"]
-                    )
+                    from game_data import GameData
+                    exploit_key = item_data["exploit_key"]
+                    if exploit_key in GameData.EXPLOITS:
+                        exploit_def = GameData.EXPLOITS[exploit_key]
+                        item = ExploitItem(exploit_key, exploit_def)
+                    else:
+                        # Skip invalid exploit - log warning
+                        logging.warning(f"Skipping invalid exploit during load: {exploit_key}")
+                        continue
                 elif item_type == "story_fragment":
-                    item = StoryFragment(
-                        item_data["name"],
-                        item_data["description"],
-                        item_data["content"]
-                    )
+                    fragment_index = item_data.get("fragment_index", 0)
+                    item = StoryFragment(fragment_index)
                 else:
                     item = InventoryItem(
-                        item_data["name"],
-                        item_data["description"]
+                        name=item_data["name"],
+                        item_type=item_type,
+                        description=item_data.get("description", "")
                     )
 
                 items.append(item)
