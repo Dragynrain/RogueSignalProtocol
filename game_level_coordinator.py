@@ -93,6 +93,9 @@ class GameLevelCoordinator:
             # Delete save on game completion (no continuing after winning)
             SaveGameManager.delete_save()
             self.game_engine.message_log.add_message("Mission complete - save data purged")
+            # Show victory dialogue
+            from game_dialogue import DialogueType
+            self.game_engine.dialogue_manager.show_dialogue(DialogueType.VICTORY_MESSAGE)
         else:
             try:
                 self.generate_procedural_level()

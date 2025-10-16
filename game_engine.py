@@ -294,7 +294,9 @@ class GameEngine:
                 if (self.game_map.gateway and
                     self.player.position.distance_to(self.game_map.gateway) == 0):
                     self.sound_manager.play_sound("ui_menu_open")
-                    self.show_gateway_confirmation = True
+                    # Show gateway confirmation dialogue
+                    from game_dialogue import DialogueType
+                    self.dialogue_manager.show_dialogue(DialogueType.GATEWAY_CONFIRM)
                     return
 
                 # Check for overheating
@@ -313,6 +315,9 @@ class GameEngine:
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
                         self.game_over = True
+                        # Show death dialogue
+                        from game_dialogue import DialogueType
+                        self.dialogue_manager.show_dialogue(DialogueType.DEATH_MESSAGE)
                         return
 
                 # Handle speed boost and turn processing only if move was successful

@@ -25,6 +25,7 @@
     "trace_reduction_on_level": 50,
     "dungeon_seed_range": 1000000,
     "default_vision_range": 10,
+    "player_base_vision_range": 15,
     "max_save_attempts": 3,
     "adjacent_visibility_threshold": 1.5,
     "shadow_vision_reduction_factor": 3,

@@ -293,14 +293,16 @@ class TestCompleteLevelPlaythrough:
         engine.player.x = gateway.x - 1
         engine.player.y = gateway.y
 
-        # Verify confirmation not shown yet
-        assert engine.show_gateway_confirmation == False
+        # Verify dialogue not shown yet
+        assert engine.dialogue_manager.is_active() == False
 
-        # Move player onto gateway (this triggers the confirmation)
+        # Move player onto gateway (this triggers the confirmation dialogue)
         engine.move_player(1, 0)
 
-        # Verify gateway confirmation dialog is shown
-        assert engine.show_gateway_confirmation == True, "Gateway confirmation not shown"
+        # Verify gateway confirmation dialogue is shown
+        from game_dialogue import DialogueType
+        assert engine.dialogue_manager.is_active() == True, "Gateway dialogue not shown"
+        assert engine.dialogue_manager.active_dialogue == DialogueType.GATEWAY_CONFIRM, "Wrong dialogue type shown"
 
         # Verify sound effect was played
         engine.sound_manager.play_sound.assert_called_with("ui_menu_open")
@@ -315,11 +317,14 @@ class TestCompleteLevelPlaythrough:
         engine.player.y = gateway.y
         engine.move_player(1, 0)
 
-        assert engine.show_gateway_confirmation == True
+        # Verify gateway confirmation dialogue is shown
+        from game_dialogue import DialogueType
+        assert engine.dialogue_manager.is_active() == True
+        assert engine.dialogue_manager.active_dialogue == DialogueType.GATEWAY_CONFIRM
 
-        # Simulate confirming gateway
+        # Dismiss dialogue and progress
         initial_level = engine.level
-        engine.show_gateway_confirmation = False
+        engine.dialogue_manager.close_dialogue()
         engine.next_level()
 
         # Verify level progression
@@ -399,11 +404,13 @@ class TestCompleteLevelPlaythrough:
         engine.player.y = gateway.y
         engine.move_player(1, 0)
 
-        # Verify gateway confirmation shown
-        assert engine.show_gateway_confirmation == True
+        # Verify gateway confirmation dialogue is shown
+        from game_dialogue import DialogueType
+        assert engine.dialogue_manager.is_active() == True, "Gateway dialogue not shown"
+        assert engine.dialogue_manager.active_dialogue == DialogueType.GATEWAY_CONFIRM
 
-        # Confirm and progress
-        engine.show_gateway_confirmation = False
+        # Dismiss dialogue and progress
+        engine.dialogue_manager.close_dialogue()
         engine.next_level()
 
         # Verify level 2 state
@@ -532,12 +539,14 @@ class TestCompleteLevelPlaythrough:
         engine.player.y = gateway.y
         engine.move_player(1, 0)
 
-        # Verify gateway confirmation shown (player can leave even with enemies alive)
-        assert engine.show_gateway_confirmation == True
+        # Verify gateway confirmation dialogue shown (player can leave even with enemies alive)
+        from game_dialogue import DialogueType
+        assert engine.dialogue_manager.is_active() == True
+        assert engine.dialogue_manager.active_dialogue == DialogueType.GATEWAY_CONFIRM
 
-        # Confirm and progress
+        # Dismiss dialogue and progress
         enemy_count_before = len(engine.enemies)
-        engine.show_gateway_confirmation = False
+        engine.dialogue_manager.close_dialogue()
         engine.next_level()
 
         # Verify progression worked

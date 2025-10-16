@@ -70,19 +70,9 @@ class GameRenderer:
         self.ui_renderer.render_bottom_panel(console, game)
         self.ui_renderer.render_system_log(console, game)
 
-        # Render overlay dialogs
-        if game.show_gateway_confirmation:
-            self._render_gateway_confirmation(console)
-
-        # Render dialogue system (highest priority overlay)
+        # Render dialogue system (highest priority overlay) - handles gateway, death, victory
         if game.dialogue_manager.is_active():
             self._render_dialogue(console, game)
-
-        # Render game over/death messages
-        if game.game_over and game.level > 3:
-            self._render_victory_message(console)
-        elif game.player.cpu <= 0:
-            self._render_death_message(console)
 
     def _render_victory_message(self, console: tcod.console.Console):
         """Render victory message."""
@@ -1635,17 +1625,25 @@ class MapRenderer:
                          f"screen=({player_screen_x}, {player_screen_y})")
     
     def _get_player_color(self, player) -> Tuple[int, int, int]:
-        """Get player color based on current state."""
+        """Get player color based on current state with priority: Red > Yellow > Green(virus) > Cyan(slow) > White(normal)."""
+        # Priority 1: Critical status - Red
+        if player.cpu < 30 or player.heat > 80 or player.trace_level > 75:
+            return Colors.RED
+
+        # Priority 2: Warning status - Yellow (invisibility takes precedence over other effects)
+        if player.is_invisible():
+            return Colors.YELLOW
+
+        # Priority 3: Virus effect - Green
         if player.temporary_effects['virus_turns'] > 0:
             return Colors.DARK_GREEN
-        elif player.is_invisible():
-            return Colors.BLUE
-        elif player.temporary_effects['speed_boost_turns'] > 0:
-            return Colors.YELLOW
-        elif player.cpu < 30 or player.heat > 80 or player.trace_level > 75:
-            return Colors.RED
-        else:
-            return Colors.PLAYER
+
+        # Priority 4: Slow effect - Cyan
+        if player.temporary_effects['movement_slowed_turns'] > 0:
+            return Colors.CYAN
+
+        # Default: White
+        return Colors.WHITE
     
     def _render_targeting_cursor(self, console: tcod.console.Console, game, camera_offset: Position):
         """Render targeting cursor and range indicator."""

@@ -62,7 +62,7 @@ class GameData:
         'log_wiper': ExploitDefinition("Log Wiper", 2, 20, 0, "utility", 0, TargetingMode.NONE,
                                      "Significantly reduces trace level (-50%)", 0, 0),  # No damage, counter-trace level
         'antivirus': ExploitDefinition("Antivirus", 2, 25, 0, "utility", 0, TargetingMode.NONE,
-                                     "Purges all negative status effects (virus, etc.)", 0, 0),  # Status cleansing
+                                     "Purges all negative status effects (virus, slow, etc.)", 0, 0),  # Status cleansing
         'denial_of_service': ExploitDefinition("Denial of Service", 3, 40, 4, "combat", 20, TargetingMode.AREA,
                                      "Targeted area attack (20 damage, radius 1) that disables enemies for 5 turns", 5, 1),  # Moderate area damage + 5-turn stun duration, radius 1
         'memory_leak': ExploitDefinition("Memory Leak", 2, 30, 1, "combat", 0, TargetingMode.AREA,

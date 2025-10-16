@@ -103,7 +103,7 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
         # Only play menu music if NO music is currently playing
         if AUDIO_AVAILABLE and not pygame.mixer.music.get_busy():
-            menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000, volume_multiplier=1.3)
+            menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000, volume_multiplier=1.56)
     except Exception as e:
         logging.warning(f"Could not play main menu music: {e}")
         # Continue without music
@@ -184,11 +184,15 @@ def handle_game_input_events(event, game, input_handler):
         return False, None  # Exit program
     elif event.type == "KEYDOWN":
         if event.sym == tcod.event.KeySym.ESCAPE:
+            # Priority 1: If dialogue is active, let it handle escape first
+            if game.dialogue_manager.is_active():
+                input_handler._handle_dialogue_dismiss()
+                return True, game
             # Check if any UI states are open - close those first
-            if (game.show_story_fragment is not None or 
-                game.show_lore_viewer or 
-                game.show_help or 
-                game.show_inventory or 
+            elif (game.show_story_fragment is not None or
+                game.show_lore_viewer or
+                game.show_help or
+                game.show_inventory or
                 game.targeting_mode):
                 input_handler._handle_escape()
             else:

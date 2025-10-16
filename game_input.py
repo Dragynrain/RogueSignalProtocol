@@ -156,6 +156,11 @@ class InputHandler:
             if exploit_key:
                 # Execute the exploit that will cause overheating
                 self.exploit_system.use_exploit(exploit_key)
+        elif dialogue_type == DialogueType.GATEWAY_CONFIRM:
+            # Player confirmed gateway - proceed to next level
+            self.game.sound_manager.play_sound("level_complete")
+            self.game.message_log.add_message("Gateway reached! Next network...")
+            self.game.next_level()
 
         # Close dialogue
         self.game.dialogue_manager.close_dialogue()
@@ -172,6 +177,12 @@ class InputHandler:
             pass
         elif dialogue_type == DialogueType.OVERCLOCK_WARNING:
             # Cancel exploit use - just close dialogue
+            pass
+        elif dialogue_type == DialogueType.GATEWAY_CONFIRM:
+            # Player cancelled gateway - close dialogue and stay on level
+            self.game.message_log.add_message("Staying in current network")
+        elif dialogue_type in (DialogueType.DEATH_MESSAGE, DialogueType.VICTORY_MESSAGE):
+            # Death/victory messages - any key closes and returns to menu
             pass
 
         # Close dialogue
@@ -244,28 +255,40 @@ class InputHandler:
             # Handle navigation using universal handler with callback
             if UniversalInputHandler.handle_list_navigation(self, event, len(discovered_fragments), False, self._navigate_lore_viewer):
                 return True
-            
+
             # Handle selection
             if UniversalInputHandler.is_confirm_key(event):
                 # Enter reading mode for selected fragment
                 self.game.lore_viewer_mode = "reading"
                 return True
+            elif event.sym == tcod.event.KeySym.L:
+                # 'L' key closes lore viewer and returns to game
+                self.game.show_lore_viewer = False
+                self.game.lore_viewer_mode = "list"
+                self.game.lore_viewer_selection = 0
+                return True
             elif UniversalInputHandler.is_escape_key(event):
-                # Let main loop handle ESC
-                return False
+                # ESC also closes lore viewer
+                self.game.show_lore_viewer = False
+                self.game.lore_viewer_mode = "list"
+                self.game.lore_viewer_selection = 0
+                return True
         
         elif self.game.lore_viewer_mode == "reading":
-            # Reading mode - any key except ESC returns to list
-            if UniversalInputHandler.is_escape_key(event):
-                # Let main loop handle ESC
-                return False
+            # Reading mode - ESC or 'L' closes, other keys return to list
+            if event.sym == tcod.event.KeySym.L or UniversalInputHandler.is_escape_key(event):
+                # 'L' or ESC closes lore viewer and returns to game
+                self.game.show_lore_viewer = False
+                self.game.lore_viewer_mode = "list"
+                self.game.lore_viewer_selection = 0
+                return True
             else:
-                # Any other key returns to list
+                # Any other key returns to list view
                 self.game.lore_viewer_mode = "list"
                 return True
         
-        # Unhandled key - let other handlers process it
-        return False
+        # Unhandled key - consume it and stay in lore viewer
+        return True
     
     def _navigate_list(self, current_index, list_length, direction):
         """Generic list navigation helper."""
