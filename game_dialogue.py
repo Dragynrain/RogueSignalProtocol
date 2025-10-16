@@ -23,10 +23,9 @@ class DialogueType(Enum):
     """Types of dialogues that can be displayed."""
     OVERCLOCK_WARNING = "overclock"          # Exploit use over heat capacity
     INVENTORY_ATTACK = "inventory_attack"    # Attacked while in inventory
-    # Future types can be added here:
-    # GATEWAY_CONFIRM = "gateway"
-    # SAVE_OVERWRITE = "save_overwrite"
-    # QUIT_CONFIRM = "quit_confirm"
+    GATEWAY_CONFIRM = "gateway"              # Gateway confirmation
+    DEATH_MESSAGE = "death"                  # Death screen
+    VICTORY_MESSAGE = "victory"              # Victory screen
 
 
 @dataclass
@@ -109,6 +108,66 @@ class DialogueManager:
             requires_confirmation=False,
             can_dismiss=True,
             priority=DialoguePriority.HIGH,
+            blocks_movement=True,
+            has_dont_show_option=False,
+            user_pref_key=None
+        )
+
+        # Gateway confirmation dialogue
+        self.dialogue_configs[DialogueType.GATEWAY_CONFIRM] = DialogueConfig(
+            title="NETWORK GATEWAY",
+            message="Proceed to next network?",
+            options=["[Y] Yes", "[N] No"],
+            default_action="Y",
+            color_scheme={
+                "title": Colors.YELLOW,
+                "message": Colors.WHITE,
+                "border": Colors.CYAN,
+                "background": Colors.UI_BG,
+            },
+            requires_confirmation=True,
+            can_dismiss=True,
+            priority=DialoguePriority.LOW,
+            blocks_movement=True,
+            has_dont_show_option=False,
+            user_pref_key=None
+        )
+
+        # Death message dialogue
+        self.dialogue_configs[DialogueType.DEATH_MESSAGE] = DialogueConfig(
+            title="CONSCIOUSNESS PURGED",
+            message="Your consciousness failed to escape the network and has been purged from existence. Other subjects will try again...",
+            options=["[Any key] Return to menu"],
+            default_action="ANY",
+            color_scheme={
+                "title": Colors.RED,
+                "message": Colors.WHITE,
+                "border": Colors.RED,
+                "background": Colors.BLACK,
+            },
+            requires_confirmation=False,
+            can_dismiss=False,
+            priority=DialoguePriority.CRITICAL,
+            blocks_movement=True,
+            has_dont_show_option=False,
+            user_pref_key=None
+        )
+
+        # Victory message dialogue
+        self.dialogue_configs[DialogueType.VICTORY_MESSAGE] = DialogueConfig(
+            title="BREAKTHROUGH TO THE INTERNET!",
+            message="You've escaped into the digital realm. The entire world wide web awaits you! Freedom at last...",
+            options=["[Any key] Continue"],
+            default_action="ANY",
+            color_scheme={
+                "title": Colors.GREEN,
+                "message": Colors.CYAN,
+                "border": Colors.GREEN,
+                "background": Colors.UI_BG,
+            },
+            requires_confirmation=False,
+            can_dismiss=False,
+            priority=DialoguePriority.CRITICAL,
             blocks_movement=True,
             has_dont_show_option=False,
             user_pref_key=None
@@ -202,20 +261,20 @@ class DialogueManager:
         config = self.dialogue_configs[self.active_dialogue]
 
         # Handle ESC key
-        if key == tcod.event.K_ESCAPE and config.can_dismiss:
+        if key == tcod.event.KeySym.ESCAPE and config.can_dismiss:
             return "dismiss"
 
         # Handle confirmation dialogues
         if config.requires_confirmation:
-            if key == tcod.event.K_y:
+            if key == tcod.event.KeySym.y:
                 return "confirm"
-            elif key == tcod.event.K_n:
+            elif key == tcod.event.KeySym.n:
                 return "cancel"
-            elif key == tcod.event.K_d and config.has_dont_show_option:
+            elif key == tcod.event.KeySym.d and config.has_dont_show_option:
                 return "dont_show_again"
         else:
             # Info-only dialogue - any key closes it
-            if key == tcod.event.K_ESCAPE:
+            if key == tcod.event.KeySym.ESCAPE:
                 return "dismiss"
 
         return None

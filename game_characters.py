@@ -35,8 +35,9 @@ class Player:
         self.trace_level = 0.0  # Global trace level (float for fractional increments)
         self.ram_total = 8
         
-        # Vision and abilities
-        self.base_vision_range = 15
+        # Vision and abilities - load from config for easy balancing
+        from game_config import GameConfig
+        self.base_vision_range = GameConfig.get('gameplay.player_base_vision_range', 15)
         
         # Temporary effects
         self.temporary_effects = {
@@ -276,8 +277,8 @@ class Enemy:
         if player.is_invisible() and self.type != 'admin':
             return False
             
-        # Can't attack if no damage, unless it's a virus (which applies status effects)
-        if self.type_data.damage <= 0 and self.type != 'virus':
+        # Can't attack if no damage, unless it's a virus or inhibitor (which apply status effects)
+        if self.type_data.damage <= 0 and self.type not in ('virus', 'inhibitor'):
             return False
             
         dx = abs(self.position.x - player.position.x)
