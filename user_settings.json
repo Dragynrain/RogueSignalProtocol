@@ -2,5 +2,6 @@
   "master_volume": 0.5,
   "sfx_volume": 1.0,
   "music_volume": 1.0,
-  "graphics_mode": "graphics"
+  "graphics_mode": "graphics",
+  "dialogue_preferences": {}
 }
