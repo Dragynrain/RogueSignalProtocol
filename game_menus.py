@@ -79,7 +79,7 @@ class MainMenu:
         
         # TCOD is a console-based library, not designed for large background images
         # For true graphics, we would need tcod.sdl.render, but that's complex
-        # For now, we'll use the traditional centered menu with optional ASCII art
+        # For now, we'll use the traditional centered menu with optional CP437 glyph art
         
         self._render_enhanced_menu(console)
     
@@ -89,14 +89,14 @@ class MainMenu:
             # Graphics mode with background - calculate optimal positioning
             return self._calculate_background_aware_layout()
         else:
-            # ASCII mode or no background - center everything
+            # Glyph mode or no background - center everything
             return {
                 'title_x': GameConfig.SCREEN_WIDTH // 2,
                 'menu_x': GameConfig.SCREEN_WIDTH // 2,
                 'use_background_layout': False,
                 'layout_zone': 'center'
             }
-    
+
     def _render_right_side_box(self, console: tcod.console.Console, height: int, border_color: tuple, y_offset: int = 0):
         """Render a right-side menu box with consistent positioning and styling.
 
@@ -151,7 +151,7 @@ class MainMenu:
             render_char_safe(console, box['center_x'] - 6, 12, "Exfiltration", fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, box['center_x'] - 10, 13, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
         else:
-            # ASCII mode - centered positioning
+            # Glyph mode - centered positioning
             title = "ROGUE SIGNAL PROTOCOL"
             render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 6, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN, bg=Colors.BLACK)
@@ -169,7 +169,7 @@ class MainMenu:
                 author_info, fg=(128, 128, 128), bg=Colors.BLACK
             )
         else:
-            # ASCII mode - centered
+            # Glyph mode - centered
             render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - len(author_info) // 2, 11,
                 author_info, fg=(128, 128, 128), bg=Colors.BLACK
@@ -186,7 +186,7 @@ class MainMenu:
                 # Background mode - centered within narrow box
                 x_pos = box['center_x'] - len(option) // 2 - 1
             else:
-                # ASCII mode - centered
+                # Glyph mode - centered
                 x_pos = GameConfig.SCREEN_WIDTH // 2 - len(option) // 2 - 1
                 
             render_char_safe(console, 
@@ -218,12 +218,12 @@ class MainMenu:
                         saved_text, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK
                     )
                 else:
-                    # ASCII mode - centered
-                    render_char_safe(console, 
+                    # Glyph mode - centered
+                    render_char_safe(console,
                         GameConfig.SCREEN_WIDTH // 2 - 15, start_y + len(self.options) * 2 + 2,
                         "Save file found - Continue to resume", fg=Colors.GREEN, bg=Colors.BLACK
                     )
-                    render_char_safe(console, 
+                    render_char_safe(console,
                         GameConfig.SCREEN_WIDTH // 2 - 12, start_y + len(self.options) * 2 + 3,
                         f"Last saved: {save_timestamp}", fg=Colors.LIGHT_GRAY, bg=Colors.BLACK
                     )
@@ -243,12 +243,12 @@ class MainMenu:
                 select_text, fg=(128, 128, 128), bg=Colors.BLACK
             )
         else:
-            # ASCII mode - centered
-            render_char_safe(console, 
+            # Glyph mode - centered
+            render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
                 "UP/DOWN or W/S: Navigate", fg=(128, 128, 128), bg=Colors.BLACK
             )
-            render_char_safe(console, 
+            render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
                 "Enter: Select", fg=(128, 128, 128), bg=Colors.BLACK
             )
@@ -266,8 +266,8 @@ class MainMenu:
                     fragment_text, fg=Colors.CYAN, bg=Colors.BLACK
                 )
             else:
-                # ASCII mode - centered
-                render_char_safe(console, 
+                # Glyph mode - centered
+                render_char_safe(console,
                     GameConfig.SCREEN_WIDTH // 2 - 12, GameConfig.SCREEN_HEIGHT - 2,
                     f"Story Fragments: {discovered}/{total}", fg=Colors.CYAN, bg=Colors.BLACK
                 )
@@ -303,7 +303,7 @@ class MainMenu:
                 "Continue?"
             ]
         else:
-            # ASCII mode - use original longer lines
+            # Glyph mode - use original longer lines
             messages = [
                 "Starting a new game will delete your",
                 "current progress permanently.",
@@ -334,7 +334,7 @@ class MainMenu:
                 option_text = short_options[i]
                 option_x = box['center_x'] - len(option_text) // 2 - 1
             else:
-                # ASCII mode - use full option text
+                # Glyph mode - use full option text
                 option_text = option
                 option_x = box['center_x'] - len(option_text) // 2 - 1
             
@@ -555,7 +555,7 @@ class SettingsMenu:
             {"name": "SFX Volume", "type": "volume", "key": "sfx"},
             {"name": "Music Volume", "type": "volume", "key": "music"},
             {"name": "Graphics Mode", "type": "toggle", "key": "graphics_mode",
-             "values": ["ASCII", "Graphics"]},
+             "values": ["Classic", "Graphics"]},
             {"name": "--- Dialogues ---", "type": "section_header"},
             {"name": "Overclock Warnings", "type": "dialogue_toggle", "key": "show_overclock_warning"},
             {"name": "Back", "type": "action"}
@@ -573,14 +573,14 @@ class SettingsMenu:
             # Graphics mode with background - calculate optimal positioning
             return self._calculate_background_aware_layout()
         else:
-            # ASCII mode or no background - center everything
+            # Glyph mode or no background - center everything
             return {
                 'title_x': GameConfig.SCREEN_WIDTH // 2,
                 'menu_x': GameConfig.SCREEN_WIDTH // 2,
                 'use_background_layout': False,
                 'layout_zone': 'center'
             }
-    
+
     def _calculate_background_aware_layout(self):
         """Calculate sophisticated layout for background mode based on window dimensions."""
         return MenuRenderingUtils.calculate_background_aware_layout(self.background)
@@ -656,7 +656,7 @@ class SettingsMenu:
                 'use_background_layout': True
             }
         else:
-            # ASCII mode - larger centered box
+            # Glyph mode - larger centered box
             box_width = 50
             box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
             box_right = box_left + box_width - 1
@@ -673,7 +673,7 @@ class SettingsMenu:
                              ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0),
                              bg_blend=tcod.constants.BKGND_SET)
 
-            # Draw simple ASCII border
+            # Draw simple glyph border
             for x in range(box_left, box_left + box_width):
                 render_char_safe(console, x, box_top, '=', fg=border_color, bg=Colors.BLACK)
                 render_char_safe(console, x, box_bottom, '=', fg=border_color, bg=Colors.BLACK)
@@ -749,7 +749,7 @@ class SettingsMenu:
 
                 elif option["type"] == "toggle":
                     if option["key"] == "graphics_mode":
-                        current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "ASCII"
+                        current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "Classic"
                         render_char_safe(console, name_x, option_y + 1, f"< {current_value} >", fg=color, bg=Colors.BLACK)
 
                 elif option["type"] == "dialogue_toggle":
@@ -759,7 +759,7 @@ class SettingsMenu:
                     status = "[X]" if is_enabled else "[ ]"
                     render_char_safe(console, name_x, option_y + 1, f"{status} Enabled", fg=color, bg=Colors.BLACK)
             else:
-                # ASCII mode - wider layout
+                # Glyph mode - wider layout
                 # Option name
                 if option["type"] == "section_header":
                     render_char_safe(console, box['content_left'] + 2, option_y, option["name"], fg=Colors.CYAN, bg=Colors.BLACK)
@@ -778,7 +778,7 @@ class SettingsMenu:
 
                 elif option["type"] == "toggle":
                     if option["key"] == "graphics_mode":
-                        current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "ASCII"
+                        current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "Classic"
                         render_char_safe(console, box['content_left'] + 18, option_y, f"< {current_value} >", fg=color, bg=Colors.BLACK)
 
                 elif option["type"] == "dialogue_toggle":
@@ -799,7 +799,7 @@ class SettingsMenu:
             ]
             inst_start_y = box['bottom'] - 6
         else:
-            # Full instructions for ASCII mode
+            # Full instructions for glyph mode
             instructions = [
                 "Arrow Keys/WASD: Navigate",
                 "Left/Right or A/D: Adjust volumes/toggle options", 
@@ -898,7 +898,7 @@ class SettingsMenu:
         elif option["type"] == "toggle":
             if option["key"] == "graphics_mode":
                 current_mode = self.settings.graphics_mode
-                new_mode = "graphics" if current_mode == "ascii" else "ascii"
+                new_mode = "graphics" if current_mode == "glyph" else "glyph"
                 self.settings.set_graphics_mode(new_mode)
 
                 # Immediately update background to reflect the change

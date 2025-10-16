@@ -220,10 +220,10 @@ class MenuBackground:
             if mode_changed:
                 logging.info("Graphics mode enabled - loading background")
             self.load_random_background()
-        elif current_mode == "ascii" and has_texture:
-            # Mode switched to ASCII - free memory
+        elif current_mode == "glyph" and has_texture:
+            # Mode switched to glyph mode - free memory
             if mode_changed:
-                logging.info("ASCII mode enabled - cleaning up background")
+                logging.info("Glyph mode enabled - cleaning up background")
             self.cleanup()
         
         # Force layout recalculation on next render by clearing cached dimensions

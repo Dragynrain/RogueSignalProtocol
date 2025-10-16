@@ -72,7 +72,7 @@ class TestGameComponentIntegration(unittest.TestCase):
         # Check default values are set
         self.assertIsInstance(settings.master_volume, float)
         self.assertIsInstance(settings.graphics_mode, str)
-        self.assertIn(settings.graphics_mode, ["ascii", "graphics"])
+        self.assertIn(settings.graphics_mode, ["glyph", "graphics"])
         
     def test_player_integration(self):
         """Test that Player class can be imported and created."""

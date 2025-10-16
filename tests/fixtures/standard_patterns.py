@@ -37,7 +37,7 @@ def create_basic_game_environment():
     game_settings.master_volume = 0.0
     game_settings.sfx_volume = 0.0
     game_settings.music_volume = 0.0
-    game_settings.graphics_mode = "ascii"
+    game_settings.graphics_mode = "glyph"
 
     mock_sound_manager = Mock()
 

@@ -22,7 +22,7 @@ class GameSettings:
         self.master_volume = 0.7
         self.sfx_volume = 0.8
         self.music_volume = 0.5
-        self.graphics_mode = "ascii"  # "ascii" or "graphics"
+        self.graphics_mode = "glyph"  # "glyph" (CP437 characters) or "graphics" (PNG sprites)
         self.dialogue_preferences = {}  # Stores user preferences for dialogue visibility
         self.load_settings()
     
@@ -46,7 +46,15 @@ class GameSettings:
                     self.master_volume = settings_data.get("master_volume", 0.7)
                     self.sfx_volume = settings_data.get("sfx_volume", 0.8)
                     self.music_volume = settings_data.get("music_volume", 0.5)
-                    self.graphics_mode = settings_data.get("graphics_mode", "ascii")
+                    self.graphics_mode = settings_data.get("graphics_mode", "glyph")
+
+                    # Migrate old "ascii" setting to "glyph"
+                    if self.graphics_mode == "ascii":
+                        self.graphics_mode = "glyph"
+                        # Save immediately to persist the migration
+                        self.save_settings()
+                        logging.info("Migrated graphics_mode from 'ascii' to 'glyph'")
+
                     # Load dialogue preferences with default empty dict
                     self.dialogue_preferences = settings_data.get("dialogue_preferences", {})
                 except json.JSONDecodeError as e:
@@ -65,7 +73,7 @@ class GameSettings:
                 "master_volume": 0.7,
                 "sfx_volume": 0.8,
                 "music_volume": 0.5,
-                "graphics_mode": "ascii",
+                "graphics_mode": "glyph",
                 "dialogue_preferences": {}
             }
             with open(self.SETTINGS_FILE, 'w') as f:
@@ -107,8 +115,12 @@ class GameSettings:
         self._set_volume_attribute("music", volume)
     
     def set_graphics_mode(self, mode: str):
-        """Set graphics mode ('ascii' or 'graphics')"""
-        if mode in ["ascii", "graphics"]:
+        """Set graphics mode ('glyph' for CP437 characters or 'graphics' for PNG sprites)"""
+        if mode in ["glyph", "graphics", "ascii"]:  # Accept "ascii" for backwards compatibility
+            # Migrate "ascii" to "glyph" if provided
+            if mode == "ascii":
+                mode = "glyph"
+                logging.info("Migrated graphics_mode from 'ascii' to 'glyph'")
             self.graphics_mode = mode
             self.save_settings()
     
