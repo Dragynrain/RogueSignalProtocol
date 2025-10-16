@@ -22,22 +22,25 @@ from game_graphics_tiles import TileManager
 
 def load_tileset():
     """Load terminal tileset - no fallbacks, missing font indicates corrupt installation."""
-    
+
     # Load terminal tileset
+    # terminal10x16 means each glyph is 10 pixels wide x 16 pixels tall
+    # The tilesheet has 16 columns x 16 rows of glyphs
     tileset = tcod.tileset.load_tilesheet(
         "terminal10x16_gs_ro.png", 16, 16, tcod.tileset.CHARMAP_CP437
     )
-    logging.info("Loaded terminal tileset successfully")
-    
+
+    logging.info("Loaded terminal tileset successfully (10x16)")
+
     return tileset
 
 
 def initialize_tcod_context():
     """Initialize tcod context with terminal font and SDL validation."""
     tileset = load_tileset()
-    
+
     logging.info("Using terminal font")
-    
+
     context_args = {
         "columns": GameConfig.SCREEN_WIDTH,
         "rows": GameConfig.SCREEN_HEIGHT,
@@ -45,22 +48,25 @@ def initialize_tcod_context():
         "vsync": True,
         "sdl_window_flags": 160  # Resizable window
     }
-    
+
     if tileset:
         context_args["tileset"] = tileset
-    
+
     context = tcod.context.new(**context_args)
-    
+
+    # Store tileset reference on context for later GlyphManager initialization
+    context.tileset = tileset
+
     # Validate SDL renderer availability and set up console rendering
     if hasattr(context, 'sdl_renderer') and context.sdl_renderer:
         logging.info("SDL renderer available for graphics mode")
-        
+
         # Create console rendering objects for proper SDL + console mixing
         try:
             from tcod import render as tcod_render
             atlas = tcod_render.SDLTilesetAtlas(context.sdl_renderer, tileset)
             console_render = tcod_render.SDLConsoleRender(atlas)
-            
+
             # Attach console render to context for later use
             context.console_render = console_render
             logging.info("Console texture rendering initialized successfully")
@@ -70,7 +76,7 @@ def initialize_tcod_context():
     else:
         logging.warning("SDL renderer unavailable - graphics mode will be disabled")
         context.console_render = None
-    
+
     return context
 
 
@@ -86,8 +92,13 @@ def initialize_game_systems(settings: GameSettings, menu_background=None, sound_
     }
 
 
-def handle_menu_navigation(console, context, menus, settings, menu_sound_manager=None):
-    """Handle the main menu navigation loop."""
+def handle_menu_navigation(console, context, menus, settings, menu_sound_manager=None, active_game=None):
+    """
+    Handle the main menu navigation loop.
+
+    Args:
+        active_game: If provided, this is a game in progress that should be resumed on "continue"
+    """
     main_menu = menus['main_menu']
     main_menu.refresh_options(show_continue=True)
     current_menu = main_menu
@@ -162,8 +173,14 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     # Only stop if menu music was actually started (current_music is set)
                     if menu_sound_manager.current_music is not None:
                         menu_sound_manager.stop_music(fade_out_ms=1000)
-                    game = GameEngine(load_save=True, settings=settings)
-                    return game, False
+
+                    # If there's an active game in progress, resume it
+                    # Otherwise, load from save file
+                    if active_game is not None:
+                        return active_game, False
+                    else:
+                        game = GameEngine(load_save=True, settings=settings)
+                        return game, False
                 elif action == "new_game":
                     # Stop any music for new game - fresh start
                     menu_sound_manager.stop_music(fade_out_ms=1000)
@@ -247,12 +264,16 @@ def main():
 
             game = None
 
+            # Track the active game across menu returns
+            active_game_session = None
+
             while True:
                 # Check for graphics mode changes and reload accordingly
                 menu_background.reload_if_mode_changed()
 
                 if game is None:
-                    game, should_exit = handle_menu_navigation(console, context, menus, settings, menu_sound_manager)
+                    # Pass active_game_session to handle_menu_navigation so it can resume
+                    game, should_exit = handle_menu_navigation(console, context, menus, settings, menu_sound_manager, active_game_session)
                     if should_exit:
                         # Cleanup background before exit
                         menu_background.cleanup()
@@ -267,7 +288,7 @@ def main():
                             logging.info("TileManager initialized for graphics mode")
                         except Exception as e:
                             logging.error(f"Failed to initialize TileManager: {e}")
-                            logging.error("Graphics mode will use glyph fallbacks")
+                            logging.error("Graphics mode will fall back to glyph mode")
 
                     # Initialize game rendering systems
                     renderer = GameRenderer(settings, tile_manager=tile_manager, context=context)
@@ -279,14 +300,22 @@ def main():
                     try:
                         game.sound_manager.update()
                         renderer.render_game(console, game, context)
-                        context.present(console)
-                        
+
+                        # Only present console in glyph mode - graphics mode handles its own present()
+                        # Note: render_game handles present() internally for graphics mode
+                        if settings.graphics_mode != "graphics":
+                            context.present(console)
+
                         # Handle input events
                         for event in tcod.event.wait():
+                            # Save game reference before it potentially becomes None
+                            previous_game = game
                             should_continue, game = handle_game_input_events(event, game, input_handler)
                             if not should_continue:
                                 return  # Exit program
                             if game is None:
+                                # Player returned to menu - save the active game session
+                                active_game_session = previous_game
                                 break  # Return to main menu
                         
                     except Exception as e:

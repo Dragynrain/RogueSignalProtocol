@@ -266,11 +266,11 @@ class DialogueManager:
 
         # Handle confirmation dialogues
         if config.requires_confirmation:
-            if key == tcod.event.KeySym.y:
+            if key == tcod.event.KeySym.Y:
                 return "confirm"
-            elif key == tcod.event.KeySym.n:
+            elif key == tcod.event.KeySym.N:
                 return "cancel"
-            elif key == tcod.event.KeySym.d and config.has_dont_show_option:
+            elif key == tcod.event.KeySym.D and config.has_dont_show_option:
                 return "dont_show_again"
         else:
             # Info-only dialogue - any key closes it

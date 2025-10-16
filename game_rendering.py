@@ -16,7 +16,6 @@ from game_data import GameData, GameUpgrades
 from game_menus import HelpMenu
 from data_loading import get_story_fragments
 
-
 # Import render_char_safe from game_ui to avoid circular imports
 from game_ui import render_char_safe
 
@@ -48,33 +47,106 @@ class GameRenderer:
 
     def render_game(self, console: tcod.console.Console, game, context=None):
         """Render the complete game state."""
-        console.clear()
+        # Check if we should use graphics mode rendering
+        should_use_graphics = (self.settings and
+                               self.settings.graphics_mode == "graphics" and
+                               self.tile_manager is not None and
+                               self.context is not None and
+                               hasattr(self.context, 'sdl_renderer') and
+                               self.context.sdl_renderer is not None and
+                               hasattr(self.context, 'console_render') and
+                               self.context.console_render is not None)
 
+        # Only clear console for overlay screens that need full console rendering
+        # Main game screen handles clearing differently for graphics vs glyph mode
         if game.show_story_fragment is not None:
+            console.clear()
             self.ui_renderer.render_story_fragment_screen(console, game, game.show_story_fragment)
         elif game.show_lore_viewer:
+            console.clear()
             self.ui_renderer.render_lore_viewer_screen(console, game)
         elif game.show_help:
+            console.clear()
             self.ui_renderer.render_help_screen(console)
         elif game.show_inventory:
+            console.clear()
             self.ui_renderer.render_inventory_screen(console, game)
         else:
+            # Main game screen uses special graphics rendering
             self._render_main_game_screen(console, game)
+            return  # Main game screen handles its own present() in graphics mode
 
         # Render dialogue system on top of EVERYTHING (highest priority overlay)
         if game.dialogue_manager.is_active():
             self._render_dialogue(console, game)
 
-    def _render_main_game_screen(self, console: tcod.console.Console, game):
-        """Render the main game screen."""
-        self.ui_renderer.render_top_status_bar(console, game)
-        self.map_renderer.render_map(console, game)
-        self.ui_renderer.render_bottom_panel(console, game)
-        self.ui_renderer.render_system_log(console, game)
+        # For overlay screens (inventory, help, lore), we need to present in graphics mode too
+        if should_use_graphics:
+            self.context.sdl_renderer.clear()
+            console_texture = self.context.console_render.render(console)
+            self.context.sdl_renderer.copy(console_texture)
+            self.context.sdl_renderer.present()
 
-        # Render dialogue system (highest priority overlay) - handles gateway, death, victory
-        if game.dialogue_manager.is_active():
-            self._render_dialogue(console, game)
+    def _render_main_game_screen(self, console: tcod.console.Console, game):
+        """
+        Render the main game screen.
+        Uses layered SDL rendering in graphics mode, traditional console in glyph mode.
+        """
+        # Check if we should use graphics mode rendering
+        should_use_graphics = (self.settings and
+                               self.settings.graphics_mode == "graphics" and
+                               self.tile_manager is not None and
+                               self.context is not None and
+                               hasattr(self.context, 'sdl_renderer') and
+                               self.context.sdl_renderer is not None and
+                               hasattr(self.context, 'console_render') and
+                               self.context.console_render is not None)
+
+        if should_use_graphics:
+            # === GRAPHICS MODE: Sprites + Console UI ===
+            logging.info("Using graphics mode rendering")
+
+            # Set SDL clear color to black (for unexplored areas)
+            self.context.sdl_renderer.draw_color = (0, 0, 0, 255)
+            self.context.sdl_renderer.clear()
+
+            # LAYER 1: Render sprites (terrain + entities) directly to SDL
+            self.map_renderer.render_sprites_layer(game)
+
+            # LAYER 2: Render status effect boxes over sprites
+            self.map_renderer.render_status_effects_layer(game)
+
+            # LAYER 3: Render console with UI text as texture overlay
+            # Clear console and render all UI to it
+            console.clear()
+            self.ui_renderer.render_top_status_bar(console, game)
+            self.ui_renderer.render_bottom_panel(console, game)
+            self.ui_renderer.render_system_log(console, game)
+
+            # Render dialogue system on console if active (covers everything)
+            if game.dialogue_manager.is_active():
+                self._render_dialogue(console, game)
+
+            # Convert console to texture and overlay it on top of sprites
+            console_texture = self.context.console_render.render(console)
+            self.context.sdl_renderer.copy(console_texture)
+
+            # Present final frame
+            self.context.sdl_renderer.present()
+
+        else:
+            # === GLYPH MODE: Traditional Console Rendering ===
+            # Clear console for glyph mode - map rendering will overwrite everything
+            console.clear()
+
+            self.ui_renderer.render_top_status_bar(console, game)
+            self.map_renderer.render_map(console, game)
+            self.ui_renderer.render_bottom_panel(console, game)
+            self.ui_renderer.render_system_log(console, game)
+
+            # Render dialogue system (highest priority overlay) - handles gateway, death, victory
+            if game.dialogue_manager.is_active():
+                self._render_dialogue(console, game)
 
     def _render_victory_message(self, console: tcod.console.Console):
         """Render victory message."""
@@ -1084,6 +1156,48 @@ class MapRenderer:
         self.tile_manager = tile_manager
         self.context = context
 
+    def _should_use_graphics(self):
+        """Check if graphics mode is available and should be used."""
+        return (self.tile_manager is not None and
+                self.context is not None and
+                hasattr(self.context, 'sdl_renderer') and
+                self.context.sdl_renderer is not None)
+
+    def _grid_to_pixel(self, screen_x: int, screen_y: int) -> Tuple[int, int]:
+        """
+        Convert grid coordinates to pixel coordinates.
+
+        Args:
+            screen_x: Grid x coordinate (0 to GAME_AREA_WIDTH)
+            screen_y: Grid y coordinate (0 to SCREEN_HEIGHT)
+
+        Returns:
+            Tuple of (pixel_x, pixel_y)
+        """
+        if not self.tile_manager:
+            return (0, 0)
+
+        pixel_x = screen_x * self.tile_manager.tile_width
+        pixel_y = screen_y * self.tile_manager.tile_height
+        return (pixel_x, pixel_y)
+
+    def _get_tile_rect(self, screen_x: int, screen_y: int) -> Tuple[int, int, int, int]:
+        """
+        Get pixel rectangle for a tile at grid coordinates.
+
+        Args:
+            screen_x: Grid x coordinate
+            screen_y: Grid y coordinate
+
+        Returns:
+            Tuple of (x, y, width, height) in pixels for SDL rendering
+        """
+        if not self.tile_manager:
+            return (0, 0, 0, 0)
+
+        px, py = self._grid_to_pixel(screen_x, screen_y)
+        return (px, py, self.tile_manager.tile_width, self.tile_manager.tile_height)
+
     def render_map(self, console: tcod.console.Console, game):
         """Render the complete game map."""
         try:
@@ -1401,8 +1515,11 @@ class MapRenderer:
 
         return pulsed_color
 
-    def _render_vision_overlays(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
+    def _render_vision_overlays(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
         """Render enemy vision range overlays."""
+        # TODO: Implement graphics mode vision overlays
+        if use_graphics:
+            return
         if game.player.is_invisible():
             return
         
@@ -1466,8 +1583,11 @@ class MapRenderer:
             # Silent fail for overlay errors, but could log line_no if needed for debugging
             pass
     
-    def _render_patrol_routes(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
+    def _render_patrol_routes(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
         """Render next 3 predicted moves for all moving enemies."""
+        # TODO: Implement graphics mode patrol routes
+        if use_graphics:
+            return
         
         threat_scan_active = game.game_state.threat_scan_turns > 0
         
@@ -1517,8 +1637,11 @@ class MapRenderer:
                             symbol = chr(tcod.tileset.CHARMAP_CP437[9])
                         render_char_safe(console, screen_x, screen_y, symbol, fg=color, bg=bg_color)
     
-    def _render_gateway(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
+    def _render_gateway(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
         """Render the level gateway."""
+        # TODO: Implement graphics mode gateway rendering
+        if use_graphics:
+            return
         if not game.game_map.gateway:
             return
         
@@ -1658,7 +1781,10 @@ class MapRenderer:
         # Default: White
         return Colors.WHITE
     
-    def _render_targeting_cursor(self, console: tcod.console.Console, game, camera_offset: Position):
+    def _render_targeting_cursor(self, console: tcod.console.Console, game, camera_offset: Position, use_graphics=False):
+        # TODO: Implement graphics mode targeting cursor
+        if use_graphics:
+            return
         """Render targeting cursor and range indicator."""
         if not game.targeting_mode:
             return
@@ -1697,8 +1823,398 @@ class MapRenderer:
             for dy in range(-1, 2):
                 area_screen_x = center.x - camera_offset.x + dx
                 area_screen_y = center.y - camera_offset.y + dy + 1
-                
-                if (0 <= area_screen_x < GameConfig.GAME_AREA_WIDTH() and 
+
+                if (0 <= area_screen_x < GameConfig.GAME_AREA_WIDTH() and
                     1 <= area_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                     # Use a brighter overlay to distinguish from range indicator
                     self._safely_overlay_tile(console, area_screen_x, area_screen_y, (60, 60, 20))
+
+    # ===== GRAPHICS MODE SPRITE RENDERING =====
+
+    def render_sprites_layer(self, game):
+        """
+        Render all sprite textures directly to SDL renderer (Layers 1 & 2).
+        This includes terrain (floors, walls), items, and entities (player, enemies).
+
+        Should only be called in graphics mode.
+        """
+        if not self._should_use_graphics():
+            logging.warning("render_sprites_layer called but graphics mode not available")
+            return
+
+        logging.debug("render_sprites_layer: Starting sprite rendering")
+        renderer = self.context.sdl_renderer
+        camera_offset = self._calculate_camera_offset(game.player)
+        vision_range = game.player.get_vision_range()
+        logging.debug(f"Camera offset: {camera_offset}, vision range: {vision_range}")
+
+        # LAYER 1: Render terrain sprites (floors, walls) for visible and remembered tiles
+        for screen_x in range(GameConfig.GAME_AREA_WIDTH()):
+            for screen_y in range(1, GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                world_x = screen_x + camera_offset.x
+                world_y = screen_y - 1 + camera_offset.y
+                world_pos = Position(world_x, world_y)
+
+                if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                    continue
+
+                # Check visibility
+                if game.player.can_see_through_walls():
+                    distance = game.player.position.distance_to(world_pos)
+                    can_see = distance <= vision_range
+                else:
+                    can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+
+                # Check if tile has been explored (for fog of war)
+                explored = (world_x, world_y) in game.game_map.explored_tiles
+
+                if can_see:
+                    # Currently visible - full brightness
+                    if game.game_map.is_wall(world_pos):
+                        texture = self.tile_manager.get_tile("wall")
+                    else:
+                        texture = self.tile_manager.get_tile("floor")
+
+                    if texture:
+                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        renderer.copy(texture, dest=tile_rect)
+                    else:
+                        # Log first few missing textures for debugging
+                        if screen_x < 2 and screen_y < 3:
+                            terrain_type = "wall" if game.game_map.is_wall(world_pos) else "floor"
+                            logging.warning(f"Missing texture for {terrain_type} at screen ({screen_x},{screen_y})")
+                elif explored:
+                    # Explored but not currently visible - dimmed (fog of war)
+                    if game.game_map.is_wall(world_pos):
+                        texture = self.tile_manager.get_tile("wall")
+                    else:
+                        texture = self.tile_manager.get_tile("floor")
+
+                    if texture:
+                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        # Dim the texture for fog of war effect
+                        texture.color_mod = (80, 80, 100)  # Dark blue-gray tint for explored areas
+                        renderer.copy(texture, dest=tile_rect)
+                        # Reset color mod
+                        texture.color_mod = (255, 255, 255)
+
+        # LAYER 2A: Render item sprites with tinting for tintable items
+        # Code hacks
+        for (world_x, world_y), code_hack in game.game_map.code_hacks.items():
+            world_pos = Position(world_x, world_y)
+            if game.player.can_see_through_walls():
+                distance = game.player.position.distance_to(world_pos)
+                can_see = distance <= vision_range
+            else:
+                can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+
+            if can_see:
+                screen_x = world_x - camera_offset.x
+                screen_y = world_y - camera_offset.y + 1
+
+                if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
+                    1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                    texture = self.tile_manager.get_tile("codehack")
+                    if texture:
+                        # Apply tint if tintable
+                        if self.tile_manager.is_tintable("codehack"):
+                            # Map color name to RGB
+                            color_map = {
+                                'crimson': Colors.CRIMSON,
+                                'azure': Colors.AZURE,
+                                'emerald': Colors.EMERALD,
+                                'golden': Colors.GOLDEN,
+                                'violet': Colors.VIOLET,
+                                'silver': Colors.SILVER
+                            }
+                            tint_color = color_map.get(code_hack.color_name.lower(), Colors.WHITE)
+                            texture.color_mod = tint_color
+
+                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        renderer.copy(texture, dest=tile_rect)
+
+                        # Reset color mod
+                        if self.tile_manager.is_tintable("codehack"):
+                            texture.color_mod = (255, 255, 255)
+
+        # Exploit pickups
+        for (world_x, world_y), exploit_item in game.game_map.exploit_pickups.items():
+            world_pos = Position(world_x, world_y)
+            if game.player.can_see_through_walls():
+                distance = game.player.position.distance_to(world_pos)
+                can_see = distance <= vision_range
+            else:
+                can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+
+            if can_see:
+                screen_x = world_x - camera_offset.x
+                screen_y = world_y - camera_offset.y + 1
+
+                if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
+                    1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                    # Use exploit category for tile lookup
+                    if exploit_item.exploit_key in GameData.EXPLOITS:
+                        exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
+                        exploit_category = exploit_def.category
+                        texture = self.tile_manager.get_tile(f"exploit_{exploit_category}")
+
+                        if texture:
+                            # Apply tint if tintable
+                            if self.tile_manager.is_tintable(f"exploit_{exploit_category}"):
+                                # Get exploit color from config
+                                from data_loading import DataLoader
+                                config = DataLoader.load_config()
+                                exploit_colors = config.get("colors", {}).get("exploits", {})
+                                color_data = exploit_colors.get(exploit_category, [255, 20, 255])
+                                tint_color = ensure_color_tuple(color_data)
+                                texture.color_mod = tint_color
+
+                            tile_rect = self._get_tile_rect(screen_x, screen_y)
+                            renderer.copy(texture, dest=tile_rect)
+
+                            # Reset color mod
+                            if self.tile_manager.is_tintable(f"exploit_{exploit_category}"):
+                                texture.color_mod = (255, 255, 255)
+
+        # LAYER 2B: Render entity sprites (enemies, player - NO tinting)
+        # Enemies
+        for enemy in game.enemies:
+            screen_x = enemy.x - camera_offset.x
+            screen_y = enemy.y - camera_offset.y + 1
+
+            if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
+                1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                threat_scan_active = game.game_state.threat_scan_turns > 0
+                can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
+
+                if can_see_enemy or threat_scan_active:
+                    # Get enemy type name for tile lookup
+                    enemy_type_name = enemy.type_data.symbol  # Use symbol as identifier
+                    # Map enemy symbols to type names
+                    enemy_name_map = {
+                        'S': 'Scanner',
+                        'P': 'Patrol',
+                        'B': 'Bot',
+                        'H': 'Hunter',
+                        'V': 'Virus',
+                        'I': 'Inhibitor',
+                        'F': 'Firewall',
+                        'A': 'Avatar'
+                    }
+                    enemy_type = enemy_name_map.get(enemy_type_name, enemy_type_name)
+                    texture = self.tile_manager.get_tile(enemy_type)
+
+                    if texture:
+                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        renderer.copy(texture, dest=tile_rect)
+
+        # Player
+        player_screen_x = game.player.x - camera_offset.x
+        player_screen_y = game.player.y - camera_offset.y + 1
+
+        if (0 <= player_screen_x < GameConfig.GAME_AREA_WIDTH() and
+            1 <= player_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+            texture = self.tile_manager.get_tile("player")
+            if texture:
+                tile_rect = self._get_tile_rect(player_screen_x, player_screen_y)
+                renderer.copy(texture, dest=tile_rect)
+
+    def render_glyphs_layer(self, console: tcod.console.Console, game):
+        """
+        Render glyphs for elements that should appear over sprites.
+        This includes special nodes, movement predictions, targeting cursor, etc.
+
+        In graphics mode, renders directly to SDL using GlyphManager.
+        In glyph mode, renders to console traditionally.
+        """
+        camera_offset = self._calculate_camera_offset(game.player)
+        vision_range = game.player.get_vision_range()
+
+        # Check if we're in graphics mode
+        use_graphics = self._should_use_graphics() and self.glyph_manager is not None
+
+        # Render special nodes as glyphs
+        for screen_x in range(GameConfig.GAME_AREA_WIDTH()):
+            for screen_y in range(1, GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                world_x = screen_x + camera_offset.x
+                world_y = screen_y - 1 + camera_offset.y
+                world_pos = Position(world_x, world_y)
+
+                if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                    continue
+
+                # Check visibility
+                if game.player.can_see_through_walls():
+                    distance = game.player.position.distance_to(world_pos)
+                    can_see = distance <= vision_range
+                else:
+                    can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+
+                if can_see:
+                    # Render special nodes
+                    glyph = None
+                    color = None
+
+                    if game.game_map.is_cooling_node(world_pos):
+                        glyph = ord(chr(tcod.tileset.CHARMAP_CP437[4]))  # Diamond
+                        color = Colors.CYAN
+                    elif game.game_map.is_cpu_recovery_node(world_pos):
+                        glyph = ord(chr(tcod.tileset.CHARMAP_CP437[3]))  # Heart
+                        color = Colors.RED
+                    elif game.game_map.is_ghost_node(world_pos):
+                        glyph = ord(chr(tcod.tileset.CHARMAP_CP437[6]))  # Spade
+                        color = Colors.ELECTRIC_PURPLE
+
+                    if glyph and color:
+                        if use_graphics:
+                            # Graphics mode: render glyph as SDL texture
+                            self.glyph_manager.render_glyph(
+                                glyph, color, screen_x, screen_y,
+                                self.tile_manager.tile_width, self.tile_manager.tile_height
+                            )
+                        else:
+                            # Glyph mode: render to console
+                            console.rgb[screen_x, screen_y] = (glyph, color, (0, 0, 0))
+
+        # Render vision overlays
+        self._render_vision_overlays(console, game, camera_offset, vision_range, use_graphics)
+
+        # Render patrol routes (movement prediction)
+        self._render_patrol_routes(console, game, camera_offset, vision_range, use_graphics)
+
+        # Render gateway
+        self._render_gateway(console, game, camera_offset, vision_range, use_graphics)
+
+        # Render targeting cursor
+        self._render_targeting_cursor(console, game, camera_offset, use_graphics)
+
+    def render_status_effects_layer(self, game):
+        """
+        Render colored status effect outlines over NON-TINTABLE sprites (Layer 2.5).
+        This includes virus effects, slow effects, enemy state indicators, and other status indicators.
+
+        Should only be called in graphics mode.
+        """
+        if not self._should_use_graphics():
+            return
+
+        renderer = self.context.sdl_renderer
+        camera_offset = self._calculate_camera_offset(game.player)
+
+        # Draw status effect outline for player if has status
+        player_screen_x = game.player.x - camera_offset.x
+        player_screen_y = game.player.y - camera_offset.y + 1
+
+        if (0 <= player_screen_x < GameConfig.GAME_AREA_WIDTH() and
+            1 <= player_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+
+            # Check for various player status effects
+            status_color = None
+            if game.player.temporary_effects['virus_turns'] > 0:
+                status_color = (0, 255, 0)  # Bright green for virus
+            elif game.player.is_invisible():
+                status_color = (255, 255, 0)  # Yellow for invisibility
+            elif game.player.temporary_effects['movement_slowed_turns'] > 0:
+                status_color = (0, 255, 255)  # Cyan for slow
+
+            if status_color:
+                player_tile_rect = self._get_tile_rect(player_screen_x, player_screen_y)
+                self._draw_outline_box(renderer, player_tile_rect, status_color, thickness=2)
+
+        # Draw enemy state outlines (yellow/orange/red for normal/alert/hostile)
+        for enemy in game.enemies:
+            screen_x = enemy.x - camera_offset.x
+            screen_y = enemy.y - camera_offset.y + 1
+
+            if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
+                1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                threat_scan_active = game.game_state.threat_scan_turns > 0
+                can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
+
+                if can_see_enemy or threat_scan_active:
+                    enemy_tile_rect = self._get_tile_rect(screen_x, screen_y)
+
+                    # Determine enemy state color
+                    if enemy.disabled_turns > 0:
+                        # Disabled enemies get blue outline
+                        outline_color = (100, 100, 255)  # Blue for disabled
+                        self._draw_outline_box(renderer, enemy_tile_rect, outline_color, thickness=2)
+                    else:
+                        # Show enemy state with colored outline
+                        if enemy.state == EnemyState.HOSTILE:
+                            outline_color = (255, 0, 0)  # Red for hostile
+                        elif enemy.state == EnemyState.ALERT:
+                            outline_color = (255, 165, 0)  # Orange for alert
+                        else:  # PATROLLING/IDLE
+                            outline_color = (255, 255, 0)  # Yellow for normal
+
+                        self._draw_outline_box(renderer, enemy_tile_rect, outline_color, thickness=1)
+
+    def _draw_outline_box(self, renderer, rect: Tuple[int, int, int, int], color: Tuple[int, int, int], thickness: int = 1):
+        """
+        Draw a colored outline rectangle (not filled).
+
+        SDL renderer's draw_rect fills, so we need to draw 4 lines to create an outline.
+
+        Args:
+            renderer: SDL renderer instance
+            rect: Rectangle (x, y, width, height) in pixels
+            color: RGB color tuple
+            thickness: Thickness of outline in pixels
+        """
+        x, y, w, h = rect
+
+        # Convert RGB to RGBA for SDL (SDL requires 4 values: R, G, B, A)
+        if len(color) == 3:
+            color_rgba = (*color, 255)  # Add full alpha
+        else:
+            color_rgba = color
+
+        # Draw outline as 4 separate lines for each thickness level
+        for i in range(thickness):
+            # Set color for this line
+            renderer.draw_color = color_rgba
+
+            # Top line
+            renderer.draw_line((x + i, y + i), (x + w - i - 1, y + i))
+            # Bottom line
+            renderer.draw_line((x + i, y + h - i - 1), (x + w - i - 1, y + h - i - 1))
+            # Left line
+            renderer.draw_line((x + i, y + i), (x + i, y + h - i - 1))
+            # Right line
+            renderer.draw_line((x + w - i - 1, y + i), (x + w - i - 1, y + h - i - 1))
+
+        # Reset draw color to avoid affecting other rendering
+        renderer.draw_color = (255, 255, 255, 255)
+
+    def _expand_rect(self, rect: Tuple[int, int, int, int], offset: int) -> Tuple[int, int, int, int]:
+        """
+        Expand rectangle by offset pixels on all sides.
+
+        Args:
+            rect: Original rectangle (x, y, width, height)
+            offset: Number of pixels to expand
+
+        Returns:
+            Expanded rectangle (x, y, width, height)
+        """
+        return (rect[0] - offset, rect[1] - offset,
+                rect[2] + offset * 2, rect[3] + offset * 2)
+
+    def _get_status_outline_color(self, status_type: str) -> Tuple[int, int, int]:
+        """
+        Get outline color for status effect.
+
+        Args:
+            status_type: Type of status effect
+
+        Returns:
+            RGB color tuple for the outline
+        """
+        STATUS_COLORS = {
+            "virus": (0, 255, 0),              # Green
+            "slow": (255, 255, 0),             # Yellow
+            "invisible": (100, 100, 255),      # Blue
+            "disabled": (100, 100, 255),       # Blue
+        }
+        return STATUS_COLORS.get(status_type, (255, 255, 255))
