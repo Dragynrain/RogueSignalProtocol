@@ -1959,15 +1959,15 @@ class MapRenderer:
 
                 if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
                     1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                    # Use exploit category for tile lookup
-                    if exploit_item.exploit_key in GameData.EXPLOITS:
-                        exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
-                        exploit_category = exploit_def.category
-                        texture = self.tile_manager.get_tile(f"exploit_{exploit_category}")
+                    # All exploits use the same "exploit" sprite, tinted by category
+                    texture = self.tile_manager.get_tile("exploit")
 
-                        if texture:
-                            # Apply tint if tintable
-                            if self.tile_manager.is_tintable(f"exploit_{exploit_category}"):
+                    if texture:
+                        # Apply tint if tintable
+                        if self.tile_manager.is_tintable("exploit"):
+                            if exploit_item.exploit_key in GameData.EXPLOITS:
+                                exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
+                                exploit_category = exploit_def.category
                                 # Get exploit color from config
                                 from data_loading import DataLoader
                                 config = DataLoader.load_config()
@@ -1976,12 +1976,92 @@ class MapRenderer:
                                 tint_color = ensure_color_tuple(color_data)
                                 texture.color_mod = tint_color
 
+                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        renderer.copy(texture, dest=tile_rect)
+
+                        # Reset color mod
+                        if self.tile_manager.is_tintable("exploit"):
+                            texture.color_mod = (255, 255, 255)
+
+        # Resource nodes (cooling, CPU, ghost)
+        for screen_x in range(GameConfig.GAME_AREA_WIDTH()):
+            for screen_y in range(1, GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                world_x = screen_x + camera_offset.x
+                world_y = screen_y - 1 + camera_offset.y
+                world_pos = Position(world_x, world_y)
+
+                if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                    continue
+
+                # Check visibility
+                if game.player.can_see_through_walls():
+                    distance = game.player.position.distance_to(world_pos)
+                    can_see = distance <= vision_range
+                else:
+                    can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+
+                if can_see:
+                    # Render nodes as sprites
+                    node_type = None
+                    if game.game_map.is_cooling_node(world_pos):
+                        node_type = "cooling_node"
+                    elif game.game_map.is_cpu_recovery_node(world_pos):
+                        node_type = "cpu_node"
+                    elif game.game_map.is_ghost_node(world_pos):
+                        node_type = "ghost_node"
+
+                    if node_type:
+                        texture = self.tile_manager.get_tile(node_type)
+                        if texture:
                             tile_rect = self._get_tile_rect(screen_x, screen_y)
                             renderer.copy(texture, dest=tile_rect)
 
-                            # Reset color mod
-                            if self.tile_manager.is_tintable(f"exploit_{exploit_category}"):
-                                texture.color_mod = (255, 255, 255)
+        # Permanent upgrades
+        for (world_x, world_y), upgrade_key in game.game_map.permanent_upgrades.items():
+            world_pos = Position(world_x, world_y)
+            if game.player.can_see_through_walls():
+                distance = game.player.position.distance_to(world_pos)
+                can_see = distance <= vision_range
+            else:
+                can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+
+            if can_see:
+                screen_x = world_x - camera_offset.x
+                screen_y = world_y - camera_offset.y + 1
+
+                if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
+                    1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                    # Map upgrade key to sprite name
+                    upgrade_sprite_map = {
+                        'cooling_upgrade': 'cooling_upgrade',
+                        'cpu_upgrade': 'cpu_upgrade',
+                        'ram_upgrade': 'ram_upgrade'
+                    }
+                    sprite_name = upgrade_sprite_map.get(upgrade_key)
+                    if sprite_name:
+                        texture = self.tile_manager.get_tile(sprite_name)
+                        if texture:
+                            tile_rect = self._get_tile_rect(screen_x, screen_y)
+                            renderer.copy(texture, dest=tile_rect)
+
+        # Story fragments
+        for (world_x, world_y), story_fragment in game.game_map.story_fragments.items():
+            world_pos = Position(world_x, world_y)
+            if game.player.can_see_through_walls():
+                distance = game.player.position.distance_to(world_pos)
+                can_see = distance <= vision_range
+            else:
+                can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+
+            if can_see:
+                screen_x = world_x - camera_offset.x
+                screen_y = world_y - camera_offset.y + 1
+
+                if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
+                    1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                    # Story fragments don't have sprites yet, skip rendering
+                    # TODO: Add story fragment sprite when available
+                    pass
 
         # LAYER 2B: Render entity sprites (enemies, player - NO tinting)
         # Enemies
@@ -2040,46 +2120,40 @@ class MapRenderer:
         # Check if we're in graphics mode
         use_graphics = self._should_use_graphics() and self.glyph_manager is not None
 
-        # Render special nodes as glyphs
-        for screen_x in range(GameConfig.GAME_AREA_WIDTH()):
-            for screen_y in range(1, GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                world_x = screen_x + camera_offset.x
-                world_y = screen_y - 1 + camera_offset.y
-                world_pos = Position(world_x, world_y)
+        # Render special nodes as glyphs (only in glyph mode - sprites are used in graphics mode)
+        if not use_graphics:
+            for screen_x in range(GameConfig.GAME_AREA_WIDTH()):
+                for screen_y in range(1, GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                    world_x = screen_x + camera_offset.x
+                    world_y = screen_y - 1 + camera_offset.y
+                    world_pos = Position(world_x, world_y)
 
-                if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-                    continue
+                    if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                        continue
 
-                # Check visibility
-                if game.player.can_see_through_walls():
-                    distance = game.player.position.distance_to(world_pos)
-                    can_see = distance <= vision_range
-                else:
-                    can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+                    # Check visibility
+                    if game.player.can_see_through_walls():
+                        distance = game.player.position.distance_to(world_pos)
+                        can_see = distance <= vision_range
+                    else:
+                        can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
 
-                if can_see:
-                    # Render special nodes
-                    glyph = None
-                    color = None
+                    if can_see:
+                        # Render special nodes
+                        glyph = None
+                        color = None
 
-                    if game.game_map.is_cooling_node(world_pos):
-                        glyph = ord(chr(tcod.tileset.CHARMAP_CP437[4]))  # Diamond
-                        color = Colors.CYAN
-                    elif game.game_map.is_cpu_recovery_node(world_pos):
-                        glyph = ord(chr(tcod.tileset.CHARMAP_CP437[3]))  # Heart
-                        color = Colors.RED
-                    elif game.game_map.is_ghost_node(world_pos):
-                        glyph = ord(chr(tcod.tileset.CHARMAP_CP437[6]))  # Spade
-                        color = Colors.ELECTRIC_PURPLE
+                        if game.game_map.is_cooling_node(world_pos):
+                            glyph = ord(chr(tcod.tileset.CHARMAP_CP437[4]))  # Diamond
+                            color = Colors.CYAN
+                        elif game.game_map.is_cpu_recovery_node(world_pos):
+                            glyph = ord(chr(tcod.tileset.CHARMAP_CP437[3]))  # Heart
+                            color = Colors.RED
+                        elif game.game_map.is_ghost_node(world_pos):
+                            glyph = ord(chr(tcod.tileset.CHARMAP_CP437[6]))  # Spade
+                            color = Colors.ELECTRIC_PURPLE
 
-                    if glyph and color:
-                        if use_graphics:
-                            # Graphics mode: render glyph as SDL texture
-                            self.glyph_manager.render_glyph(
-                                glyph, color, screen_x, screen_y,
-                                self.tile_manager.tile_width, self.tile_manager.tile_height
-                            )
-                        else:
+                        if glyph and color:
                             # Glyph mode: render to console
                             console.rgb[screen_x, screen_y] = (glyph, color, (0, 0, 0))
 

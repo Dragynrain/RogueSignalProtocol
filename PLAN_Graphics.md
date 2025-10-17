@@ -209,7 +209,7 @@ RogueSignalProtocol/
 - Simplified to sprites-only architecture (bd7f07f)
 - Console transparency solution implemented (current HEAD)
 
-### 🚧 **PHASE 3: Configuration & Settings Integration (MOSTLY COMPLETE)**
+### ✅ **PHASE 3: Configuration & Settings Integration (COMPLETED)**
 **Goal:** Polish configuration and ensure settings work correctly
 
 **Completed:**
@@ -221,11 +221,18 @@ RogueSignalProtocol/
   - Settings menu toggle works
   - Setting persists across sessions
   - Mode switches gracefully
+- [x] 3.3: Add ramupgrade to graphics_tiles.json
+  - RAM upgrade sprite mapping added
+- [x] 3.4: Validate all entity types have mappings
+  - All enemies, terrain, and items mapped
+  - Node sprites (cooling, CPU, ghost) render correctly
+  - Upgrade sprites (cooling, CPU, RAM) render correctly
+  - Exploit tinting works correctly
+- [x] 3.5: Fix exploit category tile lookup
+  - Changed from per-category lookup to unified "exploit" sprite with tinting
 
-**Remaining:**
-- [ ] Add ramupgrade to graphics_tiles.json (file exists, not mapped)
-- [ ] Validate all entity types have mappings or explicit fallbacks
-- [ ] Add graphics quality/scaling settings (future)
+**Deferred:**
+- [ ] Add graphics quality/scaling settings (Phase 6 - future enhancement)
 
 ### 🚧 **PHASE 4: Testing & Validation (PARTIAL)**
 **Goal:** Comprehensive testing of graphics system
