@@ -1719,9 +1719,13 @@ class MapRenderer:
             if can_see_enemy:
                 visible_count += 1
                 next_positions = game.get_enemy_next_positions(enemy, 3)
-                logging.debug(f"_render_patrol_routes: Enemy {enemy.type_data.symbol} visible, next_positions: {len(next_positions)}")
 
                 for i, point in enumerate(next_positions):
+                    # Skip rendering movement prediction if there's an enemy at this position
+                    enemy_at_point = any(e.position.x == point.x and e.position.y == point.y for e in game.enemies)
+                    if enemy_at_point:
+                        continue
+
                     screen_x = point.x - camera_offset.x
                     screen_y = point.y - camera_offset.y + 1
                     if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
@@ -1730,7 +1734,6 @@ class MapRenderer:
                             # Graphics mode: Render movement prediction sprite with color_mod
                             texture = self.tile_manager.get_tile("movement_prediction")
                             if texture:
-                                logging.debug(f"_render_patrol_routes: Rendering movement prediction at screen ({screen_x},{screen_y})")
                                 tile_rect = self._get_tile_rect(screen_x, screen_y)
                                 # Apply color based on position (brightness fades with distance)
                                 if i == 0:
@@ -1773,8 +1776,6 @@ class MapRenderer:
                                 # Position 9 = ○ (circle) for enemy move intent
                                 symbol = chr(tcod.tileset.CHARMAP_CP437[9])
                             render_char_safe(console, screen_x, screen_y, symbol, fg=color, bg=bg_color)
-
-        logging.debug(f"_render_patrol_routes: Found {visible_count} visible enemies out of {len(game.enemies)} total")
 
     def _render_gateway(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
         """Render the level gateway (classic mode only - graphics mode renders in sprite layer)."""
@@ -1986,11 +1987,9 @@ class MapRenderer:
             logging.warning("render_sprites_layer called but graphics mode not available")
             return
 
-        logging.debug("render_sprites_layer: Starting sprite rendering")
         renderer = self.context.sdl_renderer
         camera_offset = self._calculate_camera_offset(game.player)
         vision_range = game.player.get_vision_range()
-        logging.debug(f"Camera offset: {camera_offset}, vision range: {vision_range}")
 
         # LAYER 1: Render terrain sprites (floors, walls) for visible and remembered tiles
         graphics_mode = self._get_graphics_mode()
@@ -2024,6 +2023,8 @@ class MapRenderer:
                     # Currently visible - full brightness
                     if game.game_map.is_wall(world_pos):
                         texture = self.tile_manager.get_tile("wall")
+                    elif game.game_map.is_shadow(world_pos):
+                        texture = self.tile_manager.get_tile("shadow")
                     else:
                         texture = self.tile_manager.get_tile("floor")
 
@@ -2033,12 +2034,19 @@ class MapRenderer:
                     else:
                         # Log first few missing textures for debugging
                         if console_x < 2 and console_y < 3:
-                            terrain_type = "wall" if game.game_map.is_wall(world_pos) else "floor"
+                            if game.game_map.is_wall(world_pos):
+                                terrain_type = "wall"
+                            elif game.game_map.is_shadow(world_pos):
+                                terrain_type = "shadow"
+                            else:
+                                terrain_type = "floor"
                             logging.warning(f"Missing texture for {terrain_type} at console ({console_x},{console_y})")
                 elif explored:
                     # Explored but not currently visible - dimmed (fog of war)
                     if game.game_map.is_wall(world_pos):
                         texture = self.tile_manager.get_tile("wall")
+                    elif game.game_map.is_shadow(world_pos):
+                        texture = self.tile_manager.get_tile("shadow")
                     else:
                         texture = self.tile_manager.get_tile("floor")
 
@@ -2209,10 +2217,8 @@ class MapRenderer:
 
         # Gateway/Portal
         if game.game_map.gateway:
-            logging.debug(f"render_sprites_layer: Gateway exists at ({game.game_map.gateway.x}, {game.game_map.gateway.y})")
             screen_x = game.game_map.gateway.x - camera_offset.x
             screen_y = game.game_map.gateway.y - camera_offset.y + 1
-            logging.debug(f"render_sprites_layer: Gateway screen position ({screen_x}, {screen_y})")
 
             if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
                 1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
@@ -2222,16 +2228,12 @@ class MapRenderer:
                           (game.player.can_see_through_walls() or
                            game.game_map.has_line_of_sight(game.player.position, game.game_map.gateway)))
 
-                logging.debug(f"render_sprites_layer: Gateway can_see={can_see}, distance={distance}, vision_range={vision_range}")
-
                 if can_see:
                     # Render portal sprite
                     texture = self.tile_manager.get_tile("portal")
-                    logging.debug(f"render_sprites_layer: Portal texture loaded: {texture is not None}")
                     if texture:
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
                         renderer.copy(texture, dest=tile_rect)
-                        logging.debug(f"render_sprites_layer: Rendered portal sprite at screen ({screen_x}, {screen_y})")
                     else:
                         logging.warning("render_sprites_layer: Portal texture not found!")
                     # Add to memory system
@@ -2278,7 +2280,7 @@ class MapRenderer:
                         'V': 'Virus',
                         'I': 'Inhibitor',
                         'F': 'Firewall',
-                        'A': 'Avatar'
+                        'A': 'Admin Avatar'
                     }
                     enemy_type = enemy_name_map.get(enemy_type_name, enemy_type_name)
                     texture = self.tile_manager.get_tile(enemy_type)
@@ -2367,10 +2369,8 @@ class MapRenderer:
         This layer renders between status effects and console UI.
         """
         if not self._should_use_graphics():
-            logging.debug("render_overlay_layer: Graphics mode not enabled, skipping")
             return
 
-        logging.debug("render_overlay_layer: Starting overlay rendering in graphics mode")
         camera_offset = self._calculate_camera_offset(game.player)
         vision_range = game.player.get_vision_range()
 
@@ -2378,15 +2378,12 @@ class MapRenderer:
         dummy_console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
 
         # Render vision overlays
-        logging.debug(f"render_overlay_layer: Rendering vision overlays (enemies: {len(game.enemies)})")
         self._render_vision_overlays(dummy_console, game, camera_offset, vision_range, use_graphics=True)
 
         # Render patrol routes (movement prediction)
-        logging.debug("render_overlay_layer: Rendering patrol routes")
         self._render_patrol_routes(dummy_console, game, camera_offset, vision_range, use_graphics=True)
 
         # Render targeting cursor
-        logging.debug(f"render_overlay_layer: Rendering targeting cursor (targeting_mode: {game.targeting_mode})")
         self._render_targeting_cursor(dummy_console, game, camera_offset, use_graphics=True)
 
     def render_status_effects_layer(self, game):
