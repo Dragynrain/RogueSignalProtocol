@@ -8,6 +8,8 @@ import tcod
 import os
 import logging
 import traceback
+import time
+import math
 from typing import List, Tuple, Optional
 
 from game_config import GameConfig
@@ -115,6 +117,9 @@ class GameRenderer:
 
             # LAYER 2: Render status effect boxes over sprites
             self.map_renderer.render_status_effects_layer(game)
+
+            # LAYER 2.5: Render overlay elements (vision, movement prediction, targeting) to SDL
+            self.map_renderer.render_overlay_layer(game)
 
             # LAYER 3: Render console UI as texture overlay
             # Clear console and render ONLY UI panels (not game area)
@@ -1596,55 +1601,89 @@ class MapRenderer:
 
     def _render_vision_overlays(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
         """Render enemy vision range overlays."""
-        # TODO: Implement graphics mode vision overlays
-        if use_graphics:
-            return
         if game.player.is_invisible():
             return
-        
+
         threat_scan_active = game.game_state.threat_scan_turns > 0
-        
+
+        # Get renderer for graphics mode
+        renderer = None
+        if use_graphics and self.context and hasattr(self.context, 'sdl_renderer'):
+            renderer = self.context.sdl_renderer
+
         for enemy in game.enemies:
             if enemy.disabled_turns > 0:
                 continue
-            
+
             # Show vision overlays for visible enemies OR if Threat Scan is active
             can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
-            
+
             if can_see_enemy or threat_scan_active:
-                overlay_color = self._get_vision_overlay_color(enemy.state)
-                
+                overlay_color = self._get_vision_overlay_color(enemy.state, use_graphics)
+
                 # If revealed by threat scan, make overlay more translucent
                 if threat_scan_active and not can_see_enemy:
                     overlay_color = tuple(c // 2 for c in overlay_color)  # Make it dimmer
-                
-                self._render_enemy_vision_range(console, enemy, camera_offset, overlay_color, game.game_map)
-    
-    def _get_vision_overlay_color(self, enemy_state: EnemyState) -> Tuple[int, int, int]:
-        """Get vision overlay color based on enemy state."""
-        if enemy_state == EnemyState.HOSTILE:
-            return Colors.VISION_HOSTILE
-        elif enemy_state == EnemyState.ALERT:
-            return Colors.VISION_ALERT
+
+                self._render_enemy_vision_range(console, enemy, camera_offset, overlay_color, game.game_map, use_graphics, renderer)
+
+    def _get_vision_overlay_color(self, enemy_state: EnemyState, use_graphics=False) -> Tuple[int, int, int]:
+        """Get vision overlay color based on enemy state.
+
+        In graphics mode, returns brighter colors for better visibility.
+        In classic mode, returns standard darkened colors.
+        """
+        if use_graphics:
+            # Use full-brightness enemy colors for graphics mode brackets
+            if enemy_state == EnemyState.HOSTILE:
+                return Colors.ENEMY_HOSTILE
+            elif enemy_state == EnemyState.ALERT:
+                return Colors.ENEMY_ALERT
+            else:
+                return Colors.ENEMY_UNAWARE
         else:
-            return Colors.VISION_UNAWARE
+            # Use standard darkened colors for classic mode
+            if enemy_state == EnemyState.HOSTILE:
+                return Colors.VISION_HOSTILE
+            elif enemy_state == EnemyState.ALERT:
+                return Colors.VISION_ALERT
+            else:
+                return Colors.VISION_UNAWARE
     
-    def _render_enemy_vision_range(self, console: tcod.console.Console, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map):
-        """Render vision range for a single enemy."""
+    def _render_enemy_vision_range(self, console: tcod.console.Console, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map, use_graphics=False, renderer=None):
+        """
+        Render vision range for a single enemy.
+
+        In classic mode: Highlights tile backgrounds with overlay_color
+        In graphics mode: Draws corner brackets with overlay_color
+        """
         # Enemies have full vision range regardless of whether they're in shadow
         # The shadow mechanic only affects whether they can see players IN shadow
         actual_vision_range = enemy.type_data.vision
-        
+
         for dx in range(-actual_vision_range, actual_vision_range + 1):
             for dy in range(-actual_vision_range, actual_vision_range + 1):
                 # Use Euclidean distance to match the actual trace_level logic
                 if dx*dx + dy*dy <= actual_vision_range*actual_vision_range:
-                    screen_x = enemy.x - camera_offset.x + dx
-                    screen_y = enemy.y - camera_offset.y + dy + 1
-                    
-                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and 
+                    world_x = enemy.x + dx
+                    world_y = enemy.y + dy
+
+                    # Skip the enemy's own tile (no redundant indicators)
+                    if world_x == enemy.x and world_y == enemy.y:
+                        continue
+
+                    screen_x = world_x - camera_offset.x
+                    screen_y = world_y - camera_offset.y + 1
+
+                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
                         1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                        self._safely_overlay_tile(console, screen_x, screen_y, overlay_color)
+                        if use_graphics and renderer:
+                            # Graphics mode: Draw corner brackets
+                            tile_rect = self._get_tile_rect(screen_x, screen_y)
+                            self._draw_corner_brackets(renderer, tile_rect, overlay_color, bracket_size=4)
+                        else:
+                            # Classic mode: Highlight background
+                            self._safely_overlay_tile(console, screen_x, screen_y, overlay_color)
     
     def _safely_overlay_tile(self, console: tcod.console.Console, x: int, y: int, bg_color: Tuple[int, int, int]):
         """Safely overlay background color on existing tile."""
@@ -1664,61 +1703,81 @@ class MapRenderer:
     
     def _render_patrol_routes(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
         """Render next 3 predicted moves for all moving enemies."""
-        # TODO: Implement graphics mode patrol routes
-        if use_graphics:
-            return
-        
         threat_scan_active = game.game_state.threat_scan_turns > 0
-        
+
+        # Get renderer for graphics mode
+        renderer = None
+        if use_graphics and self.context and hasattr(self.context, 'sdl_renderer'):
+            renderer = self.context.sdl_renderer
+
+        visible_count = 0
         for enemy in game.enemies:
             # Show patrol routes for visible enemies OR if Threat Scan is active
             can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
-            
+
             # Show movement intentions for all visible enemies (permanent ability)
             if can_see_enemy:
+                visible_count += 1
                 next_positions = game.get_enemy_next_positions(enemy, 3)
-                
+                logging.debug(f"_render_patrol_routes: Enemy {enemy.type_data.symbol} visible, next_positions: {len(next_positions)}")
+
                 for i, point in enumerate(next_positions):
                     screen_x = point.x - camera_offset.x
                     screen_y = point.y - camera_offset.y + 1
-                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and 
+                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
                         1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                        # Preserve existing background color if present (e.g., vision overlay)
-                        try:
-                            current_bg = tuple(console.bg[screen_x, screen_y][:3])
-                            # Use current background if it's not black, otherwise use black
-                            bg_color = current_bg if current_bg != (0, 0, 0) else Colors.BLACK
-                        except (IndexError, AttributeError):
-                            bg_color = Colors.BLACK
-                        
-                        # Ensure bg_color is a proper tuple to prevent TCOD ColorRGB errors
-                        bg_color = ensure_color_tuple(bg_color)
-                        
-                        # Check if background is bright (sum of RGB values > 30 indicates brighter area)
-                        bg_brightness = sum(bg_color) if bg_color != Colors.BLACK else 0
-                        is_bright_area = bg_brightness > 30
-                        
-                        # Large bright yellow shapes for all enemy movement prediction
-                        if i == 0:
-                            # Next immediate move - brightest and largest
-                            color = (255, 255, 50)
-                            # Position 9 = ○ (circle) for enemy move intent
-                            symbol = chr(tcod.tileset.CHARMAP_CP437[9])
-                        elif i == 1:
-                            # Second move - slightly dimmer but still bright
-                            color = (240, 240, 30)
-                            # Position 9 = ○ (circle) for enemy move intent
-                            symbol = chr(tcod.tileset.CHARMAP_CP437[9])
+                        if use_graphics and renderer:
+                            # Graphics mode: Render movement prediction sprite with color_mod
+                            texture = self.tile_manager.get_tile("movement_prediction")
+                            if texture:
+                                logging.debug(f"_render_patrol_routes: Rendering movement prediction at screen ({screen_x},{screen_y})")
+                                tile_rect = self._get_tile_rect(screen_x, screen_y)
+                                # Apply color based on position (brightness fades with distance)
+                                if i == 0:
+                                    texture.color_mod = (255, 255, 50)  # Brightest
+                                elif i == 1:
+                                    texture.color_mod = (240, 240, 30)  # Slightly dimmer
+                                else:
+                                    texture.color_mod = (220, 220, 20)  # Dimmest
+                                renderer.copy(texture, dest=tile_rect)
+                                # Reset color_mod
+                                texture.color_mod = (255, 255, 255)
+                            else:
+                                logging.warning("_render_patrol_routes: movement_prediction texture not found!")
                         else:
-                            # Third+ moves - still bright yellow
-                            color = (220, 220, 20)
-                            # Position 9 = ○ (circle) for enemy move intent
-                            symbol = chr(tcod.tileset.CHARMAP_CP437[9])
-                        render_char_safe(console, screen_x, screen_y, symbol, fg=color, bg=bg_color)
-    
+                            # Classic mode: Preserve existing background color if present (e.g., vision overlay)
+                            try:
+                                current_bg = tuple(console.bg[screen_x, screen_y][:3])
+                                # Use current background if it's not black, otherwise use black
+                                bg_color = current_bg if current_bg != (0, 0, 0) else Colors.BLACK
+                            except (IndexError, AttributeError):
+                                bg_color = Colors.BLACK
+
+                            # Ensure bg_color is a proper tuple to prevent TCOD ColorRGB errors
+                            bg_color = ensure_color_tuple(bg_color)
+
+                            # Large bright yellow shapes for all enemy movement prediction
+                            if i == 0:
+                                # Next immediate move - brightest and largest
+                                color = (255, 255, 50)
+                                # Position 9 = ○ (circle) for enemy move intent
+                                symbol = chr(tcod.tileset.CHARMAP_CP437[9])
+                            elif i == 1:
+                                # Second move - slightly dimmer but still bright
+                                color = (240, 240, 30)
+                                # Position 9 = ○ (circle) for enemy move intent
+                                symbol = chr(tcod.tileset.CHARMAP_CP437[9])
+                            else:
+                                # Third+ moves - still bright yellow
+                                color = (220, 220, 20)
+                                # Position 9 = ○ (circle) for enemy move intent
+                                symbol = chr(tcod.tileset.CHARMAP_CP437[9])
+                            render_char_safe(console, screen_x, screen_y, symbol, fg=color, bg=bg_color)
+
+        logging.debug(f"_render_patrol_routes: Found {visible_count} visible enemies out of {len(game.enemies)} total")
+
     def _render_gateway(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
-        """Render the level gateway."""
-        # TODO: Implement graphics mode gateway rendering
+        """Render the level gateway (classic mode only - graphics mode renders in sprite layer)."""
         if use_graphics:
             return
         if not game.game_map.gateway:
@@ -1853,25 +1912,39 @@ class MapRenderer:
         return Colors.WHITE
     
     def _render_targeting_cursor(self, console: tcod.console.Console, game, camera_offset: Position, use_graphics=False):
-        # TODO: Implement graphics mode targeting cursor
-        if use_graphics:
-            return
         """Render targeting cursor and range indicator."""
         if not game.targeting_mode:
             return
-        
+
+        # Get renderer for graphics mode
+        renderer = None
+        if use_graphics and self.context and hasattr(self.context, 'sdl_renderer'):
+            renderer = self.context.sdl_renderer
+
         cursor_screen_x = game.cursor_position.x - camera_offset.x
         cursor_screen_y = game.cursor_position.y - camera_offset.y + 1
-        
-        if (0 <= cursor_screen_x < GameConfig.GAME_AREA_WIDTH() and 
+
+        if (0 <= cursor_screen_x < GameConfig.GAME_AREA_WIDTH() and
             1 <= cursor_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-            render_char_safe(console, cursor_screen_x, cursor_screen_y, 'X', fg=Colors.RED, bg=Colors.BLACK)
-        
+            if use_graphics and renderer:
+                # Graphics mode: Render targeting cursor sprite
+                texture = self.tile_manager.get_tile("targeting")
+                if texture:
+                    tile_rect = self._get_tile_rect(cursor_screen_x, cursor_screen_y)
+                    # Tint red for targeting cursor
+                    texture.color_mod = (255, 0, 0)
+                    renderer.copy(texture, dest=tile_rect)
+                    # Reset color_mod
+                    texture.color_mod = (255, 255, 255)
+            else:
+                # Classic mode: Render 'X' character
+                render_char_safe(console, cursor_screen_x, cursor_screen_y, 'X', fg=Colors.RED, bg=Colors.BLACK)
+
         # Show range indicator and area effect
         if game.targeting_exploit in GameData.EXPLOITS:
             exploit = GameData.EXPLOITS[game.targeting_exploit]
             self._render_targeting_range(console, game.player.position, exploit.range, camera_offset)
-            
+
             # Show area effect for AREA targeting mode
             if exploit.targeting == TargetingMode.AREA:
                 self._render_targeting_area(console, game.cursor_position, camera_offset)
@@ -2128,9 +2201,59 @@ class MapRenderer:
 
                 if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
                     1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                    # Story fragments don't have sprites yet, skip rendering
-                    # TODO: Add story fragment sprite when available
-                    pass
+                    # Render story fragment sprite
+                    texture = self.tile_manager.get_tile("story_fragment")
+                    if texture:
+                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        renderer.copy(texture, dest=tile_rect)
+
+        # Gateway/Portal
+        if game.game_map.gateway:
+            logging.debug(f"render_sprites_layer: Gateway exists at ({game.game_map.gateway.x}, {game.game_map.gateway.y})")
+            screen_x = game.game_map.gateway.x - camera_offset.x
+            screen_y = game.game_map.gateway.y - camera_offset.y + 1
+            logging.debug(f"render_sprites_layer: Gateway screen position ({screen_x}, {screen_y})")
+
+            if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
+                1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                distance = game.player.position.distance_to(game.game_map.gateway)
+                # Check if player can see the gateway (respecting walls)
+                can_see = (distance <= vision_range and
+                          (game.player.can_see_through_walls() or
+                           game.game_map.has_line_of_sight(game.player.position, game.game_map.gateway)))
+
+                logging.debug(f"render_sprites_layer: Gateway can_see={can_see}, distance={distance}, vision_range={vision_range}")
+
+                if can_see:
+                    # Render portal sprite
+                    texture = self.tile_manager.get_tile("portal")
+                    logging.debug(f"render_sprites_layer: Portal texture loaded: {texture is not None}")
+                    if texture:
+                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        renderer.copy(texture, dest=tile_rect)
+                        logging.debug(f"render_sprites_layer: Rendered portal sprite at screen ({screen_x}, {screen_y})")
+                    else:
+                        logging.warning("render_sprites_layer: Portal texture not found!")
+                    # Add to memory system
+                    if not hasattr(game.game_state, 'revealed_special_nodes'):
+                        game.game_state.revealed_special_nodes = {}
+                    gateway_pos = (game.game_map.gateway.x, game.game_map.gateway.y)
+                    game.game_state.revealed_special_nodes[gateway_pos] = "gateway"
+                else:
+                    # Check if gateway was previously seen (in memory)
+                    gateway_pos = (game.game_map.gateway.x, game.game_map.gateway.y)
+                    if (hasattr(game.game_state, 'revealed_special_nodes') and
+                        gateway_pos in game.game_state.revealed_special_nodes and
+                        game.game_state.revealed_special_nodes[gateway_pos] == "gateway"):
+                        # Render portal sprite with dimmed appearance
+                        texture = self.tile_manager.get_tile("portal")
+                        if texture:
+                            tile_rect = self._get_tile_rect(screen_x, screen_y)
+                            # Use color_mod to dim the sprite (70% brightness for memory)
+                            texture.color_mod = (179, 179, 179)  # 70% of 255
+                            renderer.copy(texture, dest=tile_rect)
+                            # Reset color_mod
+                            texture.color_mod = (255, 255, 255)
 
         # LAYER 2B: Render entity sprites (enemies, player - NO tinting)
         # Enemies
@@ -2238,6 +2361,34 @@ class MapRenderer:
         # Render targeting cursor
         self._render_targeting_cursor(console, game, camera_offset, use_graphics)
 
+    def render_overlay_layer(self, game):
+        """
+        Render overlay elements in graphics mode (vision ranges, movement prediction, targeting).
+        This layer renders between status effects and console UI.
+        """
+        if not self._should_use_graphics():
+            logging.debug("render_overlay_layer: Graphics mode not enabled, skipping")
+            return
+
+        logging.debug("render_overlay_layer: Starting overlay rendering in graphics mode")
+        camera_offset = self._calculate_camera_offset(game.player)
+        vision_range = game.player.get_vision_range()
+
+        # Create a dummy console (not used in graphics mode, but required by method signatures)
+        dummy_console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
+
+        # Render vision overlays
+        logging.debug(f"render_overlay_layer: Rendering vision overlays (enemies: {len(game.enemies)})")
+        self._render_vision_overlays(dummy_console, game, camera_offset, vision_range, use_graphics=True)
+
+        # Render patrol routes (movement prediction)
+        logging.debug("render_overlay_layer: Rendering patrol routes")
+        self._render_patrol_routes(dummy_console, game, camera_offset, vision_range, use_graphics=True)
+
+        # Render targeting cursor
+        logging.debug(f"render_overlay_layer: Rendering targeting cursor (targeting_mode: {game.targeting_mode})")
+        self._render_targeting_cursor(dummy_console, game, camera_offset, use_graphics=True)
+
     def render_status_effects_layer(self, game):
         """
         Render colored status effect outlines over NON-TINTABLE sprites (Layer 2.5).
@@ -2284,19 +2435,25 @@ class MapRenderer:
                 if can_see_enemy or threat_scan_active:
                     enemy_tile_rect = self._get_tile_rect(screen_x, screen_y)
 
+                    # Get pulse intensity for pulsing animation
+                    pulse_intensity = self._get_pulse_intensity(pulse_speed=2.0)
+
                     # Determine enemy state color
                     if enemy.disabled_turns > 0:
-                        # Disabled enemies get blue outline
+                        # Disabled enemies get blue outline (no pulsing for disabled)
                         outline_color = (100, 100, 255)  # Blue for disabled
                         self._draw_outline_box(renderer, enemy_tile_rect, outline_color, thickness=2)
                     else:
-                        # Show enemy state with colored outline
+                        # Show enemy state with colored outline + pulsing
                         if enemy.state == EnemyState.HOSTILE:
-                            outline_color = (255, 0, 0)  # Red for hostile
+                            base_color = (255, 0, 0)  # Red for hostile
                         elif enemy.state == EnemyState.ALERT:
-                            outline_color = (255, 165, 0)  # Orange for alert
+                            base_color = (255, 165, 0)  # Orange for alert
                         else:  # PATROLLING/IDLE
-                            outline_color = (255, 255, 0)  # Yellow for normal
+                            base_color = (255, 255, 0)  # Yellow for normal
+
+                        # Apply pulse to color
+                        outline_color = tuple(int(c * pulse_intensity) for c in base_color)
 
                         self._draw_outline_box(renderer, enemy_tile_rect, outline_color, thickness=1)
 
@@ -2368,3 +2525,57 @@ class MapRenderer:
             "disabled": (100, 100, 255),       # Blue
         }
         return STATUS_COLORS.get(status_type, (255, 255, 255))
+
+    def _draw_corner_brackets(self, renderer, rect: Tuple[int, int, int, int], color: Tuple[int, int, int], bracket_size: int = 4):
+        """
+        Draw corner brackets around a tile rectangle.
+
+        Args:
+            renderer: SDL renderer instance
+            rect: Rectangle (x, y, width, height) in pixels
+            color: RGB color tuple
+            bracket_size: Length of each bracket arm in pixels
+        """
+        x, y, w, h = rect
+
+        # Convert RGB to RGBA for SDL
+        if len(color) == 3:
+            color_rgba = (*color, 255)
+        else:
+            color_rgba = color
+
+        renderer.draw_color = color_rgba
+
+        # Top-left corner
+        renderer.draw_line((x, y), (x + bracket_size, y))  # Horizontal arm
+        renderer.draw_line((x, y), (x, y + bracket_size))  # Vertical arm
+
+        # Top-right corner
+        renderer.draw_line((x + w - bracket_size - 1, y), (x + w - 1, y))  # Horizontal arm
+        renderer.draw_line((x + w - 1, y), (x + w - 1, y + bracket_size))  # Vertical arm
+
+        # Bottom-left corner
+        renderer.draw_line((x, y + h - bracket_size - 1), (x, y + h - 1))  # Vertical arm
+        renderer.draw_line((x, y + h - 1), (x + bracket_size, y + h - 1))  # Horizontal arm
+
+        # Bottom-right corner
+        renderer.draw_line((x + w - 1, y + h - bracket_size - 1), (x + w - 1, y + h - 1))  # Vertical arm
+        renderer.draw_line((x + w - bracket_size - 1, y + h - 1), (x + w - 1, y + h - 1))  # Horizontal arm
+
+        # Reset draw color
+        renderer.draw_color = (255, 255, 255, 255)
+
+    def _get_pulse_intensity(self, pulse_speed: float = 2.0) -> float:
+        """
+        Calculate pulse intensity based on current time.
+
+        Args:
+            pulse_speed: Speed of pulsing (higher = faster). Default 2.0 Hz.
+
+        Returns:
+            Float between 0.7 and 1.0 representing brightness multiplier
+        """
+        current_time = time.time()
+        pulse_phase = (current_time * pulse_speed) % 1.0  # 0.0 to 1.0
+        pulse_intensity = 0.7 + 0.3 * math.sin(pulse_phase * 2 * math.pi)
+        return pulse_intensity

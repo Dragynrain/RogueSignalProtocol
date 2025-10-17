@@ -296,18 +296,40 @@ def main():
                     show_welcome_messages(game)
 
                 # Main game loop
+                last_render_time = time.time()
+                render_interval = 1.0 / 30.0  # 30 FPS for smooth pulsing animation
+
                 while game is not None:
                     try:
                         game.sound_manager.update()
-                        renderer.render_game(console, game, context)
 
-                        # Only present console in glyph mode - graphics mode handles its own present()
-                        # Note: render_game handles present() internally for graphics mode
-                        if settings.graphics_mode != "graphics":
+                        # In graphics mode, render continuously at fixed frame rate
+                        # In glyph mode, only render when there are events
+                        if settings.graphics_mode == "graphics":
+                            current_time = time.time()
+
+                            # Render at fixed frame rate
+                            if current_time - last_render_time >= render_interval:
+                                renderer.render_game(console, game, context)
+                                last_render_time = current_time
+
+                            # Get all available events (non-blocking)
+                            events = tcod.event.get()
+
+                            # If no events, sleep briefly to avoid CPU spinning
+                            if not events:
+                                time.sleep(0.001)  # Sleep 1ms to avoid busy-waiting
+                                continue
+                        else:
+                            # Glyph mode: event-driven rendering
+                            renderer.render_game(console, game, context)
                             context.present(console)
 
+                            # Wait for events (blocking)
+                            events = [tcod.event.wait()]
+
                         # Handle input events
-                        for event in tcod.event.wait():
+                        for event in events:
                             # Save game reference before it potentially becomes None
                             previous_game = game
                             should_continue, game = handle_game_input_events(event, game, input_handler)
