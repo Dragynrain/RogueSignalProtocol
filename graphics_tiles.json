@@ -65,6 +65,11 @@
       "file": "wall01.png",
       "tintable": false,
       "_comment": "Basic wall tile"
+    },
+    "shadow": {
+      "file": "shadow01.png",
+      "tintable": false,
+      "_comment": "Shadow terrain tile for stealth mechanics"
     }
   },
 
