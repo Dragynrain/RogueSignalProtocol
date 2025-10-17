@@ -116,8 +116,8 @@ class GameRenderer:
             # LAYER 2: Render status effect boxes over sprites
             self.map_renderer.render_status_effects_layer(game)
 
-            # LAYER 3: Render console with UI text as texture overlay
-            # Clear console and render all UI to it
+            # LAYER 3: Render console UI as texture overlay
+            # Clear console and render ONLY UI panels (not game area)
             console.clear()
             self.ui_renderer.render_top_status_bar(console, game)
             self.ui_renderer.render_bottom_panel(console, game)
@@ -127,8 +127,11 @@ class GameRenderer:
             if game.dialogue_manager.is_active():
                 self._render_dialogue(console, game)
 
-            # Convert console to texture and overlay it on top of sprites
+            # Convert console to texture
             console_texture = self.context.console_render.render(console)
+
+            # TEMPORARY: Copy full console to test UI rendering
+            # This will block sprites but verify UI is being rendered
             self.context.sdl_renderer.copy(console_texture)
 
             # Present final frame
