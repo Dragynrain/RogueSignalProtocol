@@ -231,8 +231,6 @@ RogueSignalProtocol/
 - [x] 3.5: Fix exploit category tile lookup
   - Changed from per-category lookup to unified "exploit" sprite with tinting
 
-**Deferred:**
-- [ ] Add graphics quality/scaling settings (Phase 6 - future enhancement)
 
 ### 🚧 **PHASE 4: Testing & Validation (PARTIAL)**
 **Goal:** Comprehensive testing of graphics system
@@ -323,19 +321,6 @@ RogueSignalProtocol/
   - Visual: Glowing document/data fragment/hologram
   - Tintable: false (colored sprite)
   - Colors: Soft white/gold glow to indicate collectible
-
-### JSON Configuration Updates Needed
-
-#### **3. RAM Upgrade Mapping**
-- **Status:** Sprite files exist (ramupgrade01.png through ramupgrade06.png) but not mapped in graphics_tiles.json
-- **Action Required:** Add to "items" section:
-  ```json
-  "ram_upgrade": {
-    "file": "ramupgrade01.png",
-    "tintable": false,
-    "_comment": "RAM permanent upgrade"
-  }
-  ```
 
 ### UI/Overlay Elements (Lower Priority)
 
