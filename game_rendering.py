@@ -127,11 +127,15 @@ class GameRenderer:
             if game.dialogue_manager.is_active():
                 self._render_dialogue(console, game)
 
-            # Convert console to texture
-            console_texture = self.context.console_render.render(console)
+            # Set game area background alpha to 0 for transparency
+            # This allows sprites rendered below to show through the console texture
+            # Game area: x=0-54, y=1-44 (excluding top bar, bottom panel, and system log)
+            for x in range(GameConfig.GAME_AREA_WIDTH()):
+                for y in range(1, GameConfig.PANEL_Y()):
+                    console.rgba["bg"][x, y, 3] = 0  # Alpha = 0 (fully transparent)
 
-            # TEMPORARY: Copy full console to test UI rendering
-            # This will block sprites but verify UI is being rendered
+            # Convert console to texture and overlay on top of sprites
+            console_texture = self.context.console_render.render(console)
             self.context.sdl_renderer.copy(console_texture)
 
             # Present final frame

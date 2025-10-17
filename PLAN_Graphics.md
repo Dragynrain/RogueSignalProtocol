@@ -168,7 +168,7 @@ RogueSignalProtocol/
 **Commits:**
 - Phase 1 complete (d75180f)
 
-### ✅ **PHASE 2: Layered SDL Rendering Architecture (COMPLETED - SIMPLIFIED)**
+### ✅ **PHASE 2: Layered SDL Rendering Architecture (COMPLETED)**
 **Goal:** Render sprites with layered SDL + console overlay system
 
 **Tasks Completed:**
@@ -187,18 +187,27 @@ RogueSignalProtocol/
   - SDL clear → sprites → boxes → console texture → present
   - Transparent console backgrounds in game area
   - Graphics mode vs glyph mode branching
-- [x] 2.4: Console transparency coordination
-  - Game area backgrounds alpha 0
-  - UI panels keep solid backgrounds
-  - Glyph fallbacks visible over sprites
+- [x] 2.4: Console transparency coordination (**CRITICAL SOLUTION**)
+  - **Key Discovery:** TCOD console.rgba["bg"] alpha channel DOES work with SDL rendering
+  - Setting `console.rgba["bg"][x, y, 3] = 0` creates truly transparent background cells
+  - Game area (x: 0-54, y: 1-44) backgrounds set to alpha=0 after UI rendering
+  - UI panels (top bar y=0, bottom panel y=45-49, system log x=55-79) keep solid backgrounds
+  - Full console texture rendered and copied - transparent game area reveals sprites underneath
+  - **Implementation:** game_rendering.py:130-136
 - [x] 2.5: Dynamic window scaling
   - Detects >10% window size changes
   - Recalculates tile dimensions
   - Reloads all cached textures at new scale
   - Smart reload strategy (lazy reload on next access)
 
+**Key Technical Notes:**
+- **Console Alpha Transparency:** Despite TCOD docs saying alpha behavior is "undefined", setting per-cell background alpha via `console.rgba["bg"][x, y, 3] = 0` works perfectly for SDL texture rendering. The transparent cells allow underlying SDL sprite rendering to show through.
+- **Rendering Order:** Sprites rendered first to SDL, then full console texture with transparent game area overlaid. This is simpler than managing separate consoles for each UI region.
+- **Why This Works:** SDL texture alpha blending respects per-pixel alpha values from the console texture. Black backgrounds with alpha=0 become fully transparent, while UI panels with alpha=255 remain opaque.
+
 **Commits:**
 - Simplified to sprites-only architecture (bd7f07f)
+- Console transparency solution implemented (current HEAD)
 
 ### 🚧 **PHASE 3: Configuration & Settings Integration (MOSTLY COMPLETE)**
 **Goal:** Polish configuration and ensure settings work correctly
@@ -383,3 +392,57 @@ RogueSignalProtocol/
 - JSON configuration for easy sprite swapping
 - Comprehensive error handling and fallbacks
 - Logging for debugging sprite load failures
+
+---
+
+## TECHNICAL IMPLEMENTATION DETAILS
+
+### Console Transparency Solution (Phase 2.4)
+
+**Problem We Solved:**
+When mixing SDL sprite rendering with TCOD console UI, the console's opaque black background in the game area was covering the sprites underneath.
+
+**Solution:**
+Set per-cell background alpha to 0 for game area cells, making them transparent while keeping UI panels opaque.
+
+**Implementation Code (game_rendering.py:130-136):**
+```python
+# After rendering UI to console, before converting to texture:
+for x in range(GameConfig.GAME_AREA_WIDTH()):  # 0-54
+    for y in range(1, GameConfig.PANEL_Y()):    # 1-44
+        console.rgba["bg"][x, y, 3] = 0  # Set background alpha to 0
+```
+
+**How It Works:**
+1. SDL renderer cleared and sprites rendered (layers 1-2)
+2. Console cleared (creates opaque black background, alpha=255)
+3. UI elements rendered to console (status bar, bottom panel, system log)
+4. Game area background alpha set to 0 (makes game area transparent)
+5. Console rendered to SDL texture (respects per-pixel alpha)
+6. Console texture copied to SDL renderer (transparent areas show sprites)
+7. SDL present() composites everything
+
+**Grid Layout:**
+- **Top Status Bar**: x=0-79, y=0 (opaque, renders UI)
+- **Game Area**: x=0-54, y=1-44 (transparent, shows sprites)
+- **Bottom Panel**: x=0-54, y=45-49 (opaque, renders UI)
+- **System Log**: x=55-79, y=0-49 (opaque, renders UI)
+
+**Why This Works:**
+- TCOD's `console.rgba["bg"]` allows direct manipulation of background RGBA values
+- The fourth component (index 3) is the alpha channel (0=transparent, 255=opaque)
+- SDL texture rendering respects alpha blending when `blend_mode = BLEND` is set
+- Console texture becomes a "mask" - opaque where UI exists, transparent where sprites show
+
+**Key Insight:**
+Despite TCOD documentation stating alpha behavior is "undefined", the alpha channel in console backgrounds DOES work correctly when rendering console to SDL texture. This allows simple single-console rendering instead of managing multiple console regions.
+
+**Alternatives Considered (and why they failed):**
+1. **Separate consoles per UI region** - More complex, requires multiple SDLConsoleRender instances
+2. **Partial texture copying** - Can't skip the black background that's IN the texture
+3. **Render only UI cells** - Would leave gaps, console.clear() fills entire console
+
+**Performance Notes:**
+- Loop runs once per frame: 55 × 44 = 2,420 cells
+- Simple memory write operation (negligible overhead)
+- Alternative of separate consoles would require 3 texture renders instead of 1
