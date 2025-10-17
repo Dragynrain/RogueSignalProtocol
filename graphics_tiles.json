@@ -99,6 +99,11 @@
       "tintable": false,
       "_comment": "CPU permanent upgrade"
     },
+    "ram_upgrade": {
+      "file": "ramupgrade01.png",
+      "tintable": false,
+      "_comment": "RAM permanent upgrade"
+    },
     "ghost_node": {
       "file": "ghostnode01.png",
       "tintable": false,
