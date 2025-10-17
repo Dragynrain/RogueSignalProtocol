@@ -43,7 +43,7 @@ class GameRenderer:
         self.tile_manager = tile_manager
         self.context = context
         self.ui_renderer = UIRenderer()
-        self.map_renderer = MapRenderer(tile_manager=tile_manager, context=context)
+        self.map_renderer = MapRenderer(tile_manager=tile_manager, context=context, settings=settings)
 
     def render_game(self, console: tcod.console.Console, game, context=None):
         """Render the complete game state."""
@@ -1152,16 +1152,18 @@ class UIRenderer:
 class MapRenderer:
     """Renders the game map and entities."""
 
-    def __init__(self, tile_manager=None, context=None):
+    def __init__(self, tile_manager=None, context=None, settings=None):
         """
         Initialize MapRenderer with optional graphics support.
 
         Args:
             tile_manager: TileManager instance for sprite loading (None for glyph mode)
             context: TCOD context with SDL renderer (None for glyph mode)
+            settings: GameSettings instance for accessing graphics_mode
         """
         self.tile_manager = tile_manager
         self.context = context
+        self.settings = settings
 
     def _should_use_graphics(self):
         """Check if graphics mode is available and should be used."""
@@ -1169,6 +1171,56 @@ class MapRenderer:
                 self.context is not None and
                 hasattr(self.context, 'sdl_renderer') and
                 self.context.sdl_renderer is not None)
+
+    def _get_graphics_mode(self):
+        """Get current graphics mode from settings."""
+        if self.settings:
+            return self.settings.graphics_mode
+        return "glyph"
+
+    def _world_to_console(self, world_x: int, world_y: int, camera_offset: Position) -> Tuple[int, int]:
+        """
+        Convert world coordinates to console coordinates based on viewport.
+
+        Args:
+            world_x: World X coordinate
+            world_y: World Y coordinate
+            camera_offset: Camera offset position
+
+        Returns:
+            Tuple of (console_x, console_y) or None if out of viewport
+        """
+        # Calculate viewport position
+        viewport_x = world_x - camera_offset.x
+        viewport_y = world_y - camera_offset.y
+
+        # Console position accounts for status bar at row 0
+        console_x = viewport_x
+        console_y = viewport_y + 1
+
+        return (console_x, console_y)
+
+    def _is_in_viewport(self, world_x: int, world_y: int, camera_offset: Position) -> bool:
+        """
+        Check if world coordinates are within the current viewport.
+
+        Args:
+            world_x: World X coordinate
+            world_y: World Y coordinate
+            camera_offset: Camera offset position
+
+        Returns:
+            True if position is in viewport
+        """
+        graphics_mode = self._get_graphics_mode()
+        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
+        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
+
+        viewport_x = world_x - camera_offset.x
+        viewport_y = world_y - camera_offset.y
+
+        return (0 <= viewport_x < viewport_width and
+                0 <= viewport_y < viewport_height)
 
     def _grid_to_pixel(self, screen_x: int, screen_y: int) -> Tuple[int, int]:
         """
@@ -1232,21 +1284,41 @@ class MapRenderer:
             logging.error(traceback.format_exc())
     
     def _calculate_camera_offset(self, player) -> Position:
-        """Calculate camera offset to center on player."""
-        camera_x = max(0, min(GameConfig.MAP_WIDTH - GameConfig.GAME_AREA_WIDTH(), 
-                             player.x - GameConfig.GAME_AREA_WIDTH() // 2))
-        # Viewable height is from screen row 1 to (SCREEN_HEIGHT - PANEL_HEIGHT - 1)
-        viewable_height = GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT - 1
-        camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewable_height, 
-                             player.y - viewable_height // 2))
+        """
+        Calculate camera offset to center on player.
+
+        Uses viewport dimensions based on graphics mode - smaller viewport
+        in graphics mode for larger sprite appearance.
+        """
+        graphics_mode = self._get_graphics_mode()
+
+        # Get viewport dimensions (tiles visible, not console grid size)
+        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
+        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
+
+        # Center camera on player within the viewport
+        camera_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
+                             player.x - viewport_width // 2))
+        camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
+                             player.y - viewport_height // 2))
+
         return Position(camera_x, camera_y)
     
     def _render_terrain(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
         """Render basic terrain (floors, walls, items)."""
-        for screen_x in range(GameConfig.GAME_AREA_WIDTH()):
-            for screen_y in range(1, GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                world_pos = Position(screen_x + camera_offset.x, screen_y - 1 + camera_offset.y)
-                
+        graphics_mode = self._get_graphics_mode()
+        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
+        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
+
+        for viewport_x in range(viewport_width):
+            for viewport_y in range(viewport_height):
+                # World position from viewport coordinates
+                world_pos = Position(viewport_x + camera_offset.x, viewport_y + camera_offset.y)
+
+                # Console position (account for status bar at row 0)
+                console_x = viewport_x
+                console_y = viewport_y + 1
+
                 if world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
                     # Check if player can see this position using TCOD FOV
                     if game.player.can_see_through_walls():
@@ -1256,21 +1328,21 @@ class MapRenderer:
                     else:
                         # Use TCOD FOV system for proper corner visibility
                         can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
-                    
+
                     # Check if this tile has been explored (memory system)
                     explored = (world_pos.x, world_pos.y) in game.game_map.explored_tiles
-                    
+
                     if can_see:
-                        self._render_tile(console, screen_x, screen_y, world_pos, game)
+                        self._render_tile(console, console_x, console_y, world_pos, game)
                     elif explored:
                         # Render remembered tile with dimmed colors
-                        self._render_remembered_tile(console, screen_x, screen_y, world_pos, game)
+                        self._render_remembered_tile(console, console_x, console_y, world_pos, game)
                     else:
                         # Fog of war
-                        render_char_safe(console, screen_x, screen_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
+                        render_char_safe(console, console_x, console_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
                 else:
                     # Outside map bounds
-                    render_char_safe(console, screen_x, screen_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
+                    render_char_safe(console, console_x, console_y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
     
     def _render_remembered_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game):
         """Render a tile from memory with dimmed neon colors."""
@@ -1694,39 +1766,34 @@ class MapRenderer:
                     if game.player.can_see_enemy(enemy, game.game_map):
                         currently_visible = True
                     break
-            
+
             # Only show ghost if enemy is not currently visible and was seen recently
             from game_config import GameBalance
             if not currently_visible and turn_seen > game.turn - GameBalance.ENEMY_MEMORY_TURNS:
-                screen_x = position.x - camera_offset.x
-                screen_y = position.y - camera_offset.y + 1
-                
-                if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and 
-                    1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                if self._is_in_viewport(position.x, position.y, camera_offset):
+                    console_x, console_y = self._world_to_console(position.x, position.y, camera_offset)
                     if current_enemy:
                         # Dimmed ghost of living enemy
                         ghost_color = tuple(c // 3 for c in current_enemy.get_color())
-                        render_char_safe(console, screen_x, screen_y, '?', fg=ghost_color, bg=Colors.BLACK)
-        
+                        render_char_safe(console, console_x, console_y, '?', fg=ghost_color, bg=Colors.BLACK)
+
         # Then render currently visible enemies
         for enemy in game.enemies:
-            screen_x = enemy.x - camera_offset.x
-            screen_y = enemy.y - camera_offset.y + 1
-            
-            if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and 
-                1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+            if self._is_in_viewport(enemy.x, enemy.y, camera_offset):
+                console_x, console_y = self._world_to_console(enemy.x, enemy.y, camera_offset)
+
                 # Check if Threat Scan is active (shows all enemies)
                 threat_scan_active = game.game_state.threat_scan_turns > 0
                 can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
-                
+
                 if can_see_enemy or threat_scan_active:
                     if threat_scan_active and not can_see_enemy:
                         # Threat scan reveals enemy with special highlighting
-                        render_char_safe(console, screen_x, screen_y, enemy.type_data.symbol, 
+                        render_char_safe(console, console_x, console_y, enemy.type_data.symbol,
                                     fg=Colors.CYAN, bg=(20, 0, 20))  # Cyan text on dark purple bg
                     else:
                         # Normal enemy rendering
-                        render_char_safe(console, screen_x, screen_y, enemy.type_data.symbol,
+                        render_char_safe(console, console_x, console_y, enemy.type_data.symbol,
                                     fg=enemy.get_color(), bg=Colors.BLACK)
 
     def _render_enemy_movement_prediction(self, console: tcod.console.Console, enemy, camera_offset: Position, game):
@@ -1746,20 +1813,17 @@ class MapRenderer:
 
     def _render_player(self, console: tcod.console.Console, game, camera_offset: Position):
         """Render the player character."""
-        player_screen_x = game.player.x - camera_offset.x
-        player_screen_y = game.player.y - camera_offset.y + 1
-        
-        if (0 <= player_screen_x < GameConfig.GAME_AREA_WIDTH() and 
-            1 <= player_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+        if self._is_in_viewport(game.player.x, game.player.y, camera_offset):
+            console_x, console_y = self._world_to_console(game.player.x, game.player.y, camera_offset)
             player_color = self._get_player_color(game.player)
             # Position 2 = ☻ (inverse smiley)
             try:
-                render_char_safe(console, player_screen_x, player_screen_y, chr(tcod.tileset.CHARMAP_CP437[2]), fg=player_color, bg=Colors.BLACK)
+                render_char_safe(console, console_x, console_y, chr(tcod.tileset.CHARMAP_CP437[2]), fg=player_color, bg=Colors.BLACK)
             except Exception as e:
                 import logging
                 logging.error(f"PLAYER RENDER ERROR: {e}, color={player_color}")
                 # Fallback to simple @ character
-                render_char_safe(console, player_screen_x, player_screen_y, '@', fg=Colors.WHITE, bg=Colors.BLACK)
+                render_char_safe(console, console_x, console_y, '@', fg=Colors.WHITE, bg=Colors.BLACK)
         else:
             # Only log when player is actually off screen - this shouldn't happen often
             import logging
@@ -1856,14 +1920,22 @@ class MapRenderer:
         logging.debug(f"Camera offset: {camera_offset}, vision range: {vision_range}")
 
         # LAYER 1: Render terrain sprites (floors, walls) for visible and remembered tiles
-        for screen_x in range(GameConfig.GAME_AREA_WIDTH()):
-            for screen_y in range(1, GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                world_x = screen_x + camera_offset.x
-                world_y = screen_y - 1 + camera_offset.y
+        graphics_mode = self._get_graphics_mode()
+        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
+        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
+
+        for viewport_x in range(viewport_width):
+            for viewport_y in range(viewport_height):
+                world_x = viewport_x + camera_offset.x
+                world_y = viewport_y + camera_offset.y
                 world_pos = Position(world_x, world_y)
 
                 if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
                     continue
+
+                # Console coordinates (for SDL rendering)
+                console_x = viewport_x
+                console_y = viewport_y + 1
 
                 # Check visibility
                 if game.player.can_see_through_walls():
@@ -1883,13 +1955,13 @@ class MapRenderer:
                         texture = self.tile_manager.get_tile("floor")
 
                     if texture:
-                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        tile_rect = self._get_tile_rect(console_x, console_y)
                         renderer.copy(texture, dest=tile_rect)
                     else:
                         # Log first few missing textures for debugging
-                        if screen_x < 2 and screen_y < 3:
+                        if console_x < 2 and console_y < 3:
                             terrain_type = "wall" if game.game_map.is_wall(world_pos) else "floor"
-                            logging.warning(f"Missing texture for {terrain_type} at screen ({screen_x},{screen_y})")
+                            logging.warning(f"Missing texture for {terrain_type} at console ({console_x},{console_y})")
                 elif explored:
                     # Explored but not currently visible - dimmed (fog of war)
                     if game.game_map.is_wall(world_pos):
@@ -1898,7 +1970,7 @@ class MapRenderer:
                         texture = self.tile_manager.get_tile("floor")
 
                     if texture:
-                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        tile_rect = self._get_tile_rect(console_x, console_y)
                         # Dim the texture for fog of war effect
                         texture.color_mod = (80, 80, 100)  # Dark blue-gray tint for explored areas
                         renderer.copy(texture, dest=tile_rect)
@@ -1915,34 +1987,31 @@ class MapRenderer:
             else:
                 can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
 
-            if can_see:
-                screen_x = world_x - camera_offset.x
-                screen_y = world_y - camera_offset.y + 1
+            if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
+                console_x, console_y = self._world_to_console(world_x, world_y, camera_offset)
 
-                if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
-                    1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                    texture = self.tile_manager.get_tile("codehack")
-                    if texture:
-                        # Apply tint if tintable
-                        if self.tile_manager.is_tintable("codehack"):
-                            # Map color name to RGB
-                            color_map = {
-                                'crimson': Colors.CRIMSON,
-                                'azure': Colors.AZURE,
-                                'emerald': Colors.EMERALD,
-                                'golden': Colors.GOLDEN,
-                                'violet': Colors.VIOLET,
-                                'silver': Colors.SILVER
-                            }
-                            tint_color = color_map.get(code_hack.color_name.lower(), Colors.WHITE)
-                            texture.color_mod = tint_color
+                texture = self.tile_manager.get_tile("codehack")
+                if texture:
+                    # Apply tint if tintable
+                    if self.tile_manager.is_tintable("codehack"):
+                        # Map color name to RGB
+                        color_map = {
+                            'crimson': Colors.CRIMSON,
+                            'azure': Colors.AZURE,
+                            'emerald': Colors.EMERALD,
+                            'golden': Colors.GOLDEN,
+                            'violet': Colors.VIOLET,
+                            'silver': Colors.SILVER
+                        }
+                        tint_color = color_map.get(code_hack.color_name.lower(), Colors.WHITE)
+                        texture.color_mod = tint_color
 
-                        tile_rect = self._get_tile_rect(screen_x, screen_y)
-                        renderer.copy(texture, dest=tile_rect)
+                    tile_rect = self._get_tile_rect(console_x, console_y)
+                    renderer.copy(texture, dest=tile_rect)
 
-                        # Reset color mod
-                        if self.tile_manager.is_tintable("codehack"):
-                            texture.color_mod = (255, 255, 255)
+                    # Reset color mod
+                    if self.tile_manager.is_tintable("codehack"):
+                        texture.color_mod = (255, 255, 255)
 
         # Exploit pickups
         for (world_x, world_y), exploit_item in game.game_map.exploit_pickups.items():

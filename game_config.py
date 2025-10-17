@@ -241,6 +241,54 @@ class GameConfig:
         """Calculate panel Y position (screen height minus panel height)."""
         cls._ensure_loaded()
         return cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT
+
+    @classmethod
+    def VIEWPORT_WIDTH(cls, graphics_mode: str = "glyph"):
+        """
+        Calculate viewport width (visible tiles) based on rendering mode.
+
+        In graphics mode, viewport is smaller to make sprites appear larger.
+        In glyph mode, viewport fills the full game area.
+
+        Args:
+            graphics_mode: "graphics" or "glyph"
+
+        Returns:
+            Number of tiles visible horizontally
+        """
+        cls._ensure_loaded()
+        game_area_width = cls.SCREEN_WIDTH - cls.LOG_WIDTH
+
+        if graphics_mode == "graphics":
+            # Half size viewport for graphics mode (larger sprites)
+            return game_area_width // 2
+        else:
+            # Full viewport for glyph mode
+            return game_area_width
+
+    @classmethod
+    def VIEWPORT_HEIGHT(cls, graphics_mode: str = "glyph"):
+        """
+        Calculate viewport height (visible tiles) based on rendering mode.
+
+        In graphics mode, viewport is smaller to make sprites appear larger.
+        In glyph mode, viewport fills the full game area.
+
+        Args:
+            graphics_mode: "graphics" or "glyph"
+
+        Returns:
+            Number of tiles visible vertically (excluding top status bar)
+        """
+        cls._ensure_loaded()
+        viewable_height = cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT - 1
+
+        if graphics_mode == "graphics":
+            # Half size viewport for graphics mode (larger sprites)
+            return viewable_height // 2
+        else:
+            # Full viewport for glyph mode
+            return viewable_height
     
     @classmethod
     def _get_required(cls, key: str):

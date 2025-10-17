@@ -272,6 +272,12 @@ RogueSignalProtocol/
   - Vision overlay sprites (OPTIONAL - keep glyphs)
   - Patrol prediction sprites (OPTIONAL - keep glyphs)
   - Targeting cursor sprite (OPTIONAL - keep glyphs)
+- [ ] 5.3: Graphics mode viewport scaling
+  - Reduce visible viewport to ~half size in graphics mode only
+  - Makes sprites appear 2x larger (better visual fidelity)
+  - Glyph mode keeps original viewport size
+  - Update camera/scrolling logic for smaller viewport
+  - Test and validate both rendering modes
 
 ### 🚧 **PHASE 6: Documentation & Completion (PARTIAL)**
 **Goal:** Complete documentation and final polish
