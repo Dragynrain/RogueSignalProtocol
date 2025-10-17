@@ -288,8 +288,8 @@ class TileManager:
             if isinstance(player_data, dict) and "file" in player_data:
                 return player_data["file"]
 
-        # Check each category (enemies, terrain, items)
-        for category in ["enemies", "terrain", "items"]:
+        # Check each category (enemies, terrain, items, special)
+        for category in ["enemies", "terrain", "items", "special"]:
             if category in self.tile_mappings:
                 category_data = self.tile_mappings[category]
                 if isinstance(category_data, dict) and entity_name in category_data:

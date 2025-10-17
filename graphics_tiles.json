@@ -111,12 +111,26 @@
     }
   },
 
-  "_missing_sprites": {
-    "_comment": "Entities that will use glyph fallbacks until sprites are created",
-    "gateway": "Exit to next level ('>') - no sprite yet",
-    "targeting_cursor": "Targeting UI ('X') - always rendered as glyph overlay",
-    "movement_prediction": "Movement indicators - always rendered as glyph overlay",
-    "vision_overlays": "FOV shadows/vision - handled by console background colors",
-    "story_fragments": "Story/lore pickups - no sprite yet"
+  "special": {
+    "portal": {
+      "file": "portal01.png",
+      "tintable": false,
+      "_comment": "Portal/gateway to next level"
+    },
+    "story_fragment": {
+      "file": "storyfragment01.png",
+      "tintable": false,
+      "_comment": "Story/lore pickup collectible"
+    },
+    "movement_prediction": {
+      "file": "movementprediction01.png",
+      "tintable": false,
+      "_comment": "Enemy movement prediction indicator"
+    },
+    "targeting": {
+      "file": "targeting01.png",
+      "tintable": false,
+      "_comment": "Targeting cursor overlay"
+    }
   }
 }
