@@ -57,7 +57,7 @@
 
   "terrain": {
     "floor": {
-      "file": "floor01.png",
+      "file": "floor02.png",
       "tintable": false,
       "_comment": "Basic floor tile"
     },
