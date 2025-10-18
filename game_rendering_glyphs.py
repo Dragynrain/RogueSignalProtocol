@@ -139,7 +139,7 @@ class GlyphsMapRenderer:
     def render_map(self, console: tcod.console.Console, game):
         """Render the complete game map."""
         try:
-            camera_offset = self._calculate_camera_offset(game.player)
+            camera_offset = self._calculate_camera_offset(game.player, game)
             vision_range = game.player.get_vision_range()
             
             # Render in layers for proper z-ordering
@@ -162,12 +162,16 @@ class GlyphsMapRenderer:
             logging.error(f"Map rendering error: {e}")
             logging.error(traceback.format_exc())
     
-    def _calculate_camera_offset(self, player) -> Position:
+    def _calculate_camera_offset(self, player, game=None) -> Position:
         """
-        Calculate camera offset to center on player.
+        Calculate camera offset to center on player or look cursor.
 
         Uses viewport dimensions based on graphics mode - smaller viewport
         in graphics mode for larger sprite appearance.
+
+        Args:
+            player: Player entity
+            game: Game engine (optional, for look mode support)
         """
         graphics_mode = self._get_graphics_mode()
 
@@ -175,11 +179,19 @@ class GlyphsMapRenderer:
         viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
         viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
 
-        # Center camera on player within the viewport
+        # In look mode, center camera on cursor instead of player
+        if game and game.look_mode and hasattr(game, 'look_cursor_position'):
+            center_x = game.look_cursor_position.x
+            center_y = game.look_cursor_position.y
+        else:
+            center_x = player.x
+            center_y = player.y
+
+        # Center camera on target position within the viewport
         camera_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                             player.x - viewport_width // 2))
+                             center_x - viewport_width // 2))
         camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                             player.y - viewport_height // 2))
+                             center_y - viewport_height // 2))
 
         return Position(camera_x, camera_y)
     

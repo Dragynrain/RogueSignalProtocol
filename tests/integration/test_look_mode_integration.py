@@ -435,6 +435,43 @@ class TestLookModeWorkflow:
         assert game.dialogue_manager.is_active()
         assert not game.look_mode
 
+    def test_look_mode_camera_scrolling(self):
+        """Test that camera follows cursor in look mode for map exploration."""
+        from game_rendering_glyphs import GlyphsMapRenderer
+        from game_config import GameConfig
+
+        game = GameEngine(load_save=False)
+        renderer = GlyphsMapRenderer(settings=game.settings)
+
+        # Enter look mode
+        game.look_mode = True
+        game.look_cursor_position = Position(game.player.x, game.player.y)
+
+        # Initial camera should center on player
+        initial_camera = renderer._calculate_camera_offset(game.player, game)
+        assert initial_camera.x == max(0, min(GameConfig.MAP_WIDTH - GameConfig.VIEWPORT_WIDTH(game.settings.graphics_mode),
+                                              game.player.x - GameConfig.VIEWPORT_WIDTH(game.settings.graphics_mode) // 2))
+        assert initial_camera.y == max(0, min(GameConfig.MAP_HEIGHT - GameConfig.VIEWPORT_HEIGHT(game.settings.graphics_mode),
+                                              game.player.y - GameConfig.VIEWPORT_HEIGHT(game.settings.graphics_mode) // 2))
+
+        # Move cursor far away from player (at least half viewport width)
+        distance = GameConfig.VIEWPORT_WIDTH(game.settings.graphics_mode) // 2 + 5
+        game.look_cursor_position = Position(
+            min(GameConfig.MAP_WIDTH - 1, game.player.x + distance),
+            game.player.y
+        )
+
+        # Camera should now follow cursor, not player
+        new_camera = renderer._calculate_camera_offset(game.player, game)
+        assert new_camera.x != initial_camera.x, "Camera should scroll when cursor moves away from player"
+
+        # Exit look mode
+        game.look_mode = False
+
+        # Camera should return to centering on player
+        final_camera = renderer._calculate_camera_offset(game.player, game)
+        assert final_camera == initial_camera, "Camera should return to player when exiting look mode"
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

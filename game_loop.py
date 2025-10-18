@@ -284,6 +284,7 @@ def handle_game_input_events(event, game, input_handler):
                 game.show_lore_viewer or
                 game.show_help or
                 game.show_inventory or
+                game.look_mode or
                 game.targeting_mode):
                 input_handler._handle_escape()
             else:
@@ -399,7 +400,7 @@ def main():
                             context.present(console)
 
                             # Wait for events (blocking)
-                            events = [tcod.event.wait()]
+                            events = list(tcod.event.wait())
 
                         # Handle input events
                         for event in events:

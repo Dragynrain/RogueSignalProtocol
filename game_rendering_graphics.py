@@ -89,16 +89,30 @@ class GraphicsMapRenderer:
         return (0 <= viewport_x < viewport_width and
                 0 <= viewport_y < viewport_height)
 
-    def _calculate_camera_offset(self, player) -> Position:
-        """Calculate camera offset to center on player."""
+    def _calculate_camera_offset(self, player, game=None) -> Position:
+        """
+        Calculate camera offset to center on player or look cursor.
+
+        Args:
+            player: Player entity
+            game: Game engine (optional, for look mode support)
+        """
         graphics_mode = self._get_graphics_mode()
         viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
         viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
 
+        # In look mode, center camera on cursor instead of player
+        if game and game.look_mode and hasattr(game, 'look_cursor_position'):
+            center_x = game.look_cursor_position.x
+            center_y = game.look_cursor_position.y
+        else:
+            center_x = player.x
+            center_y = player.y
+
         camera_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                             player.x - viewport_width // 2))
+                             center_x - viewport_width // 2))
         camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                             player.y - viewport_height // 2))
+                             center_y - viewport_height // 2))
         return Position(camera_x, camera_y)
 
     def _grid_to_pixel(self, screen_x: int, screen_y: int) -> Tuple[int, int]:
@@ -128,7 +142,7 @@ class GraphicsMapRenderer:
             return
 
         renderer = self.context.sdl_renderer
-        camera_offset = self._calculate_camera_offset(game.player)
+        camera_offset = self._calculate_camera_offset(game.player, game)
         vision_range = game.player.get_vision_range()
 
         # LAYER 1: Render terrain sprites (floors, walls) for visible and remembered tiles
@@ -448,7 +462,7 @@ class GraphicsMapRenderer:
         In graphics mode, renders directly to SDL using GlyphManager.
         In glyph mode, renders to console traditionally.
         """
-        camera_offset = self._calculate_camera_offset(game.player)
+        camera_offset = self._calculate_camera_offset(game.player, game)
         vision_range = game.player.get_vision_range()
 
         # Check if we're in graphics mode
@@ -499,14 +513,14 @@ class GraphicsMapRenderer:
         if not self._should_use_graphics():
             return
 
-        camera_offset = self._calculate_camera_offset(game.player)
+        camera_offset = self._calculate_camera_offset(game.player, game)
         vision_range = game.player.get_vision_range()
 
-        # TODO: Implement graphics-specific overlay rendering here
-        # These overlays (vision ranges, patrol routes, targeting cursor) should be rendered
+        # Render targeting cursor for look mode or targeting mode
+        self._render_targeting_cursor(game, camera_offset)
+
+        # TODO: Implement other overlays (vision ranges, patrol routes, movement prediction)
         # using SDL graphics primitives or sprite textures, not console glyphs.
-        # For now, overlays are handled by the glyph renderer layer.
-        pass
 
     def render_status_effects_layer(self, game):
         """
@@ -519,7 +533,7 @@ class GraphicsMapRenderer:
             return
 
         renderer = self.context.sdl_renderer
-        camera_offset = self._calculate_camera_offset(game.player)
+        camera_offset = self._calculate_camera_offset(game.player, game)
 
         # Draw status effect outline for player if has status
         player_screen_x = game.player.x - camera_offset.x
@@ -626,6 +640,37 @@ class GraphicsMapRenderer:
         """
         return (rect[0] - offset, rect[1] - offset,
                 rect[2] + offset * 2, rect[3] + offset * 2)
+
+    def _render_targeting_cursor(self, game, camera_offset: Position):
+        """Render targeting cursor for look mode or targeting mode in graphics mode."""
+        # Check if either targeting mode or look mode is active
+        if not game.targeting_mode and not game.look_mode:
+            return
+
+        # Determine which cursor position and color to use
+        if game.look_mode:
+            cursor_pos = game.look_cursor_position
+            cursor_color = Colors.CYAN  # Cyan for look mode
+        else:  # targeting_mode
+            cursor_pos = game.cursor_position
+            cursor_color = Colors.RED  # Red for targeting mode
+
+        renderer = self.context.sdl_renderer
+
+        cursor_screen_x = cursor_pos.x - camera_offset.x
+        cursor_screen_y = cursor_pos.y - camera_offset.y + 1
+
+        if (0 <= cursor_screen_x < GameConfig.GAME_AREA_WIDTH() and
+            1 <= cursor_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+            # Graphics mode: Render targeting cursor sprite
+            texture = self.tile_manager.get_tile("targeting")
+            if texture:
+                tile_rect = self._get_tile_rect(cursor_screen_x, cursor_screen_y)
+                # Tint based on mode (red for targeting, cyan for look)
+                texture.color_mod = cursor_color
+                renderer.copy(texture, dest=tile_rect)
+                # Reset color_mod
+                texture.color_mod = (255, 255, 255)
 
     def _get_status_outline_color(self, status_type: str) -> Tuple[int, int, int]:
         """
