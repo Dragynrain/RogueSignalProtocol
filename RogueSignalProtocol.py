@@ -41,7 +41,9 @@ from game_engine import GameEngine
 
 # Import new modular components
 from game_state import MessageLog, GameStateManager, TurnProcessor
-from game_rendering import GameRenderer, UIRenderer, MapRenderer
+from game_rendering_core import GameRenderer
+from game_rendering_ui import UIRenderer
+from game_rendering_glyphs import GlyphsMapRenderer
 from game_loop import main, initialize_tcod_context, WindowManager as LoopWindowManager
 
 # Setup detailed logging for comprehensive debugging
