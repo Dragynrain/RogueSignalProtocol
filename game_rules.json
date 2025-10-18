@@ -198,12 +198,54 @@
       "t_left": 180
     }
   },
+  "terrain_descriptions": {
+    "wall": {
+      "name": "Security Barrier",
+      "description": "Impenetrable firewall - blocks movement and vision"
+    },
+    "floor": {
+      "name": "Data Corridor",
+      "description": "Open network pathway"
+    },
+    "shadow": {
+      "name": "Shadow Zone",
+      "description": "Concealed network area - reduces enemy vision"
+    },
+    "gateway": {
+      "name": "Network Gateway",
+      "description": "Exit to next network level"
+    },
+    "cooling_node": {
+      "name": "Cooling Node",
+      "description": "Reduces heat by 20 degrees"
+    },
+    "cpu_recovery_node": {
+      "name": "CPU Recovery Node",
+      "description": "Restores 20 CPU"
+    },
+    "ghost_node": {
+      "name": "Ghost Node",
+      "description": "Reduces trace level by 20% and acts as shadow"
+    },
+    "code_hack": {
+      "name": "Data Code",
+      "description": "Randomized beneficial effect"
+    },
+    "exploit_pickup": {
+      "name": "Exploit Module",
+      "description": "Equippable ability"
+    },
+    "story_fragment": {
+      "name": "Data Fragment",
+      "description": "Piece of hidden lore"
+    }
+  },
   "welcome_messages": [
     "Welcome to Rogue Signal Protocol v0.8.0 Alpha!",
     "Navigate using stealth",
     "Reach the gateway (>)",
     "Hide in shadows (.) to avoid detection",
-    "Press 'L' to view discovered lore",
+    "Press 'L' for look mode, 'O' for lore",
     "Starting Corporate Network infiltration..."
   ],
   "metadata": {

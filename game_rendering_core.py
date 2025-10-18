@@ -127,6 +127,7 @@ class GameRenderer:
             self.ui_renderer.render_top_status_bar(console, game)
             self.ui_renderer.render_bottom_panel(console, game)
             self.ui_renderer.render_system_log(console, game)
+            self.ui_renderer.render_inspection_panel(console, game)
 
             # Render dialogue system on console if active (covers everything)
             if game.dialogue_manager.is_active():
@@ -155,6 +156,7 @@ class GameRenderer:
             self.glyphs_renderer.render_map(console, game)
             self.ui_renderer.render_bottom_panel(console, game)
             self.ui_renderer.render_system_log(console, game)
+            self.ui_renderer.render_inspection_panel(console, game)
 
             # Render dialogue system (highest priority overlay) - handles gateway, death, victory
             if game.dialogue_manager.is_active():

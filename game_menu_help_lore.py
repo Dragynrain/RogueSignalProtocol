@@ -210,8 +210,15 @@ class HelpMenu:
             ("  Arrow Keys, WASD, or Numpad: Move/Navigate", Colors.WHITE),
             ("  1-5: Use loaded exploits (requires targeting)", Colors.WHITE),
             ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
-            ("  L: View discovered lore fragments", Colors.WHITE),
+            ("  L: Look mode (examine map and entities)", Colors.WHITE),
+            ("  O: View discovered lore fragments", Colors.WHITE),
             ("  ESC: Pause menu / Close screens", Colors.WHITE),
+            ("", Colors.WHITE),
+
+            ("LOOK MODE:", Colors.CYAN),
+            ("  L or ESC: Exit look mode", Colors.WHITE),
+            ("  Arrow Keys, WASD, or Numpad: Move cursor", Colors.WHITE),
+            ("  Inspect enemies, items, terrain, and nodes", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("MAP SYMBOLS:", Colors.CYAN),

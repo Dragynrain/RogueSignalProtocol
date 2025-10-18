@@ -117,6 +117,10 @@ class GameEngine:
         self.targeting_exploit: Optional[str] = None
         self.cursor_position = Position(0, 0)
 
+        # Look mode system
+        self.look_mode = False
+        self.look_cursor_position = Position(0, 0)
+
         # Overclocking system
         self.overclock_confirmation = False
         self.overclock_exploit: Optional[str] = None

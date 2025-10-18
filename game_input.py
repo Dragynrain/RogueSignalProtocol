@@ -8,6 +8,7 @@ from game_combat import ExploitSystem
 from game_data import GameData
 from game_inventory import CodeHack, ExploitItem
 from game_ui import UniversalInputHandler
+from game_entities import Position
 
 
 class InputMappings:
@@ -70,24 +71,27 @@ class InputHandler:
         if self.game.show_help:
             self.game.show_help = False
             return True
-        
+
         if self.game.show_story_fragment is not None:
             # Any key closes the story fragment display
             self.game.show_story_fragment = None
             return True
-        
+
         if self.game.show_lore_viewer:
             return self._handle_lore_viewer_input(event)
-        
+
         if self.game.show_gateway_confirmation:
             return self._handle_gateway_confirmation_input(event)
-        
+
         if self.game.show_inventory:
             return self._handle_inventory_input(event)
-        
+
+        if self.game.look_mode:
+            return self._handle_look_mode_input(event)
+
         if self.game.targeting_mode:
             return self._handle_targeting_input(event)
-        
+
         # Normal gameplay
         return self._handle_gameplay_input(event)
     
@@ -104,6 +108,9 @@ class InputHandler:
             g.show_gateway_confirmation = False
         elif g.show_inventory:
             g.show_inventory = False
+        elif g.look_mode:
+            g.look_mode = False
+            g.message_log.add_message("Look mode exited")
         elif g.targeting_mode:
             g.targeting_mode, g.targeting_exploit = False, None
             g.message_log.add_message("Targeting cancelled")
@@ -261,8 +268,8 @@ class InputHandler:
                 # Enter reading mode for selected fragment
                 self.game.lore_viewer_mode = "reading"
                 return True
-            elif event.sym == tcod.event.KeySym.L:
-                # 'L' key closes lore viewer and returns to game
+            elif event.sym == tcod.event.KeySym.O:
+                # 'O' key closes lore viewer and returns to game
                 self.game.show_lore_viewer = False
                 self.game.lore_viewer_mode = "list"
                 self.game.lore_viewer_selection = 0
@@ -275,9 +282,9 @@ class InputHandler:
                 return True
         
         elif self.game.lore_viewer_mode == "reading":
-            # Reading mode - ESC or 'L' closes, other keys return to list
-            if event.sym == tcod.event.KeySym.L or UniversalInputHandler.is_escape_key(event):
-                # 'L' or ESC closes lore viewer and returns to game
+            # Reading mode - ESC or 'O' closes, other keys return to list
+            if event.sym == tcod.event.KeySym.O or UniversalInputHandler.is_escape_key(event):
+                # 'O' or ESC closes lore viewer and returns to game
                 self.game.show_lore_viewer = False
                 self.game.lore_viewer_mode = "list"
                 self.game.lore_viewer_selection = 0
@@ -337,6 +344,8 @@ class InputHandler:
         elif event.sym == tcod.event.KeySym.I:
             self._open_inventory()
         elif event.sym == tcod.event.KeySym.L:
+            self._enter_look_mode()
+        elif event.sym == tcod.event.KeySym.O:
             self.game.show_lore_viewer = True
         elif event.sym == tcod.event.KeySym.SLASH and (event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)):
             self.game.show_help = True
@@ -489,3 +498,44 @@ class InputHandler:
         equipped = self.game.player.inventory_manager.equipped_exploits
         if 0 <= slot < len(equipped):
             self.exploit_system.use_exploit(equipped[slot])
+
+    def _enter_look_mode(self):
+        """Enter look mode."""
+        self.game.look_mode = True
+        # Initialize look cursor at player position
+        self.game.look_cursor_position = Position(self.game.player.x, self.game.player.y)
+        self.game.message_log.add_message("Look mode - Move cursor to inspect, ESC or L to exit")
+        self.game.sound_manager.play_sound("ui_menu_open")
+
+    def _handle_look_mode_input(self, event) -> bool:
+        """Handle input while in look mode."""
+        # ESC or L exits look mode
+        if UniversalInputHandler.is_escape_key(event) or event.sym == tcod.event.KeySym.L:
+            self.game.look_mode = False
+            self.game.message_log.add_message("Look mode exited")
+            return True
+
+        # Movement keys - use shared mapping to avoid duplication
+        if event.sym in InputMappings.MOVEMENT_MAP:
+            dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
+            self._move_look_cursor(dx, dy)
+            return True
+
+        # Unhandled key - consume it and stay in look mode
+        return True
+
+    def _move_look_cursor(self, dx: int, dy: int):
+        """Move look mode cursor and update inspection info."""
+        from game_config import GameConfig
+
+        # Calculate new position
+        new_x = max(0, min(GameConfig.MAP_WIDTH - 1, self.game.look_cursor_position.x + dx))
+        new_y = max(0, min(GameConfig.MAP_HEIGHT - 1, self.game.look_cursor_position.y + dy))
+        self.game.look_cursor_position = Position(new_x, new_y)
+
+        # Get entity info at new position for immediate feedback
+        from game_inspection import EntityInspector
+        entity_info = EntityInspector.get_entity_at_position(self.game, self.game.look_cursor_position)
+
+        # Show brief feedback in message log
+        self.game.message_log.add_message(f"Looking at: {entity_info['name']}", entity_info['color'])
