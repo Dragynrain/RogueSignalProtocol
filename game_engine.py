@@ -26,7 +26,6 @@ from game_enemies import EnemyManager
 from game_combat import ExploitSystem
 from game_map import GameMap
 from game_input import InputHandler
-from game_save_load_manager import GameSaveLoadManager
 
 # Import new specialized modules
 from game_state_persistence import GameStatePersistence
@@ -131,9 +130,6 @@ class GameEngine:
 
         # Story fragment system
         self.story_fragment_manager = StoryFragmentManager()
-
-        # Initialize save/load manager
-        self.save_load_manager = GameSaveLoadManager(self)
 
         # Initialize ExploitSystem after game engine is mostly constructed
         self.exploit_system = self._exploit_system_param or ExploitSystem(self)

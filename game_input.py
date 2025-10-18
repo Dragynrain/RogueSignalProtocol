@@ -268,23 +268,23 @@ class InputHandler:
                 # Enter reading mode for selected fragment
                 self.game.lore_viewer_mode = "reading"
                 return True
-            elif event.sym == tcod.event.KeySym.O:
-                # 'O' key closes lore viewer and returns to game
+            elif event.sym == tcod.event.KeySym.F:
+                # 'F' key closes story fragment viewer and returns to game
                 self.game.show_lore_viewer = False
                 self.game.lore_viewer_mode = "list"
                 self.game.lore_viewer_selection = 0
                 return True
             elif UniversalInputHandler.is_escape_key(event):
-                # ESC also closes lore viewer
+                # ESC also closes story fragment viewer
                 self.game.show_lore_viewer = False
                 self.game.lore_viewer_mode = "list"
                 self.game.lore_viewer_selection = 0
                 return True
         
         elif self.game.lore_viewer_mode == "reading":
-            # Reading mode - ESC or 'O' closes, other keys return to list
-            if event.sym == tcod.event.KeySym.O or UniversalInputHandler.is_escape_key(event):
-                # 'O' or ESC closes lore viewer and returns to game
+            # Reading mode - ESC or 'F' closes, other keys return to list
+            if event.sym == tcod.event.KeySym.F or UniversalInputHandler.is_escape_key(event):
+                # 'F' or ESC closes story fragment viewer and returns to game
                 self.game.show_lore_viewer = False
                 self.game.lore_viewer_mode = "list"
                 self.game.lore_viewer_selection = 0
@@ -345,7 +345,7 @@ class InputHandler:
             self._open_inventory()
         elif event.sym == tcod.event.KeySym.L:
             self._enter_look_mode()
-        elif event.sym == tcod.event.KeySym.O:
+        elif event.sym == tcod.event.KeySym.F:
             self.game.show_lore_viewer = True
         elif event.sym == tcod.event.KeySym.SLASH and (event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)):
             self.game.show_help = True

@@ -217,7 +217,7 @@ class HelpMenu:
             ("  1-5: Use loaded exploits (requires targeting)", Colors.WHITE),
             ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
             ("  L: Look mode (examine map and entities)", Colors.WHITE),
-            ("  O: View discovered lore fragments", Colors.WHITE),
+            ("  F: View discovered story fragments", Colors.WHITE),
             ("  ESC: Pause menu / Close screens", Colors.WHITE),
             ("", Colors.WHITE),
 

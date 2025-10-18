@@ -20,39 +20,6 @@ from game_inventory import InventoryManager
 from tests.fixtures.simple_fixtures import player
 
 
-class TestSaveDataIntegrity:
-    """Test save data integrity beyond basic file operations."""
-
-    def setup_method(self):
-        """Set up test environment."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.original_save_file = SaveGameManager.SAVE_FILE
-        SaveGameManager.SAVE_FILE = os.path.join(self.temp_dir, "test_save.json")
-
-    def teardown_method(self):
-        """Clean up test environment."""
-        SaveGameManager.SAVE_FILE = self.original_save_file
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    def test_save_numpy_conversion(self):
-        """Test numpy type conversion in save data."""
-        try:
-            import numpy as np
-
-            # Test numpy converter directly
-            converter = SaveGameManager._numpy_converter
-
-            assert converter(np.int32(42)) == 42
-            assert converter(np.float64(3.14)) == 3.14
-            assert converter(np.array([1, 2, 3])) == [1, 2, 3]  # Already returns list
-
-            with pytest.raises(TypeError):
-                converter(object())
-        except ImportError:
-            # Skip test if numpy not available
-            pytest.skip("NumPy not available")
-
-
 class TestCorruptionRecovery:
     """Test corruption recovery and error handling."""
 

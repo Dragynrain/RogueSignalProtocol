@@ -345,12 +345,19 @@ class PositionValidator:
     @staticmethod
     def is_valid_for_placement(position: Position, game_map, min_distance_from_spawn: float = 5.0,
                               check_existing_items: bool = False) -> bool:
-        """Check if position is valid for item/node placement."""
+        """Check if position is valid for item/node placement.
+
+        Ensures items don't spawn on gateway or other critical locations.
+        """
         from game_config import GameConfig
 
         # Boundary and wall check
         if not (0 < position.x < GameConfig.MAP_WIDTH - 1 and 0 < position.y < GameConfig.MAP_HEIGHT - 1
                 and game_map.is_valid_position(position)):
+            return False
+
+        # Gateway check - never place items on gateway
+        if game_map.gateway and position.x == game_map.gateway.x and position.y == game_map.gateway.y:
             return False
 
         # Spawn distance check

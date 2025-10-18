@@ -3,7 +3,8 @@ Game Map Module - Handles map data structure and queries
 """
 
 import tcod
-from tcod import libtcodpy
+import tcod.constants
+from functools import lru_cache
 from typing import Set, Tuple, Dict, Optional
 from game_entities import Position
 from game_inventory import CodeHack, ExploitItem, StoryFragment
@@ -136,7 +137,7 @@ class GameMap:
             transparency=transparency,
             pov=(start.y, start.x),
             radius=max_distance,
-            algorithm=libtcodpy.FOV_SYMMETRIC_SHADOWCAST
+            algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST
         )
         
         # Check if end position is visible (TCOD array is indexed as [y, x])
@@ -163,19 +164,24 @@ class GameMap:
             del self._walkability_cache
 
     def get_walkability_map(self):
-        """Get walkability map for pathfinding (cached for performance)."""
+        """Get walkability map for pathfinding (cached for performance).
+
+        Returns:
+            Boolean numpy array with shape (height, width) where True = walkable.
+            Uses (y, x) indexing consistent with TCOD conventions.
+        """
         if not hasattr(self, '_walkability_cache'):
             import numpy as np
-            walkability = np.zeros((self.width, self.height), dtype=bool)
-            for x in range(self.width):
-                for y in range(self.height):
+            walkability = np.zeros((self.height, self.width), dtype=bool)
+            for y in range(self.height):
+                for x in range(self.width):
                     pos = Position(x, y)
-                    walkability[x, y] = self.is_valid_position(pos)
+                    walkability[y, x] = self.is_valid_position(pos)
             self._walkability_cache = walkability
         return self._walkability_cache
     
     def can_see_position(self, start: Position, end: Position, vision_range: int) -> bool:
-        """Check if start position can see end position using TCOD FOV within range (optimized with caching)."""
+        """Check if start position can see end position using TCOD FOV within range (optimized with LRU caching)."""
         if not (start.is_valid(self.width, self.height) and
                 end.is_valid(self.width, self.height)):
             return False
@@ -185,29 +191,28 @@ class GameMap:
         if distance > vision_range:
             return False
 
-        # Cache FOV computations to avoid repeated calculations
-        fov_cache_key = (start.x, start.y, vision_range)
-        if not hasattr(self, '_fov_cache'):
-            self._fov_cache = {}
-
-        if fov_cache_key not in self._fov_cache:
-            # Use TCOD FOV system for proper corner visibility
-            transparency = self._get_transparency_map()
-
-            # Compute FOV from start position (TCOD uses y,x coordinate order)
-            fov = tcod.map.compute_fov(
-                transparency=transparency,
-                pov=(start.y, start.x),
-                radius=vision_range,
-                algorithm=libtcodpy.FOV_SYMMETRIC_SHADOWCAST
-            )
-
-            # Limit cache size to prevent memory issues
-            if len(self._fov_cache) > 50:
-                self._fov_cache.clear()
-            self._fov_cache[fov_cache_key] = fov
-        else:
-            fov = self._fov_cache[fov_cache_key]
+        # Use internal cached FOV computation
+        fov = self._compute_fov_cached(start.x, start.y, vision_range)
 
         # Check if end position is visible (TCOD array is indexed as [y, x])
         return fov[end.y, end.x]
+
+    @lru_cache(maxsize=128)
+    def _compute_fov_cached(self, start_x: int, start_y: int, vision_range: int):
+        """Compute FOV with LRU caching for better performance.
+
+        Args:
+            start_x: Starting X position
+            start_y: Starting Y position
+            vision_range: Maximum vision radius
+
+        Returns:
+            Boolean numpy array of visible tiles
+        """
+        transparency = self._get_transparency_map()
+        return tcod.map.compute_fov(
+            transparency=transparency,
+            pov=(start_y, start_x),
+            radius=vision_range,
+            algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST
+        )

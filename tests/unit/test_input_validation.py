@@ -371,11 +371,11 @@ class TestUIToggleInputValidation:
         assert game.show_inventory is False
     
     def test_lore_viewer_toggle(self):
-        """Test lore viewer toggle."""
+        """Test story fragment viewer toggle with 'F' key."""
         game = create_mock_game()
         handler = InputHandler(game)
 
-        event = create_mock_event(tcod.event.KeySym.O)
+        event = create_mock_event(tcod.event.KeySym.F)
         handler._handle_gameplay_input(event)
 
         assert game.show_lore_viewer is True
