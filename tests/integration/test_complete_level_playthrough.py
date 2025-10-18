@@ -193,9 +193,20 @@ class TestCompleteLevelPlaythrough:
 
         # Equip the exploit if there's room (pass ExploitItem, not string)
         if initial_equipped_count < 5:  # Max 5 exploits
+            # Check RAM availability before attempting to equip
+            current_ram_usage = engine.player.inventory_manager.get_ram_usage()
+            exploit_ram_cost = GameData.EXPLOITS[exploit_item.exploit_key].ram
+            has_enough_ram = current_ram_usage + exploit_ram_cost <= engine.player.ram_total
+
             success = engine.player.inventory_manager.equip_exploit(exploit_in_inventory)
-            assert success, "Failed to equip exploit"
-            assert exploit_item.exploit_key in engine.player.inventory_manager.equipped_exploits, "Exploit not in equipped list"
+
+            # Only assert success if player has enough RAM
+            if has_enough_ram:
+                assert success, f"Failed to equip exploit (RAM: {current_ram_usage}/{engine.player.ram_total}, cost: {exploit_ram_cost})"
+                assert exploit_item.exploit_key in engine.player.inventory_manager.equipped_exploits, "Exploit not in equipped list"
+            else:
+                # If not enough RAM, equip should fail gracefully
+                assert not success, "Equip should fail when insufficient RAM"
 
     def test_permanent_upgrade_collection_and_effect(self):
         """Test collecting permanent upgrades and verifying their effects."""
