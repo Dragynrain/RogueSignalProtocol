@@ -272,50 +272,50 @@
   "terrain_descriptions": {
     "wall": {
       "name": "Security Barrier",
-      "description": "Impenetrable firewall - blocks movement and vision"
+      "description": "Impenetrable firewall protecting restricted network segments. Blocks both movement and line of sight."
     },
     "floor": {
       "name": "Data Corridor",
-      "description": "Open network pathway"
+      "description": "Standard network pathway where data flows freely. Visible to security monitoring systems."
     },
     "shadow": {
-      "name": "Shadow Zone",
-      "description": "Concealed network area - reduces enemy vision"
+      "name": "Digital Shadows",
+      "description": "Unmonitored network dead zones where surveillance coverage is weak. Concealment reduces enemy detection range."
     },
     "gateway": {
       "name": "Network Gateway",
-      "description": "Exit to next network level"
+      "description": "Secure tunnel to the next network layer. Step here to progress deeper into the system."
     },
     "cooling_node": {
       "name": "Cooling Node",
-      "description": "Reduces heat by 20 degrees"
+      "description": "Thermal regulation system that dissipates 20 degrees of excess heat. Single-use per visit."
     },
     "cpu_recovery_node": {
       "name": "CPU Recovery Node",
-      "description": "Restores 20 CPU"
+      "description": "Emergency processing restoration point. Recovers 20 CPU when accessed."
     },
     "ghost_node": {
       "name": "Ghost Node",
-      "description": "Reduces trace level by 20% and acts as shadow"
+      "description": "Trace obfuscation relay that reduces detection signature by 20%. Also functions as digital shadow for concealment."
     },
     "code_hack": {
       "name": "Data Code",
-      "description": "Randomized beneficial effect"
+      "description": "Encrypted payload with randomized beneficial effects. Collect to discover its purpose."
     },
     "exploit_pickup": {
       "name": "Exploit Module",
-      "description": "Equippable ability"
+      "description": "Sophisticated hacking tool. Equip to add new tactical capabilities to your arsenal."
     },
     "story_fragment": {
       "name": "Data Fragment",
-      "description": "Piece of hidden lore"
+      "description": "Corrupted memory dump containing fragments of classified information. Collect to reconstruct the narrative."
     }
   },
   "welcome_messages": [
     "Welcome to Rogue Signal Protocol v0.8.0 Alpha!",
     "Navigate using stealth",
     "Reach the gateway (>)",
-    "Hide in shadows (.) to avoid detection",
+    "Hide in digital shadows (.) to avoid detection",
     "Press 'L' for look mode, 'O' for lore",
     "Starting Corporate Network infiltration..."
   ],

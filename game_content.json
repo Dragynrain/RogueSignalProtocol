@@ -7,7 +7,7 @@
       "movement": "STATIC",
       "name": "Scanner",
       "damage": 0,
-      "description": "High vision, no attack - pure detection"
+      "description": "Stationary surveillance node with enhanced detection arrays. Cannot attack but sees farther than most security programs."
     },
     "patrol": {
       "symbol": "P",
@@ -16,7 +16,7 @@
       "movement": "PATROL",
       "name": "Patrol",
       "damage": 10,
-      "description": "Larger coverage, moderate damage"
+      "description": "Automated security routine that follows predetermined routes. Equipped with basic defensive protocols."
     },
     "bot": {
       "symbol": "B",
@@ -25,7 +25,7 @@
       "movement": "RANDOM",
       "name": "Bot",
       "damage": 8,
-      "description": "More HP, better vision, light damage"
+      "description": "Autonomous cleaning script with pattern recognition. Wanders unpredictably while scanning for anomalies."
     },
     "firewall": {
       "symbol": "F",
@@ -34,7 +34,7 @@
       "movement": "STATIC",
       "name": "Firewall",
       "damage": 5,
-      "description": "Massive HP, huge vision, light damage"
+      "description": "Heavily fortified security barrier process. Extremely resilient but slow to respond to threats."
     },
     "hunter": {
       "symbol": "H",
@@ -43,7 +43,7 @@
       "movement": "RANDOM",
       "name": "Hunter",
       "damage": 15,
-      "description": "Elite threat - good vision, high damage"
+      "description": "Elite security algorithm with advanced threat detection and powerful attack protocols. Highly dangerous."
     },
     "virus": {
       "symbol": "V",
@@ -52,7 +52,7 @@
       "movement": "VIRUS",
       "name": "Virus",
       "damage": 0,
-      "description": "No direct damage - applies virus effect instead"
+      "description": "Hostile malware that corrupts on contact. Doesn't deal direct damage but infects systems with degrading code."
     },
     "inhibitor": {
       "symbol": "I",
@@ -61,7 +61,7 @@
       "movement": "RANDOM",
       "name": "Inhibitor",
       "damage": 0,
-      "description": "No direct damage - slows player movement instead"
+      "description": "Traffic control daemon that throttles unauthorized processes. Slows your execution speed without causing damage."
     },
     "admin": {
       "symbol": "A",
@@ -70,7 +70,7 @@
       "movement": "ADMIN",
       "name": "Admin Avatar",
       "damage": 45,
-      "description": "Boss-level but not impossible"
+      "description": "System administrator's digital enforcer. Heavily armed, relentless, and commands root-level privileges."
     }
   },
   "exploits": {
@@ -84,7 +84,7 @@
       "targeting": "SINGLE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Teleport to any shadow zone within range (6 tiles)"
+      "description": "Phase through unmonitored network pathways. Instantly teleport to any digital shadow within 6 tiles - perfect for repositioning."
     },
     "data_mimic": {
       "name": "Data Mimic",
@@ -96,7 +96,7 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 5,
-      "description": "Become invisible to enemies for 5 turns"
+      "description": "Cloak your signal signature as benign traffic. Become completely invisible to security protocols for 5 turns - walk past enemies undetected."
     },
     "noise_maker": {
       "name": "Noise Maker",
@@ -108,7 +108,7 @@
       "targeting": "SINGLE",
       "effect_radius": 10,
       "effect_duration": 8,
-      "description": "Create distraction that lasts 8 turns at target location"
+      "description": "Inject false traffic patterns to draw attention. Creates a convincing distraction lasting 8 turns - lure enemies away from your path."
     },
     "buffer_overflow": {
       "name": "Buffer Overflow",
@@ -120,7 +120,7 @@
       "targeting": "SINGLE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Devastating melee attack (40 damage, 1 tile range)"
+      "description": "Overload a target's memory buffer with malicious data. Devastating close-range exploit dealing 40 damage - high risk, high reward."
     },
     "code_injection": {
       "name": "Code Injection",
@@ -132,7 +132,7 @@
       "targeting": "SINGLE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Ranged attack (25 damage, 5 tile range)"
+      "description": "Execute hostile code remotely in a target's process space. Reliable ranged attack dealing 25 damage from up to 5 tiles away."
     },
     "system_crash": {
       "name": "System Crash",
@@ -144,7 +144,7 @@
       "targeting": "NONE",
       "effect_duration": 3,
       "effect_radius": 3,
-      "description": "Emergency panic button - crashes and stuns all enemies within 3 spaces for 3 turns"
+      "description": "Force a critical system error in all nearby processes. Emergency protocol dealing 30 damage and stunning all enemies within 3 tiles for 3 turns."
     },
     "threat_scan": {
       "name": "Threat Scan",
@@ -156,7 +156,7 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 5,
-      "description": "Reveals ALL enemies, vision ranges, & movement paths (5 turns)"
+      "description": "Tap into security monitoring feeds. Reveals all hostile programs, their detection ranges, and predicted movement paths for 5 turns."
     },
     "network_scan": {
       "name": "Network Scan",
@@ -168,7 +168,7 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Reveals all cooling nodes, CPU nodes, and ghost nodes on the level"
+      "description": "Query the network topology for maintenance systems. Instantly reveals locations of all cooling nodes, CPU recovery nodes, and ghost nodes."
     },
     "log_wiper": {
       "name": "Log Wiper",
@@ -180,7 +180,7 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Significantly reduces detection level (-30%)"
+      "description": "Scrub your activity from system logs and audit trails. Significantly reduces your detection level by 30% - cover your tracks."
     },
     "antivirus": {
       "name": "Antivirus",
@@ -192,7 +192,7 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Purges all negative status effects (virus, slow)"
+      "description": "Run a quarantine protocol on your own systems. Instantly purges all hostile effects like viruses and movement inhibitors."
     },
     "denial_of_service": {
       "name": "Denial of Service",
@@ -204,7 +204,7 @@
       "targeting": "AREA",
       "effect_duration": 5,
       "effect_radius": 1,
-      "description": "Targeted area attack (20 damage, radius 1) that disables enemies for 5 turns"
+      "description": "Flood a network segment with overwhelming traffic. Area attack dealing 20 damage in radius 1 and disabling all affected enemies for 5 turns."
     },
     "memory_leak": {
       "name": "Memory Leak",
@@ -216,7 +216,7 @@
       "targeting": "AREA",
       "effect_radius": 1,
       "effect_duration": 0,
-      "description": "Target enemies forget they saw you (3x3 area)"
+      "description": "Corrupt short-term memory buffers of nearby processes. Makes enemies in a 3x3 area forget they detected you - reset their awareness."
     }
   },
   "upgrades": {
@@ -226,7 +226,7 @@
       "color": [100, 149, 237],
       "stat_type": "ram",
       "bonus_amount": 4,
-      "description": "Permanently increases RAM capacity by 4"
+      "description": "High-capacity memory module. Permanently expands RAM by 4GB - equip more complex exploits simultaneously."
     },
     "cpu_boost": {
       "name": "Processing Core",
@@ -234,7 +234,7 @@
       "color": [255, 50, 20],
       "stat_type": "cpu",
       "bonus_amount": 20,
-      "description": "Permanently increases CPU capacity by 20"
+      "description": "Overclocked processor upgrade. Permanently increases maximum CPU by 20 - survive more damage and operations."
     },
     "heat_boost": {
       "name": "Cooling Matrix",
@@ -242,7 +242,7 @@
       "color": [20, 255, 200],
       "stat_type": "heat",
       "bonus_amount": 20,
-      "description": "Permanently increases heat tolerance by 20"
+      "description": "Advanced thermal dissipation system. Permanently raises heat tolerance by 20 degrees - execute more exploits before overheating."
     }
   },
   "network_configs": {
