@@ -417,6 +417,12 @@ def main():
                             if game is None:
                                 # Player returned to menu - save the active game session
                                 active_game_session = previous_game
+
+                                # Cleanup SDL renderer state before returning to main menu
+                                if context.sdl_renderer:
+                                    context.sdl_renderer.draw_color = (0, 0, 0, 255)
+                                    context.sdl_renderer.clear()
+
                                 break  # Return to main menu
                         
                     except Exception as e:

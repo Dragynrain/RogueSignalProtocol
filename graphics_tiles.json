@@ -7,14 +7,14 @@
   },
 
   "player": {
-    "file": "player01.png",
+    "file": "player02.png",
     "tintable": false,
     "_comment": "Player sprite is colored, uses outline boxes for status effects (virus, etc.)"
   },
 
   "enemies": {
     "Scanner": {
-      "file": "scanner01.png",
+      "file": "scanner02.png",
       "tintable": false,
       "_comment": "Basic detection enemy"
     },
@@ -24,27 +24,27 @@
       "_comment": "Moves on fixed routes"
     },
     "Bot": {
-      "file": "bot01.png",
+      "file": "bot02.png",
       "tintable": false,
       "_comment": "Basic combat enemy"
     },
     "Hunter": {
-      "file": "hunter01.png",
+      "file": "hunter06.png",
       "tintable": false,
       "_comment": "Tracks and chases player"
     },
     "Virus": {
-      "file": "virus01.png",
+      "file": "virus02.png",
       "tintable": false,
       "_comment": "Inflicts damage over time"
     },
     "Inhibitor": {
-      "file": "inhibitor01.png",
+      "file": "inhibitor07.png",
       "tintable": false,
       "_comment": "Slows player movement"
     },
     "Firewall": {
-      "file": "firewall01.png",
+      "file": "firewall04.png",
       "tintable": false,
       "_comment": "Defensive barrier enemy"
     },
@@ -57,17 +57,17 @@
 
   "terrain": {
     "floor": {
-      "file": "floor02.png",
+      "file": "floor06.png",
       "tintable": false,
       "_comment": "Basic floor tile"
     },
     "wall": {
-      "file": "wall01.png",
+      "file": "wall06.png",
       "tintable": false,
       "_comment": "Basic wall tile"
     },
     "shadow": {
-      "file": "shadow01.png",
+      "file": "shadow07.png",
       "tintable": false,
       "_comment": "Shadow terrain tile for stealth mechanics"
     }
@@ -75,42 +75,42 @@
 
   "items": {
     "codehack": {
-      "file": "codehack01.png",
+      "file": "codehack04.png",
       "tintable": true,
       "_comment": "White base sprite - tintable for different code hack types"
     },
     "exploit": {
-      "file": "exploit01.png",
+      "file": "exploit03.png",
       "tintable": true,
       "_comment": "White base sprite - tintable for different exploit types"
     },
     "cooling_node": {
-      "file": "coolingnode01.png",
+      "file": "coolingnode02.png",
       "tintable": false,
       "_comment": "Cooling resource node"
     },
     "cooling_upgrade": {
-      "file": "coolingupgrade01.png",
+      "file": "coolingupgrade03.png",
       "tintable": false,
       "_comment": "Cooling permanent upgrade"
     },
     "cpu_node": {
-      "file": "cpunode01.png",
+      "file": "cpunode02.png",
       "tintable": false,
       "_comment": "CPU resource node"
     },
     "cpu_upgrade": {
-      "file": "cpuupgrade01.png",
+      "file": "cpuupgrade05.png",
       "tintable": false,
       "_comment": "CPU permanent upgrade"
     },
     "ram_upgrade": {
-      "file": "ramupgrade01.png",
+      "file": "ramupgrade06.png",
       "tintable": false,
       "_comment": "RAM permanent upgrade"
     },
     "ghost_node": {
-      "file": "ghostnode01.png",
+      "file": "ghostnode06.png",
       "tintable": false,
       "_comment": "Detection reduction node"
     }
@@ -118,22 +118,22 @@
 
   "special": {
     "portal": {
-      "file": "portal01.png",
+      "file": "portal04.png",
       "tintable": false,
       "_comment": "Portal/gateway to next level"
     },
     "story_fragment": {
-      "file": "storyfragment01.png",
+      "file": "storyfragment05.png",
       "tintable": false,
       "_comment": "Story/lore pickup collectible"
     },
     "movement_prediction": {
-      "file": "movementprediction01.png",
+      "file": "movementprediction04.png",
       "tintable": false,
       "_comment": "Enemy movement prediction indicator"
     },
     "targeting": {
-      "file": "targeting01.png",
+      "file": "targeting06.png",
       "tintable": false,
       "_comment": "Targeting cursor overlay"
     }
