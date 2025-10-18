@@ -73,19 +73,39 @@ class GameData:
 
 
 class GameUpgrades:
-    """Static upgrade definitions."""
-    
-    UPGRADES = {
-        'ram_boost': UpgradeDefinition(
-            "Memory Expansion", "[", (100, 149, 237), "ram", 4
-        ),
-        'cpu_boost': UpgradeDefinition(
-            "Processing Core", "]", (50, 205, 50), "cpu", 20
-        ),
-        'heat_boost': UpgradeDefinition(
-            "Cooling Matrix", "=", (20, 255, 200), "heat", 20
-        )
-    }
+    """Static upgrade definitions - loads colors from JSON."""
+
+    _loaded = False
+    UPGRADES = {}
+
+    @classmethod
+    def _ensure_loaded(cls):
+        """Lazy load upgrades from JSON on first access."""
+        if not cls._loaded:
+            cls._load_upgrades()
+            cls._loaded = True
+
+    @classmethod
+    def _load_upgrades(cls):
+        """Load upgrade definitions from game_content.json."""
+        from data_loading import DataLoader
+        from game_entities import ensure_color_tuple
+
+        content = DataLoader.load_game_data()
+        upgrades_data = content.get("upgrades", {})
+
+        for key, data in upgrades_data.items():
+            cls.UPGRADES[key] = UpgradeDefinition(
+                name=data["name"],
+                symbol=data["symbol"],
+                color=ensure_color_tuple(data["color"]),
+                stat_type=data["stat_type"],
+                bonus_amount=data["bonus_amount"]
+            )
+
+
+# Load upgrades on module import
+GameUpgrades._ensure_loaded()
 
 
 class GameBalance:

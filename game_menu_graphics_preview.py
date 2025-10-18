@@ -58,7 +58,11 @@ class GraphicsPreviewMenu:
 
         # Alert ring animation state
         self.alert_color_index = 0  # 0=yellow, 1=orange, 2=red
-        self.alert_colors = [(255, 255, 0), (255, 165, 0), (255, 0, 0)]
+        from data_loading import DataLoader
+        from game_entities import ensure_color_tuple
+        config = DataLoader.load_config()
+        alert_seq = config.get("colors", {}).get("preview_demo", {}).get("alert_sequence", [])
+        self.alert_colors = [ensure_color_tuple(c) for c in alert_seq] if alert_seq else [(255, 255, 0), (255, 165, 0), (255, 0, 0)]
 
         # Load available graphics
         self._scan_available_graphics()
@@ -99,12 +103,18 @@ class GraphicsPreviewMenu:
 
         except Exception as e:
             logging.error(f"Failed to load color config from game_rules.json: {e}")
-            # Fallback to default colors
-            self.codehack_colors = [
+            # Fallback to default colors from preview_demo
+            from data_loading import DataLoader
+            from game_entities import ensure_color_tuple
+            config = DataLoader.load_config()
+            preview_demo = config.get("colors", {}).get("preview_demo", {})
+            enemy_colors_data = preview_demo.get("enemy_colors", [])
+            exploit_colors_data = preview_demo.get("exploit_colors", [])
+            self.codehack_colors = [ensure_color_tuple(c) for c in enemy_colors_data] if enemy_colors_data else [
                 (220, 20, 60), (0, 255, 255), (50, 205, 50),
                 (255, 215, 0), (138, 43, 226), (192, 192, 192)
             ]
-            self.exploit_colors = [
+            self.exploit_colors = [ensure_color_tuple(c) for c in exploit_colors_data] if exploit_colors_data else [
                 (138, 43, 226), (220, 20, 60), (255, 215, 0),
                 (255, 120, 20), (138, 43, 226), (220, 20, 60)
             ]
@@ -404,7 +414,11 @@ class GraphicsPreviewMenu:
                         renderer.copy(codehack_texture, dest=(screen_x, screen_y, tile_w, tile_h))
 
                 # Reset color mod
-                codehack_texture.color_mod = (255, 255, 255)
+                from data_loading import DataLoader
+                from game_entities import ensure_color_tuple
+                config = DataLoader.load_config()
+                normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                codehack_texture.color_mod = normal_tint
 
         # 2. Exploits in TOP RIGHT corner - tight 3x2 cluster below CodeHacks
         if "exploit" in self.selected_variants:
@@ -427,7 +441,11 @@ class GraphicsPreviewMenu:
                         renderer.copy(exploit_texture, dest=(screen_x, screen_y, tile_w, tile_h))
 
                 # Reset color mod
-                exploit_texture.color_mod = (255, 255, 255)
+                from data_loading import DataLoader
+                from game_entities import ensure_color_tuple
+                config = DataLoader.load_config()
+                normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                exploit_texture.color_mod = normal_tint
 
         # 3. Pulsing alert rings on all enemies
         # Use EXACT same pulse calculation as game renderer (from game_rendering.py:2565-2578)
@@ -479,7 +497,11 @@ class GraphicsPreviewMenu:
                             tile_h
                         )
                         # Red brackets for hostile enemy state
-                        self._draw_corner_brackets(renderer, bracket_rect, (255, 0, 0), bracket_size=4)
+                        from data_loading import DataLoader
+                        from game_entities import ensure_color_tuple
+                        config = DataLoader.load_config()
+                        bracket_color = ensure_color_tuple(config.get("colors", {}).get("targeting", {}).get("corner_bracket", [255, 0, 0]))
+                        self._draw_corner_brackets(renderer, bracket_rect, bracket_color, bracket_size=4)
 
         # Render enemy in combat scene
         if "scanner" in self.selected_variants:
@@ -504,10 +526,14 @@ class GraphicsPreviewMenu:
                     (15, 11),  # Second move
                     (14, 11),  # Third move (dimmest)
                 ]
+                from data_loading import DataLoader
+                from game_entities import ensure_color_tuple
+                config = DataLoader.load_config()
+                targeting_colors = config.get("colors", {}).get("targeting", {})
                 prediction_colors = [
-                    (255, 255, 50),   # Brightest
-                    (240, 240, 30),   # Slightly dimmer
-                    (220, 220, 20),   # Dimmest
+                    ensure_color_tuple(targeting_colors.get("prediction_bright", [255, 255, 50])),
+                    ensure_color_tuple(targeting_colors.get("prediction_medium", [240, 240, 30])),
+                    ensure_color_tuple(targeting_colors.get("prediction_dim", [220, 220, 20])),
                 ]
                 for i, (pred_x, pred_y) in enumerate(prediction_positions):
                     screen_x = offset_pixel_x + (pred_x * tile_w)
@@ -516,7 +542,8 @@ class GraphicsPreviewMenu:
                     prediction_texture.color_mod = prediction_colors[i]
                     renderer.copy(prediction_texture, dest=(screen_x, screen_y, tile_w, tile_h))
                 # Reset color mod
-                prediction_texture.color_mod = (255, 255, 255)
+                normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                prediction_texture.color_mod = normal_tint
 
     def _render_alert_ring(self, renderer, offset_pixel_x, offset_pixel_y,
                           map_x, map_y, tile_w, tile_h, pulse_intensity):

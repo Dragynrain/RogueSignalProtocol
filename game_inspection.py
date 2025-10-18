@@ -159,6 +159,7 @@ class EntityInspector:
     @staticmethod
     def _inspect_items(game, position: Position) -> Optional[Dict[str, Any]]:
         """Check for items at position (code hacks, exploits, upgrades, story fragments)."""
+        from game_entities import Colors
 
         # Check for code hack
         code_hack = game.game_map.get_code_hack(position)
@@ -170,12 +171,15 @@ class EntityInspector:
             else:
                 description = "Unknown effect until used"
 
+            # Get color from Colors class (loaded from JSON data_codes)
+            code_color = Colors.get_color(code_hack.color_name.upper())
+
             return {
                 'name': f"{code_hack.name}",
                 'description': description,
                 'entity_type': 'code_hack',
                 'details': f"Color: {code_hack.color_name.title()}",
-                'color': code_hack.color
+                'color': code_color
             }
 
         # Check for exploit pickup
