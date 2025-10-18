@@ -252,6 +252,7 @@ class EnemyTypeDefinition:
     movement: str
     name: str
     damage: int
+    description: str = ""
 
 
 @dataclass

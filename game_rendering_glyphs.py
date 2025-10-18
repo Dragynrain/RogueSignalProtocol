@@ -787,17 +787,28 @@ class GlyphsMapRenderer:
         return Colors.WHITE
     
     def _render_targeting_cursor(self, console: tcod.console.Console, game, camera_offset: Position, use_graphics=False):
-        """Render targeting cursor and range indicator."""
-        if not game.targeting_mode:
+        """Render targeting cursor and look mode cursor."""
+        # Check if either targeting mode or look mode is active
+        if not game.targeting_mode and not game.look_mode:
             return
+
+        # Determine which cursor position and color to use
+        if game.look_mode:
+            cursor_pos = game.look_cursor_position
+            cursor_color = Colors.CYAN  # Cyan for look mode
+            char = 'X'
+        else:  # targeting_mode
+            cursor_pos = game.cursor_position
+            cursor_color = Colors.RED  # Red for targeting mode
+            char = 'X'
 
         # Get renderer for graphics mode
         renderer = None
         if use_graphics and self.context and hasattr(self.context, 'sdl_renderer'):
             renderer = self.context.sdl_renderer
 
-        cursor_screen_x = game.cursor_position.x - camera_offset.x
-        cursor_screen_y = game.cursor_position.y - camera_offset.y + 1
+        cursor_screen_x = cursor_pos.x - camera_offset.x
+        cursor_screen_y = cursor_pos.y - camera_offset.y + 1
 
         if (0 <= cursor_screen_x < GameConfig.GAME_AREA_WIDTH() and
             1 <= cursor_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
@@ -806,23 +817,23 @@ class GlyphsMapRenderer:
                 texture = self.tile_manager.get_tile("targeting")
                 if texture:
                     tile_rect = self._get_tile_rect(cursor_screen_x, cursor_screen_y)
-                    # Tint red for targeting cursor
-                    texture.color_mod = (255, 0, 0)
+                    # Tint based on mode (red for targeting, cyan for look)
+                    texture.color_mod = cursor_color
                     renderer.copy(texture, dest=tile_rect)
                     # Reset color_mod
                     texture.color_mod = (255, 255, 255)
             else:
                 # Classic mode: Render 'X' character
-                render_char_safe(console, cursor_screen_x, cursor_screen_y, 'X', fg=Colors.RED, bg=Colors.BLACK)
+                render_char_safe(console, cursor_screen_x, cursor_screen_y, char, fg=cursor_color, bg=Colors.BLACK)
 
-        # Show range indicator and area effect
-        if game.targeting_exploit in GameData.EXPLOITS:
+        # Show range indicator and area effect (only for targeting mode)
+        if game.targeting_mode and game.targeting_exploit in GameData.EXPLOITS:
             exploit = GameData.EXPLOITS[game.targeting_exploit]
             self._render_targeting_range(console, game.player.position, exploit.range, camera_offset)
 
             # Show area effect for AREA targeting mode
             if exploit.targeting == TargetingMode.AREA:
-                self._render_targeting_area(console, game.cursor_position, camera_offset)
+                self._render_targeting_area(console, cursor_pos, camera_offset)
     
     def _render_targeting_range(self, console: tcod.console.Console, center: Position, range_val: int, camera_offset: Position):
         """Render targeting range indicator."""
