@@ -119,6 +119,46 @@ class GraphicsPreviewMenu:
                 (255, 120, 20), (138, 43, 226), (220, 20, 60)
             ]
 
+    def _get_default_variant_from_config(self, entity_key: str) -> int:
+        """
+        Get default variant number from graphics_tiles.json.
+
+        Args:
+            entity_key: Entity key (e.g., "player", "scanner", "floor")
+
+        Returns:
+            Variant number from config, or 1 if not found
+        """
+        tile_mappings = self.tile_manager.tile_mappings
+
+        # Check player
+        if entity_key == "player":
+            if "player" in tile_mappings and "file" in tile_mappings["player"]:
+                filename = tile_mappings["player"]["file"]
+                # Extract variant number from filename (e.g., "player02.png" -> 2)
+                match = re.match(r'^[a-z]+(\d+)\.png$', filename)
+                if match:
+                    return int(match.group(1))
+
+        # Check in categories
+        for category in ["enemies", "terrain", "items", "special"]:
+            if category in tile_mappings:
+                category_data = tile_mappings[category]
+                if isinstance(category_data, dict):
+                    for name, data in category_data.items():
+                        if isinstance(data, dict) and "file" in data:
+                            # Extract base name from file (e.g., "scanner02.png" -> "scanner")
+                            filename = data["file"]
+                            base_name = filename.replace(".png", "").rstrip("0123456789")
+                            if base_name == entity_key:
+                                # Extract variant number
+                                match = re.match(r'^[a-z]+(\d+)\.png$', filename)
+                                if match:
+                                    return int(match.group(1))
+
+        # Default to variant 1 if not found
+        return 1
+
     def _scan_available_graphics(self):
         """Scan graphics directory to find all available entity types and variants."""
         graphics_dir = self.tile_manager.graphics_dir
@@ -178,13 +218,17 @@ class GraphicsPreviewMenu:
                 display_name = get_display_name(terrain_type)
                 self.entity_types.append(("terrain", terrain_type, display_name))
                 self.variants[terrain_type] = sorted(entity_groups[terrain_type])
-                self.selected_variants[terrain_type] = self.variants[terrain_type][0]
+                # Use default from graphics_tiles.json
+                default_variant = self._get_default_variant_from_config(terrain_type)
+                self.selected_variants[terrain_type] = default_variant if default_variant in self.variants[terrain_type] else self.variants[terrain_type][0]
 
         # Player
         if "player" in entity_groups:
             self.entity_types.append(("player", "player", "Player"))
             self.variants["player"] = sorted(entity_groups["player"])
-            self.selected_variants["player"] = self.variants["player"][0]
+            # Use default from graphics_tiles.json
+            default_variant = self._get_default_variant_from_config("player")
+            self.selected_variants["player"] = default_variant if default_variant in self.variants["player"] else self.variants["player"][0]
 
         # Enemies
         enemy_order = ["scanner", "patrol", "bot", "hunter", "virus", "inhibitor", "firewall", "avatar"]
@@ -193,7 +237,9 @@ class GraphicsPreviewMenu:
                 display_name = get_display_name(enemy_type)
                 self.entity_types.append(("enemy", enemy_type, display_name))
                 self.variants[enemy_type] = sorted(entity_groups[enemy_type])
-                self.selected_variants[enemy_type] = self.variants[enemy_type][0]
+                # Use default from graphics_tiles.json
+                default_variant = self._get_default_variant_from_config(enemy_type)
+                self.selected_variants[enemy_type] = default_variant if default_variant in self.variants[enemy_type] else self.variants[enemy_type][0]
 
         # Items
         item_order = ["codehack", "exploit", "coolingnode", "coolingupgrade",
@@ -203,7 +249,9 @@ class GraphicsPreviewMenu:
                 display_name = get_display_name(item_type)
                 self.entity_types.append(("item", item_type, display_name))
                 self.variants[item_type] = sorted(entity_groups[item_type])
-                self.selected_variants[item_type] = self.variants[item_type][0]
+                # Use default from graphics_tiles.json
+                default_variant = self._get_default_variant_from_config(item_type)
+                self.selected_variants[item_type] = default_variant if default_variant in self.variants[item_type] else self.variants[item_type][0]
 
         # Special
         special_order = ["portal", "storyfragment", "movementprediction", "targeting"]
@@ -212,7 +260,9 @@ class GraphicsPreviewMenu:
                 display_name = get_display_name(special_type)
                 self.entity_types.append(("special", special_type, display_name))
                 self.variants[special_type] = sorted(entity_groups[special_type])
-                self.selected_variants[special_type] = self.variants[special_type][0]
+                # Use default from graphics_tiles.json
+                default_variant = self._get_default_variant_from_config(special_type)
+                self.selected_variants[special_type] = default_variant if default_variant in self.variants[special_type] else self.variants[special_type][0]
 
         logging.info(f"Graphics Preview: Found {len(self.entity_types)} entity types")
 
@@ -464,6 +514,8 @@ class GraphicsPreviewMenu:
         combat_enemy_y = 11
         combat_player_x = 13
         combat_player_y = 11
+        combat_target_x = 13
+        combat_target_y = 10  # Square above player
 
         scanner_vision_range = 5  # From game_content.json
 
@@ -474,6 +526,14 @@ class GraphicsPreviewMenu:
                 screen_x = offset_pixel_x + (combat_player_x * tile_w)
                 screen_y = offset_pixel_y + (combat_player_y * tile_h)
                 renderer.copy(player_texture, dest=(screen_x, screen_y, tile_w, tile_h))
+
+        # Render targeting sprite above player
+        if "targeting" in self.selected_variants:
+            targeting_texture = self._get_variant_texture("targeting")
+            if targeting_texture:
+                screen_x = offset_pixel_x + (combat_target_x * tile_w)
+                screen_y = offset_pixel_y + (combat_target_y * tile_h)
+                renderer.copy(targeting_texture, dest=(screen_x, screen_y, tile_w, tile_h))
 
         # Draw enemy vision range brackets AROUND player using actual game vision rendering
         # Scanner vision = 5, so draw brackets in a 5-tile radius around enemy centered on player
@@ -578,6 +638,9 @@ class GraphicsPreviewMenu:
         # Right
         renderer.fill_rect((screen_x + tile_w - ring_offset - ring_thickness, screen_y + ring_offset,
                           ring_thickness, tile_h - (ring_offset * 2)))
+
+        # Reset draw color to avoid affecting other rendering
+        renderer.draw_color = (255, 255, 255, 255)
 
     def _draw_corner_brackets(self, renderer, rect: Tuple[int, int, int, int], color: Tuple[int, int, int], bracket_size: int = 4):
         """
