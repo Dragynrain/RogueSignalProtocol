@@ -138,7 +138,10 @@ class TestGameModuleImports(unittest.TestCase):
     def test_rendering_module_imports(self):
         """Test importing rendering-related modules."""
         rendering_modules = [
-            'game_rendering',
+            'game_rendering_core',
+            'game_rendering_ui',
+            'game_rendering_glyphs',
+            'game_rendering_graphics',
             'game_loop',
             'game_state',
             'game_input'

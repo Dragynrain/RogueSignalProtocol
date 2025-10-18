@@ -12,7 +12,7 @@ import tempfile
 import tcod
 
 from game_engine import GameEngine
-from game_rendering import GameRenderer
+from game_rendering_core import GameRenderer
 from game_save import SaveGameManager
 from game_config import GameConfig, GameSettings
 

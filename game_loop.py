@@ -16,7 +16,7 @@ from game_audio import SoundManager
 from game_menus import MenuBackground, MainMenu, SettingsMenu, HelpMenu, LoreMenu
 from game_menu_graphics_preview import GraphicsPreviewMenu
 from game_engine import GameEngine
-from game_rendering import GameRenderer
+from game_rendering_core import GameRenderer
 from game_input import InputHandler
 from game_graphics_tiles import TileManager
 
