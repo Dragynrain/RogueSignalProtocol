@@ -54,16 +54,18 @@
 ---
 
 ## 7. Gameplay Systems
-- Enemies alert others when spotting player.  
-- **All enemy movement uses queues**: FIFO, 3 size queue  
-- **Alert timer = 1 turn only.**  
-- Use TCOD vision and TCOD A* pathfinding always.
+- Enemies alert others when spotting player.
+- **All enemy movement uses queues**: FIFO, 3 size queue
+- **Alert timer = 1 turn only.**
+- Use TCOD FOV (`tcod.map.compute_fov`) and pathfinding (`tcod.path`) always.
+- For TCOD API details, invoke the `tcod` skill.
 
 ---
 
 ## 8. Docs & Research
-- Always check latest official docs.  
+- Always check latest official docs.
 - Confirm API details before assuming limits and interfaces.
+- **TCOD-specific questions**: Use the `tcod` skill (`.claude/skills/tcod.md`).
 
 ---
 
