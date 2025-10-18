@@ -204,23 +204,20 @@ class GameConfig:
 
         except FileNotFoundError as e:
             error_msg = f"CRITICAL CONFIG ERROR: game_rules.json not found"
-            print(error_msg)
             logging.error(error_msg)
-            print(f"Exception: {str(e)}")
+            logging.error(f"Exception: {str(e)}")
             raise FileNotFoundError(f"Required file game_rules.json is missing") from e
         except json.JSONDecodeError as e:
             error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in game_rules.json"
-            print(error_msg)
             logging.error(error_msg)
-            print(f"Exception: {str(e)}")
+            logging.error(f"Exception: {str(e)}")
             raise json.JSONDecodeError(f"game_rules.json contains invalid JSON", e.doc, e.pos) from e
         except KeyError as e:
             error_msg = f"CRITICAL CONFIG ERROR: Missing required config value in game_rules.json"
-            print(error_msg)
             logging.error(error_msg)
-            print(f"Exception: {str(e)}")
+            logging.error(f"Exception: {str(e)}")
             if cls._config_data:
-                print(f"Available top-level sections: {list(cls._config_data.keys())}")
+                logging.error(f"Available top-level sections: {list(cls._config_data.keys())}")
             raise KeyError(f"Required configuration value missing from game_rules.json: {e}") from e
 
     @classmethod
@@ -304,7 +301,6 @@ class GameConfig:
             return value
         except (KeyError, TypeError) as e:
             error_msg = f"CRITICAL CONFIG ERROR: Required key '{key}' not found in game_rules.json"
-            print(error_msg)
             logging.error(error_msg)
 
             # Provide helpful debug info
@@ -320,9 +316,9 @@ class GameConfig:
             if partial_keys:
                 path_str = '.'.join(partial_keys[:-1]) if len(partial_keys) > 1 else "root"
                 if isinstance(partial_value, dict):
-                    print(f"Available keys at '{path_str}': {list(partial_value.keys())}")
+                    logging.error(f"Available keys at '{path_str}': {list(partial_value.keys())}")
                 else:
-                    print(f"Value at '{path_str}' is {type(partial_value).__name__}, not a dict")
+                    logging.error(f"Value at '{path_str}' is {type(partial_value).__name__}, not a dict")
 
             raise KeyError(f"Required config key missing: {key}") from e
 
@@ -456,13 +452,12 @@ class GameBalance:
             return multipliers[difficulty]
         except KeyError as e:
             error_msg = f"CRITICAL CONFIG ERROR: Difficulty '{difficulty}' not found in game_content.json difficulty_multipliers"
-            print(error_msg)
             logging.error(error_msg)
             if 'difficulty_multipliers' in game_data:
-                print(f"Available difficulties: {list(game_data['difficulty_multipliers'].keys())}")
+                logging.error(f"Available difficulties: {list(game_data['difficulty_multipliers'].keys())}")
             else:
-                print(f"'difficulty_multipliers' section missing from game_content.json")
-                print(f"Available sections: {list(game_data.keys())}")
+                logging.error(f"'difficulty_multipliers' section missing from game_content.json")
+                logging.error(f"Available sections: {list(game_data.keys())}")
             raise KeyError(f"Difficulty multiplier not found for: {difficulty}") from e
 
 

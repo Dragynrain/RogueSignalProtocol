@@ -26,21 +26,18 @@ class DataLoader:
                 return data[key] if key else data
         except FileNotFoundError as e:
             msg = f"CRITICAL CONFIG ERROR: {filename} not found"
-            print(msg)
             logging.error(msg)
-            print(f"Exception: {str(e)}")
+            logging.error(f"Exception: {str(e)}")
             raise FileNotFoundError(f"Required file {filename} is missing") from e
         except json.JSONDecodeError as e:
             msg = f"CRITICAL CONFIG ERROR: Invalid JSON in {filename}"
-            print(msg)
             logging.error(msg)
-            print(f"Exception: {str(e)}")
+            logging.error(f"Exception: {str(e)}")
             raise json.JSONDecodeError(f"{filename} contains invalid JSON", e.doc, e.pos) from e
         except KeyError as e:
             msg = f"CRITICAL CONFIG ERROR: Missing '{key}' key in {filename}"
-            print(msg)
             logging.error(msg)
-            print(f"Exception: {str(e)}")
+            logging.error(f"Exception: {str(e)}")
             raise KeyError(f"Required '{key}' section missing from {filename}") from e
     
     @classmethod
@@ -64,10 +61,9 @@ class DataLoader:
             return data[section]
         except KeyError as e:
             msg = f"CRITICAL CONFIG ERROR: Missing '{section}' section in game_content.json"
-            print(msg)
             logging.error(msg)
-            print(f"Exception: {str(e)}")
-            print(f"Available sections: {list(data.keys())}")
+            logging.error(f"Exception: {str(e)}")
+            logging.error(f"Available sections: {list(data.keys())}")
             raise KeyError(f"Required '{section}' section missing from game_content.json") from e
 
     @classmethod
@@ -88,14 +84,13 @@ class DataLoader:
             return config['balance']['ai_behavior']
         except KeyError as e:
             error_msg = f"CRITICAL CONFIG ERROR: Missing AI behavior config in game_rules.json"
-            print(error_msg)
             logging.error(error_msg)
-            print(f"Exception: {str(e)}")
+            logging.error(f"Exception: {str(e)}")
             if 'balance' in config:
-                print(f"Available balance keys: {list(config['balance'].keys())}")
+                logging.error(f"Available balance keys: {list(config['balance'].keys())}")
             else:
-                print("No 'balance' section found")
-                print(f"Available sections: {list(config.keys())}")
+                logging.error("No 'balance' section found")
+                logging.error(f"Available sections: {list(config.keys())}")
             raise KeyError(f"Required 'balance.ai_behavior' section missing from game_rules.json") from e
     
     @classmethod
@@ -107,15 +102,13 @@ class DataLoader:
                     cls._config = json.load(f)
             except FileNotFoundError as e:
                 error_msg = f"CRITICAL CONFIG ERROR: game_rules.json not found"
-                print(error_msg)
                 logging.error(error_msg)
-                print(f"Exception: {str(e)}")
+                logging.error(f"Exception: {str(e)}")
                 raise FileNotFoundError(f"Required file game_rules.json is missing") from e
             except json.JSONDecodeError as e:
                 error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in game_rules.json"
-                print(error_msg)
                 logging.error(error_msg)
-                print(f"Exception: {str(e)}")
+                logging.error(f"Exception: {str(e)}")
                 raise json.JSONDecodeError(f"game_rules.json contains invalid JSON", e.doc, e.pos) from e
         return cls._config
     
@@ -132,9 +125,8 @@ class DataLoader:
         except json.JSONDecodeError as e:
             # Corrupted settings file - use defaults but warn user
             error_msg = f"WARNING: Invalid JSON in user_settings.json, using defaults"
-            print(error_msg)
             logging.warning(error_msg)
-            print(f"JSON error: {str(e)}")
+            logging.warning(f"JSON error: {str(e)}")
             return cls._get_default_user_settings()
     
     @classmethod

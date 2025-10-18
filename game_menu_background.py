@@ -45,7 +45,6 @@ class MenuBackground:
     def _handle_background_error(self, message, exception=None):
         """Simple error handling - log and disable graphics."""
         error_msg = f"Background graphics error: {message}"
-        print(error_msg)
         logging.warning(error_msg)
         if exception:
             logging.warning(f"Exception: {str(exception)}")

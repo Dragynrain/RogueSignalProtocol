@@ -28,19 +28,17 @@ class GameErrorHandler:
         # Create detailed error message for logging
         error_details = f"{context}: {type(error).__name__}: {str(error)}"
 
-        # Console output (always visible to user)
-        print(f"ERROR: {error_details}")
+        # Logging
+        logging.error(f"ERROR: {error_details}")
         if user_message:
-            print(f"User Impact: {user_message}")
+            logging.error(f"User Impact: {user_message}")
 
-        # Logging for debugging
-        logging.error(error_details)
         logging.error(f"Exception details: {str(error)}")
         if logging.getLogger().isEnabledFor(logging.DEBUG):
             logging.error(traceback.format_exc())
 
         if fatal:
-            print("FATAL ERROR: Game cannot continue")
+            logging.critical("FATAL ERROR: Game cannot continue")
             logging.critical(f"Fatal error in {context}: {error}")
             raise error
 
@@ -54,8 +52,7 @@ class GameErrorHandler:
             context: Context where warning occurred
         """
         warning_msg = f"{context}: {message}"
-        print(f"WARNING: {warning_msg}")
-        logging.warning(warning_msg)
+        logging.warning(f"WARNING: {warning_msg}")
 
     @staticmethod
     def handle_safe_operation(operation_func, context: str, fallback_value: Any = None,

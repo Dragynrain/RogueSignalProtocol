@@ -148,9 +148,8 @@ class LevelGenerator:
         # FAIL if level config not found
         if level not in network_configs:
             error_msg = f"CRITICAL CONFIG ERROR: Level {level} not found in network_configs"
-            print(error_msg)
             logging.error(error_msg)
-            print(f"Available levels: {list(network_configs.keys())}")
+            logging.error(f"Available levels: {list(network_configs.keys())}")
             raise KeyError(f"Network config missing for level: {level}")
 
         config = network_configs[level]
@@ -158,9 +157,8 @@ class LevelGenerator:
         # Ensure shadow_coverage exists
         if 'shadow_coverage' not in config:
             error_msg = f"CRITICAL CONFIG ERROR: 'shadow_coverage' missing for level {level} in game_data.json network_configs"
-            print(error_msg)
             logging.error(error_msg)
-            print(f"Available config keys for level {level}: {list(config.keys())}")
+            logging.error(f"Available config keys for level {level}: {list(config.keys())}")
             raise KeyError(f"Required key 'shadow_coverage' missing from level {level} config")
 
         shadow_coverage = config['shadow_coverage']
@@ -303,9 +301,8 @@ class LevelGenerator:
         network_configs = GameConfig.get_network_configs()
         if level not in network_configs:
             error_msg = f"CRITICAL CONFIG ERROR: Level {level} not found in network_configs"
-            print(error_msg)
             logging.error(error_msg)
-            print(f"Available levels: {list(network_configs.keys())}")
+            logging.error(f"Available levels: {list(network_configs.keys())}")
             raise KeyError(f"Network config missing for level: {level}")
 
         config = network_configs[level]
@@ -314,9 +311,8 @@ class LevelGenerator:
         def get_required_config(key: str) -> int:
             if key not in config:
                 error_msg = f"CRITICAL CONFIG ERROR: '{key}' missing for level {level} in game_data.json network_configs"
-                print(error_msg)
                 logging.error(error_msg)
-                print(f"Available config keys for level {level}: {list(config.keys())}")
+                logging.error(f"Available config keys for level {level}: {list(config.keys())}")
                 raise KeyError(f"Required key '{key}' missing from level {level} config")
             return config[key]
 
