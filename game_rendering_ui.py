@@ -788,8 +788,9 @@ class UIRenderer:
             for y in range(3, GameConfig.SCREEN_HEIGHT):
                 render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
 
-        # Process and display messages
-        self._render_log_messages(console, game)
+        # Process and display messages (skip if in look mode - inspection panel will use this area)
+        if not game.look_mode:
+            self._render_log_messages(console, game)
 
     def _render_log_messages(self, console: tcod.console.Console, game):
         """Render log messages with proper wrapping."""

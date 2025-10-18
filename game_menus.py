@@ -162,17 +162,22 @@ class MainMenu:
         """Render author information."""
         author_info = "by Adam Forster"
 
+        from data_loading import DataLoader
+        from game_entities import ensure_color_tuple
+        config = DataLoader.load_config()
+        help_text_color = ensure_color_tuple(config.get("colors", {}).get("ui", {}).get("help_text", [128, 128, 128]))
+
         if box['use_background_layout']:
             # Background mode - position within narrow box
             render_char_safe(console,
                 box['center_x'] - len(author_info) // 2, 15,
-                author_info, fg=(128, 128, 128), bg=Colors.BLACK
+                author_info, fg=help_text_color, bg=Colors.BLACK
             )
         else:
             # Glyph mode - centered
             render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - len(author_info) // 2, 11,
-                author_info, fg=(128, 128, 128), bg=Colors.BLACK
+                author_info, fg=help_text_color, bg=Colors.BLACK
             )
     
     def _render_menu_options(self, console: tcod.console.Console, box: dict) -> None:
@@ -230,27 +235,32 @@ class MainMenu:
     
     def _render_controls_help(self, console: tcod.console.Console, box: dict) -> None:
         """Render control instructions."""
+        from data_loading import DataLoader
+        from game_entities import ensure_color_tuple
+        config = DataLoader.load_config()
+        help_text_color = ensure_color_tuple(config.get("colors", {}).get("ui", {}).get("help_text", [128, 128, 128]))
+
         if box['use_background_layout']:
             # Background mode - position within narrow box
             nav_text = "↕/W/S: Navigate"
             select_text = "Enter: Select"
-            render_char_safe(console, 
+            render_char_safe(console,
                 box['center_x'] - len(nav_text) // 2, GameConfig.SCREEN_HEIGHT - 6,
-                nav_text, fg=(128, 128, 128), bg=Colors.BLACK
+                nav_text, fg=help_text_color, bg=Colors.BLACK
             )
-            render_char_safe(console, 
+            render_char_safe(console,
                 box['center_x'] - len(select_text) // 2, GameConfig.SCREEN_HEIGHT - 5,
-                select_text, fg=(128, 128, 128), bg=Colors.BLACK
+                select_text, fg=help_text_color, bg=Colors.BLACK
             )
         else:
             # Glyph mode - centered
             render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
-                "UP/DOWN or W/S: Navigate", fg=(128, 128, 128), bg=Colors.BLACK
+                "UP/DOWN or W/S: Navigate", fg=help_text_color, bg=Colors.BLACK
             )
             render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
-                "Enter: Select", fg=(128, 128, 128), bg=Colors.BLACK
+                "Enter: Select", fg=help_text_color, bg=Colors.BLACK
             )
     
     def _render_story_progress(self, console: tcod.console.Console, box: dict) -> None:

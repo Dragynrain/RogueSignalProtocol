@@ -533,9 +533,5 @@ class InputHandler:
         new_y = max(0, min(GameConfig.MAP_HEIGHT - 1, self.game.look_cursor_position.y + dy))
         self.game.look_cursor_position = Position(new_x, new_y)
 
-        # Get entity info at new position for immediate feedback
-        from game_inspection import EntityInspector
-        entity_info = EntityInspector.get_entity_at_position(self.game, self.game.look_cursor_position)
-
-        # Show brief feedback in message log
-        self.game.message_log.add_message(f"Looking at: {entity_info['name']}", entity_info['color'])
+        # Inspection info is displayed in real-time via the inspection panel
+        # No need to log to message log

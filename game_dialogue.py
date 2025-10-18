@@ -66,6 +66,13 @@ class DialogueManager:
         self.settings = settings  # Reference to GameSettings for "don't show" preferences
         self._register_default_dialogues()
 
+    def _get_dialogue_bg_color(self) -> Tuple[int, int, int]:
+        """Get dialogue background color from config."""
+        from data_loading import DataLoader
+        from game_entities import ensure_color_tuple
+        config = DataLoader.load_config()
+        return ensure_color_tuple(config.get("colors", {}).get("ui", {}).get("dialogue_background", [30, 0, 0]))
+
     def _register_default_dialogues(self):
         """Register all default dialogue configurations."""
         # Import Colors here to avoid circular imports
@@ -82,7 +89,7 @@ class DialogueManager:
                 "title": Colors.RED,
                 "message": Colors.YELLOW,
                 "border": Colors.RED,
-                "background": (30, 0, 0),
+                "background": self._get_dialogue_bg_color(),
             },
             requires_confirmation=True,
             can_dismiss=True,
@@ -103,7 +110,7 @@ class DialogueManager:
                 "title": Colors.RED,
                 "message": Colors.BRIGHT_RED,
                 "border": Colors.RED,
-                "background": (30, 0, 0),
+                "background": self._get_dialogue_bg_color(),
             },
             requires_confirmation=False,
             can_dismiss=True,

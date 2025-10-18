@@ -234,6 +234,11 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                             # Small delay to prevent CPU spinning (60 FPS)
                             time.sleep(1/60)
 
+                        # Cleanup SDL renderer state before returning to main menu
+                        if graphics_available and context.sdl_renderer:
+                            context.sdl_renderer.draw_color = (0, 0, 0, 255)
+                            context.sdl_renderer.clear()
+
                         # Return to main menu after exiting preview
                         current_menu = main_menu
                     else:

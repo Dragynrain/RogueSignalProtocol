@@ -193,10 +193,16 @@ class HelpMenu:
     def _get_help_sections(self):
         """Get help sections with text and colors."""
         # Define enemy state colors for help
-        ENEMY_UNAWARE = (100, 100, 0)    # Dark yellow
-        ENEMY_ALERT = (150, 75, 0)       # Orange-brown  
-        ENEMY_HOSTILE = (150, 0, 0)      # Dark red
-        NEON_PINK = (255, 20, 147)       # Deep pink
+        from data_loading import DataLoader
+        from game_entities import ensure_color_tuple
+        config = DataLoader.load_config()
+        enemy_colors = config.get("colors", {}).get("enemies", {})
+        ui_colors = config.get("colors", {}).get("ui", {})
+
+        ENEMY_UNAWARE = ensure_color_tuple(enemy_colors.get("unaware_dark", [100, 100, 0]))
+        ENEMY_ALERT = ensure_color_tuple(enemy_colors.get("alert_dark", [150, 75, 0]))
+        ENEMY_HOSTILE = ensure_color_tuple(enemy_colors.get("hostile_dark", [150, 0, 0]))
+        NEON_PINK = ensure_color_tuple(ui_colors.get("neon_pink", [255, 20, 147]))
         
         return [
             ("OBJECTIVE:", Colors.CYAN),

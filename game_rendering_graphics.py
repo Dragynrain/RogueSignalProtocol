@@ -207,10 +207,14 @@ class GraphicsMapRenderer:
                     if texture:
                         tile_rect = self._get_tile_rect(console_x, console_y)
                         # Dim the texture for fog of war effect
-                        texture.color_mod = (80, 80, 100)  # Dark blue-gray tint for explored areas
+                        from data_loading import DataLoader
+                        config = DataLoader.load_config()
+                        explored_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("explored", [80, 80, 100]))
+                        normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                        texture.color_mod = explored_tint
                         renderer.copy(texture, dest=tile_rect)
                         # Reset color mod
-                        texture.color_mod = (255, 255, 255)
+                        texture.color_mod = normal_tint
 
         # LAYER 2A: Render item sprites with tinting for tintable items
         # Code hacks
@@ -246,7 +250,10 @@ class GraphicsMapRenderer:
 
                     # Reset color mod
                     if self.tile_manager.is_tintable("codehack"):
-                        texture.color_mod = (255, 255, 255)
+                        from data_loading import DataLoader
+                        config = DataLoader.load_config()
+                        normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                        texture.color_mod = normal_tint
 
         # Exploit pickups
         for (world_x, world_y), exploit_item in game.game_map.exploit_pickups.items():
@@ -285,7 +292,10 @@ class GraphicsMapRenderer:
 
                         # Reset color mod
                         if self.tile_manager.is_tintable("exploit"):
-                            texture.color_mod = (255, 255, 255)
+                            from data_loading import DataLoader
+                            config = DataLoader.load_config()
+                            normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                            texture.color_mod = normal_tint
 
         # Resource nodes (cooling, CPU, ghost)
         for screen_x in range(GameConfig.GAME_AREA_WIDTH()):
@@ -404,12 +414,16 @@ class GraphicsMapRenderer:
                         # Render portal sprite with dimmed appearance
                         texture = self.tile_manager.get_tile("portal")
                         if texture:
+                            from data_loading import DataLoader
+                            config = DataLoader.load_config()
+                            dimmed_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("dimmed", [179, 179, 179]))
+                            normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
                             tile_rect = self._get_tile_rect(screen_x, screen_y)
                             # Use color_mod to dim the sprite (70% brightness for memory)
-                            texture.color_mod = (179, 179, 179)  # 70% of 255
+                            texture.color_mod = dimmed_tint
                             renderer.copy(texture, dest=tile_rect)
                             # Reset color_mod
-                            texture.color_mod = (255, 255, 255)
+                            texture.color_mod = normal_tint
 
         # LAYER 2B: Render entity sprites (enemies, player - NO tinting)
         # Enemies
@@ -543,13 +557,17 @@ class GraphicsMapRenderer:
             1 <= player_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
 
             # Check for various player status effects
+            from data_loading import DataLoader
+            config = DataLoader.load_config()
+            status_effects_colors = config.get("colors", {}).get("status_effects", {})
+
             status_color = None
             if game.player.temporary_effects['virus_turns'] > 0:
-                status_color = (0, 255, 0)  # Bright green for virus
+                status_color = ensure_color_tuple(status_effects_colors.get("virus", [0, 255, 0]))
             elif game.player.is_invisible():
-                status_color = (255, 255, 0)  # Yellow for invisibility
+                status_color = ensure_color_tuple(status_effects_colors.get("invisible", [255, 255, 0]))
             elif game.player.temporary_effects['movement_slowed_turns'] > 0:
-                status_color = (0, 255, 255)  # Cyan for slow
+                status_color = ensure_color_tuple(status_effects_colors.get("slow", [0, 255, 255]))
 
             if status_color:
                 player_tile_rect = self._get_tile_rect(player_screen_x, player_screen_y)
@@ -572,18 +590,22 @@ class GraphicsMapRenderer:
                     pulse_intensity = self._get_pulse_intensity(pulse_speed=2.0)
 
                     # Determine enemy state color
+                    from data_loading import DataLoader
+                    config = DataLoader.load_config()
+                    enemy_colors = config.get("colors", {}).get("enemies", {})
+
                     if enemy.disabled_turns > 0:
                         # Disabled enemies get blue outline (no pulsing for disabled)
-                        outline_color = (100, 100, 255)  # Blue for disabled
+                        outline_color = ensure_color_tuple(enemy_colors.get("disabled", [100, 100, 255]))
                         self._draw_outline_box(renderer, enemy_tile_rect, outline_color, thickness=2)
                     else:
                         # Show enemy state with colored outline + pulsing
                         if enemy.state == EnemyState.HOSTILE:
-                            base_color = (255, 0, 0)  # Red for hostile
+                            base_color = ensure_color_tuple(enemy_colors.get("hostile", [220, 20, 60]))
                         elif enemy.state == EnemyState.ALERT:
-                            base_color = (255, 165, 0)  # Orange for alert
+                            base_color = ensure_color_tuple(enemy_colors.get("alert", [255, 165, 0]))
                         else:  # PATROLLING/IDLE
-                            base_color = (255, 255, 0)  # Yellow for normal
+                            base_color = ensure_color_tuple(enemy_colors.get("unaware", [255, 255, 0]))
 
                         # Apply pulse to color
                         outline_color = tuple(int(c * pulse_intensity) for c in base_color)
@@ -665,12 +687,15 @@ class GraphicsMapRenderer:
             # Graphics mode: Render targeting cursor sprite
             texture = self.tile_manager.get_tile("targeting")
             if texture:
+                from data_loading import DataLoader
+                config = DataLoader.load_config()
+                normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
                 tile_rect = self._get_tile_rect(cursor_screen_x, cursor_screen_y)
                 # Tint based on mode (red for targeting, cyan for look)
                 texture.color_mod = cursor_color
                 renderer.copy(texture, dest=tile_rect)
                 # Reset color_mod
-                texture.color_mod = (255, 255, 255)
+                texture.color_mod = normal_tint
 
     def _get_status_outline_color(self, status_type: str) -> Tuple[int, int, int]:
         """
@@ -682,13 +707,11 @@ class GraphicsMapRenderer:
         Returns:
             RGB color tuple for the outline
         """
-        STATUS_COLORS = {
-            "virus": (0, 255, 0),              # Green
-            "slow": (255, 255, 0),             # Yellow
-            "invisible": (100, 100, 255),      # Blue
-            "disabled": (100, 100, 255),       # Blue
-        }
-        return STATUS_COLORS.get(status_type, (255, 255, 255))
+        from data_loading import DataLoader
+        config = DataLoader.load_config()
+        status_effects_colors = config.get("colors", {}).get("status_effects", {})
+        default_color = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("white", [255, 255, 255]))
+        return ensure_color_tuple(status_effects_colors.get(status_type, default_color))
 
     def _draw_corner_brackets(self, renderer, rect: Tuple[int, int, int, int], color: Tuple[int, int, int], bracket_size: int = 4):
         """

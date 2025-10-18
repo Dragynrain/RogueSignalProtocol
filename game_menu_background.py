@@ -162,15 +162,16 @@ class MenuBackground:
         """Render cyberpunk pattern in a side panel."""
         random.seed(42)  # Consistent pattern
         
+        from data_loading import DataLoader
+        config = DataLoader.load_config()
+        menu_bg_colors = config.get("colors", {}).get("menu_background", {})
+        pattern_colors_data = menu_bg_colors.get("pattern_colors", [])
+        colors = [ensure_color_tuple(c) for c in pattern_colors_data]
+        base_bg = ensure_color_tuple(menu_bg_colors.get("base", [5, 5, 15]))
+        black = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("black", [0, 0, 0]))
+
         patterns = ['▓', '▒', '░', '·', '▪', '▫']
-        colors = [
-            (0, 80, 120),    # Cyan blue
-            (0, 120, 180),   # Bright blue  
-            (80, 0, 120),    # Purple
-            (120, 0, 180),   # Bright purple
-            (0, 180, 120),   # Teal
-        ]
-        
+
         for y in range(console.height):
             for x in range(start_x, min(end_x, console.width)):
                 # Higher density for side panels
@@ -178,32 +179,42 @@ class MenuBackground:
                     pattern_char = random.choice(patterns)
                     fg_color = random.choice(colors)
                     # Use dark background to make pattern visible
-                    render_char_safe(console, x, y, pattern_char, fg=fg_color, bg=(5, 5, 15))
+                    render_char_safe(console, x, y, pattern_char, fg=fg_color, bg=base_bg)
                 else:
                     # Fill with dark background
-                    render_char_safe(console, x, y, ' ', fg=(0, 0, 0), bg=(5, 5, 15))
-    
+                    render_char_safe(console, x, y, ' ', fg=black, bg=base_bg)
+
     def _render_borders(self, console):
         """Add cyberpunk-style borders."""
-        border_color = (0, 150, 200)  # Bright cyan
-        
+        from data_loading import DataLoader
+        config = DataLoader.load_config()
+        menu_bg_colors = config.get("colors", {}).get("menu_background", {})
+        border_color = ensure_color_tuple(menu_bg_colors.get("border", [0, 150, 200]))
+        base_bg = ensure_color_tuple(menu_bg_colors.get("base", [5, 5, 15]))
+
         # Top border
         for x in range(console.width):
-            render_char_safe(console, x, 0, '─', fg=border_color, bg=(5, 5, 15))
-        
-        # Bottom border  
+            render_char_safe(console, x, 0, '─', fg=border_color, bg=base_bg)
+
+        # Bottom border
         for x in range(console.width):
-            render_char_safe(console, x, console.height - 1, '─', fg=border_color, bg=(5, 5, 15))
+            render_char_safe(console, x, console.height - 1, '─', fg=border_color, bg=base_bg)
     
     def _render_center_atmosphere(self, console):
         """Add subtle atmospheric elements to center area."""
         random.seed(123)  # Different seed for center
         
         # Very subtle dots in center area (positions 26-54)
+        from data_loading import DataLoader
+        config = DataLoader.load_config()
+        menu_bg_colors = config.get("colors", {}).get("menu_background", {})
+        dots_color = ensure_color_tuple(menu_bg_colors.get("dots", [0, 60, 100]))
+        black = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("black", [0, 0, 0]))
+
         for y in range(2, console.height - 2):
             for x in range(26, 54):
                 if random.random() < 0.02:  # Very low density - 2%
-                    render_char_safe(console, x, y, '·', fg=(0, 60, 100), bg=(0, 0, 0))
+                    render_char_safe(console, x, y, '·', fg=dots_color, bg=black)
         
     def reload_if_mode_changed(self):
         """Reload or unload background based on current graphics mode."""
