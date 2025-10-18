@@ -35,6 +35,8 @@ def create_mock_game():
     game.show_inventory = False
     game.targeting_mode = False
     game.targeting_exploit = None
+    game.look_mode = False
+    game.look_cursor_position = Position(10, 10)
     game.cursor_position = Position(10, 10)
     game.inventory_selection = 0
     game.lore_viewer_mode = "list"
@@ -372,10 +374,10 @@ class TestUIToggleInputValidation:
         """Test lore viewer toggle."""
         game = create_mock_game()
         handler = InputHandler(game)
-        
-        event = create_mock_event(tcod.event.KeySym.L)
+
+        event = create_mock_event(tcod.event.KeySym.O)
         handler._handle_gameplay_input(event)
-        
+
         assert game.show_lore_viewer is True
     
     def test_help_toggle_with_shift(self):
