@@ -32,7 +32,7 @@ class MainMenu:
     
     def __init__(self, background=None):
         self.selected_option = 0
-        self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Lore", "Exit"]
+        self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Graphics Preview", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Lore", "Graphics Preview", "Exit"]
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
@@ -41,10 +41,10 @@ class MainMenu:
     def refresh_options(self, show_continue: bool = True) -> None:
         """Refresh menu options. Set show_continue=False when accessed from mid-game."""
         if show_continue and SaveGameManager.save_exists():
-            self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Exit"]
+            self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Graphics Preview", "Exit"]
             self.mid_game_mode = False
         else:
-            self.options = ["New Game", "Settings", "Help", "Lore", "Exit"]
+            self.options = ["New Game", "Settings", "Help", "Lore", "Graphics Preview", "Exit"]
             self.mid_game_mode = not show_continue  # True when accessed from mid-game
         # Reset selection to prevent index out of bounds
         self.selected_option = 0
@@ -374,6 +374,8 @@ class MainMenu:
                 return "help"
             elif option == "Lore":
                 return "lore"
+            elif option == "Graphics Preview":
+                return "graphics_preview"
             elif option == "Exit":
                 return "exit"
         # ESC disabled on main menu to prevent accidental exit

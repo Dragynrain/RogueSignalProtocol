@@ -25,7 +25,7 @@ class TestMainMenu:
             assert menu.selected_option == 0
             assert "Continue Game" in menu.options
             assert "New Game" in menu.options
-            assert len(menu.options) == 6  # Continue, New, Settings, Help, Lore, Exit
+            assert len(menu.options) == 7  # Continue, New, Settings, Help, Lore, Graphics Preview, Exit
     
     def test_main_menu_initialization_no_save(self):
         """MainMenu initializes correctly when no save file exists."""
@@ -34,7 +34,7 @@ class TestMainMenu:
             assert menu.selected_option == 0
             assert "Continue Game" not in menu.options
             assert "New Game" in menu.options
-            assert len(menu.options) == 5  # New, Settings, Help, Lore, Exit
+            assert len(menu.options) == 6  # New, Settings, Help, Lore, Graphics Preview, Exit
     
     def test_refresh_options_with_continue(self):
         """refresh_options() correctly adds continue option when save exists."""
