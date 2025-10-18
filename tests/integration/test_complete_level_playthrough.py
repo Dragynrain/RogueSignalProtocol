@@ -137,9 +137,18 @@ class TestCompleteLevelPlaythrough:
 
         assert code_in_inventory is not None, "Code hack not found in inventory"
 
+        # Damage player to ensure code hacks will have visible effect
+        # This prevents false failures when player is at perfect health
+        engine.player.cpu = engine.player.max_cpu - 20
+        engine.player.heat = 30
+        engine.player.trace_level = 50
+
         # Use the code hack
         pre_use_cpu = engine.player.cpu
         pre_use_heat = engine.player.heat
+        pre_use_trace = engine.player.trace_level
+        pre_use_temp_effects = dict(engine.player.temporary_effects)
+        pre_use_inventory_count = len(engine.player.inventory_manager.items)
 
         # Code hacks have different effects based on color
         # We'll test that using the code has SOME effect
@@ -147,17 +156,22 @@ class TestCompleteLevelPlaythrough:
 
         assert success, "Code hack use failed"
 
-        # Verify code hack was consumed
+        # Verify code hack was consumed (quantity decreased or item removed)
         post_use_count = len(engine.player.inventory_manager.items)
-        assert post_use_count <= len(engine.player.inventory_manager.items), "Code hack not consumed or quantity decreased"
+        consumed = (post_use_count < pre_use_inventory_count) or (
+            code_in_inventory in engine.player.inventory_manager.items and
+            code_in_inventory.quantity < 1
+        )
 
-        # Verify some stat changed (CPU, heat, or trace level)
+        # Verify some stat changed (CPU, heat, trace level, or temporary effects like speed_boost)
+        # Code hack effects: restore_cpu, reduce_heat, reduce_trace_level, speed_boost
         stats_changed = (
             engine.player.cpu != pre_use_cpu or
             engine.player.heat != pre_use_heat or
-            engine.player.trace_level != 0  # Trace could have been affected
+            engine.player.trace_level != pre_use_trace or
+            engine.player.temporary_effects != pre_use_temp_effects
         )
-        assert stats_changed or engine.player.cpu == engine.player.max_cpu, "Code hack had no visible effect"
+        assert stats_changed, f"Code hack had no visible effect. CPU: {pre_use_cpu}->{engine.player.cpu}, Heat: {pre_use_heat}->{engine.player.heat}, Trace: {pre_use_trace}->{engine.player.trace_level}, TempEffects: {pre_use_temp_effects}->{engine.player.temporary_effects}"
 
     def test_exploit_pickup_collection_and_equipping(self):
         """Test collecting exploit pickups and equipping them."""

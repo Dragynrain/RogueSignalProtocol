@@ -144,7 +144,12 @@ class GameMap:
         return fov[end.y, end.x]
     
     def _get_transparency_map(self):
-        """Get transparency map for FOV calculations."""
+        """Get transparency map for FOV calculations (cached for performance).
+
+        Returns:
+            Boolean numpy array with shape (height, width) where True = transparent.
+            Uses (y, x) indexing consistent with TCOD conventions.
+        """
         # Cache the transparency map to avoid recreating it every time
         if not hasattr(self, '_transparency_cache'):
             import numpy as np
@@ -157,7 +162,10 @@ class GameMap:
         return self._transparency_cache
     
     def invalidate_transparency_cache(self):
-        """Invalidate the transparency cache when map changes."""
+        """Invalidate transparency and walkability caches when map changes.
+
+        Call this method whenever walls are added or removed from the map.
+        """
         if hasattr(self, '_transparency_cache'):
             del self._transparency_cache
         if hasattr(self, '_walkability_cache'):

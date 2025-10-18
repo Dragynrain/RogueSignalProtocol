@@ -432,10 +432,9 @@ def main():
                         filename = tb[-1].filename if tb else "unknown"
 
                         error_msg = f"SYSTEM ERROR: Rendering failure in {filename}:{line_no}"
-                        print(error_msg)  # Always visible to user
-                        logging.error(error_msg)  # Also log for debugging
-                        print(f"Exception: {str(e)}")
-                        print(f"Exception type: {type(e).__name__}")
+                        logging.error(error_msg)
+                        logging.error(f"Exception: {str(e)}")
+                        logging.error(f"Exception type: {type(e).__name__}")
 
                         # Print full traceback for debugging
                         traceback.print_exc()
@@ -450,10 +449,9 @@ def main():
         filename = tb[-1].filename if tb else "unknown"
 
         error_msg = f"CRITICAL SYSTEM ERROR: Game initialization/main loop failure in {filename}:{line_no}"
-        print(error_msg)  # Always visible to user
-        logging.critical(error_msg)  # Also log for debugging
-        print(f"Exception: {str(e)}")
-        print(f"Exception type: {type(e).__name__}")
+        logging.critical(error_msg)
+        logging.critical(f"Exception: {str(e)}")
+        logging.critical(f"Exception type: {type(e).__name__}")
 
         # Print full traceback for debugging
         traceback.print_exc()
@@ -466,10 +464,9 @@ if __name__ == "__main__":
         import traceback
 
         error_msg = f"CRITICAL UNHANDLED EXCEPTION: Program termination"
-        print(error_msg)  # Always visible to user
-        logging.critical(error_msg)  # Also log for debugging
-        print(f"Exception: {str(e)}")
-        print(f"Exception type: {type(e).__name__}")
+        logging.critical(error_msg)
+        logging.critical(f"Exception: {str(e)}")
+        logging.critical(f"Exception type: {type(e).__name__}")
 
         # Print full traceback for debugging
         traceback.print_exc()

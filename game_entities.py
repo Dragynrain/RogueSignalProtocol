@@ -34,9 +34,8 @@ class ColorManager:
             # Ensure colors section exists
             if 'colors' not in config:
                 error_msg = "CRITICAL CONFIG ERROR: 'colors' section missing from game_config.json"
-                print(error_msg)
                 logging.error(error_msg)
-                print(f"Available sections: {list(config.keys())}")
+                logging.error(f"Available sections: {list(config.keys())}")
                 raise KeyError("Required 'colors' section missing from game_config.json")
 
             color_config = config['colors']
@@ -46,9 +45,8 @@ class ColorManager:
             for category in required_categories:
                 if category not in color_config:
                     error_msg = f"CRITICAL CONFIG ERROR: 'colors.{category}' section missing from game_config.json"
-                    print(error_msg)
                     logging.error(error_msg)
-                    print(f"Available color categories: {list(color_config.keys())}")
+                    logging.error(f"Available color categories: {list(color_config.keys())}")
                     raise KeyError(f"Required color category missing: {category}")
 
             # Load basic, game_elements, data_codes, message_log categories
@@ -62,9 +60,8 @@ class ColorManager:
             for color_name in required_enemy_colors:
                 if color_name not in enemies:
                     error_msg = f"CRITICAL CONFIG ERROR: 'colors.enemies.{color_name}' missing from game_config.json"
-                    print(error_msg)
                     logging.error(error_msg)
-                    print(f"Available enemy colors: {list(enemies.keys())}")
+                    logging.error(f"Available enemy colors: {list(enemies.keys())}")
                     raise KeyError(f"Required enemy color missing: {color_name}")
 
             self._colors['ENEMY_UNAWARE'] = tuple(enemies['unaware'])
@@ -77,9 +74,8 @@ class ColorManager:
             for color_name in required_ui_colors:
                 if color_name not in ui:
                     error_msg = f"CRITICAL CONFIG ERROR: 'colors.ui.{color_name}' missing from game_config.json"
-                    print(error_msg)
                     logging.error(error_msg)
-                    print(f"Available UI colors: {list(ui.keys())}")
+                    logging.error(f"Available UI colors: {list(ui.keys())}")
                     raise KeyError(f"Required UI color missing: {color_name}")
 
             self._colors['UI_BG'] = tuple(ui['background'])
@@ -98,7 +94,6 @@ class ColorManager:
             # LIGHT_GRAY should be in basic colors
             if 'LIGHT_GRAY' not in self._colors:
                 error_msg = "CRITICAL CONFIG ERROR: 'light_gray' missing from colors.basic in game_config.json"
-                print(error_msg)
                 logging.error(error_msg)
                 raise KeyError("Required color missing: light_gray")
 
@@ -107,9 +102,8 @@ class ColorManager:
             raise
         except Exception as e:
             error_msg = f"CRITICAL CONFIG ERROR: Failed to load colors from game_config.json"
-            print(error_msg)
             logging.error(error_msg)
-            print(f"Exception: {str(e)}")
+            logging.error(f"Exception: {str(e)}")
             raise RuntimeError(f"Failed to load colors: {e}") from e
     
     def _darken_color(self, color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:

@@ -198,10 +198,11 @@ class EnemyManager:
                 end_point = route[(i + 1) % len(route)]  # Wrap around to check full loop
 
                 # Quick pathfinding check
+                # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
                 graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
                 pathfinder = tcod.path.Pathfinder(graph)
-                pathfinder.add_root((start_point.x, start_point.y))
-                path = pathfinder.path_to((end_point.x, end_point.y))
+                pathfinder.add_root((start_point.y, start_point.x))
+                path = pathfinder.path_to((end_point.y, end_point.x))
 
                 # If no path exists, route is invalid
                 if len(path) < 2:

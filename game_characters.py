@@ -419,7 +419,8 @@ class Enemy:
 
                 # Take up to 3 steps (skip current position at index 0)
                 for i in range(1, min(len(path), 4)):
-                    next_pos = Position(path[i][0], path[i][1])
+                    # TCOD path returns (y, x) tuples, convert to Position(x, y)
+                    next_pos = Position(path[i][1], path[i][0])
 
                     # Ensure this position is adjacent to the previous position
                     if not prev_pos.is_adjacent_to(next_pos):
@@ -453,17 +454,19 @@ class Enemy:
                         next_patrol_target = self.patrol_points[next_patrol_index]
 
                         # Calculate path from last queued position to next patrol point
+                        # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
                         cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
                         graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
                         pathfinder = tcod.path.Pathfinder(graph)
-                        pathfinder.add_root((last_queued_pos.x, last_queued_pos.y))
-                        next_path = pathfinder.path_to((next_patrol_target.x, next_patrol_target.y))
+                        pathfinder.add_root((last_queued_pos.y, last_queued_pos.x))
+                        next_path = pathfinder.path_to((next_patrol_target.y, next_patrol_target.x))
 
                         # Add remaining moves to fill queue up to 3 total
                         if next_path is not None and len(next_path) > 1:
                             moves_to_add = 3 - len(self.move_queue)
                             for i in range(1, min(len(next_path), moves_to_add + 1)):
-                                next_pos = Position(next_path[i][0], next_path[i][1])
+                                # TCOD path returns (y, x) tuples, convert to Position(x, y)
+                                next_pos = Position(next_path[i][1], next_path[i][0])
                                 if last_queued_pos.is_adjacent_to(next_pos):
                                     self.move_queue.append(next_pos)
                                     last_queued_pos = next_pos
@@ -515,16 +518,18 @@ class Enemy:
                 direct_distance = start_pos.distance_to(target)
                 max_reasonable_path_length = max(6, int(direct_distance * 3))
 
+                # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
                 cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
                 graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
                 pathfinder = tcod.path.Pathfinder(graph)
-                pathfinder.add_root((start_pos.x, start_pos.y))
-                path = pathfinder.path_to((target.x, target.y))
+                pathfinder.add_root((start_pos.y, start_pos.x))
+                path = pathfinder.path_to((target.y, target.x))
 
                 if len(path) > 1:
                     # Only add move if path length is reasonable
                     if len(path) <= max_reasonable_path_length:
-                        next_pos = Position(path[1][0], path[1][1])
+                        # TCOD path returns (y, x) tuples, convert to Position(x, y)
+                        next_pos = Position(path[1][1], path[1][0])
 
                         # Validate adjacency before adding
                         if start_pos.is_adjacent_to(next_pos):
@@ -551,11 +556,12 @@ class Enemy:
             else:
                 max_reasonable_path_length = max(15, int(direct_distance * 3))
 
+            # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
             cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
-            pathfinder.add_root((self.position.x, self.position.y))
-            path = pathfinder.path_to((target.x, target.y))
+            pathfinder.add_root((self.position.y, self.position.x))
+            path = pathfinder.path_to((target.y, target.x))
 
             # Check if path exists and is reasonable
             if len(path) > 1:
@@ -586,14 +592,16 @@ class Enemy:
 
         # Use pathfinding to get next step
         try:
+            # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
             cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
-            pathfinder.add_root((self.position.x, self.position.y))
-            path = pathfinder.path_to((target.x, target.y))
+            pathfinder.add_root((self.position.y, self.position.x))
+            path = pathfinder.path_to((target.y, target.x))
 
             if len(path) > 1:
-                return Position(path[1][0], path[1][1])
+                # TCOD path returns (y, x) tuples, convert to Position(x, y)
+                return Position(path[1][1], path[1][0])
         except Exception as e:
             logging.warning(f"Patrol pathfinding failed for {self.type_data.name}: {e}")
 

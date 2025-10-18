@@ -385,5 +385,5 @@ class TestGameStateIntegration:
         assert engine.player.trace_level == 45
 
         # Verify persistence systems exist
-        assert hasattr(engine, 'save_load_manager')
-        assert callable(getattr(engine, 'auto_save', None))
+        assert hasattr(engine, 'state_persistence'), "Engine should have state_persistence attribute"
+        assert callable(getattr(engine, 'auto_save', None)), "Engine should have auto_save method"
