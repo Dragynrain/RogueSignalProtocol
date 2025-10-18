@@ -6,7 +6,7 @@ Extracted from game_engine.py for better separation of concerns.
 """
 
 import tcod
-from tcod import libtcodpy
+import tcod.constants
 import random
 import math
 import logging
@@ -37,11 +37,6 @@ class GameTurnManager:
         old_cpu = self.game_engine.player.cpu
         self.game_engine.turn_processor.process_turn(self.game_engine.player)
 
-        # For backward compatibility with tests, call legacy methods (but not player effects)
-        # Note: player effects are now handled by turn_processor to avoid double-decrementing
-        self._process_enemies_turn()
-        self._process_environmental_effects()
-
         # Handle sound effects for virus damage
         if old_cpu > self.game_engine.player.cpu and self.game_engine.player.temporary_effects.get('virus_turns', 0) > 0:
             self.game_engine.sound_manager.play_sound("virus_damage")
@@ -68,18 +63,6 @@ class GameTurnManager:
             background_increase = config.get("background_trace", 1)
             self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + background_increase)
 
-    def _process_enemies_turn(self):
-        """Process enemy turns - for backward compatibility."""
-        # Note: move_cooldown and disabled_turns are both decremented in the enemy's move() method
-        # to avoid double-decrementing. This method kept for backwards compatibility but does nothing.
-        pass
-
-    def _process_environmental_effects(self):
-        """Process environmental effects - for backward compatibility."""
-        # Note: threat_scan_turns is now handled in GameStateManager.advance_turn()
-        # Note: distraction_points is now handled in GameStateManager.advance_turn()
-        pass
-
     def _update_memory_system(self):
         """Update the hybrid fog of war memory system using TCOD FOV."""
         vision_range = self.game_engine.player.get_vision_range()
@@ -102,7 +85,7 @@ class GameTurnManager:
                 transparency=transparency,
                 pov=(self.game_engine.player.y, self.game_engine.player.x),
                 radius=vision_range,
-                algorithm=libtcodpy.FOV_SYMMETRIC_SHADOWCAST
+                algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST
             )
 
             # Mark all visible tiles as explored

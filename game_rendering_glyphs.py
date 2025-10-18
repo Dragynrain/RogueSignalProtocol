@@ -18,18 +18,7 @@ from game_ui import render_char_safe
 
 
 class GlyphsMapRenderer:
-    """Renders the game map in ASCII/glyph mode."""
-
-    def __init__(self, settings=None):
-        """
-        Initialize GlyphsMapRenderer.
-
-        Args:
-            settings: GameSettings instance for accessing graphics_mode
-        """
-        self.settings = settings
-
-    """Renders the game map and entities."""
+    """Renders the game map and entities in ASCII/glyph mode."""
 
     def __init__(self, tile_manager=None, context=None, settings=None):
         """

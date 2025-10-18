@@ -344,7 +344,7 @@ class TestGameStateIntegration:
         assert hasattr(engine, 'turn')
 
         # Verify save/load system exists
-        assert hasattr(engine, 'save_load_manager')
+        assert hasattr(engine, 'state_persistence')
         assert hasattr(engine, 'auto_save')
 
         # Test basic state access
