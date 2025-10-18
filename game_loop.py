@@ -14,6 +14,7 @@ from game_entities import Colors
 from game_ui import render_char_safe, WindowManager
 from game_audio import SoundManager
 from game_menus import MenuBackground, MainMenu, SettingsMenu, HelpMenu, LoreMenu
+from game_menu_graphics_preview import GraphicsPreviewMenu
 from game_engine import GameEngine
 from game_rendering import GameRenderer
 from game_input import InputHandler
@@ -82,14 +83,29 @@ def initialize_tcod_context():
 
 
 
-def initialize_game_systems(settings: GameSettings, menu_background=None, sound_manager=None):
+def initialize_game_systems(settings: GameSettings, context, menu_background=None, sound_manager=None, tile_manager=None):
     """Initialize menu systems and return menu objects."""
-    return {
+    # Initialize tile manager if not provided and graphics mode is enabled
+    if tile_manager is None and settings.graphics_mode == "graphics":
+        try:
+            tile_manager = TileManager(context, settings)
+            logging.info("TileManager initialized for graphics preview menu")
+        except Exception as e:
+            logging.warning(f"Failed to initialize TileManager for preview: {e}")
+            tile_manager = None
+
+    menus = {
         'main_menu': MainMenu(background=menu_background),  # Pass background here
         'settings_menu': SettingsMenu(settings, menu_background, sound_manager),  # Pass sound manager for live volume updates
         'help_menu': HelpMenu(),
         'lore_menu': LoreMenu()
     }
+
+    # Only add graphics preview menu if we have a tile manager
+    if tile_manager is not None:
+        menus['graphics_preview_menu'] = GraphicsPreviewMenu(context, settings, tile_manager)
+
+    return menus
 
 
 def handle_menu_navigation(console, context, menus, settings, menu_sound_manager=None, active_game=None):
@@ -166,6 +182,63 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     current_menu = menus['help_menu']
                 elif action == "lore":
                     current_menu = menus['lore_menu']
+                elif action == "graphics_preview":
+                    if 'graphics_preview_menu' in menus:
+                        # Enter graphics preview mode
+                        graphics_preview_menu = menus['graphics_preview_menu']
+
+                        # Flush any pending events to avoid immediate exit
+                        tcod.event.get()
+
+                        exit_preview = False
+                        while not exit_preview:
+                            # Render the preview menu to console
+                            graphics_preview_menu.render(console)
+
+                            # Check if we should render graphics
+                            graphics_available = (context.sdl_renderer and
+                                                hasattr(context, 'console_render') and
+                                                context.console_render and
+                                                settings.graphics_mode == "graphics")
+
+                            if graphics_available:
+                                # Graphics mode: render through SDL with preview map
+                                context.sdl_renderer.clear()
+
+                                # Render the preview map graphics FIRST (background)
+                                graphics_preview_menu._render_preview_map(console)
+
+                                # Then render console text on top
+                                console_texture = context.console_render.render(console)
+                                context.sdl_renderer.copy(console_texture)
+                                context.sdl_renderer.present()
+                            else:
+                                # Glyph mode: just show console
+                                context.present(console)
+
+                            # Process events (non-blocking for continuous animation)
+                            for preview_event in tcod.event.get():
+                                if preview_event.type == "QUIT":
+                                    # Export selections and return to main menu on quit
+                                    graphics_preview_menu.export_selections()
+                                    exit_preview = True
+                                    break
+                                elif preview_event.type == "KEYDOWN":
+                                    preview_action = graphics_preview_menu.handle_input(preview_event)
+                                    if preview_action == 'exit':
+                                        # Export selections and return to main menu
+                                        graphics_preview_menu.export_selections()
+                                        exit_preview = True
+                                        break
+
+                            # Small delay to prevent CPU spinning (60 FPS)
+                            time.sleep(1/60)
+
+                        # Return to main menu after exiting preview
+                        current_menu = main_menu
+                    else:
+                        # Graphics preview not available
+                        logging.warning("Graphics Preview not available")
                 elif action == "back":
                     current_menu = main_menu
                 elif action == "continue":
@@ -260,7 +333,7 @@ def main():
             menu_sound_manager.preload_sounds()  # Preload for sound previews
 
             # Pass background and sound manager to initialize_game_systems
-            menus = initialize_game_systems(settings, menu_background, menu_sound_manager)
+            menus = initialize_game_systems(settings, context, menu_background, menu_sound_manager)
 
             game = None
 

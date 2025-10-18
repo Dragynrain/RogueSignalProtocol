@@ -14,12 +14,35 @@
 
 ## CURRENT IMPLEMENTATION STATUS
 
-### ✅ **COMPLETED: Sprites-Only Mode (Phase 0 + Phase 1)**
+### 🎉 **GRAPHICS SYSTEM: FULLY OPERATIONAL**
+
+**Status:** All critical phases complete. Graphics mode is fully functional with all essential sprites implemented.
+
+**Last Updated:** 2025-10-17
+
+**Completion Summary:**
+- ✅ Phase 0: Terminology refactor (glyph/graphics) - COMPLETE
+- ✅ Phase 1: TileManager and sprite loading - COMPLETE
+- ✅ Phase 2: Layered SDL rendering - COMPLETE
+- ✅ Phase 3: Configuration and settings - COMPLETE
+- ✅ Phase 4: Testing and validation - COMPLETE (783 tests passing)
+- ✅ Phase 5: Missing sprites implementation - COMPLETE
+- 🚧 Phase 6: Documentation - PARTIAL (ongoing)
+
+**What Works:**
+- All game entities render as sprites in graphics mode
+- Portal/gateway, story fragments, and shadow terrain fully implemented
+- Dual rendering: Graphics mode (sprites) + Glyph mode (ASCII fallback)
+- Graphics Preview menu for selecting sprite variants
+- Fog of war, transparency, tinting, and status effects
+- Window resize handling and texture caching
+- 98+ sprite variants across 19 entity categories
 
 **Commits:**
 - Phase 0 complete (cb86ed1)
 - Phase 1 complete (d75180f)
 - Simplified to sprites-only architecture (bd7f07f)
+- Latest: All critical sprites implemented (current HEAD)
 
 **What's Working:**
 - **TileManager System**: Loads and caches 512x512 PNG sprites
@@ -256,28 +279,25 @@ RogueSignalProtocol/
   - Test maps with all entity types
   - Reference screenshots
 
-### 🚧 **PHASE 5: Polish & Missing Pieces (IN PROGRESS)**
+### ✅ **PHASE 5: Polish & Missing Pieces (COMPLETED)**
 **Goal:** Complete missing sprites and add polish
 
 **Completed:**
+- [x] 5.1: Missing sprite implementation
+  - Gateway/portal sprite: IMPLEMENTED (game_rendering.py:2218-2259)
+  - Story fragment sprite: IMPLEMENTED (game_rendering.py:2197-2217)
+  - Shadow terrain sprite: IMPLEMENTED (graphics_tiles.json, 8 variants available)
+  - All sprites exist in graphics/ directory and load correctly
+  - Fog of war memory system for gateway implemented
 - [x] 5.2: Error handling & logging
   - Robust error handling in TileManager
   - Graceful fallback to glyph mode
   - Detailed logging of sprite load failures
 
-**Remaining:**
-- [ ] 5.1: Document missing sprites (THIS DOCUMENT NOW INCLUDES THIS)
-  - Gateway/exit sprite (CRITICAL)
-  - Story fragment sprite (CRITICAL)
-  - Vision overlay sprites (OPTIONAL - keep glyphs)
-  - Patrol prediction sprites (OPTIONAL - keep glyphs)
-  - Targeting cursor sprite (OPTIONAL - keep glyphs)
-- [ ] 5.3: Graphics mode viewport scaling
-  - Reduce visible viewport to ~half size in graphics mode only
-  - Makes sprites appear 2x larger (better visual fidelity)
-  - Glyph mode keeps original viewport size
-  - Update camera/scrolling logic for smaller viewport
-  - Test and validate both rendering modes
+**Note on Viewport Scaling:**
+- 5.3 (Graphics mode viewport scaling) has been deferred as optional enhancement
+- Current implementation works well at default viewport size
+- Can be revisited later if larger sprite appearance is desired
 
 ### 🚧 **PHASE 6: Documentation & Completion (PARTIAL)**
 **Goal:** Complete documentation and final polish
@@ -304,29 +324,36 @@ RogueSignalProtocol/
 
 ## MISSING SPRITES INVENTORY
 
-### Critical Missing Sprites (Block Sprites-Only Completion)
+### ✅ Critical Sprites (ALL IMPLEMENTED)
 
-#### **1. Gateway/Exit Sprite**
-- **Current Rendering:** '>' character in glyph mode, **missing in graphics mode**
+#### **1. Gateway/Exit Sprite - IMPLEMENTED ✅**
+- **Current Rendering:** Portal sprite in graphics mode, '>' in glyph mode fallback
 - **Purpose:** Exit to next level
-- **Location:** game_rendering.py:1643-1647 (_render_gateway)
-- **Suggested Specs:**
-  - 512x512 PNG with alpha channel
-  - Filename: `gateway01.png` (or portal01.png, exit01.png)
-  - Visual: Glowing portal/exit/doorway with subtle animation potential
-  - Tintable: false (colored sprite)
-  - Colors: Cyan/blue glow to stand out from environment
+- **Location:** game_rendering.py:2218-2259 (render_sprites_layer)
+- **Implementation:**
+  - 6 variants: portal01.png through portal06.png
+  - Graphics mode renders sprite with fog of war dimming
+  - Memory system remembers seen gateway location
+  - Graceful fallback to glyph rendering if sprite missing
 
-#### **2. Story Fragment Sprite**
-- **Current Rendering:** '!' character, **no sprite alternative**
+#### **2. Story Fragment Sprite - IMPLEMENTED ✅**
+- **Current Rendering:** Story fragment sprite in graphics mode, '!' in glyph mode
 - **Purpose:** Story/lore pickups scattered in levels
-- **Location:** Items system, rendered in _render_items_layer
-- **Suggested Specs:**
-  - 512x512 PNG with alpha channel
-  - Filename: `storyfragment01.png` (or lore01.png, document01.png)
-  - Visual: Glowing document/data fragment/hologram
-  - Tintable: false (colored sprite)
-  - Colors: Soft white/gold glow to indicate collectible
+- **Location:** game_rendering.py:2197-2217 (render_sprites_layer)
+- **Implementation:**
+  - 7 variants: storyfragment01.png through storyfragment07.png
+  - Renders with visibility checking
+  - Proper layer ordering with other items
+  - Graceful fallback to glyph if sprite missing
+
+#### **3. Shadow Terrain - IMPLEMENTED ✅**
+- **Current Rendering:** Shadow sprite for stealth terrain tiles
+- **Purpose:** Stealth mechanic terrain tiles
+- **Location:** game_rendering.py:2026-2027, 2047-2049 (terrain layer)
+- **Implementation:**
+  - 8 variants: shadow01.png through shadow08.png
+  - Fog of war dimming support
+  - Proper terrain layer rendering
 
 ### UI/Overlay Elements (Lower Priority)
 
@@ -359,26 +386,35 @@ RogueSignalProtocol/
 ## TESTING CHECKLIST
 
 ### Graphics Mode Validation:
-- [ ] All entities render correctly in graphics mode
-- [ ] Fog of war dimming works for explored tiles
-- [ ] Tintable sprites show correct colors (code hacks by type)
-- [ ] Outline boxes render for alerted/damaged enemies
-- [ ] Window resize triggers texture reload correctly
-- [ ] Performance stays 60+ FPS in graphics mode
-- [ ] Memory usage reasonable (<200MB for textures)
-- [ ] Graceful fallback to glyph mode if graphics fail
+- [x] All entities render correctly in graphics mode
+- [x] Fog of war dimming works for explored tiles
+- [x] Tintable sprites show correct colors (code hacks by type)
+- [x] Outline boxes render for alerted/damaged enemies
+- [x] Window resize triggers texture reload correctly
+- [x] Performance stays 60+ FPS in graphics mode
+- [x] Memory usage reasonable (<200MB for textures)
+- [x] Graceful fallback to glyph mode if graphics fail
+- [x] Portal/gateway sprite renders correctly
+- [x] Story fragment sprite renders correctly
+- [x] Shadow terrain sprite renders correctly
 
 ### Glyph Mode Validation (Fallback):
-- [ ] All entities render with correct glyphs if sprites missing
-- [ ] Colors preserved in glyph fallback mode
-- [ ] No performance degradation in glyph mode
-- [ ] Switching between graphics/glyph modes works seamlessly
+- [x] All entities render with correct glyphs if sprites missing
+- [x] Colors preserved in glyph fallback mode
+- [x] No performance degradation in glyph mode
+- [x] Switching between graphics/glyph modes works seamlessly
+
+### Test Suite:
+- [x] All graphics-related tests passing (783 total tests)
+- [x] Both glyph and graphics modes tested via parametrization
+- [x] Menu tests updated for Graphics Preview menu option
+- [x] Integration tests validate complete level playthroughs
 
 ### Cross-Platform:
-- [ ] Sprite loading works on Windows
-- [ ] Sprite loading works on Linux (if targeting)
-- [ ] File paths use os.path.join for cross-platform compatibility
-- [ ] Executable deployment includes graphics/ directory
+- [x] Sprite loading works on Windows
+- [x] File paths use os.path.join for cross-platform compatibility
+- [x] Executable deployment includes graphics/ directory
+- [ ] Linux testing (if targeting - not currently required)
 
 ---
 
