@@ -43,45 +43,21 @@ class TestVictoryFixes(unittest.TestCase):
         # Create console for rendering
         console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
 
-        # Create renderer and render victory message
-        renderer = GameRenderer()
+        # Create victory dialogue using new system
+        from game_dialogue_system import create_victory_dialogue, UnifiedRenderer
+        victory_dialogue = create_victory_dialogue()
 
-        # Test the victory message rendering (now via DialogueRenderer)
-        renderer.dialogue_renderer.render_victory_message(console)
+        # Render the dialogue
+        UnifiedRenderer.render(console, victory_dialogue)
 
-        # Define the victory message text (should match game_rendering.py)
-        victory_messages = [
-            "BREAKTHROUGH TO THE INTERNET!",
-            "You've escaped into the digital realm",
-            "The entire world wide web awaits you!",
-            "Freedom at last...",
-            "Press any key to continue"
-        ]
+        # The UnifiedRenderer automatically handles box sizing and word wrapping
+        # This test now verifies that the dialogue was created with the correct content
+        # and that rendering completed without errors
 
-        # Calculate box dimensions (should match game_rendering.py)
-        center_x = GameConfig.GAME_AREA_WIDTH() // 2
-        center_y = GameConfig.SCREEN_HEIGHT // 2
-        box_width = 50  # Updated width from the fix
-        box_height = 10
-        start_x = center_x - box_width // 2
-        start_y = center_y - box_height // 2
-
-        # Verify box is large enough for all messages
-        for message in victory_messages:
-            message_start_x = center_x - len(message) // 2
-            message_end_x = message_start_x + len(message)
-
-            # Message should fit within box bounds
-            self.assertGreaterEqual(message_start_x, start_x,
-                                   f"Message '{message}' starts outside left box boundary")
-            self.assertLessEqual(message_end_x, start_x + box_width,
-                                f"Message '{message}' extends outside right box boundary")
-
-        # Verify the longest message fits
-        longest_message = max(victory_messages, key=len)
-        required_width = len(longest_message) + 2  # Add padding
-        self.assertGreaterEqual(box_width, required_width,
-                               f"Box width {box_width} too small for message '{longest_message}' (needs {required_width})")
+        # Verify the dialogue has the expected content
+        self.assertIn("BREAKTHROUGH", victory_dialogue.title or "", "Title should mention breakthrough")
+        self.assertIsNotNone(victory_dialogue.message, "Victory message should have content")
+        self.assertGreater(len(victory_dialogue.message), 0, "Victory message should not be empty")
 
     def test_victory_triggers_save_deletion(self):
         """Test that winning the game deletes the save file."""

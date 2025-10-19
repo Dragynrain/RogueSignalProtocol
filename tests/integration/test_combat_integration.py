@@ -143,7 +143,7 @@ class TestExploitSystem:
         mock_game.player = mock_player
         mock_game.message_log = Mock()
         mock_game.sound_manager = Mock()
-        mock_game.dialogue_manager = Mock()  # Add dialogue_manager mock
+        mock_game.dialogue_state = Mock()  # Add dialogue_state mock
 
         with patch('game_combat.GameData') as mock_game_data:
             mock_exploit = Mock(spec=ExploitDefinition)
@@ -159,8 +159,8 @@ class TestExploitSystem:
 
             # Should return False and show dialogue instead of old confirmation system
             assert result is False
-            # Verify dialogue_manager.show_dialogue was called
-            mock_game.dialogue_manager.show_dialogue.assert_called_once()
+            # Verify dialogue_state.show was called
+            mock_game.dialogue_state.show.assert_called_once()
     
     def test_execute_exploit_invalid(self):
         """Cannot execute unknown exploit."""

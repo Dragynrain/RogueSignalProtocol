@@ -319,40 +319,41 @@ class TestCompleteLevelPlaythrough:
         engine.player.y = gateway.y
 
         # Verify dialogue not shown yet
-        assert engine.dialogue_manager.is_active() == False
+        assert engine.dialogue_state.is_active() == False
 
-        # Move player onto gateway (this triggers the confirmation dialogue)
+        # Move player onto gateway (this triggers the gateway dialogue and level progression)
+        initial_level = engine.level
         engine.move_player(1, 0)
 
-        # Verify gateway confirmation dialogue is shown
-        from game_dialogue import DialogueType
-        assert engine.dialogue_manager.is_active() == True, "Gateway dialogue not shown"
-        assert engine.dialogue_manager.active_dialogue == DialogueType.GATEWAY_CONFIRM, "Wrong dialogue type shown"
+        # Verify gateway dialogue is shown
+        assert engine.dialogue_state.is_active() == True, "Gateway dialogue not shown"
+        active_dialogue = engine.dialogue_state.get_active()
+        assert active_dialogue is not None, "Should have an active dialogue"
+        assert "GATEWAY" in active_dialogue.title.upper(), "Should be gateway dialogue"
 
         # Verify sound effect was played
         engine.sound_manager.play_sound.assert_called_with("ui_menu_open")
 
+        # Verify level progressed immediately (no confirmation needed)
+        assert engine.level == initial_level + 1, "Level should have progressed"
+
     def test_gateway_confirmation_progresses_to_next_level(self):
-        """Test that confirming gateway dialog progresses to next level."""
+        """Test that stepping on gateway progresses to next level automatically."""
         engine = self.create_test_engine(level=1)
 
-        # Move player to gateway and trigger confirmation
+        # Move player to gateway (this triggers automatic level progression)
         gateway = engine.game_map.gateway
         engine.player.x = gateway.x - 1
         engine.player.y = gateway.y
+        initial_level = engine.level
         engine.move_player(1, 0)
 
-        # Verify gateway confirmation dialogue is shown
-        from game_dialogue import DialogueType
-        assert engine.dialogue_manager.is_active() == True
-        assert engine.dialogue_manager.active_dialogue == DialogueType.GATEWAY_CONFIRM
+        # Verify gateway dialogue is shown
+        assert engine.dialogue_state.is_active() == True, "Gateway dialogue should be shown"
+        active_dialogue = engine.dialogue_state.get_active()
+        assert active_dialogue is not None, "Should have an active dialogue"
 
-        # Dismiss dialogue and progress
-        initial_level = engine.level
-        engine.dialogue_manager.close_dialogue()
-        engine.next_level()
-
-        # Verify level progression
+        # Verify level progression happened automatically (no manual confirmation needed)
         assert engine.level == initial_level + 1, "Level not incremented"
         assert engine.game_over == False, "Game should not be over"
 
@@ -423,22 +424,18 @@ class TestCompleteLevelPlaythrough:
             assert enemy.state in [EnemyState.UNAWARE, EnemyState.ALERT, EnemyState.HOSTILE]
             assert enemy.cpu > 0
 
-        # Reach gateway
+        # Reach gateway (automatically progresses to next level)
         gateway = engine.game_map.gateway
         engine.player.x = gateway.x - 1
         engine.player.y = gateway.y
         engine.move_player(1, 0)
 
-        # Verify gateway confirmation dialogue is shown
-        from game_dialogue import DialogueType
-        assert engine.dialogue_manager.is_active() == True, "Gateway dialogue not shown"
-        assert engine.dialogue_manager.active_dialogue == DialogueType.GATEWAY_CONFIRM
+        # Verify gateway dialogue is shown
+        assert engine.dialogue_state.is_active() == True, "Gateway dialogue not shown"
+        active_dialogue = engine.dialogue_state.get_active()
+        assert active_dialogue is not None, "Should have an active dialogue"
 
-        # Dismiss dialogue and progress
-        engine.dialogue_manager.close_dialogue()
-        engine.next_level()
-
-        # Verify level 2 state
+        # Verify level 2 state (progression happens automatically)
         assert engine.level == 2
         assert engine.game_over == False
         assert engine.game_map is not None
@@ -564,17 +561,12 @@ class TestCompleteLevelPlaythrough:
         engine.player.y = gateway.y
         engine.move_player(1, 0)
 
-        # Verify gateway confirmation dialogue shown (player can leave even with enemies alive)
-        from game_dialogue import DialogueType
-        assert engine.dialogue_manager.is_active() == True
-        assert engine.dialogue_manager.active_dialogue == DialogueType.GATEWAY_CONFIRM
+        # Verify gateway dialogue shown (player can leave even with enemies alive)
+        assert engine.dialogue_state.is_active() == True
+        active_dialogue = engine.dialogue_state.get_active()
+        assert active_dialogue is not None, "Should have an active dialogue"
 
-        # Dismiss dialogue and progress
-        enemy_count_before = len(engine.enemies)
-        engine.dialogue_manager.close_dialogue()
-        engine.next_level()
-
-        # Verify progression worked
+        # Verify progression worked automatically (no manual next_level call needed)
         assert engine.level == 2
         assert engine.game_over == False
 

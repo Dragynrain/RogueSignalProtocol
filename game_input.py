@@ -61,7 +61,7 @@ class InputHandler:
         """
         # Priority 1: Active dialogue (highest priority overlay)
         # Check this BEFORE game_over to allow death dialogue to be shown
-        if self.game.dialogue_manager.is_active():
+        if self.game.dialogue_state.is_active():
             return self._handle_dialogue_input(event)
 
         # Dead/game over state - any key should exit to main menu
@@ -91,9 +91,6 @@ class InputHandler:
         if self.game.show_lore_viewer:
             return self._handle_lore_viewer_input(event)
 
-        if self.game.show_gateway_confirmation:
-            return self._handle_gateway_confirmation_input(event)
-
         if self.game.show_inventory:
             return self._handle_inventory_input(event)
 
@@ -115,8 +112,6 @@ class InputHandler:
             g.show_lore_viewer, g.lore_viewer_mode, g.lore_viewer_selection = False, "list", 0
         elif g.show_help:
             g.show_help = False
-        elif g.show_gateway_confirmation:
-            g.show_gateway_confirmation = False
         elif g.show_inventory:
             g.show_inventory = False
         elif g.look_mode:
@@ -129,16 +124,15 @@ class InputHandler:
 
     def _handle_dialogue_input(self, event) -> bool:
         """Handle input when a dialogue is active."""
-        from game_dialogue import DialogueType
+        from game_dialogue_system import DialogueInputHandler
         from game_entities import Colors
 
-        config = self.game.dialogue_manager.get_active_config()
-        if not config:
+        dialogue = self.game.dialogue_state.get_active()
+        if not dialogue:
             return True
 
-        # CRITICAL: Check dialogue input FIRST, before blocking movement keys
-        # This allows SPACE/ENTER to dismiss dialogues even though they're also movement keys
-        action = self.game.dialogue_manager.handle_input(event.sym)
+        # Use DialogueInputHandler to process input
+        action = DialogueInputHandler.handle_input(dialogue, event.sym)
 
         # If dialogue handled the input, process it
         if action is not None:
@@ -146,49 +140,34 @@ class InputHandler:
                 self._handle_dialogue_confirm()
                 return True
             elif action in ["cancel", "dismiss"]:
-                # Handle dismiss and check if we should exit to menu (for death/victory)
                 should_continue = self._handle_dialogue_dismiss()
                 return should_continue
             elif action == "dont_show_again":
                 self._handle_dialogue_dont_show_again()
                 return True
 
-        # Block movement keys if dialogue blocks movement (and dialogue didn't handle the key)
-        if config.blocks_movement:
-            movement_keys = {
-                tcod.event.KeySym.UP, tcod.event.KeySym.DOWN, tcod.event.KeySym.LEFT, tcod.event.KeySym.RIGHT,
-                tcod.event.KeySym.W, tcod.event.KeySym.A, tcod.event.KeySym.S, tcod.event.KeySym.D,
-                tcod.event.KeySym.Q, tcod.event.KeySym.E, tcod.event.KeySym.Z, tcod.event.KeySym.C,
-                tcod.event.KeySym.KP_8, tcod.event.KeySym.KP_2, tcod.event.KeySym.KP_4, tcod.event.KeySym.KP_6,
-                tcod.event.KeySym.KP_7, tcod.event.KeySym.KP_9, tcod.event.KeySym.KP_1, tcod.event.KeySym.KP_3,
-                tcod.event.KeySym.SPACE, tcod.event.KeySym.PERIOD, tcod.event.KeySym.KP_5
-            }
-            if event.sym in movement_keys:
-                return True  # Ignore movement while dialogue active
-
         # Dialogue is active - don't process other inputs
         return True
 
     def _handle_dialogue_confirm(self):
         """Handle dialogue confirmation (user pressed Y)."""
-        from game_dialogue import DialogueType
+        dialogue = self.game.dialogue_state.get_active()
+        if not dialogue:
+            return
 
-        dialogue_type = self.game.dialogue_manager.active_dialogue
-
-        if dialogue_type == DialogueType.OVERCLOCK_WARNING:
-            # Player confirmed overclock - execute exploit with damage
-            exploit_key = self.game.dialogue_manager.dialogue_data.get("exploit_key")
-            if exploit_key:
-                # Execute the exploit that will cause overheating
-                self.exploit_system.use_exploit(exploit_key)
-        elif dialogue_type == DialogueType.GATEWAY_CONFIRM:
+        # Check dialogue type by title (since we're using DialogueBox now)
+        if "OVERCLOCK WARNING" in dialogue.title:
+            # Player confirmed overclock - no need to do anything, exploit will be used
+            # The overclock system sets self.overclock_confirmation before showing dialogue
+            pass
+        elif "GATEWAY" in dialogue.title:
             # Player confirmed gateway - proceed to next level
             self.game.sound_manager.play_sound("level_complete")
             self.game.message_log.add_message("Gateway reached! Next network...")
             self.game.next_level()
 
         # Close dialogue
-        self.game.dialogue_manager.close_dialogue()
+        self.game.dialogue_state.close()
 
     def _handle_dialogue_dismiss(self) -> bool:
         """
@@ -197,37 +176,39 @@ class InputHandler:
         Returns:
             True if game should continue, False if should exit to menu
         """
-        from game_dialogue import DialogueType
+        dialogue = self.game.dialogue_state.get_active()
+        if not dialogue:
+            return True
 
-        dialogue_type = self.game.dialogue_manager.active_dialogue
-
-        if dialogue_type == DialogueType.INVENTORY_ATTACK:
-            # Keep inventory open - user should be able to continue using inventory
-            # after dismissing the attack warning
+        # Check dialogue type by title
+        if "UNDER ATTACK" in dialogue.title:
+            # Keep inventory open - user should be able to continue
             pass
-        elif dialogue_type == DialogueType.OVERCLOCK_WARNING:
+        elif "OVERCLOCK WARNING" in dialogue.title:
             # Cancel exploit use - just close dialogue
             pass
-        elif dialogue_type == DialogueType.GATEWAY_CONFIRM:
-            # Player cancelled gateway - close dialogue and stay on level
+        elif "GATEWAY" in dialogue.title:
+            # Player cancelled gateway
             self.game.message_log.add_message("Staying in current network")
-        elif dialogue_type in (DialogueType.DEATH_MESSAGE, DialogueType.VICTORY_MESSAGE):
+        elif "PURGED" in dialogue.title or "BREAKTHROUGH" in dialogue.title:
             # Death/victory messages - any key closes and returns to menu
-            self.game.dialogue_manager.close_dialogue()
+            self.game.dialogue_state.close()
             return False  # Exit to main menu
 
         # Close dialogue
-        self.game.dialogue_manager.close_dialogue()
+        self.game.dialogue_state.close()
         return True  # Continue game
 
     def _handle_dialogue_dont_show_again(self):
         """Handle 'don't show this again' option (user pressed D)."""
         from game_entities import Colors
 
-        dialogue_type = self.game.dialogue_manager.active_dialogue
+        dialogue = self.game.dialogue_state.get_active()
+        if not dialogue or not dialogue.user_pref_key:
+            return
 
         # Disable this dialogue type
-        self.game.dialogue_manager.disable_dialogue(dialogue_type)
+        self.game.dialogue_state.disable_dialogue(dialogue.user_pref_key)
 
         # Add message to log
         self.game.message_log.add_message(
@@ -235,28 +216,12 @@ class InputHandler:
             Colors.YELLOW
         )
 
-        # Close dialogue (also executes the "confirm" action for overclock warning)
-        if dialogue_type:
-            # For overclock warning, pressing D should still execute the exploit
+        # For overclock warning, pressing D should still execute the exploit
+        if "OVERCLOCK WARNING" in dialogue.title:
             self._handle_dialogue_confirm()
         else:
-            self.game.dialogue_manager.close_dialogue()
+            self.game.dialogue_state.close()
 
-    def _handle_gateway_confirmation_input(self, event) -> bool:
-        """Handle input for gateway confirmation dialog."""
-        if UniversalInputHandler.is_confirm_key(event) or event.sym == tcod.event.KeySym.Y:
-            # Yes - proceed to next level
-            self.game.show_gateway_confirmation = False
-            self.game.sound_manager.play_sound("level_complete")
-            self.game.message_log.add_message("Gateway reached! Next network...")
-            self.game.next_level()
-        elif event.sym == tcod.event.KeySym.N or UniversalInputHandler.is_escape_key(event):
-            # No - cancel and don't waste turn
-            self.game.show_gateway_confirmation = False
-            self.game.message_log.add_message("Staying in current network")
-        
-        return True
-    
     def _handle_inventory_input(self, event) -> bool:
         """Handle input while inventory is open."""
         # Handle navigation using universal handler with callback

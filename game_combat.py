@@ -41,17 +41,15 @@ class ExploitSystem:
             remaining_cpu = self.game.player.cpu - cpu_damage
 
             # Show overclock warning dialogue with exact calculations
-            from game_dialogue import DialogueType
-            self.game.dialogue_manager.show_dialogue(
-                DialogueType.OVERCLOCK_WARNING,
-                exploit_key=exploit_key,
+            from game_dialogue_system import create_overclock_warning_dialogue
+            dialogue = create_overclock_warning_dialogue(
                 exploit_name=exploit.name,
-                damage=cpu_damage,
                 overheat_amount=overheat_amount,
-                current_cpu=self.game.player.cpu,
-                max_cpu=self.game.player.max_cpu,
-                remaining_cpu=remaining_cpu
+                damage=cpu_damage,
+                remaining_cpu=remaining_cpu,
+                max_cpu=self.game.player.max_cpu
             )
+            self.game.dialogue_state.show(dialogue)
 
             # Play warning sound
             self.game.sound_manager.play_sound("exploit_failed")

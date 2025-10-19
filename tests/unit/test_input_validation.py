@@ -31,7 +31,6 @@ def create_mock_game():
     game.show_help = False
     game.show_story_fragment = None
     game.show_lore_viewer = False
-    game.show_gateway_confirmation = False
     game.show_inventory = False
     game.targeting_mode = False
     game.targeting_exploit = None
@@ -55,8 +54,9 @@ def create_mock_game():
     game.sound_manager.play_sound = Mock()
     game.story_fragment_manager = Mock()
     game.story_fragment_manager.get_discovered_fragments = Mock(return_value=[])
-    game.dialogue_manager = Mock()  # Add dialogue_manager mock for new dialogue system
-    game.dialogue_manager.is_active = Mock(return_value=False)  # Dialogue not active by default
+    game.dialogue_state = Mock()  # Add dialogue_state mock for new dialogue system
+    game.dialogue_state.is_active = Mock(return_value=False)  # Dialogue not active by default
+    game.dialogue_state.get_active = Mock(return_value=None)
 
     return game
 
@@ -164,10 +164,6 @@ class TestInputHandler:
         handler._handle_escape()
         assert game.show_help is False
         
-        # Test gateway confirmation
-        game.show_gateway_confirmation = True
-        handler._handle_escape()
-        assert game.show_gateway_confirmation is False
         
         # Test inventory
         game.show_inventory = True
@@ -491,49 +487,7 @@ class TestInventoryInputEdgeCases:
         game.message_log.add_message.assert_called_with("No item selected")
 
 
-class TestGatewayConfirmationInput:
-    """Test gateway confirmation input handling."""
-    
-    def test_gateway_confirmation_yes(self):
-        """Test gateway confirmation with Yes input."""
-        game = create_mock_game()
-        handler = InputHandler(game)
-        
-        # Test Y key
-        event = create_mock_event(tcod.event.KeySym.Y)
-        result = handler._handle_gateway_confirmation_input(event)
-        
-        assert result is True
-        assert game.show_gateway_confirmation is False
-        game.sound_manager.play_sound.assert_called_with("level_complete")
-        game.message_log.add_message.assert_called_with("Gateway reached! Next network...")
-        game.next_level.assert_called()
-    
-    def test_gateway_confirmation_no(self):
-        """Test gateway confirmation with No input."""
-        game = create_mock_game()
-        handler = InputHandler(game)
-        
-        # Test N key
-        event = create_mock_event(tcod.event.KeySym.N)
-        result = handler._handle_gateway_confirmation_input(event)
-        
-        assert result is True
-        assert game.show_gateway_confirmation is False
-        game.message_log.add_message.assert_called_with("Staying in current network")
-        game.next_level.assert_not_called()
-    
-    def test_gateway_confirmation_escape(self):
-        """Test gateway confirmation with Escape key."""
-        game = create_mock_game()
-        handler = InputHandler(game)
-        
-        event = create_mock_event(tcod.event.KeySym.ESCAPE)
-        result = handler._handle_gateway_confirmation_input(event)
-        
-        assert result is True
-        assert game.show_gateway_confirmation is False
-        game.next_level.assert_not_called()
+# Gateway confirmation tests removed - feature now handled by dialogue system
 
 
 class TestLoreViewerInputEdgeCases:

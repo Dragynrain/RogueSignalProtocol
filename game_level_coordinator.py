@@ -94,8 +94,8 @@ class GameLevelCoordinator:
             SaveGameManager.delete_save()
             self.game_engine.message_log.add_message("Mission complete - save data purged")
             # Show victory dialogue
-            from game_dialogue import DialogueType
-            self.game_engine.dialogue_manager.show_dialogue(DialogueType.VICTORY_MESSAGE)
+            from game_dialogue_system import create_victory_dialogue
+            self.game_engine.dialogue_state.show(create_victory_dialogue())
         else:
             try:
                 self.generate_procedural_level()
