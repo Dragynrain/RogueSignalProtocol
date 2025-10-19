@@ -41,7 +41,7 @@ class GameRenderer:
         self.settings = settings
         self.tile_manager = tile_manager
         self.context = context
-        self.ui_renderer = UIRenderer()
+        self.ui_renderer = UIRenderer(settings=settings, context=context, tile_manager=tile_manager)
 
         # Initialize both map renderers
         self.glyphs_renderer = GlyphsMapRenderer(settings=settings)
@@ -85,6 +85,11 @@ class GameRenderer:
         # For overlay screens (inventory, help, lore), we need to present in graphics mode too
         if should_use_graphics:
             self.context.sdl_renderer.clear()
+
+            # Render sprites if the screen supports them (e.g., GraphicalHelpMenu)
+            if game.show_help:
+                self.ui_renderer.render_help_sprites()
+
             console_texture = self.context.console_render.render(console)
             self.context.sdl_renderer.copy(console_texture)
             self.context.sdl_renderer.present()

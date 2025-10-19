@@ -62,6 +62,66 @@
 
 ---
 
+## 7b. Graphics Rendering & Coordinate Systems (CRITICAL)
+
+**Three Different Coordinate Systems - DO NOT MIX THEM:**
+
+### 1. Console Character Coordinates (80x50 grid)
+- Used for: Text rendering, UI layout, sprite positioning
+- Range: X: 0-79, Y: 0-49
+- Example: `render_char_safe(console, 10, 5, "text")`
+- **Console rendered as texture with 10x16 pixel characters (tileset size)**
+
+### 2. Game Viewport Coordinates (27x21 in graphics mode)
+- Used for: Game map tile positions during gameplay
+- Scaled based on viewport to fit window
+- TileManager calculates tile dimensions (e.g., 65x54 pixels per tile)
+- **Only used for in-game map rendering, NOT menus/help screens**
+
+### 3. SDL Pixel Coordinates (window resolution, e.g., 2560x1351)
+- Used for: Direct SDL sprite rendering
+- Full window pixel space
+- **Sprites rendered here must align with console texture**
+
+**CRITICAL RULES:**
+
+1. **Menu/Help Screens (GraphicalHelpMenu, etc.)**:
+   - Console is ALWAYS 80x50 characters
+   - **Sprite POSITIONING**: Calculate from console coords + window scaling
+     ```python
+     # Get window size
+     window_width, window_height = context.sdl_window.size
+     # Calculate pixels per console character
+     pixels_per_char_x = window_width / 80
+     pixels_per_char_y = window_height / 50
+     # Convert console position to pixel position
+     pixel_x = int(console_x * pixels_per_char_x)
+     pixel_y = int(console_y * pixels_per_char_y)
+     ```
+   - **Sprite SIZE**: Use TileManager dimensions (SAME AS IN-GAME!)
+     ```python
+     sprite_width = tile_manager.tile_width  # e.g., 65 pixels
+     sprite_height = tile_manager.tile_height  # e.g., 54 pixels
+     ```
+   - Sprites should be same scale as in-game for consistency
+
+2. **In-Game Rendering**:
+   - Use TileManager.tile_width/height for both size AND positioning
+   - These dimensions are viewport-scaled (e.g., 65x54 for 2x zoom)
+   - Game area uses different coordinate system than menus
+
+3. **Console Transparency**:
+   - Set entire console background transparent: `console.rgba["bg"][:, :, 3] = 0`
+   - Text rendering makes those areas opaque automatically
+   - Sprites underneath show through transparent areas
+
+**Common Mistakes**:
+- Using tileset size (10x16) for sprite SIZE → tiny sprites
+- Using tile dimensions (65x54) to multiply console coords → wrong positions
+- Mixing positioning math between menus and in-game rendering
+
+---
+
 ## 8. Docs & Research
 - Always check latest official docs.
 - Confirm API details before assuming limits and interfaces.
