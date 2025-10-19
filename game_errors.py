@@ -7,7 +7,6 @@ Provides consistent error logging and user notification patterns.
 import logging
 import traceback
 from typing import Optional, Any
-from game_entities import Colors
 
 
 class GameErrorHandler:
@@ -86,3 +85,46 @@ class GameErrorHandler:
         """
         log_func = getattr(logging, level.lower(), logging.info)
         log_func(f"Game Event: {message}")
+
+    @staticmethod
+    def handle_config_error(operation: str, exception: Exception) -> None:
+        """
+        Handle configuration loading errors consistently.
+
+        Args:
+            operation: Description of what configuration operation failed
+            exception: The exception that occurred
+
+        Raises:
+            The same exception type with enhanced message
+        """
+        error_msg = f"CRITICAL CONFIG ERROR: {operation}"
+        logging.error(error_msg)
+        logging.error(f"Exception: {str(exception)}")
+
+        # Re-raise with enhanced message but preserve original exception type
+        if isinstance(exception, FileNotFoundError):
+            raise FileNotFoundError(f"{operation} - file missing") from exception
+        elif isinstance(exception, KeyError):
+            raise KeyError(f"{operation} - required key missing") from exception
+        else:
+            raise type(exception)(f"{operation}: {str(exception)}") from exception
+
+    @staticmethod
+    def handle_data_error(data_type: str, exception: Exception) -> None:
+        """
+        Handle data loading errors consistently.
+
+        Args:
+            data_type: Type of data being loaded (e.g., "enemy data", "exploit config")
+            exception: The exception that occurred
+
+        Raises:
+            The same exception type with enhanced message
+        """
+        error_msg = f"Failed to load {data_type}"
+        logging.error(error_msg)
+        logging.error(f"Exception: {str(exception)}")
+
+        # Re-raise with context
+        raise type(exception)(f"Failed to load {data_type}: {str(exception)}") from exception

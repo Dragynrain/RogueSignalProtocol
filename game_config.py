@@ -445,7 +445,6 @@ class GameBalance:
     @staticmethod
     def get_enemy_difficulty_multiplier(difficulty: str) -> float:
         """Get difficulty multiplier for enemies - FAILS if not found."""
-        from data_loading import DataLoader
         game_data = DataLoader.load_game_data()
         try:
             multipliers = game_data['difficulty_multipliers']

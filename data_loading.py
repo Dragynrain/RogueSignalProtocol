@@ -8,6 +8,7 @@ import json
 import logging
 import os
 from typing import List, Dict, Any
+from game_errors import GameErrorHandler
 
 
 class DataLoader:
@@ -25,20 +26,11 @@ class DataLoader:
                 data = json.load(f)
                 return data[key] if key else data
         except FileNotFoundError as e:
-            msg = f"CRITICAL CONFIG ERROR: {filename} not found"
-            logging.error(msg)
-            logging.error(f"Exception: {str(e)}")
-            raise FileNotFoundError(f"Required file {filename} is missing") from e
+            GameErrorHandler.handle_config_error(f"{filename} not found", e)
         except json.JSONDecodeError as e:
-            msg = f"CRITICAL CONFIG ERROR: Invalid JSON in {filename}"
-            logging.error(msg)
-            logging.error(f"Exception: {str(e)}")
-            raise json.JSONDecodeError(f"{filename} contains invalid JSON", e.doc, e.pos) from e
+            GameErrorHandler.handle_config_error(f"Invalid JSON in {filename}", e)
         except KeyError as e:
-            msg = f"CRITICAL CONFIG ERROR: Missing '{key}' key in {filename}"
-            logging.error(msg)
-            logging.error(f"Exception: {str(e)}")
-            raise KeyError(f"Required '{key}' section missing from {filename}") from e
+            GameErrorHandler.handle_config_error(f"Missing '{key}' key in {filename}", e)
     
     @classmethod
     def load_story_fragments(cls) -> List[str]:
@@ -83,15 +75,13 @@ class DataLoader:
         try:
             return config['balance']['ai_behavior']
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Missing AI behavior config in game_rules.json"
-            logging.error(error_msg)
-            logging.error(f"Exception: {str(e)}")
+            # Provide additional context for debugging
             if 'balance' in config:
                 logging.error(f"Available balance keys: {list(config['balance'].keys())}")
             else:
                 logging.error("No 'balance' section found")
                 logging.error(f"Available sections: {list(config.keys())}")
-            raise KeyError(f"Required 'balance.ai_behavior' section missing from game_rules.json") from e
+            GameErrorHandler.handle_config_error("Missing AI behavior config in game_rules.json", e)
     
     @classmethod
     def load_config(cls) -> Dict[str, Any]:
