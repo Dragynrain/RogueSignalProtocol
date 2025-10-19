@@ -135,6 +135,16 @@ class GameSettings:
         if volume_type in setter_map:
             setter_map[volume_type](percent / 100.0)
 
+    @property
+    def audio_enabled(self) -> bool:
+        """Check if audio is enabled (master volume > 0)."""
+        return self.master_volume > 0
+
+    @property
+    def music_enabled(self) -> bool:
+        """Check if music is enabled (music volume > 0 and master volume > 0)."""
+        return self.music_volume > 0 and self.master_volume > 0
+
 
 class GameConfig:
     """Game configuration constants and settings."""
