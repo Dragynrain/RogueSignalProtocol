@@ -16,6 +16,7 @@ from game_data import GameData, GameUpgrades
 from data_loading import DataLoader
 from game_ui import render_char_safe
 from game_rendering_base import MapRendererBase
+from game_color_manager import ColorManager
 
 
 class GlyphsMapRenderer(MapRendererBase):
@@ -59,7 +60,7 @@ class GlyphsMapRenderer(MapRendererBase):
 
                 # Console position (account for status bar at row 0)
                 console_x = viewport_x
-                console_y = viewport_y + 1
+                console_y = viewport_y + GameConfig.STATUS_BAR_HEIGHT()
 
                 if world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
                     # Check if player can see this position using TCOD FOV
@@ -89,9 +90,6 @@ class GlyphsMapRenderer(MapRendererBase):
     def _render_remembered_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game):
         """Render a tile from memory with dimmed neon colors."""
         # Check if this position has a revealed special node
-        from data_loading import DataLoader
-        config = DataLoader.load_config()
-        terrain_colors = config.get("colors", {}).get("terrain_variants", {})
 
         pos_tuple = (world_pos.x, world_pos.y)
         if pos_tuple in game.game_state.revealed_special_nodes:
@@ -158,9 +156,7 @@ class GlyphsMapRenderer(MapRendererBase):
                 render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
-                from data_loading import DataLoader
-                config = DataLoader.load_config()
-                cooling_faded = ensure_color_tuple(config.get("colors", {}).get("terrain_variants", {}).get("cooling_node", [0, 120, 120]))
+                cooling_faded = ColorManager.get_terrain_variant_color("cooling_node")
                 render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=cooling_faded, bg=Colors.BLACK)
         elif game.game_map.is_cpu_recovery_node(world_pos):
             # Position 3 = ♥ (heart)
@@ -179,9 +175,7 @@ class GlyphsMapRenderer(MapRendererBase):
                 render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
-                from data_loading import DataLoader
-                config = DataLoader.load_config()
-                cpu_faded = ensure_color_tuple(config.get("colors", {}).get("terrain_variants", {}).get("cpu_node", [120, 0, 0]))
+                cpu_faded = ColorManager.get_terrain_variant_color("cpu_node")
                 render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=cpu_faded, bg=Colors.BLACK)
         elif game.game_map.is_ghost_node(world_pos):
             # Position 6 = ♠ (spade)
@@ -200,9 +194,7 @@ class GlyphsMapRenderer(MapRendererBase):
                 render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
-                from data_loading import DataLoader
-                config = DataLoader.load_config()
-                ghost_faded = ensure_color_tuple(config.get("colors", {}).get("terrain_variants", {}).get("ghost_node", [80, 0, 120]))
+                ghost_faded = ColorManager.get_terrain_variant_color("ghost_node")
                 render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=ghost_faded, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.code_hacks:
             patch = game.game_map.code_hacks[(world_pos.x, world_pos.y)]
@@ -230,15 +222,13 @@ class GlyphsMapRenderer(MapRendererBase):
                 if exploit_item.exploit_key in GameData.EXPLOITS:
                     exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
                     exploit_category = exploit_def.category  # Fixed: was exploit_class, should be category
-                    # Get color from config, fallback to magenta
-                    from data_loading import DataLoader
-                    config = DataLoader.load_config()
-                    exploit_colors = config.get("colors", {}).get("exploits", {})
-                    color_data = exploit_colors.get(exploit_category, [255, 20, 255])
-                    
-                    # Validate color data and convert to tuple
-                    color_tuple = ensure_color_tuple(color_data)
-                    
+                    # Get color from config
+                    try:
+                        color_tuple = ColorManager.get_exploit_color(exploit_category)
+                    except KeyError:
+                        # Fallback to magenta if category not found
+                        color_tuple = Colors.MAGENTA
+
                     render_char_safe(console, screen_x, screen_y, '&', fg=color_tuple, bg=Colors.BLACK)
                 else:
                     logging.error(f"Unknown exploit key: {exploit_item.exploit_key}")
@@ -436,7 +426,7 @@ class GlyphsMapRenderer(MapRendererBase):
                         if use_graphics and renderer:
                             # Graphics mode: Draw corner brackets
                             tile_rect = self._get_tile_rect(screen_x, screen_y)
-                            self._draw_corner_brackets(renderer, tile_rect, overlay_color, bracket_size=4)
+                            self._draw_corner_brackets(renderer, tile_rect, overlay_color, bracket_size=GameConfig.VISION_BRACKET_SIZE())
                         else:
                             # Classic mode: Highlight background
                             self._safely_overlay_tile(console, screen_x, screen_y, overlay_color)
@@ -490,20 +480,17 @@ class GlyphsMapRenderer(MapRendererBase):
                             # Graphics mode: Render movement prediction sprite with color_mod
                             texture = self.tile_manager.get_tile("movement_prediction")
                             if texture:
-                                from data_loading import DataLoader
-                                config = DataLoader.load_config()
-                                targeting_colors = config.get("colors", {}).get("targeting", {})
                                 tile_rect = self._get_tile_rect(screen_x, screen_y)
                                 # Apply color based on position (brightness fades with distance)
                                 if i == 0:
-                                    texture.color_mod = ensure_color_tuple(targeting_colors.get("prediction_bright", [255, 255, 50]))
+                                    texture.color_mod = ColorManager.get_targeting_color("prediction_bright")
                                 elif i == 1:
-                                    texture.color_mod = ensure_color_tuple(targeting_colors.get("prediction_medium", [240, 240, 30]))
+                                    texture.color_mod = ColorManager.get_targeting_color("prediction_medium")
                                 else:
-                                    texture.color_mod = ensure_color_tuple(targeting_colors.get("prediction_dim", [220, 220, 20]))
+                                    texture.color_mod = ColorManager.get_targeting_color("prediction_dim")
                                 renderer.copy(texture, dest=tile_rect)
                                 # Reset color_mod
-                                normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                                normal_tint = ColorManager.get_tint_color("normal")
                                 texture.color_mod = normal_tint
                             else:
                                 logging.warning("_render_patrol_routes: movement_prediction texture not found!")
@@ -520,23 +507,19 @@ class GlyphsMapRenderer(MapRendererBase):
                             bg_color = ensure_color_tuple(bg_color)
 
                             # Large bright yellow shapes for all enemy movement prediction
-                            from data_loading import DataLoader
-                            config = DataLoader.load_config()
-                            targeting_colors = config.get("colors", {}).get("targeting", {})
-
                             if i == 0:
                                 # Next immediate move - brightest and largest
-                                color = ensure_color_tuple(targeting_colors.get("prediction_bright", [255, 255, 50]))
+                                color = ColorManager.get_targeting_color("prediction_bright")
                                 # Position 9 = ○ (circle) for enemy move intent
                                 symbol = chr(tcod.tileset.CHARMAP_CP437[9])
                             elif i == 1:
                                 # Second move - slightly dimmer but still bright
-                                color = ensure_color_tuple(targeting_colors.get("prediction_medium", [240, 240, 30]))
+                                color = ColorManager.get_targeting_color("prediction_medium")
                                 # Position 9 = ○ (circle) for enemy move intent
                                 symbol = chr(tcod.tileset.CHARMAP_CP437[9])
                             else:
                                 # Third+ moves - still bright yellow
-                                color = ensure_color_tuple(targeting_colors.get("prediction_dim", [220, 220, 20]))
+                                color = ColorManager.get_targeting_color("prediction_dim")
                                 # Position 9 = ○ (circle) for enemy move intent
                                 symbol = chr(tcod.tileset.CHARMAP_CP437[9])
                             render_char_safe(console, screen_x, screen_y, symbol, fg=color, bg=bg_color)
@@ -574,9 +557,7 @@ class GlyphsMapRenderer(MapRendererBase):
                     gateway_pos in game.game_state.revealed_special_nodes and
                     game.game_state.revealed_special_nodes[gateway_pos] == "gateway"):
                     # Render remembered gateway in darker yellow
-                    from data_loading import DataLoader
-                    config = DataLoader.load_config()
-                    gateway_dark = ensure_color_tuple(config.get("colors", {}).get("terrain_variants", {}).get("gateway_dark", [180, 150, 0]))
+                    gateway_dark = ColorManager.get_terrain_variant_color("gateway_dark")
                     render_char_safe(console, screen_x, screen_y, '>', fg=gateway_dark, bg=Colors.BLACK)
     
     def _render_enemies(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
@@ -737,9 +718,7 @@ class GlyphsMapRenderer(MapRendererBase):
                     
                     if (0 <= range_screen_x < GameConfig.GAME_AREA_WIDTH() and
                         1 <= range_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                        from data_loading import DataLoader
-                        config = DataLoader.load_config()
-                        range_color = ensure_color_tuple(config.get("colors", {}).get("targeting", {}).get("range_overlay", [40, 40, 40]))
+                        range_color = ColorManager.get_targeting_color("range_overlay")
                         self._safely_overlay_tile(console, range_screen_x, range_screen_y, range_color)
     
     def _render_targeting_area(self, console: tcod.console.Console, center: Position, camera_offset: Position):
@@ -752,9 +731,7 @@ class GlyphsMapRenderer(MapRendererBase):
                 if (0 <= area_screen_x < GameConfig.GAME_AREA_WIDTH() and
                     1 <= area_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                     # Use a brighter overlay to distinguish from range indicator
-                    from data_loading import DataLoader
-                    config = DataLoader.load_config()
-                    area_color = ensure_color_tuple(config.get("colors", {}).get("targeting", {}).get("area_overlay", [60, 60, 20]))
+                    area_color = ColorManager.get_targeting_color("area_overlay")
                     self._safely_overlay_tile(console, area_screen_x, area_screen_y, area_color)
 
     # ===== GRAPHICS MODE SPRITE RENDERING =====

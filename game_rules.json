@@ -17,6 +17,16 @@
     "message_line_spacing": 1,
     "message_button_spacing": 3
   },
+  "rendering": {
+    "status_bar_height": 1,
+    "vision_bracket_size": 4,
+    "status_outline_thickness": 2,
+    "enemy_outline_thickness": 1,
+    "min_tile_width": 8,
+    "min_tile_height": 8,
+    "fallback_tile_width": 10,
+    "fallback_tile_height": 16
+  },
   "gameplay": {
     "default_player_ram": 8,
     "default_player_cpu": 100,
