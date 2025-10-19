@@ -32,7 +32,7 @@ class MainMenu:
     
     def __init__(self, background=None):
         self.selected_option = 0
-        self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Graphics Preview", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Lore", "Graphics Preview", "Exit"]
+        self.options = ["Continue Game", "New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", "Exit"]
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
@@ -41,10 +41,10 @@ class MainMenu:
     def refresh_options(self, show_continue: bool = True) -> None:
         """Refresh menu options. Set show_continue=False when accessed from mid-game."""
         if show_continue and SaveGameManager.save_exists():
-            self.options = ["Continue Game", "New Game", "Settings", "Help", "Lore", "Graphics Preview", "Exit"]
+            self.options = ["Continue Game", "New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", "Exit"]
             self.mid_game_mode = False
         else:
-            self.options = ["New Game", "Settings", "Help", "Lore", "Graphics Preview", "Exit"]
+            self.options = ["New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", "Exit"]
             self.mid_game_mode = not show_continue  # True when accessed from mid-game
         # Reset selection to prevent index out of bounds
         self.selected_option = 0
@@ -382,7 +382,7 @@ class MainMenu:
                 return "settings"
             elif option == "Help":
                 return "help"
-            elif option == "Lore":
+            elif option == "Data Fragments":
                 return "lore"
             elif option == "Graphics Preview":
                 return "graphics_preview"
@@ -578,7 +578,7 @@ class SettingsMenu:
             console.clear()
 
         # Calculate menu height (account for all options including dialogue toggles)
-        menu_height = 30  # Increased for dialogue preferences section
+        menu_height = 35  # Increased for dialogue preferences section with better spacing
         
         # Render the right-side box using common method
         box = self._render_right_side_box(console, menu_height, Colors.WHITE)
@@ -631,7 +631,8 @@ class SettingsMenu:
                     dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
                     is_enabled = dialogue_prefs.get(option["key"], True)
                     status = "[X]" if is_enabled else "[ ]"
-                    render_char_safe(console, name_x, option_y + 1, f"{status} Enabled", fg=color, bg=Colors.BLACK)
+                    # Render on same line for narrow box
+                    render_char_safe(console, name_x + 18, option_y, f"{status}", fg=color, bg=Colors.BLACK)
             else:
                 # Glyph mode - wider layout
                 # Option name

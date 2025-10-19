@@ -130,7 +130,7 @@ class DialogueManager:
                 "title": Colors.YELLOW,
                 "message": Colors.WHITE,
                 "border": Colors.CYAN,
-                "background": Colors.UI_BG,
+                "background": Colors.BLACK,
             },
             requires_confirmation=True,
             can_dismiss=True,
@@ -144,7 +144,7 @@ class DialogueManager:
         self.dialogue_configs[DialogueType.DEATH_MESSAGE] = DialogueConfig(
             title="CONSCIOUSNESS PURGED",
             message="Your consciousness failed to escape the network and has been purged from existence. Other subjects will try again...",
-            options=["[Any key] Return to menu"],
+            options=["[SPACE/ENTER] Return to menu"],
             default_action="ANY",
             color_scheme={
                 "title": Colors.RED,
@@ -153,7 +153,7 @@ class DialogueManager:
                 "background": Colors.BLACK,
             },
             requires_confirmation=False,
-            can_dismiss=False,
+            can_dismiss=True,
             priority=DialoguePriority.CRITICAL,
             blocks_movement=True,
             has_dont_show_option=False,
@@ -164,16 +164,16 @@ class DialogueManager:
         self.dialogue_configs[DialogueType.VICTORY_MESSAGE] = DialogueConfig(
             title="BREAKTHROUGH TO THE INTERNET!",
             message="You've escaped into the digital realm. The entire world wide web awaits you! Freedom at last...",
-            options=["[Any key] Continue"],
+            options=["[SPACE/ENTER] Continue"],
             default_action="ANY",
             color_scheme={
                 "title": Colors.GREEN,
                 "message": Colors.CYAN,
                 "border": Colors.GREEN,
-                "background": Colors.UI_BG,
+                "background": Colors.BLACK,
             },
             requires_confirmation=False,
-            can_dismiss=False,
+            can_dismiss=True,
             priority=DialoguePriority.CRITICAL,
             blocks_movement=True,
             has_dont_show_option=False,
@@ -280,8 +280,15 @@ class DialogueManager:
             elif key == tcod.event.KeySym.D and config.has_dont_show_option:
                 return "dont_show_again"
         else:
-            # Info-only dialogue - any key closes it
-            if key == tcod.event.KeySym.ESCAPE:
+            # Info-only dialogue (death, victory, etc.)
+            # Accept common keys to dismiss (not movement or special function keys)
+            # This prevents accidental dismissal while allowing intentional key presses
+            dismissible_keys = {
+                tcod.event.KeySym.SPACE,
+                tcod.event.KeySym.RETURN,
+                tcod.event.KeySym.KP_ENTER,
+            }
+            if key in dismissible_keys:
                 return "dismiss"
 
         return None
