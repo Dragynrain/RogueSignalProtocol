@@ -21,22 +21,22 @@ from game_ui import render_char_safe, WindowManager, UniversalInputHandler
 from game_menu_background import MenuBackground
 from game_menu_help_lore import LoreMenu, HelpMenu
 from game_menu_utilities import MenuRenderingUtils
+from game_menu_base import BaseMenu
 
 
 # ============================================================================
 # MAIN MENU SYSTEM
 # ============================================================================
 
-class MainMenu:
+class MainMenu(BaseMenu):
     """Main menu for New Game/Continue options."""
-    
+
     def __init__(self, background=None):
-        self.selected_option = 0
+        super().__init__(background)
         self.options = ["Continue Game", "New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", "Exit"]
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
-        self.background = background
     
     def refresh_options(self, show_continue: bool = True) -> None:
         """Refresh menu options. Set show_continue=False when accessed from mid-game."""
@@ -50,13 +50,7 @@ class MainMenu:
         self.selected_option = 0
         # Reset warning state when refreshing options
         self.show_warning = False
-    
-    def _has_background(self) -> bool:
-        """Check if background is available and should be displayed."""
-        return (self.background and 
-                self.background.should_load_background() and 
-                self.background.background_texture)
-    
+
     def render(self, console: tcod.console.Console) -> None:
         """Render the main menu with optional background."""
         if self._has_background():
@@ -68,12 +62,7 @@ class MainMenu:
             self._render_warning_dialog(console)
         else:
             self._render_main_menu(console)
-    
-    def _clear_text_areas_only(self, console):
-        """Create true separation: left 60% transparent for graphics, right 40% opaque for menu."""
-        layout = self._get_menu_layout_params()
-        MenuRenderingUtils.clear_text_areas_only(console, layout)
-    
+
     def _render_main_menu(self, console: tcod.console.Console) -> None:
         """Render the main menu screen."""
         
@@ -82,40 +71,7 @@ class MainMenu:
         # For now, we'll use the traditional centered menu with optional CP437 glyph art
         
         self._render_enhanced_menu(console)
-    
-    def _get_menu_layout_params(self):
-        """Calculate menu positioning based on graphics mode, window state, and optimal visibility."""
-        if self._has_background():
-            # Graphics mode with background - calculate optimal positioning
-            return self._calculate_background_aware_layout()
-        else:
-            # Glyph mode or no background - center everything
-            return {
-                'title_x': GameConfig.SCREEN_WIDTH // 2,
-                'menu_x': GameConfig.SCREEN_WIDTH // 2,
-                'use_background_layout': False,
-                'layout_zone': 'center'
-            }
 
-    def _render_right_side_box(self, console: tcod.console.Console, height: int, border_color: tuple, y_offset: int = 0):
-        """Render a right-side menu box with consistent positioning and styling.
-
-        Args:
-            console: The console to render to
-            height: Height of the box
-            border_color: Color for the box border
-            y_offset: Vertical offset for positioning (0 = centered)
-
-        Returns:
-            dict: Box dimensions and positions for content rendering
-        """
-        layout = self._get_menu_layout_params()
-        return MenuRenderingUtils.render_right_side_box(console, layout, height, border_color, y_offset)
-    
-    def _calculate_background_aware_layout(self):
-        """Calculate sophisticated layout for background mode based on window dimensions."""
-        return MenuRenderingUtils.calculate_background_aware_layout(self.background)
-    
     def _render_enhanced_menu(self, console: tcod.console.Console) -> None:
         """Render an enhanced menu with dynamic positioning based on background state."""
         # Calculate menu height based on content
@@ -415,15 +371,14 @@ class MainMenu:
 # Do not create duplicate class definitions
 
 
-class SettingsMenu:
+class SettingsMenu(BaseMenu):
     """Settings menu for audio, graphics, and help options."""
 
     def __init__(self, settings: GameSettings, menu_background=None, sound_manager=None):
+        super().__init__(menu_background)
         self.settings = settings
         self.menu_background = menu_background  # Reference to background manager
-        self.background = menu_background  # Alias for consistency with MainMenu
         self.sound_manager = sound_manager  # For live volume updates and sound previews
-        self.selected_option = 0
         self.options = [
             {"name": "Master Volume", "type": "volume", "key": "master"},
             {"name": "SFX Volume", "type": "volume", "key": "sfx"},
@@ -434,35 +389,6 @@ class SettingsMenu:
             {"name": "Overclock Warnings", "type": "dialogue_toggle", "key": "show_overclock_warning"},
             {"name": "Back", "type": "action"}
         ]
-    
-    def _has_background(self) -> bool:
-        """Check if background is available and should be displayed."""
-        return (self.background and 
-                self.background.should_load_background() and 
-                self.background.background_texture)
-    
-    def _get_menu_layout_params(self):
-        """Calculate menu positioning based on graphics mode, window state, and optimal visibility."""
-        if self._has_background():
-            # Graphics mode with background - calculate optimal positioning
-            return self._calculate_background_aware_layout()
-        else:
-            # Glyph mode or no background - center everything
-            return {
-                'title_x': GameConfig.SCREEN_WIDTH // 2,
-                'menu_x': GameConfig.SCREEN_WIDTH // 2,
-                'use_background_layout': False,
-                'layout_zone': 'center'
-            }
-
-    def _calculate_background_aware_layout(self):
-        """Calculate sophisticated layout for background mode based on window dimensions."""
-        return MenuRenderingUtils.calculate_background_aware_layout(self.background)
-    
-    def _clear_text_areas_only(self, console):
-        """Create true separation: left 60% transparent for graphics, right 40% opaque for menu."""
-        layout = self._get_menu_layout_params()
-        MenuRenderingUtils.clear_text_areas_only(console, layout)
 
     def _render_right_side_box(self, console: tcod.console.Console, height: int, border_color: tuple, y_offset: int = 0):
         """Render a right-side menu box with consistent positioning and styling.

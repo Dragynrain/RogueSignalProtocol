@@ -20,6 +20,8 @@ import sys
 import json
 from typing import Dict, Optional, Tuple
 
+from game_tile_dimension_calculator import TileDimensionCalculator
+
 
 class TileManager:
     """
@@ -135,59 +137,22 @@ class TileManager:
         """
         Calculate tile pixel dimensions based on window size and grid layout.
 
-        In graphics mode, tiles are calculated based on the smaller viewport size,
-        making each sprite appear larger (2x scale factor).
+        Delegates to TileDimensionCalculator for pure calculation logic.
         """
         try:
-            from game_config import GameConfig
-
-            # Get window pixel dimensions
             window_size = self._get_window_size()
-            window_width, window_height = window_size
-
-            # Get console grid dimensions (full console for UI)
-            console_width = GameConfig.SCREEN_WIDTH
-            console_height = GameConfig.SCREEN_HEIGHT
-
-            # Calculate base tile size for UI rendering
-            base_tile_width = window_width // console_width
-            base_tile_height = window_height // console_height
-
-            # In graphics mode, use viewport dimensions to calculate larger sprite tiles
-            if self.settings.graphics_mode == "graphics":
-                # Get viewport dimensions (half of game area)
-                viewport_width = GameConfig.VIEWPORT_WIDTH("graphics")
-                viewport_height = GameConfig.VIEWPORT_HEIGHT("graphics")
-
-                # Calculate game area pixel dimensions
-                game_area_width = GameConfig.GAME_AREA_WIDTH()
-                viewable_height = GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT - 1
-
-                # Calculate sprite tile size to fill game area with smaller viewport
-                self.tile_width = (base_tile_width * game_area_width) // viewport_width
-                self.tile_height = (base_tile_height * viewable_height) // viewport_height
-            else:
-                # Glyph mode: tiles match console grid
-                self.tile_width = base_tile_width
-                self.tile_height = base_tile_height
-
-            # Ensure minimum tile size (readability threshold)
-            if self.tile_width < 8:
-                self.tile_width = 8
-                logging.warning(f"Tile width clamped to minimum: {self.tile_width}px")
-            if self.tile_height < 8:
-                self.tile_height = 8
-                logging.warning(f"Tile height clamped to minimum: {self.tile_height}px")
+            self.tile_width, self.tile_height = TileDimensionCalculator.calculate_from_window(
+                window_size, self.settings.graphics_mode
+            )
 
             logging.debug(f"Tile dimensions calculated: {self.tile_width}x{self.tile_height} "
-                         f"(window={window_width}x{window_height}, "
+                         f"(window={window_size[0]}x{window_size[1]}, "
                          f"mode={self.settings.graphics_mode})")
 
         except Exception as e:
             logging.error(f"Failed to calculate tile dimensions: {e}")
-            # Fallback to reasonable defaults
-            self.tile_width = 10
-            self.tile_height = 16
+            # Use fallback dimensions from config
+            self.tile_width, self.tile_height = TileDimensionCalculator.get_fallback_dimensions()
             logging.warning(f"Using fallback tile dimensions: {self.tile_width}x{self.tile_height}")
 
     def _get_window_size(self) -> Tuple[int, int]:

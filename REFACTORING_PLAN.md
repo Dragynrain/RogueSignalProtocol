@@ -747,9 +747,9 @@ That's it. Keep it simple.
 - [x] Task 2.3: Extract DialogueRenderer
 
 ### Phase 3: Architecture Improvements
-- [ ] Task 3.1: Implement GameEngineBuilder Pattern
-- [ ] Task 3.2: Reduce Settings Object Coupling
-- [ ] Task 3.3: Refactor TileManager Dimension Calculation
+- [x] Task 3.1: Implement GameEngineBuilder Pattern
+- [x] Task 3.2: Reduce Settings Object Coupling
+- [x] Task 3.3: Refactor TileManager Dimension Calculation
 
 ### Phase 4: Final Cleanup
 - [ ] Task 4.1: Extract BaseMenu and Split Menu Files
