@@ -15,6 +15,7 @@ from game_entities import Position, Colors, EnemyState, ensure_color_tuple
 from game_data import GameData, GameUpgrades
 from data_loading import DataLoader
 from game_rendering_base import MapRendererBase
+from game_color_manager import ColorManager
 
 
 class GraphicsMapRenderer(MapRendererBase):
@@ -51,7 +52,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
                 # Console coordinates (for SDL rendering)
                 console_x = viewport_x
-                console_y = viewport_y + 1
+                console_y = viewport_y + GameConfig.STATUS_BAR_HEIGHT()
 
                 # Check visibility
                 if game.player.can_see_through_walls():
@@ -97,10 +98,8 @@ class GraphicsMapRenderer(MapRendererBase):
                     if texture:
                         tile_rect = self._get_tile_rect(console_x, console_y)
                         # Dim the texture for fog of war effect
-                        from data_loading import DataLoader
-                        config = DataLoader.load_config()
-                        explored_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("explored", [80, 80, 100]))
-                        normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                        explored_tint = ColorManager.get_tint_color("explored")
+                        normal_tint = ColorManager.get_tint_color("normal")
                         texture.color_mod = explored_tint
                         renderer.copy(texture, dest=tile_rect)
                         # Reset color mod
@@ -140,9 +139,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
                     # Reset color mod
                     if self.tile_manager.is_tintable("codehack"):
-                        from data_loading import DataLoader
-                        config = DataLoader.load_config()
-                        normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                        normal_tint = ColorManager.get_tint_color("normal")
                         texture.color_mod = normal_tint
 
         # Exploit pickups
@@ -170,11 +167,7 @@ class GraphicsMapRenderer(MapRendererBase):
                                 exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
                                 exploit_category = exploit_def.category
                                 # Get exploit color from config
-                                from data_loading import DataLoader
-                                config = DataLoader.load_config()
-                                exploit_colors = config.get("colors", {}).get("exploits", {})
-                                color_data = exploit_colors.get(exploit_category, [255, 20, 255])
-                                tint_color = ensure_color_tuple(color_data)
+                                tint_color = ColorManager.get_exploit_color(exploit_category)
                                 texture.color_mod = tint_color
 
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
@@ -182,9 +175,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
                         # Reset color mod
                         if self.tile_manager.is_tintable("exploit"):
-                            from data_loading import DataLoader
-                            config = DataLoader.load_config()
-                            normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                            normal_tint = ColorManager.get_tint_color("normal")
                             texture.color_mod = normal_tint
 
         # Resource nodes (cooling, CPU, ghost)
@@ -304,10 +295,8 @@ class GraphicsMapRenderer(MapRendererBase):
                         # Render portal sprite with dimmed appearance
                         texture = self.tile_manager.get_tile("portal")
                         if texture:
-                            from data_loading import DataLoader
-                            config = DataLoader.load_config()
-                            dimmed_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("dimmed", [179, 179, 179]))
-                            normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                            dimmed_tint = ColorManager.get_tint_color("dimmed")
+                            normal_tint = ColorManager.get_tint_color("normal")
                             tile_rect = self._get_tile_rect(screen_x, screen_y)
                             # Use color_mod to dim the sprite (70% brightness for memory)
                             texture.color_mod = dimmed_tint
@@ -450,17 +439,13 @@ class GraphicsMapRenderer(MapRendererBase):
             1 <= player_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
 
             # Check for various player status effects
-            from data_loading import DataLoader
-            config = DataLoader.load_config()
-            status_effects_colors = config.get("colors", {}).get("status_effects", {})
-
             status_color = None
             if game.player.temporary_effects['virus_turns'] > 0:
-                status_color = ensure_color_tuple(status_effects_colors.get("virus", [0, 255, 0]))
+                status_color = ColorManager.get("status_effects", "virus")
             elif game.player.is_invisible():
-                status_color = ensure_color_tuple(status_effects_colors.get("invisible", [255, 255, 0]))
+                status_color = ColorManager.get("status_effects", "invisible")
             elif game.player.temporary_effects['movement_slowed_turns'] > 0:
-                status_color = ensure_color_tuple(status_effects_colors.get("slow", [0, 255, 255]))
+                status_color = ColorManager.get("status_effects", "slow")
 
             if status_color:
                 player_tile_rect = self._get_tile_rect(player_screen_x, player_screen_y)
@@ -483,22 +468,18 @@ class GraphicsMapRenderer(MapRendererBase):
                     pulse_intensity = self._get_pulse_intensity(pulse_speed=2.0)
 
                     # Determine enemy state color
-                    from data_loading import DataLoader
-                    config = DataLoader.load_config()
-                    enemy_colors = config.get("colors", {}).get("enemies", {})
-
                     if enemy.disabled_turns > 0:
                         # Disabled enemies get blue outline (no pulsing for disabled)
-                        outline_color = ensure_color_tuple(enemy_colors.get("disabled", [100, 100, 255]))
+                        outline_color = ColorManager.get_enemy_state_color("disabled")
                         self._draw_outline_box(renderer, enemy_tile_rect, outline_color, thickness=2)
                     else:
                         # Show enemy state with colored outline + pulsing
                         if enemy.state == EnemyState.HOSTILE:
-                            base_color = ensure_color_tuple(enemy_colors.get("hostile", [220, 20, 60]))
+                            base_color = ColorManager.get_enemy_state_color("hostile")
                         elif enemy.state == EnemyState.ALERT:
-                            base_color = ensure_color_tuple(enemy_colors.get("alert", [255, 165, 0]))
+                            base_color = ColorManager.get_enemy_state_color("alert")
                         else:  # PATROLLING/IDLE
-                            base_color = ensure_color_tuple(enemy_colors.get("unaware", [255, 255, 0]))
+                            base_color = ColorManager.get_enemy_state_color("unaware")
 
                         # Apply pulse to color
                         outline_color = tuple(int(c * pulse_intensity) for c in base_color)
@@ -580,9 +561,7 @@ class GraphicsMapRenderer(MapRendererBase):
             # Graphics mode: Render targeting cursor sprite
             texture = self.tile_manager.get_tile("targeting")
             if texture:
-                from data_loading import DataLoader
-                config = DataLoader.load_config()
-                normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                normal_tint = ColorManager.get_tint_color("normal")
                 tile_rect = self._get_tile_rect(cursor_screen_x, cursor_screen_y)
                 # Tint based on mode (red for targeting, cyan for look)
                 texture.color_mod = cursor_color
@@ -600,11 +579,11 @@ class GraphicsMapRenderer(MapRendererBase):
         Returns:
             RGB color tuple for the outline
         """
-        from data_loading import DataLoader
-        config = DataLoader.load_config()
-        status_effects_colors = config.get("colors", {}).get("status_effects", {})
-        default_color = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("white", [255, 255, 255]))
-        return ensure_color_tuple(status_effects_colors.get(status_type, default_color))
+        try:
+            return ColorManager.get("status_effects", status_type)
+        except KeyError:
+            # Fallback to white if status type not found
+            return ColorManager.get_basic_color("white")
 
     def _draw_corner_brackets(self, renderer, rect: Tuple[int, int, int, int], color: Tuple[int, int, int], bracket_size: int = 4):
         """
@@ -686,16 +665,12 @@ class GraphicsMapRenderer(MapRendererBase):
 
     def _get_vision_overlay_color(self, enemy_state: EnemyState) -> Tuple[int, int, int]:
         """Get vision overlay color based on enemy state (full brightness for graphics mode)."""
-        from data_loading import DataLoader
-        config = DataLoader.load_config()
-        enemy_colors = config.get("colors", {}).get("enemies", {})
-
         if enemy_state == EnemyState.HOSTILE:
-            return ensure_color_tuple(enemy_colors.get("hostile", [220, 20, 60]))
+            return ColorManager.get_enemy_state_color("hostile")
         elif enemy_state == EnemyState.ALERT:
-            return ensure_color_tuple(enemy_colors.get("alert", [255, 165, 0]))
+            return ColorManager.get_enemy_state_color("alert")
         else:
-            return ensure_color_tuple(enemy_colors.get("unaware", [255, 255, 0]))
+            return ColorManager.get_enemy_state_color("unaware")
 
     def _render_enemy_vision_range(self, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map, renderer):
         """Render vision range for a single enemy using corner brackets in graphics mode."""
@@ -719,7 +694,7 @@ class GraphicsMapRenderer(MapRendererBase):
                         1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                         # Draw corner brackets
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
-                        self._draw_corner_brackets(renderer, tile_rect, overlay_color, bracket_size=4)
+                        self._draw_corner_brackets(renderer, tile_rect, overlay_color, bracket_size=GameConfig.VISION_BRACKET_SIZE())
 
     def _render_patrol_routes(self, game, camera_offset: Position, vision_range: int):
         """Render next 3 predicted moves for all moving enemies using sprites."""
@@ -745,18 +720,15 @@ class GraphicsMapRenderer(MapRendererBase):
                         # Render movement prediction sprite with color_mod
                         texture = self.tile_manager.get_tile("movement_prediction")
                         if texture:
-                            from data_loading import DataLoader
-                            config = DataLoader.load_config()
-                            targeting_colors = config.get("colors", {}).get("targeting", {})
-                            normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                            normal_tint = ColorManager.get_tint_color("normal")
                             tile_rect = self._get_tile_rect(screen_x, screen_y)
                             # Apply color based on position (brightness fades with distance)
                             if i == 0:
-                                texture.color_mod = ensure_color_tuple(targeting_colors.get("prediction_bright", [255, 255, 50]))
+                                texture.color_mod = ColorManager.get_targeting_color("prediction_bright")
                             elif i == 1:
-                                texture.color_mod = ensure_color_tuple(targeting_colors.get("prediction_medium", [240, 240, 30]))
+                                texture.color_mod = ColorManager.get_targeting_color("prediction_medium")
                             else:
-                                texture.color_mod = ensure_color_tuple(targeting_colors.get("prediction_dim", [220, 220, 20]))
+                                texture.color_mod = ColorManager.get_targeting_color("prediction_dim")
                             renderer.copy(texture, dest=tile_rect)
                             # Reset color_mod
                             texture.color_mod = normal_tint

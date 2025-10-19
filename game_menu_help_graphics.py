@@ -13,6 +13,7 @@ from game_entities import Colors, ensure_color_tuple
 from game_ui import render_char_safe
 from game_input import UniversalInputHandler
 from data_loading import DataLoader
+from game_color_manager import ColorManager
 
 
 class GraphicalHelpMenu:
@@ -54,14 +55,10 @@ class GraphicalHelpMenu:
 
     def _load_colors(self):
         """Load enemy and UI colors from game config."""
-        config = DataLoader.load_config()
-        enemy_colors = config.get("colors", {}).get("enemies", {})
-        ui_colors = config.get("colors", {}).get("ui", {})
-
-        self.ENEMY_UNAWARE = ensure_color_tuple(enemy_colors.get("unaware_dark", [100, 100, 0]))
-        self.ENEMY_ALERT = ensure_color_tuple(enemy_colors.get("alert_dark", [150, 75, 0]))
-        self.ENEMY_HOSTILE = ensure_color_tuple(enemy_colors.get("hostile_dark", [150, 0, 0]))
-        self.NEON_PINK = ensure_color_tuple(ui_colors.get("neon_pink", [255, 20, 147]))
+        self.ENEMY_UNAWARE = ColorManager.get_enemy_state_color("unaware_dark")
+        self.ENEMY_ALERT = ColorManager.get_enemy_state_color("alert_dark")
+        self.ENEMY_HOSTILE = ColorManager.get_enemy_state_color("hostile_dark")
+        self.NEON_PINK = ColorManager.get_ui_color("neon_pink")
 
     def _build_pages(self):
         """Build all help pages with content."""

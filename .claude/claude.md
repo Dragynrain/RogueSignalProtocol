@@ -1,5 +1,16 @@
 # Claude Code Quick Guidelines
 
+## 0. Planning & Estimates
+- **NEVER provide time estimates** (hours, days, weeks) when planning work.
+- You are bad at estimating. Focus on tasks, priorities, and dependencies instead.
+
+## 0b. Performance
+- **Don't worry about performance** until it's actually a problem affecting user experience.
+- No preemptive optimization, benchmarking, or regression analysis.
+- Focus on code clarity and correctness first.
+
+---
+
 ## 1. Bash & Environment
 - Quote paths: `cd "path with spaces"`.  
 - Use bash cmds (`rm`, `ls`, `mkdir`), not Windows ones.  

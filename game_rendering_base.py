@@ -2,6 +2,36 @@
 """
 Game Rendering Base
 Base class for map renderers with common functionality.
+
+COORDINATE SYSTEMS USED IN THIS CODEBASE:
+
+1. CONSOLE COORDINATES (80x50 grid)
+   - Used for: Text rendering, UI layout, menu positioning
+   - Range: X: 0-79, Y: 0-49
+   - Characters rendered at 10x16 pixels (tileset size)
+   - Example: render_char_safe(console, 10, 5, "text")
+
+2. GAME VIEWPORT COORDINATES (27x21 tiles in graphics mode)
+   - Used for: Game map tile positions during gameplay
+   - Calculated by: GameConfig.VIEWPORT_WIDTH/HEIGHT(graphics_mode)
+   - Scaled to fit window using TileManager.tile_width/height
+   - Example: viewport_x, viewport_y from camera position
+
+3. SDL PIXEL COORDINATES (window resolution, e.g., 2560x1351)
+   - Used for: Direct SDL sprite rendering
+   - Full window pixel space
+   - Example: SDL_Rect(pixel_x, pixel_y, sprite_w, sprite_h)
+
+CONVERSION METHODS:
+- _world_to_console(): World tile -> Console position
+- _grid_to_pixel(): Game viewport -> SDL pixels (in-game)
+- _console_to_pixel(): Console grid -> SDL pixels (menus)
+- _is_in_viewport(): Check if world position is visible
+
+CRITICAL RULES:
+1. Menu rendering: Use console coords (80x50) + window scaling
+2. Game rendering: Use viewport coords + TileManager dimensions
+3. NEVER mix the two - they use different math!
 """
 
 from typing import Tuple
@@ -42,21 +72,26 @@ class MapRendererBase:
         """
         Convert world coordinates to console coordinates based on viewport.
 
+        COORDINATE SYSTEM: World (50x50 map) -> Console (80x50 grid)
+        This is the fundamental conversion for all text rendering.
+
         Args:
-            world_x: World X coordinate
-            world_y: World Y coordinate
-            camera_offset: Camera offset position
+            world_x: World X coordinate (0-49 in a 50x50 map)
+            world_y: World Y coordinate (0-49 in a 50x50 map)
+            camera_offset: Camera offset position (top-left of viewport)
 
         Returns:
-            Tuple of (console_x, console_y)
+            Tuple of (console_x, console_y) where:
+            - console_x: Console X position (0-79)
+            - console_y: Console Y position (1-49, accounting for status bar at row 0)
         """
-        # Calculate viewport position
+        # Calculate viewport position (relative to camera)
         viewport_x = world_x - camera_offset.x
         viewport_y = world_y - camera_offset.y
 
         # Console position accounts for status bar at row 0
         console_x = viewport_x
-        console_y = viewport_y + 1
+        console_y = viewport_y + GameConfig.STATUS_BAR_HEIGHT()
 
         return (console_x, console_y)
 
@@ -117,18 +152,26 @@ class MapRendererBase:
 
     def _grid_to_pixel(self, screen_x: int, screen_y: int) -> Tuple[int, int]:
         """
-        Convert grid coordinates to pixel coordinates.
+        Convert grid coordinates to pixel coordinates for IN-GAME rendering.
+
+        COORDINATE SYSTEM: Game viewport grid -> SDL pixels
+        This is used for positioning sprites during gameplay.
+
+        IMPORTANT: This uses TileManager dimensions which are viewport-scaled
+        (e.g., 65x54 pixels per tile in 2x zoom mode). This is DIFFERENT from
+        menu sprite positioning which uses window scaling.
 
         Args:
             screen_x: Grid x coordinate (0 to GAME_AREA_WIDTH)
             screen_y: Grid y coordinate (0 to SCREEN_HEIGHT)
 
         Returns:
-            Tuple of (pixel_x, pixel_y)
+            Tuple of (pixel_x, pixel_y) in SDL window space
         """
         if not self.tile_manager:
             return (0, 0)
 
+        # Use viewport-scaled tile dimensions
         pixel_x = screen_x * self.tile_manager.tile_width
         pixel_y = screen_y * self.tile_manager.tile_height
         return (pixel_x, pixel_y)

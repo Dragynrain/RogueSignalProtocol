@@ -286,7 +286,55 @@ class GameConfig:
         else:
             # Full viewport for glyph mode
             return viewable_height
-    
+
+    @classmethod
+    def STATUS_BAR_HEIGHT(cls):
+        """Get status bar height from config."""
+        cls._ensure_loaded()
+        return cls._get_required('rendering.status_bar_height')
+
+    @classmethod
+    def VISION_BRACKET_SIZE(cls):
+        """Get vision bracket size from config."""
+        cls._ensure_loaded()
+        return cls._get_required('rendering.vision_bracket_size')
+
+    @classmethod
+    def STATUS_OUTLINE_THICKNESS(cls):
+        """Get status outline thickness from config."""
+        cls._ensure_loaded()
+        return cls._get_required('rendering.status_outline_thickness')
+
+    @classmethod
+    def ENEMY_OUTLINE_THICKNESS(cls):
+        """Get enemy outline thickness from config."""
+        cls._ensure_loaded()
+        return cls._get_required('rendering.enemy_outline_thickness')
+
+    @classmethod
+    def MIN_TILE_WIDTH(cls):
+        """Get minimum tile width from config."""
+        cls._ensure_loaded()
+        return cls._get_required('rendering.min_tile_width')
+
+    @classmethod
+    def MIN_TILE_HEIGHT(cls):
+        """Get minimum tile height from config."""
+        cls._ensure_loaded()
+        return cls._get_required('rendering.min_tile_height')
+
+    @classmethod
+    def FALLBACK_TILE_WIDTH(cls):
+        """Get fallback tile width from config."""
+        cls._ensure_loaded()
+        return cls._get_required('rendering.fallback_tile_width')
+
+    @classmethod
+    def FALLBACK_TILE_HEIGHT(cls):
+        """Get fallback tile height from config."""
+        cls._ensure_loaded()
+        return cls._get_required('rendering.fallback_tile_height')
+
     @classmethod
     def _get_required(cls, key: str):
         """Get required configuration value - raises KeyError if missing."""
