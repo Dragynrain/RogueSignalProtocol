@@ -65,7 +65,8 @@ Navigate through 3 increasingly dangerous network levels, reach the gateway (>) 
 - **Movement**: Arrow Keys, WASD, or Numpad
 - **Exploits**: 1-5 keys to use equipped exploits
 - **Inventory**: I key to manage codes and exploits
-- **Lore**: L key to view discovered story fragments
+- **Look Mode**: L key to examine entities and terrain
+- **Lore Fragments**: F key to view discovered story fragments
 - **Pause**: ESC key
 
 ### Core Mechanics

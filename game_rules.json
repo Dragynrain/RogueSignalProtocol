@@ -120,18 +120,18 @@
       "story_fragment": [20, 255, 200]
     },
     "data_codes": {
-      "crimson": [220, 20, 60],
-      "azure": [30, 144, 255],
-      "emerald": [50, 205, 50],
-      "golden": [255, 215, 0],
-      "violet": [138, 43, 226],
-      "silver": [192, 192, 192]
+      "crimson": [255, 20, 80],
+      "azure": [0, 200, 255],
+      "emerald": [0, 255, 100],
+      "golden": [255, 240, 0],
+      "violet": [200, 60, 255],
+      "silver": [230, 230, 255]
     },
     "exploits": {
-      "stealth": [138, 43, 226],
-      "combat": [220, 20, 60],
-      "utility": [255, 215, 0],
-      "emergency": [255, 120, 20]
+      "stealth": [200, 60, 255],
+      "combat": [255, 20, 80],
+      "utility": [255, 240, 0],
+      "emergency": [255, 140, 0]
     },
     "message_log": {
       "critical": [220, 20, 60],
@@ -316,7 +316,7 @@
     "Navigate using stealth",
     "Reach the gateway (>)",
     "Hide in digital shadows (.) to avoid detection",
-    "Press 'L' for look mode, 'O' for lore",
+    "Press 'L' for look mode, 'F' for fragments",
     "Starting Corporate Network infiltration..."
   ],
   "metadata": {

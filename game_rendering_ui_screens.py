@@ -381,7 +381,7 @@ class FullScreenRenderer:
 
         self._render_content_area_with_word_wrap(console, fragment_text, content_start_y, content_end_y)
 
-        self._render_screen_footer(console, "Press any key to continue...", "Press 'L' to view all lore")
+        self._render_screen_footer(console, "Press any key to continue...", "Press 'F' to view all fragments")
 
     def render_lore_viewer_screen(self, console: tcod.console.Console, game):
         """Render the lore viewer showing all discovered fragments."""
