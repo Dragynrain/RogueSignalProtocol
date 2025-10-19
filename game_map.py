@@ -2,6 +2,7 @@
 Game Map Module - Handles map data structure and queries
 """
 
+import logging
 import tcod
 import tcod.constants
 from functools import lru_cache

@@ -260,6 +260,12 @@ class GraphicsMapRenderer(MapRendererBase):
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
                         renderer.copy(texture, dest=tile_rect)
 
+                        # Add rainbow pulsing ring around data fragment (uses outline box like enemies)
+                        rainbow_color = self._get_rainbow_color()
+                        pulse_intensity = self._get_pulse_intensity(pulse_speed=1.34)  # Consistent with enemy pulses
+                        pulsed_rainbow = tuple(int(c * pulse_intensity) for c in rainbow_color)
+                        self._draw_outline_box(renderer, tile_rect, pulsed_rainbow, thickness=2)
+
         # Gateway/Portal
         if game.game_map.gateway:
             screen_x = game.game_map.gateway.x - camera_offset.x
@@ -464,8 +470,8 @@ class GraphicsMapRenderer(MapRendererBase):
                 if can_see_enemy or threat_scan_active:
                     enemy_tile_rect = self._get_tile_rect(screen_x, screen_y)
 
-                    # Get pulse intensity for pulsing animation
-                    pulse_intensity = self._get_pulse_intensity(pulse_speed=2.0)
+                    # Get pulse intensity for pulsing animation (slowed down by 33%)
+                    pulse_intensity = self._get_pulse_intensity(pulse_speed=1.34)
 
                     # Determine enemy state color
                     if enemy.disabled_turns > 0:
@@ -639,6 +645,22 @@ class GraphicsMapRenderer(MapRendererBase):
         pulse_intensity = 0.7 + 0.3 * math.sin(pulse_phase * 2 * math.pi)
         return pulse_intensity
 
+    def _get_rainbow_color(self) -> Tuple[int, int, int]:
+        """
+        Calculate rainbow color based on current time for data fragment highlighting.
+
+        Returns:
+            RGB color tuple cycling through rainbow colors
+        """
+        current_time = time.time()
+        # Cycle through rainbow every 4 seconds
+        hue = (current_time * 0.25) % 1.0  # 0.0 to 1.0
+
+        # Convert HSV to RGB (hue cycles, saturation and value fixed)
+        import colorsys
+        r, g, b = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
+        return (int(r * 255), int(g * 255), int(b * 255))
+
     def _render_vision_overlays(self, game, camera_offset: Position, vision_range: int):
         """Render enemy vision range overlays using corner brackets in graphics mode."""
         if game.player.is_invisible():
@@ -673,28 +695,39 @@ class GraphicsMapRenderer(MapRendererBase):
             return ColorManager.get_enemy_state_color("unaware")
 
     def _render_enemy_vision_range(self, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map, renderer):
-        """Render vision range for a single enemy using corner brackets in graphics mode."""
+        """Render vision range for a single enemy using corner brackets in graphics mode.
+        Uses TCOD FOV for perfect consistency with actual enemy vision."""
         actual_vision_range = enemy.type_data.vision
 
+        # Use TCOD FOV to get exactly what the enemy can see (matches enemy vision logic)
+        fov = game_map._compute_fov_cached(enemy.x, enemy.y, actual_vision_range)
+
+        # Render brackets for all visible tiles within range
         for dx in range(-actual_vision_range, actual_vision_range + 1):
             for dy in range(-actual_vision_range, actual_vision_range + 1):
-                # Use Euclidean distance to match the actual vision logic
-                if dx*dx + dy*dy <= actual_vision_range*actual_vision_range:
-                    world_x = enemy.x + dx
-                    world_y = enemy.y + dy
+                world_x = enemy.x + dx
+                world_y = enemy.y + dy
 
-                    # Skip the enemy's own tile
-                    if world_x == enemy.x and world_y == enemy.y:
-                        continue
+                # Skip out of bounds
+                if not (0 <= world_x < game_map.width and 0 <= world_y < game_map.height):
+                    continue
 
-                    screen_x = world_x - camera_offset.x
-                    screen_y = world_y - camera_offset.y + 1
+                # Skip the enemy's own tile
+                if world_x == enemy.x and world_y == enemy.y:
+                    continue
 
-                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
-                        1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                        # Draw corner brackets
-                        tile_rect = self._get_tile_rect(screen_x, screen_y)
-                        self._draw_corner_brackets(renderer, tile_rect, overlay_color, bracket_size=GameConfig.VISION_BRACKET_SIZE())
+                # Check if this tile is visible in FOV (TCOD array is [y, x])
+                if not fov[world_y, world_x]:
+                    continue
+
+                screen_x = world_x - camera_offset.x
+                screen_y = world_y - camera_offset.y + 1
+
+                if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
+                    1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                    # Draw corner brackets
+                    tile_rect = self._get_tile_rect(screen_x, screen_y)
+                    self._draw_corner_brackets(renderer, tile_rect, overlay_color, bracket_size=GameConfig.VISION_BRACKET_SIZE())
 
     def _render_patrol_routes(self, game, camera_offset: Position, vision_range: int):
         """Render next 3 predicted moves for all moving enemies using sprites."""

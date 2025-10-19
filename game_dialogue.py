@@ -89,7 +89,7 @@ class DialogueManager:
                 "title": Colors.RED,
                 "message": Colors.YELLOW,
                 "border": Colors.RED,
-                "background": self._get_dialogue_bg_color(),
+                "background": Colors.BLACK,
             },
             requires_confirmation=True,
             can_dismiss=True,
@@ -110,7 +110,7 @@ class DialogueManager:
                 "title": Colors.RED,
                 "message": Colors.BRIGHT_RED,
                 "border": Colors.RED,
-                "background": self._get_dialogue_bg_color(),
+                "background": Colors.BLACK,
             },
             requires_confirmation=False,
             can_dismiss=True,
@@ -205,10 +205,12 @@ class DialogueManager:
 
         # If a dialogue is already active, add to queue based on priority
         if self.active_dialogue:
+            logging.info(f"Dialogue {dialogue_type} queued (active: {self.active_dialogue})")
             self._queue_dialogue(dialogue_type, context_data)
             return
 
         # Show dialogue immediately
+        logging.info(f"Showing dialogue: {dialogue_type}")
         self.active_dialogue = dialogue_type
         self.dialogue_data = context_data
 
@@ -273,11 +275,12 @@ class DialogueManager:
 
         # Handle confirmation dialogues
         if config.requires_confirmation:
-            if key == tcod.event.KeySym.Y:
+            # Accept both lowercase and uppercase variants (though TCOD usually only has uppercase)
+            if key == tcod.event.KeySym.Y or key == getattr(tcod.event.KeySym, 'y', None):
                 return "confirm"
-            elif key == tcod.event.KeySym.N:
+            elif key == tcod.event.KeySym.N or key == getattr(tcod.event.KeySym, 'n', None):
                 return "cancel"
-            elif key == tcod.event.KeySym.D and config.has_dont_show_option:
+            elif (key == tcod.event.KeySym.D or key == getattr(tcod.event.KeySym, 'd', None)) and config.has_dont_show_option:
                 return "dont_show_again"
         else:
             # Info-only dialogue (death, victory, etc.)
@@ -300,6 +303,7 @@ class DialogueManager:
         Clears the active dialogue state and automatically shows the next
         queued dialogue if one exists.
         """
+        logging.info(f"Closing dialogue: {self.active_dialogue}, queue length: {len(self.dialogue_queue)}")
         self.active_dialogue = None
         self.dialogue_data = {}
 

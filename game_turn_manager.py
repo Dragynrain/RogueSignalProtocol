@@ -386,11 +386,11 @@ class GameTurnManager:
                 damage = enemy.attack_player(self.game_engine.player)
 
                 # Track if player was attacked while in inventory
-                if damage > 0:
-                    total_damage_taken += damage
-                    attacking_enemy_count += 1
-                    if self.game_engine.show_inventory:
-                        player_attacked_in_inventory = True
+                # Count ALL attacks (damage, virus, inhibitor) not just direct damage
+                total_damage_taken += damage
+                attacking_enemy_count += 1
+                if self.game_engine.show_inventory:
+                    player_attacked_in_inventory = True
 
                 if enemy.type == 'virus':
                     virus_turns = self.game_engine.player.temporary_effects.get('virus_turns', 0)
@@ -414,6 +414,9 @@ class GameTurnManager:
                     SaveGameManager.delete_save()
                     self.game_engine.message_log.add_message("Save data purged")
                     self.game_engine.game_over = True
+                    # Show death dialogue
+                    from game_dialogue import DialogueType
+                    self.game_engine.dialogue_manager.show_dialogue(DialogueType.DEATH_MESSAGE)
                     return  # Exit immediately - no more enemy processing after player death
 
         # Show inventory attack warning if player was attacked while inventory was open

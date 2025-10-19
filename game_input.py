@@ -136,7 +136,24 @@ class InputHandler:
         if not config:
             return True
 
-        # Block movement keys if dialogue blocks movement
+        # CRITICAL: Check dialogue input FIRST, before blocking movement keys
+        # This allows SPACE/ENTER to dismiss dialogues even though they're also movement keys
+        action = self.game.dialogue_manager.handle_input(event.sym)
+
+        # If dialogue handled the input, process it
+        if action is not None:
+            if action == "confirm":
+                self._handle_dialogue_confirm()
+                return True
+            elif action in ["cancel", "dismiss"]:
+                # Handle dismiss and check if we should exit to menu (for death/victory)
+                should_continue = self._handle_dialogue_dismiss()
+                return should_continue
+            elif action == "dont_show_again":
+                self._handle_dialogue_dont_show_again()
+                return True
+
+        # Block movement keys if dialogue blocks movement (and dialogue didn't handle the key)
         if config.blocks_movement:
             movement_keys = {
                 tcod.event.KeySym.UP, tcod.event.KeySym.DOWN, tcod.event.KeySym.LEFT, tcod.event.KeySym.RIGHT,
@@ -148,18 +165,6 @@ class InputHandler:
             }
             if event.sym in movement_keys:
                 return True  # Ignore movement while dialogue active
-
-        # Get action from dialogue manager
-        action = self.game.dialogue_manager.handle_input(event.sym)
-
-        if action == "confirm":
-            self._handle_dialogue_confirm()
-        elif action in ["cancel", "dismiss"]:
-            # Handle dismiss and check if we should exit to menu (for death/victory)
-            should_continue = self._handle_dialogue_dismiss()
-            return should_continue
-        elif action == "dont_show_again":
-            self._handle_dialogue_dont_show_again()
 
         # Dialogue is active - don't process other inputs
         return True
