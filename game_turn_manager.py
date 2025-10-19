@@ -5,6 +5,7 @@ Handles complete turn processing including special tiles, enemies, and game effe
 Extracted from game_engine.py for better separation of concerns.
 """
 
+import os
 import tcod
 import tcod.constants
 import random
@@ -43,6 +44,8 @@ class GameTurnManager:
             if self.game_engine.player.cpu <= 0:
                 self.game_engine.sound_manager.play_sound("player_death", priority=10)
                 self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
+                # Delete save on death (permadeath)
+                self._delete_save_on_death()
 
         # Process special tiles
         self._process_special_tiles()
@@ -411,22 +414,17 @@ class GameTurnManager:
                     self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
                     self.game_engine.sound_manager.stop_music(fade_out_ms=500)  # Stop level music on death
                     # Delete save on death (permadeath)
-                    SaveGameManager.delete_save()
-                    self.game_engine.message_log.add_message("Save data purged")
+                    self._delete_save_on_death()
                     self.game_engine.game_over = True
                     # Show death dialogue
-                    from game_dialogue import DialogueType
-                    self.game_engine.dialogue_manager.show_dialogue(DialogueType.DEATH_MESSAGE)
+                    from game_dialogue_system import create_death_dialogue
+                    self.game_engine.dialogue_state.show(create_death_dialogue())
                     return  # Exit immediately - no more enemy processing after player death
 
         # Show inventory attack warning if player was attacked while inventory was open
         if player_attacked_in_inventory:
-            from game_dialogue import DialogueType
-            self.game_engine.dialogue_manager.show_dialogue(
-                DialogueType.INVENTORY_ATTACK,
-                damage=total_damage_taken,
-                enemy_count=attacking_enemy_count
-            )
+            from game_dialogue_system import create_inventory_attack_dialogue
+            self.game_engine.dialogue_state.show(create_inventory_attack_dialogue())
 
         # Movement flags are reset at the start of _update_enemies()
 
@@ -493,3 +491,19 @@ class GameTurnManager:
         if self.game_engine.game_map.is_valid_position(fallback):
             return fallback
         return Position(40, 40)
+
+    def _delete_save_on_death(self):
+        """
+        Delete save file on player death (permadeath).
+
+        Called when player CPU reaches 0 to enforce permadeath mechanic.
+        This ensures the renderer doesn't need side effects.
+        """
+        save_path = "save_game.json"
+        if os.path.exists(save_path):
+            try:
+                os.remove(save_path)
+                logging.info("Save file deleted on death (permadeath)")
+                self.game_engine.message_log.add_message("Save data purged")
+            except OSError as e:
+                logging.error(f"Failed to delete save file: {e}")

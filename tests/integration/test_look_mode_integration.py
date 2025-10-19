@@ -419,8 +419,8 @@ class TestLookModeWorkflow:
         game = GameEngine(load_save=False)
 
         # Activate a dialogue
-        from game_dialogue import DialogueType
-        game.dialogue_manager.show_dialogue(DialogueType.DEATH_MESSAGE)
+        from game_dialogue_system import create_death_dialogue
+        game.dialogue_state.show(create_death_dialogue())
 
         # Try to enter look mode
         event_l = tcod.event.KeyDown(
@@ -432,7 +432,7 @@ class TestLookModeWorkflow:
         game.input_handler.handle_keydown(event_l)
 
         # Should still be in dialogue, not look mode
-        assert game.dialogue_manager.is_active()
+        assert game.dialogue_state.is_active()
         assert not game.look_mode
 
     def test_look_mode_camera_scrolling(self):

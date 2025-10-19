@@ -97,23 +97,24 @@
 **Files Deleted**: `game_dialogue.py`, `game_dialogue_renderer.py`
 
 **Tasks**:
-- [ ] **Death save deletion** (FIRST): Move from renderer to `GameTurnManager.process_turn()` - delete save when `player.cpu <= 0` first detected
-- [ ] Replace `game.dialogue_manager` with `game.dialogue_state` in game engine
-- [ ] Update all dialogue creation calls to use factory functions with `should_show_dialogue()` checks
-- [ ] Remove `show_gateway_confirmation` flag from game_engine.py and game_input.py
-- [ ] **Rendering**: Implement full rendering order (sprites → UI → transparency pass → dialogues → composite)
-- [ ] **Rendering**: Replace 3 dialogue routing blocks with single unified call to UnifiedRenderer
-- [ ] **Rendering**: Ensure transparency pass happens BEFORE dialogue rendering in graphics mode
-- [ ] **Input**: Update `_handle_dialogue_input()` to use new `DialogueInputHandler`
-- [ ] **Input**: Update action handling to work with DialogueBox instead of DialogueType
-- [ ] **Input**: Remove dead code - `_handle_gateway_confirmation_input()` (lines 245-258)
-- [ ] **Input**: Remove dead code - gateway check in escape handler (line 118)
-- [ ] Delete `game_dialogue.py` and `game_dialogue_renderer.py`
-- [ ] Update all tests using dialogue system to use new API
-- [ ] Remove/update tests for deleted code
-- [ ] Run test suite: `uv run pytest tests/ -v --tb=short`
+- [x] **Death save deletion** (FIRST): Move from renderer to `GameTurnManager.process_turn()` - delete save when `player.cpu <= 0` first detected
+- [x] Replace `game.dialogue_manager` with `game.dialogue_state` in game engine
+- [x] Update all dialogue creation calls to use factory functions with `should_show_dialogue()` checks
+- [x] Remove `show_gateway_confirmation` flag from game_engine.py and game_input.py
+- [x] **Rendering**: Implement full rendering order (sprites → UI → transparency pass → dialogues → composite)
+- [x] **Rendering**: Replace 3 dialogue routing blocks with single unified call to UnifiedRenderer
+- [x] **Rendering**: Ensure transparency pass happens BEFORE dialogue rendering in graphics mode
+- [x] **Input**: Update `_handle_dialogue_input()` to use new `DialogueInputHandler`
+- [x] **Input**: Update action handling to work with DialogueBox instead of DialogueType
+- [x] **Input**: Remove dead code - `_handle_gateway_confirmation_input()` (lines 245-258)
+- [x] **Input**: Remove dead code - gateway check in escape handler (line 118)
+- [x] Delete `game_dialogue.py` and `game_dialogue_renderer.py`
+- [x] Update all tests using dialogue system to use new API
+- [x] Remove/update tests for deleted code (gateway confirmation tests updated to reflect auto-progression)
+- [x] Run test suite: `uv run pytest tests/ -v --tb=short`
 
 **Validation**:
+- [x] All tests pass (955/955) ✅
 - [ ] Save deleted on death (test by dying and checking filesystem)
 - [ ] All dialogue types work (gateway, death, victory, overclock, inventory attack)
 - [ ] Transparency works in graphics mode (dialogues opaque, game area transparent)
@@ -121,7 +122,6 @@
 - [ ] Input handling works for all dialogue types
 - [ ] "Don't show again" feature works
 - [ ] Dialogue queueing works (trigger two simultaneous dialogues)
-- [ ] All tests pass
 
 ---
 

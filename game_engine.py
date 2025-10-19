@@ -31,7 +31,7 @@ from game_input import InputHandler
 from game_state_persistence import GameStatePersistence
 from game_level_coordinator import GameLevelCoordinator
 from game_turn_manager import GameTurnManager
-from game_dialogue import DialogueManager
+from game_dialogue_system import DialogueState
 
 
 class GameEngine:
@@ -91,8 +91,8 @@ class GameEngine:
         self.level_coordinator = GameLevelCoordinator(self)
         self.turn_manager = GameTurnManager(self)
 
-        # Initialize dialogue manager with settings for preference persistence
-        self.dialogue_manager = DialogueManager(self.settings)
+        # Initialize dialogue state with settings for preference persistence
+        self.dialogue_state = DialogueState(self.settings)
 
         # Preload all sound effects
         self.sound_manager.preload_sounds()
@@ -100,7 +100,6 @@ class GameEngine:
         # UI state
         self.show_inventory = False
         self.show_help = False
-        self.show_gateway_confirmation = False
         self.show_story_fragment: Optional[int] = None
 
         # Track when player first steps on nodes to avoid repeated sounds
@@ -290,13 +289,15 @@ class GameEngine:
             # Try to move player
             if self.player.move(dx, dy, self.game_map):
                 self.sound_manager.play_sound("player_move")
-                # Check for gateway
+                # Check for gateway - progress to next level immediately
                 if (self.game_map.gateway and
                     self.player.position.distance_to(self.game_map.gateway) == 0):
                     self.sound_manager.play_sound("ui_menu_open")
-                    # Show gateway confirmation dialogue
-                    from game_dialogue import DialogueType
-                    self.dialogue_manager.show_dialogue(DialogueType.GATEWAY_CONFIRM)
+                    # Progress to next level
+                    from game_dialogue_system import create_gateway_dialogue
+                    if self.dialogue_state.should_show_dialogue(create_gateway_dialogue()):
+                        self.dialogue_state.show(create_gateway_dialogue())
+                    self.level_coordinator.progress_to_next_level()
                     return
 
                 # Check for overheating
@@ -306,19 +307,7 @@ class GameEngine:
                     self.player.take_damage(damage)
                     self.player.heat = max(85, self.player.max_heat - 15)  # Cool down to 15 below max, minimum 85
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
-                    if self.player.cpu <= 0:
-                        self.sound_manager.play_sound("player_death", priority=10)
-                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
-                        self.sound_manager.play_sound("critical_system_failure", priority=10)
-                        self.sound_manager.stop_music(fade_out_ms=500)  # Stop level music on death
-                        # Delete save on death (permadeath)
-                        SaveGameManager.delete_save()
-                        self.message_log.add_message("Save data purged")
-                        self.game_over = True
-                        # Show death dialogue
-                        from game_dialogue import DialogueType
-                        self.dialogue_manager.show_dialogue(DialogueType.DEATH_MESSAGE)
-                        return
+                    # Death handling moved to game_turn_manager.py (called via maybe_process_turn)
 
                 # Handle speed boost and turn processing only if move was successful
                 self.maybe_process_turn()

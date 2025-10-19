@@ -17,7 +17,7 @@ from game_ui import render_char_safe
 from game_rendering_ui import UIRenderer
 from game_rendering_glyphs import GlyphsMapRenderer
 from game_rendering_graphics import GraphicsMapRenderer
-from game_dialogue_renderer import DialogueRenderer
+from game_dialogue_system import UnifiedRenderer
 
 
 def draw_bordered_box(console: tcod.console.Console, start_x: int, start_y: int,
@@ -43,7 +43,7 @@ class GameRenderer:
         self.tile_manager = tile_manager
         self.context = context
         self.ui_renderer = UIRenderer(settings=settings, context=context, tile_manager=tile_manager)
-        self.dialogue_renderer = DialogueRenderer()
+        # UnifiedRenderer is stateless, no need to initialize
 
         # Initialize both map renderers
         self.glyphs_renderer = GlyphsMapRenderer(settings=settings)
@@ -81,20 +81,11 @@ class GameRenderer:
             return  # Main game screen handles its own present() in graphics mode
 
         # Render dialogue system on top of EVERYTHING (highest priority overlay)
-        if game.dialogue_manager.is_active():
-            from game_dialogue import DialogueType
-            dialogue_type = game.dialogue_manager.active_dialogue
-
-            # Route to specific renderer based on dialogue type
-            if dialogue_type == DialogueType.DEATH_MESSAGE:
-                self.dialogue_renderer.render_death_message(console)
-            elif dialogue_type == DialogueType.VICTORY_MESSAGE:
-                self.dialogue_renderer.render_victory_message(console)
-            elif dialogue_type == DialogueType.GATEWAY_CONFIRM:
-                self.dialogue_renderer.render_gateway_confirmation(console)
-            else:
-                # Generic dialogue renderer (overclock warning, inventory attack, etc.)
-                self.dialogue_renderer.render_dialogue(console, game)
+        if game.dialogue_state.is_active():
+            # Use UnifiedRenderer for all dialogue types
+            dialogue = game.dialogue_state.get_active()
+            if dialogue:
+                UnifiedRenderer.render(console, dialogue)
 
         # For overlay screens (inventory, help, lore), we need to present in graphics mode too
         if should_use_graphics:
@@ -163,20 +154,11 @@ class GameRenderer:
                     console.rgba["bg"][y, x, 3] = 0  # Alpha = 0 (fully transparent)
 
             # Render dialogue system on console AFTER transparency pass (highest priority, opaque backgrounds)
-            if game.dialogue_manager.is_active():
-                from game_dialogue import DialogueType
-                dialogue_type = game.dialogue_manager.active_dialogue
-
-                # Route to specific renderer based on dialogue type
-                if dialogue_type == DialogueType.DEATH_MESSAGE:
-                    self.dialogue_renderer.render_death_message(console)
-                elif dialogue_type == DialogueType.VICTORY_MESSAGE:
-                    self.dialogue_renderer.render_victory_message(console)
-                elif dialogue_type == DialogueType.GATEWAY_CONFIRM:
-                    self.dialogue_renderer.render_gateway_confirmation(console)
-                else:
-                    # Generic dialogue renderer (overclock warning, inventory attack, etc.)
-                    self.dialogue_renderer.render_dialogue(console, game)
+            if game.dialogue_state.is_active():
+                # Use UnifiedRenderer for all dialogue types
+                dialogue = game.dialogue_state.get_active()
+                if dialogue:
+                    UnifiedRenderer.render(console, dialogue)
 
             # Convert console to texture and overlay on top of sprites
             console_texture = self.context.console_render.render(console)
@@ -197,20 +179,11 @@ class GameRenderer:
             self.ui_renderer.render_inspection_panel(console, game)
 
             # Render dialogue system (highest priority overlay) - handles gateway, death, victory
-            if game.dialogue_manager.is_active():
-                from game_dialogue import DialogueType
-                dialogue_type = game.dialogue_manager.active_dialogue
-
-                # Route to specific renderer based on dialogue type
-                if dialogue_type == DialogueType.DEATH_MESSAGE:
-                    self.dialogue_renderer.render_death_message(console)
-                elif dialogue_type == DialogueType.VICTORY_MESSAGE:
-                    self.dialogue_renderer.render_victory_message(console)
-                elif dialogue_type == DialogueType.GATEWAY_CONFIRM:
-                    self.dialogue_renderer.render_gateway_confirmation(console)
-                else:
-                    # Generic dialogue renderer (overclock warning, inventory attack, etc.)
-                    self.dialogue_renderer.render_dialogue(console, game)
+            if game.dialogue_state.is_active():
+                # Use UnifiedRenderer for all dialogue types
+                dialogue = game.dialogue_state.get_active()
+                if dialogue:
+                    UnifiedRenderer.render(console, dialogue)
 
 
 # Legacy alias for backward compatibility
