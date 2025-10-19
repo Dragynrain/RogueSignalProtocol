@@ -192,3 +192,48 @@ class MapRendererBase:
 
         px, py = self._grid_to_pixel(screen_x, screen_y)
         return (px, py, self.tile_manager.tile_width, self.tile_manager.tile_height)
+
+    def _console_to_pixels(self, console_x: int, console_y: int) -> Tuple[int, int]:
+        """
+        Convert console coordinates to pixel coordinates for MENU rendering.
+
+        COORDINATE SYSTEM: Console grid (80x50) -> SDL pixels
+        This is used for positioning sprites in menus to align with text.
+
+        IMPORTANT: This uses window scaling (pixels per character) which is
+        DIFFERENT from in-game rendering that uses TileManager dimensions.
+        Both methods use the same sprite SIZE (TileManager dimensions) but
+        different positioning math.
+
+        Args:
+            console_x: Console X coordinate (0-79)
+            console_y: Console Y coordinate (0-49)
+
+        Returns:
+            Tuple of (pixel_x, pixel_y) in SDL window space
+        """
+        window_width, window_height = self._get_window_size()
+
+        # Console is always 80x50 characters
+        pixels_per_char_x = window_width / GameConfig.SCREEN_WIDTH
+        pixels_per_char_y = window_height / GameConfig.SCREEN_HEIGHT
+
+        pixel_x = int(console_x * pixels_per_char_x)
+        pixel_y = int(console_y * pixels_per_char_y)
+
+        return (pixel_x, pixel_y)
+
+    def _get_window_size(self) -> Tuple[int, int]:
+        """
+        Get current window dimensions with fallback.
+
+        Returns:
+            Tuple of (width, height) in pixels
+        """
+        try:
+            if hasattr(self.context, 'sdl_window') and self.context.sdl_window:
+                return self.context.sdl_window.size
+        except (AttributeError, TypeError):
+            pass
+        # Fallback to default resolution
+        return (800, 600)

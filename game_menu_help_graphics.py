@@ -391,34 +391,43 @@ class GraphicalHelpMenu:
         Returns:
             Tuple of (x, y, width, height) in pixels for SDL rendering
         """
+        # Calculate positioning using window scaling (console coords -> pixels)
+        pixel_x, pixel_y = self._console_to_pixels(console_x, console_y)
+
+        # Use TileManager for size (same as in-game for consistency)
+        sprite_width = int(self.tile_manager.tile_width * scale)
+        sprite_height = int(self.tile_manager.tile_height * scale)
+
+        return (pixel_x, pixel_y, sprite_width, sprite_height)
+
+    def _console_to_pixels(self, console_x: int, console_y: int) -> Tuple[int, int]:
+        """
+        Convert console coordinates to pixel coordinates for menu sprite positioning.
+
+        Args:
+            console_x: Console X coordinate (0-79)
+            console_y: Console Y coordinate (0-49)
+
+        Returns:
+            Tuple of (pixel_x, pixel_y)
+        """
         # Get window size from SDL
         try:
             if hasattr(self.context, 'sdl_window') and self.context.sdl_window:
                 window_width, window_height = self.context.sdl_window.size
             else:
-                # Fallback to reasonable default
                 window_width, window_height = 800, 600
         except (AttributeError, TypeError):
-            # Mock objects or missing attributes
             window_width, window_height = 800, 600
 
-        # Console is always 80x50 characters
-        CONSOLE_WIDTH = 80
-        CONSOLE_HEIGHT = 50
+        # Calculate pixels per console character
+        pixels_per_char_x = window_width / GameConfig.SCREEN_WIDTH
+        pixels_per_char_y = window_height / GameConfig.SCREEN_HEIGHT
 
-        # Calculate how many pixels per console character
-        pixels_per_char_x = window_width / CONSOLE_WIDTH
-        pixels_per_char_y = window_height / CONSOLE_HEIGHT
-
-        # Calculate pixel position based on console character grid
         pixel_x = int(console_x * pixels_per_char_x)
         pixel_y = int(console_y * pixels_per_char_y)
 
-        # Sprite size should match in-game size (tile_width x tile_height from TileManager)
-        sprite_width = int(self.tile_manager.tile_width * scale)
-        sprite_height = int(self.tile_manager.tile_height * scale)
-
-        return (pixel_x, pixel_y, sprite_width, sprite_height)
+        return (pixel_x, pixel_y)
 
     def _render_text_layer(self, console: tcod.console.Console, page: dict):
         """
