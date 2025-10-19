@@ -46,8 +46,8 @@ class TestVictoryFixes(unittest.TestCase):
         # Create renderer and render victory message
         renderer = GameRenderer()
 
-        # Test the victory message rendering
-        renderer._render_victory_message(console)
+        # Test the victory message rendering (now via DialogueRenderer)
+        renderer.dialogue_renderer.render_victory_message(console)
 
         # Define the victory message text (should match game_rendering.py)
         victory_messages = [

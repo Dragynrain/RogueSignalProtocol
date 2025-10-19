@@ -742,9 +742,9 @@ That's it. Keep it simple.
 - [x] Task 1.3: Document Coordinate Systems
 
 ### Phase 2: Rendering Consolidation
-- [ ] Task 2.1: Consolidate Sprite Positioning Logic
-- [ ] Task 2.2: Monitor File Sizes (informational only - no action)
-- [ ] Task 2.3: Extract DialogueRenderer
+- [x] Task 2.1: Consolidate Sprite Positioning Logic
+- [x] Task 2.2: Monitor File Sizes (informational only - no action)
+- [x] Task 2.3: Extract DialogueRenderer
 
 ### Phase 3: Architecture Improvements
 - [ ] Task 3.1: Implement GameEngineBuilder Pattern
