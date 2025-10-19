@@ -8,6 +8,7 @@ import math
 from dataclasses import dataclass
 from enum import Enum
 from typing import List, Tuple, Optional
+from data_loading import DataLoader
 
 
 class ColorManager:
@@ -25,7 +26,6 @@ class ColorManager:
     def _load_colors(self):
         """Load colors from JSON configuration - NO FALLBACKS."""
         import logging
-        from data_loading import DataLoader
 
         try:
             config = DataLoader.load_config()

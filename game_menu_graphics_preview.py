@@ -19,9 +19,10 @@ from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 
 from game_config import GameSettings, GameConfig
-from game_entities import Colors
+from game_entities import Colors, ensure_color_tuple
 from game_ui import render_char_safe
 from game_graphics_tiles import TileManager
+from data_loading import DataLoader
 
 
 class GraphicsPreviewMenu:
@@ -58,8 +59,6 @@ class GraphicsPreviewMenu:
 
         # Alert ring animation state
         self.alert_color_index = 0  # 0=yellow, 1=orange, 2=red
-        from data_loading import DataLoader
-        from game_entities import ensure_color_tuple
         config = DataLoader.load_config()
         alert_seq = config.get("colors", {}).get("preview_demo", {}).get("alert_sequence", [])
         self.alert_colors = [ensure_color_tuple(c) for c in alert_seq] if alert_seq else [(255, 255, 0), (255, 165, 0), (255, 0, 0)]
@@ -104,8 +103,6 @@ class GraphicsPreviewMenu:
         except Exception as e:
             logging.error(f"Failed to load color config from game_rules.json: {e}")
             # Fallback to default colors from preview_demo
-            from data_loading import DataLoader
-            from game_entities import ensure_color_tuple
             config = DataLoader.load_config()
             preview_demo = config.get("colors", {}).get("preview_demo", {})
             enemy_colors_data = preview_demo.get("enemy_colors", [])
@@ -464,8 +461,6 @@ class GraphicsPreviewMenu:
                         renderer.copy(codehack_texture, dest=(screen_x, screen_y, tile_w, tile_h))
 
                 # Reset color mod
-                from data_loading import DataLoader
-                from game_entities import ensure_color_tuple
                 config = DataLoader.load_config()
                 normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
                 codehack_texture.color_mod = normal_tint
@@ -491,8 +486,6 @@ class GraphicsPreviewMenu:
                         renderer.copy(exploit_texture, dest=(screen_x, screen_y, tile_w, tile_h))
 
                 # Reset color mod
-                from data_loading import DataLoader
-                from game_entities import ensure_color_tuple
                 config = DataLoader.load_config()
                 normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
                 exploit_texture.color_mod = normal_tint
@@ -557,8 +550,6 @@ class GraphicsPreviewMenu:
                             tile_h
                         )
                         # Red brackets for hostile enemy state
-                        from data_loading import DataLoader
-                        from game_entities import ensure_color_tuple
                         config = DataLoader.load_config()
                         bracket_color = ensure_color_tuple(config.get("colors", {}).get("targeting", {}).get("corner_bracket", [255, 0, 0]))
                         self._draw_corner_brackets(renderer, bracket_rect, bracket_color, bracket_size=4)
@@ -586,8 +577,6 @@ class GraphicsPreviewMenu:
                     (15, 11),  # Second move
                     (14, 11),  # Third move (dimmest)
                 ]
-                from data_loading import DataLoader
-                from game_entities import ensure_color_tuple
                 config = DataLoader.load_config()
                 targeting_colors = config.get("colors", {}).get("targeting", {})
                 prediction_colors = [
