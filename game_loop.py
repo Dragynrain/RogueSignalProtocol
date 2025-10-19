@@ -13,7 +13,8 @@ from game_config import GameConfig, GameSettings
 from game_entities import Colors
 from game_ui import render_char_safe, WindowManager
 from game_audio import SoundManager
-from game_menus import MenuBackground, MainMenu, SettingsMenu, HelpMenu, LoreMenu
+from game_menus import MenuBackground, MainMenu, SettingsMenu
+from game_menu_help_lore import create_help_menu, LoreMenu
 from game_menu_graphics_preview import GraphicsPreviewMenu
 from game_engine import GameEngine
 from game_rendering_core import GameRenderer
@@ -89,15 +90,15 @@ def initialize_game_systems(settings: GameSettings, context, menu_background=Non
     if tile_manager is None and settings.graphics_mode == "graphics":
         try:
             tile_manager = TileManager(context, settings)
-            logging.info("TileManager initialized for graphics preview menu")
+            logging.info("TileManager initialized for graphics mode")
         except Exception as e:
-            logging.warning(f"Failed to initialize TileManager for preview: {e}")
+            logging.warning(f"Failed to initialize TileManager: {e}")
             tile_manager = None
 
     menus = {
         'main_menu': MainMenu(background=menu_background),  # Pass background here
         'settings_menu': SettingsMenu(settings, menu_background, sound_manager),  # Pass sound manager for live volume updates
-        'help_menu': HelpMenu(),
+        'help_menu': create_help_menu(settings, context, tile_manager),  # Use factory function
         'lore_menu': LoreMenu()
     }
 
@@ -139,29 +140,42 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
     while True:
         # Render console content first
         current_menu.render(console)
-        
+
+        # Check for background graphics (main menu, settings menu, etc.)
+        has_background = (hasattr(current_menu, 'background') and
+                         current_menu.background and
+                         current_menu.background.should_load_background())
+
+        # Check for sprite rendering (graphical help menu)
+        has_sprites = hasattr(current_menu, 'render_sprites')
+
         # CORRECTED RENDERING: Use SDL renderer when available for graphics mode
-        graphics_available = (context.sdl_renderer and hasattr(context, 'console_render') and 
-                            context.console_render and hasattr(current_menu, 'background') and 
-                            current_menu.background and current_menu.background.should_load_background())
-        
+        graphics_available = (context.sdl_renderer and hasattr(context, 'console_render') and
+                            context.console_render and (has_background or has_sprites))
+
         if graphics_available:
             # Graphics mode: render everything through SDL
             context.sdl_renderer.clear()
-            
-            # Render background graphics to SDL first
-            current_menu.background.render_background(console)
-            
+
+            # Render background graphics to SDL first (if menu has background)
+            if has_background:
+                current_menu.background.render_background(console)
+
+            # Render sprites to SDL (if menu has sprites, like GraphicalHelpMenu)
+            if has_sprites:
+                logging.debug(f"Menu has sprites, calling render_sprites() for {type(current_menu).__name__}")
+                current_menu.render_sprites()
+
             # Render console content as texture to SDL
             console_texture = context.console_render.render(console)
-            
+
             # Render full console texture to preserve internal character positioning
-            # The console has transparent areas on the left side for background graphics
+            # The console has transparent areas for background graphics or sprites
             context.sdl_renderer.copy(console_texture)
-            
+
             # Present everything through SDL
             context.sdl_renderer.present()
-            
+
         else:
             # ASCII mode or fallback: normal console presentation
             context.present(console)
@@ -371,7 +385,7 @@ def main():
 
                     # Initialize game rendering systems
                     renderer = GameRenderer(settings, tile_manager=tile_manager, context=context)
-                    input_handler = InputHandler(game)
+                    input_handler = InputHandler(game, renderer=renderer)
                     show_welcome_messages(game)
 
                 # Main game loop

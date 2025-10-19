@@ -2,14 +2,42 @@
 """
 Help and Lore Menus
 Contains HelpMenu and LoreMenu classes for game information and story fragments.
+Factory function creates appropriate help menu based on graphics mode.
 """
 
 import tcod
+import logging
 
 from game_config import GameConfig
 from game_entities import Colors
 from game_story import StoryFragmentManager
 from game_ui import render_char_safe, UniversalInputHandler
+
+
+def create_help_menu(settings, context=None, tile_manager=None):
+    """
+    Factory function to create appropriate help menu based on graphics mode.
+
+    Args:
+        settings: GameSettings instance
+        context: TCOD context (required for graphics mode)
+        tile_manager: TileManager instance (required for graphics mode)
+
+    Returns:
+        HelpMenu or GraphicalHelpMenu instance
+    """
+    if settings.graphics_mode == "graphics" and tile_manager is not None:
+        try:
+            from game_menu_help_graphics import GraphicalHelpMenu
+            logging.info("Creating GraphicalHelpMenu")
+            return GraphicalHelpMenu(context, settings, tile_manager)
+        except Exception as e:
+            logging.error(f"Failed to create GraphicalHelpMenu: {e}")
+            logging.info("Falling back to standard HelpMenu")
+            return HelpMenu()
+    else:
+        logging.info("Creating standard HelpMenu (glyph mode)")
+        return HelpMenu()
 
 
 class LoreMenu:

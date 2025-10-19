@@ -15,12 +15,25 @@ from game_rendering_ui_screens import FullScreenRenderer
 class UIRenderer:
     """Renders UI elements by coordinating specialized renderers."""
 
-    def __init__(self):
-        """Initialize UI renderer with component renderers."""
+    def __init__(self, settings=None, context=None, tile_manager=None):
+        """
+        Initialize UI renderer with component renderers.
+
+        Args:
+            settings: GameSettings instance (optional, for graphical help)
+            context: TCOD context (optional, for graphical help)
+            tile_manager: TileManager instance (optional, for graphical help)
+        """
         self.message_log_renderer = MessageLogRenderer()
         self.status_renderer = StatusBarRenderer()
         self.panel_renderer = PanelRenderer()
-        self.screen_renderer = FullScreenRenderer(self.status_renderer, self.message_log_renderer)
+        self.screen_renderer = FullScreenRenderer(
+            self.status_renderer,
+            self.message_log_renderer,
+            settings=settings,
+            context=context,
+            tile_manager=tile_manager
+        )
 
     # === Delegate to component renderers ===
 
@@ -41,8 +54,12 @@ class UIRenderer:
         self.panel_renderer.render_inspection_panel(console, game)
 
     def render_help_screen(self, console: tcod.console.Console):
-        """Render the help screen using HelpMenu content."""
+        """Render the help screen using appropriate help menu."""
         self.screen_renderer.render_help_screen(console)
+
+    def render_help_sprites(self):
+        """Render help screen sprites (for GraphicalHelpMenu only)."""
+        self.screen_renderer.render_help_sprites()
 
     def render_inventory_screen(self, console: tcod.console.Console, game):
         """Render the inventory screen with scrolling support."""

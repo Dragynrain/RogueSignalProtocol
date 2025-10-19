@@ -5,10 +5,11 @@ Renders full-screen UIs like help, inventory, and lore viewer.
 """
 
 import tcod
+import logging
 from game_config import GameConfig
 from game_entities import Colors
 from game_data import GameData
-from game_menus import HelpMenu
+from game_menu_help_lore import create_help_menu
 from data_loading import get_story_fragments
 from game_ui import render_char_safe
 
@@ -16,10 +17,25 @@ from game_ui import render_char_safe
 class FullScreenRenderer:
     """Renders full-screen UI overlays."""
 
-    def __init__(self, status_renderer, message_log_renderer):
-        """Initialize with references to other renderers for inventory screen."""
+    def __init__(self, status_renderer, message_log_renderer, settings=None, context=None, tile_manager=None):
+        """
+        Initialize with references to other renderers for inventory screen.
+
+        Args:
+            status_renderer: StatusRenderer instance
+            message_log_renderer: MessageLogRenderer instance
+            settings: GameSettings instance (optional, for graphical help)
+            context: TCOD context (optional, for graphical help)
+            tile_manager: TileManager instance (optional, for graphical help)
+        """
         self.status_renderer = status_renderer
         self.message_log_renderer = message_log_renderer
+        self.settings = settings
+        self.context = context
+        self.tile_manager = tile_manager
+
+        # Create help menu once (reuse for multiple opens)
+        self._help_menu = None
 
     # === HELPER METHODS ===
 
@@ -141,10 +157,48 @@ class FullScreenRenderer:
     # === FULL SCREEN RENDERING METHODS ===
 
     def render_help_screen(self, console: tcod.console.Console):
-        """Render the help screen using HelpMenu content."""
-        # Create a temporary HelpMenu and use its render method
-        help_menu = HelpMenu()
-        help_menu.render(console)
+        """
+        Render the help screen using appropriate help menu.
+
+        Uses GraphicalHelpMenu in graphics mode, HelpMenu in glyph mode.
+        """
+        # Create help menu if not already created
+        if self._help_menu is None:
+            if self.settings is not None:
+                self._help_menu = create_help_menu(self.settings, self.context, self.tile_manager)
+                logging.info(f"Created in-game help menu: {type(self._help_menu).__name__}")
+            else:
+                # Fallback to standard help menu if settings not provided
+                from game_menu_help_lore import HelpMenu
+                self._help_menu = HelpMenu()
+                logging.warning("Settings not provided to FullScreenRenderer, using standard HelpMenu")
+
+        # Render help menu
+        self._help_menu.render(console)
+
+    def render_help_sprites(self):
+        """
+        Render help screen sprites (for GraphicalHelpMenu only).
+
+        This should be called BEFORE render_help_screen when in graphics mode.
+        Only GraphicalHelpMenu has this method.
+        """
+        if self._help_menu and hasattr(self._help_menu, 'render_sprites'):
+            self._help_menu.render_sprites()
+
+    def handle_help_input(self, event) -> str:
+        """
+        Handle input for help screen.
+
+        Args:
+            event: TCOD event
+
+        Returns:
+            Result from help menu input handler ('back' to exit, '' to continue)
+        """
+        if self._help_menu:
+            return self._help_menu.handle_input(event)
+        return ""
 
     def render_inventory_screen(self, console: tcod.console.Console, game):
         """Render the inventory screen with scrolling support."""

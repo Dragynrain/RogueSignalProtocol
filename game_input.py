@@ -44,10 +44,11 @@ class InputMappings:
 
 class InputHandler:
     """Handles all user input and translates it to game actions."""
-    
-    def __init__(self, game):
+
+    def __init__(self, game, renderer=None):
         self.game = game
         self.exploit_system = ExploitSystem(game)
+        self.renderer = renderer  # GameRenderer instance for help screen input
     
     def handle_keydown(self, event: tcod.event.KeyDown) -> bool:
         """Handle keydown events.
@@ -69,8 +70,16 @@ class InputHandler:
 
         # Modal screens - handle non-escape keys
         if self.game.show_help:
-            self.game.show_help = False
-            return True
+            # Delegate to help menu's input handler (supports pagination)
+            if self.renderer and hasattr(self.renderer, 'ui_renderer'):
+                result = self.renderer.ui_renderer.screen_renderer.handle_help_input(event)
+                if result == "back":
+                    self.game.show_help = False
+                return True
+            else:
+                # Fallback: any key closes help
+                self.game.show_help = False
+                return True
 
         if self.game.show_story_fragment is not None:
             # Any key closes the story fragment display
