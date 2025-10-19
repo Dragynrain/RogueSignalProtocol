@@ -276,8 +276,8 @@ class GraphicalHelpMenu:
                 # Full-width tips at bottom - centered, non-bulleted
                 (30, 31, "SURVIVAL TIPS:", Colors.YELLOW),
                 (12, 33, "Use stealth to save resources for combat when you need it", Colors.WHITE),
-                (4, 35, "Watch your trace level to avoid the Admin Avatar and use ghost nodes or log", Colors.RED),
-                (20, 36, "wiper to reduce your trace level", Colors.RED),
+                (6, 35, "Watch your trace level to avoid the Admin Avatar and use ghost nodes", Colors.RED),
+                (18, 36, "or log wiper to reduce your trace level", Colors.RED),
                 (8, 38, "If you overheat, you take CPU damage but can still use exploits", Colors.CYAN),
             ]
         }
