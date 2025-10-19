@@ -41,7 +41,7 @@ def create_help_menu(settings, context=None, tile_manager=None):
 
 
 class LoreMenu:
-    """Lore viewer menu for main menu."""
+    """Data Fragments viewer menu for main menu."""
     
     def __init__(self):
         self.story_fragment_manager = None
@@ -67,12 +67,12 @@ class LoreMenu:
             self._render_list_mode(console, discovered_fragments, discovered_count, total_count)
     
     def _render_list_mode(self, console, discovered_fragments, discovered_count, total_count):
-        """Render lore fragment list."""
-        title = f"DISCOVERED LORE FRAGMENTS ({discovered_count}/{total_count})"
+        """Render data fragment list."""
+        title = f"DISCOVERED DATA FRAGMENTS ({discovered_count}/{total_count})"
         render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
-        
+
         if not discovered_fragments:
-            render_char_safe(console, 2, 5, "No lore fragments discovered yet.", fg=Colors.WHITE)
+            render_char_safe(console, 2, 5, "No data fragments discovered yet.", fg=Colors.WHITE)
             render_char_safe(console, 2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
             render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
             return
@@ -261,7 +261,7 @@ class HelpMenu:
             ("  ┌┐└┘┬┴├┤┼─│: Walls (impassable)", Colors.WALL),
             ("  *: Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
             ("  >: Gateway to next level", Colors.GATEWAY),
-            ("  ♫: Story fragments (lore)", Colors.CYAN),
+            ("  ♫: Data fragments (story/lore)", Colors.CYAN),
             ("", Colors.WHITE),
             
             ("ENEMY TYPES (HP, Vision, Behavior, Damage):", Colors.CYAN),

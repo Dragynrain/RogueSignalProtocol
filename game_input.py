@@ -59,14 +59,16 @@ class InputHandler:
         Returns:
             True if game should continue, False if should exit
         """
+        # Priority 1: Active dialogue (highest priority overlay)
+        # Check this BEFORE game_over to allow death dialogue to be shown
+        if self.game.dialogue_manager.is_active():
+            return self._handle_dialogue_input(event)
+
         # Dead/game over state - any key should exit to main menu
+        # Only reached if no dialogue is active (death dialogue would be active)
         if self.game.player.cpu <= 0 or self.game.game_over:
             # Exit to main menu instead of showing pause menu when dead
             return False
-
-        # Priority 1: Active dialogue (highest priority overlay)
-        if self.game.dialogue_manager.is_active():
-            return self._handle_dialogue_input(event)
 
         # Modal screens - handle non-escape keys
         if self.game.show_help:
@@ -153,7 +155,9 @@ class InputHandler:
         if action == "confirm":
             self._handle_dialogue_confirm()
         elif action in ["cancel", "dismiss"]:
-            self._handle_dialogue_dismiss()
+            # Handle dismiss and check if we should exit to menu (for death/victory)
+            should_continue = self._handle_dialogue_dismiss()
+            return should_continue
         elif action == "dont_show_again":
             self._handle_dialogue_dont_show_again()
 
@@ -181,8 +185,13 @@ class InputHandler:
         # Close dialogue
         self.game.dialogue_manager.close_dialogue()
 
-    def _handle_dialogue_dismiss(self):
-        """Handle dialogue dismissal/cancellation (user pressed N or ESC)."""
+    def _handle_dialogue_dismiss(self) -> bool:
+        """
+        Handle dialogue dismissal/cancellation (user pressed N or ESC).
+
+        Returns:
+            True if game should continue, False if should exit to menu
+        """
         from game_dialogue import DialogueType
 
         dialogue_type = self.game.dialogue_manager.active_dialogue
@@ -199,10 +208,12 @@ class InputHandler:
             self.game.message_log.add_message("Staying in current network")
         elif dialogue_type in (DialogueType.DEATH_MESSAGE, DialogueType.VICTORY_MESSAGE):
             # Death/victory messages - any key closes and returns to menu
-            pass
+            self.game.dialogue_manager.close_dialogue()
+            return False  # Exit to main menu
 
         # Close dialogue
         self.game.dialogue_manager.close_dialogue()
+        return True  # Continue game
 
     def _handle_dialogue_dont_show_again(self):
         """Handle 'don't show this again' option (user pressed D)."""
