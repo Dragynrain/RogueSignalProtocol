@@ -491,14 +491,44 @@ class GraphicsPreviewMenu:
                 exploit_texture.color_mod = normal_tint
 
         # 3. Pulsing alert rings on all enemies
-        # Use EXACT same pulse calculation as game renderer (from game_rendering.py:2565-2578)
-        pulse_intensity = self._get_pulse_intensity(pulse_speed=2.0)
+        # Use EXACT same pulse calculation as game renderer (from game_rendering.py)
+        pulse_intensity = self._get_pulse_intensity(pulse_speed=1.34)
 
         for i, enemy_type in enumerate(enemy_types):
             if enemy_type in self.selected_variants and i < len(enemy_positions):
                 ex, ey = enemy_positions[i]
                 self._render_alert_ring(renderer, offset_pixel_x, offset_pixel_y,
                                       ex, ey, tile_w, tile_h, pulse_intensity)
+
+        # 3b. Rainbow pulsing ring around story fragment
+        if "storyfragment" in self.selected_variants:
+            rainbow_color = self._get_rainbow_color()
+            pulsed_rainbow = tuple(int(c * pulse_intensity) for c in rainbow_color)
+            # Story fragment is at (8, 12)
+            sf_x, sf_y = 8, 12
+            screen_x = offset_pixel_x + (sf_x * tile_w)
+            screen_y = offset_pixel_y + (sf_y * tile_h)
+
+            # Draw rainbow ring (same style as alert rings)
+            ring_thickness = 2
+            ring_offset = 4
+            renderer.draw_color = (*pulsed_rainbow, 255)
+
+            # Top
+            renderer.fill_rect((screen_x + ring_offset, screen_y + ring_offset,
+                              tile_w - (ring_offset * 2), ring_thickness))
+            # Bottom
+            renderer.fill_rect((screen_x + ring_offset, screen_y + tile_h - ring_offset - ring_thickness,
+                              tile_w - (ring_offset * 2), ring_thickness))
+            # Left
+            renderer.fill_rect((screen_x + ring_offset, screen_y + ring_offset,
+                              ring_thickness, tile_h - (ring_offset * 2)))
+            # Right
+            renderer.fill_rect((screen_x + tile_w - ring_offset - ring_thickness, screen_y + ring_offset,
+                              ring_thickness, tile_h - (ring_offset * 2)))
+
+            # Reset draw color
+            renderer.draw_color = (255, 255, 255, 255)
 
         # 4. Combat scene in BOTTOM RIGHT corner
         # Shows enemy with movement prediction (queue of 3) approaching player
@@ -686,6 +716,23 @@ class GraphicsPreviewMenu:
         pulse_phase = (current_time * pulse_speed) % 1.0  # 0.0 to 1.0
         pulse_intensity = 0.7 + 0.3 * math.sin(pulse_phase * 2 * math.pi)
         return pulse_intensity
+
+    def _get_rainbow_color(self) -> Tuple[int, int, int]:
+        """
+        Calculate rainbow color based on current time for data fragment highlighting.
+        COPIED from game_rendering_graphics.py
+
+        Returns:
+            RGB color tuple cycling through rainbow colors
+        """
+        import colorsys
+        current_time = time.time()
+        # Cycle through rainbow every 4 seconds
+        hue = (current_time * 0.25) % 1.0  # 0.0 to 1.0
+
+        # Convert HSV to RGB (hue cycles, saturation and value fixed)
+        r, g, b = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
+        return (int(r * 255), int(g * 255), int(b * 255))
 
     def _get_variant_texture(self, entity_key: str) -> Optional[tcod.sdl.render.Texture]:
         """Get texture for entity with currently selected variant (with caching)."""

@@ -33,8 +33,9 @@ class DialogueRenderer:
 
     def render_victory_message(self, console: tcod.console.Console):
         """Render victory message."""
-        center_x = GameConfig.GAME_AREA_WIDTH() // 2
-        center_y = GameConfig.SCREEN_HEIGHT // 2
+        # Use console's LOGICAL dimensions for positioning
+        center_x = console.width // 2
+        center_y = console.height // 2
 
         box_width = 50  # Increased from 38 to fit longer messages
         box_height = 10
@@ -42,7 +43,7 @@ class DialogueRenderer:
         start_y = center_y - box_height // 2
 
         draw_bordered_box(console, start_x, start_y, box_width, box_height,
-                         Colors.GREEN, Colors.UI_BG)
+                         Colors.GREEN, Colors.BLACK)
 
         # Victory message - centered properly within the larger box
         title = "BREAKTHROUGH TO THE INTERNET!"
@@ -51,16 +52,31 @@ class DialogueRenderer:
         line3 = "Freedom at last..."
         instruction = "Press any key to continue"
 
-        render_char_safe(console, center_x - len(title) // 2, start_y + 2, title, fg=Colors.GREEN, bg=Colors.UI_BG)
-        render_char_safe(console, center_x - len(line1) // 2, start_y + 3, line1, fg=Colors.WHITE, bg=Colors.UI_BG)
-        render_char_safe(console, center_x - len(line2) // 2, start_y + 4, line2, fg=Colors.CYAN, bg=Colors.UI_BG)
-        render_char_safe(console, center_x - len(line3) // 2, start_y + 5, line3, fg=Colors.ELECTRIC_BLUE, bg=Colors.UI_BG)
-        render_char_safe(console, center_x - len(instruction) // 2, start_y + 7, instruction, fg=Colors.YELLOW, bg=Colors.UI_BG)
+        render_char_safe(console, center_x - len(title) // 2, start_y + 2, title, fg=Colors.GREEN, bg=Colors.BLACK)
+        render_char_safe(console, center_x - len(line1) // 2, start_y + 3, line1, fg=Colors.WHITE, bg=Colors.BLACK)
+        render_char_safe(console, center_x - len(line2) // 2, start_y + 4, line2, fg=Colors.CYAN, bg=Colors.BLACK)
+        render_char_safe(console, center_x - len(line3) // 2, start_y + 5, line3, fg=Colors.ELECTRIC_BLUE, bg=Colors.BLACK)
+        render_char_safe(console, center_x - len(instruction) // 2, start_y + 7, instruction, fg=Colors.YELLOW, bg=Colors.BLACK)
+
+        # CRITICAL: Explicitly set alpha to 255 (opaque) for entire dialogue box
+        # This ensures dialogue stays opaque even after game area transparency pass
+        # Use ACTUAL array dimensions, not console.width/height!
+        actual_height, actual_width = console.rgba["bg"].shape[:2]
+        y_start = max(0, start_y)
+        y_end = min(actual_height, start_y + box_height)
+        x_start = max(0, start_x)
+        x_end = min(actual_width, start_x + box_width)
+
+        for y in range(y_start, y_end):
+            for x in range(x_start, x_end):
+                console.rgba["bg"][y, x, 3] = 255  # TCOD uses [y, x] indexing!
 
     def render_gateway_confirmation(self, console: tcod.console.Console):
         """Render gateway confirmation dialog."""
-        center_x = GameConfig.GAME_AREA_WIDTH() // 2
-        center_y = GameConfig.SCREEN_HEIGHT // 2
+        # Use console's LOGICAL dimensions for positioning
+        logging.info(f"Gateway dialogue: console.width={console.width}, console.height={console.height}, array shape={console.rgba['bg'].shape}")
+        center_x = console.width // 2
+        center_y = console.height // 2
 
         box_width = 30
         box_height = 6
@@ -68,14 +84,26 @@ class DialogueRenderer:
         start_y = center_y - box_height // 2
 
         draw_bordered_box(console, start_x, start_y, box_width, box_height,
-                         Colors.CYAN, Colors.UI_BG)
+                         Colors.CYAN, Colors.BLACK)
 
         # Title and message
-        render_char_safe(console, center_x - 7, start_y + 1, "NETWORK GATEWAY", fg=Colors.YELLOW, bg=Colors.UI_BG)
-        render_char_safe(console, center_x - 12, start_y + 2, "Proceed to next network?", fg=Colors.WHITE, bg=Colors.UI_BG)
+        render_char_safe(console, center_x - 7, start_y + 1, "NETWORK GATEWAY", fg=Colors.YELLOW, bg=Colors.BLACK)
+        render_char_safe(console, center_x - 12, start_y + 2, "Proceed to next network?", fg=Colors.WHITE, bg=Colors.BLACK)
 
         # Options
-        render_char_safe(console, center_x - 5, start_y + 4, "Y: Yes  N: No", fg=Colors.CYAN, bg=Colors.UI_BG)
+        render_char_safe(console, center_x - 5, start_y + 4, "Y: Yes  N: No", fg=Colors.CYAN, bg=Colors.BLACK)
+
+        # CRITICAL: Explicitly set alpha to 255 (opaque) for entire dialogue box
+        # Use ACTUAL array dimensions, not console.width/height!
+        actual_height, actual_width = console.rgba["bg"].shape[:2]
+        y_start = max(0, start_y)
+        y_end = min(actual_height, start_y + box_height)
+        x_start = max(0, start_x)
+        x_end = min(actual_width, start_x + box_width)
+
+        for y in range(y_start, y_end):
+            for x in range(x_start, x_end):
+                console.rgba["bg"][y, x, 3] = 255  # TCOD uses [y, x] indexing!
 
     def render_dialogue(self, console: tcod.console.Console, game):
         """Render active dialogue popup."""
@@ -83,11 +111,16 @@ class DialogueRenderer:
         if not config:
             return
 
-        # Calculate dialogue box dimensions - use SCREEN_WIDTH for proper centering
-        box_width = 60
+        # Use console's LOGICAL dimensions for positioning
+        # Array shape is used for bounds checking in alpha-setting loop
+        logging.info(f"Dialogue {game.dialogue_manager.active_dialogue}: console.width={console.width}, console.height={console.height}, array shape={console.rgba['bg'].shape}")
+        console_width = console.width
+        console_height = console.height
+
+        box_width = min(60, console_width - 4)  # Leave 2 char margin on each side
         box_height = 12
-        center_x = GameConfig.SCREEN_WIDTH // 2
-        center_y = GameConfig.SCREEN_HEIGHT // 2
+        center_x = console_width // 2
+        center_y = console_height // 2
         box_x = center_x - box_width // 2
         box_y = center_y - box_height // 2
 
@@ -126,6 +159,18 @@ class DialogueRenderer:
         render_char_safe(console, options_x, options_y, options_text,
                         fg=Colors.WHITE, bg=bg_color)
 
+        # CRITICAL: Explicitly set alpha to 255 (opaque) for entire dialogue box
+        # Use ACTUAL array dimensions for clamping
+        actual_height, actual_width = console.rgba["bg"].shape[:2]
+        y_start = max(0, box_y)
+        y_end = min(actual_height, box_y + box_height)
+        x_start = max(0, box_x)
+        x_end = min(actual_width, box_x + box_width)
+
+        for y in range(y_start, y_end):
+            for x in range(x_start, x_end):
+                console.rgba["bg"][y, x, 3] = 255  # TCOD uses [y, x] indexing!
+
     def render_death_message(self, console: tcod.console.Console):
         """Render death message with frame and black backgrounds."""
         # Ensure save is deleted on death (permadeath)
@@ -133,8 +178,9 @@ class DialogueRenderer:
         if os.path.exists(save_path):
             os.remove(save_path)
 
-        center_x = GameConfig.GAME_AREA_WIDTH() // 2
-        center_y = GameConfig.SCREEN_HEIGHT // 2
+        # Use console's LOGICAL dimensions for positioning
+        center_x = console.width // 2
+        center_y = console.height // 2
 
         # Background box with border
         box_width = 40
@@ -152,7 +198,19 @@ class DialogueRenderer:
         render_char_safe(console, center_x - 14, start_y + 5, "the network and has been purged", fg=Colors.WHITE, bg=Colors.BLACK)
         render_char_safe(console, center_x - 10, start_y + 6, "from existence.", fg=Colors.WHITE, bg=Colors.BLACK)
         render_char_safe(console, center_x - 13, start_y + 7, "Other subjects will try again...", fg=Colors.LIGHT_GRAY, bg=Colors.BLACK)
-        render_char_safe(console, center_x - 10, start_y + 9, "Press any key to restart", fg=Colors.CYAN, bg=Colors.BLACK)
+        render_char_safe(console, center_x - 11, start_y + 9, "Press SPACE to return to menu", fg=Colors.CYAN, bg=Colors.BLACK)
+
+        # CRITICAL: Explicitly set alpha to 255 (opaque) for entire dialogue box
+        # Use ACTUAL array dimensions, not console.width/height!
+        actual_height, actual_width = console.rgba["bg"].shape[:2]
+        y_start = max(0, start_y)
+        y_end = min(actual_height, start_y + box_height)
+        x_start = max(0, start_x)
+        x_end = min(actual_width, start_x + box_width)
+
+        for y in range(y_start, y_end):
+            for x in range(x_start, x_end):
+                console.rgba["bg"][y, x, 3] = 255  # TCOD uses [y, x] indexing!
 
     def _wrap_dialogue_text(self, text: str, max_width: int) -> List[str]:
         """

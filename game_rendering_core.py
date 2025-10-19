@@ -82,7 +82,19 @@ class GameRenderer:
 
         # Render dialogue system on top of EVERYTHING (highest priority overlay)
         if game.dialogue_manager.is_active():
-            self.dialogue_renderer.render_dialogue(console, game)
+            from game_dialogue import DialogueType
+            dialogue_type = game.dialogue_manager.active_dialogue
+
+            # Route to specific renderer based on dialogue type
+            if dialogue_type == DialogueType.DEATH_MESSAGE:
+                self.dialogue_renderer.render_death_message(console)
+            elif dialogue_type == DialogueType.VICTORY_MESSAGE:
+                self.dialogue_renderer.render_victory_message(console)
+            elif dialogue_type == DialogueType.GATEWAY_CONFIRM:
+                self.dialogue_renderer.render_gateway_confirmation(console)
+            else:
+                # Generic dialogue renderer (overclock warning, inventory attack, etc.)
+                self.dialogue_renderer.render_dialogue(console, game)
 
         # For overlay screens (inventory, help, lore), we need to present in graphics mode too
         if should_use_graphics:
@@ -136,16 +148,35 @@ class GameRenderer:
             self.ui_renderer.render_system_log(console, game)
             self.ui_renderer.render_inspection_panel(console, game)
 
-            # Render dialogue system on console if active (covers everything)
-            if game.dialogue_manager.is_active():
-                self.dialogue_renderer.render_dialogue(console, game)
-
-            # Set game area background alpha to 0 for transparency
+            # Set game area background alpha to 0 for transparency BEFORE rendering dialogues
             # This allows sprites rendered below to show through the console texture
-            # Game area: x=0-54, y=1-44 (excluding top bar, bottom panel, and system log)
-            for x in range(GameConfig.GAME_AREA_WIDTH()):
-                for y in range(1, GameConfig.PANEL_Y()):
-                    console.rgba["bg"][x, y, 3] = 0  # Alpha = 0 (fully transparent)
+            # CRITICAL: Use ACTUAL array dimensions for bounds, not GameConfig
+            actual_height, actual_width = console.rgba["bg"].shape[:2]
+
+            # Clamp to actual array bounds to prevent index errors
+            max_y = min(actual_height, GameConfig.PANEL_Y())
+            max_x = min(actual_width, GameConfig.GAME_AREA_WIDTH())
+
+            # Loop: y outer, x inner → indexing: [y, x]
+            for y in range(1, max_y):
+                for x in range(max_x):
+                    console.rgba["bg"][y, x, 3] = 0  # Alpha = 0 (fully transparent)
+
+            # Render dialogue system on console AFTER transparency pass (highest priority, opaque backgrounds)
+            if game.dialogue_manager.is_active():
+                from game_dialogue import DialogueType
+                dialogue_type = game.dialogue_manager.active_dialogue
+
+                # Route to specific renderer based on dialogue type
+                if dialogue_type == DialogueType.DEATH_MESSAGE:
+                    self.dialogue_renderer.render_death_message(console)
+                elif dialogue_type == DialogueType.VICTORY_MESSAGE:
+                    self.dialogue_renderer.render_victory_message(console)
+                elif dialogue_type == DialogueType.GATEWAY_CONFIRM:
+                    self.dialogue_renderer.render_gateway_confirmation(console)
+                else:
+                    # Generic dialogue renderer (overclock warning, inventory attack, etc.)
+                    self.dialogue_renderer.render_dialogue(console, game)
 
             # Convert console to texture and overlay on top of sprites
             console_texture = self.context.console_render.render(console)
@@ -167,7 +198,19 @@ class GameRenderer:
 
             # Render dialogue system (highest priority overlay) - handles gateway, death, victory
             if game.dialogue_manager.is_active():
-                self.dialogue_renderer.render_dialogue(console, game)
+                from game_dialogue import DialogueType
+                dialogue_type = game.dialogue_manager.active_dialogue
+
+                # Route to specific renderer based on dialogue type
+                if dialogue_type == DialogueType.DEATH_MESSAGE:
+                    self.dialogue_renderer.render_death_message(console)
+                elif dialogue_type == DialogueType.VICTORY_MESSAGE:
+                    self.dialogue_renderer.render_victory_message(console)
+                elif dialogue_type == DialogueType.GATEWAY_CONFIRM:
+                    self.dialogue_renderer.render_gateway_confirmation(console)
+                else:
+                    # Generic dialogue renderer (overclock warning, inventory attack, etc.)
+                    self.dialogue_renderer.render_dialogue(console, game)
 
 
 # Legacy alias for backward compatibility

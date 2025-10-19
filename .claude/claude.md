@@ -73,6 +73,49 @@
 
 ---
 
+## 7a. TCOD Array Indexing (CRITICAL - READ EVERY TIME)
+
+**🚨 TCOD USES [y, x] INDEXING FOR ALL ARRAYS - NOT [x, y]! 🚨**
+
+This is the **#1 source of bugs** in this codebase. Always check before writing array code.
+
+**CORRECT:**
+```python
+# Loop order: y outer, x inner → indexing: [y, x]
+for y in range(height):
+    for x in range(width):
+        console.rgba["bg"][y, x, 3] = 255  # ✓ Matches loop order
+
+# With Position objects: extract y first, x second
+pos = Position(x=10, y=5)
+console.rgba["bg"][pos.y, pos.x, 3] = 255  # ✓ [y, x] order
+
+# TCOD functions use (y, x) tuples
+cost_map[enemy_y, enemy_x] = 0  # ✓ [y, x] indexing
+pathfinder.path_to((target_y, target_x))  # ✓ (y, x) tuple
+```
+
+**WRONG (causes transparency/rendering bugs):**
+```python
+# ✗ Loop variables swapped with indexing
+for x in range(width):
+    for y in range(height):
+        console.rgba["bg"][x, y, 3] = 255  # BUG: Creates transposed transparency!
+
+# ✗ Using Position in wrong order
+pos = Position(x=10, y=5)
+console.rgba["bg"][pos.x, pos.y, 3] = 255  # BUG: Transposed!
+
+# ✗ Wrong tuple order for TCOD functions
+cost_map[enemy_x, enemy_y] = 0  # BUG: Wrong position!
+```
+
+**Why this matters:** Using `[x, y]` instead of `[y, x]` sets values at **transposed coordinates**. If you want to modify position (10, 20), using `[x, y]` will modify (20, 10) instead, causing dialogue transparency bugs, pathfinding failures, and rendering issues.
+
+**See `.claude/TCOD_COORDINATE_SYSTEMS.md` for complete reference.**
+
+---
+
 ## 7b. Graphics Rendering & Coordinate Systems (CRITICAL)
 
 **Three Different Coordinate Systems - DO NOT MIX THEM:**

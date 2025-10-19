@@ -297,7 +297,11 @@ def handle_game_input_events(event, game, input_handler):
         if event.sym == tcod.event.KeySym.ESCAPE:
             # Priority 1: If dialogue is active, let it handle escape first
             if game.dialogue_manager.is_active():
-                input_handler._handle_dialogue_dismiss()
+                logging.info(f"ESC pressed with dialogue active: {game.dialogue_manager.active_dialogue}")
+                should_continue = input_handler._handle_dialogue_dismiss()
+                if not should_continue:
+                    # Death/victory dialogue wants to exit to menu
+                    return True, None
                 return True, game
             # Check if any UI states are open - close those first
             elif (game.show_story_fragment is not None or

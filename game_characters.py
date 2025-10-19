@@ -265,7 +265,14 @@ class Enemy:
         if game_map.is_shadow(player.position) and distance > GameBalance.ADJACENT_DISTANCE_THRESHOLD:
             return False
 
-        return game_map.can_see_position(self.position, player.position, self.type_data.vision)
+        # Final LOS check using TCOD FOV
+        can_see = game_map.can_see_position(self.position, player.position, self.type_data.vision)
+
+        # Debug: Log only when enemy DOES see player
+        if can_see:
+            logging.info(f"ENEMY VISION: {self.type} at ({self.x},{self.y}) sees player at ({player.x},{player.y}), distance={distance:.1f}")
+
+        return can_see
     
     def can_attack_player(self, player: Player) -> bool:
         """Check if enemy can attack player (adjacent including diagonally)."""
@@ -347,13 +354,16 @@ class Enemy:
         next_position = self.move_queue.pop(0)
         if not self._is_move_valid(next_position, game_map, player, game_engine):
             # Move blocked - clear queue and refresh
+            logging.info(f"Enemy {self.id} ({self.type}) at {self.position}: move to {next_position} blocked, recalculating")
             self.move_queue.clear()
             self._refresh_move_queue(player, game_map, game_engine)
             # Try again with fresh queue
             if not self.move_queue:
+                logging.info(f"Enemy {self.id} ({self.type}): no valid moves after recalculation")
                 return False
             next_position = self.move_queue.pop(0)
             if not self._is_move_valid(next_position, game_map, player, game_engine):
+                logging.info(f"Enemy {self.id} ({self.type}): move to {next_position} STILL blocked after recalculation, giving up")
                 self.move_queue.clear()
                 return False
 
@@ -413,7 +423,15 @@ class Enemy:
         # Admin, hostile enemies, and patrol enemies use pathfinding
         if self.type == 'admin' or self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
             path = self._calculate_path_to_target(self._queue_target, game_map, game_engine)
-            if path is not None and len(path) > 1:
+
+            # If pathfinding failed (blocked by enemies/walls), use greedy movement as fallback
+            if (path is None or len(path) <= 1) and self._queue_target:
+                logging.debug(f"Enemy {self.id} ({self.type}) pathfinding failed, using greedy fallback toward {self._queue_target}")
+                fallback_move = self._calculate_greedy_move_toward_target(self._queue_target, game_map, game_engine)
+                if fallback_move:
+                    self.move_queue.append(fallback_move)
+                    logging.debug(f"Enemy {self.id} greedy move: {fallback_move}")
+            elif path is not None and len(path) > 1:
                 # Add positions to queue, validating adjacency between each step
                 prev_pos = self.position  # Start from current position
 
@@ -607,6 +625,53 @@ class Enemy:
 
         return None
 
+    def _calculate_greedy_move_toward_target(self, target: Position, game_map, game_engine) -> Optional[Position]:
+        """
+        Calculate best adjacent move toward target using greedy algorithm.
+        Used as fallback when pathfinding fails due to blocking enemies.
+        ONLY returns moves that are actually valid (not blocked by enemies or walls).
+        """
+        if not target:
+            return None
+
+        best_move = None
+        best_distance = float('inf')
+
+        # Try all 8 adjacent directions
+        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+
+        for dx, dy in directions:
+            next_pos = Position(self.position.x + dx, self.position.y + dy)
+
+            # Check if move is valid (not blocked by walls)
+            if not next_pos.is_valid(game_map.width, game_map.height):
+                continue
+            if game_map.is_wall(next_pos):
+                continue
+
+            # CRITICAL: Skip positions blocked by other enemies
+            enemy_blocking = any(e.position.x == next_pos.x and e.position.y == next_pos.y
+                               for e in game_engine.enemies if e.id != self.id)
+            if enemy_blocking:
+                logging.debug(f"Enemy {self.id} greedy: {next_pos} blocked by enemy, skipping")
+                continue
+
+            # Calculate distance to target from this position
+            distance = next_pos.distance_to(target)
+
+            # Keep track of best VALID move (closest to target)
+            if distance < best_distance:
+                best_distance = distance
+                best_move = next_pos
+                logging.debug(f"Enemy {self.id} greedy candidate: {next_pos}, distance {distance:.2f}")
+
+        if best_move:
+            logging.info(f"Enemy {self.id} greedy move selected: {best_move} → target (distance {best_distance:.2f})")
+        else:
+            logging.info(f"Enemy {self.id} completely blocked - no valid greedy moves")
+
+        return best_move
+
     def _calculate_random_move(self, game_map, player, game_engine) -> Optional[Position]:
         """Calculate a random valid adjacent move from the last queued position or current position."""
         # Calculate from the last position in queue (for rolling queue behavior)
@@ -673,13 +738,14 @@ def create_pathfinding_cost_map(game_map, game_engine, moving_enemy):
     cost_map = game_map.get_walkability_map().copy()
 
     # Mark enemy positions as impassable (cost = 0)
-    # This forces pathfinding to go around other enemies
+    # Enemies block other enemies - pathfinding must route around them
     for enemy in game_engine.enemies:
         if enemy != moving_enemy:
             x, y = enemy.x, enemy.y
             if 0 <= x < game_map.width and 0 <= y < game_map.height:
                 # Mark as impassable (0 cost means wall/blocked)
-                cost_map[x, y] = 0
+                # CRITICAL: TCOD uses [y, x] indexing for numpy arrays!
+                cost_map[y, x] = 0
 
     return cost_map
 
