@@ -74,8 +74,6 @@ class TileManager:
         # Calculate initial tile dimensions
         self._calculate_tile_dimensions()
 
-        logging.info(f"TileManager initialized: tile_size={self.tile_width}x{self.tile_height}")
-
     def _get_graphics_dir(self) -> str:
         """Get absolute path to graphics directory."""
         if getattr(sys, 'frozen', False):
@@ -104,8 +102,6 @@ class TileManager:
 
             # Extract tintable flags for quick lookup
             self._extract_tintable_flags(data)
-
-            logging.info(f"Loaded {len(self.tile_mappings)} tile mapping categories")
 
         except json.JSONDecodeError as e:
             logging.error(f"Failed to parse {mapping_file}: {e}")
@@ -144,10 +140,6 @@ class TileManager:
             self.tile_width, self.tile_height = TileDimensionCalculator.calculate_from_window(
                 window_size, self.settings.graphics_mode
             )
-
-            logging.debug(f"Tile dimensions calculated: {self.tile_width}x{self.tile_height} "
-                         f"(window={window_size[0]}x{window_size[1]}, "
-                         f"mode={self.settings.graphics_mode})")
 
         except Exception as e:
             logging.error(f"Failed to calculate tile dimensions: {e}")
@@ -229,8 +221,6 @@ class TileManager:
 
             # Set blend mode for proper transparency rendering
             texture.blend_mode = tcod.sdl.render.BlendMode.BLEND
-
-            logging.debug(f"Loaded sprite: {entity_name} from {sprite_file}")
             return texture
 
         except Exception as e:
@@ -335,7 +325,6 @@ class TileManager:
 
         # Reload if change > 10%
         if width_change > 0.1 or height_change > 0.1:
-            logging.info(f"Window resized: {self.last_window_size} -> {current_size}")
             self._reload_all_textures(current_size)
             self.last_window_size = current_size
             return True
@@ -362,9 +351,6 @@ class TileManager:
         # Lazy reload - textures will reload on next get_tile() call
         # We don't reload immediately to avoid hitching
 
-        logging.info(f"Prepared {len(loaded_entities)} textures for reload at "
-                    f"new size: {self.tile_width}x{self.tile_height}")
-
     def preload_common_tiles(self):
         """
         Preload commonly used sprites to avoid first-access hitching.
@@ -383,21 +369,13 @@ class TileManager:
             # Add common enemies once we have the mappings defined
         ]
 
-        logging.info("Preloading common tiles...")
-        preloaded = 0
-
         for entity_name in common_entities:
-            texture = self.get_tile(entity_name)
-            if texture is not None:
-                preloaded += 1
-
-        logging.info(f"Preloaded {preloaded}/{len(common_entities)} common tiles")
+            self.get_tile(entity_name)
 
     def cleanup(self):
         """Free all cached textures and reset state."""
         self.texture_cache.clear()
         self.last_window_size = None
-        logging.info("TileManager cleanup complete")
 
     def get_stats(self) -> Dict[str, int]:
         """

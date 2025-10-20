@@ -32,17 +32,12 @@ def load_tileset():
     tileset = tcod.tileset.load_tilesheet(
         "terminal10x16_gs_ro.png", 16, 16, tcod.tileset.CHARMAP_CP437
     )
-
-    logging.info("Loaded terminal tileset successfully (10x16)")
-
     return tileset
 
 
 def initialize_tcod_context():
     """Initialize tcod context with terminal font and SDL validation."""
     tileset = load_tileset()
-
-    logging.info("Using terminal font")
 
     context_args = {
         "columns": GameConfig.SCREEN_WIDTH,
@@ -62,8 +57,6 @@ def initialize_tcod_context():
 
     # Validate SDL renderer availability and set up console rendering
     if hasattr(context, 'sdl_renderer') and context.sdl_renderer:
-        logging.info("SDL renderer available for graphics mode")
-
         # Create console rendering objects for proper SDL + console mixing
         try:
             from tcod import render as tcod_render
@@ -72,7 +65,6 @@ def initialize_tcod_context():
 
             # Attach console render to context for later use
             context.console_render = console_render
-            logging.info("Console texture rendering initialized successfully")
         except Exception as e:
             logging.warning(f"Failed to initialize console rendering: {e}")
             context.console_render = None
@@ -91,7 +83,6 @@ def initialize_game_systems(settings: GameSettings, context, menu_background=Non
     if tile_manager is None and settings.graphics_mode == "graphics":
         try:
             tile_manager = TileManager(context, settings)
-            logging.info("TileManager initialized for graphics mode")
         except Exception as e:
             logging.warning(f"Failed to initialize TileManager: {e}")
             tile_manager = None
@@ -164,7 +155,6 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
             # Render sprites to SDL (if menu has sprites, like GraphicalHelpMenu)
             if has_sprites:
-                logging.debug(f"Menu has sprites, calling render_sprites() for {type(current_menu).__name__}")
                 current_menu.render_sprites()
 
             # Render console content as texture to SDL
@@ -297,7 +287,6 @@ def handle_game_input_events(event, game, input_handler):
         if event.sym == tcod.event.KeySym.ESCAPE:
             # Priority 1: If dialogue is active, let it handle escape first
             if game.dialogue_state.is_active():
-                logging.info(f"ESC pressed with dialogue active: {game.dialogue_state.get_active()}")
                 should_continue = input_handler._handle_dialogue_dismiss()
                 if not should_continue:
                     # Death/victory dialogue wants to exit to menu
@@ -383,7 +372,6 @@ def main():
                         try:
                             tile_manager = TileManager(context, settings)
                             tile_manager.preload_common_tiles()
-                            logging.info("TileManager initialized for graphics mode")
                         except Exception as e:
                             logging.error(f"Failed to initialize TileManager: {e}")
                             logging.error("Graphics mode will fall back to glyph mode")

@@ -98,7 +98,6 @@ class DialogueState:
         """
         # Check user preferences
         if not self.should_show_dialogue(dialogue):
-            logging.info(f"Dialogue '{dialogue.title}' suppressed by user preference")
             return
 
         # If dialogue already active, queue this one
@@ -107,16 +106,12 @@ class DialogueState:
             return
 
         # Show immediately
-        logging.info(f"Showing dialogue: {dialogue.title}")
         self.active_dialogue = dialogue
 
     def close(self) -> None:
         """
         Close active dialogue and show next queued dialogue if any.
         """
-        if self.active_dialogue:
-            logging.info(f"Closing dialogue: {self.active_dialogue.title}")
-
         self.active_dialogue = None
 
         # Show next queued dialogue
@@ -124,7 +119,6 @@ class DialogueState:
             # Pop highest priority dialogue
             next_dialogue, _ = self.dialogue_queue.pop(0)
             self.active_dialogue = next_dialogue
-            logging.info(f"Showing queued dialogue: {next_dialogue.title}")
 
     def is_active(self) -> bool:
         """Check if a dialogue is currently active."""
@@ -168,8 +162,6 @@ class DialogueState:
         # Save immediately
         self.settings.save_settings()
 
-        logging.info(f"Disabled dialogue preference: {user_pref_key}")
-
     def _queue_dialogue(self, dialogue: DialogueBox) -> None:
         """
         Add dialogue to priority queue.
@@ -185,12 +177,10 @@ class DialogueState:
             if dialogue.priority > queued_priority:
                 self.dialogue_queue.insert(i, (dialogue, dialogue.priority))
                 inserted = True
-                logging.info(f"Queued dialogue '{dialogue.title}' at position {i} (priority {dialogue.priority})")
                 break
 
         if not inserted:
             self.dialogue_queue.append((dialogue, dialogue.priority))
-            logging.info(f"Queued dialogue '{dialogue.title}' at end (priority {dialogue.priority})")
 
 
 # ============================================================================

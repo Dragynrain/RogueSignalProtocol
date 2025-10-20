@@ -267,11 +267,6 @@ class Enemy:
 
         # Final LOS check using TCOD FOV
         can_see = game_map.can_see_position(self.position, player.position, self.type_data.vision)
-
-        # Debug: Log only when enemy DOES see player
-        if can_see:
-            logging.info(f"ENEMY VISION: {self.type} at ({self.x},{self.y}) sees player at ({player.x},{player.y}), distance={distance:.1f}")
-
         return can_see
     
     def can_attack_player(self, player: Player) -> bool:
@@ -354,16 +349,13 @@ class Enemy:
         next_position = self.move_queue.pop(0)
         if not self._is_move_valid(next_position, game_map, player, game_engine):
             # Move blocked - clear queue and refresh
-            logging.info(f"Enemy {self.id} ({self.type}) at {self.position}: move to {next_position} blocked, recalculating")
             self.move_queue.clear()
             self._refresh_move_queue(player, game_map, game_engine)
             # Try again with fresh queue
             if not self.move_queue:
-                logging.info(f"Enemy {self.id} ({self.type}): no valid moves after recalculation")
                 return False
             next_position = self.move_queue.pop(0)
             if not self._is_move_valid(next_position, game_map, player, game_engine):
-                logging.info(f"Enemy {self.id} ({self.type}): move to {next_position} STILL blocked after recalculation, giving up")
                 self.move_queue.clear()
                 return False
 
@@ -426,11 +418,9 @@ class Enemy:
 
             # If pathfinding failed (blocked by enemies/walls), use greedy movement as fallback
             if (path is None or len(path) <= 1) and self._queue_target:
-                logging.debug(f"Enemy {self.id} ({self.type}) pathfinding failed, using greedy fallback toward {self._queue_target}")
                 fallback_move = self._calculate_greedy_move_toward_target(self._queue_target, game_map, game_engine)
                 if fallback_move:
                     self.move_queue.append(fallback_move)
-                    logging.debug(f"Enemy {self.id} greedy move: {fallback_move}")
             elif path is not None and len(path) > 1:
                 # Add positions to queue, validating adjacency between each step
                 prev_pos = self.position  # Start from current position
@@ -653,7 +643,6 @@ class Enemy:
             enemy_blocking = any(e.position.x == next_pos.x and e.position.y == next_pos.y
                                for e in game_engine.enemies if e.id != self.id)
             if enemy_blocking:
-                logging.debug(f"Enemy {self.id} greedy: {next_pos} blocked by enemy, skipping")
                 continue
 
             # Calculate distance to target from this position
@@ -663,12 +652,6 @@ class Enemy:
             if distance < best_distance:
                 best_distance = distance
                 best_move = next_pos
-                logging.debug(f"Enemy {self.id} greedy candidate: {next_pos}, distance {distance:.2f}")
-
-        if best_move:
-            logging.info(f"Enemy {self.id} greedy move selected: {best_move} → target (distance {best_distance:.2f})")
-        else:
-            logging.info(f"Enemy {self.id} completely blocked - no valid greedy moves")
 
         return best_move
 
