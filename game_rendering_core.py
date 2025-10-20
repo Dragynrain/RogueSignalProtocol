@@ -12,6 +12,7 @@ from typing import List
 from game_config import GameConfig
 from game_entities import Position, Colors, ensure_color_tuple
 from game_ui import render_char_safe
+from game_coordinate_helpers import CoordinateHelpers
 
 # Import specialized renderers
 from game_rendering_ui import UIRenderer
@@ -135,8 +136,10 @@ class GameRenderer:
             # Clear console (alpha=255 by default)
             console.clear()
 
-            # Make ENTIRE console transparent FIRST (like the working test)
-            console.rgba["bg"][:, :, 3] = 0
+            # Make ENTIRE console transparent FIRST using CoordinateHelpers
+            CoordinateHelpers.set_alpha_region(
+                console, x=0, y=0, width=console.width, height=console.height, alpha=0
+            )
 
             # Render UI panels - we'll set their alpha explicitly after
             self.ui_renderer.render_top_status_bar(console, game)
@@ -144,30 +147,22 @@ class GameRenderer:
             self.ui_renderer.render_system_log(console, game)
             self.ui_renderer.render_inspection_panel(console, game)
 
-            # Set UI panel areas back to opaque
-            # Detect console order to use correct indexing
-            array_shape = console.rgba["bg"].shape
-            is_fortran_order = (array_shape[0] == console.width)
-
+            # Set UI panel areas back to opaque using CoordinateHelpers
             panel_y = GameConfig.PANEL_Y()
             log_x = GameConfig.GAME_AREA_WIDTH()
 
-            if is_fortran_order:
-                # order='F': array is (width, height, channels), use [x, y, channel]
-                # Top status bar (y=0, all x)
-                console.rgba["bg"][:, 0, 3] = 255
-                # Bottom panel (y >= PANEL_Y, all x)
-                console.rgba["bg"][:, panel_y:, 3] = 255
-                # System log (x >= GAME_AREA_WIDTH, all y)
-                console.rgba["bg"][log_x:, :, 3] = 255
-            else:
-                # default order: array is (height, width, channels), use [y, x, channel]
-                # Top status bar (y=0, all x)
-                console.rgba["bg"][0, :, 3] = 255
-                # Bottom panel (y >= PANEL_Y, all x)
-                console.rgba["bg"][panel_y:, :, 3] = 255
-                # System log (x >= GAME_AREA_WIDTH, all y)
-                console.rgba["bg"][:, log_x:, 3] = 255
+            # Top status bar (full width, height 1)
+            CoordinateHelpers.set_alpha_region(
+                console, x=0, y=0, width=console.width, height=1, alpha=255
+            )
+            # Bottom panel (full width, from PANEL_Y to bottom)
+            CoordinateHelpers.set_alpha_region(
+                console, x=0, y=panel_y, width=console.width, height=console.height - panel_y, alpha=255
+            )
+            # System log (from GAME_AREA_WIDTH to right edge, full height)
+            CoordinateHelpers.set_alpha_region(
+                console, x=log_x, y=0, width=console.width - log_x, height=console.height, alpha=255
+            )
 
             # Render dialogue system on console AFTER transparency pass (highest priority, opaque backgrounds)
             if game.dialogue_state.is_active():

@@ -14,6 +14,7 @@ from game_ui import render_char_safe
 from game_input import UniversalInputHandler
 from data_loading import DataLoader
 from game_color_manager import ColorManager
+from game_coordinate_helpers import CoordinateHelpers
 
 
 class GraphicalHelpMenu:
@@ -415,14 +416,10 @@ class GraphicalHelpMenu:
         except (AttributeError, TypeError):
             window_width, window_height = 800, 600
 
-        # Calculate pixels per console character
-        pixels_per_char_x = window_width / GameConfig.SCREEN_WIDTH
-        pixels_per_char_y = window_height / GameConfig.SCREEN_HEIGHT
-
-        pixel_x = int(console_x * pixels_per_char_x)
-        pixel_y = int(console_y * pixels_per_char_y)
-
-        return (pixel_x, pixel_y)
+        # Use CoordinateHelpers for consistent coordinate conversion
+        return CoordinateHelpers.char_to_pixel_coords(
+            console_x, console_y, window_width, window_height
+        )
 
     def _render_text_layer(self, console: tcod.console.Console, page: dict):
         """
@@ -437,8 +434,10 @@ class GraphicalHelpMenu:
 
         # Make ENTIRE console transparent first (like the game does for the game area)
         # This allows ALL sprites to show through
-        # Use numpy slicing to set all alpha values at once (more efficient and avoids indexing issues)
-        console.rgba["bg"][:, :, 3] = 0  # Set all background alpha to 0 (fully transparent)
+        # Use CoordinateHelpers to handle transparency correctly across all console orders
+        CoordinateHelpers.set_alpha_region(
+            console, x=0, y=0, width=console.width, height=console.height, alpha=0
+        )
 
         # Now render text - text areas will become opaque automatically
         # Render title

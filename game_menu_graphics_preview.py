@@ -23,6 +23,7 @@ from game_entities import Colors, ensure_color_tuple
 from game_ui import render_char_safe
 from game_graphics_tiles import TileManager
 from data_loading import DataLoader
+from game_coordinate_helpers import CoordinateHelpers
 
 
 class GraphicsPreviewMenu:
@@ -288,11 +289,15 @@ class GraphicsPreviewMenu:
 
         # Make preview area transparent so SDL graphics show through
         if self.settings.graphics_mode == "graphics":
-            for y in range(self.preview_offset_y, self.preview_offset_y + self.preview_height):
-                for x in range(self.preview_offset_x, self.preview_offset_x + self.preview_width):
-                    if 0 <= x < GameConfig.SCREEN_WIDTH and 0 <= y < GameConfig.SCREEN_HEIGHT:
-                        # Set transparent background for preview area
-                        console.rgba["bg"][x, y, 3] = 0  # Alpha = 0 (fully transparent)
+            # Use CoordinateHelpers to set transparency correctly regardless of console order
+            CoordinateHelpers.set_alpha_region(
+                console,
+                x=self.preview_offset_x,
+                y=self.preview_offset_y,
+                width=self.preview_width,
+                height=self.preview_height,
+                alpha=0
+            )
 
         # Title
         title = "GRAPHICS PREVIEW - VARIANT EXPLORER"

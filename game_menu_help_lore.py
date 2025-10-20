@@ -12,6 +12,7 @@ from game_config import GameConfig
 from game_entities import Colors
 from game_story import StoryFragmentManager
 from game_ui import render_char_safe, UniversalInputHandler
+from game_screen_utilities import ScreenRenderingUtils
 
 
 def create_help_menu(settings, context=None, tile_manager=None):
@@ -69,28 +70,28 @@ class LoreMenu:
     def _render_list_mode(self, console, discovered_fragments, discovered_count, total_count):
         """Render data fragment list."""
         title = f"DISCOVERED DATA FRAGMENTS ({discovered_count}/{total_count})"
-        render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        ScreenRenderingUtils.render_centered_title(console, title, 2, Colors.YELLOW)
 
         if not discovered_fragments:
             render_char_safe(console, 2, 5, "No data fragments discovered yet.", fg=Colors.WHITE)
             render_char_safe(console, 2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
             render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
             return
-        
+
         start_y = 5
         for i, (fragment_index, fragment_text) in enumerate(discovered_fragments):
             # Clamp selection
             if self.lore_viewer_selection >= len(discovered_fragments):
                 self.lore_viewer_selection = len(discovered_fragments) - 1
-            
+
             is_selected = (i == self.lore_viewer_selection)
             color = Colors.CYAN if is_selected else Colors.WHITE
             prefix = "> " if is_selected else "  "
-            
+
             # Show first line of fragment as title
             first_line = fragment_text.split('\n')[0][:60]
             render_char_safe(console, 2, start_y + i, f"{prefix}Fragment {fragment_index + 1}: {first_line}", fg=color)
-        
+
         # Instructions
         render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 4, "Up/Down: Navigate  Enter: Read  Esc: Back", fg=Colors.LIGHT_GRAY)
     
@@ -99,38 +100,19 @@ class LoreMenu:
         if self.lore_viewer_selection >= len(discovered_fragments):
             self.lore_viewer_mode = "list"
             return
-            
+
         fragment_index, fragment_text = discovered_fragments[self.lore_viewer_selection]
-        
+
         title = f"DATA FRAGMENT {fragment_index + 1}"
-        render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
-        
-        # Render fragment text with wrapping
-        lines = fragment_text.split('\n')
-        y = 5
-        for line in lines:
-            if y < GameConfig.SCREEN_HEIGHT - 4:
-                # Simple word wrapping
-                if len(line) <= GameConfig.SCREEN_WIDTH - 4:
-                    render_char_safe(console, 2, y, line, fg=Colors.WHITE)
-                    y += 1
-                else:
-                    # Basic word wrapping for long lines
-                    words = line.split(' ')
-                    current_line = ""
-                    for word in words:
-                        if len(current_line + " " + word) <= GameConfig.SCREEN_WIDTH - 4:
-                            current_line += (" " if current_line else "") + word
-                        else:
-                            render_char_safe(console, 2, y, current_line, fg=Colors.WHITE)
-                            y += 1
-                            current_line = word
-                            if y >= GameConfig.SCREEN_HEIGHT - 4:
-                                break
-                    if current_line and y < GameConfig.SCREEN_HEIGHT - 4:
-                        render_char_safe(console, 2, y, current_line, fg=Colors.WHITE)
-                        y += 1
-        
+        ScreenRenderingUtils.render_centered_title(console, title, 2, Colors.YELLOW)
+
+        # Render fragment text with word wrapping utility
+        ScreenRenderingUtils.render_word_wrapped_text(
+            console, fragment_text, 2, 5,
+            max_width=GameConfig.SCREEN_WIDTH - 4,
+            max_height=GameConfig.SCREEN_HEIGHT - 4
+        )
+
         render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to list", fg=Colors.LIGHT_GRAY)
     
     def handle_input(self, event) -> str:
@@ -187,10 +169,10 @@ class HelpMenu:
     def render(self, console: tcod.console.Console) -> None:
         """Render the help screen."""
         console.clear()
-        
+
         # Title
         title = "ROGUE SIGNAL PROTOCOL - HELP"
-        render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 2, title, fg=Colors.YELLOW)
+        ScreenRenderingUtils.render_centered_title(console, title, 2, Colors.YELLOW)
         
         y = 5
         help_sections = self._get_help_sections()
