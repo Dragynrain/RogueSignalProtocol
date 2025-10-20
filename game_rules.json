@@ -64,7 +64,21 @@
     "ghost_nodes_per_level": 2,
     "code_hacks_per_level": 4,
     "exploit_pickups_per_level": 3,
-    "permanent_upgrades_per_level": 1
+    "permanent_upgrades_per_level": 1,
+    "corridor_width_weights": {
+      "narrow": 0.50,
+      "medium": 0.35,
+      "wide": 0.15
+    },
+    "shadow_placement_weights": {
+      "wall_adjacent": 0.60,
+      "interior": 0.40
+    },
+    "corridor_alcove_chance": 0.40,
+    "corridor_alcove_min_length": 4,
+    "cover_min_open_area_size": 10,
+    "cover_cluster_chance": 0.50,
+    "cover_poisson_radius": 8.0
   },
   "balance": {
     "heat_reduction_normal": 2,
