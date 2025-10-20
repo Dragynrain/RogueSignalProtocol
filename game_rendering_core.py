@@ -132,26 +132,42 @@ class GameRenderer:
             self.graphics_renderer.render_overlay_layer(game)
 
             # LAYER 3: Render console UI as texture overlay
-            # Clear console and render ONLY UI panels (not game area)
+            # Clear console (alpha=255 by default)
             console.clear()
+
+            # Make ENTIRE console transparent FIRST (like the working test)
+            console.rgba["bg"][:, :, 3] = 0
+
+            # Render UI panels - we'll set their alpha explicitly after
             self.ui_renderer.render_top_status_bar(console, game)
             self.ui_renderer.render_bottom_panel(console, game)
             self.ui_renderer.render_system_log(console, game)
             self.ui_renderer.render_inspection_panel(console, game)
 
-            # Set game area background alpha to 0 for transparency BEFORE rendering dialogues
-            # This allows sprites rendered below to show through the console texture
-            # CRITICAL: Use ACTUAL array dimensions for bounds, not GameConfig
-            actual_height, actual_width = console.rgba["bg"].shape[:2]
+            # Set UI panel areas back to opaque
+            # Detect console order to use correct indexing
+            array_shape = console.rgba["bg"].shape
+            is_fortran_order = (array_shape[0] == console.width)
 
-            # Clamp to actual array bounds to prevent index errors
-            max_y = min(actual_height, GameConfig.PANEL_Y())
-            max_x = min(actual_width, GameConfig.GAME_AREA_WIDTH())
+            panel_y = GameConfig.PANEL_Y()
+            log_x = GameConfig.GAME_AREA_WIDTH()
 
-            # Loop: y outer, x inner → indexing: [y, x]
-            for y in range(1, max_y):
-                for x in range(max_x):
-                    console.rgba["bg"][y, x, 3] = 0  # Alpha = 0 (fully transparent)
+            if is_fortran_order:
+                # order='F': array is (width, height, channels), use [x, y, channel]
+                # Top status bar (y=0, all x)
+                console.rgba["bg"][:, 0, 3] = 255
+                # Bottom panel (y >= PANEL_Y, all x)
+                console.rgba["bg"][:, panel_y:, 3] = 255
+                # System log (x >= GAME_AREA_WIDTH, all y)
+                console.rgba["bg"][log_x:, :, 3] = 255
+            else:
+                # default order: array is (height, width, channels), use [y, x, channel]
+                # Top status bar (y=0, all x)
+                console.rgba["bg"][0, :, 3] = 255
+                # Bottom panel (y >= PANEL_Y, all x)
+                console.rgba["bg"][panel_y:, :, 3] = 255
+                # System log (x >= GAME_AREA_WIDTH, all y)
+                console.rgba["bg"][:, log_x:, 3] = 255
 
             # Render dialogue system on console AFTER transparency pass (highest priority, opaque backgrounds)
             if game.dialogue_state.is_active():

@@ -130,8 +130,15 @@ class CoordinateHelpers:
             This is where we fix the [y, x] vs [x, y] confusion once and for all.
             Loop order is y-outer, x-inner to match TCOD array indexing [y, x].
         """
-        # Get console dimensions for bounds checking
-        console_height, console_width = console.rgba["bg"].shape[:2]
+        # Detect console order by checking array shape
+        # order='F': shape is (width, height, channels) → use [x, y] indexing
+        # default:   shape is (height, width, channels) → use [y, x] indexing
+        array_shape = console.rgba["bg"].shape
+        is_fortran_order = (array_shape[0] == console.width)
+
+        # Get console dimensions
+        console_width = console.width
+        console_height = console.height
 
         # Clamp the region to console bounds
         x, y, width, height = CoordinateHelpers.clamp_bounds(
@@ -139,12 +146,17 @@ class CoordinateHelpers:
         )
 
         # Set alpha for the region
-        # CRITICAL: Loop order (y outer, x inner) matches TCOD indexing [y, x]
-        # This prevents the transposed transparency bug that plagued this codebase
-        for row in range(y, y + height):
+        # Use correct indexing based on detected console order
+        if is_fortran_order:
+            # order='F': array[x, y, channel]
             for col in range(x, x + width):
-                # Access pattern: [y, x, channel] NOT [x, y, channel]
-                console.rgba["bg"][row, col, 3] = alpha
+                for row in range(y, y + height):
+                    console.rgba["bg"][col, row, 3] = alpha
+        else:
+            # default order: array[y, x, channel]
+            for row in range(y, y + height):
+                for col in range(x, x + width):
+                    console.rgba["bg"][row, col, 3] = alpha
 
     @staticmethod
     def char_to_pixel_coords(console_x: int, console_y: int,
