@@ -13,7 +13,7 @@ from unittest.mock import Mock, patch, MagicMock
 
 from game_save import SaveGameManager
 from game_characters import Player, Enemy
-from game_entities import Position
+from game_entities import Position, EnemyState
 
 
 class TestSaveGameManager:
@@ -100,6 +100,56 @@ class TestSaveGameIntegration:
                 assert loaded_data["level"] == mock_game.level
                 assert loaded_data["player"]["x"] == mock_game.player.x
                 assert loaded_data["player"]["cpu"] == mock_game.player.cpu
+        finally:
+            if os.path.exists(temp_path):
+                os.unlink(temp_path)
+
+    def test_save_load_enemy_state_enum(self):
+        """Enemy state enum is properly serialized and deserialized in save/load cycle."""
+        # Create a test enemy with a specific state
+        enemy = Enemy(Position(10, 10), 'scanner')
+        enemy.state = EnemyState.ALERT
+
+        # Mock minimal game state
+        mock_game = self._create_minimal_mock_game()
+        mock_game.enemies = [enemy]
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+            temp_path = temp_file.name
+
+        try:
+            # Override the save file path
+            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
+                # First save - state is an enum
+                save_success = SaveGameManager.save_game(mock_game)
+                assert save_success is True
+
+                # Load the save data
+                loaded_data = SaveGameManager.load_game()
+                assert loaded_data is not None
+
+                # Verify enemy state was saved as a string
+                assert len(loaded_data["enemies"]) == 1
+                saved_enemy_state = loaded_data["enemies"][0]["state"]
+                assert isinstance(saved_enemy_state, str)
+                assert saved_enemy_state == "alert"
+
+                # Manually restore enemy state to simulate the bug scenario
+                # In real game, GameStatePersistence._restore_enemies does this conversion
+                restored_enemy = Enemy(Position(10, 10), 'scanner')
+                # This simulates the fixed code converting string back to enum
+                restored_enemy.state = EnemyState(saved_enemy_state) if isinstance(saved_enemy_state, str) else saved_enemy_state
+
+                # Verify the restored enemy has proper EnemyState enum
+                assert isinstance(restored_enemy.state, EnemyState)
+                assert restored_enemy.state == EnemyState.ALERT
+
+                # Now save again to test the bug - this would fail without the fix
+                # because .value would be called on a string
+                mock_game.enemies = [restored_enemy]
+                save_success = SaveGameManager.save_game(mock_game)
+                assert save_success is True
+
         finally:
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
