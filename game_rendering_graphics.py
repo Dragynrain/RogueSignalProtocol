@@ -266,7 +266,7 @@ class GraphicsMapRenderer(MapRendererBase):
                         pulsed_rainbow = tuple(int(c * pulse_intensity) for c in rainbow_color)
                         self._draw_outline_box(renderer, tile_rect, pulsed_rainbow, thickness=2)
 
-        # Gateway/Portal
+        # Gateway
         if game.game_map.gateway:
             screen_x = game.game_map.gateway.x - camera_offset.x
             screen_y = game.game_map.gateway.y - camera_offset.y + 1
@@ -280,13 +280,13 @@ class GraphicsMapRenderer(MapRendererBase):
                            game.game_map.has_line_of_sight(game.player.position, game.game_map.gateway)))
 
                 if can_see:
-                    # Render portal sprite
-                    texture = self.tile_manager.get_tile("portal")
+                    # Render gateway sprite
+                    texture = self.tile_manager.get_tile("gateway")
                     if texture:
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
                         renderer.copy(texture, dest=tile_rect)
                     else:
-                        logging.warning("render_sprites_layer: Portal texture not found!")
+                        logging.warning("render_sprites_layer: Gateway texture not found!")
                     # Add to memory system
                     if not hasattr(game.game_state, 'revealed_special_nodes'):
                         game.game_state.revealed_special_nodes = {}
@@ -298,8 +298,8 @@ class GraphicsMapRenderer(MapRendererBase):
                     if (hasattr(game.game_state, 'revealed_special_nodes') and
                         gateway_pos in game.game_state.revealed_special_nodes and
                         game.game_state.revealed_special_nodes[gateway_pos] == "gateway"):
-                        # Render portal sprite with dimmed appearance
-                        texture = self.tile_manager.get_tile("portal")
+                        # Render gateway sprite with dimmed appearance
+                        texture = self.tile_manager.get_tile("gateway")
                         if texture:
                             dimmed_tint = ColorManager.get_tint_color("dimmed")
                             normal_tint = ColorManager.get_tint_color("normal")

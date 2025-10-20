@@ -117,10 +117,10 @@
   },
 
   "special": {
-    "portal": {
-      "file": "portal04.png",
+    "gateway": {
+      "file": "gateway04.png",
       "tintable": false,
-      "_comment": "Portal/gateway to next level"
+      "_comment": "Gateway to next level"
     },
     "story_fragment": {
       "file": "storyfragment05.png",

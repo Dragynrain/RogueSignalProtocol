@@ -124,13 +124,13 @@ class TestSpriteConfiguration:
             assert 'file' in items_config[item_type]
 
     def test_special_sprites_configured(self, tile_manager):
-        """Special sprites (portal, story_fragment) should be configured."""
+        """Special sprites (gateway, story_fragment) should be configured."""
         special_config = tile_manager.tile_mappings.get('special', {})
 
-        assert 'portal' in special_config
+        assert 'gateway' in special_config
         assert 'story_fragment' in special_config
 
-        for special_type in ['portal', 'story_fragment']:
+        for special_type in ['gateway', 'story_fragment']:
             assert 'file' in special_config[special_type]
 
     def test_tintable_flags_present(self, tile_manager):
@@ -191,11 +191,11 @@ class TestSpriteFileExistence:
             sprite_path = os.path.join('graphics', sprite_file)
             assert os.path.exists(sprite_path), f"{item_type} sprite not found: {sprite_path}"
 
-    def test_portal_sprite_exists(self, tile_manager):
-        """Portal/gateway sprite file should exist."""
-        sprite_file = tile_manager.tile_mappings['special']['portal']['file']
+    def test_gateway_sprite_exists(self, tile_manager):
+        """Gateway sprite file should exist."""
+        sprite_file = tile_manager.tile_mappings['special']['gateway']['file']
         sprite_path = os.path.join('graphics', sprite_file)
-        assert os.path.exists(sprite_path), f"Portal sprite not found: {sprite_path}"
+        assert os.path.exists(sprite_path), f"Gateway sprite not found: {sprite_path}"
 
     def test_story_fragment_sprite_exists(self, tile_manager):
         """Story fragment sprite file should exist."""
@@ -240,7 +240,7 @@ class TestTileManagerAPI:
         assert tile_manager.has_sprite('floor') == True
         assert tile_manager.has_sprite('wall') == True
         assert tile_manager.has_sprite('codehack') == True
-        assert tile_manager.has_sprite('portal') == True
+        assert tile_manager.has_sprite('gateway') == True
 
     def test_has_sprite_returns_false_for_unconfigured_entities(self, tile_manager):
         """has_sprite() should return False for unconfigured entities."""

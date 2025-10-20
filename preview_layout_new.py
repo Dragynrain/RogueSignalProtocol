@@ -48,8 +48,8 @@
                 render_queue.append((ix, iy, item_type, 2))
 
         # Special entities
-        if "portal" in self.selected_variants:
-            render_queue.append((14, 14, "portal", 2))
+        if "gateway" in self.selected_variants:
+            render_queue.append((14, 14, "gateway", 2))
         if "storyfragment" in self.selected_variants:
             render_queue.append((17, 14, "storyfragment", 2))
 

@@ -1193,40 +1193,6 @@ class LevelGenerator:
 
         return shadow_adjacent
 
-    def _place_gateway(self) -> None:
-        """Place the exit gateway far from spawn but with some randomness."""
-        spawn_area = Position(5, 5)  # Center of spawn area
-        floor_positions = self._get_all_floor_positions()
-        
-        if not floor_positions:
-            return
-            
-        # Get positions far from spawn (bottom-right quadrant preferred)
-        far_positions = []
-        medium_positions = []
-        
-        for pos in floor_positions:
-            position = Position(pos[0], pos[1])
-            distance = spawn_area.distance_to(position)
-            
-            # Prefer positions that are far from spawn
-            if distance > 30:  # Very far
-                far_positions.append(pos)
-            elif distance > 20:  # Medium distance
-                medium_positions.append(pos)
-        
-        # Choose gateway position with preference for far positions
-        if far_positions:
-            gateway_pos = random.choice(far_positions)
-        elif medium_positions:
-            gateway_pos = random.choice(medium_positions)
-        else:
-            # Fallback: any position far enough
-            valid_positions = [pos for pos in floor_positions 
-                             if spawn_area.distance_to(Position(pos[0], pos[1])) > 15]
-            gateway_pos = random.choice(valid_positions) if valid_positions else random.choice(floor_positions)
-        
-        self.game_map.gateway = Position(gateway_pos[0], gateway_pos[1])
     
     def _get_all_floor_positions(self) -> List[Tuple[int, int]]:
         """Get all valid floor positions (not walls)."""
@@ -1834,84 +1800,108 @@ class LevelGenerator:
         return strategies[0]  # Fallback
 
     def _gateway_far_corner(self, spawn: Position, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
-        """Gateway in opposite corner from spawn - current default strategy."""
-        far_positions = []
-        for pos in floor_positions:
-            position = Position(pos[0], pos[1])
-            distance = spawn.distance_to(position)
-            if distance > 30:
-                far_positions.append(pos)
+        """Gateway in opposite corner from spawn - minimum 30 tiles."""
+        min_distance = GameConfig._get_required('room_generation.gateway_minimum_distances')['far_corner']
+
+        far_positions = [pos for pos in floor_positions
+                        if spawn.distance_to(Position(pos[0], pos[1])) > min_distance]
 
         if far_positions:
             return random.choice(far_positions)
 
-        # Fallback to furthest available
+        # Fallback to furthest available (but log warning)
         furthest = max(floor_positions, key=lambda pos: spawn.distance_to(Position(pos[0], pos[1])))
+        logging.warning(f"Far corner gateway: No positions >{min_distance} tiles from spawn, using furthest available")
         return furthest
 
     def _gateway_central_hub(self, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
-        """Gateway in or near central area of map."""
+        """Gateway in or near central area of map - minimum 20 tiles from spawn."""
+        min_distance = GameConfig._get_required('room_generation.gateway_minimum_distances')['central_hub']
+        spawn = Position(5, 5)
         map_center_x = GameConfig.MAP_WIDTH // 2
         map_center_y = GameConfig.MAP_HEIGHT // 2
 
-        # Find positions near center
+        # Find positions near center AND far enough from spawn
         central_positions = []
         for pos in floor_positions:
             distance_to_center = abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y)
-            if distance_to_center < 15:
+            distance_from_spawn = spawn.distance_to(Position(pos[0], pos[1]))
+
+            if distance_to_center < 15 and distance_from_spawn > min_distance:
                 central_positions.append(pos)
 
         if central_positions:
             return random.choice(central_positions)
 
-        # Fallback to closest to center
-        closest = min(floor_positions,
-                     key=lambda pos: abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y))
-        return closest
+        # Fallback: prioritize distance over centrality
+        valid_by_distance = [pos for pos in floor_positions
+                            if spawn.distance_to(Position(pos[0], pos[1])) > min_distance]
+        if valid_by_distance:
+            # From valid positions, choose closest to center
+            return min(valid_by_distance, key=lambda pos: abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y))
+
+        # Absolute fallback (shouldn't happen on normal maps)
+        logging.warning(f"Central hub gateway: No positions >{min_distance} tiles from spawn!")
+        return min(floor_positions, key=lambda pos: abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y))
 
     def _gateway_hidden_dead_end(self, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
-        """Gateway at end of longest branch - requires exploration."""
-        # Find positions with few floor neighbors (dead ends)
+        """Gateway at end of longest branch - minimum 25 tiles from spawn."""
+        min_distance = GameConfig._get_required('room_generation.gateway_minimum_distances')['hidden_dead_end']
+        spawn = Position(5, 5)
+
+        # Find dead ends (≤2 neighbors) that are far enough from spawn
         dead_end_positions = []
 
         for pos in floor_positions:
             x, y = pos
-            neighbor_count = 0
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                neighbor = (x + dx, y + dy)
-                if neighbor in floor_positions:
-                    neighbor_count += 1
 
-            # Dead ends have 1-2 neighbors
+            # Count floor neighbors
+            neighbor_count = sum(1 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+                                if (x + dx, y + dy) in floor_positions)
+
+            # Is it a dead end?
             if neighbor_count <= 2:
-                dead_end_positions.append(pos)
+                distance_from_spawn = spawn.distance_to(Position(x, y))
+                if distance_from_spawn > min_distance:
+                    dead_end_positions.append(pos)
 
         if dead_end_positions:
             return random.choice(dead_end_positions)
 
-        # Fallback to random position
+        # Fallback: Any dead end (ignore distance requirement)
+        any_dead_end = [pos for pos in floor_positions
+                       if sum(1 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+                             if (pos[0] + dx, pos[1] + dy) in floor_positions) <= 2]
+
+        if any_dead_end:
+            logging.warning(f"Hidden dead end gateway: No dead ends >{min_distance} tiles from spawn")
+            return random.choice(any_dead_end)
+
+        # Ultimate fallback
         return random.choice(floor_positions)
 
     def _gateway_gauntlet(self, spawn: Position, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
-        """Gateway along edge but requires passing through map."""
-        # Find positions along map edges
-        edge_positions = []
+        """Gateway along edge - minimum 25 tiles from spawn, requires crossing map."""
+        min_distance = GameConfig._get_required('room_generation.gateway_minimum_distances')['gauntlet']
 
+        edge_positions = []
         for pos in floor_positions:
             x, y = pos
+
             # Check if near any edge
             near_edge = (x < 10 or x > GameConfig.MAP_WIDTH - 10 or
                         y < 10 or y > GameConfig.MAP_HEIGHT - 10)
 
-            # But not too close to spawn
             distance_from_spawn = spawn.distance_to(Position(x, y))
-            if near_edge and distance_from_spawn > 20:
+
+            if near_edge and distance_from_spawn > min_distance:
                 edge_positions.append(pos)
 
         if edge_positions:
             return random.choice(edge_positions)
 
         # Fallback to far corner strategy
+        logging.warning(f"Gauntlet gateway: No edge positions >{min_distance} tiles from spawn, using far corner")
         return self._gateway_far_corner(spawn, floor_positions)
 
     # ========================================================================

@@ -144,7 +144,7 @@ class GraphicalHelpMenu:
                 ('floor', 16, 6, 1.0),
                 ('wall', 30, 6, 1.0),
                 ('shadow', 44, 6, 1.0),
-                ('portal', 58, 6, 1.0),
+                ('gateway', 58, 6, 1.0),
                 # Row 2 - Collectibles (3 centered)
                 ('codehack', 16, 13, 1.0),
                 ('exploit', 30, 13, 1.0),
