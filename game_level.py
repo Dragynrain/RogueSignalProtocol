@@ -7,6 +7,7 @@ Extracted from RogueSignalProtocol.py for better code organization.
 
 import random
 import logging
+import math
 from typing import List, Tuple, Optional, Dict, Set
 
 # Import required classes and configs
@@ -20,6 +21,7 @@ class LevelGenerator:
     
     def __init__(self, game_map):
         self.game_map = game_map
+        self.corridor_tiles = set()  # Track corridor tiles for alcove placement
     
     def generate_level(self, level: int, seed: int) -> None:
         """Generate a complete level with rooms, corridors, and special tiles."""
@@ -51,6 +53,7 @@ class LevelGenerator:
         self.game_map.story_fragments.clear()
         self.game_map.explored_tiles.clear()
         self.game_map.last_known_enemy_positions.clear()
+        self.corridor_tiles.clear()  # Clear corridor tracking
         # Invalidate transparency cache for FOV calculations
         self.game_map.invalidate_transparency_cache()
     
@@ -69,7 +72,10 @@ class LevelGenerator:
         
         # Add extra paths for multiple routes (good for stealth)
         self._add_extra_paths(rooms)
-        
+
+        # Add alcoves to corridors for stealth hiding spots
+        self._add_corridor_alcoves()
+
         # Add strategic cover elements in open areas
         self._add_cover_elements_new()
         
@@ -142,7 +148,7 @@ class LevelGenerator:
 
     
     def _place_shadow_areas(self, level: int, rooms: List[Tuple[int, int, int, int]]) -> None:
-        """Place shadow areas for stealth gameplay - NO FALLBACKS."""
+        """Place shadow areas for stealth gameplay with wall-adjacent preference - NO FALLBACKS."""
         network_configs = GameConfig.NETWORK_CONFIGS()
 
         # FAIL if level config not found
@@ -162,25 +168,100 @@ class LevelGenerator:
             raise KeyError(f"Required key 'shadow_coverage' missing from level {level} config")
 
         shadow_coverage = config['shadow_coverage']
-        
+
+        # Get shadow placement weights from config - FAIL if missing
+        wall_adjacent_weight = GameConfig._get_required('room_generation.shadow_placement_weights.wall_adjacent')
+        interior_weight = GameConfig._get_required('room_generation.shadow_placement_weights.interior')
+
         total_floor_tiles = sum(w * h for x, y, w, h in rooms)
         target_shadow_tiles = int(total_floor_tiles * shadow_coverage)
-        
+
         placed_shadows = 0
         for room in rooms:
             if placed_shadows >= target_shadow_tiles:
                 break
-                
+
             x, y, width, height = room
             shadows_in_room = min(target_shadow_tiles - placed_shadows, width * height // 3)
-            
+
+            # Get wall-adjacent and interior positions for this room
+            wall_adjacent_positions = self._get_wall_adjacent_positions(room)
+            interior_positions = self._get_interior_positions(room)
+
             for _ in range(shadows_in_room):
-                shadow_x = random.randint(x, x + width - 1)
-                shadow_y = random.randint(y, y + height - 1)
-                
-                if (shadow_x, shadow_y) not in self.game_map.walls:
-                    self.game_map.shadows.add((shadow_x, shadow_y))
+                # Determine if this shadow should be wall-adjacent or interior
+                if random.random() < wall_adjacent_weight:
+                    # Try wall-adjacent placement
+                    if wall_adjacent_positions:
+                        shadow_pos = random.choice(wall_adjacent_positions)
+                        wall_adjacent_positions.remove(shadow_pos)
+                    elif interior_positions:
+                        # Fallback to interior if no wall-adjacent positions left
+                        shadow_pos = random.choice(interior_positions)
+                        interior_positions.remove(shadow_pos)
+                    else:
+                        continue  # No positions left
+                else:
+                    # Try interior placement
+                    if interior_positions:
+                        shadow_pos = random.choice(interior_positions)
+                        interior_positions.remove(shadow_pos)
+                    elif wall_adjacent_positions:
+                        # Fallback to wall-adjacent if no interior positions left
+                        shadow_pos = random.choice(wall_adjacent_positions)
+                        wall_adjacent_positions.remove(shadow_pos)
+                    else:
+                        continue  # No positions left
+
+                if shadow_pos not in self.game_map.walls:
+                    self.game_map.shadows.add(shadow_pos)
                     placed_shadows += 1
+
+    def _get_wall_adjacent_positions(self, room: Tuple[int, int, int, int]) -> List[Tuple[int, int]]:
+        """Get floor positions that are adjacent to walls (1 tile from wall)."""
+        x, y, width, height = room
+        wall_adjacent = []
+
+        for rx in range(x, x + width):
+            for ry in range(y, y + height):
+                if (rx, ry) in self.game_map.walls:
+                    continue
+
+                # Check if adjacent to any wall
+                adjacent_to_wall = False
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    neighbor = (rx + dx, ry + dy)
+                    if neighbor in self.game_map.walls:
+                        adjacent_to_wall = True
+                        break
+
+                if adjacent_to_wall:
+                    wall_adjacent.append((rx, ry))
+
+        return wall_adjacent
+
+    def _get_interior_positions(self, room: Tuple[int, int, int, int]) -> List[Tuple[int, int]]:
+        """Get floor positions that are NOT adjacent to walls (interior tiles)."""
+        x, y, width, height = room
+        interior = []
+
+        for rx in range(x, x + width):
+            for ry in range(y, y + height):
+                if (rx, ry) in self.game_map.walls:
+                    continue
+
+                # Check if NOT adjacent to any wall
+                adjacent_to_wall = False
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    neighbor = (rx + dx, ry + dy)
+                    if neighbor in self.game_map.walls:
+                        adjacent_to_wall = True
+                        break
+
+                if not adjacent_to_wall:
+                    interior.append((rx, ry))
+
+        return interior
     
     def _connect_rooms_mst(self, rooms: List[Tuple[int, int, int, int]]) -> None:
         """Connect rooms using minimum spanning tree approach."""
@@ -226,56 +307,327 @@ class LevelGenerator:
                 self._create_corridor_between_rooms(room1, room2)
     
     def _create_corridor_between_rooms(self, room1: Tuple[int, int, int, int], room2: Tuple[int, int, int, int]) -> None:
-        """Create L-shaped corridor between two rooms."""
+        """Create L-shaped corridor between two rooms with variable width."""
         x1 = room1[0] + room1[2] // 2
         y1 = room1[1] + room1[3] // 2
         x2 = room2[0] + room2[2] // 2
         y2 = room2[1] + room2[3] // 2
-        
-        # Create L-shaped corridor
+
+        # Determine corridor width based on configured probabilities
+        width = self._get_corridor_width()
+
+        # Create L-shaped corridor with specified width
         if random.choice([True, False]):
             # Horizontal then vertical
-            for x in range(min(x1, x2), max(x1, x2) + 1):
-                if 0 <= x < GameConfig.MAP_WIDTH and 0 <= y1 < GameConfig.MAP_HEIGHT:
-                    self.game_map.walls.discard((x, y1))
-            for y in range(min(y1, y2), max(y1, y2) + 1):
-                if 0 <= x2 < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT:
-                    self.game_map.walls.discard((x2, y))
+            self._carve_corridor_segment(min(x1, x2), max(x1, x2), y1, y1, width, horizontal=True)
+            self._carve_corridor_segment(x2, x2, min(y1, y2), max(y1, y2), width, horizontal=False)
         else:
             # Vertical then horizontal
-            for y in range(min(y1, y2), max(y1, y2) + 1):
-                if 0 <= x1 < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT:
-                    self.game_map.walls.discard((x1, y))
-            for x in range(min(x1, x2), max(x1, x2) + 1):
-                if 0 <= x < GameConfig.MAP_WIDTH and 0 <= y2 < GameConfig.MAP_HEIGHT:
-                    self.game_map.walls.discard((x, y2))
-    
+            self._carve_corridor_segment(x1, x1, min(y1, y2), max(y1, y2), width, horizontal=False)
+            self._carve_corridor_segment(min(x1, x2), max(x1, x2), y2, y2, width, horizontal=True)
+
+    def _get_corridor_width(self) -> int:
+        """Determine corridor width based on configured probabilities."""
+        rand = random.random()
+
+        # Get weights from config - FAIL if missing
+        narrow_weight = GameConfig._get_required('room_generation.corridor_width_weights.narrow')
+        medium_weight = GameConfig._get_required('room_generation.corridor_width_weights.medium')
+        wide_weight = GameConfig._get_required('room_generation.corridor_width_weights.wide')
+
+        # Select width based on cumulative probabilities
+        if rand < narrow_weight:
+            return 1
+        elif rand < narrow_weight + medium_weight:
+            return 2
+        else:
+            return 3
+
+    def _carve_corridor_segment(self, x_start: int, x_end: int, y_start: int, y_end: int,
+                                width: int, horizontal: bool) -> None:
+        """Carve a corridor segment with specified width and track corridor tiles."""
+        if horizontal:
+            # Horizontal corridor - expand vertically
+            for x in range(x_start, x_end + 1):
+                for offset in range(-(width // 2), (width + 1) // 2):
+                    y = y_start + offset
+                    if 0 <= x < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT:
+                        self.game_map.walls.discard((x, y))
+                        self.corridor_tiles.add((x, y))  # Track corridor tile
+        else:
+            # Vertical corridor - expand horizontally
+            for y in range(y_start, y_end + 1):
+                for offset in range(-(width // 2), (width + 1) // 2):
+                    x = x_start + offset
+                    if 0 <= x < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT:
+                        self.game_map.walls.discard((x, y))
+                        self.corridor_tiles.add((x, y))  # Track corridor tile
+
+    def _add_corridor_alcoves(self) -> None:
+        """Add alcoves to straight corridor segments for stealth hiding spots."""
+        # Get alcove chance from config - FAIL if missing
+        alcove_chance = GameConfig._get_required('room_generation.corridor_alcove_chance')
+        min_segment_length = GameConfig._get_required('room_generation.corridor_alcove_min_length')
+
+        # Find straight corridor segments
+        horizontal_segments = self._find_straight_corridor_segments(horizontal=True)
+        vertical_segments = self._find_straight_corridor_segments(horizontal=False)
+
+        # Add alcoves to eligible segments
+        for segment in horizontal_segments:
+            if len(segment) >= min_segment_length and random.random() < alcove_chance:
+                self._create_alcoves_on_segment(segment, horizontal=True)
+
+        for segment in vertical_segments:
+            if len(segment) >= min_segment_length and random.random() < alcove_chance:
+                self._create_alcoves_on_segment(segment, horizontal=False)
+
+    def _find_straight_corridor_segments(self, horizontal: bool) -> List[List[Tuple[int, int]]]:
+        """Find straight corridor segments (either horizontal or vertical)."""
+        segments = []
+        processed = set()
+
+        for tile in self.corridor_tiles:
+            if tile in processed:
+                continue
+
+            x, y = tile
+
+            if horizontal:
+                # Find horizontal segment starting from this tile
+                segment = []
+                # Scan left to find start
+                start_x = x
+                while (start_x - 1, y) in self.corridor_tiles:
+                    start_x -= 1
+
+                # Scan right to build segment
+                curr_x = start_x
+                while (curr_x, y) in self.corridor_tiles:
+                    if (curr_x, y) not in processed:
+                        segment.append((curr_x, y))
+                        processed.add((curr_x, y))
+                    curr_x += 1
+
+                if len(segment) > 0:
+                    segments.append(segment)
+            else:
+                # Find vertical segment starting from this tile
+                segment = []
+                # Scan up to find start
+                start_y = y
+                while (x, start_y - 1) in self.corridor_tiles:
+                    start_y -= 1
+
+                # Scan down to build segment
+                curr_y = start_y
+                while (x, curr_y) in self.corridor_tiles:
+                    if (x, curr_y) not in processed:
+                        segment.append((x, curr_y))
+                        processed.add((x, curr_y))
+                    curr_y += 1
+
+                if len(segment) > 0:
+                    segments.append(segment)
+
+        return segments
+
+    def _create_alcoves_on_segment(self, segment: List[Tuple[int, int]], horizontal: bool) -> None:
+        """Create 1-2 alcoves along a corridor segment."""
+        if len(segment) < 4:
+            return
+
+        # Determine how many alcoves to place (1-2)
+        num_alcoves = random.randint(1, min(2, len(segment) // 4))
+
+        # Select random positions along the segment (avoid first and last tiles)
+        valid_positions = segment[1:-1]  # Exclude endpoints
+        if len(valid_positions) < num_alcoves:
+            return
+
+        alcove_positions = random.sample(valid_positions, num_alcoves)
+
+        for pos in alcove_positions:
+            x, y = pos
+
+            if horizontal:
+                # Horizontal corridor - add alcove above or below
+                direction = random.choice([-1, 1])
+                alcove_pos = (x, y + direction)
+            else:
+                # Vertical corridor - add alcove left or right
+                direction = random.choice([-1, 1])
+                alcove_pos = (x + direction, y)
+
+            # Check if alcove position is valid (is currently a wall, not out of bounds)
+            if (0 <= alcove_pos[0] < GameConfig.MAP_WIDTH and
+                0 <= alcove_pos[1] < GameConfig.MAP_HEIGHT and
+                alcove_pos in self.game_map.walls):
+
+                # Carve the alcove
+                self.game_map.walls.discard(alcove_pos)
+
+                # Place a shadow in the alcove for stealth gameplay
+                self.game_map.shadows.add(alcove_pos)
+
     def _add_cover_elements_new(self) -> None:
-        """Add small cover elements in open areas."""
-        # Add small wall segments for cover in larger open areas
-        for y in range(5, GameConfig.MAP_HEIGHT - 5, 8):
-            for x in range(5, GameConfig.MAP_WIDTH - 5, 8):
-                if random.random() < 0.3:  # 30% chance
-                    # Check if area is mostly open
+        """Add strategic cover clusters in open areas using Poisson disc sampling."""
+        # Get config values
+        min_open_area_size = GameConfig._get_required('room_generation.cover_min_open_area_size')
+        cluster_chance = GameConfig._get_required('room_generation.cover_cluster_chance')
+        poisson_radius = GameConfig._get_required('room_generation.cover_poisson_radius')
+
+        # Find large open areas (10x10+ contiguous floor space)
+        open_areas = self._find_large_open_areas(min_open_area_size)
+
+        # Place cover clusters in some open areas
+        for area in open_areas:
+            if random.random() < cluster_chance:
+                # Use Poisson disc sampling for natural distribution
+                cluster_positions = self._poisson_disc_sampling(area, poisson_radius)
+
+                # Create cover clusters at sampled positions
+                for pos in cluster_positions:
+                    self._create_cover_cluster(pos)
+
+    def _find_large_open_areas(self, min_size: int) -> List[Tuple[int, int, int, int]]:
+        """Find large contiguous open floor areas (x, y, width, height)."""
+        open_areas = []
+
+        # Simple grid-based search for open rectangles
+        for y in range(5, GameConfig.MAP_HEIGHT - min_size - 5, min_size):
+            for x in range(5, GameConfig.MAP_WIDTH - min_size - 5, min_size):
+                # Check if this position starts a large open area
+                max_width = 0
+                max_height = 0
+
+                # Find maximum width at this y
+                for w in range(min_size, GameConfig.MAP_WIDTH - x):
+                    if (x + w, y) in self.game_map.walls:
+                        break
+                    max_width = w + 1
+
+                # Find maximum height at this x
+                for h in range(min_size, GameConfig.MAP_HEIGHT - y):
+                    if (x, y + h) in self.game_map.walls:
+                        break
+                    max_height = h + 1
+
+                # Check if we have a large enough rectangular area
+                if max_width >= min_size and max_height >= min_size:
+                    # Verify the rectangle is mostly open
                     open_tiles = 0
-                    for dy in range(-2, 3):
-                        for dx in range(-2, 3):
-                            check_pos = (x + dx, y + dy)
-                            if check_pos not in self.game_map.walls:
+                    total_tiles = max_width * max_height
+                    for dy in range(max_height):
+                        for dx in range(max_width):
+                            if (x + dx, y + dy) not in self.game_map.walls:
                                 open_tiles += 1
-                    
-                    # If mostly open, add small cover element
-                    if open_tiles > 15:
-                        if random.choice([True, False]):
-                            # Small horizontal wall
-                            for dx in range(2):
-                                if 0 <= x + dx < GameConfig.MAP_WIDTH:
-                                    self.game_map.walls.add((x + dx, y))
-                        else:
-                            # Small vertical wall
-                            for dy in range(2):
-                                if 0 <= y + dy < GameConfig.MAP_HEIGHT:
-                                    self.game_map.walls.add((x, y + dy))
+
+                    # If at least 70% open, consider it an open area
+                    if open_tiles >= total_tiles * 0.7:
+                        open_areas.append((x, y, max_width, max_height))
+
+        return open_areas
+
+    def _poisson_disc_sampling(self, area: Tuple[int, int, int, int], radius: float) -> List[Tuple[int, int]]:
+        """
+        Generate points using Poisson disc sampling for natural distribution.
+        Points are guaranteed to be at least 'radius' distance apart.
+        """
+        x_start, y_start, width, height = area
+        points = []
+
+        # Check if area is too small for sampling
+        if width < 5 or height < 5:
+            return points
+
+        # Simplified Poisson disc sampling using rejection method
+        max_attempts = 30
+        k_attempts = 0
+
+        # Try to place 2-4 points depending on area size
+        num_points = min(4, max(2, (width * height) // 100))
+
+        for _ in range(num_points):
+            for attempt in range(max_attempts):
+                # Random point in area (with bounds checking)
+                max_x = x_start + width - 3
+                max_y = y_start + height - 3
+                if max_x <= x_start + 2 or max_y <= y_start + 2:
+                    break  # Area too small
+
+                px = random.randint(x_start + 2, max_x)
+                py = random.randint(y_start + 2, max_y)
+
+                # Check distance to existing points
+                valid = True
+                for ex_x, ex_y in points:
+                    dist = math.sqrt((px - ex_x) ** 2 + (py - ex_y) ** 2)
+                    if dist < radius:
+                        valid = False
+                        break
+
+                if valid and (px, py) not in self.game_map.walls:
+                    points.append((px, py))
+                    break
+
+        return points
+
+    def _create_cover_cluster(self, center: Tuple[int, int]) -> None:
+        """Create a cluster of cover walls at the specified position."""
+        x, y = center
+
+        # Randomly select cluster pattern
+        cluster_type = random.choice(['small', 'l_shaped', 'scattered'])
+
+        if cluster_type == 'small':
+            # Small 2x2 cluster
+            for dx in range(2):
+                for dy in range(2):
+                    pos = (x + dx, y + dy)
+                    if self._is_valid_cover_position(pos):
+                        self.game_map.walls.add(pos)
+
+        elif cluster_type == 'l_shaped':
+            # L-shaped cover
+            positions = [(x, y), (x + 1, y), (x + 2, y), (x, y + 1), (x, y + 2)]
+            for pos in positions:
+                if self._is_valid_cover_position(pos):
+                    self.game_map.walls.add(pos)
+
+        elif cluster_type == 'scattered':
+            # Scattered 5-6 tile cluster
+            positions = [
+                (x, y), (x + 2, y), (x + 1, y + 1),
+                (x, y + 2), (x + 2, y + 2)
+            ]
+            for pos in positions:
+                if self._is_valid_cover_position(pos):
+                    self.game_map.walls.add(pos)
+
+    def _is_valid_cover_position(self, pos: Tuple[int, int]) -> bool:
+        """Check if a position is valid for placing cover."""
+        x, y = pos
+
+        # Must be within bounds
+        if not (0 <= x < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT):
+            return False
+
+        # Must currently be floor
+        if pos in self.game_map.walls:
+            return False
+
+        # Must not be in a corridor (corridors need to stay clear)
+        if pos in self.corridor_tiles:
+            return False
+
+        # Must not be too close to existing special nodes
+        if (pos in self.game_map.cooling_nodes or
+            pos in self.game_map.cpu_recovery_nodes or
+            pos in self.game_map.ghost_nodes):
+            return False
+
+        return True
     
     def _ensure_border_walls_new(self) -> None:
         """Ensure map has solid border walls."""
