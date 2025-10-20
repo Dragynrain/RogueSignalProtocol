@@ -22,6 +22,7 @@ from game_menu_background import MenuBackground
 from game_menu_help_lore import LoreMenu, HelpMenu
 from game_menu_utilities import MenuRenderingUtils
 from game_menu_base import BaseMenu
+from game_coordinate_helpers import CoordinateHelpers
 
 
 # ============================================================================
@@ -458,14 +459,18 @@ class SettingsMenu(BaseMenu):
         else:
             # Glyph mode - larger centered box
             box_width = 50
-            box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
-            box_right = box_left + box_width - 1
 
             if y_offset == 0:
-                box_top = (GameConfig.SCREEN_HEIGHT - height) // 2
+                # Use CoordinateHelpers to center the box
+                box_left, box_top = CoordinateHelpers.center_box(
+                    box_width, height, GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT
+                )
             else:
+                # Horizontal centering only, custom vertical offset
+                box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
                 box_top = y_offset
 
+            box_right = box_left + box_width - 1
             box_bottom = box_top + height - 1
 
             # Draw black background

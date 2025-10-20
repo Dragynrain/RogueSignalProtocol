@@ -37,6 +37,7 @@ CRITICAL RULES:
 from typing import Tuple
 from game_config import GameConfig
 from game_entities import Position
+from game_coordinate_helpers import CoordinateHelpers
 
 
 class MapRendererBase:
@@ -214,14 +215,10 @@ class MapRendererBase:
         """
         window_width, window_height = self._get_window_size()
 
-        # Console is always 80x50 characters
-        pixels_per_char_x = window_width / GameConfig.SCREEN_WIDTH
-        pixels_per_char_y = window_height / GameConfig.SCREEN_HEIGHT
-
-        pixel_x = int(console_x * pixels_per_char_x)
-        pixel_y = int(console_y * pixels_per_char_y)
-
-        return (pixel_x, pixel_y)
+        # Use CoordinateHelpers for consistent coordinate conversion
+        return CoordinateHelpers.char_to_pixel_coords(
+            console_x, console_y, window_width, window_height
+        )
 
     def _get_window_size(self) -> Tuple[int, int]:
         """
