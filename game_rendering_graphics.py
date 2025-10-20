@@ -419,7 +419,7 @@ class GraphicsMapRenderer(MapRendererBase):
         self._render_vision_overlays(game, camera_offset, vision_range)
 
         # Render enemy movement prediction sprites
-        self._render_patrol_routes(game, camera_offset, vision_range)
+        self._render_movement_prediction(game, camera_offset, vision_range)
 
         # Render targeting cursor for look mode or targeting mode
         self._render_targeting_cursor(game, camera_offset)
@@ -729,7 +729,7 @@ class GraphicsMapRenderer(MapRendererBase):
                     tile_rect = self._get_tile_rect(screen_x, screen_y)
                     self._draw_corner_brackets(renderer, tile_rect, overlay_color, bracket_size=GameConfig.VISION_BRACKET_SIZE())
 
-    def _render_patrol_routes(self, game, camera_offset: Position, vision_range: int):
+    def _render_movement_prediction(self, game, camera_offset: Position, vision_range: int):
         """Render next 3 predicted moves for all moving enemies using sprites."""
         renderer = self.context.sdl_renderer
 
@@ -766,4 +766,4 @@ class GraphicsMapRenderer(MapRendererBase):
                             # Reset color_mod
                             texture.color_mod = normal_tint
                         else:
-                            logging.warning("_render_patrol_routes: movement_prediction texture not found!")
+                            logging.warning("_render_movement_prediction: movement_prediction texture not found!")
