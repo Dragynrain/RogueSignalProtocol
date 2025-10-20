@@ -289,15 +289,15 @@ class GameEngine:
             # Try to move player
             if self.player.move(dx, dy, self.game_map):
                 self.sound_manager.play_sound("player_move")
-                # Check for gateway - progress to next level immediately
+                # Check for gateway - show dialogue for user confirmation
                 if (self.game_map.gateway and
                     self.player.position.distance_to(self.game_map.gateway) == 0):
                     self.sound_manager.play_sound("ui_menu_open")
-                    # Progress to next level
+                    # Show dialogue - level transition happens on confirmation
                     from game_dialogue_system import create_gateway_dialogue
                     if self.dialogue_state.should_show_dialogue(create_gateway_dialogue()):
                         self.dialogue_state.show(create_gateway_dialogue())
-                    self.level_coordinator.progress_to_next_level()
+                    # Don't progress immediately - wait for dialogue confirmation
                     return
 
                 # Check for overheating
