@@ -182,8 +182,8 @@ class GameLevelCoordinator:
 
         # Calculate how many items should go in loot rooms vs normal areas
         if loot_room_positions:
-            # 60% of items in loot rooms (with multiplier effect)
-            loot_room_count = int(patch_count * 0.6)
+            # 30% of items in loot rooms (reduced from 60% to be less generous)
+            loot_room_count = int(patch_count * 0.3)
             normal_count = patch_count - loot_room_count
         else:
             # No loot rooms, place normally
@@ -252,7 +252,7 @@ class GameLevelCoordinator:
 
         # Calculate distribution
         if loot_room_positions:
-            loot_room_count = int(exploit_count * 0.6)
+            loot_room_count = int(exploit_count * 0.3)
         else:
             loot_room_count = 0
 
