@@ -334,7 +334,10 @@ class TestCompleteLevelPlaythrough:
         # Verify sound effect was played
         engine.sound_manager.play_sound.assert_called_with("ui_menu_open")
 
-        # Verify level progressed immediately (no confirmation needed)
+        # Confirm gateway transition (simulates player pressing Y)
+        engine.next_level()
+
+        # Verify level progressed after confirmation
         assert engine.level == initial_level + 1, "Level should have progressed"
 
     def test_gateway_confirmation_progresses_to_next_level(self):
@@ -353,7 +356,10 @@ class TestCompleteLevelPlaythrough:
         active_dialogue = engine.dialogue_state.get_active()
         assert active_dialogue is not None, "Should have an active dialogue"
 
-        # Verify level progression happened automatically (no manual confirmation needed)
+        # Confirm gateway transition (simulates player pressing Y)
+        engine.next_level()
+
+        # Verify level progression happened after confirmation
         assert engine.level == initial_level + 1, "Level not incremented"
         assert engine.game_over == False, "Game should not be over"
 
@@ -435,7 +441,10 @@ class TestCompleteLevelPlaythrough:
         active_dialogue = engine.dialogue_state.get_active()
         assert active_dialogue is not None, "Should have an active dialogue"
 
-        # Verify level 2 state (progression happens automatically)
+        # Confirm gateway transition (simulates player pressing Y)
+        engine.next_level()
+
+        # Verify level 2 state (progression happens after confirmation)
         assert engine.level == 2
         assert engine.game_over == False
         assert engine.game_map is not None
@@ -566,7 +575,10 @@ class TestCompleteLevelPlaythrough:
         active_dialogue = engine.dialogue_state.get_active()
         assert active_dialogue is not None, "Should have an active dialogue"
 
-        # Verify progression worked automatically (no manual next_level call needed)
+        # Confirm gateway transition (simulates player pressing Y)
+        engine.next_level()
+
+        # Verify progression worked after confirmation
         assert engine.level == 2
         assert engine.game_over == False
 
