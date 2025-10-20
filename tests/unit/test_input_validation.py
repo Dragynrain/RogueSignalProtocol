@@ -76,9 +76,9 @@ class TestInputHandler:
         """Test that InputHandler initializes correctly with game instance."""
         game = create_mock_game()
         handler = InputHandler(game)
-        
+
         assert handler.game == game
-        assert handler.exploit_system is not None
+        assert handler.game.exploit_system is not None
     
     def test_dead_player_any_key_exits(self):
         """Test that any key exits to main menu when player is dead."""
@@ -303,22 +303,22 @@ class TestExploitInputValidation:
         game.player.inventory_manager.equipped_exploits = ["exploit1", "exploit2"]
         
         handler = InputHandler(game)
-        
+
         # Mock the exploit system to avoid GameData lookup
-        handler.exploit_system = Mock()
-        
+        game.exploit_system = Mock()
+
         # Valid slot
         handler._use_exploit_slot(0)
-        handler.exploit_system.use_exploit.assert_called_with("exploit1")
-        
+        game.exploit_system.use_exploit.assert_called_with("exploit1")
+
         # Valid slot 2
         handler._use_exploit_slot(1)
-        handler.exploit_system.use_exploit.assert_called_with("exploit2")
-        
+        game.exploit_system.use_exploit.assert_called_with("exploit2")
+
         # Invalid slot (out of range)
-        handler.exploit_system.use_exploit.reset_mock()
+        game.exploit_system.use_exploit.reset_mock()
         handler._use_exploit_slot(5)
-        handler.exploit_system.use_exploit.assert_not_called()
+        game.exploit_system.use_exploit.assert_not_called()
     
     def test_targeting_mode_exploit_execution(self):
         """Test exploit execution in targeting mode."""
@@ -326,23 +326,23 @@ class TestExploitInputValidation:
         game.targeting_mode = True
         game.targeting_exploit = "test_exploit"
         game.cursor_position = Position(5, 5)
-        
+
         handler = InputHandler(game)
-        
+
         # Mock the exploit system
-        handler.exploit_system = Mock()
-        
+        game.exploit_system = Mock()
+
         # Test Enter key
         event = create_mock_event(tcod.event.KeySym.RETURN)
         handler._handle_targeting_input(event)
-        
-        handler.exploit_system.execute_exploit.assert_called_with("test_exploit", Position(5, 5))
-        
+
+        game.exploit_system.execute_exploit.assert_called_with("test_exploit", Position(5, 5))
+
         # Test Numpad Enter
         event = create_mock_event(tcod.event.KeySym.KP_ENTER)
         handler._handle_targeting_input(event)
-        
-        assert handler.exploit_system.execute_exploit.call_count == 2
+
+        assert game.exploit_system.execute_exploit.call_count == 2
 
 
 class TestUIToggleInputValidation:
