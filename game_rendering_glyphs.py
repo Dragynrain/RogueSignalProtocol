@@ -31,7 +31,7 @@ class GlyphsMapRenderer(MapRendererBase):
             # Render in layers for proper z-ordering
             self._render_terrain(console, game, camera_offset, vision_range)
             self._render_vision_overlays(console, game, camera_offset, vision_range)
-            self._render_patrol_routes(console, game, camera_offset, vision_range)
+            self._render_movement_prediction(console, game, camera_offset, vision_range)
             self._render_gateway(console, game, camera_offset, vision_range)
             self._render_enemies(console, game, camera_offset, vision_range)
             self._render_player(console, game, camera_offset)
@@ -447,7 +447,7 @@ class GlyphsMapRenderer(MapRendererBase):
             # Silent fail for overlay errors, but could log line_no if needed for debugging
             pass
     
-    def _render_patrol_routes(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
+    def _render_movement_prediction(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
         """Render next 3 predicted moves for all moving enemies."""
         threat_scan_active = game.game_state.threat_scan_turns > 0
 
@@ -493,7 +493,7 @@ class GlyphsMapRenderer(MapRendererBase):
                                 normal_tint = ColorManager.get_tint_color("normal")
                                 texture.color_mod = normal_tint
                             else:
-                                logging.warning("_render_patrol_routes: movement_prediction texture not found!")
+                                logging.warning("_render_movement_prediction: movement_prediction texture not found!")
                         else:
                             # Classic mode: Preserve existing background color if present (e.g., vision overlay)
                             try:
