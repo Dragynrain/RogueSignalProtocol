@@ -108,7 +108,16 @@
     "corridor_intersection_chance": 0.30,
     "corridor_intersection_min_size": 3,
     "corridor_intersection_max_size": 5,
-    "enable_landmarks": true
+    "enable_landmarks": true,
+    "curved_corridor_chance": 0.20,
+    "defensive_position_chance": 0.30,
+    "defensive_position_types": ["corner_cover", "shadow_bunker", "crossfire"],
+    "loot_room_percentage": 0.20,
+    "loot_room_multiplier": 2.5,
+    "choke_point_count": 2,
+    "choke_point_max_exits": 2,
+    "zone_types": ["linear", "open", "mixed"],
+    "zone_count": 3
   },
   "balance": {
     "heat_reduction_normal": 2,

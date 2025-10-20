@@ -167,7 +167,7 @@ class GameLevelCoordinator:
         return Position(6, 6)
 
     def _place_code_hacks(self):
-        """Place codes throughout the level."""
+        """Place codes throughout the level with clustering in loot rooms."""
         # Code effects should already be initialized at game start
         # If somehow empty, this is an error - don't place patches
         if not self.game_engine.code_hack_effects:
@@ -175,24 +175,58 @@ class GameLevelCoordinator:
             return
 
         patch_count = 12 + self.game_engine.level * 4  # Much more codes (was 6 + level * 2)
+
+        # PHASE 5: Apply loot room clustering
+        loot_multiplier = GameConfig._get_required('room_generation.loot_room_multiplier')
+        loot_room_positions = self.game_engine.game_map.loot_room_positions
+
+        # Calculate how many items should go in loot rooms vs normal areas
+        if loot_room_positions:
+            # 60% of items in loot rooms (with multiplier effect)
+            loot_room_count = int(patch_count * 0.6)
+            normal_count = patch_count - loot_room_count
+        else:
+            # No loot rooms, place normally
+            loot_room_count = 0
+            normal_count = patch_count
+
         placed_patches = 0
         attempts = 0
 
-        while placed_patches < patch_count and attempts < 150:
+        # Place items in loot rooms first
+        while placed_patches < loot_room_count and attempts < 150:
             attempts += 1
-            x = random.randint(3, GameConfig.MAP_WIDTH - 3)
-            y = random.randint(3, GameConfig.MAP_HEIGHT - 3)
+            # Choose position from loot rooms
+            if not loot_room_positions:
+                break
+            x, y = random.choice(list(loot_room_positions))
             position = Position(x, y)
 
             if self._is_valid_patch_placement(position):
                 color = random.choice(list(self.game_engine.code_hack_effects.keys()))
                 effect, desc = self.game_engine.code_hack_effects[color]
                 patch = CodeHack(color_name=color, effect=effect, name=f"{color.title()} Code", description=desc)
-
-                # Check if player has already discovered this color effect
-                # by looking at existing inventory items
                 patch.discovered = self._is_code_color_discovered(color)
+                self.game_engine.game_map.code_hacks[(x, y)] = patch
+                placed_patches += 1
 
+        # Place remaining items in normal areas
+        attempts = 0
+        while placed_patches < patch_count and attempts < 150:
+            attempts += 1
+            x = random.randint(3, GameConfig.MAP_WIDTH - 3)
+            y = random.randint(3, GameConfig.MAP_HEIGHT - 3)
+            position = Position(x, y)
+
+            # Skip if in loot room (already placed items there)
+            if (x, y) in loot_room_positions:
+                continue
+
+            if self._is_valid_patch_placement(position):
+                color = random.choice(list(self.game_engine.code_hack_effects.keys()))
+                effect, desc = self.game_engine.code_hack_effects[color]
+                patch = CodeHack(color_name=color, effect=effect, name=f"{color.title()} Code", description=desc)
+                patch.discovered = self._is_code_color_discovered(color)
                 self.game_engine.game_map.code_hacks[(x, y)] = patch
                 placed_patches += 1
 
@@ -210,22 +244,52 @@ class GameLevelCoordinator:
                 item.discovered = item.color_name in self.game_engine.discovered_code_effects
 
     def _place_exploit_pickups(self):
-        """Place random exploit pickups throughout the level."""
+        """Place random exploit pickups throughout the level with clustering in loot rooms."""
         exploit_count = 5 + self.game_engine.level * 2  # Much more exploits (was 2 + max(0, level - 1))
+
+        # PHASE 5: Apply loot room clustering
+        loot_room_positions = self.game_engine.game_map.loot_room_positions
+
+        # Calculate distribution
+        if loot_room_positions:
+            loot_room_count = int(exploit_count * 0.6)
+        else:
+            loot_room_count = 0
+
         placed_exploits = 0
         attempts = 0
 
-        # Get list of available exploits (excluding ones player starts with)
+        # Get list of available exploits
         available_exploits = list(GameData.EXPLOITS.keys())
 
+        # Place in loot rooms first
+        while placed_exploits < loot_room_count and attempts < 100:
+            attempts += 1
+            if not loot_room_positions:
+                break
+            x, y = random.choice(list(loot_room_positions))
+            position = Position(x, y)
+
+            if self._is_valid_patch_placement(position):
+                exploit_key = random.choice(available_exploits)
+                exploit_def = GameData.EXPLOITS[exploit_key]
+                exploit_item = ExploitItem(exploit_key, exploit_def)
+                self.game_engine.game_map.exploit_pickups[(x, y)] = exploit_item
+                placed_exploits += 1
+
+        # Place remaining in normal areas
+        attempts = 0
         while placed_exploits < exploit_count and attempts < 100:
             attempts += 1
             x = random.randint(5, GameConfig.MAP_WIDTH - 5)
             y = random.randint(5, GameConfig.MAP_HEIGHT - 5)
             position = Position(x, y)
 
-            if self._is_valid_patch_placement(position):  # Reuse code placement validation
-                # Choose random exploit
+            # Skip loot rooms
+            if (x, y) in loot_room_positions:
+                continue
+
+            if self._is_valid_patch_placement(position):
                 exploit_key = random.choice(available_exploits)
                 exploit_def = GameData.EXPLOITS[exploit_key]
                 exploit_item = ExploitItem(exploit_key, exploit_def)
