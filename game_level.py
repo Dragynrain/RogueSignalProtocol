@@ -35,7 +35,8 @@ class LevelGenerator:
         
         # Place special tiles and items
         self._place_special_tiles(level)
-        self._place_gateway()
+        # PHASE 3: Use strategic gateway placement
+        self._place_gateway_strategic(level)
         
         # Final invalidation to ensure FOV calculations use the correct wall layout
         self.game_map.invalidate_transparency_cache()
@@ -67,11 +68,20 @@ class LevelGenerator:
         # Create rooms with varied sizes (inspired by dungeon-gen-v3.py)
         rooms = self._create_varied_rooms(level)
         
+        # PHASE 3: Identify hub rooms before connecting
+        hub_rooms = self._identify_hub_rooms(rooms)
+
         # Connect rooms using MST approach for better connectivity
         self._connect_rooms_mst(rooms)
-        
+
         # Add extra paths for multiple routes (good for stealth)
         self._add_extra_paths(rooms)
+
+        # PHASE 3: Create looping paths for better stealth options
+        self._create_looping_paths(rooms)
+
+        # PHASE 3: Connect hub rooms to create hub-and-spoke pattern
+        self._connect_hub_rooms(hub_rooms, rooms)
 
         # Add alcoves to corridors for stealth hiding spots
         self._add_corridor_alcoves()
@@ -420,7 +430,7 @@ class LevelGenerator:
 
     
     def _place_shadow_areas(self, level: int, rooms: List[Tuple[int, int, int, int]]) -> None:
-        """Place shadow areas for stealth gameplay with wall-adjacent preference - NO FALLBACKS."""
+        """Place shadow areas for stealth gameplay with wall-adjacent preference and shadow zones - NO FALLBACKS."""
         network_configs = GameConfig.NETWORK_CONFIGS()
 
         # FAIL if level config not found
@@ -445,6 +455,9 @@ class LevelGenerator:
         wall_adjacent_weight = GameConfig._get_required('room_generation.shadow_placement_weights.wall_adjacent')
         interior_weight = GameConfig._get_required('room_generation.shadow_placement_weights.interior')
 
+        # PHASE 3: Try to create shadow zones first
+        shadow_zone_rooms = self._create_shadow_zones(rooms)
+
         total_floor_tiles = sum(w * h for x, y, w, h in rooms)
         target_shadow_tiles = int(total_floor_tiles * shadow_coverage)
 
@@ -454,7 +467,13 @@ class LevelGenerator:
                 break
 
             x, y, width, height = room
-            shadows_in_room = min(target_shadow_tiles - placed_shadows, width * height // 3)
+
+            # PHASE 3: If this room is in a shadow zone, use higher coverage
+            if room in shadow_zone_rooms:
+                zone_coverage = GameConfig._get_required('room_generation.shadow_zone_coverage')
+                shadows_in_room = int(width * height * zone_coverage)
+            else:
+                shadows_in_room = min(target_shadow_tiles - placed_shadows, width * height // 3)
 
             # Get wall-adjacent and interior positions for this room
             wall_adjacent_positions = self._get_wall_adjacent_positions(room)
@@ -1016,3 +1035,371 @@ class LevelGenerator:
                 if (x, y) not in self.game_map.walls:
                     floor_positions.append((x, y))
         return floor_positions
+
+    # ========================================================================
+    # PHASE 3: Layout Improvements
+    # ========================================================================
+
+    def _identify_hub_rooms(self, rooms: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
+        """
+        Identify 1-2 central rooms to become hub rooms.
+        Hub rooms will be expanded and have more connections.
+        PHASE 3 - Section 4.1: Hub-and-Spoke Patterns
+        """
+        if len(rooms) < 5:
+            return []  # Not enough rooms for hub pattern
+
+        hub_count = GameConfig._get_required('room_generation.hub_room_count')
+
+        # Find most central rooms (closest to map center)
+        map_center_x = GameConfig.MAP_WIDTH // 2
+        map_center_y = GameConfig.MAP_HEIGHT // 2
+
+        # Calculate centrality for each room
+        room_centrality = []
+        for room in rooms:
+            x, y, w, h = room
+            room_center_x = x + w // 2
+            room_center_y = y + h // 2
+            distance_to_center = abs(room_center_x - map_center_x) + abs(room_center_y - map_center_y)
+            room_centrality.append((distance_to_center, room))
+
+        # Sort by centrality and pick the most central rooms
+        room_centrality.sort(key=lambda item: item[0])
+        hub_rooms = [room for _, room in room_centrality[:hub_count]]
+
+        # Expand hub rooms to make them larger
+        expanded_hubs = []
+        for room in hub_rooms:
+            expanded_room = self._expand_hub_room(room)
+            expanded_hubs.append(expanded_room)
+
+        return expanded_hubs
+
+    def _expand_hub_room(self, room: Tuple[int, int, int, int]) -> Tuple[int, int, int, int]:
+        """
+        Expand a hub room to make it larger and more prominent.
+        PHASE 3 - Section 4.1: Hub-and-Spoke Patterns
+        """
+        x, y, w, h = room
+        multiplier = GameConfig._get_required('room_generation.hub_room_size_multiplier')
+
+        # Calculate new dimensions
+        new_w = int(w * multiplier)
+        new_h = int(h * multiplier)
+
+        # Keep it centered around the same point
+        new_x = max(1, x - (new_w - w) // 2)
+        new_y = max(1, y - (new_h - h) // 2)
+
+        # Ensure it fits within map bounds
+        if new_x + new_w >= GameConfig.MAP_WIDTH - 1:
+            new_x = GameConfig.MAP_WIDTH - new_w - 1
+        if new_y + new_h >= GameConfig.MAP_HEIGHT - 1:
+            new_y = GameConfig.MAP_HEIGHT - new_h - 1
+
+        # Re-carve the room at its new size (will be rectangular for clarity)
+        expanded_room = (new_x, new_y, new_w, new_h)
+        self._carve_rectangular_room(expanded_room)
+
+        return expanded_room
+
+    def _connect_hub_rooms(self, hub_rooms: List[Tuple[int, int, int, int]],
+                          all_rooms: List[Tuple[int, int, int, int]]) -> None:
+        """
+        Create hub-and-spoke pattern by connecting hub rooms to multiple other rooms.
+        PHASE 3 - Section 4.1: Hub-and-Spoke Patterns
+        """
+        if not hub_rooms:
+            return
+
+        min_connections = GameConfig._get_required('room_generation.hub_min_connections')
+        max_connections = GameConfig._get_required('room_generation.hub_max_connections')
+
+        for hub in hub_rooms:
+            # Find nearby rooms to connect to
+            hub_center_x = hub[0] + hub[2] // 2
+            hub_center_y = hub[1] + hub[3] // 2
+
+            # Calculate distances to all other rooms
+            room_distances = []
+            for room in all_rooms:
+                if room == hub or room in hub_rooms:
+                    continue
+                room_center_x = room[0] + room[2] // 2
+                room_center_y = room[1] + room[3] // 2
+                distance = abs(hub_center_x - room_center_x) + abs(hub_center_y - room_center_y)
+                room_distances.append((distance, room))
+
+            # Sort by distance and connect to closest rooms
+            room_distances.sort(key=lambda item: item[0])
+            num_connections = random.randint(min_connections, max_connections)
+
+            for i in range(min(num_connections, len(room_distances))):
+                _, target_room = room_distances[i]
+                self._create_corridor_between_rooms(hub, target_room)
+
+    def _create_looping_paths(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+        """
+        Create looping paths by identifying leaf nodes and adding connections to create cycles.
+        PHASE 3 - Section 4.2: Looping Paths
+        """
+        if len(rooms) < 4:
+            return  # Need at least 4 rooms for meaningful loops
+
+        # Build connectivity graph
+        connectivity = self._build_room_connectivity_graph(rooms)
+
+        # Find leaf nodes (rooms with only 1 connection)
+        leaf_rooms = [room for room in rooms if connectivity.get(room, 0) <= 1]
+
+        # Add extra connections to create loops
+        min_loops = GameConfig._get_required('room_generation.looping_paths_min_loops')
+        max_loops = GameConfig._get_required('room_generation.looping_paths_max_loops')
+        target_loops = random.randint(min_loops, max_loops)
+
+        loops_created = 0
+        extra_connections = GameConfig._get_required('room_generation.looping_paths_extra_connections')
+
+        for _ in range(extra_connections):
+            if loops_created >= target_loops:
+                break
+
+            # Pick two random rooms that aren't already heavily connected
+            candidates = [room for room in rooms if connectivity.get(room, 0) < 4]
+            if len(candidates) < 2:
+                break
+
+            room1 = random.choice(candidates)
+            room2 = random.choice([r for r in candidates if r != room1])
+
+            # Create connection
+            self._create_corridor_between_rooms(room1, room2)
+            connectivity[room1] = connectivity.get(room1, 0) + 1
+            connectivity[room2] = connectivity.get(room2, 0) + 1
+            loops_created += 1
+
+    def _build_room_connectivity_graph(self, rooms: List[Tuple[int, int, int, int]]) -> Dict[Tuple[int, int, int, int], int]:
+        """
+        Build a simple connectivity graph showing how many connections each room has.
+        This is an approximation based on proximity and corridor tiles.
+        """
+        connectivity = {}
+
+        for room in rooms:
+            x, y, w, h = room
+            # Count corridor tiles adjacent to this room
+            adjacent_corridors = 0
+
+            # Check room perimeter for corridor tiles
+            for rx in range(x - 1, x + w + 1):
+                if (rx, y - 1) in self.corridor_tiles or (rx, y + h) in self.corridor_tiles:
+                    adjacent_corridors += 1
+            for ry in range(y - 1, y + h + 1):
+                if (x - 1, ry) in self.corridor_tiles or (x + w, ry) in self.corridor_tiles:
+                    adjacent_corridors += 1
+
+            # Estimate connections (corridors tend to create 2+ adjacent tiles)
+            estimated_connections = max(1, adjacent_corridors // 3)
+            connectivity[room] = estimated_connections
+
+        return connectivity
+
+    def _create_shadow_zones(self, rooms: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
+        """
+        Identify room clusters and designate some as shadow zones.
+        PHASE 3 - Section 3.3: Shadow Zones
+        """
+        shadow_zone_chance = GameConfig._get_required('room_generation.shadow_zone_chance')
+        min_cluster_size = GameConfig._get_required('room_generation.shadow_zone_room_cluster_min')
+
+        # Find room clusters (groups of 3+ nearby rooms)
+        clusters = self._find_room_clusters(rooms, min_cluster_size)
+
+        shadow_zone_rooms = []
+        for cluster in clusters:
+            if random.random() < shadow_zone_chance:
+                shadow_zone_rooms.extend(cluster)
+
+        return shadow_zone_rooms
+
+    def _find_room_clusters(self, rooms: List[Tuple[int, int, int, int]], min_size: int) -> List[List[Tuple[int, int, int, int]]]:
+        """
+        Find clusters of nearby rooms using simple proximity-based clustering.
+        """
+        clusters = []
+        unclustered = set(rooms)
+        proximity_threshold = 15  # Manhattan distance threshold for "nearby"
+
+        while unclustered:
+            # Start a new cluster with a random unclustered room
+            seed = unclustered.pop()
+            cluster = [seed]
+
+            # Find all rooms within proximity threshold
+            changed = True
+            while changed:
+                changed = False
+                to_add = []
+
+                for room in unclustered:
+                    for cluster_room in cluster:
+                        if self._room_distance(room, cluster_room) < proximity_threshold:
+                            to_add.append(room)
+                            changed = True
+                            break
+
+                for room in to_add:
+                    unclustered.discard(room)
+                    cluster.append(room)
+
+            # Only keep clusters that meet minimum size
+            if len(cluster) >= min_size:
+                clusters.append(cluster)
+
+        return clusters
+
+    def _room_distance(self, room1: Tuple[int, int, int, int], room2: Tuple[int, int, int, int]) -> int:
+        """Calculate Manhattan distance between room centers."""
+        x1, y1, w1, h1 = room1
+        x2, y2, w2, h2 = room2
+        center1_x = x1 + w1 // 2
+        center1_y = y1 + h1 // 2
+        center2_x = x2 + w2 // 2
+        center2_y = y2 + h2 // 2
+        return abs(center1_x - center2_x) + abs(center1_y - center2_y)
+
+    def _place_gateway_strategic(self, level: int) -> None:
+        """
+        Place gateway using strategic placement strategies.
+        PHASE 3 - Section 5.1: Gateway Placement Strategies
+        """
+        # Select strategy based on configured weights
+        strategy = self._select_gateway_strategy()
+
+        spawn_area = Position(5, 5)  # Center of spawn area
+        floor_positions = self._get_all_floor_positions()
+
+        if not floor_positions:
+            return
+
+        if strategy == 'far_corner':
+            gateway_pos = self._gateway_far_corner(spawn_area, floor_positions)
+        elif strategy == 'central_hub':
+            gateway_pos = self._gateway_central_hub(floor_positions)
+        elif strategy == 'hidden_dead_end':
+            gateway_pos = self._gateway_hidden_dead_end(floor_positions)
+        elif strategy == 'gauntlet':
+            gateway_pos = self._gateway_gauntlet(spawn_area, floor_positions)
+        else:
+            # Fallback to far corner
+            gateway_pos = self._gateway_far_corner(spawn_area, floor_positions)
+
+        self.game_map.gateway = Position(gateway_pos[0], gateway_pos[1])
+
+    def _select_gateway_strategy(self) -> str:
+        """Select a gateway placement strategy based on configured weights."""
+        weights = GameConfig._get_required('room_generation.gateway_strategy_weights')
+
+        strategies = ['far_corner', 'central_hub', 'hidden_dead_end', 'gauntlet']
+        strategy_weights = [
+            weights.get('far_corner', 0.4),
+            weights.get('central_hub', 0.3),
+            weights.get('hidden_dead_end', 0.2),
+            weights.get('gauntlet', 0.1)
+        ]
+
+        # Normalize weights
+        total = sum(strategy_weights)
+        normalized = [w / total for w in strategy_weights]
+
+        # Select based on cumulative probability
+        rand = random.random()
+        cumulative = 0
+        for strategy, weight in zip(strategies, normalized):
+            cumulative += weight
+            if rand < cumulative:
+                return strategy
+
+        return strategies[0]  # Fallback
+
+    def _gateway_far_corner(self, spawn: Position, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
+        """Gateway in opposite corner from spawn - current default strategy."""
+        far_positions = []
+        for pos in floor_positions:
+            position = Position(pos[0], pos[1])
+            distance = spawn.distance_to(position)
+            if distance > 30:
+                far_positions.append(pos)
+
+        if far_positions:
+            return random.choice(far_positions)
+
+        # Fallback to furthest available
+        furthest = max(floor_positions, key=lambda pos: spawn.distance_to(Position(pos[0], pos[1])))
+        return furthest
+
+    def _gateway_central_hub(self, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
+        """Gateway in or near central area of map."""
+        map_center_x = GameConfig.MAP_WIDTH // 2
+        map_center_y = GameConfig.MAP_HEIGHT // 2
+
+        # Find positions near center
+        central_positions = []
+        for pos in floor_positions:
+            distance_to_center = abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y)
+            if distance_to_center < 15:
+                central_positions.append(pos)
+
+        if central_positions:
+            return random.choice(central_positions)
+
+        # Fallback to closest to center
+        closest = min(floor_positions,
+                     key=lambda pos: abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y))
+        return closest
+
+    def _gateway_hidden_dead_end(self, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
+        """Gateway at end of longest branch - requires exploration."""
+        # Find positions with few floor neighbors (dead ends)
+        dead_end_positions = []
+
+        for pos in floor_positions:
+            x, y = pos
+            neighbor_count = 0
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                neighbor = (x + dx, y + dy)
+                if neighbor in floor_positions:
+                    neighbor_count += 1
+
+            # Dead ends have 1-2 neighbors
+            if neighbor_count <= 2:
+                dead_end_positions.append(pos)
+
+        if dead_end_positions:
+            return random.choice(dead_end_positions)
+
+        # Fallback to random position
+        return random.choice(floor_positions)
+
+    def _gateway_gauntlet(self, spawn: Position, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
+        """Gateway along edge but requires passing through map."""
+        # Find positions along map edges
+        edge_positions = []
+
+        for pos in floor_positions:
+            x, y = pos
+            # Check if near any edge
+            near_edge = (x < 10 or x > GameConfig.MAP_WIDTH - 10 or
+                        y < 10 or y > GameConfig.MAP_HEIGHT - 10)
+
+            # But not too close to spawn
+            distance_from_spawn = spawn.distance_to(Position(x, y))
+            if near_edge and distance_from_spawn > 20:
+                edge_positions.append(pos)
+
+        if edge_positions:
+            return random.choice(edge_positions)
+
+        # Fallback to far corner strategy
+        return self._gateway_far_corner(spawn, floor_positions)
