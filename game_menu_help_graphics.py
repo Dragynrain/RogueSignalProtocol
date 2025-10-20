@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Graphical Help Menu - Graphics Mode Help Screen
-Displays help information with sprites and text in paginated format.
+Rogue Signal Protocol - Graphical Help Menu
+
+Graphics-mode help screen with sprite visualization and paginated layout.
+Displays enemy sprites, item sprites alongside descriptions using SDL rendering.
+Uses same sprite scale as in-game for consistency. Supports page navigation.
 """
 
 import tcod

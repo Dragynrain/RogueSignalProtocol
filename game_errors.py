@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Centralized error handling utilities for the game.
-Provides consistent error logging and user notification patterns.
+Rogue Signal Protocol - Error Handling Utilities
+
+Centralized error handling for consistent logging and user notification.
+GameErrorHandler provides static methods for error handling, warnings, and safe operations.
+Special handlers for config and data loading errors with enhanced context.
 """
 
 import logging

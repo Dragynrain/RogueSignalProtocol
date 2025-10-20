@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
-Player and Enemy character classes.
-Extracted from RogueSignalProtocol.py for better organization.
+Player and Enemy character classes with AI behavior and movement systems.
+
+This module handles all character logic including:
+- Player stats (CPU, heat, RAM), abilities, and inventory management
+- Enemy AI states (UNAWARE -> ALERT -> HOSTILE) and vision
+- Movement queue system (FIFO 3-move rolling queue for all enemies)
+- Pathfinding using TCOD's A* algorithm with enemy collision avoidance
+- Status effects, damage calculation, and attack logic
 """
 
 import logging
@@ -14,8 +20,20 @@ from game_config import GameConfig, GameBalance
 
 
 class Player:
-    """Player character with stats, position, and abilities."""
-    
+    """
+    Player character managing stats, position, abilities, and inventory.
+
+    The Player class coordinates several systems:
+    - Core stats (CPU health, heat, RAM capacity) with configurable maximums
+    - Temporary status effects (invisibility, speed, vision enhancements, virus infection)
+    - Vision system with shadow mechanics and enhanced vision upgrades
+    - Inventory management (delegated to InventoryManager)
+    - Permanent upgrades (RAM, CPU, heat capacity)
+
+    Movement validation uses centralized PositionValidator to ensure consistency
+    with enemy movement and other systems.
+    """
+
     def __init__(self, x: int, y: int):
         """Initialize player character at the specified position.
         
@@ -76,7 +94,20 @@ class Player:
         return self.inventory_manager.get_ram_usage()
     
     def move(self, dx: int, dy: int, game_map) -> bool:
-        """Move player with boundary and collision checking."""
+        """
+        Move player with boundary and collision checking.
+
+        Uses centralized PositionValidator to ensure movement validation
+        is consistent across player and enemy movement systems.
+
+        Args:
+            dx: Change in X coordinate (-1, 0, or 1)
+            dy: Change in Y coordinate (-1, 0, or 1)
+            game_map: GameMap instance for boundary/collision checking
+
+        Returns:
+            True if move was successful, False if blocked
+        """
         self.last_position = Position(self.x, self.y)
         
         # Calculate the intended destination (unclamped)
@@ -118,7 +149,25 @@ class Player:
         return self.temporary_effects['enhanced_vision_turns'] > 0
     
     def can_see_enemy(self, enemy_target: 'Enemy', game_map) -> bool:
-        """Check if player can see enemy."""
+        """
+        Check if player can see an enemy using vision range and shadow mechanics.
+
+        Vision rules (checked in order):
+        1. Adjacent enemies (distance <= 1.5) are always visible
+        2. Enhanced vision ignores walls and sees within extended range
+        3. Enemies in shadows are only visible when adjacent (shadows block incoming vision)
+        4. Standard TCOD FOV check for line-of-sight within vision range
+
+        Note: Shadows block vision TO targets in shadows, but do NOT block vision
+        FROM the player if standing in a shadow. This creates tactical asymmetry.
+
+        Args:
+            enemy_target: Enemy to check visibility for
+            game_map: GameMap instance for shadow/FOV checking
+
+        Returns:
+            True if player can see the enemy
+        """
         distance = self.position.distance_to(enemy_target.position)
 
         # Adjacent enemies always visible
@@ -150,18 +199,31 @@ class Player:
         self._max_heat = value
     
     def apply_permanent_upgrade(self, upgrade_key: str) -> bool:
-        """Apply a permanent upgrade to the player."""
-        # Delayed import to avoid circular dependency  
+        """
+        Apply a permanent stat upgrade with configurable caps.
+
+        Each upgrade type has a maximum capacity to prevent unlimited scaling:
+        - RAM: Capped at max_ram_capacity (default 32)
+        - CPU: Capped at max_cpu_capacity (default 200), also boosts current CPU
+        - Heat: Capped at 200 to balance heat-based abilities
+
+        Args:
+            upgrade_key: Key into GameUpgrades.UPGRADES dict
+
+        Returns:
+            True if upgrade was successfully applied, False if key not found
+        """
+        # Delayed import to avoid circular dependency
         from game_data import GameUpgrades
-        
+
         if upgrade_key not in GameUpgrades.UPGRADES:
             return False
-            
+
         upgrade = GameUpgrades.UPGRADES[upgrade_key]
-        
+
         max_ram = GameConfig.get('gameplay.max_ram_capacity', 32)
         max_cpu = GameConfig.get('gameplay.max_cpu_capacity', 200)
-        
+
         if upgrade.stat_type == 'ram':
             self.ram_total = min(max_ram, self.ram_total + upgrade.bonus_amount)
         elif upgrade.stat_type == 'cpu':
@@ -169,7 +231,7 @@ class Player:
             self.cpu = min(self.max_cpu, self.cpu + upgrade.bonus_amount)  # Boost current as well but cap at max
         elif upgrade.stat_type == 'heat':
             self.max_heat = min(200, self.max_heat + upgrade.bonus_amount)  # Cap at 200
-            
+
         return True
     
     def take_damage(self, damage: int) -> int:
@@ -180,11 +242,41 @@ class Player:
 
 
 class Enemy:
-    """Enemy character with AI behavior."""
-    
+    """
+    Enemy character with state-based AI, pathfinding, and movement queue system.
+
+    The Enemy class manages several interconnected systems:
+    - AI state machine (UNAWARE -> ALERT -> HOSTILE) with vision checks
+    - Movement queue system (FIFO 3-move rolling queue) for smooth pathfinding
+    - TCOD A* pathfinding with enemy collision avoidance
+    - Combat (melee attacks, status effects like virus/slow)
+    - Special behaviors (virus mimicry, admin omniscience, patrol routes)
+
+    Movement queue ensures enemies plan 3 moves ahead, providing smooth
+    pathfinding that adapts when blocked. All enemies use the same queue
+    system regardless of movement type (PATROL, RANDOM, SEEK, STATIC).
+
+    Key delegation:
+    - Type data loaded from GameData.ENEMY_TYPES (stats, vision, damage)
+    - Pathfinding uses create_pathfinding_cost_map() helper
+    - Position validation uses PositionValidator
+    """
+
     _next_id = 1  # Class variable for unique IDs
-    
+
     def __init__(self, position: Position, enemy_type: str):
+        """
+        Initialize enemy with type-specific stats and AI state.
+
+        Args:
+            position: Starting Position on the game map
+            enemy_type: Key into GameData.ENEMY_TYPES (e.g., 'admin', 'virus', 'drone')
+
+        Note:
+            - Admin enemies start HOSTILE (can always see player)
+            - Virus enemies store original_movement_type for mimicry behavior
+            - Movement queue starts empty and is filled on first move
+        """
         self.id = Enemy._next_id
         Enemy._next_id += 1
 
@@ -266,7 +358,24 @@ class Enemy:
         return self.type_data.movement
 
     def can_see_player(self, player: Player, game_map) -> bool:
-        """Check if enemy can see player."""
+        """
+        Check if enemy can see player using layered vision rules.
+
+        Vision checks are performed in order of efficiency:
+        1. Disabled enemies cannot see anything
+        2. Admin enemies always see player (omniscient)
+        3. Range check using enemy's vision stat
+        4. Invisibility check (data mimic blocks vision)
+        5. Shadow check (players in shadows only visible when adjacent)
+        6. TCOD FOV line-of-sight check
+
+        Args:
+            player: Player instance to check visibility for
+            game_map: GameMap instance for shadow/FOV checking
+
+        Returns:
+            True if enemy can see player
+        """
         if self.disabled_turns > 0:
             return False
 
@@ -342,7 +451,32 @@ class Enemy:
         return self.cpu <= 0
     
     def move(self, game_map, player: Player, game_engine) -> bool:
-        """Execute next move from queue, maintaining rolling 3-move queue."""
+        """
+        Execute next move from FIFO queue, maintaining rolling 3-move queue.
+
+        Movement queue flow:
+        1. Check if at patrol waypoint (advance to next if reached)
+        2. Skip if disabled/on cooldown
+        3. Refresh queue if empty (calculate up to 3 moves ahead)
+        4. Pop next position from front of queue (FIFO)
+        5. Validate move (replan if blocked)
+        6. Execute move
+        7. For tracking enemies (admin/hostile): detect target changes, refresh if needed
+        8. Replenish queue (add 1 move to back to maintain 3 moves)
+
+        Why rolling queue?
+        - Smooth pathfinding that shows 3 moves ahead for player prediction
+        - Adapts to blockages by replanning when invalid
+        - Efficient: only calculates new moves as needed
+
+        Args:
+            game_map: GameMap instance for pathfinding
+            player: Player instance for target tracking
+            game_engine: GameEngine instance for enemy collision checking
+
+        Returns:
+            True if move was executed, False if blocked/skipped
+        """
         # Check patrol point advancement first
         movement_type = self.get_movement_type()
         if movement_type == EnemyMovement.PATROL and self.patrol_points and self.state != EnemyState.HOSTILE:
@@ -424,7 +558,22 @@ class Enemy:
         return True
 
     def _refresh_move_queue(self, player, game_map, game_engine):
-        """Recalculate movement queue (up to 3 moves)."""
+        """
+        Recalculate movement queue from scratch (up to 3 moves).
+
+        Called when:
+        - Queue is empty
+        - Move is blocked and needs replanning
+        - Target changes for tracking enemies (admin/hostile)
+        - Patrol waypoint is reached
+
+        Strategy:
+        - Admin/hostile/patrol: Use TCOD A* pathfinding, add first 3 steps
+        - Random movement: Generate 3 random valid moves
+        - Validates adjacency between consecutive moves
+        - Extends patrol queues to next waypoint if current route is short
+        - Falls back to greedy movement if pathfinding fails
+        """
         self.move_queue.clear()
 
         # Update tracking
@@ -642,9 +791,20 @@ class Enemy:
 
     def _calculate_greedy_move_toward_target(self, target: Position, game_map, game_engine) -> Optional[Position]:
         """
-        Calculate best adjacent move toward target using greedy algorithm.
-        Used as fallback when pathfinding fails due to blocking enemies.
-        ONLY returns moves that are actually valid (not blocked by enemies or walls).
+        Calculate best adjacent move toward target using greedy distance minimization.
+
+        Used as fallback when pathfinding fails (e.g., blocked by other enemies).
+        Tries all 8 adjacent directions and returns the valid position closest
+        to the target. This ensures enemies can still make progress even when
+        A* pathfinding cannot find a valid path.
+
+        Args:
+            target: Destination Position to move toward
+            game_map: GameMap instance for wall checking
+            game_engine: GameEngine instance for enemy collision checking
+
+        Returns:
+            Position closest to target that is valid, or None if no valid moves
         """
         if not target:
             return None

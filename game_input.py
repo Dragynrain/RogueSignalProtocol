@@ -1,5 +1,9 @@
 """
-Game Input Module - Handles player input and translates to game actions
+Rogue Signal Protocol - Game Input Module
+
+Handles all player input and translates to game actions.
+Provides InputHandler for in-game controls and InputMappings for shared key definitions.
+Supports movement, combat, inventory, menu navigation, and look mode.
 """
 
 import tcod

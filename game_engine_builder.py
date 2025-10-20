@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Game Engine Builder
-Simplifies GameEngine initialization with a fluent builder pattern.
+Rogue Signal Protocol - Game Engine Builder
+
+Fluent builder pattern for GameEngine initialization.
+Simplifies complex dependency injection with sensible defaults and optional customization.
+Provides clear initialization order and supports both new games and save loading.
 """
 
 from typing import Optional

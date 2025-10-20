@@ -1,8 +1,30 @@
 #!/usr/bin/env python3
 """
-Game State Persistence
-Handles all save/load operations for the game state.
-Extracted from game_engine.py for better separation of concerns.
+Game state save/load system managing serialization and restoration.
+
+This module handles bidirectional conversion between game state and JSON:
+
+Save operations:
+- Collect game state (player stats, inventory, map items, enemies)
+- Serialize to JSON with proper type handling
+- Delegate file I/O to SaveGameManager
+
+Load operations:
+- Restore game state from JSON
+- Regenerate level with same seed for map structure
+- Restore map items and enemies at saved positions
+- Sync code hack discovery status
+- Restore UI state (message log, story fragments)
+
+Key challenges:
+- Enemy IDs must be preserved (restore Enemy._next_id counter)
+- Code hack discovery status synced across inventory and game engine
+- Level regeneration must use same seed for identical layout
+- Position objects reconstructed from coordinate tuples
+
+Delegation:
+- SaveGameManager: File I/O and JSON parsing
+- This class: Game state serialization/deserialization
 """
 
 import logging
@@ -19,14 +41,52 @@ from game_characters import Enemy
 
 
 class GameStatePersistence:
-    """Handles saving and loading game state data."""
+    """
+    Manages serialization and restoration of game state to/from JSON.
+
+    Responsibilities:
+    - Save: Collect state from all game systems and serialize to dict
+    - Load: Restore state from dict, regenerate level, restore entities
+    - Type conversion: Position objects <-> coordinate tuples
+    - Discovery sync: Code hack effects synced between inventory and game
+    - ID preservation: Enemy IDs must be maintained for save/load cycles
+
+    Key methods:
+    - load_from_save(): Main entry point for loading, orchestrates restoration
+    - save_to_file(): Main entry point for saving, collects and serializes state
+    - _restore_*(): Helper methods for restoring specific subsystems
+
+    Attributes:
+        game_engine: GameEngine instance providing access to all game systems
+    """
 
     def __init__(self, game_engine):
-        """Initialize with reference to game engine."""
+        """
+        Initialize persistence manager with game engine reference.
+
+        Args:
+            game_engine: GameEngine instance for state access
+        """
         self.game_engine = game_engine
 
     def load_from_save(self) -> bool:
-        """Load game state from save file."""
+        """
+        Load and restore complete game state from save file.
+
+        Load pipeline:
+        1. Load JSON via SaveGameManager
+        2. Restore core game state (level, turn, seed)
+        3. Restore player state (stats, inventory, effects)
+        4. Restore game effects (code discoveries, revealed nodes)
+        5. Regenerate level with same seed (map structure)
+        6. Restore map items (code hacks, exploits, nodes)
+        7. Restore enemies (position, state, AI data)
+        8. Restore UI state (message log, story fragments)
+        9. Sync code hack discovery status
+
+        Returns:
+            True if load successful, False if no save file or error
+        """
         save_data = SaveGameManager.load_game()
         if not save_data:
             return False

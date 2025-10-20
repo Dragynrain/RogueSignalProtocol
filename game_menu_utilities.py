@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Shared menu rendering utilities to eliminate duplication across menu classes.
-Consolidated from game_menus.py refactoring.
+Rogue Signal Protocol - Menu Rendering Utilities
+
+Shared rendering utilities for all menu screens to eliminate duplication.
+Handles background-aware layout calculations, box rendering, and transparency management.
+Consolidated from game_menus.py refactoring for consistency across MainMenu, SettingsMenu, etc.
 """
 
 import tcod
@@ -12,7 +15,16 @@ from game_coordinate_helpers import CoordinateHelpers
 
 
 class MenuRenderingUtils:
-    """Shared utilities for menu rendering across MainMenu, SettingsMenu, etc."""
+    """
+    Shared utilities for menu rendering across MainMenu, SettingsMenu, etc.
+
+    Provides static methods for:
+    - Right-side box rendering with consistent styling
+    - Background-aware layout calculation based on window aspect ratio
+    - Transparency management for graphics/glyph mode separation
+
+    All methods are static as this is a pure utility class with no state.
+    """
 
     @staticmethod
     def render_right_side_box(console: tcod.console.Console, layout: dict, height: int,

@@ -1,8 +1,20 @@
 """
-Game Level Generator Module
+Procedural level generation with room types, corridors, and tactical features.
 
-Handles procedural level generation and room placement algorithms.
-Extracted from RogueSignalProtocol.py for better code organization.
+This module handles multi-phase level generation:
+- Phase 1: Room creation with varied types (rectangular, L-shaped, irregular, cross, circular)
+- Phase 2: Room connection using MST + extra paths for multiple routes
+- Phase 3: Hub-and-spoke patterns, looping paths for stealth options
+- Phase 4: Landmark rooms (central plazas, long halls), T-junctions, intersections
+- Phase 5: Tactical features (choke points, defensive positions, loot clustering)
+- Item/node placement: Strategic positioning based on room types and corridors
+
+Key algorithms:
+- Minimum Spanning Tree (MST) for base connectivity
+- Alcove generation in corridors for hiding spots
+- Shadow placement for stealth gameplay
+- Cover elements in open areas
+- Gateway placement with minimum distance from spawn
 """
 
 import random
@@ -17,14 +29,50 @@ from game_inventory import CodeHack, ExploitItem, StoryFragment
 
 
 class LevelGenerator:
-    """Handles procedural level generation and room placement."""
-    
+    """
+    Procedural level generator coordinating multi-phase map creation.
+
+    The generator orchestrates several subsystems:
+    - Room generation with varied shapes and sizes (configurable per level)
+    - Corridor creation using MST algorithm + extra paths
+    - Tactical feature placement (cover, shadows, alcoves, intersections)
+    - Item/node distribution (strategic positioning in rooms and corridors)
+    - Gateway placement with spawn distance constraints
+
+    Generation flow:
+    1. Clear existing level data
+    2. Fill map with walls
+    3. Generate rooms with varied types
+    4. Connect rooms (MST + extra paths + loops + hubs)
+    5. Add tactical features (alcoves, intersections, cover, shadows)
+    6. Place special tiles (items, nodes, gateway)
+    7. Invalidate FOV cache for new layout
+
+    Attributes:
+        game_map: GameMap instance to populate with generated content
+        corridor_tiles: Set of (x, y) tuples tracking corridor positions for alcove placement
+        last_generated_rooms: List of room bounds (x, y, w, h) from last generation
+    """
+
     def __init__(self, game_map):
         self.game_map = game_map
         self.corridor_tiles = set()  # Track corridor tiles for alcove placement
     
     def generate_level(self, level: int, seed: int) -> None:
-        """Generate a complete level with rooms, corridors, and special tiles."""
+        """
+        Generate a complete level from scratch using seeded RNG.
+
+        Coordinates the entire generation pipeline:
+        1. Set RNG seed for reproducibility (seed + level)
+        2. Clear previous level data
+        3. Generate rooms, corridors, and tactical features
+        4. Place special tiles (items, nodes, gateway)
+        5. Invalidate FOV cache to reflect new walls
+
+        Args:
+            level: Current level number (affects difficulty, room counts, items)
+            seed: Base RNG seed (combined with level for reproducibility)
+        """
         random.seed(seed + level)
         
         # Clear existing level data
@@ -60,7 +108,23 @@ class LevelGenerator:
         self.game_map.invalidate_transparency_cache()
     
     def _generate_procedural_level(self, level: int) -> None:
-        """Generate the basic level structure using improved algorithm from dungeon-gen-v3.py"""
+        """
+        Generate the core level structure with multi-phase room/corridor creation.
+
+        This is the main generation orchestrator that executes all phases:
+        - Room creation with varied types and guaranteed spawn room
+        - MST-based connectivity + extra paths for routing options
+        - Hub-and-spoke patterns and looping paths for stealth
+        - Landmark rooms, corridor intersections, and alcoves
+        - Tactical features (choke points, cover, shadows, defensive positions)
+        - Loot room identification for item clustering
+
+        The algorithm prioritizes gameplay variety (multiple paths, hiding spots,
+        tactical positions) over pure dungeon aesthetics.
+
+        Args:
+            level: Current level number for difficulty scaling
+        """
         # Fill map with walls initially
         for x in range(GameConfig.MAP_WIDTH):
             for y in range(GameConfig.MAP_HEIGHT):

@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
 Core game entities and data structures.
-Extracted from RogueSignalProtocol.py for better organization.
+
+Defines foundational data classes:
+- Position: 2D coordinates with utility methods
+- ColorManager: JSON-driven color configuration (singleton)
+- Enemy/Exploit/Upgrade definitions
+- Enums for game states (EnemyState, EnemyMovement, TargetingMode)
+- PositionValidator: Centralized position validation logic
 """
 
 import math
@@ -12,8 +18,16 @@ from data_loading import DataLoader
 
 
 class ColorManager:
-    """JSON-driven color management for the game."""
-    
+    """
+    JSON-driven color management for the game (singleton pattern).
+
+    Loads all colors from game_config.json on first access and caches them.
+    Ensures consistent color scheme across the entire game and fails fast
+    if required colors are missing from configuration. No hardcoded fallbacks.
+
+    The singleton pattern ensures only one instance loads the JSON once.
+    """
+
     _instance = None
     _colors = None
     
@@ -24,7 +38,15 @@ class ColorManager:
         return cls._instance
     
     def _load_colors(self):
-        """Load colors from JSON configuration - NO FALLBACKS."""
+        """
+        Load colors from JSON configuration with strict validation.
+
+        Fails fast if any required color category or specific color is missing.
+        This ensures configuration errors are caught immediately rather than
+        causing subtle bugs during gameplay. No fallback values are used.
+
+        Required categories: basic, game_elements, data_codes, message_log, enemies, ui
+        """
         import logging
 
         try:
@@ -107,16 +129,45 @@ class ColorManager:
             raise RuntimeError(f"Failed to load colors: {e}") from e
     
     def _darken_color(self, color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
-        """Darken a color by the given factor."""
+        """
+        Darken a color by multiplying each RGB component by the factor.
+
+        Args:
+            color: RGB tuple (0-255 for each component)
+            factor: Darkening factor (0.0 = black, 1.0 = original color)
+
+        Returns:
+            Darkened RGB tuple
+        """
         return tuple(int(c * factor) for c in color)
-    
+
     def get_color(self, name: str) -> Tuple[int, int, int]:
-        """Get color by name."""
+        """
+        Get color by name (case-insensitive).
+
+        Args:
+            name: Color name (e.g., 'white', 'ENEMY_HOSTILE')
+
+        Returns:
+            RGB tuple (defaults to white if not found)
+        """
         return self._colors.get(name.upper(), (255, 255, 255))
-    
+
     @staticmethod
     def interpolate_color(color1: Tuple[int, int, int], color2: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
-        """Interpolate between two colors by the given factor (0.0 to 1.0)."""
+        """
+        Interpolate between two colors.
+
+        Useful for creating smooth color transitions (e.g., heat meters, health bars).
+
+        Args:
+            color1: Starting RGB color
+            color2: Ending RGB color
+            factor: Interpolation factor (0.0 = color1, 1.0 = color2)
+
+        Returns:
+            Interpolated RGB tuple
+        """
         factor = max(0.0, min(1.0, factor))
         r = int(color1[0] + (color2[0] - color1[0]) * factor)
         g = int(color1[1] + (color2[1] - color1[1]) * factor)
@@ -125,7 +176,12 @@ class ColorManager:
 
 
 class Colors:
-    """Backward-compatible color access using ColorManager."""
+    """
+    Backward-compatible color access wrapper for ColorManager.
+
+    Provides attribute-style access to colors (e.g., Colors.WHITE, Colors.ENEMY_HOSTILE).
+    Delegates to the singleton ColorManager instance under the hood.
+    """
     
     _manager = None
     
@@ -156,25 +212,48 @@ Colors = Colors()
 
 
 class EnemyState(Enum):
-    """Enemy awareness states."""
+    """
+    Enemy awareness states.
+
+    UNAWARE: Enemy has not detected player (green)
+    ALERT: Enemy suspects player presence, searching (yellow) - lasts 1 turn
+    HOSTILE: Enemy actively pursuing player (red)
+    """
     UNAWARE = "unaware"
     ALERT = "alert"
     HOSTILE = "hostile"
 
 
 class EnemyMovement(Enum):
-    """Enemy movement patterns."""
+    """
+    Enemy movement patterns defining AI behavior.
+
+    STATIC: Does not move unless alerted
+    PATROL: Follows predefined patrol points in sequence
+    RANDOM: Wanders randomly
+    SEEK: Actively seeks player (used for hostile behavior)
+    ADMIN: Perfect vision and constant seeking (boss-type enemy)
+    TRACK: Legacy tracking behavior
+    VIRUS: Randomly selects STATIC, PATROL, or RANDOM on spawn (unpredictable)
+    """
     STATIC = "static"
     PATROL = "patrol"
     RANDOM = "random"
     SEEK = "seek"
-    ADMIN = "admin"  # Constant seeking with perfect vision
-    TRACK = "track"  # Legacy tracking behavior
-    VIRUS = "virus"  # Randomly picks STATIC, PATROL, or RANDOM on spawn
+    ADMIN = "admin"
+    TRACK = "track"
+    VIRUS = "virus"
 
 
 class TargetingMode(Enum):
-    """Exploit targeting modes."""
+    """
+    Exploit targeting modes.
+
+    NONE: No targeting required (instant self-buff/debuff)
+    SINGLE: Single target selection
+    AREA: Area of effect around target point
+    DIRECTION: Directional targeting (not currently used)
+    """
     NONE = "none"
     SINGLE = "single"
     AREA = "area"
@@ -183,24 +262,58 @@ class TargetingMode(Enum):
 
 @dataclass
 class Position:
-    """2D position with x, y coordinates."""
+    """
+    2D position with x, y coordinates and utility methods.
+
+    Immutable-style dataclass representing a point on the game map.
+    Provides distance calculations, validation, and conversion utilities.
+    Hashable for use as dictionary keys.
+    """
     x: int
     y: int
-    
+
     def distance_to(self, other: 'Position') -> float:
-        """Calculate Euclidean distance to another position."""
+        """
+        Calculate Euclidean distance to another position.
+
+        Args:
+            other: Target position
+
+        Returns:
+            Float distance (uses sqrt, so diagonal = ~1.414)
+
+        Raises:
+            ValueError: If other is None
+        """
         if other is None:
             raise ValueError("Cannot calculate distance to None position")
         return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
     
     def is_valid(self, width: int, height: int) -> bool:
-        """Check if position is within bounds."""
+        """
+        Check if position is within rectangular bounds.
+
+        Args:
+            width: Map width
+            height: Map height
+
+        Returns:
+            True if 0 <= x < width and 0 <= y < height
+        """
         if width <= 0 or height <= 0:
             return False
         return 0 <= self.x < width and 0 <= self.y < height
     
     def is_adjacent_to(self, other: 'Position') -> bool:
-        """Check if this position is adjacent to another position."""
+        """
+        Check if this position is adjacent to another (including diagonals).
+
+        Args:
+            other: Target position
+
+        Returns:
+            True if positions differ by at most 1 in both x and y
+        """
         if other is None:
             return False
         return abs(self.x - other.x) <= 1 and abs(self.y - other.y) <= 1
@@ -277,16 +390,42 @@ class UpgradeDefinition:
 
 # Utility functions for position handling
 def clamp(value: float, min_val: float, max_val: float) -> float:
-    """Clamp a value between min and max bounds."""
+    """
+    Clamp a value between min and max bounds.
+
+    Args:
+        value: Value to clamp
+        min_val: Minimum allowed value
+        max_val: Maximum allowed value
+
+    Returns:
+        Value constrained to [min_val, max_val]
+    """
     return max(min_val, min(value, max_val))
 
 
 def format_position_key(pos: Position) -> str:
-    """Format position as string key for dictionaries."""
+    """
+    Format position as string key for dictionaries.
+
+    Args:
+        pos: Position to format
+
+    Returns:
+        String in format "x,y"
+    """
     return f"{pos.x},{pos.y}"
 
 def parse_position_key(key: str) -> Optional[Position]:
-    """Parse string key back to Position."""
+    """
+    Parse string key back to Position.
+
+    Args:
+        key: String in format "x,y"
+
+    Returns:
+        Position object, or None if parsing fails
+    """
     try:
         x, y = map(int, key.split(','))
         return Position(x, y)
@@ -317,7 +456,17 @@ def ensure_color_tuple(color) -> Tuple[int, int, int]:
 
 
 class PositionValidator:
-    """Centralized position validation utilities to avoid code duplication."""
+    """
+    Centralized position validation utilities to avoid code duplication.
+
+    Provides static methods for common validation patterns:
+    - Boundary checks
+    - Wall collision detection
+    - Item/enemy placement validation
+    - Movement validation
+
+    All methods are static as they don't maintain state.
+    """
 
     @staticmethod
     def is_within_bounds(position: Position, width: int, height: int) -> bool:

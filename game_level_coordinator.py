@@ -1,8 +1,20 @@
 #!/usr/bin/env python3
 """
-Game Level Coordinator
-Handles level generation, progression, and placement of game elements.
-Extracted from game_engine.py for better separation of concerns.
+Level generation coordinator managing progression and game element placement.
+
+This module orchestrates high-level level management:
+- Level generation pipeline (delegates to LevelGenerator for map structure)
+- Enemy placement with patrol routes and AI configuration
+- Item distribution (code hacks, exploits, upgrades, story fragments)
+- Level progression logic (stat preservation/reset, victory conditions)
+- Background music transitions per level
+- Code hack discovery state synchronization
+
+Key responsibilities:
+- Coordinates LevelGenerator (map structure) with enemy/item placement
+- Manages level transitions (CPU/heat preserved, trace reset)
+- Handles win condition (level > 3) and save deletion
+- Synchronizes discovered code effects across level transitions
 """
 
 import logging
@@ -19,14 +31,49 @@ from game_save import SaveGameManager
 
 
 class GameLevelCoordinator:
-    """Coordinates level generation and progression."""
+    """
+    Coordinates level generation, progression, and element placement.
+
+    Delegates map structure generation to LevelGenerator, then handles
+    placement of gameplay elements (enemies, items, story fragments).
+    Also manages level transitions with appropriate stat resets and
+    victory conditions.
+
+    Key delegation:
+    - LevelGenerator: Handles map structure (rooms, corridors, tactical features)
+    - This class: Handles gameplay elements (enemies, items, progression logic)
+
+    Attributes:
+        game_engine: GameEngine instance for accessing all game systems
+    """
 
     def __init__(self, game_engine):
-        """Initialize with reference to game engine."""
+        """
+        Initialize coordinator with game engine reference.
+
+        Args:
+            game_engine: GameEngine instance providing access to all game systems
+        """
         self.game_engine = game_engine
 
     def generate_procedural_level(self):
-        """Generate a procedural level using the new LevelGenerator system."""
+        """
+        Generate a complete level with map structure and gameplay elements.
+
+        Generation pipeline:
+        1. Clear previous map data and enemies
+        2. Start appropriate background music for level
+        3. Delegate map generation to LevelGenerator (rooms, corridors, nodes)
+        4. Place gameplay elements (enemies, items, upgrades, story fragments)
+        5. Reset player to spawn position
+        6. Reset trace level (CPU/heat preserved)
+        7. Sync code hack discovery status
+
+        Level-specific behavior:
+        - Level 1: "level1_stealth.mp3"
+        - Level 2: "level2_infiltration.mp3"
+        - Level 3: "level3_core.mp3"
+        """
         # Clear all map data and enemies first
         self._clear_map()
 
@@ -77,7 +124,25 @@ class GameLevelCoordinator:
             random.seed()
 
     def progress_to_next_level(self):
-        """Progress to the next level."""
+        """
+        Progress to next level or trigger victory if all levels complete.
+
+        Level progression rules:
+        - CPU and heat are preserved across levels
+        - Trace level is reset to 0 for new network
+        - Admin spawned state is reset
+        - After level 3: Victory condition triggers
+
+        Victory behavior:
+        - Play victory music
+        - Show victory messages and dialogue
+        - Delete save file (no continuing after win)
+        - Set game_over flag
+
+        Next level behavior:
+        - Increment level counter
+        - Generate new level with preserved stats
+        """
         # Don't progress if game is already over
         if self.game_engine.game_over:
             return

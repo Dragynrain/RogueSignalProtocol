@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Color Manager Service
-Centralized color management with lazy loading.
+Rogue Signal Protocol - Color Manager
+
+Centralized color management with lazy loading from JSON configuration.
+Provides ColorManager class with no fallback colors - fails fast on missing config.
+Ensures all colors are loaded from game_rules.json for consistency.
 """
 
 from typing import Tuple

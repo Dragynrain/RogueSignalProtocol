@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
 Rogue Signal Protocol - Combat System
+
 Handles exploit usage, targeting, and combat effects.
+Manages all exploit execution including:
+- Heat cost calculation and overclocking
+- Targeting validation and confirmation
+- Individual exploit effects (damage, stun, buffs, debuffs)
+- Sound effects and message log updates
 """
 
 from typing import TYPE_CHECKING
@@ -17,13 +23,37 @@ if TYPE_CHECKING:
 
 
 class ExploitSystem:
-    """Handles exploit usage and effects."""
-    
+    """
+    Handles exploit usage and effects.
+
+    Coordinates exploit execution by validating requirements, calculating costs,
+    executing effects, and processing turns. Each exploit type has its own
+    _execute_* method with specific logic.
+    """
+
     def __init__(self, game):
+        """
+        Initialize exploit system with reference to game engine.
+
+        Args:
+            game: GameEngine instance for accessing player, enemies, map, etc.
+        """
         self.game = game
     
     def use_exploit(self, exploit_key: str) -> bool:
-        """Attempt to use an exploit."""
+        """
+        Attempt to use an equipped exploit.
+
+        Validates exploit is equipped, checks heat limits, and shows overclock
+        warning if needed. Enters targeting mode for ranged exploits or executes
+        immediately for self-targeted effects.
+
+        Args:
+            exploit_key: Unique identifier for the exploit (e.g., 'shadow_step')
+
+        Returns:
+            True if exploit was used/entered targeting, False if failed validation
+        """
         if exploit_key not in self.game.player.inventory_manager.equipped_exploits:
             self.game.message_log.add_message("Exploit not equipped")
             return False
@@ -70,7 +100,19 @@ class ExploitSystem:
         return self.execute_exploit(exploit_key, self.game.player.position)
     
     def execute_exploit(self, exploit_key: str, target: Position) -> bool:
-        """Execute an exploit at target location."""
+        """
+        Execute an exploit at target location.
+
+        Validates target position and range, executes the exploit-specific effect,
+        applies heat cost (with potential overclocking damage), and processes turn.
+
+        Args:
+            exploit_key: Unique identifier for the exploit
+            target: Target position for the exploit
+
+        Returns:
+            True if exploit executed successfully, False otherwise
+        """
         if exploit_key not in GameData.EXPLOITS:
             self.game.message_log.add_message("Unknown exploit")
             return False
@@ -110,12 +152,33 @@ class ExploitSystem:
         return success
     
     def _calculate_heat_cost(self, exploit: ExploitDefinition) -> int:
-        """Calculate heat cost with efficiency bonus."""
+        """
+        Calculate heat cost with exploit efficiency bonus.
+
+        Exploit efficiency reduces heat cost by 40% (60% of original cost).
+
+        Args:
+            exploit: Exploit definition with base heat cost
+
+        Returns:
+            Final heat cost after efficiency bonus
+        """
         multiplier = 0.6 if self.game.player.temporary_effects['exploit_efficiency_turns'] > 0 else 1.0
         return int(exploit.heat * multiplier)
-    
+
     def _validate_target(self, exploit: ExploitDefinition, target: Position) -> bool:
-        """Validate targeting for exploit."""
+        """
+        Validate targeting for exploit.
+
+        Checks that target is within map bounds and within exploit's range.
+
+        Args:
+            exploit: Exploit definition with range limit
+            target: Target position
+
+        Returns:
+            True if target is valid, False otherwise
+        """
         if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
             self.game.message_log.add_message("Invalid target location")
             return False
@@ -127,9 +190,21 @@ class ExploitSystem:
         
         return True
 
-    
     def _execute_specific_exploit(self, exploit_key: str, exploit: ExploitDefinition, target: Position) -> bool:
-        """Execute the specific exploit effect."""
+        """
+        Execute the specific exploit effect by dispatching to appropriate handler.
+
+        Routes to the correct _execute_* method based on exploit_key.
+        Each exploit has unique mechanics defined in its handler method.
+
+        Args:
+            exploit_key: Unique identifier for the exploit
+            exploit: Exploit definition with stats
+            target: Target position
+
+        Returns:
+            True if exploit executed successfully, False otherwise
+        """
         if exploit_key == 'shadow_step':
             return self._execute_shadow_step(target)
         elif exploit_key == 'data_mimic':
@@ -158,7 +233,18 @@ class ExploitSystem:
         return False
     
     def _execute_shadow_step(self, target: Position) -> bool:
-        """Execute shadow step exploit."""
+        """
+        Execute Shadow Step exploit - teleport to shadow zone.
+
+        Instantly moves player to target position if it's in a shadow zone,
+        not occupied by an enemy, and is a valid walkable tile.
+
+        Args:
+            target: Target shadow position
+
+        Returns:
+            True if teleport succeeded, False if target invalid
+        """
         if self.game.game_map.is_shadow(target) and self.game.game_map.is_valid_position(target):
             if not self.game._get_enemy_at(target):
                 self.game.sound_manager.play_sound("exploit_shadow_step")
@@ -172,7 +258,15 @@ class ExploitSystem:
         return False
     
     def _execute_data_mimic(self) -> bool:
-        """Execute data mimic exploit."""
+        """
+        Execute Data Mimic exploit - grant temporary invisibility.
+
+        Makes player invisible to enemies for the duration specified in JSON config.
+        Enemies cannot see or pursue an invisible player.
+
+        Returns:
+            True (always succeeds)
+        """
         self.game.sound_manager.play_sound("exploit_data_mimic")
         exploit = GameData.EXPLOITS['data_mimic']
         self.game.player.temporary_effects['data_mimic_turns'] = exploit.effect_duration
@@ -180,7 +274,19 @@ class ExploitSystem:
         return True
     
     def _execute_noise_maker(self, target: Position) -> bool:
-        """Execute noise maker exploit."""
+        """
+        Execute Noise Maker exploit - create distraction to lure enemies.
+
+        Attracts nearby enemies (within effect_radius) to the target location.
+        PATROL enemies become ALERT for 3 turns, others get last_seen_player set
+        to target and become ALERT for 2 turns. Does not affect STATIC enemies.
+
+        Args:
+            target: Location of the noise
+
+        Returns:
+            True (always succeeds), displays count of attracted enemies
+        """
         self.game.sound_manager.play_sound("exploit_noise_maker")
         exploit = GameData.EXPLOITS['noise_maker']
         attracted = 0
@@ -200,7 +306,20 @@ class ExploitSystem:
         return True
     
     def _damage_enemy(self, enemy, damage: int) -> bool:
-        """Apply damage to enemy and handle elimination/hostility."""
+        """
+        Apply damage to enemy and handle elimination/hostility.
+
+        If enemy is eliminated, removes it and grants CPU reward.
+        If enemy survives, makes it HOSTILE and aware of player position.
+        Preserves patrol state for PATROL enemies before they become hostile.
+
+        Args:
+            enemy: Enemy to damage
+            damage: Amount of damage to apply
+
+        Returns:
+            True (always succeeds)
+        """
         if enemy.take_damage(damage):
             self.game.enemies.remove(enemy)
             self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
@@ -215,7 +334,18 @@ class ExploitSystem:
         return True
 
     def _execute_code_injection(self, target: Position) -> bool:
-        """Execute code injection exploit."""
+        """
+        Execute Code Injection exploit - single target ranged damage.
+
+        Deals 30 damage (35 to firewalls) to enemy at target position.
+        Fails if no enemy at target.
+
+        Args:
+            target: Target enemy position
+
+        Returns:
+            True if enemy hit, False if no target
+        """
         self.game.sound_manager.play_sound("exploit_code_injection")
         enemy = self.game._get_enemy_at(target)
         if not enemy:
@@ -226,7 +356,18 @@ class ExploitSystem:
         return self._damage_enemy(enemy, damage)
 
     def _execute_buffer_overflow(self, target: Position) -> bool:
-        """Execute buffer overflow exploit."""
+        """
+        Execute Buffer Overflow exploit - high damage melee attack.
+
+        Deals 50 damage to adjacent enemy (within distance 1.5 to include diagonals).
+        Requires enemy to be adjacent to player.
+
+        Args:
+            target: Target adjacent enemy position
+
+        Returns:
+            True if enemy hit, False if target not adjacent or no enemy
+        """
         self.game.sound_manager.play_sound("exploit_buffer_overflow")
         # Check if target is within range-1 (including diagonals, distance <= 1.5)
         distance = self.game.player.position.distance_to(target)
@@ -242,7 +383,20 @@ class ExploitSystem:
         return self._damage_enemy(enemy, 50)
     
     def _disable_area_enemies(self, target: Position, radius: int, duration: int) -> int:
-        """Disable enemies in area for the specified duration and return count (stun is additive)."""
+        """
+        Disable enemies in area for the specified duration.
+
+        Stun effect is additive - multiple stuns stack duration.
+        Disabled enemies cannot move or attack. Resets their state to UNAWARE.
+
+        Args:
+            target: Center of AoE
+            radius: Effect radius
+            duration: Number of turns enemies are disabled
+
+        Returns:
+            Count of enemies disabled
+        """
         count = 0
         for enemy in self.game.enemies:
             if enemy.position.distance_to(target) <= radius:
@@ -253,7 +407,20 @@ class ExploitSystem:
         return count
 
     def _execute_system_crash(self, target: Position, exploit_range: int) -> bool:
-        """Execute system crash exploit - untargeted AoE around player."""
+        """
+        Execute System Crash exploit - emergency AoE stun around player.
+
+        Untargeted AoE centered on player position (not target).
+        Disables all enemies within effect_radius for effect_duration turns.
+        Emergency defensive tool with high heat cost.
+
+        Args:
+            target: Ignored (exploit is centered on player)
+            exploit_range: Ignored (uses effect_radius from JSON)
+
+        Returns:
+            True (always succeeds)
+        """
         self.game.sound_manager.play_sound("exploit_system_crash")
         # System Crash is an emergency untargeted AoE centered on player
         exploit = GameData.EXPLOITS['system_crash']
@@ -269,7 +436,17 @@ class ExploitSystem:
         return True
     
     def _execute_threat_scan(self) -> bool:
-        """Execute threat scan exploit."""
+        """
+        Execute Threat Scan exploit - reveal enemy positions.
+
+        Reveals all enemies on the map and their immediate surroundings (3x3 area).
+        Does NOT reveal the entire map - only enemy locations and local context.
+        Updates last_known_enemy_positions for all enemies.
+        Effect lasts for effect_duration turns (from JSON config).
+
+        Returns:
+            True (always succeeds)
+        """
         self.game.sound_manager.play_sound("exploit_threat_scan")
         exploit = GameData.EXPLOITS['threat_scan']
         self.game.game_state.threat_scan_turns = exploit.effect_duration  # Duration from JSON config
@@ -294,7 +471,14 @@ class ExploitSystem:
         return True
 
     def _execute_log_wiper(self) -> bool:
-        """Execute log wiper exploit."""
+        """
+        Execute Log Wiper exploit - reduce trace level.
+
+        Reduces trace level by 30%, minimum 0. Useful for lowering detection risk.
+
+        Returns:
+            True (always succeeds)
+        """
         self.game.sound_manager.play_sound("exploit_log_wiper")
         old_trace = self.game.player.trace_level
         self.game.player.trace_level = max(0, self.game.player.trace_level - 30)
@@ -303,7 +487,15 @@ class ExploitSystem:
         return True
     
     def _execute_antivirus(self) -> bool:
-        """Execute antivirus exploit - purges negative status effects."""
+        """
+        Execute Antivirus exploit - purge negative status effects.
+
+        Removes all negative temporary effects (virus, movement inhibition).
+        Essential for countering virus enemy attacks.
+
+        Returns:
+            True (always succeeds)
+        """
         self.game.sound_manager.play_sound("exploit_antivirus")
         
         # Check if player has any negative effects to cure
@@ -327,7 +519,19 @@ class ExploitSystem:
         return True
     
     def _execute_denial_of_service(self, target: Position, exploit_range: int) -> bool:
-        """Execute Denial of Service exploit."""
+        """
+        Execute Denial of Service exploit - targeted AoE stun.
+
+        Disables all enemies within effect_radius of target for effect_duration turns.
+        More targeted than System Crash, allowing tactical positioning.
+
+        Args:
+            target: Center of AoE
+            exploit_range: Maximum range to place AoE center
+
+        Returns:
+            True (always succeeds)
+        """
         self.game.sound_manager.play_sound("exploit_denial_of_service")
         # Denial of Service uses configured effect_radius at the target location
         exploit = GameData.EXPLOITS['denial_of_service']
@@ -336,7 +540,19 @@ class ExploitSystem:
         return True
     
     def _execute_memory_leak(self, target: Position) -> bool:
-        """Execute memory leak exploit - makes enemies forget they saw the player."""
+        """
+        Execute Memory Leak exploit - make enemies forget player.
+
+        Resets all enemies within effect_radius to UNAWARE state and clears
+        their last_seen_player position. They forget they ever saw the player.
+        Useful for escaping pursuit.
+
+        Args:
+            target: Center of AoE
+
+        Returns:
+            True (always succeeds)
+        """
         self.game.sound_manager.play_sound("exploit_memory_leak")
         exploit = GameData.EXPLOITS['memory_leak']
         count = 0
@@ -352,7 +568,16 @@ class ExploitSystem:
         return True
     
     def _execute_network_scan(self) -> bool:
-        """Execute network scan exploit - reveals all special nodes on the level."""
+        """
+        Execute Network Scan exploit - reveal all special nodes on the level.
+
+        Reveals and adds to explored tiles all cooling nodes, CPU recovery nodes,
+        and ghost nodes (3x3 area around each). Provides strategic visibility
+        for resource planning without revealing the entire map.
+
+        Returns:
+            True (always succeeds)
+        """
         self.game.sound_manager.play_sound("exploit_network_scan")
 
         # Add all special nodes to revealed dict

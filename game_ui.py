@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-UI utilities and functions.
+Rogue Signal Protocol - UI Utilities
+
+Core UI utility functions and helper classes.
+Provides safe console rendering, window management, and universal input handling.
 Extracted from RogueSignalProtocol.py for better organization.
 """
 
@@ -13,7 +16,23 @@ from game_entities import Colors
 
 
 def render_char_safe(console, x, y, char, fg=None, bg=None):
-    """Render character with TCOD native validation - consolidated function."""
+    """
+    Render character to console with color validation and error handling.
+
+    Validates color tuples, converts to RGB format, and uses TCOD print.
+    Raises ValueError on invalid colors (strings, out-of-range values).
+
+    Args:
+        console: TCOD console to render to
+        x: X coordinate
+        y: Y coordinate
+        char: Character or string to render
+        fg: Foreground color as RGB tuple (optional)
+        bg: Background color as RGB tuple (optional)
+
+    Raises:
+        ValueError: If color format is invalid
+    """
     def validate_color(color):
         """Validate and convert color to RGB tuple."""
         if color is None:
@@ -43,15 +62,33 @@ def render_char_safe(console, x, y, char, fg=None, bg=None):
 
 
 class WindowManager:
-    """Manages dynamic window sizing and pixel dimension calculations."""
-    
+    """
+    Manages dynamic window sizing and pixel dimension calculations.
+
+    Provides cached window dimensions to avoid excessive SDL calls.
+    Calculates background image rectangles with aspect ratio preservation.
+    Constrains backgrounds to left 60% of window for menu separation.
+
+    Key attributes:
+        context: TCOD context with SDL window access
+        _cached_dimensions: Cached window size (refreshed every 0.1s)
+    """
+
     def __init__(self, context):
         self.context = context
         self._cached_dimensions = None
         self._last_check_time = 0
         
     def get_window_pixel_dimensions(self):
-        """Get current window pixel dimensions with caching."""
+        """
+        Get current window pixel dimensions with caching.
+
+        Caches dimensions for 0.1 seconds to avoid excessive SDL calls.
+        Falls back to conservative estimate if window unavailable.
+
+        Returns:
+            Tuple of (width, height) in pixels
+        """
         # Cache dimensions for 0.1 seconds to avoid excessive SDL calls
         current_time = time.time()
         if (self._cached_dimensions is None or 
@@ -70,7 +107,18 @@ class WindowManager:
         return self._cached_dimensions
     
     def calculate_background_rect(self, image_size):
-        """Calculate rectangle for background image constrained to left portion only."""
+        """
+        Calculate rectangle for background image constrained to left 60% of window.
+
+        Maintains aspect ratio while fitting background in left portion only.
+        This creates separation between background graphics and right-side menus.
+
+        Args:
+            image_size: Tuple of (image_width, image_height) in pixels
+
+        Returns:
+            Tuple of (x, y, width, height) for SDL destination rectangle
+        """
         window_width, window_height = self.get_window_pixel_dimensions()
         img_width, img_height = image_size
         
@@ -92,8 +140,19 @@ class WindowManager:
 
 
 class UniversalInputHandler:
-    """Universal input handler for all menu and UI screens."""
-    
+    """
+    Universal input handler for all menu and UI screens.
+
+    Provides reusable input handling methods for common UI patterns:
+    - List navigation (up/down with optional wrap-around)
+    - Dialog navigation (toggle between options)
+    - Value adjustment (left/right for settings)
+    - Key checking (confirm, escape, any key)
+
+    Defines common key sets as class constants for consistency.
+    All methods are static as this is a pure utility class.
+    """
+
     # Define common key sets
     NAVIGATION_UP = (tcod.event.KeySym.UP, tcod.event.KeySym.W, tcod.event.KeySym.KP_8)
     NAVIGATION_DOWN = (tcod.event.KeySym.DOWN, tcod.event.KeySym.S, tcod.event.KeySym.KP_2)

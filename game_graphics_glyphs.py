@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 """
-Graphics Glyph Manager
+Rogue Signal Protocol - Graphics Glyph Manager
+
 Manages rendering of console glyphs as SDL textures for graphics mode.
-This is a temporary hacky solution to overlay text glyphs on sprites until proper sprite assets are created.
+Converts TCOD tileset characters into colored SDL textures with alpha transparency.
+Caches textures by (codepoint, color) for performance.
+
+This is a transitional solution to overlay text glyphs on sprites until
+proper sprite assets are created for all game elements.
 """
 
 import tcod
@@ -134,6 +139,10 @@ class GlyphManager:
         self.renderer.copy(texture, dest=dest_rect)
 
     def cleanup(self):
-        """Clean up cached textures."""
+        """
+        Clean up cached glyph textures to free SDL resources.
+
+        Should be called when switching modes or shutting down.
+        """
         self.glyph_cache.clear()
         logging.info("GlyphManager cache cleared")

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-Rogue Signal Protocol - Game Engine (Refactored)
-Main game orchestrator with proper separation of concerns.
-Focused on dependency injection and component coordination.
+Rogue Signal Protocol - Game Engine
+
+Main game orchestrator that coordinates all game systems through dependency injection.
+Manages player state, enemy behavior, combat, inventory, and turn processing.
+Delegates specialized tasks to coordinator classes for better modularity.
 """
 
 import logging
@@ -37,7 +39,12 @@ from game_dialogue_system import DialogueState
 class GameEngine:
     """
     Main game orchestrator that coordinates all game systems.
-    Refactored for better separation of concerns and modularity.
+
+    Uses dependency injection to allow flexible component configuration.
+    Delegates specialized operations to coordinator classes:
+    - GameStatePersistence: Save/load operations
+    - GameLevelCoordinator: Level generation and progression
+    - GameTurnManager: Turn processing and enemy updates
     """
 
     def __init__(self,
@@ -205,29 +212,30 @@ class GameEngine:
         """Get enemy at position - for backward compatibility."""
         return self.enemy_manager.get_enemy_at_position(position)
 
-    # Backward compatibility methods for tests (simplified)
+    # Backward compatibility methods for tests
+    # These methods delegate to the appropriate coordinator/manager classes
     def _process_player_turn(self):
-        """Process player turn."""
+        """Process player turn by updating temporary effects and incrementing turn counter."""
         self.turn_processor.process_turn(self.player)
 
     def _process_enemies_turn(self):
-        """Process enemies turn."""
+        """Process all enemy turns (movement, attacks, AI decisions)."""
         self.turn_manager._process_enemies_turn()
 
     def _process_special_tiles(self):
-        """Process special tiles."""
+        """Process special tile effects (cooling nodes, CPU recovery, etc.)."""
         self.turn_manager._process_special_tiles()
 
     def _update_enemies(self):
-        """Update enemies."""
+        """Update enemy AI, movement, and pathfinding."""
         self.turn_manager._update_enemies()
 
     def _generate_procedural_level(self):
-        """Generate procedural level."""
+        """Generate a new procedural level with rooms, enemies, and items."""
         self.level_coordinator.generate_procedural_level()
 
     def _update_enemy_awareness(self):
-        """Update enemy awareness."""
+        """Update enemy awareness states based on FOV and player visibility."""
         self.turn_manager._update_enemy_awareness()
 
     def auto_save(self) -> None:
@@ -240,7 +248,13 @@ class GameEngine:
                 logging.warning("Auto-save failed")
 
     def _randomize_code_hacks(self):
-        """Randomize code effects for this game session."""
+        """
+        Randomize code hack effects for this game session.
+
+        Each game session randomly assigns effects to color-coded hacks,
+        requiring players to discover what each color does through experimentation.
+        This creates variety and prevents players from memorizing optimal strategies.
+        """
         # Clear discovered effects when starting new game
         self.discovered_code_effects.clear()
 
@@ -263,7 +277,21 @@ class GameEngine:
         self.turn_manager.process_turn()
 
     def move_player(self, dx: int, dy: int):
-        """Move player and process the resulting turn."""
+        """
+        Move player by delta coordinates and process the resulting turn.
+
+        Handles:
+        - Cursor movement in targeting mode
+        - Bump attacks on enemies
+        - Movement validation and wall blocking
+        - Gateway detection for level progression
+        - Overheating damage calculation
+        - Speed boost mechanics (extra moves per turn)
+
+        Args:
+            dx: Change in x coordinate (-1, 0, or 1)
+            dy: Change in y coordinate (-1, 0, or 1)
+        """
         if self.targeting_mode:
             self._move_cursor(dx, dy)
             return
@@ -316,7 +344,13 @@ class GameEngine:
                 self.message_log.add_message("Wall blocks movement")
 
     def maybe_process_turn(self):
-        """Process turn only if speed boost doesn't allow another action."""
+        """
+        Process turn only if speed boost doesn't grant another free action.
+
+        Speed boost allows multiple moves per turn by granting speed_moves_remaining.
+        Only processes a full turn (enemy moves, effects, etc.) when no speed moves remain.
+        Movement inhibition causes enemies to get double moves (2 enemy turns per 1 player action).
+        """
         # Consume speed move if applicable
         if self.player.speed_moves_remaining > 0:
             self.player.speed_moves_remaining -= 1
@@ -334,7 +368,20 @@ class GameEngine:
             self.turn_manager._update_enemies()
 
     def _perform_bump_attack(self, target_enemy: Enemy):
-        """Perform a bump attack on an enemy."""
+        """
+        Perform a melee bump attack on an adjacent enemy.
+
+        Damage calculation:
+        - Base damage: 30 (balanced for enemy HP pools)
+        - Stealth bonus: +10 if attacking from shadows or while invisible
+        - Speed bonus: +5 if speed boost is active
+
+        Effects:
+        - Generates 8 heat (reduced by 30% if exploit efficiency active)
+        - Restores CPU on enemy elimination
+        - Makes damaged enemies hostile and aware of player position
+        - Preserves patrol state for PATROL enemies before hostility
+        """
         # Calculate base damage - rebalanced for new enemy HP values
         base_damage = 30  # Increased from 25 to match average enemy damage
 
@@ -390,8 +437,18 @@ class GameEngine:
 
     def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
         """
-        Get predicted next positions for an enemy from their actual movement queue.
-        This shows the player what the enemy is actually planning to do.
+        Get predicted next positions for an enemy from their movement queue.
+
+        Returns up to 'steps' positions from the enemy's actual FIFO movement queue.
+        This shows the player what the enemy is planning to do next, enabling
+        tactical positioning and threat assessment. Disabled enemies return empty list.
+
+        Args:
+            enemy: The enemy to query
+            steps: Maximum number of future positions to return (default 3)
+
+        Returns:
+            List of Position objects representing planned moves (empty if disabled)
         """
         if enemy.disabled_turns > 0:
             return []
@@ -404,7 +461,22 @@ class GameEngine:
         self.level_coordinator.progress_to_next_level()
 
     def get_game_state_for_save(self) -> dict:
-        """Get the current game state as a dictionary for saving."""
+        """
+        Get the current game state as a dictionary for saving.
+
+        Serializes all necessary game state including:
+        - Player stats, position, inventory, and temporary effects
+        - Enemy positions, states, and AI data
+        - Map items and special locations (gateway, nodes, pickups)
+        - Code hack effects and discovered effects for this session
+        - UI state for better user experience on load
+
+        Map layout is NOT saved - regenerated using the same dungeon_seed.
+        This reduces save file size while maintaining deterministic level generation.
+
+        Returns:
+            Dictionary containing all serialized game state
+        """
         import time
         from game_save import SaveGameManager
         from game_characters import Enemy

@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-Game data definitions and static data.
-Extracted from RogueSignalProtocol.py for better organization.
+Rogue Signal Protocol - Game Data Definitions
+
+Static game data and definitions loaded from JSON configuration.
+Provides GameData class with enemy types, exploits, upgrades, and code hacks.
+Uses DataLoader for configuration loading with no hardcoded fallbacks.
+GameUpgrades class handles upgrade discovery and management.
 """
 
 from dataclasses import dataclass

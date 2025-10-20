@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Base Menu Class
-Shared functionality for all menu screens to eliminate duplication.
+Rogue Signal Protocol - Base Menu Class
+
+Shared base class for all menu screens to eliminate duplication.
+Provides common background detection, layout calculation, and rendering helpers.
+Subclasses implement render() and handle_input() for specific menu behavior.
 """
 
 import tcod

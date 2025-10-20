@@ -1,15 +1,18 @@
 #!/usr/bin/env python3
 """
-Unified Dialogue System
+Rogue Signal Protocol - Unified Dialogue System
 
-A complete rewrite of the dialogue system with:
-- Single renderer for ALL dialogues (no duplication)
-- Reusable coordinate helpers (fixes [y,x] indexing bugs)
-- Data-driven dialogues (DialogueBox dataclass)
-- Clean state management (DialogueState with priority queue)
-- All input handling stays in game_input.py
+Complete dialogue system for all in-game prompts and confirmations.
+Uses data-driven design with DialogueBox dataclass and priority queue management.
+Provides single unified renderer using CoordinateHelpers for correct transparency handling.
 
-This system replaces game_dialogue.py and game_dialogue_renderer.py.
+Key components:
+- DialogueBox: Pure data structure for all dialogues
+- DialogueState: Priority queue manager for dialogue flow
+- UnifiedRenderer: Single static renderer for all dialogue types
+- DialogueInputHandler: Processes dialogue responses (used by game_input.py)
+
+This system replaces the old game_dialogue.py and game_dialogue_renderer.py.
 """
 
 import logging

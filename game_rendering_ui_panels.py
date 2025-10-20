@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Game Rendering UI - Panels
-Renders inspection panels and other overlay panels.
+Rogue Signal Protocol - Panel Renderer
+
+Renders overlay panels for inspection and other contextual information.
+Handles text wrapping and proper positioning within the log area.
+Inspection panel appears when in look mode, displaying entity details.
 """
 
 import tcod
@@ -11,10 +14,29 @@ from game_ui import render_char_safe
 
 
 class PanelRenderer:
-    """Renders inspection and info panels."""
+    """
+    Renders overlay panels for contextual information.
+
+    Currently handles inspection panel (look mode) which displays:
+    - Entity name with color coding
+    - Entity description
+    - Detailed stats and status information
+
+    Panel renders in the log area (right side of screen) when active.
+    """
 
     def render_inspection_panel(self, console: tcod.console.Console, game):
-        """Render the inspection panel when in look mode."""
+        """
+        Render the inspection panel when in look mode.
+
+        Shows entity information at cursor position using EntityInspector.
+        Renders in log area with proper text wrapping and vertical layout.
+        Returns early if not in look mode.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with look_mode and look_cursor_position
+        """
         if not game.look_mode:
             return
 
@@ -72,7 +94,19 @@ class PanelRenderer:
             render_char_safe(console, panel_x, panel_y, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.YELLOW, bg=Colors.LOG_BG)
 
     def _wrap_text(self, text: str, max_width: int) -> list:
-        """Wrap text to fit within max_width."""
+        """
+        Wrap text to fit within max_width using word boundaries.
+
+        Uses word-based wrapping to maintain readability.
+        Handles single-line text and multi-line wrapping.
+
+        Args:
+            text: Text to wrap
+            max_width: Maximum characters per line
+
+        Returns:
+            List of wrapped text lines
+        """
         if len(text) <= max_width:
             return [text]
 
