@@ -39,6 +39,9 @@ class GameMap:
         # Memory system for hybrid fog of war
         self.explored_tiles: Set[Tuple[int, int]] = set()
         self.last_known_enemy_positions: Dict[int, Tuple[Position, int]] = {}  # enemy_id -> (position, turn_seen)
+
+        # PHASE 5: Loot room clustering
+        self.loot_room_positions: Set[Tuple[int, int]] = set()  # Floor positions in loot rooms
     
     def is_wall(self, position: Position) -> bool:
         """Check if position contains a wall."""

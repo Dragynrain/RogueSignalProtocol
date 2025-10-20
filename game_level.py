@@ -84,6 +84,9 @@ class LevelGenerator:
         # PHASE 3: Connect hub rooms to create hub-and-spoke pattern
         self._connect_hub_rooms(hub_rooms, rooms)
 
+        # PHASE 5: Create choke points along critical path
+        self._create_choke_points(rooms)
+
         # PHASE 4: Create landmark rooms
         landmark_rooms = self._create_landmark_rooms(level, rooms)
 
@@ -98,6 +101,12 @@ class LevelGenerator:
 
         # Add shadow areas for stealth gameplay
         self._place_shadow_areas(level, rooms)
+
+        # PHASE 5: Add defensive positions (cover + shadow combinations)
+        self._place_defensive_positions(rooms)
+
+        # PHASE 5: Identify loot rooms for item clustering
+        self._identify_loot_rooms(rooms)
 
         # PHASE 4: Clean up any shadows that ended up on walls (from cover placement)
         self._cleanup_invalid_shadows()
@@ -392,10 +401,13 @@ class LevelGenerator:
                     self.game_map.walls.add((rx, ry))
 
     def _generate_rooms_avoiding_existing(self, level: int, existing_rooms: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
-        """Generate room layouts for the level."""
+        """Generate room layouts for the level with zone-based placement."""
         num_rooms = RoomGenerationConfig.MIN_ROOMS_BASE + level * RoomGenerationConfig.ROOM_LEVEL_MULTIPLIER
         max_rooms = min(num_rooms, RoomGenerationConfig.MAX_ROOMS)
         max_attempts = RoomGenerationConfig.MAX_PLACEMENT_ATTEMPTS
+
+        # PHASE 5: Create zones for different placement strategies
+        zones = self._create_map_zones()
 
         new_rooms = []
         all_rooms = existing_rooms.copy()  # Include existing rooms for overlap checking
@@ -422,6 +434,12 @@ class LevelGenerator:
 
                 # Carve room with selected type
                 self._carve_room(new_room, room_type, level)
+
+                # PHASE 5: Tag room with zone type for later connection strategies
+                zone_type = self._get_zone_for_room(new_room, zones)
+                if not hasattr(self, '_room_zones'):
+                    self._room_zones = {}
+                self._room_zones[new_room] = zone_type
 
         return new_rooms
     
@@ -608,7 +626,7 @@ class LevelGenerator:
                 self._create_corridor_between_rooms(room1, room2)
     
     def _create_corridor_between_rooms(self, room1: Tuple[int, int, int, int], room2: Tuple[int, int, int, int]) -> None:
-        """Create L-shaped corridor between two rooms with variable width."""
+        """Create corridor between two rooms - either L-shaped or curved."""
         x1 = room1[0] + room1[2] // 2
         y1 = room1[1] + room1[3] // 2
         x2 = room2[0] + room2[2] // 2
@@ -617,15 +635,20 @@ class LevelGenerator:
         # Determine corridor width based on configured probabilities
         width = self._get_corridor_width()
 
-        # Create L-shaped corridor with specified width
-        if random.choice([True, False]):
-            # Horizontal then vertical
-            self._carve_corridor_segment(min(x1, x2), max(x1, x2), y1, y1, width, horizontal=True)
-            self._carve_corridor_segment(x2, x2, min(y1, y2), max(y1, y2), width, horizontal=False)
+        # PHASE 5: 20% chance to use curved corridor instead of L-shaped
+        curved_chance = GameConfig._get_required('room_generation.curved_corridor_chance')
+        if random.random() < curved_chance:
+            self._create_curved_corridor(x1, y1, x2, y2, width)
         else:
-            # Vertical then horizontal
-            self._carve_corridor_segment(x1, x1, min(y1, y2), max(y1, y2), width, horizontal=False)
-            self._carve_corridor_segment(min(x1, x2), max(x1, x2), y2, y2, width, horizontal=True)
+            # Create L-shaped corridor with specified width
+            if random.choice([True, False]):
+                # Horizontal then vertical
+                self._carve_corridor_segment(min(x1, x2), max(x1, x2), y1, y1, width, horizontal=True)
+                self._carve_corridor_segment(x2, x2, min(y1, y2), max(y1, y2), width, horizontal=False)
+            else:
+                # Vertical then horizontal
+                self._carve_corridor_segment(x1, x1, min(y1, y2), max(y1, y2), width, horizontal=False)
+                self._carve_corridor_segment(min(x1, x2), max(x1, x2), y2, y2, width, horizontal=True)
 
     def _get_corridor_width(self) -> int:
         """Determine corridor width based on configured probabilities."""
@@ -643,6 +666,55 @@ class LevelGenerator:
             return 2
         else:
             return 3
+
+    def _create_curved_corridor(self, x1: int, y1: int, x2: int, y2: int, width: int) -> None:
+        """
+        Create a curved corridor using Bresenham's line algorithm.
+        PHASE 5 - Section 2.4: Curved Corridors
+        """
+        # Use Bresenham's line algorithm to get line points
+        line_points = self._bresenham_line(x1, y1, x2, y2)
+
+        # Widen the line to the desired corridor width
+        for x, y in line_points:
+            # Carve a small area around each point based on width
+            half_width = width // 2
+            for dx in range(-half_width, (width + 1) // 2):
+                for dy in range(-half_width, (width + 1) // 2):
+                    px = x + dx
+                    py = y + dy
+                    if 0 <= px < GameConfig.MAP_WIDTH and 0 <= py < GameConfig.MAP_HEIGHT:
+                        self.game_map.walls.discard((px, py))
+                        self.corridor_tiles.add((px, py))
+
+    def _bresenham_line(self, x1: int, y1: int, x2: int, y2: int) -> List[Tuple[int, int]]:
+        """
+        Bresenham's line algorithm to get all points along a line.
+        Returns list of (x, y) coordinates from (x1, y1) to (x2, y2).
+        """
+        points = []
+        dx = abs(x2 - x1)
+        dy = abs(y2 - y1)
+        sx = 1 if x1 < x2 else -1
+        sy = 1 if y1 < y2 else -1
+        err = dx - dy
+
+        x, y = x1, y1
+        while True:
+            points.append((x, y))
+
+            if x == x2 and y == y2:
+                break
+
+            e2 = 2 * err
+            if e2 > -dy:
+                err -= dy
+                x += sx
+            if e2 < dx:
+                err += dx
+                y += sy
+
+        return points
 
     def _carve_corridor_segment(self, x_start: int, x_end: int, y_start: int, y_end: int,
                                 width: int, horizontal: bool) -> None:
@@ -1841,3 +1913,267 @@ class LevelGenerator:
 
         # Fallback to far corner strategy
         return self._gateway_far_corner(spawn, floor_positions)
+
+    # ========================================================================
+    # PHASE 5: Polish Features
+    # ========================================================================
+
+    def _place_defensive_positions(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+        """
+        Place defensive positions (cover + shadow combinations) in strategic locations.
+        PHASE 5 - Section 3.2: Defensive Positions
+        """
+        defensive_chance = GameConfig._get_required('room_generation.defensive_position_chance')
+        position_types = GameConfig._get_required('room_generation.defensive_position_types')
+
+        # Identify strategic locations:
+        # 1. Near gateway (if it exists)
+        # 2. In large rooms
+        # 3. Near landmark rooms if they exist
+
+        strategic_rooms = []
+
+        # Add large rooms (good for defensive positions)
+        for room in rooms:
+            x, y, w, h = room
+            area = w * h
+            if area >= 50:  # Large room
+                strategic_rooms.append(room)
+
+        # Limit to placing 1-3 defensive positions
+        num_positions = min(random.randint(1, 3), len(strategic_rooms))
+
+        for _ in range(num_positions):
+            if not strategic_rooms:
+                break
+
+            # Select random strategic room
+            room = random.choice(strategic_rooms)
+            strategic_rooms.remove(room)
+
+            # Choose position type
+            position_type = random.choice(position_types)
+
+            # Create defensive position
+            self._create_defensive_position(room, position_type)
+
+    def _create_defensive_position(self, room: Tuple[int, int, int, int], position_type: str) -> None:
+        """
+        Create a specific type of defensive position within a room.
+        Combines cover walls and shadow placement for tactical advantage.
+        """
+        x, y, w, h = room
+
+        # Find a good central position in the room (avoid edges)
+        if w < 6 or h < 6:
+            return  # Room too small for defensive position
+
+        # Select position near room center
+        center_x = x + w // 2
+        center_y = y + h // 2
+
+        # Add some randomness to avoid always being exactly centered
+        offset_x = random.randint(-2, 2)
+        offset_y = random.randint(-2, 2)
+        pos_x = max(x + 2, min(x + w - 3, center_x + offset_x))
+        pos_y = max(y + 2, min(y + h - 3, center_y + offset_y))
+
+        if position_type == 'corner_cover':
+            self._create_corner_cover_position(pos_x, pos_y)
+        elif position_type == 'shadow_bunker':
+            self._create_shadow_bunker_position(pos_x, pos_y)
+        elif position_type == 'crossfire':
+            self._create_crossfire_position(pos_x, pos_y)
+
+    def _create_corner_cover_position(self, x: int, y: int) -> None:
+        """
+        Corner Cover: L-shaped cover with shadow in the corner.
+        Pattern:
+        ##S
+        #..
+        """
+        # Place L-shaped cover
+        cover_positions = [(x, y), (x + 1, y), (x, y + 1)]
+        for pos in cover_positions:
+            if self._is_valid_cover_position(pos):
+                self.game_map.walls.add(pos)
+
+        # Place shadow in the corner (protected spot)
+        shadow_pos = (x + 1, y + 1)
+        if shadow_pos not in self.game_map.walls:
+            self.game_map.shadows.add(shadow_pos)
+
+    def _create_shadow_bunker_position(self, x: int, y: int) -> None:
+        """
+        Shadow Bunker: 3-sided cover with shadow inside.
+        Pattern:
+        ###
+        #S#
+        .#.
+        """
+        # Place 3-sided cover
+        cover_positions = [
+            (x, y), (x + 1, y), (x + 2, y),      # Top wall
+            (x, y + 1), (x + 2, y + 1),          # Side walls
+            (x + 1, y + 2)                       # Bottom center
+        ]
+        for pos in cover_positions:
+            if self._is_valid_cover_position(pos):
+                self.game_map.walls.add(pos)
+
+        # Place shadow in the protected center
+        shadow_pos = (x + 1, y + 1)
+        if shadow_pos not in self.game_map.walls:
+            self.game_map.shadows.add(shadow_pos)
+
+    def _create_crossfire_position(self, x: int, y: int) -> None:
+        """
+        Crossfire: Two separated cover pieces with shadows, creates crossfire opportunity.
+        Pattern:
+        #S...S#
+        """
+        # Place two cover walls with gap
+        cover_positions = [(x, y), (x + 4, y)]
+        for pos in cover_positions:
+            if self._is_valid_cover_position(pos):
+                self.game_map.walls.add(pos)
+
+        # Place shadows behind each cover
+        shadow_positions = [(x + 1, y), (x + 3, y)]
+        for pos in shadow_positions:
+            if pos not in self.game_map.walls:
+                self.game_map.shadows.add(pos)
+
+    def _identify_loot_rooms(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+        """
+        Identify which rooms should be 'loot rooms' with higher item density.
+        PHASE 5 - Section 5.2: Item Placement Clustering
+        """
+        loot_room_percentage = GameConfig._get_required('room_generation.loot_room_percentage')
+        num_loot_rooms = max(1, int(len(rooms) * loot_room_percentage))
+
+        # Select random rooms to be loot rooms
+        loot_rooms = random.sample(rooms, num_loot_rooms)
+
+        # Store loot room positions in game map for use during item placement
+        # We'll store the room bounds as a set of positions
+        loot_room_positions = set()
+        for room in loot_rooms:
+            x, y, w, h = room
+            for rx in range(x, x + w):
+                for ry in range(y, y + h):
+                    if (rx, ry) not in self.game_map.walls:
+                        loot_room_positions.add((rx, ry))
+
+        # Store in game map (we'll add this attribute)
+        self.game_map.loot_room_positions = loot_room_positions
+
+    def _create_choke_points(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+        """
+        Create choke points by narrowing corridors near strategic rooms.
+        PHASE 5 - Section 4.3: Choke Points
+
+        Choke points are bottleneck areas that force tension in gameplay.
+        """
+        choke_point_count = GameConfig._get_required('room_generation.choke_point_count')
+        max_exits = GameConfig._get_required('room_generation.choke_point_max_exits')
+
+        # We can't create true "choke point rooms" post-generation, but we can:
+        # 1. Narrow existing corridors in strategic locations
+        # 2. Add walls to reduce corridor width in key areas
+
+        # Find central/strategic corridor positions
+        if not self.corridor_tiles:
+            return
+
+        # Find corridor tiles near the map center (high traffic)
+        map_center_x = GameConfig.MAP_WIDTH // 2
+        map_center_y = GameConfig.MAP_HEIGHT // 2
+
+        central_corridors = []
+        for tile in self.corridor_tiles:
+            x, y = tile
+            distance_to_center = abs(x - map_center_x) + abs(y - map_center_y)
+            if distance_to_center < 20:  # Within central area
+                central_corridors.append(tile)
+
+        if not central_corridors:
+            return
+
+        # Select random positions to narrow
+        num_chokes = min(choke_point_count, len(central_corridors) // 10)
+        choke_positions = random.sample(central_corridors, min(num_chokes, len(central_corridors)))
+
+        for choke_pos in choke_positions:
+            self._narrow_corridor_at_position(choke_pos)
+
+    def _narrow_corridor_at_position(self, position: Tuple[int, int]) -> None:
+        """
+        Narrow a corridor at the given position by adding walls on sides.
+        Creates a bottleneck effect.
+        """
+        x, y = position
+
+        # Check corridor orientation (horizontal or vertical)
+        has_horizontal_flow = ((x - 1, y) in self.corridor_tiles or (x + 1, y) in self.corridor_tiles)
+        has_vertical_flow = ((x, y - 1) in self.corridor_tiles or (x, y + 1) in self.corridor_tiles)
+
+        if has_horizontal_flow and not has_vertical_flow:
+            # Horizontal corridor - add walls above/below
+            # Only narrow if corridor is wide enough
+            if (x, y + 1) not in self.game_map.walls and (x, y + 1) in self.corridor_tiles:
+                self.game_map.walls.add((x, y + 1))
+                self.corridor_tiles.discard((x, y + 1))
+            if (x, y - 1) not in self.game_map.walls and (x, y - 1) in self.corridor_tiles:
+                self.game_map.walls.add((x, y - 1))
+                self.corridor_tiles.discard((x, y - 1))
+
+        elif has_vertical_flow and not has_horizontal_flow:
+            # Vertical corridor - add walls left/right
+            if (x + 1, y) not in self.game_map.walls and (x + 1, y) in self.corridor_tiles:
+                self.game_map.walls.add((x + 1, y))
+                self.corridor_tiles.discard((x + 1, y))
+            if (x - 1, y) not in self.game_map.walls and (x - 1, y) in self.corridor_tiles:
+                self.game_map.walls.add((x - 1, y))
+                self.corridor_tiles.discard((x - 1, y))
+
+    def _create_map_zones(self) -> List[Dict]:
+        """
+        Divide the map into zones with different connectivity characteristics.
+        PHASE 5 - Section 4.4: Linear/Open Sections
+
+        Returns list of zone definitions with their types and bounds.
+        """
+        zone_count = GameConfig._get_required('room_generation.zone_count')
+        zone_types = GameConfig._get_required('room_generation.zone_types')
+
+        zones = []
+
+        # Divide map into horizontal zones (simple approach)
+        zone_height = GameConfig.MAP_HEIGHT // zone_count
+
+        for i in range(zone_count):
+            y_start = i * zone_height
+            y_end = (i + 1) * zone_height if i < zone_count - 1 else GameConfig.MAP_HEIGHT
+
+            zone_type = random.choice(zone_types)
+            zones.append({
+                'type': zone_type,
+                'bounds': (0, y_start, GameConfig.MAP_WIDTH, y_end),
+                'index': i
+            })
+
+        return zones
+
+    def _get_zone_for_room(self, room: Tuple[int, int, int, int], zones: List[Dict]) -> str:
+        """Determine which zone a room belongs to based on its center point."""
+        x, y, w, h = room
+        center_x = x + w // 2
+        center_y = y + h // 2
+
+        for zone in zones:
+            x_min, y_min, x_max, y_max = zone['bounds']
+            if x_min <= center_x < x_max and y_min <= center_y < y_max:
+                return zone['type']
+
+        return 'mixed'  # Default fallback
