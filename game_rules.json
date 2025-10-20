@@ -112,7 +112,7 @@
     "curved_corridor_chance": 0.10,
     "defensive_position_chance": 0.15,
     "defensive_position_types": ["corner_cover", "shadow_bunker", "crossfire"],
-    "loot_room_percentage": 0.20,
+    "loot_room_percentage": 0.15,
     "loot_room_multiplier": 2.5,
     "choke_point_count": 2,
     "choke_point_max_exits": 2,
