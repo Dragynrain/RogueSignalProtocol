@@ -252,7 +252,7 @@ class GraphicsPreviewMenu:
                 self.selected_variants[item_type] = default_variant if default_variant in self.variants[item_type] else self.variants[item_type][0]
 
         # Special
-        special_order = ["portal", "storyfragment", "movementprediction", "targeting"]
+        special_order = ["gateway", "storyfragment", "movementprediction", "targeting"]
         for special_type in special_order:
             if special_type in entity_groups:
                 display_name = get_display_name(special_type)
@@ -419,7 +419,7 @@ class GraphicsPreviewMenu:
             (2, 14), (4, 14), (6, 14)  # Second row
         ]
         item_types = ["coolingnode", "coolingupgrade", "cpunode", "cpuupgrade",
-                     "ramupgrade", "portal"]
+                     "ramupgrade", "gateway"]
         for i, item_type in enumerate(item_types):
             if item_type in self.selected_variants and i < len(item_positions):
                 ix, iy = item_positions[i]

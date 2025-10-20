@@ -1,0 +1,59 @@
+D:\Projects\RogueSignalProtocol\.venv\Lib\site-packages\pygame\pkgdata.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  from pkg_resources import resource_stream, resource_exists
+Starting FULL level generation analysis with coordinator...
+Testing 400 iterations total (100 per gateway strategy)...
+This includes: gateway placement, code hacks, exploit pickups, AND enemies
+(This will take 1-2 minutes)
+
+Testing Far Corner... Done!
+Testing Central Hub... Done!
+Testing Hidden Dead End... Done!
+Testing Gauntlet... Done!
+
+========================================================================================================================
+FULL LEVEL GENERATION ANALYSIS - 400 ITERATIONS TOTAL (100 PER STRATEGY)
+========================================================================================================================
+
+GATEWAY PLACEMENT:
+------------------------------------------------------------------------------------------------------------------------
+Strategy             | Warnings        | Min Dist     | Avg Dist     | Max Dist    
+                     | (count/%)       | (tiles)      | (tiles)      | (tiles)     
+------------------------------------------------------------------------------------------------------------------------
+Far Corner           | 0 (0%)          | 30.2         | 40.5         | 58.0        
+Central Hub          | 0 (0%)          | 20.5         | 29.9         | 38.6        
+Hidden Dead End      | 0 (0%)          | 26.9         | 39.0         | 58.7        
+Gauntlet             | 0 (0%)          | 25.0         | 44.8         | 58.0        
+
+CODE HACKS PLACED:
+------------------------------------------------------------------------------------------------------------------------
+Strategy             | Min          | Max          | Average      | Iterations  
+------------------------------------------------------------------------------------------------------------------------
+Far Corner           | 16           | 16           | 16.0         | 100         
+Central Hub          | 16           | 16           | 16.0         | 100         
+Hidden Dead End      | 16           | 16           | 16.0         | 100         
+Gauntlet             | 16           | 16           | 16.0         | 100         
+
+EXPLOIT PICKUPS PLACED:
+------------------------------------------------------------------------------------------------------------------------
+Strategy             | Min          | Max          | Average      | Iterations  
+------------------------------------------------------------------------------------------------------------------------
+Far Corner           | 7            | 7            | 7.0          | 100         
+Central Hub          | 7            | 7            | 7.0          | 100         
+Hidden Dead End      | 7            | 7            | 7.0          | 100         
+Gauntlet             | 7            | 7            | 7.0          | 100         
+
+ENEMIES PLACED:
+------------------------------------------------------------------------------------------------------------------------
+Strategy             | Min          | Max          | Average      | Iterations  
+------------------------------------------------------------------------------------------------------------------------
+Far Corner           | 24           | 24           | 24.0         | 100         
+Central Hub          | 24           | 24           | 24.0         | 100         
+Hidden Dead End      | 24           | 24           | 24.0         | 100         
+Gauntlet             | 24           | 24           | 24.0         | 100         
+
+WARNING MESSAGES (if any):
+------------------------------------------------------------------------------------------------------------------------
+  (No warnings - all strategies met minimum distance requirements!)
+
+========================================================================================================================
+
