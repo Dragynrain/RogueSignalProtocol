@@ -34,7 +34,8 @@ class LevelGenerator:
         self._generate_procedural_level(level)
         
         # Place special tiles and items
-        self._place_special_tiles(level)
+        # PHASE 4: Pass landmark rooms for objective-oriented placement
+        self._place_special_tiles(level, landmark_rooms=getattr(self, '_landmark_rooms', []))
         # PHASE 3: Use strategic gateway placement
         self._place_gateway_strategic(level)
         
@@ -83,15 +84,24 @@ class LevelGenerator:
         # PHASE 3: Connect hub rooms to create hub-and-spoke pattern
         self._connect_hub_rooms(hub_rooms, rooms)
 
+        # PHASE 4: Create landmark rooms
+        landmark_rooms = self._create_landmark_rooms(level, rooms)
+
         # Add alcoves to corridors for stealth hiding spots
         self._add_corridor_alcoves()
 
+        # PHASE 4: Create T-junctions and 4-way intersections
+        self._create_corridor_intersections()
+
         # Add strategic cover elements in open areas
         self._add_cover_elements_new()
-        
+
         # Add shadow areas for stealth gameplay
         self._place_shadow_areas(level, rooms)
-        
+
+        # PHASE 4: Clean up any shadows that ended up on walls (from cover placement)
+        self._cleanup_invalid_shadows()
+
         # Ensure border walls are intact
         self._ensure_border_walls_new()
         
@@ -920,6 +930,19 @@ class LevelGenerator:
 
         return True
     
+    def _cleanup_invalid_shadows(self) -> None:
+        """
+        Remove any shadows that ended up on walls (can happen when cover is placed after shadows).
+        PHASE 4: Ensures shadows never overlap with walls.
+        """
+        invalid_shadows = []
+        for shadow_pos in self.game_map.shadows:
+            if shadow_pos in self.game_map.walls:
+                invalid_shadows.append(shadow_pos)
+
+        for shadow_pos in invalid_shadows:
+            self.game_map.shadows.remove(shadow_pos)
+
     def _ensure_border_walls_new(self) -> None:
         """Ensure map has solid border walls."""
         # Top and bottom walls
@@ -932,8 +955,14 @@ class LevelGenerator:
             self.game_map.walls.add((0, y))
             self.game_map.walls.add((GameConfig.MAP_WIDTH - 1, y))
     
-    def _place_special_tiles(self, level: int) -> None:
-        """Place cooling nodes, CPU recovery nodes, and other special tiles - NO FALLBACKS."""
+    def _place_special_tiles(self, level: int, landmark_rooms: List[Dict] = None) -> None:
+        """
+        Place cooling nodes, CPU recovery nodes, and other special tiles.
+        PHASE 4: Uses objective-oriented placement strategies.
+        """
+        if landmark_rooms is None:
+            landmark_rooms = []
+
         floor_positions = self._get_all_floor_positions()
 
         if not floor_positions:
@@ -959,39 +988,139 @@ class LevelGenerator:
                 raise KeyError(f"Required key '{key}' missing from level {level} config")
             return config[key]
 
-        # Place cooling nodes
+        # PHASE 4: Objective-oriented placement
+
+        # Place cooling nodes in high-traffic areas (central corridors)
         cooling_count = get_required_config('cooling_nodes')
+        cooling_positions = self._get_high_traffic_positions(floor_positions)
         for i in range(cooling_count):
-            if floor_positions:
+            if cooling_positions:
+                pos = random.choice(cooling_positions)
+                cooling_positions.remove(pos)
+                floor_positions.remove(pos)
+                self.game_map.cooling_nodes.add(pos)
+            elif floor_positions:
+                # Fallback to random if no high-traffic positions
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.cooling_nodes.add(pos)
-                if level == 3:
-                    logging.info(f"Placed cooling node {i+1}/{cooling_count} at {pos}")
 
-        # Place CPU recovery nodes
+        # Place CPU recovery nodes in safer peripheral rooms
         cpu_count = get_required_config('cpu_nodes')
+        cpu_positions = self._get_peripheral_positions(floor_positions)
         for i in range(cpu_count):
-            if floor_positions:
+            if cpu_positions:
+                pos = random.choice(cpu_positions)
+                cpu_positions.remove(pos)
+                floor_positions.remove(pos)
+                self.game_map.cpu_recovery_nodes.add(pos)
+            elif floor_positions:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.cpu_recovery_nodes.add(pos)
-                if level == 3:
-                    logging.info(f"Placed CPU node {i+1}/{cpu_count} at {pos}")
 
-        # Place ghost nodes (trace level reduction)
+        # Place ghost nodes along stealth paths (shadow zones)
         ghost_count = get_required_config('ghost_nodes')
+        ghost_positions = self._get_shadow_adjacent_positions(floor_positions)
         for i in range(ghost_count):
-            if floor_positions:
+            if ghost_positions:
+                pos = random.choice(ghost_positions)
+                ghost_positions.remove(pos)
+                floor_positions.remove(pos)
+                self.game_map.ghost_nodes.add(pos)
+            elif floor_positions:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.ghost_nodes.add(pos)
-                if level == 3:
-                    logging.info(f"Placed ghost node {i+1}/{ghost_count} at {pos}")
-                    
-        if level == 3:
-            logging.info(f"Level 3 special nodes placed - Cooling: {len(self.game_map.cooling_nodes)}, CPU: {len(self.game_map.cpu_recovery_nodes)}, Ghost: {len(self.game_map.ghost_nodes)}")
     
+    # ========================================================================
+    # PHASE 4: Objective-Oriented Placement Helpers
+    # ========================================================================
+
+    def _get_high_traffic_positions(self, floor_positions: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        Get positions in high-traffic areas (central corridors, hub rooms).
+        PHASE 4 - Section 5.3: Objective-Oriented Placement
+        """
+        map_center_x = GameConfig.MAP_WIDTH // 2
+        map_center_y = GameConfig.MAP_HEIGHT // 2
+
+        high_traffic = []
+        for pos in floor_positions:
+            x, y = pos
+
+            # Check if in central area of map
+            dist_to_center = abs(x - map_center_x) + abs(y - map_center_y)
+            if dist_to_center < 15:
+                high_traffic.append(pos)
+                continue
+
+            # Check if in a corridor (has limited floor neighbors)
+            floor_neighbors = 0
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1),
+                          (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+                neighbor = (x + dx, y + dy)
+                if neighbor not in self.game_map.walls:
+                    floor_neighbors += 1
+
+            # Corridors typically have 3-6 floor neighbors
+            if 3 <= floor_neighbors <= 6:
+                high_traffic.append(pos)
+
+        return high_traffic
+
+    def _get_peripheral_positions(self, floor_positions: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        Get positions in peripheral/safer areas (edge rooms, dead ends).
+        PHASE 4 - Section 5.3: Objective-Oriented Placement
+        """
+        peripheral = []
+
+        for pos in floor_positions:
+            x, y = pos
+
+            # Check if near map edges
+            near_edge = (x < 15 or x > GameConfig.MAP_WIDTH - 15 or
+                        y < 15 or y > GameConfig.MAP_HEIGHT - 15)
+
+            if near_edge:
+                # Also check it's in a room (not a corridor)
+                floor_neighbors = 0
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    neighbor = (x + dx, y + dy)
+                    if neighbor not in self.game_map.walls:
+                        floor_neighbors += 1
+
+                # Rooms typically have 4 floor neighbors
+                if floor_neighbors >= 3:
+                    peripheral.append(pos)
+
+        return peripheral
+
+    def _get_shadow_adjacent_positions(self, floor_positions: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+        """
+        Get positions adjacent to or within shadow areas.
+        PHASE 4 - Section 5.3: Objective-Oriented Placement
+        """
+        shadow_adjacent = []
+
+        for pos in floor_positions:
+            x, y = pos
+
+            # Check if position itself is a shadow
+            if pos in self.game_map.shadows:
+                shadow_adjacent.append(pos)
+                continue
+
+            # Check if adjacent to shadows
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                neighbor = (x + dx, y + dy)
+                if neighbor in self.game_map.shadows:
+                    shadow_adjacent.append(pos)
+                    break
+
+        return shadow_adjacent
+
     def _place_gateway(self) -> None:
         """Place the exit gateway far from spawn but with some randomness."""
         spawn_area = Position(5, 5)  # Center of spawn area
@@ -1268,6 +1397,315 @@ class LevelGenerator:
         center2_x = x2 + w2 // 2
         center2_y = y2 + h2 // 2
         return abs(center1_x - center2_x) + abs(center1_y - center2_y)
+
+    # ========================================================================
+    # PHASE 4: Landmark Rooms
+    # ========================================================================
+
+    def _create_landmark_rooms(self, level: int, rooms: List[Tuple[int, int, int, int]]) -> List[Dict]:
+        """
+        Create 1-2 distinctive landmark rooms per level.
+        PHASE 4 - Section 6.2: Landmark Rooms
+
+        Returns list of landmark room definitions with positions for special item placement.
+        """
+        # Check if landmarks are enabled
+        if not GameConfig._get_required('room_generation.enable_landmarks'):
+            self._landmark_rooms = []
+            return []
+
+        if len(rooms) < 5:
+            self._landmark_rooms = []
+            return []  # Not enough rooms for landmarks
+
+        # Select 1-2 landmark types to create
+        num_landmarks = random.randint(1, 2)
+        landmark_types = random.sample(['server_core', 'vault', 'junction', 'maze', 'arena'], num_landmarks)
+
+        landmark_rooms = []
+        for landmark_type in landmark_types:
+            landmark_data = self._create_landmark_room(landmark_type, rooms, level)
+            if landmark_data:
+                landmark_rooms.append(landmark_data)
+
+        # Store for later use in special tile placement
+        self._landmark_rooms = landmark_rooms
+        return landmark_rooms
+
+    def _create_landmark_room(self, landmark_type: str, existing_rooms: List[Tuple[int, int, int, int]],
+                             level: int) -> Optional[Dict]:
+        """
+        Create a specific landmark room type.
+        Returns dict with 'type', 'position', 'room', and other relevant data.
+        """
+        if landmark_type == 'server_core':
+            return self._create_server_core_landmark(existing_rooms, level)
+        elif landmark_type == 'vault':
+            return self._create_vault_landmark(existing_rooms)
+        elif landmark_type == 'junction':
+            return self._create_junction_landmark(existing_rooms)
+        elif landmark_type == 'maze':
+            return self._create_maze_landmark(existing_rooms)
+        elif landmark_type == 'arena':
+            return self._create_arena_landmark(existing_rooms)
+
+        return None
+
+    def _create_server_core_landmark(self, existing_rooms: List[Tuple[int, int, int, int]],
+                                     level: int) -> Optional[Dict]:
+        """
+        The Server Core: Large circular room with pillar pattern, gateway often inside.
+        """
+        # Find a good central location
+        map_center_x = GameConfig.MAP_WIDTH // 2
+        map_center_y = GameConfig.MAP_HEIGHT // 2
+
+        # Try to place near center
+        size = 10
+        x = map_center_x - size // 2
+        y = map_center_y - size // 2
+
+        room = (x, y, size, size)
+
+        # Check if it overlaps too much with existing rooms
+        if self._room_overlaps(room, existing_rooms):
+            return None
+
+        # Carve circular room
+        self._carve_circular_room(room)
+
+        # Add pillars inside
+        self._apply_pillar_pattern(room, level)
+
+        return {
+            'type': 'server_core',
+            'room': room,
+            'position': (x + size // 2, y + size // 2),  # Center position
+            'description': 'Server Core - Large circular room with server pillars'
+        }
+
+    def _create_vault_landmark(self, existing_rooms: List[Tuple[int, int, int, int]]) -> Optional[Dict]:
+        """
+        The Vault: Small room at the end of a narrow corridor with upgrade.
+        """
+        # Find an edge room
+        edge_rooms = [r for r in existing_rooms
+                     if r[0] < 15 or r[0] > GameConfig.MAP_WIDTH - 15 or
+                        r[1] < 15 or r[1] > GameConfig.MAP_HEIGHT - 15]
+
+        if not edge_rooms:
+            return None
+
+        vault_base = random.choice(edge_rooms)
+        x, y, w, h = vault_base
+
+        # Create small vault room nearby
+        vault_size = 4
+        vault_x = x + w + 5  # Offset from base room
+        vault_y = y
+
+        vault_room = (vault_x, vault_y, vault_size, vault_size)
+
+        if self._room_overlaps(vault_room, existing_rooms):
+            return None
+
+        # Carve the vault
+        self._carve_rectangular_room(vault_room)
+
+        # Create narrow corridor to vault
+        self._create_corridor_between_rooms(vault_base, vault_room)
+
+        return {
+            'type': 'vault',
+            'room': vault_room,
+            'position': (vault_x + vault_size // 2, vault_y + vault_size // 2),
+            'description': 'Vault - Small secured room with valuable items'
+        }
+
+    def _create_junction_landmark(self, existing_rooms: List[Tuple[int, int, int, int]]) -> Optional[Dict]:
+        """
+        The Junction: Massive cross-shaped room connecting 6+ other rooms.
+        """
+        # Find central location
+        map_center_x = GameConfig.MAP_WIDTH // 2
+        map_center_y = GameConfig.MAP_HEIGHT // 2
+
+        size = 12
+        x = map_center_x - size // 2
+        y = map_center_y - size // 2
+
+        room = (x, y, size, size)
+
+        if self._room_overlaps(room, existing_rooms):
+            return None
+
+        # Carve as cross-shaped
+        self._carve_cross_room(room)
+
+        # Connect to nearby rooms
+        nearby_rooms = sorted(existing_rooms,
+                            key=lambda r: abs((r[0] + r[2]//2) - map_center_x) +
+                                        abs((r[1] + r[3]//2) - map_center_y))[:6]
+
+        for nearby_room in nearby_rooms:
+            self._create_corridor_between_rooms(room, nearby_room)
+
+        return {
+            'type': 'junction',
+            'room': room,
+            'position': (x + size // 2, y + size // 2),
+            'description': 'Junction - Major cross-shaped hub connecting multiple areas'
+        }
+
+    def _create_maze_landmark(self, existing_rooms: List[Tuple[int, int, int, int]]) -> Optional[Dict]:
+        """
+        The Maze: Dense cluster of small rooms with many connections.
+        """
+        # Find a corner location
+        corner_x = random.choice([10, GameConfig.MAP_WIDTH - 20])
+        corner_y = random.choice([10, GameConfig.MAP_HEIGHT - 20])
+
+        # Create 4-6 small interconnected rooms
+        maze_rooms = []
+        for i in range(random.randint(4, 6)):
+            offset_x = (i % 3) * 5
+            offset_y = (i // 3) * 5
+            small_room = (corner_x + offset_x, corner_y + offset_y, 4, 4)
+
+            if not self._room_overlaps(small_room, existing_rooms + maze_rooms):
+                self._carve_rectangular_room(small_room)
+                maze_rooms.append(small_room)
+
+        # Connect all maze rooms to each other
+        for i, room1 in enumerate(maze_rooms):
+            for room2 in maze_rooms[i+1:]:
+                if random.random() < 0.7:  # 70% chance to connect
+                    self._create_corridor_between_rooms(room1, room2)
+
+        if not maze_rooms:
+            return None
+
+        # Return center of maze
+        center_room = maze_rooms[len(maze_rooms) // 2]
+
+        return {
+            'type': 'maze',
+            'room': center_room,
+            'position': (center_room[0] + center_room[2] // 2, center_room[1] + center_room[3] // 2),
+            'description': 'Maze - Dense cluster of interconnected small rooms'
+        }
+
+    def _create_arena_landmark(self, existing_rooms: List[Tuple[int, int, int, int]]) -> Optional[Dict]:
+        """
+        The Arena: Large open room with scattered cover, good for major fights.
+        """
+        # Find open area
+        arena_size = 14
+        x = random.randint(15, GameConfig.MAP_WIDTH - arena_size - 15)
+        y = random.randint(15, GameConfig.MAP_HEIGHT - arena_size - 15)
+
+        room = (x, y, arena_size, arena_size)
+
+        if self._room_overlaps(room, existing_rooms):
+            return None
+
+        # Carve large rectangular room
+        self._carve_rectangular_room(room)
+
+        # Add scattered cover using Poisson disc sampling
+        cover_positions = self._poisson_disc_sampling(room, 6.0)
+        for pos in cover_positions:
+            self._create_cover_cluster(pos)
+
+        return {
+            'type': 'arena',
+            'room': room,
+            'position': (x + arena_size // 2, y + arena_size // 2),
+            'description': 'Arena - Large open combat area with scattered cover'
+        }
+
+    # ========================================================================
+    # PHASE 4: T-Junctions and 4-Way Intersections
+    # ========================================================================
+
+    def _create_corridor_intersections(self) -> None:
+        """
+        Create T-junctions and 4-way intersections where corridors meet.
+        PHASE 4 - Section 2.2: T-Junction and 4-Way Intersections
+        """
+        # Get configuration values
+        intersection_chance = GameConfig._get_required('room_generation.corridor_intersection_chance')
+        min_junction_size = GameConfig._get_required('room_generation.corridor_intersection_min_size')
+        max_junction_size = GameConfig._get_required('room_generation.corridor_intersection_max_size')
+
+        # Find corridor intersection points (tiles where 3+ corridors meet)
+        intersections = self._find_corridor_intersections()
+
+        for intersection_pos in intersections:
+            if random.random() < intersection_chance:
+                # Randomly choose junction size
+                junction_size = random.choice([min_junction_size, max_junction_size])
+                self._expand_intersection_into_junction(intersection_pos, junction_size)
+
+    def _find_corridor_intersections(self) -> List[Tuple[int, int]]:
+        """
+        Find points where 3 or more corridor segments meet.
+        Returns list of (x, y) positions that are intersection points.
+        """
+        intersections = []
+
+        for tile in self.corridor_tiles:
+            x, y = tile
+
+            # Count corridor neighbors (orthogonal directions)
+            corridor_neighbors = 0
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                neighbor = (x + dx, y + dy)
+                if neighbor in self.corridor_tiles:
+                    corridor_neighbors += 1
+
+            # If 3 or 4 corridor neighbors, this is an intersection
+            if corridor_neighbors >= 3:
+                intersections.append(tile)
+
+        return intersections
+
+    def _expand_intersection_into_junction(self, center: Tuple[int, int], size: int) -> None:
+        """
+        Expand an intersection point into a larger junction room.
+        Places shadows in corners for stealth advantage.
+
+        PHASE 4 - Section 2.2: T-Junction and 4-Way Intersections
+        """
+        x, y = center
+        half_size = size // 2
+
+        # Carve out junction area (square around the intersection)
+        for jx in range(x - half_size, x + half_size + 1):
+            for jy in range(y - half_size, y + half_size + 1):
+                if 0 <= jx < GameConfig.MAP_WIDTH and 0 <= jy < GameConfig.MAP_HEIGHT:
+                    # Don't carve if it would break into another room
+                    if (jx, jy) in self.game_map.walls:
+                        self.game_map.walls.discard((jx, jy))
+                        self.corridor_tiles.add((jx, jy))
+
+        # Place shadows in corners of junction for stealth gameplay
+        # Only place if the corner is actually carved (not a wall)
+        corners = [
+            (x - half_size, y - half_size),      # Top-left
+            (x + half_size, y - half_size),      # Top-right
+            (x - half_size, y + half_size),      # Bottom-left
+            (x + half_size, y + half_size)       # Bottom-right
+        ]
+
+        for corner in corners:
+            cx, cy = corner
+            if (0 <= cx < GameConfig.MAP_WIDTH and
+                0 <= cy < GameConfig.MAP_HEIGHT and
+                (cx, cy) not in self.game_map.walls and
+                (cx, cy) in self.corridor_tiles):  # Ensure it's actually a floor tile
+                # Place shadow in corner
+                self.game_map.shadows.add((cx, cy))
 
     def _place_gateway_strategic(self, level: int) -> None:
         """
