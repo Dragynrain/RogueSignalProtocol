@@ -40,7 +40,8 @@ class EnemyManager:
             # Virus enemies mimic other infected enemies - randomly pick base movement type
             virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.PATROL]
             chosen_movement = random.choice(virus_movement_types)
-            enemy.type_data.movement = chosen_movement
+            # Store in instance variable, NOT in shared type_data!
+            enemy.original_movement_type = chosen_movement
 
             # Generate patrol route if virus got PATROL movement
             if chosen_movement == EnemyMovement.PATROL:

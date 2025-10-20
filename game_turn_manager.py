@@ -320,7 +320,8 @@ class GameTurnManager:
 
     def _restore_patrol(self, enemy):
         """Store/restore patrol index for patrol enemies."""
-        if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
+        movement_type = enemy.get_movement_type()
+        if movement_type == EnemyMovement.PATROL and enemy.patrol_points:
             enemy.original_patrol_index = enemy.patrol_index
 
     def _check_trace_threshold_warnings(self, old_trace: float, new_trace: float):
@@ -345,7 +346,8 @@ class GameTurnManager:
             distance = enemy.position.distance_to(alerting_enemy.position)
             if distance <= alert_range:
                 # Store patrol information for PATROL enemies before becoming hostile
-                if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
+                movement_type = enemy.get_movement_type()
+                if movement_type == EnemyMovement.PATROL and enemy.patrol_points:
                     enemy.original_patrol_index = enemy.patrol_index
                 # All enemies within alert range immediately go HOSTILE and get player location
                 enemy.state = EnemyState.HOSTILE
