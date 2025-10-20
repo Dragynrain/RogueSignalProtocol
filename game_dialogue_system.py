@@ -265,8 +265,9 @@ class UnifiedRenderer:
         render_char_safe(console, options_x, options_y, options_text,
                         fg=Colors.WHITE, bg=bg_color)
 
-        # CRITICAL: Set dialogue box to opaque
-        # This ensures dialogues render correctly over transparent game areas
+        # CRITICAL: Explicitly set alpha channel to 255 (opaque)
+        # bg_blend=BKGND_SET only sets RGB, not alpha channel.
+        # This ensures dialogues render correctly over transparent game areas in graphics mode.
         CoordinateHelpers.set_alpha_region(
             console, x=box_x, y=box_y, width=box_width, height=box_height, alpha=255
         )

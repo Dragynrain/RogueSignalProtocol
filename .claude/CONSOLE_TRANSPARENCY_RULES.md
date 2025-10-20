@@ -4,24 +4,33 @@
 
 **Every single time you write code involving console.rgba:**
 
-1. ✓ **Indexing Check**: Is it `console.rgba["bg"][y, x, 3]`? (NOT `[x, y]`!)
-2. ✓ **Loop Order**: Outer loop = y? Inner loop = x? Indexing = `[y, x]`?
-3. ✓ **Variable Names**: When iterating, are loop variables named correctly?
-   - `for y in range(...): for x in range(...): rgba[y, x]` ✓
-   - `for x in range(...): for y in range(...): rgba[x, y]` ✗
-4. ✓ **Array Shape**: Getting dimensions from `console.rgba["bg"].shape[:2]` gives `(height, width)` = `(y_max, x_max)`
+1. ✓ **Console Order Check**: Does the game use `order='F'`? (YES - see game_loop.py:347)
+2. ✓ **Indexing Check**: With `order='F'`, use `console.rgba["bg"][x, y, 3]` (NOT `[y, x]`!)
+3. ✓ **Use CoordinateHelpers**: ALWAYS use `CoordinateHelpers.set_alpha_region()` - it handles order detection automatically!
+4. ✓ **Array Shape**: With `order='F'`, `console.rgba["bg"].shape[:2]` gives `(width, height)` NOT `(height, width)`!
+
+**See `.claude/TCOD_COORDINATE_SYSTEMS.md` for complete explanation of console order!**
 
 **Common Trap:**
 ```python
-# ✗ WRONG - creates TRANSPOSED transparency!
-for x in range(width):
-    for y in range(height):
-        console.rgba["bg"][x, y, 3] = 0  # BUG: should be [y, x]
-
-# ✓ CORRECT
+# ✗ WRONG - assumes default order (uses [y, x] indexing)
 for y in range(height):
     for x in range(width):
-        console.rgba["bg"][y, x, 3] = 0
+        console.rgba["bg"][y, x, 3] = 0  # BUG: game uses order='F'!
+
+# ✓ CORRECT - use CoordinateHelpers (detects order automatically)
+CoordinateHelpers.set_alpha_region(console, x=0, y=0, width=width, height=height, alpha=0)
+
+# ✓ CORRECT - manual with order detection
+is_fortran = (console.rgba["bg"].shape[0] == console.width)
+if is_fortran:
+    for x in range(width):
+        for y in range(height):
+            console.rgba["bg"][x, y, 3] = 0
+else:
+    for y in range(height):
+        for x in range(width):
+            console.rgba["bg"][y, x, 3] = 0
 ```
 
 ---
@@ -38,7 +47,44 @@ console.rgba["bg"][y, x, 3] = 0  # Alpha = 0 (transparent)
 
 ## THE SOLUTION
 
-**After rendering ANY dialogue/popup**, you MUST explicitly set the alpha channel to 255 for the entire dialogue area:
+### Option 1: Use CoordinateHelpers (RECOMMENDED)
+
+**ALWAYS prefer using CoordinateHelpers.set_alpha_region()** - it handles all the complexity for you:
+
+```python
+from game_coordinate_helpers import CoordinateHelpers
+
+# Calculate box dimensions
+console_width = console.width
+console_height = console.height
+box_width = min(60, console_width - 4)
+box_height = 12
+center_x = console_width // 2
+center_y = console_height // 2
+box_x = center_x - box_width // 2
+box_y = center_y - box_height // 2
+
+# Render dialogue box
+draw_bordered_box(console, box_x, box_y, box_width, box_height, border_color, bg_color)
+# ... render text ...
+
+# CRITICAL: Set alpha to 255 (opaque) using CoordinateHelpers
+# This handles [y,x] indexing, bounds clamping, and array shape checking automatically
+CoordinateHelpers.set_alpha_region(console, x=box_x, y=box_y,
+                                   width=box_width, height=box_height,
+                                   alpha=255)
+```
+
+**Benefits**:
+- ✓ Handles [y, x] vs [x, y] indexing internally
+- ✓ Automatically clamps to array bounds (no crashes)
+- ✓ Uses actual array shape, not console.width/height
+- ✓ One line instead of 10+ lines of loop code
+- ✓ Same code works everywhere (dialogues, menus, game area)
+
+### Option 2: Manual Alpha Setting (For Understanding)
+
+If you need to set alpha manually (e.g., debugging, special cases):
 
 ```python
 # Get actual console dimensions (CRITICAL - don't use GameConfig!)
@@ -89,28 +135,83 @@ for y in range(y_start, y_end):
 
 ## WHERE THIS APPLIES
 
-- Victory message (`render_victory_message`)
-- Gateway confirmation (`render_gateway_confirmation`)
-- Death message (`render_death_message`)
-- Generic dialogues (`render_dialogue`)
+All dialogues now use the **UnifiedRenderer** from `game_dialogue_system.py`:
+- Victory dialogues
+- Gateway dialogues (auto-show, no confirmation needed)
+- Death dialogues
+- Overclock warning dialogues
+- Inventory attack warning dialogues
 - ANY popup/overlay in graphics mode
+
+The UnifiedRenderer uses CoordinateHelpers.set_alpha_region() internally, so individual dialogue renderers don't need to worry about alpha management.
+
+## The "Make Everything Transparent First" Pattern
+
+**Best practice for graphics mode rendering:**
+
+### The Pattern:
+1. Clear console (sets alpha=255 by default)
+2. **Make ENTIRE console transparent**: `console.rgba["bg"][:, :, 3] = 0`
+3. Render text/graphics (doesn't change alpha)
+4. **Explicitly set alpha=255 for areas that should be opaque** (UI panels, dialogues)
+
+### Why This Works:
+- `console.draw_rect()` and `console.print()` set RGB values but **DO NOT SET ALPHA**
+- Making everything transparent first ensures a clean slate
+- Then explicitly setting alpha=255 for opaque areas is more reliable
+- Simpler than trying to make only certain areas transparent
+
+### Example:
+```python
+# 1. Clear console
+console.clear()
+
+# 2. Make ENTIRE console transparent FIRST (use CoordinateHelpers!)
+CoordinateHelpers.set_alpha_region(console, x=0, y=0,
+                                    width=console.width, height=console.height, alpha=0)
+
+# 3. Render UI
+render_status_bar(console)
+render_panels(console)
+
+# 4. Set UI areas back to opaque (use CoordinateHelpers!)
+CoordinateHelpers.set_alpha_region(console, x=0, y=0, width=console.width, height=1, alpha=255)  # Top bar
+CoordinateHelpers.set_alpha_region(console, x=0, y=45, width=console.width, height=5, alpha=255)  # Bottom panel
+
+# 5. Render dialogue (sets its own alpha to 255)
+if dialogue_active:
+    UnifiedRenderer.render(console, dialogue)
+```
 
 ## RENDERING ORDER (game_rendering_core.py)
 
 ```python
-# 1. Render UI elements to console
+from game_coordinate_helpers import CoordinateHelpers
+from game_dialogue_system import UnifiedRenderer
+
+# 1. Clear console (alpha=255 by default)
+console.clear()
+
+# 2. Make ENTIRE console transparent FIRST (critical pattern)
+console.rgba["bg"][:, :, 3] = 0
+
+# 3. Render UI elements
 self.ui_renderer.render_top_status_bar(console, game)
 self.ui_renderer.render_bottom_panel(console, game)
+self.ui_renderer.render_system_log(console, game)
 
-# 2. Set game area to transparent
-for x in range(GameConfig.GAME_AREA_WIDTH()):
-    for y in range(1, GameConfig.PANEL_Y()):
-        console.rgba["bg"][y, x, 3] = 0  # Note: [y, x] order!
+# 4. Set UI areas back to opaque
+# Top status bar (y=0)
+console.rgba["bg"][0, :, 3] = 255
+# Bottom panel (y >= PANEL_Y)
+console.rgba["bg"][GameConfig.PANEL_Y():, :, 3] = 255
+# System log (x >= GAME_AREA_WIDTH)
+console.rgba["bg"][:, GameConfig.GAME_AREA_WIDTH():, 3] = 255
 
-# 3. Render dialogues AFTER transparency pass
-# Dialogues will set their own alpha to 255 internally
-if game.dialogue_manager.is_active():
-    self.dialogue_renderer.render_dialogue(console, game)
+# 5. Render dialogues - UnifiedRenderer sets alpha=255 for dialogue area
+if game.dialogue_state.is_active():
+    dialogue = game.dialogue_state.get_active()
+    UnifiedRenderer.render(console, dialogue)  # Sets alpha=255 internally
 ```
 
 ## COMMON MISTAKES

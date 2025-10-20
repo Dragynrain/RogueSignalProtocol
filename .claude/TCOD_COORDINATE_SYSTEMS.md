@@ -2,112 +2,211 @@
 
 ## 🚨 THE FUNDAMENTAL RULE 🚨
 
-**TCOD uses numpy-style [y, x] indexing for ALL array operations.**
+**TCOD console array indexing depends on the console's memory order!**
+
+### Console Creation Determines Indexing
 
 ```python
-# Game logic coordinates: (x, y) - column, row
-position = Position(x=10, y=5)
+# Game uses Fortran order (order='F')
+console = tcod.console.Console(80, 50, order='F')
+# → Array shape: (80, 50, 4) = (width, height, channels)
+# → Indexing: [x, y, channel]
+# → This is what the game uses!
 
-# TCOD array indexing: [y, x] - row, column
-console.rgba["bg"][5, 10, 3] = 255  # Note: [y, x] NOT [x, y]!
+# Tests/default use C order (default)
+console = tcod.console.Console(80, 50)
+# → Array shape: (50, 80, 4) = (height, width, channels)
+# → Indexing: [y, x, channel]
+# → This is the TCOD default
 ```
 
-**This is SWAPPED from what you might expect!**
+**You MUST check the console's memory order before indexing arrays!**
 
 ---
 
-## Common Indexing Patterns
+## How to Detect Console Order
+
+```python
+# Detect order by checking if shape matches console dimensions
+is_fortran_order = (console.rgba["bg"].shape[0] == console.width)
+
+if is_fortran_order:
+    # order='F': array is (width, height, channels)
+    console.rgba["bg"][x, y, 3] = 255  # [x, y, channel]
+else:
+    # default: array is (height, width, channels)
+    console.rgba["bg"][y, x, 3] = 255  # [y, x, channel]
+```
+
+**CoordinateHelpers.set_alpha_region() handles this automatically - use it!**
+
+---
+
+## Why This Caused the Dialogue Transparency Bug
+
+**The Bug:**
+- Game uses `Console(80, 50, order='F')` → requires `[x, y]` indexing
+- All alpha-setting code used `[y, x]` indexing (assuming default order)
+- Result: Alpha was set at **transposed coordinates**!
+- Dialogue at position (20, 17) had alpha set at (17, 20) instead
+- Dialogue box stayed transparent because alpha was set in wrong location
+
+**The Fix:**
+- CoordinateHelpers now detects console order
+- Uses correct indexing based on detected order
+- Works with both order='F' (game) and default (tests)
+
+---
+
+## Correct Patterns for the Game (order='F')
 
 ### ✓ CORRECT Patterns
 
 ```python
-# Pattern 1: Nested loops with correct indexing
+# Pattern 1: Use CoordinateHelpers (RECOMMENDED)
+from game_coordinate_helpers import CoordinateHelpers
+
+# Set transparency - handles indexing automatically
+CoordinateHelpers.set_alpha_region(console, x=10, y=5, width=30, height=15, alpha=0)
+
+# Pattern 2: Detect order and index correctly
+is_fortran = (console.rgba["bg"].shape[0] == console.width)
+
+if is_fortran:
+    # order='F': use [x, y]
+    for x in range(10, 40):
+        for y in range(5, 20):
+            console.rgba["bg"][x, y, 3] = 255
+else:
+    # default: use [y, x]
+    for y in range(5, 20):
+        for x in range(10, 40):
+            console.rgba["bg"][y, x, 3] = 255
+
+# Pattern 3: Game logic always uses (x, y) for positions
+pos = Position(x=10, y=5)
+console.print(pos.x, pos.y, "@")  # console.print() uses (x, y)
+
+# Pattern 4: Array slicing for order='F'
+# Top row (y=0, all x)
+console.rgba["bg"][:, 0, 3] = 255  # [all x, y=0, alpha]
+# Right column (x=79, all y)
+console.rgba["bg"][79, :, 3] = 255  # [x=79, all y, alpha]
+```
+
+### ✗ WRONG Patterns (will cause transparency bugs!)
+
+```python
+# Bug 1: Assuming all consoles use [y, x] indexing
 for y in range(height):
     for x in range(width):
-        console.rgba["bg"][y, x, 3] = 255  # [y, x] matches loop order
+        console.rgba["bg"][y, x, 3] = 255  # WRONG for order='F'!
 
-# Pattern 2: Using Position objects
-pos = Position(x=10, y=5)
-console.rgba["bg"][pos.y, pos.x, 3] = 255  # Extract y first, x second
+# Bug 2: Assuming shape is always (height, width)
+height, width = console.rgba["bg"].shape[:2]  # WRONG for order='F'!
+# With order='F', shape is (width, height)!
 
-# Pattern 3: Getting array dimensions
-actual_height, actual_width = console.rgba["bg"].shape[:2]  # shape is (height, width)
-
-# Pattern 4: TCOD FOV/pathfinding
-fov = tcod.map.compute_fov(transparency, pov=(y, x), ...)  # (y, x) tuple
-path = pathfinder.path_to((y, x))  # (y, x) tuple
-```
-
-### ✗ WRONG Patterns (will cause bugs!)
-
-```python
-# Bug 1: Loop variables don't match indexing
-for x in range(width):
-    for y in range(height):
-        console.rgba["bg"][x, y, 3] = 255  # BUG: should be [y, x]
-
-# Bug 2: Using Position coordinates in wrong order
-pos = Position(x=10, y=5)
-console.rgba["bg"][pos.x, pos.y, 3] = 255  # BUG: transposed!
-
-# Bug 3: Assuming shape is (width, height)
-width, height = console.rgba["bg"].shape[:2]  # BUG: actually (height, width)!
-
-# Bug 4: TCOD functions with (x, y) tuples
-fov = tcod.map.compute_fov(transparency, pov=(x, y), ...)  # BUG: should be (y, x)
+# Bug 3: Array slicing without checking order
+console.rgba["bg"][0, :, 3] = 255  # May be top row OR left column!
 ```
 
 ---
 
-## Why This Matters
+## TCOD Functions (Order-Independent)
 
-**Example Bug: Transparency at wrong location**
+**Good news:** TCOD's high-level functions always use `(x, y)` order regardless of console memory order!
 
 ```python
-# Transparency pass with wrong indexing
-for x in range(game_area_width):
-    for y in range(game_area_height):
-        console.rgba["bg"][x, y, 3] = 0  # Sets transparency at (y=x, x=y)!
+# These always use (x, y) order
+console.print(x=10, y=5, "text")  # Always (x, y)
+console.draw_rect(x=10, y=5, width=20, height=10, ...)  # Always x, y, width, height
+console.draw_frame(x=10, y=5, width=20, height=10, ...)  # Always x, y, width, height
 
-# Result: If you want to make (10, 20) transparent,
-# this code makes (20, 10) transparent instead.
-# Dialogue drawn at (10, 20) stays visible (wrong!)
-# Area at (20, 10) becomes transparent (wrong!)
+# Position objects always use (x, y)
+pos = Position(x=10, y=5)
+```
+
+**BUT:** When accessing `.rgba`, `.ch`, `.fg`, `.bg` arrays directly, order matters!
+
+---
+
+## Quick Decision Tree
+
+```
+Are you calling a TCOD function like console.print()?
+├─ YES → Use (x, y) order
+└─ NO → Are you accessing console.rgba/ch/fg/bg arrays?
+    ├─ YES → Detect console order first!
+    │   ├─ Use CoordinateHelpers (recommended)
+    │   └─ Or check: is_fortran = (shape[0] == width)
+    └─ NO → You're fine, carry on
 ```
 
 ---
 
-## Quick Reference Table
+## The Game's Choice: Why order='F'?
 
-| Operation | Coordinate Order | Example |
-|-----------|------------------|---------|
-| Game Position object | `(x, y)` | `Position(x=10, y=5)` |
-| Console print/draw | `(x, y)` | `console.print(x=10, y=5, ...)` |
-| Console array indexing | `[y, x]` | `console.rgba["bg"][5, 10, 3]` |
-| TCOD FOV pov parameter | `(y, x)` | `compute_fov(..., pov=(5, 10))` |
-| TCOD path_to parameter | `(y, x)` | `pathfinder.path_to((5, 10))` |
-| Array shape | `(height, width)` | `shape = (50, 80)` means 50 tall, 80 wide |
+The game uses `order='F'` (Fortran order) which:
+- Creates array shape (width, height, channels) instead of (height, width, channels)
+- Uses [x, y] indexing which matches console.print(x, y) parameter order
+- Was likely chosen for consistency with function call order
+
+**This is fine, but you MUST use [x, y] indexing when accessing arrays!**
+
+---
+
+## Common Mistakes in This Codebase
+
+**Mistake 1:** Copying code from TCOD examples
+- Most TCOD examples use default order
+- They use [y, x] indexing
+- This breaks when used in our order='F' game!
+
+**Mistake 2:** Assuming shape is (height, width)
+```python
+# ✗ WRONG
+height, width = console.rgba["bg"].shape[:2]
+
+# ✓ CORRECT (for game)
+width, height = console.rgba["bg"].shape[:2]
+
+# ✓ CORRECT (order-independent)
+if console.rgba["bg"].shape[0] == console.width:
+    width, height = console.rgba["bg"].shape[:2]
+else:
+    height, width = console.rgba["bg"].shape[:2]
+```
+
+**Mistake 3:** Not using CoordinateHelpers
+- CoordinateHelpers handles all this complexity
+- It detects order and uses correct indexing
+- Always use it for alpha/transparency operations!
 
 ---
 
 ## The Mnemonic
 
-**"Arrays are row-major, positions are column-first"**
+**"Check the order before you index the array"**
 
-- **Arrays**: Think spreadsheet - row then column = `[y, x]`
-- **Positions**: Think Cartesian plane - x-axis then y-axis = `(x, y)`
+1. High-level TCOD functions → Always (x, y)
+2. Array access → Detect order first!
+3. When in doubt → Use CoordinateHelpers
 
 ---
 
-## When In Doubt
+## Testing Note
 
-1. Check if you're working with a **Position object** → use `(x, y)` or extract `pos.y, pos.x`
-2. Check if you're **indexing an array** → use `[y, x]`
-3. Check if you're calling **TCOD functions** → read the docs, most use `(y, x)`
-4. **If confused**: Add a comment explaining the coordinate order!
+**Tests use default order, game uses order='F'**
 
-```python
-# Example with defensive commenting
-enemy_x, enemy_y = enemy.position.x, enemy.position.y  # Position: (x, y)
-cost_map[enemy_y, enemy_x] = 0  # Array indexing: [y, x]
-```
+When writing tests:
+- Tests typically create `Console(80, 50)` without order parameter
+- This uses default order = [y, x] indexing
+- Game creates `Console(80, 50, order='F')` = [x, y] indexing
+- **CoordinateHelpers works with both** - that's why we use it!
+
+---
+
+## See Also
+
+- `.claude/CONSOLE_TRANSPARENCY_RULES.md` - Transparency and alpha channel specifics
+- `game_coordinate_helpers.py` - Reusable coordinate utilities that handle order detection

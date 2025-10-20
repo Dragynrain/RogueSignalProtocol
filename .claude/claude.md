@@ -75,42 +75,55 @@
 
 ## 7a. TCOD Array Indexing (CRITICAL - READ EVERY TIME)
 
-**🚨 TCOD USES [y, x] INDEXING FOR ALL ARRAYS - NOT [x, y]! 🚨**
+**🚨 TCOD ARRAY INDEXING DEPENDS ON CONSOLE ORDER! 🚨**
 
-This is the **#1 source of bugs** in this codebase. Always check before writing array code.
+This is the **#1 source of bugs** in this codebase. **NEVER assume indexing order!**
 
-**CORRECT:**
+### The Game Uses order='F' (Fortran Order)
+
+**Game console creation (game_loop.py:347):**
 ```python
-# Loop order: y outer, x inner → indexing: [y, x]
-for y in range(height):
+console = tcod.console.Console(80, 50, order='F')
+# → Array shape: (80, 50, 4) = (width, height, channels)
+# → Indexing: [x, y, channel]
+```
+
+### ALWAYS Use CoordinateHelpers
+
+```python
+# ✓ CORRECT - handles order detection automatically
+from game_coordinate_helpers import CoordinateHelpers
+
+CoordinateHelpers.set_alpha_region(console, x=10, y=5, width=30, height=15, alpha=255)
+```
+
+### Manual Array Access (ONLY if CoordinateHelpers can't be used)
+
+```python
+# ✓ CORRECT - detect order first
+is_fortran = (console.rgba["bg"].shape[0] == console.width)
+
+if is_fortran:  # Game uses this
+    # order='F': use [x, y] indexing
     for x in range(width):
-        console.rgba["bg"][y, x, 3] = 255  # ✓ Matches loop order
-
-# With Position objects: extract y first, x second
-pos = Position(x=10, y=5)
-console.rgba["bg"][pos.y, pos.x, 3] = 255  # ✓ [y, x] order
-
-# TCOD functions use (y, x) tuples
-cost_map[enemy_y, enemy_x] = 0  # ✓ [y, x] indexing
-pathfinder.path_to((target_y, target_x))  # ✓ (y, x) tuple
-```
-
-**WRONG (causes transparency/rendering bugs):**
-```python
-# ✗ Loop variables swapped with indexing
-for x in range(width):
+        for y in range(height):
+            console.rgba["bg"][x, y, 3] = 255
+else:  # Tests use this
+    # default: use [y, x] indexing
     for y in range(height):
-        console.rgba["bg"][x, y, 3] = 255  # BUG: Creates transposed transparency!
-
-# ✗ Using Position in wrong order
-pos = Position(x=10, y=5)
-console.rgba["bg"][pos.x, pos.y, 3] = 255  # BUG: Transposed!
-
-# ✗ Wrong tuple order for TCOD functions
-cost_map[enemy_x, enemy_y] = 0  # BUG: Wrong position!
+        for x in range(width):
+            console.rgba["bg"][y, x, 3] = 255
 ```
 
-**Why this matters:** Using `[x, y]` instead of `[y, x]` sets values at **transposed coordinates**. If you want to modify position (10, 20), using `[x, y]` will modify (20, 10) instead, causing dialogue transparency bugs, pathfinding failures, and rendering issues.
+### TCOD Functions (Always (x, y))
+
+```python
+# High-level TCOD functions ALWAYS use (x, y) regardless of order
+console.print(x=10, y=5, "text")  # ✓ Always (x, y)
+console.draw_rect(x=10, y=5, width=20, height=10, ...)  # ✓ Always (x, y)
+```
+
+**Why this matters:** Using wrong indexing sets values at **transposed coordinates**. The dialogue transparency bug was caused by using `[y, x]` indexing when the game needs `[x, y]` due to `order='F'`.
 
 **See `.claude/TCOD_COORDINATE_SYSTEMS.md` for complete reference.**
 

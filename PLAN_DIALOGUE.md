@@ -131,13 +131,13 @@
 **Files Modified**: `.claude/CONSOLE_TRANSPARENCY_RULES.md`, all new code files
 
 **Tasks**:
-- [ ] Update `.claude/CONSOLE_TRANSPARENCY_RULES.md` with CoordinateHelpers approach
-- [ ] Add docstrings to CoordinateHelpers (class + all methods)
-- [ ] Add docstrings to DialogueBox, DialogueState, UnifiedRenderer, DialogueInputHandler
-- [ ] Add docstrings to all factory functions
-- [ ] Add inline comments for transparency pass in game_rendering_core.py
-- [ ] Add inline comments for [y, x] indexing in CoordinateHelpers.set_alpha_region()
-- [ ] Run test suite: `uv run pytest tests/ -v --tb=short`
+- [x] Update `.claude/CONSOLE_TRANSPARENCY_RULES.md` with CoordinateHelpers approach
+- [x] Add docstrings to CoordinateHelpers (class + all methods)
+- [x] Add docstrings to DialogueBox, DialogueState, UnifiedRenderer, DialogueInputHandler
+- [x] Add docstrings to all factory functions
+- [x] Add inline comments for transparency pass in game_rendering_core.py
+- [x] Add inline comments for [y, x] indexing in CoordinateHelpers.set_alpha_region()
+- [x] Run test suite: `uv run pytest tests/ -v --tb=short`
 
 **Manual Testing Checklist**:
 - [ ] Gateway dialogue (graphics + glyph modes)
@@ -150,7 +150,11 @@
 - [ ] Dialogue queuing works
 - [ ] Save deletion works on death
 
-**Validation**: Documentation clear, all docstrings present, all tests pass, all manual checks verified.
+**Validation**:
+- [x] All tests pass (955/955) ✅
+- [x] Documentation clear ✅
+- [x] All docstrings present ✅
+- [ ] Manual testing checklist (to be completed by user)
 
 ---
 

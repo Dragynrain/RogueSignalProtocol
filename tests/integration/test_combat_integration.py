@@ -108,7 +108,7 @@ class TestExploitSystem:
         mock_game.player = mock_player
         mock_game.message_log = Mock()
         mock_game.sound_manager = Mock()
-        mock_game.dialogue_manager = Mock()  # Add dialogue_manager mock
+        mock_game.dialogue_state = Mock()  # Add dialogue_state mock
         
         with patch('game_combat.GameData') as mock_game_data:
             # Mock an exploit that requires targeting

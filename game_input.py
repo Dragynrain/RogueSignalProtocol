@@ -182,8 +182,8 @@ class InputHandler:
 
         # Check dialogue type by title
         if "UNDER ATTACK" in dialogue.title:
-            # Keep inventory open - user should be able to continue
-            pass
+            # Close inventory when under attack (can't stay in inventory while being attacked)
+            self.game.show_inventory = False
         elif "OVERCLOCK WARNING" in dialogue.title:
             # Cancel exploit use - just close dialogue
             pass
