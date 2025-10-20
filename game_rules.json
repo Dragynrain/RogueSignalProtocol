@@ -104,7 +104,11 @@
     "hub_room_count": 1,
     "hub_room_size_multiplier": 1.5,
     "hub_min_connections": 4,
-    "hub_max_connections": 6
+    "hub_max_connections": 6,
+    "corridor_intersection_chance": 0.30,
+    "corridor_intersection_min_size": 3,
+    "corridor_intersection_max_size": 5,
+    "enable_landmarks": true
   },
   "balance": {
     "heat_reduction_normal": 2,
