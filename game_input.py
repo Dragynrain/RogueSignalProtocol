@@ -8,7 +8,6 @@ Supports movement, combat, inventory, menu navigation, and look mode.
 
 import tcod
 import tcod.event
-from game_combat import ExploitSystem
 from game_data import GameData
 from game_inventory import CodeHack, ExploitItem
 from game_ui import UniversalInputHandler
@@ -51,7 +50,6 @@ class InputHandler:
 
     def __init__(self, game, renderer=None):
         self.game = game
-        self.exploit_system = ExploitSystem(game)
         self.renderer = renderer  # GameRenderer instance for help screen input
     
     def handle_keydown(self, event: tcod.event.KeyDown) -> bool:
@@ -316,8 +314,8 @@ class InputHandler:
             dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
             self.game._move_cursor(dx, dy)
         elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
-            self.exploit_system.execute_exploit(
-                self.game.targeting_exploit, 
+            self.game.exploit_system.execute_exploit(
+                self.game.targeting_exploit,
                 self.game.cursor_position
             )
         
@@ -491,7 +489,7 @@ class InputHandler:
         """Use exploit in specified slot."""
         equipped = self.game.player.inventory_manager.equipped_exploits
         if 0 <= slot < len(equipped):
-            self.exploit_system.use_exploit(equipped[slot])
+            self.game.exploit_system.use_exploit(equipped[slot])
 
     def _enter_look_mode(self):
         """Enter look mode."""

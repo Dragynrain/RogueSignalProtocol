@@ -80,7 +80,7 @@ class TestCombatSystemIntegration:
         initial_heat = engine.player.heat
 
         # Execute exploit (this will target based on game logic)
-        result = engine.input_handler.exploit_system.use_exploit('code_injection')
+        result = engine.exploit_system.use_exploit('code_injection')
 
         # Verify exploit system integration
         assert isinstance(result, bool)  # Should return a boolean
@@ -89,8 +89,8 @@ class TestCombatSystemIntegration:
         assert engine.player.heat >= initial_heat  # Heat should increase or stay same
 
         # Verify exploit system is properly integrated
-        assert hasattr(engine.input_handler, 'exploit_system')
-        assert engine.input_handler.exploit_system.game == engine
+        assert hasattr(engine, 'exploit_system')
+        assert engine.exploit_system.game == engine
 
     def test_enemy_attack_player_integration(self):
         """Test enemy attacking player integration."""
@@ -260,10 +260,10 @@ class TestExploitSystemIntegration:
 
         # Verify exploit system exists and is accessible
         assert hasattr(engine, 'input_handler')
-        assert hasattr(engine.input_handler, 'exploit_system')
+        assert hasattr(engine, 'exploit_system')
 
         # Verify exploit system is properly initialized
-        exploit_system = engine.input_handler.exploit_system
+        exploit_system = engine.exploit_system
         assert exploit_system.game == engine
 
         # Verify player has inventory system for exploits
@@ -279,7 +279,7 @@ class TestExploitSystemIntegration:
         initial_heat = engine.player.heat
 
         # Use exploit
-        result = engine.input_handler.exploit_system.use_exploit('code_injection')
+        result = engine.exploit_system.use_exploit('code_injection')
 
         # Verify heat system integration
         assert isinstance(result, bool)
