@@ -51,8 +51,6 @@ class GraphicalHelpMenu:
         self.pages = []
         self.pages_built = False
 
-        logging.info("GraphicalHelpMenu initialized")
-
     def _load_colors(self):
         """Load enemy and UI colors from game config."""
         self.ENEMY_UNAWARE = ColorManager.get_enemy_state_color("unaware_dark")
@@ -73,7 +71,6 @@ class GraphicalHelpMenu:
         ]
 
         self.pages_built = True
-        logging.info(f"Built {len(self.pages)} help pages")
 
     def _build_page_enemies(self) -> dict:
         """Page 1: All 8 enemies - better vertical spacing."""
@@ -313,8 +310,6 @@ class GraphicalHelpMenu:
         Must be called BEFORE render() to ensure sprites appear behind text.
         Only called when in graphics mode.
         """
-        logging.info(f"GraphicalHelpMenu.render_sprites() called for page {self.current_page + 1}")
-
         # Build pages on first render
         self._build_pages()
 

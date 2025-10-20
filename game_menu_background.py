@@ -34,7 +34,6 @@ class MenuBackground:
     def reset_background_system(self):
         """Reset background system and re-enable graphics."""
         self.enabled = True
-        logging.info("Background graphics system reset and re-enabled")
 
     def should_load_background(self):
         """Check if background should be loaded based on graphics mode."""
@@ -69,7 +68,6 @@ class MenuBackground:
         try:
             if self._load_image_file(image_path):
                 self.current_image_path = image_path
-                logging.info(f"Loaded background: main_menu_{image_num}.png")
                 return True
             return False
         except Exception as e:
