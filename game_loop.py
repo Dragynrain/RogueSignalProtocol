@@ -333,7 +333,7 @@ def main():
     
     try:
         with initialize_tcod_context() as context:
-            console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT, order='F')
+            console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
             
             settings = GameSettings()
             

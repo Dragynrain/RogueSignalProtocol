@@ -42,12 +42,21 @@
 ---
 
 ## 5. Testing (Critical)
-- Test with venv Python.  
-- Update tests with every code change or API edit.  
-- Prefer integration tests (real behavior) over mocks.  
-- Use `tests/fixtures/` builders.  
-- After refactor, run full suite & fix all, even unrelated tests.  
-- Pre-commit: `python test_commands.py full`.
+- Test with venv Python.
+- Update tests with every code change or API edit.
+- Prefer integration tests (real behavior) over mocks.
+- Use `tests/fixtures/` builders.
+- After refactor, run full suite & fix all, even unrelated tests.
+
+**Running Tests:**
+- **Full suite:** `python test_commands.py full` (with coverage & timing)
+- **Quick unit tests:** `python test_commands.py quick` (fast feedback)
+- **Integration only:** `python test_commands.py integration`
+- **Coverage report:** `python test_commands.py coverage` (generates htmlcov/)
+- **Changed files:** `python test_commands.py changed` (git-based)
+- **Direct pytest:** `.venv/Scripts/python.exe -m pytest` (uses pytest.ini config)
+
+**Pre-commit:** `python test_commands.py full`
 
 ---
 
@@ -56,10 +65,10 @@
 - **Game log:** gameplay messages → `MessageLog.add_message()`.  
 - Don’t mix the two.  
 
-**Config:**  
-- Fail fast on missing files.  
-- Required: `game_data.json`, `game_config.json`, `story_content.json`.  
-- Only `user_settings.json` can default.  
+**Config:**
+- Fail fast on missing files.
+- Required: `game_content.json`, `game_rules.json`, `story_content.json`.
+- Only `user_settings.json` can default.
 - No hardcoded fallback values — all data from JSON.
 
 ---
@@ -73,119 +82,60 @@
 
 ---
 
-## 7a. TCOD Array Indexing (CRITICAL - READ EVERY TIME)
+## 7a. TCOD Specifics
 
-**🚨 TCOD ARRAY INDEXING DEPENDS ON CONSOLE ORDER! 🚨**
+**🚨 CRITICAL: Array indexing vs function parameters! 🚨**
 
-This is the **#1 source of bugs** in this codebase. **NEVER assume indexing order!**
+TCOD functions use `(x, y)` but arrays use `[y, x]` - this mismatch causes bugs!
 
-### The Game Uses order='F' (Fortran Order)
+**The Rules:**
+- **ALWAYS use CoordinateHelpers** for array access (handles `[y, x]` internally)
+- **Use UnifiedRenderer** for dialogue rendering (handles transparency automatically)
+- **TCOD functions** (like `console.print()`) use `(x, y)` - safe!
+- **Direct array access** (like `console.rgba[...]`) uses `[y, x]` - use helpers!
 
-**Game console creation (game_loop.py:347):**
+**Example:**
 ```python
-console = tcod.console.Console(80, 50, order='F')
-# → Array shape: (80, 50, 4) = (width, height, channels)
-# → Indexing: [x, y, channel]
-```
-
-### ALWAYS Use CoordinateHelpers
-
-```python
-# ✓ CORRECT - handles order detection automatically
+# ✓ CORRECT - use helpers
 from game_coordinate_helpers import CoordinateHelpers
-
 CoordinateHelpers.set_alpha_region(console, x=10, y=5, width=30, height=15, alpha=255)
+
+# ✓ CORRECT - use UnifiedRenderer for dialogues
+from game_dialogue_system import UnifiedRenderer
+UnifiedRenderer.render(console, dialogue)
+
+# ✗ WRONG - direct array access with [x, y]
+console.rgba["bg"][x, y, 3] = 255  # BUG! Should be [y, x]!
 ```
 
-### Manual Array Access (ONLY if CoordinateHelpers can't be used)
-
-```python
-# ✓ CORRECT - detect order first
-is_fortran = (console.rgba["bg"].shape[0] == console.width)
-
-if is_fortran:  # Game uses this
-    # order='F': use [x, y] indexing
-    for x in range(width):
-        for y in range(height):
-            console.rgba["bg"][x, y, 3] = 255
-else:  # Tests use this
-    # default: use [y, x] indexing
-    for y in range(height):
-        for x in range(width):
-            console.rgba["bg"][y, x, 3] = 255
-```
-
-### TCOD Functions (Always (x, y))
-
-```python
-# High-level TCOD functions ALWAYS use (x, y) regardless of order
-console.print(x=10, y=5, "text")  # ✓ Always (x, y)
-console.draw_rect(x=10, y=5, width=20, height=10, ...)  # ✓ Always (x, y)
-```
-
-**Why this matters:** Using wrong indexing sets values at **transposed coordinates**. The dialogue transparency bug was caused by using `[y, x]` indexing when the game needs `[x, y]` due to `order='F'`.
-
-**See `.claude/TCOD_COORDINATE_SYSTEMS.md` for complete reference.**
+**For complete details:** See `.claude/TCOD_GUIDE.md`
 
 ---
 
-## 7b. Graphics Rendering & Coordinate Systems (CRITICAL)
+## 7b. Graphics Coordinate Systems
 
-**Three Different Coordinate Systems - DO NOT MIX THEM:**
+**Three coordinate systems - DO NOT MIX:**
 
-### 1. Console Character Coordinates (80x50 grid)
-- Used for: Text rendering, UI layout, sprite positioning
-- Range: X: 0-79, Y: 0-49
-- Example: `render_char_safe(console, 10, 5, "text")`
-- **Console rendered as texture with 10x16 pixel characters (tileset size)**
+1. **Console chars (80x50)** - Text rendering, UI layout
+2. **Game viewport (27x21)** - In-game tile positions (viewport-scaled)
+3. **SDL pixels (window size)** - Direct sprite rendering
 
-### 2. Game Viewport Coordinates (27x21 in graphics mode)
-- Used for: Game map tile positions during gameplay
-- Scaled based on viewport to fit window
-- TileManager calculates tile dimensions (e.g., 65x54 pixels per tile)
-- **Only used for in-game map rendering, NOT menus/help screens**
+**Menu/Help Screen Sprites:**
+```python
+# Position: Convert console coords to pixels
+pixel_x = int(console_x * (window_width / 80))
+pixel_y = int(console_y * (window_height / 50))
 
-### 3. SDL Pixel Coordinates (window resolution, e.g., 2560x1351)
-- Used for: Direct SDL sprite rendering
-- Full window pixel space
-- **Sprites rendered here must align with console texture**
+# Size: Use TileManager (same scale as in-game)
+sprite_width = tile_manager.tile_width
+sprite_height = tile_manager.tile_height
+```
 
-**CRITICAL RULES:**
-
-1. **Menu/Help Screens (GraphicalHelpMenu, etc.)**:
-   - Console is ALWAYS 80x50 characters
-   - **Sprite POSITIONING**: Calculate from console coords + window scaling
-     ```python
-     # Get window size
-     window_width, window_height = context.sdl_window.size
-     # Calculate pixels per console character
-     pixels_per_char_x = window_width / 80
-     pixels_per_char_y = window_height / 50
-     # Convert console position to pixel position
-     pixel_x = int(console_x * pixels_per_char_x)
-     pixel_y = int(console_y * pixels_per_char_y)
-     ```
-   - **Sprite SIZE**: Use TileManager dimensions (SAME AS IN-GAME!)
-     ```python
-     sprite_width = tile_manager.tile_width  # e.g., 65 pixels
-     sprite_height = tile_manager.tile_height  # e.g., 54 pixels
-     ```
-   - Sprites should be same scale as in-game for consistency
-
-2. **In-Game Rendering**:
-   - Use TileManager.tile_width/height for both size AND positioning
-   - These dimensions are viewport-scaled (e.g., 65x54 for 2x zoom)
-   - Game area uses different coordinate system than menus
-
-3. **Console Transparency**:
-   - Set entire console background transparent: `console.rgba["bg"][:, :, 3] = 0`
-   - Text rendering makes those areas opaque automatically
-   - Sprites underneath show through transparent areas
-
-**Common Mistakes**:
+**Common mistakes:**
 - Using tileset size (10x16) for sprite SIZE → tiny sprites
-- Using tile dimensions (65x54) to multiply console coords → wrong positions
-- Mixing positioning math between menus and in-game rendering
+- Using tile dimensions to multiply console coords → wrong positions
+
+**For complete details:** See `.claude/TCOD_GUIDE.md`
 
 ---
 

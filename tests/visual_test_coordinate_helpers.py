@@ -11,7 +11,7 @@ Run this script manually to visually verify:
 - Coordinate calculations are accurate
 
 Usage:
-    uv run python tests/visual_test_coordinate_helpers.py
+    python tests/visual_test_coordinate_helpers.py
 """
 
 import tcod
