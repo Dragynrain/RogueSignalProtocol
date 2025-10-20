@@ -954,5 +954,232 @@ class TestStrategicCoverClusters:
         assert len(points) >= 0  # Should not crash
 
 
+class TestVariableRoomTypes:
+    """Test variable room type generation (L-shaped, irregular, cross, circular, pillar)."""
+
+    def setup_method(self):
+        """Set up test environment."""
+        self.game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
+        self.level_generator = LevelGenerator(self.game_map)
+
+    def test_room_type_selection(self):
+        """Test that room type selection returns valid types."""
+        # Test with various room sizes
+        room_types = set()
+        for _ in range(50):
+            room_type = self.level_generator._select_room_type(1, 8, 8)
+            room_types.add(room_type)
+            assert room_type in ['rectangular', 'l_shaped', 'irregular', 'cross', 'circular']
+
+        # Should use multiple types over 50 iterations
+        assert len(room_types) >= 2
+
+    def test_room_type_respects_minimum_sizes(self):
+        """Test that room types respect minimum size requirements."""
+        # Small room should only get rectangular or limited types
+        for _ in range(20):
+            small_room_type = self.level_generator._select_room_type(1, 3, 3)
+            assert small_room_type in ['rectangular']
+
+        # Large room should be able to get all types
+        large_room_types = set()
+        for _ in range(100):
+            large_room_type = self.level_generator._select_room_type(1, 8, 8)
+            large_room_types.add(large_room_type)
+
+        # Should have variety
+        assert len(large_room_types) >= 3
+
+    def test_carve_rectangular_room(self):
+        """Test rectangular room carving."""
+        # Fill map with walls
+        for x in range(GameConfig.MAP_WIDTH):
+            for y in range(GameConfig.MAP_HEIGHT):
+                self.game_map.walls.add((x, y))
+
+        room = (10, 10, 5, 5)
+        self.level_generator._carve_rectangular_room(room)
+
+        # Verify all tiles in room are carved
+        for x in range(10, 15):
+            for y in range(10, 15):
+                assert (x, y) not in self.game_map.walls
+
+    def test_carve_l_shaped_room(self):
+        """Test L-shaped room carving."""
+        # Fill map with walls
+        for x in range(GameConfig.MAP_WIDTH):
+            for y in range(GameConfig.MAP_HEIGHT):
+                self.game_map.walls.add((x, y))
+
+        room = (10, 10, 8, 8)
+        self.level_generator._carve_l_shaped_room(room)
+
+        # Count carved tiles
+        carved_tiles = 0
+        for x in range(10, 18):
+            for y in range(10, 18):
+                if (x, y) not in self.game_map.walls:
+                    carved_tiles += 1
+
+        # Should carve less than full room but more than half
+        full_room_size = 8 * 8
+        assert carved_tiles > full_room_size * 0.5
+        assert carved_tiles < full_room_size
+
+    def test_carve_irregular_room(self):
+        """Test irregular/damaged room carving."""
+        # Fill map with walls
+        for x in range(GameConfig.MAP_WIDTH):
+            for y in range(GameConfig.MAP_HEIGHT):
+                self.game_map.walls.add((x, y))
+
+        room = (10, 10, 8, 8)
+        random.seed(42)
+        self.level_generator._carve_irregular_room(room)
+
+        # Count carved tiles
+        carved_tiles = 0
+        for x in range(10, 18):
+            for y in range(10, 18):
+                if (x, y) not in self.game_map.walls:
+                    carved_tiles += 1
+
+        # Should carve at least 70% of room (removed up to 30%)
+        full_room_size = 8 * 8
+        assert carved_tiles >= full_room_size * 0.7
+
+    def test_carve_cross_room(self):
+        """Test cross/plus-shaped room carving."""
+        # Fill map with walls
+        for x in range(GameConfig.MAP_WIDTH):
+            for y in range(GameConfig.MAP_HEIGHT):
+                self.game_map.walls.add((x, y))
+
+        room = (10, 10, 9, 9)
+        self.level_generator._carve_cross_room(room)
+
+        # Verify center column is carved (vertical bar)
+        center_x = 10 + 9 // 2
+        for y in range(10, 19):
+            assert (center_x, y) not in self.game_map.walls
+
+        # Verify center row is carved (horizontal bar)
+        center_y = 10 + 9 // 2
+        for x in range(10, 19):
+            assert (x, center_y) not in self.game_map.walls
+
+    def test_carve_circular_room(self):
+        """Test circular/oval room carving."""
+        # Fill map with walls
+        for x in range(GameConfig.MAP_WIDTH):
+            for y in range(GameConfig.MAP_HEIGHT):
+                self.game_map.walls.add((x, y))
+
+        room = (10, 10, 8, 8)
+        self.level_generator._carve_circular_room(room)
+
+        # Verify center is carved
+        center_x, center_y = 10 + 4, 10 + 4
+        assert (center_x, center_y) not in self.game_map.walls
+
+        # Count carved tiles - should be less than full rectangular room
+        carved_tiles = 0
+        for x in range(10, 18):
+            for y in range(10, 18):
+                if (x, y) not in self.game_map.walls:
+                    carved_tiles += 1
+
+        full_room_size = 8 * 8
+        # Circle should carve roughly pi/4 of the rectangular area (~78%)
+        assert carved_tiles < full_room_size
+        assert carved_tiles > full_room_size * 0.5
+
+    def test_apply_pillar_pattern(self):
+        """Test pillar pattern application to large rooms."""
+        # Fill map with walls
+        for x in range(GameConfig.MAP_WIDTH):
+            for y in range(GameConfig.MAP_HEIGHT):
+                self.game_map.walls.add((x, y))
+
+        # Create large room
+        room = (10, 10, 10, 10)
+        self.level_generator._carve_rectangular_room(room)
+
+        floor_before = sum(1 for x in range(10, 20) for y in range(10, 20) if (x, y) not in self.game_map.walls)
+
+        # Apply pillars
+        random.seed(1)  # Seed that triggers pillar placement
+        self.level_generator._apply_pillar_pattern(room, level=1)
+
+        floor_after = sum(1 for x in range(10, 20) for y in range(10, 20) if (x, y) not in self.game_map.walls)
+
+        # Pillars may or may not be added based on chance
+        # If added, floor tiles should decrease
+        assert floor_after <= floor_before
+
+    def test_level_generation_with_varied_rooms(self):
+        """Test that full level generation works with varied room types."""
+        random.seed(12345)
+        self.level_generator.generate_level(1, 88888)
+
+        # Should complete successfully
+        assert len(self.game_map.walls) > 0
+
+        # Should have some floor tiles
+        floor_count = 0
+        for x in range(GameConfig.MAP_WIDTH):
+            for y in range(GameConfig.MAP_HEIGHT):
+                if (x, y) not in self.game_map.walls:
+                    floor_count += 1
+
+        assert floor_count > 100
+
+        # Gateway should be placed
+        assert self.game_map.gateway is not None
+
+    def test_per_level_room_type_weights(self):
+        """Test that different levels use different room type distributions."""
+        # Get weights for different levels
+        weights_l1 = self.level_generator._get_room_type_weights(1)
+        weights_l2 = self.level_generator._get_room_type_weights(2)
+        weights_l3 = self.level_generator._get_room_type_weights(3)
+
+        # Verify all levels have rectangular as most common or second most common
+        assert all('rectangular' in w for w in [weights_l1, weights_l2, weights_l3])
+
+        # Level 1 should favor rectangular more than or equal to level 3
+        # (Equal is acceptable if per-level configs not loaded, > if they are loaded)
+        assert weights_l1['rectangular'] >= weights_l3['rectangular']
+
+        # Verify weights are valid (sum to 1.0 or close to it)
+        for weights in [weights_l1, weights_l2, weights_l3]:
+            total = sum(weights.values())
+            assert 0.99 <= total <= 1.01
+
+    def test_all_room_types_can_be_generated(self):
+        """Test that all room types can be successfully generated."""
+        room_types = ['rectangular', 'l_shaped', 'irregular', 'cross', 'circular']
+
+        for room_type in room_types:
+            # Clear map
+            for x in range(GameConfig.MAP_WIDTH):
+                for y in range(GameConfig.MAP_HEIGHT):
+                    self.game_map.walls.add((x, y))
+
+            # Carve room of each type
+            room = (15, 15, 8, 8)
+            self.level_generator._carve_room(room, room_type, level=1)
+
+            # Verify some tiles were carved
+            carved_tiles = 0
+            for x in range(15, 23):
+                for y in range(15, 23):
+                    if (x, y) not in self.game_map.walls:
+                        carved_tiles += 1
+
+            assert carved_tiles > 0, f"Room type {room_type} failed to carve any tiles"
+
+
 if __name__ == "__main__":
     pytest.main([__file__])

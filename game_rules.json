@@ -78,7 +78,17 @@
     "corridor_alcove_min_length": 4,
     "cover_min_open_area_size": 10,
     "cover_cluster_chance": 0.50,
-    "cover_poisson_radius": 8.0
+    "cover_poisson_radius": 8.0,
+    "room_type_weights": {
+      "rectangular": 0.45,
+      "l_shaped": 0.15,
+      "irregular": 0.20,
+      "cross": 0.10,
+      "circular": 0.10
+    },
+    "pillar_room_chance": 0.15,
+    "pillar_min_room_size": 7,
+    "pillar_grid_spacing": 2
   },
   "balance": {
     "heat_reduction_normal": 2,
