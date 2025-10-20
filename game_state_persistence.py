@@ -275,7 +275,9 @@ class GameStatePersistence:
 
             # Restore enemy state
             enemy.cpu = enemy_data["cpu"]
-            enemy.state = enemy_data["state"]
+            # Convert state string back to EnemyState enum
+            from game_entities import EnemyState
+            enemy.state = EnemyState(enemy_data["state"]) if isinstance(enemy_data["state"], str) else enemy_data["state"]
             enemy.move_cooldown = enemy_data["move_cooldown"]
             enemy.disabled_turns = enemy_data["disabled_turns"]
             enemy.alert_timer = enemy_data["alert_timer"]
