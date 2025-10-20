@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Save game management system.
-Extracted from RogueSignalProtocol.py for better organization.
+Rogue Signal Protocol - Save Game Management
+
+Complete game state serialization and deserialization system.
+Handles JSON save/load with numpy type conversion and robust error handling.
+Deletes save file on player death (per game design). Single save slot system.
 """
 
 import json

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Game Inspection Module
-Provides entity inspection for look mode - identifies and describes entities at positions.
+Rogue Signal Protocol - Entity Inspection Module
+
+Provides entity inspection for look mode with priority-based entity identification.
+EntityInspector examines positions and returns formatted entity information.
+Loads terrain descriptions from game_rules.json. Used by inspection panel rendering.
 """
 
 from typing import Optional, Dict, Any

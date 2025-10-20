@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-Game Rendering UI - Full Screens
-Renders full-screen UIs like help, inventory, and lore viewer.
+Rogue Signal Protocol - Full Screen Renderer
+
+Renders full-screen overlays: help, inventory, story fragments, and lore viewer.
+Delegates to specialized menu systems (HelpMenu, GraphicalHelpMenu) and uses
+utility classes (ScreenRenderingUtils, ScrollableListManager) for common operations.
+Manages scroll state for inventory and lore viewer screens.
 """
 
 import tcod
@@ -16,7 +20,23 @@ from game_screen_utilities import ScreenRenderingUtils, ScrollableListManager
 
 
 class FullScreenRenderer:
-    """Renders full-screen UI overlays."""
+    """
+    Renders full-screen UI overlays.
+
+    Coordinates rendering of:
+    - Help screens (graphical or text-based, delegated to help menu classes)
+    - Inventory screen with scrolling and item management
+    - Story fragment discovery screens
+    - Lore viewer with list and reading modes
+
+    Reuses status and message log renderers for consistent UI.
+    Creates help menu on demand and caches it for reuse.
+
+    Key attributes:
+        status_renderer: Renders status bar for inventory screen
+        message_log_renderer: Renders message log for inventory screen
+        _help_menu: Cached help menu instance (HelpMenu or GraphicalHelpMenu)
+    """
 
     def __init__(self, status_renderer, message_log_renderer, settings=None, context=None, tile_manager=None):
         """
@@ -41,14 +61,35 @@ class FullScreenRenderer:
     # === HELPER METHODS ===
 
     def _clear_game_area(self, console: tcod.console.Console) -> None:
-        """Clear only the main game area, preserving UI elements."""
+        """
+        Clear only the main game area, preserving UI panels.
+
+        Clears the viewport but leaves status bar, message log, and bottom panel intact.
+        Used by inventory screen to maintain UI consistency.
+
+        Args:
+            console: TCOD console to clear
+        """
         for x in range(GameConfig.GAME_AREA_WIDTH()):
             for y in range(1, GameConfig.PANEL_Y()):
                 render_char_safe(console, x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
 
     def _render_overlay_menu(self, console: tcod.console.Console, title: str, options: list, menu_width: int = 30) -> tuple:
-        """Render a centered overlay menu with title and options.
-        Returns (menu_x, menu_y, menu_height) for additional rendering."""
+        """
+        Render a centered overlay menu with title and options.
+
+        Draws a bordered, centered menu box with title and option list.
+        Used by story fragment and other overlay screens.
+
+        Args:
+            console: TCOD console to render to
+            title: Menu title text
+            options: List of option strings
+            menu_width: Width of menu box in characters (default 30)
+
+        Returns:
+            Tuple of (menu_x, menu_y, menu_height) for additional rendering
+        """
         menu_height = 6 + len(options)  # Header + options + padding
         menu_x = (GameConfig.SCREEN_WIDTH - menu_width) // 2
         menu_y = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
@@ -120,7 +161,17 @@ class FullScreenRenderer:
         return ""
 
     def render_inventory_screen(self, console: tcod.console.Console, game):
-        """Render the inventory screen with scrolling support."""
+        """
+        Render the inventory screen with scrolling support.
+
+        Displays all items grouped by category (exploits, codes, upgrades, fragments).
+        Uses ScrollableListManager for automatic scroll handling with selection tracking.
+        Preserves status bar and message log for UI consistency.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with player inventory and scroll state
+        """
         # Clear only the main game area, preserve UI elements
         self._clear_game_area(console)
 
@@ -176,7 +227,18 @@ class FullScreenRenderer:
         self._render_inventory_controls(console)
 
     def _build_inventory_lines(self, game):
-        """Build all inventory display lines with formatting."""
+        """
+        Build all inventory lines for rendering with proper formatting.
+
+        Creates a flat list of all inventory items grouped by category:
+        - Exploits (with equipped indicators and stats)
+        - Code Hacks (with equipped indicators and effects)
+        - Upgrades (installed status and descriptions)
+        - Story Fragments (discovered count)
+
+        Returns:
+            List of dicts with 'x', 'text', 'color' keys for each line
+        """
         lines = []
 
         # Equipped exploits section
@@ -282,7 +344,18 @@ class FullScreenRenderer:
 
 
     def _find_selection_line(self, game) -> int:
-        """Find which line number the current selection is on."""
+        """
+        Find which line contains the currently selected inventory item.
+
+        Scans built inventory lines to locate the selected item's display line.
+        Used by scroll manager to ensure selected item is visible.
+
+        Args:
+            game: GameEngine with inventory_selector state
+
+        Returns:
+            Line index of selected item, or 0 if not found
+        """
         equipped_count = len(game.player.inventory_manager.equipped_exploits)
         display_items = game.player.inventory_manager.get_display_items()
 
@@ -323,7 +396,14 @@ class FullScreenRenderer:
         return line_count
 
     def _render_inventory_controls(self, console: tcod.console.Console):
-        """Render inventory controls."""
+        """
+        Render inventory screen controls at the bottom.
+
+        Shows available actions: equip, unequip, install, use, drop, and close.
+
+        Args:
+            console: TCOD console to render to
+        """
         y_start = GameConfig.SCREEN_HEIGHT - 6
 
         render_char_safe(console, 2, y_start, "CONTROLS:", fg=Colors.CYAN)
@@ -332,7 +412,17 @@ class FullScreenRenderer:
         render_char_safe(console, 4, y_start + 3, "ESC/I: Close inventory", fg=Colors.WHITE)
 
     def render_story_fragment_screen(self, console: tcod.console.Console, game, fragment_index: int):
-        """Render a single story fragment discovery screen."""
+        """
+        Render a story fragment discovery screen when player picks up a fragment.
+
+        Shows fragment title and content in centered overlay menu.
+        Prompts player to press any key to continue.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine (for context)
+            fragment_index: Index of fragment to display
+        """
         console.clear()
 
         # Get the fragment text
@@ -357,7 +447,19 @@ class FullScreenRenderer:
         )
 
     def render_lore_viewer_screen(self, console: tcod.console.Console, game):
-        """Render the lore viewer showing all discovered fragments."""
+        """
+        Render the lore viewer with all discovered story fragments.
+
+        Has two modes:
+        - List mode: Shows all discovered fragments with selection
+        - Reading mode: Shows selected fragment content
+
+        Uses game.lore_viewer_selected to track selected fragment.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with story_fragment_manager and lore viewer state
+        """
         console.clear()
 
         discovered_fragments = game.story_fragment_manager.get_discovered_fragments()
@@ -371,7 +473,19 @@ class FullScreenRenderer:
             self._render_lore_list_mode(console, game, discovered_fragments, discovered_count, total_count)
 
     def _render_lore_list_mode(self, console: tcod.console.Console, game, discovered_fragments, discovered_count: int, total_count: int):
-        """Render the lore viewer list mode."""
+        """
+        Render lore viewer list mode showing all discovered fragments.
+
+        Displays scrollable list of discovered fragments with selection highlighting.
+        Shows discovery count and navigation controls.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with lore_viewer_selected
+            discovered_fragments: List of discovered story fragments
+            discovered_count: Number of fragments discovered
+            total_count: Total number of fragments in game
+        """
         title = f"RECOVERED DATA FRAGMENTS ({discovered_count}/{total_count})"
         content_start_y = ScreenRenderingUtils.render_screen_header(console, title)
 
@@ -421,7 +535,17 @@ class FullScreenRenderer:
             ScreenRenderingUtils.render_screen_footer(console, "Up/Down: Navigate, Enter: Read, ESC: Close")
 
     def _render_lore_reading_mode(self, console: tcod.console.Console, game, discovered_fragments):
-        """Render the lore viewer reading mode."""
+        """
+        Render lore viewer reading mode for selected fragment.
+
+        Shows full content of selected fragment with text wrapping.
+        Displays navigation controls for returning to list or switching fragments.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with lore_viewer_selected
+            discovered_fragments: List of discovered story fragments
+        """
         if game.lore_viewer_selection >= len(discovered_fragments):
             game.lore_viewer_selection = 0
 

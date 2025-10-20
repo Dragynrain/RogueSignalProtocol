@@ -1,7 +1,16 @@
 #!/usr/bin/env python3
 """
-Data loading and configuration management.
-Extracted from RogueSignalProtocol.py for better organization.
+Data Loading and Configuration Management
+
+Centralized JSON file loading with caching and strict error handling.
+Provides static methods for loading:
+- Game content (exploits, enemies, upgrades)
+- Story fragments
+- Configuration rules (balance, AI behavior)
+
+Uses fail-fast approach - missing files or keys cause immediate errors
+rather than using fallback values. This ensures configuration problems
+are caught during development, not during gameplay.
 """
 
 import json
@@ -12,7 +21,13 @@ from game_errors import GameErrorHandler
 
 
 class DataLoader:
-    """Handles loading of JSON configuration and game data files."""
+    """
+    Handles loading of JSON configuration and game data files.
+
+    Uses class-level caching to avoid re-reading files on every access.
+    All methods are class methods since there's no instance state.
+    Delegates error handling to GameErrorHandler for consistent error reporting.
+    """
 
     _story_fragments = None
     _game_data = None
@@ -20,7 +35,19 @@ class DataLoader:
 
     @classmethod
     def _load_json_file(cls, filename: str, key: str = None) -> Any:
-        """Load JSON file with standardized error handling."""
+        """
+        Load JSON file with standardized error handling.
+
+        Args:
+            filename: Path to JSON file
+            key: Optional key to extract from root object
+
+        Returns:
+            Parsed JSON data (full or extracted by key)
+
+        Raises:
+            Exits game via GameErrorHandler if file not found or invalid
+        """
         try:
             with open(filename, 'r', encoding='utf-8') as f:
                 data = json.load(f)
@@ -85,7 +112,18 @@ class DataLoader:
     
     @classmethod
     def load_config(cls) -> Dict[str, Any]:
-        """Load configuration from JSON file."""
+        """
+        Load configuration from game_rules.json with caching.
+
+        Contains balance values, AI behavior, colors, and message patterns.
+        Cached on first access to avoid repeated file I/O.
+
+        Returns:
+            Full configuration dictionary
+
+        Raises:
+            Exits game via GameErrorHandler if file missing or invalid
+        """
         if cls._config is None:
             try:
                 with open('game_rules.json', 'r', encoding='utf-8') as f:

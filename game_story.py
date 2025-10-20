@@ -1,7 +1,22 @@
 #!/usr/bin/env python3
 """
-Story fragment management system.
-Extracted from RogueSignalProtocol.py for better organization.
+Story fragment discovery and persistent progress tracking system.
+
+This module manages narrative fragments found throughout the game:
+- Discovery tracking (which fragments have been found)
+- Persistent storage across game sessions (rogue_signal_progress.json)
+- Fragment retrieval and ordering
+- Progress queries for UI display
+
+Key features:
+- Story fragments persist across runs (not tied to save files)
+- Fragments discovered in order (0, 1, 2, ...)
+- Progress saved immediately on discovery
+- Fragment text loaded from story_content.json
+
+Delegation:
+- PersistentStorage: File I/O for progress data
+- get_story_fragments(): Loads fragment text from story_content.json
 """
 
 from typing import List, Tuple, Optional
@@ -11,8 +26,24 @@ from data_loading import PersistentStorage, get_story_fragments
 
 
 class StoryFragmentManager:
-    """Manages story fragment discovery and display."""
-    
+    """
+    Manages story fragment discovery with persistent progress tracking.
+
+    Responsibilities:
+    - Track which fragments have been discovered (persists across sessions)
+    - Save/load progress data (rogue_signal_progress.json)
+    - Query next undiscovered fragment for placement
+    - Retrieve discovered fragments for display in fragments menu
+
+    Story fragments are separate from save files - they persist even after
+    death (permadeath) or game completion. This allows players to collect
+    all story pieces across multiple runs.
+
+    Attributes:
+        progress_data: Dict containing discovered fragments and version
+        discovered_fragments: List of fragment indices (0, 1, 2, ...) that have been found
+    """
+
     def __init__(self):
         # Initialize progress data with defaults (PersistentStorage moved to data_loading module)
         storage = PersistentStorage()
@@ -25,7 +56,15 @@ class StoryFragmentManager:
         self.discovered_fragments: List[int] = self.progress_data.get("discovered_story_fragments", [])
     
     def get_next_undiscovered_fragment(self) -> Optional[int]:
-        """Get the next fragment index that hasn't been discovered yet."""
+        """
+        Get the next fragment index that hasn't been discovered yet.
+
+        Used by level generator to place story fragments - only undiscovered
+        fragments are placed in levels.
+
+        Returns:
+            Next undiscovered fragment index (0-based), or None if all discovered
+        """
         story_fragments = get_story_fragments()
         for i in range(len(story_fragments)):
             if i not in self.discovered_fragments:
@@ -33,7 +72,19 @@ class StoryFragmentManager:
         return None  # All fragments discovered
     
     def discover_fragment(self, fragment_index: int) -> bool:
-        """Discover a new story fragment and save progress."""
+        """
+        Mark a fragment as discovered and save progress immediately.
+
+        Validates fragment index, adds to discovered list (sorted), and
+        persists to rogue_signal_progress.json. This ensures progress is
+        saved even if the player dies before reaching a save point.
+
+        Args:
+            fragment_index: Index of fragment to discover (0-based)
+
+        Returns:
+            True if newly discovered, False if already discovered or invalid index
+        """
         if fragment_index in self.discovered_fragments:
             return False  # Already discovered
             
@@ -52,7 +103,12 @@ class StoryFragmentManager:
         return True
     
     def get_discovered_fragments(self) -> List[Tuple[int, str]]:
-        """Get all discovered fragments in order."""
+        """
+        Get all discovered fragments in order for display in fragments menu.
+
+        Returns:
+            List of (fragment_index, fragment_text) tuples sorted by index
+        """
         story_fragments = get_story_fragments()
         fragments = []
         for fragment_index in sorted(self.discovered_fragments):
@@ -61,6 +117,11 @@ class StoryFragmentManager:
         return fragments
     
     def get_fragment_count(self) -> Tuple[int, int]:
-        """Get (discovered_count, total_count) for UI display."""
+        """
+        Get fragment counts for UI display (e.g., "Fragments: 3/10").
+
+        Returns:
+            Tuple of (discovered_count, total_count)
+        """
         story_fragments = get_story_fragments()
         return len(self.discovered_fragments), len(story_fragments)

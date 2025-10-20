@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Game Loop and Initialization
-Contains main game loop, window management, and initialization functions.
+Rogue Signal Protocol - Game Loop and Initialization
+
+Main game loop, TCOD context initialization, and window management.
+Handles menu navigation, game state transitions, and error recovery.
+Coordinates rendering, input handling, and audio systems.
 """
 
 import tcod

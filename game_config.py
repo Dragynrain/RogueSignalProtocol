@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """
-Game configuration and settings management.
-Extracted from RogueSignalProtocol.py for better organization.
+Game Configuration and Settings Management
+
+Contains:
+- GameSettings: User preferences (audio, graphics mode, dialogue preferences)
+- GameConfig: Core game constants (map size, FOV, balance values)
+- GameBalance: Balance values loaded from JSON
+- RoomGenerationConfig: Procedural generation parameters
+
+GameSettings persists to user_settings.json (can use defaults if missing).
+GameConfig and GameBalance load from game_rules.json (fail-fast if missing).
 """
 
 import json
@@ -14,10 +22,21 @@ from data_loading import DataLoader
 
 
 class GameSettings:
-    """Manages game settings with persistent storage."""
-    
+    """
+    Manages user preferences with persistent storage.
+
+    Settings are saved to user_settings.json and loaded on startup.
+    If the file is missing or corrupted, creates a new one with defaults.
+    This is the ONLY configuration file that can be missing without error.
+
+    Settings include:
+    - Audio volumes (master, SFX, music)
+    - Graphics mode (glyph vs graphics sprites)
+    - Dialogue preferences (which dialogues to show/hide)
+    """
+
     SETTINGS_FILE = "user_settings.json"
-    
+
     def __init__(self):
         self.master_volume = 0.7
         self.sfx_volume = 0.8
@@ -27,7 +46,16 @@ class GameSettings:
         self.load_settings()
     
     def load_settings(self) -> None:
-        """Load settings from file."""
+        """
+        Load settings from user_settings.json.
+
+        Handles:
+        - Missing file (creates default)
+        - Empty/corrupted file (recreates default)
+        - Migration from old setting names (e.g., "ascii" -> "glyph")
+
+        Never crashes - always falls back to defaults if needed.
+        """
         try:
             if os.path.exists(self.SETTINGS_FILE):
                 # Read file content first to check for corruption

@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-Menu Background System - Extracted from game_menus.py
-Handles high-resolution background images for main menu with conditional loading.
+Rogue Signal Protocol - Menu Background System
+
+Manages high-resolution PNG background images for main menu.
+Loads random backgrounds from main_menu/ directory with aspect ratio preservation.
+Conditionally loads based on graphics mode setting and falls back gracefully.
+Renders cyberpunk-styled console patterns when SDL backgrounds unavailable.
 """
 
 import tcod
@@ -18,9 +22,27 @@ from game_ui import render_char_safe, WindowManager
 
 
 class MenuBackground:
-    """Handles high-resolution background images for main menu with conditional loading."""
-    
+    """
+    Manages menu background rendering with high-res PNG images and console fallback.
+
+    Loads random background from 25 available images (main_menu_1.png through main_menu_25.png).
+    Uses SDL renderer for PNG display in graphics mode, falls back to cyberpunk console
+    pattern in glyph mode. Handles window resize and mode switching gracefully.
+
+    Key attributes:
+        background_texture: SDL texture for current background (None if not loaded)
+        enabled: Whether background system is active (disabled on errors)
+        image_size: Original PNG dimensions for aspect ratio calculations
+    """
+
     def __init__(self, context, settings):
+        """
+        Initialize menu background system.
+
+        Args:
+            context: TCOD context with SDL renderer access
+            settings: GameSettings instance with graphics_mode setting
+        """
         self.context = context
         self.settings = settings
         self.window_manager = WindowManager(context)
@@ -30,19 +52,36 @@ class MenuBackground:
         self.last_window_size = None
         self.image_size = None
         self.last_known_mode = settings.graphics_mode
-        
+
     def reset_background_system(self):
-        """Reset background system and re-enable graphics."""
+        """
+        Reset background system and re-enable graphics after errors.
+
+        Used to recover from background loading failures.
+        """
         self.enabled = True
 
     def should_load_background(self):
-        """Check if background should be loaded based on graphics mode."""
+        """
+        Check if background should be loaded based on current state.
+
+        Returns:
+            True if graphics mode is enabled, system is enabled, and SDL renderer available
+        """
         return (self.settings.graphics_mode == "graphics" and 
                 self.enabled and 
                 self.context.sdl_renderer is not None)
     
     def _handle_background_error(self, message, exception=None):
-        """Simple error handling - log and disable graphics."""
+        """
+        Handle background errors by logging and disabling the system.
+
+        Prevents cascading failures by disabling background after errors.
+
+        Args:
+            message: Error description
+            exception: Optional exception for detailed logging
+        """
         error_msg = f"Background graphics error: {message}"
         logging.warning(error_msg)
         if exception:
@@ -50,7 +89,17 @@ class MenuBackground:
         self.enabled = False
     
     def _get_image_path(self, image_number):
-        """Build path to image file."""
+        """
+        Build absolute path to background image file.
+
+        Handles both frozen (exe) and development paths.
+
+        Args:
+            image_number: Image number (1-25)
+
+        Returns:
+            Absolute path to main_menu/main_menu_{number}.png
+        """
         if getattr(sys, 'frozen', False):
             base_path = os.path.dirname(sys.executable)
         else:
@@ -58,7 +107,15 @@ class MenuBackground:
         return os.path.join(base_path, "main_menu", f"main_menu_{image_number}.png")
         
     def load_random_background(self):
-        """Load one random menu background. If it fails, disable graphics mode."""
+        """
+        Load one random menu background from available images.
+
+        Selects random image from 1-25 and loads it as SDL texture.
+        Disables background system on failure to prevent repeated errors.
+
+        Returns:
+            True if background loaded successfully, False otherwise
+        """
         if not self.should_load_background():
             return False
 
@@ -76,7 +133,18 @@ class MenuBackground:
     
     
     def _load_image_file(self, image_path):
-        """Load image file and create SDL texture."""
+        """
+        Load PNG image file and create SDL texture.
+
+        Uses PIL to load image, converts to RGB if needed, uploads to SDL.
+        Stores original image size for aspect ratio calculations.
+
+        Args:
+            image_path: Path to PNG file
+
+        Returns:
+            True if texture created successfully, False otherwise
+        """
         if not os.path.exists(image_path):
             return False
 
@@ -109,7 +177,15 @@ class MenuBackground:
             return False
 
     def render_background(self, console):
-        """Render background image using SDL renderer."""
+        """
+        Render background image using SDL renderer with aspect ratio preservation.
+
+        Calculates destination rectangle to fit background in window while maintaining
+        aspect ratio. Uses SDL renderer.copy() for texture rendering.
+
+        Args:
+            console: TCOD console (unused, kept for API consistency)
+        """
         if (not self.should_load_background() or 
             not self.background_texture or 
             not self.image_size):
@@ -140,7 +216,15 @@ class MenuBackground:
             self._handle_background_error('texture_failed', f"SDL background rendering failed", e)
     
     def _render_console_background(self, console):
-        """Render a visible cyberpunk background pattern to the console."""
+        """
+        Render cyberpunk-styled console background pattern.
+
+        Creates side panels with dense pattern, borders, and subtle center atmosphere.
+        Used when SDL background unavailable (glyph mode or loading failure).
+
+        Args:
+            console: TCOD console to render to
+        """
         # Create a more visible cyberpunk background with side panels
         
         # Fill left side with cyberpunk pattern (positions 0-25)
@@ -246,7 +330,11 @@ class MenuBackground:
             self.load_random_background()  # Load new background if in graphics mode
     
     def cleanup(self):
-        """Free background texture memory."""
+        """
+        Free background texture memory and reset state.
+
+        Called when switching to glyph mode or shutting down.
+        """
         self.background_texture = None
         self.current_image_path = None
         self.image_size = None

@@ -1,5 +1,13 @@
 """
-Game Map Module - Handles map data structure and queries
+Game Map Module - Handles map data structure and spatial queries.
+
+Manages all map-related data:
+- Terrain (walls, shadows)
+- Special nodes (cooling, CPU recovery, ghost)
+- Items (code hacks, exploits, upgrades, story fragments)
+- Gateway (level exit)
+- Fog of war and enemy memory system
+- Line of sight calculations using TCOD FOV
 """
 
 import logging
@@ -12,8 +20,14 @@ from game_inventory import CodeHack, ExploitItem, StoryFragment
 
 
 class GameMap:
-    """Game world map with terrain and features."""
-    
+    """
+    Game world map with terrain and features.
+
+    Stores map data as sets and dictionaries for fast lookups.
+    Provides query methods for terrain, items, and visibility.
+    Maintains explored tiles and last known enemy positions for fog of war.
+    """
+
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
@@ -50,11 +64,22 @@ class GameMap:
         return (position.x, position.y) in self.walls
     
     def is_shadow(self, position: Position) -> bool:
-        """Check if position is in shadow."""
+        """
+        Check if position is in shadow.
+
+        Shadow zones provide stealth bonuses and enable Shadow Step teleportation.
+        Ghost nodes also count as shadows in addition to their trace reduction effect.
+
+        Args:
+            position: Position to check
+
+        Returns:
+            True if position is in a shadow zone or is a ghost node
+        """
         if not position.is_valid(self.width, self.height):
             return False
         # Ghost nodes function as shadows in addition to their special effect
-        return ((position.x, position.y) in self.shadows or 
+        return ((position.x, position.y) in self.shadows or
                 (position.x, position.y) in self.ghost_nodes)
     
     def is_cooling_node(self, position: Position) -> bool:
@@ -83,7 +108,19 @@ class GameMap:
                 not self.is_wall(position))
     
     def has_line_of_sight(self, start: Position, end: Position) -> bool:
-        """Check line of sight between two positions using TCOD's improved FOV system."""
+        """
+        Check line of sight between two positions.
+
+        Uses TCOD's symmetric shadowcasting FOV algorithm for better corner visibility
+        and consistency with the game's FOV rendering.
+
+        Args:
+            start: Starting position (viewer)
+            end: Target position
+
+        Returns:
+            True if unobstructed line of sight exists
+        """
         # Use the improved TCOD version for better corner visibility
         return self.has_line_of_sight_tcod(start, end)
     
@@ -124,7 +161,21 @@ class GameMap:
         return False  # Safety fallback if max steps exceeded
     
     def has_line_of_sight_tcod(self, start: Position, end: Position) -> bool:
-        """Check line of sight between two positions using TCOD's FOV system."""
+        """
+        Check line of sight using TCOD's FOV system.
+
+        Creates a transparency map and computes FOV from the start position.
+        Uses symmetric shadowcasting for consistent visibility rules.
+
+        Note: TCOD arrays use [y, x] indexing while functions use (x, y) parameters.
+
+        Args:
+            start: Starting position (viewer)
+            end: Target position
+
+        Returns:
+            True if target is visible from start position
+        """
         if not (start.is_valid(self.width, self.height) and 
                 end.is_valid(self.width, self.height)):
             return False

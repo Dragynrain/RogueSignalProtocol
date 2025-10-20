@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Game Rendering UI - Message Log
-Renders the system message log panel.
+Rogue Signal Protocol - Message Log Renderer
+
+Renders the system message log panel on the right side of the screen.
+Handles message wrapping, scrolling, and proper vertical alignment.
+Hides messages when in look mode to make room for the inspection panel.
 """
 
 import tcod
@@ -13,10 +16,31 @@ from game_ui import render_char_safe
 
 
 class MessageLogRenderer:
-    """Renders the system message log panel."""
+    """
+    Renders the system message log in the right panel.
+
+    Displays scrolling game messages with automatic text wrapping.
+    Uses GameConfig constants for positioning and sizing.
+    Respects look mode by hiding messages when inspection panel is active.
+
+    The log renders with:
+    - Border separator from game area
+    - Help text in top-right corner
+    - "SYSTEM LOG" header with divider
+    - Scrolling message area (shows latest messages)
+    """
 
     def render_system_log(self, console: tcod.console.Console, game):
-        """Render the system log on the right side."""
+        """
+        Render the system message log on the right side.
+
+        Draws border, header, help text, and scrolling messages.
+        Hides messages when in look mode to avoid overlap with inspection panel.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with message_log and look_mode state
+        """
         # Draw log border
         for y in range(GameConfig.SCREEN_HEIGHT):
             render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '│', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
@@ -40,7 +64,16 @@ class MessageLogRenderer:
             self._render_log_messages(console, game)
 
     def _render_log_messages(self, console: tcod.console.Console, game):
-        """Render log messages with proper wrapping."""
+        """
+        Render scrolling log messages with automatic wrapping.
+
+        Shows the most recent messages that fit in the available vertical space.
+        Delegates text wrapping to _wrap_messages().
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with message_log
+        """
         wrapped_lines = self._wrap_messages(game.message_log.messages)
         log_height = GameConfig.SCREEN_HEIGHT - 3  # Adjusted for header repositioning
         visible_lines = wrapped_lines[-log_height:] if len(wrapped_lines) > log_height else wrapped_lines
@@ -51,7 +84,18 @@ class MessageLogRenderer:
                 render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
 
     def _wrap_messages(self, messages: List) -> List[Tuple[str, Tuple[int, int, int]]]:
-        """Wrap long messages across multiple lines."""
+        """
+        Wrap long messages across multiple lines for display.
+
+        Uses word-based wrapping to keep messages readable.
+        Handles both Message objects and (text, color) tuples for flexibility.
+
+        Args:
+            messages: List of Message objects or (text, color) tuples
+
+        Returns:
+            List of (wrapped_text, color) tuples ready for rendering
+        """
         wrapped_lines = []
         max_msg_width = GameConfig.LOG_WIDTH - 2
 

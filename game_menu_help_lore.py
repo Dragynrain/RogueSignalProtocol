@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """
-Help and Lore Menus
-Contains HelpMenu and LoreMenu classes for game information and story fragments.
-Factory function creates appropriate help menu based on graphics mode.
+Rogue Signal Protocol - Help and Lore Menus
+
+Help menu system with text-based display and factory for mode selection.
+LoreMenu displays discovered story fragments from main menu.
+Factory function (create_help_menu) selects HelpMenu or GraphicalHelpMenu based on graphics mode.
 """
 
 import tcod

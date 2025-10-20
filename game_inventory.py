@@ -1,7 +1,17 @@
 #!/usr/bin/env python3
 """
-Inventory and item management system.
-Extracted from RogueSignalProtocol.py for better organization.
+Inventory and item management system with item types and exploit equipping.
+
+This module handles:
+- Item types (CodeHack, ExploitItem, StoryFragment) with use() methods
+- Code hack discovery system (effects randomized per session, revealed on first use)
+- Exploit equipping with RAM constraints and slot limits
+- Inventory operations (add, remove, stack management for code hacks)
+- RAM usage calculation from equipped exploits
+
+Key pattern:
+All items inherit from InventoryItem and override use() for their specific behavior.
+InventoryManager delegates to items for usage logic.
 """
 
 import random
@@ -12,21 +22,59 @@ from game_config import GameBalance
 
 
 class InventoryItem:
-    """Base class for all inventory items."""
-    
+    """
+    Base class for all inventory items using template method pattern.
+
+    Subclasses override use() to implement specific item behavior (heal,
+    equip exploit, reveal story, etc.). The base implementation returns
+    False to indicate no effect.
+
+    Attributes:
+        name: Display name for UI
+        item_type: Category string (code_hack, exploit, story_fragment)
+        description: Descriptive text shown in menus
+    """
+
     def __init__(self, name: str, item_type: str, description: str = ""):
         self.name = name
         self.item_type = item_type
         self.description = description
-    
+
     def use(self, player, game) -> bool:
-        """Use the item. Returns True if successful. Override in subclasses."""
+        """
+        Use the item with side effects on player/game state.
+
+        Args:
+            player: Player instance to modify
+            game: GameEngine instance for message log and game state
+
+        Returns:
+            True if item was successfully used
+        """
         return False
 
 
 class CodeHack(InventoryItem):
-    """Randomized code hacks with unknown effects until used."""
-    
+    """
+    Randomized code hacks with discovery system and stack management.
+
+    Code hacks have randomized effects per game session (e.g., "Crimson Code"
+    might restore CPU in one run, reduce heat in another). Effects are unknown
+    until first use, then revealed for all codes of that color.
+
+    Features:
+    - Color-based effect randomization (same color = same effect per session)
+    - Discovery tracking (first use reveals effect for that color)
+    - Stacking (multiple codes of same color stack in inventory)
+    - Various effects (restore CPU, reduce heat/trace, speed boost, enhanced vision)
+
+    Attributes:
+        color_name: Color identifier used for effect lookup and stacking
+        effect: Effect type key (restore_cpu, reduce_heat, etc.)
+        quantity: Number of uses in this stack
+        discovered: Whether this color's effect has been revealed
+    """
+
     def __init__(self, color_name: str, effect: str, name: str, description: str = "", quantity: int = 1):
         super().__init__(name, "code_hack", description)
         self.color_name = color_name
@@ -35,7 +83,23 @@ class CodeHack(InventoryItem):
         self.discovered = False
     
     def use(self, player, game) -> bool:
-        """Apply the code effect to the player."""
+        """
+        Apply code effect and trigger discovery if first use of this color.
+
+        Discovery flow:
+        1. Decrement quantity (remove if depleted)
+        2. Check if this color has been discovered in this session
+        3. If not discovered: mark as discovered, update all matching codes in inventory
+        4. Show message (with or without discovery notification)
+        5. Apply the specific effect
+
+        Args:
+            player: Player instance to apply effect to
+            game: GameEngine instance for discovery tracking and messages
+
+        Returns:
+            True if effect was successfully applied
+        """
         if self.color_name not in game.code_hack_effects:
             return False
         
@@ -140,8 +204,18 @@ class CodeHack(InventoryItem):
 
 
 class ExploitItem(InventoryItem):
-    """Exploit items that can be equipped."""
-    
+    """
+    Exploit items that can be equipped with RAM cost constraints.
+
+    Exploits are abilities that consume RAM when equipped (e.g., firewall breach,
+    data corruption, stealth protocols). Players can equip up to max_equipped_exploits
+    (default 5) as long as total RAM cost doesn't exceed ram_total.
+
+    Attributes:
+        exploit_key: Key into GameData.EXPLOITS for stats and behavior
+        ram_cost: RAM consumed when equipped (cached from exploit_def)
+    """
+
     def __init__(self, exploit_key: str, exploit_def: ExploitDefinition):
         super().__init__(exploit_def.name, "exploit", exploit_def.description)
         self.exploit_key = exploit_key
@@ -182,8 +256,26 @@ class StoryFragment(InventoryItem):
 
 
 class InventoryManager:
-    """Manages player inventory and equipped items."""
-    
+    """
+    Manages player inventory, item operations, and exploit equipping.
+
+    Responsibilities:
+    - Item storage (list of InventoryItem instances)
+    - Stack management for code hacks (same color stacks together)
+    - Exploit equipping with RAM/slot validation
+    - RAM usage calculation from equipped exploits
+    - Item queries by type and display ordering
+
+    Key constraints:
+    - Max 5 equipped exploits (configurable)
+    - Total RAM usage cannot exceed player.ram_total
+    - Code hacks of same color automatically stack
+
+    Delegation:
+    - Items handle their own use() logic
+    - GameData.EXPLOITS provides exploit stats
+    """
+
     def __init__(self, player):
         self.player = player
         self.items: List[InventoryItem] = []
@@ -193,11 +285,23 @@ class InventoryManager:
         self.max_equipped_exploits = 5
     
     def add_item(self, item: InventoryItem) -> bool:
-        """Add an item to inventory."""
+        """
+        Add item to inventory with automatic stacking for code hacks.
+
+        Code hacks of the same color automatically stack together (quantity
+        is incremented on existing stack). Other item types are added as
+        separate entries.
+
+        Args:
+            item: InventoryItem to add (CodeHack, ExploitItem, etc.)
+
+        Returns:
+            True if successfully added
+        """
         if isinstance(item, CodeHack):
             # Look for existing code of the same color
             for existing_item in self.items:
-                if (isinstance(existing_item, CodeHack) and 
+                if (isinstance(existing_item, CodeHack) and
                     existing_item.color_name == item.color_name):
                         # Found matching color, add to existing stack
                         existing_item.quantity += item.quantity
@@ -206,7 +310,7 @@ class InventoryManager:
                             existing_item.discovered = True
                         return True
             # No existing stack found, add as new item
-        
+
         # Add non-code items or new code colors
         self.items.append(item)
         return True

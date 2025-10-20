@@ -1,6 +1,10 @@
 #!/usr/bin/env python3
 """
-Menu system and background graphics.
+Rogue Signal Protocol - Menu System
+
+Main menu implementation with settings, graphics preview, and navigation.
+Includes MainMenu, SettingsMenu, and GraphicsPreviewMenu classes.
+Handles background rendering coordination and menu state management.
 Extracted from RogueSignalProtocol.py for better organization.
 """
 
@@ -30,7 +34,18 @@ from game_coordinate_helpers import CoordinateHelpers
 # ============================================================================
 
 class MainMenu(BaseMenu):
-    """Main menu for New Game/Continue options."""
+    """
+    Main menu for game launch and mid-game access.
+
+    Provides options: Continue, New Game, Settings, Help, Data Fragments, Graphics Preview, Exit.
+    Dynamically adjusts options based on save file existence and mid-game context.
+    Shows confirmation dialog for destructive actions (New Game when save exists).
+
+    Key attributes:
+        options: Current menu options list (refreshed dynamically)
+        show_warning: Whether new game warning dialog is active
+        mid_game_mode: True when accessed from in-game (hides Continue option)
+    """
 
     def __init__(self, background=None):
         super().__init__(background)

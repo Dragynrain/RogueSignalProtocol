@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """
-Game Rendering UI - Status
-Renders the status bar and bottom panel.
+Rogue Signal Protocol - Status Bar Renderer
+
+Renders player status information in the top bar and bottom panel.
+Displays CPU, heat, trace levels, RAM usage, equipped exploits, and active conditions.
+Uses color coding to indicate critical resource levels (red/yellow/green thresholds).
 """
 
 import tcod
@@ -14,10 +17,31 @@ from game_ui import render_char_safe
 
 
 class StatusBarRenderer:
-    """Renders player status bar and bottom panel."""
+    """
+    Renders player status information in top bar and bottom panel.
+
+    Top bar shows core resources: CPU, heat, trace level, RAM
+    Bottom panel shows equipped exploits and active temporary conditions
+    Uses color-coded thresholds for quick visual feedback on resource status.
+
+    Color thresholds:
+    - CPU: red <30, yellow <60, green ≥60
+    - Heat: red >80, yellow >60, green ≤60
+    - Trace: red >75, yellow >50, green ≤50
+    - RAM: red if over capacity, green otherwise
+    """
 
     def render_top_status_bar(self, console: tcod.console.Console, game):
-        """Render the top status bar across the full width."""
+        """
+        Render the top status bar with player resources.
+
+        Displays CPU, heat, trace, and RAM with color-coded values.
+        Stays within game area width (help text is in log panel).
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with player stats
+        """
         # Clear the entire top line (full screen width)
         for x in range(GameConfig.SCREEN_WIDTH):
             render_char_safe(console, x, 0, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
@@ -46,7 +70,15 @@ class StatusBarRenderer:
                 x_pos += len(part) + 2
 
     def _get_cpu_color(self, cpu: int) -> Tuple[int, int, int]:
-        """Get color for CPU display."""
+        """
+        Get threshold-based color for CPU display.
+
+        Args:
+            cpu: Current CPU value
+
+        Returns:
+            RGB color tuple (red/yellow/green)
+        """
         if cpu < 30:
             return Colors.RED
         elif cpu < 60:
@@ -55,7 +87,15 @@ class StatusBarRenderer:
             return Colors.GREEN
 
     def _get_heat_color(self, heat: int) -> Tuple[int, int, int]:
-        """Get color for heat display."""
+        """
+        Get threshold-based color for heat display.
+
+        Args:
+            heat: Current heat value
+
+        Returns:
+            RGB color tuple (red/yellow/green)
+        """
         if heat > 80:
             return Colors.RED
         elif heat > 60:
@@ -64,7 +104,15 @@ class StatusBarRenderer:
             return Colors.GREEN
 
     def _get_trace_color(self, trace_level: float) -> Tuple[int, int, int]:
-        """Get color for trace_level display."""
+        """
+        Get threshold-based color for trace level display.
+
+        Args:
+            trace_level: Current trace percentage
+
+        Returns:
+            RGB color tuple (red/yellow/green)
+        """
         if trace_level > 75:
             return Colors.RED
         elif trace_level > 50:
@@ -73,7 +121,17 @@ class StatusBarRenderer:
             return Colors.GREEN
 
     def render_bottom_panel(self, console: tcod.console.Console, game):
-        """Render the bottom information panel."""
+        """
+        Render the bottom panel with exploits and conditions.
+
+        Displays:
+        - Equipped exploits (up to 5, with heat feasibility colors)
+        - Active temporary conditions with turn counts
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with player inventory and effects
+        """
         # Clear panel area
         for x in range(GameConfig.GAME_AREA_WIDTH()):
             for y in range(GameConfig.PANEL_Y(), GameConfig.SCREEN_HEIGHT):
@@ -91,7 +149,17 @@ class StatusBarRenderer:
 
 
     def _render_equipped_exploits_panel(self, console: tcod.console.Console, game):
-        """Render equipped exploits in bottom panel using 2 lines."""
+        """
+        Render equipped exploits across two lines.
+
+        Shows exploits 1-3 on first line, 4-5 on second line.
+        Colors exploits green if usable (heat cost fits), red if too hot.
+        Accounts for exploit efficiency temporary effect reducing heat cost.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with player inventory and heat
+        """
         y1 = GameConfig.PANEL_Y() + 1
         y2 = GameConfig.PANEL_Y() + 2
 
@@ -135,7 +203,17 @@ class StatusBarRenderer:
                 x_pos += len(exploit_text) + 2
 
     def _render_temporary_conditions(self, console: tcod.console.Console, game):
-        """Render all temporary conditions with turn counts remaining."""
+        """
+        Render all active temporary conditions with turn counts.
+
+        Displays player effects (speed boost, data mimic, etc.), threat scan,
+        and speed moves remaining. Uses color-coded display matching the
+        effect type (e.g., data code colors for code effects).
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with player temporary_effects and game_state
+        """
         y = GameConfig.PANEL_Y() + 3
 
         conditions = []
@@ -189,7 +267,21 @@ class StatusBarRenderer:
             render_char_safe(console, 1, y, "Conditions: None", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
 
     def _get_data_code_color_for_effect(self, game, effect_key: str, fallback_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
-        """Get the code color for a specific effect based on the current game's randomization."""
+        """
+        Get the data code color for a specific effect from current game.
+
+        Looks up which color code provides the given effect in this game
+        instance (since code effects are randomized per game). Returns
+        the matching color or fallback if not found.
+
+        Args:
+            game: GameEngine with code_hack_effects mapping
+            effect_key: Effect name (e.g., 'speed_boost', 'enhanced_vision')
+            fallback_color: Color to use if effect not found in mapping
+
+        Returns:
+            RGB color tuple matching the code that provides this effect
+        """
         color_map = {
             'crimson': Colors.CRIMSON,
             'azure': Colors.AZURE,

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 Rogue Signal Protocol - A cyberpunk stealth roguelike
-Refactored main file - imports from modular components
+
+Main entry point that imports modular components and initializes the game.
+Sets up logging configuration for both console and file output.
 """
 
 import tcod
@@ -39,32 +41,29 @@ from game_map import GameMap
 from game_input import InputHandler
 from game_engine import GameEngine
 
-# Import new modular components
+# Import modular components for game loop and rendering
 from game_state import MessageLog, GameStateManager, TurnProcessor
 from game_rendering_core import GameRenderer
 from game_rendering_ui import UIRenderer
 from game_rendering_glyphs import GlyphsMapRenderer
 from game_loop import main, initialize_tcod_context, WindowManager as LoopWindowManager
 
-# Setup detailed logging for comprehensive debugging
+# Configure logging to capture debug info for both console and file output
+# Overwrites game_debug.log each session to prevent log file bloat
 logging.basicConfig(
-    level=logging.DEBUG,  # Changed to DEBUG to capture all debug messages
+    level=logging.DEBUG,
     format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s',
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler('game_debug.log', mode='w')  # Write to file, overwrite each session
+        logging.FileHandler('game_debug.log', mode='w')
     ],
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 
 
-# ============================================================================
-# CONSTANTS AND CONFIGURATION
-# ============================================================================
-# GameConfig imported from game_config.py - no duplication needed
-
-
-# Colors are now handled by the JSON-driven ColorManager in game_entities.py
+# All configuration constants are loaded from JSON files via:
+# - GameConfig (game_config.py): Core game settings and balance values
+# - ColorManager (game_entities.py): JSON-driven color management
 
 
 if __name__ == "__main__":

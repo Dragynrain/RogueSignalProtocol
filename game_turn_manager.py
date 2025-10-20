@@ -1,8 +1,27 @@
 #!/usr/bin/env python3
 """
-Game Turn Manager
-Handles complete turn processing including special tiles, enemies, and game effects.
-Extracted from game_engine.py for better separation of concerns.
+Turn processing manager coordinating game state updates and enemy AI.
+
+This module handles per-turn game logic in structured phases:
+
+Turn processing order:
+1. Player status effects (speed boost, virus damage, temp effects)
+2. Special tile effects (cooling nodes, CPU recovery, ghost nodes, item pickups)
+3. Memory system updates (FOV, explored tiles, enemy ghost positions)
+4. Enemy AI phases (awareness -> movement -> attacks)
+5. Trace level increases and admin spawn checks
+
+Enemy AI phases (CRITICAL ORDER):
+- Phase 1: Awareness - Update states (UNAWARE/ALERT/HOSTILE), communication
+- Phase 2: Movement - All enemies move based on current state
+- Phase 3: Attacks - Adjacent enemies attack (move OR attack, not both)
+
+Key systems:
+- FOV using TCOD shadowcasting for exploration and vision
+- Enemy state machine (UNAWARE -> ALERT -> HOSTILE) with 1-turn alert timer
+- Ghost position tracking (last known enemy locations)
+- Trace level warnings at 75% and 90% thresholds
+- Permadeath save deletion on death
 """
 
 import os
@@ -22,14 +41,54 @@ from game_save import SaveGameManager
 
 
 class GameTurnManager:
-    """Manages complete turn processing and game mechanics."""
+    """
+    Manages complete turn processing with phased enemy AI and game effects.
+
+    Orchestrates all per-turn updates in a specific order to ensure consistent
+    behavior and prevent timing issues. Enemy AI is split into three phases to
+    prevent movement-attack conflicts and ensure proper communication.
+
+    Key responsibilities:
+    - Player status effect updates (speed, virus, temporary effects)
+    - Special tile processing (nodes, pickups, story fragments)
+    - FOV/memory system updates (TCOD shadowcasting, ghost positions)
+    - Enemy AI coordination (three-phase: awareness -> movement -> attacks)
+    - Trace level management and admin spawning
+    - Permadeath enforcement (save deletion on death)
+
+    Phase separation rationale:
+    Separating awareness/movement/attacks prevents enemies from moving twice,
+    ensures proper communication propagation, and makes AI behavior predictable.
+
+    Attributes:
+        game_engine: GameEngine instance for accessing all game systems
+    """
 
     def __init__(self, game_engine):
-        """Initialize with reference to game engine."""
+        """
+        Initialize turn manager with game engine reference.
+
+        Args:
+            game_engine: GameEngine instance providing access to all game systems
+        """
         self.game_engine = game_engine
 
     def process_turn(self):
-        """Process one complete game turn using the new system architecture."""
+        """
+        Process one complete game turn in structured phases.
+
+        Turn order:
+        1. Grant speed boost moves (if active and exhausted)
+        2. Process player turn effects (virus damage, status effects)
+        3. Process special tiles (nodes, items, upgrades, fragments)
+        4. Update memory system (FOV, explored tiles, ghost positions)
+        5. Update enemies (three-phase: awareness -> movement -> attacks)
+        6. Check admin spawn (if trace >= 100%)
+        7. Apply passive trace increase (based on level config)
+
+        Note: Speed boost grants 2 moves per enemy turn. This is processed
+        at the start of each turn to ensure consistent move counting.
+        """
         # Grant speed boost moves at start of turn
         if self.game_engine.player.temporary_effects['speed_boost_turns'] > 0 and self.game_engine.player.speed_moves_remaining == 0:
             self.game_engine.player.speed_moves_remaining = 2  # Grant 2 moves per enemy turn
@@ -216,7 +275,26 @@ class GameTurnManager:
             del self.game_engine.game_map.story_fragments[player_pos]
 
     def _update_enemies(self):
-        """Update all enemy states and actions in structured phases."""
+        """
+        Update all enemy states and actions in structured three-phase system.
+
+        Phase 1: Awareness and Communication
+        - All enemies check visibility and update states (UNAWARE/ALERT/HOSTILE)
+        - Alert/hostile enemies communicate with nearby enemies
+
+        Phase 2: Movement
+        - All enemies move based on their current state
+        - Enemies adjacent to player skip movement (save attack for phase 3)
+
+        Phase 3: Attacks
+        - Enemies adjacent to player attack (move OR attack, not both)
+        - Track attacks for inventory warning dialogue
+
+        Why phased?
+        - Prevents double-movement (enemy moving during awareness then during movement)
+        - Ensures communication propagates before movement
+        - Makes AI behavior deterministic and testable
+        """
         # Reset movement flags at start of enemy turn
         for enemy in self.game_engine.enemies:
             enemy.has_moved_this_turn = False
@@ -234,7 +312,21 @@ class GameTurnManager:
         self._process_enemy_attacks()
 
     def _update_enemy_awareness(self):
-        """PHASE 1: Update enemy awareness states and handle communication."""
+        """
+        PHASE 1: Update enemy awareness states and handle communication.
+
+        State machine per enemy:
+        - UNAWARE + sees player -> ALERT (1 turn grace period)
+        - ALERT + sees player (timer expires) -> HOSTILE (alerts nearby enemies)
+        - ALERT + loses sight -> UNAWARE (after grace period)
+        - HOSTILE + loses sight -> 15% chance to return to UNAWARE
+
+        Communication:
+        - Hostile enemies alert all enemies within NEARBY_ENEMY_ALERT_RADIUS
+        - Alerted enemies immediately become HOSTILE with player's last position
+
+        Note: Skip updates on first turn after loading to preserve saved states.
+        """
         # Skip enemy state updates on the first turn after loading to preserve saved states
         if hasattr(self.game_engine.game_state, 'just_loaded') and self.game_engine.game_state.just_loaded:
             self.game_engine.game_state.just_loaded = False

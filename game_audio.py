@@ -1,7 +1,25 @@
 #!/usr/bin/env python3
 """
-Audio system and sound management.
-Extracted from RogueSignalProtocol.py for better organization.
+Audio system managing sound effects and background music via pygame.
+
+This module handles:
+- Sound effect playback with priority queue (16 simultaneous channels)
+- Background music streaming with fade in/out
+- Volume management (master, music, SFX) synced with GameSettings
+- Sound preloading at startup for instant playback
+- Graceful fallback when pygame unavailable
+
+Key features:
+- Priority-based sound playback (higher priority interrupts lower)
+- Configurable audio directories (sound/, music/)
+- Master volume slider affects all audio (music and SFX)
+- Music loops infinitely or plays once based on loops parameter
+- Safe initialization with fallback to silent mode if pygame missing
+
+Technical details:
+- Uses pygame.mixer with 22050 Hz, 16-bit, stereo, 512 buffer
+- 16 channels for simultaneous sound effects
+- Music volume set from settings immediately after init (pygame defaults to 0.0)
 """
 
 import os
@@ -21,8 +39,31 @@ from game_config import GameSettings
 
 
 class SoundManager:
-    """Manages sound effects and background music using pygame."""
-    
+    """
+    Audio manager for sound effects and background music using pygame.mixer.
+
+    Responsibilities:
+    - Preload sound effects at startup (instant playback)
+    - Play sounds with priority queue (interrupts lower priority)
+    - Stream background music with fade in/out
+    - Volume management synced with GameSettings
+    - Graceful degradation when pygame unavailable
+
+    Key systems:
+    - 16 simultaneous sound channels for layered effects
+    - Priority-based playback (e.g., player death has priority 10)
+    - Configurable audio directories (defaults: sound/, music/)
+    - Volume hierarchy: master volume * (music/sfx volume)
+
+    Attributes:
+        settings: GameSettings instance for volume preferences
+        enabled: Whether pygame audio is available
+        sounds: Dict mapping sound keys to pygame.mixer.Sound objects
+        current_music: Currently playing music filename
+        music_playing: Whether music is currently playing
+        max_channels: Number of simultaneous sound channels (16)
+    """
+
     # Centralized audio directory configuration
     @property
     def SOUND_DIRECTORY(self):
@@ -65,7 +106,21 @@ class SoundManager:
             pygame.mixer.music.set_volume(self.settings.music_volume * self.settings.master_volume)
     
     def preload_sounds(self):
-        """Preload all sound effects at startup"""
+        """
+        Preload all sound effects at startup for instant playback.
+
+        Loads all game sound effects into memory to avoid disk I/O during
+        gameplay. Missing sound files are logged as warnings but don't
+        crash the game (graceful degradation).
+
+        Organized categories:
+        - Movement and actions (player_move, player_attack, stealth_attack)
+        - Combat and alerts (enemy_attack, enemy_alert, admin_spawn)
+        - Item interactions (item_pickup_*, item_use_*)
+        - Environmental (node_activate)
+        - Player status (player_death, virus_damage, overheat)
+        - Exploits (exploit_* for each ability)
+        """
         if not self.enabled:
             return
             

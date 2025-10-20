@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """
-Game Rendering Core
-Main renderer orchestrator and shared utilities.
+Rogue Signal Protocol - Game Rendering Core
+
+Main rendering orchestrator that coordinates all visual output.
+Manages dual rendering modes (ASCII glyphs and graphical tiles) and delegates
+specialized rendering tasks to dedicated subsystems (UI, map, dialogue).
+Uses layered SDL rendering in graphics mode for sprite-over-UI composition.
 """
 
 import tcod
@@ -23,7 +27,21 @@ from game_dialogue_system import UnifiedRenderer
 
 def draw_bordered_box(console: tcod.console.Console, start_x: int, start_y: int,
                      width: int, height: int, border_color: tuple, bg_color: tuple):
-    """Draw a bordered box with background fill - extracted utility function."""
+    """
+    Draw a bordered box with background fill using TCOD primitives.
+
+    Uses TCOD's built-in draw_rect and draw_frame for efficiency.
+    Ensures color values are tuples to prevent TCOD ColorRGB errors.
+
+    Args:
+        console: TCOD console to draw on
+        start_x: Left edge of box
+        start_y: Top edge of box
+        width: Box width in characters
+        height: Box height in characters
+        border_color: RGB tuple for border color
+        bg_color: RGB tuple for background fill
+    """
     # Ensure colors are tuples to prevent TCOD ColorRGB errors
     border_color = ensure_color_tuple(border_color)
     bg_color = ensure_color_tuple(bg_color)
@@ -37,9 +55,42 @@ def draw_bordered_box(console: tcod.console.Console, start_x: int, start_y: int,
 
 
 class GameRenderer:
-    """Unified game renderer - consolidates all rendering functionality."""
+    """
+    Main rendering orchestrator that coordinates all visual output.
+
+    Manages dual rendering modes (ASCII glyphs vs graphical tiles) and delegates
+    specialized rendering to subsystems:
+    - UIRenderer: Status bars, panels, screens
+    - GlyphsMapRenderer: ASCII map rendering
+    - GraphicsMapRenderer: Sprite-based map rendering with SDL
+    - UnifiedRenderer: Dialogue system overlays
+
+    In graphics mode, uses layered SDL rendering:
+    1. Sprites (terrain + entities) rendered to SDL
+    2. Status effects rendered as sprite overlays
+    3. Vision/targeting overlays rendered to SDL
+    4. Console UI rendered as transparent texture overlay
+
+    Key attributes:
+        ui_renderer: Handles all UI panels and screens
+        glyphs_renderer: ASCII map rendering for glyph mode
+        graphics_renderer: Sprite rendering for graphics mode
+        tile_manager: Manages sprite tiles and dimensions
+        context: TCOD context with SDL renderer access
+    """
 
     def __init__(self, settings=None, tile_manager=None, context=None):
+        """
+        Initialize the renderer with dependency injection.
+
+        Creates both glyph and graphics renderers to support runtime mode switching.
+        Graphics renderer requires tile_manager and context with SDL support.
+
+        Args:
+            settings: Game settings for graphics mode detection
+            tile_manager: Manages sprite tiles (required for graphics mode)
+            context: TCOD context with SDL renderer (required for graphics mode)
+        """
         self.settings = settings
         self.tile_manager = tile_manager
         self.context = context
@@ -51,7 +102,21 @@ class GameRenderer:
         self.graphics_renderer = GraphicsMapRenderer(tile_manager=tile_manager, context=context, settings=settings)
 
     def render_game(self, console: tcod.console.Console, game, context=None):
-        """Render the complete game state."""
+        """
+        Render the complete game state based on current screen mode.
+
+        Delegates to specialized renderers based on active screen:
+        - Story fragments, lore viewer, help, inventory: Full console overlays
+        - Main game: Layered rendering (graphics mode) or console (glyph mode)
+
+        Always renders dialogue system last as highest-priority overlay.
+        Graphics mode handles SDL present() internally for overlay screens.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine instance with complete game state
+            context: Optional TCOD context (unused, kept for compatibility)
+        """
         # Check if we should use graphics mode rendering
         should_use_graphics = (self.settings and
                                self.settings.graphics_mode == "graphics" and
@@ -102,8 +167,23 @@ class GameRenderer:
 
     def _render_main_game_screen(self, console: tcod.console.Console, game):
         """
-        Render the main game screen.
-        Uses layered SDL rendering in graphics mode, traditional console in glyph mode.
+        Render the main game screen with mode-specific layering.
+
+        Graphics mode (SDL layered rendering):
+        1. Sprites layer: Terrain + entities rendered to SDL
+        2. Status effects layer: Visual status indicators over sprites
+        3. Overlay layer: Vision cones, movement prediction, targeting
+        4. Console UI layer: Transparent texture with opaque UI panels
+
+        Glyph mode (traditional console):
+        - Single-pass console rendering with all elements
+
+        Uses transparency masking in graphics mode to allow sprites to show
+        through the game viewport area while keeping UI panels opaque.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine instance with complete game state
         """
         # Check if we should use graphics mode rendering
         should_use_graphics = (self.settings and

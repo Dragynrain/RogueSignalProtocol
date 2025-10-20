@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """
-Enemy management module for Rogue Signal Protocol.
-Handles enemy spawning, AI coordination, and state updates.
+Enemy Management Module
+
+Handles enemy spawning, patrol route generation, and high-level AI coordination.
+The EnemyManager class:
+- Spawns enemies with proper initialization
+- Generates patrol routes (line, triangle, rectangle patterns)
+- Updates all enemy AI each turn
+- Provides queries for enemy positions
+
+Individual enemy AI and movement logic is in game_characters.py.
 """
 
 import random
@@ -18,15 +26,43 @@ if TYPE_CHECKING:
 
 
 class EnemyManager:
-    """Manages enemy spawning, AI coordination, and state updates."""
-    
+    """
+    Manages enemy spawning, AI coordination, and state updates.
+
+    Centralizes enemy management to ensure consistent initialization and
+    coordinate multi-enemy behaviors. Generates patrol routes automatically
+    for PATROL enemies.
+    """
+
     def __init__(self, game_map: 'GameMap', message_log: 'MessageLog'):
+        """
+        Initialize enemy manager.
+
+        Args:
+            game_map: GameMap instance for position validation
+            message_log: MessageLog instance for AI messages
+        """
         self.enemies: List[Enemy] = []
         self.game_map = game_map
         self.message_log = message_log
-    
+
     def spawn_enemy(self, position: Position, enemy_type: str) -> Enemy:
-        """Spawn a new enemy at the specified position."""
+        """
+        Spawn a new enemy at the specified position.
+
+        Automatically generates patrol routes for PATROL enemies.
+        Virus enemies randomly select STATIC, RANDOM, or PATROL behavior.
+
+        Args:
+            position: Spawn position (must not be a wall)
+            enemy_type: Enemy type identifier (e.g., 'daemon', 'worm', 'virus')
+
+        Returns:
+            Newly spawned Enemy instance
+
+        Raises:
+            ValueError: If position is on a wall
+        """
         # Validate position is not on a wall
         if self.game_map.is_wall(position):
             raise ValueError(f"Cannot spawn enemy on wall at {position}")
@@ -51,7 +87,17 @@ class EnemyManager:
         return enemy
     
     def update_all_enemies(self, player: Player, game_state: 'GameStateManager', game_engine: 'GameEngine') -> None:
-        """Update AI and movement for all enemies."""
+        """
+        Update AI and movement for all enemies.
+
+        Skips disabled (stunned) enemies. Enemy state updates (awareness) are
+        handled by GameTurnManager._update_enemy_awareness().
+
+        Args:
+            player: Player instance for AI targeting
+            game_state: GameStateManager instance for game context
+            game_engine: GameEngine instance for pathfinding and queries
+        """
         for enemy in self.enemies[:]:  # Use slice copy for safe iteration
             if enemy.disabled_turns > 0:
                 continue
@@ -85,11 +131,26 @@ class EnemyManager:
         # patrol_stuck_counter removed in simplified movement system
     
     def _generate_patrol_route(self, start: Position) -> List[Position]:
-        """Generate simple geometric patrol routes with 2-4 points.
+        """
+        Generate simple geometric patrol routes with 2-4 points.
+
+        Creates one of three patterns:
+        - Line: 2 points (back and forth)
+        - Triangle: 3 points (cyclic patrol)
+        - Rectangle: 4 points (perimeter patrol)
 
         Validates that all points:
-        1. Are within bounds (not in walls)
-        2. Can be reached from each other via pathfinding
+        1. Are within bounds and not on walls
+        2. Can be reached from each other via TCOD pathfinding
+
+        If no valid pattern can be created, falls back to single-point patrol
+        (enemy stays in place when in patrol mode).
+
+        Args:
+            start: Starting patrol position
+
+        Returns:
+            List of Position objects forming the patrol route
         """
         # Choose a simple pattern type
         pattern_type = random.choice(['line', 'triangle', 'rectangle'])

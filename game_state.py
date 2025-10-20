@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
 Game State Management
-Contains MessageLog, GameStateManager, and TurnProcessor classes.
+
+Contains core state management classes:
+- MessageLog: Manages game messages with automatic color coding
+- GameStateManager: Tracks level, turn, game status, and active effects
+- TurnProcessor: Handles turn-based logic (heat, effects, trace level)
+
+These classes work together to maintain consistent game state across turns.
 """
 
 import random
@@ -16,21 +22,46 @@ from game_save import SaveGameManager
 
 @dataclass
 class Message:
-    """Represents a single message in the game log."""
+    """
+    Represents a single message in the game log.
+
+    Attributes:
+        text: Message content
+        color: RGB color tuple for rendering
+        msg_type: Optional type identifier for categorization
+    """
     text: str
     color: Tuple[int, int, int]
     msg_type: Optional[str] = None
 
 
 class MessageLog:
-    """Manages game messages and logging."""
+    """
+    Manages game messages with automatic color coding.
+
+    Analyzes message content to determine appropriate color based on
+    patterns defined in JSON config. Maintains a rolling buffer of messages
+    to prevent excessive memory usage.
+    """
     
     def __init__(self, max_messages: int = 100):
         self.messages: List[Message] = []
         self.max_messages = max_messages
     
     def add_message(self, text: str, color: Optional[Tuple[int, int, int]] = None, msg_type: Optional[str] = None):
-        """Add a message to the log."""
+        """
+        Add a message to the log with automatic color determination.
+
+        Color is determined by:
+        1. Explicit color parameter (highest priority)
+        2. Message type parameter (uses JSON config colors)
+        3. Content analysis (pattern matching from JSON config)
+
+        Args:
+            text: Message content
+            color: Optional explicit color (overrides automatic detection)
+            msg_type: Optional message type for color lookup
+        """
         if not text:
             return
 
@@ -53,7 +84,18 @@ class MessageLog:
         return ensure_color_tuple(message_colors.get(msg_type, message_colors.get("default", [144, 238, 144])))
     
     def _determine_message_color(self, text: str) -> Tuple[int, int, int]:
-        """Determine appropriate color for message based on content using JSON config."""
+        """
+        Determine appropriate color for message based on content.
+
+        Checks message text against patterns defined in JSON config
+        (message_types.patterns). First matching pattern determines the color.
+
+        Args:
+            text: Message content
+
+        Returns:
+            RGB color tuple (defaults to 'default' color if no match)
+        """
         text_lower = text.lower()
         
         # Get message type patterns from config
@@ -79,7 +121,18 @@ class MessageLog:
 
 
 class GameStateManager:
-    """Manages core game state like level, turn, and game status."""
+    """
+    Manages core game state like level, turn, and game status.
+
+    Maintains:
+    - Level progression and turn counter
+    - Game over and admin spawn flags
+    - Dungeon seed for deterministic level generation
+    - Active effects (threat scan, distractions, revealed nodes)
+
+    The just_loaded flag prevents enemy state updates immediately after loading
+    to avoid double-processing.
+    """
 
     def __init__(self):
         self.level: int = 1
@@ -96,7 +149,12 @@ class GameStateManager:
         self.revealed_special_nodes: Dict[Tuple[int, int], str] = {}  # position -> node_type
     
     def advance_turn(self) -> None:
-        """Advance to the next turn."""
+        """
+        Advance to the next turn and update time-based effects.
+
+        Decrements threat scan duration and decays distraction points.
+        Removes expired distractions from the map.
+        """
         self.turn += 1
         
         # Update threat scan effect
@@ -120,7 +178,19 @@ class GameStateManager:
         return network_configs.get(self.level, network_configs[1])
     
     def should_spawn_admin(self, trace_level: float) -> bool:
-        """Determine if admin should spawn based on trace level."""
+        """
+        Determine if admin should spawn based on trace level.
+
+        Admin spawns when trace level reaches maximum (100%) and hasn't
+        already spawned. Admin is a powerful boss enemy that constantly
+        pursues the player with perfect vision.
+
+        Args:
+            trace_level: Current player trace level (0-100)
+
+        Returns:
+            True if admin should spawn now
+        """
         if self.admin_spawned:
             return False
             
@@ -128,14 +198,39 @@ class GameStateManager:
 
 
 class TurnProcessor:
-    """Handles turn-based game logic and effects processing."""
-    
+    """
+    Handles turn-based game logic and effects processing.
+
+    Coordinates turn progression with:
+    - Heat reduction (passive cooling)
+    - Temporary effect countdown
+    - Trace level increase
+
+    Does NOT handle enemy movement or special tiles - those are handled
+    by GameTurnManager.
+    """
+
     def __init__(self, game_state: GameStateManager, message_log: MessageLog):
+        """
+        Initialize turn processor.
+
+        Args:
+            game_state: GameStateManager instance
+            message_log: MessageLog instance for status messages
+        """
         self.game_state = game_state
         self.message_log = message_log
-    
+
     def process_turn(self, player) -> None:
-        """Process a complete game turn including heat management and effects."""
+        """
+        Process a complete game turn including heat management and effects.
+
+        Called once per player action (move, exploit, etc).
+        Updates player state and increments turn counter.
+
+        Args:
+            player: Player instance to update
+        """
         self.game_state.advance_turn()
         
         # Process heat reduction
