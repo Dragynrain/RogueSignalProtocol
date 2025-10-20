@@ -174,7 +174,7 @@ class TestRoomGeneration(TestMapGeneration):
 
     def test_spawn_room_generation(self):
         """Spawn room is generated at fixed location."""
-        rooms = self.level_generator._create_varied_rooms(1)
+        rooms = self.level_generator.room_generator.create_varied_rooms(1)
         spawn_room = rooms[0]
         x, y, width, height = spawn_room
 
@@ -315,7 +315,7 @@ class TestMapBoundaryConditions(TestMapGeneration):
 
         try:
             # Should still generate at least the spawn room
-            rooms = self.level_generator._create_varied_rooms(level=1)
+            rooms = self.level_generator.room_generator.create_varied_rooms(level=1)
             assert len(rooms) >= 1
 
             # First room should be spawn room

@@ -291,7 +291,7 @@ class TestEntityInspection:
         # Add a code hack to the map
         test_pos = Position(10, 10)
         if not game.game_map.is_wall(test_pos):
-            code_hack = CodeHack('crimson', (255, 0, 0))
+            code_hack = CodeHack('crimson', 'restore_cpu', 'Crimson Code', 'Restores CPU', quantity=1)
             game.game_map.code_hacks[(test_pos.x, test_pos.y)] = code_hack
 
             entity_info = EntityInspector.get_entity_at_position(game, test_pos)
