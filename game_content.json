@@ -248,7 +248,7 @@
   "network_configs": {
     "1": {
       "enemies": 15,
-      "shadow_coverage": 0.15,
+      "shadow_coverage": 0.08,
       "name": "Corporate Network",
       "background_trace": 1,
       "trace_alert_to_hostile": 1,
@@ -262,7 +262,7 @@
     },
     "2": {
       "enemies": 22,
-      "shadow_coverage": 0.18,
+      "shadow_coverage": 0.09,
       "name": "Government System",
       "background_trace": 2,
       "trace_alert_to_hostile": 2,
@@ -276,7 +276,7 @@
     },
     "3": {
       "enemies": 30,
-      "shadow_coverage": 0.16,
+      "shadow_coverage": 0.08,
       "name": "Military Backbone",
       "background_trace": 3,
       "trace_alert_to_hostile": 3,
