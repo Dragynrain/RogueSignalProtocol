@@ -88,7 +88,23 @@
     },
     "pillar_room_chance": 0.15,
     "pillar_min_room_size": 7,
-    "pillar_grid_spacing": 2
+    "pillar_grid_spacing": 2,
+    "looping_paths_min_loops": 3,
+    "looping_paths_max_loops": 5,
+    "looping_paths_extra_connections": 3,
+    "gateway_strategy_weights": {
+      "far_corner": 0.40,
+      "central_hub": 0.30,
+      "hidden_dead_end": 0.20,
+      "gauntlet": 0.10
+    },
+    "shadow_zone_chance": 0.25,
+    "shadow_zone_room_cluster_min": 3,
+    "shadow_zone_coverage": 0.70,
+    "hub_room_count": 1,
+    "hub_room_size_multiplier": 1.5,
+    "hub_min_connections": 4,
+    "hub_max_connections": 6
   },
   "balance": {
     "heat_reduction_normal": 2,

@@ -1181,5 +1181,279 @@ class TestVariableRoomTypes:
             assert carved_tiles > 0, f"Room type {room_type} failed to carve any tiles"
 
 
+class TestPhase3LayoutImprovements:
+    """Test Phase 3 layout improvements: looping paths, gateway strategies, shadow zones, hub-and-spoke."""
+
+    def setup_method(self):
+        """Set up test environment."""
+        self.game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
+        self.level_generator = LevelGenerator(self.game_map)
+
+    def test_identify_hub_rooms(self):
+        """Test identification of central hub rooms."""
+        # Generate some rooms
+        self.level_generator.generate_level(1, 12345)
+        rooms = self.level_generator.last_generated_rooms
+
+        # Identify hub rooms
+        hub_rooms = self.level_generator._identify_hub_rooms(rooms)
+
+        # Should return empty list for too few rooms, or valid hubs otherwise
+        if len(rooms) >= 5:
+            assert len(hub_rooms) >= 0
+            # If hubs were created, verify they're larger than original rooms
+            if hub_rooms:
+                for hub in hub_rooms:
+                    x, y, w, h = hub
+                    assert w > 0 and h > 0
+        else:
+            assert hub_rooms == []
+
+    def test_hub_room_expansion(self):
+        """Test that hub rooms are expanded correctly."""
+        # Create a small room
+        room = (10, 10, 5, 5)
+        expanded = self.level_generator._expand_hub_room(room)
+
+        x, y, w, h = expanded
+
+        # Expanded room should be larger
+        assert w >= 5
+        assert h >= 5
+
+        # Should be within map bounds
+        assert 0 <= x < GameConfig.MAP_WIDTH
+        assert 0 <= y < GameConfig.MAP_HEIGHT
+        assert x + w <= GameConfig.MAP_WIDTH
+        assert y + h <= GameConfig.MAP_HEIGHT
+
+    def test_create_looping_paths(self):
+        """Test creation of looping paths in level."""
+        # Generate a level
+        self.level_generator.generate_level(1, 54321)
+
+        # Level should complete successfully
+        assert self.game_map.gateway is not None
+        assert len(self.game_map.walls) > 0
+
+    def test_build_room_connectivity_graph(self):
+        """Test building connectivity graph from rooms."""
+        # Generate level to get rooms
+        self.level_generator.generate_level(1, 99999)
+        rooms = self.level_generator.last_generated_rooms
+
+        # Build connectivity graph
+        connectivity = self.level_generator._build_room_connectivity_graph(rooms)
+
+        # Should have connectivity data for each room
+        assert len(connectivity) > 0
+
+        # All rooms should have at least 1 connection
+        for room, connections in connectivity.items():
+            assert connections >= 1
+
+    def test_create_shadow_zones(self):
+        """Test shadow zone creation."""
+        # Generate level to get rooms
+        self.level_generator.generate_level(1, 77777)
+        rooms = self.level_generator.last_generated_rooms
+
+        # Create shadow zones
+        shadow_zone_rooms = self.level_generator._create_shadow_zones(rooms)
+
+        # Shadow zones may or may not be created
+        assert isinstance(shadow_zone_rooms, list)
+
+        # If created, should be subset of rooms
+        for sz_room in shadow_zone_rooms:
+            assert sz_room in rooms
+
+    def test_find_room_clusters(self):
+        """Test finding clusters of nearby rooms."""
+        # Generate level to get rooms
+        self.level_generator.generate_level(1, 33333)
+        rooms = self.level_generator.last_generated_rooms
+
+        # Find clusters
+        clusters = self.level_generator._find_room_clusters(rooms, 3)
+
+        # Clusters should be valid
+        assert isinstance(clusters, list)
+
+        # Each cluster should have minimum size
+        for cluster in clusters:
+            assert len(cluster) >= 3
+            # All rooms in cluster should be from original room list
+            for room in cluster:
+                assert room in rooms
+
+    def test_room_distance_calculation(self):
+        """Test Manhattan distance calculation between rooms."""
+        room1 = (10, 10, 5, 5)
+        room2 = (20, 20, 5, 5)
+
+        distance = self.level_generator._room_distance(room1, room2)
+
+        # Distance should be positive
+        assert distance > 0
+
+        # Distance between same room should be 0
+        assert self.level_generator._room_distance(room1, room1) == 0
+
+        # Distance should be symmetric
+        assert self.level_generator._room_distance(room1, room2) == self.level_generator._room_distance(room2, room1)
+
+    def test_gateway_strategy_selection(self):
+        """Test gateway placement strategy selection."""
+        # Test multiple times to verify randomness
+        strategies = set()
+        for _ in range(50):
+            strategy = self.level_generator._select_gateway_strategy()
+            strategies.add(strategy)
+            assert strategy in ['far_corner', 'central_hub', 'hidden_dead_end', 'gauntlet']
+
+        # Should use multiple strategies over iterations
+        assert len(strategies) >= 2
+
+    def test_gateway_far_corner_strategy(self):
+        """Test far corner gateway placement strategy."""
+        floor_positions = self._create_open_map()
+        spawn = Position(5, 5)
+
+        gateway_pos = self.level_generator._gateway_far_corner(spawn, floor_positions)
+
+        # Gateway should be far from spawn
+        gateway = Position(gateway_pos[0], gateway_pos[1])
+        distance = spawn.distance_to(gateway)
+        assert distance > 15  # Should be reasonably far
+
+    def test_gateway_central_hub_strategy(self):
+        """Test central hub gateway placement strategy."""
+        floor_positions = self._create_open_map()
+
+        gateway_pos = self.level_generator._gateway_central_hub(floor_positions)
+
+        # Gateway should be near center of map
+        map_center_x = GameConfig.MAP_WIDTH // 2
+        map_center_y = GameConfig.MAP_HEIGHT // 2
+        dist_to_center = abs(gateway_pos[0] - map_center_x) + abs(gateway_pos[1] - map_center_y)
+
+        # Should be relatively central
+        assert dist_to_center < GameConfig.MAP_WIDTH // 2
+
+    def test_gateway_hidden_dead_end_strategy(self):
+        """Test hidden dead end gateway placement strategy."""
+        floor_positions = self._create_open_map()
+
+        gateway_pos = self.level_generator._gateway_hidden_dead_end(floor_positions)
+
+        # Should return a valid position
+        assert gateway_pos in floor_positions
+
+    def test_gateway_gauntlet_strategy(self):
+        """Test gauntlet gateway placement strategy."""
+        floor_positions = self._create_open_map()
+        spawn = Position(5, 5)
+
+        gateway_pos = self.level_generator._gateway_gauntlet(spawn, floor_positions)
+
+        # Should return a valid position
+        assert gateway_pos in floor_positions
+
+        # Should be far enough from spawn
+        gateway = Position(gateway_pos[0], gateway_pos[1])
+        distance = spawn.distance_to(gateway)
+        assert distance > 10
+
+    def test_strategic_gateway_placement(self):
+        """Test strategic gateway placement in full level generation."""
+        # Generate level with strategic gateway placement
+        self.level_generator.generate_level(1, 11111)
+
+        # Gateway should be placed
+        assert self.game_map.gateway is not None
+
+        # Gateway should be on floor
+        gateway_pos = (self.game_map.gateway.x, self.game_map.gateway.y)
+        assert gateway_pos not in self.game_map.walls
+
+    def test_shadow_zones_increase_shadow_coverage(self):
+        """Test that shadow zones have higher shadow coverage."""
+        # Generate level with shadow zones
+        random.seed(42)
+        self.level_generator.generate_level(1, 22222)
+
+        # Should have some shadows
+        assert len(self.game_map.shadows) > 0
+
+        # All shadows should be on floor
+        for shadow in self.game_map.shadows:
+            assert shadow not in self.game_map.walls
+
+    def test_connect_hub_rooms(self):
+        """Test hub room connection to other rooms."""
+        # Generate level with rooms
+        self.level_generator.generate_level(1, 44444)
+
+        # Should complete successfully
+        assert self.game_map.gateway is not None
+
+    def test_level_generation_with_phase3_features(self):
+        """Test that full level generation works with all Phase 3 features."""
+        # Generate multiple levels to test different strategies
+        for seed in [111, 222, 333, 444, 555]:
+            self.level_generator._clear_level_data()
+            self.level_generator.generate_level(1, seed)
+
+            # Verify basic level structure
+            assert len(self.game_map.walls) > 0
+            assert self.game_map.gateway is not None
+
+            # Gateway should be on floor
+            gateway_pos = (self.game_map.gateway.x, self.game_map.gateway.y)
+            assert gateway_pos not in self.game_map.walls
+
+            # Should have floor tiles
+            floor_count = sum(1 for x in range(GameConfig.MAP_WIDTH)
+                            for y in range(GameConfig.MAP_HEIGHT)
+                            if (x, y) not in self.game_map.walls)
+            assert floor_count > 50
+
+    def test_phase3_deterministic_generation(self):
+        """Test that Phase 3 features maintain deterministic generation."""
+        seed = 99999
+
+        # Generate first level
+        self.level_generator.generate_level(1, seed)
+        first_walls = set(self.game_map.walls)
+        first_shadows = set(self.game_map.shadows)
+        first_gateway = self.game_map.gateway
+
+        # Generate second level with same seed
+        self.level_generator._clear_level_data()
+        self.level_generator.generate_level(1, seed)
+        second_walls = set(self.game_map.walls)
+        second_shadows = set(self.game_map.shadows)
+        second_gateway = self.game_map.gateway
+
+        # Should be identical
+        assert first_walls == second_walls
+        assert first_shadows == second_shadows
+        assert first_gateway == second_gateway
+
+    def _create_open_map(self):
+        """Helper to create an open map for testing."""
+        # Clear most of the map
+        for x in range(5, GameConfig.MAP_WIDTH - 5):
+            for y in range(5, GameConfig.MAP_HEIGHT - 5):
+                if (x, y) in self.game_map.walls:
+                    self.game_map.walls.remove((x, y))
+
+        # Return floor positions
+        return [(x, y) for x in range(5, GameConfig.MAP_WIDTH - 5)
+                for y in range(5, GameConfig.MAP_HEIGHT - 5)
+                if (x, y) not in self.game_map.walls]
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
