@@ -130,12 +130,6 @@ class CoordinateHelpers:
             This is where we fix the [y, x] vs [x, y] confusion once and for all.
             Loop order is y-outer, x-inner to match TCOD array indexing [y, x].
         """
-        # Detect console order by checking array shape
-        # order='F': shape is (width, height, channels) → use [x, y] indexing
-        # default:   shape is (height, width, channels) → use [y, x] indexing
-        array_shape = console.rgba["bg"].shape
-        is_fortran_order = (array_shape[0] == console.width)
-
         # Get console dimensions
         console_width = console.width
         console_height = console.height
@@ -145,18 +139,10 @@ class CoordinateHelpers:
             x, y, width, height, console_width, console_height
         )
 
-        # Set alpha for the region
-        # Use correct indexing based on detected console order
-        if is_fortran_order:
-            # order='F': array[x, y, channel]
+        # Set alpha for the region using TCOD's standard [y, x] indexing
+        for row in range(y, y + height):
             for col in range(x, x + width):
-                for row in range(y, y + height):
-                    console.rgba["bg"][col, row, 3] = alpha
-        else:
-            # default order: array[y, x, channel]
-            for row in range(y, y + height):
-                for col in range(x, x + width):
-                    console.rgba["bg"][row, col, 3] = alpha
+                console.rgba["bg"][row, col, 3] = alpha
 
     @staticmethod
     def char_to_pixel_coords(console_x: int, console_y: int,

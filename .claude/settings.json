@@ -26,15 +26,9 @@
       "Bash(python:*)",
       "Bash(pytest:*)",
       "Bash:*",
-	  "Bash(uv run:*)",
-      "Bash(uv:*)",
-	  "Bash(uv run pytest tests/ -v --tb=short)",
       "WebFetch(domain:docs.claude.com)",
       "Fetch(domain:docs.claude.com)",
-      "Bash(find:*)",
-      "Bash(uv run pytest :*)",
-      "Bash(uv run pytest tests:*)",	  
-      "Bash(uv run pytest:*)"
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": [
