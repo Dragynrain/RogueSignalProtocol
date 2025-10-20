@@ -392,9 +392,10 @@ class GameLevelCoordinator:
                     virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.PATROL, EnemyMovement.SEEK]
                     virus_movement_weights = [2, 3, 2, 2]  # Equal chance for each movement type
                     chosen_movement = random.choices(virus_movement_types, weights=virus_movement_weights)[0]
-                    enemy.type_data.movement = chosen_movement
+                    # Store in instance variable, NOT in shared type_data!
+                    enemy.original_movement_type = chosen_movement
 
-                    # Generate patrol route if virus got LINEAR movement
+                    # Generate patrol route if virus got PATROL movement
                     if chosen_movement == EnemyMovement.PATROL:
                         enemy.patrol_points = self.game_engine.enemy_manager._generate_patrol_route(position)
 

@@ -367,7 +367,8 @@ class GameEngine:
             self.message_log.add_message(f"{target_enemy.type_data.name} health: {target_enemy.cpu}/{target_enemy.max_cpu}")
             # Store patrol information for PATROL enemies before becoming hostile
             from game_entities import EnemyMovement
-            if target_enemy.type_data.movement == EnemyMovement.PATROL and target_enemy.patrol_points:
+            movement_type = target_enemy.get_movement_type()
+            if movement_type == EnemyMovement.PATROL and target_enemy.patrol_points:
                 target_enemy.original_patrol_index = target_enemy.patrol_index
             # Make enemy hostile and aware of player
             from game_entities import EnemyState

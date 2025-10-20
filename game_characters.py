@@ -211,6 +211,9 @@ class Enemy:
         self.last_seen_player: Optional[Position] = None
         self.original_patrol_index = 0  # Store original patrol index when becoming hostile
 
+        # Virus-specific: Store the original non-hostile movement type
+        self.original_movement_type: Optional[EnemyMovement] = None
+
         # Movement queue system - stores next 3 planned moves
         self.move_queue: List[Position] = []
         self._queue_target: Optional[Position] = None  # Target when queue was calculated
@@ -242,7 +245,26 @@ class Enemy:
             return Colors.ENEMY_ALERT
         else:
             return Colors.ENEMY_HOSTILE
-    
+
+    def get_movement_type(self) -> EnemyMovement:
+        """Get the effective movement type for this enemy.
+
+        For virus enemies:
+        - When HOSTILE: use SEEK movement (chase player)
+        - When not HOSTILE (UNAWARE/ALERT): use their original mimicked movement type
+        For all other enemies: returns type_data.movement
+        """
+        if self.type == 'virus':
+            if self.state == EnemyState.HOSTILE:
+                # Hostile viruses actively seek the player
+                return EnemyMovement.SEEK
+            elif self.original_movement_type is not None:
+                # Non-hostile viruses use their mimicked movement type
+                return self.original_movement_type
+            # Fallback if original_movement_type wasn't set (shouldn't happen)
+            return self.type_data.movement
+        return self.type_data.movement
+
     def can_see_player(self, player: Player, game_map) -> bool:
         """Check if enemy can see player."""
         if self.disabled_turns > 0:
@@ -322,7 +344,8 @@ class Enemy:
     def move(self, game_map, player: Player, game_engine) -> bool:
         """Execute next move from queue, maintaining rolling 3-move queue."""
         # Check patrol point advancement first
-        if self.type_data.movement == EnemyMovement.PATROL and self.patrol_points and self.state != EnemyState.HOSTILE:
+        movement_type = self.get_movement_type()
+        if movement_type == EnemyMovement.PATROL and self.patrol_points and self.state != EnemyState.HOSTILE:
             current_patrol_target = self.patrol_points[self.patrol_index]
             if self.position.distance_to(current_patrol_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
                 self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
@@ -377,7 +400,7 @@ class Enemy:
 
         if self.type == 'admin' or self.state == EnemyState.HOSTILE:
             should_add_move = current_target and not self.position.is_adjacent_to(player.position)
-        elif self.type_data.movement == EnemyMovement.RANDOM:
+        elif movement_type == EnemyMovement.RANDOM:
             should_add_move = True
         elif current_target:
             should_add_move = True
@@ -386,14 +409,14 @@ class Enemy:
             self._add_next_move_to_queue(player, game_map, game_engine)
 
         # Handle patrol point advancement (non-hostile only)
-        if self.type_data.movement == EnemyMovement.PATROL and self.patrol_points and self.state != EnemyState.HOSTILE:
+        if movement_type == EnemyMovement.PATROL and self.patrol_points and self.state != EnemyState.HOSTILE:
             current_target = self.patrol_points[self.patrol_index]
             if self.position.distance_to(current_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
                 self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
                 self.move_queue.clear()  # Will refresh on next turn
 
         # Reset cooldown
-        if self.type_data.movement == EnemyMovement.STATIC:
+        if movement_type == EnemyMovement.STATIC:
             self.move_cooldown = 999
         else:
             self.move_cooldown = 0
@@ -409,11 +432,12 @@ class Enemy:
         self._queue_target = self._get_current_target(player, game_map)
 
         # Static enemies don't move
-        if self.type_data.movement == EnemyMovement.STATIC:
+        movement_type = self.get_movement_type()
+        if movement_type == EnemyMovement.STATIC:
             return
 
         # Admin, hostile enemies, and patrol enemies use pathfinding
-        if self.type == 'admin' or self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
+        if self.type == 'admin' or self.state == EnemyState.HOSTILE or movement_type == EnemyMovement.PATROL:
             path = self._calculate_path_to_target(self._queue_target, game_map, game_engine)
 
             # If pathfinding failed (blocked by enemies/walls), use greedy movement as fallback
@@ -444,7 +468,7 @@ class Enemy:
 
                 # For patrol enemies: if queue doesn't have 3 moves, try to extend toward next patrol point
                 # This ensures short patrol routes still show movement predictions
-                if (self.type_data.movement == EnemyMovement.PATROL and
+                if (movement_type == EnemyMovement.PATROL and
                     self.state != EnemyState.HOSTILE and
                     self.patrol_points and
                     len(self.patrol_points) >= 2 and  # Only extend if there are multiple patrol points
@@ -483,7 +507,7 @@ class Enemy:
                     except Exception as e:
                         logging.warning(f"Failed to extend patrol queue: {e}")
         # Random movement - add up to 3 random moves
-        elif self.type_data.movement == EnemyMovement.RANDOM:
+        elif movement_type == EnemyMovement.RANDOM:
             for i in range(3):
                 next_move = self._calculate_random_move(game_map, player, game_engine)
                 if next_move:
@@ -502,7 +526,8 @@ class Enemy:
             return
 
         # Random movement doesn't need a target (unless hostile or admin - they always pathfind)
-        if self.type_data.movement == EnemyMovement.RANDOM and self.type != 'admin' and self.state != EnemyState.HOSTILE:
+        movement_type = self.get_movement_type()
+        if movement_type == EnemyMovement.RANDOM and self.type != 'admin' and self.state != EnemyState.HOSTILE:
             next_move = self._calculate_random_move(game_map, player, game_engine)
             if next_move:
                 self.move_queue.append(next_move)
@@ -520,7 +545,7 @@ class Enemy:
             return
 
         # For pathfinding enemies (admin, hostile, or patrol), calculate next step along path
-        if self.type == 'admin' or self.state == EnemyState.HOSTILE or self.type_data.movement == EnemyMovement.PATROL:
+        if self.type == 'admin' or self.state == EnemyState.HOSTILE or movement_type == EnemyMovement.PATROL:
             try:
                 # Check if path would be reasonable before adding to queue
                 direct_distance = start_pos.distance_to(target)
@@ -686,7 +711,8 @@ class Enemy:
             return self.last_seen_player
 
         # PATROL enemies target current patrol point
-        if self.type_data.movement == EnemyMovement.PATROL and self.patrol_points:
+        movement_type = self.get_movement_type()
+        if movement_type == EnemyMovement.PATROL and self.patrol_points:
             return self.patrol_points[self.patrol_index]
 
         # RANDOM enemies have no fixed target

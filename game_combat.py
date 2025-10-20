@@ -185,9 +185,10 @@ class ExploitSystem:
         exploit = GameData.EXPLOITS['noise_maker']
         attracted = 0
         for enemy in self.game.enemies:
-            if (enemy.type_data.movement in [EnemyMovement.SEEK, EnemyMovement.RANDOM, EnemyMovement.PATROL] and
+            movement_type = enemy.get_movement_type()
+            if (movement_type in [EnemyMovement.SEEK, EnemyMovement.RANDOM, EnemyMovement.PATROL] and
                 enemy.position.distance_to(target) <= exploit.effect_radius):
-                if enemy.type_data.movement == EnemyMovement.PATROL:
+                if movement_type == EnemyMovement.PATROL:
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = 3
                 else:
@@ -206,7 +207,8 @@ class ExploitSystem:
             self.game.message_log.add_message(f"Eliminated {enemy.type_data.name}")
         else:
             self.game.message_log.add_message(f"{enemy.type_data.name} damaged")
-            if enemy.type_data.movement == EnemyMovement.PATROL and enemy.patrol_points:
+            movement_type = enemy.get_movement_type()
+            if movement_type == EnemyMovement.PATROL and enemy.patrol_points:
                 enemy.original_patrol_index = enemy.patrol_index
             enemy.state = EnemyState.HOSTILE
             enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
