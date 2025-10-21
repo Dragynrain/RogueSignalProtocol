@@ -53,7 +53,12 @@ echo Creating release archive...
 set TIMESTAMP=%date:~-4%-%date:~-10,2%-%date:~-7,2%
 set RELEASE_NAME=RogueSignalProtocol_%BUILD_TYPE%_%TIMESTAMP%.zip
 if not exist releases mkdir releases
-powershell -Command "Compress-Archive -Path 'dist\*' -DestinationPath 'releases\%RELEASE_NAME%' -Force"
+"C:\Program Files\7-Zip\7z.exe" a -tzip "releases\%RELEASE_NAME%" ".\dist\*" >nul
+if %ERRORLEVEL% NEQ 0 (
+    echo ERROR: Failed to create zip archive
+    pause
+    exit /b 1
+)
 
 echo.
 echo Build complete!
