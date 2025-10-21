@@ -799,10 +799,6 @@ class Enemy:
                 else:
                     break
 
-    def invalidate_move_queue(self):
-        """Mark queue as invalid (called externally when state changes)."""
-        self.move_queue.clear()
-
     def _add_next_move_to_queue(self, player, game_map, game_engine):
         """Add one move to the back of queue to maintain 3 moves (rolling queue)."""
         # Don't add more if already at 3

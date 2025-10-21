@@ -366,11 +366,13 @@ class GameSession:
         """Update enemy state based on player visibility."""
         player_pos = Position(self.game_engine.player.x, self.game_engine.player.y)
 
+        # Track old state for invalidation
+        old_state = enemy.state
+
         if can_see_player:
             # Enemy sees player - escalate state
             if enemy.state == EnemyState.UNAWARE:
                 enemy.state = EnemyState.ALERT
-                enemy.invalidate_move_queue()  # State changed, recalculate path
                 enemy.alert_timer = 1  # Give 1 turn grace period before becoming HOSTILE
                 enemy.last_seen_player = player_pos
                 self.game_engine.message_log.add_message(f"{enemy.type_data.name} investigating")
@@ -392,7 +394,6 @@ class GameSession:
                 enemy.alert_timer -= 1
                 if enemy.alert_timer <= 0:
                     enemy.state = EnemyState.UNAWARE
-                    enemy.invalidate_move_queue()  # State changed, recalculate path
                     self._restore_patrol(enemy)
                     self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost interest")
 
@@ -400,20 +401,22 @@ class GameSession:
                 if random.random() < 0.15:
                     if enemy.type == 'admin':
                         enemy.state = EnemyState.ALERT
-                        enemy.invalidate_move_queue()  # State changed
                         enemy.alert_timer = 0
                     else:
                         enemy.state = EnemyState.UNAWARE
-                        enemy.invalidate_move_queue()  # State changed
                         enemy.last_seen_player = None
                         self._restore_patrol(enemy)
                         self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost track")
+
+        # INVALIDATION TRIGGER #1: State change
+        if enemy.state != old_state:
+            enemy.move_queue.clear()  # New state = new plan
 
     def _transition_to_hostile(self, enemy):
         """Transition enemy to hostile state."""
         self._restore_patrol(enemy)  # Store original patrol index
         enemy.state = EnemyState.HOSTILE
-        enemy.invalidate_move_queue()  # State changed, recalculate path
+        # State changed - will be caught by invalidation check in _update_enemy_state
         self._increase_trace(GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE, 'trace_alert_to_hostile')
         self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
         self.game_engine.sound_manager.play_sound("enemy_hostile")
@@ -447,7 +450,6 @@ class GameSession:
         """Alert nearby enemies when one becomes hostile."""
         alert_range = GameConfig.NEARBY_ENEMY_ALERT_RADIUS  # Use config value
         alerted_count = 0
-        alerted_enemies = []
 
         for enemy in self.game_engine.enemies:
             if enemy is alerting_enemy or enemy.state == EnemyState.HOSTILE:
@@ -459,13 +461,19 @@ class GameSession:
                 movement_type = enemy.get_movement_type()
                 if movement_type == EnemyMovement.PATROL and enemy.patrol_points:
                     enemy.original_patrol_index = enemy.patrol_index
+
+                # Track old state for invalidation
+                old_state = enemy.state
+
                 # All enemies within alert range immediately go HOSTILE and get player location
                 enemy.state = EnemyState.HOSTILE
-                enemy.invalidate_move_queue()  # State changed, recalculate path
                 enemy.alert_timer = 0
                 enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
                 alerted_count += 1
-                alerted_enemies.append(enemy)
+
+                # INVALIDATION: State changed
+                if enemy.state != old_state:
+                    enemy.move_queue.clear()
 
         # Don't move alerted enemies immediately - they will move in the movement phase
         # This ensures proper phase separation: awareness -> movement -> attacks
