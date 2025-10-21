@@ -22,7 +22,13 @@ from game_config import GameConfig, GameBalance
 class PathfindingHelper:
     """
     Centralized pathfinding using TCOD A*.
-    Single implementation used for all queue operations.
+
+    Single source of truth for all enemy pathfinding operations.
+    Used by the movement queue system to calculate paths to targets.
+
+    This helper ensures consistent pathfinding behavior across all enemies
+    and movement types (PATROL, SEEK, HOSTILE). Includes enemy collision
+    avoidance and reasonable path length validation.
     """
 
     @staticmethod
@@ -579,7 +585,15 @@ class Enemy:
         return True
 
     def _should_advance_patrol_waypoint(self) -> bool:
-        """Check if enemy reached current patrol waypoint."""
+        """
+        Check if enemy reached current patrol waypoint.
+
+        Only advances for PATROL movement type enemies who are not hostile.
+        Uses adjacency threshold to determine if waypoint reached.
+
+        Returns:
+            True if should advance to next waypoint, False otherwise
+        """
         if self.get_movement_type() != EnemyMovement.PATROL:
             return False
         if not self.patrol_points:
@@ -601,10 +615,22 @@ class Enemy:
         This is the ONLY method that fills the queue. Called after each move
         to maintain a fixed 3-length queue for player predictability.
 
+        The 3-length queue is a core gameplay mechanic that allows players
+        to predict enemy positions up to 3 turns ahead and plan tactically.
+
+        Queue Invalidation: Queue is cleared (invalidated) in only 2 cases:
+        1. Enemy state changes (UNAWARE <-> ALERT <-> HOSTILE)
+        2. Next queued move is blocked (wall, enemy, etc.)
+
         Strategy:
         - If queue already has 3 moves, do nothing
         - Otherwise, calculate path from last queued position (or current position)
         - Add moves until queue has 3 (or path exhausted)
+
+        Args:
+            game_map: GameMap for pathfinding
+            player: Player for targeting
+            game_engine: GameEngine for enemy collision avoidance
         """
         # Already full
         if len(self.move_queue) >= 3:
@@ -655,7 +681,18 @@ class Enemy:
                 self.move_queue.append(greedy_move)
 
     def _fill_random_moves(self, game_map, player, game_engine):
-        """Fill queue with random moves."""
+        """
+        Fill queue with random moves for RANDOM movement type enemies.
+
+        Chains random moves from last queued position to maintain
+        3-length queue predictability. Used only for enemies with
+        RANDOM base movement type who are not hostile.
+
+        Args:
+            game_map: GameMap for move validation
+            player: Player to avoid colliding with
+            game_engine: GameEngine for enemy collision avoidance
+        """
         # Start from last queued position (or current if empty)
         start_pos = self.move_queue[-1] if self.move_queue else self.position
 
@@ -669,7 +706,20 @@ class Enemy:
                 break  # No valid random moves
 
     def _calculate_random_move_from(self, from_pos: Position, game_map, player, game_engine) -> Optional[Position]:
-        """Calculate a random valid move from given position."""
+        """
+        Calculate a random valid move from given position.
+
+        Tries all 8 directions in random order until valid move found.
+
+        Args:
+            from_pos: Position to move from
+            game_map: GameMap for boundary validation
+            player: Player to avoid colliding with
+            game_engine: GameEngine for enemy collision avoidance
+
+        Returns:
+            Valid random Position, or None if no valid moves
+        """
         directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
         random.shuffle(directions)
 
@@ -680,7 +730,21 @@ class Enemy:
         return None
 
     def _is_move_valid_from(self, position: Position, from_position: Position, game_map, player, game_engine) -> bool:
-        """Check if move from from_position to position is valid."""
+        """
+        Check if move from from_position to position is valid.
+
+        Validates: boundaries, player collision, enemy collision.
+
+        Args:
+            position: Target position
+            from_position: Current position (unused but kept for consistency)
+            game_map: GameMap for boundary validation
+            player: Player to avoid colliding with
+            game_engine: GameEngine for enemy collision avoidance
+
+        Returns:
+            True if move is valid, False otherwise
+        """
         if not game_map.is_valid_position(position):
             return False
         if position.x == player.x and position.y == player.y:

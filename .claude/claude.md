@@ -74,8 +74,34 @@
 ---
 
 ## 7. Gameplay Systems
+
+### Enemy Movement Queue
+
+Enemies maintain a **fixed 3-length movement queue** for player predictability:
+
+**Queue as Gameplay Mechanic:**
+- Queue shows player what enemy is committed to doing (3 moves ahead)
+- Enables tactical planning: player can predict enemy positions and plan accordingly
+- Always shows 3 moves when possible (or fewer if path exhausted)
+
+**Queue Lifecycle:**
+1. Enemy executes move (pops from queue)
+2. Queue tops up to 3 moves (unified fill logic)
+3. Player sees enemy's commitment via rendering
+
+**Queue Invalidation (Only 2 Triggers):**
+1. Enemy state changes (UNAWARE ↔ ALERT ↔ HOSTILE)
+2. Next move is blocked (wall, enemy, etc.)
+
+When invalidated, queue clears and enemy replans on next turn.
+
+**Implementation:**
+- Single method `_ensure_queue_full()` handles all queue filling
+- Uses `PathfindingHelper` for consistent pathfinding
+- No special cases or duplicate logic
+
+### Other Systems
 - Enemies alert others when spotting player.
-- **All enemy movement uses queues**: FIFO, 3 size queue
 - **Alert timer = 1 turn only.**
 - Use TCOD FOV (`tcod.map.compute_fov`) and pathfinding (`tcod.path`) always.
 - For TCOD API details, invoke the `tcod` skill.

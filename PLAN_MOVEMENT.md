@@ -810,9 +810,11 @@ Update `tests/integration/test_enemy_movement_integration.py`:
 
 ---
 
-### Phase 7: Documentation
+### Phase 7: Documentation ✓ COMPLETE
 
 **Goal:** Document new architecture
+
+**Status:** ✓ Complete - All documentation updated
 
 **Files to update:**
 
@@ -872,6 +874,43 @@ The movement system has been simplified to focus on the queue as a gameplay mech
 ```
 
 **Acceptance:** Documentation complete and accurate
+
+**Implementation Notes (Completed):**
+
+1. **Method docstrings in `game_characters.py`:**
+   - Enhanced `PathfindingHelper` class docstring with detailed description
+   - Updated `_ensure_queue_full()` docstring to document:
+     - 3-length queue as core gameplay mechanic
+     - Queue invalidation triggers (only 2)
+     - Args documentation
+   - Enhanced `_fill_random_moves()` docstring with purpose and args
+   - Enhanced `_calculate_random_move_from()` docstring with detailed args/returns
+   - Enhanced `_is_move_valid_from()` docstring with validation details
+   - Enhanced `_should_advance_patrol_waypoint()` docstring with conditions
+   - All docstrings now clearly explain purpose, behavior, and parameters
+
+2. **Updated `.claude/CLAUDE.md`:**
+   - Replaced generic "All enemy movement uses queues" with detailed section
+   - Added "Enemy Movement Queue" subsection under "7. Gameplay Systems"
+   - Documented queue as gameplay mechanic (3-move prediction for tactical planning)
+   - Documented queue lifecycle (execute, top up, invalidate)
+   - Documented only 2 invalidation triggers (state change and blockage)
+   - Documented simplified implementation (single method, no special cases)
+   - Moved other gameplay rules to "Other Systems" subsection for clarity
+
+3. **Updated `MOVEMENT_EXPLAINED.md`:**
+   - Added "Simplified Architecture (Current)" section at end
+   - Documented core insight (queue represents enemy commitment)
+   - Documented simplified design (ONE fill method, TWO invalidation triggers, NO special cases)
+   - Added "What Changed" section comparing before/after
+   - Detailed code reduction: ~300 lines → ~150 lines (50% reduction)
+   - Documented implementation details:
+     - Centralized PathfindingHelper
+     - Simplified queue lifecycle
+     - Benefits of new architecture
+   - Preserves all original complexity documentation for historical reference
+
+All documentation now accurately reflects the simplified architecture while maintaining clarity for future developers.
 
 ---
 
