@@ -369,3 +369,288 @@ class TestPathfindingHelper:
         assert len(path) == 2, "Path to adjacent should be 2 steps (start + goal)"
         # Verify path ends at goal (comparing tuples directly)
         assert tuple(path[-1]) == (10, 11), "Path should end at goal position (y, x)"
+
+
+class TestEnsureQueueFull:
+    """Test _ensure_queue_full() method for Phase 2."""
+
+    def test_ensure_queue_full_fills_to_three_initially(self):
+        """Empty queue fills to 3 moves."""
+        from unittest.mock import Mock
+
+        # Use bot which has SEEK movement type (not STATIC)
+        enemy = enemy_builder("bot", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 20
+        player.y = 20
+        player.position = Position(20, 20)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        # Hostile enemy should target player
+        enemy.state = EnemyState.HOSTILE
+        enemy.last_seen_player = player.position
+        # Mock can_see_player so target is found
+        enemy.can_see_player = Mock(return_value=True)
+
+        enemy._ensure_queue_full(game_map, player, game_engine)
+
+        assert len(enemy.move_queue) <= 3, "Queue should not exceed 3 moves"
+        assert len(enemy.move_queue) >= 1, "Queue should have at least 1 move"
+
+    def test_ensure_queue_full_tops_up_partial_queue(self):
+        """Partial queue tops up to 3 moves."""
+        from unittest.mock import Mock
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 20
+        player.y = 20
+        player.position = Position(20, 20)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        # Hostile enemy should target player
+        enemy.state = EnemyState.HOSTILE
+        enemy.last_seen_player = player.position
+
+        # Start with 1 move
+        enemy.move_queue = [Position(11, 10)]
+
+        enemy._ensure_queue_full(game_map, player, game_engine)
+
+        assert len(enemy.move_queue) <= 3, "Queue should not exceed 3 moves"
+        assert len(enemy.move_queue) >= 1, "Queue should maintain moves"
+
+    def test_ensure_queue_full_does_not_overfill(self):
+        """Queue with 3 moves should not be overfilled."""
+        from unittest.mock import Mock
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 20
+        player.y = 20
+        player.position = Position(20, 20)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        # Fill queue to 3
+        enemy.move_queue = [Position(11, 10), Position(12, 10), Position(13, 10)]
+
+        enemy._ensure_queue_full(game_map, player, game_engine)
+
+        assert len(enemy.move_queue) == 3, "Queue should stay at 3 moves"
+
+    def test_ensure_queue_full_random_movement(self):
+        """Random movement enemies fill queue with random moves."""
+        from unittest.mock import Mock
+        from game_entities import EnemyMovement
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 20
+        player.y = 20
+        player.position = Position(20, 20)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        # Force random movement by mocking type_data
+        enemy.type_data = Mock()
+        enemy.type_data.movement = EnemyMovement.RANDOM
+
+        enemy._ensure_queue_full(game_map, player, game_engine)
+
+        # Random movement should fill queue
+        assert len(enemy.move_queue) <= 3, "Queue should not exceed 3 moves"
+
+    def test_ensure_queue_full_static_enemy(self):
+        """Static enemies don't fill queue."""
+        from unittest.mock import Mock
+        from game_entities import EnemyMovement
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 20
+        player.y = 20
+        player.position = Position(20, 20)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        # Force static movement
+        enemy.type_data = Mock()
+        enemy.type_data.movement = EnemyMovement.STATIC
+
+        enemy._ensure_queue_full(game_map, player, game_engine)
+
+        assert len(enemy.move_queue) == 0, "Static enemies should not queue moves"
+
+
+class TestFillRandomMoves:
+    """Test _fill_random_moves() helper method."""
+
+    def test_fill_random_moves_fills_queue(self):
+        """_fill_random_moves() fills queue with random valid moves."""
+        from unittest.mock import Mock
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 30
+        player.y = 30
+        player.position = Position(30, 30)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        enemy._fill_random_moves(game_map, player, game_engine)
+
+        # Should fill to 3 (or fewer if cornered)
+        assert len(enemy.move_queue) <= 3
+        # All moves should be valid positions
+        for move in enemy.move_queue:
+            assert game_map.is_valid_position(move)
+
+    def test_fill_random_moves_chains_from_last_position(self):
+        """Random moves chain from last queued position."""
+        from unittest.mock import Mock
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 30
+        player.y = 30
+        player.position = Position(30, 30)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        # Start with one move
+        enemy.move_queue = [Position(11, 10)]
+
+        enemy._fill_random_moves(game_map, player, game_engine)
+
+        # Should have filled to 3
+        assert len(enemy.move_queue) <= 3
+        # First move should remain unchanged
+        assert enemy.move_queue[0] == Position(11, 10)
+
+
+class TestCalculateRandomMoveFrom:
+    """Test _calculate_random_move_from() helper."""
+
+    def test_calculate_random_move_from_open_space(self):
+        """Can find random move from open space."""
+        from unittest.mock import Mock
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 30
+        player.y = 30
+        player.position = Position(30, 30)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        move = enemy._calculate_random_move_from(Position(15, 15), game_map, player, game_engine)
+
+        assert move is not None, "Should find random move in open space"
+        assert game_map.is_valid_position(move)
+        # Should be adjacent to start position
+        distance = Position(15, 15).distance_to(move)
+        assert distance <= 1.5, "Random move should be adjacent"
+
+    def test_calculate_random_move_from_blocked(self):
+        """Returns None if all directions blocked."""
+        from unittest.mock import Mock
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        # Surround position with walls
+        walls = [(x, y) for x in range(14, 17) for y in range(14, 17) if (x, y) != (15, 15)]
+        game_map = map_builder(width=40, height=40, walls=walls)
+        player = Mock()
+        player.x = 30
+        player.y = 30
+        player.position = Position(30, 30)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        move = enemy._calculate_random_move_from(Position(15, 15), game_map, player, game_engine)
+
+        # Should return None when all directions are blocked
+        assert move is None, "Should return None when surrounded"
+
+
+class TestIsMoveValidFrom:
+    """Test _is_move_valid_from() helper."""
+
+    def test_is_move_valid_from_valid_position(self):
+        """Valid move returns True."""
+        from unittest.mock import Mock
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 30
+        player.y = 30
+        player.position = Position(30, 30)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        is_valid = enemy._is_move_valid_from(Position(15, 15), Position(14, 15), game_map, player, game_engine)
+
+        assert is_valid is True
+
+    def test_is_move_valid_from_player_position(self):
+        """Move to player position is invalid."""
+        from unittest.mock import Mock
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 15
+        player.y = 15
+        player.position = Position(15, 15)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        is_valid = enemy._is_move_valid_from(Position(15, 15), Position(14, 15), game_map, player, game_engine)
+
+        assert is_valid is False
+
+    def test_is_move_valid_from_other_enemy(self):
+        """Move to other enemy position is invalid."""
+        from unittest.mock import Mock
+
+        enemy1 = enemy_builder("scanner", pos=(10, 10))
+        enemy2 = enemy_builder("bot", pos=(15, 15))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 30
+        player.y = 30
+        player.position = Position(30, 30)
+        game_engine = Mock()
+        game_engine.enemies = [enemy1, enemy2]
+
+        is_valid = enemy1._is_move_valid_from(Position(15, 15), Position(14, 15), game_map, player, game_engine)
+
+        assert is_valid is False
+
+    def test_is_move_valid_from_out_of_bounds(self):
+        """Move to out of bounds position is invalid."""
+        from unittest.mock import Mock
+
+        enemy = enemy_builder("scanner", pos=(10, 10))
+        game_map = map_builder(width=40, height=40)
+        player = Mock()
+        player.x = 30
+        player.y = 30
+        player.position = Position(30, 30)
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        is_valid = enemy._is_move_valid_from(Position(50, 50), Position(10, 10), game_map, player, game_engine)
+
+        assert is_valid is False
