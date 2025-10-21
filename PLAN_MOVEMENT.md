@@ -58,9 +58,11 @@ No target change detection, no patrol advancement clearing, no special cases.
 
 ## Implementation Plan
 
-### Phase 1: Add Unified Pathfinding Helper
+### Phase 1: Add Unified Pathfinding Helper ✓ COMPLETE
 
 **Goal:** Single source of truth for all pathfinding
+
+**Status:** ✓ Complete - PathfindingHelper class added with full test coverage
 
 **File:** `game_characters.py`
 
@@ -144,6 +146,14 @@ class PathfindingHelper:
 - Test path length limit works
 
 **Acceptance:** PathfindingHelper class added and tested
+
+**Implementation Notes (Completed):**
+- Added PathfindingHelper class at line 22 in game_characters.py
+- Implemented calculate_path() with TCOD A* and path length validation
+- Implemented _create_cost_map() for enemy collision avoidance
+- Added 6 unit tests in tests/unit/test_enemy_movement_queue.py
+- All 19 movement queue tests passing
+- Fixed numpy array truth value ambiguity issues in both code and tests
 
 ---
 

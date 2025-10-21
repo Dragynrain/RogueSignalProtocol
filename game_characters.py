@@ -19,6 +19,76 @@ from game_entities import Position, Colors, EnemyState, EnemyMovement, PositionV
 from game_config import GameConfig, GameBalance
 
 
+class PathfindingHelper:
+    """
+    Centralized pathfinding using TCOD A*.
+    Single implementation used for all queue operations.
+    """
+
+    @staticmethod
+    def calculate_path(
+        start: Position,
+        goal: Position,
+        game_map,
+        game_engine,
+        moving_enemy,
+        max_length_multiplier: float = 3.0
+    ) -> Optional[List[Tuple[int, int]]]:
+        """
+        Calculate path from start to goal.
+
+        Args:
+            start: Starting position
+            goal: Goal position
+            game_map: GameMap for walkability
+            game_engine: GameEngine for enemy positions
+            moving_enemy: Enemy doing pathfinding (exclude from collision)
+            max_length_multiplier: Max path length as multiple of direct distance
+
+        Returns:
+            List of (y, x) tuples (TCOD format), or None if no reasonable path
+        """
+        # Calculate reasonable path length
+        direct_distance = start.distance_to(goal)
+        if direct_distance <= 5:
+            max_length = max(15, int(direct_distance * 5))
+        else:
+            max_length = max(15, int(direct_distance * max_length_multiplier))
+
+        try:
+            # Create cost map with enemy collision
+            cost_map = PathfindingHelper._create_cost_map(game_map, game_engine, moving_enemy)
+
+            # TCOD pathfinding
+            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+            pathfinder = tcod.path.Pathfinder(graph)
+            pathfinder.add_root((start.y, start.x))  # TCOD uses (y, x)
+            path = pathfinder.path_to((goal.y, goal.x))
+
+            # Validate path (TCOD returns numpy array)
+            if len(path) > 1 and len(path) <= max_length:
+                return path
+            return None
+
+        except Exception as e:
+            logging.warning(f"Pathfinding failed from {start} to {goal}: {e}")
+            return None
+
+    @staticmethod
+    def _create_cost_map(game_map, game_engine, moving_enemy):
+        """Create cost map with enemy collision avoidance."""
+        cost_map = game_map.get_walkability_map().copy()
+
+        # Mark other enemies as impassable
+        for enemy in game_engine.enemies:
+            if enemy.id != moving_enemy.id:
+                x, y = enemy.x, enemy.y
+                if 0 <= x < game_map.width and 0 <= y < game_map.height:
+                    cost_map[y, x] = 0  # TCOD uses [y, x] indexing
+
+        return cost_map
+
+
 class Player:
     """
     Player character managing stats, position, abilities, and inventory.

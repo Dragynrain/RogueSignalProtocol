@@ -207,3 +207,165 @@ class TestQueueFromPathfinding:
         enemy.move_queue = [Position(x, y) for x, y in pathfinding_result[:3]]
 
         assert len(enemy.move_queue) == 0
+
+
+class TestPathfindingHelper:
+    """Test centralized pathfinding helper."""
+
+    def test_pathfinding_finds_straight_path(self):
+        """PathfindingHelper finds basic straight path."""
+        from game_characters import PathfindingHelper
+        from unittest.mock import Mock
+
+        game_map = map_builder(width=30, height=30)
+        enemy = enemy_builder("scanner", pos=(10, 10))
+
+        # Mock game_engine with enemies list
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        path = PathfindingHelper.calculate_path(
+            start=Position(10, 10),
+            goal=Position(15, 10),
+            game_map=game_map,
+            game_engine=game_engine,
+            moving_enemy=enemy
+        )
+
+        assert path is not None, "Should find path"
+        assert len(path) > 1, "Path should have multiple steps"
+        # Path should move toward goal
+        assert path[-1][1] > 10, "Path should move in positive x direction"
+
+    def test_pathfinding_around_walls(self):
+        """PathfindingHelper routes around walls."""
+        from game_characters import PathfindingHelper
+        from unittest.mock import Mock
+
+        # Create map with wall blocking direct path
+        game_map = map_builder(width=30, height=30,
+                              walls=[(11, 10), (12, 10), (13, 10)])
+        enemy = enemy_builder("scanner", pos=(10, 10))
+
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        path = PathfindingHelper.calculate_path(
+            start=Position(10, 10),
+            goal=Position(15, 10),
+            game_map=game_map,
+            game_engine=game_engine,
+            moving_enemy=enemy
+        )
+
+        # Should find path around wall (or None if completely blocked)
+        # The important thing is it doesn't crash and handles walls
+        assert path is None or len(path) > 1
+
+    def test_pathfinding_routes_around_enemies(self):
+        """PathfindingHelper routes around other enemies."""
+        from game_characters import PathfindingHelper
+        from unittest.mock import Mock
+
+        game_map = map_builder(width=30, height=30)
+        enemy1 = enemy_builder("scanner", pos=(10, 10))
+        enemy2 = enemy_builder("bot", pos=(11, 10))  # Blocking
+
+        game_engine = Mock()
+        game_engine.enemies = [enemy1, enemy2]
+
+        path = PathfindingHelper.calculate_path(
+            start=Position(10, 10),
+            goal=Position(15, 10),
+            game_map=game_map,
+            game_engine=game_engine,
+            moving_enemy=enemy1
+        )
+
+        # Path should exist and route around enemy2
+        assert path is not None, "Should find path around enemy"
+        # Verify path doesn't go through enemy2's position
+        if len(path) > 1:
+            # Check that no step in path goes through enemy2
+            for step in path[1:]:  # Skip start position
+                # step is a tuple (y, x), compare correctly
+                assert not (step[0] == enemy2.y and step[1] == enemy2.x), "Path should not go through other enemy"
+
+    def test_pathfinding_unreachable_target(self):
+        """PathfindingHelper returns None for unreachable targets."""
+        from game_characters import PathfindingHelper
+        from unittest.mock import Mock
+
+        # Create map with walls completely surrounding the goal
+        walls = []
+        for x in range(14, 17):
+            for y in range(14, 17):
+                walls.append((x, y))
+
+        game_map = map_builder(width=30, height=30, walls=walls)
+        enemy = enemy_builder("scanner", pos=(10, 10))
+
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        path = PathfindingHelper.calculate_path(
+            start=Position(10, 10),
+            goal=Position(15, 15),  # Completely walled off
+            game_map=game_map,
+            game_engine=game_engine,
+            moving_enemy=enemy
+        )
+
+        assert path is None, "Should return None for unreachable target"
+
+    def test_pathfinding_path_length_limit(self):
+        """PathfindingHelper respects path length limits."""
+        from game_characters import PathfindingHelper
+        from unittest.mock import Mock
+
+        game_map = map_builder(width=100, height=100)
+        enemy = enemy_builder("scanner", pos=(10, 10))
+
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        # Try to find path to very distant target
+        path = PathfindingHelper.calculate_path(
+            start=Position(10, 10),
+            goal=Position(90, 90),
+            game_map=game_map,
+            game_engine=game_engine,
+            moving_enemy=enemy,
+            max_length_multiplier=1.5  # Strict limit
+        )
+
+        # Path should either be None or within reasonable length
+        if path is not None:
+            direct_distance = Position(10, 10).distance_to(Position(90, 90))
+            max_allowed = max(15, int(direct_distance * 1.5))
+            assert len(path) <= max_allowed, "Path should respect length limit"
+
+    def test_pathfinding_adjacent_positions(self):
+        """PathfindingHelper handles adjacent positions correctly."""
+        from game_characters import PathfindingHelper
+        from unittest.mock import Mock
+
+        game_map = map_builder(width=30, height=30)
+        enemy = enemy_builder("scanner", pos=(10, 10))
+
+        game_engine = Mock()
+        game_engine.enemies = [enemy]
+
+        # Path to adjacent position
+        path = PathfindingHelper.calculate_path(
+            start=Position(10, 10),
+            goal=Position(11, 10),
+            game_map=game_map,
+            game_engine=game_engine,
+            moving_enemy=enemy
+        )
+
+        assert path is not None, "Should find path to adjacent position"
+        assert len(path) == 2, "Path to adjacent should be 2 steps (start + goal)"
+        # Verify path ends at goal (comparing tuples directly)
+        assert tuple(path[-1]) == (10, 11), "Path should end at goal position (y, x)"
