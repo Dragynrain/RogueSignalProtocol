@@ -13,17 +13,19 @@ if /i "%BUILD_TYPE%"=="release" (
     echo Building RELEASE version (minimal logging)...
     set LOG_LEVEL=WARNING
     set BUILD_SUFFIX=Release
-) else if /i "%BUILD_TYPE%"=="alpha" (
-    echo Building ALPHA version (debug logging for playtesters)...
-    set LOG_LEVEL=DEBUG
-    set BUILD_SUFFIX=Alpha
 ) else (
-    echo Unknown build type: %BUILD_TYPE%
-    echo Usage: build.bat [alpha^|release]
-    echo   alpha   - Debug logging for playtesters (default)
-    echo   release - Minimal logging for public release
-    pause
-    exit /b 1
+    if /i "%BUILD_TYPE%"=="alpha" (
+        echo Building ALPHA version (debug logging for playtesters)...
+        set LOG_LEVEL=DEBUG
+        set BUILD_SUFFIX=Alpha
+    ) else (
+        echo Unknown build type: %BUILD_TYPE%
+        echo Usage: build.bat [alpha^|release]
+        echo   alpha   - Debug logging for playtesters (default)
+        echo   release - Minimal logging for public release
+        pause
+        exit /b 1
+    )
 )
 
 echo.
