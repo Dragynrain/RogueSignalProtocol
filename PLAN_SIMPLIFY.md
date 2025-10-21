@@ -119,26 +119,30 @@ The `has_moved_this_turn` flag currently prevents enemies from moving AND attack
   - [X] Run full test suite (1035/1036 passing - 1 flaky test unrelated to changes)
   - [X] Commit: "Delete unnecessary GameEngineBuilder pattern"
 
-- [ ] **Issue #7: Remove trivial delegates**
-  - [ ] Identify one-line delegation methods
-  - [ ] Replace with direct calls to underlying methods
-  - [ ] Update callers
-  - [ ] Commit: "Remove trivial delegation methods"
+- [X] **Issue #7: Remove trivial delegates** (SKIPPED)
+  - Analysis: Delegation methods provide stable public API for 20+ test files
+  - Removing would add complexity rather than reduce it
+  - Methods serve backward compatibility purpose
+  - Decision: Keep as-is
 
-- [ ] **Issue #8: Consolidate validation helpers**
-  - [ ] Merge position validation methods into unified method
-  - [ ] Update all call sites
-  - [ ] Commit: "Consolidate position validation helpers"
+- [X] **Issue #8: Consolidate validation helpers** (SKIPPED)
+  - Analysis: Validation methods are semantically different, not just parameter variations
+  - `is_within_bounds`, `is_valid_for_placement`, `is_valid_for_enemy_movement` have distinct logic
+  - Consolidating would reduce code clarity
+  - Decision: Keep as-is
 
-- [ ] **Issue #9: Clean up comments**
-  - [ ] Remove obvious/redundant comments
-  - [ ] Keep non-obvious explanations
-  - [ ] Commit: "Clean up redundant comments"
+- [X] **Issue #9: Clean up comments** (SKIPPED)
+  - Analysis: Codebase already has high-quality comments
+  - Comments explain WHY, not just WHAT
+  - No TODO/FIXME/HACK markers found
+  - No obvious redundant comments found
+  - Decision: No cleanup needed
 
-**Expected Result:**
-- -1 file (47 → 46)
-- ~-500 lines
-- Cleaner, more readable code
+**Actual Result:**
+- -1 file (47 → 46) - GameEngineBuilder deleted
+- -136 lines (GameEngineBuilder.py removed)
+- Issues #7-9 skipped after analysis showed they would add complexity rather than reduce it
+- Codebase already follows best practices for delegation, validation, and comments
 
 **Testing Protocol:**
 - Full test suite after builder deletion
