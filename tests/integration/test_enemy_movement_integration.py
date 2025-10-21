@@ -77,9 +77,9 @@ class TestEnemyCommunication:
         self.game_engine.message_log = Mock()
         self.game_engine.sound_manager = Mock()
 
-        # Import GameTurnManager here to avoid circular imports
-        from game_turn_manager import GameTurnManager
-        self.turn_manager = GameTurnManager(self.game_engine)
+        # Import GameSession here to avoid circular imports
+        from game_session import GameSession
+        self.game_session = GameSession(self.game_engine)
 
     def test_nearby_enemies_alerted_when_enemy_goes_hostile(self):
         """When an enemy becomes HOSTILE, nearby enemies should be alerted."""
@@ -98,7 +98,7 @@ class TestEnemyCommunication:
         self.game_engine.enemies = [alerting_enemy, nearby_enemy, distant_enemy]
 
         # Trigger alert
-        self.turn_manager._alert_nearby_enemies(alerting_enemy)
+        self.game_session._alert_nearby_enemies(alerting_enemy)
 
         # Nearby enemy should be alerted
         assert nearby_enemy.state == EnemyState.HOSTILE, "Nearby enemy should become HOSTILE"
@@ -119,7 +119,7 @@ class TestEnemyCommunication:
         self.game_engine.enemies = [alerting_enemy, nearby_enemy]
 
         # Trigger alert
-        self.turn_manager._alert_nearby_enemies(alerting_enemy)
+        self.game_session._alert_nearby_enemies(alerting_enemy)
 
         # Should skip ALERT and go straight to HOSTILE
         assert nearby_enemy.state == EnemyState.HOSTILE, "Should go directly to HOSTILE"
@@ -137,7 +137,7 @@ class TestEnemyCommunication:
         self.game_engine.enemies = [alerting_enemy, already_hostile]
 
         # Trigger alert
-        self.turn_manager._alert_nearby_enemies(alerting_enemy)
+        self.game_session._alert_nearby_enemies(alerting_enemy)
 
         # Should keep original last_seen_player position
         assert already_hostile.last_seen_player == Position(5, 5), "Should not update position"

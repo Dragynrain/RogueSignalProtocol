@@ -30,9 +30,7 @@ from game_map import GameMap
 from game_input import InputHandler
 
 # Import new specialized modules
-from game_state_persistence import GameStatePersistence
-from game_level_coordinator import GameLevelCoordinator
-from game_turn_manager import GameTurnManager
+from game_session import GameSession
 from game_dialogue_system import DialogueState
 
 
@@ -93,10 +91,8 @@ class GameEngine:
         # Initialize turn processor with dependencies
         self.turn_processor = TurnProcessor(self.game_state, self.message_log)
 
-        # Initialize specialized coordinators
-        self.state_persistence = GameStatePersistence(self)
-        self.level_coordinator = GameLevelCoordinator(self)
-        self.turn_manager = GameTurnManager(self)
+        # Initialize game session coordinator (combines turn, level, and persistence)
+        self.game_session = GameSession(self)
 
         # Initialize dialogue state with settings for preference persistence
         self.dialogue_state = DialogueState(self.settings)
@@ -142,14 +138,14 @@ class GameEngine:
 
         # Initialize game state
         if load_save:
-            success = self.state_persistence.load_from_save()
+            success = self.game_session.load_from_save()
             if not success:
                 # Fallback to new game if loading fails
                 self._randomize_code_hacks()
-                self.level_coordinator.generate_procedural_level()
+                self.game_session.generate_procedural_level()
         else:
             self._randomize_code_hacks()
-            self.level_coordinator.generate_procedural_level()
+            self.game_session.generate_procedural_level()
 
         # Initialize InputHandler after GameEngine is fully set up (requires self reference)
         if input_handler is None:
@@ -213,30 +209,30 @@ class GameEngine:
         return self.enemy_manager.get_enemy_at_position(position)
 
     # Backward compatibility methods for tests
-    # These methods delegate to the appropriate coordinator/manager classes
+    # These methods delegate to the game session coordinator
     def _process_player_turn(self):
         """Process player turn by updating temporary effects and incrementing turn counter."""
         self.turn_processor.process_turn(self.player)
 
     def _process_enemies_turn(self):
         """Process all enemy turns (movement, attacks, AI decisions)."""
-        self.turn_manager._process_enemies_turn()
+        self.game_session._update_enemies()
 
     def _process_special_tiles(self):
         """Process special tile effects (cooling nodes, CPU recovery, etc.)."""
-        self.turn_manager._process_special_tiles()
+        self.game_session._process_special_tiles()
 
     def _update_enemies(self):
         """Update enemy AI, movement, and pathfinding."""
-        self.turn_manager._update_enemies()
+        self.game_session._update_enemies()
 
     def _generate_procedural_level(self):
         """Generate a new procedural level with rooms, enemies, and items."""
-        self.level_coordinator.generate_procedural_level()
+        self.game_session.generate_procedural_level()
 
     def _update_enemy_awareness(self):
         """Update enemy awareness states based on FOV and player visibility."""
-        self.turn_manager._update_enemy_awareness()
+        self.game_session._update_enemy_awareness()
 
     def auto_save(self) -> None:
         """Auto-save the current game state."""
@@ -273,8 +269,8 @@ class GameEngine:
             self.code_hack_effects[color] = (effect, desc)
 
     def process_turn(self):
-        """Process one complete game turn - delegates to TurnManager."""
-        self.turn_manager.process_turn()
+        """Process one complete game turn - delegates to GameSession."""
+        self.game_session.process_turn()
 
     def move_player(self, dx: int, dy: int):
         """
@@ -364,8 +360,8 @@ class GameEngine:
         if self.player.temporary_effects['movement_slowed_turns'] > 0:
             self.message_log.add_message("Movement inhibition: Enemies get double moves")
             # Process enemy updates twice for the double move advantage
-            self.turn_manager._update_enemies()
-            self.turn_manager._update_enemies()
+            self.game_session._update_enemies()
+            self.game_session._update_enemies()
 
     def _perform_bump_attack(self, target_enemy: Enemy):
         """
@@ -457,8 +453,8 @@ class GameEngine:
         return enemy.move_queue[:steps]
 
     def next_level(self):
-        """Progress to the next level - delegates to LevelCoordinator."""
-        self.level_coordinator.progress_to_next_level()
+        """Progress to the next level - delegates to GameSession."""
+        self.game_session.progress_to_next_level()
 
     def get_game_state_for_save(self) -> dict:
         """
