@@ -6,6 +6,7 @@ Main entry point that imports modular components and initializes the game.
 Sets up logging configuration for both console and file output.
 """
 
+import sys
 import tcod
 from tcod import libtcodpy
 import logging
@@ -18,6 +19,19 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Tuple, Optional, Dict, Any
+
+# CRITICAL: Set working directory to exe location when running as frozen executable
+# This ensures the game can find assets regardless of where it's launched from
+if getattr(sys, 'frozen', False):
+    # Running as compiled exe
+    application_path = os.path.dirname(sys.executable)
+    os.chdir(application_path)
+    print(f"Running as frozen exe, changed working directory to: {application_path}")
+else:
+    # Running as script
+    application_path = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(application_path)
+    print(f"Running as script, working directory: {application_path}")
 
 # Import refactored modules
 from data_loading import DataLoader, PersistentStorage, get_story_fragments
@@ -48,17 +62,41 @@ from game_rendering_ui import UIRenderer
 from game_rendering_glyphs import GlyphsMapRenderer
 from game_loop import main, initialize_tcod_context, WindowManager as LoopWindowManager
 
-# Configure logging to capture debug info for both console and file output
-# Overwrites game_debug.log each session to prevent log file bloat
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s',
-    handlers=[
+# Configure logging based on build type
+# Alpha builds: DEBUG logging with file output (for playtester bug reports)
+# Release builds: WARNING logging with minimal file output
+# Check for debug_mode.flag file created by build script
+DEBUG_MODE = os.path.exists('debug_mode.flag')
+
+if DEBUG_MODE:
+    # Alpha/Debug build - verbose logging for playtesters
+    log_level = logging.DEBUG
+    log_handlers = [
         logging.StreamHandler(),
         logging.FileHandler('game_debug.log', mode='w')
-    ],
+    ]
+    print("DEBUG MODE: Verbose logging enabled (Alpha build)")
+else:
+    # Release build - minimal logging
+    log_level = logging.WARNING
+    log_handlers = [
+        logging.FileHandler('game_errors.log', mode='w')
+    ]
+    print("RELEASE MODE: Minimal logging (Release build)")
+
+logging.basicConfig(
+    level=log_level,
+    format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s',
+    handlers=log_handlers,
     datefmt='%Y-%m-%d %H:%M:%S'
 )
+
+# Log the startup mode
+if DEBUG_MODE:
+    logging.info("Game started in DEBUG mode (Alpha build for playtesters)")
+    logging.info(f"Log file: game_debug.log")
+else:
+    logging.warning("Game started in RELEASE mode (errors only logged to game_errors.log)")
 
 
 # All configuration constants are loaded from JSON files via:

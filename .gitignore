@@ -1,5 +1,7 @@
 # Debug and log files
 game_debug.log
+game_errors.log
+debug_mode.flag
 *.log
 
 # Python cache files
@@ -24,6 +26,8 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+releases/
+*.spec
 
 # Virtual environment
 .venv/
