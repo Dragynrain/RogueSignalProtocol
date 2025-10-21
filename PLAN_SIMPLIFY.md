@@ -28,24 +28,24 @@ The codebase contains **56 Python files with ~21,000 lines** of game code. While
 **Goal:** Fix critical bugs and remove major structural complexity
 
 **Issues to Complete:**
-- [ ] **Issue #1: Fix ExploitSystem duplication bug** - CRITICAL BUG FIX
-  - [ ] Delete `self.exploit_system = ExploitSystem(game)` from game_input.py line 54
-  - [ ] Replace `self.exploit_system.use_exploit()` with `self.game.exploit_system.use_exploit()` (line 494)
-  - [ ] Replace `self.exploit_system.execute_exploit()` with `self.game.exploit_system.execute_exploit()` (line 319)
-  - [ ] Run full test suite
-  - [ ] Commit: "Fix ExploitSystem duplication bug in InputHandler"
+- [X] **Issue #1: Fix ExploitSystem duplication bug** - CRITICAL BUG FIX
+  - [X] Delete `self.exploit_system = ExploitSystem(game)` from game_input.py line 54
+  - [X] Replace `self.exploit_system.use_exploit()` with `self.game.exploit_system.use_exploit()` (line 494)
+  - [X] Replace `self.exploit_system.execute_exploit()` with `self.game.exploit_system.execute_exploit()` (line 319)
+  - [X] Run full test suite
+  - [X] Commit: "Fix ExploitSystem duplication bug in InputHandler"
 
-- [ ] **Issue #2: Consolidate coordinators into GameEngine + GameSession**
-  - [ ] Create new `game_session.py` file (~875 lines)
-  - [ ] Move turn processing from GameTurnManager to GameSession
-  - [ ] Move level generation orchestration from GameLevelCoordinator to GameSession
-  - [ ] Move save/load from GameStatePersistence to GameSession
-  - [ ] Keep GameEngine as structure/setup (~900 lines)
-  - [ ] Update GameEngine to instantiate GameSession
-  - [ ] Update all references/imports
-  - [ ] Delete game_turn_manager.py, game_level_coordinator.py, game_state_persistence.py
-  - [ ] Run full test suite
-  - [ ] Commit: "Split coordinator logic into GameEngine (structure) and GameSession (runtime)"
+- [X] **Issue #2: Consolidate coordinators into GameEngine + GameSession**
+  - [X] Create new `game_session.py` file (~1318 lines - larger than planned but still under guideline)
+  - [X] Move turn processing from GameTurnManager to GameSession
+  - [X] Move level generation orchestration from GameLevelCoordinator to GameSession
+  - [X] Move save/load from GameStatePersistence to GameSession
+  - [X] Keep GameEngine as structure/setup
+  - [X] Update GameEngine to instantiate GameSession
+  - [X] Update all references/imports
+  - [X] Delete game_turn_manager.py, game_level_coordinator.py, game_state_persistence.py
+  - [X] Run full test suite (1036/1036 passing)
+  - [X] Commit: "Split coordinator logic into GameEngine (structure) and GameSession (runtime)"
 
 - [ ] **Issue #3: Consolidate rendering files**
   - [ ] Merge UI subsystem files into single game_rendering_ui.py
