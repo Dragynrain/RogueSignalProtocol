@@ -211,8 +211,10 @@ class UnifiedRenderer:
             dialogue: DialogueBox to render
         """
         # Calculate box dimensions
-        box_width = min(60, console.width - 4)  # Leave 2 char margin
-        box_height = 12
+        # Use 70 characters for dialogue boxes to provide more horizontal space
+        # This helps with longer messages like overclock warnings
+        box_width = min(70, console.width - 4)  # Leave 2 char margin
+        box_height = 14  # Increased height to accommodate wrapped text
 
         # Center the box
         box_x, box_y = CoordinateHelpers.center_box(
@@ -449,8 +451,8 @@ def create_overclock_warning_dialogue(exploit_name: str, overheat_amount: int,
     """
     return DialogueBox(
         title="*** OVERCLOCK WARNING ***",
-        message="Using {exploit_name} will exceed heat capacity by {overheat_amount}. You will take {damage} CPU damage. Remaining CPU: {remaining_cpu}/{max_cpu}",
-        options=["[Y] Use exploit anyway", "[N] Cancel", "[D] Don't show again"],
+        message="Using {exploit_name} will overheat by {overheat_amount} heat.\n\nCPU damage: {damage}\nRemaining CPU: {remaining_cpu}/{max_cpu}",
+        options=["[Y] Use anyway", "[N] Cancel", "[D] Don't ask again"],
         valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.D, tcod.event.KeySym.ESCAPE],
         title_color=Colors.RED,
         message_color=Colors.YELLOW,

@@ -76,6 +76,85 @@ I = Inhibitor    (30 HP, vision 4, slows movement, 5 damage)
 A = Admin Avatar (250 HP, vision 8, perfect tracking, 45 damage)
 
 -------------------------------------------------------------------------------
+SYSTEM REQUIREMENTS
+-------------------------------------------------------------------------------
+
+* Windows 10 or later
+* 4 GB RAM minimum
+* Sound card for audio (optional)
+
+-------------------------------------------------------------------------------
+TROUBLESHOOTING
+-------------------------------------------------------------------------------
+
+WINDOWS SMARTSCREEN WARNING (VERY COMMON):
+When you first run the .exe, Windows will show:
+"Windows protected your PC"
+
+This is NORMAL for new, unsigned applications.
+The game is safe - this happens because it's not code-signed.
+
+To run the game:
+1. Click "More info"
+2. Click "Run anyway"
+
+You only need to do this ONCE.
+
+ANTIVIRUS FALSE POSITIVES (COMMON):
+Some antivirus software may flag the .exe as suspicious.
+This is a false positive - the game is safe.
+
+If your antivirus blocks it:
+- Add the game folder to your antivirus exclusions
+- Temporarily disable real-time protection while running
+
+If the game won't start:
+- Make sure all folders and files are present
+- Run as Administrator if needed
+- Check Windows Event Viewer for specific errors
+
+If graphics don't load:
+- Verify the graphics/ folder is in the same location as the .exe
+- Check that graphics_tiles.json is present
+
+If sound doesn't work:
+- Verify the sound/ and music/ folders are present
+- Check Windows audio settings
+
+ALPHA TESTERS - SENDING BUG REPORTS:
+If you encounter a crash or bug, please send us:
+1. The game_debug.log file (created next to the .exe)
+2. A description of what you were doing when it happened
+3. Your system info (Windows version, RAM, graphics card)
+
+The debug log contains detailed information that helps us fix bugs!
+
+-------------------------------------------------------------------------------
+GAME FILES
+-------------------------------------------------------------------------------
+
+DO NOT DELETE these files or folders:
+- graphics/       (sprite graphics)
+- sound/          (sound effects)
+- music/          (background music)
+- game_content.json
+- game_rules.json
+- graphics_tiles.json
+- story_content.json
+- terminal10x16_gs_ro.png
+
+SAFE TO DELETE (regenerated automatically):
+- user_settings.json    (resets your settings)
+- rogue_signal_save.json (deletes your save)
+- game_debug.log        (debug log - alpha builds only)
+- game_errors.log       (error log - release builds only)
+
+ADVANCED - LOGGING CONTROL:
+- debug_mode.flag       (if present, enables verbose debug logging)
+                        (alpha builds include this, release builds don't)
+                        (delete to reduce logging, create to enable it)
+
+-------------------------------------------------------------------------------
 FEEDBACK
 -------------------------------------------------------------------------------
 

@@ -724,20 +724,40 @@ class GraphicsPreviewMenu:
 
     def _get_rainbow_color(self) -> Tuple[int, int, int]:
         """
-        Calculate rainbow color based on current time for data fragment highlighting.
+        Calculate cyberpunk color based on current time for data fragment highlighting.
+        Cycles through neon cyberpunk colors used in the game.
         COPIED from game_rendering_graphics.py
 
         Returns:
-            RGB color tuple cycling through rainbow colors
+            RGB color tuple cycling through cyberpunk neon colors
         """
-        import colorsys
-        current_time = time.time()
-        # Cycle through rainbow every 4 seconds
-        hue = (current_time * 0.25) % 1.0  # 0.0 to 1.0
+        # Cyberpunk neon palette from game_rules.json
+        cyberpunk_colors = [
+            (255, 20, 80),    # Crimson - neon red/pink
+            (0, 200, 255),    # Azure - bright cyan
+            (0, 255, 100),    # Emerald - neon green
+            (255, 240, 0),    # Golden - neon yellow
+            (200, 60, 255),   # Violet - electric purple
+            (255, 20, 147),   # Neon Pink - hot pink
+        ]
 
-        # Convert HSV to RGB (hue cycles, saturation and value fixed)
-        r, g, b = colorsys.hsv_to_rgb(hue, 1.0, 1.0)
-        return (int(r * 255), int(g * 255), int(b * 255))
+        current_time = time.time()
+        # Cycle through colors every 6 seconds (1 second per color)
+        color_index = int(current_time) % len(cyberpunk_colors)
+
+        # Smooth transition between colors
+        next_index = (color_index + 1) % len(cyberpunk_colors)
+        blend_factor = (current_time % 1.0)  # 0.0 to 1.0 within the second
+
+        current_color = cyberpunk_colors[color_index]
+        next_color = cyberpunk_colors[next_index]
+
+        # Linear interpolation between colors
+        r = int(current_color[0] * (1 - blend_factor) + next_color[0] * blend_factor)
+        g = int(current_color[1] * (1 - blend_factor) + next_color[1] * blend_factor)
+        b = int(current_color[2] * (1 - blend_factor) + next_color[2] * blend_factor)
+
+        return (r, g, b)
 
     def _get_variant_texture(self, entity_key: str) -> Optional[tcod.sdl.render.Texture]:
         """Get texture for entity with currently selected variant (with caching)."""

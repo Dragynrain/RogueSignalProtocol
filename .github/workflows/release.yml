@@ -1,0 +1,133 @@
+name: Build Release
+
+# Only run when a new release is created
+on:
+  release:
+    types: [published]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        lfs: true  # Enable Git LFS for large asset files
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'  # Use latest stable Python 3.x
+
+    - name: Verify required files
+      run: |
+        # Check that all required files exist
+        $missing = @()
+
+        if (-not (Test-Path "RogueSignalProtocol.py")) { $missing += "RogueSignalProtocol.py" }
+        if (-not (Test-Path "requirements.txt")) { $missing += "requirements.txt" }
+        if (-not (Test-Path "game_content.json")) { $missing += "game_content.json" }
+        if (-not (Test-Path "game_rules.json")) { $missing += "game_rules.json" }
+        if (-not (Test-Path "graphics_tiles.json")) { $missing += "graphics_tiles.json" }
+        if (-not (Test-Path "story_content.json")) { $missing += "story_content.json" }
+        if (-not (Test-Path "terminal10x16_gs_ro.png")) { $missing += "terminal10x16_gs_ro.png" }
+        if (-not (Test-Path "graphics")) { $missing += "graphics/" }
+        if (-not (Test-Path "sound")) { $missing += "sound/" }
+        if (-not (Test-Path "music")) { $missing += "music/" }
+
+        if ($missing.Count -gt 0) {
+          Write-Error "Missing required files: $($missing -join ', ')"
+          exit 1
+        }
+
+        Write-Host "All required files found."
+      shell: powershell
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pyinstaller
+
+    - name: Build executable with PyInstaller
+      run: |
+        pyinstaller --onefile --noconsole --name RogueSignalProtocol RogueSignalProtocol.py
+
+        # Create debug_mode.flag for alpha releases (enable verbose logging for bug reports)
+        # Comment out the next two lines for production release builds
+        Write-Host "Creating debug_mode.flag for alpha/beta testing..."
+        "This file enables DEBUG logging for playtester bug reports." | Out-File -FilePath "dist\debug_mode.flag" -Encoding ASCII
+      shell: powershell
+
+    - name: Verify executable was created
+      run: |
+        if (-not (Test-Path "dist\RogueSignalProtocol.exe")) {
+          Write-Error "Build failed - executable not found!"
+          exit 1
+        }
+        Write-Host "Executable created successfully."
+      shell: powershell
+
+    - name: Copy assets to dist
+      run: |
+        # Copy JSON config files
+        Write-Host "Copying JSON config files..."
+        Copy-Item -Path "game_content.json" -Destination "dist\"
+        Copy-Item -Path "game_rules.json" -Destination "dist\"
+        Copy-Item -Path "graphics_tiles.json" -Destination "dist\"
+        Copy-Item -Path "story_content.json" -Destination "dist\"
+
+        # Copy font file
+        Write-Host "Copying font file..."
+        Copy-Item -Path "terminal10x16_gs_ro.png" -Destination "dist\"
+
+        # Copy LICENSE if it exists
+        if (Test-Path "LICENSE") {
+          Write-Host "Copying LICENSE..."
+          Copy-Item -Path "LICENSE" -Destination "dist\"
+        }
+
+        # Copy README
+        Write-Host "Copying distribution README..."
+        Copy-Item -Path "README.txt" -Destination "dist\README.txt"
+
+        # Create build info
+        Write-Host "Creating build info..."
+        "Build Type: Alpha (GitHub Actions)" | Out-File -FilePath "dist\build_info.txt" -Encoding ASCII
+        "Log Level: DEBUG" | Add-Content -Path "dist\build_info.txt"
+        "Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')" | Add-Content -Path "dist\build_info.txt"
+
+        # Copy asset folders
+        Write-Host "Copying graphics folder..."
+        Copy-Item -Path "graphics" -Destination "dist\graphics" -Recurse
+
+        Write-Host "Copying sound folder..."
+        Copy-Item -Path "sound" -Destination "dist\sound" -Recurse
+
+        Write-Host "Copying music folder..."
+        Copy-Item -Path "music" -Destination "dist\music" -Recurse
+
+        Write-Host "All assets copied successfully."
+      shell: powershell
+
+    - name: Create release archive
+      run: |
+        Compress-Archive -Path dist\* -DestinationPath RogueSignalProtocol-Windows.zip -Force
+
+        # Verify zip was created
+        if (-not (Test-Path "RogueSignalProtocol-Windows.zip")) {
+          Write-Error "Failed to create release archive!"
+          exit 1
+        }
+
+        $zipSize = (Get-Item "RogueSignalProtocol-Windows.zip").Length / 1MB
+        Write-Host "Release archive created: $([math]::Round($zipSize, 2)) MB"
+      shell: powershell
+
+    - name: Upload release asset
+      uses: softprops/action-gh-release@v1
+      with:
+        files: RogueSignalProtocol-Windows.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
