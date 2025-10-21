@@ -232,7 +232,7 @@ class GameEngine:
 
     def _update_enemy_awareness(self):
         """Update enemy awareness states based on FOV and player visibility."""
-        self.game_session._update_enemy_awareness()
+        self.game_session._update_all_enemy_awareness()
 
     def auto_save(self) -> None:
         """Auto-save the current game state."""

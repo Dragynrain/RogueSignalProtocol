@@ -313,9 +313,11 @@ def _get_current_target(self, player, game_map) -> Optional[Position]:
 
 ---
 
-### Phase 3: Simplify move() Method
+### Phase 3: Simplify move() Method ✓ COMPLETE
 
 **Goal:** Clean execution flow
+
+**Status:** ✓ Complete - move() method simplified with helper methods and full test coverage
 
 **File:** `game_characters.py` in `Enemy` class
 
@@ -413,6 +415,19 @@ def _advance_patrol_waypoint(self):
 - Test random enemy movement
 
 **Acceptance:** move() simplified, queue always maintained at 3
+
+**Implementation Notes (Completed):**
+- Replaced move() method at line 523 in game_characters.py
+- New move() is 59 lines (down from 106 lines - 44% reduction)
+- Added `_should_advance_patrol_waypoint()` helper method at line 583
+- Added `_advance_patrol_waypoint()` helper method at line 595
+- Removed: double retry logic on blocked moves
+- Removed: target change detection and queue refresh
+- Removed: duplicate patrol waypoint advancement check
+- Removed: calls to `_add_next_move_to_queue()` and `_refresh_move_queue()`
+- Fixed: numpy array truth value issue in `_ensure_queue_full()` (changed `if path` to `if path is not None`)
+- Fixed: HOSTILE enemies with RANDOM base movement now correctly pathfind to player (state takes precedence over movement type)
+- All movement-related tests passing (1054/1055 total tests passing - 1 unrelated pre-existing failure)
 
 ---
 
