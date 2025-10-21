@@ -157,9 +157,11 @@ class PathfindingHelper:
 
 ---
 
-### Phase 2: Add Simplified Queue Methods
+### Phase 2: Add Simplified Queue Methods ✓ COMPLETE
 
 **Goal:** Unified queue management
+
+**Status:** ✓ Complete - All new queue methods added with full test coverage
 
 **File:** `game_characters.py` in `Enemy` class
 
@@ -293,6 +295,21 @@ def _get_current_target(self, player, game_map) -> Optional[Position]:
 - Test pathfinding movement fills correctly
 
 **Acceptance:** Queue filling logic working, always targets 3 moves
+
+**Implementation Notes (Completed):**
+- Added `_ensure_queue_full()` method at line 630 in game_characters.py
+- Added `_fill_random_moves()` helper method at line 689
+- Added `_calculate_random_move_from()` helper method at line 703
+- Added `_is_move_valid_from()` helper method at line 714
+- Reused existing `_get_current_target()` method (already exists at line 928)
+- Added 5 new test classes in tests/unit/test_enemy_movement_queue.py:
+  - TestEnsureQueueFull (5 tests)
+  - TestFillRandomMoves (2 tests)
+  - TestCalculateRandomMoveFrom (2 tests)
+  - TestIsMoveValidFrom (4 tests)
+- All 32 movement queue tests passing
+- Methods use PathfindingHelper from Phase 1 for consistent pathfinding
+- Queue filling logic properly handles STATIC, RANDOM, PATROL, and SEEK movement types
 
 ---
 

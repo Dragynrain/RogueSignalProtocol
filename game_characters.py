@@ -627,6 +627,101 @@ class Enemy:
 
         return True
 
+    def _ensure_queue_full(self, game_map, player, game_engine):
+        """
+        Ensure move queue has 3 moves (or as many as possible).
+
+        This is the ONLY method that fills the queue. Called after each move
+        to maintain a fixed 3-length queue for player predictability.
+
+        Strategy:
+        - If queue already has 3 moves, do nothing
+        - Otherwise, calculate path from last queued position (or current position)
+        - Add moves until queue has 3 (or path exhausted)
+        """
+        # Already full
+        if len(self.move_queue) >= 3:
+            return
+
+        movement_type = self.get_movement_type()
+
+        # Static enemies don't move
+        if movement_type == EnemyMovement.STATIC:
+            return
+
+        # Random movement - fill with random moves
+        if movement_type == EnemyMovement.RANDOM:
+            self._fill_random_moves(game_map, player, game_engine)
+            return
+
+        # Pathfinding-based movement (PATROL, SEEK)
+        target = self._get_current_target(player, game_map)
+        if not target:
+            return
+
+        # Start pathfinding from last queued position (or current if empty)
+        start_pos = self.move_queue[-1] if self.move_queue else self.position
+
+        # Calculate path
+        path = PathfindingHelper.calculate_path(
+            start=start_pos,
+            goal=target,
+            game_map=game_map,
+            game_engine=game_engine,
+            moving_enemy=self
+        )
+
+        # Fill queue from path
+        if path and len(path) > 1:
+            # Add moves until queue has 3
+            for i in range(1, len(path)):
+                if len(self.move_queue) >= 3:
+                    break
+                # TCOD returns (y, x), convert to Position(x, y)
+                self.move_queue.append(Position(path[i][1], path[i][0]))
+
+        # Pathfinding failed - try greedy fallback (add at least 1 move)
+        elif target and len(self.move_queue) == 0:
+            greedy_move = self._calculate_greedy_move_toward_target(target, game_map, game_engine)
+            if greedy_move:
+                self.move_queue.append(greedy_move)
+
+    def _fill_random_moves(self, game_map, player, game_engine):
+        """Fill queue with random moves."""
+        # Start from last queued position (or current if empty)
+        start_pos = self.move_queue[-1] if self.move_queue else self.position
+
+        # Add random moves until queue has 3
+        while len(self.move_queue) < 3:
+            next_move = self._calculate_random_move_from(start_pos, game_map, player, game_engine)
+            if next_move:
+                self.move_queue.append(next_move)
+                start_pos = next_move  # Chain for next random move
+            else:
+                break  # No valid random moves
+
+    def _calculate_random_move_from(self, from_pos: Position, game_map, player, game_engine) -> Optional[Position]:
+        """Calculate a random valid move from given position."""
+        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+        random.shuffle(directions)
+
+        for dx, dy in directions:
+            next_pos = Position(from_pos.x + dx, from_pos.y + dy)
+            if self._is_move_valid_from(next_pos, from_pos, game_map, player, game_engine):
+                return next_pos
+        return None
+
+    def _is_move_valid_from(self, position: Position, from_position: Position, game_map, player, game_engine) -> bool:
+        """Check if move from from_position to position is valid."""
+        if not game_map.is_valid_position(position):
+            return False
+        if position.x == player.x and position.y == player.y:
+            return False
+        for other_enemy in game_engine.enemies:
+            if other_enemy.id != self.id and other_enemy.x == position.x and other_enemy.y == position.y:
+                return False
+        return True
+
     def _refresh_move_queue(self, player, game_map, game_engine):
         """
         Recalculate movement queue from scratch (up to 3 moves).
