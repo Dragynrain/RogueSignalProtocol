@@ -1,0 +1,50 @@
+# Git Attributes Configuration
+# Ensures consistent line endings and file handling across platforms
+
+# Auto-detect text files and normalize line endings to LF in repository
+* text=auto
+
+# Source code - always use LF
+*.py text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.ini text eol=lf
+*.cfg text eol=lf
+*.txt text eol=lf
+*.sh text eol=lf
+
+# Windows batch files - must use CRLF
+*.bat text eol=crlf
+
+# Binary files - never modify
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+*.flac binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.7z binary
+*.pdf binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.pyc binary
+*.pyd binary
+
+# Python wheels and eggs
+*.egg binary
+*.whl binary
+
+# Archives created by build
+releases/*.zip binary
