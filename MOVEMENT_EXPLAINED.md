@@ -711,3 +711,58 @@ The system tries to maintain a **predictive rolling queue** while handling **dyn
 - Correctness (validate adjacency, handle blockages)
 
 The result is a complex system with many edge cases, special handling, and defensive programming that's hard to reason about and maintain.
+
+---
+
+## Simplified Architecture (Current)
+
+The movement system has been simplified to focus on the queue as a gameplay mechanic:
+
+**Core Insight:** The queue represents enemy commitment. Always show 3 moves ahead.
+
+**Simplified Design:**
+- ONE method fills queue: `_ensure_queue_full()` (handles initial fill and top-up)
+- TWO invalidation triggers: state change and blockage
+- NO special cases: patrol extension, target tracking, double retry removed
+
+**Code Reduction:** ~300 lines → ~150 lines (50% reduction)
+
+**Same Gameplay:** Queue still shows 3-move commitment for tactical planning
+
+### What Changed
+
+**Before (Complex):**
+- Separate `_refresh_move_queue()` (initial fill, 116 lines) and `_add_next_move_to_queue()` (replenishment, 53 lines)
+- 6+ invalidation triggers scattered across multiple files
+- Target change detection with `_queue_target` and `_queue_state` tracking variables
+- Patrol extension special case (40+ lines just for visual polish)
+- Double retry on blocked moves
+- Duplicate patrol waypoint advancement checks
+
+**After (Simple):**
+- Single `_ensure_queue_full()` method (89 lines) handles all queue filling
+- 2 invalidation triggers: state change (in `game_session.py`) and blocked move (in `move()`)
+- No target tracking variables - queue invalidates on state change only
+- No patrol extension - queue fills to 3 or as many as path allows
+- Single attempt on blocked move - clear queue and replan next turn
+- Single patrol waypoint check at start of move
+
+### Implementation Details
+
+**Centralized Pathfinding:**
+- New `PathfindingHelper` class provides single source of truth for pathfinding
+- `PathfindingHelper.calculate_path()` used by all movement types
+- Consistent enemy collision avoidance via `_create_cost_map()`
+
+**Queue Lifecycle (Simplified):**
+1. Execute move (pop from queue)
+2. Ensure queue has 3 moves (top up)
+3. If state changes or move blocked → Clear queue
+4. Go to step 1
+
+**Benefits:**
+- Easier to understand and debug
+- Single responsibility per method
+- Fewer edge cases to handle
+- Same player experience (3-move prediction)
+- Faster (less duplicate pathfinding)
