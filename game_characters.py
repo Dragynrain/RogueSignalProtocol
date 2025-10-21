@@ -328,7 +328,7 @@ class Enemy:
 
     Key delegation:
     - Type data loaded from GameData.ENEMY_TYPES (stats, vision, damage)
-    - Pathfinding uses create_pathfinding_cost_map() helper
+    - Pathfinding uses PathfindingHelper for all pathfinding operations
     - Position validation uses PositionValidator
     """
 
@@ -378,8 +378,6 @@ class Enemy:
 
         # Movement queue system - stores next 3 planned moves
         self.move_queue: List[Position] = []
-        self._queue_target: Optional[Position] = None  # Target when queue was calculated
-        self._queue_state: EnemyState = self.state  # State when queue was calculated
     
     @property
     def x(self) -> int:
@@ -692,167 +690,6 @@ class Enemy:
                 return False
         return True
 
-    def _refresh_move_queue(self, player, game_map, game_engine):
-        """
-        Recalculate movement queue from scratch (up to 3 moves).
-
-        Called when:
-        - Queue is empty
-        - Move is blocked and needs replanning
-        - Target changes for tracking enemies (admin/hostile)
-        - Patrol waypoint is reached
-
-        Strategy:
-        - Admin/hostile/patrol: Use TCOD A* pathfinding, add first 3 steps
-        - Random movement: Generate 3 random valid moves
-        - Validates adjacency between consecutive moves
-        - Extends patrol queues to next waypoint if current route is short
-        - Falls back to greedy movement if pathfinding fails
-        """
-        self.move_queue.clear()
-
-        # Update tracking
-        self._queue_state = self.state
-        self._queue_target = self._get_current_target(player, game_map)
-
-        # Static enemies don't move
-        movement_type = self.get_movement_type()
-        if movement_type == EnemyMovement.STATIC:
-            return
-
-        # Admin, hostile enemies, and patrol enemies use pathfinding
-        if self.type == 'admin' or self.state == EnemyState.HOSTILE or movement_type == EnemyMovement.PATROL:
-            path = self._calculate_path_to_target(self._queue_target, game_map, game_engine)
-
-            # If pathfinding failed (blocked by enemies/walls), use greedy movement as fallback
-            if (path is None or len(path) <= 1) and self._queue_target:
-                fallback_move = self._calculate_greedy_move_toward_target(self._queue_target, game_map, game_engine)
-                if fallback_move:
-                    self.move_queue.append(fallback_move)
-            elif path is not None and len(path) > 1:
-                # Add positions to queue, validating adjacency between each step
-                prev_pos = self.position  # Start from current position
-
-                # Take up to 3 steps (skip current position at index 0)
-                for i in range(1, min(len(path), 4)):
-                    # TCOD path returns (y, x) tuples, convert to Position(x, y)
-                    next_pos = Position(path[i][1], path[i][0])
-
-                    # Ensure this position is adjacent to the previous position
-                    if not prev_pos.is_adjacent_to(next_pos):
-                        # Path has a gap - stop adding moves
-                        break
-
-                    self.move_queue.append(next_pos)
-                    prev_pos = next_pos  # Update for next iteration
-
-                    # Stop if adjacent to target (no need to add more moves)
-                    if self._queue_target and next_pos.is_adjacent_to(self._queue_target):
-                        break
-
-                # For patrol enemies: if queue doesn't have 3 moves, try to extend toward next patrol point
-                # This ensures short patrol routes still show movement predictions
-                if (movement_type == EnemyMovement.PATROL and
-                    self.state != EnemyState.HOSTILE and
-                    self.patrol_points and
-                    len(self.patrol_points) >= 2 and  # Only extend if there are multiple patrol points
-                    len(self.move_queue) < 3):
-
-                    try:
-                        # Determine starting position for extension
-                        if self.move_queue:
-                            last_queued_pos = self.move_queue[-1]
-                        else:
-                            last_queued_pos = self.position
-
-                        # Get next patrol point
-                        next_patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
-                        next_patrol_target = self.patrol_points[next_patrol_index]
-
-                        # Calculate path from last queued position to next patrol point
-                        # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
-                        cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
-                        graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-                        pathfinder = tcod.path.Pathfinder(graph)
-                        pathfinder.add_root((last_queued_pos.y, last_queued_pos.x))
-                        next_path = pathfinder.path_to((next_patrol_target.y, next_patrol_target.x))
-
-                        # Add remaining moves to fill queue up to 3 total
-                        if next_path is not None and len(next_path) > 1:
-                            moves_to_add = 3 - len(self.move_queue)
-                            for i in range(1, min(len(next_path), moves_to_add + 1)):
-                                # TCOD path returns (y, x) tuples, convert to Position(x, y)
-                                next_pos = Position(next_path[i][1], next_path[i][0])
-                                if last_queued_pos.is_adjacent_to(next_pos):
-                                    self.move_queue.append(next_pos)
-                                    last_queued_pos = next_pos
-                                else:
-                                    break
-                    except Exception as e:
-                        logging.warning(f"Failed to extend patrol queue: {e}")
-        # Random movement - add up to 3 random moves
-        elif movement_type == EnemyMovement.RANDOM:
-            for i in range(3):
-                next_move = self._calculate_random_move(game_map, player, game_engine)
-                if next_move:
-                    self.move_queue.append(next_move)
-                else:
-                    break
-
-    def _add_next_move_to_queue(self, player, game_map, game_engine):
-        """Add one move to the back of queue to maintain 3 moves (rolling queue)."""
-        # Don't add more if already at 3
-        if len(self.move_queue) >= 3:
-            return
-
-        # Random movement doesn't need a target (unless hostile or admin - they always pathfind)
-        movement_type = self.get_movement_type()
-        if movement_type == EnemyMovement.RANDOM and self.type != 'admin' and self.state != EnemyState.HOSTILE:
-            next_move = self._calculate_random_move(game_map, player, game_engine)
-            if next_move:
-                self.move_queue.append(next_move)
-            return
-
-        # Calculate from last position in queue
-        start_pos = self.move_queue[-1] if self.move_queue else self.position
-        target = self._get_current_target(player, game_map)
-
-        if not target:
-            return
-
-        # Don't add more moves if queue already reaches adjacent to target
-        if start_pos.is_adjacent_to(target):
-            return
-
-        # For pathfinding enemies (admin, hostile, or patrol), calculate next step along path
-        if self.type == 'admin' or self.state == EnemyState.HOSTILE or movement_type == EnemyMovement.PATROL:
-            try:
-                # Check if path would be reasonable before adding to queue
-                direct_distance = start_pos.distance_to(target)
-                max_reasonable_path_length = max(6, int(direct_distance * 3))
-
-                # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
-                cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
-                graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-                pathfinder = tcod.path.Pathfinder(graph)
-                pathfinder.add_root((start_pos.y, start_pos.x))
-                path = pathfinder.path_to((target.y, target.x))
-
-                if len(path) > 1:
-                    # Only add move if path length is reasonable
-                    if len(path) <= max_reasonable_path_length:
-                        # TCOD path returns (y, x) tuples, convert to Position(x, y)
-                        next_pos = Position(path[1][1], path[1][0])
-
-                        # Validate adjacency before adding
-                        if start_pos.is_adjacent_to(next_pos):
-                            self.move_queue.append(next_pos)
-                    else:
-                        # Path too long - skip this move
-                        pass
-            except Exception as e:
-                logging.warning(f"Failed to add move to queue for {self.type_data.name}: {e}")
-
     def _calculate_path_to_target(self, target: Optional[Position], game_map, game_engine):
         """Calculate full path to target using A* pathfinding with reasonable distance limits."""
         if not target:
@@ -870,7 +707,7 @@ class Enemy:
                 max_reasonable_path_length = max(15, int(direct_distance * 3))
 
             # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
-            cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
+            cost_map = PathfindingHelper._create_cost_map(game_map, game_engine, self)
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
             pathfinder.add_root((self.position.y, self.position.x))
@@ -888,37 +725,6 @@ class Enemy:
             return None
 
 
-
-    def _calculate_patrol_move(self, game_map, game_engine) -> Optional[Position]:
-        """Calculate next move toward current patrol point."""
-        if not self.patrol_points:
-            return None
-
-        current_target = self.patrol_points[self.patrol_index]
-
-        # If close to current patrol point, route toward next one
-        if self.position.distance_to(current_target) <= 2.0:
-            next_index = (self.patrol_index + 1) % len(self.patrol_points)
-            target = self.patrol_points[next_index]
-        else:
-            target = current_target
-
-        # Use pathfinding to get next step
-        try:
-            # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
-            cost_map = create_pathfinding_cost_map(game_map, game_engine, self)
-            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-            pathfinder = tcod.path.Pathfinder(graph)
-            pathfinder.add_root((self.position.y, self.position.x))
-            path = pathfinder.path_to((target.y, target.x))
-
-            if len(path) > 1:
-                # TCOD path returns (y, x) tuples, convert to Position(x, y)
-                return Position(path[1][1], path[1][0])
-        except Exception as e:
-            logging.warning(f"Patrol pathfinding failed for {self.type_data.name}: {e}")
-
-        return None
 
     def _calculate_greedy_move_toward_target(self, target: Position, game_map, game_engine) -> Optional[Position]:
         """
@@ -1028,25 +834,5 @@ class Enemy:
 
 
 # Pathfinding helper functions
-def create_pathfinding_cost_map(game_map, game_engine, moving_enemy):
-    """Create cost map for TCOD A* pathfinding with optimizations.
-
-    Enemies are treated as impassable obstacles (like walls), forcing pathfinding
-    to route around them or get as close as possible and wait.
-    """
-    # Start with base terrain map (cached in game_map)
-    cost_map = game_map.get_walkability_map().copy()
-
-    # Mark enemy positions as impassable (cost = 0)
-    # Enemies block other enemies - pathfinding must route around them
-    for enemy in game_engine.enemies:
-        if enemy != moving_enemy:
-            x, y = enemy.x, enemy.y
-            if 0 <= x < game_map.width and 0 <= y < game_map.height:
-                # Mark as impassable (0 cost means wall/blocked)
-                # CRITICAL: TCOD uses [y, x] indexing for numpy arrays!
-                cost_map[y, x] = 0
-
-    return cost_map
 
 
