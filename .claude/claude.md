@@ -67,6 +67,13 @@
 - Build incrementally: test after adding every 10-20 lines
 - If broken, bisect to find exact failing line
 
+**Batch File Syntax:**
+- **NO `else if` support!** Batch files don't have `else if` syntax
+- Use nested `if` statements: `) else ( if ... )`
+- Use `%~dp0` to get batch file's directory for reliable path handling
+- Prefer `Python -m PyInstaller` over direct `.exe` calls
+- Files from `git show` have LF line endings - run `unix2dos` if needed
+
 ### Verification Rules
 1. **Never assume** - always verify
 2. **Never commit blindly** - test first
