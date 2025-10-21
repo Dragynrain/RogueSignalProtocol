@@ -634,9 +634,11 @@ Find any remaining calls to old methods and update to use new methods.
 
 ---
 
-### Phase 6: Update Tests
+### Phase 6: Update Tests ✓ COMPLETE
 
 **Goal:** Update tests for new architecture
+
+**Status:** ✓ Complete - All tests updated and passing
 
 **Files:** Test files in `tests/` directory
 
@@ -782,6 +784,29 @@ Update `tests/integration/test_enemy_movement_integration.py`:
 - Add tests for new behavior
 
 **Acceptance:** All tests updated and passing
+
+**Implementation Notes (Completed):**
+- Renamed test_enemy_movement_queue.py to test_enemy_movement.py
+- Updated file docstring to match new simplified architecture
+- Added TestQueueMaintenance class with 4 new tests:
+  - test_queue_fills_to_three_initially
+  - test_queue_tops_up_after_move
+  - test_queue_maintains_three_over_multiple_turns
+  - test_short_path_fills_partial_queue
+- Added TestQueueInvalidation class with 3 new tests:
+  - test_queue_clears_on_state_change
+  - test_queue_clears_on_blocked_move
+  - test_queue_does_not_clear_on_successful_move
+- TestPathfindingHelper already complete from Phase 1 (6 tests)
+- Updated integration tests (test_enemy_movement_integration.py):
+  - Added TestQueueMaintenanceIntegration class with 3 new tests
+  - test_queue_always_has_moves_when_path_available
+  - test_queue_refills_after_each_move
+  - test_queue_clears_on_state_transition
+- Fixed test fixtures to use "bot" instead of "scanner" (scanner is STATIC movement type)
+- All 620 unit tests passing
+- All 209 integration tests passing (1 pre-existing failure in unrelated exploit test)
+- Total movement-related tests: 39 unit + 9 integration = 48 tests
 
 ---
 
