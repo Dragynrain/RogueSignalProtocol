@@ -28,7 +28,7 @@ from game_entities import (Position, EnemyState, EnemyMovement, TargetingMode,
                           parse_coordinate_string, ensure_color_tuple)
 from game_data import GameData, GameUpgrades
 from game_inventory import InventoryItem, CodeHack, ExploitItem, StoryFragment, InventoryManager
-from game_characters import Player, Enemy, create_pathfinding_cost_map
+from game_characters import Player, Enemy
 from game_audio import SoundManager
 from game_save import SaveGameManager
 from game_story import StoryFragmentManager

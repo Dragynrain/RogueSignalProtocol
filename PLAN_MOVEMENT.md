@@ -577,9 +577,11 @@ def _alert_nearby_enemies(self, alerting_enemy):
 
 ---
 
-### Phase 5: Remove Old Code
+### Phase 5: Remove Old Code ✓ COMPLETE
 
 **Goal:** Delete deprecated methods and special cases
+
+**Status:** ✓ Complete - All deprecated code removed, tests passing
 
 **File:** `game_characters.py`
 
@@ -614,6 +616,21 @@ Find any remaining calls to old methods and update to use new methods.
 - Manual playthrough test
 
 **Acceptance:** Old code removed, all tests passing
+
+**Implementation Notes (Completed):**
+- Deleted `_refresh_move_queue()` method (107 lines) - fully replaced by `_ensure_queue_full()`
+- Deleted `_add_next_move_to_queue()` method (53 lines) - fully replaced by `_ensure_queue_full()`
+- Deleted `_calculate_patrol_move()` method (30 lines) - logic now in `_ensure_queue_full()`
+- Deleted instance variables `_queue_target` and `_queue_state` from Enemy.__init__
+- Deleted standalone function `create_pathfinding_cost_map()` (20 lines) - replaced by `PathfindingHelper._create_cost_map()`
+- Updated `_calculate_path_to_target()` to use `PathfindingHelper._create_cost_map()` instead of deleted function
+- Updated class docstring to reference PathfindingHelper instead of old function
+- Updated RogueSignalProtocol.py import to remove `create_pathfinding_cost_map`
+- Updated tests/unit/test_enemy_ai_behavior.py to patch `PathfindingHelper._create_cost_map` instead of old function
+- All 1054 tests passing (1 pre-existing failure in unrelated stealth detection test)
+- **Total lines removed: ~210 lines of deprecated code**
+- Movement queue tests (32 tests) all passing
+- No import errors, no undefined method errors
 
 ---
 

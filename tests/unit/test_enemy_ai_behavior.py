@@ -7,7 +7,8 @@ pathfinding, alerts, and the movement queue system.
 
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from game_characters import Enemy, Player
+import numpy as np
+from game_characters import Enemy, Player, PathfindingHelper
 from game_entities import Position, EnemyState, EnemyMovement
 from game_enemies import EnemyManager
 from tests.fixtures.simple_fixtures import player
@@ -16,7 +17,8 @@ from tests.fixtures.simple_fixtures import player
 # Mock the pathfinding function to prevent import errors
 def mock_create_pathfinding_cost_map(game_map, game, moving_enemy):
     """Mock pathfinding cost map creation."""
-    return [[1 for _ in range(game_map.width)] for _ in range(game_map.height)]
+    # Return a numpy array for compatibility with PathfindingHelper
+    return np.ones((game_map.height, game_map.width), dtype=np.int8)
 
 
 class TestEnemyAIBehavior:
@@ -96,7 +98,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
         with patch('game_data.GameData.ENEMY_TYPES', {
             'random_test': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=5, damage=10, name="RandomTest")
         }):
-            with patch('game_characters.create_pathfinding_cost_map', mock_create_pathfinding_cost_map):
+            with patch('game_characters.PathfindingHelper._create_cost_map', mock_create_pathfinding_cost_map):
                 enemy = Enemy(Position(5, 5), "random_test")
 
                 # RANDOM enemies move when unaware
@@ -112,7 +114,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
         with patch('game_data.GameData.ENEMY_TYPES', {
             'seek_test': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10, name="SeekTest")
         }):
-            with patch('game_characters.create_pathfinding_cost_map', mock_create_pathfinding_cost_map):
+            with patch('game_characters.PathfindingHelper._create_cost_map', mock_create_pathfinding_cost_map):
                 enemy = Enemy(Position(5, 5), "seek_test")
                 enemy.state = EnemyState.HOSTILE
 
@@ -128,7 +130,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
         with patch('game_data.GameData.ENEMY_TYPES', {
             'hostile_test': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10, name="HostileTest")
         }):
-            with patch('game_characters.create_pathfinding_cost_map', mock_create_pathfinding_cost_map):
+            with patch('game_characters.PathfindingHelper._create_cost_map', mock_create_pathfinding_cost_map):
                 enemy = Enemy(Position(5, 5), "hostile_test")
                 enemy.state = EnemyState.HOSTILE
                 enemy.last_seen_player = Position(15, 15)
@@ -145,7 +147,7 @@ class TestEnemyMovementPatterns(TestEnemyAIBehavior):
         with patch('game_data.GameData.ENEMY_TYPES', {
             'patrol_test': Mock(movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="PatrolTest")
         }):
-            with patch('game_characters.create_pathfinding_cost_map', mock_create_pathfinding_cost_map):
+            with patch('game_characters.PathfindingHelper._create_cost_map', mock_create_pathfinding_cost_map):
                 enemy = Enemy(Position(5, 5), "patrol_test")
                 enemy.patrol_points = [Position(10, 10), Position(15, 15), Position(5, 5)]
                 enemy.patrol_index = 0
@@ -386,7 +388,7 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
         with patch('game_data.GameData.ENEMY_TYPES', {
             'patrol': Mock(movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="PatrolTest")
         }):
-            with patch('game_characters.create_pathfinding_cost_map', mock_create_pathfinding_cost_map):
+            with patch('game_characters.PathfindingHelper._create_cost_map', mock_create_pathfinding_cost_map):
                 enemy = Enemy(Position(5, 5), "patrol")
                 enemy.patrol_points = [Position(10, 10), Position(15, 15), Position(5, 5)]
                 enemy.patrol_index = 0
@@ -403,7 +405,7 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
         with patch('game_data.GameData.ENEMY_TYPES', {
             'patrol': Mock(movement=EnemyMovement.PATROL, cpu=50, vision=10, damage=10, name="PatrolTest")
         }):
-            with patch('game_characters.create_pathfinding_cost_map', mock_create_pathfinding_cost_map):
+            with patch('game_characters.PathfindingHelper._create_cost_map', mock_create_pathfinding_cost_map):
                 enemy = Enemy(Position(5, 5), "patrol")
                 enemy.patrol_points = [Position(10, 10), Position(15, 15), Position(5, 5)]
                 enemy.patrol_index = 0
@@ -421,7 +423,7 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
         with patch('game_data.GameData.ENEMY_TYPES', {
             'patrol': Mock(movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="PatrolTest")
         }):
-            with patch('game_characters.create_pathfinding_cost_map', mock_create_pathfinding_cost_map):
+            with patch('game_characters.PathfindingHelper._create_cost_map', mock_create_pathfinding_cost_map):
                 enemy = Enemy(Position(5, 5), "patrol")
                 enemy.patrol_points = [Position(10, 10), Position(15, 15), Position(5, 5)]
                 enemy.patrol_index = 1
