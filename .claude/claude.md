@@ -41,12 +41,38 @@
 
 ---
 
-## 5. Testing (Critical)
+## 5. Testing & Verification (Critical)
+
+**ALWAYS TEST BEFORE COMMITTING. NO EXCEPTIONS.**
+
+### Python Tests
 - Test with venv Python.
 - Update tests with every code change or API edit.
 - Prefer integration tests (real behavior) over mocks.
 - Use `tests/fixtures/` builders.
 - After refactor, run full suite & fix all, even unrelated tests.
+
+### Batch Files & Scripts
+- **NEVER commit batch files without executing them first**
+- **Test method for .bat files from bash:**
+  ```bash
+  powershell.exe -Command "Start-Process -FilePath 'cmd.exe' \
+    -ArgumentList '/c','D:\Projects\RogueSignalProtocol\path\to\file.bat','args' \
+    -Wait -NoNewWindow \
+    -RedirectStandardOutput 'D:\Projects\RogueSignalProtocol\stdout.txt' \
+    -RedirectStandardError 'D:\Projects\RogueSignalProtocol\stderr.txt'"
+  cat stdout.txt stderr.txt
+  ```
+- Use full Windows paths (D:\...), not relative paths
+- Build incrementally: test after adding every 10-20 lines
+- If broken, bisect to find exact failing line
+
+### Verification Rules
+1. **Never assume** - always verify
+2. **Never commit blindly** - test first
+3. **Never claim "it works"** without proof
+4. **Never make multiple commits** without testing each one
+5. If you can't test it, say so - don't pretend
 
 **Running Tests:**
 - **Full suite:** `python test_commands.py full` (with coverage & timing)
