@@ -520,42 +520,27 @@ class Enemy:
         self.cpu -= damage
         return self.cpu <= 0
     
-    def move(self, game_map, player: Player, game_engine) -> bool:
+    def move(self, game_map, player, game_engine) -> bool:
         """
-        Execute next move from FIFO queue, maintaining rolling 3-move queue.
+        Execute next queued move, maintaining fixed 3-length queue.
 
-        Movement queue flow:
-        1. Check if at patrol waypoint (advance to next if reached)
-        2. Skip if disabled/on cooldown
-        3. Refresh queue if empty (calculate up to 3 moves ahead)
-        4. Pop next position from front of queue (FIFO)
-        5. Validate move (replan if blocked)
-        6. Execute move
-        7. For tracking enemies (admin/hostile): detect target changes, refresh if needed
-        8. Replenish queue (add 1 move to back to maintain 3 moves)
-
-        Why rolling queue?
-        - Smooth pathfinding that shows 3 moves ahead for player prediction
-        - Adapts to blockages by replanning when invalid
-        - Efficient: only calculates new moves as needed
-
-        Args:
-            game_map: GameMap instance for pathfinding
-            player: Player instance for target tracking
-            game_engine: GameEngine instance for enemy collision checking
+        Simplified flow:
+        1. Check patrol waypoint advancement
+        2. Check disabilities/cooldowns
+        3. Ensure queue has moves (fill if needed)
+        4. Pop and validate next move
+        5. Execute move
+        6. Ensure queue stays full (top up to 3)
 
         Returns:
-            True if move was executed, False if blocked/skipped
+            True if moved successfully, False otherwise
         """
-        # Check patrol point advancement first
-        movement_type = self.get_movement_type()
-        if movement_type == EnemyMovement.PATROL and self.patrol_points and self.state != EnemyState.HOSTILE:
-            current_patrol_target = self.patrol_points[self.patrol_index]
-            if self.position.distance_to(current_patrol_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
-                self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
-                self.move_queue.clear()  # Triggers refresh below
+        # 1. Patrol waypoint advancement
+        if self._should_advance_patrol_waypoint():
+            self._advance_patrol_waypoint()
+            self.move_queue.clear()  # New waypoint = new plan
 
-        # Skip movement if disabled or on cooldown
+        # 2. Disability check
         if self.disabled_turns > 0:
             self.disabled_turns -= 1
             return False
@@ -564,68 +549,52 @@ class Enemy:
             self.move_cooldown -= 1
             return False
 
-        # Refresh queue if empty
+        # 3. Ensure queue has moves
         if not self.move_queue:
-            self._refresh_move_queue(player, game_map, game_engine)
+            self._ensure_queue_full(game_map, player, game_engine)
 
         # No moves available
         if not self.move_queue:
             return False
 
-        # Pop and validate next move
+        # 4. Pop next move
         next_position = self.move_queue.pop(0)
-        if not self._is_move_valid(next_position, game_map, player, game_engine):
-            # Move blocked - clear queue and refresh
-            self.move_queue.clear()
-            self._refresh_move_queue(player, game_map, game_engine)
-            # Try again with fresh queue
-            if not self.move_queue:
-                return False
-            next_position = self.move_queue.pop(0)
-            if not self._is_move_valid(next_position, game_map, player, game_engine):
-                self.move_queue.clear()
-                return False
 
-        # Execute move
+        # 5. Validate move
+        if not self._is_move_valid(next_position, game_map, player, game_engine):
+            # Blocked - clear queue and replan next turn
+            self.move_queue.clear()
+            return False
+
+        # 6. Execute move
         self.position = next_position
 
-        # Check if we need to refresh queue due to target change (for tracking enemies)
-        if self.type == 'admin' or self.state == EnemyState.HOSTILE:
-            current_target = self._get_current_target(player, game_map)
-            # If target changed (player moved), refresh entire queue
-            if current_target != self._queue_target:
-                self.move_queue.clear()
-                self._refresh_move_queue(player, game_map, game_engine)
-                return True  # Move successful, queue refreshed
+        # 7. Top up queue to maintain 3 moves
+        self._ensure_queue_full(game_map, player, game_engine)
 
-        # Replenish queue (rolling queue - add one move to maintain 3 moves)
-        current_target = self._get_current_target(player, game_map)
-        should_add_move = False
-
-        if self.type == 'admin' or self.state == EnemyState.HOSTILE:
-            should_add_move = current_target and not self.position.is_adjacent_to(player.position)
-        elif movement_type == EnemyMovement.RANDOM:
-            should_add_move = True
-        elif current_target:
-            should_add_move = True
-
-        if should_add_move:
-            self._add_next_move_to_queue(player, game_map, game_engine)
-
-        # Handle patrol point advancement (non-hostile only)
-        if movement_type == EnemyMovement.PATROL and self.patrol_points and self.state != EnemyState.HOSTILE:
-            current_target = self.patrol_points[self.patrol_index]
-            if self.position.distance_to(current_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
-                self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
-                self.move_queue.clear()  # Will refresh on next turn
-
-        # Reset cooldown
-        if movement_type == EnemyMovement.STATIC:
+        # 8. Update cooldown
+        if self.get_movement_type() == EnemyMovement.STATIC:
             self.move_cooldown = 999
         else:
             self.move_cooldown = 0
 
         return True
+
+    def _should_advance_patrol_waypoint(self) -> bool:
+        """Check if enemy reached current patrol waypoint."""
+        if self.get_movement_type() != EnemyMovement.PATROL:
+            return False
+        if not self.patrol_points:
+            return False
+        if self.state == EnemyState.HOSTILE:
+            return False  # Hostile patrol enemies chase player
+
+        current_target = self.patrol_points[self.patrol_index]
+        return self.position.distance_to(current_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD
+
+    def _advance_patrol_waypoint(self):
+        """Advance to next patrol waypoint (wraps around)."""
+        self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
 
     def _ensure_queue_full(self, game_map, player, game_engine):
         """
@@ -649,12 +618,13 @@ class Enemy:
         if movement_type == EnemyMovement.STATIC:
             return
 
-        # Random movement - fill with random moves
-        if movement_type == EnemyMovement.RANDOM:
+        # Random movement - fill with random moves (but only if not hostile/admin)
+        # Hostile and admin enemies always use pathfinding, regardless of base movement type
+        if movement_type == EnemyMovement.RANDOM and self.type != 'admin' and self.state != EnemyState.HOSTILE:
             self._fill_random_moves(game_map, player, game_engine)
             return
 
-        # Pathfinding-based movement (PATROL, SEEK)
+        # Pathfinding-based movement (PATROL, SEEK, or HOSTILE/ADMIN override)
         target = self._get_current_target(player, game_map)
         if not target:
             return
@@ -672,7 +642,7 @@ class Enemy:
         )
 
         # Fill queue from path
-        if path and len(path) > 1:
+        if path is not None and len(path) > 1:
             # Add moves until queue has 3
             for i in range(1, len(path)):
                 if len(self.move_queue) >= 3:
