@@ -20,7 +20,6 @@ from game_menus import MenuBackground, MainMenu, SettingsMenu
 from game_menu_help_lore import create_help_menu, LoreMenu
 from game_menu_graphics_preview import GraphicsPreviewMenu
 from game_engine import GameEngine
-from game_engine_builder import GameEngineBuilder
 from game_rendering_core import GameRenderer
 from game_input import InputHandler
 from game_graphics_tiles import TileManager
@@ -265,12 +264,12 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     if active_game is not None:
                         return active_game, False
                     else:
-                        game = GameEngineBuilder().with_settings(settings).load_from_save().build()
+                        game = GameEngine(settings=settings, load_save=True)
                         return game, False
                 elif action == "new_game":
                     # Stop any music for new game - fresh start
                     menu_sound_manager.stop_music(fade_out_ms=1000)
-                    game = GameEngineBuilder().with_settings(settings).build()
+                    game = GameEngine(settings=settings)
                     return game, False
 
 
