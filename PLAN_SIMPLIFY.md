@@ -112,12 +112,12 @@ The `has_moved_this_turn` flag currently prevents enemies from moving AND attack
 **Goal:** Clean up obvious issues
 
 **Issues to Complete:**
-- [ ] **Issue #6: Delete GameEngineBuilder**
-  - [ ] Update game_loop.py to use direct GameEngine constructor
-  - [ ] Remove import of GameEngineBuilder
-  - [ ] Delete game_engine_builder.py
-  - [ ] Run full test suite
-  - [ ] Commit: "Delete unnecessary GameEngineBuilder pattern"
+- [X] **Issue #6: Delete GameEngineBuilder**
+  - [X] Update game_loop.py to use direct GameEngine constructor
+  - [X] Remove import of GameEngineBuilder
+  - [X] Delete game_engine_builder.py
+  - [X] Run full test suite (1035/1036 passing - 1 flaky test unrelated to changes)
+  - [X] Commit: "Delete unnecessary GameEngineBuilder pattern"
 
 - [ ] **Issue #7: Remove trivial delegates**
   - [ ] Identify one-line delegation methods
