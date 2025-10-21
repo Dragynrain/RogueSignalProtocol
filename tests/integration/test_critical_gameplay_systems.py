@@ -344,7 +344,7 @@ class TestGameStateIntegration:
         assert hasattr(engine, 'turn')
 
         # Verify save/load system exists
-        assert hasattr(engine, 'state_persistence')
+        assert hasattr(engine, 'game_session')
         assert hasattr(engine, 'auto_save')
 
         # Test basic state access
@@ -385,5 +385,5 @@ class TestGameStateIntegration:
         assert engine.player.trace_level == 45
 
         # Verify persistence systems exist
-        assert hasattr(engine, 'state_persistence'), "Engine should have state_persistence attribute"
+        assert hasattr(engine, 'game_session'), "Engine should have game_session attribute"
         assert callable(getattr(engine, 'auto_save', None)), "Engine should have auto_save method"
