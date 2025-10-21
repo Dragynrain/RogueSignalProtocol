@@ -680,6 +680,10 @@ class Enemy:
             if greedy_move:
                 self.move_queue.append(greedy_move)
 
+        # PATROL special case: If queue still not full, extend with next waypoint(s)
+        if movement_type == EnemyMovement.PATROL and self.patrol_points and len(self.move_queue) < 3:
+            self._extend_patrol_queue(game_map, game_engine)
+
     def _fill_random_moves(self, game_map, player, game_engine):
         """
         Fill queue with random moves for RANDOM movement type enemies.
@@ -753,6 +757,49 @@ class Enemy:
             if other_enemy.id != self.id and other_enemy.x == position.x and other_enemy.y == position.y:
                 return False
         return True
+
+    def _extend_patrol_queue(self, game_map, game_engine):
+        """
+        Extend patrol queue with next waypoint(s) to reach 3 moves.
+
+        When close to current waypoint, this chains pathfinding to subsequent
+        waypoints to maintain the 3-move prediction guarantee.
+
+        Args:
+            game_map: GameMap for pathfinding
+            game_engine: GameEngine for enemy collision avoidance
+        """
+        attempts = 0
+        max_attempts = len(self.patrol_points)  # Avoid infinite loops
+
+        while len(self.move_queue) < 3 and attempts < max_attempts:
+            attempts += 1
+
+            # Calculate next waypoint index (wraps around)
+            next_index = (self.patrol_index + attempts) % len(self.patrol_points)
+            next_waypoint = self.patrol_points[next_index]
+
+            # Start from last queued position
+            start_pos = self.move_queue[-1] if self.move_queue else self.position
+
+            # Calculate path to next waypoint
+            path = PathfindingHelper.calculate_path(
+                start=start_pos,
+                goal=next_waypoint,
+                game_map=game_map,
+                game_engine=game_engine,
+                moving_enemy=self
+            )
+
+            # Add moves from path
+            if path is not None and len(path) > 1:
+                for i in range(1, len(path)):
+                    if len(self.move_queue) >= 3:
+                        return  # Queue full, done
+                    self.move_queue.append(Position(path[i][1], path[i][0]))
+            else:
+                # Can't pathfind to next waypoint, stop trying
+                break
 
     def _calculate_path_to_target(self, target: Optional[Position], game_map, game_engine):
         """Calculate full path to target using A* pathfinding with reasonable distance limits."""
