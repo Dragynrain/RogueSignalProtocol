@@ -33,11 +33,8 @@ from typing import List, Tuple
 from game_config import GameConfig
 
 # Import specialized level generation subsystems
-from game_level_rooms import RoomGenerator
-from game_level_corridors import CorridorGenerator
-from game_level_tactical import TacticalGenerator
-from game_level_advanced import AdvancedLayoutGenerator
-from game_level_placement import TilePlacementGenerator
+from game_level_structure import RoomGenerator, CorridorGenerator
+from game_level_features import TacticalGenerator, AdvancedLayoutGenerator, TilePlacementGenerator
 
 
 class LevelGenerator:

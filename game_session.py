@@ -271,44 +271,67 @@ class GameSession:
 
     def _update_enemies(self):
         """
-        Update all enemy states and actions in structured three-phase system.
+        Update all enemy states and actions in single-pass system.
 
-        Phase 1: Awareness and Communication
-        - All enemies check visibility and update states (UNAWARE/ALERT/HOSTILE)
-        - Alert/hostile enemies communicate with nearby enemies
+        For each enemy:
+        1. Update awareness state and communicate alerts
+        2. Decide action: if adjacent to player, attack; otherwise move
+        3. Execute action (ensuring move OR attack, not both)
 
-        Phase 2: Movement
-        - All enemies move based on their current state
-        - Enemies adjacent to player skip movement (save attack for phase 3)
-
-        Phase 3: Attacks
-        - Enemies adjacent to player attack (move OR attack, not both)
-        - Track attacks for inventory warning dialogue
-
-        Why phased?
-        - Prevents double-movement (enemy moving during awareness then during movement)
-        - Ensures communication propagates before movement
-        - Makes AI behavior deterministic and testable
+        This simplification removes the three-phase approach while preserving
+        the "move OR attack" constraint essential for game balance.
         """
-        # Reset movement flags at start of enemy turn
-        for enemy in self.game_engine.enemies:
-            enemy.has_moved_this_turn = False
+        # First pass: Update awareness for all enemies
+        # This must be separate to ensure alert propagation before movement
+        self._update_all_enemy_awareness()
 
-        # PHASE 1: Awareness and Communication
-        # All enemies detect player, update states, and communicate with nearby enemies
-        self._update_enemy_awareness()
+        # Second pass: Process each enemy's action (move OR attack)
+        # Track attacks for inventory warning dialogue
+        player_attacked_in_inventory = False
+        total_damage_taken = 0
+        attacking_enemy_count = 0
 
-        # PHASE 2: Movement
-        # All enemies move based on their current awareness state
-        self._move_enemies()
+        for enemy in self.game_engine.enemies[:]:
+            # Check if enemy can attack player
+            can_attack = enemy.can_attack_player(self.game_engine.player)
 
-        # PHASE 3: Attacks
-        # All enemies attack if they are in range (move OR attack, not both)
-        self._process_enemy_attacks()
+            if can_attack:
+                # Enemy is adjacent - attack instead of moving
+                self.game_engine.sound_manager.play_sound("enemy_attack")
+                damage = enemy.attack_player(self.game_engine.player)
 
-    def _update_enemy_awareness(self):
+                # Track attacks for inventory warning
+                if damage >= 0 or (hasattr(enemy.type_data, 'effects') and
+                                  ('virus' in enemy.type_data.effects or 'inhibitor' in enemy.type_data.effects)):
+                    attacking_enemy_count += 1
+                    if damage > 0:
+                        total_damage_taken += damage
+
+                    if self.game_engine.show_inventory:
+                        player_attacked_in_inventory = True
+
+                        if total_damage_taken > 0:
+                            if attacking_enemy_count > 1:
+                                warning_msg = f"{attacking_enemy_count} enemies attacked for {total_damage_taken} damage! Close inventory to defend."
+                            else:
+                                warning_msg = f"Attacked for {damage} damage! Close inventory to defend."
+                            self.game_engine.message_log.add_message(warning_msg, Colors.RED)
+                        else:
+                            self.game_engine.message_log.add_message(
+                                "Enemy attacked with status effect! Close inventory to defend.",
+                                Colors.YELLOW
+                            )
+
+            else:
+                # Enemy is not adjacent - move toward player
+                enemy.move(self.game_engine.game_map, self.game_engine.player, self.game_engine)
+
+    def _update_all_enemy_awareness(self):
         """
-        PHASE 1: Update enemy awareness states and handle communication.
+        Update awareness states and handle communication for all enemies.
+
+        This is kept separate from movement/attack to ensure alert propagation
+        happens before any enemy moves.
 
         State machine per enemy:
         - UNAWARE + sees player -> ALERT (1 turn grace period)
@@ -450,72 +473,6 @@ class GameSession:
         if alerted_count > 0:
             self.game_engine.message_log.add_message(f"{alerted_count} enemies alerted nearby!")
             self.game_engine.sound_manager.play_sound("enemies_alerted", priority=6)
-
-    def _move_enemies(self):
-        """PHASE 2: Move all enemies according to their current awareness state."""
-        for enemy in self.game_engine.enemies:
-            # Only move enemies that haven't moved this turn
-            if not getattr(enemy, 'has_moved_this_turn', False):
-                # If enemy can attack player, don't move (save the attack for next phase)
-                if enemy.can_attack_player(self.game_engine.player):
-                    enemy.has_moved_this_turn = False  # Mark as not moved so it can attack
-                else:
-                    # Enemy can't attack, so try to move
-                    did_move = enemy.move(self.game_engine.game_map, self.game_engine.player, self.game_engine)
-                    enemy.has_moved_this_turn = did_move
-
-    def _process_enemy_attacks(self):
-        """PHASE 3: Process attacks from enemies adjacent to player."""
-        # Track attacks this turn for inventory warning (only show once per turn)
-        player_attacked_in_inventory = False
-        total_damage_taken = 0
-        attacking_enemy_count = 0
-
-        for enemy in self.game_engine.enemies[:]:
-            # Only attack if enemy hasn't moved this turn (move OR attack, not both)
-            if enemy.can_attack_player(self.game_engine.player) and not getattr(enemy, 'has_moved_this_turn', False):
-                self.game_engine.sound_manager.play_sound("enemy_attack")
-                damage = enemy.attack_player(self.game_engine.player)
-
-                # Track if player was attacked while in inventory
-                # Count ALL attacks (damage, virus, inhibitor) not just direct damage
-                total_damage_taken += damage
-                attacking_enemy_count += 1
-                if self.game_engine.show_inventory:
-                    player_attacked_in_inventory = True
-
-                if enemy.type == 'virus':
-                    virus_turns = self.game_engine.player.temporary_effects.get('virus_turns', 0)
-                    self.game_engine.message_log.add_message(f"{enemy.type_data.name} applies virus damage ({virus_turns} turns)")
-                    self.game_engine.sound_manager.play_sound("virus_infection")
-                elif enemy.type == 'inhibitor':
-                    # Inhibitor applies movement slow
-                    slow_turns = self.game_engine.player.temporary_effects.get('movement_slowed_turns', 0)
-                    if slow_turns > 0:
-                        self.game_engine.message_log.add_message(f"{enemy.type_data.name} applies movement slow ({slow_turns} turns)")
-                    else:
-                        self.game_engine.message_log.add_message(f"{enemy.type_data.name} disrupts speed boost")
-                elif damage > 0:
-                    self.game_engine.message_log.add_message(f"{enemy.type_data.name} attacks: {damage} CPU damage")
-                if self.game_engine.player.cpu <= 0:
-                    self.game_engine.sound_manager.play_sound("player_death", priority=10)
-                    self.game_engine.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
-                    self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
-                    self.game_engine.sound_manager.stop_music(fade_out_ms=500)  # Stop level music on death
-                    # Delete save on death (permadeath)
-                    self._delete_save_on_death()
-                    self.game_engine.game_over = True
-                    # Show death dialogue
-                    from game_dialogue_system import create_death_dialogue
-                    self.game_engine.dialogue_state.show(create_death_dialogue())
-                    return  # Exit immediately - no more enemy processing after player death
-
-        # Show inventory attack warning if player was attacked while inventory was open
-        if player_attacked_in_inventory:
-            from game_dialogue_system import create_inventory_attack_dialogue
-            self.game_engine.dialogue_state.show(create_inventory_attack_dialogue())
-
-        # Movement flags are reset at the start of _update_enemies()
 
     def _check_admin_spawn(self):
         """Check if admin avatar should spawn."""

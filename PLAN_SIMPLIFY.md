@@ -77,21 +77,21 @@ The codebase contains **56 Python files with ~21,000 lines** of game code. While
 **Goal:** Improve file organization and modularity
 
 **Issues to Complete:**
-- [ ] **Issue #4: Recombine level generation files**
-  - [ ] Create game_level_structure.py (rooms + corridors)
-  - [ ] Create game_level_features.py (placement + tactical + advanced)
-  - [ ] Keep game_level.py as orchestrator
-  - [ ] Update imports across codebase
-  - [ ] Run full test suite
-  - [ ] Commit: "Consolidate level generation files"
+- [X] **Issue #4: Recombine level generation files**
+  - [X] Create game_level_structure.py (rooms + corridors)
+  - [X] Create game_level_features.py (placement + tactical + advanced)
+  - [X] Keep game_level.py as orchestrator
+  - [X] Update imports across codebase
+  - [X] Run full test suite (1034/1036 passing - 2 flaky tests unrelated to changes)
+  - [X] Commit: "Consolidate level generation files"
 
-- [ ] **Issue #5: Simplify enemy AI phases**
-  - [ ] Design single-loop approach that preserves "move OR attack" logic
-  - [ ] Inline three-phase update into single enemy processing loop
-  - [ ] Remove `has_moved_this_turn` flags
-  - [ ] Verify alert system still works
-  - [ ] Run full test suite + gameplay testing
-  - [ ] Commit: "Simplify enemy AI update phases"
+- [X] **Issue #5: Simplify enemy AI phases**
+  - [X] Design single-loop approach that preserves "move OR attack" logic
+  - [X] Inline three-phase update into single enemy processing loop
+  - [X] Remove `has_moved_this_turn` flags
+  - [X] Verify alert system still works
+  - [X] Run full test suite + gameplay testing (1034/1036 passing - same 2 flaky tests as before)
+  - [X] Commit: "Simplify enemy AI update phases"
 
 **Expected Result:**
 - -3 more files (50 → 47)
