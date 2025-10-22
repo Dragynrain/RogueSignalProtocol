@@ -146,7 +146,7 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
         # Only play menu music if NO music is currently playing
         if AUDIO_AVAILABLE and not pygame.mixer.music.get_busy():
-            menu_sound_manager.play_music("main_menu.mp3", loops=-1, fade_in_ms=1000, volume_multiplier=1.56)
+            menu_sound_manager.play_music("main_menu.ogg", loops=-1, fade_in_ms=1000)
     except Exception as e:
         logging.warning(f"Could not play main menu music: {e}")
         # Continue without music

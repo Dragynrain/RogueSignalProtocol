@@ -243,8 +243,8 @@ class SoundManager:
 
         return channel.play(sound)
     
-    def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0, volume_multiplier: float = 1.0):
-        """Play background music with optional volume multiplier"""
+    def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0):
+        """Play background music (OGG format recommended)"""
         if not self.enabled:
             return
 
@@ -258,8 +258,8 @@ class SoundManager:
         try:
             pygame.mixer.music.load(music_path)
 
-            # Apply volume multiplier for per-track volume adjustments
-            volume = self.settings.music_volume * self.settings.master_volume * volume_multiplier
+            # Apply volume from settings (OGG files should be pre-normalized)
+            volume = self.settings.music_volume * self.settings.master_volume
             pygame.mixer.music.set_volume(min(1.0, volume))  # Cap at 1.0
 
             if fade_in_ms > 0:
