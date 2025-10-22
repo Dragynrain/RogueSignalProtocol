@@ -25,7 +25,7 @@ class TestVariableRoomTypes:
         # Test with various room sizes
         room_types = set()
         for _ in range(50):
-            room_type = self.level_generator._select_room_type(1, 8, 8)
+            room_type = self.level_generator.room_generator.select_room_type(1, 8, 8)
             room_types.add(room_type)
             assert room_type in ['rectangular', 'l_shaped', 'irregular', 'cross', 'circular']
 
@@ -36,13 +36,13 @@ class TestVariableRoomTypes:
         """Test that room types respect minimum size requirements."""
         # Small room should only get rectangular or limited types
         for _ in range(20):
-            small_room_type = self.level_generator._select_room_type(1, 3, 3)
+            small_room_type = self.level_generator.room_generator.select_room_type(1, 3, 3)
             assert small_room_type in ['rectangular']
 
         # Large room should be able to get all types
         large_room_types = set()
         for _ in range(100):
-            large_room_type = self.level_generator._select_room_type(1, 8, 8)
+            large_room_type = self.level_generator.room_generator.select_room_type(1, 8, 8)
             large_room_types.add(large_room_type)
 
         # Should have variety
@@ -56,7 +56,7 @@ class TestVariableRoomTypes:
                 self.game_map.walls.add((x, y))
 
         room = (10, 10, 5, 5)
-        self.level_generator._carve_rectangular_room(room)
+        self.level_generator.room_generator.carve_rectangular_room(room)
 
         # Verify all tiles in room are carved
         for x in range(10, 15):
@@ -71,7 +71,7 @@ class TestVariableRoomTypes:
                 self.game_map.walls.add((x, y))
 
         room = (10, 10, 8, 8)
-        self.level_generator._carve_l_shaped_room(room)
+        self.level_generator.room_generator.carve_l_shaped_room(room)
 
         # Count carved tiles
         carved_tiles = 0
@@ -94,7 +94,7 @@ class TestVariableRoomTypes:
 
         room = (10, 10, 8, 8)
         random.seed(42)
-        self.level_generator._carve_irregular_room(room)
+        self.level_generator.room_generator.carve_irregular_room(room)
 
         # Count carved tiles
         carved_tiles = 0
@@ -115,7 +115,7 @@ class TestVariableRoomTypes:
                 self.game_map.walls.add((x, y))
 
         room = (10, 10, 9, 9)
-        self.level_generator._carve_cross_room(room)
+        self.level_generator.room_generator.carve_cross_room(room)
 
         # Verify center column is carved (vertical bar)
         center_x = 10 + 9 // 2
@@ -135,7 +135,7 @@ class TestVariableRoomTypes:
                 self.game_map.walls.add((x, y))
 
         room = (10, 10, 8, 8)
-        self.level_generator._carve_circular_room(room)
+        self.level_generator.room_generator.carve_circular_room(room)
 
         # Verify center is carved
         center_x, center_y = 10 + 4, 10 + 4
@@ -162,13 +162,13 @@ class TestVariableRoomTypes:
 
         # Create large room
         room = (10, 10, 10, 10)
-        self.level_generator._carve_rectangular_room(room)
+        self.level_generator.room_generator.carve_rectangular_room(room)
 
         floor_before = sum(1 for x in range(10, 20) for y in range(10, 20) if (x, y) not in self.game_map.walls)
 
         # Apply pillars
         random.seed(1)  # Seed that triggers pillar placement
-        self.level_generator._apply_pillar_pattern(room, level=1)
+        self.level_generator.room_generator.apply_pillar_pattern(room, level=1)
 
         floor_after = sum(1 for x in range(10, 20) for y in range(10, 20) if (x, y) not in self.game_map.walls)
 
@@ -199,9 +199,9 @@ class TestVariableRoomTypes:
     def test_per_level_room_type_weights(self):
         """Test that different levels use different room type distributions."""
         # Get weights for different levels
-        weights_l1 = self.level_generator._get_room_type_weights(1)
-        weights_l2 = self.level_generator._get_room_type_weights(2)
-        weights_l3 = self.level_generator._get_room_type_weights(3)
+        weights_l1 = self.level_generator.room_generator.get_room_type_weights(1)
+        weights_l2 = self.level_generator.room_generator.get_room_type_weights(2)
+        weights_l3 = self.level_generator.room_generator.get_room_type_weights(3)
 
         # Verify all levels have rectangular as most common or second most common
         assert all('rectangular' in w for w in [weights_l1, weights_l2, weights_l3])
@@ -227,7 +227,7 @@ class TestVariableRoomTypes:
 
             # Carve room of each type
             room = (15, 15, 8, 8)
-            self.level_generator._carve_room(room, room_type, level=1)
+            self.level_generator.room_generator.carve_room(room, room_type, level=1)
 
             # Verify some tiles were carved
             carved_tiles = 0
@@ -254,7 +254,7 @@ class TestPhase3LayoutImprovements:
         rooms = self.level_generator.last_generated_rooms
 
         # Identify hub rooms
-        hub_rooms = self.level_generator._identify_hub_rooms(rooms)
+        hub_rooms = self.level_generator.advanced_generator.identify_hub_rooms(rooms)
 
         # Should return empty list for too few rooms, or valid hubs otherwise
         if len(rooms) >= 5:
@@ -271,7 +271,7 @@ class TestPhase3LayoutImprovements:
         """Test that hub rooms are expanded correctly."""
         # Create a small room
         room = (10, 10, 5, 5)
-        expanded = self.level_generator._expand_hub_room(room)
+        expanded = self.level_generator.advanced_generator.expand_hub_room(room)
 
         x, y, w, h = expanded
 
@@ -301,7 +301,7 @@ class TestPhase3LayoutImprovements:
         rooms = self.level_generator.last_generated_rooms
 
         # Build connectivity graph
-        connectivity = self.level_generator._build_room_connectivity_graph(rooms)
+        connectivity = self.level_generator.advanced_generator.build_room_connectivity_graph(rooms)
 
         # Should have connectivity data for each room
         assert len(connectivity) > 0
@@ -317,7 +317,7 @@ class TestPhase3LayoutImprovements:
         rooms = self.level_generator.last_generated_rooms
 
         # Create shadow zones
-        shadow_zone_rooms = self.level_generator._create_shadow_zones(rooms)
+        shadow_zone_rooms = self.level_generator.advanced_generator.create_shadow_zones(rooms)
 
         # Shadow zones may or may not be created
         assert isinstance(shadow_zone_rooms, list)
@@ -333,7 +333,7 @@ class TestPhase3LayoutImprovements:
         rooms = self.level_generator.last_generated_rooms
 
         # Find clusters
-        clusters = self.level_generator._find_room_clusters(rooms, 3)
+        clusters = self.level_generator.advanced_generator.find_room_clusters(rooms, 3)
 
         # Clusters should be valid
         assert isinstance(clusters, list)
@@ -350,23 +350,23 @@ class TestPhase3LayoutImprovements:
         room1 = (10, 10, 5, 5)
         room2 = (20, 20, 5, 5)
 
-        distance = self.level_generator._room_distance(room1, room2)
+        distance = self.level_generator.advanced_generator.room_distance(room1, room2)
 
         # Distance should be positive
         assert distance > 0
 
         # Distance between same room should be 0
-        assert self.level_generator._room_distance(room1, room1) == 0
+        assert self.level_generator.advanced_generator.room_distance(room1, room1) == 0
 
         # Distance should be symmetric
-        assert self.level_generator._room_distance(room1, room2) == self.level_generator._room_distance(room2, room1)
+        assert self.level_generator.advanced_generator.room_distance(room1, room2) == self.level_generator.advanced_generator.room_distance(room2, room1)
 
     def test_gateway_strategy_selection(self):
         """Test gateway placement strategy selection."""
         # Test multiple times to verify randomness
         strategies = set()
         for _ in range(50):
-            strategy = self.level_generator._select_gateway_strategy()
+            strategy = self.level_generator.placement_generator.select_gateway_strategy()
             strategies.add(strategy)
             assert strategy in ['far_corner', 'central_hub', 'hidden_dead_end', 'gauntlet']
 
@@ -378,7 +378,7 @@ class TestPhase3LayoutImprovements:
         floor_positions = self._create_open_map()
         spawn = Position(5, 5)
 
-        gateway_pos = self.level_generator._gateway_far_corner(spawn, floor_positions)
+        gateway_pos = self.level_generator.placement_generator.gateway_far_corner(spawn, floor_positions)
 
         # Gateway should be far from spawn
         gateway = Position(gateway_pos[0], gateway_pos[1])
@@ -389,7 +389,7 @@ class TestPhase3LayoutImprovements:
         """Test central hub gateway placement strategy."""
         floor_positions = self._create_open_map()
 
-        gateway_pos = self.level_generator._gateway_central_hub(floor_positions)
+        gateway_pos = self.level_generator.placement_generator.gateway_central_hub(floor_positions)
 
         # Gateway should be near center of map
         map_center_x = GameConfig.MAP_WIDTH // 2
@@ -403,7 +403,7 @@ class TestPhase3LayoutImprovements:
         """Test hidden dead end gateway placement strategy."""
         floor_positions = self._create_open_map()
 
-        gateway_pos = self.level_generator._gateway_hidden_dead_end(floor_positions)
+        gateway_pos = self.level_generator.placement_generator.gateway_hidden_dead_end(floor_positions)
 
         # Should return a valid position
         assert gateway_pos in floor_positions
@@ -413,7 +413,7 @@ class TestPhase3LayoutImprovements:
         floor_positions = self._create_open_map()
         spawn = Position(5, 5)
 
-        gateway_pos = self.level_generator._gateway_gauntlet(spawn, floor_positions)
+        gateway_pos = self.level_generator.placement_generator.gateway_gauntlet(spawn, floor_positions)
 
         # Should return a valid position
         assert gateway_pos in floor_positions
