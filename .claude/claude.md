@@ -12,23 +12,23 @@
 ---
 
 ## 1. Bash & Environment
-- Quote paths: `cd "path with spaces"`.  
-- Use bash cmds (`rm`, `ls`, `mkdir`), not Windows ones.  
-- Run via `.venv/Scripts/python.exe`; install with `.venv/Scripts/pip.exe install <pkg>`.  
+- Quote paths: `cd "path with spaces"`.
+- Use bash cmds (`rm`, `ls`, `mkdir`), not Windows ones.
+- Run via `.venv/Scripts/python.exe`; install with `.venv/Scripts/pip.exe install <pkg>`.
 
 ---
 
 ## 2. Compatibility
-- **ASCII only**, no Unicode.  
-- Target: Windows 10/11 (cmd/PowerShell).  
-- Rendering: ASCII (main) + TCOD graphics (sync both).  
+- **ASCII only**, no Unicode.
+- Target: Windows 10/11 (cmd/PowerShell).
+- Rendering: ASCII (main) + TCOD graphics (sync both).
 
 ---
 
 ## 3. Project Rules
-- A–Z = enemies only; everything else ASCII symbols.  
-- Use latest deps (esp. `python-tcod`).  
-- Delete save on death (no prompt).  
+- A–Z = enemies only; everything else ASCII symbols.
+- Use latest deps (esp. `python-tcod`).
+- Delete save on death (no prompt).
 
 ---
 
@@ -43,95 +43,62 @@
 
 ## 4a. Build Process
 
-**Building the Game:**
-- Run `build\build.bat alpha` for debug builds (default)
-- Run `build\build.bat release` for production builds
-- Creates `dist\RogueSignalProtocol.exe` (37MB) + all assets
-- Generates timestamped zip in `releases\` folder (103MB)
+**Commands:**
+- `build\build.bat alpha` - Debug build with `debug_mode.flag`
+- `build\build.bat release` - Production build
 
-**Build Script Requirements:**
-- Uses `Python -m PyInstaller` (more reliable than direct exe calls)
-- Uses 7zip for archive creation (PowerShell Compress-Archive doesn't work)
-- Requires 7zip installed at `C:\Program Files\7-Zip\7z.exe`
-- Script uses `%~dp0` for directory navigation (works from any location)
+**Requirements:**
+- 7zip at `C:\Program Files\7-Zip\7z.exe` (PowerShell Compress-Archive doesn't work)
+- Uses `Python -m PyInstaller` (more reliable than `.exe` calls)
 
-**What the Build Does:**
-1. Cleans previous build artifacts
-2. Runs PyInstaller to create single-file executable
-3. Copies JSON configs, fonts, LICENSE, README to dist/
-4. Copies graphics/, sound/, music/ folders to dist/
-5. Creates debug_mode.flag for alpha builds
-6. Creates timestamped zip archive in releases/
+**Outputs:**
+- `dist\RogueSignalProtocol.exe` (37MB) + assets
+- `releases\RogueSignalProtocol_[type]_[date].zip` (103MB)
 
-**Build Outputs:**
-- `dist/RogueSignalProtocol.exe` - Main executable
-- `releases/RogueSignalProtocol_[type]_[date].zip` - Distribution archive
-- Alpha builds include `debug_mode.flag` for verbose logging
+**Details:** See `.claude/BUILD_REFERENCE.md`
 
 ---
 
-## 5. Testing & Verification (Critical)
+## 5. Testing & Verification
 
 **ALWAYS TEST BEFORE COMMITTING. NO EXCEPTIONS.**
 
 ### Python Tests
-- Test with venv Python.
-- Update tests with every code change or API edit.
-- Prefer integration tests (real behavior) over mocks.
-- Use `tests/fixtures/` builders.
-- After refactor, run full suite & fix all, even unrelated tests.
+
+| Command | Purpose |
+|---------|---------|
+| `python test_commands.py full` | Full suite + coverage + timing (pre-commit) |
+| `python test_commands.py quick` | Unit tests only (fast feedback) |
+| `python test_commands.py integration` | Integration tests only |
+| `python test_commands.py coverage` | Generate htmlcov/ report |
+| `python test_commands.py changed` | Test changed files only (git-based) |
+| `.venv/Scripts/python.exe -m pytest` | Direct pytest (uses pytest.ini) |
+
+**Test Policy:**
+- Update tests with every code change or API edit
+- Prefer integration tests (real behavior) over mocks
+- Use `tests/fixtures/` builders
+- After refactor, run full suite & fix all tests
 
 ### Batch Files & Scripts
-- **NEVER commit batch files without executing them first**
-- **Test method for .bat files from bash:**
-  ```bash
-  powershell.exe -Command "Start-Process -FilePath 'cmd.exe' \
-    -ArgumentList '/c','D:\Projects\RogueSignalProtocol\path\to\file.bat','args' \
-    -Wait -NoNewWindow \
-    -RedirectStandardOutput 'D:\Projects\RogueSignalProtocol\stdout.txt' \
-    -RedirectStandardError 'D:\Projects\RogueSignalProtocol\stderr.txt'"
-  cat stdout.txt stderr.txt
-  ```
-- Use full Windows paths (D:\...), not relative paths
-- Build incrementally: test after adding every 10-20 lines
-- If broken, bisect to find exact failing line
 
-**Batch File Syntax:**
-- **NO `else if` support!** Batch files don't have `else if` syntax
-- Use nested `if` statements: `) else ( if ... )`
-- Use `%~dp0` to get batch file's directory for reliable path handling
-- Prefer `Python -m PyInstaller` over direct `.exe` calls
-- Files from `git show` have LF line endings - run `unix2dos` if needed
+**NEVER commit .bat files without testing them first!**
 
-### Verification Rules
-1. **Never assume** - always verify
-2. **Never commit blindly** - test first
-3. **Never claim "it works"** without proof
-4. **Never make multiple commits** without testing each one
-5. If you can't test it, say so - don't pretend
-
-**Running Tests:**
-- **Full suite:** `python test_commands.py full` (with coverage & timing)
-- **Quick unit tests:** `python test_commands.py quick` (fast feedback)
-- **Integration only:** `python test_commands.py integration`
-- **Coverage report:** `python test_commands.py coverage` (generates htmlcov/)
-- **Changed files:** `python test_commands.py changed` (git-based)
-- **Direct pytest:** `.venv/Scripts/python.exe -m pytest` (uses pytest.ini config)
-
-**Pre-commit:** `python test_commands.py full`
+- See `.claude/WINDOWS_SCRIPTING.md` for batch syntax rules and testing method
+- Key gotcha: **NO `else if` support** - use nested ifs: `) else ( if ... )`
 
 ---
 
 ## 6. Logging & Errors
-- **Console:** tech errors → `print()` / `logging.error()`.  
-- **Game log:** gameplay messages → `MessageLog.add_message()`.  
-- Don’t mix the two.  
+- **Console:** tech errors → `print()` / `logging.error()`
+- **Game log:** gameplay messages → `MessageLog.add_message()`
+- Don't mix the two
 
 **Config:**
-- Fail fast on missing files.
-- Required: `game_content.json`, `game_rules.json`, `story_content.json`.
-- Only `user_settings.json` can default.
-- No hardcoded fallback values — all data from JSON.
+- Fail fast on missing files
+- Required: `game_content.json`, `game_rules.json`, `story_content.json`
+- Only `user_settings.json` can default
+- No hardcoded fallback values — all data from JSON
 
 ---
 
@@ -139,34 +106,18 @@
 
 ### Enemy Movement Queue
 
-Enemies maintain a **fixed 3-length movement queue** for player predictability:
-
-**Queue as Gameplay Mechanic:**
-- Queue shows player what enemy is committed to doing (3 moves ahead)
-- Enables tactical planning: player can predict enemy positions and plan accordingly
-- Always shows 3 moves when possible (or fewer if path exhausted)
-
-**Queue Lifecycle:**
-1. Enemy executes move (pops from queue)
-2. Queue tops up to 3 moves (unified fill logic)
-3. Player sees enemy's commitment via rendering
-
-**Queue Invalidation (Only 2 Triggers):**
-1. Enemy state changes (UNAWARE ↔ ALERT ↔ HOSTILE)
-2. Next move is blocked (wall, enemy, etc.)
-
-When invalidated, queue clears and enemy replans on next turn.
-
-**Implementation:**
-- Single method `_ensure_queue_full()` handles all queue filling
-- Uses `PathfindingHelper` for consistent pathfinding
-- No special cases or duplicate logic
+**Fixed 3-length queue** for player predictability:
+- Shows enemy commitment (3 moves ahead)
+- Enables tactical planning
+- Invalidated only on: (1) state change, (2) blocked move
+- Single method `_ensure_queue_full()` handles all filling
+- Uses `PathfindingHelper` for consistency
 
 ### Other Systems
-- Enemies alert others when spotting player.
-- **Alert timer = 1 turn only.**
-- Use TCOD FOV (`tcod.map.compute_fov`) and pathfinding (`tcod.path`) always.
-- For TCOD API details, invoke the `tcod` skill.
+- Enemies alert others when spotting player
+- **Alert timer = 1 turn only**
+- Use TCOD FOV (`tcod.map.compute_fov`) and pathfinding (`tcod.path`) always
+- For TCOD API details, invoke the `tcod` skill
 
 ---
 
@@ -228,17 +179,17 @@ sprite_height = tile_manager.tile_height
 ---
 
 ## 8. Docs & Research
-- Always check latest official docs.
-- Confirm API details before assuming limits and interfaces.
-- **TCOD-specific questions**: Use the `tcod` skill (`.claude/skills/tcod.md`).
+- Always check latest official docs
+- Confirm API details before assuming limits and interfaces
+- **TCOD-specific questions**: Use the `tcod` skill (`.claude/skills/tcod.md`)
 
 ---
 
 ## 9. UI / UX
-- Help text must exactly match in-game symbols and be kept up-to-date at all times.
+- Help text must exactly match in-game symbols and be kept up-to-date at all times
 
 ---
 
 ## 10. Git & Attribution
-- No `Co-Authored-By` or AI/Claude tags.  
-- Keep commit messages clean and technical.
+- No `Co-Authored-By` or AI/Claude tags
+- Keep commit messages clean and technical
