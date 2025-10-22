@@ -193,3 +193,10 @@ sprite_height = tile_manager.tile_height
 ## 10. Git & Attribution
 - No `Co-Authored-By` or AI/Claude tags
 - Keep commit messages clean and technical
+
+**CRITICAL: .gitignore editing rules**
+- **NEVER add inline comments** with trailing spaces (e.g., `dist/  # comment`)
+- Trailing spaces break patterns silently - git interprets `"dist/     "` literally
+- Always verify changes: `git check-ignore -v <path>` and `git add --dry-run .`
+- Keep comments on separate lines above patterns
+- When editing `.gitignore`, always test that patterns work before committing
