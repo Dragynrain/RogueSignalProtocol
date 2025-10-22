@@ -27,7 +27,7 @@ class TestVariableCorridorWidths:
         random.seed(42)  # Fixed seed for reproducibility
 
         for _ in range(100):
-            width = self.level_generator._get_corridor_width()
+            width = self.level_generator.corridor_generator.get_corridor_width()
             widths.append(width)
 
         # Count occurrences of each width
@@ -55,7 +55,7 @@ class TestVariableCorridorWidths:
                 self.game_map.walls.add((x, y))
 
         # Test width 1 horizontal corridor
-        self.level_generator._carve_corridor_segment(10, 20, 15, 15, 1, horizontal=True)
+        self.level_generator.corridor_generator.carve_corridor_segment(10, 20, 15, 15, 1, horizontal=True)
 
         # Verify corridor carved correctly
         for x in range(10, 21):
@@ -73,7 +73,7 @@ class TestVariableCorridorWidths:
                 self.game_map.walls.add((x, y))
 
         # Test width 3 horizontal corridor
-        self.level_generator._carve_corridor_segment(10, 20, 15, 15, 3, horizontal=True)
+        self.level_generator.corridor_generator.carve_corridor_segment(10, 20, 15, 15, 3, horizontal=True)
 
         # Verify corridor carved with width 3 (y=14, 15, 16)
         for x in range(10, 21):
@@ -93,7 +93,7 @@ class TestVariableCorridorWidths:
                 self.game_map.walls.add((x, y))
 
         # Test width 2 vertical corridor
-        self.level_generator._carve_corridor_segment(15, 15, 10, 20, 2, horizontal=False)
+        self.level_generator.corridor_generator.carve_corridor_segment(15, 15, 10, 20, 2, horizontal=False)
 
         # Verify corridor carved with width 2 (x=14, 15)
         for y in range(10, 21):
@@ -110,11 +110,11 @@ class TestVariableCorridorWidths:
         room1 = (5, 5, 5, 5)
         room2 = (20, 20, 5, 5)
 
-        self.level_generator._carve_room(room1)
-        self.level_generator._carve_room(room2)
+        self.level_generator.room_generator.carve_room(room1)
+        self.level_generator.room_generator.carve_room(room2)
 
         # Create corridor between them
-        self.level_generator._create_corridor_between_rooms(room1, room2)
+        self.level_generator.corridor_generator.create_corridor_between_rooms(room1, room2)
 
         # Verify some corridor tiles were carved (rooms are now connected)
         # Check if there's a path near the midpoint between rooms
@@ -162,10 +162,10 @@ class TestWallAdjacentShadows:
         """Test identification of wall-adjacent positions in a room."""
         # Create a simple 5x5 room
         room = (10, 10, 5, 5)
-        self.level_generator._carve_room(room)
+        self.level_generator.room_generator.carve_room(room)
 
         # Get wall-adjacent positions
-        wall_adjacent = self.level_generator._get_wall_adjacent_positions(room)
+        wall_adjacent = self.level_generator.tactical_generator.get_wall_adjacent_positions(room)
 
         # Verify all wall-adjacent positions are actually adjacent to walls
         for pos in wall_adjacent:
@@ -184,10 +184,10 @@ class TestWallAdjacentShadows:
         """Test identification of interior positions in a room."""
         # Create a simple 5x5 room
         room = (10, 10, 5, 5)
-        self.level_generator._carve_room(room)
+        self.level_generator.room_generator.carve_room(room)
 
         # Get interior positions
-        interior = self.level_generator._get_interior_positions(room)
+        interior = self.level_generator.tactical_generator.get_interior_positions(room)
 
         # Verify all interior positions are NOT adjacent to walls
         for pos in interior:
@@ -201,10 +201,10 @@ class TestWallAdjacentShadows:
         """Test that wall-adjacent and interior positions don't overlap."""
         # Create a room
         room = (10, 10, 7, 7)
-        self.level_generator._carve_room(room)
+        self.level_generator.room_generator.carve_room(room)
 
-        wall_adjacent = set(self.level_generator._get_wall_adjacent_positions(room))
-        interior = set(self.level_generator._get_interior_positions(room))
+        wall_adjacent = set(self.level_generator.tactical_generator.get_wall_adjacent_positions(room))
+        interior = set(self.level_generator.tactical_generator.get_interior_positions(room))
 
         # Sets should not overlap
         overlap = wall_adjacent.intersection(interior)
@@ -219,10 +219,10 @@ class TestWallAdjacentShadows:
 
         # Create a 3x3 room - most floor tiles should be wall-adjacent
         room = (10, 10, 3, 3)
-        self.level_generator._carve_room(room)
+        self.level_generator.room_generator.carve_room(room)
 
-        interior = self.level_generator._get_interior_positions(room)
-        wall_adjacent = self.level_generator._get_wall_adjacent_positions(room)
+        interior = self.level_generator.tactical_generator.get_interior_positions(room)
+        wall_adjacent = self.level_generator.tactical_generator.get_wall_adjacent_positions(room)
 
         # Small rooms should have mostly wall-adjacent tiles
         # A 3x3 room surrounded by walls should have at most 1 interior tile (the center)
@@ -317,7 +317,7 @@ class TestCorridorAlcoves:
                 self.game_map.walls.add((x, y))
 
         # Carve a horizontal corridor segment
-        self.level_generator._carve_corridor_segment(10, 20, 15, 15, 1, horizontal=True)
+        self.level_generator.corridor_generator.carve_corridor_segment(10, 20, 15, 15, 1, horizontal=True)
 
         # Verify corridor tiles were tracked
         assert len(self.level_generator.corridor_tiles) > 0
@@ -339,7 +339,7 @@ class TestCorridorAlcoves:
             self.level_generator.corridor_tiles.add((x, 15))
 
         # Find horizontal segments
-        segments = self.level_generator._find_straight_corridor_segments(horizontal=True)
+        segments = self.level_generator.corridor_generator.find_straight_corridor_segments(horizontal=True)
 
         # Should find at least one segment
         assert len(segments) > 0
@@ -367,7 +367,7 @@ class TestCorridorAlcoves:
             self.level_generator.corridor_tiles.add((15, y))
 
         # Find vertical segments
-        segments = self.level_generator._find_straight_corridor_segments(horizontal=False)
+        segments = self.level_generator.corridor_generator.find_straight_corridor_segments(horizontal=False)
 
         # Should find at least one segment
         assert len(segments) > 0
@@ -396,7 +396,7 @@ class TestCorridorAlcoves:
 
         random.seed(42)
         # Create alcoves on this segment
-        self.level_generator._create_alcoves_on_segment(segment, horizontal=True)
+        self.level_generator.corridor_generator.create_alcoves_on_segment(segment, horizontal=True)
 
         # Check if any alcoves were created (tiles adjacent to corridor)
         alcoves_created = False
@@ -450,7 +450,7 @@ class TestCorridorAlcoves:
         walls_before = len(self.game_map.walls)
 
         # Try to create alcoves (should not create any due to min length requirement)
-        self.level_generator._create_alcoves_on_segment(segment, horizontal=True)
+        self.level_generator.corridor_generator.create_alcoves_on_segment(segment, horizontal=True)
 
         walls_after = len(self.game_map.walls)
 
@@ -473,7 +473,7 @@ class TestStrategicCoverClusters:
         radius = 5.0
 
         random.seed(42)
-        points = self.level_generator._poisson_disc_sampling(area, radius)
+        points = self.level_generator.tactical_generator.poisson_disc_sampling(area, radius)
 
         # Should generate some points
         assert len(points) > 0
@@ -499,7 +499,7 @@ class TestStrategicCoverClusters:
                     self.game_map.walls.remove((x, y))
 
         # Find open areas
-        open_areas = self.level_generator._find_large_open_areas(10)
+        open_areas = self.level_generator.tactical_generator.find_large_open_areas(10)
 
         # Should find at least one open area
         assert len(open_areas) > 0
@@ -519,20 +519,20 @@ class TestStrategicCoverClusters:
             self.game_map.walls.remove(test_pos)
 
         # Should be valid (floor, not in corridor, not a special node)
-        assert self.level_generator._is_valid_cover_position(test_pos)
+        assert self.level_generator.tactical_generator.is_valid_cover_position(test_pos)
 
         # Add to corridor tiles - should now be invalid
         self.level_generator.corridor_tiles.add(test_pos)
-        assert not self.level_generator._is_valid_cover_position(test_pos)
+        assert not self.level_generator.tactical_generator.is_valid_cover_position(test_pos)
 
         # Remove from corridor, add as special node - should be invalid
         self.level_generator.corridor_tiles.remove(test_pos)
         self.game_map.cooling_nodes.add(test_pos)
-        assert not self.level_generator._is_valid_cover_position(test_pos)
+        assert not self.level_generator.tactical_generator.is_valid_cover_position(test_pos)
 
         # Test out of bounds
-        assert not self.level_generator._is_valid_cover_position((-1, -1))
-        assert not self.level_generator._is_valid_cover_position((GameConfig.MAP_WIDTH + 1, GameConfig.MAP_HEIGHT + 1))
+        assert not self.level_generator.tactical_generator.is_valid_cover_position((-1, -1))
+        assert not self.level_generator.tactical_generator.is_valid_cover_position((GameConfig.MAP_WIDTH + 1, GameConfig.MAP_HEIGHT + 1))
 
     def test_create_cover_cluster_small(self):
         """Test creation of small cover cluster."""
@@ -548,7 +548,7 @@ class TestStrategicCoverClusters:
         random.seed(100)  # Force 'small' cluster type
         # Try multiple times to get 'small' type
         for _ in range(10):
-            self.level_generator._create_cover_cluster((15, 15))
+            self.level_generator.tactical_generator.create_cover_cluster((15, 15))
             if len(self.game_map.walls) > walls_before:
                 break
 
@@ -568,7 +568,7 @@ class TestStrategicCoverClusters:
             self.game_map.walls.remove(corridor_pos)
 
         # Try to create cover at corridor position
-        assert not self.level_generator._is_valid_cover_position(corridor_pos)
+        assert not self.level_generator.tactical_generator.is_valid_cover_position(corridor_pos)
 
     def test_level_generation_with_cover_clusters(self):
         """Test that full level generation works with cover clusters."""
@@ -593,7 +593,7 @@ class TestStrategicCoverClusters:
         area = (10, 10, 3, 3)
         radius = 5.0
 
-        points = self.level_generator._poisson_disc_sampling(area, radius)
+        points = self.level_generator.tactical_generator.poisson_disc_sampling(area, radius)
 
         # May generate 0 or very few points due to space constraints
         assert len(points) >= 0  # Should not crash

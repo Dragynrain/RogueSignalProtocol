@@ -28,7 +28,7 @@ class TestPhase4AdvancedFeatures:
             self.level_generator.corridor_tiles.add((20, y))
 
         # Find intersections
-        intersections = self.level_generator._find_corridor_intersections()
+        intersections = self.level_generator.corridor_generator.find_corridor_intersections()
 
         # Should find the center point (20, 20) as a 4-way intersection
         assert (20, 20) in intersections
@@ -51,7 +51,7 @@ class TestPhase4AdvancedFeatures:
         self.level_generator.corridor_tiles.add(center)
 
         # Expand into 3x3 junction
-        self.level_generator._expand_intersection_into_junction(center, 3)
+        self.level_generator.corridor_generator.expand_intersection_into_junction(center, 3)
 
         # Verify junction area is carved
         for jx in range(19, 22):
@@ -81,7 +81,7 @@ class TestPhase4AdvancedFeatures:
         rooms = self.level_generator.last_generated_rooms
 
         # Create landmark rooms
-        landmark_rooms = self.level_generator._create_landmark_rooms(1, rooms)
+        landmark_rooms = self.level_generator.advanced_generator.create_landmark_rooms(1, rooms)
 
         # Should create 1-2 landmarks or 0 if not enough rooms
         assert 0 <= len(landmark_rooms) <= 2
@@ -100,7 +100,7 @@ class TestPhase4AdvancedFeatures:
         rooms = self.level_generator.last_generated_rooms
 
         # Try to create server core
-        landmark = self.level_generator._create_server_core_landmark(rooms, 1)
+        landmark = self.level_generator.advanced_generator.create_server_core_landmark(rooms, 1)
 
         # May or may not succeed depending on room placement
         if landmark:
@@ -117,7 +117,7 @@ class TestPhase4AdvancedFeatures:
         rooms = self.level_generator.last_generated_rooms
 
         # Try to create vault
-        landmark = self.level_generator._create_vault_landmark(rooms)
+        landmark = self.level_generator.advanced_generator.create_vault_landmark(rooms)
 
         # May or may not succeed
         if landmark:
@@ -131,7 +131,7 @@ class TestPhase4AdvancedFeatures:
         rooms = self.level_generator.last_generated_rooms
 
         # Try to create arena
-        landmark = self.level_generator._create_arena_landmark(rooms)
+        landmark = self.level_generator.advanced_generator.create_arena_landmark(rooms)
 
         # May or may not succeed
         if landmark:
@@ -142,10 +142,10 @@ class TestPhase4AdvancedFeatures:
         """Test identification of high-traffic positions."""
         # Generate a level
         self.level_generator.generate_level(1, 44444)
-        floor_positions = self.level_generator._get_all_floor_positions()
+        floor_positions = self.level_generator.placement_generator.get_all_floor_positions()
 
         # Get high-traffic positions
-        high_traffic = self.level_generator._get_high_traffic_positions(floor_positions)
+        high_traffic = self.level_generator.placement_generator.get_high_traffic_positions(floor_positions)
 
         # Should find some high-traffic positions
         assert len(high_traffic) > 0
@@ -158,10 +158,10 @@ class TestPhase4AdvancedFeatures:
         """Test identification of peripheral positions."""
         # Generate a level
         self.level_generator.generate_level(1, 55555)
-        floor_positions = self.level_generator._get_all_floor_positions()
+        floor_positions = self.level_generator.placement_generator.get_all_floor_positions()
 
         # Get peripheral positions
-        peripheral = self.level_generator._get_peripheral_positions(floor_positions)
+        peripheral = self.level_generator.placement_generator.get_peripheral_positions(floor_positions)
 
         # Should find some peripheral positions (unless map is very small)
         # All should be valid floor positions
@@ -172,10 +172,10 @@ class TestPhase4AdvancedFeatures:
         """Test identification of shadow-adjacent positions."""
         # Generate a level
         self.level_generator.generate_level(1, 66666)
-        floor_positions = self.level_generator._get_all_floor_positions()
+        floor_positions = self.level_generator.placement_generator.get_all_floor_positions()
 
         # Get shadow-adjacent positions
-        shadow_adjacent = self.level_generator._get_shadow_adjacent_positions(floor_positions)
+        shadow_adjacent = self.level_generator.placement_generator.get_shadow_adjacent_positions(floor_positions)
 
         # Should find some shadow-adjacent positions if shadows exist
         if len(self.game_map.shadows) > 0:
@@ -277,7 +277,7 @@ class TestPhase4AdvancedFeatures:
 
         # Create a cross-shaped room
         room = (20, 20, 9, 9)
-        self.level_generator._carve_cross_room(room)
+        self.level_generator.room_generator.carve_cross_room(room)
 
         # Verify center column is carved
         center_x = 20 + 9 // 2
@@ -298,7 +298,7 @@ class TestPhase4AdvancedFeatures:
 
         # Create a circular room
         room = (20, 20, 8, 8)
-        self.level_generator._carve_circular_room(room)
+        self.level_generator.room_generator.carve_circular_room(room)
 
         # Verify center is carved
         center_x, center_y = 20 + 4, 20 + 4
@@ -327,19 +327,19 @@ class TestPhase5PolishFeatures:
     def test_bresenham_line_algorithm(self):
         """Test Bresenham's line algorithm produces correct line points."""
         # Test horizontal line
-        points = self.level_generator._bresenham_line(5, 5, 10, 5)
+        points = self.level_generator.corridor_generator.bresenham_line(5, 5, 10, 5)
         assert len(points) == 6  # Should have 6 points (5 to 10 inclusive)
         assert (5, 5) in points
         assert (10, 5) in points
 
         # Test vertical line
-        points = self.level_generator._bresenham_line(5, 5, 5, 10)
+        points = self.level_generator.corridor_generator.bresenham_line(5, 5, 5, 10)
         assert len(points) == 6
         assert (5, 5) in points
         assert (5, 10) in points
 
         # Test diagonal line
-        points = self.level_generator._bresenham_line(5, 5, 10, 10)
+        points = self.level_generator.corridor_generator.bresenham_line(5, 5, 10, 10)
         assert len(points) >= 5  # Should have at least 5 points
         assert (5, 5) in points
         assert (10, 10) in points
@@ -352,7 +352,7 @@ class TestPhase5PolishFeatures:
                 self.game_map.walls.add((x, y))
 
         # Create a curved corridor
-        self.level_generator._create_curved_corridor(10, 10, 20, 20, width=1)
+        self.level_generator.corridor_generator.create_curved_corridor(10, 10, 20, 20, width=1)
 
         # Verify corridor exists (should carve from start to end)
         # Check that start and end points are not walls
@@ -369,13 +369,13 @@ class TestPhase5PolishFeatures:
 
         # Create a large room for testing
         test_room = (15, 15, 10, 10)
-        self.level_generator._carve_rectangular_room(test_room)
+        self.level_generator.room_generator.carve_rectangular_room(test_room)
 
         initial_walls = len(self.game_map.walls)
         initial_shadows = len(self.game_map.shadows)
 
         # Create a defensive position
-        self.level_generator._create_corner_cover_position(17, 17)
+        self.level_generator.tactical_generator.create_corner_cover_position(17, 17)
 
         # Should have added some walls (cover) and possibly shadows
         # Note: Shadow creation depends on room layout and may not always increase count
@@ -411,7 +411,7 @@ class TestPhase5PolishFeatures:
         initial_corridor_count = len(self.level_generator.corridor_tiles)
 
         # Narrow the corridor at a position
-        self.level_generator._narrow_corridor_at_position((15, 25))
+        self.level_generator.tactical_generator.narrow_corridor_at_position((15, 25))
 
         # Should have fewer corridor tiles (some converted to walls)
         # Note: May not always narrow if corridor is already narrow
@@ -419,7 +419,7 @@ class TestPhase5PolishFeatures:
 
     def test_map_zones_created(self):
         """Test that map zones are created with correct structure."""
-        zones = self.level_generator._create_map_zones()
+        zones = self.level_generator.advanced_generator.create_map_zones()
 
         # Should create configured number of zones
         zone_count = GameConfig._get_required('room_generation.zone_count')
@@ -433,16 +433,16 @@ class TestPhase5PolishFeatures:
 
     def test_zone_assignment_for_rooms(self):
         """Test that rooms are correctly assigned to zones."""
-        zones = self.level_generator._create_map_zones()
+        zones = self.level_generator.advanced_generator.create_map_zones()
 
         # Test room in different areas
         top_room = (10, 5, 5, 5)
         middle_room = (10, 25, 5, 5)
         bottom_room = (10, 45, 5, 5)
 
-        top_zone = self.level_generator._get_zone_for_room(top_room, zones)
-        middle_zone = self.level_generator._get_zone_for_room(middle_room, zones)
-        bottom_zone = self.level_generator._get_zone_for_room(bottom_room, zones)
+        top_zone = self.level_generator.advanced_generator.get_zone_for_room(top_room, zones)
+        middle_zone = self.level_generator.advanced_generator.get_zone_for_room(middle_room, zones)
+        bottom_zone = self.level_generator.advanced_generator.get_zone_for_room(bottom_room, zones)
 
         # Should all return valid zone types
         assert top_zone in ['linear', 'open', 'mixed']
@@ -472,7 +472,7 @@ class TestPhase5PolishFeatures:
                 self.game_map.walls.add((x, y))
 
         # Create corridors with different widths
-        self.level_generator._create_curved_corridor(10, 10, 15, 15, width=1)
+        self.level_generator.corridor_generator.create_curved_corridor(10, 10, 15, 15, width=1)
         narrow_count = len(self.level_generator.corridor_tiles)
 
         self.level_generator.corridor_tiles.clear()
@@ -480,7 +480,7 @@ class TestPhase5PolishFeatures:
             for y in range(GameConfig.MAP_HEIGHT):
                 self.game_map.walls.add((x, y))
 
-        self.level_generator._create_curved_corridor(10, 10, 15, 15, width=3)
+        self.level_generator.corridor_generator.create_curved_corridor(10, 10, 15, 15, width=3)
         wide_count = len(self.level_generator.corridor_tiles)
 
         # Wider corridor should have more tiles

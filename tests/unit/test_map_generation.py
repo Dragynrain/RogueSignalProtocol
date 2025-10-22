@@ -138,7 +138,7 @@ class TestRoomGeneration(TestMapGeneration):
 
         # Carve a room
         test_room = (5, 5, 10, 8)  # x, y, width, height
-        self.level_generator._carve_room(test_room)
+        self.level_generator.room_generator.carve_room(test_room)
 
         # Check that walls were removed in the room area
         for x in range(5, 15):
@@ -157,20 +157,20 @@ class TestRoomGeneration(TestMapGeneration):
 
         # Test non-overlapping room
         non_overlapping = (30, 30, 5, 5)
-        assert not self.level_generator._room_overlaps(non_overlapping, existing_rooms)
+        assert not self.level_generator.room_generator.room_overlaps(non_overlapping, existing_rooms)
 
         # Test overlapping room (direct overlap)
         overlapping_direct = (7, 7, 5, 5)
-        assert self.level_generator._room_overlaps(overlapping_direct, existing_rooms)
+        assert self.level_generator.room_generator.room_overlaps(overlapping_direct, existing_rooms)
 
         # Test overlapping room considering padding
         padding = RoomGenerationConfig.ROOM_PADDING
         overlapping_padding = (15 - padding, 5, 5, 5)
-        assert self.level_generator._room_overlaps(overlapping_padding, existing_rooms)
+        assert self.level_generator.room_generator.room_overlaps(overlapping_padding, existing_rooms)
 
         # Test edge case - just outside padding
         just_outside = (15 + padding + 1, 5, 5, 5)
-        assert not self.level_generator._room_overlaps(just_outside, existing_rooms)
+        assert not self.level_generator.room_generator.room_overlaps(just_outside, existing_rooms)
 
     def test_spawn_room_generation(self):
         """Spawn room is generated at fixed location."""
@@ -198,15 +198,15 @@ class TestRoomOverlapPrevention(TestMapGeneration):
 
         # Test room that overlaps with first room
         overlapping_1 = (7, 7, 5, 5)
-        assert self.level_generator._room_overlaps(overlapping_1, existing_rooms)
+        assert self.level_generator.room_generator.room_overlaps(overlapping_1, existing_rooms)
 
         # Test room that overlaps with second room
         overlapping_2 = (22, 22, 4, 4)
-        assert self.level_generator._room_overlaps(overlapping_2, existing_rooms)
+        assert self.level_generator.room_generator.room_overlaps(overlapping_2, existing_rooms)
 
         # Test room that doesn't overlap with any
         non_overlapping = (50, 50, 5, 5)
-        assert not self.level_generator._room_overlaps(non_overlapping, existing_rooms)
+        assert not self.level_generator.room_generator.room_overlaps(non_overlapping, existing_rooms)
 
     def test_padding_consideration(self):
         """Room overlap considers padding correctly."""
@@ -215,11 +215,11 @@ class TestRoomOverlapPrevention(TestMapGeneration):
 
         # Room exactly at padding distance should not overlap
         room_at_padding = (20 + padding, 10, 5, 5)
-        assert not self.level_generator._room_overlaps(room_at_padding, existing_rooms)
+        assert not self.level_generator.room_generator.room_overlaps(room_at_padding, existing_rooms)
 
         # Room inside padding distance should overlap
         room_inside_padding = (20 + padding - 1, 10, 5, 5)
-        assert self.level_generator._room_overlaps(room_inside_padding, existing_rooms)
+        assert self.level_generator.room_generator.room_overlaps(room_inside_padding, existing_rooms)
 
 
 class TestMapConnectivity(TestMapGeneration):
@@ -232,11 +232,11 @@ class TestMapConnectivity(TestMapGeneration):
         room2 = (15, 15, 6, 6)
 
         # Carve the rooms first
-        self.level_generator._carve_room(room1)
-        self.level_generator._carve_room(room2)
+        self.level_generator.room_generator.carve_room(room1)
+        self.level_generator.room_generator.carve_room(room2)
 
         # Create corridor between rooms
-        self.level_generator._create_corridor_between_rooms(room1, room2)
+        self.level_generator.corridor_generator.create_corridor_between_rooms(room1, room2)
 
         # Verify corridor was created (some non-wall positions between rooms)
         room1_center = (8, 8)
@@ -299,7 +299,7 @@ class TestMapBoundaryConditions(TestMapGeneration):
         edge_room = (GameConfig.MAP_WIDTH - 10, GameConfig.MAP_HEIGHT - 10, 5, 5)
 
         # This should not crash
-        self.level_generator._carve_room(edge_room)
+        self.level_generator.room_generator.carve_room(edge_room)
 
         # Room should be carved properly within bounds
         for x in range(GameConfig.MAP_WIDTH - 10, GameConfig.MAP_WIDTH - 5):
