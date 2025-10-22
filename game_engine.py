@@ -146,6 +146,13 @@ class GameEngine:
         else:
             self._randomize_code_hacks()
             self.game_session.generate_procedural_level()
+            # Show intro messages for new games
+            self.message_log.add_message_typed("CONSCIOUSNESS RESTORED", 'cyan')
+            self.message_log.add_message("The simulation is failing. They're coming for you.")
+            self.message_log.add_message("Find the gateway (>) - escape before De-Resolution.")
+            # Show intro dialogue
+            from game_dialogue_system import create_intro_dialogue
+            self.dialogue_state.show(create_intro_dialogue())
 
         # Initialize InputHandler after GameEngine is fully set up (requires self reference)
         if input_handler is None:

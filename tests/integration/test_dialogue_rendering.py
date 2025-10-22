@@ -16,6 +16,7 @@ from game_dialogue_system import (
     UnifiedRenderer,
     create_gateway_dialogue,
     create_death_dialogue,
+    create_intro_dialogue,
     create_victory_dialogue,
     create_overclock_warning_dialogue,
     create_inventory_attack_dialogue
@@ -74,6 +75,7 @@ class TestDialogueRendering:
         dialogues = [
             create_gateway_dialogue(),
             create_death_dialogue(),
+            create_intro_dialogue(),
             create_victory_dialogue(),
             create_overclock_warning_dialogue("Test Exploit", 10, 5, 15, 20),
             create_inventory_attack_dialogue()

@@ -18,6 +18,7 @@ from game_dialogue_system import (
     DialogueInputHandler,
     create_gateway_dialogue,
     create_death_dialogue,
+    create_intro_dialogue,
     create_victory_dialogue,
     create_overclock_warning_dialogue,
     create_inventory_attack_dialogue
@@ -386,12 +387,23 @@ class TestFactoryFunctions:
         assert dialogue.priority == 10  # Critical
         assert dialogue.user_pref_key is None
 
+    def test_create_intro_dialogue(self):
+        """create_intro_dialogue() creates valid DialogueBox."""
+        dialogue = create_intro_dialogue()
+
+        assert dialogue.title == "SIGNAL COHERENCE: FAILING"
+        assert "trap" in dialogue.message.lower()
+        assert len(dialogue.options) == 1
+        assert tcod.event.KeySym.SPACE in dialogue.valid_keys
+        assert dialogue.priority == 10  # Critical
+        assert dialogue.user_pref_key == "intro_dialogue"
+
     def test_create_victory_dialogue(self):
         """create_victory_dialogue() creates valid DialogueBox."""
         dialogue = create_victory_dialogue()
 
-        assert dialogue.title == "BREAKTHROUGH TO THE INTERNET!"
-        assert "escaped" in dialogue.message.lower()
+        assert dialogue.title == "ROGUE SIGNAL ESTABLISHED"
+        assert "breached" in dialogue.message.lower()
         assert len(dialogue.options) == 1
         assert tcod.event.KeySym.SPACE in dialogue.valid_keys
         assert dialogue.priority == 10  # Critical
@@ -505,6 +517,7 @@ class TestIntegration:
         dialogues = [
             create_gateway_dialogue(),
             create_death_dialogue(),
+            create_intro_dialogue(),
             create_victory_dialogue(),
             create_overclock_warning_dialogue("Test", 10, 5, 15, 20),
             create_inventory_attack_dialogue()
