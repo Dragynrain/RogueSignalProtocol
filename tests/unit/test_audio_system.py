@@ -164,7 +164,7 @@ class TestMusicPlayback(unittest.TestCase):
     def test_play_music_when_disabled_does_nothing(self):
         """Test music playback when audio is disabled."""
         self.sound_manager.enabled = False
-        self.sound_manager.play_music("test.mp3")
+        self.sound_manager.play_music("test.ogg")
 
         self.assertIsNone(self.sound_manager.current_music)
         self.assertFalse(self.sound_manager.music_playing)
@@ -176,7 +176,7 @@ class TestMusicPlayback(unittest.TestCase):
         mock_exists.return_value = False
 
         self.sound_manager.enabled = True
-        self.sound_manager.play_music("missing.mp3")
+        self.sound_manager.play_music("missing.ogg")
 
         self.assertIsNone(self.sound_manager.current_music)
         self.assertFalse(self.sound_manager.music_playing)
@@ -191,9 +191,9 @@ class TestMusicPlayback(unittest.TestCase):
         mock_exists.return_value = True
 
         self.sound_manager.enabled = True
-        self.sound_manager.play_music("test.mp3")
+        self.sound_manager.play_music("test.ogg")
 
-        self.assertEqual(self.sound_manager.current_music, "test.mp3")
+        self.assertEqual(self.sound_manager.current_music, "test.ogg")
         self.assertTrue(self.sound_manager.music_playing)
 
     @patch('game_audio.AUDIO_AVAILABLE', True)
@@ -201,14 +201,14 @@ class TestMusicPlayback(unittest.TestCase):
     @patch('pygame.mixer.music.set_volume')
     @patch('os.path.exists')
     def test_play_music_volume_caps_at_one(self, mock_exists, mock_set_volume, mock_load):
-        """Test music volume is capped at 1.0 even with high multipliers."""
+        """Test music volume is capped at 1.0."""
         mock_exists.return_value = True
 
         self.sound_manager.enabled = True
         self.settings.music_volume = 1.0
         self.settings.master_volume = 1.0
 
-        self.sound_manager.play_music("test.mp3", volume_multiplier=2.0)
+        self.sound_manager.play_music("test.ogg")
 
         mock_set_volume.assert_called_with(1.0)  # Capped at 1.0
 
@@ -221,7 +221,7 @@ class TestMusicPlayback(unittest.TestCase):
         self.sound_manager.enabled = True
 
         with patch('os.path.exists', return_value=True):
-            self.sound_manager.play_music("error.mp3")
+            self.sound_manager.play_music("error.ogg")
 
         # Should reset state on error
         self.assertIsNone(self.sound_manager.current_music)
@@ -241,7 +241,7 @@ class TestMusicControls(unittest.TestCase):
         """Test stopping music resets manager state."""
         self.sound_manager.enabled = True
         self.sound_manager.music_playing = True
-        self.sound_manager.current_music = "test.mp3"
+        self.sound_manager.current_music = "test.ogg"
 
         self.sound_manager.stop_music()
 
@@ -282,7 +282,7 @@ class TestSoundSystemUpdate(unittest.TestCase):
         mock_get_busy.return_value = False
         self.sound_manager.enabled = True
         self.sound_manager.music_playing = True
-        self.sound_manager.current_music = "test.mp3"
+        self.sound_manager.current_music = "test.ogg"
 
         self.sound_manager.update()
 

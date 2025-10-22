@@ -533,9 +533,9 @@ python test_commands.py full
 - **Usage**: `sound_manager.play_sound("sound_name")`
 
 ### Music
-- **Format**: MP3
+- **Format**: OGG (normalized volume)
 - **Location**: `music/` folder
-- **Naming**: `level#_theme.mp3` or descriptive
+- **Naming**: `level#_theme.ogg` or descriptive
 - **Usage**: Played automatically per level
 
 ### Font Tileset

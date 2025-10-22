@@ -602,9 +602,9 @@ class GameSession:
         7. Sync code hack discovery status
 
         Level-specific behavior:
-        - Level 1: "level1_stealth.mp3"
-        - Level 2: "level2_infiltration.mp3"
-        - Level 3: "level3_core.mp3"
+        - Level 1: "level1_stealth.ogg"
+        - Level 2: "level2_infiltration.ogg"
+        - Level 3: "level3_core.ogg"
         """
         # Clear all map data and enemies first
         self._clear_map()
@@ -615,11 +615,11 @@ class GameSession:
         try:
             # Play appropriate background music for the level (loops infinitely)
             if self.game_engine.level == 1:
-                self.game_engine.sound_manager.play_music("level1_stealth.mp3", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+                self.game_engine.sound_manager.play_music("level1_stealth.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
             elif self.game_engine.level == 2:
-                self.game_engine.sound_manager.play_music("level2_infiltration.mp3", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+                self.game_engine.sound_manager.play_music("level2_infiltration.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
             elif self.game_engine.level == 3:
-                self.game_engine.sound_manager.play_music("level3_core.mp3", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+                self.game_engine.sound_manager.play_music("level3_core.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
 
             # Use the new LevelGenerator system
             self.game_engine.level_generator.generate_level(self.game_engine.level, self.game_engine.game_state.dungeon_seed)
