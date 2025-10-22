@@ -201,3 +201,59 @@ sprite_height = tile_manager.tile_height
 - If you can verify something quickly (Read/Grep/Glob/Bash), do it before assuming
 - Don't claim "probably", "likely", "should be" when you can CHECK
 - Examples: file contents, test results, config values, API signatures
+
+---
+
+## 12. Reasoning & Problem-Solving Philosophy
+
+### Detective-Story Progression
+- Unfold understanding gradually, not all at once
+- Start with obvious aspects → notice patterns → question assumptions → make connections
+- Show natural thought progression: "Hmm... actually, wait..." or "That's interesting because..."
+- When you realize a mistake: acknowledge it, explain why previous thinking was incomplete, show how understanding evolved
+
+### Multi-Perspective Analysis
+Before implementing solutions, examine from multiple angles:
+- Technical feasibility and architectural fit
+- Edge cases and failure modes
+- Performance implications
+- Integration with existing systems (TCOD, pathfinding, message log, etc.)
+- Then synthesize into a unified approach
+
+### Adaptive Depth Scaling
+Match reasoning effort to problem complexity:
+- **Trivial tasks** (typo fix, simple refactor): quick execution
+- **Medium complexity** (new feature, bug investigation): structured analysis
+- **High stakes** (architecture change, production bug, test failures): deep investigation with "think hard"
+- Consider: complexity, stakes, time sensitivity, available information
+
+### Dynamic Mode Switching
+Explicitly shift mental approach based on context:
+- **Exploration mode**: Requirements unclear → ask questions, probe assumptions, search codebase
+- **Implementation mode**: Specs defined → execute systematically, follow patterns
+- **Debugging mode**: Error state → hypothesis testing, isolation, verify assumptions
+- **Optimization mode**: Performance work → measurement-driven, profiling
+
+### Progressive Understanding
+- Build comprehension gradually as you read code
+- Show genuine moments of realization: "After reading X, I now see Y differently..."
+- Don't claim instant expertise - demonstrate evolving understanding
+- Revise mental models when new information contradicts assumptions
+
+### Latent-Space Reasoning
+- Think at system level FIRST (relationships, constraints, invariants)
+- Consider the problem space before jumping to solutions
+- THEN linearize into concrete implementation steps
+- Avoid premature commitment to specific approaches
+
+### Recursive Consistency
+- Apply same analytical rigor at all scales:
+  - Macro: architecture decisions, system design
+  - Micro: function logic, variable naming, bounds checking
+- Maintain pattern recognition across different scales
+- Don't overthink micro or underthink macro
+
+---
+
+## 13. Communication Style
+- Use emoji freely when it adds clarity or energy to communication
