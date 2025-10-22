@@ -54,15 +54,32 @@ class TestBasicShadowDetection:
         """Test enemy can see player in light (non-shadow) within vision range."""
         engine = self.create_test_engine()
 
-        # Position player and enemy adjacent (always visible, no walls can block)
-        engine.player.position.x = 20
-        engine.player.position.y = 20
+        # Find a position in light (not shadow) or explicitly remove shadow
+        light_pos = None
+        for x in range(15, 30):
+            for y in range(15, 30):
+                pos = Position(x, y)
+                if not engine.game_map.is_shadow(pos) and engine.game_map.is_valid_position(pos):
+                    light_pos = pos
+                    break
+            if light_pos:
+                break
 
-        # Ensure player is not in shadow
+        # If all positions have shadows, explicitly remove shadow from test position
+        if light_pos is None:
+            light_pos = Position(20, 20)
+            engine.game_map.shadows.discard((light_pos.x, light_pos.y))
+            engine.game_map.ghost_nodes.discard((light_pos.x, light_pos.y))
+
+        # Position player in light
+        engine.player.position = light_pos
+
+        # Verify player is not in shadow
         assert not engine.game_map.is_shadow(engine.player.position), "Player should not be in shadow"
 
-        # Create scanner enemy adjacent (distance 1, always visible)
-        scanner = create_real_enemy("scanner", Position(21, 20))
+        # Create scanner enemy adjacent to player (distance 1, always visible)
+        enemy_pos = Position(light_pos.x + 1, light_pos.y)
+        scanner = create_real_enemy("scanner", enemy_pos)
         engine.enemies = [scanner]
 
         # Verify enemy can see player (adjacent always works)
@@ -386,8 +403,12 @@ class TestStealthGameplayScenarios:
         # Position player in shadows
         engine.player.position = Position(15, 20)
 
-        # Create enemy watching from light
-        scanner = create_real_enemy("scanner", Position(20, 15))
+        # Create enemy watching from light - ensure enemy position has no shadow
+        enemy_pos = Position(20, 15)
+        engine.game_map.shadows.discard((enemy_pos.x, enemy_pos.y))
+        engine.game_map.ghost_nodes.discard((enemy_pos.x, enemy_pos.y))
+
+        scanner = create_real_enemy("scanner", enemy_pos)
         scanner.state = EnemyState.UNAWARE
         engine.enemies = [scanner]
 

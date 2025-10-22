@@ -11,6 +11,7 @@ These classes work together to maintain consistent game state across turns.
 """
 
 import random
+import logging
 from typing import List, Tuple, Optional, Dict, Any
 from dataclasses import dataclass
 
@@ -232,26 +233,35 @@ class TurnProcessor:
             player: Player instance to update
         """
         self.game_state.advance_turn()
-        
+        # Safe formatting to handle both real values and mocks in tests
+        try:
+            trace_str = f"{float(player.trace_level):.1f}" if hasattr(player.trace_level, '__float__') else str(player.trace_level)
+        except (TypeError, ValueError):
+            trace_str = str(player.trace_level)
+        logging.debug(f"=== Turn {self.game_state.turn} START: heat={player.heat}/{player.max_heat}, trace={trace_str}, cpu={player.cpu}/{player.max_cpu} ===")
+
         # Process heat reduction
         self._process_heat_management(player)
-        
+
         # Process temporary effects
         self._process_temporary_effects(player)
-        
+
         # Process trace level increase
         self._process_trace_increase(player)
     
     def _process_heat_management(self, player) -> None:
         """Handle heat reduction over time."""
         if player.heat > 0:
-            heat_reduction = (GameBalance.HEAT_REDUCTION_BOOSTED 
-                            if player.temporary_effects['exploit_efficiency_turns'] > 0 
+            heat_reduction = (GameBalance.HEAT_REDUCTION_BOOSTED
+                            if player.temporary_effects['exploit_efficiency_turns'] > 0
                             else GameBalance.HEAT_REDUCTION_NORMAL)
-            
+
             old_heat = player.heat
             player.heat = max(0, player.heat - heat_reduction)
-            
+
+            if old_heat != player.heat:
+                logging.debug(f"Turn: Heat cooldown {old_heat} → {player.heat} (-{heat_reduction})")
+
             # Heat reduction applied silently
     
     def _process_temporary_effects(self, player) -> None:
@@ -294,8 +304,20 @@ class TurnProcessor:
         if self.game_state.turn % GameBalance.TRACE_INCREASE_INTERVAL == 0:
             config = self.game_state.get_current_network_config()
             trace_increase = config.get('background_trace', 1) * GameBalance.TRACE_INCREASE_AMOUNT
-            
+
             old_trace = player.trace_level
             player.trace_level = min(100, player.trace_level + trace_increase)
-            
+
+            if old_trace != player.trace_level:
+                # Safe formatting to handle both real values and mocks in tests
+                try:
+                    old_trace_str = f"{float(old_trace):.1f}" if hasattr(old_trace, '__float__') else str(old_trace)
+                    new_trace_str = f"{float(player.trace_level):.1f}" if hasattr(player.trace_level, '__float__') else str(player.trace_level)
+                    increase_str = f"{float(trace_increase):.1f}" if hasattr(trace_increase, '__float__') else str(trace_increase)
+                except (TypeError, ValueError):
+                    old_trace_str = str(old_trace)
+                    new_trace_str = str(player.trace_level)
+                    increase_str = str(trace_increase)
+                logging.debug(f"Turn: Trace level {old_trace_str} → {new_trace_str} (+{increase_str})")
+
             # Trace Level increases silently in background

@@ -13,6 +13,7 @@ Individual enemy AI and movement logic is in game_characters.py.
 """
 
 import random
+import logging
 from typing import List, Optional, TYPE_CHECKING
 
 # Import necessary entities and configurations
@@ -66,12 +67,13 @@ class EnemyManager:
         # Validate position is not on a wall
         if self.game_map.is_wall(position):
             raise ValueError(f"Cannot spawn enemy on wall at {position}")
-        
+
         enemy = Enemy(position, enemy_type)
-        
+
         # Set up patrol route for patrol enemies
         if enemy.type == 'patrol':
             enemy.patrol_points = self._generate_patrol_route(position)
+            logging.debug(f"Spawned {enemy_type} at ({position.x},{position.y}), movement=PATROL, patrol_points={len(enemy.patrol_points)}")
         elif enemy.type == 'virus':
             # Virus enemies mimic other infected enemies - randomly pick base movement type
             virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.PATROL]
@@ -82,7 +84,13 @@ class EnemyManager:
             # Generate patrol route if virus got PATROL movement
             if chosen_movement == EnemyMovement.PATROL:
                 enemy.patrol_points = self._generate_patrol_route(position)
-            
+                logging.debug(f"Spawned {enemy_type} at ({position.x},{position.y}), movement={chosen_movement.name}, patrol_points={len(enemy.patrol_points)}")
+            else:
+                logging.debug(f"Spawned {enemy_type} at ({position.x},{position.y}), movement={chosen_movement.name}")
+        else:
+            movement_type = enemy.get_movement_type()
+            logging.debug(f"Spawned {enemy_type} at ({position.x},{position.y}), movement={movement_type.name}")
+
         self.enemies.append(enemy)
         return enemy
     
@@ -155,6 +163,7 @@ class EnemyManager:
         # Choose a simple pattern type
         pattern_type = random.choice(['line', 'triangle', 'rectangle'])
         step_size = random.randint(4, 8)  # Distance between patrol points
+        logging.debug(f"Patrol route: start=({start.x},{start.y}), pattern={pattern_type}, step_size={step_size}")
 
         if pattern_type == 'line':
             # 2-point line pattern (back and forth)
@@ -231,9 +240,11 @@ class EnemyManager:
             if self._is_valid_patrol_point(fallback_end):
                 route = [start, fallback_end]
                 if self._validate_patrol_connectivity(route):
+                    logging.debug(f"Patrol route: fallback pattern succeeded, points={len(route)}")
                     return route
 
         # Last resort: single point (static guard)
+        logging.debug(f"Patrol route: all patterns failed, using single-point patrol at ({start.x},{start.y})")
         return [start]
 
     def _is_valid_patrol_point(self, point: Position) -> bool:

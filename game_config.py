@@ -39,9 +39,9 @@ class GameSettings:
 
     def __init__(self):
         self.master_volume = 0.7
-        self.sfx_volume = 0.8
-        self.music_volume = 0.5
-        self.graphics_mode = "glyph"  # "glyph" (CP437 characters) or "graphics" (PNG sprites)
+        self.sfx_volume = 0.75
+        self.music_volume = 0.6
+        self.graphics_mode = "graphics"  # "glyph" (CP437 characters) or "graphics" (PNG sprites)
         self.dialogue_preferences = {}  # Stores user preferences for dialogue visibility
         self.load_settings()
     
@@ -72,9 +72,9 @@ class GameSettings:
                 try:
                     settings_data = json.loads(content)
                     self.master_volume = settings_data.get("master_volume", 0.7)
-                    self.sfx_volume = settings_data.get("sfx_volume", 0.8)
-                    self.music_volume = settings_data.get("music_volume", 0.5)
-                    self.graphics_mode = settings_data.get("graphics_mode", "glyph")
+                    self.sfx_volume = settings_data.get("sfx_volume", 0.75)
+                    self.music_volume = settings_data.get("music_volume", 0.6)
+                    self.graphics_mode = settings_data.get("graphics_mode", "graphics")
 
                     # Migrate old "ascii" setting to "glyph"
                     if self.graphics_mode == "ascii":
@@ -99,9 +99,9 @@ class GameSettings:
         try:
             default_settings = {
                 "master_volume": 0.7,
-                "sfx_volume": 0.8,
-                "music_volume": 0.5,
-                "graphics_mode": "glyph",
+                "sfx_volume": 0.75,
+                "music_volume": 0.6,
+                "graphics_mode": "graphics",
                 "dialogue_preferences": {}
             }
             with open(self.SETTINGS_FILE, 'w') as f:

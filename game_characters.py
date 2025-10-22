@@ -73,7 +73,12 @@ class PathfindingHelper:
 
             # Validate path (TCOD returns numpy array)
             if len(path) > 1 and len(path) <= max_length:
+                logging.debug(f"Pathfinding: ({start.x},{start.y}) → ({goal.x},{goal.y}), path_length={len(path)}, max={max_length}")
                 return path
+            elif len(path) > max_length:
+                logging.debug(f"Pathfinding: ({start.x},{start.y}) → ({goal.x},{goal.y}), path too long: {len(path)} > {max_length}")
+            else:
+                logging.debug(f"Pathfinding: ({start.x},{start.y}) → ({goal.x},{goal.y}), no path found")
             return None
 
         except Exception as e:
@@ -195,12 +200,15 @@ class Player:
 
         # Use centralized validation
         if PositionValidator.is_basic_valid_position(new_position, game_map):
+            logging.debug(f"Player: moved from ({self.last_position.x},{self.last_position.y}) to ({new_position.x},{new_position.y})")
             self.position = new_position
             return True
 
         # Log boundary violations for debugging
         if not PositionValidator.is_within_bounds(new_position, game_map.width, game_map.height):
-            logging.warning(f"Movement out of bounds: intended=({intended_x}, {intended_y}), map_bounds=({game_map.width}, {game_map.height})")
+            logging.warning(f"Player movement out of bounds: intended=({intended_x}, {intended_y}), map_bounds=({game_map.width}, {game_map.height})")
+        else:
+            logging.debug(f"Player movement blocked: intended=({intended_x}, {intended_y})")
 
         return False
     
@@ -301,19 +309,28 @@ class Player:
         max_cpu = GameConfig.get('gameplay.max_cpu_capacity', 200)
 
         if upgrade.stat_type == 'ram':
+            old_ram = self.ram_total
             self.ram_total = min(max_ram, self.ram_total + upgrade.bonus_amount)
+            logging.debug(f"Player upgrade '{upgrade_key}': RAM {old_ram} → {self.ram_total} (cap={max_ram})")
         elif upgrade.stat_type == 'cpu':
+            old_max_cpu = self.max_cpu
+            old_cpu = self.cpu
             self.max_cpu = min(max_cpu, self.max_cpu + upgrade.bonus_amount)
             self.cpu = min(self.max_cpu, self.cpu + upgrade.bonus_amount)  # Boost current as well but cap at max
+            logging.debug(f"Player upgrade '{upgrade_key}': max_CPU {old_max_cpu} → {self.max_cpu}, CPU {old_cpu} → {self.cpu} (cap={max_cpu})")
         elif upgrade.stat_type == 'heat':
+            old_max_heat = self.max_heat
             self.max_heat = min(200, self.max_heat + upgrade.bonus_amount)  # Cap at 200
+            logging.debug(f"Player upgrade '{upgrade_key}': max_heat {old_max_heat} → {self.max_heat} (cap=200)")
 
         return True
     
     def take_damage(self, damage: int) -> int:
         """Take damage and return actual damage taken."""
         actual_damage = min(damage, self.cpu)
+        old_cpu = self.cpu
         self.cpu -= actual_damage
+        logging.debug(f"Player: took {actual_damage} damage, CPU {old_cpu} → {self.cpu}/{self.max_cpu}")
         return actual_damage
 
 
@@ -472,6 +489,11 @@ class Enemy:
 
         # Final LOS check using TCOD FOV
         can_see = game_map.can_see_position(self.position, player.position, self.type_data.vision)
+
+        # Log visibility result
+        if can_see:
+            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): spotted player@({player.x},{player.y}), distance={distance:.1f}")
+
         return can_see
     
     def can_attack_player(self, player: Player) -> bool:
@@ -499,6 +521,7 @@ class Enemy:
         if self.type == 'virus':
             virus_turns = player.temporary_effects.get('virus_turns', 0) + 3
             player.temporary_effects['virus_turns'] = min(virus_turns, 10)
+            logging.debug(f"Enemy {self.type}@({self.x},{self.y}): infected player, virus_turns={player.temporary_effects['virus_turns']}")
             return 0
 
         if self.type == 'inhibitor':
@@ -511,18 +534,26 @@ class Enemy:
             else:
                 player.temporary_effects['speed_boost_turns'] = 0
                 player.temporary_effects['movement_slowed_turns'] = -net_effect
+            logging.debug(f"Enemy {self.type}@({self.x},{self.y}): inhibited player, slowed_turns={player.temporary_effects['movement_slowed_turns']}")
             return 0
 
-        return player.take_damage(self.type_data.damage)
+        damage = player.take_damage(self.type_data.damage)
+        logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): attacked player for {damage} damage, player_cpu={player.cpu}/{player.max_cpu}")
+        return damage
     
     def take_damage(self, damage: int) -> bool:
         """Take damage and return True if destroyed."""
         # Admin avatar has 50% damage resistance
+        original_damage = damage
         if self.type == 'admin':
             damage = max(5, damage // 2)  # Minimum 5 damage to prevent immunity
-        
+            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): damage reduced by resistance: {original_damage} → {damage}")
+
+        old_cpu = self.cpu
         self.cpu -= damage
-        return self.cpu <= 0
+        is_dead = self.cpu <= 0
+        logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): took {damage} damage, cpu {old_cpu} → {self.cpu}, destroyed={is_dead}")
+        return is_dead
     
     def move(self, game_map, player, game_engine) -> bool:
         """
@@ -567,10 +598,12 @@ class Enemy:
         # 5. Validate move
         if not self._is_move_valid(next_position, game_map, player, game_engine):
             # Blocked - clear queue and replan next turn
+            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): move to ({next_position.x},{next_position.y}) BLOCKED, clearing queue")
             self.move_queue.clear()
             return False
 
         # 6. Execute move
+        logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): moved to ({next_position.x},{next_position.y})")
         self.position = next_position
 
         # 7. Top up queue to maintain 3 moves
@@ -636,7 +669,9 @@ class Enemy:
         if len(self.move_queue) >= 3:
             return
 
+        old_queue_len = len(self.move_queue)
         movement_type = self.get_movement_type()
+        logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): filling move queue, current_len={old_queue_len}, state={self.state.name}, movement={movement_type.name}")
 
         # Static enemies don't move
         if movement_type == EnemyMovement.STATIC:

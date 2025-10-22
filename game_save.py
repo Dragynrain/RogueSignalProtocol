@@ -54,6 +54,8 @@ class SaveGameManager:
         # Attempt save with retry logic
         for attempt in range(GameConfig.MAX_SAVE_ATTEMPTS):
             try:
+                logging.debug(f"Save: Attempt {attempt+1}/{GameConfig.MAX_SAVE_ATTEMPTS}, level={game.level}, turn={game.turn}, player_cpu={game.player.cpu}/{game.player.max_cpu}")
+
                 # Gather all game state data
                 save_data = {
                     "version": "0.8.0 Alpha",
@@ -132,8 +134,9 @@ class SaveGameManager:
                     # Atomic rename to prevent corruption
                     import shutil
                     shutil.move(temp_file, cls.SAVE_FILE)
-                    
-                    logging.info("Game saved successfully")
+
+                    file_size = os.path.getsize(cls.SAVE_FILE)
+                    logging.info(f"Save: Successful, file={cls.SAVE_FILE}, size={file_size} bytes, enemies={len(game.enemies)}")
                     return True
                 finally:
                     # Clean up temp file if it exists
@@ -187,7 +190,12 @@ class SaveGameManager:
             # Try to parse JSON with better error reporting
             try:
                 save_data = json.loads(content)
-                logging.info("Game loaded successfully")
+                level = save_data.get('level', '?')
+                turn = save_data.get('turn', '?')
+                player_data = save_data.get('player', {})
+                player_cpu = player_data.get('cpu', '?')
+                enemy_count = len(save_data.get('enemies', []))
+                logging.info(f"Load: Successful, level={level}, turn={turn}, player_cpu={player_cpu}, enemies={enemy_count}")
                 return save_data
             except json.JSONDecodeError as e:
                 logging.error(f"Save file corrupted - JSON decode error at line {e.lineno}, column {e.colno}: {e.msg}")
@@ -211,8 +219,9 @@ class SaveGameManager:
         """Delete the save file."""
         try:
             if cls.save_exists():
+                logging.debug(f"Save: Deleting save file: {cls.SAVE_FILE} (reason: player death)")
                 os.remove(cls.SAVE_FILE)
-                logging.info("Save file deleted")
+                logging.info("Save: File deleted successfully")
             return True
         except Exception as e:
             import traceback
