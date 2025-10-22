@@ -269,6 +269,19 @@ class GameSession:
                 self.game_engine.show_story_fragment = story_fragment.fragment_index
             del self.game_engine.game_map.story_fragments[player_pos]
 
+        # Environmental narrative: First shadow entry
+        if self.game_engine.game_map.is_shadow(pp):
+            shadow_msg = self.game_engine.narrative_manager.trigger_first_shadow()
+            if shadow_msg:
+                self.game_engine.message_log.add_message(shadow_msg)
+
+        # Environmental narrative: Low CPU warning
+        cpu_percent = self.game_engine.player.cpu / self.game_engine.player.max_cpu
+        if cpu_percent < 0.30 and random.random() < 0.10:  # 10% chance per turn when below 30%
+            low_cpu_msg = self.game_engine.narrative_manager.trigger_low_cpu()
+            if low_cpu_msg:
+                self.game_engine.message_log.add_message(low_cpu_msg)
+
     def _update_enemies(self):
         """
         Update all enemy states and actions in single-pass system.
@@ -444,6 +457,11 @@ class GameSession:
             if old_trace < threshold <= new_trace:
                 self.game_engine.sound_manager.play_sound("trace_threshold")
                 self.game_engine.message_log.add_message(msg, color)
+                # Add environmental narrative for high trace
+                if threshold >= 75:
+                    env_msg = self.game_engine.narrative_manager.trigger_high_trace()
+                    if env_msg:
+                        self.game_engine.message_log.add_message(env_msg)
                 break
 
     def _alert_nearby_enemies(self, alerting_enemy):
@@ -502,6 +520,10 @@ class GameSession:
             self.game_engine.admin_spawned = True
             self.game_engine.message_log.add_message("*** ADMIN AVATAR SPAWNED! ***")
             self.game_engine.sound_manager.play_sound("admin_spawn", priority=8)
+            # Add environmental narrative for admin spawn
+            env_msg = self.game_engine.narrative_manager.trigger_admin_spawn()
+            if env_msg:
+                self.game_engine.message_log.add_message(env_msg)
 
     def _find_admin_spawn_position(self) -> Optional[Position]:
         """Find a suitable spawn position for admin avatar near player and visible."""
@@ -626,7 +648,15 @@ class GameSession:
             # Sync code hack discovered status with global discovered effects
             self._sync_code_discovered_status()
 
+            # Reset narrative manager per-level flags
+            self.game_engine.narrative_manager.reset_level_flags()
+
             self.game_engine.message_log.add_message(f"{config['name']} loaded")
+
+            # Add atmospheric level start message
+            env_message = self.game_engine.narrative_manager.trigger_level_start()
+            if env_message:
+                self.game_engine.message_log.add_message(env_message)
 
         finally:
             # Restore random seed
@@ -676,6 +706,13 @@ class GameSession:
             from game_dialogue_system import create_victory_dialogue
             self.game_engine.dialogue_state.show(create_victory_dialogue())
         else:
+            # Add level transition flavor text
+            from data_loading import get_level_transition_messages
+            transition_messages = get_level_transition_messages()
+            transition_key = f"{old_level}_to_{self.game_engine.level}"
+            if transition_key in transition_messages:
+                self.game_engine.message_log.add_message(transition_messages[transition_key])
+
             try:
                 logging.debug(f"Session: Generating level {self.game_engine.level}")
                 self.generate_procedural_level()

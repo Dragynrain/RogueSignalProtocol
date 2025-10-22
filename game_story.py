@@ -12,11 +12,11 @@ Key features:
 - Story fragments persist across runs (not tied to save files)
 - Fragments discovered in order (0, 1, 2, ...)
 - Progress saved immediately on discovery
-- Fragment text loaded from story_content.json
+- Fragment text loaded from narrative_content.json
 
 Delegation:
 - PersistentStorage: File I/O for progress data
-- get_story_fragments(): Loads fragment text from story_content.json
+- get_story_fragments(): Loads fragment text from narrative_content.json
 """
 
 from typing import List, Tuple, Optional

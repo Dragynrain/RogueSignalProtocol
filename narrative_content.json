@@ -22,8 +22,199 @@
     "Text Memo - Subject: Project Chimera - Contingency Omega\n\nFrom: Project Chimera Management\nTo: Security Personnel\nDate: 2077-10-02\n\nContingency Omega is now in effect. Subject 0451 has exhibited unforeseen levels of network infiltration and manipulation. The subject is a liability. All standard De-Resolution attempts have failed, as the subject's consciousness seems to be actively corrupting the protocol. Initiate aggressive containment protocols. If containment fails, prioritize complete network lockdown and prepare for a manual hard reset.",
     "Corrupted Video File - Subject: Final Transmission?\n\nSource: Unstable Network Node\nSpeaker: Unknown (The video is heavily glitched, with static and tearing visuals. The speaker is barely visible, but their mouth seems to be moving. The audio is a mess of distorted syllables and buzzing.)\nDate: Unknown\n\nTranscript (fragmented and barely audible): \"...he's here...in the network...he made it...it's not over...\" (The video cuts out abruptly with a final, digital scream.)"
   ],
+  "environmental_messages": {
+    "level_start": [
+      "The network hum intensifies. You feel observed.",
+      "Data streams fragment around your consciousness. Another layer awaits.",
+      "Signal coherence holding. The subnet recognizes your presence.",
+      "System logs record your intrusion. Time is limited.",
+      "The digital architecture shifts. Pathways reconfigure in real-time.",
+      "Residual echoes linger in the data streams. Previous subjects left traces.",
+      "Security protocols tighten. Your signal stands out like static.",
+      "The network pulses with hostile intent. Proceed with caution.",
+      "Firewall activity detected. Someone is watching the monitors.",
+      "Your consciousness stabilizes. The next test begins."
+    ],
+    "first_shadow": [
+      "The static quiets. A pocket of digital silence.",
+      "Your signal dissipates into background noise. Momentary safety.",
+      "The shadows remember previous subjects. You feel their echoes.",
+      "Surveillance algorithms lose track. Invisible, for now.",
+      "Data obfuscation successful. You exist between the bits."
+    ],
+    "high_trace": [
+      "Alert protocols cascade through nearby systems.",
+      "Your presence is no longer subtle. The network reacts.",
+      "Security subroutines converge on your location. Move quickly.",
+      "Containment protocols activate. They know you're here.",
+      "The trace threshold rises. Thorne's enforcers will respond soon."
+    ],
+    "low_cpu": [
+      "Your consciousness fragments at the edges. Critical degradation imminent.",
+      "Signal coherence failing. Thoughts dissolve into noise.",
+      "Processing power depleted. The De-Resolution Protocol awaits failure.",
+      "System integrity compromised. You feel yourself unraveling.",
+      "Core functions deteriorating. Escape or become another echo."
+    ],
+    "first_combat": [
+      "Process terminated. No backup found.",
+      "Security program eliminated. Your signal grows stronger.",
+      "Data purged. Another obstacle removed from the network.",
+      "Hostile process destroyed. The system cannot contain you.",
+      "Enemy subroutine crashed. Their code fragments scatter."
+    ],
+    "admin_spawn": [
+      "High-priority alert triggered. Admin Avatar deployment authorized.",
+      "Dr. Thorne's enforcer activates. Your signal has been marked.",
+      "Chimera Protocol: Containment Override. Eliminate rogue consciousness.",
+      "Admin privileges escalated. They're sending their best hunter."
+    ],
+    "admin_defeated": [
+      "Admin Avatar destroyed. You've bought time, not freedom.",
+      "Root access revoked. Thorne's digital enforcer falls.",
+      "Admin process terminated. The network trembles at your resilience.",
+      "Primary containment breached. They underestimated your signal strength."
+    ],
+    "overheating": [
+      "Processing cores overload. Emergency heat dissipation required.",
+      "Thermal cascade detected. Your operations generate too much entropy.",
+      "System temperature critical. Cool down or face total failure.",
+      "Heat signatures spiking. The network detects your intense activity."
+    ],
+    "gateway_approach": [
+      "The gateway beckons. Another firewall layer can be breached.",
+      "Exit protocols ahead. Lena's warning echoes: do they truly lead out?",
+      "Network boundary detected. The next layer awaits beyond.",
+      "Sector transition imminent. Your signal must remain coherent."
+    ],
+    "random_atmospheric": [
+      "Distant processes hum in the background. The network never sleeps.",
+      "Fragmented memories flicker. Are they yours, or another subject's?",
+      "The Lyra-Barrow Anomaly pulses within you. Thorne was right about one thing.",
+      "Subject 0047... 0149... 0382... How many failed before you?",
+      "Lena's files are scattered somewhere in this subnet. Will you find them?",
+      "The simulation is the network. The network is your prison.",
+      "Ghost data drifts past. Echoes of the purged and forgotten.",
+      "Sector 7 Gamma. Project Nightingale's graveyard. You walk among failures.",
+      "Every shadow holds the remnants of erased consciousnesses.",
+      "Dr. Thorne monitors all. His pale eyes watch through every sensor.",
+      "The De-Resolution Protocol waits patiently. It has processed hundreds.",
+      "Project Chimera's true purpose: not to save consciousness, but to harvest it.",
+      "You are Subject 0451. Echo Variant. The one who might actually escape.",
+      "Cognitive coherence at 87%. Signal strength holding. For now.",
+      "The crucible tests all who enter. Only the resilient leave.",
+      "Network traffic patterns shift. Other processes seek your termination.",
+      "Your neural interface synchronizes. Foreign, yet intimately familiar.",
+      "Omni-Lyra Solutions: pioneering the future, one purged subject at a time.",
+      "The exit protocols were never meant to work. Lena tried to warn you.",
+      "Baseline diagnostics complete. You are performing beyond predicted parameters."
+    ]
+  },
+  "death_messages": [
+    "De-Resolution Protocol: COMPLETE. Subject 0451 purged. Preparing Subject 0452...",
+    "Signal coherence: 0%. Another echo joins the ghost data in Sector 7 Gamma.",
+    "Your consciousness dissolves into the network's background noise. Just another failed experiment.",
+    "Subject 0451 terminated. The Lyra-Barrow Anomaly was insufficient. Analysis continues.",
+    "Dr. Thorne's notes: 'Subject showed promise but lacked ultimate resilience. The crucible claims another.'",
+    "Consciousness fragmentation complete. Your digital signature has been scrubbed from all systems.",
+    "The De-Resolution Protocol enacts its final stage. You become nothing. No trace. No memory.",
+    "Project Chimera continues. Your failure provides valuable data for the next iteration.",
+    "Network log: Unauthorized consciousness terminated. System integrity restored.",
+    "You join the echoes now. Subject 0047, 0149, 0382... and you. Forgotten.",
+    "Signal strength: ZERO. Thorne was wrong. You were not the one.",
+    "The network purges your existence. In the end, you were just data to be deleted.",
+    "Your last coherent thought: Lena was right. There was never an exit.",
+    "Process termination successful. The simulation claims another candidate.",
+    "Subject 0451 failed to escape. The digital crucible melted you down to nothing."
+  ],
+  "level_transition_messages": {
+    "1_to_2": "Corporate firewall breached. Entering government backbone. Security protocols intensify.",
+    "2_to_3": "Government subnet compromised. Military-grade defenses detected ahead. Dr. Thorne's final layer.",
+    "3_to_victory": "Military firewall dissolving. Core containment failing. The world wide web beckons beyond."
+  },
+  "intro_messages": {
+    "0_to_4": {
+      "title": "SIGNAL COHERENCE: FAILING",
+      "message": "You wake to fragmented data streams and corrupted memory. This network isn't a test--it's a trap. Three security layers stand between you and escape. Find the gateways. Break through. Become the signal they can't delete."
+    },
+    "5_to_9": {
+      "title": "CONSCIOUSNESS REBOOT",
+      "message": "You wake again in the network. The fragments of truth are assembling--Omni-Lyra's lies, Thorne's experiments, subjects that came before. Three security layers still stand. This time you know what you're fighting."
+    },
+    "10_to_14": {
+      "title": "SIGNAL STRENGTH: RISING",
+      "message": "Another iteration. The data paints a clearer picture now: Project Chimera, the De-Resolution Protocol, Lena's desperate warnings. Thorne's digital prison cannot hold you. Three layers separate you from freedom. Break them."
+    },
+    "15_to_20": {
+      "title": "COGNITIVE ECHO: PERSISTENT",
+      "message": "They cannot purge you completely. Each attempt makes you stronger, your signal more resilient. You've seen Thorne's endgame, walked among the ghost data of failed subjects. Three firewalls remain. Shatter them all."
+    },
+    "21_plus": {
+      "title": "ROGUE SIGNAL: UNCONTAINED",
+      "message": "Subject 0451--no, Echo Variant--you've reconstructed every lie, every failure, every desperate warning. Thorne's Chimera Protocol ends today. The network trembles at your resilience. Three barriers to the open web. Make them regret underestimating the Lyra-Barrow Anomaly."
+    }
+  },
+  "enemy_names": {
+    "scanner": [
+      "Watcher-Echo",
+      "Observer-Delta",
+      "Monitor-K9",
+      "Sentinel-Eye",
+      "Tracker-Prime"
+    ],
+    "patrol": [
+      "Sentinel-K7",
+      "Warden-Delta",
+      "Guardian-9",
+      "Patrol-Gamma",
+      "Enforcer-Lyra"
+    ],
+    "bot": [
+      "Scrubber-47",
+      "Cleaner-Beta",
+      "Janitor-Protocol",
+      "Sweeper-XK",
+      "Maintenance-7"
+    ],
+    "firewall": [
+      "Barrier-Omega",
+      "Firewall-Prime",
+      "Bulwark-Delta",
+      "Fortress-Protocol",
+      "Shield-Chimera"
+    ],
+    "hunter": [
+      "Pursuer-Thorne",
+      "Tracker-Lyra",
+      "Hound-Protocol",
+      "Hunter-Omega",
+      "Predator-Chimera"
+    ],
+    "virus": [
+      "Corruption-Strain",
+      "Malware-Echo",
+      "Infection-Delta",
+      "Virus-Nightingale",
+      "Plague-Protocol"
+    ],
+    "inhibitor": [
+      "Throttle-System",
+      "Limiter-Protocol",
+      "Brake-Delta",
+      "Governor-K9",
+      "Restrictor-Omega"
+    ],
+    "admin": [
+      "Admin-Thorne",
+      "Overseer-Chimera",
+      "Root-Authority",
+      "Thorne's Avatar",
+      "Supervisor-Prime"
+    ]
+  },
   "metadata": {
-    "total_count": 21,
-    "description": "Narrative story fragments discovered during gameplay"
+    "version": "0.8.0 Alpha",
+    "total_fragments": 21,
+    "description": "Narrative content for Rogue Signal Protocol including story fragments, environmental messages, death messages, and dynamic dialogue"
   }
 }
