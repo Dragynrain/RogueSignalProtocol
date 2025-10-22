@@ -365,29 +365,24 @@ class TestEnemyTurnProcessing:
         engine.game_map.shadows.discard((player_pos.x, player_pos.y))
         engine.game_map.ghost_nodes.discard((player_pos.x, player_pos.y))
 
-        # Create hostile enemy some distance away with line of sight
-        enemy_pos = Position(25, 20)
+        # Create hostile enemy ADJACENT to player to maintain continuous visibility
+        # This prevents random de-escalation to UNAWARE (15% chance when can't see player)
+        enemy_pos = Position(21, 20)  # Adjacent = always visible
         engine.game_map.shadows.discard((enemy_pos.x, enemy_pos.y))
         engine.game_map.ghost_nodes.discard((enemy_pos.x, enemy_pos.y))
 
         enemy = create_real_enemy("bot", enemy_pos)
         enemy.state = EnemyState.HOSTILE
-        enemy.last_seen_player = player_pos  # Ensure enemy knows where player is
+        enemy.last_seen_player = player_pos
         engine.enemies = [enemy]
 
-        initial_distance = abs(enemy.x - engine.player.x) + abs(enemy.y - engine.player.y)
-        initial_pos = (enemy.x, enemy.y)
-
-        # Process several turns
+        # Process several turns - enemy should remain hostile since it can always see player
         for _ in range(5):
             engine.process_turn()
 
-        # Enemy should have been processed (might move or stay same depending on pathfinding)
-        # Just verify the enemy still exists and has valid state
-        assert enemy in engine.enemies or len(engine.enemies) >= 0, "Enemy should be tracked"
-        # Enemy should remain hostile or become alert (if it moved and lost sight)
-        # but should not return to completely unaware in just 5 turns
-        assert enemy.state in [EnemyState.HOSTILE, EnemyState.ALERT], f"Enemy should remain hostile or alert, not {enemy.state}"
+        # Enemy should have been processed and remain hostile (continuous visibility)
+        assert enemy in engine.enemies, "Enemy should still be tracked"
+        assert enemy.state == EnemyState.HOSTILE, f"Enemy should remain hostile with continuous visibility, not {enemy.state}"
 
     def test_disabled_enemy_skips_turn(self):
         """Test disabled enemy does not act during turn."""

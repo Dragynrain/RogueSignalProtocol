@@ -235,12 +235,26 @@ class TestStateConsistency:
         # Verify accessible from different systems
         assert engine.player.trace_level == 50, "Player trace should be 50"
 
-        # Process turn (trace should increase)
+        # Ensure player is not on a cooling node (which would decrease trace)
+        player_tile_pos = (engine.player.x, engine.player.y)
+        if player_tile_pos in engine.game_map.cooling_nodes:
+            # Move player to a safe position away from special tiles
+            for x in range(15, 25):
+                for y in range(15, 25):
+                    test_pos = (x, y)
+                    if (not engine.game_map.is_wall(Position(x, y)) and
+                        test_pos not in engine.game_map.cooling_nodes and
+                        test_pos not in engine.game_map.ghost_nodes):
+                        engine.player.x = x
+                        engine.player.y = y
+                        break
+
+        # Process turn (trace should increase due to background trace)
         initial_trace = engine.player.trace_level
         engine.process_turn()
 
-        # Trace should increase or stay same
-        assert engine.player.trace_level >= initial_trace, "Trace should not decrease without action"
+        # Trace should increase or stay same (no cooling nodes to reduce it)
+        assert engine.player.trace_level >= initial_trace, "Trace should not decrease without cooling nodes"
 
 
 class TestMenuStateTransitions:
