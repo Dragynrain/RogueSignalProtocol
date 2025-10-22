@@ -127,6 +127,19 @@ class TestTemporaryEffectsDecayFixes(unittest.TestCase):
 
     def test_virus_effect_applies_damage_then_decrements(self):
         """Test that virus effect applies damage before decrementing counter."""
+        # Ensure player is not on a CPU recovery node (which would heal +20 and mask virus damage of -3)
+        player_pos = (self.player.x, self.player.y)
+        if self.engine.game_map.is_cpu_recovery_node(self.player.position):
+            # Move player off the CPU node
+            for x in range(15, 30):
+                for y in range(15, 30):
+                    test_pos = Position(x, y)
+                    if (not self.engine.game_map.is_wall(test_pos) and
+                        not self.engine.game_map.is_cpu_recovery_node(test_pos)):
+                        self.player.x = x
+                        self.player.y = y
+                        break
+
         # Set virus effect and track initial CPU
         self.player.temporary_effects['virus_turns'] = 3
         initial_cpu = self.player.cpu
@@ -135,7 +148,7 @@ class TestTemporaryEffectsDecayFixes(unittest.TestCase):
         self.engine.process_turn()
 
         # CPU should have decreased (virus damage applied)
-        self.assertLess(self.player.cpu, initial_cpu, "Virus should deal damage")
+        self.assertLess(self.player.cpu, initial_cpu, "Virus should deal damage (player not on CPU recovery node)")
 
         # Virus turns should have decremented by 1
         self.assertEqual(self.player.temporary_effects['virus_turns'], 2,
