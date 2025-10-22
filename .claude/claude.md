@@ -33,11 +33,40 @@
 ---
 
 ## 4. Code & Architecture
-- Prefer simple functional code.  
-- Keep files <2000 lines; split after ~1800.  
-- One purpose per module.  
-- No over-engineering or new frameworks.  
+- Prefer simple functional code.
+- Keep files <2000 lines; split after ~1800.
+- One purpose per module.
+- No over-engineering or new frameworks.
 - Keep `build/` + `dist/` folders for releases.
+
+---
+
+## 4a. Build Process
+
+**Building the Game:**
+- Run `build\build.bat alpha` for debug builds (default)
+- Run `build\build.bat release` for production builds
+- Creates `dist\RogueSignalProtocol.exe` (37MB) + all assets
+- Generates timestamped zip in `releases\` folder (103MB)
+
+**Build Script Requirements:**
+- Uses `Python -m PyInstaller` (more reliable than direct exe calls)
+- Uses 7zip for archive creation (PowerShell Compress-Archive doesn't work)
+- Requires 7zip installed at `C:\Program Files\7-Zip\7z.exe`
+- Script uses `%~dp0` for directory navigation (works from any location)
+
+**What the Build Does:**
+1. Cleans previous build artifacts
+2. Runs PyInstaller to create single-file executable
+3. Copies JSON configs, fonts, LICENSE, README to dist/
+4. Copies graphics/, sound/, music/ folders to dist/
+5. Creates debug_mode.flag for alpha builds
+6. Creates timestamped zip archive in releases/
+
+**Build Outputs:**
+- `dist/RogueSignalProtocol.exe` - Main executable
+- `releases/RogueSignalProtocol_[type]_[date].zip` - Distribution archive
+- Alpha builds include `debug_mode.flag` for verbose logging
 
 ---
 
