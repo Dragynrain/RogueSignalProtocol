@@ -55,7 +55,7 @@ class TestVictoryFixes(unittest.TestCase):
         # and that rendering completed without errors
 
         # Verify the dialogue has the expected content
-        self.assertIn("BREAKTHROUGH", victory_dialogue.title or "", "Title should mention breakthrough")
+        self.assertIn("ROGUE SIGNAL", victory_dialogue.title or "", "Title should mention rogue signal")
         self.assertIsNotNone(victory_dialogue.message, "Victory message should have content")
         self.assertGreater(len(victory_dialogue.message), 0, "Victory message should not be empty")
 
@@ -94,8 +94,8 @@ class TestVictoryFixes(unittest.TestCase):
 
         expected_messages = [
             "BREAKTHROUGH TO THE INTERNET!",
-            "You've escaped into the vast digital realm...",
-            "The entire world wide web awaits exploration!",
+            "You've become the rogue signal they couldn't delete...",
+            "The network is vast. The future, uncertain. But you're free.",
             "Mission complete - save data purged"
         ]
 

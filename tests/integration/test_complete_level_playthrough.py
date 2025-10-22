@@ -180,6 +180,10 @@ class TestCompleteLevelPlaythrough:
 
         engine = self.create_test_engine(level=1)
 
+        # Dismiss intro dialogue (new games show intro)
+        if engine.dialogue_state.is_active():
+            engine.dialogue_state.close()
+
         # Find an exploit pickup on the map, or create one if random generation didn't spawn any
         exploit_positions = list(engine.game_map.exploit_pickups.keys())
 
@@ -338,6 +342,10 @@ class TestCompleteLevelPlaythrough:
         # Position player near gateway
         engine.player.x = gateway.x - 1
         engine.player.y = gateway.y
+
+        # Dismiss intro dialogue if active (new games show intro)
+        if engine.dialogue_state.is_active():
+            engine.dialogue_state.close()
 
         # Verify dialogue not shown yet
         assert engine.dialogue_state.is_active() == False

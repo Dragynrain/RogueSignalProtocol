@@ -411,6 +411,28 @@ def create_death_dialogue() -> DialogueBox:
     )
 
 
+def create_intro_dialogue() -> DialogueBox:
+    """
+    Create intro message dialogue for new game start.
+
+    Returns:
+        DialogueBox for intro message
+    """
+    return DialogueBox(
+        title="SIGNAL COHERENCE: FAILING",
+        message="You wake to fragmented data streams and corrupted memory. This network isn't a test--it's a trap. Three security layers stand between you and escape. Find the gateways. Break through. Become the signal they can't delete.",
+        options=["[SPACE/ENTER] Continue"],
+        valid_keys=[tcod.event.KeySym.SPACE, tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
+        title_color=Colors.RED,
+        message_color=Colors.CYAN,
+        border_color=Colors.RED,
+        bg_color=Colors.BLACK,
+        format_data={},
+        priority=10,  # Critical priority
+        user_pref_key="intro_dialogue"
+    )
+
+
 def create_victory_dialogue() -> DialogueBox:
     """
     Create victory message dialogue.

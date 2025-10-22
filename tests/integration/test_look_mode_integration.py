@@ -21,6 +21,10 @@ class TestLookModeIntegration:
         """Test entering look mode with L key."""
         game = GameEngine(load_save=False)
 
+        # Dismiss intro dialogue (new games show intro)
+        if game.dialogue_state.is_active():
+            game.dialogue_state.close()
+
         # Verify initially not in look mode
         assert not game.look_mode
 
@@ -44,6 +48,10 @@ class TestLookModeIntegration:
         """Test exiting look mode with ESC key."""
         game = GameEngine(load_save=False)
 
+        # Dismiss intro dialogue (new games show intro)
+        if game.dialogue_state.is_active():
+            game.dialogue_state.close()
+
         # Enter look mode
         game.look_mode = True
         game.look_cursor_position = Position(game.player.x, game.player.y)
@@ -65,6 +73,10 @@ class TestLookModeIntegration:
         """Test exiting look mode with L key."""
         game = GameEngine(load_save=False)
 
+        # Dismiss intro dialogue (new games show intro)
+        if game.dialogue_state.is_active():
+            game.dialogue_state.close()
+
         # Enter look mode
         game.look_mode = True
         game.look_cursor_position = Position(game.player.x, game.player.y)
@@ -85,6 +97,10 @@ class TestLookModeIntegration:
     def test_move_cursor_with_arrow_keys(self):
         """Test moving look mode cursor with arrow keys."""
         game = GameEngine(load_save=False)
+
+        # Dismiss intro dialogue (new games show intro)
+        if game.dialogue_state.is_active():
+            game.dialogue_state.close()
 
         # Enter look mode
         game.look_mode = True
@@ -118,6 +134,10 @@ class TestLookModeIntegration:
         """Test moving look mode cursor with WASD keys."""
         game = GameEngine(load_save=False)
 
+        # Dismiss intro dialogue (new games show intro)
+        if game.dialogue_state.is_active():
+            game.dialogue_state.close()
+
         # Enter look mode
         game.look_mode = True
         initial_x = game.player.x
@@ -147,6 +167,10 @@ class TestLookModeIntegration:
     def test_move_cursor_with_numpad_keys(self):
         """Test moving look mode cursor with numpad keys."""
         game = GameEngine(load_save=False)
+
+        # Dismiss intro dialogue (new games show intro)
+        if game.dialogue_state.is_active():
+            game.dialogue_state.close()
 
         # Enter look mode
         game.look_mode = True
@@ -349,6 +373,10 @@ class TestLookModeWorkflow:
     def test_complete_look_mode_workflow(self):
         """Test complete workflow: enter, move, inspect, exit."""
         game = GameEngine(load_save=False)
+
+        # Dismiss intro dialogue (new games show intro)
+        if game.dialogue_state.is_active():
+            game.dialogue_state.close()
 
         # 1. Enter look mode
         event_l = tcod.event.KeyDown(
