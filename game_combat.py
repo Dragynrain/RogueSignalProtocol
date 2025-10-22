@@ -10,6 +10,7 @@ Manages all exploit execution including:
 - Sound effects and message log updates
 """
 
+import logging
 from typing import TYPE_CHECKING
 
 # Import required modules
@@ -57,11 +58,12 @@ class ExploitSystem:
         if exploit_key not in self.game.player.inventory_manager.equipped_exploits:
             self.game.message_log.add_message("Exploit not equipped")
             return False
-        
+
         exploit = GameData.EXPLOITS[exploit_key]
-        
+
         # Check heat limit - show overclock warning dialogue
         heat_cost = self._calculate_heat_cost(exploit)
+        logging.debug(f"Combat: Player attempting exploit '{exploit.name}', heat={self.game.player.heat}/{self.game.player.max_heat}, cost={heat_cost}")
         if self.game.player.heat + heat_cost > self.game.player.max_heat:
             # Calculate overclock damage
             overheat_amount = (self.game.player.heat + heat_cost) - self.game.player.max_heat
@@ -121,7 +123,10 @@ class ExploitSystem:
 
         # Validate target
         if not self._validate_target(exploit, target):
+            logging.debug(f"Combat: Exploit '{exploit.name}' failed validation for target ({target.x},{target.y})")
             return False
+
+        logging.debug(f"Combat: Executing exploit '{exploit.name}' on target ({target.x},{target.y})")
 
         # Execute specific exploit
         success = self._execute_specific_exploit(exploit_key, exploit, target)
@@ -136,13 +141,16 @@ class ExploitSystem:
                 # Apply overclock damage (confirmed via dialogue)
                 overheat_amount = new_heat - self.game.player.max_heat
                 actual_damage = self.game.player.take_damage(overheat_amount)
+                logging.debug(f"Combat: OVERCLOCKING! overheat={overheat_amount}, damage={actual_damage}, heat capped at {self.game.player.max_heat}")
                 self.game.message_log.add_message(f"OVERCLOCKING: {actual_damage} CPU damage!")
                 self.game.sound_manager.play_sound("overclocking")
                 # Set heat to max (not over)
                 self.game.player.heat = self.game.player.max_heat
             else:
                 # Normal heat application
+                old_heat = self.game.player.heat
                 self.game.player.heat = new_heat
+                logging.debug(f"Combat: Heat applied for '{exploit.name}': {old_heat} → {new_heat} (+{heat_cost})")
 
         if success:
             self.game.targeting_mode = False
@@ -323,14 +331,17 @@ class ExploitSystem:
         if enemy.take_damage(damage):
             self.game.enemies.remove(enemy)
             self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
+            logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) ELIMINATED, CPU reward={GameBalance.ENEMY_ELIMINATION_CPU_REWARD}")
             self.game.message_log.add_message(f"Eliminated {enemy.type_data.name}")
         else:
             self.game.message_log.add_message(f"{enemy.type_data.name} damaged")
             movement_type = enemy.get_movement_type()
+            old_state = enemy.state
             if movement_type == EnemyMovement.PATROL and enemy.patrol_points:
                 enemy.original_patrol_index = enemy.patrol_index
             enemy.state = EnemyState.HOSTILE
             enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
+            logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) damaged, state {old_state.name} → HOSTILE")
         return True
 
     def _execute_code_injection(self, target: Position) -> bool:
@@ -403,6 +414,7 @@ class ExploitSystem:
                 enemy.disabled_turns += duration  # Additive stun effect
                 enemy.state = EnemyState.UNAWARE
                 enemy.alert_timer = 0
+                logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) STUNNED for {duration} turns, total={enemy.disabled_turns}")
                 count += 1
         return count
 

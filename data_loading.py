@@ -170,12 +170,19 @@ class DataLoader:
     
     @classmethod
     def _get_default_user_settings(cls) -> Dict[str, Any]:
-        """Default user settings if file doesn't exist - this is the only legitimate fallback."""
+        """
+        Default user settings if file doesn't exist.
+
+        NOTE: This method is legacy and not actively used.
+        GameSettings class in game_config.py handles settings creation.
+        Kept for backwards compatibility only.
+        """
         return {
             "master_volume": 0.7,
-            "sfx_volume": 1.0,
-            "music_volume": 0.7,
-            "graphics_mode": "terminal"
+            "sfx_volume": 0.75,
+            "music_volume": 0.6,
+            "graphics_mode": "graphics",
+            "dialogue_preferences": {}
         }
 
 
