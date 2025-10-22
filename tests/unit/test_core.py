@@ -311,15 +311,21 @@ class TestTurnProcessor:
         message_log = MessageLog()
         processor = TurnProcessor(gsm, message_log)
         mock_player = Mock()
-        
+        # Configure mock with numeric values for logging
+        mock_player.heat = 50
+        mock_player.max_heat = 100
+        mock_player.trace_level = 25.0
+        mock_player.cpu = 70
+        mock_player.max_cpu = 100
+
         initial_turn = gsm.turn
-        
+
         with patch.object(processor, '_process_heat_management'), \
              patch.object(processor, '_process_temporary_effects'), \
              patch.object(processor, '_process_trace_increase'):
-            
+
             processor.process_turn(mock_player)
-            
+
             assert gsm.turn == initial_turn + 1
     
     def test_heat_management_processing(self):
@@ -451,12 +457,18 @@ class TestCoreTurnProcessorRemoved:
         core_gsm = GameStateManager()
         core_processor = TurnProcessor(core_gsm, MessageLog())
         mock_player = Mock()
+        # Configure mock with numeric values for logging
+        mock_player.heat = 50
+        mock_player.max_heat = 100
+        mock_player.trace_level = 25.0
+        mock_player.cpu = 70
+        mock_player.max_cpu = 100
         mock_message_log = Mock()
-        
+
         with patch.object(core_processor, '_process_heat_management') as mock_heat, \
              patch.object(core_processor, '_process_temporary_effects') as mock_effects, \
              patch.object(core_processor, '_process_trace_increase') as mock_trace_level:
-            
+
             core_processor.process_turn(mock_player)
 
             # Should advance game state
