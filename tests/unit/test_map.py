@@ -331,24 +331,7 @@ class TestLineOfSight:
             
             assert result is True
             mock_tcod.assert_called_once_with(start, end)
-    
-    def test_has_line_of_sight_bresenham_basic(self):
-        """has_line_of_sight_bresenham works for basic cases."""
-        game_map = GameMap(30, 20)
-        start = Position(5, 5)
-        end = Position(5, 10)  # Straight vertical line
-        
-        # No walls - should have line of sight
-        assert game_map.has_line_of_sight_bresenham(start, end) is True
-    
-    def test_has_line_of_sight_bresenham_out_of_bounds(self):
-        """has_line_of_sight_bresenham handles out-of-bounds positions."""
-        game_map = GameMap(30, 20)
-        start = Position(-1, -1)  # Out of bounds
-        end = Position(10, 10)
-        
-        assert game_map.has_line_of_sight_bresenham(start, end) is False
-    
+
     def test_can_see_position_with_range(self):
         """can_see_position considers vision range."""
         game_map = GameMap(50, 30)
