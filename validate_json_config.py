@@ -170,26 +170,26 @@ def validate_game_data():
 
 
 def validate_story_content():
-    """Validate story_content.json structure."""
-    print("\nValidating story_content.json...")
+    """Validate narrative_content.json structure."""
+    print("\nValidating narrative_content.json...")
 
-    with open('story_content.json', 'r', encoding='utf-8') as f:
+    with open('narrative_content.json', 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     if 'fragments' not in data:
-        print(f"ERROR: Missing 'fragments' section in story_content.json")
+        print(f"ERROR: Missing 'fragments' section in narrative_content.json")
         print(f"Available sections: {list(data.keys())}")
         return False
 
     if not isinstance(data['fragments'], list):
-        print(f"ERROR: 'fragments' must be a list in story_content.json")
+        print(f"ERROR: 'fragments' must be a list in narrative_content.json")
         return False
 
     if len(data['fragments']) == 0:
-        print(f"ERROR: 'fragments' list is empty in story_content.json")
+        print(f"ERROR: 'fragments' list is empty in narrative_content.json")
         return False
 
-    print(f"[OK] story_content.json is valid ({len(data['fragments'])} fragments found)")
+    print(f"[OK] narrative_content.json is valid ({len(data['fragments'])} fragments found)")
     return True
 
 
@@ -325,13 +325,13 @@ def main():
         if not validate_story_content():
             all_valid = False
     except FileNotFoundError as e:
-        print(f"ERROR: story_content.json not found: {e}")
+        print(f"ERROR: narrative_content.json not found: {e}")
         all_valid = False
     except json.JSONDecodeError as e:
-        print(f"ERROR: story_content.json has invalid JSON syntax: {e}")
+        print(f"ERROR: narrative_content.json has invalid JSON syntax: {e}")
         all_valid = False
     except Exception as e:
-        print(f"ERROR: Unexpected error validating story_content.json: {e}")
+        print(f"ERROR: Unexpected error validating narrative_content.json: {e}")
         all_valid = False
 
     try:

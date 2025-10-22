@@ -72,7 +72,7 @@ class DataLoader:
         """Load story fragments from JSON file."""
         if cls._story_fragments is None:
             logging.debug("Data Loading: Loading story fragments (cache miss)")
-            cls._story_fragments = cls._load_json_file('story_content.json', 'fragments')
+            cls._story_fragments = cls._load_json_file('narrative_content.json', 'fragments')
         else:
             logging.debug("Data Loading: Using cached story fragments")
         return cls._story_fragments
@@ -258,3 +258,23 @@ class PersistentStorage:
 def get_story_fragments() -> List[str]:
     """Get story fragments - convenience function."""
     return DataLoader.load_story_fragments()
+
+
+def get_environmental_messages() -> Dict[str, List[str]]:
+    """Get environmental messages for atmospheric flavor text."""
+    return DataLoader._load_json_file('narrative_content.json', 'environmental_messages')
+
+
+def get_death_messages() -> List[str]:
+    """Get death messages with story context."""
+    return DataLoader._load_json_file('narrative_content.json', 'death_messages')
+
+
+def get_level_transition_messages() -> Dict[str, str]:
+    """Get level transition flavor text."""
+    return DataLoader._load_json_file('narrative_content.json', 'level_transition_messages')
+
+
+def get_intro_messages() -> Dict[str, Dict[str, str]]:
+    """Get tiered intro messages based on fragment discovery."""
+    return DataLoader._load_json_file('narrative_content.json', 'intro_messages')

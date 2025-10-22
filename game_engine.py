@@ -20,6 +20,7 @@ from game_characters import Player, Enemy
 from game_audio import SoundManager
 from game_save import SaveGameManager
 from game_story import StoryFragmentManager
+from game_narrative import NarrativeManager
 
 # Import modular game systems
 from game_state import GameStateManager, TurnProcessor, MessageLog
@@ -132,6 +133,9 @@ class GameEngine:
 
         # Story fragment system
         self.story_fragment_manager = StoryFragmentManager()
+
+        # Environmental narrative system
+        self.narrative_manager = NarrativeManager()
 
         # Initialize ExploitSystem after game engine is mostly constructed
         self.exploit_system = self._exploit_system_param or ExploitSystem(self)
@@ -408,10 +412,18 @@ class GameEngine:
         # Apply damage
         if target_enemy.take_damage(total_damage):
             # Enemy destroyed
+            is_admin = target_enemy.type == 'admin'
             self.sound_manager.play_sound("enemy_death")
             self.enemy_manager.remove_enemy(target_enemy)
             self.player.cpu = min(self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)  # Small CPU recovery
             self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")
+            # Add environmental narrative for first combat or admin defeat
+            if is_admin:
+                env_msg = self.narrative_manager.trigger_admin_defeated()
+            else:
+                env_msg = self.narrative_manager.trigger_first_combat()
+            if env_msg:
+                self.message_log.add_message(env_msg)
         else:
             # Enemy damaged but alive - show remaining health
             self.message_log.add_message(f"{target_enemy.type_data.name} health: {target_enemy.cpu}/{target_enemy.max_cpu}")

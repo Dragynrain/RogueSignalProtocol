@@ -16,6 +16,7 @@ This system replaces the old game_dialogue.py and game_dialogue_renderer.py.
 """
 
 import logging
+import random
 from dataclasses import dataclass
 from typing import List, Tuple, Optional, Dict, Any
 
@@ -25,6 +26,8 @@ import tcod.event
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Colors, ensure_color_tuple
 from game_ui import render_char_safe
+from data_loading import get_death_messages, get_intro_messages
+from game_story import StoryFragmentManager
 
 
 # ============================================================================
@@ -391,14 +394,17 @@ def create_gateway_dialogue() -> DialogueBox:
 
 def create_death_dialogue() -> DialogueBox:
     """
-    Create death message dialogue.
+    Create death message dialogue with randomized story-contextual messages.
 
     Returns:
         DialogueBox for death message
     """
+    death_messages = get_death_messages()
+    message = random.choice(death_messages) if death_messages else "Your consciousness failed to escape the network and has been purged from existence. Other subjects will try again..."
+
     return DialogueBox(
         title="CONSCIOUSNESS PURGED",
-        message="Your consciousness failed to escape the network and has been purged from existence. Other subjects will try again...",
+        message=message,
         options=["[SPACE/ENTER] Return to menu"],
         valid_keys=[tcod.event.KeySym.SPACE, tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
         title_color=Colors.RED,
@@ -414,13 +420,34 @@ def create_death_dialogue() -> DialogueBox:
 def create_intro_dialogue() -> DialogueBox:
     """
     Create intro message dialogue for new game start.
+    Message adapts based on how many story fragments have been discovered.
 
     Returns:
         DialogueBox for intro message
     """
+    # Get discovered fragment count
+    fragment_manager = StoryFragmentManager()
+    discovered_count, _ = fragment_manager.get_fragment_count()
+
+    # Determine tier based on fragment count
+    intro_messages = get_intro_messages()
+    if discovered_count <= 4:
+        intro_data = intro_messages.get('0_to_4', {})
+    elif discovered_count <= 9:
+        intro_data = intro_messages.get('5_to_9', {})
+    elif discovered_count <= 14:
+        intro_data = intro_messages.get('10_to_14', {})
+    elif discovered_count <= 20:
+        intro_data = intro_messages.get('15_to_20', {})
+    else:
+        intro_data = intro_messages.get('21_plus', {})
+
+    title = intro_data.get('title', "SIGNAL COHERENCE: FAILING")
+    message = intro_data.get('message', "You wake to fragmented data streams and corrupted memory. This network isn't a test--it's a trap. Three security layers stand between you and escape. Find the gateways. Break through. Become the signal they can't delete.")
+
     return DialogueBox(
-        title="SIGNAL COHERENCE: FAILING",
-        message="You wake to fragmented data streams and corrupted memory. This network isn't a test--it's a trap. Three security layers stand between you and escape. Find the gateways. Break through. Become the signal they can't delete.",
+        title=title,
+        message=message,
         options=["[SPACE/ENTER] Continue"],
         valid_keys=[tcod.event.KeySym.SPACE, tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
         title_color=Colors.RED,

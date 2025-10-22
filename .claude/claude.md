@@ -90,7 +90,7 @@
 
 **Config:**
 - Fail fast on missing files
-- Required: `game_content.json`, `game_rules.json`, `story_content.json`
+- Required: `game_content.json`, `game_rules.json`, `narrative_content.json`
 - Only `user_settings.json` can default
 - No hardcoded fallback values — all data from JSON
 
