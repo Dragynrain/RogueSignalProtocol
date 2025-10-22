@@ -194,3 +194,10 @@ sprite_height = tile_manager.tile_height
 - Always verify changes: `git check-ignore -v <path>` and `git add --dry-run .`
 - Keep comments on separate lines above patterns
 - When editing `.gitignore`, always test that patterns work before committing
+
+---
+
+## 11. Verification Over Assumptions
+- If you can verify something quickly (Read/Grep/Glob/Bash), do it before assuming
+- Don't claim "probably", "likely", "should be" when you can CHECK
+- Examples: file contents, test results, config values, API signatures
