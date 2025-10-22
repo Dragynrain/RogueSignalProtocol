@@ -233,12 +233,7 @@ class TurnProcessor:
             player: Player instance to update
         """
         self.game_state.advance_turn()
-        # Safe formatting to handle both real values and mocks in tests
-        try:
-            trace_str = f"{float(player.trace_level):.1f}" if hasattr(player.trace_level, '__float__') else str(player.trace_level)
-        except (TypeError, ValueError):
-            trace_str = str(player.trace_level)
-        logging.debug(f"=== Turn {self.game_state.turn} START: heat={player.heat}/{player.max_heat}, trace={trace_str}, cpu={player.cpu}/{player.max_cpu} ===")
+        logging.debug(f"=== Turn {self.game_state.turn} START: heat={player.heat}/{player.max_heat}, trace={player.trace_level:.1f}, cpu={player.cpu}/{player.max_cpu} ===")
 
         # Process heat reduction
         self._process_heat_management(player)
@@ -315,15 +310,6 @@ class TurnProcessor:
             player.trace_level = min(100, player.trace_level + trace_increase)
 
             if old_trace != player.trace_level:
-                # Safe formatting to handle both real values and mocks in tests
-                try:
-                    old_trace_str = f"{float(old_trace):.1f}" if hasattr(old_trace, '__float__') else str(old_trace)
-                    new_trace_str = f"{float(player.trace_level):.1f}" if hasattr(player.trace_level, '__float__') else str(player.trace_level)
-                    increase_str = f"{float(trace_increase):.1f}" if hasattr(trace_increase, '__float__') else str(trace_increase)
-                except (TypeError, ValueError):
-                    old_trace_str = str(old_trace)
-                    new_trace_str = str(player.trace_level)
-                    increase_str = str(trace_increase)
-                logging.debug(f"Turn: Trace level {old_trace_str} → {new_trace_str} (+{increase_str})")
+                logging.debug(f"Turn: Trace level {old_trace:.1f} → {player.trace_level:.1f} (+{trace_increase:.1f})")
 
             # Trace Level increases silently in background

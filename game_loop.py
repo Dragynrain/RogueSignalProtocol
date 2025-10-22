@@ -25,6 +25,26 @@ from game_input import InputHandler
 from game_graphics_tiles import TileManager
 
 
+def log_exception(e: Exception, context: str, level: str = "error"):
+    """
+    Centralized exception logging with traceback details.
+
+    Args:
+        e: The exception to log
+        context: Description of where/what failed (e.g., "Rendering failure", "Game initialization")
+        level: Logging level - "error", "critical", or "warning"
+    """
+    tb = traceback.extract_tb(e.__traceback__)
+    line_no = tb[-1].lineno if tb else "?"
+    filename = tb[-1].filename if tb else "unknown"
+
+    log_func = getattr(logging, level, logging.error)
+    log_func(f"{context} in {filename}:{line_no}")
+    log_func(f"Exception: {str(e)}")
+    log_func(f"Exception type: {type(e).__name__}")
+    traceback.print_exc()
+
+
 def load_tileset():
     """Load terminal tileset - no fallbacks, missing font indicates corrupt installation."""
 
@@ -435,48 +455,19 @@ def main():
                                 break  # Return to main menu
                         
                     except Exception as e:
-                        import traceback
+                        log_exception(e, "SYSTEM ERROR: Rendering failure", level="error")
                         tb = traceback.extract_tb(e.__traceback__)
                         line_no = tb[-1].lineno if tb else "?"
-                        filename = tb[-1].filename if tb else "unknown"
-
-                        error_msg = f"SYSTEM ERROR: Rendering failure in {filename}:{line_no}"
-                        logging.error(error_msg)
-                        logging.error(f"Exception: {str(e)}")
-                        logging.error(f"Exception type: {type(e).__name__}")
-
-                        # Print full traceback for debugging
-                        traceback.print_exc()
-
                         if handle_error_screen(console, context, e, line_no):
                             return
     
     except Exception as e:
-        import traceback
-        tb = traceback.extract_tb(e.__traceback__)
-        line_no = tb[-1].lineno if tb else "?"
-        filename = tb[-1].filename if tb else "unknown"
-
-        error_msg = f"CRITICAL SYSTEM ERROR: Game initialization/main loop failure in {filename}:{line_no}"
-        logging.critical(error_msg)
-        logging.critical(f"Exception: {str(e)}")
-        logging.critical(f"Exception type: {type(e).__name__}")
-
-        # Print full traceback for debugging
-        traceback.print_exc()
+        log_exception(e, "CRITICAL SYSTEM ERROR: Game initialization/main loop failure", level="critical")
 
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        import traceback
-
-        error_msg = f"CRITICAL UNHANDLED EXCEPTION: Program termination"
-        logging.critical(error_msg)
-        logging.critical(f"Exception: {str(e)}")
-        logging.critical(f"Exception type: {type(e).__name__}")
-
-        # Print full traceback for debugging
-        traceback.print_exc()
+        log_exception(e, "CRITICAL UNHANDLED EXCEPTION: Program termination", level="critical")
         raise

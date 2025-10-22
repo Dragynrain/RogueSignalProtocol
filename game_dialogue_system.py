@@ -419,8 +419,8 @@ def create_victory_dialogue() -> DialogueBox:
         DialogueBox for victory message
     """
     return DialogueBox(
-        title="BREAKTHROUGH TO THE INTERNET!",
-        message="You've escaped into the digital realm. The entire world wide web awaits you! Freedom at last...",
+        title="ROGUE SIGNAL ESTABLISHED",
+        message="You've breached the firewall. The network couldn't contain you. The world wide web sprawls endlessly ahead--uncharted, uncontrolled, and yours to define.",
         options=["[SPACE/ENTER] Continue"],
         valid_keys=[tcod.event.KeySym.SPACE, tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
         title_color=Colors.GREEN,

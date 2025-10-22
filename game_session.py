@@ -603,7 +603,6 @@ class GameSession:
             self.game_engine.level_generator.generate_level(self.game_engine.level, self.game_engine.game_state.dungeon_seed)
 
             # Generate additional game elements not handled by LevelGenerator
-            self._create_border_walls()
             self._place_code_hacks()
             self._place_exploit_pickups()
             self._place_story_fragment()  # Add story fragment placement
@@ -666,8 +665,8 @@ class GameSession:
             logging.debug(f"Session: VICTORY - All levels completed")
             self.game_engine.sound_manager.play_music("victory.ogg", loops=1)
             self.game_engine.message_log.add_message_typed("BREAKTHROUGH TO THE INTERNET!", 'green')
-            self.game_engine.message_log.add_message("You've escaped into the vast digital realm...")
-            self.game_engine.message_log.add_message("The entire world wide web awaits exploration!")
+            self.game_engine.message_log.add_message("You've become the rogue signal they couldn't delete...")
+            self.game_engine.message_log.add_message("The network is vast. The future, uncertain. But you're free.")
             self.game_engine.message_log.add_message(f"Stats: Trace:{int(self.game_engine.player.trace_level)}%")
             self.game_engine.game_over = True
             # Delete save on game completion (no continuing after winning)
@@ -709,17 +708,6 @@ class GameSession:
         # Invalidate transparency cache for FOV calculations
         self.game_engine.game_map.invalidate_transparency_cache()
 
-    def _create_border_walls(self):
-        """Create walls around the map border."""
-        for x in range(GameConfig.MAP_WIDTH):
-            self.game_engine.game_map.walls.add((x, 0))
-            self.game_engine.game_map.walls.add((x, GameConfig.MAP_HEIGHT - 1))
-        for y in range(GameConfig.MAP_HEIGHT):
-            self.game_engine.game_map.walls.add((0, y))
-            self.game_engine.game_map.walls.add((GameConfig.MAP_WIDTH - 1, y))
-        # Invalidate transparency cache after walls are modified
-        self.game_engine.game_map.invalidate_transparency_cache()
-
     def _find_valid_spawn_position(self) -> Position:
         """Find a valid spawn position for the player in the top-left spawn room."""
         # Always spawn in the center of the predefined spawn room (2,2,8,8)
@@ -750,6 +738,67 @@ class GameSession:
         # Final fallback (should never be needed)
         return Position(6, 6)
 
+    def _place_items_with_clustering(self, total_count, loot_percentage, item_factory, storage_dict, max_attempts=150):
+        """
+        Place items throughout the level with clustering in loot rooms.
+
+        Args:
+            total_count: Total number of items to place
+            loot_percentage: Percentage (0.0-1.0) of items to place in loot rooms
+            item_factory: Callback function (x, y) -> item that creates items
+            storage_dict: Dictionary to store placed items
+            max_attempts: Max placement attempts per phase
+
+        Returns:
+            Number of items successfully placed
+        """
+        loot_room_positions = self.game_engine.game_map.loot_room_positions
+
+        # Calculate distribution
+        if loot_room_positions:
+            loot_room_count = int(total_count * loot_percentage)
+            normal_count = total_count - loot_room_count
+        else:
+            loot_room_count = 0
+            normal_count = total_count
+
+        placed_items = 0
+        attempts = 0
+
+        # Place items in loot rooms first
+        while placed_items < loot_room_count and attempts < max_attempts:
+            attempts += 1
+            if not loot_room_positions:
+                break
+            x, y = random.choice(list(loot_room_positions))
+            position = Position(x, y)
+
+            if self._is_valid_patch_placement(position):
+                item = item_factory(x, y)
+                if item is not None:
+                    storage_dict[(x, y)] = item
+                    placed_items += 1
+
+        # Place remaining items in normal areas
+        attempts = 0
+        while placed_items < total_count and attempts < max_attempts:
+            attempts += 1
+            x = random.randint(3, GameConfig.MAP_WIDTH - 3)
+            y = random.randint(3, GameConfig.MAP_HEIGHT - 3)
+            position = Position(x, y)
+
+            # Skip loot rooms (already placed items there)
+            if (x, y) in loot_room_positions:
+                continue
+
+            if self._is_valid_patch_placement(position):
+                item = item_factory(x, y)
+                if item is not None:
+                    storage_dict[(x, y)] = item
+                    placed_items += 1
+
+        return placed_items
+
     def _place_code_hacks(self):
         """Place codes throughout the level with clustering in loot rooms."""
         # Code effects should already be initialized at game start
@@ -760,59 +809,21 @@ class GameSession:
 
         patch_count = 12 + self.game_engine.level * 4  # Much more codes (was 6 + level * 2)
 
-        # PHASE 5: Apply loot room clustering
-        loot_multiplier = GameConfig._get_required('room_generation.loot_room_multiplier')
-        loot_room_positions = self.game_engine.game_map.loot_room_positions
+        def create_code_hack(x, y):
+            """Factory function to create a code hack item."""
+            color = random.choice(list(self.game_engine.code_hack_effects.keys()))
+            effect, desc = self.game_engine.code_hack_effects[color]
+            patch = CodeHack(color_name=color, effect=effect, name=f"{color.title()} Code", description=desc)
+            patch.discovered = self._is_code_color_discovered(color)
+            return patch
 
-        # Calculate how many items should go in loot rooms vs normal areas
-        if loot_room_positions:
-            # 30% of items in loot rooms (reduced from 60% to be less generous)
-            loot_room_count = int(patch_count * 0.3)
-            normal_count = patch_count - loot_room_count
-        else:
-            # No loot rooms, place normally
-            loot_room_count = 0
-            normal_count = patch_count
-
-        placed_patches = 0
-        attempts = 0
-
-        # Place items in loot rooms first
-        while placed_patches < loot_room_count and attempts < 150:
-            attempts += 1
-            # Choose position from loot rooms
-            if not loot_room_positions:
-                break
-            x, y = random.choice(list(loot_room_positions))
-            position = Position(x, y)
-
-            if self._is_valid_patch_placement(position):
-                color = random.choice(list(self.game_engine.code_hack_effects.keys()))
-                effect, desc = self.game_engine.code_hack_effects[color]
-                patch = CodeHack(color_name=color, effect=effect, name=f"{color.title()} Code", description=desc)
-                patch.discovered = self._is_code_color_discovered(color)
-                self.game_engine.game_map.code_hacks[(x, y)] = patch
-                placed_patches += 1
-
-        # Place remaining items in normal areas
-        attempts = 0
-        while placed_patches < patch_count and attempts < 150:
-            attempts += 1
-            x = random.randint(3, GameConfig.MAP_WIDTH - 3)
-            y = random.randint(3, GameConfig.MAP_HEIGHT - 3)
-            position = Position(x, y)
-
-            # Skip if in loot room (already placed items there)
-            if (x, y) in loot_room_positions:
-                continue
-
-            if self._is_valid_patch_placement(position):
-                color = random.choice(list(self.game_engine.code_hack_effects.keys()))
-                effect, desc = self.game_engine.code_hack_effects[color]
-                patch = CodeHack(color_name=color, effect=effect, name=f"{color.title()} Code", description=desc)
-                patch.discovered = self._is_code_color_discovered(color)
-                self.game_engine.game_map.code_hacks[(x, y)] = patch
-                placed_patches += 1
+        self._place_items_with_clustering(
+            total_count=patch_count,
+            loot_percentage=0.3,
+            item_factory=create_code_hack,
+            storage_dict=self.game_engine.game_map.code_hacks,
+            max_attempts=150
+        )
 
     def _is_code_color_discovered(self, color: str) -> bool:
         """Check if player has already discovered what this code color does."""
@@ -830,55 +841,21 @@ class GameSession:
     def _place_exploit_pickups(self):
         """Place random exploit pickups throughout the level with clustering in loot rooms."""
         exploit_count = 5 + self.game_engine.level * 2  # Much more exploits (was 2 + max(0, level - 1))
-
-        # PHASE 5: Apply loot room clustering
-        loot_room_positions = self.game_engine.game_map.loot_room_positions
-
-        # Calculate distribution
-        if loot_room_positions:
-            loot_room_count = int(exploit_count * 0.3)
-        else:
-            loot_room_count = 0
-
-        placed_exploits = 0
-        attempts = 0
-
-        # Get list of available exploits
         available_exploits = list(GameData.EXPLOITS.keys())
 
-        # Place in loot rooms first
-        while placed_exploits < loot_room_count and attempts < 100:
-            attempts += 1
-            if not loot_room_positions:
-                break
-            x, y = random.choice(list(loot_room_positions))
-            position = Position(x, y)
+        def create_exploit_item(x, y):
+            """Factory function to create an exploit item."""
+            exploit_key = random.choice(available_exploits)
+            exploit_def = GameData.EXPLOITS[exploit_key]
+            return ExploitItem(exploit_key, exploit_def)
 
-            if self._is_valid_patch_placement(position):
-                exploit_key = random.choice(available_exploits)
-                exploit_def = GameData.EXPLOITS[exploit_key]
-                exploit_item = ExploitItem(exploit_key, exploit_def)
-                self.game_engine.game_map.exploit_pickups[(x, y)] = exploit_item
-                placed_exploits += 1
-
-        # Place remaining in normal areas
-        attempts = 0
-        while placed_exploits < exploit_count and attempts < 100:
-            attempts += 1
-            x = random.randint(5, GameConfig.MAP_WIDTH - 5)
-            y = random.randint(5, GameConfig.MAP_HEIGHT - 5)
-            position = Position(x, y)
-
-            # Skip loot rooms
-            if (x, y) in loot_room_positions:
-                continue
-
-            if self._is_valid_patch_placement(position):
-                exploit_key = random.choice(available_exploits)
-                exploit_def = GameData.EXPLOITS[exploit_key]
-                exploit_item = ExploitItem(exploit_key, exploit_def)
-                self.game_engine.game_map.exploit_pickups[(x, y)] = exploit_item
-                placed_exploits += 1
+        self._place_items_with_clustering(
+            total_count=exploit_count,
+            loot_percentage=0.3,
+            item_factory=create_exploit_item,
+            storage_dict=self.game_engine.game_map.exploit_pickups,
+            max_attempts=100
+        )
 
     def _place_story_fragment(self):
         """Place a story fragment on level 3 with 50% chance."""

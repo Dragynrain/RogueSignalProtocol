@@ -119,18 +119,13 @@ class CodeHack(InventoryItem):
         if not is_known:
             # Mark this color effect as discovered for this game session
             game.discovered_code_effects[self.color_name] = effect_key
-
-            # Update all code hacks of this color in player's inventory to be discovered
-            for item in player.inventory_manager.items:
-                if isinstance(item, CodeHack) and item.color_name == self.color_name:
-                    item.discovered = True
-                    item.description = description  # Store the description
-
+            self.discovered = True
+            self.description = description
             game.message_log.add_message(f"Used {self.name}: {description}")
         else:
             # Effect is known, show it was already identified
             self.discovered = True
-            self.description = description  # Store the description
+            self.description = description
             game.message_log.add_message(f"Used {self.name} ({description})")
         
         return self._apply_effect(effect_key, player, game)

@@ -1289,6 +1289,9 @@ class TilePlacementGenerator:
             self.game_map.walls.add((0, y))
             self.game_map.walls.add((GameConfig.MAP_WIDTH - 1, y))
 
+        # Invalidate transparency cache after walls are modified
+        self.game_map.invalidate_transparency_cache()
+
     def place_special_tiles(self, level: int, landmark_rooms: List[Dict] = None) -> None:
         """
         Place cooling nodes, CPU recovery nodes, and other special tiles.
