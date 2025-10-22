@@ -249,13 +249,18 @@ class TacticalGenerator:
         poisson_radius = GameConfig._get_required('room_generation.cover_poisson_radius')
 
         open_areas = self.find_large_open_areas(min_open_area_size)
+        logging.debug(f"Tactical Gen: Found {len(open_areas)} open areas for cover placement")
 
+        clusters_placed = 0
         for area in open_areas:
             if random.random() < cluster_chance:
                 cluster_positions = self.poisson_disc_sampling(area, poisson_radius)
 
                 for pos in cluster_positions:
                     self.create_cover_cluster(pos)
+                    clusters_placed += 1
+
+        logging.debug(f"Tactical Gen: Placed {clusters_placed} cover clusters")
 
     def find_large_open_areas(self, min_size: int) -> List[Tuple[int, int, int, int]]:
         """
@@ -1297,6 +1302,7 @@ class TilePlacementGenerator:
             level: Current level number (affects node counts)
             landmark_rooms: List of landmark room definitions for objective placement
         """
+        logging.debug(f"Tile Placement: Placing special tiles for level {level}")
         if landmark_rooms is None:
             landmark_rooms = []
 
@@ -1325,6 +1331,7 @@ class TilePlacementGenerator:
 
         cooling_count = get_required_config('cooling_nodes')
         cooling_positions = self.get_high_traffic_positions(floor_positions)
+        logging.debug(f"Tile Placement: Placing {cooling_count} cooling nodes (high-traffic candidates={len(cooling_positions)})")
         for i in range(cooling_count):
             if cooling_positions:
                 pos = random.choice(cooling_positions)
@@ -1335,9 +1342,11 @@ class TilePlacementGenerator:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.cooling_nodes.add(pos)
+        logging.debug(f"Tile Placement: Placed {len(self.game_map.cooling_nodes)} cooling nodes")
 
         cpu_count = get_required_config('cpu_nodes')
         cpu_positions = self.get_peripheral_positions(floor_positions)
+        logging.debug(f"Tile Placement: Placing {cpu_count} CPU nodes (peripheral candidates={len(cpu_positions)})")
         for i in range(cpu_count):
             if cpu_positions:
                 pos = random.choice(cpu_positions)
@@ -1348,9 +1357,11 @@ class TilePlacementGenerator:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.cpu_recovery_nodes.add(pos)
+        logging.debug(f"Tile Placement: Placed {len(self.game_map.cpu_recovery_nodes)} CPU recovery nodes")
 
         ghost_count = get_required_config('ghost_nodes')
         ghost_positions = self.get_shadow_adjacent_positions(floor_positions)
+        logging.debug(f"Tile Placement: Placing {ghost_count} ghost nodes (shadow-adjacent candidates={len(ghost_positions)})")
         for i in range(ghost_count):
             if ghost_positions:
                 pos = random.choice(ghost_positions)
@@ -1361,6 +1372,7 @@ class TilePlacementGenerator:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.ghost_nodes.add(pos)
+        logging.debug(f"Tile Placement: Placed {len(self.game_map.ghost_nodes)} ghost nodes")
 
     def get_high_traffic_positions(self, floor_positions: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """
@@ -1492,11 +1504,13 @@ class TilePlacementGenerator:
             level: Current level number (not currently used, but available for future per-level strategies)
         """
         strategy = self.select_gateway_strategy()
+        logging.debug(f"Gateway: Selected strategy '{strategy}' for level {level}")
 
         spawn_area = Position(5, 5)
         floor_positions = self.get_all_floor_positions()
 
         if not floor_positions:
+            logging.warning(f"Gateway: No floor positions available for level {level}")
             return
 
         if strategy == 'far_corner':
@@ -1511,6 +1525,8 @@ class TilePlacementGenerator:
             gateway_pos = self.gateway_far_corner(spawn_area, floor_positions)
 
         self.game_map.gateway = Position(gateway_pos[0], gateway_pos[1])
+        distance_from_spawn = spawn_area.distance_to(self.game_map.gateway)
+        logging.debug(f"Gateway: Placed at {gateway_pos}, distance_from_spawn={distance_from_spawn:.1f}")
 
     def select_gateway_strategy(self) -> str:
         """

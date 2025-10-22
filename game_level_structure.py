@@ -72,9 +72,11 @@ class RoomGenerator:
             List of room tuples (x, y, width, height) including spawn room
         """
         spawn_room = (2, 2, 8, 8)
+        logging.debug(f"Room Gen: Creating spawn room at {spawn_room[:2]}, size={spawn_room[2]}x{spawn_room[3]}")
         self.carve_room(spawn_room, room_type='rectangular', level=level)
         rooms = [spawn_room]
         rooms.extend(self.generate_rooms_avoiding_existing(level, [spawn_room]))
+        logging.debug(f"Room Gen: Total rooms created: {len(rooms)}")
         return rooms
 
     def get_room_type_weights(self, level: int) -> Dict[str, float]:
@@ -382,8 +384,11 @@ class RoomGenerator:
         max_rooms = min(num_rooms, RoomGenerationConfig.MAX_ROOMS)
         max_attempts = RoomGenerationConfig.MAX_PLACEMENT_ATTEMPTS
 
+        logging.debug(f"Room Gen: Attempting to generate {max_rooms} rooms (max_attempts={max_attempts})")
+
         new_rooms = []
         all_rooms = existing_rooms.copy()
+        room_type_counts = {}
 
         for _ in range(max_attempts):
             if len(new_rooms) >= max_rooms:
@@ -398,12 +403,15 @@ class RoomGenerator:
 
             if not self.room_overlaps(new_room, all_rooms):
                 room_type = self.select_room_type(level, room_width, room_height)
+                room_type_counts[room_type] = room_type_counts.get(room_type, 0) + 1
 
                 new_rooms.append(new_room)
                 all_rooms.append(new_room)
 
                 self.carve_room(new_room, room_type, level)
+                logging.debug(f"Room Gen: Room {len(new_rooms)}: type={room_type}, pos=({room_x},{room_y}), size={room_width}x{room_height}")
 
+        logging.debug(f"Room Gen: Successfully placed {len(new_rooms)} rooms, types={room_type_counts}")
         return new_rooms
 
     def room_overlaps(self, new_room: Tuple[int, int, int, int], existing_rooms: List[Tuple[int, int, int, int]]) -> bool:
@@ -465,10 +473,13 @@ class CorridorGenerator:
             rooms: List of room tuples (x, y, width, height)
         """
         if len(rooms) < 2:
+            logging.debug(f"Corridor Gen: Skipping MST (only {len(rooms)} room)")
             return
 
+        logging.debug(f"Corridor Gen: Building MST for {len(rooms)} rooms")
         connected = [rooms[0]]
         unconnected = rooms[1:]
+        edges_created = 0
 
         while unconnected:
             min_distance = float('inf')
@@ -492,6 +503,9 @@ class CorridorGenerator:
                 self.create_corridor_between_rooms(room1, room2)
                 connected.append(room2)
                 unconnected.pop(index)
+                edges_created += 1
+
+        logging.debug(f"Corridor Gen: MST complete, created {edges_created} corridor connections")
 
     def add_extra_paths(self, rooms: List[Tuple[int, int, int, int]]) -> None:
         """
@@ -506,9 +520,11 @@ class CorridorGenerator:
             rooms: List of room tuples (x, y, width, height)
         """
         if len(rooms) < 3:
+            logging.debug(f"Corridor Gen: Skipping extra paths (only {len(rooms)} rooms)")
             return
 
         extra_connections = min(random.randint(2, 4), len(rooms) // 2)
+        logging.debug(f"Corridor Gen: Adding {extra_connections} extra paths for loops")
         for _ in range(extra_connections):
             room1 = random.choice(rooms)
             room2 = random.choice(rooms)
@@ -681,13 +697,18 @@ class CorridorGenerator:
         horizontal_segments = self.find_straight_corridor_segments(horizontal=True)
         vertical_segments = self.find_straight_corridor_segments(horizontal=False)
 
+        alcoves_created = 0
         for segment in horizontal_segments:
             if len(segment) >= min_segment_length and random.random() < alcove_chance:
                 self.create_alcoves_on_segment(segment, horizontal=True)
+                alcoves_created += 1
 
         for segment in vertical_segments:
             if len(segment) >= min_segment_length and random.random() < alcove_chance:
                 self.create_alcoves_on_segment(segment, horizontal=False)
+                alcoves_created += 1
+
+        logging.debug(f"Corridor Gen: Created {alcoves_created} alcoves from {len(horizontal_segments)} H + {len(vertical_segments)} V segments")
 
     def find_straight_corridor_segments(self, horizontal: bool) -> List[List[Tuple[int, int]]]:
         """
@@ -795,11 +816,16 @@ class CorridorGenerator:
         max_junction_size = GameConfig._get_required('room_generation.corridor_intersection_max_size')
 
         intersections = self.find_corridor_intersections()
+        logging.debug(f"Corridor Gen: Found {len(intersections)} corridor intersections")
 
+        junctions_created = 0
         for intersection_pos in intersections:
             if random.random() < intersection_chance:
                 junction_size = random.choice([min_junction_size, max_junction_size])
                 self.expand_intersection_into_junction(intersection_pos, junction_size)
+                junctions_created += 1
+
+        logging.debug(f"Corridor Gen: Created {junctions_created} T-junction/4-way rooms")
 
     def find_corridor_intersections(self) -> List[Tuple[int, int]]:
         """

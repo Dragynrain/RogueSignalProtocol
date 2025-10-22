@@ -265,12 +265,18 @@ class Player:
 
         # Enemies in shadows only visible when adjacent (shadows block vision coming IN)
         if game_map.is_shadow(enemy_target.position) and distance > 1:
+            enemy_id = getattr(enemy_target, 'char', 'enemy')
+            logging.debug(f"Vision: Player cannot see {enemy_id}@{enemy_target.position} (in shadow, distance={distance:.1f})")
             return False
 
         # Shadows do NOT block vision going OUT - player standing in shadow has normal vision
         # (Shadows only block vision coming in, not vision going out)
 
-        return game_map.can_see_position(self.position, enemy_target.position, vision_range)
+        can_see = game_map.can_see_position(self.position, enemy_target.position, vision_range)
+        if can_see:
+            enemy_id = getattr(enemy_target, 'char', 'enemy')
+            logging.debug(f"Vision: Player sees {enemy_id}@{enemy_target.position}, distance={distance:.1f}, player_in_shadow={game_map.is_shadow(self.position)}")
+        return can_see
     
     @property
     def max_heat(self) -> int:
@@ -481,10 +487,14 @@ class Enemy:
 
         # Invisible players can't be seen
         if player.is_invisible():
+            enemy_id = getattr(self, 'char', 'enemy')
+            logging.debug(f"Vision: {enemy_id}@{self.position} cannot see player (invisible)")
             return False
 
         # Players in shadows only visible when adjacent
         if game_map.is_shadow(player.position) and distance > GameBalance.ADJACENT_DISTANCE_THRESHOLD:
+            enemy_id = getattr(self, 'char', 'enemy')
+            logging.debug(f"Vision: {enemy_id}@{self.position} cannot see player@{player.position} (player in shadow, distance={distance:.1f})")
             return False
 
         # Final LOS check using TCOD FOV
@@ -492,7 +502,8 @@ class Enemy:
 
         # Log visibility result
         if can_see:
-            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): spotted player@({player.x},{player.y}), distance={distance:.1f}")
+            enemy_id = getattr(self, 'char', 'enemy')
+            logging.debug(f"Vision: {enemy_id}@{self.position} spotted player@{player.position}, distance={distance:.1f}, player_in_shadow={game_map.is_shadow(player.position)}")
 
         return can_see
     

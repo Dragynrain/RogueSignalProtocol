@@ -6,6 +6,7 @@ Provides InputHandler for in-game controls and InputMappings for shared key defi
 Supports movement, combat, inventory, menu navigation, and look mode.
 """
 
+import logging
 import tcod
 import tcod.event
 from game_data import GameData
@@ -61,6 +62,23 @@ class InputHandler:
         Returns:
             True if game should continue, False if should exit
         """
+        # Log key event with current state context
+        state_context = []
+        if self.game.game_over:
+            state_context.append("game_over")
+        if self.game.dialogue_state.is_active():
+            state_context.append("dialogue_active")
+        if self.game.show_help:
+            state_context.append("help_screen")
+        if self.game.show_inventory:
+            state_context.append("inventory")
+        if self.game.look_mode:
+            state_context.append("look_mode")
+        if self.game.targeting_mode:
+            state_context.append("targeting")
+
+        logging.debug(f"Input: Key {event.sym.name}, state=[{','.join(state_context) if state_context else 'gameplay'}]")
+
         # Priority 1: Active dialogue (highest priority overlay)
         # Check this BEFORE game_over to allow death dialogue to be shown
         if self.game.dialogue_state.is_active():
@@ -131,10 +149,12 @@ class InputHandler:
 
         dialogue = self.game.dialogue_state.get_active()
         if not dialogue:
+            logging.debug("Input: Dialogue input handler called but no active dialogue")
             return True
 
         # Use DialogueInputHandler to process input
         action = DialogueInputHandler.handle_input(dialogue, event.sym)
+        logging.debug(f"Input: Dialogue '{dialogue.title}' received key {event.sym.name}, action={action}")
 
         # If dialogue handled the input, process it
         if action is not None:
@@ -157,13 +177,16 @@ class InputHandler:
         if not dialogue:
             return
 
+        logging.debug(f"Input: Dialogue confirm for '{dialogue.title}'")
+
         # Check dialogue type by title (since we're using DialogueBox now)
         if "OVERCLOCK WARNING" in dialogue.title:
             # Player confirmed overclock - no need to do anything, exploit will be used
             # The overclock system sets self.overclock_confirmation before showing dialogue
-            pass
+            logging.debug("Input: Overclock confirmed")
         elif "GATEWAY" in dialogue.title:
             # Player confirmed gateway - proceed to next level
+            logging.debug(f"Input: Gateway confirmed, advancing from level {self.game.level}")
             self.game.sound_manager.play_sound("level_complete")
             self.game.message_log.add_message("Gateway reached! Next network...")
             self.game.next_level()
@@ -181,6 +204,8 @@ class InputHandler:
         dialogue = self.game.dialogue_state.get_active()
         if not dialogue:
             return True
+
+        logging.debug(f"Input: Dialogue dismiss for '{dialogue.title}'")
 
         # Check dialogue type by title
         if "UNDER ATTACK" in dialogue.title:
@@ -314,11 +339,12 @@ class InputHandler:
             dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
             self.game._move_cursor(dx, dy)
         elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
+            logging.debug(f"Input: Targeting confirm - exploit={self.game.targeting_exploit}, target=({self.game.cursor_position.x},{self.game.cursor_position.y})")
             self.game.exploit_system.execute_exploit(
                 self.game.targeting_exploit,
                 self.game.cursor_position
             )
-        
+
         return True
     
     def _handle_gameplay_input(self, event) -> bool:
@@ -481,6 +507,7 @@ class InputHandler:
     
     def _open_inventory(self):
         """Open the inventory screen."""
+        logging.debug("Input: Opening inventory")
         self.game.sound_manager.play_sound("ui_menu_open")
         self.game.show_inventory = True
         self.game.inventory_selection = 0
@@ -489,10 +516,15 @@ class InputHandler:
         """Use exploit in specified slot."""
         equipped = self.game.player.inventory_manager.equipped_exploits
         if 0 <= slot < len(equipped):
-            self.game.exploit_system.use_exploit(equipped[slot])
+            exploit_key = equipped[slot]
+            logging.debug(f"Input: Using exploit slot {slot+1}: {exploit_key}")
+            self.game.exploit_system.use_exploit(exploit_key)
+        else:
+            logging.debug(f"Input: Exploit slot {slot+1} is empty or invalid")
 
     def _enter_look_mode(self):
         """Enter look mode."""
+        logging.debug(f"Input: Entering look mode at player pos ({self.game.player.x},{self.game.player.y})")
         self.game.look_mode = True
         # Initialize look cursor at player position
         self.game.look_cursor_position = Position(self.game.player.x, self.game.player.y)
@@ -503,6 +535,7 @@ class InputHandler:
         """Handle input while in look mode."""
         # ESC or L exits look mode
         if UniversalInputHandler.is_escape_key(event) or event.sym == tcod.event.KeySym.L:
+            logging.debug(f"Input: Exiting look mode from cursor ({self.game.look_cursor_position.x},{self.game.look_cursor_position.y})")
             self.game.look_mode = False
             self.game.message_log.add_message("Look mode exited")
             return True

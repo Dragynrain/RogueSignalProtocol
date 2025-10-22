@@ -110,6 +110,10 @@ class LevelGenerator:
             level: Current level number (affects difficulty, room counts, items)
             seed: Base RNG seed (combined with level for reproducibility)
         """
+        logging.debug(f"Level Gen: === Level {level} Generation START (seed={seed}) ===")
+        import time
+        start_time = time.time()
+
         random.seed(seed + level)
 
         # Clear existing level data
@@ -128,6 +132,12 @@ class LevelGenerator:
 
         # Final invalidation to ensure FOV calculations use the correct wall layout
         self.game_map.invalidate_transparency_cache()
+
+        generation_time = time.time() - start_time
+        rooms_count = len(getattr(self, 'last_generated_rooms', []))
+        corridor_count = len(self.corridor_tiles)
+
+        logging.debug(f"Level Gen: Level {level} complete in {generation_time:.3f}s: rooms={rooms_count}, corridor_tiles={corridor_count}")
 
     def _clear_level_data(self) -> None:
         """Clear all existing level data."""
@@ -170,45 +180,61 @@ class LevelGenerator:
                 self.game_map.walls.add((x, y))
 
         # PHASE 1: Create rooms with varied types
+        logging.debug(f"Level Gen: Phase 1 - Creating varied rooms for level {level}")
         rooms = self.room_generator.create_varied_rooms(level)
+        logging.debug(f"Level Gen: Phase 1 complete: {len(rooms)} rooms created")
 
         # PHASE 3: Identify hub rooms before connecting
+        logging.debug(f"Level Gen: Phase 2 - Identifying hub rooms")
         hub_rooms = self.advanced_generator.identify_hub_rooms(rooms)
+        logging.debug(f"Level Gen: Identified {len(hub_rooms)} hub rooms")
 
         # PHASE 2: Connect rooms using MST approach for better connectivity
+        logging.debug(f"Level Gen: Phase 2 - Connecting rooms with MST")
         self.corridor_generator.connect_rooms_mst(rooms)
 
         # Add extra paths for multiple routes (good for stealth)
         self.corridor_generator.add_extra_paths(rooms)
+        logging.debug(f"Level Gen: Phase 2 complete: {len(self.corridor_tiles)} corridor tiles created")
 
         # PHASE 3: Create looping paths for better stealth options
+        logging.debug(f"Level Gen: Phase 3 - Creating looping paths")
         self.advanced_generator.create_looping_paths(rooms)
 
         # PHASE 3: Connect hub rooms to create hub-and-spoke pattern
         self.advanced_generator.connect_hub_rooms(hub_rooms, rooms)
 
         # PHASE 5: Create choke points along critical path
+        logging.debug(f"Level Gen: Phase 3 - Creating choke points")
         self.tactical_generator.create_choke_points(rooms)
 
         # PHASE 4: Create landmark rooms
+        logging.debug(f"Level Gen: Phase 4 - Creating landmark rooms")
         landmark_rooms = self.advanced_generator.create_landmark_rooms(level, rooms)
         # Store for later use in special tile placement
         self._landmark_rooms = landmark_rooms
+        logging.debug(f"Level Gen: Created {len(landmark_rooms)} landmark rooms: {[lm['type'] for lm in landmark_rooms]}")
 
         # Add alcoves to corridors for stealth hiding spots
+        logging.debug(f"Level Gen: Phase 4 - Adding corridor alcoves")
         self.corridor_generator.add_corridor_alcoves()
 
         # PHASE 4: Create T-junctions and 4-way intersections
         self.corridor_generator.create_corridor_intersections()
 
         # Add strategic cover elements in open areas
+        logging.debug(f"Level Gen: Phase 4 - Adding cover elements")
         self.tactical_generator.add_cover_elements_new()
 
         # PHASE 3: Create shadow zones first
+        logging.debug(f"Level Gen: Phase 5 - Creating shadow zones")
         shadow_zone_rooms = self.advanced_generator.create_shadow_zones(rooms)
+        logging.debug(f"Level Gen: Created {len(shadow_zone_rooms)} shadow zone rooms")
 
         # Add shadow areas for stealth gameplay (with shadow zones)
+        logging.debug(f"Level Gen: Phase 5 - Placing shadow areas")
         self.tactical_generator.place_shadow_areas(level, rooms, shadow_zone_rooms)
+        logging.debug(f"Level Gen: Placed {len(self.game_map.shadows)} shadow tiles")
 
         # PHASE 5: Add defensive positions (cover + shadow combinations)
         self.tactical_generator.place_defensive_positions(rooms)
@@ -217,7 +243,11 @@ class LevelGenerator:
         self.advanced_generator.identify_loot_rooms(rooms)
 
         # PHASE 4: Clean up any shadows that ended up on walls (from cover placement)
+        before_cleanup = len(self.game_map.shadows)
         self.tactical_generator.cleanup_invalid_shadows()
+        after_cleanup = len(self.game_map.shadows)
+        if before_cleanup != after_cleanup:
+            logging.debug(f"Level Gen: Shadow cleanup removed {before_cleanup - after_cleanup} invalid shadows")
 
         # Ensure border walls are intact
         self.placement_generator.ensure_border_walls_new()

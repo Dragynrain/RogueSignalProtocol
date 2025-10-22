@@ -103,6 +103,8 @@ class TileManager:
             # Extract tintable flags for quick lookup
             self._extract_tintable_flags(data)
 
+            logging.debug(f"Graphics: Loaded tile mappings - {len(self.tile_mappings)} categories, {len(self.tintable_flags)} tintable flags")
+
         except json.JSONDecodeError as e:
             logging.error(f"Failed to parse {mapping_file}: {e}")
             logging.error("Graphics mode will use glyph fallbacks")
@@ -140,6 +142,7 @@ class TileManager:
             self.tile_width, self.tile_height = TileDimensionCalculator.calculate_from_window(
                 window_size, self.settings.graphics_mode
             )
+            logging.debug(f"Graphics: Calculated tile dimensions {self.tile_width}x{self.tile_height} for window {window_size[0]}x{window_size[1]}")
 
         except Exception as e:
             logging.error(f"Failed to calculate tile dimensions: {e}")
@@ -221,6 +224,7 @@ class TileManager:
 
             # Set blend mode for proper transparency rendering
             texture.blend_mode = tcod.sdl.render.BlendMode.BLEND
+            logging.debug(f"Graphics: Loaded sprite '{entity_name}' from {sprite_file} ({self.tile_width}x{self.tile_height}px)")
             return texture
 
         except Exception as e:
@@ -339,11 +343,15 @@ class TileManager:
             new_window_size: New window dimensions (width, height) in pixels
         """
         # Recalculate tile dimensions
+        old_size = (self.tile_width, self.tile_height)
         self._calculate_tile_dimensions()
+        new_size = (self.tile_width, self.tile_height)
 
         # Get list of entities that were loaded
         loaded_entities = [name for name, texture in self.texture_cache.items()
                           if texture is not None]
+
+        logging.debug(f"Graphics: Window resize {new_window_size[0]}x{new_window_size[1]}px - reloading {len(loaded_entities)} textures (tile size {old_size[0]}x{old_size[1]} → {new_size[0]}x{new_size[1]})")
 
         # Clear cache (textures will be garbage collected)
         self.texture_cache.clear()
@@ -369,8 +377,13 @@ class TileManager:
             # Add common enemies once we have the mappings defined
         ]
 
+        logging.debug(f"Graphics: Preloading {len(common_entities)} common tiles")
+        loaded_count = 0
         for entity_name in common_entities:
-            self.get_tile(entity_name)
+            if self.get_tile(entity_name):
+                loaded_count += 1
+
+        logging.debug(f"Graphics: Preloaded {loaded_count}/{len(common_entities)} common tiles successfully")
 
     def cleanup(self):
         """Free all cached textures and reset state."""

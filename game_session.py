@@ -655,10 +655,15 @@ class GameSession:
         """
         # Don't progress if game is already over
         if self.game_engine.game_over:
+            logging.debug(f"Session: Level progression blocked - game already over")
             return
 
+        old_level = self.game_engine.level
         self.game_engine.level += 1
+        logging.debug(f"Session: Level progression: {old_level} → {self.game_engine.level}, turn={self.game_engine.turn}, player_cpu={self.game_engine.player.cpu}/{self.game_engine.player.max_cpu}")
+
         if self.game_engine.level > 3:
+            logging.debug(f"Session: VICTORY - All levels completed")
             self.game_engine.sound_manager.play_music("victory.ogg", loops=1)
             self.game_engine.message_log.add_message_typed("BREAKTHROUGH TO THE INTERNET!", 'green')
             self.game_engine.message_log.add_message("You've escaped into the vast digital realm...")
@@ -673,14 +678,18 @@ class GameSession:
             self.game_engine.dialogue_state.show(create_victory_dialogue())
         else:
             try:
+                logging.debug(f"Session: Generating level {self.game_engine.level}")
                 self.generate_procedural_level()
                 # Auto-save after successful level generation
                 self.game_engine.auto_save()
+                logging.debug(f"Session: Level {self.game_engine.level} generation and auto-save complete")
             except Exception as e:
                 tb = traceback.extract_tb(e.__traceback__)
                 line_no = tb[-1].lineno if tb else "?"
+                logging.error(f"Session: Level generation FAILED: {str(e)[:50]} at line {line_no}")
                 self.game_engine.message_log.add_message(f"Network error: {str(e)[:15]} (line {line_no})")
                 self.game_engine.level -= 1
+                logging.debug(f"Session: Rolled back to level {self.game_engine.level}")
 
     def _clear_map(self):
         """Clear all map data."""
