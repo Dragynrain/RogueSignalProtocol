@@ -1,13 +1,6 @@
 # Claude Code Quick Guidelines
 
-## 0. Planning & Estimates
-- **NEVER provide time estimates** (hours, days, weeks) when planning work.
-- You are bad at estimating. Focus on tasks, priorities, and dependencies instead.
-
-## 0b. Performance
-- **Don't worry about performance** until it's actually a problem affecting user experience.
-- No preemptive optimization, benchmarking, or regression analysis.
-- Focus on code clarity and correctness first.
+**For planning tasks:** See `.claude/PLANNING_GUIDE.md`
 
 ---
 
@@ -38,6 +31,7 @@
 - One purpose per module.
 - No over-engineering or new frameworks.
 - Keep `build/` + `dist/` folders for releases.
+- **Always check bounds before array access** - verify indices are valid before indexing any array.
 
 ---
 
