@@ -101,6 +101,28 @@ class GameRenderer:
         self.glyphs_renderer = GlyphsMapRenderer(settings=settings)
         self.graphics_renderer = GraphicsMapRenderer(tile_manager=tile_manager, context=context, settings=settings)
 
+    def _is_graphics_mode_available(self) -> bool:
+        """
+        Check if graphics rendering is available and enabled.
+
+        Returns True if all requirements are met:
+        - Settings exist with graphics_mode == "graphics"
+        - tile_manager is available
+        - context exists with SDL renderer support
+        - console_render exists in context
+
+        Returns:
+            bool: True if graphics mode can be used, False otherwise
+        """
+        return (self.settings and
+                self.settings.graphics_mode == "graphics" and
+                self.tile_manager is not None and
+                self.context is not None and
+                hasattr(self.context, 'sdl_renderer') and
+                self.context.sdl_renderer is not None and
+                hasattr(self.context, 'console_render') and
+                self.context.console_render is not None)
+
     def render_game(self, console: tcod.console.Console, game, context=None):
         """
         Render the complete game state based on current screen mode.
@@ -118,14 +140,7 @@ class GameRenderer:
             context: Optional TCOD context (unused, kept for compatibility)
         """
         # Check if we should use graphics mode rendering
-        should_use_graphics = (self.settings and
-                               self.settings.graphics_mode == "graphics" and
-                               self.tile_manager is not None and
-                               self.context is not None and
-                               hasattr(self.context, 'sdl_renderer') and
-                               self.context.sdl_renderer is not None and
-                               hasattr(self.context, 'console_render') and
-                               self.context.console_render is not None)
+        should_use_graphics = self._is_graphics_mode_available()
 
         # Only clear console for overlay screens that need full console rendering
         # Main game screen handles clearing differently for graphics vs glyph mode
@@ -186,14 +201,7 @@ class GameRenderer:
             game: GameEngine instance with complete game state
         """
         # Check if we should use graphics mode rendering
-        should_use_graphics = (self.settings and
-                               self.settings.graphics_mode == "graphics" and
-                               self.tile_manager is not None and
-                               self.context is not None and
-                               hasattr(self.context, 'sdl_renderer') and
-                               self.context.sdl_renderer is not None and
-                               hasattr(self.context, 'console_render') and
-                               self.context.console_render is not None)
+        should_use_graphics = self._is_graphics_mode_available()
 
         if should_use_graphics:
             # === GRAPHICS MODE: Sprites + Console UI ===

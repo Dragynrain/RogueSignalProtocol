@@ -529,12 +529,12 @@ def gateway_far_corner(self, spawn, floor_positions):
 **Impact:** ~160 lines removed (Task #1) + 109 lines removed (Task #3) = **269 lines saved**
 
 ### Phase 2: Moderate Improvements (Next)
-4. Create helper for graphics mode validation
-5. Delete legacy Bresenham FOV
-6. Simplify patrol route fallbacks
-7. Convert exploit dispatcher to dictionary
+4. ✅ **DONE** - Create helper for graphics mode validation (extracted repeated 8-line check)
+5. ✅ **DONE** - Delete legacy Bresenham FOV (removed 35-line legacy method + 2 tests)
+6. ❌ **REMOVED FROM PLAN** - Simplify patrol route fallbacks (concerns about gameplay impact)
+7. ✅ **DONE** - Convert exploit dispatcher to dictionary (24-line if-elif → 5-line dict lookup)
 
-**Impact:** ~100 lines removed, better patterns
+**Impact:** ~65 lines removed (graphics: ~14 lines, Bresenham: ~45 lines, dispatcher: ~21 lines) + cleaner patterns
 
 ### Phase 3: Polish (Future)
 8. Optimize discovery status updates

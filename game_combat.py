@@ -40,6 +40,23 @@ class ExploitSystem:
             game: GameEngine instance for accessing player, enemies, map, etc.
         """
         self.game = game
+
+        # Exploit handler dispatch table
+        # Lambdas normalize different handler signatures (no params, target only, target + range)
+        self.exploit_handlers = {
+            'shadow_step': lambda exploit, target: self._execute_shadow_step(target),
+            'data_mimic': lambda exploit, target: self._execute_data_mimic(),
+            'noise_maker': lambda exploit, target: self._execute_noise_maker(target),
+            'code_injection': lambda exploit, target: self._execute_code_injection(target),
+            'buffer_overflow': lambda exploit, target: self._execute_buffer_overflow(target),
+            'system_crash': lambda exploit, target: self._execute_system_crash(target, exploit.range),
+            'threat_scan': lambda exploit, target: self._execute_threat_scan(),
+            'log_wiper': lambda exploit, target: self._execute_log_wiper(),
+            'antivirus': lambda exploit, target: self._execute_antivirus(),
+            'denial_of_service': lambda exploit, target: self._execute_denial_of_service(target, exploit.range),
+            'memory_leak': lambda exploit, target: self._execute_memory_leak(target),
+            'network_scan': lambda exploit, target: self._execute_network_scan(),
+        }
     
     def use_exploit(self, exploit_key: str) -> bool:
         """
@@ -202,7 +219,7 @@ class ExploitSystem:
         """
         Execute the specific exploit effect by dispatching to appropriate handler.
 
-        Routes to the correct _execute_* method based on exploit_key.
+        Uses dictionary dispatch to route to the correct _execute_* method based on exploit_key.
         Each exploit has unique mechanics defined in its handler method.
 
         Args:
@@ -213,31 +230,9 @@ class ExploitSystem:
         Returns:
             True if exploit executed successfully, False otherwise
         """
-        if exploit_key == 'shadow_step':
-            return self._execute_shadow_step(target)
-        elif exploit_key == 'data_mimic':
-            return self._execute_data_mimic()
-        elif exploit_key == 'noise_maker':
-            return self._execute_noise_maker(target)
-        elif exploit_key == 'code_injection':
-            return self._execute_code_injection(target)
-        elif exploit_key == 'buffer_overflow':
-            return self._execute_buffer_overflow(target)
-        elif exploit_key == 'system_crash':
-            return self._execute_system_crash(target, exploit.range)
-        elif exploit_key == 'threat_scan':
-            return self._execute_threat_scan()
-        elif exploit_key == 'log_wiper':
-            return self._execute_log_wiper()
-        elif exploit_key == 'antivirus':
-            return self._execute_antivirus()
-        elif exploit_key == 'denial_of_service':
-            return self._execute_denial_of_service(target, exploit.range)
-        elif exploit_key == 'memory_leak':
-            return self._execute_memory_leak(target)
-        elif exploit_key == 'network_scan':
-            return self._execute_network_scan()
-        
+        handler = self.exploit_handlers.get(exploit_key)
+        if handler:
+            return handler(exploit, target)
         return False
     
     def _execute_shadow_step(self, target: Position) -> bool:

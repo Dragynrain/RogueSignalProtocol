@@ -123,43 +123,7 @@ class GameMap:
         """
         # Use the improved TCOD version for better corner visibility
         return self.has_line_of_sight_tcod(start, end)
-    
-    def has_line_of_sight_bresenham(self, start: Position, end: Position) -> bool:
-        """Check line of sight between two positions using Bresenham's algorithm (legacy)."""
-        if not (start.is_valid(self.width, self.height) and 
-                end.is_valid(self.width, self.height)):
-            return False
-        
-        # Calculate distance and direction for Bresenham's algorithm
-        delta_x = abs(end.x - start.x)
-        delta_y = abs(end.y - start.y)
-        x_direction = 1 if start.x < end.x else -1
-        y_direction = 1 if start.y < end.y else -1
-        bresenham_error = delta_x - delta_y
-        
-        current_x, current_y = start.x, start.y
-        max_steps = delta_x + delta_y + 1  # Safety counter to prevent infinite loops
-        step_count = 0
-        
-        while step_count < max_steps:
-            if current_x == end.x and current_y == end.y:
-                return True
-            if self.is_wall(Position(current_x, current_y)):
-                return False
-            
-            # Bresenham's line algorithm step
-            error_doubled = 2 * bresenham_error
-            if error_doubled > -delta_y:
-                bresenham_error -= delta_y
-                current_x += x_direction
-            if error_doubled < delta_x:
-                bresenham_error += delta_x
-                current_y += y_direction
-            
-            step_count += 1
-        
-        return False  # Safety fallback if max steps exceeded
-    
+
     def has_line_of_sight_tcod(self, start: Position, end: Position) -> bool:
         """
         Check line of sight using TCOD's FOV system.
