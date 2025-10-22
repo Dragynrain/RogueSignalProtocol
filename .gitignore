@@ -10,10 +10,10 @@ __pycache__/
 *$py.class
 
 # Build & Distribution (PyInstaller)
-build/RogueSignalProtocol/  # PyInstaller temp files
-dist/                       # PyInstaller output
-releases/                   # Timestamped release archives
-*.spec                      # PyInstaller spec files (auto-generated)
+build/RogueSignalProtocol/
+dist/
+releases/
+*.spec
 
 # Virtual environment
 .venv/
