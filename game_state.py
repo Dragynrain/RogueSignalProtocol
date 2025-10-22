@@ -267,7 +267,10 @@ class TurnProcessor:
     def _process_temporary_effects(self, player) -> None:
         """Process and decay temporary effects."""
         effects_to_update = list(player.temporary_effects.keys())
-        
+        active_effects = {k: v for k, v in player.temporary_effects.items() if v > 0}
+        if active_effects:
+            logging.debug(f"Turn: Active effects: {active_effects}")
+
         for effect_name in effects_to_update:
             if player.temporary_effects[effect_name] > 0:
                 # Handle virus damage over time BEFORE decrementing counter
@@ -275,19 +278,22 @@ class TurnProcessor:
                     virus_damage = GameConfig.VIRUS_DAMAGE_PER_TURN
                     actual_damage = player.take_damage(virus_damage)
                     self.message_log.add_message(f"Virus damage: {actual_damage} CPU damage")
-                    
+                    logging.debug(f"Turn: Virus dealt {actual_damage} damage, player_cpu={player.cpu}/{player.max_cpu}")
+
                     # Check for death from virus
                     if player.cpu <= 0:
                         self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
                         self.game_state.game_over = True
+                        logging.debug(f"Turn: Player death from virus")
                         return  # Exit early if player dies
-                
+
                 # Now decrement the counter
                 player.temporary_effects[effect_name] -= 1
-                
+
                 if player.temporary_effects[effect_name] == 0:
+                    logging.debug(f"Turn: Effect expired: {effect_name}")
                     if effect_name == 'exploit_efficiency_turns':
                         self.message_log.add_message("Exploit efficiency boost expired")
                     elif effect_name == 'data_mimic_turns':

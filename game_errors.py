@@ -30,6 +30,8 @@ class GameErrorHandler:
         # Create detailed error message for logging
         error_details = f"{context}: {type(error).__name__}: {str(error)}"
 
+        logging.debug(f"Error Handling: Caught {type(error).__name__} in {context}, fatal={fatal}")
+
         # Logging
         logging.error(f"ERROR: {error_details}")
         if user_message:
@@ -74,6 +76,7 @@ class GameErrorHandler:
         try:
             return operation_func()
         except Exception as e:
+            logging.debug(f"Error Handling: Safe operation failed in {context}, using fallback={fallback_value}")
             GameErrorHandler.handle_error(e, context, user_message)
             return fallback_value
 
@@ -101,6 +104,7 @@ class GameErrorHandler:
         Raises:
             The same exception type with enhanced message
         """
+        logging.debug(f"Error Handling: Config error - {operation}, exception={type(exception).__name__}")
         error_msg = f"CRITICAL CONFIG ERROR: {operation}"
         logging.error(error_msg)
         logging.error(f"Exception: {str(exception)}")

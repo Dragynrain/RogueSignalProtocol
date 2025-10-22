@@ -85,6 +85,8 @@ class GameSettings:
 
                     # Load dialogue preferences with default empty dict
                     self.dialogue_preferences = settings_data.get("dialogue_preferences", {})
+
+                    logging.debug(f"Settings: Loaded from {self.SETTINGS_FILE} - graphics={self.graphics_mode}, master_vol={self.master_volume:.2f}, dialogues={len(self.dialogue_preferences)}")
                 except json.JSONDecodeError as e:
                     logging.warning(f"Settings file corrupted (JSON decode error: {e}), recreating with defaults")
                     self._create_default_settings_file()
@@ -122,6 +124,7 @@ class GameSettings:
             }
             with open(self.SETTINGS_FILE, 'w') as f:
                 json.dump(settings_data, f, indent=2)
+            logging.debug(f"Settings: Saved to {self.SETTINGS_FILE}")
         except Exception as e:
             import traceback
             logging.error(f"Failed to save settings: {e}")
@@ -130,7 +133,10 @@ class GameSettings:
     def _set_volume_attribute(self, volume_type: str, volume: float):
         """Generic volume setter for any volume type."""
         from game_entities import clamp
-        setattr(self, f"{volume_type}_volume", clamp(volume, 0.0, 1.0))
+        old_value = getattr(self, f"{volume_type}_volume", 0.0)
+        new_value = clamp(volume, 0.0, 1.0)
+        setattr(self, f"{volume_type}_volume", new_value)
+        logging.debug(f"Settings: {volume_type}_volume changed {old_value:.2f} → {new_value:.2f}")
         self.save_settings()
 
     def set_master_volume(self, volume: float):
@@ -149,7 +155,9 @@ class GameSettings:
             if mode == "ascii":
                 mode = "glyph"
                 logging.info("Migrated graphics_mode from 'ascii' to 'glyph'")
+            old_mode = self.graphics_mode
             self.graphics_mode = mode
+            logging.debug(f"Settings: graphics_mode changed {old_mode} → {mode}")
             self.save_settings()
     
     def get_volume_percent(self, volume_type: str) -> int:

@@ -51,7 +51,15 @@ class DataLoader:
         try:
             with open(filename, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-                return data[key] if key else data
+                result = data[key] if key else data
+                key_info = f", key='{key}'" if key else ""
+                if isinstance(result, dict):
+                    logging.debug(f"Data Loading: Loaded {filename}{key_info} ({len(result)} entries)")
+                elif isinstance(result, list):
+                    logging.debug(f"Data Loading: Loaded {filename}{key_info} ({len(result)} items)")
+                else:
+                    logging.debug(f"Data Loading: Loaded {filename}{key_info}")
+                return result
         except FileNotFoundError as e:
             GameErrorHandler.handle_config_error(f"{filename} not found", e)
         except json.JSONDecodeError as e:
@@ -63,14 +71,20 @@ class DataLoader:
     def load_story_fragments(cls) -> List[str]:
         """Load story fragments from JSON file."""
         if cls._story_fragments is None:
+            logging.debug("Data Loading: Loading story fragments (cache miss)")
             cls._story_fragments = cls._load_json_file('story_content.json', 'fragments')
+        else:
+            logging.debug("Data Loading: Using cached story fragments")
         return cls._story_fragments
     
     @classmethod
     def load_game_data(cls) -> Dict[str, Any]:
         """Load game data from JSON file."""
         if cls._game_data is None:
+            logging.debug("Data Loading: Loading game data (cache miss)")
             cls._game_data = cls._load_json_file('game_content.json')
+        else:
+            logging.debug("Data Loading: Using cached game data")
         return cls._game_data
     
     @classmethod
@@ -125,9 +139,11 @@ class DataLoader:
             Exits game via GameErrorHandler if file missing or invalid
         """
         if cls._config is None:
+            logging.debug("Data Loading: Loading game_rules.json (cache miss)")
             try:
                 with open('game_rules.json', 'r', encoding='utf-8') as f:
                     cls._config = json.load(f)
+                logging.debug(f"Data Loading: Loaded game_rules.json ({len(cls._config)} top-level keys)")
             except FileNotFoundError as e:
                 error_msg = f"CRITICAL CONFIG ERROR: game_rules.json not found"
                 logging.error(error_msg)
@@ -163,6 +179,7 @@ class DataLoader:
         try:
             with open('user_settings.json', 'w', encoding='utf-8') as f:
                 json.dump(settings, f, indent=2, ensure_ascii=False)
+            logging.debug(f"Data Loading: Saved user settings ({len(settings)} entries)")
             return True
         except Exception as e:
             logging.error(f"Failed to save user settings: {e}")

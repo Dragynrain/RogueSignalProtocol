@@ -94,7 +94,9 @@ class SoundManager:
 
                 # CRITICAL: Set initial volume from settings immediately after init
                 # pygame.mixer starts at volume 0.0 by default
-                pygame.mixer.music.set_volume(self.settings.music_volume * self.settings.master_volume)
+                music_vol = self.settings.music_volume * self.settings.master_volume
+                pygame.mixer.music.set_volume(music_vol)
+                logging.debug(f"Audio: Initialized pygame.mixer - {self.max_channels} channels, music_vol={music_vol:.2f}")
             except Exception as e:
                 logging.warning(f"Failed to initialize sound system: {e}")
                 logging.debug(traceback.format_exc())
@@ -103,7 +105,9 @@ class SoundManager:
     def update_volumes(self):
         """Update volumes from settings"""
         if self.enabled:
-            pygame.mixer.music.set_volume(self.settings.music_volume * self.settings.master_volume)
+            new_vol = self.settings.music_volume * self.settings.master_volume
+            pygame.mixer.music.set_volume(new_vol)
+            logging.debug(f"Audio: Updated music volume to {new_vol:.2f}")
     
     def preload_sounds(self):
         """
@@ -180,25 +184,32 @@ class SoundManager:
         }
         
         # Load each sound file
+        logging.debug(f"Audio: Preloading {len(sound_files)} sound effects")
+        loaded_count = 0
         for sound_id, filename in sound_files.items():
-            self.load_sound(sound_id, filename)
+            if self.load_sound(sound_id, filename):
+                loaded_count += 1
+        logging.debug(f"Audio: Preloaded {loaded_count}/{len(sound_files)} sounds successfully")
     
-    def load_sound(self, sound_id: str, filename: str):
+    def load_sound(self, sound_id: str, filename: str) -> bool:
         """Load a sound effect from file"""
         if not self.enabled:
-            return
+            return False
 
         try:
             sound_path = os.path.join(self.SOUND_DIRECTORY, filename)
             if not os.path.exists(sound_path):
                 logging.warning(f"Sound file not found: {sound_path}")
-                return
+                return False
 
             self.sounds[sound_id] = pygame.mixer.Sound(sound_path)
-            logging.info(f"Loaded sound: {sound_id}")
+            file_size = os.path.getsize(sound_path)
+            logging.debug(f"Audio: Loaded sound '{sound_id}' from {filename} ({file_size} bytes)")
+            return True
         except Exception as e:
             logging.error(f"Failed to load sound {sound_id}: {e}")
             logging.debug(traceback.format_exc())
+            return False
     
     def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
         """Play a loaded sound effect with channel management"""
@@ -208,6 +219,8 @@ class SoundManager:
         sound = self.sounds[sound_id]  # Let it fail if sound doesn't exist
         final_volume = self.settings.sfx_volume * self.settings.master_volume * volume_modifier
         sound.set_volume(final_volume)
+
+        logging.debug(f"Audio: Playing sound '{sound_id}' (volume={final_volume:.2f}, priority={priority})")
 
         # Find available channel for simultaneous playback
         channel = pygame.mixer.find_channel()
@@ -256,7 +269,8 @@ class SoundManager:
 
             self.current_music = filename
             self.music_playing = True
-            logging.info(f"Playing music: {filename} (volume: {volume:.2f})")
+            loop_info = "loop" if loops == -1 else f"{loops} times"
+            logging.debug(f"Audio: Playing music '{filename}' ({loop_info}, volume={volume:.2f}, fade_in={fade_in_ms}ms)")
         except Exception as e:
             logging.error(f"Failed to play music {filename}: {e}")
             self.current_music = None
@@ -266,8 +280,9 @@ class SoundManager:
         """Stop background music"""
         if not self.enabled:
             return
-        
+
         try:
+            logging.debug(f"Audio: Stopping music (fade_out={fade_out_ms}ms)")
             if fade_out_ms > 0:
                 pygame.mixer.music.fadeout(fade_out_ms)
             else:

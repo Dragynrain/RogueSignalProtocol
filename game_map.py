@@ -272,10 +272,14 @@ class GameMap:
         Returns:
             Boolean numpy array of visible tiles
         """
+        # Only log when actually computing (not from cache)
+        # This is the first call for this set of parameters
         transparency = self._get_transparency_map()
-        return tcod.map.compute_fov(
+        result = tcod.map.compute_fov(
             transparency=transparency,
             pov=(start_y, start_x),
             radius=vision_range,
             algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST
         )
+        # Note: Can't reliably detect cache hits/misses here, so minimal logging
+        return result
