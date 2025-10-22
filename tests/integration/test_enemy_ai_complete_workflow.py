@@ -305,16 +305,28 @@ class TestEnemyPathfindingAndChase:
 
         # Create patrol enemy - note that patrol points are set by EnemyManager.spawn_enemy()
         # When created directly, patrol_points is empty. We need to spawn it properly.
-        # Find a valid non-wall position
+        # Find a valid non-wall position with space for patrol route generation
         patrol_pos = None
-        for x in range(10, 20):
-            for y in range(10, 20):
+        # Search in center of map where there's more open space for patrol routes
+        for x in range(15, 35):
+            for y in range(15, 35):
                 test_pos = Position(x, y)
                 if not engine.game_map.is_wall(test_pos):
                     patrol_pos = test_pos
                     break
             if patrol_pos:
                 break
+
+        # Fallback to wider search if needed
+        if patrol_pos is None:
+            for x in range(5, 45):
+                for y in range(5, 45):
+                    test_pos = Position(x, y)
+                    if not engine.game_map.is_wall(test_pos):
+                        patrol_pos = test_pos
+                        break
+                if patrol_pos:
+                    break
 
         assert patrol_pos is not None, "Should find a valid position for patrol enemy"
 
