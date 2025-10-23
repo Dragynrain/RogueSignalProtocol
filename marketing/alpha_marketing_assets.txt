@@ -1,0 +1,73 @@
+🧱 1. Itch.io Page: Polished, But Lean
+
+Your page should be:
+
+Clean
+Functional
+Clearly geared toward gathering feedback
+
+✅ Must-Haves:
+
+Short game description (2-3 sentences max): Explain what the game is, what genre elements it includes (turn-based, traditional roguelike, cyberpunk, etc.).
+One good trailer OR 1-2 GIFs: Real gameplay. No fluff, no cinematic trailer — /r/roguelikedev prefers substance.
+Screenshots (2–4 max): Show UI, movement, and one combat example.
+Known limitations: List what isn't finished or what you're actively seeking feedback on. Be transparent.
+Link to feedback form or how you want to receive feedback.
+Instructions: How to play, controls, any hotkeys or important mechanics.
+
+📝 2. Reddit Post on /r/roguelikedev: Honest, Specific, and Engaging
+
+You're not marketing to strangers — you're speaking to peers. Treat the post like a devlog but with a playable prototype.
+
+✅ Include:
+
+A personal tone: “Hey folks, I’ve been working on this for X months...”
+Purpose of the release: “I’m looking for feedback on X systems, especially Y mechanic...”
+Link to Itch.io + brief game description.
+1–2 GIFs or screenshots inline (Reddit supports image embeds).
+A direct call to action: “I’d really love feedback on [combat balance / UI clarity / procedural generation].”
+Optional but useful: Mention if you're planning to post a follow-up on what you learned from this alpha.
+
+📋 3. Feedback Form (Highly Recommended)
+
+You will not get good feedback without guiding people. Provide structure to help them help you.
+
+✅ Recommended Tools:
+
+Google Forms or Typeform (free tier is fine)
+
+📄 What to Include in the Form:
+How far did you get?
+What confused you the most?
+What part was the most fun?
+What part felt tedious or frustrating?
+Any bugs or crashes?
+(Optional) Would you play again? Why or why not?
+(Optional) Email or Discord for follow-up
+
+Keep it short — 5-7 questions max. Offer a comment box at the end for general thoughts.
+
+🧰 4. Re-Usable Assets: Keep These Light
+
+These are nice to have for reusing in devlogs, Discord, or future marketing, but don’t overbuild for Alpha:
+
+Asset	Effort Level	Reason
+
+Short gameplay GIFs (2–3)	✅ Worth it	Reddit & Discord love GIFs
+
+One logo or title screen	👍 Basic branding helps	But don't agonize over design
+
+Tagline or one-liner	👍 Optional	Useful in Reddit post or feedback form
+"A cyberspace stealth roguelike where detection means deletion."
+
+Devlog template or blog post	🤏 Optional	/r/roguelikedev loves dev process breakdowns
+
+💬 5. Community Engagement (Do This!)
+
+Respond to every comment on Reddit.
+
+Thank testers.
+
+Consider joining their feedback Discord or inviting them to yours.
+
+If feedback is implemented, follow up later with: “Here’s what changed based on your input…”
