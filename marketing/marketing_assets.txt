@@ -1,0 +1,366 @@
+1. Visual Assets (Images, Screenshots, Logos, Icons)
+
+a) Screenshots (6-8 images)
+
+These will primarily be used on your itch.io page, social media posts, and marketing materials. Each screenshot should showcase different aspects of your game.
+Action Shot: Combat or key gameplay moment.
+Atmosphere Shot: Environmental art showcasing the cyberpunk world.
+UI Showcase: A screenshot highlighting the interface or special features (e.g., menus, inventory).
+Character/Enemy Art: Show a unique character or enemy from the game.
+Roguelike Mechanics: A shot illustrating your game's core mechanics like procedural generation, permadeath, or skill upgrades.
+Boss Battle or Special Event: Highlight one of the larger or climactic moments.
+Recommended Size:
+1080px x 720px (landscape orientation).
+Aspect Ratio: 16:9 (standard landscape size).
+
+b) GIFs (3-5 GIFs)
+
+GIFs are excellent for showcasing gameplay in motion. They’re particularly effective on platforms like Twitter, Reddit, Instagram, and even itch.io devlogs.
+Combat Example: A few seconds showing the turn-based battle system in action.
+Exploration/Movement: A clip showing a player navigating the environment or a unique game mechanic in action.
+Ability/Skill Showcase: Demonstrate a special attack, power-up, or the impact of a roguelike feature (e.g., random loot drop).
+Recommended Size:
+600px x 400px
+Max 8 MB size for quicker loading (Keep it optimized but still visually appealing).
+
+c) Game Logo (1-2 logos)
+
+Main Logo: The primary logo for your game. This should be visually striking and give a strong sense of the cyberpunk aesthetic.
+Simplified Icon: A smaller version of the logo or a symbol/icon for use on social media profile pictures, buttons, or small banners.
+Recommended Size:
+Main Logo: 1000px x 1000px
+Icon Version: 500px x 500px
+
+d) Banner Images (2-3 banners)
+
+You'll need these for things like itch.io’s store page, social media posts, or potentially email marketing.
+Game Overview Banner: Large and visually dynamic, showcasing key gameplay, characters, or story moments.
+Community/Release Banner: Could be a horizontal banner for your social media or Steam page that celebrates a milestone like a demo release or game update.
+Recommended Size:
+Itch.io banner: 1920px x 640px
+Social Media Banner: 1500px x 500px
+Twitter/X Header: 1500px x 500px
+
+2. Video Assets (Trailers and Clips)
+
+a) Game Trailer (1)
+A short, punchy trailer that highlights the key features and atmosphere of your game.
+Focus: Action, setting, core gameplay loop, unique features (turn-based combat, roguelike elements, etc.).
+Length: 30-60 seconds.
+Content: Start with an attention-grabbing moment, followed by an overview of gameplay, and end with a hook (such as a release date or call to action).
+Recommended Size:
+1920px x 1080px (1080p HD resolution).
+
+b) Short Gameplay Clip/Teaser (2-3 clips)
+These are smaller snippets or teaser clips to give viewers a taste of specific mechanics or moments from the game.
+Focus: Focus on different mechanics (turn-based combat, exploration, random generation, special powers).
+Length: 15-30 seconds each. Perfect for platforms like Instagram, TikTok, or Twitter/X.
+Recommended Size:
+1080px x 720px
+Square (1:1) format for social media like Instagram or Twitter. Vertical (9:16) for TikTok and Instagram Stories.
+
+c) Development Progress/Behind-the-Scenes Video (Optional)
+These are useful for devlogs or game jams. They show the process and offer insight into the development journey, which engages fans who enjoy supporting indie games.
+Focus: Development progress, art creation, coding, problem-solving, and iteration.
+Length: 30-60 seconds.
+
+3. Text Assets (Descriptions, Bios, Taglines)
+
+a) Short Game Description (1)
+
+A quick, punchy description that you’ll use across platforms like itch.io, Twitter/X, and other promotional materials. Should immediately grab attention and make your game sound unique.
+Length: 2-3 sentences. Think of it like an elevator pitch.
+Example:
+"A neon-drenched, turn-based roguelike that plunges you into a cyberpunk world of hackers, rogue AIs, and corporate overlords. Fight to survive, level up your character, and conquer procedurally generated challenges in this ever-changing dystopia."
+
+b) Long Game Description (1)
+
+A more detailed description for your itch.io page, press kit, or any platform that requires deeper context. This should cover core features, story background, and gameplay mechanics.
+Length: 1-2 paragraphs.
+Example:
+"In a fractured future where megacorporations control every aspect of life, you are a rogue hacker, tasked with infiltrating digital fortresses, fighting rogue AIs, and uncovering hidden truths about the world. Every run is different, thanks to procedurally generated maps and enemy encounters. Customize your character’s skills, gear up with advanced technology, and fight to survive in an unforgiving, dystopian landscape where death is only the beginning."
+
+c) Key Features (3-5 points)
+
+These are short, bulleted points summarizing the core features of your game. These will be used on itch.io, Steam, social media, or for quick pitch emails to journalists or influencers.
+Example:
+Procedurally Generated Levels: No two runs are ever the same.
+Turn-Based Combat: Tactical, strategic battles with deep RPG mechanics.
+Cyberpunk World: A dark, neon-lit city where danger lurks around every corner.
+Permanent Death: Every choice matters in this unforgiving world.
+Customizable Skills and Equipment: Tailor your hacker to your playstyle.
+
+d) Taglines (3-5 catchy lines)
+
+Short, impactful phrases to catch the eye. These are great for social media, trailers, or promotional banners.
+
+"A cyberspace stealth roguelike where detection means deletion."
+
+
+e) Press Release Template (1)
+
+If you plan to pitch your game to influencers, bloggers, or gaming websites, a press release will help you standardize your outreach.
+Content: Game name, release date, short description, key features, development history, contact info.
+Example Press Release Intro:
+"Indie game studio [Your Studio Name] is excited to announce the release of their new cyberpunk roguelike, [Game Title]. Set in a procedurally generated world, [Game Title] combines strategic turn-based combat, customizable characters, and permadeath mechanics to deliver an experience where every run is unique."
+
+f) FAQ (Optional)
+
+This can be helpful for community engagement on platforms like Reddit or itch.io. It answers common questions about the game’s features, release dates, and mechanics.
+Example Questions:
+"Is there multiplayer?"
+"What are the system requirements?"
+"Is there a demo available?"
+
+4. Email Marketing Assets
+
+Email Newsletter Template: For collecting early access or beta testers. You’ll need a signup page on itch.io or a dedicated site.
+Launch Announcement Template: An email announcing your game's launch, demo availability, or any major milestone.
+
+Summary of Asset List:
+
+Images:
+6-8 Screenshots (1080px x 720px).
+3-5 GIFs (600px x 400px).
+1-2 Logos (1000px x 1000px).
+2-3 Banners (1920px x 640px).
+
+Videos:
+1 Game Trailer (30-60 sec, 1920px x 1080px).
+2-3 Gameplay Clips (15-30 sec, 1080px x 720px).
+1 Devlog/Behind-the-scenes Clip (Optional, 30-60 sec).
+
+Text Assets:
+Short Game Description.
+Long Game Description.
+Key Features (3-5).
+Taglines (3-5).
+Press Release Template.
+**FAQ (Optional
+
+
+----------------------------------------------
+
+
+a) Short Game Description
+
+
+  A stealth-first roguelike where you infiltrate cyberspace as a trapped consciousness. Navigate procedurally generated networks, avoid AI security, and hack through escalating defenses.
+  Manage heat, trace signatures, and limited resources as you fight to escape. Detection means deletion. Permadeath erases everything.
+
+  ---
+  b) Long Game Description
+
+  Rogue Signal Protocol is a cyberspace stealth roguelike where you play as a digitized consciousness trapped inside a hostile corporate network. Your memories are fragmented. The security systems
+  are hunting something that shouldn't exist: you. Strange echoes linger in the data streams—traces of others who came before. The network whispers of failures, experiments, and something called
+  a resilience initiative. But the only test that matters now is survival.
+
+  Infiltrate three increasingly hostile networks—Corporate, Government, and Military—each filled with sophisticated AI security systems designed to detect and eliminate unauthorized
+  consciousnesses. Hide in digital shadows, deploy 12 powerful hacking exploits ranging from stealth tools to devastating cyberattacks, and discover 20+ narrative fragments that slowly reveal
+  what happened to you. Every action generates trace data that alerts enemies to your presence. Overuse your abilities and you'll overheat, making detection inevitable. Take damage and your CPU
+  degrades, bringing you closer to total system failure. And when you die? Your save file is deleted. Forever. Become the rogue signal that shatters the firewalls, or fade into the network's
+  ghost data like the others before you.
+
+  ---
+  c) Key Features
+
+  - Stealth-First Infiltration: Hide in shadows, manage your trace signature, and avoid detection—combat is dangerous, silence is survival
+  - Permadeath with Stakes: Death deletes your save file. No second chances. Every decision carries weight
+  - 12 Powerful Exploits: From Shadow Step teleportation to System Crash emergency protocols—combine stealth, combat, and utility tools
+  - 8 Unique Enemy Types: Face surveillance Scanners, deadly Admin Avatars, corrupting Viruses, and adaptive AI hunters with predictive movement queues
+  - Procedural Generation: Every run creates new network layouts, enemy placements, and resource distributions
+
+  ---
+  d) Taglines (3 Total)
+
+  *1. "A cyberspace stealth roguelike where detection means deletion." (PRIMARY)
+  *2. "Become the signal they can't delete."
+  *3. "Three firewalls. No second chances. One way out."
+
+  ---
+  e) Press Release Template
+
+  ---
+  FOR IMMEDIATE RELEASE
+
+  Indie Developer Releases Cyberpunk Stealth Roguelike Where Your Consciousness is the Payload
+
+  Rogue Signal Protocol Combines Permadeath Stakes, Deep Stealth Mechanics, and Mystery-Driven Narrative
+
+  [YOUR CITY, DATE] — Independent developer Adam Forster is proud to announce the release of Rogue Signal Protocol, a cyberspace stealth roguelike where detection means deletion. Available now
+  on [itch.io/Steam], the game challenges players to infiltrate hostile networks as a trapped digital consciousness with fragmented memories and relentless AI hunters on their trail.
+
+  About Rogue Signal Protocol
+
+  You wake as a digitized consciousness inside a hostile corporate network. Your memories are fragmented. The security systems are hunting you. Strange data echoes suggest others came before—and
+  failed. Armed with 12 powerful hacking exploits, you must stealth through three procedurally generated security networks to escape before you're permanently deleted. Piece together what
+  happened through scattered narrative fragments, but move carefully—every action leaves traces that bring the hunters closer.
+
+  Key Features:
+  - Stealth-first gameplay where avoiding detection is survival
+  - Permadeath with save file deletion—every run matters
+  - 12 unique exploits combining stealth, combat, and utility abilities
+  - 8 distinct enemy AI types with predictive movement systems showing their next 3 moves
+  - 20+ narrative fragments revealing the mystery through environmental storytelling
+  - 3 escalating network environments: Corporate, Government, Military
+  - Resource management across CPU (health), RAM, Heat, and Trace systems
+
+  Development Background
+
+  Rogue Signal Protocol was built using Python and the TCOD library, combining classic roguelike mechanics with modern stealth gameplay. The game features procedurally generated levels,
+  permadeath consequences, and a mystery-driven narrative inspired by cyberpunk classics like System Shock and Deus Ex.
+
+  "I wanted to create a stealth roguelike where the setting justified the mechanics," says developer Adam Forster. "Your consciousness is literally trapped in a digital prison. The shadows are
+  data obfuscation. Heat is processing load. Every system reinforces the fiction that you're a rogue signal trying to escape deletion."
+
+  Availability
+
+  Rogue Signal Protocol is available now on [itch.io/Steam] for Windows. The game is open source under GPL v3 license.
+
+  Download/Purchase: [URL]
+  Official Website: [URL]
+  Trailer: [URL]
+  Press Kit: [URL]
+
+  Media Contact:
+  Adam Forster
+  Email: [YOUR EMAIL]
+  Twitter: [@Dragynrain]
+  GitHub: github.com/Dragynrain
+
+  Assets Available:
+  - Screenshots (4K resolution)
+  - Gameplay trailer
+  - Logo files (transparent PNG)
+  - Press kit with fact sheet
+
+  ---
+  f) FAQ
+
+  Q: What platforms is Rogue Signal Protocol available on?A: Currently Windows 10/11. The game is built with Python/TCOD and is open source, so community ports are possible.
+
+  Q: Is there a demo available?A: [Yes - download the demo on itch.io / No, but the full game is available for $X]
+
+  Q: How long does a full run take?A: A complete run through all three networks takes 10-15 minutes depending on playstyle. Most deaths happen much faster—this is a challenging game!
+
+  Q: Is permadeath really permanent?A: Yes. When you die, your save file is deleted automatically. This is a core theme—your digital consciousness is being erased. No backups, no restores.
+
+  Q: What makes this different from other stealth roguelikes?A: Three unique elements: (1) enemies show their planned movement 3 turns ahead for tactical planning, (2) rich cyberpunk narrative
+  with 20+ story fragments, (3) every game system (heat, trace, CPU) reinforces the digital consciousness theme.
+
+  Q: Can I mod the game?A: Absolutely! The game uses JSON files for all content (enemies, exploits, narrative). The codebase is open source (GPL v3). See README_DEV.md for modding details.
+
+  Q: Are there difficulty options?A: No, not yet.
+
+  Q: Is there multiplayer or co-op?A: No, Rogue Signal Protocol is a single-player experience focused on stealth and narrative.
+
+  Q: What are the system requirements?A: Very modest! Any Windows 10/11 PC from the last decade should run it. Requires ~150MB disk space.
+
+  Q: Will there be updates or DLC?A: Depends upon interest.
+
+  ---
+  g) Email Marketing Assets
+
+  Email Newsletter Signup Template
+
+  Subject: Signal Detected: Join the Network ⚠️
+
+  Body:
+
+  Your consciousness has been flagged.
+
+  Something is happening in the network. You're going to want to see this.
+
+  Sign up below to receive:
+  - Early access to alpha/beta builds
+  - Exclusive narrative fragments not in the main game
+  - Development updates from the digital frontier
+  - Launch day notification and discount code
+
+  [SIGNUP BUTTON]
+
+  Warning: This network does not forgive mistakes.
+
+  —Rogue Signal Protocol
+  [Your Studio Name]
+
+  ---
+  Launch Announcement Email Template
+
+  Subject: The Network Is Live. Escape Protocol: ACTIVE
+
+  Body:
+
+  The network is live.
+
+  Rogue Signal Protocol is now available.
+
+  You are a digital consciousness trapped in a hostile corporate network. Your memories are fragmented. The security systems are hunting you. Three firewall layers stand between you and
+  freedom. Others tried to escape before you—their data echoes still linger in the network.
+
+  Three networks stand between you and freedom:
+  - Corporate firewall
+  - Government backbone
+  - Military core
+
+  Detection means deletion. Permadeath is permanent.
+
+  [DOWNLOAD NOW / BUY NOW BUTTON]
+
+  What You're Getting:
+  ✓ Stealth-first roguelike gameplay
+  ✓ 12 powerful hacking exploits
+  ✓ 8 unique AI enemy types
+  ✓ 20+ narrative fragments to uncover
+  ✓ Procedurally generated networks
+  ✓ True permadeath consequences
+
+  Launch Week Special: [X% off for the next 7 days]
+
+  System Requirements: Windows 10/11 | 150MB disk space
+
+  [DOWNLOAD BUTTON]
+
+  Signal strength holding. For now.
+
+  —Rogue Signal Protocol
+  [Your Studio Name]
+
+  P.S. Every purchase supports independent game development and keeps this project open source (GPL v3).
+
+  ---
+  Demo Available Email Template
+
+  Subject: Demo Available: Test Your Signal Strength
+
+  Body:
+
+  The network is waiting.
+
+  A free demo of Rogue Signal Protocol is now available. Infiltrate the first network layer—the Corporate subnet—and see if you have what it takes to survive as a trapped digital consciousness.
+
+  Demo includes:
+  - Full Corporate Network level
+  - 8 exploits to unlock and master
+  - 6 enemy types
+  - Narrative fragments revealing fragments of the mystery
+  - Your progress does NOT carry over (this is an isolated test)
+
+  [DOWNLOAD DEMO BUTTON]
+
+  If you survive the Corporate layer, the full game awaits:
+  - Government System subnet
+  - Military Backbone subnet
+  - Complete narrative arc
+  - All 12 exploits and 8 enemy types
+  - True permadeath stakes
+
+  [WISHLIST ON STEAM / BUY FULL GAME BUTTON]
+
+  Detection means deletion. Make your signal count.
+
+  —Rogue Signal Protocol
+  [Your Studio Name]
+
+
+
