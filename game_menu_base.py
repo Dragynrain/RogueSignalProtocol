@@ -7,11 +7,13 @@ Provides common background detection, layout calculation, and rendering helpers.
 Subclasses implement render() and handle_input() for specific menu behavior.
 """
 
+import logging
 import tcod
 from typing import Optional
 
 from game_config import GameConfig
 from game_menu_utilities import MenuRenderingUtils
+
 
 
 class BaseMenu:
@@ -130,7 +132,7 @@ class BaseMenu:
 
     def handle_input(self, event) -> Optional[str]:
         """
-        Handle input events. Must be implemented by subclasses.
+        Handle input events. Must be implemented by subclass.
 
         Args:
             event: Input event to handle
@@ -142,3 +144,148 @@ class BaseMenu:
             NotImplementedError: If not implemented by subclass
         """
         raise NotImplementedError("Subclasses must implement handle_input()")
+
+    def handle_mouse_motion(self, event) -> bool:
+        """
+        Handle mouse motion events - update selection based on hover.
+
+        Default implementation for menus with vertical option lists.
+        Subclasses can override for custom behavior.
+
+        Args:
+            event: Mouse motion event with tile coordinates
+
+        Returns:
+            True if event was handled, False otherwise
+        """
+        if not self.options:
+            logging.debug(f"[MENU MOUSE] {self.__class__.__name__} has no options")
+            return False
+
+        # Check if position coordinates are available (tile is deprecated)
+        if not hasattr(event, 'position') or event.position is None:
+            logging.debug(f"[MENU MOUSE] No position on event")
+            return False
+
+        # After context.convert_event(), position contains TILE coordinates
+        tile_x = int(event.position.x)
+        tile_y = int(event.position.y)
+
+        logging.debug(f"[MENU MOUSE] {self.__class__.__name__} motion at tile ({tile_x},{tile_y})")
+
+        # Menu options start at Y=21 (original position, box itself is shifted)
+        start_y = 21
+        spacing = 2
+
+        logging.debug(f"[MENU MOUSE] Options: {len(self.options)}, start_y={start_y}, spacing={spacing}")
+
+        # Calculate which option was hovered
+        if tile_y >= start_y:
+            option_index = (tile_y - start_y) // spacing
+            logging.debug(f"[MENU MOUSE] Calculated index: {option_index}")
+            if 0 <= option_index < len(self.options):
+                logging.debug(f"[MENU MOUSE] Valid! Selecting option {option_index}: '{self.options[option_index]}'")
+                self.selected_option = option_index
+                return True
+            else:
+                logging.debug(f"[MENU MOUSE] Index out of range (0-{len(self.options)-1})")
+        else:
+            logging.debug(f"[MENU MOUSE] tile_y={tile_y} < start_y={start_y}")
+
+        return False
+
+    def handle_mouse_click(self, event) -> Optional[str]:
+        """
+        Handle mouse click events - activate clicked option.
+
+        Default implementation for menus with vertical option lists.
+        Subclasses can override for custom behavior.
+
+        Args:
+            event: Mouse click event with tile coordinates
+
+        Returns:
+            Action string (same as handle_input would return), or None
+        """
+        logging.debug(f"[MENU MOUSE DEBUG] Click event received, options={len(self.options) if self.options else 0}")
+
+        if not self.options:
+            logging.debug("[MENU MOUSE DEBUG] No options available")
+            return None
+
+        # Check if position coordinates are available (tile is deprecated)
+        if not hasattr(event, 'position') or event.position is None:
+            logging.debug(f"[MENU MOUSE DEBUG] No position on event: {event}")
+            return None
+
+        # After context.convert_event(), position contains TILE coordinates (0-79, 0-49)
+        tile_x = int(event.position.x)
+        tile_y = int(event.position.y)
+
+        logging.debug(f"[MENU MOUSE DEBUG] Click at tile ({tile_x}, {tile_y})")
+
+        # Menu options start at Y=21 (original position, box itself is shifted)
+        start_y = 21
+        spacing = 2
+
+        # Calculate which option was clicked
+        logging.debug(f"[MENU MOUSE DEBUG] start_y={start_y}, spacing={spacing}, num_options={len(self.options)}")
+
+        if tile_y >= start_y:
+            option_index = (tile_y - start_y) // spacing
+            logging.debug(f"[MENU MOUSE DEBUG] Calculated option_index={option_index}")
+
+            if 0 <= option_index < len(self.options):
+                # Update selection
+                self.selected_option = option_index
+                logging.debug(f"[MENU MOUSE DEBUG] Selected option: '{self.options[option_index]}'")
+
+                # Activate this option (same as pressing Enter)
+                action = self._get_action_for_option(option_index)
+                logging.debug(f"[MENU MOUSE DEBUG] Returning action: '{action}'")
+                return action
+            else:
+                logging.debug(f"[MENU MOUSE DEBUG] option_index {option_index} out of range [0, {len(self.options)})")
+        else:
+            logging.debug(f"[MENU MOUSE DEBUG] tile_y {tile_y} < start_y {start_y}")
+
+        logging.debug("[MENU MOUSE DEBUG] Returning None")
+        return None
+
+    def _get_action_for_option(self, option_index: int) -> Optional[str]:
+        """
+        Get the action string for a menu option.
+
+        Default implementation maps option text to action.
+        Subclasses can override for custom action mapping.
+
+        Args:
+            option_index: Index of the selected option
+
+        Returns:
+            Action string, or None
+        """
+        if option_index < 0 or option_index >= len(self.options):
+            return None
+
+        option_text = self.options[option_index]
+
+        # Map option text to action (same logic as keyboard input)
+        if "Continue" in option_text:
+            return "continue"
+        elif "New Game" in option_text:
+            return "new_game"
+        elif "Settings" in option_text:
+            return "settings"
+        elif "Help" in option_text:
+            return "help"
+        elif "Data Fragments" in option_text:
+            return "lore"
+        elif "Graphics Preview" in option_text:
+            return "graphics_preview"
+        elif "Exit" in option_text:
+            return "exit"
+        elif "Back" in option_text:
+            return "back"
+
+        return None

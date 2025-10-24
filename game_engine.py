@@ -123,6 +123,12 @@ class GameEngine:
         self.look_mode = False
         self.look_cursor_position = Position(0, 0)
 
+        # Mouse hover tracking (for visual feedback)
+        self.mouse_hover_world_pos: Optional[Position] = None
+
+        # Camera offset tracking (for consistent input/rendering in look mode)
+        self.last_camera_offset: Optional[Position] = None
+
         # Overclocking system
         self.overclock_confirmation = False
         self.overclock_exploit: Optional[str] = None

@@ -183,3 +183,70 @@ class CoordinateHelpers:
         pixel_y = int(console_y * pixels_per_char_y)
 
         return (pixel_x, pixel_y)
+
+    @staticmethod
+    def pixel_to_char_coords(pixel_x: int, pixel_y: int,
+                            window_width: int, window_height: int,
+                            console_width: int = 80, console_height: int = 50,
+                            tile_pixel_width: int = 10, tile_pixel_height: int = 16) -> Tuple[int, int]:
+        """
+        Convert SDL pixel coordinates to console character coordinates.
+
+        Accounts for TCOD's aspect-ratio-preserving scaling and letterboxing.
+        USE THIS FOR MENUS that render using console characters only.
+
+        Args:
+            pixel_x: X position in SDL window pixel space
+            pixel_y: Y position in SDL window pixel space
+            window_width: Window width in pixels
+            window_height: Window height in pixels
+            console_width: Console width in characters (default 80)
+            console_height: Console height in characters (default 50)
+            tile_pixel_width: Tileset tile width in pixels (default 10)
+            tile_pixel_height: Tileset tile height in pixels (default 16)
+
+        Returns:
+            Tuple of (console_x, console_y) in console character grid (0-79, 0-49)
+        """
+        # Console fills entire window - no letterboxing
+        # Direct conversion: window pixels to console chars
+        pixels_per_tile_x = window_width / console_width
+        pixels_per_tile_y = window_height / console_height
+
+        tile_x = int(pixel_x / pixels_per_tile_x)
+        tile_y = int(pixel_y / pixels_per_tile_y)
+
+        # Clamp to valid console range
+        tile_x = max(0, min(console_width - 1, tile_x))
+        tile_y = max(0, min(console_height - 1, tile_y))
+
+        return (tile_x, tile_y)
+
+    @staticmethod
+    def pixel_to_sprite_grid(pixel_x: int, pixel_y: int,
+                            sprite_tile_width: int, sprite_tile_height: int) -> Tuple[int, int]:
+        """
+        Convert SDL pixel coordinates to sprite grid coordinates.
+
+        In graphics mode, sprites are rendered directly to SDL at positions
+        calculated as: pixel = grid * tile_dimension. This converts back.
+        USE THIS FOR GAMEPLAY in graphics mode where sprites are used.
+
+        Args:
+            pixel_x: X position in SDL window pixel space
+            pixel_y: Y position in SDL window pixel space
+            sprite_tile_width: Sprite tile width from TileManager (e.g., 97)
+            sprite_tile_height: Sprite tile height from TileManager (e.g., 80)
+
+        Returns:
+            Tuple of (grid_x, grid_y) in sprite grid coordinates
+
+        Example:
+            # For window 3840x2019, TileManager calculates 97x80 pixel tiles
+            # Player sprite at viewport (13, 11) renders at pixel (13*97, 11*80) = (1261, 880)
+            # Click at pixel (1261, 880) should convert back to grid (13, 11)
+            grid_x, grid_y = pixel_to_sprite_grid(1261, 880, 97, 80)
+        """
+        grid_x = int(pixel_x / sprite_tile_width)
+        grid_y = int(pixel_y / sprite_tile_height)
+        return (grid_x, grid_y)

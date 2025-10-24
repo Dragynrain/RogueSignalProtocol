@@ -173,14 +173,14 @@ sprite_height = tile_manager.tile_height
 ---
 
 ## 8. Docs & Research
-- Always check latest official docs
-- Confirm API details before assuming limits and interfaces
+- Always check latest official TCOD docs
+- Confirm TCOD API details before assuming limits and interfaces
 - **TCOD-specific questions**: Use the `tcod` skill (`.claude/skills/tcod.md`)
 
 ---
 
 ## 9. UI / UX
-- Help text must exactly match in-game symbols and be kept up-to-date at all times
+- Help text in glyphs mode must exactly match in-game symbols and be kept up-to-date at all times
 
 ---
 
@@ -256,4 +256,4 @@ Explicitly shift mental approach based on context:
 ---
 
 ## 13. Communication Style
-- Use emoji freely when it adds clarity or energy to communication
+- Use emoji freely when it adds clarity, fun, humor, or energy to communication

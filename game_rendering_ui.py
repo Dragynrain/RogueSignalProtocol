@@ -13,7 +13,7 @@ Previously split across 4 separate files, now unified for easier navigation.
 
 import tcod
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from game_config import GameConfig, GameBalance
 from game_entities import Colors
@@ -614,6 +614,12 @@ class UIRenderer:
 
     # === Inventory Screen ===
 
+    # Stored coordinates for inventory click detection (single source of truth)
+    last_inventory_lines = None  # List of line data with selectability
+    last_inventory_content_start_y = None
+    last_inventory_scroll_offset = None
+    last_inventory_equipped_count = None
+
     def render_inventory_screen(self, console: tcod.console.Console, game):
         """
         Render the inventory screen with scrolling support.
@@ -679,6 +685,12 @@ class UIRenderer:
 
         # Controls
         self._render_inventory_controls(console)
+
+        # Store data for mouse click detection (single source of truth)
+        UIRenderer.last_inventory_lines = inventory_lines
+        UIRenderer.last_inventory_content_start_y = content_start_y
+        UIRenderer.last_inventory_scroll_offset = scroll_manager.get_scroll_offset()
+        UIRenderer.last_inventory_equipped_count = len(game.player.inventory_manager.equipped_exploits)
 
     def _build_inventory_lines(self, game):
         """
@@ -863,6 +875,55 @@ class UIRenderer:
         render_char_safe(console, 4, y_start + 1, "W/S: Navigate  Enter: Use  X: Examine", fg=Colors.WHITE)
         render_char_safe(console, 4, y_start + 2, "U: Unequip selected exploit", fg=Colors.WHITE)
         render_char_safe(console, 4, y_start + 3, "ESC/I: Close inventory", fg=Colors.WHITE)
+
+    @staticmethod
+    def get_inventory_item_at_click(tile_y: int) -> Optional[int]:
+        """
+        Get the selection index of the inventory item clicked at the given tile Y coordinate.
+
+        Uses stored rendering data (single source of truth) to map click coordinates
+        to inventory selection indices. Only returns indices for selectable items.
+
+        Args:
+            tile_y: Y coordinate in tile space (0-49)
+
+        Returns:
+            Selection index if a selectable item was clicked, None otherwise
+        """
+        # Check if inventory data is available
+        if UIRenderer.last_inventory_lines is None:
+            return None
+        if UIRenderer.last_inventory_content_start_y is None:
+            return None
+        if UIRenderer.last_inventory_scroll_offset is None:
+            return None
+
+        # Convert tile_y to line index
+        line_index_in_visible = tile_y - UIRenderer.last_inventory_content_start_y
+        if line_index_in_visible < 0:
+            return None  # Clicked above content area
+
+        # Account for scroll offset
+        line_index = line_index_in_visible + UIRenderer.last_inventory_scroll_offset
+
+        # Check if line index is valid
+        if line_index < 0 or line_index >= len(UIRenderer.last_inventory_lines):
+            return None
+
+        # Get the line data
+        line_data = UIRenderer.last_inventory_lines[line_index]
+
+        # Check if this line is selectable
+        if not line_data.get('selectable', False):
+            return None
+
+        # Count how many selectable lines came before this one to get selection index
+        selection_index = 0
+        for i in range(line_index):
+            if UIRenderer.last_inventory_lines[i].get('selectable', False):
+                selection_index += 1
+
+        return selection_index
 
     # === Story Fragment Screen ===
 

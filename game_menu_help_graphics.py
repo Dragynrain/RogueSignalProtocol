@@ -67,19 +67,19 @@ class GraphicalHelpMenu:
         if self.pages_built:
             return
 
-        # 3 pages total: Enemies, Items/Map, Controls/Mechanics
+        # 3 pages total: Items/Map, Enemies, Controls/Mechanics
         self.pages = [
-            self._build_page_enemies(),          # Page 1: ALL 8 enemies (2 columns)
-            self._build_page_items_and_map(),    # Page 2: Items + map symbols (with sprites!)
+            self._build_page_items_and_map(),    # Page 1: Items + map symbols (with sprites!)
+            self._build_page_enemies(),          # Page 2: ALL 8 enemies (2 columns)
             self._build_page_controls_mechanics(), # Page 3: Controls + mechanics (multi-column text)
         ]
 
         self.pages_built = True
 
     def _build_page_enemies(self) -> dict:
-        """Page 1: All 8 enemies - better vertical spacing."""
+        """Page 2: All 8 enemies - better vertical spacing."""
         return {
-            'title': 'ENEMY TYPES (Page 1/3)',
+            'title': 'ENEMY TYPES (Page 2/3)',
             'sprites': [
                 # Blank line after title, then sprites
                 # Left column
@@ -138,9 +138,9 @@ class GraphicalHelpMenu:
         }
 
     def _build_page_items_and_map(self) -> dict:
-        """Page 2: Map symbols at top, then collectibles, nodes, upgrades."""
+        """Page 1: Map symbols at top, then collectibles, nodes, upgrades."""
         return {
-            'title': 'ITEMS & MAP SYMBOLS (Page 2/3)',
+            'title': 'ITEMS & MAP SYMBOLS (Page 1/3)',
             'sprites': [
                 # Row 1 - Map symbols (5 columns) - shifted down 1 row
                 ('player', 2, 6, 1.0),
@@ -494,7 +494,50 @@ class GraphicalHelpMenu:
             # Any other key returns
             return "back"
 
+    def handle_mouse_motion(self, event) -> bool:
+        """Handle mouse motion - hover zones for page navigation."""
+        # Could add visual feedback for hover zones in the future
+        return False
+
+    def handle_mouse_click(self, event) -> str:
+        """
+        Handle mouse click - click left/right zones to navigate pages.
+
+        Left third of screen: previous page
+        Right third of screen: next page
+        """
+        if not hasattr(event, 'position') or not event.position:
+            return ""
+
+        from game_config import GameConfig
+
+        # Divide screen into thirds
+        left_zone = GameConfig.SCREEN_WIDTH // 3
+        right_zone = GameConfig.SCREEN_WIDTH * 2 // 3
+
+        if event.position.x < left_zone:
+            # Left zone - previous page
+            self._previous_page()
+        elif event.position.x > right_zone:
+            # Right zone - next page
+            self._next_page()
+        else:
+            # Middle zone - close help menu
+            return "back"
+
         return ""
+
+    def handle_mouse_wheel(self, event) -> bool:
+        """Handle mouse wheel - scroll pages."""
+        if hasattr(event, 'y'):
+            if event.y > 0:
+                # Scroll up = previous page
+                self._previous_page()
+            elif event.y < 0:
+                # Scroll down = next page
+                self._next_page()
+            return True
+        return False
 
     def _previous_page(self):
         """Navigate to previous page."""

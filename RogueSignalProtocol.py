@@ -71,9 +71,15 @@ DEBUG_MODE = os.path.exists('debug_mode.flag')
 if DEBUG_MODE:
     # Alpha/Debug build - verbose logging for playtesters
     log_level = logging.DEBUG
+    # Use unbuffered file handler so logs are written immediately (critical for crash debugging)
+    # Open with buffering=1 for line buffering
+    log_file = open('game_debug.log', mode='w', buffering=1)
+    file_handler = logging.StreamHandler(log_file)
+    file_handler.setLevel(logging.DEBUG)
+
     log_handlers = [
         logging.StreamHandler(),
-        logging.FileHandler('game_debug.log', mode='w')
+        file_handler
     ]
     print("DEBUG MODE: Verbose logging enabled (Alpha build)")
 else:
@@ -88,13 +94,17 @@ logging.basicConfig(
     level=log_level,
     format='%(asctime)s - %(levelname)s - %(filename)s:%(lineno)d - %(funcName)s() - %(message)s',
     handlers=log_handlers,
-    datefmt='%Y-%m-%d %H:%M:%S'
+    datefmt='%Y-%m-%d %H:%M:%S',
+    force=True  # Force reconfiguration even if already configured
 )
 
 # Log the startup mode
 if DEBUG_MODE:
     logging.info("Game started in DEBUG mode (Alpha build for playtesters)")
     logging.info(f"Log file: game_debug.log")
+    # Force flush to ensure it's written
+    for handler in logging.root.handlers:
+        handler.flush()
 else:
     logging.warning("Game started in RELEASE mode (errors only logged to game_errors.log)")
 

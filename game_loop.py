@@ -18,11 +18,13 @@ from game_ui import render_char_safe, WindowManager
 from game_audio import SoundManager
 from game_menus import MenuBackground, MainMenu, SettingsMenu
 from game_menu_help_lore import create_help_menu, LoreMenu
+
 from game_menu_graphics_preview import GraphicsPreviewMenu
 from game_engine import GameEngine
 from game_rendering_core import GameRenderer
 from game_input import InputHandler
 from game_graphics_tiles import TileManager
+from game_coordinate_helpers import CoordinateHelpers
 
 
 def log_exception(e: Exception, context: str, level: str = "error"):
@@ -179,12 +181,17 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
             if has_sprites:
                 current_menu.render_sprites()
 
-            # Render console content as texture to SDL
+            # Render console texture to fill entire window (no aspect ratio preservation)
+            # This matches the user's expectation for full-screen console
             console_texture = context.console_render.render(console)
 
-            # Render full console texture to preserve internal character positioning
-            # The console has transparent areas for background graphics or sprites
-            context.sdl_renderer.copy(console_texture)
+            window_w, window_h = context.sdl_window.size
+
+            # Fill entire window - no letterboxing
+            dest_rect = (0, 0, window_w, window_h)
+            context.sdl_renderer.copy(console_texture, dest=dest_rect)
+
+            logging.debug(f"[RENDER] Full window fill: {window_w}x{window_h}")
 
             # Present everything through SDL
             context.sdl_renderer.present()
@@ -194,9 +201,140 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
             context.present(console)
         
         for event in tcod.event.wait():
+            # Debug: log CLICK and WHEEL events only (not motion - too spammy)
+            if event.type in ("MOUSEBUTTONDOWN", "MOUSEWHEEL"):
+                logging.debug(f"[EVENT DEBUG] Menu loop received {event.type} event")
+
+            # Convert pixel coordinates to console tiles for menus
+            # Menus always use console rendering, so this conversion is correct for all menu types
+            if hasattr(event, 'position') and event.position:
+                # Store original pixel coordinates for debugging
+                original_pixel_x = event.position.x
+                original_pixel_y = event.position.y
+
+                # Get window dimensions
+                if hasattr(context, 'sdl_window') and context.sdl_window:
+                    window_w, window_h = context.sdl_window.size
+                else:
+                    window_w, window_h = (800, 600)
+
+                # Convert to console tile coordinates (menus use console rendering)
+                tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+                    original_pixel_x, original_pixel_y, window_w, window_h
+                )
+
+                # Create new event with tile coordinates
+                import copy
+                event = copy.copy(event)
+                event.position = type(event.position)(tile_x, tile_y)
+
             if event.type == "QUIT":
                 menu_sound_manager.cleanup()
                 return None, True  # game=None, should_exit=True
+            elif event.type == "MOUSEMOTION":
+                # Handle mouse hover on menu options
+                current_menu.handle_mouse_motion(event)
+            elif event.type == "MOUSEBUTTONDOWN":
+                # Handle mouse clicks on menu options
+                action = current_menu.handle_mouse_click(event)
+
+                if action == "exit":
+                    menu_sound_manager.cleanup()
+                    return None, True  # game=None, should_exit=True
+                elif action == "settings":
+                    current_menu = menus['settings_menu']
+                elif action == "help":
+                    current_menu = menus['help_menu']
+                elif action == "lore":
+                    current_menu = menus['lore_menu']
+                elif action == "graphics_preview":
+                    if 'graphics_preview_menu' in menus:
+                        # Enter graphics preview mode
+                        graphics_preview_menu = menus['graphics_preview_menu']
+
+                        # Flush any pending events to avoid immediate exit
+                        tcod.event.get()
+
+                        exit_preview = False
+                        while not exit_preview:
+                            # Render the preview menu to console
+                            graphics_preview_menu.render(console)
+
+                            # Check if we should render graphics
+                            graphics_available = (context.sdl_renderer and
+                                                hasattr(context, 'console_render') and
+                                                context.console_render and
+                                                settings.graphics_mode == "graphics")
+
+                            if graphics_available:
+                                # Graphics mode: render through SDL with preview map
+                                context.sdl_renderer.clear()
+
+                                # Render the preview map graphics FIRST (background)
+                                graphics_preview_menu._render_preview_map(console)
+
+                                # Then render console text on top
+                                console_texture = context.console_render.render(console)
+                                context.sdl_renderer.copy(console_texture)
+                                context.sdl_renderer.present()
+                            else:
+                                # Glyph mode: just show console
+                                context.present(console)
+
+                            # Process events (non-blocking for continuous animation)
+                            for preview_event in tcod.event.get():
+                                if preview_event.type == "QUIT":
+                                    # Export selections and return to main menu on quit
+                                    graphics_preview_menu.export_selections()
+                                    exit_preview = True
+                                    break
+                                elif preview_event.type == "KEYDOWN":
+                                    preview_action = graphics_preview_menu.handle_input(preview_event)
+                                    if preview_action == 'exit':
+                                        # Export selections and return to main menu
+                                        graphics_preview_menu.export_selections()
+                                        exit_preview = True
+                                        break
+
+                            # Small delay to prevent CPU spinning (60 FPS)
+                            time.sleep(1/60)
+
+                        # Cleanup SDL renderer state before returning to main menu
+                        if graphics_available and context.sdl_renderer:
+                            context.sdl_renderer.draw_color = (0, 0, 0, 255)
+                            context.sdl_renderer.clear()
+
+                        # Return to main menu after exiting preview
+                        current_menu = main_menu
+                    else:
+                        # Graphics preview not available
+                        logging.warning("Graphics Preview not available")
+                elif action == "back":
+                    current_menu = main_menu
+                elif action == "continue":
+                    # Don't stop music if it's level music playing from previous session
+                    # Only stop if menu music was actually started (current_music is set)
+                    if menu_sound_manager.current_music is not None:
+                        menu_sound_manager.stop_music(fade_out_ms=1000)
+
+                    # If there's an active game in progress, resume it
+                    # Otherwise, load from save file
+                    if active_game is not None:
+                        return active_game, False
+                    else:
+                        game = GameEngine(settings=settings, load_save=True)
+                        return game, False
+                elif action == "new_game":
+                    # Stop any music for new game - fresh start
+                    menu_sound_manager.stop_music(fade_out_ms=1000)
+                    game = GameEngine(settings=settings)
+                    return game, False
+
+            elif event.type == "MOUSEWHEEL":
+                # Handle mouse wheel events in menus (e.g., scrolling help pages)
+                if hasattr(current_menu, 'handle_mouse_wheel'):
+                    current_menu.handle_mouse_wheel(event)
+
             elif event.type == "KEYDOWN":
                 action = current_menu.handle_input(event)
                 
@@ -305,6 +443,15 @@ def handle_game_input_events(event, game, input_handler):
         game.auto_save()
         game.sound_manager.cleanup()
         return False, None  # Exit program
+    elif event.type == "MOUSEMOTION":
+        # Handle mouse motion events (cursor updates, hover effects)
+        input_handler.handle_mouse_motion(event)
+    elif event.type == "MOUSEBUTTONDOWN":
+        # Handle mouse click events
+        input_handler.handle_mouse_click(event)
+    elif event.type == "MOUSEWHEEL":
+        # Handle mouse wheel events (scrolling)
+        input_handler.handle_mouse_wheel(event)
     elif event.type == "KEYDOWN":
         if event.sym == tcod.event.KeySym.ESCAPE:
             # Priority 1: If dialogue is active, let it handle escape first
@@ -436,8 +583,30 @@ def main():
                             # Wait for events (blocking)
                             events = list(tcod.event.wait())
 
+                        # PERFORMANCE FIX: Filter out redundant mouse motion events
+                        # Only keep the LAST mouse motion event to avoid processing hundreds per frame
+                        filtered_events = []
+                        last_mouse_motion = None
+
+                        for event in events:
+                            if event.type == "MOUSEMOTION":
+                                # Keep only the most recent mouse motion
+                                last_mouse_motion = event
+                            else:
+                                # Keep all non-motion events
+                                filtered_events.append(event)
+
+                        # Add the last mouse motion at the end (if any)
+                        if last_mouse_motion:
+                            filtered_events.append(last_mouse_motion)
+
+                        events = filtered_events
+
                         # Handle input events
                         for event in events:
+                            # Don't convert coordinates here - let input handlers do it
+                            # This allows dialogue (console coords) and gameplay (sprite grid) to use different systems
+
                             # Save game reference before it potentially becomes None
                             previous_game = game
                             should_continue, game = handle_game_input_events(event, game, input_handler)

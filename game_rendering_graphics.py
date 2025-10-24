@@ -424,6 +424,9 @@ class GraphicsMapRenderer(MapRendererBase):
         # Render targeting cursor for look mode or targeting mode
         self._render_targeting_cursor(game, camera_offset)
 
+        # Render mouse hover highlight (if not in special modes)
+        self._render_hover_highlight(game, camera_offset)
+
     def render_status_effects_layer(self, game):
         """
         Render colored status effect outlines over NON-TINTABLE sprites (Layer 2.5).
@@ -574,6 +577,41 @@ class GraphicsMapRenderer(MapRendererBase):
                 renderer.copy(texture, dest=tile_rect)
                 # Reset color_mod
                 texture.color_mod = normal_tint
+
+    def _render_hover_highlight(self, game, camera_offset: Position):
+        """Render hover highlight for mouse cursor in normal gameplay mode."""
+        # Only show hover in normal gameplay (not in look/targeting/menus)
+        if game.look_mode or game.targeting_mode or game.show_inventory or game.show_lore_viewer or game.show_help:
+            return
+
+        # Only show if mouse is hovering over a valid world position
+        if not game.mouse_hover_world_pos:
+            return
+
+        renderer = self.context.sdl_renderer
+        hover_pos = game.mouse_hover_world_pos
+
+        hover_screen_x = hover_pos.x - camera_offset.x
+        hover_screen_y = hover_pos.y - camera_offset.y + 1
+
+        if (0 <= hover_screen_x < GameConfig.GAME_AREA_WIDTH() and
+            1 <= hover_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+
+            tile_rect = self._get_tile_rect(hover_screen_x, hover_screen_y)
+
+            # Determine if this is a valid move target (adjacent to player)
+            dx = hover_pos.x - game.player.x
+            dy = hover_pos.y - game.player.y
+            is_adjacent = (abs(dx) <= 1 and abs(dy) <= 1 and not (dx == 0 and dy == 0))
+
+            # Color: Green for valid adjacent tiles, Yellow for other tiles
+            if is_adjacent:
+                highlight_color = (0, 255, 0, 180)  # Green, semi-transparent
+            else:
+                highlight_color = (255, 255, 0, 100)  # Yellow, more transparent
+
+            # Draw highlight border (thicker than other overlays for visibility)
+            self._draw_outline_box(renderer, tile_rect, highlight_color, thickness=3)
 
     def _get_status_outline_color(self, status_type: str) -> Tuple[int, int, int]:
         """

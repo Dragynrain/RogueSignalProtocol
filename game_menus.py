@@ -53,6 +53,11 @@ class MainMenu(BaseMenu):
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
+
+        # Stored coordinates for warning dialog click detection
+        self.warning_option_y = None
+        self.warning_option_0_x_range = None  # (start_x, end_x) for "Yes, Delete"
+        self.warning_option_1_x_range = None  # (start_x, end_x) for "No, Go Back"
     
     def refresh_options(self, show_continue: bool = True) -> None:
         """Refresh menu options. Set show_continue=False when accessed from mid-game."""
@@ -154,19 +159,19 @@ class MainMenu(BaseMenu):
     
     def _render_menu_options(self, console: tcod.console.Console, box: dict) -> None:
         """Render the main menu options."""
-        start_y = 21
+        start_y = 21  # Back to original Y position (box itself is shifted)
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             prefix = "> " if i == self.selected_option else "  "
-            
+
             if box['use_background_layout']:
-                # Background mode - centered within narrow box
+                # Background mode - centered within box (box itself is shifted)
                 x_pos = box['center_x'] - len(option) // 2 - 1
             else:
                 # Glyph mode - centered
                 x_pos = GameConfig.SCREEN_WIDTH // 2 - len(option) // 2 - 1
-                
-            render_char_safe(console, 
+
+            render_char_safe(console,
                 x_pos, start_y + i * 2,
                 f"{prefix}{option}", fg=color, bg=Colors.BLACK
             )
@@ -305,11 +310,14 @@ class MainMenu(BaseMenu):
         # Options
         options = ["Yes, Delete Save", "No, Go Back"]
         options_start_y = box['bottom'] - 4
-        
+
+        # Store Y coordinate for click detection (same for both options)
+        self.warning_option_y = options_start_y
+
         for i, option in enumerate(options):
             color = Colors.RED if i == self.warning_selection and i == 0 else Colors.YELLOW if i == self.warning_selection else Colors.WHITE
             prefix = "> " if i == self.warning_selection else "  "
-            
+
             if box['use_background_layout']:
                 # Narrow box - shorter option text and center alignment
                 short_options = ["Yes, Delete", "No, Go Back"]
@@ -319,12 +327,23 @@ class MainMenu(BaseMenu):
                 # Glyph mode - use full option text
                 option_text = option
                 option_x = box['center_x'] - len(option_text) // 2 - 1
-            
-            render_char_safe(console, 
-                option_x, 
+
+            full_text = f"{prefix}{option_text}"
+            render_char_safe(console,
+                option_x,
                 options_start_y + i,
-                f"{prefix}{option_text}", fg=color, bg=Colors.BLACK
+                full_text, fg=color, bg=Colors.BLACK
             )
+
+            # Store X range for click detection (includes prefix)
+            start_x = option_x
+            end_x = option_x + len(full_text)
+            if i == 0:
+                self.warning_option_0_x_range = (start_x, end_x)
+                self.warning_option_0_y = options_start_y + i
+            else:
+                self.warning_option_1_x_range = (start_x, end_x)
+                self.warning_option_1_y = options_start_y + i
     
     def handle_input(self, event) -> str:
         """Handle menu input. Returns action: 'continue', 'new_game', 'exit', or ''."""
@@ -369,7 +388,7 @@ class MainMenu(BaseMenu):
         # Handle navigation using universal handler
         if UniversalInputHandler.handle_dialog_navigation(self, event):
             return ""
-        
+
         # Handle selection
         if UniversalInputHandler.is_confirm_key(event):
             if self.warning_selection == 0:  # Yes, Delete Save
@@ -379,8 +398,79 @@ class MainMenu(BaseMenu):
                 self.show_warning = False
         elif UniversalInputHandler.is_escape_key(event):
             self.show_warning = False
-        
+
         return ""
+
+    def handle_mouse_motion(self, event) -> bool:
+        """Handle mouse motion - update selection in menu or warning dialog."""
+        if self.show_warning:
+            return self._handle_warning_mouse_motion(event)
+        else:
+            # Use base class implementation for main menu
+            return super().handle_mouse_motion(event)
+
+    def handle_mouse_click(self, event) -> str:
+        """Handle mouse click - activate option in menu or warning dialog."""
+        if self.show_warning:
+            return self._handle_warning_mouse_click(event)
+
+        # Get the action from base class
+        action = super().handle_mouse_click(event)
+
+        # If clicking "New Game" with existing save, show warning instead
+        if action == "new_game" and SaveGameManager.save_exists() and not self.mid_game_mode:
+            self.show_warning = True
+            self.warning_selection = 1  # Default to "No"
+            return ""  # Don't execute new_game yet
+
+        return action
+
+    def _handle_warning_mouse_motion(self, event) -> bool:
+        """Handle mouse motion in warning dialog - update selection."""
+        if not hasattr(event, 'position') or not event.position:
+            return False
+
+        # The menu loop already converted pixel to tile coordinates
+        # event.position is already in tile space (0-79, 0-49)
+        tile_x = int(event.position.x)
+        tile_y = int(event.position.y)
+
+        # Check if hovering over option 0
+        if (hasattr(self, 'warning_option_0_y') and
+            hasattr(self, 'warning_option_0_x_range') and
+            self.warning_option_0_y is not None and
+            self.warning_option_0_x_range is not None):
+
+            start_x, end_x = self.warning_option_0_x_range
+            if tile_y == self.warning_option_0_y and start_x <= tile_x < end_x:
+                self.warning_selection = 0
+                return True
+
+        # Check if hovering over option 1
+        if (hasattr(self, 'warning_option_1_y') and
+            hasattr(self, 'warning_option_1_x_range') and
+            self.warning_option_1_y is not None and
+            self.warning_option_1_x_range is not None):
+
+            start_x, end_x = self.warning_option_1_x_range
+            if tile_y == self.warning_option_1_y and start_x <= tile_x < end_x:
+                self.warning_selection = 1
+                return True
+
+        return False
+
+    def _handle_warning_mouse_click(self, event) -> str:
+        """Handle mouse click in warning dialog - activate clicked option."""
+        # Update selection based on click position
+        self._handle_warning_mouse_motion(event)
+
+        # Execute the selected option (same as pressing Enter)
+        if self.warning_selection == 0:  # Yes, Delete Save
+            SaveGameManager.delete_save()
+            return "new_game"
+        else:  # No, Go Back
+            self.show_warning = False
+            return ""
 
 
 # LoreMenu and HelpMenu are imported from game_menu_help_lore.py
@@ -575,6 +665,97 @@ class SettingsMenu(BaseMenu):
             if self.selected_option == old_selection:
                 break
     
+    def handle_mouse_motion(self, event) -> bool:
+        """Handle mouse motion - update selection in settings menu, skipping section headers."""
+        if not hasattr(event, 'position') or event.position is None:
+            return False
+
+        tile_x = int(event.position.x)
+        tile_y = int(event.position.y)
+
+        logging.debug(f"[MENU MOUSE] SettingsMenu motion at tile ({tile_x},{tile_y})")
+
+        # Calculate box dimensions the same way render() does
+        menu_height = 35
+        from game_config import GameConfig
+        layout = self._get_menu_layout_params()
+
+        # Calculate box top (same logic as _render_right_side_box)
+        # IMPORTANT: In graphics mode, box is shifted up by 1 tile (see MenuRenderingUtils.render_right_side_box)
+        if layout['use_background_layout']:
+            box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2 - 1  # Shift 1 tile up
+        else:
+            box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
+
+        # Options start at box_top + 5 with spacing of 2
+        start_y = box_top + 5
+        spacing = 2
+
+        logging.debug(f"[MENU MOUSE] Settings: box_top={box_top}, start_y={start_y}, spacing={spacing}")
+
+        # Calculate which option was hovered
+        if tile_y >= start_y:
+            option_index = (tile_y - start_y) // spacing
+            logging.debug(f"[MENU MOUSE] Calculated index: {option_index}")
+
+            if 0 <= option_index < len(self.options):
+                # Skip section headers - they're not selectable
+                if self.options[option_index]["type"] == "section_header":
+                    logging.debug(f"[MENU MOUSE] Skipping section header: '{self.options[option_index]['name']}'")
+                    return False
+
+                logging.debug(f"[MENU MOUSE] Valid! Selecting option {option_index}: '{self.options[option_index]['name']}'")
+                self.selected_option = option_index
+                return True
+            else:
+                logging.debug(f"[MENU MOUSE] Index out of range (0-{len(self.options)-1})")
+        else:
+            logging.debug(f"[MENU MOUSE] tile_y={tile_y} < start_y={start_y}")
+
+        return False
+
+    def handle_mouse_click(self, event) -> str:
+        """Handle mouse click - activate clicked option (for toggle/action types)."""
+        # First update selection based on click position
+        if not self.handle_mouse_motion(event):
+            return ""
+
+        option = self.options[self.selected_option]
+
+        logging.debug(f"[MENU MOUSE] SettingsMenu click on option {self.selected_option}: {option['name']} (type: {option['type']})")
+
+        # Handle different option types
+        if option["type"] == "action":
+            if option["name"] == "Back":
+                return "back"
+        elif option["type"] == "toggle":
+            # Toggle the value (same as pressing Enter)
+            if option["key"] == "graphics_mode":
+                current_mode = self.settings.graphics_mode
+                new_mode = "graphics" if current_mode == "glyph" else "glyph"
+                self.settings.set_graphics_mode(new_mode)
+
+                # Immediately update background to reflect the change
+                if self.menu_background:
+                    self.menu_background.reload_if_mode_changed()
+                    logging.info(f"Graphics mode changed to {new_mode} via mouse - background updated")
+        elif option["type"] == "dialogue_toggle":
+            # Toggle dialogue preference
+            dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
+            current_value = dialogue_prefs.get(option["key"], True)
+            new_value = not current_value
+
+            # Update preference
+            if not hasattr(self.settings, 'dialogue_preferences'):
+                self.settings.dialogue_preferences = {}
+            self.settings.dialogue_preferences[option["key"]] = new_value
+            self.settings.save_settings()
+            logging.info(f"Dialogue preference '{option['key']}' set to {new_value} via mouse")
+        # Volume options require left/right adjustment, not click to toggle
+        # So we don't handle them here - user can adjust with mouse wheel or arrow keys
+
+        return ""
+
     def _adjust_setting(self, direction: int):
         """Adjust the currently selected setting."""
         option = self.options[self.selected_option]
