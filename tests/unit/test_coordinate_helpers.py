@@ -325,6 +325,87 @@ class TestCharToPixelCoords:
         assert pixel_y == 300  # 25 * (600/50) = 25 * 12 = 300
 
 
+class TestPixelToCharCoords:
+    """Test pixel_to_char_coords() method for mouse coordinate conversion."""
+
+    def test_pixel_to_char_origin(self):
+        """pixel_to_char_coords handles origin (0, 0)."""
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            pixel_x=0, pixel_y=0,
+            window_width=1920, window_height=1080
+        )
+
+        assert tile_x == 0
+        assert tile_y == 0
+
+    def test_pixel_to_char_standard_resolution(self):
+        """pixel_to_char_coords converts correctly for standard resolution."""
+        # 1920x1080 window with 80x50 console
+        # Click at pixel (240, 108) should be tile (10, 5)
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            pixel_x=240, pixel_y=108,
+            window_width=1920, window_height=1080
+        )
+
+        assert tile_x == 10  # 240 * (80/1920) = 240 * 0.0416... = 10
+        assert tile_y == 5   # 108 * (50/1080) = 108 * 0.0462... = 5
+
+    def test_pixel_to_char_inverse_of_char_to_pixel(self):
+        """pixel_to_char_coords is the inverse of char_to_pixel_coords."""
+        # Convert console coords to pixels, then back
+        original_x, original_y = 15, 20
+
+        pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
+            original_x, original_y, 1920, 1080
+        )
+
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            pixel_x, pixel_y, 1920, 1080
+        )
+
+        assert tile_x == original_x
+        assert tile_y == original_y
+
+    def test_pixel_to_char_fractional_result(self):
+        """pixel_to_char_coords handles fractional tile positions."""
+        # Click at pixel (250, 110) - between tiles
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            pixel_x=250, pixel_y=110,
+            window_width=1920, window_height=1080
+        )
+
+        # Should be integer values (truncated)
+        assert isinstance(tile_x, int)
+        assert isinstance(tile_y, int)
+
+        # 250 * (80/1920) = 250 * 0.0416... = 10.416... -> 10
+        # 110 * (50/1080) = 110 * 0.0462... = 5.092... -> 5
+        assert tile_x == 10
+        assert tile_y == 5
+
+    def test_pixel_to_char_corner(self):
+        """pixel_to_char_coords handles bottom-right corner."""
+        # Click near bottom-right of window
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            pixel_x=1580, pixel_y=980,
+            window_width=1600, window_height=1000
+        )
+
+        assert tile_x == 79  # 1580 * (80/1600) = 1580 * 0.05 = 79
+        assert tile_y == 49  # 980 * (50/1000) = 980 * 0.05 = 49
+
+    def test_pixel_to_char_small_window(self):
+        """pixel_to_char_coords works with small windows."""
+        # 800x600 window, click at (400, 300)
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            pixel_x=400, pixel_y=300,
+            window_width=800, window_height=600
+        )
+
+        assert tile_x == 40  # 400 * (80/800) = 400 * 0.1 = 40
+        assert tile_y == 25  # 300 * (50/600) = 300 * 0.0833... = 25
+
+
 class TestIntegration:
     """Integration tests combining multiple CoordinateHelpers methods."""
 

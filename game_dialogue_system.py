@@ -91,6 +91,8 @@ class DialogueState:
         self.active_dialogue: Optional[DialogueBox] = None
         # Priority queue: List of (DialogueBox, priority) sorted by priority
         self.dialogue_queue: List[Tuple[DialogueBox, int]] = []
+        # Last rendered coordinates for click detection
+        self.last_render_coords: Optional[Dict[str, int]] = None
 
     def show(self, dialogue: DialogueBox) -> None:
         """
@@ -199,10 +201,12 @@ class UnifiedRenderer:
 
     Uses CoordinateHelpers to handle positioning and transparency correctly.
     No more duplicated rendering code - one renderer to rule them all.
+
+    Rendered coordinates are stored in DialogueState for click detection.
     """
 
     @staticmethod
-    def render(console: tcod.console.Console, dialogue: DialogueBox) -> None:
+    def render(console: tcod.console.Console, dialogue: DialogueBox, dialogue_state: Optional[DialogueState] = None) -> None:
         """
         Render a dialogue box on the console.
 
@@ -212,6 +216,8 @@ class UnifiedRenderer:
         Args:
             console: TCOD console to render to
             dialogue: DialogueBox to render
+            dialogue_state: Optional DialogueState instance to store coordinates for click detection.
+                           If None, coordinates won't be stored (useful for testing).
         """
         # Calculate box dimensions
         # Use 70 characters for dialogue boxes to provide more horizontal space
@@ -269,6 +275,67 @@ class UnifiedRenderer:
         CoordinateHelpers.set_alpha_region(
             console, x=box_x, y=box_y, width=box_width, height=box_height, alpha=255
         )
+
+        # Store coordinates in DialogueState for click detection (if provided)
+        if dialogue_state is not None:
+            dialogue_state.last_render_coords = {
+                'box_x': box_x,
+                'box_y': box_y,
+                'box_width': box_width,
+                'box_height': box_height,
+                'options_y': options_y,
+                'options_x': options_x,
+                'options_width': len(options_text),
+                'num_options': len(dialogue.options)
+            }
+
+    @staticmethod
+    def get_option_at_click(dialogue_state: DialogueState, tile_x: int, tile_y: int) -> Optional[int]:
+        """
+        Check if a click at the given console coordinates hits a dialogue option.
+
+        This is the single source of truth for dialogue click detection.
+        Uses the coordinates stored in DialogueState from the last render() call.
+
+        Args:
+            dialogue_state: DialogueState instance with last_render_coords
+            tile_x: Console tile X coordinate (0-79)
+            tile_y: Console tile Y coordinate (0-49)
+
+        Returns:
+            Option index (0-based) if click is on an option, None otherwise.
+            For 2-option dialogues: 0 = left option, 1 = right option
+            For single-option dialogues: 0 = the only option
+            Returns None if click is anywhere else (allows click-to-dismiss)
+        """
+        # Check if we have rendered coordinates
+        if not dialogue_state.last_render_coords:
+            return None
+
+        coords = dialogue_state.last_render_coords
+
+        # Check if click is on the options row
+        if tile_y != coords['options_y']:
+            return None
+
+        # Check if click is within the options text bounds
+        options_end_x = coords['options_x'] + coords['options_width']
+        if not (coords['options_x'] <= tile_x < options_end_x):
+            return None
+
+        # For single-option dialogues, any click on options text = option 0
+        if coords['num_options'] == 1:
+            return 0
+
+        # For two-option dialogues, determine left vs right
+        # Options are rendered as "option1  option2" with 2 spaces between
+        # Find the midpoint to distinguish left from right
+        mid_x = coords['options_x'] + coords['options_width'] // 2
+
+        if tile_x < mid_x:
+            return 0
+        else:
+            return 1
 
     @staticmethod
     def _wrap_text(text: str, max_width: int) -> List[str]:

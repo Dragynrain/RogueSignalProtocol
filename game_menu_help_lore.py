@@ -151,7 +151,69 @@ class LoreMenu:
                 return ""
         
         return ""
-    
+
+    def handle_mouse_motion(self, event) -> bool:
+        """Handle mouse motion - update selection based on hover."""
+        if self.lore_viewer_mode != "list":
+            return False
+
+        self._load_story_fragments()
+        discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
+
+        if not discovered_fragments or not hasattr(event, 'position') or not event.position:
+            return False
+
+        # Fragment list starts at Y=5, 1 line per item (rendered with start_y + i)
+        start_y = 5
+        spacing = 1
+        tile_y = int(event.position.y)
+
+        if tile_y >= start_y:
+            index = (tile_y - start_y) // spacing
+            if 0 <= index < len(discovered_fragments):
+                self.lore_viewer_selection = index
+                return True
+
+        return False
+
+    def handle_mouse_click(self, event) -> str:
+        """Handle mouse click - select fragment or navigate."""
+        if not hasattr(event, 'position') or not event.position:
+            return ""
+
+        if self.lore_viewer_mode == "reading":
+            # Click anywhere in reading mode returns to list
+            self.lore_viewer_mode = "list"
+            return ""
+        else:
+            # In list mode, update selection and open
+            if self.handle_mouse_motion(event):
+                # Mouse was over a valid item, open it
+                self.lore_viewer_mode = "reading"
+            return ""
+
+    def handle_mouse_wheel(self, event) -> bool:
+        """Handle mouse wheel - scroll through fragments."""
+        if self.lore_viewer_mode != "list":
+            return False
+
+        self._load_story_fragments()
+        discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
+
+        if not discovered_fragments:
+            return False
+
+        if hasattr(event, 'y'):
+            if event.y > 0:
+                # Scroll up
+                self._navigate_lore_selection(-1)
+            elif event.y < 0:
+                # Scroll down
+                self._navigate_lore_selection(1)
+            return True
+
+        return False
+
     def _navigate_lore_selection(self, direction: int):
         """Navigate lore selection."""
         discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
@@ -201,7 +263,17 @@ class HelpMenu:
         if UniversalInputHandler.handle_any_key_screen(event):
             return "back"
         return ""
-    
+
+    def handle_mouse_motion(self, event) -> bool:
+        """Handle mouse motion."""
+        return False
+
+    def handle_mouse_click(self, event) -> str:
+        """Handle mouse click - click anywhere to return."""
+        if hasattr(event, 'position') and event.position:
+            return "back"
+        return ""
+
     def _get_help_sections(self):
         """Get help sections with text and colors."""
         # Define enemy state colors for help
@@ -226,6 +298,7 @@ class HelpMenu:
             
             ("MOVEMENT & CONTROLS:", Colors.CYAN),
             ("  Arrow Keys, WASD, or Numpad: Move/Navigate", Colors.WHITE),
+            ("  Mouse: Click adjacent tiles to move, hover/click menus", Colors.WHITE),
             ("  1-5: Use loaded exploits (requires targeting)", Colors.WHITE),
             ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
             ("  L: Look mode (examine map and entities)", Colors.WHITE),
@@ -233,9 +306,16 @@ class HelpMenu:
             ("  ESC: Pause menu / Close screens", Colors.WHITE),
             ("", Colors.WHITE),
 
+            ("MOUSE CONTROLS:", Colors.CYAN),
+            ("  Left Click: Move (adjacent tiles), select/activate options", Colors.WHITE),
+            ("  Right Click: Cancel/exit current mode", Colors.WHITE),
+            ("  Hover: Update cursor position in look/targeting modes", Colors.WHITE),
+            ("  Scroll Wheel: Navigate lists (inventory, lore, etc.)", Colors.WHITE),
+            ("", Colors.WHITE),
+
             ("LOOK MODE:", Colors.CYAN),
             ("  L or ESC: Exit look mode", Colors.WHITE),
-            ("  Arrow Keys, WASD, or Numpad: Move cursor", Colors.WHITE),
+            ("  Arrow Keys, WASD, Numpad, or Mouse: Move cursor", Colors.WHITE),
             ("  Inspect enemies, items, terrain, and nodes", Colors.WHITE),
             ("", Colors.WHITE),
             

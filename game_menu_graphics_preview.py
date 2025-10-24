@@ -900,6 +900,14 @@ class GraphicsPreviewMenu:
 
         return ''
 
+    def handle_mouse_motion(self, event) -> bool:
+        """Handle mouse motion - not implemented for graphics preview."""
+        return False
+
+    def handle_mouse_click(self, event) -> str:
+        """Handle mouse click - not implemented for graphics preview."""
+        return ""
+
     def _cycle_variant(self, direction: int):
         """Cycle the variant for currently selected entity."""
         if not self.entity_types:

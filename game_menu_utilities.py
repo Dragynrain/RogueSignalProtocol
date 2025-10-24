@@ -42,15 +42,15 @@ class MenuRenderingUtils:
             dict: Box dimensions and positions for content rendering
         """
         if layout['use_background_layout']:
-            # Graphics mode - narrow box on right side
+            # Graphics mode - narrow box on right side, shifted 3 left and 1 up
             box_width = 28
-            box_right = GameConfig.SCREEN_WIDTH - 2
+            box_right = GameConfig.SCREEN_WIDTH - 2 - 3  # Shift 3 tiles left
             box_left = box_right - box_width
 
             if y_offset == 0:
-                box_top = (GameConfig.SCREEN_HEIGHT - height) // 2
+                box_top = (GameConfig.SCREEN_HEIGHT - height) // 2 - 1  # Shift 1 tile up
             else:
-                box_top = y_offset
+                box_top = y_offset - 1  # Shift 1 tile up
 
             box_bottom = box_top + height - 1
 

@@ -9,10 +9,13 @@ Supports movement, combat, inventory, menu navigation, and look mode.
 import logging
 import tcod
 import tcod.event
+from typing import Optional, Tuple
 from game_data import GameData
 from game_inventory import CodeHack, ExploitItem
 from game_ui import UniversalInputHandler
 from game_entities import Position
+from game_coordinate_helpers import CoordinateHelpers
+
 
 
 class InputMappings:
@@ -52,7 +55,26 @@ class InputHandler:
     def __init__(self, game, renderer=None):
         self.game = game
         self.renderer = renderer  # GameRenderer instance for help screen input
-    
+
+    def _get_window_dimensions(self) -> Tuple[int, int]:
+        """
+        Get window dimensions from context.
+
+        Tries renderer.context first, then game.context, then fallback.
+
+        Returns:
+            Tuple of (window_width, window_height) in pixels
+        """
+        context = None
+        if self.renderer and hasattr(self.renderer, 'context'):
+            context = self.renderer.context
+        elif hasattr(self.game, 'context'):
+            context = self.game.context
+
+        if context and hasattr(context, 'sdl_window'):
+            return context.sdl_window.size
+        return (800, 600)  # Fallback
+
     def handle_keydown(self, event: tcod.event.KeyDown) -> bool:
         """Handle keydown events.
 
@@ -424,10 +446,8 @@ class InputHandler:
         if 0 <= self.game.inventory_selection < len(equipped_exploits):
             exploit_key = equipped_exploits[self.game.inventory_selection]
             if self.game.player.inventory_manager.unequip_exploit(exploit_key):
-                # Add the exploit back to inventory as an item
+                # unequip_exploit() already adds the item back to inventory
                 exploit_def = GameData.EXPLOITS[exploit_key]
-                exploit_item = ExploitItem(exploit_key, exploit_def)
-                self.game.player.inventory_manager.add_item(exploit_item)
                 self.game.message_log.add_message(f"Unequipped {exploit_def.name}")
                 # Unequipping consumes a turn
                 self.game.maybe_process_turn()
@@ -560,3 +580,611 @@ class InputHandler:
 
         # Inspection info is displayed in real-time via the inspection panel
         # No need to log to message log
+
+    # ============================================================================
+    # MOUSE EVENT HANDLERS
+    # ============================================================================
+
+    def handle_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
+        """Handle mouse motion events.
+
+        Args:
+            event: The mouse motion event with tile coordinates
+
+        Returns:
+            True if event was handled, False otherwise
+        """
+        # After context.convert_event(), position contains TILE coordinates
+        if not hasattr(event, 'position') or event.position is None:
+            return False
+
+        # event.position contains RAW PIXEL coordinates from SDL
+        # Handlers will convert to appropriate coordinate system (console or sprite grid)
+        pixel_x = event.position.x
+        pixel_y = event.position.y
+
+        # Dispatch to state-specific handlers
+        # Check dialogue FIRST (highest priority overlay)
+        if self.game.dialogue_state.is_active():
+            return self._handle_dialogue_mouse_motion(event)
+        elif self.game.look_mode:
+            return self._handle_look_mode_mouse_motion(event)
+        elif self.game.targeting_mode:
+            return self._handle_targeting_mouse_motion(event)
+        elif self.game.show_inventory:
+            return self._handle_inventory_mouse_motion(event)
+        elif self.game.show_lore_viewer:
+            return self._handle_lore_viewer_mouse_motion(event)
+
+        # Normal gameplay: update hover position for visual feedback
+        return self._handle_gameplay_mouse_motion(event)
+
+    def handle_mouse_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """Handle mouse click events.
+
+        Args:
+            event: The mouse click event with tile coordinates
+
+        Returns:
+            True if event was handled, False otherwise
+        """
+        # event.position contains RAW PIXEL coordinates from SDL
+        # Handlers will convert to appropriate coordinate system (console or sprite grid)
+        if not hasattr(event, 'position') or event.position is None:
+            return False
+
+        pixel_x = event.position.x
+        pixel_y = event.position.y
+
+        # Dispatch to state-specific handlers based on button
+        # Use MouseButton enum (not deprecated BUTTON_* constants)
+        if event.button == tcod.event.MouseButton.LEFT:
+            result = self._handle_left_click(event)
+            return result
+        elif event.button == tcod.event.MouseButton.RIGHT:
+            result = self._handle_right_click(event)
+            return result
+
+        return False
+
+    def handle_mouse_wheel(self, event: tcod.event.MouseWheel) -> bool:
+        """Handle mouse wheel events.
+
+        Args:
+            event: The mouse wheel event
+
+        Returns:
+            True if event was handled, False otherwise
+        """
+        # Dispatch to state-specific handlers
+        if self.game.show_inventory:
+            return self._handle_inventory_mouse_wheel(event)
+        elif self.game.show_lore_viewer:
+            return self._handle_lore_viewer_mouse_wheel(event)
+
+        return False
+
+    def _is_valid_mouse_tile(self, tile_x: int, tile_y: int) -> bool:
+        """Check if mouse tile coordinates are within valid screen bounds.
+
+        Args:
+            tile_x: Console X coordinate (0-79)
+            tile_y: Console Y coordinate (0-49)
+
+        Returns:
+            True if coordinates are valid, False otherwise
+        """
+        from game_config import GameConfig
+        return (0 <= tile_x < GameConfig.SCREEN_WIDTH and
+                0 <= tile_y < GameConfig.SCREEN_HEIGHT)
+
+    def _mouse_pixel_to_world(self, pixel_x: float, pixel_y: float) -> Optional[Position]:
+        """Convert mouse pixel coords to world coords.
+
+        Conversion flow:
+        1. Convert pixels to sprite grid coordinates (in graphics mode) or console chars (in glyph mode)
+        2. Subtract status bar height to get viewport coords
+        3. Add camera offset to get world coords
+        4. Validate against map bounds
+
+        Args:
+            pixel_x: SDL pixel X coordinate
+            pixel_y: SDL pixel Y coordinate
+
+        Returns:
+            Position in world coordinates, or None if outside valid game area
+        """
+        from game_config import GameConfig
+
+        # Get graphics mode to determine conversion method
+        graphics_mode = self.game.settings.graphics_mode if hasattr(self.game, 'settings') else "glyph"
+
+        # Convert pixels to grid coordinates
+        if graphics_mode == "graphics":
+            # In graphics mode, sprites are rendered at pixel = grid * tile_dimension
+            # Use self.renderer which is passed during InputHandler initialization
+            if self.renderer and hasattr(self.renderer, 'tile_manager') and self.renderer.tile_manager:
+                tile_x, tile_y = CoordinateHelpers.pixel_to_sprite_grid(
+                    pixel_x, pixel_y,
+                    self.renderer.tile_manager.tile_width,
+                    self.renderer.tile_manager.tile_height
+                )
+            else:
+                logging.error(f"Graphics mode but renderer not available: renderer={self.renderer}, has_tile_mgr={hasattr(self.renderer, 'tile_manager') if self.renderer else False}")
+                return None
+        else:
+            # In glyph mode, use console character conversion
+            try:
+                window_w, window_h = self._get_window_dimensions()
+                tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+                    pixel_x, pixel_y, window_w, window_h
+                )
+            except Exception as e:
+                logging.error(f"Failed to convert pixels in glyph mode: {e}")
+                return None
+
+        # Use graphics_mode (already fetched above) to handle coordinate conversion
+        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
+        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
+        status_bar_height = GameConfig.STATUS_BAR_HEIGHT()
+
+        # In GRAPHICS mode, grid coords from pixel_to_sprite_grid are RENDERING positions
+        # Sprites render at: pixel = (viewport_x, viewport_y + status_bar) * tile_dimensions
+        # So grid coords INCLUDE status bar offset - we need to subtract it
+        # In GLYPH mode, tile coords from pixel_to_char_coords are CONSOLE positions
+        # Console tiles map directly: viewport = console_tile - status_bar
+
+        if graphics_mode == "graphics":
+            # Grid coordinates include status bar offset, subtract to get viewport
+            viewport_x = tile_x
+            viewport_y = tile_y - status_bar_height
+        else:
+            # Console coordinates, subtract status bar to get viewport
+            viewport_x = tile_x
+            viewport_y = tile_y - status_bar_height
+
+        # Validate viewport coordinates
+        if viewport_y < 0 or viewport_y >= viewport_height:
+            return None
+        if viewport_x < 0 or viewport_x >= viewport_width:
+            return None
+
+        # Use the camera offset from the last render for consistency
+        # This ensures input conversion matches what's actually displayed on screen
+        if hasattr(self.game, 'last_camera_offset') and self.game.last_camera_offset:
+            camera_x = self.game.last_camera_offset.x
+            camera_y = self.game.last_camera_offset.y
+        else:
+            # Fallback: calculate fresh (shouldn't happen after first render)
+            center_x = self.game.player.x
+            center_y = self.game.player.y
+            camera_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
+                                 center_x - viewport_width // 2))
+            camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
+                                 center_y - viewport_height // 2))
+
+        # Convert to world coordinates
+        world_x = viewport_x + camera_x
+        world_y = viewport_y + camera_y
+
+        # Validate against map bounds
+        if not (0 <= world_x < GameConfig.MAP_WIDTH and
+                0 <= world_y < GameConfig.MAP_HEIGHT):
+            return None
+
+        return Position(world_x, world_y)
+
+    # ============================================================================
+    # GAMEPLAY MOUSE HANDLERS (Phase 2)
+    # ============================================================================
+
+    def _handle_look_mode_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
+        """Handle mouse motion in look mode - update cursor position."""
+        world_pos = self._mouse_pixel_to_world(event.position.x, event.position.y)
+        if world_pos:
+            self.game.look_cursor_position = world_pos
+            return True
+        return False
+
+    def _handle_targeting_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
+        """Handle mouse motion in targeting mode - update cursor position."""
+        world_pos = self._mouse_pixel_to_world(event.position.x, event.position.y)
+        if world_pos:
+            self.game.cursor_position = world_pos
+            return True
+        return False
+
+    def _handle_gameplay_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
+        """Handle mouse motion in normal gameplay - update hover position for visual feedback."""
+        world_pos = self._mouse_pixel_to_world(event.position.x, event.position.y)
+        if world_pos:
+            self.game.mouse_hover_world_pos = world_pos
+            return True
+        else:
+            # Clear hover if mouse moved outside valid game area
+            self.game.mouse_hover_world_pos = None
+        return False
+
+    def _handle_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """Handle left mouse click based on current game state."""
+        # Priority: dialogue > look mode > targeting > gameplay
+        if self.game.dialogue_state.is_active():
+            return self._handle_dialogue_left_click(event)
+        elif self.game.look_mode:
+            return self._handle_look_mode_left_click(event)
+        elif self.game.targeting_mode:
+            return self._handle_targeting_left_click(event)
+        elif self.game.show_inventory:
+            return self._handle_inventory_left_click(event)
+        elif self.game.show_lore_viewer:
+            return self._handle_lore_viewer_left_click(event)
+
+        # Gameplay: click adjacent tile to move
+        return self._handle_gameplay_left_click(event)
+
+    def _handle_right_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """Handle right mouse click - typically cancel/exit actions."""
+        if self.game.look_mode:
+            logging.debug("Input: Right-click exiting look mode")
+            self.game.look_mode = False
+            self.game.message_log.add_message("Look mode exited")
+            return True
+        elif self.game.targeting_mode:
+            logging.debug("Input: Right-click cancelling targeting")
+            self.game.targeting_mode = False
+            self.game.targeting_exploit = None
+            self.game.message_log.add_message("Targeting cancelled")
+            return True
+
+        return False
+
+    def _handle_look_mode_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """Handle left click in look mode - inspect entity at cursor."""
+        world_pos = self._mouse_pixel_to_world(event.position.x, event.position.y)
+        if world_pos:
+            # Update cursor to clicked position
+            self.game.look_cursor_position = world_pos
+            # Inspection info is shown automatically in the inspection panel
+            logging.debug(f"Input: Look mode left-click at ({world_pos.x},{world_pos.y})")
+            return True
+        return False
+
+    def _handle_targeting_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """Handle left click in targeting mode - execute exploit."""
+        world_pos = self._mouse_pixel_to_world(event.position.x, event.position.y)
+        if world_pos:
+            # Update cursor position
+            self.game.cursor_position = world_pos
+
+            # Execute exploit at cursor position (same as pressing Enter)
+            if self.game.targeting_exploit:
+                logging.debug(f"Input: Targeting left-click executing {self.game.targeting_exploit} at ({world_pos.x},{world_pos.y})")
+                self.game.exploit_system.execute_targeted_exploit(
+                    self.game.targeting_exploit,
+                    world_pos
+                )
+                # Targeting mode is exited by execute_targeted_exploit
+            return True
+        return False
+
+    def _handle_gameplay_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """Handle left click during gameplay - move to adjacent tile."""
+        world_pos = self._mouse_pixel_to_world(event.position.x, event.position.y)
+
+        if not world_pos:
+            return False
+
+        # Calculate delta from player position
+        dx = world_pos.x - self.game.player.x
+        dy = world_pos.y - self.game.player.y
+
+        # Only allow adjacent tile movement (8-directional)
+        if abs(dx) <= 1 and abs(dy) <= 1 and (dx != 0 or dy != 0):
+            self.game.move_player(dx, dy)
+            return True
+
+        return False
+
+    # ============================================================================
+    # MENU MOUSE HANDLERS (Phase 3) - Stubs for now
+    # ============================================================================
+
+    def _handle_dialogue_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
+        """Handle mouse motion over dialogue - provide visual feedback for hovering.
+
+        Uses stored coordinates from last render to avoid recalculating dimensions.
+        Future: Could add visual hover highlighting.
+        """
+        dialogue = self.game.dialogue_state.get_active()
+        if not dialogue:
+            return False
+
+        # Use coordinates from last render (don't recalculate!)
+        if not self.game.dialogue_state.last_render_coords:
+            return False  # Not rendered yet
+
+        coords = self.game.dialogue_state.last_render_coords
+
+        # Convert pixel coordinates to console tile coordinates
+        window_w, window_h = self._get_window_dimensions()
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            event.position.x, event.position.y, window_w, window_h
+        )
+
+        # Check if hovering over dialogue box
+        if not (coords['box_x'] <= tile_x < coords['box_x'] + coords['box_width'] and
+                coords['box_y'] <= tile_y < coords['box_y'] + coords['box_height']):
+            return False  # Not hovering over dialogue
+
+        # Check if hovering over the options row
+        if tile_y != coords['options_y']:
+            return False  # Not hovering over options
+
+        # Use get_option_at_click to determine which option is being hovered
+        # (reuses the same click detection logic for consistency)
+        from game_dialogue_system import UnifiedRenderer
+        hovered_option = UnifiedRenderer.get_option_at_click(self.game.dialogue_state, tile_x, tile_y)
+
+        if hovered_option is not None:
+            # Future: Could set a hover state here that the renderer uses to highlight the option
+            return True
+
+        return False
+
+    def _handle_dialogue_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """Handle left click on dialogue buttons.
+
+        Dialogues have clickable option buttons like [Y] Confirm, [N] Cancel.
+        We need to check if the click is within the dialogue box and on an option.
+        """
+        from game_dialogue_system import DialogueInputHandler, UnifiedRenderer
+        from game_config import GameConfig
+
+        dialogue = self.game.dialogue_state.get_active()
+        if not dialogue:
+            return False
+
+        # Convert pixel coordinates to console tile coordinates
+        # Get context for window size
+        context = None
+        if self.renderer and hasattr(self.renderer, 'context'):
+            context = self.renderer.context
+        elif hasattr(self.game, 'context'):
+            context = self.game.context
+
+        # Get window dimensions
+        if context and hasattr(context, 'sdl_window'):
+            window_w, window_h = context.sdl_window.size
+        else:
+            window_w, window_h = (800, 600)
+
+        # Simple conversion: pixels / (window_size / console_size)
+        pixels_per_tile_x = window_w / GameConfig.SCREEN_WIDTH  # 80
+        pixels_per_tile_y = window_h / GameConfig.SCREEN_HEIGHT  # 50
+
+        tile_x = int(event.position.x / pixels_per_tile_x)
+        tile_y = int(event.position.y / pixels_per_tile_y)
+
+        # Clamp to valid range
+        tile_x = max(0, min(GameConfig.SCREEN_WIDTH - 1, tile_x))
+        tile_y = max(0, min(GameConfig.SCREEN_HEIGHT - 1, tile_y))
+
+        # Ask the dialogue renderer which option (if any) was clicked
+        # This is the single source of truth - no duplicated calculations!
+        option_index = UnifiedRenderer.get_option_at_click(self.game.dialogue_state, tile_x, tile_y)
+
+        # Determine action based on which option was clicked
+        if option_index is not None:
+            # Clicked on a specific option - use that option's key
+            action = DialogueInputHandler.handle_input(dialogue, dialogue.valid_keys[option_index])
+        else:
+            # Clicked anywhere else - use first/default option (allows click-to-dismiss)
+            action = DialogueInputHandler.handle_input(dialogue, dialogue.valid_keys[0])
+
+        # Process the action (same logic as keyboard input)
+        if action == "confirm":
+            self._handle_dialogue_confirm()
+        elif action in ["cancel", "dismiss"]:
+            should_continue = self._handle_dialogue_dismiss()
+            if not should_continue:
+                # This returns via game state, but we return True here
+                # because the event was handled
+                pass
+        elif action == "dont_show_again":
+            self._handle_dialogue_dont_show_again()
+
+        return True  # Event was handled
+
+    def _handle_inventory_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
+        """Handle mouse motion in inventory - update selection on hover.
+
+        Uses renderer's single source of truth for coordinate mapping.
+        """
+        from game_rendering_ui import UIRenderer
+
+        # Convert pixel coordinates to console tile coordinates
+        # Try to get context from renderer first, then game
+        context = None
+        if self.renderer and hasattr(self.renderer, 'context'):
+            context = self.renderer.context
+        elif hasattr(self.game, 'context'):
+            context = self.game.context
+        if context and hasattr(context, 'sdl_window'):
+            window_w, window_h = context.sdl_window.size
+        else:
+            window_w, window_h = (800, 600)
+
+        _, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            event.position.x, event.position.y, window_w, window_h
+        )
+
+        # Use renderer's click detection (single source of truth)
+        selection_index = UIRenderer.get_inventory_item_at_click(tile_y)
+
+        if selection_index is not None:
+            # Update selection to hovered item
+            self.game.inventory_selection = selection_index
+            return True
+
+        return False
+
+    def _handle_inventory_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """Handle left click in inventory - select and use item.
+
+        Uses renderer's single source of truth for coordinate mapping.
+        """
+        from game_rendering_ui import UIRenderer
+
+        # Convert pixel coordinates to console tile coordinates
+        # Try to get context from renderer first, then game
+        context = None
+        if self.renderer and hasattr(self.renderer, 'context'):
+            context = self.renderer.context
+        elif hasattr(self.game, 'context'):
+            context = self.game.context
+        if context and hasattr(context, 'sdl_window'):
+            window_w, window_h = context.sdl_window.size
+        else:
+            window_w, window_h = (800, 600)
+
+        _, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            event.position.x, event.position.y, window_w, window_h
+        )
+
+        # Use renderer's click detection (single source of truth)
+        selection_index = UIRenderer.get_inventory_item_at_click(tile_y)
+
+        if selection_index is not None:
+            # Select and use the clicked item (same as pressing Enter)
+            self.game.inventory_selection = selection_index
+            self._use_selected_inventory_item()
+            return True
+
+        return False
+
+    def _handle_inventory_mouse_wheel(self, event: tcod.event.MouseWheel) -> bool:
+        """Handle mouse wheel in inventory - scroll items."""
+        # Scroll up/down based on wheel direction
+        if event.y > 0:
+            # Scroll up
+            self.game.inventory_scroll_offset = max(0, self.game.inventory_scroll_offset - 1)
+            return True
+        elif event.y < 0:
+            # Scroll down
+            # Maximum scroll is total_lines - visible_height
+            # We'll let the scroll manager handle clamping in the render function
+            self.game.inventory_scroll_offset += 1
+            return True
+
+        return False
+
+    def _handle_lore_viewer_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
+        """Handle mouse motion in lore viewer - update selection.
+
+        In list mode, hovering over a fragment highlights it.
+        In reading mode, no hover effect.
+        """
+        if self.game.lore_viewer_mode != "list":
+            return False
+
+        # Fragment list starts at Y=4 (after header)
+        # Each fragment takes 3 lines (title, preview, spacer)
+
+        # Convert pixel coordinates to console tile coordinates
+        # Try to get context from renderer first, then game
+        context = None
+        if self.renderer and hasattr(self.renderer, 'context'):
+            context = self.renderer.context
+        elif hasattr(self.game, 'context'):
+            context = self.game.context
+        if context and hasattr(context, 'sdl_window'):
+            window_w, window_h = context.sdl_window.size
+        else:
+            window_w, window_h = (800, 600)
+
+        _, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            event.position.x, event.position.y, window_w, window_h
+        )
+
+        content_start_y = 4
+        if tile_y < content_start_y:
+            return False
+
+        # Calculate which fragment was hovered
+        relative_y = tile_y - content_start_y
+        fragment_index = relative_y // 3  # Each entry is 3 lines tall
+
+        discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
+        if 0 <= fragment_index < len(discovered_fragments):
+            self.game.lore_viewer_selection = fragment_index
+            return True
+
+        return False
+
+    def _handle_lore_viewer_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """Handle left click in lore viewer - select fragment or toggle mode."""
+
+        # Convert pixel coordinates to console tile coordinates
+        # Try to get context from renderer first, then game
+        context = None
+        if self.renderer and hasattr(self.renderer, 'context'):
+            context = self.renderer.context
+        elif hasattr(self.game, 'context'):
+            context = self.game.context
+        if context and hasattr(context, 'sdl_window'):
+            window_w, window_h = context.sdl_window.size
+        else:
+            window_w, window_h = (800, 600)
+
+        _, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            event.position.x, event.position.y, window_w, window_h
+        )
+
+        if self.game.lore_viewer_mode == "list":
+            # Fragment list starts at Y=4
+            content_start_y = 4
+
+            if tile_y < content_start_y:
+                return False
+
+            # Calculate which fragment was clicked
+            relative_y = tile_y - content_start_y
+            fragment_index = relative_y // 3  # Each entry is 3 lines tall
+
+            discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
+            if 0 <= fragment_index < len(discovered_fragments):
+                # Select this fragment
+                self.game.lore_viewer_selection = fragment_index
+                # Enter reading mode (same as pressing Enter)
+                self.game.lore_viewer_mode = "reading"
+                logging.debug(f"Input: Lore viewer left-click opening fragment {fragment_index}")
+                return True
+
+        elif self.game.lore_viewer_mode == "reading":
+            # Any click in reading mode returns to list view
+            self.game.lore_viewer_mode = "list"
+            logging.debug("Input: Lore viewer left-click returning to list mode")
+            return True
+
+        return False
+
+    def _handle_lore_viewer_mouse_wheel(self, event: tcod.event.MouseWheel) -> bool:
+        """Handle mouse wheel in lore viewer - scroll through fragments."""
+        if self.game.lore_viewer_mode != "list":
+            return False
+
+        discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
+        if not discovered_fragments:
+            return False
+
+        if event.y > 0:
+            # Scroll up (previous fragment)
+            self.game.lore_viewer_selection = max(0, self.game.lore_viewer_selection - 1)
+            return True
+        elif event.y < 0:
+            # Scroll down (next fragment)
+            max_index = len(discovered_fragments) - 1
+            self.game.lore_viewer_selection = min(max_index, self.game.lore_viewer_selection + 1)
+            return True
+
+        return False
