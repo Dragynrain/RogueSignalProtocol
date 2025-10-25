@@ -166,7 +166,8 @@ class GameRenderer:
             # Use UnifiedRenderer for all dialogue types
             dialogue = game.dialogue_state.get_active()
             if dialogue:
-                UnifiedRenderer.render(console, dialogue, game.dialogue_state)
+                UnifiedRenderer.render(console, dialogue, game.dialogue_state,
+                                     game.last_mouse_tile_x, game.last_mouse_tile_y)
 
         # For overlay screens (inventory, help, lore), we need to present in graphics mode too
         if should_use_graphics:
@@ -257,7 +258,8 @@ class GameRenderer:
                 # Use UnifiedRenderer for all dialogue types
                 dialogue = game.dialogue_state.get_active()
                 if dialogue:
-                    UnifiedRenderer.render(console, dialogue, game.dialogue_state)
+                    UnifiedRenderer.render(console, dialogue, game.dialogue_state,
+                                         game.last_mouse_tile_x, game.last_mouse_tile_y)
 
             # Convert console to texture and overlay on top of sprites
             console_texture = self.context.console_render.render(console)
@@ -282,7 +284,8 @@ class GameRenderer:
                 # Use UnifiedRenderer for all dialogue types
                 dialogue = game.dialogue_state.get_active()
                 if dialogue:
-                    UnifiedRenderer.render(console, dialogue, game.dialogue_state)
+                    UnifiedRenderer.render(console, dialogue, game.dialogue_state,
+                                         game.last_mouse_tile_x, game.last_mouse_tile_y)
 
 
 # Legacy alias for backward compatibility

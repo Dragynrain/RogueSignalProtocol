@@ -44,6 +44,7 @@ from typing import List, Tuple, Dict, Set, Optional
 
 from game_config import GameConfig
 from game_entities import Position
+from game_level_structure import create_noise_map, get_noise_value
 
 
 # ============================================================================
@@ -76,9 +77,11 @@ class TacticalGenerator:
     def place_shadow_areas(self, level: int, rooms: List[Tuple[int, int, int, int]],
                           shadow_zone_rooms: List[Tuple[int, int, int, int]]) -> None:
         """
-        Place shadow areas for stealth gameplay with wall-adjacent preference and shadow zones.
+        Place shadow areas for stealth gameplay using Perlin noise for organic patterns.
 
-        Shadows are placed using weighted distribution:
+        NEW: Uses Perlin noise to create natural-looking darkness zones!
+        Shadows are influenced by:
+        - Noise-based probability (organic shadow clusters)
         - Wall-adjacent positions (preferred for realistic lighting)
         - Interior positions (for larger shadow areas)
 
@@ -107,6 +110,17 @@ class TacticalGenerator:
 
         shadow_coverage = config['shadow_coverage']
 
+        # Create Perlin noise map for organic shadow distribution
+        noise_seed = level * 12345 + random.randint(0, 10000)
+        noise_map = create_noise_map(
+            width=GameConfig.MAP_WIDTH,
+            height=GameConfig.MAP_HEIGHT,
+            seed=noise_seed,
+            octaves=3,
+            scale=0.15  # Larger scale = bigger shadow clusters
+        )
+        logging.debug(f"Shadow Gen: Created Perlin noise map for organic shadow placement (seed={noise_seed})")
+
         wall_adjacent_weight = GameConfig._get_required('room_generation.shadow_placement_weights.wall_adjacent')
         interior_weight = GameConfig._get_required('room_generation.shadow_placement_weights.interior')
 
@@ -126,32 +140,93 @@ class TacticalGenerator:
             else:
                 shadows_in_room = min(target_shadow_tiles - placed_shadows, width * height // 3)
 
-            wall_adjacent_positions = self.get_wall_adjacent_positions(room)
-            interior_positions = self.get_interior_positions(room)
+            # Get candidate positions with noise values
+            wall_adjacent_positions = self._get_noise_weighted_positions(
+                self.get_wall_adjacent_positions(room), noise_map
+            )
+            interior_positions = self._get_noise_weighted_positions(
+                self.get_interior_positions(room), noise_map
+            )
 
             for _ in range(shadows_in_room):
+                # Use noise to bias selection toward "darker" areas
                 if random.random() < wall_adjacent_weight:
                     if wall_adjacent_positions:
-                        shadow_pos = random.choice(wall_adjacent_positions)
-                        wall_adjacent_positions.remove(shadow_pos)
+                        shadow_pos = self._select_by_noise_weight(wall_adjacent_positions)
+                        wall_adjacent_positions = [(pos, noise) for pos, noise in wall_adjacent_positions if pos != shadow_pos]
                     elif interior_positions:
-                        shadow_pos = random.choice(interior_positions)
-                        interior_positions.remove(shadow_pos)
+                        shadow_pos = self._select_by_noise_weight(interior_positions)
+                        interior_positions = [(pos, noise) for pos, noise in interior_positions if pos != shadow_pos]
                     else:
                         continue
                 else:
                     if interior_positions:
-                        shadow_pos = random.choice(interior_positions)
-                        interior_positions.remove(shadow_pos)
+                        shadow_pos = self._select_by_noise_weight(interior_positions)
+                        interior_positions = [(pos, noise) for pos, noise in interior_positions if pos != shadow_pos]
                     elif wall_adjacent_positions:
-                        shadow_pos = random.choice(wall_adjacent_positions)
-                        wall_adjacent_positions.remove(shadow_pos)
+                        shadow_pos = self._select_by_noise_weight(wall_adjacent_positions)
+                        wall_adjacent_positions = [(pos, noise) for pos, noise in wall_adjacent_positions if pos != shadow_pos]
                     else:
                         continue
 
                 if shadow_pos not in self.game_map.walls:
                     self.game_map.shadows.add(shadow_pos)
                     placed_shadows += 1
+
+        logging.debug(f"Shadow Gen: Placed {placed_shadows} shadows using noise-based organic distribution")
+
+    def _get_noise_weighted_positions(self, positions: List[Tuple[int, int]],
+                                      noise_map) -> List[Tuple[Tuple[int, int], float]]:
+        """
+        Add noise values to positions for weighted selection.
+
+        Args:
+            positions: List of (x, y) positions
+            noise_map: TCOD Noise instance
+
+        Returns:
+            List of ((x, y), noise_value) tuples
+        """
+        weighted = []
+        for pos in positions:
+            x, y = pos
+            noise_value = get_noise_value(noise_map, x, y, scale=0.15)
+            weighted.append((pos, noise_value))
+        return weighted
+
+    def _select_by_noise_weight(self, weighted_positions: List[Tuple[Tuple[int, int], float]]) -> Tuple[int, int]:
+        """
+        Select position biased by noise value (higher noise = more likely).
+
+        Converts noise from [-1, 1] to [0, 1] probability range.
+
+        Args:
+            weighted_positions: List of ((x, y), noise_value) tuples
+
+        Returns:
+            Selected (x, y) position
+        """
+        if not weighted_positions:
+            return None
+
+        # Normalize noise values to [0, 1] range and use as weights
+        normalized_weights = [(pos, (noise + 1.0) / 2.0) for pos, noise in weighted_positions]
+
+        # Weighted random selection
+        total_weight = sum(weight for _, weight in normalized_weights)
+        if total_weight <= 0:
+            # Fallback to uniform random if all weights are 0
+            return random.choice([pos for pos, _ in weighted_positions])
+
+        rand = random.random() * total_weight
+        cumulative = 0.0
+        for pos, weight in normalized_weights:
+            cumulative += weight
+            if rand <= cumulative:
+                return pos
+
+        # Fallback to last position
+        return normalized_weights[-1][0]
 
     def get_wall_adjacent_positions(self, room: Tuple[int, int, int, int]) -> List[Tuple[int, int]]:
         """

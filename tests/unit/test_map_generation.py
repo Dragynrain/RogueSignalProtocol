@@ -392,6 +392,32 @@ class TestMapIntegration(TestMapGeneration):
         # Should be different (very high probability)
         assert walls_1 != walls_2
 
+    def test_bsp_level_generation_produces_valid_map(self):
+        """BSP-based level generation creates playable map with rooms and corridors."""
+        # Create level generator with BSP enabled
+        game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
+        bsp_generator = LevelGenerator(game_map, use_bsp=True)
+
+        # Generate a real level using BSP
+        bsp_generator.generate_level(level=1, seed=12345)
+
+        # Map should have walls (border + interior)
+        assert len(game_map.walls) > 0
+
+        # Map should have walkable floor tiles (not all walls)
+        total_tiles = GameConfig.MAP_WIDTH * GameConfig.MAP_HEIGHT
+        assert len(game_map.walls) < total_tiles
+
+        # Should have at least some rooms
+        assert len(bsp_generator.last_generated_rooms) > 0
+
+        # Should have corridor tiles
+        assert len(bsp_generator.corridor_tiles) > 0
+
+        # Verify BSP room generator was used
+        from game_level_structure import BSPRoomGenerator
+        assert isinstance(bsp_generator.room_generator, BSPRoomGenerator)
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

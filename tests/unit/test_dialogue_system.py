@@ -381,7 +381,9 @@ class TestFactoryFunctions:
         dialogue = create_death_dialogue()
 
         assert dialogue.title == "CONSCIOUSNESS PURGED"
-        assert "purged" in dialogue.message.lower()
+        # Message is randomized from narrative content - just verify it exists and has content
+        assert len(dialogue.message) > 0
+        assert dialogue.message  # Non-empty string
         assert len(dialogue.options) == 1
         assert tcod.event.KeySym.SPACE in dialogue.valid_keys
         assert dialogue.priority == 10  # Critical

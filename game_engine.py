@@ -143,6 +143,10 @@ class GameEngine:
         # Environmental narrative system
         self.narrative_manager = NarrativeManager()
 
+        # Mouse position tracking for hover effects
+        self.last_mouse_tile_x: Optional[int] = None
+        self.last_mouse_tile_y: Optional[int] = None
+
         # Initialize ExploitSystem after game engine is mostly constructed
         self.exploit_system = self._exploit_system_param or ExploitSystem(self)
 

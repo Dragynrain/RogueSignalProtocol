@@ -281,6 +281,7 @@ class TurnProcessor:
                         SaveGameManager.delete_save()
                         self.message_log.add_message("Save data purged")
                         self.game_state.game_over = True
+
                         logging.debug(f"Turn: Player death from virus")
                         return  # Exit early if player dies
 

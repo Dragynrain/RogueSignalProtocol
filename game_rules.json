@@ -240,8 +240,8 @@
     },
     "targeting": {
       "prediction_bright": [255, 255, 50],
-      "prediction_medium": [240, 240, 30],
-      "prediction_dim": [220, 220, 20],
+      "prediction_medium": [180, 180, 35],
+      "prediction_dim": [120, 120, 25],
       "range_overlay": [40, 40, 40],
       "area_overlay": [60, 60, 20],
       "corner_bracket": [255, 0, 0]

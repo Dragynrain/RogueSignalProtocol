@@ -21,7 +21,7 @@ from game_config import GameConfig, GameBalance
 
 class PathfindingHelper:
     """
-    Centralized pathfinding using TCOD A*.
+    Centralized pathfinding using TCOD A* and Dijkstra maps.
 
     Single source of truth for all enemy pathfinding operations.
     Used by the movement queue system to calculate paths to targets.
@@ -29,6 +29,11 @@ class PathfindingHelper:
     This helper ensures consistent pathfinding behavior across all enemies
     and movement types (PATROL, SEEK, HOSTILE). Includes enemy collision
     avoidance and reasonable path length validation.
+
+    NEW: Dijkstra map support for advanced AI behaviors:
+    - Flee: Move away from dangerous positions
+    - Coordinate: Position relative to other enemies
+    - Ambush: Find optimal attack positions
     """
 
     @staticmethod
@@ -84,6 +89,139 @@ class PathfindingHelper:
         except Exception as e:
             logging.warning(f"Pathfinding failed from {start} to {goal}: {e}")
             return None
+
+    @staticmethod
+    def create_dijkstra_map(
+        goals: List[Position],
+        game_map,
+        game_engine,
+        moving_enemy,
+        max_distance: int = 100
+    ) -> np.ndarray:
+        """
+        Create a Dijkstra map showing distance to nearest goal from any position.
+
+        A Dijkstra map is a 2D array where each cell contains the cost to reach
+        the nearest goal. This enables advanced AI behaviors:
+        - Chase: Move to cells with LOWER values (closer to goals)
+        - Flee: Move to cells with HIGHER values (further from goals)
+        - Coordinate: Multiple enemies can use the same map
+
+        Args:
+            goals: List of goal positions (e.g., player position for chase,
+                   enemy positions for flee)
+            game_map: GameMap for walkability
+            game_engine: GameEngine for enemy positions
+            moving_enemy: Enemy using this map (for collision avoidance)
+            max_distance: Maximum distance to compute (higher = more expensive)
+
+        Returns:
+            2D numpy array [y, x] with distance values (numpy.inf for unreachable)
+        """
+        # Create cost map with enemy collision
+        cost_map = PathfindingHelper._create_cost_map(game_map, game_engine, moving_enemy)
+
+        # Create graph for pathfinding
+        graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+        pathfinder = tcod.path.Pathfinder(graph)
+
+        # Add all goals as roots
+        for goal in goals:
+            pathfinder.add_root((goal.y, goal.x))  # TCOD uses (y, x)
+
+        # Return the distance map
+        # pathfinder.distance is a 2D array with distances from roots
+        return pathfinder.distance
+
+    @staticmethod
+    def get_flee_move(
+        current_pos: Position,
+        dijkstra_map: np.ndarray,
+        game_map
+    ) -> Optional[Tuple[int, int]]:
+        """
+        Get best move to FLEE from threats using Dijkstra map.
+
+        Finds the adjacent cell with the HIGHEST distance value (furthest from threats).
+
+        Args:
+            current_pos: Current position of the fleeing enemy
+            dijkstra_map: Dijkstra map with distances to threats
+            game_map: GameMap for boundary checking
+
+        Returns:
+            Tuple (dx, dy) for the best flee direction, or None if no valid move
+        """
+        best_move = None
+        best_distance = dijkstra_map[current_pos.y, current_pos.x]  # [y, x] indexing
+
+        # Check all 8 adjacent cells
+        for dx, dy in [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]:
+            new_pos = Position(current_pos.x + dx, current_pos.y + dy)
+
+            # Validate position
+            if not new_pos.is_valid(game_map.width, game_map.height):
+                continue
+            if game_map.is_wall(new_pos):
+                continue
+
+            # Get distance at this position
+            distance = dijkstra_map[new_pos.y, new_pos.x]
+
+            # We want HIGHER distance (flee) - skip unreachable cells
+            if distance == np.inf:
+                continue
+
+            if distance > best_distance:
+                best_distance = distance
+                best_move = (dx, dy)
+
+        return best_move
+
+    @staticmethod
+    def get_chase_move(
+        current_pos: Position,
+        dijkstra_map: np.ndarray,
+        game_map
+    ) -> Optional[Tuple[int, int]]:
+        """
+        Get best move to CHASE target using Dijkstra map.
+
+        Finds the adjacent cell with the LOWEST distance value (closest to target).
+
+        Args:
+            current_pos: Current position of the chasing enemy
+            dijkstra_map: Dijkstra map with distances to target
+            game_map: GameMap for boundary checking
+
+        Returns:
+            Tuple (dx, dy) for the best chase direction, or None if no valid move
+        """
+        best_move = None
+        best_distance = dijkstra_map[current_pos.y, current_pos.x]  # [y, x] indexing
+
+        # Check all 8 adjacent cells
+        for dx, dy in [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]:
+            new_pos = Position(current_pos.x + dx, current_pos.y + dy)
+
+            # Validate position
+            if not new_pos.is_valid(game_map.width, game_map.height):
+                continue
+            if game_map.is_wall(new_pos):
+                continue
+
+            # Get distance at this position
+            distance = dijkstra_map[new_pos.y, new_pos.x]
+
+            # We want LOWER distance (chase) - skip unreachable cells
+            if distance == np.inf:
+                continue
+
+            if distance < best_distance:
+                best_distance = distance
+                best_move = (dx, dy)
+
+        return best_move
 
     @staticmethod
     def _create_cost_map(game_map, game_engine, moving_enemy):
@@ -265,8 +403,7 @@ class Player:
 
         # Enemies in shadows only visible when adjacent (shadows block vision coming IN)
         if game_map.is_shadow(enemy_target.position) and distance > 1:
-            enemy_id = getattr(enemy_target, 'char', 'enemy')
-            logging.debug(f"Vision: Player cannot see {enemy_id}@{enemy_target.position} (in shadow, distance={distance:.1f})")
+            # Don't log this - it gets called every frame during rendering
             return False
 
         # Shadows do NOT block vision going OUT - player standing in shadow has normal vision
@@ -688,6 +825,12 @@ class Enemy:
         if movement_type == EnemyMovement.STATIC:
             return
 
+        # PRIORITY 1: Flee behavior for low-health enemies (unless Admin)
+        if self._should_flee(player, game_map) and self.type != 'admin':
+            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): FLEEING (cpu={self.cpu}/{self.type_data.max_cpu})")
+            self._fill_flee_moves(game_map, player, game_engine)
+            return
+
         # Random movement - fill with random moves (but only if not hostile/admin)
         # Hostile and admin enemies always use pathfinding, regardless of base movement type
         if movement_type == EnemyMovement.RANDOM and self.type != 'admin' and self.state != EnemyState.HOSTILE:
@@ -948,6 +1091,98 @@ class Enemy:
                 return next_pos
 
         return None
+
+    def _should_flee(self, player, game_map) -> bool:
+        """
+        Determine if enemy should flee from player.
+
+        Enemies flee when:
+        1. Health is below 30% of maximum
+        2. Player is visible OR hostile state (knows player is nearby)
+        3. Not a static enemy (can't flee if can't move)
+
+        Args:
+            player: Player instance
+            game_map: GameMap for visibility checks
+
+        Returns:
+            True if enemy should flee, False otherwise
+        """
+        # Don't flee if static
+        if self.get_movement_type() == EnemyMovement.STATIC:
+            return False
+
+        # Check health threshold (30% or below)
+        # Safety check for tests where max_cpu might be a mock
+        try:
+            max_cpu = int(self.type_data.max_cpu)
+            if max_cpu <= 0:
+                return False
+            health_percent = self.cpu / max_cpu
+            if health_percent > 0.3:
+                return False
+        except (TypeError, ValueError, AttributeError):
+            # In tests or invalid state, don't flee
+            return False
+
+        # Only flee if we can see player or are hostile (know player is nearby)
+        if self.can_see_player(player, game_map) or self.state == EnemyState.HOSTILE:
+            return True
+
+        return False
+
+    def _fill_flee_moves(self, game_map, player, game_engine):
+        """
+        Fill move queue with flee moves using Dijkstra maps.
+
+        Uses TCOD Dijkstra maps to find the best escape route away from player.
+        Each move in the queue maximizes distance from player.
+
+        Args:
+            game_map: GameMap for pathfinding
+            player: Player to flee from
+            game_engine: GameEngine for enemy collision avoidance
+        """
+        # Create Dijkstra map with player as threat
+        dijkstra_map = PathfindingHelper.create_dijkstra_map(
+            goals=[player.position],
+            game_map=game_map,
+            game_engine=game_engine,
+            moving_enemy=self
+        )
+
+        # Fill queue with up to 3 flee moves
+        current_pos = self.move_queue[-1] if self.move_queue else self.position
+
+        while len(self.move_queue) < 3:
+            # Get best flee move from current position
+            flee_direction = PathfindingHelper.get_flee_move(
+                current_pos=current_pos,
+                dijkstra_map=dijkstra_map,
+                game_map=game_map
+            )
+
+            if flee_direction is None:
+                # No valid flee move, stop filling
+                logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): No valid flee move from ({current_pos.x},{current_pos.y})")
+                break
+
+            # Calculate next position
+            dx, dy = flee_direction
+            next_pos = Position(current_pos.x + dx, current_pos.y + dy)
+
+            # Validate move
+            if not self._is_move_valid_from(next_pos, current_pos, game_map, player, game_engine):
+                logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): Flee move to ({next_pos.x},{next_pos.y}) invalid")
+                break
+
+            # Add to queue
+            self.move_queue.append(next_pos)
+            current_pos = next_pos
+            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): Added flee move to ({next_pos.x},{next_pos.y})")
+
+        if len(self.move_queue) > 0:
+            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): Flee queue filled with {len(self.move_queue)} moves")
 
     def _get_current_target(self, player, game_map):
         """Get the current target position based on enemy state and movement type."""

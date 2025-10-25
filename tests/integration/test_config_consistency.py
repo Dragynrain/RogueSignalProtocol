@@ -23,7 +23,7 @@ class TestConfigRedundancy:
         """Load all config files."""
         self.game_config = self._load_json('game_rules.json')
         self.game_data = self._load_json('game_content.json')
-        self.story_content = self._load_json('story_content.json')
+        self.story_content = self._load_json('narrative_content.json')
 
     def _load_json(self, filename):
         """Load a JSON file from project root."""

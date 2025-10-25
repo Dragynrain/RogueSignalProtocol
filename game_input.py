@@ -10,6 +10,7 @@ import logging
 import tcod
 import tcod.event
 from typing import Optional, Tuple
+from game_config import GameConfig
 from game_data import GameData
 from game_inventory import CodeHack, ExploitItem
 from game_ui import UniversalInputHandler
@@ -602,6 +603,13 @@ class InputHandler:
         # Handlers will convert to appropriate coordinate system (console or sprite grid)
         pixel_x = event.position.x
         pixel_y = event.position.y
+
+        # Convert to console tile coordinates and store for hover effects
+        window_width, window_height = self._get_window_dimensions()
+        tile_x = pixel_x * GameConfig.SCREEN_WIDTH // window_width
+        tile_y = pixel_y * GameConfig.SCREEN_HEIGHT // window_height
+        self.game.last_mouse_tile_x = tile_x
+        self.game.last_mouse_tile_y = tile_y
 
         # Dispatch to state-specific handlers
         # Check dialogue FIRST (highest priority overlay)

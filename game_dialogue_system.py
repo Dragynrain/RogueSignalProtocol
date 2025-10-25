@@ -206,7 +206,7 @@ class UnifiedRenderer:
     """
 
     @staticmethod
-    def render(console: tcod.console.Console, dialogue: DialogueBox, dialogue_state: Optional[DialogueState] = None) -> None:
+    def render(console: tcod.console.Console, dialogue: DialogueBox, dialogue_state: Optional[DialogueState] = None, mouse_tile_x: Optional[int] = None, mouse_tile_y: Optional[int] = None) -> None:
         """
         Render a dialogue box on the console.
 
@@ -218,6 +218,8 @@ class UnifiedRenderer:
             dialogue: DialogueBox to render
             dialogue_state: Optional DialogueState instance to store coordinates for click detection.
                            If None, coordinates won't be stored (useful for testing).
+            mouse_tile_x: Optional mouse X coordinate for hover highlighting
+            mouse_tile_y: Optional mouse Y coordinate for hover highlighting
         """
         # Calculate box dimensions
         # Use 70 characters for dialogue boxes to provide more horizontal space
@@ -262,12 +264,36 @@ class UnifiedRenderer:
                 render_char_safe(console, box_x + 2, message_y + i, line,
                                fg=message_color, bg=bg_color)
 
-        # Render options (centered at bottom)
+        # Render options (centered at bottom) with hover highlighting
         options_y = box_y + box_height - 2
         options_text = "  ".join(dialogue.options)
         options_x = box_x + (box_width - len(options_text)) // 2
-        render_char_safe(console, options_x, options_y, options_text,
-                        fg=Colors.WHITE, bg=bg_color)
+
+        # Determine which option is being hovered (if any)
+        hovered_option = None
+        if mouse_tile_x is not None and mouse_tile_y is not None and mouse_tile_y == options_y:
+            # Use same logic as get_option_at_click to determine hovered option
+            if len(dialogue.options) == 1:
+                if options_x <= mouse_tile_x < options_x + len(options_text):
+                    hovered_option = 0
+            elif len(dialogue.options) >= 2:
+                mid_x = options_x + len(options_text) // 2
+                if options_x <= mouse_tile_x < options_x + len(options_text):
+                    hovered_option = 0 if mouse_tile_x < mid_x else 1
+
+        # Render each option individually with hover highlighting
+        current_x = options_x
+        for i, option in enumerate(dialogue.options):
+            # Highlight if hovered
+            if hovered_option == i:
+                option_fg = Colors.YELLOW
+                option_bg = (40, 40, 40)  # Dark gray highlight
+            else:
+                option_fg = Colors.WHITE
+                option_bg = bg_color
+
+            render_char_safe(console, current_x, options_y, option, fg=option_fg, bg=option_bg)
+            current_x += len(option) + 2  # +2 for the "  " separator
 
         # CRITICAL: Explicitly set alpha channel to 255 (opaque)
         # bg_blend=BKGND_SET only sets RGB, not alpha channel.
