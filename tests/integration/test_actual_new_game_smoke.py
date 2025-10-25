@@ -30,7 +30,6 @@ from game_input import InputHandler
 class TestActualNewGameSmoke:
     """TRUE smoke test - tests runtime code paths that unit tests miss."""
 
-    @pytest.mark.skip(reason="Menu flow test needs more work - use mouse coordinate test instead")
     def test_new_game_flow_with_rendering(self):
         """
         Simulate the actual New Game flow:
@@ -62,22 +61,32 @@ class TestActualNewGameSmoke:
 
             # Simulate pressing Enter to start new game
             # This should trigger game initialization
-            with patch('game_save.SaveGameManager.check_save_exists', return_value=False):
+            with patch('game_save.SaveGameManager.save_exists', return_value=False):
                 # No save exists, so new game should start directly
-                result = menu.handle_input(tcod.event.KeySym.RETURN)
+                # Create a proper KeyDown event
+                key_event = tcod.event.KeyDown(
+                    scancode=tcod.event.Scancode.RETURN,
+                    sym=tcod.event.KeySym.RETURN,
+                    mod=tcod.event.Modifier.NONE
+                )
+                result = menu.handle_input(key_event)
 
-                # Menu should return "new_game" action
-                assert result == "new_game" or result == "", "New Game should be triggered"
+                # Menu should return action to proceed (either "new_game" or "continue" when no save exists)
+                assert result in ("new_game", "continue", ""), f"Expected game start action, got: {result}"
 
             # Now create the game engine (this happens after menu closes)
             engine = GameEngine(settings=settings, load_save=False)
 
             # Simulate several frames of rendering with mouse events
             # This is where the GameConfig errors would occur
-            mock_window_width = 1280
-            mock_window_height = 800
+            # Mock the context to provide window dimensions
+            mock_context = Mock()
+            mock_sdl_window = Mock()
+            mock_sdl_window.size = (1280, 800)
+            mock_context.sdl_window = mock_sdl_window
+            engine.context = mock_context
 
-            input_handler = InputHandler(engine, mock_window_width, mock_window_height)
+            input_handler = InputHandler(engine)
 
             for frame in range(10):
                 # Create mock mouse motion event
@@ -106,7 +115,6 @@ class TestActualNewGameSmoke:
             assert len(engine.enemies) > 0
             assert len(engine.game_map.walls) > 0
 
-    @pytest.mark.skip(reason="Save deletion test needs more work - use mouse coordinate test instead")
     def test_new_game_with_save_deletion(self):
         """
         Test New Game flow when save file exists and must be deleted.
@@ -123,19 +131,20 @@ class TestActualNewGameSmoke:
             menu = MainMenu(settings)
 
             # Simulate save exists
-            with patch('game_save.SaveGameManager.check_save_exists', return_value=True):
+            with patch('game_save.SaveGameManager.save_exists', return_value=True):
                 # Select "New Game"
                 menu.selected_option = 0
 
                 # Press Enter - should show dialogue
-                result = menu.handle_input(tcod.event.KeySym.RETURN)
+                key_event = tcod.event.KeyDown(
+                    scancode=tcod.event.Scancode.RETURN,
+                    sym=tcod.event.KeySym.RETURN,
+                    mod=tcod.event.Modifier.NONE
+                )
+                result = menu.handle_input(key_event)
 
-                # First press should show confirmation dialogue (returns empty string)
-                # In real game, this would show a dialogue overlay
-
-                # Simulate clicking "Yes" to delete save
-                # (In real code, this goes through dialogue system)
-                # For this test, we just verify the flow doesn't crash
+                # First press should show confirmation dialogue
+                # The menu will handle this and return appropriate action
 
             # Create engine (simulating confirmed new game)
             with patch('game_save.SaveGameManager.delete_save'):
