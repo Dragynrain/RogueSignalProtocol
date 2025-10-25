@@ -60,7 +60,6 @@ class TestNewGameSmokeTests:
         # Validate level generator is properly initialized
         assert isinstance(engine.level_generator.room_generator, RoomGenerator)
 
-    @pytest.mark.skip(reason="BSP generation has non-determinism issues - disabled for now")
     def test_new_game_with_bsp_generation(self):
         """Test New Game explicitly with BSP generation enabled."""
         settings = GameSettings()
@@ -147,12 +146,30 @@ class TestNewGameSmokeTests:
 
         This validates RNG seeding works correctly for both traditional
         and BSP generation.
-
-        NOTE: GameEngine uses game_state.dungeon_seed which is set during init.
-        We cannot control the seed directly without refactoring, so this test
-        is skipped for now. The determinism is tested at lower levels.
         """
-        pytest.skip("Seed control requires GameStateManager refactoring")
+        from game_state import GameStateManager
+
+        # Create two games with same seed
+        state_manager1 = GameStateManager()
+        state_manager1.dungeon_seed = 12345
+        engine1 = GameEngine(settings=GameSettings(), game_state_manager=state_manager1)
+
+        state_manager2 = GameStateManager()
+        state_manager2.dungeon_seed = 12345
+        engine2 = GameEngine(settings=GameSettings(), game_state_manager=state_manager2)
+
+        # Verify identical map generation
+        assert engine1.game_map.walls == engine2.game_map.walls
+        assert len(engine1.game_map.walls) > 0  # Ensure maps were generated
+
+        # Verify identical enemy spawning
+        assert len(engine1.enemies) == len(engine2.enemies)
+        assert len(engine1.enemies) > 0  # Ensure enemies spawned
+
+        # Verify enemy positions match (same seed = same random placement)
+        enemy_positions_1 = sorted([(e.position.x, e.position.y) for e in engine1.enemies])
+        enemy_positions_2 = sorted([(e.position.x, e.position.y) for e in engine2.enemies])
+        assert enemy_positions_1 == enemy_positions_2
 
     def test_new_game_different_seeds_produce_variation(self):
         """Test that different seeds produce different maps."""
