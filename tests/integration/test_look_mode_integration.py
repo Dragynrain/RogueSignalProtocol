@@ -471,6 +471,10 @@ class TestLookModeWorkflow:
         game = GameEngine(load_save=False)
         renderer = GlyphsMapRenderer(settings=game.settings)
 
+        # Position player in center of map so camera has room to scroll
+        game.player.position.x = 25
+        game.player.position.y = 25
+
         # Enter look mode
         game.look_mode = True
         game.look_cursor_position = Position(game.player.x, game.player.y)

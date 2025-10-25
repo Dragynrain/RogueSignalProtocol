@@ -566,7 +566,14 @@ class GameSession:
         fallback = Position(GameConfig.MAP_WIDTH - 10, GameConfig.MAP_HEIGHT - 10)
         if self.game_engine.game_map.is_valid_position(fallback):
             return fallback
-        return Position(40, 40)
+
+        # Check hard-coded fallback before returning
+        last_resort = Position(40, 40)
+        if self.game_engine.game_map.is_valid_position(last_resort):
+            return last_resort
+
+        # No valid position found - admin won't spawn
+        return None
 
     def _delete_save_on_death(self):
         """

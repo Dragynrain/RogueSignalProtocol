@@ -375,6 +375,8 @@ class InputHandler:
         # Movement keys - use shared mapping to avoid duplication
         if event.sym in InputMappings.MOVEMENT_MAP:
             dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
+            # Clear mouse hover when using keyboard movement
+            self.game.mouse_hover_world_pos = None
             self.game.move_player(dx, dy)
         
         # Wait/rest
