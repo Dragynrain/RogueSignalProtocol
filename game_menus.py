@@ -53,19 +53,32 @@ class MainMenu(BaseMenu):
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
+        self.has_active_game = False  # Flag to track if there's an unsaved game in memory
 
         # Stored coordinates for warning dialog click detection
         self.warning_option_y = None
         self.warning_option_0_x_range = None  # (start_x, end_x) for "Yes, Delete"
         self.warning_option_1_x_range = None  # (start_x, end_x) for "No, Go Back"
     
-    def refresh_options(self, show_continue: bool = True) -> None:
-        """Refresh menu options. Set show_continue=False when accessed from mid-game."""
+    def refresh_options(self, show_continue: bool = True, active_game=None) -> None:
+        """
+        Refresh menu options.
+
+        Args:
+            show_continue: Set False when accessed from mid-game
+            active_game: If provided, indicates there's an active game that will be saved on exit
+        """
+        # Track if there's an active game in memory
+        self.has_active_game = active_game is not None
+
+        # Determine Exit button text based on whether there's a game to save
+        exit_text = "Save and Exit" if self.has_active_game else "Exit"
+
         if show_continue and SaveGameManager.save_exists():
-            self.options = ["Continue Game", "New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", "Exit"]
+            self.options = ["Continue Game", "New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", exit_text]
             self.mid_game_mode = False
         else:
-            self.options = ["New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", "Exit"]
+            self.options = ["New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", exit_text]
             self.mid_game_mode = not show_continue  # True when accessed from mid-game
         # Reset selection to prevent index out of bounds
         self.selected_option = 0
@@ -358,7 +371,7 @@ class MainMenu(BaseMenu):
         # Handle navigation using universal handler
         if UniversalInputHandler.handle_list_navigation(self, event, len(self.options)):
             return ""
-        
+
         # Handle selection
         if UniversalInputHandler.is_confirm_key(event):
             option = self.options[self.selected_option]
@@ -378,10 +391,10 @@ class MainMenu(BaseMenu):
                 return "lore"
             elif option == "Graphics Preview":
                 return "graphics_preview"
-            elif option == "Exit":
+            elif "Exit" in option:  # Matches both "Exit" and "Save and Exit"
                 return "exit"
         # ESC disabled on main menu to prevent accidental exit
-        
+
         return ""
     
     def _handle_warning_input(self, event) -> str:

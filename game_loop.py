@@ -133,7 +133,7 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
         active_game: If provided, this is a game in progress that should be resumed on "continue"
     """
     main_menu = menus['main_menu']
-    main_menu.refresh_options(show_continue=True)
+    main_menu.refresh_options(show_continue=True, active_game=active_game)
     current_menu = main_menu
 
     # Create sound manager if not provided
@@ -239,6 +239,9 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                 action = current_menu.handle_mouse_click(event)
 
                 if action == "exit":
+                    # Save active game before exiting if one exists
+                    if active_game is not None:
+                        active_game.auto_save()
                     menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True
                 elif action == "settings":
@@ -337,8 +340,11 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
             elif event.type == "KEYDOWN":
                 action = current_menu.handle_input(event)
-                
+
                 if action == "exit":
+                    # Save active game before exiting if one exists
+                    if active_game is not None:
+                        active_game.auto_save()
                     menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True
                 elif action == "settings":
