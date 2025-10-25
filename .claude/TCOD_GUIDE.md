@@ -85,7 +85,135 @@ TCOD uses numpy arrays with standard row-major (C) order:
 
 ---
 
-## Part 2: Console Transparency (Graphics Mode)
+## Part 2: Mouse Coordinate Conversion
+
+### ⚠️ Why We Can't Use `context.convert_event()`
+
+**IMPORTANT**: This game uses TCOD's official **`tcod.render.SDLConsoleRender`** API to composite multiple layers (sprites + console UI). This pattern requires bypassing `context.present()` and directly using SDL rendering. Since `context.convert_event()` **requires `context.present()` to establish coordinate transformation state**, it cannot be used with manual SDL rendering.
+
+Therefore, we use **manual pixel-to-tile conversion** for all mouse handling.
+
+**Technical Details:**
+- `context.convert_event()` depends on `lib.TCOD_ctx.engine` internal state
+- This state is ONLY updated when `context.present()` is called
+- The game uses `tcod.render.SDLConsoleRender` for multi-layer compositing:
+  - Layer 1: High-resolution sprite textures (backgrounds, gameplay sprites)
+  - Layer 2: Console texture with transparency (UI overlays)
+  - Final: `sdl_renderer.present()` (not `context.present()`)
+- This is the **official TCOD pattern** for mixing SDL graphics with console rendering
+
+**Why Multi-Layer Rendering:**
+- Graphics mode uses high-res PNG backgrounds (1920x1080+)
+- Sprites render at viewport-scaled resolution (e.g., 97x80 pixels per tile)
+- Console provides text/UI overlay with alpha transparency
+- Can't use `context.present()` because it clears SDL content before rendering
+
+### Manual Conversion (Required for This Game)
+
+**For all console-based UI** (menus, dialogues, inventory, help screens):
+
+```python
+# In event loops (game_loop.py)
+for event in tcod.event.wait():
+    # Manually convert pixel coordinates to tile coordinates
+    if hasattr(event, 'position') and event.position:
+        window_w, window_h = context.sdl_window.size
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            event.position.x, event.position.y, window_w, window_h
+        )
+        # Create new event with tile coordinates
+        import copy
+        event = copy.copy(event)
+        event.position = type(event.position)(tile_x, tile_y)
+
+# In handlers (game_input.py, game_menus.py)
+def handle_mouse_click(self, event):
+    if not hasattr(event, 'position') or event.position is None:
+        return False
+    tile_x, tile_y = event.position  # Already converted to console coords in event loop
+    # Use tile_x, tile_y for console-based hit detection
+```
+
+**Why Manual Conversion:**
+- Using `tcod.render.SDLConsoleRender` for multi-layer compositing
+- Bypasses `context.present()` (which would clear sprite layers)
+- `context.convert_event()` requires `context.present()` to work
+- Manual conversion is simple: `pixel / (window_size / console_size) = tile`
+
+**How It Works:**
+- `event.position` initially contains pixel coordinates from SDL
+- We manually convert to tile coordinates using window dimensions
+- Copy the event and replace position with tile coordinates
+- Handlers receive events with tile coordinates in `.position`
+
+### Custom Conversion for Graphics Mode Gameplay
+
+**For world coordinates in graphics mode only:**
+
+```python
+def _mouse_tile_to_world(self, event):
+    """Convert mouse event to world coordinates."""
+    graphics_mode = self.game.settings.graphics_mode
+
+    if graphics_mode == "graphics":
+        # Graphics mode: Use sprite grid conversion
+        tile_x, tile_y = CoordinateHelpers.pixel_to_sprite_grid(
+            event.position.x, event.position.y,
+            self.renderer.tile_manager.tile_width,
+            self.renderer.tile_manager.tile_height
+        )
+    else:
+        # Glyph mode: Manually convert pixel coordinates
+        window_w, window_h = self._get_window_dimensions()
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            event.position.x, event.position.y, window_w, window_h
+        )
+
+    # Then convert to world coordinates with camera offset
+    viewport_x = tile_x
+    viewport_y = tile_y - status_bar_height
+    world_x = viewport_x + camera_x
+    world_y = viewport_y + camera_y
+    return Position(world_x, world_y)
+```
+
+**When to use custom conversion:**
+- Gameplay mouse clicks (move player, targeting, look mode)
+- In graphics mode where sprites use custom pixel dimensions
+- When converting console/viewport coords to world coords with camera
+
+**Do NOT use custom conversion for:**
+- Menus, dialogues, inventory (use `event.tile` directly)
+- Glyph mode console UI (use `event.tile` directly)
+
+### Migration From Manual Conversion
+
+**Old approach** (manual conversion - DEPRECATED):
+```python
+# ❌ DON'T DO THIS ANYMORE
+window_w, window_h = context.sdl_window.size
+tile_x = int(event.position.x / (window_w / 80))
+tile_y = int(event.position.y / (window_h / 50))
+```
+
+**New approach** (Manual conversion for stretched rendering):
+```python
+# ✅ DO THIS INSTEAD
+window_w, window_h = context.sdl_window.size
+tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+    event.position.x, event.position.y, window_w, window_h
+)
+```
+
+**Why Not `context.convert_event()`:**
+- `convert_event()` requires `context.present()` to update coordinate state
+- This game uses `tcod.render.SDLConsoleRender` for multi-layer compositing
+- Cannot use `context.present()` because it clears SDL sprite layers
+- Manual conversion is necessary and works correctly with SDL rendering
+
+---
+
+## Part 3: Console Transparency (Graphics Mode)
 
 ### The Problem
 
@@ -167,7 +295,7 @@ if dialogue_active:
 
 ---
 
-## Part 3: Graphics Rendering Coordinate Systems
+## Part 4: Graphics Rendering Coordinate Systems
 
 ### Menu/Help Screens
 
@@ -214,7 +342,7 @@ sprite_y = game_y * tile_h
 
 ---
 
-## Part 4: CoordinateHelpers - Your Best Friend
+## Part 5: CoordinateHelpers - Your Best Friend
 
 **Located in**: `game_coordinate_helpers.py`
 
@@ -261,7 +389,7 @@ for row in range(y_start, y_end):
 
 ---
 
-## Part 5: Common Bugs & How to Avoid Them
+## Part 6: Common Bugs & How to Avoid Them
 
 ### Bug 1: Wrong Array Indexing
 
@@ -309,7 +437,7 @@ pixel_x = int(console_x * (window_width / 80))
 
 ---
 
-## Part 6: Testing Considerations
+## Part 7: Testing Considerations
 
 **Both game and tests use default TCOD consoles**
 
@@ -333,7 +461,7 @@ def test_dialogue_transparency():
 
 ---
 
-## Part 7: Quick Decision Tree
+## Part 8: Quick Decision Tree
 
 ```
 What are you doing?
@@ -356,7 +484,7 @@ What are you doing?
 
 ---
 
-## Part 8: See Also
+## Part 9: See Also
 
 - **CLAUDE.md** - General project guidelines
 - **skills/tcod.md** - Complete TCOD API reference (FOV, pathfinding, events)

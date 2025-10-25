@@ -168,7 +168,9 @@ sprite_height = tile_manager.tile_height
 - Using tileset size (10x16) for sprite SIZE → tiny sprites
 - Using tile dimensions to multiply console coords → wrong positions
 
-**For complete details:** See `.claude/TCOD_GUIDE.md`
+**For complete details:**
+- `.claude/TCOD_GUIDE.md` - Coordinate systems, transparency, mouse handling
+- `.claude/RENDERING_ARCHITECTURE.md` - Multi-layer rendering architecture
 
 ---
 
@@ -176,6 +178,7 @@ sprite_height = tile_manager.tile_height
 - Always check latest official TCOD docs
 - Confirm TCOD API details before assuming limits and interfaces
 - **TCOD-specific questions**: Use the `tcod` skill (`.claude/skills/tcod.md`)
+- **Rendering architecture**: See `.claude/RENDERING_ARCHITECTURE.md` for multi-layer rendering details
 
 ---
 
