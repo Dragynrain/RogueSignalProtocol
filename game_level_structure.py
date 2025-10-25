@@ -8,6 +8,7 @@ ROOM GENERATION:
 - Room carving with varied shapes and patterns
 - Pillar pattern application for server hall aesthetics
 - Room placement with overlap detection and zone-based strategies
+- BSP (Binary Space Partitioning) for organic spatial distribution
 
 CORRIDOR GENERATION:
 - Room connection using MST (Minimum Spanning Tree) algorithm
@@ -32,9 +33,79 @@ Corridor types:
 
 import random
 import logging
-from typing import List, Tuple, Dict, Set
+import tcod.bsp
+import tcod.random
+import tcod.noise
+from typing import List, Tuple, Dict, Set, Optional
 
 from game_config import GameConfig, RoomGenerationConfig
+
+
+# Module-level RNG instance - will be seeded by LevelGenerator
+_rng: Optional[tcod.random.Random] = None
+
+
+def get_rng() -> tcod.random.Random:
+    """Get the current RNG instance, creating one if needed."""
+    global _rng
+    if _rng is None:
+        _rng = tcod.random.Random(tcod.random.MERSENNE_TWISTER)
+    return _rng
+
+
+def seed_rng(seed: int) -> None:
+    """Seed the RNG for reproducible level generation."""
+    global _rng
+    _rng = tcod.random.Random(tcod.random.MERSENNE_TWISTER, seed=seed)
+    logging.debug(f"RNG: Seeded TCOD RNG with seed={seed}")
+
+
+def create_noise_map(width: int, height: int, seed: int, octaves: int = 4, scale: float = 0.1) -> tcod.noise.Noise:
+    """
+    Create a Perlin noise generator for organic pattern generation.
+
+    Perlin noise creates smooth, natural-looking random values useful for:
+    - Shadow zone placement (organic darkness)
+    - Terrain variation
+    - Special node distribution
+
+    Args:
+        width: Map width
+        height: Map height
+        seed: Seed for reproducible noise
+        octaves: Number of octaves (more = more detail), default 4
+        scale: Noise scale (lower = larger features), default 0.1
+
+    Returns:
+        TCOD Noise instance configured for 2D generation
+    """
+    # Create 2D Perlin noise generator
+    noise = tcod.noise.Noise(
+        dimensions=2,
+        algorithm=tcod.noise.Algorithm.PERLIN,
+        implementation=tcod.noise.Implementation.SIMPLE,
+        hurst=0.5,
+        lacunarity=2.0,
+        octaves=octaves,
+        seed=seed
+    )
+    return noise
+
+
+def get_noise_value(noise: tcod.noise.Noise, x: int, y: int, scale: float = 0.1) -> float:
+    """
+    Get noise value at a position.
+
+    Args:
+        noise: TCOD Noise instance
+        x: X coordinate
+        y: Y coordinate
+        scale: Scale factor for noise coordinates
+
+    Returns:
+        Noise value between -1.0 and 1.0
+    """
+    return noise.get_point(x * scale, y * scale)
 
 
 # ============================================================================
@@ -157,7 +228,9 @@ class RoomGenerator:
 
         normalized_weights = [w / total_weight for w in available_weights]
 
-        rand = random.random()
+        # Use TCOD RNG for reproducible room type selection
+        rng = get_rng()
+        rand = rng.uniform(0.0, 1.0)
         cumulative = 0
         for room_type, weight in zip(available_types, normalized_weights):
             cumulative += weight
@@ -433,6 +506,196 @@ class RoomGenerator:
                 y1 < y2 + h2 + pad and y1 + h1 + pad > y2):
                 return True
         return False
+
+
+# ============================================================================
+# BSP-BASED ROOM GENERATION
+# ============================================================================
+
+class BSPRoomGenerator(RoomGenerator):
+    """
+    BSP-based room generator using TCOD's Binary Space Partitioning.
+
+    Uses BSP to partition the map space into organic regions, then applies
+    the existing room types (rectangular, L-shaped, etc.) to each leaf node.
+
+    Benefits over random placement:
+    - Better spatial distribution (no clustering)
+    - More organic layouts
+    - Automatic hierarchy for corridor planning
+    - Guaranteed room connectivity via BSP tree structure
+
+    Attributes:
+        game_map: GameMap instance to populate
+        bsp_tree: Root BSP node for the current level
+        leaf_rooms: List of rooms created in BSP leaf nodes
+    """
+
+    def __init__(self, game_map):
+        """
+        Initialize BSP room generator.
+
+        Args:
+            game_map: GameMap instance to modify
+        """
+        super().__init__(game_map)
+        self.bsp_tree: Optional[tcod.bsp.BSP] = None
+        self.leaf_rooms: List[Tuple[int, int, int, int]] = []
+
+    def create_bsp_rooms(self, level: int) -> List[Tuple[int, int, int, int]]:
+        """
+        Create rooms using BSP space partitioning.
+
+        Uses TCOD's BSP algorithm to partition the map into regions,
+        then creates a room in each leaf node using existing room types.
+
+        Args:
+            level: Current level number (affects BSP depth and room types)
+
+        Returns:
+            List of room tuples (x, y, width, height)
+        """
+        logging.debug(f"BSP Gen: Starting BSP-based room generation for level {level}")
+
+        # Create BSP tree - partition the entire map
+        # Leave border space for walls
+        margin = 2
+        self.bsp_tree = tcod.bsp.BSP(
+            x=margin,
+            y=margin,
+            width=GameConfig.MAP_WIDTH - margin * 2,
+            height=GameConfig.MAP_HEIGHT - margin * 2
+        )
+
+        # Configure BSP splitting
+        # Higher levels = deeper splits = more rooms
+        depth = min(7, 5 + (level // 2))  # 5-7 depth based on level
+        min_room_size = RoomGenerationConfig.MIN_ROOM_SIZE + 2  # Add padding
+
+        logging.debug(f"BSP Gen: Partitioning with depth={depth}, min_size={min_room_size}x{min_room_size}")
+
+        # Recursively split the space
+        self.bsp_tree.split_recursive(
+            depth=depth,
+            min_width=min_room_size,
+            min_height=min_room_size,
+            max_horizontal_ratio=1.5,  # Prefer more square-ish partitions
+            max_vertical_ratio=1.5
+        )
+
+        # Create rooms in leaf nodes
+        self.leaf_rooms = []
+        self._create_rooms_in_leaves(self.bsp_tree, level)
+
+        logging.debug(f"BSP Gen: Created {len(self.leaf_rooms)} BSP rooms")
+        return self.leaf_rooms
+
+    def _create_rooms_in_leaves(self, node: tcod.bsp.BSP, level: int) -> None:
+        """
+        Recursively traverse BSP tree and create rooms in leaf nodes.
+
+        Args:
+            node: Current BSP node
+            level: Current level number for room type selection
+        """
+        # If this node has children, recurse into them
+        if node.children:
+            for child in node.children:
+                self._create_rooms_in_leaves(child, level)
+            return
+
+        # Leaf node - create a room within this partition
+        # Leave some space between room and partition boundary for walls
+        padding = random.randint(1, 3)
+
+        room_width = node.width - padding * 2
+        room_height = node.height - padding * 2
+
+        # Ensure minimum room size
+        if room_width < RoomGenerationConfig.MIN_ROOM_SIZE or room_height < RoomGenerationConfig.MIN_ROOM_SIZE:
+            logging.debug(f"BSP Gen: Skipping too-small partition: {room_width}x{room_height}")
+            return
+
+        # Randomly position room within partition (creates irregular spacing)
+        max_offset_x = padding
+        max_offset_y = padding
+        offset_x = random.randint(0, max_offset_x)
+        offset_y = random.randint(0, max_offset_y)
+
+        room_x = node.x + offset_x
+        room_y = node.y + offset_y
+
+        # Clamp to max room size if needed
+        room_width = min(room_width, RoomGenerationConfig.MAX_ROOM_SIZE)
+        room_height = min(room_height, RoomGenerationConfig.MAX_ROOM_SIZE)
+
+        room = (room_x, room_y, room_width, room_height)
+
+        # Select room type based on size and level
+        room_type = self.select_room_type(level, room_width, room_height)
+
+        # Carve the room
+        self.carve_room(room, room_type, level)
+        self.leaf_rooms.append(room)
+
+        logging.debug(f"BSP Gen: Leaf room created: type={room_type}, pos=({room_x},{room_y}), size={room_width}x{room_height}")
+
+    def connect_bsp_rooms(self, corridor_generator) -> None:
+        """
+        Connect BSP rooms using the tree hierarchy.
+
+        Traverses the BSP tree and creates corridors connecting sibling nodes.
+        This ensures all rooms are connected while creating organic pathways.
+
+        Args:
+            corridor_generator: CorridorGenerator instance for creating corridors
+        """
+        if not self.bsp_tree:
+            logging.warning("BSP Gen: No BSP tree available for room connection")
+            return
+
+        logging.debug(f"BSP Gen: Connecting {len(self.leaf_rooms)} BSP rooms via tree structure")
+        self._connect_nodes(self.bsp_tree, corridor_generator)
+
+    def _connect_nodes(self, node: tcod.bsp.BSP, corridor_generator) -> Tuple[int, int]:
+        """
+        Recursively connect BSP nodes.
+
+        For each node, get connection points from children and create corridor
+        between them. This creates organic pathways following BSP structure.
+
+        Args:
+            node: Current BSP node
+            corridor_generator: CorridorGenerator for corridor creation
+
+        Returns:
+            Tuple (x, y) representing connection point for this subtree
+        """
+        # Calculate center point (BSP nodes don't have a .center attribute)
+        center_x = node.x + node.width // 2
+        center_y = node.y + node.height // 2
+
+        # Leaf node - return center point
+        if not node.children:
+            return (center_x, center_y)
+
+        # Internal node - connect children and return our connection point
+        child1, child2 = node.children
+        point1 = self._connect_nodes(child1, corridor_generator)
+        point2 = self._connect_nodes(child2, corridor_generator)
+
+        # Create corridor between the two child connection points
+        x1, y1 = point1
+        x2, y2 = point2
+
+        # Use existing corridor generation with random width
+        corridor_width = corridor_generator.get_corridor_width()
+        corridor_generator.create_curved_corridor(x1, y1, x2, y2, corridor_width)
+
+        logging.debug(f"BSP Gen: Connected ({x1},{y1}) <-> ({x2},{y2}), width={corridor_width}")
+
+        # Return our center as connection point for parent
+        return (center_x, center_y)
 
 
 # ============================================================================

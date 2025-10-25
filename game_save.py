@@ -54,13 +54,13 @@ class SaveGameManager:
         # Attempt save with retry logic
         for attempt in range(GameConfig.MAX_SAVE_ATTEMPTS):
             try:
-                logging.debug(f"Save: Attempt {attempt+1}/{GameConfig.MAX_SAVE_ATTEMPTS}, level={game.level}, turn={game.turn}, player_cpu={game.player.cpu}/{game.player.max_cpu}")
+                logging.info(f"Save: Attempt {attempt+1}/{GameConfig.MAX_SAVE_ATTEMPTS}, level={game.level}, turn={game.turn}, player_pos=({game.player.x},{game.player.y}), seed={game.game_state.dungeon_seed}")
 
                 # Gather all game state data
                 save_data = {
                     "version": "0.8.0 Alpha",
                     "timestamp": time.time(),
-                    
+
                     # Game state
                     "level": game.level,
                     "turn": game.turn,

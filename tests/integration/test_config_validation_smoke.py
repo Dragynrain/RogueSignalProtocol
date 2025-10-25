@@ -27,9 +27,9 @@ class TestJSONFilesExist:
         """Verify game_content.json exists."""
         assert os.path.exists('game_content.json'), "Required file game_content.json is missing"
 
-    def test_story_content_json_exists(self):
-        """Verify story_content.json exists."""
-        assert os.path.exists('story_content.json'), "Required file story_content.json is missing"
+    def test_narrative_content_json_exists(self):
+        """Verify narrative_content.json exists."""
+        assert os.path.exists('narrative_content.json'), "Required file narrative_content.json is missing"
 
     def test_game_config_json_is_valid(self):
         """Verify game_rules.json contains valid JSON."""
@@ -43,11 +43,11 @@ class TestJSONFilesExist:
             data = json.load(f)  # Will raise JSONDecodeError if invalid
         assert isinstance(data, dict), "game_content.json should contain a JSON object"
 
-    def test_story_content_json_is_valid(self):
-        """Verify story_content.json contains valid JSON."""
-        with open('story_content.json', 'r', encoding='utf-8') as f:
+    def test_narrative_content_json_is_valid(self):
+        """Verify narrative_content.json contains valid JSON."""
+        with open('narrative_content.json', 'r', encoding='utf-8') as f:
             data = json.load(f)  # Will raise JSONDecodeError if invalid
-        assert isinstance(data, dict), "story_content.json should contain a JSON object"
+        assert isinstance(data, dict), "narrative_content.json should contain a JSON object"
 
 
 class TestGameConfigStructure:
@@ -269,26 +269,26 @@ class TestGameDataStructure:
         assert 'code_hacks' in balance, "Missing required 'balance.code_hacks' section in game_content.json"
 
 
-class TestStoryContentStructure:
-    """Verify story_content.json has required structure."""
+class TestNarrativeContentStructure:
+    """Verify narrative_content.json has required structure."""
 
     @pytest.fixture(scope='class')
     def story_data(self):
-        """Load story_content.json once for all tests."""
-        with open('story_content.json', 'r', encoding='utf-8') as f:
+        """Load narrative_content.json once for all tests."""
+        with open('narrative_content.json', 'r', encoding='utf-8') as f:
             return json.load(f)
 
     def test_has_fragments_key(self, story_data):
         """Verify fragments key exists."""
-        assert 'fragments' in story_data, "Missing required 'fragments' key in story_content.json"
+        assert 'fragments' in story_data, "Missing required 'fragments' key in narrative_content.json"
 
     def test_fragments_is_list(self, story_data):
         """Verify fragments is a list."""
-        assert isinstance(story_data['fragments'], list), "fragments should be a list in story_content.json"
+        assert isinstance(story_data['fragments'], list), "fragments should be a list in narrative_content.json"
 
     def test_fragments_not_empty(self, story_data):
         """Verify fragments list is not empty."""
-        assert len(story_data['fragments']) > 0, "fragments list is empty in story_content.json"
+        assert len(story_data['fragments']) > 0, "fragments list is empty in narrative_content.json"
 
 
 class TestConfigRealObjectInstantiation:
@@ -362,7 +362,7 @@ class TestConfigRealObjectInstantiation:
         assert 'network_configs' in game_data
 
     def test_data_loader_loads_story_fragments_successfully(self):
-        """Verify DataLoader can load story_content.json."""
+        """Verify DataLoader can load narrative_content.json."""
         from data_loading import DataLoader
 
         # Clear cache to force fresh load

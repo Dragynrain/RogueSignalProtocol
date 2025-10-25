@@ -162,6 +162,7 @@ class MainMenu(BaseMenu):
         start_y = 21  # Back to original Y position (box itself is shifted)
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
+            bg_color = (40, 40, 40) if i == self.selected_option else Colors.BLACK  # Dark gray highlight
             prefix = "> " if i == self.selected_option else "  "
 
             if box['use_background_layout']:
@@ -173,7 +174,7 @@ class MainMenu(BaseMenu):
 
             render_char_safe(console,
                 x_pos, start_y + i * 2,
-                f"{prefix}{option}", fg=color, bg=Colors.BLACK
+                f"{prefix}{option}", fg=color, bg=bg_color
             )
     
     def _render_save_info(self, console: tcod.console.Console, box: dict) -> None:
@@ -520,6 +521,7 @@ class SettingsMenu(BaseMenu):
         start_y = box['top'] + 5
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
+            bg_color = (40, 40, 40) if i == self.selected_option else Colors.BLACK  # Dark gray highlight
             option_y = start_y + i * 2
 
             if box['use_background_layout']:
@@ -535,7 +537,7 @@ class SettingsMenu(BaseMenu):
                 if option["type"] == "section_header":
                     render_char_safe(console, name_x, option_y, name, fg=Colors.CYAN, bg=Colors.BLACK)
                 else:
-                    render_char_safe(console, name_x, option_y, name, fg=color, bg=Colors.BLACK)
+                    render_char_safe(console, name_x, option_y, name, fg=color, bg=bg_color)
 
                 # Option value
                 if option["type"] == "volume":
@@ -543,14 +545,16 @@ class SettingsMenu(BaseMenu):
                     bar_length = 8  # Shorter bar for narrow box
                     filled_length = int(bar_length * volume_percent / 100)
 
-                    # Volume bar - more compact
+                    # Volume bar with directional hints - more compact
                     bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
-                    render_char_safe(console, name_x, option_y + 1, f"{bar} {volume_percent}%", fg=color, bg=Colors.BLACK)
+                    # Add arrows to show click left=down, click right=up
+                    bar_text = f"<- {bar} +> {volume_percent}%"
+                    render_char_safe(console, name_x, option_y + 1, bar_text, fg=color, bg=bg_color)
 
                 elif option["type"] == "toggle":
                     if option["key"] == "graphics_mode":
                         current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "Classic"
-                        render_char_safe(console, name_x, option_y + 1, f"< {current_value} >", fg=color, bg=Colors.BLACK)
+                        render_char_safe(console, name_x, option_y + 1, f"< {current_value} >", fg=color, bg=bg_color)
 
                 elif option["type"] == "dialogue_toggle":
                     # Get dialogue preference (default to True if not set)
@@ -558,14 +562,14 @@ class SettingsMenu(BaseMenu):
                     is_enabled = dialogue_prefs.get(option["key"], True)
                     status = "[X]" if is_enabled else "[ ]"
                     # Render on same line for narrow box
-                    render_char_safe(console, name_x + 18, option_y, f"{status}", fg=color, bg=Colors.BLACK)
+                    render_char_safe(console, name_x + 18, option_y, f"{status}", fg=color, bg=bg_color)
             else:
                 # Glyph mode - wider layout
                 # Option name
                 if option["type"] == "section_header":
                     render_char_safe(console, box['content_left'] + 2, option_y, option["name"], fg=Colors.CYAN, bg=Colors.BLACK)
                 else:
-                    render_char_safe(console, box['content_left'] + 2, option_y, option["name"], fg=color, bg=Colors.BLACK)
+                    render_char_safe(console, box['content_left'] + 2, option_y, option["name"], fg=color, bg=bg_color)
 
                 # Option value
                 if option["type"] == "volume":
@@ -573,21 +577,23 @@ class SettingsMenu(BaseMenu):
                     bar_length = 20
                     filled_length = int(bar_length * volume_percent / 100)
 
-                    # Volume bar
+                    # Volume bar with directional hints
                     bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
-                    render_char_safe(console, box['content_left'] + 18, option_y, f"{bar} {volume_percent}%", fg=color, bg=Colors.BLACK)
+                    # Add arrows to show click left=down, click right=up
+                    bar_text = f"<- {bar} +> {volume_percent}%"
+                    render_char_safe(console, box['content_left'] + 18, option_y, bar_text, fg=color, bg=bg_color)
 
                 elif option["type"] == "toggle":
                     if option["key"] == "graphics_mode":
                         current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "Classic"
-                        render_char_safe(console, box['content_left'] + 18, option_y, f"< {current_value} >", fg=color, bg=Colors.BLACK)
+                        render_char_safe(console, box['content_left'] + 18, option_y, f"< {current_value} >", fg=color, bg=bg_color)
 
                 elif option["type"] == "dialogue_toggle":
                     # Get dialogue preference (default to True if not set)
                     dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
                     is_enabled = dialogue_prefs.get(option["key"], True)
                     status = "[X]" if is_enabled else "[ ]"
-                    render_char_safe(console, box['content_left'] + 18, option_y, f"{status} Enabled", fg=color, bg=Colors.BLACK)
+                    render_char_safe(console, box['content_left'] + 18, option_y, f"{status} Enabled", fg=color, bg=bg_color)
         
         # Instructions
         if box['use_background_layout']:
@@ -632,6 +638,14 @@ class SettingsMenu(BaseMenu):
             if option["type"] == "action":
                 if option["name"] == "Back":
                     return "back"
+            elif option["type"] == "toggle":
+                # Trigger toggle with Enter key (same as in _adjust_setting)
+                self._adjust_setting(1)  # Direction doesn't matter for toggles
+                return ""
+            elif option["type"] == "dialogue_toggle":
+                # Trigger dialogue toggle with Enter key
+                self._adjust_setting(1)  # Direction doesn't matter for toggles
+                return ""
 
         # Handle value adjustment using universal handler
         if UniversalInputHandler.handle_value_adjustment(self, event, self._adjust_setting):
@@ -751,8 +765,33 @@ class SettingsMenu(BaseMenu):
             self.settings.dialogue_preferences[option["key"]] = new_value
             self.settings.save_settings()
             logging.info(f"Dialogue preference '{option['key']}' set to {new_value} via mouse")
-        # Volume options require left/right adjustment, not click to toggle
-        # So we don't handle them here - user can adjust with mouse wheel or arrow keys
+        elif option["type"] == "volume":
+            # Volume sliders: clicking left side decreases, right side increases
+            # (left = 0%, right = 100%)
+            # Determine which half of the slider bar was clicked
+            tile_x = event.tile.x
+
+            # Calculate slider bar position (consistent with render code)
+            # Bar is always at content_left + 18, length is 20 (ASCII) or 20 (graphics)
+            layout = self._get_menu_layout_params()
+
+            # Get box dimensions for bar positioning
+            menu_height = GameConfig.SCREEN_HEIGHT - 4
+            if layout['use_background_layout']:
+                # Graphics mode - narrow right-side box
+                box_left = GameConfig.SCREEN_WIDTH - 32
+                bar_x = box_left + 3 + 18  # content_left offset + bar position
+            else:
+                # ASCII mode - centered box
+                box_left = (GameConfig.SCREEN_WIDTH - 40) // 2
+                bar_x = box_left + 2 + 18  # content_left offset + bar position
+
+            bar_length = 20
+            bar_mid = bar_x + bar_length // 2
+
+            # Left half = decrease (toward 0%), right half = increase (toward 100%)
+            direction = -1 if tile_x < bar_mid else 1
+            self._adjust_setting(direction)
 
         return ""
 

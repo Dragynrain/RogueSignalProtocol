@@ -757,6 +757,7 @@ class GameSession:
         if (self.game_engine.game_map.is_valid_position(pos) and
             not self.game_engine.game_map.is_wall(pos) and
             not self.game_engine._get_enemy_at(pos)):
+            logging.debug(f"Spawn: Using center position {pos}")
             return pos
 
         # If center is somehow occupied, try nearby positions in the spawn room
@@ -770,9 +771,34 @@ class GameSession:
                     self.game_engine.game_map.is_valid_position(test_pos) and
                     not self.game_engine.game_map.is_wall(test_pos) and
                     not self.game_engine._get_enemy_at(test_pos)):
+                    logging.info(f"Spawn: Center occupied, using nearby position {test_pos}")
                     return test_pos
 
-        # Final fallback (should never be needed)
+        # CRITICAL: Spawn room appears to be sealed or invalid!
+        # Try to find ANY floor position in the spawn room area
+        logging.error(f"Spawn: CRITICAL - Spawn room (2,2,8,8) appears invalid!")
+        logging.error(f"Spawn: Searching entire spawn room for ANY valid position...")
+
+        for y in range(2, 10):
+            for x in range(2, 10):
+                test_pos = Position(x, y)
+                if (self.game_engine.game_map.is_valid_position(test_pos) and
+                    not self.game_engine.game_map.is_wall(test_pos)):
+                    logging.warning(f"Spawn: Found floor at {test_pos}, but spawn room may be sealed off!")
+                    return test_pos
+
+        # Absolute fallback: Search ENTIRE map for a valid floor tile
+        logging.error(f"Spawn: EMERGENCY - No valid position in spawn room! Searching entire map...")
+        for y in range(GameConfig.MAP_HEIGHT):
+            for x in range(GameConfig.MAP_WIDTH):
+                test_pos = Position(x, y)
+                if (self.game_engine.game_map.is_valid_position(test_pos) and
+                    not self.game_engine.game_map.is_wall(test_pos)):
+                    logging.error(f"Spawn: EMERGENCY spawn at {test_pos} - map generation BUG!")
+                    return test_pos
+
+        # This should NEVER happen - would mean entire map is walls
+        logging.critical(f"Spawn: CRITICAL FAILURE - Entire map is walls! Using fallback (6,6)")
         return Position(6, 6)
 
     def _place_items_with_clustering(self, total_count, loot_percentage, item_factory, storage_dict, max_attempts=150):
@@ -1046,10 +1072,23 @@ class GameSession:
             self._restore_ui_state(save_data)
 
             # Generate level layout for map structure
+            logging.info(f"Load: Generating level {self.game_engine.game_state.level} with seed={self.game_engine.game_state.dungeon_seed}")
             self.game_engine.level_generator.generate_level(
                 self.game_engine.game_state.level,
                 self.game_engine.game_state.dungeon_seed
             )
+            logging.info(f"Load: Level generation complete, player at ({self.game_engine.player.x}, {self.game_engine.player.y})")
+
+            # Validate player position after map generation
+            # If player position is invalid, the save is incompatible (likely due to map generation changes)
+            player_pos = Position(self.game_engine.player.x, self.game_engine.player.y)
+            if self.game_engine.game_map.is_wall(player_pos):
+                logging.error(f"Load: SAVE INCOMPATIBLE - Player position {player_pos} is in a wall!")
+                logging.error(f"Load: This likely means the save is from an older version with different map generation.")
+                logging.error(f"Load: Refusing to load - game will start fresh.")
+                self.game_engine.message_log.add_message_typed("Save file incompatible with current version!", Colors.RED)
+                self.game_engine.message_log.add_message("Starting new game...")
+                return False
 
             # Restore map items and enemies
             self._restore_map_items(save_data["map_state"])
@@ -1073,7 +1112,15 @@ class GameSession:
         self.game_engine.game_state.turn = save_data.get("turn", 0)
         self.game_engine.game_state.game_over = save_data.get("game_over", False)
         self.game_engine.game_state.admin_spawned = save_data.get("admin_spawned", False)
-        self.game_engine.game_state.dungeon_seed = save_data.get("dungeon_seed", random.randint(1, GameConfig.DUNGEON_SEED_RANGE))
+
+        # Log seed restoration for debugging
+        saved_seed = save_data.get("dungeon_seed")
+        if saved_seed is None:
+            logging.warning("Load: No dungeon_seed in save file! Generating new random seed.")
+            self.game_engine.game_state.dungeon_seed = random.randint(1, GameConfig.DUNGEON_SEED_RANGE)
+        else:
+            self.game_engine.game_state.dungeon_seed = saved_seed
+            logging.info(f"Load: Restored dungeon_seed={saved_seed}")
 
     def _restore_player_state(self, player_data: Dict[str, Any]) -> None:
         """Restore player state from save data."""
