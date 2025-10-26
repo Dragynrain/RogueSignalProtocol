@@ -15,7 +15,6 @@ from game_config import GameConfig
 from game_menu_utilities import MenuRenderingUtils
 
 
-
 class BaseMenu:
     """
     Base class for all menu screens with common functionality.
