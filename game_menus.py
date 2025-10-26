@@ -545,10 +545,8 @@ class SettingsMenu(BaseMenu):
                 # Narrow box layout
                 name_x = box['content_left'] + 1
 
-                # Option name (truncate if needed for narrow box)
+                # Option name (no truncation needed - values are on separate lines)
                 name = option["name"]
-                if len(name) > 15 and option["type"] != "section_header":  # Truncate for narrow box
-                    name = name[:12] + "..."
 
                 # Section headers
                 if option["type"] == "section_header":
@@ -578,8 +576,8 @@ class SettingsMenu(BaseMenu):
                     dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
                     is_enabled = dialogue_prefs.get(option["key"], True)
                     status = "[X]" if is_enabled else "[ ]"
-                    # Render on same line for narrow box
-                    render_char_safe(console, name_x + 18, option_y, f"{status}", fg=color, bg=bg_color)
+                    # Render on next line for narrow box (like volume controls)
+                    render_char_safe(console, name_x, option_y + 1, f"{status} Enabled", fg=color, bg=bg_color)
             else:
                 # Glyph mode - wider layout
                 # Option name
@@ -610,7 +608,8 @@ class SettingsMenu(BaseMenu):
                     dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
                     is_enabled = dialogue_prefs.get(option["key"], True)
                     status = "[X]" if is_enabled else "[ ]"
-                    render_char_safe(console, box['content_left'] + 18, option_y, f"{status} Enabled", fg=color, bg=bg_color)
+                    # Render on next line (like volume controls) to avoid overlap
+                    render_char_safe(console, box['content_left'] + 2, option_y + 1, f"{status} Enabled", fg=color, bg=bg_color)
         
         # Instructions
         if box['use_background_layout']:

@@ -125,6 +125,7 @@ class GameEngine:
 
         # Mouse hover tracking (for visual feedback)
         self.mouse_hover_world_pos: Optional[Position] = None
+        self.mouse_tile_pos: Optional[Tuple[int, int]] = None  # Mouse position in console tile coords
 
         # Camera offset tracking (for consistent input/rendering in look mode)
         self.last_camera_offset: Optional[Position] = None

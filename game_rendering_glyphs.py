@@ -96,19 +96,19 @@ class GlyphsMapRenderer(MapRendererBase):
             node_type = game.game_state.revealed_special_nodes[pos_tuple]
             if node_type == "cooling":
                 # Position 4 = ♦ for cooling nodes, faded cyan
-                cooling_color = ensure_color_tuple(terrain_colors.get("cooling_node", [0, 120, 120]))
+                cooling_color = ColorManager.get_terrain_variant_color("cooling_node")
                 render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=cooling_color, bg=Colors.BLACK)
             elif node_type == "cpu":
                 # Position 3 = ♥ for CPU nodes, faded red
-                cpu_color = ensure_color_tuple(terrain_colors.get("cpu_node", [120, 0, 0]))
+                cpu_color = ColorManager.get_terrain_variant_color("cpu_node")
                 render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=cpu_color, bg=Colors.BLACK)
             elif node_type == "ghost":
                 # Position 6 = ♠ for ghost nodes, faded purple
-                ghost_color = ensure_color_tuple(terrain_colors.get("ghost_node", [80, 0, 120]))
+                ghost_color = ColorManager.get_terrain_variant_color("ghost_node")
                 render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=ghost_color, bg=Colors.BLACK)
             elif node_type == "gateway":
                 # Gateway in memory - darker yellow
-                gateway_dark = ensure_color_tuple(terrain_colors.get("gateway_dark", [180, 150, 0]))
+                gateway_dark = ColorManager.get_terrain_variant_color("gateway")
                 render_char_safe(console, screen_x, screen_y, '>', fg=gateway_dark, bg=Colors.BLACK)
             return
 
@@ -116,15 +116,15 @@ class GlyphsMapRenderer(MapRendererBase):
         if game.game_map.is_wall(world_pos):
             # Smart wall system for remembered walls too
             wall_char = self._get_smart_wall_character(game.game_map, world_pos.x, world_pos.y)
-            wall_dark = ensure_color_tuple(terrain_colors.get("wall_dark", [60, 70, 90]))
+            wall_dark = ColorManager.get_terrain_variant_color("wall")
             render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=wall_dark, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
             # Position 8 = ◘ (inverse bullet) for remembered shadows
-            shadow_remembered = ensure_color_tuple(config.get("colors", {}).get("game_elements", {}).get("shadow_remembered", [50, 20, 80]))
+            shadow_remembered = ColorManager.get_terrain_variant_color("shadow")
             render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=shadow_remembered, bg=Colors.BLACK)
         else:
             # Position 7 = • (bullet) for remembered empty spaces
-            floor_explored = ensure_color_tuple(terrain_colors.get("floor_explored", [90, 90, 130]))
+            floor_explored = ColorManager.get_terrain_variant_color("floor")
             render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=floor_explored, bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game):

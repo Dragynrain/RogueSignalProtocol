@@ -693,6 +693,38 @@ class UIRenderer:
         UIRenderer.last_inventory_scroll_offset = scroll_manager.get_scroll_offset()
         UIRenderer.last_inventory_equipped_count = len(game.player.inventory_manager.equipped_exploits)
 
+        # Render tooltip if hovering directly over an exploit
+        if game.mouse_tile_pos is not None:
+            mouse_x, mouse_y = game.mouse_tile_pos
+
+            # Check if mouse is actually over an item (not just if something is selected)
+            hovered_index = UIRenderer.get_inventory_item_at_click(mouse_y)
+
+            if hovered_index is not None:
+                # Get the item at the hovered position
+                equipped_exploits = game.player.inventory_manager.equipped_exploits
+                display_items = game.player.inventory_manager.get_display_items()
+
+                exploit_def = None
+
+                # Check if hovered item is an equipped exploit
+                if hovered_index < len(equipped_exploits):
+                    exploit_key = equipped_exploits[hovered_index]
+                    if exploit_key in GameData.EXPLOITS:
+                        exploit_def = GameData.EXPLOITS[exploit_key]
+
+                # Check if hovered item is an unequipped exploit
+                else:
+                    unequipped_index = hovered_index - len(equipped_exploits)
+                    if unequipped_index >= 0 and unequipped_index < len(display_items):
+                        hovered_item = display_items[unequipped_index]
+                        if hasattr(hovered_item, 'exploit_key') and hovered_item.exploit_key in GameData.EXPLOITS:
+                            exploit_def = GameData.EXPLOITS[hovered_item.exploit_key]
+
+                # Render tooltip if we found an exploit
+                if exploit_def is not None:
+                    self._render_exploit_tooltip(console, exploit_def)
+
     def _build_inventory_lines(self, game):
         """
         Build all inventory lines for rendering with proper formatting.
@@ -925,6 +957,110 @@ class UIRenderer:
                 selection_index += 1
 
         return selection_index
+
+    def _render_exploit_tooltip(self, console: tcod.console.Console, exploit_def):
+        """
+        Render a tooltip with exploit details in the bottom right of system log.
+
+        Args:
+            console: TCOD console to render to
+            exploit_def: ExploitDefinition with exploit data
+        """
+        # Use shared formatting method
+        base_lines = exploit_def.get_detail_lines()
+
+        # Customize for tooltip: combine RAM/Heat on one line for space efficiency
+        lines = []
+        skip_next = False
+        for i, line in enumerate(base_lines):
+            if skip_next:
+                skip_next = False
+                continue
+
+            # Combine RAM and Heat costs on one line
+            if line.startswith("RAM Cost:"):
+                # Check if next line is Heat Cost
+                if i + 1 < len(base_lines) and base_lines[i + 1].startswith("Heat Cost:"):
+                    ram_val = line.split(": ")[1]
+                    heat_val = base_lines[i + 1].split(": ")[1]
+                    lines.append(f"RAM: {ram_val}  Heat: {heat_val}")
+                    skip_next = True
+                else:
+                    lines.append(line.replace("RAM Cost:", "RAM:"))
+            elif line.startswith("Heat Cost:"):
+                lines.append(line.replace("Heat Cost:", "Heat:"))
+            # Word wrap the effect description to fit in log width
+            elif line.startswith("Effect:"):
+                max_line_width = GameConfig.LOG_WIDTH - 4  # Account for borders and padding
+                if len(line) > max_line_width:
+                    words = line.split()
+                    current_line = words[0]
+                    for word in words[1:]:
+                        if len(current_line) + 1 + len(word) <= max_line_width:
+                            current_line += " " + word
+                        else:
+                            lines.append(current_line)
+                            current_line = "  " + word  # Indent continuation
+                    lines.append(current_line)
+                else:
+                    lines.append(line)
+            else:
+                lines.append(line)
+
+        # Calculate tooltip dimensions
+        max_width = max(len(line) for line in lines)
+        tooltip_width = min(max_width + 4, GameConfig.LOG_WIDTH)  # Fit within log width
+        tooltip_height = len(lines) + 2  # +2 for borders
+
+        # Position in bottom right of system log
+        tooltip_x = GameConfig.GAME_AREA_WIDTH() + 1
+        tooltip_y = GameConfig.PANEL_Y() - tooltip_height - 1  # Just above the panel
+
+        # Draw tooltip background
+        for y in range(tooltip_height):
+            for x in range(tooltip_width):
+                bg_color = Colors.LOG_BG  # Match log background
+                render_char_safe(console, tooltip_x + x, tooltip_y + y, " ", bg=bg_color)
+
+        # Draw border
+        border_color = Colors.CYAN
+        # Top and bottom borders
+        for x in range(tooltip_width):
+            render_char_safe(console, tooltip_x + x, tooltip_y, "-", fg=border_color, bg=Colors.LOG_BG)
+            render_char_safe(console, tooltip_x + x, tooltip_y + tooltip_height - 1, "-", fg=border_color, bg=Colors.LOG_BG)
+        # Left and right borders
+        for y in range(tooltip_height):
+            render_char_safe(console, tooltip_x, tooltip_y + y, "|", fg=border_color, bg=Colors.LOG_BG)
+            render_char_safe(console, tooltip_x + tooltip_width - 1, tooltip_y + y, "|", fg=border_color, bg=Colors.LOG_BG)
+        # Corners
+        render_char_safe(console, tooltip_x, tooltip_y, "+", fg=border_color, bg=Colors.LOG_BG)
+        render_char_safe(console, tooltip_x + tooltip_width - 1, tooltip_y, "+", fg=border_color, bg=Colors.LOG_BG)
+        render_char_safe(console, tooltip_x, tooltip_y + tooltip_height - 1, "+", fg=border_color, bg=Colors.LOG_BG)
+        render_char_safe(console, tooltip_x + tooltip_width - 1, tooltip_y + tooltip_height - 1, "+", fg=border_color, bg=Colors.LOG_BG)
+
+        # Render text lines with colors
+        for i, line in enumerate(lines):
+            # Color based on line content (like system log messages)
+            if line.startswith("==="):
+                # Title in cyan
+                color = Colors.CYAN
+            elif line.startswith("Category:"):
+                # Category in yellow
+                color = Colors.YELLOW
+            elif line.startswith("RAM:") or line.startswith("Heat:") or line.startswith("Damage:") or line.startswith("Range:"):
+                # Stats in orange/light red
+                color = (255, 165, 0)  # Orange
+            elif line.startswith("Targeting:"):
+                # Targeting in purple
+                color = Colors.ELECTRIC_PURPLE
+            elif line.startswith("Effect:") or line.startswith("  "):
+                # Effect description in light green
+                color = (144, 238, 144)  # Light green
+            else:
+                # Default white
+                color = Colors.WHITE
+
+            render_char_safe(console, tooltip_x + 2, tooltip_y + 1 + i, line, fg=color, bg=Colors.LOG_BG)
 
     # === Story Fragment Screen ===
 

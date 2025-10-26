@@ -376,6 +376,32 @@ class ExploitDefinition:
     effect_duration: int = 0  # Duration in turns for effects (stun, invisibility, scan, etc.)
     effect_radius: int = 0  # Radius of effect for area exploits (0 for single-target/no effect)
 
+    def get_detail_lines(self) -> list[str]:
+        """
+        Build formatted detail lines for this exploit.
+
+        Returns a list of strings containing all exploit information,
+        used by both the examine command and hover tooltips.
+
+        Returns:
+            List of formatted detail strings
+        """
+        lines = []
+        lines.append(f"=== {self.name} ===")
+        lines.append(f"Category: {self.category.title()}")
+        lines.append(f"RAM Cost: {self.ram}")
+        lines.append(f"Heat Cost: {self.heat}")
+
+        if self.damage > 0:
+            lines.append(f"Damage: {self.damage}")
+        if self.range > 0:
+            lines.append(f"Range: {self.range} tiles")
+
+        lines.append(f"Targeting: {self.targeting.name}")
+        lines.append(f"Effect: {self.description}")
+
+        return lines
+
 
 @dataclass
 class UpgradeDefinition:
