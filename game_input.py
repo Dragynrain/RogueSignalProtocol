@@ -498,18 +498,9 @@ class InputHandler:
     
     def _show_exploit_details(self, exploit_def):
         """Show detailed information about an exploit."""
-        self.game.message_log.add_message(f"=== {exploit_def.name} ===")
-        self.game.message_log.add_message(f"Category: {exploit_def.category.title()}")
-        self.game.message_log.add_message(f"RAM Cost: {exploit_def.ram}")
-        self.game.message_log.add_message(f"Heat Cost: {exploit_def.heat}")
-        
-        if exploit_def.damage > 0:
-            self.game.message_log.add_message(f"Damage: {exploit_def.damage}")
-        if exploit_def.range > 0:
-            self.game.message_log.add_message(f"Range: {exploit_def.range} tiles")
-        
-        self.game.message_log.add_message(f"Targeting: {exploit_def.targeting.name}")
-        self.game.message_log.add_message(f"Effect: {exploit_def.description}")
+        # Use shared formatting method
+        for line in exploit_def.get_detail_lines():
+            self.game.message_log.add_message(line)
     
     def _show_code_hack_details(self, code_hack):
         """Show detailed information about a code."""
@@ -878,7 +869,7 @@ class InputHandler:
         return False
 
     def _handle_gameplay_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
-        """Handle left click during gameplay - move to adjacent tile."""
+        """Handle left click during gameplay - move to adjacent tile or pass turn."""
         world_pos = self._mouse_pixel_to_world(event.position.x, event.position.y)
 
         if not world_pos:
@@ -888,8 +879,13 @@ class InputHandler:
         dx = world_pos.x - self.game.player.x
         dy = world_pos.y - self.game.player.y
 
+        # If clicking on player position, pass turn (like spacebar)
+        if dx == 0 and dy == 0:
+            self.game.move_player(0, 0)  # Pass turn
+            return True
+
         # Only allow adjacent tile movement (8-directional)
-        if abs(dx) <= 1 and abs(dy) <= 1 and (dx != 0 or dy != 0):
+        if abs(dx) <= 1 and abs(dy) <= 1:
             self.game.move_player(dx, dy)
             return True
 
@@ -1024,9 +1020,12 @@ class InputHandler:
         else:
             window_w, window_h = (800, 600)
 
-        _, tile_y = CoordinateHelpers.pixel_to_char_coords(
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
             event.position.x, event.position.y, window_w, window_h
         )
+
+        # Store mouse position for tooltip rendering
+        self.game.mouse_tile_pos = (tile_x, tile_y)
 
         # Use renderer's click detection (single source of truth)
         selection_index = UIRenderer.get_inventory_item_at_click(tile_y)
