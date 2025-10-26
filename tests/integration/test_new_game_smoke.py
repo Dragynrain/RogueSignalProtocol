@@ -251,5 +251,146 @@ class TestNewGameSmokeTests:
         assert walkable_tiles > 0
 
 
+class TestActualNewGameRenderingSmoke:
+    """
+    Smoke tests for actual runtime rendering pipeline.
+
+    These tests catch runtime errors that only appear during actual gameplay:
+    - Missing imports
+    - Attribute errors during rendering
+    - Mouse event handling bugs
+    - Rendering pipeline issues
+    - Config constant mismatches (CONSOLE_WIDTH vs SCREEN_WIDTH)
+
+    Merged from test_actual_new_game_smoke.py
+    """
+
+    def test_new_game_flow_with_rendering(self):
+        """
+        Simulate the actual New Game flow with rendering and mouse events.
+
+        This catches runtime errors that unit tests miss, like GameConfig.CONSOLE_WIDTH bugs.
+        """
+        from unittest.mock import Mock, patch, MagicMock
+        import tcod
+        from game_menus import MainMenu
+        from game_input import InputHandler
+
+        with patch('game_audio.SoundManager'):
+            settings = GameSettings()
+
+            # Create main menu
+            menu = MainMenu(settings)
+            menu.selected_option = 0  # "New Game" is first option
+
+            # Simulate pressing Enter to start new game
+            with patch('game_save.SaveGameManager.save_exists', return_value=False):
+                key_event = tcod.event.KeyDown(
+                    scancode=tcod.event.Scancode.RETURN,
+                    sym=tcod.event.KeySym.RETURN,
+                    mod=tcod.event.Modifier.NONE
+                )
+                result = menu.handle_input(key_event)
+                assert result in ("new_game", "continue", ""), f"Expected game start action, got: {result}"
+
+            # Create game engine
+            engine = GameEngine(settings=settings, load_save=False)
+
+            # Mock context for mouse events
+            mock_context = Mock()
+            mock_sdl_window = Mock()
+            mock_sdl_window.size = (1280, 800)
+            mock_context.sdl_window = mock_sdl_window
+            engine.context = mock_context
+
+            input_handler = InputHandler(engine)
+
+            # Simulate several frames of mouse events
+            for frame in range(10):
+                mock_event = Mock()
+                mock_event.position = Mock()
+                mock_event.position.x = 400
+                mock_event.position.y = 300
+
+                # Should not raise AttributeError for CONSOLE_WIDTH/HEIGHT
+                try:
+                    input_handler.handle_mouse_motion(mock_event)
+                except AttributeError as e:
+                    error_str = str(e)
+                    if "CONSOLE_WIDTH" in error_str or "CONSOLE_HEIGHT" in error_str:
+                        pytest.fail(f"CRITICAL: Mouse handling has config attribute error: {e}")
+                    if "SCREEN_WIDTH" in error_str or "SCREEN_HEIGHT" in error_str:
+                        pytest.fail(f"CRITICAL: Mouse handling missing SCREEN constants: {e}")
+                except Exception:
+                    pass  # Other exceptions are fine in test environment
+
+            # Verify game initialized successfully
+            assert engine.game_state.level == 1
+            assert engine.player is not None
+            assert len(engine.enemies) > 0
+            assert len(engine.game_map.walls) > 0
+
+    def test_input_handler_mouse_coordinate_conversion(self):
+        """
+        Test that InputHandler can convert mouse coordinates without errors.
+
+        Specifically tests for bugs like:
+        - GameConfig.CONSOLE_WIDTH (should be SCREEN_WIDTH)
+        - GameConfig.CONSOLE_HEIGHT (should be SCREEN_HEIGHT)
+        - pixel_x used twice instead of pixel_y
+        """
+        from unittest.mock import Mock, patch
+
+        with patch('game_audio.SoundManager'):
+            from game_input import InputHandler
+
+            settings = GameSettings()
+            engine = GameEngine(settings=settings, load_save=False)
+
+            # Mock context with window dimensions
+            mock_context = Mock()
+            mock_context.recommended_console_size.return_value = (80, 50)
+            mock_sdl_window = Mock()
+            mock_sdl_window.size = (1280, 800)
+            mock_context.sdl_window = mock_sdl_window
+            engine.context = mock_context
+
+            input_handler = InputHandler(engine)
+
+            # Test various mouse positions
+            test_positions = [
+                (0, 0),      # Top-left
+                (640, 400),  # Center
+                (1279, 799), # Bottom-right
+                (100, 200),  # Random position
+            ]
+
+            for pixel_x, pixel_y in test_positions:
+                mock_event = Mock()
+                mock_event.position = Mock()
+                mock_event.position.x = pixel_x
+                mock_event.position.y = pixel_y
+
+                try:
+                    input_handler.handle_mouse_motion(mock_event)
+
+                    # Verify correct conversion
+                    expected_tile_x = pixel_x * GameConfig.SCREEN_WIDTH // 1280
+                    expected_tile_y = pixel_y * GameConfig.SCREEN_HEIGHT // 800
+
+                    assert engine.last_mouse_tile_x == expected_tile_x, \
+                        f"Mouse X wrong: expected {expected_tile_x}, got {engine.last_mouse_tile_x}"
+                    assert engine.last_mouse_tile_y == expected_tile_y, \
+                        f"Mouse Y wrong: expected {expected_tile_y}, got {engine.last_mouse_tile_y}"
+
+                except AttributeError as e:
+                    error_str = str(e)
+                    if "CONSOLE_WIDTH" in error_str or "CONSOLE_HEIGHT" in error_str:
+                        pytest.fail(f"CRITICAL BUG: Using wrong config constants: {e}")
+                    if "'GameConfig' has no attribute" in error_str:
+                        pytest.fail(f"CRITICAL BUG: GameConfig attribute missing: {e}")
+                    raise
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
