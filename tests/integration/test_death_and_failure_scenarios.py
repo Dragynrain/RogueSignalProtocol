@@ -537,5 +537,149 @@ class TestDeathStatePersistence:
         assert is_game_over, "Game should be over"
 
 
+class TestDeathDialogueDismissal:
+    """Test that death dialogue dismissal works correctly with both keyboard and mouse."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.game_data = get_real_game_data()
+        self.game_settings = GameSettings()
+        self.game_settings.master_volume = 0.0
+        self.game_settings.sfx_volume = 0.0
+        self.game_settings.graphics_mode = "glyph"
+
+    def create_test_engine(self):
+        """Create a GameEngine instance for testing."""
+        mock_sound_manager = Mock()
+        engine = GameEngine(
+            sound_manager=mock_sound_manager,
+            settings=self.game_settings
+        )
+        return engine
+
+    def test_death_dialogue_dismissal_with_keyboard(self):
+        """Test that dismissing death dialogue with keyboard returns False (exit to menu)."""
+        from game_input import InputHandler
+        from game_dialogue_system import create_death_dialogue
+        import tcod.event
+
+        engine = self.create_test_engine()
+        input_handler = InputHandler(engine)
+
+        # Close any intro dialogues that GameEngine shows on startup
+        engine.dialogue_state.close()
+
+        # Show death dialogue
+        death_dialogue = create_death_dialogue()
+        engine.dialogue_state.show(death_dialogue)
+
+        # Verify dialogue is active and is the death dialogue
+        assert engine.dialogue_state.is_active()
+        active_dlg = engine.dialogue_state.get_active()
+        assert "PURGED" in active_dlg.title, f"Expected death dialogue, got {active_dlg.title}"
+
+        # Simulate pressing ESC to dismiss (death dialogue)
+        event = tcod.event.KeyDown(
+            scancode=0,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier(0),
+            repeat=False
+        )
+
+        # Handle the input
+        result = input_handler._handle_dialogue_dismiss()
+
+        # For death dialogue, should return False (exit to menu)
+        assert result == False, "Death dialogue dismissal should return False to exit to menu"
+        assert not engine.dialogue_state.is_active(), "Dialogue should be closed"
+
+    def test_death_dialogue_dismissal_with_mouse_click(self):
+        """Test that dismissing death dialogue with mouse click returns False (exit to menu)."""
+        from game_input import InputHandler
+        from game_dialogue_system import create_death_dialogue
+        from game_entities import Position
+        import tcod.event
+
+        engine = self.create_test_engine()
+        input_handler = InputHandler(engine)
+
+        # Close any intro dialogues that GameEngine shows on startup
+        engine.dialogue_state.close()
+
+        # Show death dialogue
+        death_dialogue = create_death_dialogue()
+        engine.dialogue_state.show(death_dialogue)
+
+        # Store render coordinates (normally done by renderer)
+        engine.dialogue_state.last_render_coords = {
+            'box_x': 10,
+            'box_y': 10,
+            'box_width': 60,
+            'box_height': 20,
+            'options_y': 28,
+            'option_positions': [(15, 28)]
+        }
+
+        # Verify dialogue is active
+        assert engine.dialogue_state.is_active()
+        active_dlg = engine.dialogue_state.get_active()
+        assert "PURGED" in active_dlg.title, f"Expected death dialogue, got {active_dlg.title}"
+
+        # Simulate left click on dialogue (create event with tile coordinates)
+        # The game loop would convert pixel to tile coords, so we use tile coords here
+        class MockPosition:
+            def __init__(self, x, y):
+                self.x = x
+                self.y = y
+
+        event = Mock()
+        event.position = MockPosition(40, 25)  # Tile coordinates
+        event.button = tcod.event.MouseButton.LEFT
+
+        # Handle the dialogue left click
+        result = input_handler._handle_dialogue_left_click(event)
+
+        # For death dialogue, should return False (exit to menu)
+        assert result == False, "Death dialogue click dismissal should return False to exit to menu"
+        assert not engine.dialogue_state.is_active(), "Dialogue should be closed"
+
+    def test_normal_dialogue_dismissal_returns_true(self):
+        """Test that dismissing non-death dialogue returns True (continue game)."""
+        from game_input import InputHandler
+        from game_dialogue_system import DialogueBox
+        from game_entities import Colors
+        import tcod.event
+
+        engine = self.create_test_engine()
+        input_handler = InputHandler(engine)
+
+        # Close any intro dialogues that GameEngine shows on startup
+        engine.dialogue_state.close()
+
+        # Show normal dialogue (not death)
+        normal_dialogue = DialogueBox(
+            title="TEST DIALOGUE",
+            message="This is a test.",
+            options=["[ENTER] OK"],
+            valid_keys=[tcod.event.KeySym.RETURN],
+            title_color=Colors.CYAN,
+            message_color=Colors.WHITE,
+            border_color=Colors.CYAN,
+            bg_color=(0, 0, 0),
+            format_data={}
+        )
+        engine.dialogue_state.show(normal_dialogue)
+
+        # Verify dialogue is active
+        assert engine.dialogue_state.is_active()
+
+        # Handle dismiss
+        result = input_handler._handle_dialogue_dismiss()
+
+        # For normal dialogue, should return True (continue game)
+        assert result == True, "Normal dialogue dismissal should return True to continue game"
+        assert not engine.dialogue_state.is_active(), "Dialogue should be closed"
+
+
 if __name__ == '__main__':
     pytest.main([__file__, '-v'])
