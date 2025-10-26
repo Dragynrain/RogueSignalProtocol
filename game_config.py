@@ -19,8 +19,6 @@ from typing import Dict, Any
 from data_loading import DataLoader
 
 
-
-
 class GameSettings:
     """
     Manages user preferences with persistent storage.

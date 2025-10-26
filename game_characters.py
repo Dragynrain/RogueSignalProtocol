@@ -1029,8 +1029,6 @@ class Enemy:
             logging.warning(f"Pathfinding failed for {self.type_data.name}: {e}")
             return None
 
-
-
     def _calculate_greedy_move_toward_target(self, target: Position, game_map, game_engine) -> Optional[Position]:
         """
         Calculate best adjacent move toward target using greedy distance minimization.

@@ -18,7 +18,6 @@ from game_entities import Position
 from game_coordinate_helpers import CoordinateHelpers
 
 
-
 class InputMappings:
     """Shared input mapping definitions to avoid duplication."""
 

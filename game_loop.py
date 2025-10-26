@@ -99,8 +99,6 @@ def initialize_tcod_context():
     return context
 
 
-
-
 def initialize_game_systems(settings: GameSettings, context, menu_background=None, sound_manager=None, tile_manager=None):
     """Initialize menu systems and return menu objects."""
     # Initialize tile manager if not provided and graphics mode is enabled
