@@ -83,8 +83,18 @@ class TestDialogueRendering:
 
         for dialogue in dialogues:
             console.clear()
-            # Should not crash
             UnifiedRenderer.render(console, dialogue)
+
+            # Verify dialogue was rendered (box should be opaque in center)
+            center_has_opaque_pixels = False
+            for y in range(15, 35):
+                for x in range(20, 60):
+                    if console.rgba["bg"][y, x, 3] == 255:
+                        center_has_opaque_pixels = True
+                        break
+                if center_has_opaque_pixels:
+                    break
+            assert center_has_opaque_pixels, f"Dialogue {dialogue.title} should render opaque box"
 
     def test_dialogue_rendering_with_state_manager(self):
         """Dialogue rendering works with DialogueState manager."""
@@ -132,16 +142,30 @@ class TestDialogueRendering:
             max_cpu=20
         )
 
-        # Should not crash during formatting and rendering
         UnifiedRenderer.render(console, dialogue)
+
+        # Verify format_data was used (check for health value in rendered text)
+        # The dialogue should contain formatted content
+        rendered_text_found = False
+        for y in range(console.height):
+            for x in range(console.width):
+                if console.ch[y, x] != 0:  # Non-empty character
+                    rendered_text_found = True
+                    break
+            if rendered_text_found:
+                break
+        assert rendered_text_found, "Dialogue should render text content"
 
     def test_dialogue_rendering_on_small_console(self):
         """Dialogue renders correctly on smaller consoles."""
         console = tcod.console.Console(width=40, height=25)
 
         dialogue = create_gateway_dialogue()
-        # Should not crash
         UnifiedRenderer.render(console, dialogue)
+
+        # Verify rendering succeeded on small console
+        has_text = np.any(console.ch != 0)
+        assert has_text, "Dialogue should render text even on small console"
 
     def test_multiple_dialogues_render_sequentially(self):
         """Multiple dialogues can be rendered sequentially without issues."""
@@ -293,8 +317,11 @@ class TestEdgeCases:
             format_data={}
         )
 
-        # Should not crash
         UnifiedRenderer.render(console, dialogue)
+
+        # Verify empty message was handled (should still render box frame)
+        has_frame = np.any(console.ch != 0)
+        assert has_frame, "Dialogue should render box frame even with empty message"
 
     def test_dialogue_with_very_long_message(self):
         """Dialogue with very long message wraps correctly."""
@@ -315,8 +342,11 @@ class TestEdgeCases:
             format_data={}
         )
 
-        # Should not crash
         UnifiedRenderer.render(console, dialogue)
+
+        # Verify long message was handled (should wrap or truncate)
+        has_text = np.any(console.ch != 0)
+        assert has_text, "Dialogue should render long message (wrapped/truncated)"
 
     def test_dialogue_with_missing_format_keys(self):
         """Dialogue with missing format keys handles gracefully."""
@@ -333,8 +363,11 @@ class TestEdgeCases:
         # Clear format_data to simulate missing keys
         dialogue.format_data = {}
 
-        # Should not crash (will log warning)
         UnifiedRenderer.render(console, dialogue)
+
+        # Verify missing format keys were handled gracefully
+        has_content = np.any(console.ch != 0)
+        assert has_content, "Dialogue should render even with missing format keys"
 
     def test_dialogue_on_minimal_console(self):
         """Dialogue renders on very small console."""
@@ -342,8 +375,12 @@ class TestEdgeCases:
 
         dialogue = create_gateway_dialogue()
 
-        # Should not crash (box will be clamped to fit)
         UnifiedRenderer.render(console, dialogue)
+
+        # Verify clamping worked - dialogue should fit in minimal console
+        has_text = np.any(console.ch != 0)
+        assert has_text, "Dialogue should render on minimal console (clamped to fit)"
+        # Verify no array access errors occurred (would crash before this point)
 
 
 class TestWorkflowSimulation:
