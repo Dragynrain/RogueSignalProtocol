@@ -248,9 +248,9 @@ class GameRenderer:
             CoordinateHelpers.set_alpha_region(
                 console, x=0, y=panel_y, width=console.width, height=console.height - panel_y, alpha=255
             )
-            # System log (from GAME_AREA_WIDTH to right edge, full height)
+            # System log (from GAME_AREA_WIDTH to right edge, stop at panel start)
             CoordinateHelpers.set_alpha_region(
-                console, x=log_x, y=0, width=console.width - log_x, height=console.height, alpha=255
+                console, x=log_x, y=0, width=console.width - log_x, height=panel_y, alpha=255
             )
 
             # Render dialogue system on console AFTER transparency pass (highest priority, opaque backgrounds)
