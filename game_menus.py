@@ -68,11 +68,15 @@ class MainMenu(BaseMenu):
             show_continue: Set False when accessed from mid-game
             active_game: If provided, indicates there's an active game that will be saved on exit
         """
-        # Track if there's an active game in memory
-        self.has_active_game = active_game is not None
+        # Track if there's an active game in memory that can be saved
+        # Don't allow saving if player is dead (cpu <= 0 or game_over)
+        can_save = (active_game is not None and
+                   active_game.player.cpu > 0 and
+                   not active_game.game_over)
+        self.has_active_game = can_save
 
         # Determine Exit button text based on whether there's a game to save
-        exit_text = "Save and Exit" if self.has_active_game else "Exit"
+        exit_text = "Save and Exit" if can_save else "Exit"
 
         if show_continue and SaveGameManager.save_exists():
             self.options = ["Continue Game", "New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", exit_text]

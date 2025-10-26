@@ -100,6 +100,9 @@ class GameSession:
                 self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
                 # Delete save on death (permadeath)
                 self._delete_save_on_death()
+                # Show death dialogue
+                from game_dialogue_system import create_death_dialogue
+                self.game_engine.dialogue_state.show(create_death_dialogue())
 
         # Process special tiles
         self._process_special_tiles()
@@ -119,6 +122,21 @@ class GameSession:
             config = network_configs.get(self.game_engine.level, {"background_trace": 1})
             background_increase = config.get("background_trace", 1)
             self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + background_increase)
+
+        # Check for death from ANY source (enemy attacks, virus, etc.)
+        # This catches deaths that weren't caught by the virus-specific check above
+        if self.game_engine.player.cpu <= 0 and not self.game_engine.dialogue_state.is_active():
+            # Only show dialogue if one isn't already active (avoid duplicates)
+            self.game_engine.sound_manager.play_sound("player_death", priority=10)
+            self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
+            self.game_engine.game_over = True
+            # Delete save on death (permadeath)
+            if not hasattr(self, '_death_handled'):
+                self._delete_save_on_death()
+                # Show death dialogue
+                from game_dialogue_system import create_death_dialogue
+                self.game_engine.dialogue_state.show(create_death_dialogue())
+                self._death_handled = True  # Prevent duplicate handling
 
     def _update_memory_system(self):
         """Update the hybrid fog of war memory system using TCOD FOV."""
