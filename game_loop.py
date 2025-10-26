@@ -239,8 +239,8 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                 action = current_menu.handle_mouse_click(event)
 
                 if action == "exit":
-                    # Save active game before exiting if one exists
-                    if active_game is not None:
+                    # Save active game before exiting if one exists and player is alive
+                    if active_game is not None and active_game.player.cpu > 0 and not active_game.game_over:
                         active_game.auto_save()
                     menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True
@@ -342,8 +342,8 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                 action = current_menu.handle_input(event)
 
                 if action == "exit":
-                    # Save active game before exiting if one exists
-                    if active_game is not None:
+                    # Save active game before exiting if one exists and player is alive
+                    if active_game is not None and active_game.player.cpu > 0 and not active_game.game_over:
                         active_game.auto_save()
                     menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True

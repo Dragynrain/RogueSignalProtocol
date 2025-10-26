@@ -238,6 +238,11 @@ class UnifiedRenderer:
         title_color = ensure_color_tuple(dialogue.title_color)
         message_color = ensure_color_tuple(dialogue.message_color)
 
+        # Set dialogue area to opaque (critical for graphics mode transparency)
+        CoordinateHelpers.set_alpha_region(
+            console, x=box_x, y=box_y, width=box_width, height=box_height, alpha=255
+        )
+
         # Draw box background and border
         console.draw_rect(box_x, box_y, box_width, box_height,
                          ord(' '), fg=Colors.WHITE, bg=bg_color)
