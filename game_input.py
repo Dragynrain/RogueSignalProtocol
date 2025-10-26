@@ -989,14 +989,16 @@ class InputHandler:
         # Process the action (same logic as keyboard input)
         if action == "confirm":
             self._handle_dialogue_confirm()
+            return True
         elif action in ["cancel", "dismiss"]:
             should_continue = self._handle_dialogue_dismiss()
-            if not should_continue:
-                # This returns via game state, but we return True here
-                # because the event was handled
-                pass
+            # For death/victory dialogues, should_continue will be False
+            # We need to signal this to the game loop to exit to menu
+            # Return the actual value instead of always True
+            return should_continue
         elif action == "dont_show_again":
             self._handle_dialogue_dont_show_again()
+            return True
 
         return True  # Event was handled
 

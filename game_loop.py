@@ -452,7 +452,10 @@ def handle_game_input_events(event, game, input_handler):
         input_handler.handle_mouse_motion(event)
     elif event.type == "MOUSEBUTTONDOWN":
         # Handle mouse click events
-        input_handler.handle_mouse_click(event)
+        should_continue = input_handler.handle_mouse_click(event)
+        if should_continue is not None and not should_continue:
+            # Death/victory dialogue was dismissed with click - return to main menu
+            return True, None
     elif event.type == "MOUSEWHEEL":
         # Handle mouse wheel events (scrolling)
         input_handler.handle_mouse_wheel(event)
