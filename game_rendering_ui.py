@@ -158,6 +158,7 @@ class UIRenderer:
         Shows exploits 1-3 on first line, 4-5 on second line.
         Colors exploits green if usable (heat cost fits), red if too hot.
         Accounts for exploit efficiency temporary effect reducing heat cost.
+        Stores positions for mouse click detection.
 
         Args:
             console: TCOD console to render to
@@ -169,6 +170,14 @@ class UIRenderer:
         render_char_safe(console, 1, y1, "Exploits:", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)
 
         equipped_exploits = game.player.inventory_manager.equipped_exploits[:5]
+
+        # Clear stored positions for this render
+        UIRenderer.last_exploit_positions = []
+
+        # Check if mouse is hovering over exploit bar area
+        mouse_tile_x = game.last_mouse_tile_x
+        mouse_tile_y = game.last_mouse_tile_y
+        hovered_slot = None
 
         # Fixed layout: exploits 1,2,3 on first line, 4,5 on second line
         line1_exploits = []
@@ -187,23 +196,63 @@ class UIRenderer:
 
                 # First 3 exploits go on first line, remaining on second line
                 if i < 3:
-                    line1_exploits.append((exploit_key, exploit_text, color, i+1))
+                    line1_exploits.append((exploit_key, exploit_text, color, i))
                 else:
-                    line2_exploits.append((exploit_key, exploit_text, color, i+1))
+                    line2_exploits.append((exploit_key, exploit_text, color, i))
 
         # Render first line exploits
         x_pos = 11
-        for exploit_key, exploit_text, color, slot_num in line1_exploits:
-            render_char_safe(console, x_pos, y1, exploit_text, fg=color, bg=Colors.UI_BG)
-            x_pos += len(exploit_text) + 2
+        for exploit_key, exploit_text, color, slot in line1_exploits:
+            # Check if mouse is hovering over this exploit
+            text_width = len(exploit_text)
+            is_hovered = (mouse_tile_x is not None and mouse_tile_y is not None and
+                         mouse_tile_y == y1 and
+                         x_pos <= mouse_tile_x < x_pos + text_width)
+
+            # Store position for click detection
+            UIRenderer.last_exploit_positions.append({
+                'slot': slot,
+                'x': x_pos,
+                'y': y1,
+                'width': text_width,
+                'exploit_key': exploit_key
+            })
+
+            # Use highlight background if hovered
+            bg = Colors.UI_HIGHLIGHT if is_hovered else Colors.UI_BG
+            if is_hovered:
+                hovered_slot = slot
+
+            render_char_safe(console, x_pos, y1, exploit_text, fg=color, bg=bg)
+            x_pos += text_width + 2
 
         # Render second line exploits
         if line2_exploits:
             render_char_safe(console, 1, y2, "        ", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)  # Indent to align
             x_pos = 11
-            for exploit_key, exploit_text, color, slot_num in line2_exploits:
-                render_char_safe(console, x_pos, y2, exploit_text, fg=color, bg=Colors.UI_BG)
-                x_pos += len(exploit_text) + 2
+            for exploit_key, exploit_text, color, slot in line2_exploits:
+                # Check if mouse is hovering over this exploit
+                text_width = len(exploit_text)
+                is_hovered = (mouse_tile_x is not None and mouse_tile_y is not None and
+                             mouse_tile_y == y2 and
+                             x_pos <= mouse_tile_x < x_pos + text_width)
+
+                # Store position for click detection
+                UIRenderer.last_exploit_positions.append({
+                    'slot': slot,
+                    'x': x_pos,
+                    'y': y2,
+                    'width': text_width,
+                    'exploit_key': exploit_key
+                })
+
+                # Use highlight background if hovered
+                bg = Colors.UI_HIGHLIGHT if is_hovered else Colors.UI_BG
+                if is_hovered:
+                    hovered_slot = slot
+
+                render_char_safe(console, x_pos, y2, exploit_text, fg=color, bg=bg)
+                x_pos += text_width + 2
 
     def _render_temporary_conditions(self, console: tcod.console.Console, game):
         """
@@ -613,6 +662,12 @@ class UIRenderer:
             return self._help_menu.handle_input(event)
         return ""
 
+    # === Exploit Bar Click Detection ===
+
+    # Stored coordinates for exploit bar click detection (single source of truth)
+    # Each entry: {'slot': int, 'x': int, 'y': int, 'width': int, 'exploit_key': str}
+    last_exploit_positions = []
+
     # === Inventory Screen ===
 
     # Stored coordinates for inventory click detection (single source of truth)
@@ -957,6 +1012,38 @@ class UIRenderer:
                 selection_index += 1
 
         return selection_index
+
+    @staticmethod
+    def get_exploit_at_click(tile_x: int, tile_y: int) -> Optional[int]:
+        """
+        Get the slot number (0-4) of the exploit clicked at the given tile coordinates.
+
+        Uses stored rendering data (single source of truth) to map click coordinates
+        to exploit slot numbers. Returns the slot if clicked, None otherwise.
+
+        Args:
+            tile_x: X coordinate in tile space (0-79)
+            tile_y: Y coordinate in tile space (0-49)
+
+        Returns:
+            Slot number (0-4) if an exploit was clicked, None otherwise
+        """
+        # Check if exploit position data is available
+        if not UIRenderer.last_exploit_positions:
+            return None
+
+        # Check each stored exploit position
+        for exploit_data in UIRenderer.last_exploit_positions:
+            x = exploit_data['x']
+            y = exploit_data['y']
+            width = exploit_data['width']
+            slot = exploit_data['slot']
+
+            # Check if click is within this exploit's bounds
+            if y == tile_y and x <= tile_x < x + width:
+                return slot
+
+        return None
 
     def _render_exploit_tooltip(self, console: tcod.console.Console, exploit_def):
         """

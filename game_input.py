@@ -832,6 +832,11 @@ class InputHandler:
         elif self.game.show_lore_viewer:
             return self._handle_lore_viewer_left_click(event)
 
+        # Check for exploit bar clicks (normal gameplay only)
+        # This needs to be checked before gameplay movement to intercept UI clicks
+        if self._handle_exploit_bar_click(event):
+            return True
+
         # Gameplay: click adjacent tile to move
         return self._handle_gameplay_left_click(event)
 
@@ -878,6 +883,39 @@ class InputHandler:
                 )
                 # Targeting mode is exited by execute_targeted_exploit
             return True
+        return False
+
+    def _handle_exploit_bar_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """
+        Handle left click on exploit bar - activate the clicked exploit.
+
+        Converts pixel coordinates to console tile coordinates and checks if an exploit
+        was clicked using UIRenderer's stored positions. If clicked, activates that exploit
+        (same as pressing 1-5 keys).
+
+        Args:
+            event: Mouse button down event with pixel position
+
+        Returns:
+            True if an exploit was clicked, False otherwise
+        """
+        from game_rendering_ui import UIRenderer
+
+        # Convert pixel coordinates to console tile coordinates
+        window_w, window_h = self._get_window_dimensions()
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            event.position.x, event.position.y, window_w, window_h
+        )
+
+        # Check if an exploit was clicked
+        exploit_slot = UIRenderer.get_exploit_at_click(tile_x, tile_y)
+
+        if exploit_slot is not None:
+            # Activate the exploit (same as pressing the number key)
+            logging.debug(f"Input: Exploit bar click on slot {exploit_slot+1}")
+            self._use_exploit_slot(exploit_slot)
+            return True
+
         return False
 
     def _handle_gameplay_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
