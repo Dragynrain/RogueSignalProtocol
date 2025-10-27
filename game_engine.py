@@ -130,6 +130,10 @@ class GameEngine:
         # Camera offset tracking (for consistent input/rendering in look mode)
         self.last_camera_offset: Optional[Position] = None
 
+        # Auto-walk system (click-to-walk for distant tiles)
+        from game_autowalk import AutoWalk
+        self.autowalk = AutoWalk()
+
         # Overclocking system
         self.overclock_confirmation = False
         self.overclock_exploit: Optional[str] = None
