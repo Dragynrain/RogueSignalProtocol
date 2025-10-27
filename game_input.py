@@ -371,17 +371,30 @@ class InputHandler:
     
     def _handle_gameplay_input(self, event) -> bool:
         """Handle input during normal gameplay."""
+        # Check if auto-walk is active - cancel on most keys (except UI toggles)
+        if self.game.autowalk.is_active():
+            # Allow UI toggles without cancelling auto-walk
+            ui_toggle_keys = {
+                tcod.event.KeySym.SLASH,  # Help (when shift-pressed)
+                tcod.event.KeySym.ESCAPE,  # Already handled earlier
+            }
+
+            # Cancel auto-walk on any action key (movement, exploits, etc.)
+            if event.sym not in ui_toggle_keys:
+                self.game.autowalk.cancel()
+                # Fall through to process the key normally
+
         # Movement keys - use shared mapping to avoid duplication
         if event.sym in InputMappings.MOVEMENT_MAP:
             dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
             # Clear mouse hover when using keyboard movement
             self.game.mouse_hover_world_pos = None
             self.game.move_player(dx, dy)
-        
+
         # Wait/rest
         elif event.sym in (tcod.event.KeySym.SPACE, tcod.event.KeySym.PERIOD, tcod.event.KeySym.KP_5):
             self.game.maybe_process_turn()
-        
+
         # UI toggles
         elif event.sym == tcod.event.KeySym.I:
             self._open_inventory()
@@ -391,7 +404,7 @@ class InputHandler:
             self.game.show_lore_viewer = True
         elif event.sym == tcod.event.KeySym.SLASH and (event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)):
             self.game.show_help = True
-        
+
         # Exploit usage (1-5 keys) - check as loop
         else:
             exploit_keys = {
@@ -401,7 +414,7 @@ class InputHandler:
             }
             if event.sym in exploit_keys:
                 self._use_exploit_slot(exploit_keys[event.sym])
-        
+
         return True
     
     def _navigate_inventory(self, direction: int):
@@ -868,7 +881,7 @@ class InputHandler:
         return False
 
     def _handle_gameplay_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
-        """Handle left click during gameplay - move to adjacent tile or pass turn."""
+        """Handle left click during gameplay - move to tile or start auto-walk."""
         world_pos = self._mouse_pixel_to_world(event.position.x, event.position.y)
 
         if not world_pos:
@@ -883,12 +896,20 @@ class InputHandler:
             self.game.move_player(0, 0)  # Pass turn
             return True
 
-        # Only allow adjacent tile movement (8-directional)
+        # Adjacent tile: immediate movement (8-directional)
         if abs(dx) <= 1 and abs(dy) <= 1:
             self.game.move_player(dx, dy)
             return True
 
-        return False
+        # Distant tile: start auto-walk using TCOD pathfinding
+        player_pos = Position(self.game.player.x, self.game.player.y)
+        if self.game.autowalk.start(player_pos, world_pos, self.game):
+            logging.info(f"Started auto-walk to {world_pos}")
+            return True
+        else:
+            # No path found - could show message to user
+            logging.debug(f"No path to {world_pos}")
+            return False
 
     # ============================================================================
     # MENU MOUSE HANDLERS (Phase 3) - Stubs for now

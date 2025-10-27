@@ -32,6 +32,7 @@ class GlyphsMapRenderer(MapRendererBase):
             self._render_terrain(console, game, camera_offset, vision_range)
             self._render_vision_overlays(console, game, camera_offset, vision_range)
             self._render_movement_prediction(console, game, camera_offset, vision_range)
+            self._render_autowalk_path(console, game, camera_offset)
             self._render_gateway(console, game, camera_offset, vision_range)
             self._render_enemies(console, game, camera_offset, vision_range)
             self._render_player(console, game, camera_offset)
@@ -617,6 +618,36 @@ class GlyphsMapRenderer(MapRendererBase):
                 # Render dot or small indicator for predicted position
                 # Use '·' (small dot) for movement prediction
                 render_char_safe(console, screen_x, screen_y, '·', fg=prediction_color, bg=Colors.BLACK)
+
+    def _render_autowalk_path(self, console: tcod.console.Console, game, camera_offset: Position):
+        """Render the planned auto-walk path with visual indicators."""
+        if not game.autowalk.is_active():
+            return
+
+        # Get remaining path positions
+        path = game.autowalk.get_remaining_path()
+        if not path:
+            return
+
+        # Use cyan color for auto-walk path (distinct from enemy movement prediction)
+        path_color = (0, 200, 200)  # Cyan
+
+        # Render each position in the path
+        for i, pos in enumerate(path):
+            if self._is_in_viewport(pos.x, pos.y, camera_offset):
+                console_x, console_y = self._world_to_console(pos.x, pos.y, camera_offset)
+
+                # Use different symbols for visual clarity
+                if i == len(path) - 1:
+                    # Destination: use 'X' marker
+                    symbol = 'X'
+                    color = (0, 255, 255)  # Bright cyan
+                else:
+                    # Path steps: use '·' (small dot)
+                    symbol = '·'
+                    color = path_color
+
+                render_char_safe(console, console_x, console_y, symbol, fg=color, bg=Colors.BLACK)
 
     def _render_player(self, console: tcod.console.Console, game, camera_offset: Position):
         """Render the player character."""

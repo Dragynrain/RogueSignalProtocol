@@ -565,6 +565,27 @@ def main():
                     try:
                         game.sound_manager.update()
 
+                        # Execute auto-walk if active (before handling other input)
+                        if game.autowalk.is_active() and not game.dialogue_state.is_active():
+                            # Get next move from auto-walk
+                            next_move = game.autowalk.get_next_move(game)
+
+                            if next_move:
+                                dx, dy = next_move
+                                # Execute the move (processes a turn)
+                                game.move_player(dx, dy)
+                                game.autowalk.advance_step()
+
+                                # Check stop conditions after the move
+                                should_stop, reason = game.autowalk.check_stop_conditions(game)
+                                if should_stop:
+                                    game.autowalk.stop(reason)
+                                    if reason and reason != "Destination reached":
+                                        # Notify player why auto-walk stopped (except for normal completion)
+                                        game.message_log.add_message(f"Auto-walk stopped: {reason}")
+                                # Small delay for auto-walk to feel responsive but not instant
+                                time.sleep(0.1)
+
                         # In graphics mode, render continuously at fixed frame rate
                         # In glyph mode, only render when there are events
                         if settings.graphics_mode == "graphics":
