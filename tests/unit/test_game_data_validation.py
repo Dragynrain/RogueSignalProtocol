@@ -328,6 +328,18 @@ class TestGameBalanceBalanceConfigAccess:
 class TestGameUpgradesLoading:
     """Test GameUpgrades lazy loading from JSON."""
 
+    def setup_method(self):
+        """Save GameUpgrades state before each test."""
+        from game_data import GameUpgrades
+        self._original_loaded = GameUpgrades._loaded
+        self._original_upgrades = GameUpgrades.UPGRADES.copy()
+
+    def teardown_method(self):
+        """Restore GameUpgrades state after each test."""
+        from game_data import GameUpgrades
+        GameUpgrades._loaded = self._original_loaded
+        GameUpgrades.UPGRADES = self._original_upgrades
+
     def test_upgrades_loaded_from_json(self):
         """Test that upgrades are loaded from game_content.json."""
         mock_upgrades = {

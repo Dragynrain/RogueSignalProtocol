@@ -81,9 +81,17 @@ class TestNewGameSmokeTests:
         assert len(level_generator.corridor_tiles) > 0
 
         # Validate map connectivity (rooms should be connected)
-        # At minimum, spawn room should be walkable
-        spawn_pos = Position(5, 5)  # Typical spawn location
-        assert not game_map.is_wall(spawn_pos)
+        # Player should be spawned on a walkable tile
+        player_pos = engine.player.position
+        assert not game_map.is_wall(player_pos), f"Player spawned on wall at {player_pos}"
+
+        # Spawn area (2,2 to 10,10) should have some walkable tiles
+        spawn_area_has_floor = any(
+            not game_map.is_wall(Position(x, y))
+            for x in range(2, 10)
+            for y in range(2, 10)
+        )
+        assert spawn_area_has_floor, "Spawn area has no walkable tiles"
 
     def test_new_game_with_traditional_generation(self):
         """Test New Game with traditional (non-BSP) generation."""

@@ -35,7 +35,9 @@ from game_entities import Position
 
 # Import specialized level generation subsystems
 from game_level_structure import RoomGenerator, BSPRoomGenerator, CorridorGenerator
-from game_level_features import TacticalGenerator, AdvancedLayoutGenerator, TilePlacementGenerator
+from game_level_tactical import TacticalGenerator
+from game_level_layout import AdvancedLayoutGenerator
+from game_level_placement import TilePlacementGenerator
 
 
 class LevelGenerator:

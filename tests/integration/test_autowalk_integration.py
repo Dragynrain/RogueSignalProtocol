@@ -42,6 +42,10 @@ class TestAutoWalkBasic(unittest.TestCase):
         )
         self.autowalk = self.engine.autowalk
 
+        # GameEngine generates a level on init, so clear walls again
+        self.engine.game_map.walls.clear()
+        self.engine.game_map.invalidate_transparency_cache()
+
         # Clear enemies
         self.engine.enemies.clear()
 
@@ -83,6 +87,7 @@ class TestAutoWalkBasic(unittest.TestCase):
         # Create wall obstacle between start and target
         for y in range(8, 13):
             self.engine.game_map.walls.add((12, y))
+        self.engine.game_map.invalidate_transparency_cache()
 
         success = self.autowalk.start(start_pos, target_pos, self.engine)
 
@@ -99,6 +104,7 @@ class TestAutoWalkBasic(unittest.TestCase):
 
         # Make target a wall
         self.engine.game_map.walls.add((15, 10))
+        self.engine.game_map.invalidate_transparency_cache()
 
         success = self.autowalk.start(start_pos, target_pos, self.engine)
 
@@ -115,6 +121,7 @@ class TestAutoWalkBasic(unittest.TestCase):
             for y in range(9, 12):
                 if not (x == 10 and y == 10):  # Don't block player position
                     self.engine.game_map.walls.add((x, y))
+        self.engine.game_map.invalidate_transparency_cache()
 
         success = self.autowalk.start(start_pos, target_pos, self.engine)
 
@@ -139,6 +146,10 @@ class TestAutoWalkStopConditions(unittest.TestCase):
         )
         self.autowalk = self.engine.autowalk
 
+        # GameEngine generates a level on init, so clear walls again
+        self.engine.game_map.walls.clear()
+        self.engine.game_map.invalidate_transparency_cache()
+
         # Clear enemies
         self.engine.enemies.clear()
 
@@ -155,7 +166,7 @@ class TestAutoWalkStopConditions(unittest.TestCase):
         self.assertTrue(self.autowalk.is_active())
 
         # Place enemy in vision range (but not initially visible)
-        enemy = Enemy(25, 10, 'sentry')
+        enemy = Enemy(Position(25, 10), 'scanner')
         self.engine.enemies.append(enemy)
 
         # Move player closer so enemy becomes visible
@@ -200,6 +211,7 @@ class TestAutoWalkStopConditions(unittest.TestCase):
         if len(self.autowalk.path) > 0:
             next_tile = self.autowalk.path[0]
             self.engine.game_map.walls.add((next_tile.x, next_tile.y))
+            self.engine.game_map.invalidate_transparency_cache()
 
             # Check stop conditions
             should_stop, reason = self.autowalk.check_stop_conditions(self.engine)
@@ -241,6 +253,10 @@ class TestAutoWalkExecution(unittest.TestCase):
             load_save=False
         )
         self.autowalk = self.engine.autowalk
+
+        # GameEngine generates a level on init, so clear walls again
+        self.engine.game_map.walls.clear()
+        self.engine.game_map.invalidate_transparency_cache()
 
         # Clear enemies
         self.engine.enemies.clear()
@@ -320,6 +336,10 @@ class TestAutoWalkPathPreview(unittest.TestCase):
         )
         self.autowalk = self.engine.autowalk
 
+        # GameEngine generates a level on init, so clear walls again
+        self.engine.game_map.walls.clear()
+        self.engine.game_map.invalidate_transparency_cache()
+
         # Clear enemies
         self.engine.enemies.clear()
 
@@ -378,6 +398,10 @@ class TestAutoWalkTCODIntegration(unittest.TestCase):
         )
         self.autowalk = self.engine.autowalk
 
+        # GameEngine generates a level on init, so clear walls again
+        self.engine.game_map.walls.clear()
+        self.engine.game_map.invalidate_transparency_cache()
+
         # Clear enemies
         self.engine.enemies.clear()
 
@@ -394,6 +418,7 @@ class TestAutoWalkTCODIntegration(unittest.TestCase):
             self.engine.game_map.walls.add((x, 10))
         for y in range(10, 13):
             self.engine.game_map.walls.add((14, y))
+        self.engine.game_map.invalidate_transparency_cache()
 
         success = self.autowalk.start(start_pos, target_pos, self.engine)
 
@@ -430,6 +455,7 @@ class TestAutoWalkTCODIntegration(unittest.TestCase):
         for y in range(3, 18):
             if y not in [7, 13]:  # Leave gaps
                 self.engine.game_map.walls.add((10, y))
+        self.engine.game_map.invalidate_transparency_cache()
 
         success = self.autowalk.start(start_pos, target_pos, self.engine)
 
