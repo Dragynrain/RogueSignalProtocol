@@ -599,16 +599,15 @@ class GraphicsMapRenderer(MapRendererBase):
 
             tile_rect = self._get_tile_rect(hover_screen_x, hover_screen_y)
 
-            # Determine if this is a valid move target (adjacent to player)
-            dx = hover_pos.x - game.player.x
-            dy = hover_pos.y - game.player.y
-            is_adjacent = (abs(dx) <= 1 and abs(dy) <= 1 and not (dx == 0 and dy == 0))
+            # Determine if this is a valid walkable tile
+            from game_characters import PositionValidator
+            is_walkable = PositionValidator.is_basic_valid_position(hover_pos, game.game_map)
 
-            # Color: Green for valid adjacent tiles, Yellow for other tiles
-            if is_adjacent:
+            # Color: Green for walkable tiles, Yellow for blocked tiles (walls, etc.)
+            if is_walkable:
                 highlight_color = (0, 255, 0, 180)  # Green, semi-transparent
             else:
-                highlight_color = (255, 255, 0, 100)  # Yellow, more transparent
+                highlight_color = (255, 255, 0, 180)  # Yellow, semi-transparent
 
             # Draw highlight border (thicker than other overlays for visibility)
             self._draw_outline_box(renderer, tile_rect, highlight_color, thickness=3)

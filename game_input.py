@@ -885,7 +885,8 @@ class InputHandler:
         world_pos = self._mouse_pixel_to_world(event.position.x, event.position.y)
 
         if not world_pos:
-            return False
+            # Click was outside valid game area - still handled, just ignored
+            return True
 
         # Calculate delta from player position
         dx = world_pos.x - self.game.player.x
@@ -907,9 +908,9 @@ class InputHandler:
             logging.info(f"Started auto-walk to {world_pos}")
             return True
         else:
-            # No path found - could show message to user
+            # No path found - event was handled, just no action taken
             logging.debug(f"No path to {world_pos}")
-            return False
+            return True
 
     # ============================================================================
     # MENU MOUSE HANDLERS (Phase 3) - Stubs for now
