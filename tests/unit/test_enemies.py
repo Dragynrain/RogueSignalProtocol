@@ -14,274 +14,235 @@ from game_entities import Position, EnemyState, EnemyMovement
 from game_enemies import EnemyManager
 from game_map import GameMap
 from tests.fixtures.real_game_data import create_real_enemy, create_test_map_with_real_tiles
+from tests.fixtures.simple_fixtures import enemy_builder, player, create_test_map
 
 
 class TestEnemyCreation:
     """Test enemy creation and initialization with real game data."""
-    
+
     def test_enemy_creation_with_real_data(self):
         """Enemy creates with correct position and type using real GameData."""
-        pos = Position(10, 15)
-        
-        enemy = create_real_enemy("scanner", pos)
-        
-        assert enemy.position.x == 10
-        assert enemy.position.y == 15
-        assert enemy.type == "scanner"
+        test_enemy = enemy_builder("scanner", pos=(10, 15))
+
+        assert test_enemy.position.x == 10
+        assert test_enemy.position.y == 15
+        assert test_enemy.type == "scanner"
         # Test actual values from GameData
-        assert enemy.cpu > 0
-        assert enemy.max_cpu > 0
-        assert enemy.cpu == enemy.max_cpu  # Fresh enemy has full CPU
-        assert enemy.state == EnemyState.UNAWARE
-    
+        assert test_enemy.cpu > 0
+        assert test_enemy.max_cpu > 0
+        assert test_enemy.cpu == test_enemy.max_cpu  # Fresh enemy has full CPU
+        assert test_enemy.state == EnemyState.UNAWARE
+
     def test_enemy_unique_ids(self):
         """Each enemy gets a unique ID."""
-        pos = Position(5, 5)
-        
-        enemy1 = create_real_enemy("virus", pos)
-        enemy2 = create_real_enemy("virus", pos)
-        
+        enemy1 = enemy_builder("virus", pos=(5, 5))
+        enemy2 = enemy_builder("virus", pos=(5, 5))
+
         assert enemy1.id != enemy2.id
         assert enemy1.id < enemy2.id  # IDs increment
-    
+
     def test_enemy_property_access(self):
         """Enemy x/y properties work correctly."""
-        pos = Position(15, 20)
-        
-        enemy = create_real_enemy("patrol", pos)
-        
-        assert enemy.x == 15
-        assert enemy.y == 20
-        
+        test_enemy = enemy_builder("patrol", pos=(15, 20))
+
+        assert test_enemy.x == 15
+        assert test_enemy.y == 20
+
         # Test property setters
-        enemy.x = 25
-        enemy.y = 30
-        assert enemy.position.x == 25
-        assert enemy.position.y == 30
-    
+        test_enemy.x = 25
+        test_enemy.y = 30
+        assert test_enemy.position.x == 25
+        assert test_enemy.position.y == 30
+
     def test_enemy_types_have_real_data(self):
         """Verify that different enemy types have actual GameData properties."""
-        scanner = create_real_enemy("scanner", Position(5, 5))
-        patrol = create_real_enemy("patrol", Position(10, 10))
-        bot = create_real_enemy("bot", Position(15, 15))
-        
+        scanner = enemy_builder("scanner", pos=(5, 5))
+        patrol = enemy_builder("patrol", pos=(10, 10))
+        bot = enemy_builder("bot", pos=(15, 15))
+
         # Each enemy type should have different characteristics from real GameData
         assert scanner.type_data is not None
-        assert patrol.type_data is not None  
+        assert patrol.type_data is not None
         assert bot.type_data is not None
-        
+
         # Different enemy types should have different movement patterns
         assert scanner.type_data.movement != patrol.type_data.movement
 
 
 class TestEnemyVision:
     """Test enemy vision and trace level systems with real game data."""
-    
+
     def test_can_see_player_basic(self):
         """Enemy can_see_player works with clear line of sight using real data."""
-        enemy_pos = Position(5, 5)
-        player_pos = Position(10, 5)  # Same row, clear line
-        
-        enemy = create_real_enemy("scanner", enemy_pos)
-        player = Player(player_pos.x, player_pos.y)
-        
-        # Mock game map with no walls blocking, not in shadow  
+        test_enemy = enemy_builder("scanner", pos=(5, 5))
+        test_player = player(10, 5, 100)  # Same row, clear line
+
+        # Mock game map with no walls blocking, not in shadow
         mock_map = Mock()
         mock_map.can_see_position.return_value = True
         mock_map.is_shadow.return_value = False
-        
+
         # Mock player not invisible
-        with patch.object(player, 'is_invisible', return_value=False):
-            can_see = enemy.can_see_player(player, mock_map)
-            
+        with patch.object(test_player, 'is_invisible', return_value=False):
+            can_see = test_enemy.can_see_player(test_player, mock_map)
+
             # Should be able to see player if within vision range (using real vision value)
-            distance = enemy_pos.distance_to(player_pos)
-            if distance <= enemy.type_data.vision:
+            distance = test_enemy.position.distance_to(test_player.position)
+            if distance <= test_enemy.type_data.vision:
                 assert can_see is True
             else:
                 assert can_see is False
     
     def test_can_see_player_blocked(self):
         """Enemy cannot see player through walls using real data."""
-        enemy_pos = Position(5, 5)
-        player_pos = Position(10, 5)
-        
-        enemy = create_real_enemy("scanner", enemy_pos)
-        player = Player(player_pos.x, player_pos.y)
-        
+        test_enemy = enemy_builder("scanner", pos=(5, 5))
+        test_player = player(10, 5, 100)
+
         # Mock game map with walls blocking line of sight
         mock_map = Mock()
         mock_map.has_line_of_sight.return_value = False
-        
-        can_see = enemy.can_see_player(player, mock_map)
-        
+
+        can_see = test_enemy.can_see_player(test_player, mock_map)
+
         assert can_see is False
-    
+
     def test_can_see_player_out_of_range(self):
         """Enemy cannot see player beyond vision range using real data."""
-        enemy_pos = Position(5, 5)
-        player_pos = Position(50, 5)  # Far away
-        
-        enemy = create_real_enemy("scanner", enemy_pos)
-        player = Player(player_pos.x, player_pos.y)
-        
+        test_enemy = enemy_builder("scanner", pos=(5, 5))
+        test_player = player(50, 5, 100)  # Far away
+
         # Use real game map
-        game_map = create_test_map_with_real_tiles()
-        
-        can_see = enemy.can_see_player(player, game_map)
-        
+        game_map = create_test_map()
+
+        can_see = test_enemy.can_see_player(test_player, game_map)
+
         # With this distance, should be out of range for any enemy type
         assert can_see is False
-    
+
     def test_different_enemy_vision_ranges(self):
         """Different enemy types have different vision ranges from real GameData."""
-        pos = Position(5, 5)
-        
-        scanner = create_real_enemy("scanner", pos)
-        patrol = create_real_enemy("patrol", pos) 
-        bot = create_real_enemy("bot", pos)
-        
+        scanner = enemy_builder("scanner", pos=(5, 5))
+        patrol = enemy_builder("patrol", pos=(5, 5))
+        bot = enemy_builder("bot", pos=(5, 5))
+
         # Each enemy type should have a vision range > 0
         assert scanner.type_data.vision > 0
         assert patrol.type_data.vision > 0
         assert bot.type_data.vision > 0
-        
+
         # Vision ranges can be different (but that's fine, they might be the same in GameData)
 
 
 class TestEnemyAttack:
     """Test enemy attack and combat behavior with real game data."""
-    
+
     def test_can_attack_player_adjacent(self):
         """Enemy can attack adjacent player using real data."""
-        enemy_pos = Position(5, 5)
-        player_pos = Position(6, 5)  # Adjacent position
-        
-        enemy = create_real_enemy("virus", enemy_pos)
-        player = Player(player_pos.x, player_pos.y)
-        
-        can_attack = enemy.can_attack_player(player)
-        
+        test_enemy = enemy_builder("virus", pos=(5, 5))
+        test_player = player(6, 5, 100)  # Adjacent position
+
+        can_attack = test_enemy.can_attack_player(test_player)
+
         assert can_attack is True
-    
+
     def test_can_attack_player_not_adjacent(self):
         """Enemy cannot attack non-adjacent player using real data."""
-        enemy_pos = Position(5, 5)
-        player_pos = Position(10, 10)  # Not adjacent
-        
-        enemy = create_real_enemy("virus", enemy_pos)
-        player = Player(player_pos.x, player_pos.y)
-        
-        can_attack = enemy.can_attack_player(player)
-        
+        test_enemy = enemy_builder("virus", pos=(5, 5))
+        test_player = player(10, 10, 100)  # Not adjacent
+
+        can_attack = test_enemy.can_attack_player(test_player)
+
         assert can_attack is False
-    
+
     def test_attack_player_virus_behavior(self):
         """Virus enemy applies virus effect using real GameData."""
-        enemy_pos = Position(5, 5)
-        player_pos = Position(6, 5)
-        
-        enemy = create_real_enemy("virus", enemy_pos)
-        player = Player(player_pos.x, player_pos.y)
-        initial_virus = player.temporary_effects['virus_turns']
-        
-        damage_dealt = enemy.attack_player(player)
-        
+        test_enemy = enemy_builder("virus", pos=(5, 5))
+        test_player = player(6, 5, 100)
+        initial_virus = test_player.temporary_effects['virus_turns']
+
+        damage_dealt = test_enemy.attack_player(test_player)
+
         # Virus type behavior based on real GameData - check if it applies virus effect
         # The behavior depends on actual game data implementation
         assert damage_dealt >= 0  # Can be 0 (virus effect) or > 0 (direct damage)
-    
+
     def test_attack_player_scanner_behavior(self):
         """Scanner enemy deals damage using real GameData."""
-        enemy_pos = Position(5, 5)
-        player_pos = Position(6, 5)
-        
-        enemy = create_real_enemy("scanner", enemy_pos)
-        player = Player(player_pos.x, player_pos.y)
-        initial_cpu = player.cpu
-        
-        damage_dealt = enemy.attack_player(player)
-        
+        test_enemy = enemy_builder("scanner", pos=(5, 5))
+        test_player = player(6, 5, 100)
+        initial_cpu = test_player.cpu
+
+        damage_dealt = test_enemy.attack_player(test_player)
+
         # Scanner should deal actual damage from GameData
-        expected_damage = enemy.type_data.damage
+        expected_damage = test_enemy.type_data.damage
         assert damage_dealt == expected_damage
-        assert player.cpu == initial_cpu - expected_damage
-    
+        assert test_player.cpu == initial_cpu - expected_damage
+
     def test_attack_player_when_disabled(self):
         """Disabled enemy attack behavior using real data."""
-        enemy_pos = Position(5, 5)
-        player_pos = Position(6, 5)
-        
-        enemy = create_real_enemy("scanner", enemy_pos)
-        enemy.disabled_turns = 2  # Enemy is disabled
-        player = Player(player_pos.x, player_pos.y)
-        initial_cpu = player.cpu
-        
-        damage_dealt = enemy.attack_player(player)
-        
+        test_enemy = enemy_builder("scanner", pos=(5, 5))
+        test_enemy.disabled_turns = 2  # Enemy is disabled
+        test_player = player(6, 5, 100)
+        initial_cpu = test_player.cpu
+
+        damage_dealt = test_enemy.attack_player(test_player)
+
         # Attack method still executes even when disabled
-        expected_damage = enemy.type_data.damage
+        expected_damage = test_enemy.type_data.damage
         assert damage_dealt == expected_damage
-        assert player.cpu == initial_cpu - expected_damage
+        assert test_player.cpu == initial_cpu - expected_damage
 
 
 class TestEnemyDamage:
     """Test enemy taking damage and destruction with real game data."""
-    
+
     def test_take_damage_normal(self):
         """Enemy takes damage correctly using real data."""
-        pos = Position(10, 10)
-        
-        enemy = create_real_enemy("patrol", pos)
-        initial_cpu = enemy.cpu
+        test_enemy = enemy_builder("patrol", pos=(10, 10))
+        initial_cpu = test_enemy.cpu
         damage_amount = 20
-        
-        is_destroyed = enemy.take_damage(damage_amount)
-        
+
+        is_destroyed = test_enemy.take_damage(damage_amount)
+
         assert is_destroyed is False  # Should still be alive
-        assert enemy.cpu == initial_cpu - damage_amount
-    
+        assert test_enemy.cpu == initial_cpu - damage_amount
+
     def test_take_damage_fatal(self):
         """Enemy dies when CPU reaches 0 using real data."""
-        pos = Position(10, 10)
-        
-        enemy = create_real_enemy("scanner", pos)
-        initial_cpu = enemy.cpu
-        
-        is_destroyed = enemy.take_damage(initial_cpu)  # Exactly fatal damage
-        
+        test_enemy = enemy_builder("scanner", pos=(10, 10))
+        initial_cpu = test_enemy.cpu
+
+        is_destroyed = test_enemy.take_damage(initial_cpu)  # Exactly fatal damage
+
         assert is_destroyed is True
-        assert enemy.cpu == 0
-    
+        assert test_enemy.cpu == 0
+
     def test_take_damage_overkill(self):
         """Enemy dies from overkill damage using real data."""
-        pos = Position(10, 10)
-        
-        enemy = create_real_enemy("virus", pos)
-        initial_cpu = enemy.cpu
+        test_enemy = enemy_builder("virus", pos=(10, 10))
+        initial_cpu = test_enemy.cpu
         overkill_damage = initial_cpu + 30  # More damage than CPU
-        
-        is_destroyed = enemy.take_damage(overkill_damage)
-        
+
+        is_destroyed = test_enemy.take_damage(overkill_damage)
+
         assert is_destroyed is True
-        assert enemy.cpu <= 0  # CPU can go negative with overkill
-        
+        assert test_enemy.cpu <= 0  # CPU can go negative with overkill
+
     def test_different_enemy_cpu_values(self):
         """Different enemy types have different CPU values from real GameData."""
-        pos = Position(5, 5)
-        
-        scanner = create_real_enemy("scanner", pos)
-        patrol = create_real_enemy("patrol", pos)
-        virus = create_real_enemy("virus", pos)
-        
+        scanner = enemy_builder("scanner", pos=(5, 5))
+        patrol = enemy_builder("patrol", pos=(5, 5))
+        virus = enemy_builder("virus", pos=(5, 5))
+
         # All enemies should have positive CPU values
         assert scanner.cpu > 0
         assert patrol.cpu > 0
         assert virus.cpu > 0
-        
+
         # CPU should equal max_cpu for fresh enemies
         assert scanner.cpu == scanner.max_cpu
-        assert patrol.cpu == patrol.max_cpu  
+        assert patrol.cpu == patrol.max_cpu
         assert virus.cpu == virus.max_cpu
 
 
@@ -290,18 +251,17 @@ class TestEnemyColorCoding:
 
     def test_enemy_colors_by_state(self):
         """Enemy colors change based on state."""
-        pos = Position(5, 5)
-        enemy = create_real_enemy("scanner", pos)
+        test_enemy = enemy_builder("scanner", pos=(5, 5))
 
         # Test different states produce different colors
-        enemy.state = EnemyState.UNAWARE
-        unaware_color = enemy.get_color()
+        test_enemy.state = EnemyState.UNAWARE
+        unaware_color = test_enemy.get_color()
 
-        enemy.state = EnemyState.ALERT
-        alert_color = enemy.get_color()
+        test_enemy.state = EnemyState.ALERT
+        alert_color = test_enemy.get_color()
 
-        enemy.state = EnemyState.HOSTILE
-        hostile_color = enemy.get_color()
+        test_enemy.state = EnemyState.HOSTILE
+        hostile_color = test_enemy.get_color()
 
         # Colors should be different for each state
         assert unaware_color != alert_color

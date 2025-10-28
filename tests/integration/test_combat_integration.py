@@ -12,56 +12,37 @@ from game_entities import Position, ExploitDefinition, TargetingMode
 from game_combat import ExploitSystem
 
 
-def test_exploit_system_initialization():
+def test_exploit_system_initialization(basic_game_engine):
     """ExploitSystem initializes correctly with game instance."""
     from game_combat import ExploitSystem
 
-    mock_game = Mock()
-    exploit_system = ExploitSystem(mock_game)
+    exploit_system = ExploitSystem(basic_game_engine)
 
-    assert exploit_system.game is mock_game
+    assert exploit_system.game is basic_game_engine
 
 
 class TestExploitSystem:
     """Test the ExploitSystem class and exploit mechanics."""
-    
-    def test_use_exploit_not_equipped(self):
+
+    def test_use_exploit_not_equipped(self, basic_game_engine):
         """Cannot use exploit that isn't equipped."""
-        mock_game = Mock()
-        mock_player = Mock()
-        mock_inventory = Mock()
-        mock_inventory.equipped_exploits = {}  # No exploits equipped
-        mock_player.inventory_manager = mock_inventory
-        mock_game.player = mock_player
-        mock_game.message_log = Mock()
-        
-        exploit_system = ExploitSystem(mock_game)
-        
+        # Player starts with no exploits equipped
+        basic_game_engine.player.inventory_manager.equipped_exploits = []
+
+        exploit_system = ExploitSystem(basic_game_engine)
+
         result = exploit_system.use_exploit("nonexistent_exploit")
-        
+
         assert result is False
-        mock_game.message_log.add_message.assert_called_with("Exploit not equipped")
+        # Message log is real, check the last message
+        assert basic_game_engine.message_log.messages[-1].text == "Exploit not equipped"
     
-    def test_use_exploit_requires_targeting(self):
+    def test_use_exploit_requires_targeting(self, basic_game_engine):
         """Exploit requiring targeting enters targeting mode."""
-        mock_game = Mock()
-        mock_player = Mock()
-        mock_player.x = 10
-        mock_player.y = 10
-        mock_player.heat = 50
-        mock_player.max_heat = 100  # Add max_heat for dialogue system
-        mock_player.cpu = 100  # Add cpu for dialogue system
-        mock_player.max_cpu = 100  # Add max_cpu for dialogue system
-        mock_player.position = Position(10, 10)
-        mock_player.temporary_effects = {'exploit_efficiency_turns': 0}
-        mock_inventory = Mock()
-        mock_inventory.equipped_exploits = {"buffer_overflow": True}
-        mock_player.inventory_manager = mock_inventory
-        mock_game.player = mock_player
-        mock_game.message_log = Mock()
-        mock_game.sound_manager = Mock()
-        mock_game.dialogue_state = Mock()  # Add dialogue_state mock
-        
+        # Set up player with exploit equipped
+        basic_game_engine.player.heat = 50
+        basic_game_engine.player.inventory_manager.equipped_exploits = ["buffer_overflow"]
+
         with patch('game_combat.GameData') as mock_game_data:
             # Mock an exploit that requires targeting
             mock_exploit = Mock(spec=ExploitDefinition)
@@ -70,122 +51,97 @@ class TestExploitSystem:
             mock_exploit.heat = 10
             mock_exploit.name = "Buffer Overflow"
             mock_game_data.EXPLOITS = {"buffer_overflow": mock_exploit}
-            
-            exploit_system = ExploitSystem(mock_game)
-            
-            result = exploit_system.use_exploit("buffer_overflow")
-            
-            assert result is True
-            assert mock_game.targeting_mode is True
-            assert mock_game.targeting_exploit == "buffer_overflow"
-            mock_game.message_log.add_message.assert_called_with("Targeting Buffer Overflow")
-    
-    def test_use_exploit_heat_limit_exceeded(self):
-        """Exploit with heat cost exceeding limit shows overclock dialogue."""
-        mock_game = Mock()
-        mock_player = Mock()
-        mock_player.heat = 90  # High heat
-        mock_player.max_heat = 100  # Add max_heat for dialogue system
-        mock_player.cpu = 100  # Add cpu for dialogue system
-        mock_player.max_cpu = 100  # Add max_cpu for dialogue system
-        mock_player.temporary_effects = {'exploit_efficiency_turns': 0}
-        mock_inventory = Mock()
-        mock_inventory.equipped_exploits = {"system_crash": True}
-        mock_player.inventory_manager = mock_inventory
-        mock_game.player = mock_player
-        mock_game.message_log = Mock()
-        mock_game.sound_manager = Mock()
-        mock_game.dialogue_state = Mock()  # Add dialogue_state mock
 
-        with patch('game_combat.GameData') as mock_game_data:
+            exploit_system = ExploitSystem(basic_game_engine)
+
+            result = exploit_system.use_exploit("buffer_overflow")
+
+            assert result is True
+            assert basic_game_engine.targeting_mode is True
+            assert basic_game_engine.targeting_exploit == "buffer_overflow"
+            assert basic_game_engine.message_log.messages[-1].text == "Targeting Buffer Overflow"
+    
+    def test_use_exploit_heat_limit_exceeded(self, basic_game_engine):
+        """Exploit with heat cost exceeding limit shows overclock dialogue."""
+        # Set player to high heat
+        basic_game_engine.player.heat = 90  # High heat
+        basic_game_engine.player.inventory_manager.equipped_exploits = ["system_crash"]
+
+        with patch('game_combat.GameData') as mock_game_data, \
+             patch.object(basic_game_engine.dialogue_state, 'show') as mock_show:
             mock_exploit = Mock(spec=ExploitDefinition)
             mock_exploit.heat = 20  # Would exceed 100 heat limit
             mock_exploit.targeting = TargetingMode.NONE
             mock_exploit.range = 0
-            mock_exploit.name = "System Crash"  # Add exploit name for dialogue
+            mock_exploit.name = "System Crash"
             mock_game_data.EXPLOITS = {"system_crash": mock_exploit}
 
-            exploit_system = ExploitSystem(mock_game)
+            exploit_system = ExploitSystem(basic_game_engine)
 
             result = exploit_system.use_exploit("system_crash")
 
             # Should return False and show dialogue instead of old confirmation system
             assert result is False
             # Verify dialogue_state.show was called
-            mock_game.dialogue_state.show.assert_called_once()
+            mock_show.assert_called_once()
     
-    def test_execute_exploit_invalid(self):
+    def test_execute_exploit_invalid(self, basic_game_engine):
         """Cannot execute unknown exploit."""
-        mock_game = Mock()
-        mock_game.message_log = Mock()
-        
         with patch('game_combat.GameData') as mock_game_data:
             mock_game_data.EXPLOITS = {}  # No exploits available
-            
-            exploit_system = ExploitSystem(mock_game)
-            
+
+            exploit_system = ExploitSystem(basic_game_engine)
+
             result = exploit_system.execute_exploit("unknown_exploit", Position(5, 5))
-            
+
             assert result is False
-            mock_game.message_log.add_message.assert_called_with("Unknown exploit")
+            assert basic_game_engine.message_log.messages[-1].text == "Unknown exploit"
     
-    def test_calculate_heat_cost_with_efficiency(self):
+    def test_calculate_heat_cost_with_efficiency(self, basic_game_engine):
         """Heat cost calculation considers efficiency bonus."""
-        mock_game = Mock()
-        mock_player = Mock()
-        mock_player.temporary_effects = {'exploit_efficiency_turns': 5}  # Has efficiency
-        mock_game.player = mock_player
-        
-        exploit_system = ExploitSystem(mock_game)
-        
+        basic_game_engine.player.temporary_effects['exploit_efficiency_turns'] = 5  # Has efficiency
+
+        exploit_system = ExploitSystem(basic_game_engine)
+
         mock_exploit = Mock(spec=ExploitDefinition)
         mock_exploit.heat = 20
-        
+
         heat_cost = exploit_system._calculate_heat_cost(mock_exploit)
-        
+
         # Should be 60% of original cost due to efficiency
         assert heat_cost == 12  # 20 * 0.6 = 12
-    
-    def test_calculate_heat_cost_without_efficiency(self):
+
+    def test_calculate_heat_cost_without_efficiency(self, basic_game_engine):
         """Heat cost calculation without efficiency bonus."""
-        mock_game = Mock()
-        mock_player = Mock()
-        mock_player.temporary_effects = {'exploit_efficiency_turns': 0}  # No efficiency
-        mock_game.player = mock_player
-        
-        exploit_system = ExploitSystem(mock_game)
-        
+        basic_game_engine.player.temporary_effects['exploit_efficiency_turns'] = 0  # No efficiency
+
+        exploit_system = ExploitSystem(basic_game_engine)
+
         mock_exploit = Mock(spec=ExploitDefinition)
         mock_exploit.heat = 30
-        
+
         heat_cost = exploit_system._calculate_heat_cost(mock_exploit)
-        
+
         # Should be full cost without efficiency
         assert heat_cost == 30
     
-    def test_target_validation(self):
+    def test_target_validation(self, basic_game_engine):
         """Target validation works for different exploit types."""
-        mock_game = Mock()
-        mock_player = Mock()
-        mock_player.position = Position(10, 10)
-        mock_game.player = mock_player
-        mock_game.game_map = Mock()
-        mock_game.game_map.distance.return_value = 3  # Within range
-        mock_game.game_map.has_line_of_sight.return_value = True
-        
-        exploit_system = ExploitSystem(mock_game)
-        
-        # Mock exploit with range requirement
-        mock_exploit = Mock(spec=ExploitDefinition)
-        mock_exploit.range = 5
-        mock_exploit.targeting = TargetingMode.SINGLE
-        
-        target = Position(12, 12)
-        
-        result = exploit_system._validate_target(mock_exploit, target)
-        
-        # Should validate successfully
-        assert result is True
+        with patch.object(basic_game_engine.game_map, 'has_line_of_sight', return_value=True):
+            exploit_system = ExploitSystem(basic_game_engine)
+
+            # Mock exploit with range requirement
+            mock_exploit = Mock(spec=ExploitDefinition)
+            mock_exploit.range = 5
+            mock_exploit.targeting = TargetingMode.SINGLE
+
+            # Target close enough to player (at 15, 15)
+            target = Position(17, 15)
+
+            result = exploit_system._validate_target(mock_exploit, target)
+
+            # Should validate successfully (distance is 2, within range of 5)
+            assert result is True
 
 
 class TestPlayerCombat:
@@ -249,84 +205,45 @@ class TestPlayerCombat:
 
 class TestEnemyCombat:
     """Test enemy combat mechanics."""
-    
+
     def test_enemy_attack_adjacent_player(self):
         """Enemy can attack adjacent player."""
-        with patch('game_data.GameData') as mock_game_data, \
-             patch('game_inventory.InventoryManager') as mock_inventory_cls:
-            mock_enemy_type = Mock()
-            mock_enemy_type.cpu = 50
-            mock_enemy_type.damage = 15
-            mock_game_data.ENEMY_TYPES = {'virus': mock_enemy_type}
-            mock_game_data.EXPLOITS = {'test_exploit': Mock()}
-            
-            # Mock InventoryManager to avoid random choice error
-            mock_inventory = Mock()
-            mock_inventory_cls.return_value = mock_inventory
-            
-            enemy_pos = Position(5, 5)
-            player_pos = Position(6, 5)  # Adjacent
-            
-            enemy = Enemy(enemy_pos, "virus")
-            player = Player(player_pos.x, player_pos.y)
-            initial_cpu = player.cpu
-            
-            damage = enemy.attack_player(player)
-            
-            # Virus enemies deal 0 direct damage but apply virus effect
-            assert damage == 0
-            # Player CPU should be unchanged (virus damage is applied over time)
-            assert player.cpu == initial_cpu
-    
+        from tests.fixtures.simple_fixtures import player, enemy
+
+        test_enemy = enemy("virus", 5, 5)
+        test_player = player(6, 5, 100)  # Adjacent
+        initial_cpu = test_player.cpu
+
+        damage = test_enemy.attack_player(test_player)
+
+        # Virus enemies deal 0 direct damage but apply virus effect
+        assert damage == 0
+        # Player CPU should be unchanged (virus damage is applied over time)
+        assert test_player.cpu == initial_cpu
+
     def test_enemy_cannot_attack_distant_player(self):
         """Enemy cannot attack non-adjacent player."""
-        with patch('game_data.GameData') as mock_game_data, \
-             patch('game_inventory.InventoryManager') as mock_inventory_cls:
-            mock_enemy_type = Mock()
-            mock_enemy_type.cpu = 50
-            mock_enemy_type.damage = 10
-            mock_game_data.ENEMY_TYPES = {'scanner': mock_enemy_type}
-            mock_game_data.EXPLOITS = {'test_exploit': Mock()}
-            
-            # Mock InventoryManager to avoid random choice error
-            mock_inventory = Mock()
-            mock_inventory_cls.return_value = mock_inventory
-            
-            enemy_pos = Position(5, 5)
-            player_pos = Position(10, 10)  # Not adjacent
-            
-            enemy = Enemy(enemy_pos, "scanner")
-            player = Player(player_pos.x, player_pos.y)
-            
-            can_attack = enemy.can_attack_player(player)
-            
-            assert can_attack is False
-    
+        from tests.fixtures.simple_fixtures import player, enemy
+
+        test_enemy = enemy("scanner", 5, 5)
+        test_player = player(10, 10, 100)  # Not adjacent
+
+        can_attack = test_enemy.can_attack_player(test_player)
+
+        assert can_attack is False
+
     def test_enemy_disabled_cannot_attack(self):
         """Disabled enemy cannot attack player."""
-        with patch('game_data.GameData') as mock_game_data, \
-             patch('game_inventory.InventoryManager') as mock_inventory_cls:
-            mock_enemy_type = Mock()
-            mock_enemy_type.cpu = 40
-            mock_enemy_type.damage = 12
-            mock_game_data.ENEMY_TYPES = {'patrol': mock_enemy_type}
-            mock_game_data.EXPLOITS = {'test_exploit': Mock()}
-            
-            # Mock InventoryManager to avoid random choice error
-            mock_inventory = Mock()
-            mock_inventory_cls.return_value = mock_inventory
-            
-            enemy_pos = Position(8, 8)
-            player_pos = Position(9, 8)  # Adjacent
-            
-            enemy = Enemy(enemy_pos, "patrol")
-            enemy.disabled_turns = 3  # Disabled
-            player = Player(player_pos.x, player_pos.y)
-            initial_cpu = player.cpu
-            
-            damage = enemy.attack_player(player)
-            
-            # Patrol enemy type deals direct damage even when disabled
-            # (disabled status doesn't prevent attack method execution)
-            assert damage == 12  # Normal damage
-            assert player.cpu == initial_cpu - 12  # Damage taken
+        from tests.fixtures.simple_fixtures import player, enemy
+
+        test_enemy = enemy("patrol", 8, 8)
+        test_enemy.disabled_turns = 3  # Disabled
+        test_player = player(9, 8, 100)  # Adjacent
+        initial_cpu = test_player.cpu
+
+        damage = test_enemy.attack_player(test_player)
+
+        # Patrol enemy type deals direct damage even when disabled
+        # (disabled status doesn't prevent attack method execution)
+        assert damage == test_enemy.type_data.damage  # Normal damage
+        assert test_player.cpu == initial_cpu - test_enemy.type_data.damage  # Damage taken
