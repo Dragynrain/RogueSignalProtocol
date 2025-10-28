@@ -12,9 +12,10 @@
 ---
 
 ## 2. Compatibility
-- **ASCII only**, no Unicode.
+- **Font:** CascadiaCode TrueType (32×32, scalable to any resolution)
+- **Character set:** Unicode (full box-drawing, symbols, card suits)
 - Target: Windows 10/11 (cmd/PowerShell).
-- Rendering: ASCII (main) + TCOD graphics (sync both).
+- Rendering: Unicode console + TCOD graphics (sync both).
 
 ---
 
