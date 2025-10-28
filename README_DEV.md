@@ -607,7 +607,7 @@ Located in `user_settings.json` (created automatically):
 **Code:**
 - Keep files under 2000 lines (split at ~1800)
 - One purpose per module
-- ASCII only (no Unicode in game text)
+- Unicode character set (CascadiaCode TrueType font, full box-drawing support)
 - Update tests with every change
 - Run full test suite before PR
 
