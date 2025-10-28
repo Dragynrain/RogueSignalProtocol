@@ -13,7 +13,7 @@ from game_save import SaveGameManager
 from game_engine import GameEngine
 from game_data import GameData
 from tests.fixtures.simple_fixtures import player, enemy, create_test_map
-from tests.fixtures.real_game_data import create_real_enemy
+from tests.fixtures.simple_fixtures import enemy_builder
 
 
 class TestSaveLoadMidGameplay:
@@ -31,11 +31,11 @@ class TestSaveLoadMidGameplay:
         if SaveGameManager.save_exists():
             SaveGameManager.delete_save()
 
-    def test_save_and_load_basic_player_state(self):
+    def test_save_and_load_basic_player_state(self, basic_game_engine):
         """Test that basic player state is preserved through save/load cycle."""
         # Create game with specific player state
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
             game.player.x = 25
             game.player.y = 30
             game.player.cpu = 75
@@ -62,23 +62,23 @@ class TestSaveLoadMidGameplay:
             # Note: trace_level saved as "trace level" (with space) but loaded as "trace_level" - known limitation
             assert loaded_game.player.ram_total == 12, "Player RAM should be preserved"
 
-    def test_save_and_load_enemy_states(self):
+    def test_save_and_load_enemy_states(self, basic_game_engine):
         """Test that enemy positions, states, and AI data are preserved."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Create enemies with various states
-            scanner = create_real_enemy("scanner", Position(10, 10))
+            scanner = enemy_builder("scanner", pos=(10, 10))
             scanner.state = EnemyState.ALERT
             scanner.alert_timer = 3
             scanner.last_seen_player = Position(15, 15)
 
-            patrol = create_real_enemy("patrol", Position(20, 20))
+            patrol = enemy_builder("patrol", pos=(20, 20))
             patrol.state = EnemyState.HOSTILE
             patrol.patrol_points = [Position(20, 20), Position(25, 20), Position(25, 25)]
             patrol.patrol_index = 1
 
-            bot = create_real_enemy("bot", Position(5, 5))
+            bot = enemy_builder("bot", pos=(5, 5))
             bot.state = EnemyState.UNAWARE
             bot.disabled_turns = 2
 
@@ -120,10 +120,10 @@ class TestSaveLoadMidGameplay:
             assert loaded_bot.state in (EnemyState.UNAWARE, 'unaware'), "Bot state should be UNAWARE"
             assert loaded_bot.disabled_turns == 2, "Bot disabled turns should be preserved"
 
-    def test_save_and_load_temporary_effects(self):
+    def test_save_and_load_temporary_effects(self, basic_game_engine):
         """Test that player temporary effects are preserved."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Set various temporary effects
             game.player.temporary_effects = {
@@ -151,10 +151,10 @@ class TestSaveLoadMidGameplay:
             assert effects['data_mimic_turns'] == 1, "Data mimic turns should be preserved"
             assert loaded_game.player.speed_moves_remaining == 2, "Speed moves remaining should be preserved"
 
-    def test_save_and_load_game_effects_state(self):
+    def test_save_and_load_game_effects_state(self, basic_game_engine):
         """Test that game-wide effects are preserved."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Set game effects
             game.game_state.threat_scan_turns = 8
@@ -182,10 +182,10 @@ class TestSaveLoadMidGameplay:
             # Check distraction points (converted back from string keys)
             assert len(loaded_game.game_state.distraction_points) == 2, "Distraction points should be preserved"
 
-    def test_save_and_load_level_one_progression(self):
+    def test_save_and_load_level_one_progression(self, basic_game_engine):
         """Test that level 1 and game progression state are preserved."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Set level progression state (level 1 to avoid missing level config errors)
             game.game_state.level = 1
@@ -206,10 +206,10 @@ class TestSaveLoadMidGameplay:
             assert loaded_game.game_state.admin_spawned == False, "Admin spawned flag should be preserved"
             assert loaded_game.game_state.dungeon_seed == 42, "Dungeon seed should be preserved"
 
-    def test_save_and_load_map_gateway(self):
+    def test_save_and_load_map_gateway(self, basic_game_engine):
         """Test that map gateway is preserved."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Add map gateway (note: it's singular 'gateway' not 'gateways')
             game.game_map.gateway = Position(40, 40)
@@ -227,10 +227,10 @@ class TestSaveLoadMidGameplay:
                 assert loaded_game.game_map.gateway.x == 40, "Gateway X should be preserved"
                 assert loaded_game.game_map.gateway.y == 40, "Gateway Y should be preserved"
 
-    def test_save_and_load_code_hack_effects(self):
+    def test_save_and_load_code_hack_effects(self, basic_game_engine):
         """Test that discovered code hack effects are preserved."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Set code hack effects
             game.code_hack_effects = {
@@ -258,10 +258,10 @@ class TestSaveLoadMidGameplay:
             assert "Speed Boost" in loaded_game.discovered_code_effects
             assert "Restore CPU" in loaded_game.discovered_code_effects
 
-    def test_save_and_load_enemy_counter_preservation(self):
+    def test_save_and_load_enemy_counter_preservation(self, basic_game_engine):
         """Test that Enemy._next_id counter is preserved to avoid ID conflicts."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Create several enemies to increment counter
             for i in range(5):
@@ -281,10 +281,10 @@ class TestSaveLoadMidGameplay:
             # Verify enemy counter preserved (prevents ID conflicts)
             assert Enemy._next_id == current_next_id, "Enemy ID counter should be preserved"
 
-    def test_save_when_no_player_exists(self):
+    def test_save_when_no_player_exists(self, basic_game_engine):
         """Test that save fails gracefully when player doesn't exist."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
             game.player = None  # Remove player
 
             # Attempt to save
@@ -293,7 +293,7 @@ class TestSaveLoadMidGameplay:
             # Should fail gracefully
             assert success == False, "Save should fail when player is None"
 
-    def test_load_when_save_doesnt_exist(self):
+    def test_load_when_save_doesnt_exist(self, basic_game_engine):
         """Test that load handles missing save file gracefully."""
         # Ensure no save exists
         if SaveGameManager.save_exists():
@@ -305,10 +305,10 @@ class TestSaveLoadMidGameplay:
         # Should return None
         assert save_data is None, "Load should return None when no save exists"
 
-    def test_save_file_timestamp(self):
+    def test_save_file_timestamp(self, basic_game_engine):
         """Test that save file includes valid timestamp."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Save the game
             success = SaveGameManager.save_game(game)
@@ -322,13 +322,13 @@ class TestSaveLoadMidGameplay:
             assert isinstance(timestamp, str), "Timestamp should be string"
             assert len(timestamp) > 0, "Timestamp should not be empty"
 
-    def test_save_and_load_complex_gameplay_scenario(self):
+    def test_save_and_load_complex_gameplay_scenario(self, basic_game_engine):
         """
         Integration test: Complex gameplay scenario with multiple systems active.
         Simulates mid-gameplay save with many active states.
         """
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Complex player state
             game.player.x = 35
@@ -349,16 +349,16 @@ class TestSaveLoadMidGameplay:
             }
 
             # Multiple enemies with various states
-            scanner = create_real_enemy("scanner", Position(30, 25))
+            scanner = enemy_builder("scanner", pos=(30, 25))
             scanner.state = EnemyState.HOSTILE
             scanner.last_seen_player = Position(35, 28)
 
-            patrol = create_real_enemy("patrol", Position(15, 15))
+            patrol = enemy_builder("patrol", pos=(15, 15))
             patrol.state = EnemyState.ALERT
             patrol.patrol_points = [Position(15, 15), Position(20, 15), Position(20, 20)]
             patrol.patrol_index = 2
 
-            bot = create_real_enemy("bot", Position(40, 40))
+            bot = enemy_builder("bot", pos=(40, 40))
             bot.state = EnemyState.UNAWARE
 
             game.enemy_manager.enemies = [scanner, patrol, bot]
@@ -394,10 +394,10 @@ class TestSaveLoadMidGameplay:
             assert loaded_game.game_state.threat_scan_turns == 5, "Threat scan preserved"
             assert len(loaded_game.game_state.noise_locations) == 2, "Noise locations preserved"
 
-    def test_save_preserves_equipped_exploits(self):
+    def test_save_preserves_equipped_exploits(self, basic_game_engine):
         """Test that equipped exploits are preserved through save/load."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Set equipped exploits
             game.player.inventory_manager.equipped_exploits = [
@@ -421,10 +421,10 @@ class TestSaveLoadMidGameplay:
             assert "denial_of_service" in loaded_game.player.inventory_manager.equipped_exploits
             assert loaded_game.player.inventory_manager.max_equipped_exploits == 6, "Max equipped preserved"
 
-    def test_save_atomic_write_safety(self):
+    def test_save_atomic_write_safety(self, basic_game_engine):
         """Test that save uses atomic write (temp file + rename) for safety."""
         with patch('game_audio.SoundManager'):
-            game = GameEngine()
+            game = basic_game_engine
 
             # Save the game
             success = SaveGameManager.save_game(game)

@@ -787,23 +787,46 @@ class SettingsMenu(BaseMenu):
             # Determine which half of the slider bar was clicked
             tile_x = event.tile.x
 
-            # Calculate slider bar position (consistent with render code)
-            # Bar is always at content_left + 18, length is 20 (ASCII) or 20 (graphics)
+            # Calculate slider bar position using actual box dimensions
+            # Must match the rendering code exactly
+            menu_height = 35  # Match the menu height from render()
             layout = self._get_menu_layout_params()
 
-            # Get box dimensions for bar positioning
-            menu_height = GameConfig.SCREEN_HEIGHT - 4
             if layout['use_background_layout']:
-                # Graphics mode - narrow right-side box
-                box_left = GameConfig.SCREEN_WIDTH - 32
-                bar_x = box_left + 3 + 18  # content_left offset + bar position
-            else:
-                # ASCII mode - centered box
-                box_left = (GameConfig.SCREEN_WIDTH - 40) // 2
-                bar_x = box_left + 2 + 18  # content_left offset + bar position
+                # Graphics mode - narrow box (28 chars wide)
+                box_width = 28
+                box_right = GameConfig.SCREEN_WIDTH - 2 - 3
+                box_left = box_right - box_width
+                content_left = box_left + 1
 
-            bar_length = 20
-            bar_mid = bar_x + bar_length // 2
+                # Bar rendered at: name_x = content_left + 1
+                # Bar text: "<- [========] +> 100%"
+                bar_start_x = content_left + 1
+                bar_length = 8  # Graphics mode uses short bar
+
+                # The "[" bracket is at bar_start_x + 3 (after "<- ")
+                # Actual bar content starts at bar_start_x + 4
+                bracket_x = bar_start_x + 3
+                bar_content_start = bar_start_x + 4
+                bar_content_end = bar_content_start + bar_length - 1
+                bar_mid = (bar_content_start + bar_content_end) // 2
+            else:
+                # ASCII mode - wide box (50 chars wide)
+                box_width = 50
+                box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
+                content_left = box_left + 2
+
+                # Bar rendered at: content_left + 18
+                # Bar text: "<- [====================] +> 100%"
+                bar_start_x = content_left + 18
+                bar_length = 20  # ASCII mode uses full bar
+
+                # The "[" bracket is at bar_start_x + 3 (after "<- ")
+                # Actual bar content starts at bar_start_x + 4
+                bracket_x = bar_start_x + 3
+                bar_content_start = bar_start_x + 4
+                bar_content_end = bar_content_start + bar_length - 1
+                bar_mid = (bar_content_start + bar_content_end) // 2
 
             # Left half = decrease (toward 0%), right half = increase (toward 100%)
             direction = -1 if tile_x < bar_mid else 1
