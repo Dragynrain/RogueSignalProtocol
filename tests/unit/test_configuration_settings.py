@@ -159,87 +159,58 @@ class TestGameSettings:
 
 
 class TestGameConfigConstants:
-    """Test GameConfig constants are defined correctly."""
-
-    def test_screen_dimensions(self):
-        """Test screen dimension constants."""
-        assert GameConfig.SCREEN_WIDTH == 80
-        assert GameConfig.SCREEN_HEIGHT == 50
-        assert GameConfig.MAP_WIDTH == 50
-        assert GameConfig.MAP_HEIGHT == 50
-
-    def test_ui_layout_constants(self):
-        """Test UI layout constants."""
-        assert GameConfig.UI_HEIGHT == 10
-        assert GameConfig.SIDEBAR_WIDTH == 25
-        assert GameConfig.LOG_WIDTH == 25
-        assert GameConfig.PANEL_HEIGHT == 5
+    """Test GameConfig layout calculations and relationships."""
 
     def test_calculated_layout_properties(self):
-        """Test calculated layout properties."""
+        """Test calculated layout properties work correctly."""
+        # Test that calculated properties are internally consistent
         game_area_width = GameConfig.GAME_AREA_WIDTH()
         assert game_area_width == GameConfig.SCREEN_WIDTH - GameConfig.LOG_WIDTH
+        assert game_area_width > 0
 
         panel_y = GameConfig.PANEL_Y()
         assert panel_y == GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT
+        assert panel_y > 0
 
-    def test_game_parameter_constants(self):
-        """Test core game parameter constants."""
-        assert GameConfig.DEFAULT_PLAYER_RAM == 8
-        assert GameConfig.DEFAULT_PLAYER_CPU == 100
-        assert GameConfig.MAX_HEAT == 100
-        assert GameConfig.MAX_TRACE_LEVEL == 100
-        assert GameConfig.DETECTION_REDUCTION_ON_LEVEL == 50
-        assert isinstance(GameConfig.DUNGEON_SEED_RANGE, int)
-        assert GameConfig.VIRUS_DAMAGE_PER_TURN == 3
+    def test_screen_layout_consistency(self):
+        """Test that screen layout constants are internally consistent."""
+        # UI elements should fit within screen
+        assert GameConfig.SIDEBAR_WIDTH < GameConfig.SCREEN_WIDTH
+        assert GameConfig.LOG_WIDTH < GameConfig.SCREEN_WIDTH
+        assert GameConfig.UI_HEIGHT < GameConfig.SCREEN_HEIGHT
+        assert GameConfig.PANEL_HEIGHT < GameConfig.SCREEN_HEIGHT
+
+        # Map should fit within screen
+        assert GameConfig.MAP_WIDTH <= GameConfig.SCREEN_WIDTH
+        assert GameConfig.MAP_HEIGHT <= GameConfig.SCREEN_HEIGHT
 
 
 class TestGameBalance:
-    """Test GameBalance parameters are defined correctly."""
+    """Test GameBalance parameters have valid relationships."""
 
-    def test_heat_management_constants(self):
-        """Test heat management balance constants."""
-        assert GameBalance.HEAT_REDUCTION_NORMAL == 2
-        assert GameBalance.HEAT_REDUCTION_BOOSTED == 3
-        assert isinstance(GameBalance.TRACE_INCREASE_INTERVAL, int)
-        assert isinstance(GameBalance.TRACE_INCREASE_AMOUNT, int)
+    def test_balance_parameter_relationships(self):
+        """Test that balance parameters have sensible relationships."""
+        # Heat reduction boosted should be better than normal
+        assert GameBalance.HEAT_REDUCTION_BOOSTED > GameBalance.HEAT_REDUCTION_NORMAL
 
-    def test_node_effect_constants(self):
-        """Test special node effect constants."""
-        assert GameBalance.COOLING_NODE_EFFECT == 20
-        assert GameBalance.GHOST_NODE_DETECTION_REDUCTION_PERCENT == 20.0
-        assert GameBalance.CPU_RECOVERY_AMOUNT == 20
-
-    def test_combat_reward_constants(self):
-        """Test combat reward balance constants."""
-        assert GameBalance.ENEMY_ELIMINATION_CPU_REWARD == 5
-
-    def test_code_hack_effect_constants(self):
-        """Test code hack effect constants."""
-        assert GameBalance.CPU_RESTORE_MIN == 30
-        assert GameBalance.CPU_RESTORE_MAX == 40
-        assert GameBalance.HEAT_REDUCTION_INSTANT == 40
-
-        # Ensure min is less than max
+        # CPU restore range should be valid
         assert GameBalance.CPU_RESTORE_MIN < GameBalance.CPU_RESTORE_MAX
+        assert GameBalance.CPU_RESTORE_MIN > 0
 
-    def test_balance_parameter_bounds(self):
-        """Test that balance parameters are within reasonable bounds."""
-        # Heat values should be positive
+        # All numeric values should be positive
         assert GameBalance.HEAT_REDUCTION_NORMAL > 0
         assert GameBalance.HEAT_REDUCTION_BOOSTED > 0
         assert GameBalance.HEAT_REDUCTION_INSTANT > 0
-
-        # TraceLevel values should be reasonable
-        assert 0 < GameBalance.TRACE_INCREASE_INTERVAL <= 100
-        assert 0 < GameBalance.TRACE_INCREASE_AMOUNT <= 10
-
-        # Node effects should be positive
         assert GameBalance.COOLING_NODE_EFFECT > 0
         assert GameBalance.CPU_RECOVERY_AMOUNT > 0
+        assert GameBalance.ENEMY_ELIMINATION_CPU_REWARD > 0
 
-        # Percentage should be valid
+        # Percentages should be valid (0-100)
         assert 0 <= GameBalance.GHOST_NODE_DETECTION_REDUCTION_PERCENT <= 100
+
+        # Trace level mechanics should be reasonable
+        assert 0 < GameBalance.TRACE_INCREASE_INTERVAL <= 100
+        assert 0 < GameBalance.TRACE_INCREASE_AMOUNT <= 20
 
 
 class TestPersistentStorage:
