@@ -222,77 +222,6 @@ class TestGameStateManager:
         assert len(gsm.revealed_special_nodes) == 2
 
 
-class TestCoreGameStateManagerRemoved:
-    """Test the core GameStateManager from game_core.py."""
-    
-    def test_core_game_state_initialization(self):
-        """Core GameStateManager initializes correctly."""
-        core_gsm = GameStateManager()
-
-        assert core_gsm.level == 1
-        assert core_gsm.turn == 0
-        assert core_gsm.game_over is False  # Fixed: was game_paused
-        assert core_gsm.admin_spawned is False
-    
-    def test_advance_turn_core(self):
-        """Core advance_turn increments turn counter."""
-        core_gsm = GameStateManager()
-        
-        core_gsm.advance_turn()
-        
-        assert core_gsm.turn == 1
-    def test_level_assignment(self):
-        """Test that level can be set directly."""
-        core_gsm = GameStateManager()
-
-        core_gsm.level = 2
-        assert core_gsm.level == 2
-
-        # Reset admin_spawned when level changes (manual process)
-        core_gsm.admin_spawned = False
-        core_gsm.turn = 0
-
-        assert core_gsm.level == 2
-        assert core_gsm.turn == 0
-        assert core_gsm.admin_spawned is False
-
-    def test_get_current_network_config_returns_valid_data(self):
-        """get_current_network_config returns valid network config from JSON."""
-        core_gsm = GameStateManager()
-
-        config = core_gsm.get_current_network_config()
-
-        assert isinstance(config, dict)
-        # Should have some network configuration data
-        assert len(config) > 0
-
-    def test_should_spawn_admin_with_trace_level_parameter(self):
-        """should_spawn_admin works with trace_level parameter."""
-        core_gsm = GameStateManager()
-
-        # Should return True at max trace level (doesn't set admin_spawned automatically)
-        result = core_gsm.should_spawn_admin(100)  # Max trace level
-        assert result is True
-
-    def test_should_spawn_admin_prevents_double_spawn_with_trace_level(self):
-        """should_spawn_admin prevents double spawning."""
-        core_gsm = GameStateManager()
-        core_gsm.admin_spawned = True
-
-        # Should not spawn even at max trace level if already spawned
-        result = core_gsm.should_spawn_admin(100)
-        assert result is False
-
-    def test_should_spawn_admin_below_threshold(self):
-        """should_spawn_admin doesn't spawn below max trace level."""
-        core_gsm = GameStateManager()
-
-        # Should not spawn below threshold
-        result = core_gsm.should_spawn_admin(50)  # Below max
-        assert result is False
-        assert core_gsm.admin_spawned is False
-
-
 class TestTurnProcessor:
     """Test the TurnProcessor class functionality."""
     
@@ -440,44 +369,6 @@ class TestTurnProcessor:
             processor._process_trace_increase(mock_player)
             
             assert mock_player.trace_level == 100  # Capped at 100
-
-
-class TestCoreTurnProcessorRemoved:
-    """Test the core TurnProcessor from game_core.py."""
-    
-    def test_core_turn_processor_initialization(self):
-        """Core TurnProcessor initializes correctly."""
-        core_gsm = GameStateManager()
-        core_processor = TurnProcessor(core_gsm, MessageLog())
-        
-        assert core_processor.game_state is core_gsm
-    
-    def test_core_process_turn(self):
-        """Core process_turn calls all sub-processes."""
-        core_gsm = GameStateManager()
-        core_processor = TurnProcessor(core_gsm, MessageLog())
-        mock_player = Mock()
-        # Configure mock with numeric values for logging
-        mock_player.heat = 50
-        mock_player.max_heat = 100
-        mock_player.trace_level = 25.0
-        mock_player.cpu = 70
-        mock_player.max_cpu = 100
-        mock_message_log = Mock()
-
-        with patch.object(core_processor, '_process_heat_management') as mock_heat, \
-             patch.object(core_processor, '_process_temporary_effects') as mock_effects, \
-             patch.object(core_processor, '_process_trace_increase') as mock_trace_level:
-
-            core_processor.process_turn(mock_player)
-
-            # Should advance game state
-            assert core_gsm.turn == 1
-
-            # Should call all processing methods
-            mock_heat.assert_called_once_with(mock_player)
-            mock_effects.assert_called_once_with(mock_player)
-            mock_trace_level.assert_called_once_with(mock_player)
 
 
 class TestGameLogicIntegration:

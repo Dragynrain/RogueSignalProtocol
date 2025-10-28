@@ -355,12 +355,19 @@ class TestTransparencyCache:
     def test_invalidate_transparency_cache(self):
         """invalidate_transparency_cache clears the cache."""
         game_map = GameMap(30, 20)
-        
-        # Method should exist and be callable
+
+        # Add walls and create transparency cache
+        game_map.walls.add((5, 5))
+        transparency_map = game_map._get_transparency_map()
+
+        # Cache should exist after first call
+        assert game_map._transparency_cache is not None
+
+        # Invalidating should clear the cache
         game_map.invalidate_transparency_cache()
-        
-        # Should not raise any errors
-        assert True
+
+        # Cache should be cleared
+        assert game_map._transparency_cache is None
     
     def test_get_transparency_map(self):
         """_get_transparency_map creates transparency data."""
@@ -521,25 +528,32 @@ class TestMapIntegration:
         assert game_map.gateway.x == 55
         assert len(game_map.explored_tiles) == 25
     
-    def test_map_query_performance(self):
-        """Map queries should be efficient for repeated calls."""
+    def test_map_query_consistency(self):
+        """Map queries return consistent results across multiple calls."""
         game_map = GameMap(100, 100)
-        
+
         # Add substantial content
         for i in range(0, 100, 10):
             game_map.walls.add((i, 50))  # Horizontal wall line
             game_map.shadows.add((50, i))  # Vertical shadow line
-        
-        # Perform many queries - should not crash or be extremely slow
-        test_position = Position(25, 25)
-        
-        for _ in range(100):
-            game_map.is_wall(test_position)
-            game_map.is_shadow(test_position)
-            game_map.is_valid_position(test_position)
-        
-        # If we get here without timing out, performance is acceptable
-        assert True
+
+        # Test consistency for wall position
+        test_wall_pos = Position(20, 50)
+        results = [game_map.is_wall(test_wall_pos) for _ in range(10)]
+        assert all(r == results[0] for r in results), "Wall query inconsistent"
+        assert results[0] is True
+
+        # Test consistency for shadow position
+        test_shadow_pos = Position(50, 30)
+        results = [game_map.is_shadow(test_shadow_pos) for _ in range(10)]
+        assert all(r == results[0] for r in results), "Shadow query inconsistent"
+        assert results[0] is True
+
+        # Test consistency for empty position
+        test_empty_pos = Position(25, 25)
+        results = [game_map.is_wall(test_empty_pos) for _ in range(10)]
+        assert all(r == results[0] for r in results), "Empty position query inconsistent"
+        assert results[0] is False
     
     def test_map_state_consistency(self):
         """Map state remains consistent across operations."""

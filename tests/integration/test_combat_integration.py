@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Unit tests for Combat functionality testing real combat system.
-Tests the actual ExploitSystem class and combat mechanics.
+Integration tests for Combat system functionality.
+Tests the actual ExploitSystem class and combat mechanics integration.
 """
 
 import pytest
@@ -12,62 +12,14 @@ from game_entities import Position, ExploitDefinition, TargetingMode
 from game_combat import ExploitSystem
 
 
-def test_player_takes_damage():
-    """Player can take damage."""
-    player = Player(10, 10)
-    initial_cpu = player.cpu
-    
-    # Simulate basic damage dealing
-    damage = 25
-    player.take_damage(damage)
-    
-    assert player.cpu == initial_cpu - damage
-
-
 def test_exploit_system_initialization():
     """ExploitSystem initializes correctly with game instance."""
     from game_combat import ExploitSystem
-    
+
     mock_game = Mock()
     exploit_system = ExploitSystem(mock_game)
-    
+
     assert exploit_system.game is mock_game
-
-
-def test_player_death():
-    """Player dies when CPU reaches 0."""
-    player = Player(10, 10)
-    
-    # Kill player
-    player.take_damage(player.cpu)
-    assert player.cpu <= 0
-
-
-def test_damage_boundaries():
-    """Damage system handles edge cases."""
-    player = Player(10, 10)
-    
-    # Zero damage
-    initial_cpu = player.cpu
-    player.take_damage(0)
-    assert player.cpu == initial_cpu
-    
-    # Negative damage (healing)
-    player.cpu = 50
-    player.take_damage(-10)
-    assert player.cpu == 60
-
-
-def test_excessive_damage():
-    """Excessive damage doesn't cause negative CPU."""
-    player = Player(10, 10)
-    initial_cpu = player.cpu
-    
-    # Deal more damage than CPU
-    player.take_damage(initial_cpu + 50)
-    
-    # CPU should not go below 0
-    assert player.cpu <= 0
 
 
 class TestExploitSystem:

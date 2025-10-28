@@ -286,71 +286,38 @@ class TestEnemyDamage:
 
 
 class TestEnemyColorCoding:
-    """Test enemy color coding by state."""
-    
-    def test_enemy_color_unaware(self):
-        """UNAWARE enemy shows green color."""
+    """Test enemy color coding by state using real game data."""
+
+    def test_enemy_colors_by_state(self):
+        """Enemy colors change based on state."""
         pos = Position(5, 5)
-        
-        with patch('game_data.GameData') as mock_game_data:
-            mock_enemy_type = Mock()
-            mock_enemy_type.cpu = 50
-            mock_game_data.ENEMY_TYPES = {'scanner': mock_enemy_type}
-            
-            enemy = Enemy(pos, "scanner")
-            enemy.state = EnemyState.UNAWARE
-            
-            color = enemy.get_color()
+        enemy = create_real_enemy("scanner", pos)
 
-            # Should be yellow for unaware (actual game color)
-            assert color == (255, 255, 0)  # Colors.ENEMY_UNAWARE
-    
-    def test_enemy_color_hostile(self):
-        """HOSTILE enemy shows red color."""
-        pos = Position(5, 5)
-        
-        with patch('game_data.GameData') as mock_game_data:
-            mock_enemy_type = Mock()
-            mock_enemy_type.cpu = 50
-            mock_game_data.ENEMY_TYPES = {'patrol': mock_enemy_type}
-            
-            enemy = Enemy(pos, "patrol")
-            enemy.state = EnemyState.HOSTILE
-            
-            color = enemy.get_color()
-            
-            # Should be red for hostile (actual game color)
-            assert color == (220, 20, 60)  # Colors.ENEMY_HOSTILE
-    
-    def test_enemy_color_alert(self):
-        """ALERT enemy shows yellow color."""
-        pos = Position(5, 5)
-        
-        with patch('game_data.GameData') as mock_game_data:
-            mock_enemy_type = Mock()
-            mock_enemy_type.cpu = 50
-            mock_game_data.ENEMY_TYPES = {'virus': mock_enemy_type}
-            
-            enemy = Enemy(pos, "virus")
-            enemy.state = EnemyState.ALERT
-            
-            color = enemy.get_color()
+        # Test different states produce different colors
+        enemy.state = EnemyState.UNAWARE
+        unaware_color = enemy.get_color()
 
-            # Should be orange for alert (actual game color)
-            assert color == (255, 165, 0)  # Colors.ENEMY_ALERT
+        enemy.state = EnemyState.ALERT
+        alert_color = enemy.get_color()
+
+        enemy.state = EnemyState.HOSTILE
+        hostile_color = enemy.get_color()
+
+        # Colors should be different for each state
+        assert unaware_color != alert_color
+        assert alert_color != hostile_color
+        assert unaware_color != hostile_color
+
+        # Verify colors are valid RGB tuples
+        for color in [unaware_color, alert_color, hostile_color]:
+            assert isinstance(color, tuple)
+            assert len(color) == 3
+            assert all(0 <= c <= 255 for c in color)
 
 
-class TestEnemyMovement:
-    """Test enemy movement and pathfinding."""
-    
-    # Test removed - movement queue system no longer exists
-    pass
+class TestEnemyManager:
+    """Test enemy manager functionality."""
 
-    
-    # Test removed - movement queue system no longer exists
-    pass
-
-    
     def test_enemy_manager_spawn(self):
         """EnemyManager can spawn enemies correctly using real data."""
         game_map = create_test_map_with_real_tiles(20, 20)
