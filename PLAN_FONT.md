@@ -1,6 +1,18 @@
 # Font Replacement Plan: CascadiaCode TTF
 
+**STATUS: ABANDONED - TCOD TTF SUPPORT IS BROKEN**
+
 **Objective:** Replace `terminal10x16_gs_ro.png` bitmap tileset with `CascadiaCode-VariableFont_wght.ttf` TrueType font for better scaling and visual quality.
+
+**Why this failed:**
+- TCOD's `load_truetype_font` has fundamental bugs in font rasterization
+- Fonts render at tiny sizes (5-6px glyphs) regardless of tile dimensions specified
+- Auto-width calculation is broken (calculates 73px width for 32px height!)
+- Known issue: https://github.com/libtcod/python-tcod/issues/75
+- TCOD maintainer acknowledges "font scaled down to fit without stretching"
+- No workaround exists that produces acceptable results
+
+**Decision:** Keeping bitmap font until TCOD fixes their TTF support.
 
 **Current State:**
 - Using 10×16 pixel bitmap tileset with CP437 encoding

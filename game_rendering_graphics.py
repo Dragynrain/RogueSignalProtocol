@@ -16,6 +16,7 @@ from game_data import GameData, GameUpgrades
 from data_loading import DataLoader
 from game_rendering_base import MapRendererBase
 from game_color_manager import ColorManager
+from game_unicode_chars import GameGlyphs
 
 
 class GraphicsMapRenderer(MapRendererBase):
@@ -391,13 +392,13 @@ class GraphicsMapRenderer(MapRendererBase):
                         color = None
 
                         if game.game_map.is_cooling_node(world_pos):
-                            glyph = ord(chr(tcod.tileset.CHARMAP_CP437[4]))  # Diamond
+                            glyph = ord(GameGlyphs.COOLING)  # Diamond
                             color = Colors.CYAN
                         elif game.game_map.is_cpu_recovery_node(world_pos):
-                            glyph = ord(chr(tcod.tileset.CHARMAP_CP437[3]))  # Heart
+                            glyph = ord(GameGlyphs.CPU_OVERLOAD)  # Heart
                             color = Colors.RED
                         elif game.game_map.is_ghost_node(world_pos):
-                            glyph = ord(chr(tcod.tileset.CHARMAP_CP437[6]))  # Spade
+                            glyph = ord(GameGlyphs.GHOST_MODE)  # Spade
                             color = Colors.ELECTRIC_PURPLE
 
                         if glyph and color:
@@ -447,12 +448,18 @@ class GraphicsMapRenderer(MapRendererBase):
         if (0 <= player_screen_x < GameConfig.GAME_AREA_WIDTH() and
             1 <= player_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
 
-            # Check for various player status effects
+            # Check for various player status effects (matching glyphs mode priority)
             status_color = None
-            if game.player.temporary_effects['virus_turns'] > 0:
-                status_color = ColorManager.get("status_effects", "virus")
+            # Priority 1: Critical status - Red
+            if game.player.cpu < 30 or game.player.heat > 80 or game.player.trace_level > 75:
+                status_color = Colors.RED
+            # Priority 2: Invisibility - Yellow
             elif game.player.is_invisible():
                 status_color = ColorManager.get("status_effects", "invisible")
+            # Priority 3: Virus - Green
+            elif game.player.temporary_effects['virus_turns'] > 0:
+                status_color = ColorManager.get("status_effects", "virus")
+            # Priority 4: Movement slow - Cyan
             elif game.player.temporary_effects['movement_slowed_turns'] > 0:
                 status_color = ColorManager.get("status_effects", "slow")
 

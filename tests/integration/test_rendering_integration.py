@@ -314,8 +314,11 @@ class TestGlyphsRendererIntegration(unittest.TestCase):
         # Get wall character
         char = self.renderer._get_smart_wall_character(test_map, 7, 5)
 
-        # Should return an integer character code
-        self.assertIsInstance(char, int)
+        # Should return a string (Unicode box-drawing character)
+        self.assertIsInstance(char, str)
+        # Should be a valid double-line box drawing character
+        valid_chars = {'║', '═', '╔', '╗', '╚', '╝', '╠', '╣', '╦', '╩', '╬', '■'}
+        self.assertIn(char, valid_chars)
 
     def test_get_upgrade_color_returns_rgb_tuple(self):
         """Test that _get_upgrade_color returns valid RGB tuple."""

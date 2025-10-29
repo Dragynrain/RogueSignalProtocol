@@ -56,8 +56,8 @@ def main():
     console = tcod.console.Console(width=console_width, height=console_height)
 
     # Create TCOD context
-    tileset = tcod.tileset.load_tilesheet(
-        "assets/terminal10x16_gs_ro.png", 16, 16, tcod.tileset.CHARMAP_CP437
+    tileset = tcod.tileset.load_truetype_font(
+        "../CascadiaCode-VariableFont_wght.ttf", 24, 24
     )
     with tcod.context.new(
         width=console_width,

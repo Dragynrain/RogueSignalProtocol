@@ -320,10 +320,10 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("MAP SYMBOLS:", Colors.CYAN),
-            ("  ☻: Player (you)", Colors.PLAYER),
+            ("  ☺: Player (you)", Colors.WHITE),
             ("  •: Empty floor (passable)", Colors.FLOOR),
-            ("  ┌┐└┘┬┴├┤┼─│: Walls (impassable)", Colors.WALL),
-            ("  *: Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
+            ("  ╔╗╚╝╦╩╠╣╬═║: Walls (impassable)", Colors.WALL),
+            ("  ◘: Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
             ("  >: Gateway to next level", Colors.GATEWAY),
             ("  ♫: Data fragments (story/lore)", Colors.CYAN),
             ("", Colors.WHITE),

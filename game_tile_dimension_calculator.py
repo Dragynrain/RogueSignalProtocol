@@ -40,39 +40,20 @@ class TileDimensionCalculator:
     @staticmethod
     def _calc_graphics_mode(window_width: int, window_height: int) -> Tuple[int, int]:
         """
-        Calculate tile dimensions for graphics mode with viewport scaling.
+        Calculate tile dimensions for graphics mode.
 
-        In graphics mode, the viewport is smaller (half the size) which makes
-        each sprite appear larger (2x zoom effect).
+        Graphics mode now uses fixed 64x64 tiles to match glyph mode.
+        Sprites are scaled from 512x512 to 64x64.
 
         Args:
-            window_width: Window width in pixels
-            window_height: Window height in pixels
+            window_width: Window width in pixels (unused, kept for API compatibility)
+            window_height: Window height in pixels (unused, kept for API compatibility)
 
         Returns:
-            Tuple of (tile_width, tile_height) in pixels
+            Tuple of (tile_width, tile_height) = (64, 64)
         """
-        # Get console grid dimensions for base calculation
-        console_width = GameConfig.SCREEN_WIDTH
-        console_height = GameConfig.SCREEN_HEIGHT
-
-        # Calculate base tile size
-        base_tile_width = window_width // console_width
-        base_tile_height = window_height // console_height
-
-        # Get viewport dimensions (smaller in graphics mode)
-        viewport_width = GameConfig.VIEWPORT_WIDTH("graphics")
-        viewport_height = GameConfig.VIEWPORT_HEIGHT("graphics")
-
-        # Calculate game area dimensions
-        game_area_width = GameConfig.GAME_AREA_WIDTH()
-        viewable_height = GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT - GameConfig.STATUS_BAR_HEIGHT()
-
-        # Scale up tiles to fill game area with smaller viewport
-        tile_width = (base_tile_width * game_area_width) // viewport_width
-        tile_height = (base_tile_height * viewable_height) // viewport_height
-
-        return TileDimensionCalculator.validate_and_clamp(tile_width, tile_height)
+        # Fixed 64x64 to match KreativeSquare glyph tiles
+        return (64, 64)
 
     @staticmethod
     def _calc_glyph_mode(window_width: int, window_height: int) -> Tuple[int, int]:

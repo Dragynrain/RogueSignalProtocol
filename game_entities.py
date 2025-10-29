@@ -149,9 +149,18 @@ class ColorManager:
             name: Color name (e.g., 'white', 'ENEMY_HOSTILE')
 
         Returns:
-            RGB tuple (defaults to white if not found)
+            RGB tuple
+
+        Raises:
+            KeyError: If color name not found in configuration
         """
-        return self._colors.get(name.upper(), (255, 255, 255))
+        name_upper = name.upper()
+        if name_upper not in self._colors:
+            import logging
+            logging.error(f"CRITICAL CONFIG ERROR: Color '{name}' not found in game configuration")
+            logging.error(f"Available colors: {sorted(self._colors.keys())}")
+            raise KeyError(f"Color '{name}' not found in configuration. Check game_rules.json colors section.")
+        return self._colors[name_upper]
 
     @staticmethod
     def interpolate_color(color1: Tuple[int, int, int], color2: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:

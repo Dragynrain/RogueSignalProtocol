@@ -46,12 +46,29 @@ def draw_bordered_box(console: tcod.console.Console, start_x: int, start_y: int,
     border_color = ensure_color_tuple(border_color)
     bg_color = ensure_color_tuple(bg_color)
 
-    # Use TCOD's built-in box drawing for efficiency
+    # Draw background
     console.draw_rect(start_x, start_y, width, height, ord(' '), fg=Colors.WHITE, bg=bg_color)
 
-    # Draw border using TCOD's box drawing
-    console.draw_frame(start_x, start_y, width, height,
-                      fg=border_color, bg=bg_color, clear=False)
+    # Draw double-line border manually (using GameGlyphs constants)
+    from game_unicode_chars import GameGlyphs
+    from game_ui import render_char_safe
+
+    # Top border
+    render_char_safe(console, start_x, start_y, GameGlyphs.WALL_TOP_LEFT, fg=border_color, bg=bg_color)
+    for x in range(start_x + 1, start_x + width - 1):
+        render_char_safe(console, x, start_y, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=bg_color)
+    render_char_safe(console, start_x + width - 1, start_y, GameGlyphs.WALL_TOP_RIGHT, fg=border_color, bg=bg_color)
+
+    # Side borders
+    for y in range(start_y + 1, start_y + height - 1):
+        render_char_safe(console, start_x, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=bg_color)
+        render_char_safe(console, start_x + width - 1, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=bg_color)
+
+    # Bottom border
+    render_char_safe(console, start_x, start_y + height - 1, GameGlyphs.WALL_BOTTOM_LEFT, fg=border_color, bg=bg_color)
+    for x in range(start_x + 1, start_x + width - 1):
+        render_char_safe(console, x, start_y + height - 1, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=bg_color)
+    render_char_safe(console, start_x + width - 1, start_y + height - 1, GameGlyphs.WALL_BOTTOM_RIGHT, fg=border_color, bg=bg_color)
 
 
 class GameRenderer:
