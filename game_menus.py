@@ -133,7 +133,7 @@ class MainMenu(BaseMenu):
 
         if box['use_background_layout']:
             # Title content within narrow box - split into multiple lines to fit
-            render_char_safe(console, box['center_x'] - 10, 6, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 10, 6, "═" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
             # Split title into multiple lines
             render_char_safe(console, box['center_x'] - 6, 7, "ROGUE SIGNAL", fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, box['center_x'] - 4, 8, "PROTOCOL", fg=Colors.CYAN, bg=Colors.BLACK)
@@ -143,14 +143,14 @@ class MainMenu(BaseMenu):
             # Split subtitle into two lines
             render_char_safe(console, box['center_x'] - 8, 11, "Cyberpunk Stealth", fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, box['center_x'] - 6, 12, "Exfiltration", fg=Colors.CYAN, bg=Colors.BLACK)
-            render_char_safe(console, box['center_x'] - 10, 13, "─" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 10, 13, "═" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
         else:
             # Glyph mode - centered positioning
             title = "ROGUE SIGNAL PROTOCOL"
-            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 6, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
+            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 6, "═" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN, bg=Colors.BLACK)
             render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN, bg=Colors.BLACK)
-            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 10, "─" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
+            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 10, "═" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
     
     def _render_version_info(self, console: tcod.console.Console, box: dict) -> None:
         """Render author information."""
@@ -589,7 +589,7 @@ class SettingsMenu(BaseMenu):
                 # Option value
                 if option["type"] == "volume":
                     volume_percent = self.settings.get_volume_percent(option["key"])
-                    bar_length = 20
+                    bar_length = 14  # Shortened from 20 to prevent overflow in glyph mode
                     filled_length = int(bar_length * volume_percent / 100)
 
                     # Volume bar with directional hints
@@ -613,10 +613,10 @@ class SettingsMenu(BaseMenu):
         
         # Instructions
         if box['use_background_layout']:
-            # Compact instructions for narrow box
+            # Compact instructions for narrow box (graphics mode)
             instructions = [
-                "↑↓: Navigate",
-                "←→: Adjust", 
+                "Arrows: Navigate",
+                "L/R: Adjust",
                 "Enter: Select",
                 "Esc: Back"
             ]
@@ -624,8 +624,8 @@ class SettingsMenu(BaseMenu):
         else:
             # Full instructions for glyph mode
             instructions = [
-                "Arrow Keys/WASD: Navigate",
-                "Left/Right or A/D: Adjust volumes/toggle options", 
+                "Arrows/WASD: Navigate",
+                "L/R or A/D: Adjust",
                 "Enter: Select",
                 "Escape: Back"
             ]
@@ -817,9 +817,9 @@ class SettingsMenu(BaseMenu):
                 content_left = box_left + 2
 
                 # Bar rendered at: content_left + 18
-                # Bar text: "<- [====================] +> 100%"
+                # Bar text: "<- [==============] +> 100%"
                 bar_start_x = content_left + 18
-                bar_length = 20  # ASCII mode uses full bar
+                bar_length = 14  # ASCII mode bar (shortened to fit in box)
 
                 # The "[" bracket is at bar_start_x + 3 (after "<- ")
                 # Actual bar content starts at bar_start_x + 4

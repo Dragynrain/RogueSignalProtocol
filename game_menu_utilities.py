@@ -63,19 +63,21 @@ class MenuRenderingUtils:
                              ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0),
                              bg_blend=tcod.constants.BKGND_SET)
 
-            # Draw border with Unicode box characters
-            for y in range(box_top, box_bottom + 1):
-                render_char_safe(console, box_left, y, "│", fg=border_color, bg=Colors.BLACK)
-                render_char_safe(console, box_right, y, "│", fg=border_color, bg=Colors.BLACK)
-            for x in range(box_left, box_right + 1):
-                render_char_safe(console, x, box_top, "─", fg=border_color, bg=Colors.BLACK)
-                render_char_safe(console, x, box_bottom, "─", fg=border_color, bg=Colors.BLACK)
+            # Draw border with double-line Unicode box characters
+            from game_unicode_chars import GameGlyphs
 
-            # Box corners
-            render_char_safe(console, box_left, box_top, "┌", fg=border_color, bg=Colors.BLACK)
-            render_char_safe(console, box_right, box_top, "┐", fg=border_color, bg=Colors.BLACK)
-            render_char_safe(console, box_left, box_bottom, "└", fg=border_color, bg=Colors.BLACK)
-            render_char_safe(console, box_right, box_bottom, "┘", fg=border_color, bg=Colors.BLACK)
+            for y in range(box_top, box_bottom + 1):
+                render_char_safe(console, box_left, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=Colors.BLACK)
+                render_char_safe(console, box_right, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=Colors.BLACK)
+            for x in range(box_left, box_right + 1):
+                render_char_safe(console, x, box_top, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=Colors.BLACK)
+                render_char_safe(console, x, box_bottom, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=Colors.BLACK)
+
+            # Box corners (double-line)
+            render_char_safe(console, box_left, box_top, GameGlyphs.WALL_TOP_LEFT, fg=border_color, bg=Colors.BLACK)
+            render_char_safe(console, box_right, box_top, GameGlyphs.WALL_TOP_RIGHT, fg=border_color, bg=Colors.BLACK)
+            render_char_safe(console, box_left, box_bottom, GameGlyphs.WALL_BOTTOM_LEFT, fg=border_color, bg=Colors.BLACK)
+            render_char_safe(console, box_right, box_bottom, GameGlyphs.WALL_BOTTOM_RIGHT, fg=border_color, bg=Colors.BLACK)
 
             return {
                 'left': box_left,
@@ -113,13 +115,24 @@ class MenuRenderingUtils:
                              ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0),
                              bg_blend=tcod.constants.BKGND_SET)
 
-            # Draw simple ASCII border
-            for x in range(box_left, box_left + box_width):
-                render_char_safe(console, x, box_top, '=', fg=border_color, bg=Colors.BLACK)
-                render_char_safe(console, x, box_bottom, '=', fg=border_color, bg=Colors.BLACK)
-            for y in range(box_top, box_bottom + 1):
-                render_char_safe(console, box_left, y, '|', fg=border_color, bg=Colors.BLACK)
-                render_char_safe(console, box_right, y, '|', fg=border_color, bg=Colors.BLACK)
+            # Draw double-line border using GameGlyphs
+            from game_unicode_chars import GameGlyphs
+
+            # Top and bottom borders
+            for x in range(box_left + 1, box_right):
+                render_char_safe(console, x, box_top, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=Colors.BLACK)
+                render_char_safe(console, x, box_bottom, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=Colors.BLACK)
+
+            # Side borders
+            for y in range(box_top + 1, box_bottom):
+                render_char_safe(console, box_left, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=Colors.BLACK)
+                render_char_safe(console, box_right, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=Colors.BLACK)
+
+            # Corners
+            render_char_safe(console, box_left, box_top, GameGlyphs.WALL_TOP_LEFT, fg=border_color, bg=Colors.BLACK)
+            render_char_safe(console, box_right, box_top, GameGlyphs.WALL_TOP_RIGHT, fg=border_color, bg=Colors.BLACK)
+            render_char_safe(console, box_left, box_bottom, GameGlyphs.WALL_BOTTOM_LEFT, fg=border_color, bg=Colors.BLACK)
+            render_char_safe(console, box_right, box_bottom, GameGlyphs.WALL_BOTTOM_RIGHT, fg=border_color, bg=Colors.BLACK)
 
             return {
                 'left': box_left,

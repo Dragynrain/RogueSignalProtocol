@@ -17,6 +17,7 @@ from data_loading import DataLoader
 from game_ui import render_char_safe
 from game_rendering_base import MapRendererBase
 from game_color_manager import ColorManager
+from game_unicode_chars import GameGlyphs
 
 
 class GlyphsMapRenderer(MapRendererBase):
@@ -96,17 +97,17 @@ class GlyphsMapRenderer(MapRendererBase):
         if pos_tuple in game.game_state.revealed_special_nodes:
             node_type = game.game_state.revealed_special_nodes[pos_tuple]
             if node_type == "cooling":
-                # Position 4 = ♦ for cooling nodes, faded cyan
+                # ♦ for cooling nodes, faded cyan
                 cooling_color = ColorManager.get_terrain_variant_color("cooling_node")
-                render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=cooling_color, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.COOLING, fg=cooling_color, bg=Colors.BLACK)
             elif node_type == "cpu":
-                # Position 3 = ♥ for CPU nodes, faded red
+                # ♥ for CPU nodes, faded red
                 cpu_color = ColorManager.get_terrain_variant_color("cpu_node")
-                render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=cpu_color, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.CPU_OVERLOAD, fg=cpu_color, bg=Colors.BLACK)
             elif node_type == "ghost":
-                # Position 6 = ♠ for ghost nodes, faded purple
+                # ♠ for ghost nodes, faded purple
                 ghost_color = ColorManager.get_terrain_variant_color("ghost_node")
-                render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=ghost_color, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.GHOST_MODE, fg=ghost_color, bg=Colors.BLACK)
             elif node_type == "gateway":
                 # Gateway in memory - darker yellow
                 gateway_dark = ColorManager.get_terrain_variant_color("gateway")
@@ -117,29 +118,34 @@ class GlyphsMapRenderer(MapRendererBase):
         if game.game_map.is_wall(world_pos):
             # Smart wall system for remembered walls too
             wall_char = self._get_smart_wall_character(game.game_map, world_pos.x, world_pos.y)
-            wall_dark = ColorManager.get_terrain_variant_color("wall")
-            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=wall_dark, bg=Colors.BLACK)
+            wall_dark = ColorManager.get_terrain_variant_color("wall_dark")
+            render_char_safe(console, screen_x, screen_y, wall_char, fg=wall_dark, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            # Position 8 = ◘ (inverse bullet) for remembered shadows
+            # ◘ (inverse bullet) for remembered shadows
             shadow_remembered = ColorManager.get_terrain_variant_color("shadow")
-            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=shadow_remembered, bg=Colors.BLACK)
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.SHADOW, fg=shadow_remembered, bg=Colors.BLACK)
         else:
-            # Position 7 = • (bullet) for remembered empty spaces
+            # • (bullet) for remembered empty spaces
             floor_explored = ColorManager.get_terrain_variant_color("floor")
-            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=floor_explored, bg=Colors.BLACK)
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.FLOOR_EXPLORED, fg=floor_explored, bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game):
         """Render a single tile."""
         # SYMBOL CONVENTIONS:
         # - Letters (A-Z): Reserved for enemies only (Scanner=S, Patrol=P, Bot=B, etc.)
-        # - CP437 symbols: Used for everything else (walls, items, terrain, etc.)
-        # - NO unicode characters allowed for terminal compatibility
+        # - Unicode characters: Used for everything else (walls, items, terrain, etc.)
         
         # Priority order for tile rendering
         if game.game_map.is_wall(world_pos):
-            # Smart wall system - analyze neighbors to pick correct wall piece
-            wall_char = self._get_smart_wall_character(game.game_map, world_pos.x, world_pos.y)
-            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[wall_char]), fg=Colors.WALL, bg=Colors.BLACK)
+            # Only render walls if they're within vision range (prevent distant walls from being visible)
+            distance = game.player.position.distance_to(world_pos)
+            if distance <= game.player.get_vision_range() + 1:  # +1 to show walls just outside range
+                # Smart wall system - analyze neighbors to pick correct wall piece
+                wall_char = self._get_smart_wall_character(game.game_map, world_pos.x, world_pos.y)
+                render_char_safe(console, screen_x, screen_y, wall_char, fg=Colors.WALL, bg=Colors.BLACK)
+            else:
+                # Wall too far away - render as explored memory instead
+                pass
         elif game.game_map.is_cooling_node(world_pos):
             # Position 4 = ♦ (diamond) 
             pos_tuple = (world_pos.x, world_pos.y)
@@ -154,11 +160,11 @@ class GlyphsMapRenderer(MapRendererBase):
                     if not hasattr(game.game_state, 'revealed_special_nodes'):
                         game.game_state.revealed_special_nodes = {}
                     game.game_state.revealed_special_nodes[pos_tuple] = "cooling"
-                render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=Colors.CYAN, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.COOLING, fg=Colors.CYAN, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
                 cooling_faded = ColorManager.get_terrain_variant_color("cooling_node")
-                render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[4]), fg=cooling_faded, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.COOLING, fg=cooling_faded, bg=Colors.BLACK)
         elif game.game_map.is_cpu_recovery_node(world_pos):
             # Position 3 = ♥ (heart)
             pos_tuple = (world_pos.x, world_pos.y)
@@ -173,11 +179,11 @@ class GlyphsMapRenderer(MapRendererBase):
                     if not hasattr(game.game_state, 'revealed_special_nodes'):
                         game.game_state.revealed_special_nodes = {}
                     game.game_state.revealed_special_nodes[pos_tuple] = "cpu"
-                render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=Colors.RED, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.CPU_OVERLOAD, fg=Colors.RED, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
                 cpu_faded = ColorManager.get_terrain_variant_color("cpu_node")
-                render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[3]), fg=cpu_faded, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.CPU_OVERLOAD, fg=cpu_faded, bg=Colors.BLACK)
         elif game.game_map.is_ghost_node(world_pos):
             # Position 6 = ♠ (spade)
             pos_tuple = (world_pos.x, world_pos.y)
@@ -192,11 +198,11 @@ class GlyphsMapRenderer(MapRendererBase):
                     if not hasattr(game.game_state, 'revealed_special_nodes'):
                         game.game_state.revealed_special_nodes = {}
                     game.game_state.revealed_special_nodes[pos_tuple] = "ghost"
-                render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.GHOST_MODE, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
                 ghost_faded = ColorManager.get_terrain_variant_color("ghost_node")
-                render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[6]), fg=ghost_faded, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.GHOST_MODE, fg=ghost_faded, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.code_hacks:
             patch = game.game_map.code_hacks[(world_pos.x, world_pos.y)]
             # Map patch color names to actual color tuples
@@ -215,8 +221,8 @@ class GlyphsMapRenderer(MapRendererBase):
                 # This should never happen, but fallback to white
                 logging.warning(f"CodeHack color_name is not string: {patch.color_name} (type: {type(patch.color_name)})")
                 actual_color = Colors.WHITE
-            # Position 21 = § (section) for code fragments  
-            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[21]), fg=actual_color, bg=Colors.BLACK)
+            # § (section) for code fragments
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.SECTION, fg=actual_color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
             try:
                 exploit_item = game.game_map.exploit_pickups[(world_pos.x, world_pos.y)]
@@ -250,63 +256,63 @@ class GlyphsMapRenderer(MapRendererBase):
             upgrade = GameUpgrades.UPGRADES[upgrade_key]
             # upgrade.color is already a tuple, use it directly
             color = ensure_color_tuple(upgrade.color)
-            # Position 10 = ◙ (inverse circle) for permanent upgrades (different from movement prediction)
-            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[10]), fg=color, bg=Colors.BLACK)
+            # ◙ (inverse circle) for permanent upgrades (different from movement prediction)
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.CIRCLE_DOT, fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.story_fragments:
-            # Position 14 = ♫ (double music note) for lore scraps with cycling colors
+            # ♫ (double music note) for lore scraps with cycling colors
             fragment_color = self._get_story_fragment_color(game.turn)
-            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[14]), fg=fragment_color, bg=Colors.BLACK)
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.STORY_FRAGMENT, fg=fragment_color, bg=Colors.BLACK)
         elif game.game_map.is_shadow(world_pos):
-            # Position 8 = ◘ (inverse bullet) for shadows
-            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[8]), fg=(80, 40, 120), bg=Colors.BLACK)
+            # ◘ (inverse bullet) for shadows
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.SHADOW, fg=(80, 40, 120), bg=Colors.BLACK)
         else:
-            # Position 7 = • (bullet) for empty space
-            render_char_safe(console, screen_x, screen_y, chr(tcod.tileset.CHARMAP_CP437[7]), fg=Colors.FLOOR, bg=Colors.BLACK)
+            # • (bullet) for empty space
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.FLOOR_EXPLORED, fg=Colors.FLOOR, bg=Colors.BLACK)
     
     
-    def _get_smart_wall_character(self, game_map, x: int, y: int) -> int:
+    def _get_smart_wall_character(self, game_map, x: int, y: int) -> str:
         """Get the appropriate wall character based on neighboring walls."""
         # Check which directions have walls
         n = game_map.is_wall(Position(x, y - 1))  # North
-        s = game_map.is_wall(Position(x, y + 1))  # South  
+        s = game_map.is_wall(Position(x, y + 1))  # South
         e = game_map.is_wall(Position(x + 1, y))  # East
         w = game_map.is_wall(Position(x - 1, y))  # West
-        
-        # Use proper box-drawing characters from game config
+
+        # Return Unicode box-drawing characters
         if n and s and e and w:
-            return 197  # ┼ cross (4-way intersection)
+            return GameGlyphs.WALL_CROSS  # ┼ cross (4-way intersection)
         elif n and s and e and not w:
-            return 195  # ├ T pointing right  
+            return GameGlyphs.WALL_T_RIGHT  # ├ T pointing right
         elif n and s and not e and w:
-            return 180  # ┤ T pointing left
+            return GameGlyphs.WALL_T_LEFT  # ┤ T pointing left
         elif n and not s and e and w:
-            return 193  # ┴ T pointing up
+            return GameGlyphs.WALL_T_UP  # ┴ T pointing up
         elif not n and s and e and w:
-            return 194  # ┬ T pointing down
+            return GameGlyphs.WALL_T_DOWN  # ┬ T pointing down
         elif n and not s and e and not w:
-            return 192  # └ bottom-left corner
+            return GameGlyphs.WALL_BOTTOM_LEFT  # └ bottom-left corner
         elif n and not s and not e and w:
-            return 217  # ┘ bottom-right corner
+            return GameGlyphs.WALL_BOTTOM_RIGHT  # ┘ bottom-right corner
         elif not n and s and e and not w:
-            return 218  # ┌ top-left corner
+            return GameGlyphs.WALL_TOP_LEFT  # ┌ top-left corner
         elif not n and s and not e and w:
-            return 191  # ┐ top-right corner
+            return GameGlyphs.WALL_TOP_RIGHT  # ┐ top-right corner
         elif n and s and not e and not w:
-            return 179  # │ vertical line
+            return GameGlyphs.WALL_VERTICAL  # │ vertical line
         elif not n and not s and e and w:
-            return 196  # ─ horizontal line
+            return GameGlyphs.WALL_HORIZONTAL  # ─ horizontal line
         # Handle single-connection walls (stubs)
         elif n and not s and not e and not w:
-            return 179  # │ vertical stub pointing up
+            return GameGlyphs.WALL_VERTICAL  # │ vertical stub pointing up
         elif not n and s and not e and not w:
-            return 179  # │ vertical stub pointing down  
+            return GameGlyphs.WALL_VERTICAL  # │ vertical stub pointing down
         elif not n and not s and e and not w:
-            return 196  # ─ horizontal stub pointing right
+            return GameGlyphs.WALL_HORIZONTAL  # ─ horizontal stub pointing right
         elif not n and not s and not e and w:
-            return 196  # ─ horizontal stub pointing left
-        # Isolated wall - use a different character instead of solid block
+            return GameGlyphs.WALL_HORIZONTAL  # ─ horizontal stub pointing left
+        # Isolated wall
         else:
-            return 254  # ■ small solid square instead of full block
+            return GameGlyphs.WALL_ISOLATED  # ■ small solid square
 
     def _get_upgrade_color(self, color_name: str) -> Tuple[int, int, int]:
         """Get color tuple for permanent upgrade."""
@@ -435,9 +441,10 @@ class GlyphsMapRenderer(MapRendererBase):
     def _safely_overlay_tile(self, console: tcod.console.Console, x: int, y: int, bg_color: Tuple[int, int, int]):
         """Safely overlay background color on existing tile."""
         try:
-            current_char = console.ch[x, y]
+            # CRITICAL: TCOD arrays use [y, x] indexing, not [x, y]!
+            current_char = console.ch[y, x]
             if current_char != ord(' '):  # Don't overlay fog of war
-                current_fg = console.fg[x, y]
+                current_fg = console.fg[y, x]
                 if hasattr(current_fg, '__iter__') and len(current_fg) >= 3:
                     fg_tuple = tuple(current_fg[:3])
                     render_char_safe(console, x, y, chr(current_char), fg=fg_tuple, bg=bg_color)
@@ -498,7 +505,8 @@ class GlyphsMapRenderer(MapRendererBase):
                         else:
                             # Classic mode: Preserve existing background color if present (e.g., vision overlay)
                             try:
-                                current_bg = tuple(console.bg[screen_x, screen_y][:3])
+                                # CRITICAL: TCOD arrays use [y, x] indexing, not [x, y]!
+                                current_bg = tuple(console.bg[screen_y, screen_x][:3])
                                 # Use current background if it's not black, otherwise use black
                                 bg_color = current_bg if current_bg != (0, 0, 0) else Colors.BLACK
                             except (IndexError, AttributeError):
@@ -511,18 +519,18 @@ class GlyphsMapRenderer(MapRendererBase):
                             if i == 0:
                                 # Next immediate move - brightest and largest
                                 color = ColorManager.get_targeting_color("prediction_bright")
-                                # Position 9 = ○ (circle) for enemy move intent
-                                symbol = chr(tcod.tileset.CHARMAP_CP437[9])
+                                # ○ (circle) for enemy move intent
+                                symbol = GameGlyphs.TARGETING
                             elif i == 1:
                                 # Second move - slightly dimmer but still bright
                                 color = ColorManager.get_targeting_color("prediction_medium")
-                                # Position 9 = ○ (circle) for enemy move intent
-                                symbol = chr(tcod.tileset.CHARMAP_CP437[9])
+                                # ○ (circle) for enemy move intent
+                                symbol = GameGlyphs.TARGETING
                             else:
                                 # Third+ moves - still bright yellow
                                 color = ColorManager.get_targeting_color("prediction_dim")
-                                # Position 9 = ○ (circle) for enemy move intent
-                                symbol = chr(tcod.tileset.CHARMAP_CP437[9])
+                                # ○ (circle) for enemy move intent
+                                symbol = GameGlyphs.TARGETING
                             render_char_safe(console, screen_x, screen_y, symbol, fg=color, bg=bg_color)
 
     def _render_gateway(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
@@ -654,9 +662,9 @@ class GlyphsMapRenderer(MapRendererBase):
         if self._is_in_viewport(game.player.x, game.player.y, camera_offset):
             console_x, console_y = self._world_to_console(game.player.x, game.player.y, camera_offset)
             player_color = self._get_player_color(game.player)
-            # Position 2 = ☻ (inverse smiley)
+            # ☺ (smiley face)
             try:
-                render_char_safe(console, console_x, console_y, chr(tcod.tileset.CHARMAP_CP437[2]), fg=player_color, bg=Colors.BLACK)
+                render_char_safe(console, console_x, console_y, GameGlyphs.PLAYER, fg=player_color, bg=Colors.BLACK)
             except Exception as e:
                 import logging
                 logging.error(f"PLAYER RENDER ERROR: {e}, color={player_color}")
@@ -679,9 +687,9 @@ class GlyphsMapRenderer(MapRendererBase):
         if player.is_invisible():
             return Colors.YELLOW
 
-        # Priority 3: Virus effect - Green
+        # Priority 3: Virus effect - Green (matches graphics mode)
         if player.temporary_effects['virus_turns'] > 0:
-            return Colors.DARK_GREEN
+            return ColorManager.get("status_effects", "virus")
 
         # Priority 4: Slow effect - Cyan
         if player.temporary_effects['movement_slowed_turns'] > 0:

@@ -7,6 +7,16 @@ Handles menu navigation, game state transitions, and error recovery.
 Coordinates rendering, input handling, and audio systems.
 """
 
+# CRITICAL: Set DPI awareness BEFORE importing tcod to ensure proper scaling
+import ctypes
+try:
+    ctypes.windll.shcore.SetProcessDpiAwareness(2)  # PROCESS_PER_MONITOR_DPI_AWARE
+except:
+    try:
+        ctypes.windll.user32.SetProcessDPIAware()  # Fallback for Windows 7/8
+    except:
+        pass  # DPI awareness unavailable - game will still run but may be scaled by Windows
+
 import tcod
 import time
 import logging
@@ -48,13 +58,19 @@ def log_exception(e: Exception, context: str, level: str = "error"):
 
 
 def load_tileset():
-    """Load terminal tileset - no fallbacks, missing font indicates corrupt installation."""
+    """
+    Load TrueType font tileset using custom FreeType loader.
 
-    # Load terminal tileset
-    # terminal10x16 means each glyph is 10 pixels wide x 16 pixels tall
-    # The tilesheet has 16 columns x 16 rows of glyphs
-    tileset = tcod.tileset.load_tilesheet(
-        "terminal10x16_gs_ro.png", 16, 16, tcod.tileset.CHARMAP_CP437
+    TCOD's native loader has "fit without stretching" behavior that leaves
+    tons of empty space. Custom loader gives us full control over scaling.
+    """
+    from font_loader_freetype import load_truetype_font_custom
+
+    # Use 64x64 tiles with KreativeSquare (square 1:1 aspect ratio font)
+    tileset = load_truetype_font_custom(
+        "KreativeSquare.ttf",
+        64,  # tile_width
+        64   # tile_height
     )
     return tileset
 
@@ -66,9 +82,11 @@ def initialize_tcod_context():
     context_args = {
         "columns": GameConfig.SCREEN_WIDTH,
         "rows": GameConfig.SCREEN_HEIGHT,
+        "width": 1920,   # Explicit window width in pixels (1920×1080 = Full HD)
+        "height": 1080,  # Explicit window height in pixels
         "title": "Rogue Signal Protocol",
         "vsync": True,
-        "sdl_window_flags": 160  # Resizable window
+        "sdl_window_flags": 160  # Maximized + resizable
     }
 
     if tileset:

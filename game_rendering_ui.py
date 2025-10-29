@@ -142,7 +142,7 @@ class UIRenderer:
                 render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
 
         # Panel border (full screen width)
-        border = "┌" + "─" * (GameConfig.SCREEN_WIDTH - 2) + "┐"
+        border = "╔" + "═" * (GameConfig.SCREEN_WIDTH - 2) + "╗"
         render_char_safe(console, 0, GameConfig.PANEL_Y(), border, fg=Colors.LOG_BORDER, bg=Colors.UI_BG)
 
         # Equipped exploits (2 lines)
@@ -368,7 +368,7 @@ class UIRenderer:
         """
         # Draw log border (stop at panel start to give bottom panel priority)
         for y in range(GameConfig.PANEL_Y()):
-            render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '│', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+            render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '║', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
 
         # Help text in top-right corner (properly positioned in log panel)
         help_text = "Press ? for help"
@@ -377,7 +377,7 @@ class UIRenderer:
 
         # Log header
         render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
-        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 2, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 2, "═" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
 
         # Clear log area - start from line 3 to account for header, stop at panel start
         for x in range(GameConfig.GAME_AREA_WIDTH() + 1, GameConfig.SCREEN_WIDTH):
@@ -480,7 +480,7 @@ class UIRenderer:
         panel_y = 3  # Start below log header
 
         # Draw separator
-        render_char_safe(console, panel_x, panel_y, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.YELLOW, bg=Colors.LOG_BG)
+        render_char_safe(console, panel_x, panel_y, "═" * (GameConfig.LOG_WIDTH - 1), fg=Colors.YELLOW, bg=Colors.LOG_BG)
         panel_y += 1
 
         # Render inspection header
@@ -521,7 +521,7 @@ class UIRenderer:
         # Draw bottom separator
         if panel_y < GameConfig.PANEL_Y() - 1:
             panel_y += 1
-            render_char_safe(console, panel_x, panel_y, "─" * (GameConfig.LOG_WIDTH - 1), fg=Colors.YELLOW, bg=Colors.LOG_BG)
+            render_char_safe(console, panel_x, panel_y, "═" * (GameConfig.LOG_WIDTH - 1), fg=Colors.YELLOW, bg=Colors.LOG_BG)
 
     def _wrap_text(self, text: str, max_width: int) -> list:
         """
@@ -603,8 +603,8 @@ class UIRenderer:
 
         # Menu borders (top and bottom)
         for x in range(menu_x, menu_x + menu_width):
-            render_char_safe(console, x, menu_y, '=', fg=Colors.CYAN, bg=Colors.UI_BG)
-            render_char_safe(console, x, menu_y + menu_height - 1, '─', fg=Colors.CYAN, bg=Colors.UI_BG)
+            render_char_safe(console, x, menu_y, '═', fg=Colors.CYAN, bg=Colors.UI_BG)
+            render_char_safe(console, x, menu_y + menu_height - 1, '═', fg=Colors.CYAN, bg=Colors.UI_BG)
 
         # Title (centered)
         title_x = menu_x + (menu_width - len(title)) // 2

@@ -168,9 +168,13 @@
       "bright_red": [255, 128, 128],
       "bright_green": [50, 255, 50],
       "bright_blue": [0, 191, 255],
+      "electric_blue": [0, 191, 255],
       "bright_yellow": [255, 215, 0],
       "bright_magenta": [255, 20, 255],
-      "bright_cyan": [20, 255, 200]
+      "bright_cyan": [20, 255, 200],
+      "orange": [255, 165, 0],
+      "dark_green": [0, 128, 0],
+      "acid_green": [128, 255, 0]
     },
     "game_elements": {
       "player": [50, 255, 50],
@@ -233,10 +237,13 @@
       "cooling_node": [0, 120, 120],
       "cpu_node": [120, 0, 0],
       "ghost_node": [80, 0, 120],
+      "gateway": [140, 110, 0],
       "gateway_dark": [180, 150, 0],
       "wall_dark": [60, 70, 90],
       "floor_explored": [90, 90, 130],
-      "ghost_node_explored": [80, 40, 120]
+      "ghost_node_explored": [80, 40, 120],
+      "shadow": [50, 20, 80],
+      "floor": [180, 180, 220]
     },
     "targeting": {
       "prediction_bright": [255, 255, 50],

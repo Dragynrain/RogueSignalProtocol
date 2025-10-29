@@ -243,11 +243,9 @@ class UnifiedRenderer:
             console, x=box_x, y=box_y, width=box_width, height=box_height, alpha=255
         )
 
-        # Draw box background and border
-        console.draw_rect(box_x, box_y, box_width, box_height,
-                         ord(' '), fg=Colors.WHITE, bg=bg_color)
-        console.draw_frame(box_x, box_y, box_width, box_height,
-                          fg=border_color, bg=bg_color, clear=False)
+        # Draw box background and border using shared utility
+        from game_rendering_core import draw_bordered_box
+        draw_bordered_box(console, box_x, box_y, box_width, box_height, border_color, bg_color)
 
         # Render title (centered)
         title_x = box_x + (box_width - len(dialogue.title)) // 2
