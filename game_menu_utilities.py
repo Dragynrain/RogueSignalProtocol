@@ -12,6 +12,8 @@ from game_config import GameConfig
 from game_entities import Colors
 from game_ui import render_char_safe
 from game_coordinate_helpers import CoordinateHelpers
+from game_unicode_chars import GameGlyphs
+from game_rendering_core import draw_bordered_box
 
 
 class MenuRenderingUtils:
@@ -58,26 +60,8 @@ class MenuRenderingUtils:
             box_top = max(1, min(box_top, GameConfig.SCREEN_HEIGHT - height - 1))
             box_bottom = box_top + height - 1
 
-            # Draw black background
-            console.draw_rect(x=box_left, y=box_top, width=box_width, height=height,
-                             ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0),
-                             bg_blend=tcod.constants.BKGND_SET)
-
-            # Draw border with double-line Unicode box characters
-            from game_unicode_chars import GameGlyphs
-
-            for y in range(box_top, box_bottom + 1):
-                render_char_safe(console, box_left, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=Colors.BLACK)
-                render_char_safe(console, box_right, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=Colors.BLACK)
-            for x in range(box_left, box_right + 1):
-                render_char_safe(console, x, box_top, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=Colors.BLACK)
-                render_char_safe(console, x, box_bottom, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=Colors.BLACK)
-
-            # Box corners (double-line)
-            render_char_safe(console, box_left, box_top, GameGlyphs.WALL_TOP_LEFT, fg=border_color, bg=Colors.BLACK)
-            render_char_safe(console, box_right, box_top, GameGlyphs.WALL_TOP_RIGHT, fg=border_color, bg=Colors.BLACK)
-            render_char_safe(console, box_left, box_bottom, GameGlyphs.WALL_BOTTOM_LEFT, fg=border_color, bg=Colors.BLACK)
-            render_char_safe(console, box_right, box_bottom, GameGlyphs.WALL_BOTTOM_RIGHT, fg=border_color, bg=Colors.BLACK)
+            # Draw box with border (consolidated using draw_bordered_box)
+            draw_bordered_box(console, box_left, box_top, box_width, height, border_color, Colors.BLACK)
 
             return {
                 'left': box_left,
@@ -110,29 +94,8 @@ class MenuRenderingUtils:
             box_right = box_left + box_width - 1
             box_bottom = box_top + height - 1
 
-            # Draw black background
-            console.draw_rect(x=box_left, y=box_top, width=box_width, height=height,
-                             ch=ord(' '), fg=(255, 255, 255), bg=(0, 0, 0),
-                             bg_blend=tcod.constants.BKGND_SET)
-
-            # Draw double-line border using GameGlyphs
-            from game_unicode_chars import GameGlyphs
-
-            # Top and bottom borders
-            for x in range(box_left + 1, box_right):
-                render_char_safe(console, x, box_top, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=Colors.BLACK)
-                render_char_safe(console, x, box_bottom, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=Colors.BLACK)
-
-            # Side borders
-            for y in range(box_top + 1, box_bottom):
-                render_char_safe(console, box_left, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=Colors.BLACK)
-                render_char_safe(console, box_right, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=Colors.BLACK)
-
-            # Corners
-            render_char_safe(console, box_left, box_top, GameGlyphs.WALL_TOP_LEFT, fg=border_color, bg=Colors.BLACK)
-            render_char_safe(console, box_right, box_top, GameGlyphs.WALL_TOP_RIGHT, fg=border_color, bg=Colors.BLACK)
-            render_char_safe(console, box_left, box_bottom, GameGlyphs.WALL_BOTTOM_LEFT, fg=border_color, bg=Colors.BLACK)
-            render_char_safe(console, box_right, box_bottom, GameGlyphs.WALL_BOTTOM_RIGHT, fg=border_color, bg=Colors.BLACK)
+            # Draw box with border (consolidated using draw_bordered_box)
+            draw_bordered_box(console, box_left, box_top, box_width, height, border_color, Colors.BLACK)
 
             return {
                 'left': box_left,

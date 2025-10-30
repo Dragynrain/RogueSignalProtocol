@@ -19,6 +19,7 @@ import tcod.console
 import tcod.event
 
 from game_coordinate_helpers import CoordinateHelpers
+from font_loader_freetype import load_truetype_font_custom
 
 
 def render_box_outline(console: tcod.console.Console, x: int, y: int, width: int, height: int, color: tuple):
@@ -55,10 +56,8 @@ def main():
     console_height = 50
     console = tcod.console.Console(width=console_width, height=console_height)
 
-    # Create TCOD context
-    tileset = tcod.tileset.load_truetype_font(
-        "../CascadiaCode-VariableFont_wght.ttf", 24, 24
-    )
+    # Create TCOD context with KreativeSquare font (same as main game)
+    tileset = load_truetype_font_custom("../KreativeSquare.ttf", 64, 64)
     with tcod.context.new(
         width=console_width,
         height=console_height,
