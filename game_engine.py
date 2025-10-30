@@ -86,6 +86,10 @@ class GameEngine:
         self.player = Player(5, 5)
         self.message_log = MessageLog()
 
+        # Initialize metrics tracking system (will be overwritten if loading save)
+        from game_metrics import init_session_metrics
+        self.metrics = init_session_metrics()
+
         # Update enemy manager with message log
         self.enemy_manager.message_log = self.message_log
 
@@ -339,6 +343,11 @@ class GameEngine:
             # Try to move player
             if self.player.move(dx, dy, self.game_map):
                 self.sound_manager.play_sound("player_move")
+
+                # Track metrics
+                from game_metrics import track
+                track("steps_taken")
+
                 # Check for gateway - show dialogue for user confirmation
                 if (self.game_map.gateway and
                     self.player.position.distance_to(self.game_map.gateway) == 0):
@@ -357,6 +366,11 @@ class GameEngine:
                     self.player.take_damage(damage)
                     self.player.heat = max(85, self.player.max_heat - 15)  # Cool down to 15 below max, minimum 85
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
+
+                    # Track metrics
+                    from game_metrics import track
+                    track("overheating_events")
+
                     # Death handling moved to game_turn_manager.py (called via maybe_process_turn)
 
                 # Handle speed boost and turn processing only if move was successful
@@ -432,6 +446,15 @@ class GameEngine:
             self.enemy_manager.remove_enemy(target_enemy)
             self.player.cpu = min(self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)  # Small CPU recovery
             self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")
+
+            # Track metrics
+            from game_metrics import track
+            from game_entities import EnemyState
+            track("enemies_killed", category=target_enemy.type)
+            track("damage_dealt", amount=total_damage)
+            if target_enemy.state == EnemyState.UNAWARE:
+                track("stealth_kills")
+
             # Add environmental narrative for first combat or admin defeat
             if is_admin:
                 env_msg = self.narrative_manager.trigger_admin_defeated()

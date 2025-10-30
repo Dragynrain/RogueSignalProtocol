@@ -121,7 +121,13 @@ class GameSession:
             network_configs = GameConfig.NETWORK_CONFIGS()
             config = network_configs.get(self.game_engine.level, {"background_trace": 1})
             background_increase = config.get("background_trace", 1)
+            old_trace = self.game_engine.player.trace_level
             self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + background_increase)
+
+            # Track metrics if trace actually increased
+            if self.game_engine.player.trace_level > old_trace:
+                from game_metrics import track
+                track("trace_increases")
 
         # Check for death from ANY source (enemy attacks, virus, etc.)
         # This catches deaths that weren't caught by the virus-specific check above
@@ -132,6 +138,16 @@ class GameSession:
             self.game_engine.game_over = True
             # Delete save on death (permadeath)
             if not hasattr(self, '_death_handled'):
+                # Finalize and save metrics before deleting save
+                from game_metrics import finalize_session, save_metrics
+                metrics = finalize_session(
+                    victory=False,
+                    death_cause="combat",  # Could be refined to distinguish overheat/trace
+                    death_level=self.game_engine.level
+                )
+                if metrics:
+                    save_metrics(metrics)
+
                 self._delete_save_on_death()
                 # Show death dialogue
                 from game_dialogue_system import create_death_dialogue
@@ -460,6 +476,12 @@ class GameSession:
         trace_increase = level_config.get(config_key, default_value)
         old_trace = self.game_engine.player.trace_level
         self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + trace_increase)
+
+        # Track metrics if trace actually increased
+        if self.game_engine.player.trace_level > old_trace:
+            from game_metrics import track
+            track("trace_increases")
+
         self._check_trace_threshold_warnings(old_trace, self.game_engine.player.trace_level)
 
     def _restore_patrol(self, enemy):
@@ -536,6 +558,11 @@ class GameSession:
             admin.state = EnemyState.HOSTILE
             admin.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
             self.game_engine.admin_spawned = True
+
+            # Track metrics
+            from game_metrics import track
+            track("admin_spawns")
+
             self.game_engine.message_log.add_message("*** ADMIN AVATAR SPAWNED! ***")
             self.game_engine.sound_manager.play_sound("admin_spawn", priority=8)
             # Add environmental narrative for admin spawn
@@ -713,6 +740,11 @@ class GameSession:
             return
 
         old_level = self.game_engine.level
+
+        # Track level completion (before incrementing)
+        from game_metrics import track
+        track("levels_completed")
+
         self.game_engine.level += 1
         logging.debug(f"Session: Level progression: {old_level} → {self.game_engine.level}, turn={self.game_engine.turn}, player_cpu={self.game_engine.player.cpu}/{self.game_engine.player.max_cpu}")
 
@@ -724,6 +756,13 @@ class GameSession:
             self.game_engine.message_log.add_message("The network is vast. The future, uncertain. But you're free.")
             self.game_engine.message_log.add_message(f"Stats: Trace:{int(self.game_engine.player.trace_level)}%")
             self.game_engine.game_over = True
+
+            # Finalize and save metrics before deleting save
+            from game_metrics import finalize_session, save_metrics
+            metrics = finalize_session(victory=True, death_cause=None, death_level=0)
+            if metrics:
+                save_metrics(metrics)
+
             # Delete save on game completion (no continuing after winning)
             SaveGameManager.delete_save()
             self.game_engine.message_log.add_message("Mission complete - save data purged")
@@ -1093,6 +1132,7 @@ class GameSession:
             self._restore_game_state(save_data)
             self._restore_player_state(save_data["player"])
             self._restore_game_effects(save_data)
+            self._restore_metrics(save_data)
             self._sync_code_discovered_status()
             self._restore_ui_state(save_data)
 
@@ -1212,6 +1252,18 @@ class GameSession:
         # Restore overclocking state
         self.game_engine.overclock_confirmation = save_data.get("overclock_confirmation", False)
         self.game_engine.overclock_exploit = save_data.get("overclock_exploit", None)
+
+    def _restore_metrics(self, save_data: Dict[str, Any]) -> None:
+        """Restore session metrics from save data."""
+        if "session_metrics" in save_data and save_data["session_metrics"]:
+            from game_metrics import load_session_metrics
+            metrics = load_session_metrics(save_data)
+            if metrics:
+                # Replace the default initialized metrics with loaded ones
+                self.game_engine.metrics = metrics
+                import game_metrics
+                game_metrics._current_session = metrics
+                logging.info("Metrics restored from save")
 
     def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:
         """Restore UI state from save data."""

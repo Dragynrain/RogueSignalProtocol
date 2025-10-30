@@ -71,16 +71,29 @@ class TestMenuMouseInteractions:
             menu = SettingsMenu(settings)
 
             # Create mock mouse click event on left side of volume bar
+            # Must match the actual box calculation in game_menus.py
             layout = menu._get_menu_layout_params()
             if layout['use_background_layout']:
-                box_left = GameConfig.SCREEN_WIDTH - 32
-                bar_x = box_left + 3 + 18
+                box_width = 28
+                box_right = GameConfig.SCREEN_WIDTH - 2 - 3
+                box_left = box_right - box_width
+                content_left = box_left + 1
+                bar_start_x = content_left + 1
+                bar_content_start = bar_start_x + 4
+                bar_length = 8
             else:
-                box_left = (GameConfig.SCREEN_WIDTH - 40) // 2
-                bar_x = box_left + 2 + 18
+                box_width = 50  # Fixed: was 40, should be 50
+                box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
+                content_left = box_left + 2
+                bar_start_x = content_left + 18
+                bar_content_start = bar_start_x + 4
+                bar_length = 14
 
-            # Click on left side (should decrease)
-            click_x = bar_x + 5
+            bar_content_end = bar_content_start + bar_length - 1
+            bar_mid = (bar_content_start + bar_content_end) // 2
+
+            # Click on left side (definitely before midpoint, should decrease)
+            click_x = bar_content_start + 1
             click_y = 12  # First option row
 
             event = Mock()
@@ -111,21 +124,33 @@ class TestMenuMouseInteractions:
             settings.set_volume_percent('master', 0)
             menu = SettingsMenu(settings)
 
+            # Calculate bar position (must match game_menus.py)
             layout = menu._get_menu_layout_params()
             if layout['use_background_layout']:
-                box_left = GameConfig.SCREEN_WIDTH - 32
-                bar_x = box_left + 3 + 18
+                box_width = 28
+                box_right = GameConfig.SCREEN_WIDTH - 2 - 3
+                box_left = box_right - box_width
+                content_left = box_left + 1
+                bar_start_x = content_left + 1
+                bar_content_start = bar_start_x + 4
+                bar_length = 8
             else:
-                box_left = (GameConfig.SCREEN_WIDTH - 40) // 2
-                bar_x = box_left + 2 + 18
+                box_width = 50  # Fixed: was 40, should be 50
+                box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
+                content_left = box_left + 2
+                bar_start_x = content_left + 18
+                bar_content_start = bar_start_x + 4
+                bar_length = 14
+
+            bar_content_end = bar_content_start + bar_length - 1
 
             # Click left side when at 0%
             event = Mock()
             event.tile = Mock()
-            event.tile.x = bar_x + 5
+            event.tile.x = bar_content_start + 1
             event.tile.y = 12
             event.position = Mock()
-            event.position.x = bar_x + 5
+            event.position.x = bar_content_start + 1
             event.position.y = 12
 
             menu.handle_mouse_motion(event)
@@ -139,8 +164,8 @@ class TestMenuMouseInteractions:
             menu = SettingsMenu(settings)
 
             # Click right side when at 100%
-            event.tile.x = bar_x + 15
-            event.position.x = bar_x + 15
+            event.tile.x = bar_content_end - 1
+            event.position.x = bar_content_end - 1
 
             menu.handle_mouse_motion(event)
             menu.handle_mouse_click(event)

@@ -14,6 +14,7 @@ from game_engine import GameEngine
 from game_data import GameData
 from tests.fixtures.simple_fixtures import player, enemy, create_test_map
 from tests.fixtures.simple_fixtures import enemy_builder
+from tests.fixtures.real_game_data import create_real_enemy
 
 
 class TestSaveLoadMidGameplay:

@@ -153,6 +153,11 @@ class ExploitSystem:
             heat_cost = self._calculate_heat_cost(exploit)
             new_heat = self.game.player.heat + heat_cost
 
+            # Track metrics
+            from game_metrics import track
+            track("exploits_used", category=exploit_key)
+            track("heat_generated", amount=heat_cost)
+
             # Check if this will cause overheating
             if new_heat > self.game.player.max_heat:
                 # Apply overclock damage (confirmed via dialogue)

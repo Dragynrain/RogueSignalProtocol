@@ -122,7 +122,10 @@ class SaveGameManager:
                     "ui_state": {
                         "inventory_selection": game.inventory_selection,
                         "lore_viewer_selection": game.lore_viewer_selection
-                    }
+                    },
+
+                    # Session metrics tracking
+                    "session_metrics": cls._serialize_metrics(game)
                 }
             
                 # Write to temporary file first, then atomic rename for safety
@@ -314,3 +317,9 @@ class SaveGameManager:
             serialized.append(enemy_data)
 
         return serialized
+
+    @classmethod
+    def _serialize_metrics(cls, game: 'GameEngine') -> Dict[str, Any]:
+        """Serialize session metrics for save file."""
+        from game_metrics import save_checkpoint
+        return save_checkpoint()
