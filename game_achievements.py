@@ -63,7 +63,7 @@ COMBAT_ACHIEVEMENTS = {
     "overkill": Achievement(
         id="overkill",
         name="Overkill",
-        description="Deal 100+ damage in a single hit",
+        description="Deal 50+ damage in a single hit",
         icon="💥",
         category="combat",
     ),
@@ -309,7 +309,7 @@ class AchievementChecker:
         if "massacre" not in already_unlocked and total_kills >= 20:
             newly_unlocked.append("massacre")
 
-        if "overkill" not in already_unlocked and session.max_single_hit_damage >= 100:
+        if "overkill" not in already_unlocked and session.max_single_hit_damage >= 50:
             newly_unlocked.append("overkill")
 
         # Check AOE multi-kills (aoe_multi_kills is Counter of {num_enemies: count})

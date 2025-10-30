@@ -40,6 +40,7 @@ class GameSettings:
         self.sfx_volume = 0.75
         self.music_volume = 0.6
         self.graphics_mode = "graphics"  # "glyph" (CP437 characters) or "graphics" (PNG sprites)
+        self.show_achievement_popups = True  # Show achievement unlock popups
         self.dialogue_preferences = {}  # Stores user preferences for dialogue visibility
         self.load_settings()
     
@@ -73,6 +74,7 @@ class GameSettings:
                     self.sfx_volume = settings_data.get("sfx_volume", 0.75)
                     self.music_volume = settings_data.get("music_volume", 0.6)
                     self.graphics_mode = settings_data.get("graphics_mode", "graphics")
+                    self.show_achievement_popups = settings_data.get("show_achievement_popups", True)
 
                     # Migrate old "ascii" setting to "glyph"
                     if self.graphics_mode == "ascii":
@@ -102,6 +104,7 @@ class GameSettings:
                 "sfx_volume": 0.75,
                 "music_volume": 0.6,
                 "graphics_mode": "graphics",
+                "show_achievement_popups": True,
                 "dialogue_preferences": {}
             }
             with open(self.SETTINGS_FILE, 'w') as f:
@@ -118,6 +121,7 @@ class GameSettings:
                 "sfx_volume": self.sfx_volume,
                 "music_volume": self.music_volume,
                 "graphics_mode": self.graphics_mode,
+                "show_achievement_popups": self.show_achievement_popups,
                 "dialogue_preferences": self.dialogue_preferences
             }
             with open(self.SETTINGS_FILE, 'w') as f:

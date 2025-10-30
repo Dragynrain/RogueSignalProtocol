@@ -74,40 +74,14 @@ class InfoProvider:
         if mouse_tile_y < 1 or mouse_tile_y >= GameConfig.PANEL_Y():
             return None  # Hovering over status bar or bottom panel
 
-        # Convert mouse tile position to game world position
-        from game_inspection import EntityInspector
-
-        # Determine graphics mode
-        graphics_mode = "glyph"  # Default to glyph mode
-        if hasattr(game, 'settings') and game.settings is not None:
-            graphics_mode = game.settings.graphics_mode
-
-        # Calculate viewport offset
-        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
-        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
-
-        camera_x = game.player.x - viewport_width // 2
-        camera_y = game.player.y - viewport_height // 2
-
-        # Clamp camera to map boundaries
-        camera_x = max(0, min(camera_x, game.game_map.width - viewport_width))
-        camera_y = max(0, min(camera_y, game.game_map.height - viewport_height))
-
-        # Convert screen coordinates to world coordinates
-        if graphics_mode == "graphics":
-            # In graphics mode, viewport is smaller (27x21 tiles)
-            world_x = camera_x + mouse_tile_x // 2
-            world_y = camera_y + (mouse_tile_y - 1) // 2
-        else:
-            # In glyph mode, viewport is full size (55x44 tiles)
-            world_x = camera_x + mouse_tile_x
-            world_y = camera_y + (mouse_tile_y - 1)
-
-        # Check if position is valid
-        if world_x < 0 or world_x >= game.game_map.width or world_y < 0 or world_y >= game.game_map.height:
+        # Use the world position already calculated by InputHandler
+        # This ensures info panel and game rendering use the same coordinate system
+        if not hasattr(game, 'mouse_hover_world_pos') or game.mouse_hover_world_pos is None:
             return None
 
-        position = Position(world_x, world_y)
+        position = game.mouse_hover_world_pos
+
+        from game_inspection import EntityInspector
 
         # Only show info for tiles that are visible or explored (no X-ray vision!)
         pos_tuple = (position.x, position.y)
@@ -246,8 +220,8 @@ class InfoProvider:
 
         if exploit_def.range > 0:
             range_text = f'Range: {exploit_def.range}'
-            if exploit_def.aoe_radius > 0:
-                range_text += f' (AOE: {exploit_def.aoe_radius})'
+            if exploit_def.effect_radius > 0:
+                range_text += f' (AOE: {exploit_def.effect_radius})'
             lines.append({'text': range_text, 'color': Colors.ORANGE})
 
         # Blank line before description

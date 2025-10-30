@@ -185,7 +185,10 @@ class GameRenderer:
                                      game.last_mouse_tile_x, game.last_mouse_tile_y)
 
         # Render achievement popups (high priority, after dialogue or at same level)
-        if hasattr(game, 'achievement_popup_manager'):
+        # Only show if enabled in settings (default: True)
+        if (hasattr(game, 'achievement_popup_manager') and
+            hasattr(game, 'settings') and
+            game.settings.show_achievement_popups):
             game.achievement_popup_manager.update()
             game.achievement_popup_manager.render(console)
 
