@@ -33,6 +33,7 @@ from game_input import InputHandler
 # Import new specialized modules
 from game_session import GameSession
 from game_dialogue_system import DialogueState
+from game_achievement_popups import AchievementPopupManager
 
 
 class GameEngine:
@@ -101,6 +102,9 @@ class GameEngine:
 
         # Initialize dialogue state with settings for preference persistence
         self.dialogue_state = DialogueState(self.settings)
+
+        # Initialize achievement popup manager
+        self.achievement_popup_manager = AchievementPopupManager()
 
         # Preload all sound effects
         self.sound_manager.preload_sounds()

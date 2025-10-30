@@ -193,6 +193,7 @@ class GameConfig:
     UI_HEIGHT = 10
     SIDEBAR_WIDTH = 25
     LOG_WIDTH = 25
+    INFO_PANEL_HEIGHT = 11
     PANEL_HEIGHT = 5
     DEFAULT_PLAYER_RAM = 8
     DEFAULT_PLAYER_CPU = 100
@@ -282,6 +283,12 @@ class GameConfig:
         """Calculate panel Y position (screen height minus panel height)."""
         cls._ensure_loaded()
         return cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT
+
+    @classmethod
+    def LOG_START_Y(cls):
+        """Calculate system log start Y position (after info panel header)."""
+        cls._ensure_loaded()
+        return cls.INFO_PANEL_HEIGHT
 
     @classmethod
     def VIEWPORT_WIDTH(cls, graphics_mode: str = "glyph"):

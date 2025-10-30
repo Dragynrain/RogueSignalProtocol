@@ -351,6 +351,29 @@ class UIRenderer:
         return fallback_color
 
     # ========================================================================
+    # INFO PANEL RENDERING
+    # ========================================================================
+
+    def render_info_panel(self, console: tcod.console.Console, game):
+        """
+        Render the info panel in the top-right corner.
+
+        Shows context-aware information based on mouse hover:
+        - Enemies: name, stats, state, movement queue
+        - Items: name, effects, costs
+        - Nodes: type, effect, activation
+        - Default: turn counter, level, streaks
+
+        Location: x=55-79, y=0-10 (11 lines, 25 chars wide)
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with current game state
+        """
+        from game_info_panel import InfoPanelRenderer
+        InfoPanelRenderer.render(console, game)
+
+    # ========================================================================
     # MESSAGE LOG RENDERING
     # ========================================================================
 
@@ -358,7 +381,8 @@ class UIRenderer:
         """
         Render the system message log on the right side.
 
-        Draws border, header, help text, and scrolling messages.
+        Draws border, header, and scrolling messages.
+        Now starts at y=11 (after info panel) instead of y=3.
         Hides messages when in look mode to avoid overlap with inspection panel.
         Stops at PANEL_Y to make room for bottom panel.
 
@@ -366,22 +390,19 @@ class UIRenderer:
             console: TCOD console to render to
             game: GameEngine with message_log and look_mode state
         """
-        # Draw log border (stop at panel start to give bottom panel priority)
-        for y in range(GameConfig.PANEL_Y()):
+        log_start_y = GameConfig.LOG_START_Y()
+
+        # Draw log border (from LOG_START_Y to panel start)
+        for y in range(log_start_y, GameConfig.PANEL_Y()):
             render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '║', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
 
-        # Help text in top-right corner (properly positioned in log panel)
-        help_text = "Press ? for help"
-        help_x = GameConfig.GAME_AREA_WIDTH() + 2  # Leave a space after border
-        render_char_safe(console, help_x, 0, help_text, fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
-
         # Log header
-        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 1, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
-        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, 2, "═" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, log_start_y, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
+        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, log_start_y + 1, "═" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
 
-        # Clear log area - start from line 3 to account for header, stop at panel start
+        # Clear log area - start from log_start_y + 2 to account for header, stop at panel start
         for x in range(GameConfig.GAME_AREA_WIDTH() + 1, GameConfig.SCREEN_WIDTH):
-            for y in range(3, GameConfig.PANEL_Y()):
+            for y in range(log_start_y + 2, GameConfig.PANEL_Y()):
                 render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
 
         # Process and display messages (skip if in look mode - inspection panel will use this area)
@@ -393,18 +414,20 @@ class UIRenderer:
         Render scrolling log messages with automatic wrapping.
 
         Shows the most recent messages that fit in the available vertical space.
+        Now starts at LOG_START_Y + 2 (after info panel and log header).
         Delegates text wrapping to _wrap_messages().
 
         Args:
             console: TCOD console to render to
             game: GameEngine with message_log
         """
+        log_start_y = GameConfig.LOG_START_Y()
         wrapped_lines = self._wrap_messages(game.message_log.messages)
-        log_height = GameConfig.PANEL_Y() - 3  # Stop at panel start (y=45), account for header at y=0-2
+        log_height = GameConfig.PANEL_Y() - (log_start_y + 2)  # Available space for messages
         visible_lines = wrapped_lines[-log_height:] if len(wrapped_lines) > log_height else wrapped_lines
 
         for i, (line, color) in enumerate(visible_lines):
-            y_pos = 3 + i  # Start from line 3 to avoid header
+            y_pos = log_start_y + 2 + i  # Start from LOG_START_Y + 2 to avoid header
             if y_pos < GameConfig.PANEL_Y():
                 render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
 
@@ -748,37 +771,8 @@ class UIRenderer:
         UIRenderer.last_inventory_scroll_offset = scroll_manager.get_scroll_offset()
         UIRenderer.last_inventory_equipped_count = len(game.player.inventory_manager.equipped_exploits)
 
-        # Render tooltip if hovering directly over an exploit
-        if game.mouse_tile_pos is not None:
-            mouse_x, mouse_y = game.mouse_tile_pos
-
-            # Check if mouse is actually over an item (not just if something is selected)
-            hovered_index = UIRenderer.get_inventory_item_at_click(mouse_y)
-
-            if hovered_index is not None:
-                # Get the item at the hovered position
-                equipped_exploits = game.player.inventory_manager.equipped_exploits
-                display_items = game.player.inventory_manager.get_display_items()
-
-                exploit_def = None
-
-                # Check if hovered item is an equipped exploit
-                if hovered_index < len(equipped_exploits):
-                    exploit_key = equipped_exploits[hovered_index]
-                    if exploit_key in GameData.EXPLOITS:
-                        exploit_def = GameData.EXPLOITS[exploit_key]
-
-                # Check if hovered item is an unequipped exploit
-                else:
-                    unequipped_index = hovered_index - len(equipped_exploits)
-                    if unequipped_index >= 0 and unequipped_index < len(display_items):
-                        hovered_item = display_items[unequipped_index]
-                        if hasattr(hovered_item, 'exploit_key') and hovered_item.exploit_key in GameData.EXPLOITS:
-                            exploit_def = GameData.EXPLOITS[hovered_item.exploit_key]
-
-                # Render tooltip if we found an exploit
-                if exploit_def is not None:
-                    self._render_exploit_tooltip(console, exploit_def)
+        # Note: Exploit details are now shown in the info panel instead of a tooltip
+        # The InfoProvider handles hover detection and formatting
 
     def _build_inventory_lines(self, game):
         """
@@ -1044,110 +1038,6 @@ class UIRenderer:
                 return slot
 
         return None
-
-    def _render_exploit_tooltip(self, console: tcod.console.Console, exploit_def):
-        """
-        Render a tooltip with exploit details in the bottom right of system log.
-
-        Args:
-            console: TCOD console to render to
-            exploit_def: ExploitDefinition with exploit data
-        """
-        # Use shared formatting method
-        base_lines = exploit_def.get_detail_lines()
-
-        # Customize for tooltip: combine RAM/Heat on one line for space efficiency
-        lines = []
-        skip_next = False
-        for i, line in enumerate(base_lines):
-            if skip_next:
-                skip_next = False
-                continue
-
-            # Combine RAM and Heat costs on one line
-            if line.startswith("RAM Cost:"):
-                # Check if next line is Heat Cost
-                if i + 1 < len(base_lines) and base_lines[i + 1].startswith("Heat Cost:"):
-                    ram_val = line.split(": ")[1]
-                    heat_val = base_lines[i + 1].split(": ")[1]
-                    lines.append(f"RAM: {ram_val}  Heat: {heat_val}")
-                    skip_next = True
-                else:
-                    lines.append(line.replace("RAM Cost:", "RAM:"))
-            elif line.startswith("Heat Cost:"):
-                lines.append(line.replace("Heat Cost:", "Heat:"))
-            # Word wrap the effect description to fit in log width
-            elif line.startswith("Effect:"):
-                max_line_width = GameConfig.LOG_WIDTH - 4  # Account for borders and padding
-                if len(line) > max_line_width:
-                    words = line.split()
-                    current_line = words[0]
-                    for word in words[1:]:
-                        if len(current_line) + 1 + len(word) <= max_line_width:
-                            current_line += " " + word
-                        else:
-                            lines.append(current_line)
-                            current_line = "  " + word  # Indent continuation
-                    lines.append(current_line)
-                else:
-                    lines.append(line)
-            else:
-                lines.append(line)
-
-        # Calculate tooltip dimensions
-        max_width = max(len(line) for line in lines)
-        tooltip_width = min(max_width + 4, GameConfig.LOG_WIDTH)  # Fit within log width
-        tooltip_height = len(lines) + 2  # +2 for borders
-
-        # Position in bottom right of system log
-        tooltip_x = GameConfig.GAME_AREA_WIDTH() + 1
-        tooltip_y = GameConfig.PANEL_Y() - tooltip_height - 1  # Just above the panel
-
-        # Draw tooltip background
-        for y in range(tooltip_height):
-            for x in range(tooltip_width):
-                bg_color = Colors.LOG_BG  # Match log background
-                render_char_safe(console, tooltip_x + x, tooltip_y + y, " ", bg=bg_color)
-
-        # Draw border
-        border_color = Colors.CYAN
-        # Top and bottom borders
-        for x in range(tooltip_width):
-            render_char_safe(console, tooltip_x + x, tooltip_y, "-", fg=border_color, bg=Colors.LOG_BG)
-            render_char_safe(console, tooltip_x + x, tooltip_y + tooltip_height - 1, "-", fg=border_color, bg=Colors.LOG_BG)
-        # Left and right borders
-        for y in range(tooltip_height):
-            render_char_safe(console, tooltip_x, tooltip_y + y, "|", fg=border_color, bg=Colors.LOG_BG)
-            render_char_safe(console, tooltip_x + tooltip_width - 1, tooltip_y + y, "|", fg=border_color, bg=Colors.LOG_BG)
-        # Corners
-        render_char_safe(console, tooltip_x, tooltip_y, "+", fg=border_color, bg=Colors.LOG_BG)
-        render_char_safe(console, tooltip_x + tooltip_width - 1, tooltip_y, "+", fg=border_color, bg=Colors.LOG_BG)
-        render_char_safe(console, tooltip_x, tooltip_y + tooltip_height - 1, "+", fg=border_color, bg=Colors.LOG_BG)
-        render_char_safe(console, tooltip_x + tooltip_width - 1, tooltip_y + tooltip_height - 1, "+", fg=border_color, bg=Colors.LOG_BG)
-
-        # Render text lines with colors
-        for i, line in enumerate(lines):
-            # Color based on line content (like system log messages)
-            if line.startswith("==="):
-                # Title in cyan
-                color = Colors.CYAN
-            elif line.startswith("Category:"):
-                # Category in yellow
-                color = Colors.YELLOW
-            elif line.startswith("RAM:") or line.startswith("Heat:") or line.startswith("Damage:") or line.startswith("Range:"):
-                # Stats in orange/light red
-                color = (255, 165, 0)  # Orange
-            elif line.startswith("Targeting:"):
-                # Targeting in purple
-                color = Colors.ELECTRIC_PURPLE
-            elif line.startswith("Effect:") or line.startswith("  "):
-                # Effect description in light green
-                color = (144, 238, 144)  # Light green
-            else:
-                # Default white
-                color = Colors.WHITE
-
-            render_char_safe(console, tooltip_x + 2, tooltip_y + 1 + i, line, fg=color, bg=Colors.LOG_BG)
 
     # === Story Fragment Screen ===
 

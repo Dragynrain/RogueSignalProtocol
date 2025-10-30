@@ -99,10 +99,10 @@
       "gauntlet": 0.10
     },
     "gateway_minimum_distances": {
-      "far_corner": 30,
-      "central_hub": 20,
-      "hidden_dead_end": 25,
-      "gauntlet": 25
+      "far_corner": 45,
+      "central_hub": 35,
+      "hidden_dead_end": 38,
+      "gauntlet": 40
     },
     "shadow_zone_chance": 0.10,
     "shadow_zone_room_cluster_min": 3,

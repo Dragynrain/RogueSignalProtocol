@@ -1,0 +1,296 @@
+"""
+Achievement popup system for RogueSignalProtocol.
+
+Displays small, unobtrusive achievement notifications using the same
+rendering principles as the dialogue system but with smaller dimensions
+and auto-dismiss functionality.
+"""
+
+import time
+import logging
+from dataclasses import dataclass
+from typing import Optional, List
+import tcod.console
+
+from game_coordinate_helpers import CoordinateHelpers
+from game_entities import Colors, ensure_color_tuple
+from game_ui import render_char_safe
+from game_achievements import AchievementManager, ALL_ACHIEVEMENTS, Achievement
+
+logger = logging.getLogger(__name__)
+
+
+# Popup configuration
+POPUP_WIDTH = 36  # Smaller than dialogues (70)
+POPUP_HEIGHT = 7  # Smaller than dialogues (14)
+POPUP_DURATION = 3.0  # Auto-dismiss after 3 seconds
+POPUP_FADE_DURATION = 0.3  # Optional fade effect duration
+
+
+@dataclass
+class AchievementPopup:
+    """Data structure for an achievement popup."""
+
+    achievement_id: str
+    achievement: Achievement
+    timestamp: float  # When the popup was created
+
+    def should_dismiss(self) -> bool:
+        """Check if this popup should be auto-dismissed."""
+        elapsed = time.time() - self.timestamp
+        return elapsed >= POPUP_DURATION
+
+    def get_alpha(self) -> int:
+        """
+        Get alpha value for fade-in/fade-out effect.
+
+        Returns:
+            Alpha value (0-255) for transparency
+        """
+        elapsed = time.time() - self.timestamp
+
+        # Fade in (first 0.3 seconds)
+        if elapsed < POPUP_FADE_DURATION:
+            progress = elapsed / POPUP_FADE_DURATION
+            return int(255 * progress)
+
+        # Fully visible
+        elif elapsed < POPUP_DURATION - POPUP_FADE_DURATION:
+            return 255
+
+        # Fade out (last 0.3 seconds)
+        else:
+            remaining = POPUP_DURATION - elapsed
+            progress = remaining / POPUP_FADE_DURATION
+            return max(0, int(255 * progress))
+
+
+class AchievementPopupManager:
+    """
+    Manages achievement popup display and auto-dismiss.
+
+    Works with AchievementManager to show popups for newly unlocked achievements.
+    Handles popup queue, rendering, and auto-dismiss timing.
+    """
+
+    def __init__(self):
+        """Initialize the popup manager."""
+        self.active_popup: Optional[AchievementPopup] = None
+        self.popup_queue: List[str] = []  # Achievement IDs waiting to be shown
+
+    def check_and_show_popups(self) -> None:
+        """
+        Check for new achievements from AchievementManager and queue them.
+
+        This is called each frame to check if new achievements are ready to display.
+        """
+        while AchievementManager.has_pending_popups():
+            achievement_id = AchievementManager.get_next_popup()
+            if achievement_id:
+                self.popup_queue.append(achievement_id)
+
+    def update(self) -> None:
+        """
+        Update popup state - handle auto-dismiss and show next queued popup.
+
+        This is called each frame from the main game loop.
+        """
+        # Check and show any new achievements
+        self.check_and_show_popups()
+
+        # Handle active popup
+        if self.active_popup:
+            if self.active_popup.should_dismiss():
+                logger.info(f"Auto-dismissing achievement popup: {self.active_popup.achievement_id}")
+                self.active_popup = None
+
+        # Show next queued popup if none active
+        if not self.active_popup and self.popup_queue:
+            achievement_id = self.popup_queue.pop(0)
+            self.show_popup(achievement_id)
+
+    def show_popup(self, achievement_id: str) -> None:
+        """
+        Show a popup for a specific achievement.
+
+        Args:
+            achievement_id: ID of the achievement to display
+        """
+        achievement = ALL_ACHIEVEMENTS.get(achievement_id)
+        if not achievement:
+            logger.error(f"Unknown achievement ID: {achievement_id}")
+            return
+
+        self.active_popup = AchievementPopup(
+            achievement_id=achievement_id,
+            achievement=achievement,
+            timestamp=time.time()
+        )
+        logger.info(f"Showing achievement popup: {achievement.name}")
+
+    def dismiss_active_popup(self) -> None:
+        """Manually dismiss the active popup (e.g., user pressed a key)."""
+        if self.active_popup:
+            logger.info(f"Manually dismissed achievement popup: {self.active_popup.achievement_id}")
+            self.active_popup = None
+
+    def has_active_popup(self) -> bool:
+        """Check if there's a popup currently being displayed."""
+        return self.active_popup is not None
+
+    def render(self, console: tcod.console.Console) -> None:
+        """
+        Render the active achievement popup.
+
+        Args:
+            console: TCOD console to render to
+        """
+        if not self.active_popup:
+            return
+
+        achievement = self.active_popup.achievement
+
+        # Center the popup
+        box_x, box_y = CoordinateHelpers.center_box(
+            POPUP_WIDTH, POPUP_HEIGHT, console.width, console.height
+        )
+
+        # Set popup area to opaque (critical for graphics mode)
+        CoordinateHelpers.set_alpha_region(
+            console, x=box_x, y=box_y, width=POPUP_WIDTH, height=POPUP_HEIGHT, alpha=255
+        )
+
+        # Color scheme - gold/yellow for achievements
+        border_color = ensure_color_tuple((255, 215, 0))  # Gold
+        bg_color = ensure_color_tuple((20, 20, 30))  # Dark blue-gray
+        title_color = ensure_color_tuple((255, 215, 0))  # Gold
+        achievement_name_color = ensure_color_tuple((255, 255, 255))  # White
+        description_color = ensure_color_tuple((200, 200, 200))  # Light gray
+
+        # Draw box background and border
+        from game_rendering_core import draw_bordered_box
+        draw_bordered_box(console, box_x, box_y, POPUP_WIDTH, POPUP_HEIGHT, border_color, bg_color)
+
+        # Render title with icon
+        title_text = f"{achievement.icon} ACHIEVEMENT UNLOCKED!"
+        title_x = box_x + (POPUP_WIDTH - len(title_text)) // 2
+        render_char_safe(console, title_x, box_y + 1, title_text,
+                        fg=title_color, bg=bg_color)
+
+        # Render achievement name (centered)
+        name_x = box_x + (POPUP_WIDTH - len(achievement.name)) // 2
+        render_char_safe(console, name_x, box_y + 3, achievement.name,
+                        fg=achievement_name_color, bg=bg_color)
+
+        # Render description (word-wrapped, centered)
+        description_lines = self._wrap_text(achievement.description, POPUP_WIDTH - 4)
+        for i, line in enumerate(description_lines):
+            if i >= 2:  # Max 2 lines for description
+                break
+            line_x = box_x + (POPUP_WIDTH - len(line)) // 2
+            render_char_safe(console, line_x, box_y + 4 + i, line,
+                           fg=description_color, bg=bg_color)
+
+        # Optionally show hint at bottom (very subtle)
+        hint_text = "(press any key)"
+        hint_x = box_x + (POPUP_WIDTH - len(hint_text)) // 2
+        hint_color = ensure_color_tuple((100, 100, 100))  # Very dim
+        render_char_safe(console, hint_x, box_y + POPUP_HEIGHT - 1, hint_text,
+                        fg=hint_color, bg=bg_color)
+
+    @staticmethod
+    def _wrap_text(text: str, max_width: int) -> List[str]:
+        """
+        Wrap text to fit within a maximum width.
+
+        Args:
+            text: Text to wrap
+            max_width: Maximum characters per line
+
+        Returns:
+            List of wrapped lines
+        """
+        words = text.split()
+        lines = []
+        current_line = []
+        current_length = 0
+
+        for word in words:
+            word_length = len(word)
+            # +1 for space before word (except first word)
+            space_needed = word_length + (1 if current_line else 0)
+
+            if current_length + space_needed <= max_width:
+                current_line.append(word)
+                current_length += space_needed
+            else:
+                # Start new line
+                if current_line:
+                    lines.append(' '.join(current_line))
+                current_line = [word]
+                current_length = word_length
+
+        # Add last line
+        if current_line:
+            lines.append(' '.join(current_line))
+
+        return lines
+
+
+# Global popup manager instance (initialized by GameEngine)
+_popup_manager: Optional[AchievementPopupManager] = None
+
+
+def initialize_popup_manager():
+    """Initialize the global popup manager."""
+    global _popup_manager
+    _popup_manager = AchievementPopupManager()
+    logger.info("Achievement popup manager initialized")
+
+
+def get_popup_manager() -> Optional[AchievementPopupManager]:
+    """Get the global popup manager instance."""
+    return _popup_manager
+
+
+def show_achievement_popup(achievement_id: str):
+    """
+    Convenience function to show an achievement popup.
+
+    Args:
+        achievement_id: ID of the achievement to display
+    """
+    if _popup_manager:
+        _popup_manager.show_popup(achievement_id)
+    else:
+        logger.warning("Popup manager not initialized")
+
+
+def update_popups():
+    """Convenience function to update popup state (called each frame)."""
+    if _popup_manager:
+        _popup_manager.update()
+
+
+def render_popups(console: tcod.console.Console):
+    """
+    Convenience function to render active popup.
+
+    Args:
+        console: TCOD console to render to
+    """
+    if _popup_manager:
+        _popup_manager.render(console)
+
+
+def dismiss_active_popup():
+    """Convenience function to manually dismiss the active popup."""
+    if _popup_manager:
+        _popup_manager.dismiss_active_popup()
+
+
+def has_active_popup() -> bool:
+    """Convenience function to check if there's an active popup."""
+    if _popup_manager:
+        return _popup_manager.has_active_popup()
+    return False
