@@ -19,8 +19,8 @@ def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: in
         glyph_width: Exact width of glyphs in pixels
         glyph_height: Exact height of glyphs in pixels
         chars: Optional string of characters to load (default: printable ASCII + common symbols)
-        h_scale: Horizontal scaling factor (default: 1.7 for CascadiaCode)
-        v_scale: Vertical scaling factor (default: 1.5 for square fonts, 1.0 for CascadiaCode)
+        h_scale: Horizontal scaling factor (default: 1.0 for square fonts like KreativeSquare)
+        v_scale: Vertical scaling factor (default: 1.0 for square fonts)
 
     Returns:
         Tileset with properly-sized glyphs
@@ -36,7 +36,7 @@ def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: in
             h_scale = h_scale if h_scale is not None else 1.0
             v_scale = v_scale if v_scale is not None else 1.0
         else:
-            # CascadiaCode and similar: 1.7× horizontal, 1.0× vertical
+            # Other proportional fonts: may need scaling adjustment
             h_scale = h_scale if h_scale is not None else 1.7
             v_scale = v_scale if v_scale is not None else 1.0
 
@@ -136,9 +136,9 @@ if __name__ == "__main__":
     print("FREETYPE FONT LOADER TEST")
     print("=" * 70)
 
-    # Load font with 96x150 glyphs using FreeType (accounts for 200% DPI scaling)
-    print("\nLoading CascadiaCode with 96x150 glyph size (FreeType, compensating for DPI)...")
-    tileset = load_truetype_font_custom("CascadiaCode-Regular.ttf", 96, 150)
+    # Load KreativeSquare font (same as main game)
+    print("\nLoading KreativeSquare with 64x64 glyph size...")
+    tileset = load_truetype_font_custom("KreativeSquare.ttf", 64, 64)
 
     print(f"Tileset created: {tileset.tile_width}x{tileset.tile_height}")
 
@@ -154,7 +154,7 @@ if __name__ == "__main__":
         columns=console_width,
         rows=console_height,
         tileset=tileset,
-        title="FreeType Test: CascadiaCode 96x150 (48x75 effective)",
+        title="FreeType Test: KreativeSquare 64x64",
         vsync=True,
         width=pixel_width,
         height=pixel_height
@@ -166,15 +166,15 @@ if __name__ == "__main__":
             print(f"Actual window: {actual[0]}x{actual[1]}px")
 
         print("\nLOOK AT THE WINDOW!")
-        print("With DPI compensation (96x150 -> 48x75 effective), glyphs should fill tiles!")
-        print("Test descenders (g, y, p, q, j) and vertical spacing!")
+        print("Glyphs should fill tiles completely with no gaps.")
+        print("Test box-drawing characters (║═╔╗) and descenders (g, y, p, q, j).")
         print("Press any key to exit...")
 
         while True:
             console.clear()
             console.print(0, 0, "0123456789", fg=(255, 255, 255))
             console.print(0, 1, "Typography", fg=(255, 255, 255))
-            console.print(0, 2, "WALLS ││┌┐", fg=(0, 255, 255))
+            console.print(0, 2, "WALLS ║═╔╗", fg=(0, 255, 255))
             console.print(0, 3, "gyp qj fox", fg=(255, 255, 0))
             console.print(0, 4, "AAAAAAAAAA", fg=(255, 255, 255))
             console.print(0, 5, "0123456789", fg=(255, 255, 255))

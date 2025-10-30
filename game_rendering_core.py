@@ -17,6 +17,7 @@ from game_config import GameConfig
 from game_entities import Position, Colors, ensure_color_tuple
 from game_ui import render_char_safe
 from game_coordinate_helpers import CoordinateHelpers
+from game_unicode_chars import GameGlyphs
 
 # Import specialized renderers
 from game_rendering_ui import UIRenderer
@@ -50,9 +51,6 @@ def draw_bordered_box(console: tcod.console.Console, start_x: int, start_y: int,
     console.draw_rect(start_x, start_y, width, height, ord(' '), fg=Colors.WHITE, bg=bg_color)
 
     # Draw double-line border manually (using GameGlyphs constants)
-    from game_unicode_chars import GameGlyphs
-    from game_ui import render_char_safe
-
     # Top border
     render_char_safe(console, start_x, start_y, GameGlyphs.WALL_TOP_LEFT, fg=border_color, bg=bg_color)
     for x in range(start_x + 1, start_x + width - 1):
