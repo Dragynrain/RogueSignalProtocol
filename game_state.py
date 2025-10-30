@@ -157,7 +157,11 @@ class GameStateManager:
         Removes expired distractions from the map.
         """
         self.turn += 1
-        
+
+        # Track metrics
+        from game_metrics import track
+        track("turns_taken")
+
         # Update threat scan effect
         if self.threat_scan_turns > 0:
             self.threat_scan_turns -= 1

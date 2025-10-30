@@ -24,6 +24,9 @@ ENV/
 rogue_signal_save.json
 user_settings.json
 
+# Metrics tracking data
+metrics/
+
 # IDE and editor files
 .vscode/
 .idea/

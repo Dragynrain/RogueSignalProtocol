@@ -127,7 +127,11 @@ class CodeHack(InventoryItem):
             self.discovered = True
             self.description = description
             game.message_log.add_message(f"Used {self.name} ({description})")
-        
+
+        # Track metrics
+        from game_metrics import track
+        track("code_hacks_used", category=self.name)
+
         return self._apply_effect(effect_key, player, game)
     
     def _apply_effect(self, effect_key: str, player, game) -> bool:
@@ -355,6 +359,11 @@ class InventoryManager:
         # Equip the exploit
         self.equipped_exploits.append(exploit_item.exploit_key)
         self.remove_item(exploit_item)
+
+        # Track metrics
+        from game_metrics import track
+        track("exploits_equipped", category=exploit_item.exploit_key)
+
         return True
     
     def unequip_exploit(self, exploit_key: str) -> bool:
@@ -364,12 +373,16 @@ class InventoryManager:
         
         # Remove from equipped list
         self.equipped_exploits.remove(exploit_key)
-        
+
         # Add back to inventory
         exploit_def = GameData.EXPLOITS[exploit_key]
         exploit_item = ExploitItem(exploit_key, exploit_def)
         self.add_item(exploit_item)
-        
+
+        # Track metrics
+        from game_metrics import track
+        track("exploits_unequipped", category=exploit_key)
+
         return True
     
     def get_ram_usage(self) -> int:

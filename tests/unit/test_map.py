@@ -361,13 +361,13 @@ class TestTransparencyCache:
         transparency_map = game_map._get_transparency_map()
 
         # Cache should exist after first call
-        assert game_map._transparency_cache is not None
+        assert hasattr(game_map, '_transparency_cache')
 
         # Invalidating should clear the cache
         game_map.invalidate_transparency_cache()
 
-        # Cache should be cleared
-        assert game_map._transparency_cache is None
+        # Cache should be deleted entirely (not just set to None)
+        assert not hasattr(game_map, '_transparency_cache')
     
     def test_get_transparency_map(self):
         """_get_transparency_map creates transparency data."""

@@ -474,6 +474,11 @@ class Player:
         old_cpu = self.cpu
         self.cpu -= actual_damage
         logging.debug(f"Player: took {actual_damage} damage, CPU {old_cpu} → {self.cpu}/{self.max_cpu}")
+
+        # Track metrics
+        from game_metrics import track
+        track("damage_taken", amount=actual_damage)
+
         return actual_damage
 
 
