@@ -354,8 +354,8 @@ class InputHandler:
                     self.game.show_achievements = False
                     return True
 
-        # Fallback: ESC or A closes achievements
-        if UniversalInputHandler.is_escape_key(event) or event.sym == tcod.event.KeySym.A:
+        # Fallback: ESC or V closes achievements
+        if UniversalInputHandler.is_escape_key(event) or event.sym == tcod.event.KeySym.V:
             self.game.show_achievements = False
             return True
 
@@ -430,7 +430,7 @@ class InputHandler:
             self.game.show_lore_viewer = True
         elif event.sym == tcod.event.KeySym.SLASH and (event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)):
             self.game.show_help = True
-        elif event.sym == tcod.event.KeySym.A:
+        elif event.sym == tcod.event.KeySym.V:
             self.game.show_achievements = True
 
         # Exploit usage (1-5 keys) - check as loop

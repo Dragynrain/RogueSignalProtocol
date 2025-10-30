@@ -616,4 +616,4 @@ def save_checkpoint() -> Dict[str, Any]:
     if _current_session is None:
         return {}
 
-    return {'session_metrics': _current_session.to_dict()}
+    return _current_session.to_dict()

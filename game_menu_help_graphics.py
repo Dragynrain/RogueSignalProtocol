@@ -232,7 +232,7 @@ class GraphicalHelpMenu:
                 (2, 8, "I: Inventory", Colors.WHITE),
                 (2, 9, "L: Look mode", Colors.WHITE),
                 (2, 10, "F: Story fragments", Colors.WHITE),
-                (2, 11, "A: Achievements", Colors.WHITE),
+                (2, 11, "V: Achievements", Colors.WHITE),
                 (2, 12, "?: Help  ESC: Menu", Colors.WHITE),
 
                 (2, 14, "OBJECTIVE:", Colors.CYAN),
