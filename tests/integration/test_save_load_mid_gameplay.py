@@ -37,8 +37,14 @@ class TestSaveLoadMidGameplay:
         # Create game with specific player state
         with patch('game_audio.SoundManager'):
             game = basic_game_engine
-            game.player.x = 25
-            game.player.y = 30
+
+            # Set dungeon seed and regenerate map for deterministic layout
+            game.game_state.dungeon_seed = 42
+            game.game_session.generate_procedural_level()
+
+            # Use a position that's guaranteed to be walkable (from fixture)
+            game.player.x = 15
+            game.player.y = 15
             game.player.cpu = 75
             game.player.max_cpu = 100
             game.player.heat = 40
@@ -54,8 +60,8 @@ class TestSaveLoadMidGameplay:
             loaded_game = GameEngine(load_save=True)
 
             # Verify player state preserved
-            assert loaded_game.player.x == 25, "Player X position should be preserved"
-            assert loaded_game.player.y == 30, "Player Y position should be preserved"
+            assert loaded_game.player.x == 15, "Player X position should be preserved"
+            assert loaded_game.player.y == 15, "Player Y position should be preserved"
             assert loaded_game.player.cpu == 75, "Player CPU should be preserved"
             assert loaded_game.player.max_cpu == 100, "Player max CPU should be preserved"
             assert loaded_game.player.heat == 40, "Player heat should be preserved"
@@ -67,6 +73,10 @@ class TestSaveLoadMidGameplay:
         """Test that enemy positions, states, and AI data are preserved."""
         with patch('game_audio.SoundManager'):
             game = basic_game_engine
+
+            # Set dungeon seed and regenerate map for deterministic layout
+            game.game_state.dungeon_seed = 42
+            game.game_session.generate_procedural_level()
 
             # Create enemies with various states
             scanner = enemy_builder("scanner", pos=(10, 10))
@@ -233,14 +243,14 @@ class TestSaveLoadMidGameplay:
         with patch('game_audio.SoundManager'):
             game = basic_game_engine
 
-            # Set code hack effects
+            # Set code hack effects (2-element tuples: effect, description)
             game.code_hack_effects = {
-                "speed_boost": ("Speed Boost", "Increases movement speed", {"duration": 5}),
-                "restore_cpu": ("Restore CPU", "Restores CPU", {"amount": 30})
+                "crimson": ("speed_boost", "Speed boost: 2 moves per turn (3 enemy turns)"),
+                "azure": ("restore_cpu", "Restore 15-25 CPU")
             }
             game.discovered_code_effects = {
-                "Speed Boost": "speed_boost",
-                "Restore CPU": "restore_cpu"
+                "crimson": "speed_boost",
+                "azure": "restore_cpu"
             }
 
             # Save the game
@@ -252,17 +262,21 @@ class TestSaveLoadMidGameplay:
 
             # Verify code hack effects preserved
             assert len(loaded_game.code_hack_effects) == 2, "Code hack effects should be preserved"
-            assert "speed_boost" in loaded_game.code_hack_effects
-            assert "restore_cpu" in loaded_game.code_hack_effects
+            assert "crimson" in loaded_game.code_hack_effects
+            assert "azure" in loaded_game.code_hack_effects
 
             assert len(loaded_game.discovered_code_effects) == 2, "Discovered effects should be preserved"
-            assert "Speed Boost" in loaded_game.discovered_code_effects
-            assert "Restore CPU" in loaded_game.discovered_code_effects
+            assert "crimson" in loaded_game.discovered_code_effects
+            assert "azure" in loaded_game.discovered_code_effects
 
     def test_save_and_load_enemy_counter_preservation(self, basic_game_engine):
         """Test that Enemy._next_id counter is preserved to avoid ID conflicts."""
         with patch('game_audio.SoundManager'):
             game = basic_game_engine
+
+            # Set dungeon seed and regenerate map for deterministic layout
+            game.game_state.dungeon_seed = 42
+            game.game_session.generate_procedural_level()
 
             # Create several enemies to increment counter
             for i in range(5):

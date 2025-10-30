@@ -4,6 +4,14 @@
 
 ---
 
+## 0. Critical Rules (READ FIRST)
+
+1. **🚨 NO AUTO-COMMITS 🚨**: Always ask before committing. Period. Exception: ONLY when user explicitly says "commit this" or "make a commit"
+2. **Check existing keybindings**: Before assigning hotkeys, grep for existing uses first
+3. **Fix what you're asked to fix**: Don't dismiss test failures as "unrelated" - if asked to fix all tests, fix all tests
+
+---
+
 ## 1. Bash & Environment
 - Quote paths: `cd "path with spaces"`.
 - Use bash cmds (`rm`, `ls`, `mkdir`), not Windows ones.
@@ -189,6 +197,14 @@ sprite_height = tile_manager.tile_height
 ---
 
 ## 10. Git & Attribution
+
+**🚨 CRITICAL: NEVER AUTO-COMMIT 🚨**
+- ALWAYS ask before running git commit
+- NEVER commit without explicit user approval
+- Exception: ONLY when user explicitly says "commit this" or "make a commit"
+- If unsure, ASK
+
+**Attribution:**
 - No `Co-Authored-By` or AI/Claude tags
 - Keep commit messages clean and technical
 
