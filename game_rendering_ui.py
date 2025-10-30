@@ -1194,3 +1194,22 @@ class UIRenderer:
         )
 
         ScreenRenderingUtils.render_screen_footer(console, "Any key: Back to list, ESC: Close")
+
+    # === Achievements Screen ===
+
+    def render_achievements_screen(self, console: tcod.console.Console, game):
+        """
+        Render the achievements screen.
+
+        Delegates to AchievementsMenu for rendering and creates it if needed.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine (not actively used but kept for consistency)
+        """
+        # Create achievements menu if not already created
+        if not hasattr(self, '_achievements_menu'):
+            from game_menu_achievements import AchievementsMenu
+            self._achievements_menu = AchievementsMenu()
+
+        self._achievements_menu.render(console)

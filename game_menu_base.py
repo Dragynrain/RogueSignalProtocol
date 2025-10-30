@@ -278,6 +278,8 @@ class BaseMenu:
             return "settings"
         elif "Help" in option_text:
             return "help"
+        elif "Achievements" in option_text:
+            return "achievements"
         elif "Data Fragments" in option_text:
             return "lore"
         elif "Graphics Preview" in option_text:

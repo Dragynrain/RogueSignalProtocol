@@ -37,7 +37,7 @@ class MainMenu(BaseMenu):
     """
     Main menu for game launch and mid-game access.
 
-    Provides options: Continue, New Game, Settings, Help, Data Fragments, Graphics Preview, Exit.
+    Provides options: Continue, New Game, Settings, Help, Achievements, Data Fragments, Graphics Preview, Exit.
     Dynamically adjusts options based on save file existence and mid-game context.
     Shows confirmation dialog for destructive actions (New Game when save exists).
 
@@ -49,7 +49,7 @@ class MainMenu(BaseMenu):
 
     def __init__(self, background=None):
         super().__init__(background)
-        self.options = ["Continue Game", "New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", "Exit"]
+        self.options = ["Continue Game", "New Game", "Settings", "Help", "Achievements", "Data Fragments", "Graphics Preview", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Achievements", "Data Fragments", "Graphics Preview", "Exit"]
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
@@ -79,10 +79,10 @@ class MainMenu(BaseMenu):
         exit_text = "Save and Exit" if can_save else "Exit"
 
         if show_continue and SaveGameManager.save_exists():
-            self.options = ["Continue Game", "New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", exit_text]
+            self.options = ["Continue Game", "New Game", "Settings", "Help", "Achievements", "Data Fragments", "Graphics Preview", exit_text]
             self.mid_game_mode = False
         else:
-            self.options = ["New Game", "Settings", "Help", "Data Fragments", "Graphics Preview", exit_text]
+            self.options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments", "Graphics Preview", exit_text]
             self.mid_game_mode = not show_continue  # True when accessed from mid-game
         # Reset selection to prevent index out of bounds
         self.selected_option = 0
@@ -391,6 +391,8 @@ class MainMenu(BaseMenu):
                 return "settings"
             elif option == "Help":
                 return "help"
+            elif option == "Achievements":
+                return "achievements"
             elif option == "Data Fragments":
                 return "lore"
             elif option == "Graphics Preview":

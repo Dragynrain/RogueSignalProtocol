@@ -40,6 +40,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         self.game.show_lore_viewer = False
         self.game.show_help = False
         self.game.show_inventory = False
+        self.game.show_achievements = False
         self.game.look_mode = False
         self.game.targeting_mode = False
         self.game.auto_save = Mock()
@@ -428,6 +429,7 @@ class TestAutoSaveBehavior(unittest.TestCase):
         game.dialogue_state.is_active = Mock(return_value=False)
         game.show_inventory = False
         game.show_help = False
+        game.show_achievements = False
         game.look_mode = False
         game.targeting_mode = False
         game.show_story_fragment = None
@@ -460,6 +462,7 @@ class TestAutoSaveBehavior(unittest.TestCase):
         game.show_story_fragment = None
         game.show_lore_viewer = False
         game.show_help = False
+        game.show_achievements = False
         game.look_mode = False
         game.targeting_mode = False
 

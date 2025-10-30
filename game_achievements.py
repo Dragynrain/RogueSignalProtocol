@@ -287,6 +287,57 @@ class AchievementChecker:
     """Checks session/lifetime metrics against achievement conditions."""
 
     @staticmethod
+    def check_immediate_achievements(session: SessionMetrics, already_unlocked: Set[str]) -> List[str]:
+        """
+        Check achievements that can be unlocked immediately during gameplay.
+
+        These are achievements that don't require session completion:
+        - Combat achievements (kills, damage)
+        - Stealth streaks
+        - Resource collection milestones
+
+        Args:
+            session: Current SessionMetrics (in progress)
+            already_unlocked: Set of achievement IDs already unlocked
+
+        Returns:
+            List of newly unlocked achievement IDs
+        """
+        newly_unlocked = []
+
+        # Combat achievements (immediate)
+        total_kills = sum(session.enemies_killed.values())
+
+        if "first_blood" not in already_unlocked and total_kills >= 1:
+            newly_unlocked.append("first_blood")
+
+        if "massacre" not in already_unlocked and total_kills >= 20:
+            newly_unlocked.append("massacre")
+
+        if "overkill" not in already_unlocked and session.max_single_hit_damage >= 50:
+            newly_unlocked.append("overkill")
+
+        # Check AOE multi-kills
+        max_aoe = max(session.aoe_multi_kills.keys(), default=0)
+        if "crowd_control" not in already_unlocked and max_aoe >= 5:
+            newly_unlocked.append("crowd_control")
+
+        # Efficient killer: average 2+ kills per turn for 10+ turns
+        if "efficient_killer" not in already_unlocked and session.turns_with_kills >= 10:
+            avg_kills_per_turn = total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
+            if avg_kills_per_turn >= 2.0:
+                newly_unlocked.append("efficient_killer")
+
+        # Stealth achievements (immediate)
+        if "silent_assassin" not in already_unlocked and session.max_stealth_streak >= 10:
+            newly_unlocked.append("silent_assassin")
+
+        if "shadow_master" not in already_unlocked and session.ambushes_from_shadows >= 5:
+            newly_unlocked.append("shadow_master")
+
+        return newly_unlocked
+
+    @staticmethod
     def check_session_achievements(session: SessionMetrics, already_unlocked: Set[str]) -> List[str]:
         """
         Check which achievements should be unlocked based on session metrics.
@@ -363,9 +414,14 @@ class AchievementChecker:
                 newly_unlocked.append("no_trace")
 
         # Minimalist: win with 3 or fewer unique exploits equipped
+        # If player never changed equipment (exploits_equipped is empty), check if they used <= 3 exploits total
+        # If player did change equipment, check if they equipped <= 3 unique exploits
         if "minimalist" not in already_unlocked and session.victory:
             unique_equipped = len(session.exploits_equipped)
-            if unique_equipped <= 3 and unique_equipped > 0:
+            unique_used = len(session.exploits_used)
+
+            # Award if player used minimal exploits (never changed equipment or equipped few)
+            if (unique_equipped == 0 and unique_used <= 3) or (unique_equipped > 0 and unique_equipped <= 3):
                 newly_unlocked.append("minimalist")
 
         # Pacifist: complete a level with 5 or fewer kills
@@ -478,6 +534,46 @@ class AchievementManager:
             cls._unlocked_achievements.add(achievement_id)
             cls._pending_popups.append(achievement_id)
             logger.info(f"Achievement unlocked: {achievement_id}")
+
+        return newly_unlocked
+
+    @classmethod
+    def check_immediate_achievements_and_notify(cls, session: SessionMetrics, game_engine) -> List[str]:
+        """
+        Check for immediately unlockable achievements during gameplay and show popups.
+
+        This is called during gameplay (e.g., after killing an enemy) to provide
+        instant feedback for achievements like First Blood, Massacre, Overkill, etc.
+
+        Args:
+            session: Current SessionMetrics (in progress)
+            game_engine: GameEngine instance to access achievement_popup_manager
+
+        Returns:
+            List of newly unlocked achievement IDs
+        """
+        newly_unlocked = []
+
+        # Check immediate achievements
+        immediate_unlocks = AchievementChecker.check_immediate_achievements(
+            session, cls._unlocked_achievements
+        )
+
+        # Add to unlocked set and queue popups
+        for achievement_id in immediate_unlocks:
+            cls._unlocked_achievements.add(achievement_id)
+            newly_unlocked.append(achievement_id)
+
+            # Show popup immediately if popup manager exists
+            if hasattr(game_engine, 'achievement_popup_manager'):
+                game_engine.achievement_popup_manager.show_popup(achievement_id)
+
+            logger.info(f"Achievement unlocked (immediate): {achievement_id}")
+
+        # Save progress immediately
+        if newly_unlocked:
+            from game_metrics import save_unlocked_achievements
+            save_unlocked_achievements(list(cls._unlocked_achievements))
 
         return newly_unlocked
 

@@ -435,6 +435,12 @@ class GameSession:
                 self.game_engine.message_log.add_message(f"{enemy.type_data.name} investigating")
                 self.game_engine.sound_manager.play_sound("enemy_alert")
 
+                # Track detection for Ghost Protocol achievement
+                from game_metrics import get_current_session
+                session = get_current_session()
+                if session:
+                    session.ever_detected = True
+
             elif enemy.state == EnemyState.ALERT:
                 enemy.last_seen_player = player_pos
                 enemy.alert_timer -= 1  # Decrement timer each turn they see player

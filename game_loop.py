@@ -28,7 +28,7 @@ from game_ui import render_char_safe, WindowManager
 from game_audio import SoundManager
 from game_menus import MenuBackground, MainMenu, SettingsMenu
 from game_menu_help_lore import create_help_menu, LoreMenu
-
+from game_menu_achievements import AchievementsMenu
 from game_menu_graphics_preview import GraphicsPreviewMenu
 from game_engine import GameEngine
 from game_rendering_core import GameRenderer
@@ -131,7 +131,8 @@ def initialize_game_systems(settings: GameSettings, context, menu_background=Non
         'main_menu': MainMenu(background=menu_background),  # Pass background here
         'settings_menu': SettingsMenu(settings, menu_background, sound_manager),  # Pass sound manager for live volume updates
         'help_menu': create_help_menu(settings, context, tile_manager),  # Use factory function
-        'lore_menu': LoreMenu()
+        'lore_menu': LoreMenu(),
+        'achievements_menu': AchievementsMenu()
     }
 
     # Only add graphics preview menu if we have a tile manager
@@ -266,6 +267,8 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     current_menu = menus['help_menu']
                 elif action == "lore":
                     current_menu = menus['lore_menu']
+                elif action == "achievements":
+                    current_menu = menus['achievements_menu']
                 elif action == "graphics_preview":
                     if 'graphics_preview_menu' in menus:
                         # Enter graphics preview mode
@@ -369,6 +372,8 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     current_menu = menus['help_menu']
                 elif action == "lore":
                     current_menu = menus['lore_menu']
+                elif action == "achievements":
+                    current_menu = menus['achievements_menu']
                 elif action == "graphics_preview":
                     if 'graphics_preview_menu' in menus:
                         # Enter graphics preview mode
@@ -490,6 +495,7 @@ def handle_game_input_events(event, game, input_handler):
             elif (game.show_story_fragment is not None or
                 game.show_lore_viewer or
                 game.show_help or
+                game.show_achievements or
                 game.show_inventory or
                 game.look_mode or
                 game.targeting_mode):
