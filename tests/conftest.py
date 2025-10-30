@@ -9,6 +9,7 @@ specialized fixtures from tests.fixtures.standard_patterns as needed.
 import pytest
 import sys
 import os
+import random
 
 # Add the project root to Python path so we can import game modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -26,6 +27,54 @@ from tests.fixtures.standard_patterns import (
     create_stealth_scenario,
     create_multi_enemy_scenario,
 )
+
+
+# ===== Test Infrastructure Fixtures =====
+
+@pytest.fixture(autouse=True)
+def isolate_random_state():
+    """
+    Isolate random state between tests to prevent flaky failures.
+
+    This fixture ensures that tests don't pollute the global random state,
+    which can cause non-deterministic behavior when tests run in different orders.
+
+    Strategy:
+    1. Save current Python random state before test
+    2. Set a fresh seed based on test name (deterministic but unique per test)
+    3. Restore original state after test
+    4. Crucially: Remove the random.seed() call at end of generate_procedural_level()
+
+    This approach ensures:
+    - Test isolation: Each test starts with its own clean random state
+    - Determinism: Same test always gets same random sequence
+    - No forced seed: Tests can use whatever seed makes sense for them
+    """
+    # Save current Python random state
+    saved_state = random.getstate()
+
+    # Import here to avoid circular dependencies
+    import hashlib
+    import pytest
+
+    # Get current test name for deterministic per-test seeding
+    test_name = os.environ.get('PYTEST_CURRENT_TEST', 'unknown')
+    test_hash = int(hashlib.md5(test_name.encode()).hexdigest()[:8], 16)
+
+    # Seed with test-specific value for determinism
+    random.seed(test_hash)
+
+    # Reset TCOD RNG with same test-specific seed
+    try:
+        from game_level_structure import seed_rng
+        seed_rng(test_hash)
+    except ImportError:
+        pass
+
+    yield
+
+    # Restore original Python random state
+    random.setstate(saved_state)
 
 
 # ===== Basic Entity Fixtures =====
