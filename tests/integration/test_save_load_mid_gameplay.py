@@ -331,6 +331,9 @@ class TestSaveLoadMidGameplay:
         with patch('game_audio.SoundManager'):
             game = basic_game_engine
 
+            # Set dungeon seed for deterministic map generation
+            game.game_state.dungeon_seed = 42
+
             # Complex player state
             game.player.x = 35
             game.player.y = 28

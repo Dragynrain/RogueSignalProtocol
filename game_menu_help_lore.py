@@ -303,7 +303,7 @@ class HelpMenu:
             ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
             ("  L: Look mode (examine map and entities)", Colors.WHITE),
             ("  F: View discovered story fragments", Colors.WHITE),
-            ("  A: View achievements", Colors.WHITE),
+            ("  V: View achievements", Colors.WHITE),
             ("  ESC: Pause menu / Close screens", Colors.WHITE),
             ("", Colors.WHITE),
 
