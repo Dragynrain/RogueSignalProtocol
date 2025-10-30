@@ -42,9 +42,12 @@ class TestSaveLoadMidGameplay:
             game.game_state.dungeon_seed = 42
             game.game_session.generate_procedural_level()
 
-            # Use a position that's guaranteed to be walkable (from fixture)
-            game.player.x = 15
-            game.player.y = 15
+            # Use the player's actual spawn position (guaranteed walkable by level generator)
+            # Store it for verification after load
+            saved_x = game.player.x
+            saved_y = game.player.y
+
+            # Set player stats
             game.player.cpu = 75
             game.player.max_cpu = 100
             game.player.heat = 40
@@ -60,8 +63,8 @@ class TestSaveLoadMidGameplay:
             loaded_game = GameEngine(load_save=True)
 
             # Verify player state preserved
-            assert loaded_game.player.x == 15, "Player X position should be preserved"
-            assert loaded_game.player.y == 15, "Player Y position should be preserved"
+            assert loaded_game.player.x == saved_x, "Player X position should be preserved"
+            assert loaded_game.player.y == saved_y, "Player Y position should be preserved"
             assert loaded_game.player.cpu == 75, "Player CPU should be preserved"
             assert loaded_game.player.max_cpu == 100, "Player max CPU should be preserved"
             assert loaded_game.player.heat == 40, "Player heat should be preserved"
@@ -242,6 +245,10 @@ class TestSaveLoadMidGameplay:
         """Test that discovered code hack effects are preserved."""
         with patch('game_audio.SoundManager'):
             game = basic_game_engine
+
+            # Set dungeon seed and regenerate map for deterministic layout
+            game.game_state.dungeon_seed = 42
+            game.game_session.generate_procedural_level()
 
             # Set code hack effects (2-element tuples: effect, description)
             game.code_hack_effects = {

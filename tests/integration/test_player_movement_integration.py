@@ -15,7 +15,34 @@ class TestPlayerMovementIntegration:
     def test_player_basic_movement_mechanics(self, basic_game_engine):
         """Test that player can move to valid positions and is blocked by walls."""
         engine = basic_game_engine
-        original_position = engine.player.position
+
+        # Find a position with at least one valid adjacent move
+        # (The test-specific seed might spawn player in a tight corner)
+        test_positions = [
+            engine.player.position,  # Try current position first
+            Position(10, 10),  # Common open area
+            Position(20, 20),
+            Position(15, 15),
+        ]
+
+        original_position = None
+        for test_pos in test_positions:
+            if engine.game_map.is_valid_position(test_pos):
+                # Check if this position has at least one valid adjacent move
+                has_valid_move = False
+                for dx, dy in [(0, -1), (1, 0), (0, 1), (-1, 0)]:
+                    adj_pos = Position(test_pos.x + dx, test_pos.y + dy)
+                    if engine.game_map.is_valid_position(adj_pos):
+                        has_valid_move = True
+                        break
+                if has_valid_move:
+                    original_position = test_pos
+                    engine.player.position = test_pos
+                    break
+
+        # If we can't find any valid position, skip test (extremely rare with proper map generation)
+        if original_position is None:
+            pytest.skip("No valid test position with adjacent moves found in generated map")
 
         # Test movement in all four directions
         directions = [

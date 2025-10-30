@@ -680,55 +680,50 @@ class GameSession:
         # Get network configuration for current level from game state manager
         config = self.game_engine.game_state.get_current_network_config()
 
-        try:
-            # Play appropriate background music for the level (loops infinitely)
-            if self.game_engine.level == 1:
-                self.game_engine.sound_manager.play_music("level1_stealth.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
-            elif self.game_engine.level == 2:
-                self.game_engine.sound_manager.play_music("level2_infiltration.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
-            elif self.game_engine.level == 3:
-                self.game_engine.sound_manager.play_music("level3_core.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+        # Play appropriate background music for the level (loops infinitely)
+        if self.game_engine.level == 1:
+            self.game_engine.sound_manager.play_music("level1_stealth.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+        elif self.game_engine.level == 2:
+            self.game_engine.sound_manager.play_music("level2_infiltration.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
+        elif self.game_engine.level == 3:
+            self.game_engine.sound_manager.play_music("level3_core.ogg", loops=-1, fade_in_ms=GameConfig.DEFAULT_FADE_TIME)
 
-            # Use the new LevelGenerator system
-            self.game_engine.level_generator.generate_level(self.game_engine.level, self.game_engine.game_state.dungeon_seed)
+        # Use the new LevelGenerator system
+        self.game_engine.level_generator.generate_level(self.game_engine.level, self.game_engine.game_state.dungeon_seed)
 
-            # Generate additional game elements not handled by LevelGenerator
-            self._place_code_hacks()
-            self._place_exploit_pickups()
-            self._place_story_fragment()  # Add story fragment placement
-            self._place_permanent_upgrades()
-            self._place_enemies(config["enemies"])
+        # Generate additional game elements not handled by LevelGenerator
+        self._place_code_hacks()
+        self._place_exploit_pickups()
+        self._place_story_fragment()  # Add story fragment placement
+        self._place_permanent_upgrades()
+        self._place_enemies(config["enemies"])
 
-            # Reset player position to spawn location and adjust stats for new level
-            # Find a valid spawn position (open floor tile)
-            spawn_pos = self._find_valid_spawn_position()
-            self.game_engine.player.x = spawn_pos.x
-            self.game_engine.player.y = spawn_pos.y
+        # Reset player position to spawn location and adjust stats for new level
+        # Find a valid spawn position (open floor tile)
+        spawn_pos = self._find_valid_spawn_position()
+        self.game_engine.player.x = spawn_pos.x
+        self.game_engine.player.y = spawn_pos.y
 
-            # Stat changes for level transition:
-            # - CPU: Preserved (carries over)
-            # - Heat: Preserved (carries over)
-            # - Trace Level: Reset to 0 (doesn't carry over)
-            # - Admin spawned state: Reset (new network, fresh start)
-            self.game_engine.player.trace_level = 0
-            self.game_engine.admin_spawned = False
+        # Stat changes for level transition:
+        # - CPU: Preserved (carries over)
+        # - Heat: Preserved (carries over)
+        # - Trace Level: Reset to 0 (doesn't carry over)
+        # - Admin spawned state: Reset (new network, fresh start)
+        self.game_engine.player.trace_level = 0
+        self.game_engine.admin_spawned = False
 
-            # Sync code hack discovered status with global discovered effects
-            self._sync_code_discovered_status()
+        # Sync code hack discovered status with global discovered effects
+        self._sync_code_discovered_status()
 
-            # Reset narrative manager per-level flags
-            self.game_engine.narrative_manager.reset_level_flags()
+        # Reset narrative manager per-level flags
+        self.game_engine.narrative_manager.reset_level_flags()
 
-            self.game_engine.message_log.add_message(f"{config['name']} loaded")
+        self.game_engine.message_log.add_message(f"{config['name']} loaded")
 
-            # Add atmospheric level start message
-            env_message = self.game_engine.narrative_manager.trigger_level_start()
-            if env_message:
-                self.game_engine.message_log.add_message(env_message)
-
-        finally:
-            # Restore random seed
-            random.seed()
+        # Add atmospheric level start message
+        env_message = self.game_engine.narrative_manager.trigger_level_start()
+        if env_message:
+            self.game_engine.message_log.add_message(env_message)
 
     def progress_to_next_level(self):
         """
