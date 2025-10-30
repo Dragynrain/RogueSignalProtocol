@@ -524,7 +524,14 @@ def main():
     """Main game loop with main menu and save/load functionality."""
     # Initialize JSON configuration system
     GameConfig.load_from_json()
-    
+
+    # Initialize achievement system with unlocked achievements from progress file
+    from game_achievements import AchievementManager
+    from game_metrics import load_unlocked_achievements
+    unlocked_achievements = load_unlocked_achievements()
+    AchievementManager.load_unlocked_achievements(unlocked_achievements)
+    logging.info(f"Loaded {len(unlocked_achievements)} unlocked achievements")
+
     try:
         with initialize_tcod_context() as context:
             console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)

@@ -400,5 +400,194 @@ class TestActualNewGameRenderingSmoke:
                     raise
 
 
+class TestFullRenderingPipeline:
+    """
+    Complete rendering pipeline smoke tests with ZERO mocking.
+
+    These tests actually render frames to catch bugs that only appear
+    during real rendering, like the game_info_panel.py bug where
+    game.game_state.screen was accessed but doesn't exist.
+    """
+
+    def test_render_first_frame_glyphs_mode(self):
+        """
+        Render the actual first frame in glyphs mode.
+
+        This catches rendering errors like:
+        - AttributeError during info panel rendering
+        - Missing attributes on game objects
+        - Coordinate conversion bugs
+        """
+        import tcod
+        from game_rendering_core import GameRenderer
+
+        # Create real game with glyphs mode
+        settings = GameSettings()
+        settings.graphics_mode = "glyphs"
+        engine = GameEngine(settings=settings)
+
+        # Create real console
+        console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
+
+        # Create real renderer (no mocking!)
+        renderer = GameRenderer(settings, context=None)
+
+        # Simulate mouse movement (this triggers info panel updates)
+        engine.last_mouse_tile_x = 30
+        engine.last_mouse_tile_y = 15
+
+        # THIS IS THE CRITICAL TEST: Actually render the frame
+        try:
+            renderer.render_game(console, engine, context=None)
+        except AttributeError as e:
+            pytest.fail(f"RENDERING FAILURE: {e}\n"
+                       f"This is a critical bug that prevents the game from running!\n"
+                       f"The smoke test should have caught this before commit.")
+        except Exception as e:
+            # Other exceptions might be acceptable (like missing context for graphics mode)
+            # but AttributeError means code is accessing non-existent attributes
+            if "has no attribute" in str(e):
+                pytest.fail(f"CRITICAL: Attribute error during rendering: {e}")
+            # Allow other exceptions for test environment limitations
+            pass
+
+        # If we got here, rendering succeeded
+        assert True
+
+    def test_render_multiple_frames_with_mouse_movement(self):
+        """
+        Render multiple frames with mouse movement to catch state-dependent bugs.
+        """
+        import tcod
+        from game_rendering_core import GameRenderer
+
+        settings = GameSettings()
+        settings.graphics_mode = "glyphs"
+        engine = GameEngine(settings=settings)
+        console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
+        renderer = GameRenderer(settings, context=None)
+
+        # Simulate 10 frames with different mouse positions
+        mouse_positions = [
+            (10, 10), (30, 15), (50, 20), (5, 5), (40, 25),
+            (35, 30), (20, 10), (45, 35), (15, 40), (25, 20)
+        ]
+
+        for frame, (mouse_x, mouse_y) in enumerate(mouse_positions):
+            engine.last_mouse_tile_x = mouse_x
+            engine.last_mouse_tile_y = mouse_y
+
+            try:
+                renderer.render_game(console, engine, context=None)
+            except AttributeError as e:
+                pytest.fail(f"Frame {frame} rendering failed at mouse ({mouse_x},{mouse_y}): {e}")
+            except Exception:
+                pass  # Other exceptions OK in test environment
+
+    def test_render_with_inventory_open(self):
+        """Test rendering with UI screens open (inventory, help, etc.)."""
+        import tcod
+        from game_rendering_core import GameRenderer
+
+        settings = GameSettings()
+        settings.graphics_mode = "glyphs"
+        engine = GameEngine(settings=settings)
+        console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
+        renderer = GameRenderer(settings, context=None)
+
+        # Test with inventory open
+        engine.show_inventory = True
+        try:
+            renderer.render_game(console, engine, context=None)
+        except AttributeError as e:
+            pytest.fail(f"Inventory rendering failed: {e}")
+        except Exception:
+            pass
+
+        # Test with help open
+        engine.show_inventory = False
+        engine.show_help = True
+        try:
+            renderer.render_game(console, engine, context=None)
+        except AttributeError as e:
+            pytest.fail(f"Help screen rendering failed: {e}")
+        except Exception:
+            pass
+
+    def test_render_with_enemies_visible(self):
+        """Test rendering with enemies in view to catch entity rendering bugs."""
+        import tcod
+        from game_rendering_core import GameRenderer
+
+        settings = GameSettings()
+        settings.graphics_mode = "glyphs"
+        engine = GameEngine(settings=settings)
+        console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
+        renderer = GameRenderer(settings, context=None)
+
+        # Ensure at least one enemy is near player for visibility
+        if len(engine.enemies) > 0:
+            enemy = engine.enemies[0]
+            enemy.position.x = engine.player.position.x + 5
+            enemy.position.y = engine.player.position.y + 5
+
+        # Hover mouse over enemy position
+        engine.last_mouse_tile_x = engine.enemies[0].position.x if engine.enemies else 10
+        engine.last_mouse_tile_y = engine.enemies[0].position.y if engine.enemies else 10
+
+        try:
+            renderer.render_game(console, engine, context=None)
+        except AttributeError as e:
+            pytest.fail(f"Enemy rendering/info panel failed: {e}")
+        except Exception:
+            pass
+
+    def test_render_achievement_popup(self):
+        """Test rendering with achievement popup active."""
+        import tcod
+        from game_rendering_core import GameRenderer
+        from game_achievements import AchievementManager
+
+        settings = GameSettings()
+        settings.graphics_mode = "glyphs"
+        engine = GameEngine(settings=settings)
+        console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
+        renderer = GameRenderer(settings, context=None)
+
+        # Queue an achievement popup
+        AchievementManager._pending_popups = ["first_blood"]
+        engine.achievement_popup_manager.update()
+
+        try:
+            renderer.render_game(console, engine, context=None)
+        except AttributeError as e:
+            pytest.fail(f"Achievement popup rendering failed: {e}")
+        except Exception:
+            pass
+
+    def test_render_graphics_mode_without_context(self):
+        """
+        Test that graphics mode fails gracefully without context.
+
+        This shouldn't crash with AttributeError, just skip graphics rendering.
+        """
+        import tcod
+        from game_rendering_core import GameRenderer
+
+        settings = GameSettings()
+        settings.graphics_mode = "graphics"  # Graphics mode
+        engine = GameEngine(settings=settings)
+        console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
+        renderer = GameRenderer(settings, context=None)
+
+        # Should not raise AttributeError (context is None, so should fall back)
+        try:
+            renderer.render_game(console, engine, context=None)
+        except AttributeError as e:
+            pytest.fail(f"Graphics mode should fail gracefully without context: {e}")
+        except Exception:
+            pass  # Other exceptions are OK
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

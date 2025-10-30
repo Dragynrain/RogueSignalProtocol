@@ -139,7 +139,7 @@ class GameSession:
             # Delete save on death (permadeath)
             if not hasattr(self, '_death_handled'):
                 # Finalize and save metrics before deleting save
-                from game_metrics import finalize_session, save_metrics
+                from game_metrics import finalize_session, save_metrics, load_lifetime_metrics
                 metrics = finalize_session(
                     victory=False,
                     death_cause="combat",  # Could be refined to distinguish overheat/trace
@@ -147,6 +147,16 @@ class GameSession:
                 )
                 if metrics:
                     save_metrics(metrics)
+
+                    # Check for newly unlocked achievements
+                    from game_achievements import AchievementManager
+                    from game_metrics import save_unlocked_achievements
+                    lifetime = load_lifetime_metrics()
+                    newly_unlocked = AchievementManager.check_achievements(metrics, lifetime)
+                    if newly_unlocked:
+                        logging.info(f"Unlocked {len(newly_unlocked)} achievements on death")
+                        # Save achievements to progress file
+                        save_unlocked_achievements(AchievementManager.get_unlocked_achievements())
 
                 self._delete_save_on_death()
                 # Show death dialogue
@@ -758,10 +768,20 @@ class GameSession:
             self.game_engine.game_over = True
 
             # Finalize and save metrics before deleting save
-            from game_metrics import finalize_session, save_metrics
+            from game_metrics import finalize_session, save_metrics, load_lifetime_metrics
             metrics = finalize_session(victory=True, death_cause=None, death_level=0)
             if metrics:
                 save_metrics(metrics)
+
+                # Check for newly unlocked achievements
+                from game_achievements import AchievementManager
+                from game_metrics import save_unlocked_achievements
+                lifetime = load_lifetime_metrics()
+                newly_unlocked = AchievementManager.check_achievements(metrics, lifetime)
+                if newly_unlocked:
+                    logging.info(f"Unlocked {len(newly_unlocked)} achievements on victory")
+                    # Save achievements to progress file
+                    save_unlocked_achievements(AchievementManager.get_unlocked_achievements())
 
             # Delete save on game completion (no continuing after winning)
             SaveGameManager.delete_save()

@@ -184,6 +184,11 @@ class GameRenderer:
                 UnifiedRenderer.render(console, dialogue, game.dialogue_state,
                                      game.last_mouse_tile_x, game.last_mouse_tile_y)
 
+        # Render achievement popups (high priority, after dialogue or at same level)
+        if hasattr(game, 'achievement_popup_manager'):
+            game.achievement_popup_manager.update()
+            game.achievement_popup_manager.render(console)
+
         # For overlay screens (inventory, help, lore), we need to present in graphics mode too
         if should_use_graphics:
             self.context.sdl_renderer.clear()
@@ -247,6 +252,7 @@ class GameRenderer:
 
             # Render UI panels - we'll set their alpha explicitly after
             self.ui_renderer.render_top_status_bar(console, game)
+            self.ui_renderer.render_info_panel(console, game)
             self.ui_renderer.render_bottom_panel(console, game)
             self.ui_renderer.render_system_log(console, game)
             self.ui_renderer.render_inspection_panel(console, game)
@@ -254,6 +260,7 @@ class GameRenderer:
             # Set UI panel areas back to opaque using CoordinateHelpers
             panel_y = GameConfig.PANEL_Y()
             log_x = GameConfig.GAME_AREA_WIDTH()
+            log_start_y = GameConfig.LOG_START_Y()
 
             # Top status bar (full width, height 1)
             CoordinateHelpers.set_alpha_region(
@@ -263,7 +270,7 @@ class GameRenderer:
             CoordinateHelpers.set_alpha_region(
                 console, x=0, y=panel_y, width=console.width, height=console.height - panel_y, alpha=255
             )
-            # System log (from GAME_AREA_WIDTH to right edge, stop at panel start)
+            # Info panel and system log (from GAME_AREA_WIDTH to right edge, from top to panel start)
             CoordinateHelpers.set_alpha_region(
                 console, x=log_x, y=0, width=console.width - log_x, height=panel_y, alpha=255
             )
@@ -275,6 +282,11 @@ class GameRenderer:
                 if dialogue:
                     UnifiedRenderer.render(console, dialogue, game.dialogue_state,
                                          game.last_mouse_tile_x, game.last_mouse_tile_y)
+
+            # Render achievement popups (high priority, after dialogue or at same level)
+            if hasattr(game, 'achievement_popup_manager'):
+                game.achievement_popup_manager.update()
+                game.achievement_popup_manager.render(console)
 
             # Convert console to texture and overlay on top of sprites
             console_texture = self.context.console_render.render(console)
@@ -290,6 +302,7 @@ class GameRenderer:
 
             self.ui_renderer.render_top_status_bar(console, game)
             self.glyphs_renderer.render_map(console, game)
+            self.ui_renderer.render_info_panel(console, game)
             self.ui_renderer.render_bottom_panel(console, game)
             self.ui_renderer.render_system_log(console, game)
             self.ui_renderer.render_inspection_panel(console, game)
@@ -301,6 +314,11 @@ class GameRenderer:
                 if dialogue:
                     UnifiedRenderer.render(console, dialogue, game.dialogue_state,
                                          game.last_mouse_tile_x, game.last_mouse_tile_y)
+
+            # Render achievement popups (high priority, after dialogue or at same level)
+            if hasattr(game, 'achievement_popup_manager'):
+                game.achievement_popup_manager.update()
+                game.achievement_popup_manager.render(console)
 
 
 # Legacy alias for backward compatibility

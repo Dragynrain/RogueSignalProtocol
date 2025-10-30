@@ -415,6 +415,45 @@ def load_lifetime_metrics() -> LifetimeMetrics:
     return LifetimeMetrics()
 
 
+def load_unlocked_achievements() -> list:
+    """Load unlocked achievements from rogue_signal_progress.json."""
+    progress_file = Path("rogue_signal_progress.json")
+
+    try:
+        if progress_file.exists():
+            with open(progress_file, 'r') as f:
+                data = json.load(f)
+                return data.get('unlocked_achievements', [])
+    except Exception as e:
+        logging.error(f"Failed to load unlocked achievements: {e}")
+
+    return []
+
+
+def save_unlocked_achievements(achievements: list) -> None:
+    """Save unlocked achievements to rogue_signal_progress.json."""
+    progress_file = Path("rogue_signal_progress.json")
+
+    try:
+        # Load existing progress data
+        data = {}
+        if progress_file.exists():
+            with open(progress_file, 'r') as f:
+                data = json.load(f)
+
+        # Update unlocked achievements
+        data['unlocked_achievements'] = achievements
+
+        # Save back to file
+        with open(progress_file, 'w') as f:
+            json.dump(data, f, indent=2)
+
+        logging.info(f"Saved {len(achievements)} unlocked achievements to progress file")
+
+    except Exception as e:
+        logging.error(f"Failed to save unlocked achievements: {e}")
+
+
 def save_lifetime_metrics(lifetime: LifetimeMetrics) -> None:
     """Save lifetime metrics to rogue_signal_progress.json."""
     progress_file = Path("rogue_signal_progress.json")

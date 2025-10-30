@@ -336,7 +336,7 @@ class TilePlacementGenerator:
 
     def gateway_far_corner(self, spawn: Position, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
         """
-        Gateway in opposite corner from spawn - minimum 30 tiles.
+        Gateway in opposite corner from spawn - minimum 45 tiles.
 
         Creates maximum distance objective.
 
@@ -361,7 +361,7 @@ class TilePlacementGenerator:
 
     def gateway_central_hub(self, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
         """
-        Gateway in or near central area of map - minimum 20 tiles from spawn.
+        Gateway in or near central area of map - minimum 35 tiles from spawn.
 
         Creates central objective, encourages exploration of center.
 
@@ -397,7 +397,7 @@ class TilePlacementGenerator:
 
     def gateway_hidden_dead_end(self, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
         """
-        Gateway at end of longest branch - minimum 25 tiles from spawn.
+        Gateway at end of longest branch - minimum 38 tiles from spawn.
 
         Rewards exploration, creates hidden objective.
 
@@ -438,7 +438,7 @@ class TilePlacementGenerator:
 
     def gateway_gauntlet(self, spawn: Position, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
         """
-        Gateway along edge - minimum 25 tiles from spawn, requires crossing map.
+        Gateway along edge - minimum 40 tiles from spawn, requires crossing map.
 
         Forces traversal across the level.
 
