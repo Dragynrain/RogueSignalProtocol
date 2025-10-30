@@ -117,6 +117,7 @@ class GameEngine:
         # Track when player first steps on nodes to avoid repeated sounds
         self.last_node_position: Optional[Tuple[int, int]] = None
         self.show_lore_viewer = False
+        self.show_achievements = False
         self.lore_viewer_selection = 0
         self.lore_viewer_mode = "list"
         self.inventory_selection = 0
@@ -452,12 +453,22 @@ class GameEngine:
             self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")
 
             # Track metrics
-            from game_metrics import track
+            from game_metrics import track, get_current_session
             from game_entities import EnemyState
             track("enemies_killed", category=target_enemy.type)
             track("damage_dealt", amount=total_damage)
             if target_enemy.state == EnemyState.UNAWARE:
                 track("stealth_kills")
+
+            # Update max single hit damage for Overkill achievement
+            current_session = get_current_session()
+            if current_session and total_damage > current_session.max_single_hit_damage:
+                current_session.max_single_hit_damage = total_damage
+
+            # Check for immediate achievement unlocks (First Blood, Massacre, Overkill, etc.)
+            from game_achievements import AchievementManager
+            if current_session:
+                AchievementManager.check_immediate_achievements_and_notify(current_session, self)
 
             # Add environmental narrative for first combat or admin defeat
             if is_admin:

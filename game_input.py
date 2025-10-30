@@ -133,6 +133,9 @@ class InputHandler:
         if self.game.show_lore_viewer:
             return self._handle_lore_viewer_input(event)
 
+        if self.game.show_achievements:
+            return self._handle_achievements_input(event)
+
         if self.game.show_inventory:
             return self._handle_inventory_input(event)
 
@@ -154,6 +157,8 @@ class InputHandler:
             g.show_lore_viewer, g.lore_viewer_mode, g.lore_viewer_selection = False, "list", 0
         elif g.show_help:
             g.show_help = False
+        elif g.show_achievements:
+            g.show_achievements = False
         elif g.show_inventory:
             g.show_inventory = False
         elif g.look_mode:
@@ -239,7 +244,7 @@ class InputHandler:
         elif "GATEWAY" in dialogue.title:
             # Player cancelled gateway
             self.game.message_log.add_message("Staying in current network")
-        elif "PURGED" in dialogue.title or "BREAKTHROUGH" in dialogue.title:
+        elif "PURGED" in dialogue.title or "BREAKTHROUGH" in dialogue.title or "ROGUE SIGNAL ESTABLISHED" in dialogue.title:
             # Death/victory messages - any key closes and returns to menu
             self.game.dialogue_state.close()
             return False  # Exit to main menu
@@ -335,7 +340,28 @@ class InputHandler:
         
         # Unhandled key - consume it and stay in lore viewer
         return True
-    
+
+    def _handle_achievements_input(self, event) -> bool:
+        """Handle input while achievements screen is open."""
+        # Get achievements menu from renderer
+        if self.renderer and hasattr(self.renderer, 'ui_renderer'):
+            achievements_menu = self.renderer.ui_renderer._achievements_menu if hasattr(self.renderer.ui_renderer, '_achievements_menu') else None
+
+            if achievements_menu:
+                # Delegate to achievements menu's input handler
+                action = achievements_menu.handle_input(event)
+                if action == "back":
+                    self.game.show_achievements = False
+                    return True
+
+        # Fallback: ESC or A closes achievements
+        if UniversalInputHandler.is_escape_key(event) or event.sym == tcod.event.KeySym.A:
+            self.game.show_achievements = False
+            return True
+
+        # Unhandled key - consume it and stay in achievements
+        return True
+
     def _navigate_list(self, current_index, list_length, direction):
         """Generic list navigation helper."""
         if list_length > 0:
@@ -404,6 +430,8 @@ class InputHandler:
             self.game.show_lore_viewer = True
         elif event.sym == tcod.event.KeySym.SLASH and (event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)):
             self.game.show_help = True
+        elif event.sym == tcod.event.KeySym.A:
+            self.game.show_achievements = True
 
         # Exploit usage (1-5 keys) - check as loop
         else:

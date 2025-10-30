@@ -168,6 +168,9 @@ class GameRenderer:
         elif game.show_help:
             console.clear()
             self.ui_renderer.render_help_screen(console)
+        elif game.show_achievements:
+            console.clear()
+            self.ui_renderer.render_achievements_screen(console, game)
         elif game.show_inventory:
             console.clear()
             self.ui_renderer.render_inventory_screen(console, game)

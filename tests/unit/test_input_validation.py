@@ -32,6 +32,7 @@ def create_mock_game():
     game.show_story_fragment = None
     game.show_lore_viewer = False
     game.show_inventory = False
+    game.show_achievements = False
     game.targeting_mode = False
     game.targeting_exploit = None
     game.look_mode = False

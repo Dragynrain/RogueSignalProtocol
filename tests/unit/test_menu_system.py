@@ -34,7 +34,7 @@ class TestMainMenu:
             assert menu.selected_option == 0
             assert "Continue Game" in menu.options
             assert "New Game" in menu.options
-            assert len(menu.options) == 7  # Continue, New, Settings, Help, Lore, Graphics Preview, Exit
+            assert len(menu.options) == 8  # Continue, New, Settings, Help, Achievements, Lore, Graphics Preview, Exit
             assert menu.show_warning is False
 
     def test_main_menu_initialization_no_save(self):
@@ -44,7 +44,7 @@ class TestMainMenu:
             assert menu.selected_option == 0
             assert "Continue Game" not in menu.options
             assert "New Game" in menu.options
-            assert len(menu.options) == 6  # New, Settings, Help, Lore, Graphics Preview, Exit
+            assert len(menu.options) == 7  # New, Settings, Help, Achievements, Lore, Graphics Preview, Exit
             assert isinstance(menu.options, list)
             assert menu.show_warning is False
 
