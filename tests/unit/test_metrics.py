@@ -17,7 +17,7 @@ from game_metrics import (
 
 @pytest.fixture
 def clean_metrics():
-    """Clean up metrics directory and progress file before and after tests."""
+    """Clean up metrics directory (NOT user progress) before and after tests."""
     # Clean before test
     if METRICS_DIR.exists():
         for file in METRICS_DIR.glob("*.json"):
@@ -26,10 +26,8 @@ def clean_metrics():
         if db_file.exists():
             db_file.unlink()
 
-    # Clean progress file
-    progress_file = Path("rogue_signal_progress.json")
-    if progress_file.exists():
-        progress_file.unlink()
+    # NOTE: We do NOT delete rogue_signal_progress.json - that's user data!
+    # Tests that need progress data should use mocks or temp files.
 
     yield
 
@@ -41,9 +39,8 @@ def clean_metrics():
         if db_file.exists():
             db_file.unlink()
 
-    # Clean progress file
-    if progress_file.exists():
-        progress_file.unlink()
+    # NOTE: We do NOT delete rogue_signal_progress.json - that's user data!
+    # Tests that need progress data should use mocks or temp files.
 
 
 def test_session_metrics_initialization():
