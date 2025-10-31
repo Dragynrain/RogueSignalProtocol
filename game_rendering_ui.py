@@ -23,6 +23,7 @@ from game_menu_help_lore import create_help_menu
 from data_loading import get_story_fragments
 from game_screen_utilities import ScreenRenderingUtils, ScrollableListManager
 from game_color_thresholds import ColorThresholdManager
+from game_unicode_chars import GameGlyphs
 
 
 class UIRenderer:
@@ -71,9 +72,13 @@ class UIRenderer:
             console: TCOD console to render to
             game: GameEngine with player stats
         """
-        # Clear the entire top line (full screen width)
-        for x in range(GameConfig.SCREEN_WIDTH):
-            render_char_safe(console, x, 0, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
+        # Get UI color from settings
+        ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
+
+        # Clear the entire top status area (rows 0-1)
+        for y in range(2):
+            for x in range(GameConfig.SCREEN_WIDTH):
+                render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
 
         # Color coding for status values (using centralized thresholds)
         cpu_color = ColorThresholdManager.get_cpu_color(game.player.cpu)
@@ -91,12 +96,22 @@ class UIRenderer:
 
         colors = [cpu_color, heat_color, trace_color, ram_color]
 
+        # Render status text on row 0
         x_pos = 1
         for part, color in zip(status_parts, colors):
             # Keep status bar in game area only
             if x_pos + len(part) < GameConfig.GAME_AREA_WIDTH() - 1:
                 render_char_safe(console, x_pos, 0, part, fg=color, bg=Colors.UI_BG)
                 x_pos += len(part) + 2
+
+        # Bottom border of status bar (row 1) - horizontal line with UI color
+        # Use T-piece where it meets the vertical log border
+        for x in range(GameConfig.SCREEN_WIDTH):
+            if x == GameConfig.GAME_AREA_WIDTH():
+                # T-piece where horizontal status bar meets vertical log border (╦ points down)
+                render_char_safe(console, x, 1, GameGlyphs.WALL_T_DOWN, fg=ui_color, bg=Colors.UI_BG)
+            else:
+                render_char_safe(console, x, 1, GameGlyphs.WALL_HORIZONTAL, fg=ui_color, bg=Colors.UI_BG)
 
     def render_bottom_panel(self, console: tcod.console.Console, game):
         """
@@ -110,14 +125,22 @@ class UIRenderer:
             console: TCOD console to render to
             game: GameEngine with player inventory and effects
         """
+        # Get UI color from settings
+        ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
+
         # Clear panel area (full screen width to accommodate all exploits)
         for x in range(GameConfig.SCREEN_WIDTH):
             for y in range(GameConfig.PANEL_Y(), GameConfig.SCREEN_HEIGHT):
                 render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
 
-        # Panel border (full screen width)
-        border = "╔" + "═" * (GameConfig.SCREEN_WIDTH - 2) + "╗"
-        render_char_safe(console, 0, GameConfig.PANEL_Y(), border, fg=Colors.LOG_BORDER, bg=Colors.UI_BG)
+        # Panel border - horizontal line with UI color
+        # Use T-piece where it meets the vertical log border
+        for x in range(GameConfig.SCREEN_WIDTH):
+            if x == GameConfig.GAME_AREA_WIDTH():
+                # T-piece where horizontal bottom panel meets vertical log border (╩ points up)
+                render_char_safe(console, x, GameConfig.PANEL_Y(), GameGlyphs.WALL_T_UP, fg=ui_color, bg=Colors.UI_BG)
+            else:
+                render_char_safe(console, x, GameConfig.PANEL_Y(), GameGlyphs.WALL_HORIZONTAL, fg=ui_color, bg=Colors.UI_BG)
 
         # Equipped exploits (2 lines)
         self._render_equipped_exploits_panel(console, game)
@@ -345,7 +368,9 @@ class UIRenderer:
             game: GameEngine with current game state
         """
         from game_info_panel import InfoPanelRenderer
-        InfoPanelRenderer.render(console, game)
+        # Get UI color from settings
+        ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
+        InfoPanelRenderer.render(console, game, ui_color=ui_color)
 
     # ========================================================================
     # MESSAGE LOG RENDERING
@@ -364,19 +389,38 @@ class UIRenderer:
             console: TCOD console to render to
             game: GameEngine with message_log and look_mode state
         """
+        # Get UI color from settings
+        ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
+
         log_start_y = GameConfig.LOG_START_Y()
 
-        # Draw log border (from LOG_START_Y to panel start)
-        for y in range(log_start_y, GameConfig.PANEL_Y()):
-            render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '║', fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+        # T-piece at left where log border meets the header line
+        render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), log_start_y, GameGlyphs.WALL_T_RIGHT, fg=ui_color, bg=Colors.LOG_BG)
 
-        # Log header
-        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, log_start_y, "SYSTEM LOG", fg=Colors.ELECTRIC_PURPLE, bg=Colors.LOG_BG)
-        render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, log_start_y + 1, "═" * (GameConfig.LOG_WIDTH - 1), fg=Colors.LOG_BORDER, bg=Colors.LOG_BG)
+        # Build header line: "SYSTEM LOG" embedded in ═ border
+        header_text = " SYSTEM LOG "
+        log_width = GameConfig.SCREEN_WIDTH - GameConfig.GAME_AREA_WIDTH() - 1
 
-        # Clear log area - start from log_start_y + 2 to account for header, stop at panel start
+        # Center the text in the header line
+        header_start = GameConfig.GAME_AREA_WIDTH() + 1 + (log_width - len(header_text)) // 2
+
+        # Render the header line
+        for i in range(GameConfig.GAME_AREA_WIDTH() + 1, GameConfig.SCREEN_WIDTH):
+            if i >= header_start and i < header_start + len(header_text):
+                # SYSTEM LOG text in bright cyan
+                char_idx = i - header_start
+                render_char_safe(console, i, log_start_y, header_text[char_idx], fg=Colors.CYAN, bg=Colors.LOG_BG)
+            else:
+                # ═ character fill
+                render_char_safe(console, i, log_start_y, '═', fg=ui_color, bg=Colors.LOG_BG)
+
+        # Draw log border (from LOG_START_Y + 1 to panel start) with UI color
+        for y in range(log_start_y + 1, GameConfig.PANEL_Y()):
+            render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '║', fg=ui_color, bg=Colors.LOG_BG)
+
+        # Clear log area - start from log_start_y + 1
         for x in range(GameConfig.GAME_AREA_WIDTH() + 1, GameConfig.SCREEN_WIDTH):
-            for y in range(log_start_y + 2, GameConfig.PANEL_Y()):
+            for y in range(log_start_y + 1, GameConfig.PANEL_Y()):
                 render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
 
         # Process and display messages (skip if in look mode - inspection panel will use this area)
@@ -388,7 +432,7 @@ class UIRenderer:
         Render scrolling log messages with automatic wrapping.
 
         Shows the most recent messages that fit in the available vertical space.
-        Now starts at LOG_START_Y + 2 (after info panel and log header).
+        Starts at LOG_START_Y + 2 (one blank line below header for breathing space).
         Delegates text wrapping to _wrap_messages().
 
         Args:
@@ -397,11 +441,11 @@ class UIRenderer:
         """
         log_start_y = GameConfig.LOG_START_Y()
         wrapped_lines = self._wrap_messages(game.message_log.messages)
-        log_height = GameConfig.PANEL_Y() - (log_start_y + 2)  # Available space for messages
+        log_height = GameConfig.PANEL_Y() - (log_start_y + 2)  # Available space (with blank line for breathing space)
         visible_lines = wrapped_lines[-log_height:] if len(wrapped_lines) > log_height else wrapped_lines
 
         for i, (line, color) in enumerate(visible_lines):
-            y_pos = log_start_y + 2 + i  # Start from LOG_START_Y + 2 to avoid header
+            y_pos = log_start_y + 2 + i  # Start from LOG_START_Y + 2 for breathing space
             if y_pos < GameConfig.PANEL_Y():
                 render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
 
@@ -569,9 +613,21 @@ class UIRenderer:
         Args:
             console: TCOD console to clear
         """
+        from game_coordinate_helpers import CoordinateHelpers
+
         for x in range(GameConfig.GAME_AREA_WIDTH()):
-            for y in range(1, GameConfig.PANEL_Y()):
+            for y in range(2, GameConfig.PANEL_Y()):  # Start from row 2 (after status bar on rows 0-1)
                 render_char_safe(console, x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
+
+        # Set alpha to opaque for the cleared area
+        CoordinateHelpers.set_alpha_region(
+            console,
+            x=0,
+            y=2,
+            width=GameConfig.GAME_AREA_WIDTH(),
+            height=GameConfig.PANEL_Y() - 2,
+            alpha=255
+        )
 
     def _render_overlay_menu(self, console: tcod.console.Console, title: str, options: list, menu_width: int = 30) -> tuple:
         """
@@ -695,6 +751,7 @@ class UIRenderer:
 
         # Render preserved UI elements (skip bottom panel to make room for inventory controls)
         self.render_top_status_bar(console, game)
+        self.render_info_panel(console, game)  # Render info panel so it's not black
         self.render_system_log(console, game)
 
         # Calculate available space for content
@@ -928,7 +985,7 @@ class UIRenderer:
         y_start = GameConfig.SCREEN_HEIGHT - 6
 
         render_char_safe(console, 2, y_start, "CONTROLS:", fg=Colors.CYAN)
-        render_char_safe(console, 4, y_start + 1, "W/S: Navigate  Enter: Use  X: Examine", fg=Colors.WHITE)
+        render_char_safe(console, 4, y_start + 1, "↑↓/W/S: Navigate │ Enter: Use │ X: Examine", fg=Colors.WHITE)
         render_char_safe(console, 4, y_start + 2, "U: Unequip selected exploit", fg=Colors.WHITE)
         render_char_safe(console, 4, y_start + 3, "ESC/I: Close inventory", fg=Colors.WHITE)
 
@@ -1138,7 +1195,7 @@ class UIRenderer:
 
                 y_offset += 1  # Space between entries
 
-            ScreenRenderingUtils.render_screen_footer(console, "Up/Down: Navigate, Enter: Read, ESC: Close")
+            ScreenRenderingUtils.render_screen_footer(console, "↑↓ Navigate │ Enter: Read │ ESC: Close")
 
     def _render_lore_reading_mode(self, console: tcod.console.Console, game, discovered_fragments):
         """

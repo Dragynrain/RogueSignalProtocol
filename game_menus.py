@@ -47,9 +47,10 @@ class MainMenu(BaseMenu):
         mid_game_mode: True when accessed from in-game (hides Continue option)
     """
 
-    def __init__(self, background=None):
+    def __init__(self, background=None, settings=None):
         super().__init__(background)
-        self.options = ["Continue Game", "New Game", "Settings", "Help", "Achievements", "Data Fragments", "Graphics Preview", "Exit"] if SaveGameManager.save_exists() else ["New Game", "Settings", "Help", "Achievements", "Data Fragments", "Graphics Preview", "Exit"]
+        self.settings = settings  # Store settings to check graphics mode
+        self.options = self._build_options_list()
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
@@ -59,6 +60,21 @@ class MainMenu(BaseMenu):
         self.warning_option_y = None
         self.warning_option_0_x_range = None  # (start_x, end_x) for "Yes, Delete"
         self.warning_option_1_x_range = None  # (start_x, end_x) for "No, Go Back"
+
+    def _build_options_list(self):
+        """Build the options list based on save state and graphics mode."""
+        base_options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments"]
+
+        # Only show Graphics Preview in graphics mode
+        if self.settings and self.settings.graphics_mode == "graphics":
+            base_options.append("Graphics Preview")
+
+        base_options.append("Exit")
+
+        # Add Continue Game at the start if save exists
+        if SaveGameManager.save_exists():
+            return ["Continue Game"] + base_options
+        return base_options
     
     def refresh_options(self, show_continue: bool = True, active_game=None) -> None:
         """
@@ -78,12 +94,22 @@ class MainMenu(BaseMenu):
         # Determine Exit button text based on whether there's a game to save
         exit_text = "Save and Exit" if can_save else "Exit"
 
+        # Build base options
+        base_options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments"]
+
+        # Only show Graphics Preview in graphics mode
+        if self.settings and self.settings.graphics_mode == "graphics":
+            base_options.append("Graphics Preview")
+
+        base_options.append(exit_text)
+
         if show_continue and SaveGameManager.save_exists():
-            self.options = ["Continue Game", "New Game", "Settings", "Help", "Achievements", "Data Fragments", "Graphics Preview", exit_text]
+            self.options = ["Continue Game"] + base_options
             self.mid_game_mode = False
         else:
-            self.options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments", "Graphics Preview", exit_text]
+            self.options = base_options
             self.mid_game_mode = not show_continue  # True when accessed from mid-game
+
         # Reset selection to prevent index out of bounds
         self.selected_option = 0
         # Reset warning state when refreshing options
@@ -131,26 +157,29 @@ class MainMenu(BaseMenu):
         version = "Version 0.8.0 Alpha"
         subtitle = "Cyberpunk Stealth Exfiltration"
 
+        # Get UI color from settings
+        ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
+
         if box['use_background_layout']:
             # Title content within narrow box - split into multiple lines to fit
-            render_char_safe(console, box['center_x'] - 10, 6, "═" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 10, 6, "═" * 20, fg=ui_color, bg=Colors.BLACK)
             # Split title into multiple lines
-            render_char_safe(console, box['center_x'] - 6, 7, "ROGUE SIGNAL", fg=Colors.CYAN, bg=Colors.BLACK)
-            render_char_safe(console, box['center_x'] - 4, 8, "PROTOCOL", fg=Colors.CYAN, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 6, 7, "ROGUE SIGNAL", fg=ui_color, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 4, 8, "PROTOCOL", fg=ui_color, bg=Colors.BLACK)
             # Center the version properly in the box
             version_x = box['center_x'] - len(version) // 2
             render_char_safe(console, version_x, 9, version, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
             # Split subtitle into two lines
-            render_char_safe(console, box['center_x'] - 8, 11, "Cyberpunk Stealth", fg=Colors.CYAN, bg=Colors.BLACK)
-            render_char_safe(console, box['center_x'] - 6, 12, "Exfiltration", fg=Colors.CYAN, bg=Colors.BLACK)
-            render_char_safe(console, box['center_x'] - 10, 13, "═" * 20, fg=Colors.CYAN, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 8, 11, "Cyberpunk Stealth", fg=ui_color, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 6, 12, "Exfiltration", fg=ui_color, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 10, 13, "═" * 20, fg=ui_color, bg=Colors.BLACK)
         else:
             # Glyph mode - centered positioning
             title = "ROGUE SIGNAL PROTOCOL"
-            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 6, "═" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
-            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=Colors.CYAN, bg=Colors.BLACK)
-            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=Colors.CYAN, bg=Colors.BLACK)
-            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 10, "═" * 40, fg=Colors.CYAN, bg=Colors.BLACK)
+            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 6, "═" * 40, fg=ui_color, bg=Colors.BLACK)
+            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 8, title, fg=ui_color, bg=Colors.BLACK)
+            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(subtitle) // 2, 9, subtitle, fg=ui_color, bg=Colors.BLACK)
+            render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - 20, 10, "═" * 40, fg=ui_color, bg=Colors.BLACK)
     
     def _render_version_info(self, console: tcod.console.Console, box: dict) -> None:
         """Render author information."""
@@ -251,7 +280,7 @@ class MainMenu(BaseMenu):
             # Glyph mode - centered
             render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
-                "UP/DOWN or W/S: Navigate", fg=help_text_color, bg=Colors.BLACK
+                "↑↓ or W/S: Navigate", fg=help_text_color, bg=Colors.BLACK
             )
             render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
@@ -511,7 +540,9 @@ class SettingsMenu(BaseMenu):
             {"name": "Music Volume", "type": "volume", "key": "music"},
             {"name": "Graphics Mode", "type": "toggle", "key": "graphics_mode",
              "values": ["Classic", "Graphics"]},
-            {"name": "--- Dialogues ---", "type": "section_header"},
+            {"name": "UI Color", "type": "ui_color", "key": "ui_color",
+             "values": ["Cyan", "Purple", "Magenta", "Golden", "Crimson", "Azure", "Emerald", "Ivory"]},
+            {"name": "═══ Dialogues ═══", "type": "section_header"},
             {"name": "Overclock Warnings", "type": "dialogue_toggle", "key": "show_overclock_warning"},
             {"name": "Back", "type": "action"}
         ]
@@ -525,7 +556,10 @@ class SettingsMenu(BaseMenu):
 
         # Calculate menu height (account for all options including dialogue toggles)
         menu_height = 35  # Increased for dialogue preferences section with better spacing
-        
+
+        # Get UI color for decorations
+        ui_color = self.settings.get_ui_color_rgb()
+
         # Render the right-side box using common method
         box = self._render_right_side_box(console, menu_height, Colors.WHITE)
         
@@ -552,7 +586,7 @@ class SettingsMenu(BaseMenu):
 
                 # Section headers
                 if option["type"] == "section_header":
-                    render_char_safe(console, name_x, option_y, name, fg=Colors.CYAN, bg=Colors.BLACK)
+                    render_char_safe(console, name_x, option_y, name, fg=ui_color, bg=Colors.BLACK)
                 else:
                     render_char_safe(console, name_x, option_y, name, fg=color, bg=bg_color)
 
@@ -565,13 +599,19 @@ class SettingsMenu(BaseMenu):
                     # Volume bar with directional hints - more compact
                     bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
                     # Add arrows to show click left=down, click right=up
-                    bar_text = f"<- {bar} +> {volume_percent}%"
+                    bar_text = f"< {bar} > {volume_percent}%"
                     render_char_safe(console, name_x, option_y + 1, bar_text, fg=color, bg=bg_color)
 
                 elif option["type"] == "toggle":
                     if option["key"] == "graphics_mode":
                         current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "Classic"
                         render_char_safe(console, name_x, option_y + 1, f"< {current_value} >", fg=color, bg=bg_color)
+
+                elif option["type"] == "ui_color":
+                    current_value = self.settings.ui_color.capitalize()
+                    # Show the color name in its actual color for preview
+                    color_rgb = self.settings.get_ui_color_rgb()
+                    render_char_safe(console, name_x, option_y + 1, f"< {current_value} >", fg=color_rgb, bg=bg_color)
 
                 elif option["type"] == "dialogue_toggle":
                     # Get dialogue preference (default to True if not set)
@@ -584,7 +624,7 @@ class SettingsMenu(BaseMenu):
                 # Glyph mode - wider layout
                 # Option name
                 if option["type"] == "section_header":
-                    render_char_safe(console, box['content_left'] + 2, option_y, option["name"], fg=Colors.CYAN, bg=Colors.BLACK)
+                    render_char_safe(console, box['content_left'] + 2, option_y, option["name"], fg=ui_color, bg=Colors.BLACK)
                 else:
                     render_char_safe(console, box['content_left'] + 2, option_y, option["name"], fg=color, bg=bg_color)
 
@@ -597,13 +637,19 @@ class SettingsMenu(BaseMenu):
                     # Volume bar with directional hints
                     bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
                     # Add arrows to show click left=down, click right=up
-                    bar_text = f"<- {bar} +> {volume_percent}%"
+                    bar_text = f"< {bar} > {volume_percent}%"
                     render_char_safe(console, box['content_left'] + 18, option_y, bar_text, fg=color, bg=bg_color)
 
                 elif option["type"] == "toggle":
                     if option["key"] == "graphics_mode":
                         current_value = "Graphics" if self.settings.graphics_mode == "graphics" else "Classic"
                         render_char_safe(console, box['content_left'] + 18, option_y, f"< {current_value} >", fg=color, bg=bg_color)
+
+                elif option["type"] == "ui_color":
+                    current_value = self.settings.ui_color.capitalize()
+                    # Show the color name in its actual color for preview
+                    color_rgb = self.settings.get_ui_color_rgb()
+                    render_char_safe(console, box['content_left'] + 18, option_y, f"< {current_value} >", fg=color_rgb, bg=bg_color)
 
                 elif option["type"] == "dialogue_toggle":
                     # Get dialogue preference (default to True if not set)
@@ -783,6 +829,13 @@ class SettingsMenu(BaseMenu):
             self.settings.dialogue_preferences[option["key"]] = new_value
             self.settings.save_settings()
             logging.info(f"Dialogue preference '{option['key']}' set to {new_value} via mouse")
+        elif option["type"] == "ui_color":
+            # Cycle to next UI color on click
+            colors = ["cyan", "purple", "magenta", "golden", "crimson", "azure", "emerald", "ivory"]
+            current_idx = colors.index(self.settings.ui_color) if self.settings.ui_color in colors else 0
+            new_idx = (current_idx + 1) % len(colors)
+            self.settings.set_ui_color(colors[new_idx])
+            logging.info(f"UI color changed to {colors[new_idx]} via mouse")
         elif option["type"] == "volume":
             # Volume sliders: clicking left side decreases, right side increases
             # (left = 0%, right = 100%)
@@ -877,6 +930,14 @@ class SettingsMenu(BaseMenu):
                 if self.menu_background:
                     self.menu_background.reload_if_mode_changed()
                     logging.info(f"Graphics mode changed to {new_mode} - background updated")
+
+        elif option["type"] == "ui_color":
+            # Cycle through UI colors
+            colors = ["cyan", "purple", "magenta", "golden", "crimson", "azure", "emerald", "ivory"]
+            current_idx = colors.index(self.settings.ui_color) if self.settings.ui_color in colors else 0
+            new_idx = (current_idx + direction) % len(colors)
+            self.settings.set_ui_color(colors[new_idx])
+            logging.info(f"UI color changed to {colors[new_idx]}")
 
         elif option["type"] == "dialogue_toggle":
             # Toggle dialogue preference
