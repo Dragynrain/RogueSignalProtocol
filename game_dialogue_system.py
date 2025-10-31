@@ -222,9 +222,9 @@ class UnifiedRenderer:
             mouse_tile_y: Optional mouse Y coordinate for hover highlighting
         """
         # Calculate box dimensions
-        # Use 70 characters for dialogue boxes to provide more horizontal space
-        # This helps with longer messages like overclock warnings
-        box_width = min(70, console.width - 4)  # Leave 2 char margin
+        # Use 50 characters for dialogue boxes - centered and readable without being too wide
+        # Messages will wrap nicely within this width
+        box_width = min(50, console.width - 4)  # Leave 2 char margin
         box_height = 14  # Increased height to accommodate wrapped text
 
         # Center the box
@@ -466,26 +466,46 @@ class DialogueInputHandler:
 # Factory Functions
 # ============================================================================
 
-def create_gateway_dialogue() -> DialogueBox:
+def create_gateway_dialogue(current_level: int = 1) -> DialogueBox:
     """
     Create gateway confirmation dialogue.
+
+    Args:
+        current_level: Current network level (1-3)
 
     Returns:
         DialogueBox for gateway confirmation
     """
-    return DialogueBox(
-        title="NETWORK GATEWAY",
-        message="Proceed to next network?",
-        options=["[Y] Yes", "[N] No"],
-        valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.ESCAPE],
-        title_color=Colors.YELLOW,
-        message_color=Colors.WHITE,
-        border_color=Colors.CYAN,
-        bg_color=Colors.BLACK,
-        format_data={},
-        priority=2,  # Low priority
-        user_pref_key=None
-    )
+    # Level 3 is the final gateway - epic escape message!
+    if current_level >= 3:
+        return DialogueBox(
+            title="⚡ FINAL GATEWAY ⚡",
+            message="The core network breach is complete. Beyond this gateway lies freedom—escape the Military Backbone and become the signal they cannot erase. Execute final extraction?",
+            options=["[Y] EXECUTE ESCAPE", "[N] Not Yet"],
+            valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.ESCAPE],
+            title_color=Colors.ELECTRIC_PURPLE,
+            message_color=Colors.CYAN,
+            border_color=Colors.ELECTRIC_PURPLE,
+            bg_color=Colors.BLACK,
+            format_data={},
+            priority=2,
+            user_pref_key=None
+        )
+    else:
+        # Standard gateway for levels 1-2
+        return DialogueBox(
+            title="NETWORK GATEWAY",
+            message="Proceed to next network?",
+            options=["[Y] Yes", "[N] No"],
+            valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.ESCAPE],
+            title_color=Colors.YELLOW,
+            message_color=Colors.WHITE,
+            border_color=Colors.CYAN,
+            bg_color=Colors.BLACK,
+            format_data={},
+            priority=2,
+            user_pref_key=None
+        )
 
 
 def create_death_dialogue() -> DialogueBox:

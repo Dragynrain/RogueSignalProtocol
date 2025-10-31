@@ -278,8 +278,9 @@ class TestCoordinateCorrectness:
         console = tcod.console.Console(width=80, height=50)
 
         # Calculate expected box position using CoordinateHelpers
-        box_width = 60
-        box_height = 12
+        # Note: Dialogue width is 50 (updated from 70 for better UX)
+        box_width = 50
+        box_height = 14
         expected_x, expected_y = CoordinateHelpers.center_box(
             box_width, box_height, 80, 50
         )

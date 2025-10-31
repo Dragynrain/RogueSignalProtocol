@@ -17,7 +17,7 @@ import sys
 
 # Import game modules
 from game_config import GameSettings, GameConfig
-from game_entities import Colors
+from game_entities import Colors, ensure_color_tuple
 from game_ui import render_char_safe, WindowManager
 
 
@@ -25,7 +25,7 @@ class MenuBackground:
     """
     Manages menu background rendering with high-res PNG images and console fallback.
 
-    Loads random background from 25 available images (main_menu_1.png through main_menu_25.png).
+    Dynamically loads random backgrounds from available images in the directory.
     Uses SDL renderer for PNG display in graphics mode, falls back to cyberpunk console
     pattern in glyph mode. Handles window resize and mode switching gracefully.
 
@@ -33,15 +33,17 @@ class MenuBackground:
         background_texture: SDL texture for current background (None if not loaded)
         enabled: Whether background system is active (disabled on errors)
         image_size: Original PNG dimensions for aspect ratio calculations
+        art_directory: Directory to load art from (default: "main_menu")
     """
 
-    def __init__(self, context, settings):
+    def __init__(self, context, settings, art_directory="main_menu"):
         """
         Initialize menu background system.
 
         Args:
             context: TCOD context with SDL renderer access
             settings: GameSettings instance with graphics_mode setting
+            art_directory: Directory containing art files (default: "main_menu")
         """
         self.context = context
         self.settings = settings
@@ -52,6 +54,7 @@ class MenuBackground:
         self.last_window_size = None
         self.image_size = None
         self.last_known_mode = settings.graphics_mode
+        self.art_directory = art_directory
 
     def reset_background_system(self):
         """
@@ -88,6 +91,52 @@ class MenuBackground:
             logging.warning(f"Exception: {str(exception)}")
         self.enabled = False
     
+    def _get_base_path(self):
+        """
+        Get base path for art directories.
+
+        Handles both frozen (exe) and development paths.
+
+        Returns:
+            Absolute base path
+        """
+        if getattr(sys, 'frozen', False):
+            return os.path.dirname(sys.executable)
+        else:
+            return os.path.dirname(os.path.abspath(__file__))
+
+    def _discover_art_files(self):
+        """
+        Dynamically discover available art files in the art directory.
+
+        Scans directory for PNG files matching the pattern {directory_name}_{number}.png
+        (e.g., main_menu_01.png, ending_01.png).
+
+        Returns:
+            List of available image numbers (as strings with leading zeros)
+        """
+        base_path = self._get_base_path()
+        art_dir = os.path.join(base_path, self.art_directory)
+
+        if not os.path.exists(art_dir):
+            logging.warning(f"Art directory not found: {art_dir}")
+            return []
+
+        # Extract directory name for pattern matching
+        dir_name = os.path.basename(self.art_directory)
+        prefix = f"{dir_name}_"
+        suffix = ".png"
+
+        art_files = []
+        for filename in os.listdir(art_dir):
+            if filename.startswith(prefix) and filename.endswith(suffix):
+                # Extract number from filename (e.g., "main_menu_01.png" -> "01")
+                number_str = filename[len(prefix):-len(suffix)]
+                if number_str.isdigit():
+                    art_files.append(number_str)
+
+        return sorted(art_files)
+
     def _get_image_path(self, image_number):
         """
         Build absolute path to background image file.
@@ -95,22 +144,20 @@ class MenuBackground:
         Handles both frozen (exe) and development paths.
 
         Args:
-            image_number: Image number (1-25)
+            image_number: Image number (as string with leading zeros, e.g., "01")
 
         Returns:
-            Absolute path to main_menu/main_menu_{number}.png
+            Absolute path to {art_directory}/{directory_name}_{number}.png
         """
-        if getattr(sys, 'frozen', False):
-            base_path = os.path.dirname(sys.executable)
-        else:
-            base_path = os.path.dirname(os.path.abspath(__file__))
-        return os.path.join(base_path, "main_menu", f"main_menu_{image_number}.png")
+        base_path = self._get_base_path()
+        dir_name = os.path.basename(self.art_directory)
+        return os.path.join(base_path, self.art_directory, f"{dir_name}_{image_number}.png")
         
     def load_random_background(self):
         """
         Load one random menu background from available images.
 
-        Selects random image from 1-25 and loads it as SDL texture.
+        Dynamically discovers available images and selects one randomly.
         Disables background system on failure to prevent repeated errors.
 
         Returns:
@@ -119,12 +166,20 @@ class MenuBackground:
         if not self.should_load_background():
             return False
 
-        image_num = random.randint(1, 25)
-        image_path = self._get_image_path(image_num)
+        # Dynamically discover available art files
+        available_images = self._discover_art_files()
+        if not available_images:
+            logging.warning(f"No art files found in {self.art_directory}")
+            return False
+
+        # Select random image from available files
+        image_number = random.choice(available_images)
+        image_path = self._get_image_path(image_number)
 
         try:
             if self._load_image_file(image_path):
                 self.current_image_path = image_path
+                logging.info(f"Loaded background: {os.path.basename(image_path)}")
                 return True
             return False
         except Exception as e:

@@ -114,6 +114,16 @@ class GlyphsMapRenderer(MapRendererBase):
                 render_char_safe(console, screen_x, screen_y, '>', fg=gateway_dark, bg=Colors.BLACK)
             return
 
+        # Check for undiscovered special nodes (to prevent them rendering as shadows)
+        # Undiscovered nodes should appear as regular floor until seen
+        if (game.game_map.is_cooling_node(world_pos) or
+            game.game_map.is_cpu_recovery_node(world_pos) or
+            game.game_map.is_ghost_node(world_pos)):
+            # Render as floor - player hasn't discovered this node yet
+            floor_explored = ColorManager.get_terrain_variant_color("floor")
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.FLOOR_EXPLORED, fg=floor_explored, bg=Colors.BLACK)
+            return
+
         # Only render basic terrain in memory, not dynamic elements
         if game.game_map.is_wall(world_pos):
             # Smart wall system for remembered walls too

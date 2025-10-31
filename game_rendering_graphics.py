@@ -89,8 +89,20 @@ class GraphicsMapRenderer(MapRendererBase):
                             logging.warning(f"Missing texture for {terrain_type} at console ({console_x},{console_y})")
                 elif explored:
                     # Explored but not currently visible - dimmed (fog of war)
+                    # Check for undiscovered special nodes - render as floor instead of shadow
+                    has_undiscovered_node = (
+                        (game.game_map.is_cooling_node(world_pos) or
+                         game.game_map.is_cpu_recovery_node(world_pos) or
+                         game.game_map.is_ghost_node(world_pos)) and
+                        (not hasattr(game.game_state, 'revealed_special_nodes') or
+                         (world_x, world_y) not in game.game_state.revealed_special_nodes)
+                    )
+
                     if game.game_map.is_wall(world_pos):
                         texture = self.tile_manager.get_tile("wall")
+                    elif has_undiscovered_node:
+                        # Undiscovered special node - render as floor
+                        texture = self.tile_manager.get_tile("floor")
                     elif game.game_map.is_shadow(world_pos):
                         texture = self.tile_manager.get_tile("shadow")
                     else:
@@ -189,28 +201,54 @@ class GraphicsMapRenderer(MapRendererBase):
                 if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
                     continue
 
-                # Check visibility
+                # Check visibility and discovery state
                 if game.player.can_see_through_walls():
                     distance = game.player.position.distance_to(world_pos)
                     can_see = distance <= vision_range
                 else:
                     can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
 
-                if can_see:
-                    # Render nodes as sprites
-                    node_type = None
-                    if game.game_map.is_cooling_node(world_pos):
-                        node_type = "cooling_node"
-                    elif game.game_map.is_cpu_recovery_node(world_pos):
-                        node_type = "cpu_node"
-                    elif game.game_map.is_ghost_node(world_pos):
-                        node_type = "ghost_node"
+                pos_tuple = (world_x, world_y)
+                is_explored = pos_tuple in game.game_map.explored_tiles
+                is_discovered = (hasattr(game.game_state, 'revealed_special_nodes') and
+                               pos_tuple in game.game_state.revealed_special_nodes)
 
-                    if node_type:
+                # Determine node type
+                node_type = None
+                node_memory_key = None
+                if game.game_map.is_cooling_node(world_pos):
+                    node_type = "cooling_node"
+                    node_memory_key = "cooling"
+                elif game.game_map.is_cpu_recovery_node(world_pos):
+                    node_type = "cpu_node"
+                    node_memory_key = "cpu"
+                elif game.game_map.is_ghost_node(world_pos):
+                    node_type = "ghost_node"
+                    node_memory_key = "ghost"
+
+                if node_type:
+                    if can_see:
+                        # Currently visible - full brightness, auto-discover
+                        if not is_discovered:
+                            if not hasattr(game.game_state, 'revealed_special_nodes'):
+                                game.game_state.revealed_special_nodes = {}
+                            game.game_state.revealed_special_nodes[pos_tuple] = node_memory_key
                         texture = self.tile_manager.get_tile(node_type)
                         if texture:
                             tile_rect = self._get_tile_rect(screen_x, screen_y)
                             renderer.copy(texture, dest=tile_rect)
+                    elif is_discovered and is_explored:
+                        # Discovered and explored but not currently visible - dimmed
+                        texture = self.tile_manager.get_tile(node_type)
+                        if texture:
+                            tile_rect = self._get_tile_rect(screen_x, screen_y)
+                            # Dim the texture for fog of war effect
+                            explored_tint = ColorManager.get_tint_color("explored")
+                            normal_tint = ColorManager.get_tint_color("normal")
+                            texture.color_mod = explored_tint
+                            renderer.copy(texture, dest=tile_rect)
+                            # Reset color mod
+                            texture.color_mod = normal_tint
 
         # Permanent upgrades
         for (world_x, world_y), upgrade_key in game.game_map.permanent_upgrades.items():

@@ -359,8 +359,9 @@ class GameEngine:
                     self.sound_manager.play_sound("ui_menu_open")
                     # Show dialogue - level transition happens on confirmation
                     from game_dialogue_system import create_gateway_dialogue
-                    if self.dialogue_state.should_show_dialogue(create_gateway_dialogue()):
-                        self.dialogue_state.show(create_gateway_dialogue())
+                    gateway_dialogue = create_gateway_dialogue(self.game_state.level)
+                    if self.dialogue_state.should_show_dialogue(gateway_dialogue):
+                        self.dialogue_state.show(gateway_dialogue)
                     # Don't progress immediately - wait for dialogue confirmation
                     return
 
