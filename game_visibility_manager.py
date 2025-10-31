@@ -14,6 +14,7 @@ This module provides:
 """
 
 import tcod
+from tcod import libtcodpy
 from typing import Set, Tuple, Optional
 from game_entities import Position
 import logging
@@ -179,22 +180,28 @@ class VisibilityManager:
         Returns:
             Set of (x, y) tuples for visible positions
         """
+        # Bounds check: if position is out of bounds, return empty set
+        if not (0 <= x < self.game_map.width and 0 <= y < self.game_map.height):
+            return set()
+
         # Use TCOD's FOV calculation
         transparency = self.game_map._get_transparency_map()
 
+        # CRITICAL: TCOD compute_fov expects pov=(y, x) not (x, y)!
         fov_array = tcod.map.compute_fov(
             transparency=transparency,
-            pov=(x, y),
+            pov=(y, x),
             radius=vision_range,
-            algorithm=tcod.FOV_DIAMOND
+            algorithm=libtcodpy.FOV_DIAMOND
         )
 
         # Convert to set of tuples for O(1) lookups
+        # CRITICAL: TCOD arrays are indexed [y, x] not [x, y]!
         visible_tiles = set()
         for fx in range(max(0, x - vision_range), min(self.game_map.width, x + vision_range + 1)):
             for fy in range(max(0, y - vision_range), min(self.game_map.height, y + vision_range + 1)):
                 if 0 <= fx < self.game_map.width and 0 <= fy < self.game_map.height:
-                    if fov_array[fx, fy]:
+                    if fov_array[fy, fx]:
                         visible_tiles.add((fx, fy))
 
         return visible_tiles

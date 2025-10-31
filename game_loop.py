@@ -128,7 +128,7 @@ def initialize_game_systems(settings: GameSettings, context, menu_background=Non
             tile_manager = None
 
     menus = {
-        'main_menu': MainMenu(background=menu_background),  # Pass background here
+        'main_menu': MainMenu(background=menu_background, settings=settings),  # Pass settings to hide Graphics Preview in glyph mode
         'settings_menu': SettingsMenu(settings, menu_background, sound_manager),  # Pass sound manager for live volume updates
         'help_menu': create_help_menu(settings, context, tile_manager),  # Use factory function
         'lore_menu': LoreMenu(),

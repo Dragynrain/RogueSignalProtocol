@@ -582,7 +582,7 @@ class InputHandler:
         self.game.look_mode = True
         # Initialize look cursor at player position
         self.game.look_cursor_position = Position(self.game.player.x, self.game.player.y)
-        self.game.message_log.add_message("Look mode - Move cursor to inspect, ESC or L to exit")
+        self.game.message_log.add_message("Look mode │ ↑↓←→ Move cursor to inspect │ ESC/L to exit")
         self.game.sound_manager.play_sound("ui_menu_open")
 
     def _handle_look_mode_input(self, event) -> bool:

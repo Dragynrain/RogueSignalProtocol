@@ -53,7 +53,7 @@ class AchievementsMenu:
         if len(all_lines) > self.max_visible_lines:
             total_pages = (len(all_lines) + self.max_visible_lines - 1) // self.max_visible_lines
             current_page = (self.scroll_offset // self.max_visible_lines) + 1
-            scroll_text = f"Page {current_page}/{total_pages}  (Up/Down to scroll)"
+            scroll_text = f"Page {current_page}/{total_pages}  │  ↑↓ Scroll  │  PgUp/PgDn: Fast scroll"
             render_char_safe(
                 console,
                 GameConfig.SCREEN_WIDTH // 2 - len(scroll_text) // 2,
@@ -63,7 +63,7 @@ class AchievementsMenu:
             )
 
         # Instructions
-        instructions = "Esc: Back"
+        instructions = "Esc: Back  │  Scroll Wheel ↕: Navigate"
         render_char_safe(
             console,
             2,
@@ -110,7 +110,7 @@ class AchievementsMenu:
                     color = Colors.DARK_GRAY
                 else:
                     # Show full details
-                    icon = "✓" if is_unlocked else "✗"
+                    icon = "[X]" if is_unlocked else "[ ]"
                     name = achievement.name
                     description = achievement.description
                     color = Colors.GREEN if is_unlocked else Colors.DARK_GRAY
