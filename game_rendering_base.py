@@ -135,42 +135,12 @@ class MapRendererBase:
         viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
         viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
 
-        # In look mode, allow camera to scroll gradually to show cursor
-        # Instead of centering on cursor (which jumps), nudge camera minimally
+        # In look mode, center camera on look cursor to allow exploring revealed distant areas
+        # (e.g., tiles revealed by Network Scan ability)
         if game and game.look_mode and hasattr(game, 'look_cursor_position'):
-            cursor_x = game.look_cursor_position.x
-            cursor_y = game.look_cursor_position.y
-
-            # Start with player-centered camera
-            player_camera_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                                        player.x - viewport_width // 2))
-            player_camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                                        player.y - viewport_height // 2))
-
-            # Check if cursor is outside the current viewport
-            cursor_viewport_x = cursor_x - player_camera_x
-            cursor_viewport_y = cursor_y - player_camera_y
-
-            # Scroll camera minimally to keep cursor visible with some margin
-            margin = 5  # Keep cursor at least 5 tiles from edge
-
-            # Adjust camera by minimum amount needed
-            adjust_x = 0
-            adjust_y = 0
-
-            if cursor_viewport_x < margin:
-                adjust_x = cursor_viewport_x - margin
-            elif cursor_viewport_x >= viewport_width - margin:
-                adjust_x = cursor_viewport_x - (viewport_width - margin - 1)
-
-            if cursor_viewport_y < margin:
-                adjust_y = cursor_viewport_y - margin
-            elif cursor_viewport_y >= viewport_height - margin:
-                adjust_y = cursor_viewport_y - (viewport_height - margin - 1)
-
-            # Apply minimal adjustment to camera (gradual scroll)
-            center_x = player.x + adjust_x
-            center_y = player.y + adjust_y
+            # Center on cursor position - allows free camera movement across the map
+            center_x = game.look_cursor_position.x
+            center_y = game.look_cursor_position.y
         else:
             # Normal mode: always center on player
             center_x = player.x

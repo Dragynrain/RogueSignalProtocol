@@ -41,6 +41,7 @@ class GameSettings:
         self.music_volume = 0.6
         self.graphics_mode = "graphics"  # "glyph" (CP437 characters) or "graphics" (PNG sprites)
         self.show_achievement_popups = True  # Show achievement unlock popups
+        self.ui_color = "cyan"  # UI theme color for borders/headers (cyan, purple, magenta, golden, crimson, azure, emerald)
         self.dialogue_preferences = {}  # Stores user preferences for dialogue visibility
         self.load_settings()
     
@@ -75,6 +76,7 @@ class GameSettings:
                     self.music_volume = settings_data.get("music_volume", 0.6)
                     self.graphics_mode = settings_data.get("graphics_mode", "graphics")
                     self.show_achievement_popups = settings_data.get("show_achievement_popups", True)
+                    self.ui_color = settings_data.get("ui_color", "cyan")
 
                     # Migrate old "ascii" setting to "glyph"
                     if self.graphics_mode == "ascii":
@@ -105,6 +107,7 @@ class GameSettings:
                 "music_volume": 0.6,
                 "graphics_mode": "graphics",
                 "show_achievement_popups": True,
+                "ui_color": "cyan",
                 "dialogue_preferences": {}
             }
             with open(self.SETTINGS_FILE, 'w') as f:
@@ -122,6 +125,7 @@ class GameSettings:
                 "music_volume": self.music_volume,
                 "graphics_mode": self.graphics_mode,
                 "show_achievement_popups": self.show_achievement_popups,
+                "ui_color": self.ui_color,
                 "dialogue_preferences": self.dialogue_preferences
             }
             with open(self.SETTINGS_FILE, 'w') as f:
@@ -161,6 +165,29 @@ class GameSettings:
             self.graphics_mode = mode
             logging.debug(f"Settings: graphics_mode changed {old_mode} → {mode}")
             self.save_settings()
+
+    def set_ui_color(self, color: str):
+        """Set UI theme color for borders/headers."""
+        valid_colors = ["cyan", "purple", "magenta", "golden", "crimson", "azure", "emerald", "ivory"]
+        if color in valid_colors:
+            old_color = self.ui_color
+            self.ui_color = color
+            logging.debug(f"Settings: ui_color changed {old_color} → {color}")
+            self.save_settings()
+
+    def get_ui_color_rgb(self) -> tuple:
+        """Get RGB values for current UI color."""
+        color_map = {
+            "cyan": (20, 255, 200),
+            "purple": (200, 60, 255),  # violet from game_rules.json
+            "magenta": (255, 20, 255),
+            "golden": (255, 240, 0),
+            "crimson": (255, 20, 80),
+            "azure": (0, 200, 255),
+            "emerald": (0, 255, 100),
+            "ivory": (245, 245, 235)
+        }
+        return color_map.get(self.ui_color, (20, 255, 200))  # Default to cyan
     
     def get_volume_percent(self, volume_type: str) -> int:
         """Get volume as percentage (0-100)"""

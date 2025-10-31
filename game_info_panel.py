@@ -20,6 +20,7 @@ from game_config import GameConfig
 from game_entities import Position, Colors
 from game_ui import render_char_safe
 from game_data import GameData
+from game_unicode_chars import GameGlyphs
 
 
 class InfoProvider:
@@ -285,9 +286,9 @@ class InfoProvider:
                     lines.append({'text': line, 'color': Colors.WHITE})
 
         return {
-            'title': 'SIGNAL TRACE',
+            'title': 'INFO PANEL',
             'lines': lines,
-            'color': entity_info['color']
+            'color': Colors.GREEN
         }
 
     @staticmethod
@@ -338,9 +339,9 @@ class InfoProvider:
             lines.append({'text': entity_info['details'], 'color': Colors.WHITE})
 
         return {
-            'title': 'SIGNAL TRACE',
+            'title': 'INFO PANEL',
             'lines': lines,
-            'color': entity_info['color']
+            'color': Colors.GREEN
         }
 
     @staticmethod
@@ -400,13 +401,14 @@ class InfoProvider:
         """
         lines = []
 
-        # Network level with name (if available)
+        # Network level with name (if available) - use separate lines for better readability
         if hasattr(game, 'game_state') and hasattr(game.game_state, 'level'):
             level = game.game_state.level
             try:
                 network_configs = GameConfig.get_network_configs()
                 network_name = network_configs.get(level, {}).get('name', f'Level {level}')
-                lines.append({'text': f'Level {level}: {network_name}', 'color': Colors.CYAN})
+                lines.append({'text': f'Level {level}', 'color': Colors.CYAN})
+                lines.append({'text': network_name, 'color': Colors.CYAN})
             except Exception:
                 lines.append({'text': f'Level {level}', 'color': Colors.CYAN})
         elif hasattr(game, 'level'):
@@ -446,10 +448,18 @@ class InfoProvider:
         if not lines:
             lines.append({'text': 'Hover to inspect', 'color': Colors.DARK_GRAY})
 
+        # Add "Press ? for help" near the bottom (2nd from bottom row)
+        # Panel height is 11 rows total, with ~8 content lines available
+        # Add blank lines to push help text to 2nd from bottom
+        while len(lines) < 7:
+            lines.append({'text': '', 'color': Colors.WHITE})
+
+        lines.append({'text': 'Press ? for help', 'color': Colors.DARK_GRAY})
+
         return {
-            'title': 'MISSION INFO',
+            'title': 'INFO PANEL',
             'lines': lines,
-            'color': Colors.ELECTRIC_PURPLE
+            'color': Colors.GREEN
         }
 
 
@@ -463,7 +473,7 @@ class InfoPanelRenderer:
     """
 
     @staticmethod
-    def render(console: tcod.console.Console, game):
+    def render(console: tcod.console.Console, game, ui_color=None):
         """
         Render the info panel with current context information.
 
@@ -474,7 +484,11 @@ class InfoPanelRenderer:
         Args:
             console: TCOD console to render to
             game: GameEngine instance
+            ui_color: Optional RGB tuple for border color (defaults to CYAN)
         """
+        if ui_color is None:
+            ui_color = Colors.CYAN
+
         panel_x = GameConfig.GAME_AREA_WIDTH()  # Start at 55 (same as system log border)
         panel_width = GameConfig.LOG_WIDTH - 1  # 24 chars (25 - 1 for border)
         panel_height = GameConfig.INFO_PANEL_HEIGHT
@@ -489,8 +503,8 @@ class InfoPanelRenderer:
             for x in range(panel_x, GameConfig.SCREEN_WIDTH):
                 render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
 
-        # Render border
-        InfoPanelRenderer._render_border(console, panel_x, 0, panel_width, panel_height, info['title'])
+        # Render border with UI color
+        InfoPanelRenderer._render_border(console, panel_x, 0, panel_width, panel_height, info['title'], ui_color)
 
         # Render content
         content_y = 2  # Start after header
@@ -511,7 +525,7 @@ class InfoPanelRenderer:
             content_y += 1
 
     @staticmethod
-    def _render_border(console: tcod.console.Console, x: int, y: int, width: int, height: int, title: str):
+    def _render_border(console: tcod.console.Console, x: int, y: int, width: int, height: int, title: str, ui_color=None):
         """
         Render bordered box with title for info panel.
 
@@ -522,8 +536,11 @@ class InfoPanelRenderer:
             width: Width of border (inside width, not including border chars)
             height: Height of border
             title: Title text to display in header
+            ui_color: Optional RGB tuple for border color (defaults to CYAN)
         """
-        border_color = Colors.ELECTRIC_PURPLE
+        if ui_color is None:
+            ui_color = Colors.CYAN
+        border_color = ui_color
 
         # Top border with title
         render_char_safe(console, x, y, '╔', fg=border_color, bg=Colors.LOG_BG)
@@ -541,13 +558,14 @@ class InfoPanelRenderer:
 
         render_char_safe(console, x + width + 1, y, '╗', fg=border_color, bg=Colors.LOG_BG)
 
-        # Side borders
-        for row_y in range(1, height - 1):
-            render_char_safe(console, x, y + row_y, '║', fg=border_color, bg=Colors.LOG_BG)
+        # Side borders (no bottom border - SYSTEM LOG line serves as separator)
+        for row_y in range(1, height):
+            # Left side: check for T-intersection with status bar at row 1
+            if y + row_y == 1:
+                # T-piece where status bar horizontal meets info panel left border (╣ points left)
+                # Lines from: LEFT (status bar), UP (border), DOWN (border)
+                render_char_safe(console, x, y + row_y, GameGlyphs.WALL_T_LEFT, fg=border_color, bg=Colors.LOG_BG)
+            else:
+                render_char_safe(console, x, y + row_y, '║', fg=border_color, bg=Colors.LOG_BG)
+            # Right side: always vertical
             render_char_safe(console, x + width + 1, y + row_y, '║', fg=border_color, bg=Colors.LOG_BG)
-
-        # Bottom border
-        render_char_safe(console, x, y + height - 1, '╚', fg=border_color, bg=Colors.LOG_BG)
-        for i in range(1, width + 1):
-            render_char_safe(console, x + i, y + height - 1, '═', fg=border_color, bg=Colors.LOG_BG)
-        render_char_safe(console, x + width + 1, y + height - 1, '╝', fg=border_color, bg=Colors.LOG_BG)
