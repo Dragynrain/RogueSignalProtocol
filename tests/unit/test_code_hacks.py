@@ -19,10 +19,9 @@ class TestCodeHackEffects(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up real config for all tests."""
-        # Load real config once for all tests
-        GameConfig._config_data = None
-        GameConfig.load_from_json()
-        GameBalance.load_from_json()
+        # Config already loaded by session fixture in conftest.py
+        # No need to reload here - saves ~50ms per test class
+        pass
 
     def setUp(self):
         """Set up test fixtures."""
