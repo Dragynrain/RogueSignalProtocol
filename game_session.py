@@ -761,7 +761,11 @@ class GameSession:
 
         if self.game_engine.level > 3:
             logging.debug(f"Session: VICTORY - All levels completed")
-            self.game_engine.sound_manager.play_music("victory.ogg", loops=1)
+
+            # Stop level music and play victory music (one-shot, no loop)
+            self.game_engine.sound_manager.stop_music(fade_out_ms=500)
+            self.game_engine.sound_manager.play_music("victory.wav", loops=0)  # loops=0 = play once
+
             self.game_engine.message_log.add_message_typed("BREAKTHROUGH TO THE INTERNET!", 'green')
             self.game_engine.message_log.add_message("You've become the rogue signal they couldn't delete...")
             self.game_engine.message_log.add_message("The network is vast. The future, uncertain. But you're free.")
@@ -787,9 +791,9 @@ class GameSession:
             # Delete save on game completion (no continuing after winning)
             SaveGameManager.delete_save()
             self.game_engine.message_log.add_message("Mission complete - save data purged")
-            # Show victory dialogue
-            from game_dialogue_system import create_victory_dialogue
-            self.game_engine.dialogue_state.show(create_victory_dialogue())
+
+            # Set victory flag to trigger victory screen in game loop
+            self.game_engine.game_state.show_victory_screen = True
         else:
             # Add level transition flavor text
             from data_loading import get_level_transition_messages

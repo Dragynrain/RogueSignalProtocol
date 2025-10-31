@@ -139,6 +139,7 @@ class GameStateManager:
         self.level: int = 1
         self.turn: int = 0
         self.game_over: bool = False
+        self.show_victory_screen: bool = False
         self.admin_spawned: bool = False
         self.dungeon_seed: int = random.randint(1, GameConfig.DUNGEON_SEED_RANGE)
         self.just_loaded: bool = False  # Flag to prevent immediate enemy state updates after load

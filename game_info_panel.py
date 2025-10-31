@@ -386,8 +386,10 @@ class InfoProvider:
         Get default info to display when nothing is hovered.
 
         Shows:
+        - Network level with name
         - Turn counter
-        - Time elapsed (if available)
+        - Trace/detection level
+        - Enemies remaining
         - Current streak (if any)
 
         Args:
@@ -398,15 +400,31 @@ class InfoProvider:
         """
         lines = []
 
+        # Network level with name (if available)
+        if hasattr(game, 'game_state') and hasattr(game.game_state, 'level'):
+            level = game.game_state.level
+            try:
+                network_configs = GameConfig.get_network_configs()
+                network_name = network_configs.get(level, {}).get('name', f'Level {level}')
+                lines.append({'text': f'Level {level}: {network_name}', 'color': Colors.CYAN})
+            except Exception:
+                lines.append({'text': f'Level {level}', 'color': Colors.CYAN})
+        elif hasattr(game, 'level'):
+            # Fallback to old attribute name
+            lines.append({'text': f'Level {game.level}', 'color': Colors.CYAN})
+
         # Turn counter (if available)
-        if hasattr(game, 'turn_count'):
-            lines.append({'text': f'Turn: {game.turn_count}', 'color': Colors.WHITE})
+        if hasattr(game, 'turn'):
+            lines.append({'text': f'Turns Elapsed: {game.turn}', 'color': Colors.WHITE})
+        elif hasattr(game, 'turn_count'):
+            lines.append({'text': f'Turns Elapsed: {game.turn_count}', 'color': Colors.WHITE})
 
-        # Network level (if available)
-        if hasattr(game, 'level'):
-            lines.append({'text': f'Level: {game.level}', 'color': Colors.CYAN})
+        # Enemies remaining
+        if hasattr(game, 'enemy_manager') and hasattr(game.enemy_manager, 'enemies'):
+            enemy_count = len(game.enemy_manager.enemies)
+            lines.append({'text': f'Hostiles: {enemy_count}', 'color': Colors.ORANGE})
 
-        # Add blank line only if we added content
+        # Add blank line before streaks
         if lines:
             lines.append({'text': '', 'color': Colors.WHITE})
 

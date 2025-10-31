@@ -124,13 +124,17 @@ class TestVictoryFixes(unittest.TestCase):
         self.engine.level = 3
 
         with patch.object(self.engine.sound_manager, 'play_music') as mock_play_music, \
+             patch.object(self.engine.sound_manager, 'stop_music') as mock_stop_music, \
              patch.object(SaveGameManager, 'delete_save'):
 
             # Trigger victory
             self.engine.next_level()
 
-            # Should have played victory music
-            mock_play_music.assert_called_with("victory.ogg", loops=1)
+            # Should have stopped level music
+            mock_stop_music.assert_called_with(fade_out_ms=500)
+
+            # Should have played victory music (one-shot WAV file)
+            mock_play_music.assert_called_with("victory.wav", loops=0)
 
     def test_victory_state_prevents_further_gameplay(self):
         """Test that victory state properly ends the game."""

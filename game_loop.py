@@ -592,7 +592,51 @@ def main():
                 last_render_time = time.time()
                 render_interval = 1.0 / 30.0  # 30 FPS for smooth pulsing animation
 
+                # Victory screen handling
+                victory_screen = None
+                victory_background = None
+
                 while game is not None:
+                    # Check if victory screen should be shown
+                    if game.game_state.show_victory_screen and victory_screen is None:
+                        # Create victory background with ending art
+                        victory_background = MenuBackground(context, settings, art_directory="ending")
+                        victory_background.load_random_background()
+
+                        # Import and create victory screen
+                        from game_victory_screen import VictoryScreen
+                        victory_screen = VictoryScreen(background=victory_background)
+
+                        logging.info("Victory screen initialized")
+
+                    # If victory screen is active, render it instead of the game
+                    if victory_screen is not None:
+                        try:
+                            # Render victory background
+                            if victory_background and victory_background.should_load_background():
+                                victory_background.render_background(console)
+
+                            # Render victory screen
+                            victory_screen.render(console)
+                            context.present(console)
+
+                            # Handle victory screen input
+                            for event in tcod.event.wait():
+                                if event.type == "QUIT":
+                                    return  # Exit program
+                                elif victory_screen.handle_input(event):
+                                    # Victory screen dismissed - return to main menu
+                                    logging.info("Victory screen dismissed - returning to main menu")
+                                    victory_background.cleanup()
+                                    game = None
+                                    break
+                        except Exception as e:
+                            log_exception(e, "Victory screen rendering/input")
+                            # On error, return to main menu
+                            if victory_background:
+                                victory_background.cleanup()
+                            game = None
+                        continue  # Skip normal game loop processing
                     try:
                         game.sound_manager.update()
 
