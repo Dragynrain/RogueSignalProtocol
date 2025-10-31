@@ -138,11 +138,31 @@ class GameSession:
             self.game_engine.game_over = True
             # Delete save on death (permadeath)
             if not hasattr(self, '_death_handled'):
+                # Determine death cause for analytics
+                player = self.game_engine.player
+                death_cause = "combat"  # Default
+                if player.heat >= player.max_heat:
+                    death_cause = "overheat"
+                elif player.temporary_effects.get('virus_turns', 0) > 0:
+                    death_cause = "virus"
+
+                # Alpha Testing: Death analytics
+                logging.warning("="*80)
+                logging.warning(f"💀 PLAYER DEATH - {death_cause.upper()}")
+                logging.warning(f"Level: {self.game_engine.level}, Turn: {self.game_engine.turn}")
+                logging.warning(f"Position: ({player.x},{player.y})")
+                logging.warning(f"Final CPU: {player.cpu}/{player.max_cpu}")
+                logging.warning(f"Final Heat: {player.heat}/{player.max_heat}")
+                logging.warning(f"Trace Level: {player.trace_level}")
+                logging.warning(f"Active Virus: {player.temporary_effects.get('virus_turns', 0)} turns")
+                logging.warning(f"Enemies nearby: {len([e for e in self.game_engine.game_map.enemies if abs(e.x - player.x) < 10 and abs(e.y - player.y) < 10])}")
+                logging.warning("="*80)
+
                 # Finalize and save metrics before deleting save
                 from game_metrics import finalize_session, save_metrics, load_lifetime_metrics
                 metrics = finalize_session(
                     victory=False,
-                    death_cause="combat",  # Could be refined to distinguish overheat/trace
+                    death_cause=death_cause,
                     death_level=self.game_engine.level
                 )
                 if metrics:
@@ -764,11 +784,27 @@ class GameSession:
         from game_metrics import track
         track("levels_completed")
 
+        # Alpha Testing: Level completion analytics
+        player = self.game_engine.player
+        enemies_remaining = len(self.game_engine.game_map.enemies)
+        logging.info("="*80)
+        logging.info(f"✅ LEVEL {old_level} COMPLETED")
+        logging.info(f"Turn: {self.game_engine.turn}")
+        logging.info(f"Player CPU: {player.cpu}/{player.max_cpu}")
+        logging.info(f"Player Heat: {player.heat}/{player.max_heat}")
+        logging.info(f"Trace Level: {player.trace_level:.1f}")
+        logging.info(f"Equipped Exploits: {len([e for e in player.inventory_manager.equipped_exploits if e])}/3")
+        logging.info(f"Enemies Remaining: {enemies_remaining}")
+        logging.info("="*80)
+
         self.game_engine.level += 1
-        logging.debug(f"Session: Level progression: {old_level} → {self.game_engine.level}, turn={self.game_engine.turn}, player_cpu={self.game_engine.player.cpu}/{self.game_engine.player.max_cpu}")
 
         if self.game_engine.level > 3:
-            logging.debug(f"Session: VICTORY - All levels completed")
+            logging.warning("="*80)
+            logging.warning("🏆 VICTORY - All levels completed!")
+            logging.warning(f"Total turns: {self.game_engine.turn}")
+            logging.warning(f"Final trace: {player.trace_level:.1f}%")
+            logging.warning("="*80)
 
             # Stop level music and play victory music (one-shot, no loop)
             self.game_engine.sound_manager.stop_music(fade_out_ms=500)

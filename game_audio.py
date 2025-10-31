@@ -220,8 +220,6 @@ class SoundManager:
         final_volume = self.settings.sfx_volume * self.settings.master_volume * volume_modifier
         sound.set_volume(final_volume)
 
-        logging.debug(f"Audio: Playing sound '{sound_id}' (volume={final_volume:.2f}, priority={priority})")
-
         # Find available channel for simultaneous playback
         channel = pygame.mixer.find_channel()
 

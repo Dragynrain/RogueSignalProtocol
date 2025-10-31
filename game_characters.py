@@ -1033,7 +1033,6 @@ class Enemy:
 
             # Skip if already at/very close to this waypoint (within adjacency threshold)
             if start_pos.distance_to(next_waypoint) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
-                logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): Skipping waypoint {next_index} (already there), trying next")
                 continue
 
             # Calculate path to next waypoint

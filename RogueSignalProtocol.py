@@ -100,8 +100,13 @@ logging.basicConfig(
 
 # Log the startup mode
 if DEBUG_MODE:
+    logging.info("="*80)
+    logging.info("🎮 GAME SESSION START")
+    logging.info("="*80)
     logging.info("Game started in DEBUG mode (Alpha build for playtesters)")
     logging.info(f"Log file: game_debug.log")
+    logging.info(f"Python version: {__import__('sys').version}")
+    logging.info(f"TCOD version: {tcod.__version__}")
     # Force flush to ensure it's written
     for handler in logging.root.handlers:
         handler.flush()

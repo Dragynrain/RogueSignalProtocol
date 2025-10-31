@@ -287,7 +287,16 @@ class TurnProcessor:
                         self.message_log.add_message("Save data purged")
                         self.game_state.game_over = True
 
-                        logging.debug(f"Turn: Player death from virus")
+                        # Alpha Testing: Death analytics
+                        logging.warning("="*80)
+                        logging.warning("💀 PLAYER DEATH - VIRUS")
+                        logging.warning(f"Level: {self.game_state.current_level}, Turn: {self.game_state.turn}")
+                        logging.warning(f"Position: ({player.x},{player.y})")
+                        logging.warning(f"Final CPU: {player.cpu}/{player.max_cpu}")
+                        logging.warning(f"Final Heat: {player.heat}/{player.max_heat}")
+                        logging.warning(f"Trace Level: {player.trace_level}")
+                        logging.warning(f"Virus damage per turn: {virus_damage}")
+                        logging.warning("="*80)
                         return  # Exit early if player dies
 
                 # Now decrement the counter
