@@ -258,7 +258,7 @@ class TileManager:
 
         return None
 
-    def get_tile(self, entity_name: str) -> Optional[tcod.sdl.render.Texture]:
+    def get_tile(self, entity_name: str, fail_silently: bool = False) -> Optional[tcod.sdl.render.Texture]:
         """
         Get tile texture for an entity (cached or load on-demand).
 
@@ -266,19 +266,31 @@ class TileManager:
 
         Args:
             entity_name: Name of entity
+            fail_silently: If False, raise exception on missing textures (default)
+                          If True, return None for backwards compatibility
 
         Returns:
-            SDL texture if available, None if no sprite or load failed
+            SDL texture if available, None if no sprite or load failed (only if fail_silently=True)
+
+        Raises:
+            RuntimeError: If texture cannot be loaded and fail_silently=False
         """
         # Check cache first
         if entity_name in self.texture_cache:
-            return self.texture_cache[entity_name]
+            cached = self.texture_cache[entity_name]
+            if cached is None and not fail_silently:
+                raise RuntimeError(f"Failed to load required texture: {entity_name}")
+            return cached
 
         # Not in cache - try to load
         texture = self.load_tile(entity_name)
 
         # Cache result (even if None, to avoid repeated load attempts)
         self.texture_cache[entity_name] = texture
+
+        # Fail fast on missing critical textures
+        if texture is None and not fail_silently:
+            raise RuntimeError(f"Failed to load required texture: {entity_name}")
 
         return texture
 

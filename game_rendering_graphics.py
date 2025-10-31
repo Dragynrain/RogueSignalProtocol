@@ -17,6 +17,7 @@ from data_loading import DataLoader
 from game_rendering_base import MapRendererBase
 from game_color_manager import ColorManager
 from game_unicode_chars import GameGlyphs
+from game_color_thresholds import ColorThresholdManager
 
 
 class GraphicsMapRenderer(MapRendererBase):
@@ -60,7 +61,7 @@ class GraphicsMapRenderer(MapRendererBase):
                     distance = game.player.position.distance_to(world_pos)
                     can_see = distance <= vision_range
                 else:
-                    can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+                    can_see = (world_pos.x, world_pos.y) in game.visible_tiles
 
                 # Check if tile has been explored (for fog of war)
                 explored = (world_x, world_y) in game.game_map.explored_tiles
@@ -78,15 +79,15 @@ class GraphicsMapRenderer(MapRendererBase):
                         tile_rect = self._get_tile_rect(console_x, console_y)
                         renderer.copy(texture, dest=tile_rect)
                     else:
-                        # Log first few missing textures for debugging
-                        if console_x < 2 and console_y < 3:
-                            if game.game_map.is_wall(world_pos):
-                                terrain_type = "wall"
-                            elif game.game_map.is_shadow(world_pos):
-                                terrain_type = "shadow"
-                            else:
-                                terrain_type = "floor"
-                            logging.warning(f"Missing texture for {terrain_type} at console ({console_x},{console_y})")
+                        # Fail fast on missing textures - better for debugging
+                        if game.game_map.is_wall(world_pos):
+                            terrain_type = "wall"
+                        elif game.game_map.is_shadow(world_pos):
+                            terrain_type = "shadow"
+                        else:
+                            terrain_type = "floor"
+                        logging.error(f"CRITICAL: Missing required texture for {terrain_type} - graphics mode cannot continue")
+                        raise RuntimeError(f"Missing required texture: {terrain_type}")
                 elif explored:
                     # Explored but not currently visible - dimmed (fog of war)
                     # Check for undiscovered special nodes - render as floor instead of shadow
@@ -126,7 +127,7 @@ class GraphicsMapRenderer(MapRendererBase):
                 distance = game.player.position.distance_to(world_pos)
                 can_see = distance <= vision_range
             else:
-                can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+                can_see = (world_pos.x, world_pos.y) in game.visible_tiles
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
                 console_x, console_y = self._world_to_console(world_x, world_y, camera_offset)
@@ -162,7 +163,7 @@ class GraphicsMapRenderer(MapRendererBase):
                 distance = game.player.position.distance_to(world_pos)
                 can_see = distance <= vision_range
             else:
-                can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+                can_see = (world_pos.x, world_pos.y) in game.visible_tiles
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
                 screen_x = world_x - camera_offset.x
@@ -204,7 +205,7 @@ class GraphicsMapRenderer(MapRendererBase):
                     distance = game.player.position.distance_to(world_pos)
                     can_see = distance <= vision_range
                 else:
-                    can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+                    can_see = (world_pos.x, world_pos.y) in game.visible_tiles
 
                 pos_tuple = (world_x, world_y)
                 is_explored = pos_tuple in game.game_map.explored_tiles
@@ -255,7 +256,7 @@ class GraphicsMapRenderer(MapRendererBase):
                 distance = game.player.position.distance_to(world_pos)
                 can_see = distance <= vision_range
             else:
-                can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+                can_see = (world_pos.x, world_pos.y) in game.visible_tiles
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
                 screen_x = world_x - camera_offset.x
@@ -281,7 +282,7 @@ class GraphicsMapRenderer(MapRendererBase):
                 distance = game.player.position.distance_to(world_pos)
                 can_see = distance <= vision_range
             else:
-                can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+                can_see = (world_pos.x, world_pos.y) in game.visible_tiles
 
             if can_see and self._is_in_viewport(world_x, world_y, camera_offset):
                 screen_x = world_x - camera_offset.x
@@ -412,7 +413,7 @@ class GraphicsMapRenderer(MapRendererBase):
                         distance = game.player.position.distance_to(world_pos)
                         can_see = distance <= vision_range
                     else:
-                        can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+                        can_see = (world_pos.x, world_pos.y) in game.visible_tiles
 
                     if can_see:
                         # Render special nodes
@@ -474,19 +475,18 @@ class GraphicsMapRenderer(MapRendererBase):
             player_screen_x = game.player.x - camera_offset.x
             player_screen_y = game.player.y - camera_offset.y + 1
 
-            # Check for various player status effects (matching glyphs mode priority)
+            # Check for various player status effects (using centralized thresholds)
             status_color = None
-            # Priority 1: Critical status - Red
-            if game.player.cpu < 30 or game.player.heat > 80 or game.player.trace_level > 75:
+            player_color = ColorThresholdManager.get_player_color(game.player)
+
+            # Map the color from ColorThresholdManager to status colors for outline
+            if player_color == Colors.RED:
                 status_color = Colors.RED
-            # Priority 2: Invisibility - Yellow
-            elif game.player.is_invisible():
+            elif player_color == Colors.YELLOW:
                 status_color = ColorManager.get("status_effects", "invisible")
-            # Priority 3: Virus - Green
-            elif game.player.temporary_effects['virus_turns'] > 0:
+            elif player_color == ColorManager.get("status_effects", "virus"):
                 status_color = ColorManager.get("status_effects", "virus")
-            # Priority 4: Movement slow - Cyan
-            elif game.player.temporary_effects['movement_slowed_turns'] > 0:
+            elif player_color == Colors.CYAN:
                 status_color = ColorManager.get("status_effects", "slow")
 
             if status_color:
