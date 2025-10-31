@@ -227,7 +227,7 @@ class GraphicalHelpMenu:
 
                 # Left column - Controls & Objective
                 (2, 5, "CONTROLS:", Colors.CYAN),
-                (2, 6, "Move: Arrows/WASD/Numpad", Colors.WHITE),
+                (2, 6, "Move: ↑↓←→/WASD/Numpad", Colors.WHITE),
                 (2, 7, "1-5: Use exploits", Colors.WHITE),
                 (2, 8, "I: Inventory", Colors.WHITE),
                 (2, 9, "L: Look mode", Colors.WHITE),

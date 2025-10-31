@@ -54,8 +54,8 @@ class TestAchievementsMenuBasic:
         lines = menu._build_achievement_lines()
 
         # Should have lines for all 25 achievements (not counting category headers and blank lines)
-        # Count achievement lines (those with icons like ✓, ✗, or 🔒 for hidden)
-        achievement_lines = [line for line in lines if '✓' in line['text'] or '✗' in line['text'] or '🔒' in line['text']]
+        # Count achievement lines (those with icons like [X], [ ], or 🔒 for hidden)
+        achievement_lines = [line for line in lines if '[X]' in line['text'] or '[ ]' in line['text'] or '🔒' in line['text']]
         assert len(achievement_lines) == 25, f"Expected 25 achievements, found {len(achievement_lines)}"
 
     def test_text_wrapping(self):
@@ -231,7 +231,7 @@ class TestAchievementsMenuIntegration:
                 break
 
         assert first_blood_line is not None
-        assert '✓' in first_blood_line['text']  # Should have checkmark
+        assert '[X]' in first_blood_line['text']  # Should have checked checkbox
         # Note: color will be Colors.GREEN tuple, we can't easily test exact color
 
         # Clean up
@@ -253,7 +253,7 @@ class TestAchievementsMenuIntegration:
                 break
 
         assert first_blood_line is not None
-        assert '✗' in first_blood_line['text']  # Should have X mark
+        assert '[ ]' in first_blood_line['text']  # Should have unchecked checkbox
 
     def test_menu_shows_progress_count(self):
         """Test menu displays unlock progress in title."""

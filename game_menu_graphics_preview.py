@@ -330,8 +330,8 @@ class GraphicsPreviewMenu:
 
         # Instructions
         instructions = [
-            "UP/DOWN or W/S: Select entity type",
-            "LEFT/RIGHT or A/D: Change variant",
+            "↑↓ or W/S: Select entity type",
+            "←→ or A/D: Change variant",
             "SPACE: Cycle alert ring color",
             "ESC: Exit and save log",
         ]

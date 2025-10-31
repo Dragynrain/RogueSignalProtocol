@@ -88,14 +88,14 @@ class LoreMenu:
 
             is_selected = (i == self.lore_viewer_selection)
             color = Colors.CYAN if is_selected else Colors.WHITE
-            prefix = "> " if is_selected else "  "
+            prefix = "▶ " if is_selected else "  "
 
             # Show first line of fragment as title
             first_line = fragment_text.split('\n')[0][:60]
             render_char_safe(console, 2, start_y + i, f"{prefix}Fragment {fragment_index + 1}: {first_line}", fg=color)
 
         # Instructions
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 4, "Up/Down: Navigate  Enter: Read  Esc: Back", fg=Colors.LIGHT_GRAY)
+        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 4, "↑↓ Navigate │ Enter: Read │ Esc: Back", fg=Colors.LIGHT_GRAY)
     
     def _render_reading_mode(self, console, discovered_fragments):
         """Render individual fragment for reading."""
@@ -297,8 +297,8 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("MOVEMENT & CONTROLS:", Colors.CYAN),
-            ("  Arrow Keys, WASD, or Numpad: Move/Navigate", Colors.WHITE),
-            ("  Mouse: Click adjacent tiles to move, hover/click menus", Colors.WHITE),
+            ("  ↑↓←→, WASD, or Numpad: Move/Navigate", Colors.WHITE),
+            ("  Mouse: Click tiles to move, hover/click menus", Colors.WHITE),
             ("  1-5: Use loaded exploits (requires targeting)", Colors.WHITE),
             ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
             ("  L: Look mode (examine map and entities)", Colors.WHITE),
@@ -308,25 +308,25 @@ class HelpMenu:
             ("", Colors.WHITE),
 
             ("MOUSE CONTROLS:", Colors.CYAN),
-            ("  Left Click: Move (adjacent tiles), select/activate options", Colors.WHITE),
+            ("  Left Click: Move (adjacent tiles), select/activate", Colors.WHITE),
             ("  Right Click: Cancel/exit current mode", Colors.WHITE),
-            ("  Hover: Update cursor position in look/targeting modes", Colors.WHITE),
-            ("  Scroll Wheel: Navigate lists (inventory, lore, etc.)", Colors.WHITE),
+            ("  Hover: Update cursor position (look/targeting)", Colors.WHITE),
+            ("  Scroll Wheel ↕: Navigate lists (inventory, lore)", Colors.WHITE),
             ("", Colors.WHITE),
 
             ("LOOK MODE:", Colors.CYAN),
             ("  L or ESC: Exit look mode", Colors.WHITE),
-            ("  Arrow Keys, WASD, Numpad, or Mouse: Move cursor", Colors.WHITE),
+            ("  ↑↓←→, WASD, Numpad, or Mouse: Move cursor", Colors.WHITE),
             ("  Inspect enemies, items, terrain, and nodes", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("MAP SYMBOLS:", Colors.CYAN),
-            ("  ☺: Player (you)", Colors.WHITE),
-            ("  •: Empty floor (passable)", Colors.FLOOR),
-            ("  ╔╗╚╝╦╩╠╣╬═║: Walls (impassable)", Colors.WALL),
-            ("  ◘: Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
-            ("  >: Gateway to next level", Colors.GATEWAY),
-            ("  ♫: Data fragments (story/lore)", Colors.CYAN),
+            ("  ☺  Player (you)", Colors.WHITE),
+            ("  •  Empty floor (passable)", Colors.FLOOR),
+            ("  ╔╗╚╝╦╩╠╣╬═║  Walls (impassable)", Colors.WALL),
+            ("  ◘  Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
+            ("  >  Gateway to next level", Colors.GATEWAY),
+            ("  ♫  Data fragments (story/lore)", Colors.CYAN),
             ("", Colors.WHITE),
             
             ("ENEMY TYPES (HP, Vision, Behavior, Damage):", Colors.CYAN),
@@ -341,12 +341,12 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("ITEMS & PICKUPS:", Colors.CYAN),
-            ("  §: Code Patches (grant random bonuses, restore stats)", Colors.ELECTRIC_PURPLE),
-            ("  &: Exploits (combat & utility abilities)", NEON_PINK),
-            ("  ○: Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
-            ("  ♥: CPU recovery nodes (restore health)", Colors.RED),
-            ("  ♦: Cooling nodes (reduce heat)", Colors.CYAN),
-            ("  ♠: Ghost nodes (reduce trace level)", Colors.ELECTRIC_PURPLE),
+            ("  §  Code Patches (grant random bonuses)", Colors.ELECTRIC_PURPLE),
+            ("  &  Exploits (combat & utility abilities)", NEON_PINK),
+            ("  ○  Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
+            ("  ♥  CPU recovery nodes (restore health)", Colors.RED),
+            ("  ♦  Cooling nodes (reduce heat)", Colors.CYAN),
+            ("  ♠  Ghost nodes (reduce trace level)", Colors.ELECTRIC_PURPLE),
             ("", Colors.WHITE),
             
             ("CORE MECHANICS:", Colors.CYAN),

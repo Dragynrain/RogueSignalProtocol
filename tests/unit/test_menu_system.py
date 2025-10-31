@@ -30,23 +30,41 @@ class TestMainMenu:
     def test_main_menu_initialization_with_save_exists(self):
         """MainMenu initializes correctly when save file exists."""
         with patch.object(SaveGameManager, 'save_exists', return_value=True):
+            # Without settings (glyph mode), Graphics Preview is hidden
             menu = MainMenu()
             assert menu.selected_option == 0
             assert "Continue Game" in menu.options
             assert "New Game" in menu.options
-            assert len(menu.options) == 8  # Continue, New, Settings, Help, Achievements, Lore, Graphics Preview, Exit
+            assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
+            assert len(menu.options) == 7  # Continue, New, Settings, Help, Achievements, Data Fragments, Exit
             assert menu.show_warning is False
+
+            # With graphics mode settings, Graphics Preview is shown
+            mock_settings = Mock()
+            mock_settings.graphics_mode = "graphics"
+            menu_graphics = MainMenu(settings=mock_settings)
+            assert "Graphics Preview" in menu_graphics.options
+            assert len(menu_graphics.options) == 8  # Includes Graphics Preview
 
     def test_main_menu_initialization_no_save(self):
         """MainMenu initializes correctly when no save file exists."""
         with patch.object(SaveGameManager, 'save_exists', return_value=False):
+            # Without settings (glyph mode), Graphics Preview is hidden
             menu = MainMenu()
             assert menu.selected_option == 0
             assert "Continue Game" not in menu.options
             assert "New Game" in menu.options
-            assert len(menu.options) == 7  # New, Settings, Help, Achievements, Lore, Graphics Preview, Exit
+            assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
+            assert len(menu.options) == 6  # New, Settings, Help, Achievements, Data Fragments, Exit
             assert isinstance(menu.options, list)
             assert menu.show_warning is False
+
+            # With graphics mode settings, Graphics Preview is shown
+            mock_settings = Mock()
+            mock_settings.graphics_mode = "graphics"
+            menu_graphics = MainMenu(settings=mock_settings)
+            assert "Graphics Preview" in menu_graphics.options
+            assert len(menu_graphics.options) == 7  # Includes Graphics Preview
 
     def test_refresh_options_with_continue(self):
         """refresh_options() correctly adds continue option when save exists."""

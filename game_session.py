@@ -181,10 +181,18 @@ class GameSession:
                             self.game_engine.game_map.explored_tiles.add((x, y))
         else:
             # Use TCOD FOV for proper line of sight
+            # Bounds check: ensure player position is valid before computing FOV
+            player_x = self.game_engine.player.x
+            player_y = self.game_engine.player.y
+
+            if not (0 <= player_x < GameConfig.MAP_WIDTH and 0 <= player_y < GameConfig.MAP_HEIGHT):
+                # Player is out of bounds, skip FOV calculation
+                return
+
             transparency = self.game_engine.game_map._get_transparency_map()
             fov = tcod.map.compute_fov(
                 transparency=transparency,
-                pov=(self.game_engine.player.y, self.game_engine.player.x),
+                pov=(player_y, player_x),
                 radius=vision_range,
                 algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST
             )
