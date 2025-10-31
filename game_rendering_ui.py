@@ -22,6 +22,7 @@ from game_ui import render_char_safe
 from game_menu_help_lore import create_help_menu
 from data_loading import get_story_fragments
 from game_screen_utilities import ScreenRenderingUtils, ScrollableListManager
+from game_color_thresholds import ColorThresholdManager
 
 
 class UIRenderer:
@@ -74,10 +75,10 @@ class UIRenderer:
         for x in range(GameConfig.SCREEN_WIDTH):
             render_char_safe(console, x, 0, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
 
-        # Color coding for status values
-        cpu_color = self._get_cpu_color(game.player.cpu)
-        heat_color = self._get_heat_color(game.player.heat)
-        trace_color = self._get_trace_color(game.player.trace_level)
+        # Color coding for status values (using centralized thresholds)
+        cpu_color = ColorThresholdManager.get_cpu_color(game.player.cpu)
+        heat_color = ColorThresholdManager.get_heat_color(game.player.heat)
+        trace_color = ColorThresholdManager.get_trace_color(game.player.trace_level)
         ram_color = Colors.RED if game.player.ram_used > game.player.ram_total else Colors.GREEN
 
         # Build status line (only left side stats - help text goes in log panel)
@@ -96,33 +97,6 @@ class UIRenderer:
             if x_pos + len(part) < GameConfig.GAME_AREA_WIDTH() - 1:
                 render_char_safe(console, x_pos, 0, part, fg=color, bg=Colors.UI_BG)
                 x_pos += len(part) + 2
-
-    def _get_cpu_color(self, cpu: int) -> Tuple[int, int, int]:
-        """Get threshold-based color for CPU display (red <30, yellow <60, green ≥60)."""
-        if cpu < 30:
-            return Colors.RED
-        elif cpu < 60:
-            return Colors.YELLOW
-        else:
-            return Colors.GREEN
-
-    def _get_heat_color(self, heat: int) -> Tuple[int, int, int]:
-        """Get threshold-based color for heat display (red >80, yellow >60, green ≤60)."""
-        if heat > 80:
-            return Colors.RED
-        elif heat > 60:
-            return Colors.YELLOW
-        else:
-            return Colors.GREEN
-
-    def _get_trace_color(self, trace_level: float) -> Tuple[int, int, int]:
-        """Get threshold-based color for trace display (red >75, yellow >50, green ≤50)."""
-        if trace_level > 75:
-            return Colors.RED
-        elif trace_level > 50:
-            return Colors.YELLOW
-        else:
-            return Colors.GREEN
 
     def render_bottom_panel(self, console: tcod.console.Console, game):
         """

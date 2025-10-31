@@ -34,6 +34,7 @@ from game_input import InputHandler
 from game_session import GameSession
 from game_dialogue_system import DialogueState
 from game_achievement_popups import AchievementPopupManager
+from game_visibility_manager import VisibilityManager
 
 
 class GameEngine:
@@ -77,6 +78,7 @@ class GameEngine:
         # Initialize core dependencies (with fallbacks if not provided)
         self.game_state = game_state_manager or GameStateManager()
         self.game_map = game_map or GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
+        self.visibility_manager = VisibilityManager(self.game_map)  # Centralized FOV caching
         self.level_generator = level_generator or LevelGenerator(self.game_map)
         self.enemy_manager = enemy_manager or EnemyManager(self.game_map, None)  # Will set message_log below
         # ExploitSystem will be initialized after self is fully constructed
@@ -277,6 +279,13 @@ class GameEngine:
                 logging.info("Auto-save completed")
             else:
                 logging.warning("Auto-save failed")
+
+    @property
+    def visible_tiles(self):
+        """Get cached set of visible tiles for the current turn."""
+        return self.visibility_manager.get_player_visible_tiles(
+            self.player, self.game_state.turn
+        )
 
     def _randomize_code_hacks(self):
         """

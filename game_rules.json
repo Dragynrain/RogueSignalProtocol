@@ -1,4 +1,5 @@
 {
+  "version": "0.8.0 Alpha",
   "display": {
     "screen_width": 80,
     "screen_height": 50,
@@ -44,7 +45,15 @@
     "max_ram_capacity": 32,
     "max_cpu_capacity": 200,
     "nearby_enemy_alert_radius": 8,
-    "virus_damage_per_turn": 3
+    "virus_damage_per_turn": 3,
+    "player_spawn_x": 5,
+    "player_spawn_y": 5,
+    "pathfinding_short_distance": 5,
+    "pathfinding_min_length": 15,
+    "pathfinding_short_multiplier": 5,
+    "pathfinding_long_multiplier": 3.0,
+    "movement_queue_max_size": 3,
+    "virus_min_damage": 5
   },
   "audio": {
     "default_fade_time": 2000,
@@ -108,6 +117,9 @@
     "shadow_zone_room_cluster_min": 3,
     "shadow_zone_coverage": 0.30,
     "hub_room_count": 1,
+    "noise_octaves": 4,
+    "noise_lacunarity": 2.0,
+    "noise_hurst": 0.5,
     "hub_room_size_multiplier": 1.5,
     "hub_min_connections": 4,
     "hub_max_connections": 6,

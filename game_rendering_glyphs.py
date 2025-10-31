@@ -18,6 +18,7 @@ from game_ui import render_char_safe
 from game_rendering_base import MapRendererBase
 from game_color_manager import ColorManager
 from game_unicode_chars import GameGlyphs
+from game_color_thresholds import ColorThresholdManager
 
 
 class GlyphsMapRenderer(MapRendererBase):
@@ -71,8 +72,8 @@ class GlyphsMapRenderer(MapRendererBase):
                         distance = game.player.position.distance_to(world_pos)
                         can_see = distance <= vision_range
                     else:
-                        # Use TCOD FOV system for proper corner visibility
-                        can_see = game.game_map.can_see_position(game.player.position, world_pos, vision_range)
+                        # Use cached FOV for massive performance gain
+                        can_see = (world_pos.x, world_pos.y) in game.visible_tiles
 
                     # Check if this tile has been explored (memory system)
                     explored = (world_pos.x, world_pos.y) in game.game_map.explored_tiles
@@ -689,24 +690,8 @@ class GlyphsMapRenderer(MapRendererBase):
     
     def _get_player_color(self, player) -> Tuple[int, int, int]:
         """Get player color based on current state with priority: Red > Yellow > Green(virus) > Cyan(slow) > White(normal)."""
-        # Priority 1: Critical status - Red
-        if player.cpu < 30 or player.heat > 80 or player.trace_level > 75:
-            return Colors.RED
-
-        # Priority 2: Warning status - Yellow (invisibility takes precedence over other effects)
-        if player.is_invisible():
-            return Colors.YELLOW
-
-        # Priority 3: Virus effect - Green (matches graphics mode)
-        if player.temporary_effects['virus_turns'] > 0:
-            return ColorManager.get("status_effects", "virus")
-
-        # Priority 4: Slow effect - Cyan
-        if player.temporary_effects['movement_slowed_turns'] > 0:
-            return Colors.CYAN
-
-        # Default: White
-        return Colors.WHITE
+        # Use centralized color threshold manager for consistent player colors
+        return ColorThresholdManager.get_player_color(player)
     
     def _render_targeting_cursor(self, console: tcod.console.Console, game, camera_offset: Position, use_graphics=False):
         """Render targeting cursor and look mode cursor."""
