@@ -841,6 +841,8 @@ class GameSession:
         self.game_engine.enemy_manager.enemies.clear()
         # Invalidate transparency cache for FOV calculations
         self.game_engine.game_map.invalidate_transparency_cache()
+        # Invalidate visibility manager's FOV cache to prevent stale data
+        self.game_engine.visibility_manager.invalidate_cache()
 
     def _find_valid_spawn_position(self) -> Position:
         """Find a valid spawn position for the player in the top-left spawn room."""
@@ -1065,6 +1067,8 @@ class GameSession:
         attempts = 0
         available_upgrades = list(GameUpgrades.UPGRADES.keys())
 
+        logging.debug(f"Attempting to place {upgrade_count} permanent upgrades on level {self.game_engine.level}")
+
         while placed_upgrades < upgrade_count and attempts < 100:
             attempts += 1
             x = random.randint(8, GameConfig.MAP_WIDTH - 8)
@@ -1072,17 +1076,25 @@ class GameSession:
             position = Position(x, y)
 
             # Use stricter placement rules for rare upgrades
-            if (self._is_valid_patch_placement(position) and
-                abs(x - 5) > 10 and abs(y - 5) > 10):  # Not near starting position
+            # Avoid spawn room (2-8, 2-8) with a buffer zone
+            spawn_room_buffer = 5  # 5-tile buffer around spawn room
+            far_from_spawn = (x > 8 + spawn_room_buffer or x < 2 - spawn_room_buffer or
+                             y > 8 + spawn_room_buffer or y < 2 - spawn_room_buffer)
+
+            if self._is_valid_patch_placement(position) and far_from_spawn:
 
                 upgrade_key = random.choice(available_upgrades)
                 self.game_engine.game_map.permanent_upgrades[(x, y)] = upgrade_key
                 placed_upgrades += 1
+                logging.debug(f"Placed permanent upgrade '{upgrade_key}' at ({x}, {y}) after {attempts} attempts")
 
                 # Remove from available to prevent duplicates on same level
                 available_upgrades.remove(upgrade_key)
                 if not available_upgrades:
                     break
+
+        if placed_upgrades < upgrade_count:
+            logging.warning(f"Only placed {placed_upgrades}/{upgrade_count} permanent upgrades after {attempts} attempts")
 
     def _place_enemies(self, enemy_count: int):
         """Place enemies throughout the level with increased density."""

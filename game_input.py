@@ -99,8 +99,6 @@ class InputHandler:
         if self.game.targeting_mode:
             state_context.append("targeting")
 
-        logging.debug(f"Input: Key {event.sym.name}, state=[{','.join(state_context) if state_context else 'gameplay'}]")
-
         # Priority 1: Active dialogue (highest priority overlay)
         # Check this BEFORE game_over to allow death dialogue to be shown
         if self.game.dialogue_state.is_active():

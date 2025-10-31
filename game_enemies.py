@@ -18,8 +18,8 @@ from typing import List, Optional, TYPE_CHECKING
 
 # Import necessary entities and configurations
 from game_config import GameConfig
-from game_entities import Position, EnemyMovement
-from game_characters import Enemy, Player
+from game_entities import Position, EnemyMovement, PositionValidator
+from game_characters import Enemy, Player, PathfindingHelper
 
 # Forward references to avoid circular imports
 if TYPE_CHECKING:
@@ -34,6 +34,10 @@ class EnemyManager:
     coordinate multi-enemy behaviors. Generates patrol routes automatically
     for PATROL enemies.
     """
+
+    # Patrol generation constants
+    MIN_PATROL_SPACING = 4  # Minimum distance between patrol points
+    MAX_PATROL_SPACING = 8  # Maximum distance between patrol points
 
     def __init__(self, game_map: 'GameMap', message_log: 'MessageLog'):
         """
@@ -162,7 +166,10 @@ class EnemyManager:
         """
         # Choose a simple pattern type
         pattern_type = random.choice(['line', 'triangle', 'rectangle'])
-        step_size = random.randint(4, 8)  # Distance between patrol points
+        step_size = random.randint(
+            EnemyManager.MIN_PATROL_SPACING,
+            EnemyManager.MAX_PATROL_SPACING
+        )
         logging.debug(f"Patrol route: start=({start.x},{start.y}), pattern={pattern_type}, step_size={step_size}")
 
         if pattern_type == 'line':
@@ -249,39 +256,24 @@ class EnemyManager:
 
     def _is_valid_patrol_point(self, point: Position) -> bool:
         """Check if a position is valid for patrol (within bounds, not a wall)."""
-        return (point.is_valid(GameConfig.MAP_WIDTH - 3, GameConfig.MAP_HEIGHT - 3) and
-                point.x >= 3 and point.y >= 3 and
-                self.game_map.is_valid_position(point) and
-                not self.game_map.is_wall(point))
+        # Use centralized PositionValidator for consistency
+        return PositionValidator.is_valid_for_patrol(point, self.game_map, margin=3)
 
     def _validate_patrol_connectivity(self, route: List[Position]) -> bool:
         """Verify all patrol points can reach each other via pathfinding."""
         if len(route) < 2:
             return True
 
-        import tcod
+        # Create a simple cost map (just walls vs walkable)
+        cost_map = self.game_map.get_walkability_map().copy()
 
-        try:
-            # Create a simple cost map (just walls vs walkable)
-            cost_map = self.game_map.get_walkability_map().copy()
+        # Check each consecutive pair of points using PathfindingHelper
+        for i in range(len(route)):
+            start_point = route[i]
+            end_point = route[(i + 1) % len(route)]  # Wrap around to check full loop
 
-            # Check each consecutive pair of points
-            for i in range(len(route)):
-                start_point = route[i]
-                end_point = route[(i + 1) % len(route)]  # Wrap around to check full loop
+            # Use centralized pathfinding helper
+            if not PathfindingHelper.path_exists(start_point, end_point, cost_map):
+                return False
 
-                # Quick pathfinding check
-                # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
-                graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-                pathfinder = tcod.path.Pathfinder(graph)
-                pathfinder.add_root((start_point.y, start_point.x))
-                path = pathfinder.path_to((end_point.y, end_point.x))
-
-                # If no path exists, route is invalid
-                if len(path) < 2:
-                    return False
-
-            return True
-        except Exception:
-            # If pathfinding fails for any reason, consider route invalid
-            return False
+        return True

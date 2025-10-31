@@ -577,3 +577,29 @@ class PositionValidator:
                 return False
 
         return True
+
+    @staticmethod
+    def is_valid_for_patrol(position: Position, game_map, margin: int = 3) -> bool:
+        """
+        Check if position is valid for patrol point placement.
+
+        Patrol points need extra margin from map edges to ensure the enemy
+        can path around them safely without getting stuck at borders.
+
+        Args:
+            position: Position to validate
+            game_map: GameMap for boundary and wall checking
+            margin: Minimum distance from map edges (default 3 tiles)
+
+        Returns:
+            True if valid for patrol, False otherwise
+        """
+        from game_config import GameConfig
+
+        # Check bounds with margin
+        if not (margin <= position.x < GameConfig.MAP_WIDTH - margin and
+                margin <= position.y < GameConfig.MAP_HEIGHT - margin):
+            return False
+
+        # Must be walkable (not a wall)
+        return game_map.is_valid_position(position) and not game_map.is_wall(position)

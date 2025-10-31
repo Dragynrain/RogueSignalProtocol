@@ -59,43 +59,50 @@ class GameSettings:
         try:
             if os.path.exists(self.SETTINGS_FILE):
                 # Read file content first to check for corruption
-                with open(self.SETTINGS_FILE, 'r') as f:
-                    content = f.read().strip()
-                
+                try:
+                    with open(self.SETTINGS_FILE, 'r') as f:
+                        content = f.read().strip()
+                except (PermissionError, OSError, IOError) as e:
+                    logging.error(f"Cannot read settings file: {e}")
+                    self._create_default_settings_file()
+                    return
+
                 # Check if file is empty or contains only whitespace
                 if not content:
                     logging.warning("Settings file is empty, using defaults")
                     self._create_default_settings_file()
                     return
-                
+
                 # Try to parse JSON
                 try:
                     settings_data = json.loads(content)
-                    self.master_volume = settings_data.get("master_volume", 0.7)
-                    self.sfx_volume = settings_data.get("sfx_volume", 0.75)
-                    self.music_volume = settings_data.get("music_volume", 0.6)
-                    self.graphics_mode = settings_data.get("graphics_mode", "graphics")
-                    self.show_achievement_popups = settings_data.get("show_achievement_popups", True)
-                    self.ui_color = settings_data.get("ui_color", "cyan")
-
-                    # Migrate old "ascii" setting to "glyph"
-                    if self.graphics_mode == "ascii":
-                        self.graphics_mode = "glyph"
-                        # Save immediately to persist the migration
-                        self.save_settings()
-                        logging.info("Migrated graphics_mode from 'ascii' to 'glyph'")
-
-                    # Load dialogue preferences with default empty dict
-                    self.dialogue_preferences = settings_data.get("dialogue_preferences", {})
-
-                    logging.debug(f"Settings: Loaded from {self.SETTINGS_FILE} - graphics={self.graphics_mode}, master_vol={self.master_volume:.2f}, dialogues={len(self.dialogue_preferences)}")
                 except json.JSONDecodeError as e:
                     logging.warning(f"Settings file corrupted (JSON decode error: {e}), recreating with defaults")
                     self._create_default_settings_file()
-        except Exception as e:
-            import traceback
-            logging.warning(f"Failed to load settings: {e}")
-            logging.debug(traceback.format_exc())
+                    return
+
+                # Load settings (let AttributeError bubble up - it's a code bug)
+                self.master_volume = settings_data.get("master_volume", 0.7)
+                self.sfx_volume = settings_data.get("sfx_volume", 0.75)
+                self.music_volume = settings_data.get("music_volume", 0.6)
+                self.graphics_mode = settings_data.get("graphics_mode", "graphics")
+                self.show_achievement_popups = settings_data.get("show_achievement_popups", True)
+                self.ui_color = settings_data.get("ui_color", "cyan")
+                self.dialogue_preferences = settings_data.get("dialogue_preferences", {})
+
+                # Migrate old "ascii" setting to "glyph"
+                if self.graphics_mode == "ascii":
+                    self.graphics_mode = "glyph"
+                    try:
+                        self.save_settings()
+                        logging.info("Migrated graphics_mode from 'ascii' to 'glyph'")
+                    except (PermissionError, OSError, IOError) as e:
+                        logging.error(f"Failed to save migrated settings: {e}")
+                        # Game can still run, just won't persist migration
+
+                logging.debug(f"Settings: Loaded from {self.SETTINGS_FILE} - graphics={self.graphics_mode}, master_vol={self.master_volume:.2f}, dialogues={len(self.dialogue_preferences)}")
+        except (PermissionError, OSError, IOError) as e:
+            logging.error(f"File I/O error loading settings: {e}")
             self._create_default_settings_file()
     
     def _create_default_settings_file(self) -> None:
@@ -113,8 +120,9 @@ class GameSettings:
             with open(self.SETTINGS_FILE, 'w') as f:
                 json.dump(default_settings, f, indent=2)
             logging.info("Created default settings file")
-        except Exception as e:
+        except (PermissionError, OSError, IOError) as e:
             logging.error(f"Failed to create default settings file: {e}")
+            # Game will use in-memory defaults
     
     def save_settings(self) -> None:
         """Save settings to file."""
@@ -131,10 +139,9 @@ class GameSettings:
             with open(self.SETTINGS_FILE, 'w') as f:
                 json.dump(settings_data, f, indent=2)
             logging.debug(f"Settings: Saved to {self.SETTINGS_FILE}")
-        except Exception as e:
-            import traceback
+        except (PermissionError, OSError, IOError) as e:
             logging.error(f"Failed to save settings: {e}")
-            logging.debug(traceback.format_exc())
+            # Settings won't persist, but game continues with current values
     
     def _set_volume_attribute(self, volume_type: str, volume: float):
         """Generic volume setter for any volume type."""
