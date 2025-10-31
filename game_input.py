@@ -174,12 +174,10 @@ class InputHandler:
 
         dialogue = self.game.dialogue_state.get_active()
         if not dialogue:
-            logging.debug("Input: Dialogue input handler called but no active dialogue")
             return True
 
         # Use DialogueInputHandler to process input
         action = DialogueInputHandler.handle_input(dialogue, event.sym)
-        logging.debug(f"Input: Dialogue '{dialogue.title}' received key {event.sym.name}, action={action}")
 
         # If dialogue handled the input, process it
         if action is not None:

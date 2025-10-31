@@ -158,38 +158,26 @@ class BaseMenu:
             True if event was handled, False otherwise
         """
         if not self.options:
-            logging.debug(f"[MENU MOUSE] {self.__class__.__name__} has no options")
             return False
 
         # Check if position coordinates are available (tile is deprecated)
         if not hasattr(event, 'position') or event.position is None:
-            logging.debug(f"[MENU MOUSE] No position on event")
             return False
 
         # After context.convert_event(), position contains TILE coordinates
         tile_x = int(event.position.x)
         tile_y = int(event.position.y)
 
-        logging.debug(f"[MENU MOUSE] {self.__class__.__name__} motion at tile ({tile_x},{tile_y})")
-
         # Menu options start at Y=21 (original position, box itself is shifted)
         start_y = 21
         spacing = 2
 
-        logging.debug(f"[MENU MOUSE] Options: {len(self.options)}, start_y={start_y}, spacing={spacing}")
-
         # Calculate which option was hovered
         if tile_y >= start_y:
             option_index = (tile_y - start_y) // spacing
-            logging.debug(f"[MENU MOUSE] Calculated index: {option_index}")
             if 0 <= option_index < len(self.options):
-                logging.debug(f"[MENU MOUSE] Valid! Selecting option {option_index}: '{self.options[option_index]}'")
                 self.selected_option = option_index
                 return True
-            else:
-                logging.debug(f"[MENU MOUSE] Index out of range (0-{len(self.options)-1})")
-        else:
-            logging.debug(f"[MENU MOUSE] tile_y={tile_y} < start_y={start_y}")
 
         return False
 
@@ -206,49 +194,33 @@ class BaseMenu:
         Returns:
             Action string (same as handle_input would return), or None
         """
-        logging.debug(f"[MENU MOUSE DEBUG] Click event received, options={len(self.options) if self.options else 0}")
-
         if not self.options:
-            logging.debug("[MENU MOUSE DEBUG] No options available")
             return None
 
         # Check if position coordinates are available (tile is deprecated)
         if not hasattr(event, 'position') or event.position is None:
-            logging.debug(f"[MENU MOUSE DEBUG] No position on event: {event}")
             return None
 
         # After context.convert_event(), position contains TILE coordinates (0-79, 0-49)
         tile_x = int(event.position.x)
         tile_y = int(event.position.y)
 
-        logging.debug(f"[MENU MOUSE DEBUG] Click at tile ({tile_x}, {tile_y})")
-
         # Menu options start at Y=21 (original position, box itself is shifted)
         start_y = 21
         spacing = 2
 
         # Calculate which option was clicked
-        logging.debug(f"[MENU MOUSE DEBUG] start_y={start_y}, spacing={spacing}, num_options={len(self.options)}")
-
         if tile_y >= start_y:
             option_index = (tile_y - start_y) // spacing
-            logging.debug(f"[MENU MOUSE DEBUG] Calculated option_index={option_index}")
 
             if 0 <= option_index < len(self.options):
                 # Update selection
                 self.selected_option = option_index
-                logging.debug(f"[MENU MOUSE DEBUG] Selected option: '{self.options[option_index]}'")
 
                 # Activate this option (same as pressing Enter)
                 action = self._get_action_for_option(option_index)
-                logging.debug(f"[MENU MOUSE DEBUG] Returning action: '{action}'")
                 return action
-            else:
-                logging.debug(f"[MENU MOUSE DEBUG] option_index {option_index} out of range [0, {len(self.options)})")
-        else:
-            logging.debug(f"[MENU MOUSE DEBUG] tile_y {tile_y} < start_y {start_y}")
 
-        logging.debug("[MENU MOUSE DEBUG] Returning None")
         return None
 
     def _get_action_for_option(self, option_index: int) -> Optional[str]:

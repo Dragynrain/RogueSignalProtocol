@@ -751,8 +751,6 @@ class SettingsMenu(BaseMenu):
         tile_x = int(event.position.x)
         tile_y = int(event.position.y)
 
-        logging.debug(f"[MENU MOUSE] SettingsMenu motion at tile ({tile_x},{tile_y})")
-
         # Calculate box dimensions the same way render() does
         menu_height = 35
         from game_config import GameConfig
@@ -769,26 +767,17 @@ class SettingsMenu(BaseMenu):
         start_y = box_top + 5
         spacing = 2
 
-        logging.debug(f"[MENU MOUSE] Settings: box_top={box_top}, start_y={start_y}, spacing={spacing}")
-
         # Calculate which option was hovered
         if tile_y >= start_y:
             option_index = (tile_y - start_y) // spacing
-            logging.debug(f"[MENU MOUSE] Calculated index: {option_index}")
 
             if 0 <= option_index < len(self.options):
                 # Skip section headers - they're not selectable
                 if self.options[option_index]["type"] == "section_header":
-                    logging.debug(f"[MENU MOUSE] Skipping section header: '{self.options[option_index]['name']}'")
                     return False
 
-                logging.debug(f"[MENU MOUSE] Valid! Selecting option {option_index}: '{self.options[option_index]['name']}'")
                 self.selected_option = option_index
                 return True
-            else:
-                logging.debug(f"[MENU MOUSE] Index out of range (0-{len(self.options)-1})")
-        else:
-            logging.debug(f"[MENU MOUSE] tile_y={tile_y} < start_y={start_y}")
 
         return False
 
@@ -799,8 +788,6 @@ class SettingsMenu(BaseMenu):
             return ""
 
         option = self.options[self.selected_option]
-
-        logging.debug(f"[MENU MOUSE] SettingsMenu click on option {self.selected_option}: {option['name']} (type: {option['type']})")
 
         # Handle different option types
         if option["type"] == "action":
