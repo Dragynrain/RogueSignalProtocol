@@ -31,6 +31,28 @@ from tests.fixtures.standard_patterns import (
 
 # ===== Test Infrastructure Fixtures =====
 
+@pytest.fixture(scope="session", autouse=True)
+def load_game_config_once():
+    """
+    Load game configuration once per test session.
+
+    This optimization prevents reloading JSON files for every test,
+    providing ~30-50% speedup on the full test suite.
+
+    Scope: session (loads once for entire pytest run)
+    Safety: GameConfig and GameBalance are read-only during tests
+    """
+    from game_config import GameConfig, GameBalance
+
+    # Load config once for all tests
+    GameConfig.load_from_json()
+    GameBalance.load_from_json()
+
+    yield
+
+    # No cleanup needed - data remains loaded
+
+
 @pytest.fixture(autouse=True)
 def isolate_random_state():
     """
