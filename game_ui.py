@@ -15,7 +15,7 @@ import tcod.event
 from game_entities import Colors
 
 
-def render_char_safe(console, x, y, char, fg=None, bg=None):
+def render_char_safe(console, x, y, char, fg=None, bg=None) -> None:
     """
     Render character to console with color validation and error handling.
 

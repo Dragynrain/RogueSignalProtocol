@@ -232,8 +232,6 @@ class GameRenderer:
 
         if should_use_graphics:
             # === GRAPHICS MODE: Sprites + Console UI ===
-            logging.info("Using graphics mode rendering")
-
             # Set SDL clear color to black (for unexplored areas)
             self.context.sdl_renderer.draw_color = (0, 0, 0, 255)
             self.context.sdl_renderer.clear()

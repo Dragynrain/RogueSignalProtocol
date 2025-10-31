@@ -32,6 +32,7 @@ from typing import List, Tuple
 # Import required classes and configs
 from game_config import GameConfig
 from game_entities import Position
+from game_characters import PathfindingHelper
 
 # Import specialized level generation subsystems
 from game_level_structure import RoomGenerator, BSPRoomGenerator, CorridorGenerator
@@ -304,7 +305,6 @@ class LevelGenerator:
             True if gateway is reachable, False otherwise
         """
         import numpy as np
-        import tcod
 
         # Create cost map (1 for walkable, 0 for walls)
         cost_map = np.ones((GameConfig.MAP_HEIGHT, GameConfig.MAP_WIDTH), dtype=np.uint8, order="F")
@@ -314,26 +314,16 @@ class LevelGenerator:
                 if self.game_map.is_wall(pos):
                     cost_map[y, x] = 0  # Walls are impassable
 
-        # Use TCOD pathfinding to check if path exists
-        try:
-            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-            pathfinder = tcod.path.Pathfinder(graph)
-            pathfinder.add_root((spawn_pos.x, spawn_pos.y))
+        # Use PathfindingHelper for centralized pathfinding (fixes TCOD coordinate ordering)
+        path = PathfindingHelper.calculate_simple_path(spawn_pos, gateway_pos, cost_map)
 
-            path = pathfinder.path_to((gateway_pos.x, gateway_pos.y))
-
-            # If path is empty or too short, gateway is not reachable
-            if len(path) == 0:
-                logging.error(f"Level Gen: Pathfinding returned empty path from {spawn_pos} to {gateway_pos}")
-                return False
-
-            path_length = len(path)
-            logging.debug(f"Level Gen: Gateway reachability validated - path length={path_length} tiles")
-            return True
-
-        except Exception as e:
-            logging.error(f"Level Gen: Pathfinding error during gateway validation: {e}")
+        if path is None or len(path) == 0:
+            logging.error(f"Level Gen: Pathfinding returned empty path from {spawn_pos} to {gateway_pos}")
             return False
+
+        path_length = len(path)
+        logging.debug(f"Level Gen: Gateway reachability validated - path length={path_length} tiles")
+        return True
 
     def _fix_unreachable_gateway(self, level: int, seed: int, spawn_pos: Position, gateway_pos: Position) -> None:
         """
@@ -351,52 +341,33 @@ class LevelGenerator:
             gateway_pos: Gateway position to make reachable
         """
         import numpy as np
-        import tcod
 
         # Carve emergency corridor (deterministic approach)
         logging.warning(f"Level Gen: Gateway at {gateway_pos} unreachable! Carving emergency corridor...")
         final_gateway = self.game_map.gateway
 
-        # Use TCOD pathfinding to get path, then carve it
-        cost_map = np.ones((GameConfig.MAP_HEIGHT, GameConfig.MAP_WIDTH), dtype=np.uint8, order="F")
-        for y in range(GameConfig.MAP_HEIGHT):
-            for x in range(GameConfig.MAP_WIDTH):
+        # Use PathfindingHelper to get path treating walls as walkable
+        # Create cost map where everything is walkable (we'll carve through walls)
+        cost_map_all_walkable = np.ones((GameConfig.MAP_HEIGHT, GameConfig.MAP_WIDTH), dtype=np.uint8, order="F")
+
+        emergency_path = PathfindingHelper.calculate_simple_path(spawn_pos, final_gateway, cost_map_all_walkable)
+
+        if emergency_path is not None and len(emergency_path) > 0:
+            # Carve corridor along path
+            # IMPORTANT: TCOD returns path as list of (y, x) tuples
+            for y, x in emergency_path:
                 pos = Position(x, y)
                 if self.game_map.is_wall(pos):
-                    cost_map[y, x] = 0
+                    self.game_map.walls.discard((x, y))
+                    # Add to corridor tiles for consistency
+                    self.corridor_tiles.add((x, y))
 
-        try:
-            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-            pathfinder = tcod.path.Pathfinder(graph)
-            pathfinder.add_root((spawn_pos.x, spawn_pos.y))
+            logging.warning(f"Level Gen: Emergency corridor carved ({len(emergency_path)} tiles) from {spawn_pos} to {final_gateway}")
 
-            # Get path treating walls as walkable (cost=1)
-            # We'll carve through them
-            cost_map_all_walkable = np.ones((GameConfig.MAP_HEIGHT, GameConfig.MAP_WIDTH), dtype=np.uint8, order="F")
-            graph_ignore_walls = tcod.path.SimpleGraph(cost=cost_map_all_walkable, cardinal=2, diagonal=3)
-            pathfinder_ignore_walls = tcod.path.Pathfinder(graph_ignore_walls)
-            pathfinder_ignore_walls.add_root((spawn_pos.x, spawn_pos.y))
-
-            emergency_path = pathfinder_ignore_walls.path_to((final_gateway.x, final_gateway.y))
-
-            if len(emergency_path) > 0:
-                # Carve corridor along path
-                for x, y in emergency_path:
-                    pos = Position(x, y)
-                    if self.game_map.is_wall(pos):
-                        self.game_map.walls.discard((x, y))
-                        # Add to corridor tiles for consistency
-                        self.corridor_tiles.add((x, y))
-
-                logging.warning(f"Level Gen: Emergency corridor carved ({len(emergency_path)} tiles) from {spawn_pos} to {final_gateway}")
-
-                # Final validation
-                if self._validate_gateway_reachability(spawn_pos, final_gateway):
-                    logging.info(f"Level Gen: Emergency corridor successful - gateway now reachable!")
-                else:
-                    logging.critical(f"Level Gen: CRITICAL FAILURE - Emergency corridor failed to connect spawn to gateway!")
+            # Final validation
+            if self._validate_gateway_reachability(spawn_pos, final_gateway):
+                logging.info(f"Level Gen: Emergency corridor successful - gateway now reachable!")
             else:
-                logging.critical(f"Level Gen: CRITICAL FAILURE - Could not find path even ignoring walls!")
-
-        except Exception as e:
-            logging.critical(f"Level Gen: Emergency corridor carving failed: {e}")
+                logging.critical(f"Level Gen: CRITICAL FAILURE - Emergency corridor failed to connect spawn to gateway!")
+        else:
+            logging.critical(f"Level Gen: CRITICAL FAILURE - Could not find path even ignoring walls!")

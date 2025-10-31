@@ -208,8 +208,6 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
             dest_rect = (0, 0, window_w, window_h)
             context.sdl_renderer.copy(console_texture, dest=dest_rect)
 
-            logging.debug(f"[RENDER] Full window fill: {window_w}x{window_h}")
-
             # Present everything through SDL
             context.sdl_renderer.present()
 
@@ -218,10 +216,6 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
             context.present(console)
         
         for event in tcod.event.wait():
-            # Debug: log CLICK and WHEEL events only (not motion - too spammy)
-            if event.type in ("MOUSEBUTTONDOWN", "MOUSEWHEEL"):
-                logging.debug(f"[EVENT DEBUG] Menu loop received {event.type} event")
-
             # Convert pixel coordinates to console tiles for menus
             # Menus always use console rendering, so this conversion is correct for all menu types
             if hasattr(event, 'position') and event.position:

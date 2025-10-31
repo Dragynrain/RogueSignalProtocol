@@ -8,9 +8,9 @@ with intelligent stop conditions for safety.
 """
 
 import logging
-import tcod
 from typing import Optional, Tuple, TYPE_CHECKING
 from game_entities import Position
+from game_characters import PathfindingHelper
 
 if TYPE_CHECKING:
     from game_engine import GameEngine
@@ -61,44 +61,33 @@ class AutoWalk:
             logging.debug(f"AutoWalk: Cannot walk to wall at {target_pos}")
             return False
 
-        # Use TCOD pathfinding to find route
+        # Use PathfindingHelper for centralized pathfinding
         game_map = game_engine.game_map
 
-        try:
-            # Create cost map for TCOD pathfinding
-            # TCOD needs integers: 0 = impassable, non-zero = walkable
-            import numpy as np
-            walkability = game_map.get_walkability_map()
-            cost_map = np.where(walkability, 10, 0).astype(np.int32)
+        # Create cost map for pathfinding (no enemy collision for player autowalk)
+        import numpy as np
+        walkability = game_map.get_walkability_map()
+        cost_map = np.where(walkability, 10, 0).astype(np.int32)
 
-            # Create pathfinding graph
-            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-            pathfinder = tcod.path.Pathfinder(graph)
+        # Calculate path using PathfindingHelper
+        tcod_path = PathfindingHelper.calculate_simple_path(player_pos, target_pos, cost_map)
 
-            # TCOD pathfinding uses (y, x) coordinate order
-            pathfinder.add_root((player_pos.y, player_pos.x))
-            tcod_path = pathfinder.path_to((target_pos.y, target_pos.x))
-
-            # Validate path exists
-            if len(tcod_path) < 2:  # Path includes start position
-                logging.debug(f"AutoWalk: No path from {player_pos} to {target_pos}")
-                return False
-
-            # Convert TCOD path [(y,x), ...] to Position objects
-            # Skip first entry (current position)
-            self.path = [Position(p[1], p[0]) for p in tcod_path[1:]]
-            self.current_step = 0
-            self.destination = target_pos
-            self.active = True
-            self.stop_reason = None
-            self._last_cpu = game_engine.player.cpu
-
-            logging.info(f"AutoWalk: Started from {player_pos} to {target_pos}, path_length={len(self.path)}")
-            return True
-
-        except Exception as e:
-            logging.error(f"AutoWalk: Pathfinding failed: {e}")
+        # Validate path exists
+        if tcod_path is None or len(tcod_path) < 2:  # Path includes start position
+            logging.debug(f"AutoWalk: No path from {player_pos} to {target_pos}")
             return False
+
+        # Convert TCOD path [(y,x), ...] to Position objects
+        # Skip first entry (current position)
+        self.path = [Position(p[1], p[0]) for p in tcod_path[1:]]
+        self.current_step = 0
+        self.destination = target_pos
+        self.active = True
+        self.stop_reason = None
+        self._last_cpu = game_engine.player.cpu
+
+        logging.info(f"AutoWalk: Started from {player_pos} to {target_pos}, path_length={len(self.path)}")
+        return True
 
     def get_next_move(self, game_engine: 'GameEngine') -> Optional[Tuple[int, int]]:
         """

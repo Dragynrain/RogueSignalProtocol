@@ -36,6 +36,11 @@ class PathfindingHelper:
     - Ambush: Find optimal attack positions
     """
 
+    # Pathfinding constants
+    SHORT_DISTANCE_THRESHOLD = 5  # Distance considered "short" for pathfinding
+    MIN_PATH_LENGTH = 15  # Minimum reasonable path length
+    SHORT_DISTANCE_MULTIPLIER = 5  # Path length multiplier for short distances
+
     @staticmethod
     def calculate_path(
         start: Position,
@@ -61,10 +66,16 @@ class PathfindingHelper:
         """
         # Calculate reasonable path length
         direct_distance = start.distance_to(goal)
-        if direct_distance <= 5:
-            max_length = max(15, int(direct_distance * 5))
+        if direct_distance <= PathfindingHelper.SHORT_DISTANCE_THRESHOLD:
+            max_length = max(
+                PathfindingHelper.MIN_PATH_LENGTH,
+                int(direct_distance * PathfindingHelper.SHORT_DISTANCE_MULTIPLIER)
+            )
         else:
-            max_length = max(15, int(direct_distance * max_length_multiplier))
+            max_length = max(
+                PathfindingHelper.MIN_PATH_LENGTH,
+                int(direct_distance * max_length_multiplier)
+            )
 
         try:
             # Create cost map with enemy collision
@@ -222,6 +233,71 @@ class PathfindingHelper:
                 best_move = (dx, dy)
 
         return best_move
+
+    @staticmethod
+    def path_exists(
+        start: Position,
+        goal: Position,
+        cost_map: np.ndarray
+    ) -> bool:
+        """
+        Check if a valid path exists between two points.
+
+        Simpler than calculate_path - just returns boolean, doesn't validate length
+        or apply enemy collision. Useful for connectivity validation.
+
+        Args:
+            start: Starting position
+            goal: Goal position
+            cost_map: Pre-computed cost map (0 = impassable, >0 = passable with cost)
+
+        Returns:
+            True if any path exists, False otherwise
+        """
+        try:
+            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+            pathfinder = tcod.path.Pathfinder(graph)
+            pathfinder.add_root((start.y, start.x))  # TCOD uses (y, x)
+            path = pathfinder.path_to((goal.y, goal.x))
+            return len(path) >= 2  # Path includes start and goal
+        except Exception as e:
+            logging.debug(f"path_exists check failed: {e}")
+            return False
+
+    @staticmethod
+    def calculate_simple_path(
+        start: Position,
+        goal: Position,
+        cost_map: np.ndarray
+    ) -> Optional[List[Tuple[int, int]]]:
+        """
+        Calculate path using a custom cost map without enemy collision.
+
+        Used for special pathfinding cases like:
+        - Level generation (ensuring spawn-to-gateway connectivity)
+        - Autowalk (player pathfinding without enemy avoidance)
+        - Patrol route generation
+
+        Args:
+            start: Starting position
+            goal: Goal position
+            cost_map: Pre-computed cost map (0 = impassable, >0 = passable with cost)
+
+        Returns:
+            List of (y, x) tuples (TCOD format), or None if no path exists
+        """
+        try:
+            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
+            pathfinder = tcod.path.Pathfinder(graph)
+            pathfinder.add_root((start.y, start.x))  # TCOD uses (y, x)
+            path = pathfinder.path_to((goal.y, goal.x))
+
+            if len(path) >= 2:
+                return path
+            return None
+        except Exception as e:
+            logging.warning(f"calculate_simple_path failed from {start} to {goal}: {e}")
+            return None
 
     @staticmethod
     def _create_cost_map(game_map, game_engine, moving_enemy):
@@ -410,9 +486,6 @@ class Player:
         # (Shadows only block vision coming in, not vision going out)
 
         can_see = game_map.can_see_position(self.position, enemy_target.position, vision_range)
-        if can_see:
-            enemy_id = getattr(enemy_target, 'char', 'enemy')
-            logging.debug(f"Vision: Player sees {enemy_id}@{enemy_target.position}, distance={distance:.1f}, player_in_shadow={game_map.is_shadow(self.position)}")
         return can_see
     
     @property
@@ -629,25 +702,14 @@ class Enemy:
 
         # Invisible players can't be seen
         if player.is_invisible():
-            enemy_id = getattr(self, 'char', 'enemy')
-            logging.debug(f"Vision: {enemy_id}@{self.position} cannot see player (invisible)")
             return False
 
         # Players in shadows only visible when adjacent
         if game_map.is_shadow(player.position) and distance > GameBalance.ADJACENT_DISTANCE_THRESHOLD:
-            enemy_id = getattr(self, 'char', 'enemy')
-            logging.debug(f"Vision: {enemy_id}@{self.position} cannot see player@{player.position} (player in shadow, distance={distance:.1f})")
             return False
 
         # Final LOS check using TCOD FOV
-        can_see = game_map.can_see_position(self.position, player.position, self.type_data.vision)
-
-        # Log visibility result
-        if can_see:
-            enemy_id = getattr(self, 'char', 'enemy')
-            logging.debug(f"Vision: {enemy_id}@{self.position} spotted player@{player.position}, distance={distance:.1f}, player_in_shadow={game_map.is_shadow(player.position)}")
-
-        return can_see
+        return game_map.can_see_position(self.position, player.position, self.type_data.vision)
     
     def can_attack_player(self, player: Player) -> bool:
         """Check if enemy can attack player (adjacent including diagonally)."""
@@ -756,7 +818,6 @@ class Enemy:
             return False
 
         # 6. Execute move
-        logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): moved to ({next_position.x},{next_position.y})")
         self.position = next_position
 
         # 7. Top up queue to maintain 3 moves
@@ -822,9 +883,7 @@ class Enemy:
         if len(self.move_queue) >= 3:
             return
 
-        old_queue_len = len(self.move_queue)
         movement_type = self.get_movement_type()
-        logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): filling move queue, current_len={old_queue_len}, state={self.state.name}, movement={movement_type.name}")
 
         # Static enemies don't move
         if movement_type == EnemyMovement.STATIC:
@@ -943,14 +1002,10 @@ class Enemy:
         Returns:
             True if move is valid, False otherwise
         """
-        if not game_map.is_valid_position(position):
-            return False
-        if position.x == player.x and position.y == player.y:
-            return False
-        for other_enemy in game_engine.enemies:
-            if other_enemy.id != self.id and other_enemy.x == position.x and other_enemy.y == position.y:
-                return False
-        return True
+        # Use centralized PositionValidator for consistency
+        return PositionValidator.is_valid_for_enemy_movement(
+            position, game_map, game_engine.enemies, player.position, self
+        )
 
     def _extend_patrol_queue(self, game_map, game_engine):
         """
@@ -1217,20 +1272,10 @@ class Enemy:
 
     def _is_move_valid(self, position, game_map, player, game_engine) -> bool:
         """Check if a position is valid for movement."""
-        # Basic position check
-        if not game_map.is_valid_position(position):
-            return False
-
-        # Can't move to player position
-        if position.x == player.x and position.y == player.y:
-            return False
-
-        # Can't move to position occupied by another enemy
-        for other_enemy in game_engine.enemies:
-            if other_enemy != self and other_enemy.x == position.x and other_enemy.y == position.y:
-                return False
-
-        return True
+        # Use centralized PositionValidator for consistency
+        return PositionValidator.is_valid_for_enemy_movement(
+            position, game_map, game_engine.enemies, player.position, self
+        )
 
 
 # Pathfinding helper functions

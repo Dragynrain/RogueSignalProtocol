@@ -81,10 +81,7 @@ class DataLoader:
     def load_game_data(cls) -> Dict[str, Any]:
         """Load game data from JSON file."""
         if cls._game_data is None:
-            logging.debug("Data Loading: Loading game data (cache miss)")
             cls._game_data = cls._load_json_file('game_content.json')
-        else:
-            logging.debug("Data Loading: Using cached game data")
         return cls._game_data
     
     @classmethod

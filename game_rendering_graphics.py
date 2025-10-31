@@ -264,9 +264,9 @@ class GraphicsMapRenderer(MapRendererBase):
 
                 # Map upgrade key to sprite name
                 upgrade_sprite_map = {
-                    'cooling_upgrade': 'cooling_upgrade',
-                    'cpu_upgrade': 'cpu_upgrade',
-                    'ram_upgrade': 'ram_upgrade'
+                    'ram_boost': 'ram_upgrade',
+                    'cpu_boost': 'cpu_upgrade',
+                    'heat_boost': 'cooling_upgrade'
                 }
                 sprite_name = upgrade_sprite_map.get(upgrade_key)
                 if sprite_name:
