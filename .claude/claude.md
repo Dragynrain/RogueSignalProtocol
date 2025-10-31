@@ -36,7 +36,7 @@
 
 ## 4. Code & Architecture
 - Prefer simple functional code.
-- Keep files <2000 lines; split after ~1800.
+- Keep files under ~20,000 tokens; consider refactoring when approaching this limit.
 - One purpose per module.
 - No over-engineering or new frameworks.
 - Keep `build/` + `dist/` folders for releases.
