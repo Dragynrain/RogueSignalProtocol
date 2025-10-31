@@ -155,7 +155,7 @@ class GameSession:
                 logging.warning(f"Final Heat: {player.heat}/{player.max_heat}")
                 logging.warning(f"Trace Level: {player.trace_level}")
                 logging.warning(f"Active Virus: {player.temporary_effects.get('virus_turns', 0)} turns")
-                logging.warning(f"Enemies nearby: {len([e for e in self.game_engine.game_map.enemies if abs(e.x - player.x) < 10 and abs(e.y - player.y) < 10])}")
+                logging.warning(f"Enemies nearby: {len([e for e in self.game_engine.enemies if abs(e.x - player.x) < 10 and abs(e.y - player.y) < 10])}")
                 logging.warning("="*80)
 
                 # Finalize and save metrics before deleting save
@@ -786,7 +786,7 @@ class GameSession:
 
         # Alpha Testing: Level completion analytics
         player = self.game_engine.player
-        enemies_remaining = len(self.game_engine.game_map.enemies)
+        enemies_remaining = len(self.game_engine.enemies)
         logging.info("="*80)
         logging.info(f"✅ LEVEL {old_level} COMPLETED")
         logging.info(f"Turn: {self.game_engine.turn}")
