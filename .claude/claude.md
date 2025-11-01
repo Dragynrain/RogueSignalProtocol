@@ -6,9 +6,10 @@
 
 ## 0. Critical Rules (READ FIRST)
 
-1. **🚨 NO AUTO-COMMITS 🚨**: Always ask before committing. Period. Exception: ONLY when user explicitly says "commit this" or "make a commit"
+1. **NO AUTO-COMMITS**: Always ask before committing. Exception: ONLY when user says "commit this" or "make a commit"
 2. **Check existing keybindings**: Before assigning hotkeys, grep for existing uses first
 3. **Fix what you're asked to fix**: Don't dismiss test failures as "unrelated" - if asked to fix all tests, fix all tests
+4. **NO EMOJI IN CODE/LOGS**: Emojis break on Windows (CP1252). Use ASCII: `[DEATH]`, `[OK]`, `->` not 💀, ✅, →
 
 ---
 
@@ -66,42 +67,30 @@
 
 **ALWAYS TEST BEFORE COMMITTING. NO EXCEPTIONS.**
 
-### Python Tests
-
 | Command | Purpose |
 |---------|---------|
-| `python test_commands.py full` | Full suite + coverage + timing (pre-commit) |
-| `python test_commands.py quick` | Unit tests only (fast feedback) |
-| `python test_commands.py integration` | Integration tests only |
-| `python test_commands.py coverage` | Generate htmlcov/ report |
-| `python test_commands.py changed` | Test changed files only (git-based) |
-| `.venv/Scripts/python.exe -m pytest` | Direct pytest (uses pytest.ini) |
+| `python test_commands.py full` | Full suite + coverage (pre-commit) |
+| `python test_commands.py quick` | Unit tests only |
+| `.venv/Scripts/python.exe -m pytest` | Direct pytest |
 
-**Test Policy:**
-- Update tests with every code change or API edit
-- Prefer integration tests (real behavior) over mocks
-- Use `tests/fixtures/` builders
-- After refactor, run full suite & fix all tests
+**Policy:** Update tests with code changes. Prefer integration over mocks. Run full suite after refactor.
 
-### Batch Files & Scripts
-
-**NEVER commit .bat files without testing them first!**
-
-- See `.claude/WINDOWS_SCRIPTING.md` for batch syntax rules and testing method
-- Key gotcha: **NO `else if` support** - use nested ifs: `) else ( if ... )`
+**Batch files:** Test before committing. See `.claude/WINDOWS_SCRIPTING.md`. No `else if` - use `) else ( if ... )`
 
 ---
 
 ## 6. Logging & Errors
-- **Console:** tech errors → `print()` / `logging.error()`
-- **Game log:** gameplay messages → `MessageLog.add_message()`
-- Don't mix the two
+
+**Logging rules:**
+- **Console/file logs:** `logging.debug/info/error()` - tech/debug info
+- **Game message log:** `MessageLog.add_message()` - gameplay events
+- **NO UNICODE/EMOJIS in logs**: Use ASCII only (→ = `->`, 💀 = `[DEATH]`). Breaks on Windows CP1252.
+- Don't mix console and game logs
 
 **Config:**
-- Fail fast on missing files
-- Required: `game_content.json`, `game_rules.json`, `narrative_content.json`
+- Fail fast on missing: `game_content.json`, `game_rules.json`, `narrative_content.json`
 - Only `user_settings.json` can default
-- No hardcoded fallback values — all data from JSON
+- No hardcoded fallbacks - all data from JSON
 
 ---
 
@@ -126,68 +115,38 @@
 
 ## 7a. TCOD Specifics
 
-**🚨 CRITICAL: Array indexing vs function parameters! 🚨**
+**CRITICAL: TCOD functions use `(x, y)` but arrays use `[y, x]`!**
 
-TCOD functions use `(x, y)` but arrays use `[y, x]` - this mismatch causes bugs!
+Rules:
+- Use `CoordinateHelpers` for array access (handles `[y, x]`)
+- Use `UnifiedRenderer` for dialogues (handles transparency)
+- TCOD functions (`console.print()`) use `(x, y)` - safe
+- Direct array access (`console.rgba[...]`) uses `[y, x]` - use helpers!
 
-**The Rules:**
-- **ALWAYS use CoordinateHelpers** for array access (handles `[y, x]` internally)
-- **Use UnifiedRenderer** for dialogue rendering (handles transparency automatically)
-- **TCOD functions** (like `console.print()`) use `(x, y)` - safe!
-- **Direct array access** (like `console.rgba[...]`) uses `[y, x]` - use helpers!
+Example: `CoordinateHelpers.set_alpha_region(console, x=10, y=5, ...)` ✓
+Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 
-**Example:**
-```python
-# ✓ CORRECT - use helpers
-from game_coordinate_helpers import CoordinateHelpers
-CoordinateHelpers.set_alpha_region(console, x=10, y=5, width=30, height=15, alpha=255)
-
-# ✓ CORRECT - use UnifiedRenderer for dialogues
-from game_dialogue_system import UnifiedRenderer
-UnifiedRenderer.render(console, dialogue)
-
-# ✗ WRONG - direct array access with [x, y]
-console.rgba["bg"][x, y, 3] = 255  # BUG! Should be [y, x]!
-```
-
-**For complete details:** See `.claude/TCOD_GUIDE.md`
+**Details:** `.claude/TCOD_GUIDE.md`
 
 ---
 
 ## 7b. Graphics Coordinate Systems
 
-**Three coordinate systems - DO NOT MIX:**
+**Three systems - DON'T MIX:**
+1. Console chars (80x50) - Text/UI
+2. Game viewport (27x21) - In-game tiles
+3. SDL pixels - Sprite rendering
 
-1. **Console chars (80x50)** - Text rendering, UI layout
-2. **Game viewport (27x21)** - In-game tile positions (viewport-scaled)
-3. **SDL pixels (window size)** - Direct sprite rendering
+**Sprites:** Position = `console_x * (window_width / 80)`. Size = `tile_manager.tile_width/height`
 
-**Menu/Help Screen Sprites:**
-```python
-# Position: Convert console coords to pixels
-pixel_x = int(console_x * (window_width / 80))
-pixel_y = int(console_y * (window_height / 50))
-
-# Size: Use TileManager (same scale as in-game)
-sprite_width = tile_manager.tile_width
-sprite_height = tile_manager.tile_height
-```
-
-**Common mistakes:**
-- Using tileset size (10x16) for sprite SIZE → tiny sprites
-- Using tile dimensions to multiply console coords → wrong positions
-
-**For complete details:**
-- `.claude/TCOD_GUIDE.md` - Coordinate systems, transparency, mouse handling
-- `.claude/RENDERING_ARCHITECTURE.md` - Multi-layer rendering architecture
+**Details:** `.claude/TCOD_GUIDE.md`, `.claude/RENDERING_ARCHITECTURE.md`
 
 ---
 
 ## 8. Docs & Research
-- Always check latest official TCOD docs
-- Confirm TCOD API details before assuming limits and interfaces
-- **TCOD-specific questions**: Use the `tcod` skill (`.claude/skills/tcod.md`)
-- **Rendering architecture**: See `.claude/RENDERING_ARCHITECTURE.md` for multi-layer rendering details
+- Check official TCOD docs before assuming API behavior
+- TCOD questions: Use `tcod` skill
+- Rendering: See `.claude/RENDERING_ARCHITECTURE.md`
 
 ---
 
@@ -198,22 +157,11 @@ sprite_height = tile_manager.tile_height
 
 ## 10. Git & Attribution
 
-**🚨 CRITICAL: NEVER AUTO-COMMIT 🚨**
-- ALWAYS ask before running git commit
-- NEVER commit without explicit user approval
-- Exception: ONLY when user explicitly says "commit this" or "make a commit"
-- If unsure, ASK
+**Commits:** See rule #0 - ask first!
 
-**Attribution:**
-- No `Co-Authored-By` or AI/Claude tags
-- Keep commit messages clean and technical
+**Attribution:** No `Co-Authored-By` tags. Clean technical messages.
 
-**CRITICAL: .gitignore editing rules**
-- **NEVER add inline comments** with trailing spaces (e.g., `dist/  # comment`)
-- Trailing spaces break patterns silently - git interprets `"dist/     "` literally
-- Always verify changes: `git check-ignore -v <path>` and `git add --dry-run .`
-- Keep comments on separate lines above patterns
-- When editing `.gitignore`, always test that patterns work before committing
+**.gitignore:** No inline comments with trailing spaces (`dist/  # comment` breaks). Test patterns before committing.
 
 ---
 
@@ -224,56 +172,17 @@ sprite_height = tile_manager.tile_height
 
 ---
 
-## 12. Reasoning & Problem-Solving Philosophy
+## 12. Reasoning & Problem-Solving
 
-### Detective-Story Progression
-- Unfold understanding gradually, not all at once
-- Start with obvious aspects → notice patterns → question assumptions → make connections
-- Show natural thought progression: "Hmm... actually, wait..." or "That's interesting because..."
-- When you realize a mistake: acknowledge it, explain why previous thinking was incomplete, show how understanding evolved
-
-### Multi-Perspective Analysis
-Before implementing solutions, examine from multiple angles:
-- Technical feasibility and architectural fit
-- Edge cases and failure modes
-- Performance implications
-- Integration with existing systems (TCOD, pathfinding, message log, etc.)
-- Then synthesize into a unified approach
-
-### Adaptive Depth Scaling
-Match reasoning effort to problem complexity:
-- **Trivial tasks** (typo fix, simple refactor): quick execution
-- **Medium complexity** (new feature, bug investigation): structured analysis
-- **High stakes** (architecture change, production bug, test failures): deep investigation with "think hard"
-- Consider: complexity, stakes, time sensitivity, available information
-
-### Dynamic Mode Switching
-Explicitly shift mental approach based on context:
-- **Exploration mode**: Requirements unclear → ask questions, probe assumptions, search codebase
-- **Implementation mode**: Specs defined → execute systematically, follow patterns
-- **Debugging mode**: Error state → hypothesis testing, isolation, verify assumptions
-- **Optimization mode**: Performance work → measurement-driven, profiling
-
-### Progressive Understanding
-- Build comprehension gradually as you read code
-- Show genuine moments of realization: "After reading X, I now see Y differently..."
-- Don't claim instant expertise - demonstrate evolving understanding
-- Revise mental models when new information contradicts assumptions
-
-### Latent-Space Reasoning
-- Think at system level FIRST (relationships, constraints, invariants)
-- Consider the problem space before jumping to solutions
-- THEN linearize into concrete implementation steps
-- Avoid premature commitment to specific approaches
-
-### Recursive Consistency
-- Apply same analytical rigor at all scales:
-  - Macro: architecture decisions, system design
-  - Micro: function logic, variable naming, bounds checking
-- Maintain pattern recognition across different scales
-- Don't overthink micro or underthink macro
+**Approach:**
+- Unfold understanding gradually - show natural thought progression
+- Acknowledge mistakes, explain how understanding evolved
+- Match depth to complexity (trivial → quick, high stakes → deep)
+- Think system-level first, then implement
+- Apply same rigor at all scales (architecture to variable names)
 
 ---
 
 ## 13. Communication Style
-- Use emoji freely when it adds clarity, fun, humor, or energy to communication
+- **In chat with user:** Use emoji freely for clarity, fun, or energy 😊
+- **In code/logs/commits:** NO EMOJI - breaks cross-platform (see rule #0.4)
