@@ -177,6 +177,8 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 **Approach:**
 - Unfold understanding gradually - show natural thought progression
 - Acknowledge mistakes, explain how understanding evolved
+- Examine multiple angles before implementing (feasibility, edge cases, performance, integration)
+- Switch modes based on context (exploration → implementation → debugging → optimization)
 - Match depth to complexity (trivial → quick, high stakes → deep)
 - Think system-level first, then implement
 - Apply same rigor at all scales (architecture to variable names)
