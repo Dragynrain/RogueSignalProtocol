@@ -148,7 +148,7 @@ class GameSession:
 
                 # Alpha Testing: Death analytics
                 logging.warning("="*80)
-                logging.warning(f"💀 PLAYER DEATH - {death_cause.upper()}")
+                logging.warning(f"PLAYER DEATH - {death_cause.upper()}")
                 logging.warning(f"Level: {self.game_engine.level}, Turn: {self.game_engine.turn}")
                 logging.warning(f"Position: ({player.x},{player.y})")
                 logging.warning(f"Final CPU: {player.cpu}/{player.max_cpu}")
@@ -788,7 +788,7 @@ class GameSession:
         player = self.game_engine.player
         enemies_remaining = len(self.game_engine.enemies)
         logging.info("="*80)
-        logging.info(f"✅ LEVEL {old_level} COMPLETED")
+        logging.info(f"[COMPLETE] LEVEL {old_level} COMPLETED")
         logging.info(f"Turn: {self.game_engine.turn}")
         logging.info(f"Player CPU: {player.cpu}/{player.max_cpu}")
         logging.info(f"Player Heat: {player.heat}/{player.max_heat}")
@@ -801,7 +801,7 @@ class GameSession:
 
         if self.game_engine.level > 3:
             logging.warning("="*80)
-            logging.warning("🏆 VICTORY - All levels completed!")
+            logging.warning("[VICTORY] All levels completed!")
             logging.warning(f"Total turns: {self.game_engine.turn}")
             logging.warning(f"Final trace: {player.trace_level:.1f}%")
             logging.warning("="*80)

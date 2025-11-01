@@ -89,12 +89,12 @@ class PathfindingHelper:
 
             # Validate path (TCOD returns numpy array)
             if len(path) > 1 and len(path) <= max_length:
-                logging.debug(f"Pathfinding: ({start.x},{start.y}) → ({goal.x},{goal.y}), path_length={len(path)}, max={max_length}")
+                logging.debug(f"Pathfinding: ({start.x},{start.y}) -> ({goal.x},{goal.y}), path_length={len(path)}, max={max_length}")
                 return path
             elif len(path) > max_length:
-                logging.debug(f"Pathfinding: ({start.x},{start.y}) → ({goal.x},{goal.y}), path too long: {len(path)} > {max_length}")
+                logging.debug(f"Pathfinding: ({start.x},{start.y}) -> ({goal.x},{goal.y}), path too long: {len(path)} > {max_length}")
             else:
-                logging.debug(f"Pathfinding: ({start.x},{start.y}) → ({goal.x},{goal.y}), no path found")
+                logging.debug(f"Pathfinding: ({start.x},{start.y}) -> ({goal.x},{goal.y}), no path found")
             return None
 
         except Exception as e:
@@ -527,17 +527,17 @@ class Player:
         if upgrade.stat_type == 'ram':
             old_ram = self.ram_total
             self.ram_total = min(max_ram, self.ram_total + upgrade.bonus_amount)
-            logging.debug(f"Player upgrade '{upgrade_key}': RAM {old_ram} → {self.ram_total} (cap={max_ram})")
+            logging.debug(f"Player upgrade '{upgrade_key}': RAM {old_ram} -> {self.ram_total} (cap={max_ram})")
         elif upgrade.stat_type == 'cpu':
             old_max_cpu = self.max_cpu
             old_cpu = self.cpu
             self.max_cpu = min(max_cpu, self.max_cpu + upgrade.bonus_amount)
             self.cpu = min(self.max_cpu, self.cpu + upgrade.bonus_amount)  # Boost current as well but cap at max
-            logging.debug(f"Player upgrade '{upgrade_key}': max_CPU {old_max_cpu} → {self.max_cpu}, CPU {old_cpu} → {self.cpu} (cap={max_cpu})")
+            logging.debug(f"Player upgrade '{upgrade_key}': max_CPU {old_max_cpu} -> {self.max_cpu}, CPU {old_cpu} -> {self.cpu} (cap={max_cpu})")
         elif upgrade.stat_type == 'heat':
             old_max_heat = self.max_heat
             self.max_heat = min(200, self.max_heat + upgrade.bonus_amount)  # Cap at 200
-            logging.debug(f"Player upgrade '{upgrade_key}': max_heat {old_max_heat} → {self.max_heat} (cap=200)")
+            logging.debug(f"Player upgrade '{upgrade_key}': max_heat {old_max_heat} -> {self.max_heat} (cap=200)")
 
         return True
     
@@ -546,7 +546,7 @@ class Player:
         actual_damage = min(damage, self.cpu)
         old_cpu = self.cpu
         self.cpu -= actual_damage
-        logging.debug(f"Player: took {actual_damage} damage, CPU {old_cpu} → {self.cpu}/{self.max_cpu}")
+        logging.debug(f"Player: took {actual_damage} damage, CPU {old_cpu} -> {self.cpu}/{self.max_cpu}")
 
         # Track metrics
         from game_metrics import track
@@ -762,12 +762,12 @@ class Enemy:
         original_damage = damage
         if self.type == 'admin':
             damage = max(5, damage // 2)  # Minimum 5 damage to prevent immunity
-            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): damage reduced by resistance: {original_damage} → {damage}")
+            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): damage reduced by resistance: {original_damage} -> {damage}")
 
         old_cpu = self.cpu
         self.cpu -= damage
         is_dead = self.cpu <= 0
-        logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): took {damage} damage, cpu {old_cpu} → {self.cpu}, destroyed={is_dead}")
+        logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): took {damage} damage, cpu {old_cpu} -> {self.cpu}, destroyed={is_dead}")
         return is_dead
     
     def move(self, game_map, player, game_engine) -> bool:

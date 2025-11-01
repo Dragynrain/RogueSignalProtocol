@@ -104,6 +104,11 @@ class UIRenderer:
                 render_char_safe(console, x_pos, 0, part, fg=color, bg=Colors.UI_BG)
                 x_pos += len(part) + 2
 
+        # Render "Inv" button on the right side of status bar for mouse users
+        inv_button_text = "[Inv]"
+        inv_button_x = GameConfig.GAME_AREA_WIDTH() - len(inv_button_text) - 1
+        render_char_safe(console, inv_button_x, 0, inv_button_text, fg=Colors.YELLOW, bg=Colors.UI_BG)
+
         # Bottom border of status bar (row 1) - horizontal line with UI color
         # Use T-piece where it meets the vertical log border
         for x in range(GameConfig.SCREEN_WIDTH):

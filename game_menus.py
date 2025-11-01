@@ -283,7 +283,7 @@ class MainMenu(BaseMenu):
             # Glyph mode - centered
             render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
-                "Up/Down or W/S: Navigate", fg=help_text_color, bg=Colors.BLACK
+                "↕ or W/S: Navigate", fg=help_text_color, bg=Colors.BLACK
             )
             render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
@@ -542,7 +542,6 @@ class SettingsMenu(BaseMenu):
              "values": ["Classic", "Graphics"]},
             {"name": "UI Color", "type": "ui_color", "key": "ui_color",
              "values": ["Cyan", "Purple", "Magenta", "Golden", "Crimson", "Azure", "Emerald", "Ivory"]},
-            {"name": "═══ Dialogues ═══", "type": "section_header"},
             {"name": "Overclock Warnings", "type": "dialogue_toggle", "key": "show_overclock_warning"},
             {"name": "Back", "type": "action"}
         ]
@@ -562,7 +561,7 @@ class SettingsMenu(BaseMenu):
         ui_color = self.settings.get_ui_color_rgb()
 
         # Render the right-side box using common method
-        box = self._render_right_side_box(console, menu_height, Colors.WHITE)
+        box = self._render_right_side_box(console, menu_height, ui_color)
         
         # Title
         title = "SETTINGS"
@@ -665,8 +664,8 @@ class SettingsMenu(BaseMenu):
         if box['use_background_layout']:
             # Compact instructions for narrow box (graphics mode)
             instructions = [
-                "Arrows: Navigate",
-                "L/R: Adjust",
+                "↕: Navigate",
+                "←→: Adjust",
                 "Enter: Select",
                 "Esc: Back"
             ]
@@ -674,8 +673,8 @@ class SettingsMenu(BaseMenu):
         else:
             # Full instructions for glyph mode
             instructions = [
-                "Arrows/WASD: Navigate",
-                "L/R or A/D: Adjust",
+                "↕/WASD: Navigate",
+                "←→ or A/D: Adjust",
                 "Enter: Select",
                 "Escape: Back"
             ]

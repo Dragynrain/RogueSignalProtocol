@@ -363,7 +363,7 @@ class TileManager:
         loaded_entities = [name for name, texture in self.texture_cache.items()
                           if texture is not None]
 
-        logging.debug(f"Graphics: Window resize {new_window_size[0]}x{new_window_size[1]}px - reloading {len(loaded_entities)} textures (tile size {old_size[0]}x{old_size[1]} → {new_size[0]}x{new_size[1]})")
+        logging.debug(f"Graphics: Window resize {new_window_size[0]}x{new_window_size[1]}px - reloading {len(loaded_entities)} textures (tile size {old_size[0]}x{old_size[1]} -> {new_size[0]}x{new_size[1]})")
 
         # Clear cache (textures will be garbage collected)
         self.texture_cache.clear()

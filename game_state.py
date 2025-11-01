@@ -260,7 +260,7 @@ class TurnProcessor:
             player.heat = max(0, player.heat - heat_reduction)
 
             if old_heat != player.heat:
-                logging.debug(f"Turn: Heat cooldown {old_heat} → {player.heat} (-{heat_reduction})")
+                logging.debug(f"Turn: Heat cooldown {old_heat} -> {player.heat} (-{heat_reduction})")
 
             # Heat reduction applied silently
     
@@ -289,8 +289,8 @@ class TurnProcessor:
 
                         # Alpha Testing: Death analytics
                         logging.warning("="*80)
-                        logging.warning("💀 PLAYER DEATH - VIRUS")
-                        logging.warning(f"Level: {self.game_state.current_level}, Turn: {self.game_state.turn}")
+                        logging.warning("PLAYER DEATH - VIRUS")
+                        logging.warning(f"Level: {self.game_state.level}, Turn: {self.game_state.turn}")
                         logging.warning(f"Position: ({player.x},{player.y})")
                         logging.warning(f"Final CPU: {player.cpu}/{player.max_cpu}")
                         logging.warning(f"Final Heat: {player.heat}/{player.max_heat}")
@@ -325,6 +325,6 @@ class TurnProcessor:
             player.trace_level = min(100, player.trace_level + trace_increase)
 
             if old_trace != player.trace_level:
-                logging.debug(f"Turn: Trace level {old_trace:.1f} → {player.trace_level:.1f} (+{trace_increase:.1f})")
+                logging.debug(f"Turn: Trace level {old_trace:.1f} -> {player.trace_level:.1f} (+{trace_increase:.1f})")
 
             # Trace Level increases silently in background
