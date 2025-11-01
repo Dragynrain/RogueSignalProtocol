@@ -856,8 +856,10 @@ class InputHandler:
         elif self.game.show_lore_viewer:
             return self._handle_lore_viewer_left_click(event)
 
-        # Check for exploit bar clicks (normal gameplay only)
-        # This needs to be checked before gameplay movement to intercept UI clicks
+        # Check for UI button clicks (normal gameplay only)
+        # These need to be checked before gameplay movement to intercept UI clicks
+        if self._handle_inv_button_click(event):
+            return True
         if self._handle_exploit_bar_click(event):
             return True
 
@@ -907,6 +909,40 @@ class InputHandler:
                 )
                 # Targeting mode is exited by execute_targeted_exploit
             return True
+        return False
+
+    def _handle_inv_button_click(self, event: tcod.event.MouseButtonDown) -> bool:
+        """
+        Handle left click on Inv button in status bar.
+
+        Args:
+            event: Mouse button down event with pixel position
+
+        Returns:
+            True if click was on Inv button, False otherwise
+        """
+        # Convert pixel coordinates to console tile coordinates
+        window_w, window_h = self._get_window_dimensions()
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            event.position.x, event.position.y, window_w, window_h
+        )
+
+        # Inv button is on row 0 (status bar)
+        if tile_y != 0:
+            return False
+
+        # Calculate Inv button position (must match rendering code)
+        from game_config import GameConfig
+        inv_button_text = "[Inv]"
+        inv_button_x = GameConfig.GAME_AREA_WIDTH() - len(inv_button_text) - 1
+        inv_button_end_x = inv_button_x + len(inv_button_text)
+
+        # Check if click is within Inv button bounds
+        if inv_button_x <= tile_x < inv_button_end_x:
+            logging.debug(f"Input: Inv button clicked at ({tile_x}, {tile_y})")
+            self._open_inventory()
+            return True
+
         return False
 
     def _handle_exploit_bar_click(self, event: tcod.event.MouseButtonDown) -> bool:

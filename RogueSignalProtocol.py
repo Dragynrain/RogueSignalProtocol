@@ -101,7 +101,7 @@ logging.basicConfig(
 # Log the startup mode
 if DEBUG_MODE:
     logging.info("="*80)
-    logging.info("🎮 GAME SESSION START")
+    logging.info("[START] GAME SESSION START")
     logging.info("="*80)
     logging.info("Game started in DEBUG mode (Alpha build for playtesters)")
     logging.info(f"Log file: game_debug.log")

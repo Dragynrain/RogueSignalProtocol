@@ -149,7 +149,7 @@ class GameSettings:
         old_value = getattr(self, f"{volume_type}_volume", 0.0)
         new_value = clamp(volume, 0.0, 1.0)
         setattr(self, f"{volume_type}_volume", new_value)
-        logging.debug(f"Settings: {volume_type}_volume changed {old_value:.2f} → {new_value:.2f}")
+        logging.debug(f"Settings: {volume_type}_volume changed {old_value:.2f} -> {new_value:.2f}")
         self.save_settings()
 
     def set_master_volume(self, volume: float):
@@ -170,7 +170,7 @@ class GameSettings:
                 logging.info("Migrated graphics_mode from 'ascii' to 'glyph'")
             old_mode = self.graphics_mode
             self.graphics_mode = mode
-            logging.debug(f"Settings: graphics_mode changed {old_mode} → {mode}")
+            logging.debug(f"Settings: graphics_mode changed {old_mode} -> {mode}")
             self.save_settings()
 
     def set_ui_color(self, color: str):
@@ -179,7 +179,7 @@ class GameSettings:
         if color in valid_colors:
             old_color = self.ui_color
             self.ui_color = color
-            logging.debug(f"Settings: ui_color changed {old_color} → {color}")
+            logging.debug(f"Settings: ui_color changed {old_color} -> {color}")
             self.save_settings()
 
     def get_ui_color_rgb(self) -> tuple:

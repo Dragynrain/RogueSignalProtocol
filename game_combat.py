@@ -172,7 +172,7 @@ class ExploitSystem:
                 # Normal heat application
                 old_heat = self.game.player.heat
                 self.game.player.heat = new_heat
-                logging.debug(f"Combat: Heat applied for '{exploit.name}': {old_heat} → {new_heat} (+{heat_cost})")
+                logging.debug(f"Combat: Heat applied for '{exploit.name}': {old_heat} -> {new_heat} (+{heat_cost})")
 
         if success:
             self.game.targeting_mode = False
@@ -341,7 +341,7 @@ class ExploitSystem:
                 enemy.original_patrol_index = enemy.patrol_index
             enemy.state = EnemyState.HOSTILE
             enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
-            logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) damaged, state {old_state.name} → HOSTILE")
+            logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) damaged, state {old_state.name} -> HOSTILE")
         return True
 
     def _execute_code_injection(self, target: Position) -> bool:

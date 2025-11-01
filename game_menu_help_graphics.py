@@ -227,7 +227,7 @@ class GraphicalHelpMenu:
 
                 # Left column - Controls & Objective
                 (2, 5, "CONTROLS:", Colors.CYAN),
-                (2, 6, "Move: ↑↓←→/WASD/Numpad", Colors.WHITE),
+                (2, 6, "Move: ↑↓←→/WASD/QEZC/Numpad", Colors.WHITE),
                 (2, 7, "1-5: Use exploits", Colors.WHITE),
                 (2, 8, "I: Inventory", Colors.WHITE),
                 (2, 9, "L: Look mode", Colors.WHITE),
@@ -460,7 +460,7 @@ class GraphicalHelpMenu:
             render_char_safe(console, x, y, text, fg=color, bg=Colors.BLACK)
 
         # Render navigation help at bottom
-        nav_text = "← → Arrow Keys: Change Page  |  ESC/Any Key: Return"
+        nav_text = "←→: Change Page  |  ESC/Any Key: Return"
         nav_x = GameConfig.SCREEN_WIDTH // 2 - len(nav_text) // 2
         render_char_safe(console, nav_x, GameConfig.SCREEN_HEIGHT - 2, nav_text, fg=Colors.CYAN, bg=Colors.BLACK)
 
