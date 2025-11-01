@@ -178,7 +178,7 @@ class MenuRenderingUtils:
             # Left 60%: Make transparent for SDL graphics
             for y in range(console.height):
                 for x in range(0, graphics_boundary):
-                    console.rgba[x, y] = (
+                    console.rgba[y, x] = (
                         ord(' '),           # Empty character
                         (255, 255, 255, 0), # Transparent foreground
                         (0, 0, 0, 0)        # Transparent background
