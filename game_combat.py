@@ -202,6 +202,10 @@ class ExploitSystem:
 
         Checks that target is within map bounds and within exploit's range.
 
+        IMPORTANT: Uses grid distance (Chebyshev), NOT Euclidean distance!
+        This means diagonals count as range 1, allowing range-1 exploits
+        like Buffer Overflow to target all 8 adjacent tiles.
+
         Args:
             exploit: Exploit definition with range limit
             target: Target position
@@ -212,12 +216,13 @@ class ExploitSystem:
         if not target.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
             self.game.message_log.add_message("Invalid target location")
             return False
-        
-        distance = self.game.player.position.distance_to(target)
+
+        # Use grid distance so diagonals count as 1 for gameplay purposes
+        distance = self.game.player.position.grid_distance_to(target)
         if distance > exploit.range:
             self.game.message_log.add_message(f"Out of range (Max: {exploit.range})")
             return False
-        
+
         return True
 
     def _execute_specific_exploit(self, exploit_key: str, exploit: ExploitDefinition, target: Position) -> bool:
@@ -289,6 +294,8 @@ class ExploitSystem:
         PATROL enemies become ALERT for 3 turns, others get last_seen_player set
         to target and become ALERT for 2 turns. Does not affect STATIC enemies.
 
+        Uses grid distance so diagonals count as 1 for consistent gameplay.
+
         Args:
             target: Location of the noise
 
@@ -300,8 +307,9 @@ class ExploitSystem:
         attracted = 0
         for enemy in self.game.enemies:
             movement_type = enemy.get_movement_type()
+            # Use grid distance for AoE radius (diagonals = 1)
             if (movement_type in [EnemyMovement.SEEK, EnemyMovement.RANDOM, EnemyMovement.PATROL] and
-                enemy.position.distance_to(target) <= exploit.effect_radius):
+                enemy.position.grid_distance_to(target) <= exploit.effect_radius):
                 if movement_type == EnemyMovement.PATROL:
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = 3
@@ -370,8 +378,11 @@ class ExploitSystem:
         """
         Execute Buffer Overflow exploit - high damage melee attack.
 
-        Deals 50 damage to adjacent enemy (within distance 1.5 to include diagonals).
+        Deals 50 damage to adjacent enemy (all 8 surrounding tiles including diagonals).
         Requires enemy to be adjacent to player.
+
+        IMPORTANT: Uses grid distance (Chebyshev), NOT Euclidean distance!
+        Diagonals count as range 1, so all 8 adjacent tiles are valid targets.
 
         Args:
             target: Target adjacent enemy position
@@ -380,9 +391,10 @@ class ExploitSystem:
             True if enemy hit, False if target not adjacent or no enemy
         """
         self.game.sound_manager.play_sound("exploit_buffer_overflow")
-        # Check if target is within range-1 (including diagonals, distance <= 1.5)
-        distance = self.game.player.position.distance_to(target)
-        if distance > GameBalance.ADJACENT_DISTANCE_THRESHOLD:
+        # Check if target is within range-1 (all 8 adjacent tiles including diagonals)
+        # Use grid distance so diagonals = 1, not ~1.414
+        distance = self.game.player.position.grid_distance_to(target)
+        if distance > 1:
             self.game.message_log.add_message("Must target adjacent enemy")
             return False
 
@@ -400,9 +412,11 @@ class ExploitSystem:
         Stun effect is additive - multiple stuns stack duration.
         Disabled enemies cannot move or attack. Resets their state to UNAWARE.
 
+        Uses grid distance so diagonals count as 1 for consistent gameplay.
+
         Args:
             target: Center of AoE
-            radius: Effect radius
+            radius: Effect radius (grid distance)
             duration: Number of turns enemies are disabled
 
         Returns:
@@ -410,7 +424,8 @@ class ExploitSystem:
         """
         count = 0
         for enemy in self.game.enemies:
-            if enemy.position.distance_to(target) <= radius:
+            # Use grid distance for AoE radius (diagonals = 1)
+            if enemy.position.grid_distance_to(target) <= radius:
                 enemy.disabled_turns += duration  # Additive stun effect
                 enemy.state = EnemyState.UNAWARE
                 enemy.alert_timer = 0
@@ -426,6 +441,8 @@ class ExploitSystem:
         Disables all enemies within effect_radius for effect_duration turns.
         Emergency defensive tool with high heat cost.
 
+        Uses grid distance so diagonals count as 1 for consistent gameplay.
+
         Args:
             target: Ignored (exploit is centered on player)
             exploit_range: Ignored (uses effect_radius from JSON)
@@ -439,7 +456,8 @@ class ExploitSystem:
         player_pos = self.game.player.position
         count = 0
         for enemy in self.game.enemies:
-            if enemy.position.distance_to(player_pos) <= exploit.effect_radius:
+            # Use grid distance for AoE radius (diagonals = 1)
+            if enemy.position.grid_distance_to(player_pos) <= exploit.effect_radius:
                 enemy.disabled_turns += exploit.effect_duration  # Additive stun effect
                 enemy.state = EnemyState.UNAWARE
                 enemy.alert_timer = 0
@@ -559,6 +577,8 @@ class ExploitSystem:
         their last_seen_player position. They forget they ever saw the player.
         Useful for escaping pursuit.
 
+        Uses grid distance so diagonals count as 1 for consistent gameplay.
+
         Args:
             target: Center of AoE
 
@@ -569,7 +589,8 @@ class ExploitSystem:
         exploit = GameData.EXPLOITS['memory_leak']
         count = 0
         for enemy in self.game.enemies:
-            if enemy.position.distance_to(target) <= exploit.effect_radius:
+            # Use grid distance for AoE radius (diagonals = 1)
+            if enemy.position.grid_distance_to(target) <= exploit.effect_radius:
                 enemy.state = EnemyState.UNAWARE
                 enemy.last_seen_player = None
                 enemy.alert_timer = 0

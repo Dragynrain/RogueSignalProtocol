@@ -99,6 +99,12 @@ class InputHandler:
         if self.game.targeting_mode:
             state_context.append("targeting")
 
+        # Priority 0: Achievement popup (highest priority - must consume input to prevent double-processing)
+        if hasattr(self.game, 'achievement_popup_manager') and self.game.achievement_popup_manager.has_active_popup():
+            self.game.achievement_popup_manager.dismiss_active_popup()
+            logging.debug("Input: Dismissed achievement popup with key press")
+            return True  # Consume the event - don't process further
+
         # Priority 1: Active dialogue (highest priority overlay)
         # Check this BEFORE game_over to allow death dialogue to be shown
         if self.game.dialogue_state.is_active():
@@ -845,6 +851,12 @@ class InputHandler:
 
     def _handle_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
         """Handle left mouse click based on current game state."""
+        # Priority 0: Achievement popup (highest - must consume to prevent double-processing)
+        if hasattr(self.game, 'achievement_popup_manager') and self.game.achievement_popup_manager.has_active_popup():
+            self.game.achievement_popup_manager.dismiss_active_popup()
+            logging.debug("Input: Dismissed achievement popup with mouse click")
+            return True  # Consume the event - don't process further
+
         # Priority: dialogue > look mode > targeting > gameplay
         if self.game.dialogue_state.is_active():
             return self._handle_dialogue_left_click(event)

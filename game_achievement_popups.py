@@ -192,7 +192,7 @@ class AchievementPopupManager:
                            fg=description_color, bg=bg_color)
 
         # Optionally show hint at bottom (very subtle)
-        hint_text = "(press any key)"
+        hint_text = "(press any key or click)"
         hint_x = box_x + (POPUP_WIDTH - len(hint_text)) // 2
         hint_color = ensure_color_tuple((100, 100, 100))  # Very dim
         render_char_safe(console, hint_x, box_y + POPUP_HEIGHT - 1, hint_text,

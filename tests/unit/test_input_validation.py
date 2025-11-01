@@ -58,6 +58,8 @@ def create_mock_game():
     game.dialogue_state = Mock()  # Add dialogue_state mock for new dialogue system
     game.dialogue_state.is_active = Mock(return_value=False)  # Dialogue not active by default
     game.dialogue_state.get_active = Mock(return_value=None)
+    game.achievement_popup_manager = Mock()  # Achievement popup manager
+    game.achievement_popup_manager.has_active_popup = Mock(return_value=False)  # No popup by default
 
     return game
 
