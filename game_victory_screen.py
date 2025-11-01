@@ -33,7 +33,6 @@ class VictoryScreen:
             background: MenuBackground instance configured for ending art
         """
         self.background = background
-        self.done = False
 
     def render(self, console: tcod.console.Console) -> None:
         """
@@ -242,6 +241,5 @@ class VictoryScreen:
         if isinstance(event, tcod.event.KeyDown):
             if event.sym in [tcod.event.KeySym.SPACE, tcod.event.KeySym.RETURN,
                            tcod.event.KeySym.KP_ENTER, tcod.event.KeySym.ESCAPE]:
-                self.done = True
                 return True
         return False

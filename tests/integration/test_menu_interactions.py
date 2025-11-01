@@ -40,8 +40,8 @@ class TestMenuMouseInteractions:
 
             # Click on right side (should increase)
             click_x = bar_x + 15
-            # First option is at box_top + 5, where box_top = (50-35)//2 = 7, so y=12
-            click_y = 12  # First option row
+            # First option is at box_top + 5, where box_top = (50-42)//2 = 4, so y=9
+            click_y = 9  # First option row (updated for menu_height=42)
 
             event = Mock()
             event.tile = Mock()
@@ -94,7 +94,7 @@ class TestMenuMouseInteractions:
 
             # Click on left side (definitely before midpoint, should decrease)
             click_x = bar_content_start + 1
-            click_y = 12  # First option row
+            click_y = 9  # First option row (updated for menu_height=42)
 
             event = Mock()
             event.tile = Mock()
@@ -191,13 +191,21 @@ class TestMenuMouseInteractions:
             assert graphics_option_index is not None, "Graphics mode option not found"
 
             # Create click event on graphics toggle
+            # Calculate correct Y position based on layout
+            layout = menu._get_menu_layout_params()
+            spacing = 3 if layout['use_background_layout'] else 2
+            menu_height = 42
+            box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
+            start_y = box_top + 5
+            option_y = start_y + (graphics_option_index * spacing)
+
             event = Mock()
             event.tile = Mock()
             event.tile.x = 40  # Somewhere in the menu
-            event.tile.y = 12 + (graphics_option_index * 2)  # Account for spacing
+            event.tile.y = option_y
             event.position = Mock()
             event.position.x = 40
-            event.position.y = 12 + (graphics_option_index * 2)
+            event.position.y = option_y
 
             # Select and click the option
             menu.handle_mouse_motion(event)
@@ -234,13 +242,21 @@ class TestMenuMouseInteractions:
             back_index = len(menu.options) - 1
 
             # Create click event on Back
+            # Calculate correct Y position based on layout
+            layout = menu._get_menu_layout_params()
+            spacing = 3 if layout['use_background_layout'] else 2
+            menu_height = 42
+            box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
+            start_y = box_top + 5
+            option_y = start_y + (back_index * spacing)
+
             event = Mock()
             event.tile = Mock()
             event.tile.x = 40
-            event.tile.y = 12 + (back_index * 2)
+            event.tile.y = option_y
             event.position = Mock()
             event.position.x = 40
-            event.position.y = 12 + (back_index * 2)
+            event.position.y = option_y
 
             # Select and click Back
             menu.handle_mouse_motion(event)
