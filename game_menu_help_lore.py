@@ -371,7 +371,7 @@ class HelpMenu:
             ("  Network Scan: Reveal all cooling, CPU, and ghost nodes", Colors.WHITE),
             ("  Log Wiper: Reduce trace level (-30%)", Colors.WHITE),
             ("  Antivirus: Purges negative status effects (virus, slow)", Colors.WHITE),
-            ("  Memory Leak: 3x3 area makes enemies forget player location", Colors.WHITE),
+            ("  Memory Leak: 3x3 area blinds enemies for 3 turns (keep moving)", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("STATUS EFFECTS:", Colors.CYAN),

@@ -215,8 +215,8 @@
       "damage": 0,
       "targeting": "AREA",
       "effect_radius": 1,
-      "effect_duration": 0,
-      "description": "Corrupt short-term memory buffers of nearby processes. Makes enemies in a 3x3 area forget they detected you - reset their awareness."
+      "effect_duration": 3,
+      "description": "Corrupt enemy vision systems in a 3x3 area. Blinded enemies can't see you for 3 turns while they reboot - but they keep moving. Use it to dodge into shadows!"
     }
   },
   "upgrades": {
