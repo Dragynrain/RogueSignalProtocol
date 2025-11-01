@@ -60,7 +60,9 @@ def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: in
             # Card suits (used for special nodes)
             "♠♥♦♣" +
             # Game symbols
-            "☺•○■§♫◘◙"
+            "☺•○■§♫◘◙" +
+            # Arrow symbols (used in menus and UI)
+            "↑↓←→↕↔"
         )
 
     # Load each character

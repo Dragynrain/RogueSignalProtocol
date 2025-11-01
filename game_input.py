@@ -635,8 +635,9 @@ class InputHandler:
 
         # Convert to console tile coordinates and store for hover effects
         window_width, window_height = self._get_window_dimensions()
-        tile_x = pixel_x * GameConfig.SCREEN_WIDTH // window_width
-        tile_y = pixel_y * GameConfig.SCREEN_HEIGHT // window_height
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            pixel_x, pixel_y, window_width, window_height
+        )
         self.game.last_mouse_tile_x = tile_x
         self.game.last_mouse_tile_y = tile_y
 
@@ -903,17 +904,17 @@ class InputHandler:
             # Execute exploit at cursor position (same as pressing Enter)
             if self.game.targeting_exploit:
                 logging.debug(f"Input: Targeting left-click executing {self.game.targeting_exploit} at ({world_pos.x},{world_pos.y})")
-                self.game.exploit_system.execute_targeted_exploit(
+                self.game.exploit_system.execute_exploit(
                     self.game.targeting_exploit,
                     world_pos
                 )
-                # Targeting mode is exited by execute_targeted_exploit
+                # Targeting mode is exited by execute_exploit
             return True
         return False
 
     def _handle_inv_button_click(self, event: tcod.event.MouseButtonDown) -> bool:
         """
-        Handle left click on Inv button in status bar.
+        Handle left click on Inv button in bottom panel.
 
         Args:
             event: Mouse button down event with pixel position
@@ -927,14 +928,15 @@ class InputHandler:
             event.position.x, event.position.y, window_w, window_h
         )
 
-        # Inv button is on row 0 (status bar)
-        if tile_y != 0:
+        # Inv button is on bottom row (must match rendering code)
+        from game_config import GameConfig
+        inv_button_y = GameConfig.SCREEN_HEIGHT - 1
+        if tile_y != inv_button_y:
             return False
 
         # Calculate Inv button position (must match rendering code)
-        from game_config import GameConfig
         inv_button_text = "[Inv]"
-        inv_button_x = GameConfig.GAME_AREA_WIDTH() - len(inv_button_text) - 1
+        inv_button_x = GameConfig.SCREEN_WIDTH - len(inv_button_text) - 1
         inv_button_end_x = inv_button_x + len(inv_button_text)
 
         # Check if click is within Inv button bounds

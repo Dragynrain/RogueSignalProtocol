@@ -22,6 +22,7 @@ ENV/
 
 # Save game files
 rogue_signal_save.json
+rogue_signal_progress.json
 user_settings.json
 
 # Metrics tracking data

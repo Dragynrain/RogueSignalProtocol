@@ -553,15 +553,14 @@ class SettingsMenu(BaseMenu):
         else:
             console.clear()
 
-        # Calculate menu height (account for all options including dialogue toggles)
-        # Increased to 42 for better spacing in graphics mode (spacing = 3 vs 2)
-        menu_height = 42
+        # Calculate menu height - match Main Menu for consistent transitions
+        menu_height = GameConfig.SCREEN_HEIGHT - 4  # Same as Main Menu (46 tiles)
 
         # Get UI color for decorations
         ui_color = self.settings.get_ui_color_rgb()
 
-        # Render the right-side box using common method
-        box = self._render_right_side_box(console, menu_height, ui_color)
+        # Render the right-side box using common method (match Main Menu y_offset)
+        box = self._render_right_side_box(console, menu_height, ui_color, y_offset=3)
         
         # Title
         title = "SETTINGS"
@@ -664,8 +663,8 @@ class SettingsMenu(BaseMenu):
         if box['use_background_layout']:
             # Compact instructions for narrow box (graphics mode)
             instructions = [
-                "↕: Navigate",
-                "←→: Adjust",
+                "↕/WASD: Navigate",
+                "←→/A/D: Adjust",
                 "Enter: Select",
                 "Esc: Back"
             ]
@@ -749,18 +748,19 @@ class SettingsMenu(BaseMenu):
         if not hasattr(event, 'position') or event.position is None:
             return False
 
+        from game_config import GameConfig
+
         tile_x = int(event.position.x)
         tile_y = int(event.position.y)
 
         # Calculate box dimensions the same way render() does
-        menu_height = 42  # Must match render() method
-        from game_config import GameConfig
+        menu_height = GameConfig.SCREEN_HEIGHT - 4  # Must match render() method (46 tiles)
+        y_offset = 3  # Must match render() method
         layout = self._get_menu_layout_params()
 
-        # Calculate box top (same logic as _render_right_side_box)
-        # IMPORTANT: In graphics mode, box is shifted up by 1 tile (see MenuRenderingUtils.render_right_side_box)
+        # Calculate box top (same logic as _render_right_side_box with y_offset)
         if layout['use_background_layout']:
-            box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2 - 1  # Shift 1 tile up
+            box_top = y_offset - 1  # With y_offset=3, box_top = 2
         else:
             box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
 
@@ -823,7 +823,7 @@ class SettingsMenu(BaseMenu):
             tile_x = int(event.position.x)
 
             # Calculate color display position using actual box dimensions
-            menu_height = 42  # Must match render() method
+            menu_height = GameConfig.SCREEN_HEIGHT - 4  # Must match render() method (46 tiles)
             layout = self._get_menu_layout_params()
 
             if layout['use_background_layout']:
@@ -862,7 +862,7 @@ class SettingsMenu(BaseMenu):
 
             # Calculate slider bar position using actual box dimensions
             # Must match the rendering code exactly
-            menu_height = 42  # Must match render() method
+            menu_height = GameConfig.SCREEN_HEIGHT - 4  # Must match render() method (46 tiles)
             layout = self._get_menu_layout_params()
 
             if layout['use_background_layout']:
