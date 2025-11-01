@@ -436,14 +436,19 @@ class GameSession:
             return
 
         for enemy in self.game_engine.enemies[:]:
-            can_see = enemy.can_see_player(self.game_engine.player, self.game_engine.game_map)
+            # Blinded enemies can't see anything (but keep moving)
+            if enemy.blinded_turns > 0:
+                can_see = False
+            else:
+                can_see = enemy.can_see_player(self.game_engine.player, self.game_engine.game_map)
 
-            # Admin Avatar has perfect tracking
+            # Admin Avatar has perfect tracking (but can still be blinded)
             if enemy.type == 'admin':
-                if enemy.state != EnemyState.HOSTILE:
-                    enemy.state = EnemyState.HOSTILE
-                    self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
-                enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
+                if enemy.blinded_turns <= 0:  # Only track if not blinded
+                    if enemy.state != EnemyState.HOSTILE:
+                        enemy.state = EnemyState.HOSTILE
+                        self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
+                    enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
             else:
                 self._update_enemy_state(enemy, can_see)
 

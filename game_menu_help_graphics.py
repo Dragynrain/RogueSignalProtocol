@@ -263,14 +263,15 @@ class GraphicalHelpMenu:
                 (42, 14, "NoiseMaker: Distract", self.NEON_PINK),
                 (42, 15, "LogWiper: Cut trace", self.NEON_PINK),
                 (42, 16, "Antivirus: Cure virus", self.NEON_PINK),
+                (42, 17, "MemoryLeak: Blind 3t", self.NEON_PINK),
 
-                (42, 18, "SHADOWS (*):", Colors.CYAN),
-                (42, 19, "Hide from enemies", Colors.ELECTRIC_PURPLE),
-                (42, 20, "Critical for stealth!", Colors.YELLOW),
+                (42, 19, "SHADOWS (*):", Colors.CYAN),
+                (42, 20, "Hide from enemies", Colors.ELECTRIC_PURPLE),
+                (42, 21, "Critical for stealth!", Colors.YELLOW),
 
-                (42, 22, "RAM:", Colors.CYAN),
-                (42, 23, "Limits exploit slots", Colors.WHITE),
-                (42, 24, "Max 5 equipped", Colors.LIGHT_GRAY),
+                (42, 23, "RAM:", Colors.CYAN),
+                (42, 24, "Limits exploit slots", Colors.WHITE),
+                (42, 25, "Max 5 equipped", Colors.LIGHT_GRAY),
 
                 # Full-width tips at bottom - centered, non-bulleted
                 (30, 31, "SURVIVAL TIPS:", Colors.YELLOW),

@@ -571,11 +571,12 @@ class ExploitSystem:
     
     def _execute_memory_leak(self, target: Position) -> bool:
         """
-        Execute Memory Leak exploit - make enemies forget player.
+        Execute Memory Leak exploit - blind enemies temporarily.
 
-        Resets all enemies within effect_radius to UNAWARE state and clears
-        their last_seen_player position. They forget they ever saw the player.
-        Useful for escaping pursuit.
+        Corrupts enemy vision systems, making them unable to see the player for 3 turns
+        while they reboot. Resets all enemies within effect_radius to UNAWARE state and
+        blinds them. They keep moving but can't detect the player until blindness expires.
+        Useful for escaping pursuit and getting into shadows.
 
         Uses grid distance so diagonals count as 1 for consistent gameplay.
 
@@ -594,9 +595,10 @@ class ExploitSystem:
                 enemy.state = EnemyState.UNAWARE
                 enemy.last_seen_player = None
                 enemy.alert_timer = 0
+                enemy.blinded_turns = 3  # Blind for 3 turns
                 count += 1
 
-        msg = f"Memory Leak: {count} enemies confused" if count > 0 else "No enemies in range"
+        msg = f"Memory Leak: {count} enemies blinded" if count > 0 else "No enemies in range"
         self.game.message_log.add_message(msg)
         return True
     

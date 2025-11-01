@@ -611,6 +611,7 @@ class Enemy:
         self.alert_timer = 0
         self.disabled_turns = 0
         self.move_cooldown = 0
+        self.blinded_turns = 0  # Memory Leak blindness - can't see player
 
         # Movement data
         self.patrol_points: List[Position] = []
@@ -799,6 +800,10 @@ class Enemy:
         if self.move_cooldown > 0 and self.type != 'admin':
             self.move_cooldown -= 1
             return False
+
+        # 3. Blindness decrement (blind enemies still move, just can't see)
+        if self.blinded_turns > 0:
+            self.blinded_turns -= 1
 
         # 3. Ensure queue has moves
         if not self.move_queue:
