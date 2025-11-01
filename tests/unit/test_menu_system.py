@@ -39,10 +39,11 @@ class TestMainMenu:
             assert len(menu.options) == 7  # Continue, New, Settings, Help, Achievements, Data Fragments, Exit
             assert menu.show_warning is False
 
-            # With graphics mode settings, Graphics Preview is shown
+            # With graphics mode settings, Graphics Preview is shown (if graphics_preview_menu exists)
             mock_settings = Mock()
             mock_settings.graphics_mode = "graphics"
-            menu_graphics = MainMenu(settings=mock_settings)
+            mock_menus = {'graphics_preview_menu': Mock()}  # Mock menus dict with graphics_preview_menu
+            menu_graphics = MainMenu(settings=mock_settings, menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
             assert len(menu_graphics.options) == 8  # Includes Graphics Preview
 
@@ -59,10 +60,11 @@ class TestMainMenu:
             assert isinstance(menu.options, list)
             assert menu.show_warning is False
 
-            # With graphics mode settings, Graphics Preview is shown
+            # With graphics mode settings, Graphics Preview is shown (if graphics_preview_menu exists)
             mock_settings = Mock()
             mock_settings.graphics_mode = "graphics"
-            menu_graphics = MainMenu(settings=mock_settings)
+            mock_menus = {'graphics_preview_menu': Mock()}  # Mock menus dict with graphics_preview_menu
+            menu_graphics = MainMenu(settings=mock_settings, menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
             assert len(menu_graphics.options) == 7  # Includes Graphics Preview
 

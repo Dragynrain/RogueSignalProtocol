@@ -47,17 +47,16 @@ class MainMenu(BaseMenu):
         mid_game_mode: True when accessed from in-game (hides Continue option)
     """
 
-    def __init__(self, background=None, settings=None):
+    def __init__(self, background=None, settings=None, menus=None):
         super().__init__(background)
         self.settings = settings  # Store settings to check graphics mode
+        self.menus = menus  # Reference to menus dict to check if graphics_preview_menu exists
         self.options = self._build_options_list()
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
-        self.has_active_game = False  # Flag to track if there's an unsaved game in memory
 
         # Stored coordinates for warning dialog click detection
-        self.warning_option_y = None
         self.warning_option_0_x_range = None  # (start_x, end_x) for "Yes, Delete"
         self.warning_option_1_x_range = None  # (start_x, end_x) for "No, Go Back"
 
@@ -65,8 +64,9 @@ class MainMenu(BaseMenu):
         """Build the options list based on save state and graphics mode."""
         base_options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments"]
 
-        # Only show Graphics Preview in graphics mode
-        if self.settings and self.settings.graphics_mode == "graphics":
+        # Only show Graphics Preview if in graphics mode AND the menu exists
+        if (self.settings and self.settings.graphics_mode == "graphics" and
+            self.menus and 'graphics_preview_menu' in self.menus):
             base_options.append("Graphics Preview")
 
         base_options.append("Exit")
@@ -89,7 +89,6 @@ class MainMenu(BaseMenu):
         can_save = (active_game is not None and
                    active_game.player.cpu > 0 and
                    not active_game.game_over)
-        self.has_active_game = can_save
 
         # Determine Exit button text based on whether there's a game to save
         exit_text = "Save and Exit" if can_save else "Exit"
@@ -97,8 +96,9 @@ class MainMenu(BaseMenu):
         # Build base options
         base_options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments"]
 
-        # Only show Graphics Preview in graphics mode
-        if self.settings and self.settings.graphics_mode == "graphics":
+        # Only show Graphics Preview if in graphics mode AND the menu exists
+        if (self.settings and self.settings.graphics_mode == "graphics" and
+            self.menus and 'graphics_preview_menu' in self.menus):
             base_options.append("Graphics Preview")
 
         base_options.append(exit_text)
@@ -140,9 +140,12 @@ class MainMenu(BaseMenu):
         """Render an enhanced menu with dynamic positioning based on background state."""
         # Calculate menu height based on content
         menu_height = GameConfig.SCREEN_HEIGHT - 4  # Full height for main menu
-        
+
+        # Get UI color from settings for border
+        ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
+
         # Render the right-side box using common method
-        box = self._render_right_side_box(console, menu_height, Colors.CYAN, y_offset=3)
+        box = self._render_right_side_box(console, menu_height, ui_color, y_offset=3)
         
         # Render each section of the menu
         self._render_menu_title(console, box)
@@ -280,7 +283,7 @@ class MainMenu(BaseMenu):
             # Glyph mode - centered
             render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - 15, GameConfig.SCREEN_HEIGHT - 6,
-                "↑↓ or W/S: Navigate", fg=help_text_color, bg=Colors.BLACK
+                "Up/Down or W/S: Navigate", fg=help_text_color, bg=Colors.BLACK
             )
             render_char_safe(console,
                 GameConfig.SCREEN_WIDTH // 2 - 10, GameConfig.SCREEN_HEIGHT - 5,
@@ -357,9 +360,6 @@ class MainMenu(BaseMenu):
         # Options
         options = ["Yes, Delete Save", "No, Go Back"]
         options_start_y = box['bottom'] - 4
-
-        # Store Y coordinate for click detection (same for both options)
-        self.warning_option_y = options_start_y
 
         for i, option in enumerate(options):
             color = Colors.RED if i == self.warning_selection and i == 0 else Colors.YELLOW if i == self.warning_selection else Colors.WHITE
@@ -555,7 +555,8 @@ class SettingsMenu(BaseMenu):
             console.clear()
 
         # Calculate menu height (account for all options including dialogue toggles)
-        menu_height = 35  # Increased for dialogue preferences section with better spacing
+        # Increased to 42 for better spacing in graphics mode (spacing = 3 vs 2)
+        menu_height = 42
 
         # Get UI color for decorations
         ui_color = self.settings.get_ui_color_rgb()
@@ -570,12 +571,13 @@ class SettingsMenu(BaseMenu):
         else:
             render_char_safe(console, box['center_x'] - len(title) // 2, box['top'] + 2, title, fg=Colors.WHITE, bg=Colors.BLACK)
         
-        # Options
+        # Options - use more spacing in graphics mode for better readability
         start_y = box['top'] + 5
+        spacing = 3 if box['use_background_layout'] else 2
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             bg_color = (40, 40, 40) if i == self.selected_option else Colors.BLACK  # Dark gray highlight
-            option_y = start_y + i * 2
+            option_y = start_y + i * spacing
 
             if box['use_background_layout']:
                 # Narrow box layout
@@ -752,7 +754,7 @@ class SettingsMenu(BaseMenu):
         tile_y = int(event.position.y)
 
         # Calculate box dimensions the same way render() does
-        menu_height = 35
+        menu_height = 42  # Must match render() method
         from game_config import GameConfig
         layout = self._get_menu_layout_params()
 
@@ -763,9 +765,9 @@ class SettingsMenu(BaseMenu):
         else:
             box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
 
-        # Options start at box_top + 5 with spacing of 2
+        # Options start at box_top + 5 with spacing (3 in graphics mode, 2 in glyph mode)
         start_y = box_top + 5
-        spacing = 2
+        spacing = 3 if layout['use_background_layout'] else 2
 
         # Calculate which option was hovered
         if tile_y >= start_y:
@@ -817,21 +819,51 @@ class SettingsMenu(BaseMenu):
             self.settings.save_settings()
             logging.info(f"Dialogue preference '{option['key']}' set to {new_value} via mouse")
         elif option["type"] == "ui_color":
-            # Cycle to next UI color on click
-            colors = ["cyan", "purple", "magenta", "golden", "crimson", "azure", "emerald", "ivory"]
-            current_idx = colors.index(self.settings.ui_color) if self.settings.ui_color in colors else 0
-            new_idx = (current_idx + 1) % len(colors)
-            self.settings.set_ui_color(colors[new_idx])
-            logging.info(f"UI color changed to {colors[new_idx]} via mouse")
+            # UI color selector: clicking left side cycles backward, right side cycles forward
+            # Determine which half of the color display was clicked
+            tile_x = int(event.position.x)
+
+            # Calculate color display position using actual box dimensions
+            menu_height = 42  # Must match render() method
+            layout = self._get_menu_layout_params()
+
+            if layout['use_background_layout']:
+                # Graphics mode - narrow box (28 chars wide)
+                box_width = 28
+                box_right = GameConfig.SCREEN_WIDTH - 2 - 3
+                box_left = box_right - box_width
+                content_left = box_left + 1
+                # UI color rendered at: name_x = content_left + 1 (on second line, like volume)
+                # Text format: "< ColorName >"
+                color_start_x = content_left + 1
+            else:
+                # Glyph mode - wide box (50 chars wide)
+                box_width = 50
+                box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
+                content_left = box_left + 2
+                # UI color rendered at: content_left + 18
+                # Text format: "< ColorName >"
+                color_start_x = content_left + 18
+
+            # The color text is formatted as "< ColorName >"
+            # Example: "< Cyan >" has length 8
+            # Get current color name to calculate width
+            current_color_name = self.settings.ui_color.capitalize()
+            color_display_width = len(f"< {current_color_name} >")
+            color_mid = color_start_x + (color_display_width // 2)
+
+            # Left half = previous color, right half = next color
+            direction = -1 if tile_x < color_mid else 1
+            self._adjust_setting(direction)
         elif option["type"] == "volume":
             # Volume sliders: clicking left side decreases, right side increases
             # (left = 0%, right = 100%)
             # Determine which half of the slider bar was clicked
-            tile_x = event.tile.x
+            tile_x = int(event.position.x)
 
             # Calculate slider bar position using actual box dimensions
             # Must match the rendering code exactly
-            menu_height = 35  # Match the menu height from render()
+            menu_height = 42  # Must match render() method
             layout = self._get_menu_layout_params()
 
             if layout['use_background_layout']:

@@ -128,7 +128,7 @@ def initialize_game_systems(settings: GameSettings, context, menu_background=Non
             tile_manager = None
 
     menus = {
-        'main_menu': MainMenu(background=menu_background, settings=settings),  # Pass settings to hide Graphics Preview in glyph mode
+        'main_menu': None,  # Will be set after menus dict is complete
         'settings_menu': SettingsMenu(settings, menu_background, sound_manager),  # Pass sound manager for live volume updates
         'help_menu': create_help_menu(settings, context, tile_manager),  # Use factory function
         'lore_menu': LoreMenu(),
@@ -138,6 +138,9 @@ def initialize_game_systems(settings: GameSettings, context, menu_background=Non
     # Only add graphics preview menu if we have a tile manager
     if tile_manager is not None:
         menus['graphics_preview_menu'] = GraphicsPreviewMenu(context, settings, tile_manager)
+
+    # Now create main menu with reference to menus dict (so it can check if graphics_preview_menu exists)
+    menus['main_menu'] = MainMenu(background=menu_background, settings=settings, menus=menus)
 
     return menus
 
@@ -326,6 +329,8 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                         # Graphics preview not available
                         logging.warning("Graphics Preview not available")
                 elif action == "back":
+                    # Refresh main menu options in case graphics mode changed
+                    main_menu.refresh_options(show_continue=True, active_game=active_game)
                     current_menu = main_menu
                 elif action == "continue":
                     # Don't stop music if it's level music playing from previous session
@@ -431,6 +436,8 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                         # Graphics preview not available
                         logging.warning("Graphics Preview not available")
                 elif action == "back":
+                    # Refresh main menu options in case graphics mode changed
+                    main_menu.refresh_options(show_continue=True, active_game=active_game)
                     current_menu = main_menu
                 elif action == "continue":
                     # Don't stop music if it's level music playing from previous session

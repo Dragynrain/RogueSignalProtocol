@@ -95,7 +95,7 @@ class LoreMenu:
             render_char_safe(console, 2, start_y + i, f"{prefix}Fragment {fragment_index + 1}: {first_line}", fg=color)
 
         # Instructions
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 4, "↑↓ Navigate │ Enter: Read │ Esc: Back", fg=Colors.LIGHT_GRAY)
+        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 4, "Up/Down: Navigate │ Enter: Read │ Esc: Back", fg=Colors.LIGHT_GRAY)
     
     def _render_reading_mode(self, console, discovered_fragments):
         """Render individual fragment for reading."""
@@ -297,7 +297,7 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("MOVEMENT & CONTROLS:", Colors.CYAN),
-            ("  ↑↓←→, WASD, or Numpad: Move/Navigate", Colors.WHITE),
+            ("  Arrow Keys, WASD, or Numpad: Move/Navigate", Colors.WHITE),
             ("  Mouse: Click tiles to move, hover/click menus", Colors.WHITE),
             ("  1-5: Use loaded exploits (requires targeting)", Colors.WHITE),
             ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
@@ -316,7 +316,7 @@ class HelpMenu:
 
             ("LOOK MODE:", Colors.CYAN),
             ("  L or ESC: Exit look mode", Colors.WHITE),
-            ("  ↑↓←→, WASD, Numpad, or Mouse: Move cursor", Colors.WHITE),
+            ("  Arrow Keys, WASD, Numpad, or Mouse: Move cursor", Colors.WHITE),
             ("  Inspect enemies, items, terrain, and nodes", Colors.WHITE),
             ("", Colors.WHITE),
             
