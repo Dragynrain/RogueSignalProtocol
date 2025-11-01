@@ -192,9 +192,9 @@ class GraphicsMapRenderer(MapRendererBase):
 
         # Resource nodes (cooling, CPU, ghost)
         for screen_x in range(viewport_width):
-            for screen_y in range(1, viewport_height + 1):
+            for screen_y in range(viewport_height):
                 world_x = screen_x + camera_offset.x
-                world_y = screen_y - 1 + camera_offset.y
+                world_y = screen_y + camera_offset.y
                 world_pos = Position(world_x, world_y)
 
                 if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
