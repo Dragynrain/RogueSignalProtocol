@@ -466,10 +466,11 @@ class Player:
         Returns:
             True if player can see the enemy
         """
+        # Use Euclidean for vision range (TCOD FOV uses Euclidean)
         distance = self.position.distance_to(enemy_target.position)
 
-        # Adjacent enemies always visible
-        if distance <= 1.5:
+        # Adjacent enemies always visible (use grid distance for gameplay)
+        if self.position.grid_distance_to(enemy_target.position) <= 1:
             return True
 
         # Enhanced vision sees through walls
@@ -477,8 +478,8 @@ class Player:
         if self.can_see_through_walls():
             return distance <= vision_range
 
-        # Enemies in shadows only visible when adjacent (shadows block vision coming IN)
-        if game_map.is_shadow(enemy_target.position) and distance > 1:
+        # Enemies in shadows only visible when adjacent (use grid distance for gameplay)
+        if game_map.is_shadow(enemy_target.position) and self.position.grid_distance_to(enemy_target.position) > 1:
             # Don't log this - it gets called every frame during rendering
             return False
 
@@ -695,7 +696,7 @@ class Enemy:
         if self.type == 'admin':
             return True
 
-        # Check basic range
+        # Check basic range (use Euclidean - TCOD FOV uses Euclidean internally)
         distance = self.position.distance_to(player.position)
         if distance > self.type_data.vision:
             return False
@@ -704,8 +705,8 @@ class Enemy:
         if player.is_invisible():
             return False
 
-        # Players in shadows only visible when adjacent
-        if game_map.is_shadow(player.position) and distance > GameBalance.ADJACENT_DISTANCE_THRESHOLD:
+        # Players in shadows only visible when adjacent (use grid distance for gameplay)
+        if game_map.is_shadow(player.position) and self.position.grid_distance_to(player.position) > 1:
             return False
 
         # Final LOS check using TCOD FOV
@@ -848,8 +849,9 @@ class Enemy:
         if self.state == EnemyState.HOSTILE:
             return False  # Hostile patrol enemies chase player
 
+        # Check if arrived at current patrol waypoint (use grid distance for gameplay)
         current_target = self.patrol_points[self.patrol_index]
-        return self.position.distance_to(current_target) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD
+        return self.position.grid_distance_to(current_target) <= 1
 
     def _advance_patrol_waypoint(self):
         """Advance to next patrol waypoint (wraps around)."""
@@ -1031,8 +1033,8 @@ class Enemy:
             # Start from last queued position
             start_pos = self.move_queue[-1] if self.move_queue else self.position
 
-            # Skip if already at/very close to this waypoint (within adjacency threshold)
-            if start_pos.distance_to(next_waypoint) <= GameBalance.ADJACENT_DISTANCE_THRESHOLD:
+            # Skip if already at/very close to this waypoint (use grid distance for gameplay)
+            if start_pos.grid_distance_to(next_waypoint) <= 1:
                 continue
 
             # Calculate path to next waypoint

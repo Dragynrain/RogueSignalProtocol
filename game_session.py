@@ -557,7 +557,8 @@ class GameSession:
             if enemy is alerting_enemy or enemy.state == EnemyState.HOSTILE:
                 continue
 
-            distance = enemy.position.distance_to(alerting_enemy.position)
+            # Use grid distance for gameplay mechanics (diagonals = 1)
+            distance = enemy.position.grid_distance_to(alerting_enemy.position)
             if distance <= alert_range:
                 # Store patrol information for PATROL enemies before becoming hostile
                 movement_type = enemy.get_movement_type()

@@ -285,6 +285,9 @@ class Position:
         """
         Calculate Euclidean distance to another position.
 
+        NOTE: For gameplay purposes (exploits, effects), use grid_distance_to() instead!
+        Euclidean distance treats diagonals as ~1.414, which doesn't match game grid logic.
+
         Args:
             other: Target position
 
@@ -297,6 +300,34 @@ class Position:
         if other is None:
             raise ValueError("Cannot calculate distance to None position")
         return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+
+    def grid_distance_to(self, other: 'Position') -> int:
+        """
+        Calculate Chebyshev (grid/chessboard) distance to another position.
+
+        This is the CORRECT distance for gameplay mechanics (exploits, effects, etc).
+        Treats diagonal movement as distance 1, matching 8-directional grid movement.
+
+        Examples:
+            - (0,0) to (1,0) = 1  (orthogonal)
+            - (0,0) to (1,1) = 1  (diagonal - counts as 1 step!)
+            - (0,0) to (2,1) = 2  (max of horizontal/vertical steps)
+
+        IMPORTANT: For range-1 exploits like Buffer Overflow, ALL 8 adjacent tiles
+        (including diagonals) should be valid targets. Use this method, not distance_to()!
+
+        Args:
+            other: Target position
+
+        Returns:
+            Integer grid distance (diagonals count as 1)
+
+        Raises:
+            ValueError: If other is None
+        """
+        if other is None:
+            raise ValueError("Cannot calculate distance to None position")
+        return max(abs(self.x - other.x), abs(self.y - other.y))
     
     def is_valid(self, width: int, height: int) -> bool:
         """

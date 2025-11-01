@@ -45,6 +45,7 @@
 - No over-engineering or new frameworks.
 - Keep `build/` + `dist/` folders for releases.
 - **Always check bounds before array access** - verify indices are valid before indexing any array.
+- **Distance calculations:** See `.claude/DISTANCE_GUIDE.md` - use `grid_distance_to()` for gameplay (exploits, adjacency, AoE), `distance_to()` for vision/spatial calculations
 
 ---
 
