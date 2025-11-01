@@ -196,6 +196,8 @@ class GraphicsMapRenderer(MapRendererBase):
                 world_x = screen_x + camera_offset.x
                 world_y = screen_y + camera_offset.y
                 world_pos = Position(world_x, world_y)
+                # Account for status bar offset (sprites rendered at screen_y + 1)
+                render_screen_y = screen_y + GameConfig.STATUS_BAR_HEIGHT()
 
                 if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
                     continue
@@ -234,13 +236,13 @@ class GraphicsMapRenderer(MapRendererBase):
                             game.game_state.revealed_special_nodes[pos_tuple] = node_memory_key
                         texture = self.tile_manager.get_tile(node_type)
                         if texture:
-                            tile_rect = self._get_tile_rect(screen_x, screen_y)
+                            tile_rect = self._get_tile_rect(screen_x, render_screen_y)
                             renderer.copy(texture, dest=tile_rect)
                     elif is_discovered and is_explored:
                         # Discovered and explored but not currently visible - dimmed
                         texture = self.tile_manager.get_tile(node_type)
                         if texture:
-                            tile_rect = self._get_tile_rect(screen_x, screen_y)
+                            tile_rect = self._get_tile_rect(screen_x, render_screen_y)
                             # Dim the texture for fog of war effect
                             explored_tint = ColorManager.get_tint_color("explored")
                             normal_tint = ColorManager.get_tint_color("normal")

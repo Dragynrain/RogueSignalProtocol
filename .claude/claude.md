@@ -9,7 +9,10 @@
 1. **NO AUTO-COMMITS**: Always ask before committing. Exception: ONLY when user says "commit this" or "make a commit"
 2. **Check existing keybindings**: Before assigning hotkeys, grep for existing uses first
 3. **Fix what you're asked to fix**: Don't dismiss test failures as "unrelated" - if asked to fix all tests, fix all tests
-4. **NO EMOJI IN CODE/LOGS**: Emojis break on Windows (CP1252). Use ASCII: `[DEATH]`, `[OK]`, `->` not 💀, ✅, →
+4. **Unicode character rules**:
+   - **Game UI (TCOD)**: Unicode arrows/symbols OK (↕ ↑ ↓ ← →) - CascadiaCode font supports them
+   - **Logging/console**: ASCII only - Windows CP1252 breaks on Unicode. Use `[DEATH]`, `[OK]`, `->` not 💀, ✅
+   - **Emoji**: Never use anywhere (chat messages to user are OK)
 
 ---
 
@@ -82,9 +85,10 @@
 ## 6. Logging & Errors
 
 **Logging rules:**
-- **Console/file logs:** `logging.debug/info/error()` - tech/debug info
-- **Game message log:** `MessageLog.add_message()` - gameplay events
-- **NO UNICODE/EMOJIS in logs**: Use ASCII only (→ = `->`, 💀 = `[DEATH]`). Breaks on Windows CP1252.
+- **Console/file logs:** `logging.debug/info/error()` - tech/debug info, ASCII only (Windows CP1252 limitation)
+- **Game message log:** `MessageLog.add_message()` - gameplay events, Unicode OK (rendered by TCOD)
+- **Game UI (TCOD-rendered):** Unicode arrows/symbols OK (↕ ↑ ↓ ← →) - CascadiaCode supports them
+- **Logging output:** ASCII only (→ = `->`, 💀 = `[DEATH]`). Windows console breaks on Unicode.
 - Don't mix console and game logs
 
 **Config:**
@@ -187,4 +191,6 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 
 ## 13. Communication Style
 - **In chat with user:** Use emoji freely for clarity, fun, or energy 😊
-- **In code/logs/commits:** NO EMOJI - breaks cross-platform (see rule #0.4)
+- **In game UI (TCOD):** Unicode arrows/symbols OK (↕ ↑ ↓ ← →) - CascadiaCode supports them
+- **In logging/console output:** ASCII only - Windows CP1252 breaks on Unicode
+- **Emoji in code:** Never use (breaks cross-platform) - see rule #0.4

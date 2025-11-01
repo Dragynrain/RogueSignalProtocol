@@ -873,7 +873,8 @@ class GameSession:
         self.game_engine.game_map.story_fragments.clear()
         self.game_engine.game_map.explored_tiles.clear()
         self.game_engine.game_map.last_known_enemy_positions.clear()
-        self.game_engine.game_state.revealed_special_nodes.clear()
+        if hasattr(self.game_engine.game_state, 'revealed_special_nodes'):
+            self.game_engine.game_state.revealed_special_nodes.clear()
         self.game_engine.enemy_manager.enemies.clear()
         # Invalidate transparency cache for FOV calculations
         self.game_engine.game_map.invalidate_transparency_cache()

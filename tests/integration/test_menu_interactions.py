@@ -40,8 +40,8 @@ class TestMenuMouseInteractions:
 
             # Click on right side (should increase)
             click_x = bar_x + 15
-            # First option is at box_top + 5, where box_top = (50-42)//2 = 4, so y=9
-            click_y = 9  # First option row (updated for menu_height=42)
+            # First option is at box_top + 5, where box_top = (50-46)//2 = 2, so y=7
+            click_y = 7  # First option row (menu_height=46 matches Main Menu)
 
             event = Mock()
             event.tile = Mock()
@@ -94,7 +94,7 @@ class TestMenuMouseInteractions:
 
             # Click on left side (definitely before midpoint, should decrease)
             click_x = bar_content_start + 1
-            click_y = 9  # First option row (updated for menu_height=42)
+            click_y = 7  # First option row (menu_height=46 matches Main Menu)
 
             event = Mock()
             event.tile = Mock()
@@ -194,7 +194,7 @@ class TestMenuMouseInteractions:
             # Calculate correct Y position based on layout
             layout = menu._get_menu_layout_params()
             spacing = 3 if layout['use_background_layout'] else 2
-            menu_height = 42
+            menu_height = GameConfig.SCREEN_HEIGHT - 4  # Matches actual Settings menu height
             box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
             start_y = box_top + 5
             option_y = start_y + (graphics_option_index * spacing)
@@ -245,7 +245,7 @@ class TestMenuMouseInteractions:
             # Calculate correct Y position based on layout
             layout = menu._get_menu_layout_params()
             spacing = 3 if layout['use_background_layout'] else 2
-            menu_height = 42
+            menu_height = GameConfig.SCREEN_HEIGHT - 4  # Matches actual Settings menu height
             box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
             start_y = box_top + 5
             option_y = start_y + (back_index * spacing)

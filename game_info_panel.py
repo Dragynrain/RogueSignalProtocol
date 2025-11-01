@@ -229,7 +229,7 @@ class InfoProvider:
         lines.append({'text': '', 'color': Colors.WHITE})
 
         # Description (word wrapped)
-        desc_lines = InfoProvider._wrap_text(exploit_def.description, 23)
+        desc_lines = InfoProvider._wrap_text(exploit_def.description, 22)
         for line in desc_lines:
             lines.append({'text': line, 'color': Colors.LIGHT_GRAY})
 
@@ -270,7 +270,7 @@ class InfoProvider:
         lines.append({'text': '', 'color': Colors.WHITE})
 
         # Add description (word wrapped)
-        desc_lines = InfoProvider._wrap_text(entity_info['description'], 23)  # 25 - 2 for border
+        desc_lines = InfoProvider._wrap_text(entity_info['description'], 22)  # 24 - 2 for padding
         for line in desc_lines:
             lines.append({'text': line, 'color': Colors.LIGHT_GRAY})
 
@@ -281,7 +281,7 @@ class InfoProvider:
             # Add details (word wrapped)
             detail_lines = entity_info['details'].split('\n')
             for detail_line in detail_lines:
-                wrapped_details = InfoProvider._wrap_text(detail_line, 23)
+                wrapped_details = InfoProvider._wrap_text(detail_line, 22)
                 for line in wrapped_details:
                     lines.append({'text': line, 'color': Colors.WHITE})
 
@@ -329,7 +329,7 @@ class InfoProvider:
             lines.append({'text': '', 'color': Colors.WHITE})
 
             # Word wrap the effect description
-            desc_lines = InfoProvider._wrap_text(entity_info['description'], 23)
+            desc_lines = InfoProvider._wrap_text(entity_info['description'], 22)
             for line in desc_lines:
                 lines.append({'text': line, 'color': Colors.LIGHT_GRAY})
 

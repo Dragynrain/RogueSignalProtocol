@@ -766,5 +766,107 @@ class TestTerrainDescriptionLoading:
             assert mock_load.call_count == 1
 
 
+class TestInfoPanelRendering:
+    """Test info panel text rendering and truncation behavior."""
+
+    def test_long_exploit_descriptions_dont_trigger_truncation(self):
+        """Verify that properly wrapped exploit descriptions don't get truncated with '...'."""
+        from game_info_panel import InfoProvider
+        from game_data import GameData
+
+        # Use actual exploit with long description from game data
+        game = Mock()
+        game.player = Mock()
+        game.player.temporary_effects = {'exploit_efficiency_turns': 0}
+
+        # Test all real exploits to ensure none trigger truncation
+        for exploit_key, exploit_def in GameData.EXPLOITS.items():
+            result = InfoProvider._format_exploit_info(game, exploit_def)
+
+            # Verify no line contains "..." (truncation marker)
+            for line in result['lines']:
+                assert '...' not in line['text'], \
+                    f"Exploit '{exploit_key}' line was truncated: '{line['text']}'"
+
+            # Verify description words are preserved (not cut off mid-word)
+            desc_lines = [line['text'] for line in result['lines'] if line['color'] == Colors.LIGHT_GRAY]
+            all_desc_text = ' '.join(desc_lines)
+
+            # Check that major words from description appear somewhere
+            for word in exploit_def.description.split():
+                if len(word) > 3:  # Skip short words like "to", "the", etc.
+                    assert word in all_desc_text, \
+                        f"Exploit '{exploit_key}' lost word '{word}' in wrapping"
+
+    def test_long_entity_descriptions_dont_trigger_truncation(self):
+        """Verify that entity descriptions with details don't get truncated."""
+        from game_info_panel import InfoProvider
+
+        game = Mock()
+
+        # Create entity info with long description and details
+        entity_info = {
+            'name': 'Test Enemy',
+            'description': 'This is a very long description that should wrap across multiple lines without triggering the safety truncation mechanism',
+            'entity_type': 'enemy',
+            'details': 'State: Hostile | CPU: 250/250\nVision: 8 | Damage: 45\nBehavior: Relentless pursuer',
+            'color': Colors.RED
+        }
+
+        result = InfoProvider._format_entity_info(game, entity_info)
+
+        # Verify no line contains "..." (truncation marker)
+        for line in result['lines']:
+            assert '...' not in line['text'], f"Line was truncated: '{line['text']}'"
+
+        # Verify all detail lines appear
+        all_text = ' '.join(line['text'] for line in result['lines'])
+        assert 'Hostile' in all_text
+        assert 'CPU: 250/250' in all_text
+        assert 'Relentless pursuer' in all_text
+
+    def test_text_wrapping_respects_panel_width(self):
+        """Verify that text wrapping produces lines that fit within panel width."""
+        from game_info_panel import InfoProvider
+
+        # Panel width is 24 chars, text should wrap at 22 (24 - 2 for padding)
+        max_width = 22
+
+        test_cases = [
+            "Short text",
+            "This is a medium length text that will wrap",
+            "This is a very long text with many words that definitely needs to be wrapped across multiple lines to fit properly"
+        ]
+
+        for text in test_cases:
+            wrapped = InfoProvider._wrap_text(text, max_width)
+
+            # Verify each wrapped line fits within max_width
+            for line in wrapped:
+                assert len(line) <= max_width, \
+                    f"Wrapped line too long ({len(line)} > {max_width}): '{line}'"
+
+    def test_code_hack_descriptions_dont_trigger_truncation(self):
+        """Verify code hack effect descriptions wrap properly."""
+        from game_info_panel import InfoProvider
+
+        game = Mock()
+
+        # Test discovered code hack with long description
+        entity_info = {
+            'name': 'Crimson Code Fragment',
+            'description': 'Speed boost: 2 moves per turn for 3 enemy turns allowing faster navigation',
+            'entity_type': 'code_hack',
+            'details': 'Color: Crimson',
+            'color': Colors.RED
+        }
+
+        result = InfoProvider._format_code_hack_info(game, entity_info)
+
+        # Verify no truncation
+        for line in result['lines']:
+            assert '...' not in line['text'], f"Line was truncated: '{line['text']}'"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
