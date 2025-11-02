@@ -56,6 +56,7 @@ class UIRenderer:
         self.context = context
         self.tile_manager = tile_manager
         self._help_menu = None  # Cached help menu instance
+        self._help_menu_graphics_mode = None  # Track graphics mode when help menu was created
 
     # ========================================================================
     # STATUS BAR RENDERING
@@ -682,16 +683,26 @@ class UIRenderer:
         Render the help screen using appropriate help menu.
 
         Uses GraphicalHelpMenu in graphics mode, HelpMenu in glyph mode.
+        Automatically recreates help menu if graphics mode changes.
         """
+        # Check if graphics mode has changed - invalidate cache if so
+        current_graphics_mode = self.settings.graphics_mode if self.settings else "glyph"
+        if self._help_menu is not None and self._help_menu_graphics_mode != current_graphics_mode:
+            logging.info(f"Graphics mode changed from {self._help_menu_graphics_mode} to {current_graphics_mode}, invalidating help menu cache")
+            self._help_menu = None
+            self._help_menu_graphics_mode = None
+
         # Create help menu if not already created
         if self._help_menu is None:
             if self.settings is not None:
                 self._help_menu = create_help_menu(self.settings, self.context, self.tile_manager)
+                self._help_menu_graphics_mode = current_graphics_mode
                 logging.info(f"Created in-game help menu: {type(self._help_menu).__name__}")
             else:
                 # Fallback to standard help menu if settings not provided
                 from game_menu_help_lore import HelpMenu
                 self._help_menu = HelpMenu()
+                self._help_menu_graphics_mode = "glyph"
                 logging.warning("Settings not provided to FullScreenRenderer, using standard HelpMenu")
 
         # Render help menu

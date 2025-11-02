@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING
 
 # Import required modules
 from game_config import GameConfig, GameBalance
-from game_entities import Position, TargetingMode, ExploitDefinition, EnemyMovement, EnemyState
+from game_entities import Position, TargetingMode, ExploitDefinition, EnemyMovement, EnemyState, Colors
 from game_data import GameData
 
 # Use TYPE_CHECKING to avoid circular imports
@@ -50,6 +50,7 @@ class ExploitSystem:
             'code_injection': lambda exploit, target: self._execute_code_injection(exploit, target),
             'buffer_overflow': lambda exploit, target: self._execute_buffer_overflow(exploit, target),
             'system_crash': lambda exploit, target: self._execute_system_crash(exploit, target),
+            'logic_bomb': lambda exploit, target: self._execute_logic_bomb(exploit, target),
             'threat_scan': lambda exploit, target: self._execute_threat_scan(),
             'log_wiper': lambda exploit, target: self._execute_log_wiper(),
             'antivirus': lambda exploit, target: self._execute_antivirus(),
@@ -78,32 +79,6 @@ class ExploitSystem:
 
         exploit = GameData.EXPLOITS[exploit_key]
 
-        # Check heat limit - show overclock warning dialogue
-        heat_cost = self._calculate_heat_cost(exploit)
-        logging.debug(f"Combat: Player attempting exploit '{exploit.name}', heat={self.game.player.heat}/{self.game.player.max_heat}, cost={heat_cost}")
-        if self.game.player.heat + heat_cost > self.game.player.max_heat:
-            # Calculate overclock damage
-            overheat_amount = (self.game.player.heat + heat_cost) - self.game.player.max_heat
-            cpu_damage = overheat_amount  # 1:1 ratio
-
-            # Calculate remaining CPU after damage
-            remaining_cpu = self.game.player.cpu - cpu_damage
-
-            # Show overclock warning dialogue with exact calculations
-            from game_dialogue_system import create_overclock_warning_dialogue
-            dialogue = create_overclock_warning_dialogue(
-                exploit_name=exploit.name,
-                overheat_amount=overheat_amount,
-                damage=cpu_damage,
-                remaining_cpu=remaining_cpu,
-                max_cpu=self.game.player.max_cpu
-            )
-            self.game.dialogue_state.show(dialogue)
-
-            # Play warning sound
-            self.game.sound_manager.play_sound("exploit_failed")
-            return False
-        
         # Check if exploit requires targeting
 
         if exploit.targeting != TargetingMode.NONE and exploit.range > 0:
@@ -142,6 +117,41 @@ class ExploitSystem:
         if not self._validate_target(exploit, target):
             logging.debug(f"Combat: Exploit '{exploit.name}' failed validation for target ({target.x},{target.y})")
             return False
+
+        # Check heat limit - show overclock warning dialogue if needed
+        heat_cost = self._calculate_heat_cost(exploit)
+        will_overheat = self.game.player.heat + heat_cost > self.game.player.max_heat
+
+        if will_overheat and not self.game.overclock_confirmation:
+            # Calculate overclock damage
+            overheat_amount = (self.game.player.heat + heat_cost) - self.game.player.max_heat
+            cpu_damage = overheat_amount  # 1:1 ratio
+            remaining_cpu = self.game.player.cpu - cpu_damage
+
+            # Store pending exploit info for confirmation
+            self.game.overclock_exploit = exploit_key
+            self.game.overclock_confirmation = False
+
+            # Show overclock warning dialogue
+            from game_dialogue_system import create_overclock_warning_dialogue
+            dialogue = create_overclock_warning_dialogue(
+                exploit_name=exploit.name,
+                overheat_amount=overheat_amount,
+                damage=cpu_damage,
+                remaining_cpu=remaining_cpu,
+                max_cpu=self.game.player.max_cpu
+            )
+            self.game.dialogue_state.show(dialogue)
+            self.game.sound_manager.play_sound("exploit_failed")
+
+            logging.debug(f"Combat: Overheat warning shown for '{exploit.name}', awaiting confirmation")
+            return False
+
+        # Clear overclock confirmation if it was set
+        if self.game.overclock_confirmation:
+            logging.debug(f"Combat: Overclock confirmed for '{exploit.name}'")
+            self.game.overclock_confirmation = False
+            self.game.overclock_exploit = None
 
         logging.debug(f"Combat: Executing exploit '{exploit.name}' on target ({target.x},{target.y})")
 
@@ -321,6 +331,26 @@ class ExploitSystem:
         self.game.message_log.add_message(f"Decoy Swarm: {attracted} enemies attracted")
         return True
     
+    def _calculate_exploit_damage(self, base_damage: int) -> int:
+        """
+        Calculate final exploit damage with shadow bonus.
+
+        Adds +10 damage if player is in a blind spot or invisible.
+
+        Args:
+            base_damage: Base damage from exploit definition
+
+        Returns:
+            Final damage amount
+        """
+        if base_damage == 0:
+            return 0  # No bonus for non-damaging exploits
+
+        # Shadow bonus: extra damage if attacking from blind spots or while invisible
+        if self.game.game_map.is_blind_spot(self.game.player.position) or self.game.player.is_invisible():
+            return base_damage + 10
+        return base_damage
+
     def _damage_enemy(self, enemy, damage: int) -> bool:
         """
         Apply damage to enemy and handle elimination/hostility.
@@ -358,6 +388,7 @@ class ExploitSystem:
 
         Deals damage to enemy at target position.
         Fails if no enemy at target.
+        Applies +10 shadow bonus if attacking from blind spots.
 
         Args:
             exploit: Exploit definition with damage value
@@ -372,7 +403,8 @@ class ExploitSystem:
             self.game.message_log.add_message("No target at location")
             return False
 
-        return self._damage_enemy(enemy, exploit.damage)
+        damage = self._calculate_exploit_damage(exploit.damage)
+        return self._damage_enemy(enemy, damage)
 
     def _execute_buffer_overflow(self, exploit: ExploitDefinition, target: Position) -> bool:
         """
@@ -380,6 +412,7 @@ class ExploitSystem:
 
         Deals damage to adjacent enemy (all 8 surrounding tiles including diagonals).
         Requires enemy to be adjacent to player.
+        Applies +10 shadow bonus if attacking from blind spots.
 
         IMPORTANT: Uses grid distance (Chebyshev), NOT Euclidean distance!
         Diagonals count as range 1, so all 8 adjacent tiles are valid targets.
@@ -404,7 +437,8 @@ class ExploitSystem:
             self.game.message_log.add_message("No enemy at target")
             return False
 
-        return self._damage_enemy(enemy, exploit.damage)
+        damage = self._calculate_exploit_damage(exploit.damage)
+        return self._damage_enemy(enemy, damage)
     
     def _disable_area_enemies(self, target: Position, radius: int, duration: int) -> int:
         """
@@ -441,6 +475,7 @@ class ExploitSystem:
         Untargeted AoE centered on player position (not target).
         Deals damage to and disables all enemies within effect_radius for effect_duration turns.
         Emergency defensive tool with high heat cost.
+        Applies +10 shadow bonus if attacking from blind spots.
 
         Uses grid distance so diagonals count as 1 for consistent gameplay.
 
@@ -454,13 +489,17 @@ class ExploitSystem:
         self.game.sound_manager.play_sound("exploit_system_crash")
         # System Crash is an emergency untargeted AoE centered on player
         player_pos = self.game.player.position
+
+        # Calculate damage with shadow bonus once (not per enemy)
+        damage = self._calculate_exploit_damage(exploit.damage)
+
         count = 0
         for enemy in self.game.enemies:
             # Use grid distance for AoE radius (diagonals = 1)
             if enemy.position.grid_distance_to(player_pos) <= exploit.effect_radius:
                 # Deal damage first
-                if exploit.damage > 0:
-                    self._damage_enemy(enemy, exploit.damage)
+                if damage > 0:
+                    self._damage_enemy(enemy, damage)
                 # Then apply stun (enemy might be dead, but that's OK - damage_enemy handles removal)
                 if enemy in self.game.enemies:  # Check if enemy still exists after damage
                     enemy.disabled_turns += exploit.effect_duration  # Additive stun effect
@@ -469,7 +508,85 @@ class ExploitSystem:
                 count += 1
         self.game.message_log.add_message(f"System crash: {count} affected")
         return True
-    
+
+    def _execute_logic_bomb(self, exploit: ExploitDefinition, target: Position) -> bool:
+        """
+        Execute Logic Bomb exploit - ranged AoE damage with friendly fire.
+
+        Targeted AoE centered on target position. Deals damage to all enemies
+        within effect_radius. WARNING: Also damages player if caught in blast!
+        Shows friendly fire confirmation if player is in danger zone.
+        Applies +10 shadow bonus if attacking from blind spots.
+
+        Uses grid distance so diagonals count as 1 for consistent gameplay.
+
+        Args:
+            exploit: Exploit definition with damage and radius
+            target: Center of explosion
+
+        Returns:
+            True if executed, False if cancelled due to friendly fire warning
+        """
+        player_pos = self.game.player.position
+        player_distance = player_pos.grid_distance_to(target)
+
+        # Calculate damage with shadow bonus (applies to both enemies and player)
+        damage = self._calculate_exploit_damage(exploit.damage)
+
+        # Check if player is in blast radius
+        player_in_blast = player_distance <= exploit.effect_radius
+
+        # If player is in blast and not confirmed, show warning
+        if player_in_blast and not self.game.friendly_fire_confirmed:
+            # Calculate potential damage to player (includes shadow bonus)
+            remaining_cpu = self.game.player.cpu - damage
+
+            # Store pending exploit info
+            self.game.friendly_fire_exploit = 'logic_bomb'
+            self.game.friendly_fire_target = target
+
+            # Show friendly fire warning
+            from game_dialogue_system import create_friendly_fire_warning_dialogue
+            dialogue = create_friendly_fire_warning_dialogue(
+                exploit_name=exploit.name,
+                damage=damage,
+                remaining_cpu=remaining_cpu,
+                max_cpu=self.game.player.max_cpu
+            )
+            self.game.dialogue_state.show(dialogue)
+            self.game.sound_manager.play_sound("exploit_failed")
+            return False
+
+        # Clear friendly fire confirmation (whether it was set or not)
+        self.game.friendly_fire_confirmed = False
+        self.game.friendly_fire_exploit = None
+        self.game.friendly_fire_target = None
+
+        # Execute the explosion
+        # TODO: Add dedicated exploit_logic_bomb.wav sound file
+        self.game.sound_manager.play_sound("exploit_denial_of_service")  # Placeholder
+
+        # Damage all enemies in radius
+        enemy_count = 0
+        for enemy in list(self.game.enemies):  # Use list() to avoid modification during iteration
+            if enemy.position.grid_distance_to(target) <= exploit.effect_radius:
+                self._damage_enemy(enemy, damage)
+                enemy_count += 1
+
+        # Damage player if in radius (friendly fire!)
+        if player_in_blast:
+            actual_damage = self.game.player.take_damage(damage)
+            self.game.message_log.add_message(f"FRIENDLY FIRE: {actual_damage} damage!", Colors.RED)
+            logging.debug(f"Combat: Logic Bomb friendly fire! Player took {actual_damage} damage")
+
+        # Show result message
+        if enemy_count > 0:
+            self.game.message_log.add_message(f"Logic Bomb: {enemy_count} targets eliminated!")
+        else:
+            self.game.message_log.add_message("Logic Bomb detonated (no targets)")
+
+        return True
+
     def _execute_threat_scan(self) -> bool:
         """
         Execute Threat Scan exploit - reveal enemy positions.

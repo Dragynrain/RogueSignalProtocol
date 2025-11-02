@@ -635,6 +635,40 @@ def create_overclock_warning_dialogue(exploit_name: str, overheat_amount: int,
     )
 
 
+def create_friendly_fire_warning_dialogue(exploit_name: str, damage: int,
+                                          remaining_cpu: int, max_cpu: int) -> DialogueBox:
+    """
+    Create friendly fire warning dialogue for area attacks.
+
+    Args:
+        exploit_name: Name of the exploit being used
+        damage: Player damage that will be taken
+        remaining_cpu: CPU remaining after damage
+        max_cpu: Maximum CPU
+
+    Returns:
+        DialogueBox for friendly fire warning
+    """
+    return DialogueBox(
+        title="*** FRIENDLY FIRE WARNING ***",
+        message="Using {exploit_name} here will catch you in the blast!\n\nYou will take: {damage} damage\nRemaining CPU: {remaining_cpu}/{max_cpu}",
+        options=["[Y] Fire anyway", "[N] Cancel"],
+        valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.ESCAPE],
+        title_color=Colors.RED,
+        message_color=Colors.ORANGE,
+        border_color=Colors.RED,
+        bg_color=Colors.BLACK,
+        format_data={
+            'exploit_name': exploit_name,
+            'damage': damage,
+            'remaining_cpu': remaining_cpu,
+            'max_cpu': max_cpu
+        },
+        priority=5,  # Medium priority
+        user_pref_key=None  # Always show this warning
+    )
+
+
 def create_inventory_attack_dialogue() -> DialogueBox:
     """
     Create inventory attack warning dialogue.

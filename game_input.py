@@ -121,7 +121,7 @@ class InputHandler:
         if self.game.show_help:
             # Delegate to help menu's input handler (supports pagination)
             if self.renderer and hasattr(self.renderer, 'ui_renderer'):
-                result = self.renderer.ui_renderer.screen_renderer.handle_help_input(event)
+                result = self.renderer.ui_renderer.handle_help_input(event)
                 if result == "back":
                     self.game.show_help = False
                 return True
@@ -211,9 +211,31 @@ class InputHandler:
 
         # Check dialogue type by title (since we're using DialogueBox now)
         if "OVERCLOCK WARNING" in dialogue.title:
-            # Player confirmed overclock - no need to do anything, exploit will be used
-            # The overclock system sets self.overclock_confirmation before showing dialogue
+            # Player confirmed overclock - re-execute the pending exploit
             logging.debug("Input: Overclock confirmed")
+            self.game.overclock_confirmation = True
+            # Re-execute the exploit that was cancelled
+            if self.game.overclock_exploit and self.game.targeting_mode and self.game.cursor_position:
+                self.game.exploit_system.execute_exploit(
+                    self.game.overclock_exploit,
+                    self.game.cursor_position
+                )
+            elif self.game.overclock_exploit:
+                # Non-targeting exploit - use player position
+                self.game.exploit_system.execute_exploit(
+                    self.game.overclock_exploit,
+                    self.game.player.position
+                )
+        elif "FRIENDLY FIRE WARNING" in dialogue.title:
+            # Player confirmed friendly fire - execute the pending exploit
+            logging.debug("Input: Friendly fire confirmed")
+            self.game.friendly_fire_confirmed = True
+            # Re-execute the exploit that was cancelled
+            if self.game.friendly_fire_exploit and self.game.friendly_fire_target:
+                self.game.exploit_system.execute_exploit(
+                    self.game.friendly_fire_exploit,
+                    self.game.friendly_fire_target
+                )
         elif "GATEWAY" in dialogue.title:
             # Player confirmed gateway - proceed to next level
             logging.debug(f"Input: Gateway confirmed, advancing from level {self.game.level}")
