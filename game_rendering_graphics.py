@@ -70,8 +70,8 @@ class GraphicsMapRenderer(MapRendererBase):
                     # Currently visible - full brightness
                     if game.game_map.is_wall(world_pos):
                         texture = self.tile_manager.get_tile("wall")
-                    elif game.game_map.is_shadow(world_pos):
-                        texture = self.tile_manager.get_tile("shadow")
+                    elif game.game_map.is_blind_spot(world_pos):
+                        texture = self.tile_manager.get_tile("blind_spot")
                     else:
                         texture = self.tile_manager.get_tile("floor")
 
@@ -82,15 +82,15 @@ class GraphicsMapRenderer(MapRendererBase):
                         # Fail fast on missing textures - better for debugging
                         if game.game_map.is_wall(world_pos):
                             terrain_type = "wall"
-                        elif game.game_map.is_shadow(world_pos):
-                            terrain_type = "shadow"
+                        elif game.game_map.is_blind_spot(world_pos):
+                            terrain_type = "blind_spot"
                         else:
                             terrain_type = "floor"
                         logging.error(f"CRITICAL: Missing required texture for {terrain_type} - graphics mode cannot continue")
                         raise RuntimeError(f"Missing required texture: {terrain_type}")
                 elif explored:
                     # Explored but not currently visible - dimmed (fog of war)
-                    # Check for undiscovered special nodes - render as floor instead of shadow
+                    # Check for undiscovered special nodes - render as floor instead of blind spot
                     has_undiscovered_node = (
                         (game.game_map.is_cooling_node(world_pos) or
                          game.game_map.is_cpu_recovery_node(world_pos) or
@@ -104,8 +104,8 @@ class GraphicsMapRenderer(MapRendererBase):
                     elif has_undiscovered_node:
                         # Undiscovered special node - render as floor
                         texture = self.tile_manager.get_tile("floor")
-                    elif game.game_map.is_shadow(world_pos):
-                        texture = self.tile_manager.get_tile("shadow")
+                    elif game.game_map.is_blind_spot(world_pos):
+                        texture = self.tile_manager.get_tile("blind_spot")
                     else:
                         texture = self.tile_manager.get_tile("floor")
 
@@ -783,7 +783,9 @@ class GraphicsMapRenderer(MapRendererBase):
 
     def _render_enemy_vision_range(self, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map, renderer):
         """Render vision range for a single enemy using corner brackets in graphics mode.
-        Uses TCOD FOV for perfect consistency with actual enemy vision."""
+        Uses TCOD FOV for perfect consistency with actual enemy vision.
+
+        Vision indicators are hidden on blind spot/ghost nodes since enemies can't see into blind spots."""
         actual_vision_range = enemy.type_data.vision
 
         # Use TCOD FOV to get exactly what the enemy can see (matches enemy vision logic)
@@ -801,6 +803,11 @@ class GraphicsMapRenderer(MapRendererBase):
 
                 # Skip the enemy's own tile
                 if world_x == enemy.x and world_y == enemy.y:
+                    continue
+
+                # Skip blind spot/ghost nodes - enemies can't see into blind spots
+                world_pos = Position(world_x, world_y)
+                if game_map.is_ghost_node(world_pos):
                     continue
 
                 # Check if this tile is visible in FOV (TCOD array is [y, x])

@@ -133,6 +133,7 @@ class GameEngine:
         # Look mode system
         self.look_mode = False
         self.look_cursor_position = Position(0, 0)
+        self.look_mode_mouse_last_update: float = 0.0  # Throttle mouse updates in look mode
 
         # Mouse hover tracking (for visual feedback)
         self.mouse_hover_world_pos: Optional[Position] = None
@@ -425,7 +426,6 @@ class GameEngine:
         Damage calculation:
         - Base damage: 30 (balanced for enemy HP pools)
         - Stealth bonus: +10 if attacking from shadows or while invisible
-        - Speed bonus: +5 if speed boost is active
 
         Effects:
         - Generates 8 heat (reduced by 30% if exploit efficiency active)
@@ -436,19 +436,16 @@ class GameEngine:
         # Calculate base damage - rebalanced for new enemy HP values
         base_damage = 30  # Increased from 25 to match average enemy damage
 
-        # Stealth bonus: extra damage if attacking from shadows or while invisible
+        # Stealth bonus: extra damage if attacking from blind spots or while invisible
         stealth_bonus = 0
-        if self.game_map.is_shadow(self.player.position) or self.player.is_invisible():
+        if self.game_map.is_blind_spot(self.player.position) or self.player.is_invisible():
             stealth_bonus = 10  # Reduced from 15 to prevent trivial one-shots
             self.sound_manager.play_sound("stealth_attack")
             self.message_log.add_message("Stealth attack!")
         else:
             self.sound_manager.play_sound("player_attack")
 
-        # Speed boost bonus
-        speed_bonus = 5 if self.player.temporary_effects['speed_boost_turns'] > 0 else 0  # Reduced from 10
-
-        total_damage = base_damage + stealth_bonus + speed_bonus
+        total_damage = base_damage + stealth_bonus
 
         # Log the attack with damage amount
         self.message_log.add_message(f"{target_enemy.type_data.name} damaged")

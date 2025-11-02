@@ -1063,7 +1063,7 @@ class CorridorGenerator:
 
                 self.game_map.walls.discard(alcove_pos)
 
-                self.game_map.shadows.add(alcove_pos)
+                self.game_map.blind_spots.add(alcove_pos)
 
     def create_corridor_intersections(self) -> None:
         """
@@ -1151,4 +1151,4 @@ class CorridorGenerator:
                 0 <= cy < GameConfig.MAP_HEIGHT and
                 (cx, cy) not in self.game_map.walls and
                 (cx, cy) in self.corridor_tiles):
-                self.game_map.shadows.add((cx, cy))
+                self.game_map.blind_spots.add((cx, cy))

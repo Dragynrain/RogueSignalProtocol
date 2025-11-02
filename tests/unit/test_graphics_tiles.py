@@ -105,9 +105,9 @@ class TestSpriteConfiguration:
 
         assert 'floor' in terrain_config
         assert 'wall' in terrain_config
-        assert 'shadow' in terrain_config
+        assert 'blind_spot' in terrain_config
 
-        for terrain_type in ['floor', 'wall', 'shadow']:
+        for terrain_type in ['floor', 'wall', 'blind_spot']:
             assert 'file' in terrain_config[terrain_type]
 
     def test_item_sprites_configured(self, tile_manager):

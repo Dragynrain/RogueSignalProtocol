@@ -13,7 +13,7 @@ Key features:
 
 Event types:
 - level_start: Entering a new network level
-- first_shadow: First time entering shadows on a level
+- first_blind_spot: First time entering blind spots on a level
 - high_trace: When trace level is dangerously high (>70%)
 - low_cpu: When CPU is critical (<30)
 - first_combat: First enemy killed on a level
@@ -48,14 +48,14 @@ class NarrativeManager:
 
         # Per-level flags to ensure certain messages only show once per level
         self.level_flags = {
-            'first_shadow': False,
+            'first_blind_spot': False,
             'first_combat': False
         }
 
     def reset_level_flags(self):
         """Reset per-level flags when starting a new level."""
         self.level_flags = {
-            'first_shadow': False,
+            'first_blind_spot': False,
             'first_combat': False
         }
 
@@ -103,11 +103,11 @@ class NarrativeManager:
         """Trigger level start message."""
         return self.get_message('level_start')
 
-    def trigger_first_shadow(self) -> str:
-        """Trigger first shadow entry message (once per level)."""
-        if not self.level_flags['first_shadow']:
-            self.level_flags['first_shadow'] = True
-            return self.get_message('first_shadow')
+    def trigger_first_blind_spot(self) -> str:
+        """Trigger first blind spot entry message (once per level)."""
+        if not self.level_flags['first_blind_spot']:
+            self.level_flags['first_blind_spot'] = True
+            return self.get_message('first_blind_spot')
         return ""
 
     def trigger_high_trace(self) -> str:

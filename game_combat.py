@@ -44,16 +44,16 @@ class ExploitSystem:
         # Exploit handler dispatch table
         # Lambdas normalize different handler signatures (no params, target only, target + range)
         self.exploit_handlers = {
-            'shadow_step': lambda exploit, target: self._execute_shadow_step(target),
-            'data_mimic': lambda exploit, target: self._execute_data_mimic(),
-            'noise_maker': lambda exploit, target: self._execute_noise_maker(target),
-            'code_injection': lambda exploit, target: self._execute_code_injection(target),
-            'buffer_overflow': lambda exploit, target: self._execute_buffer_overflow(target),
-            'system_crash': lambda exploit, target: self._execute_system_crash(target, exploit.range),
+            'system_hop': lambda exploit, target: self._execute_system_hop(target),
+            'traffic_masquerade': lambda exploit, target: self._execute_traffic_masquerade(),
+            'decoy_swarm': lambda exploit, target: self._execute_decoy_swarm(target),
+            'code_injection': lambda exploit, target: self._execute_code_injection(exploit, target),
+            'buffer_overflow': lambda exploit, target: self._execute_buffer_overflow(exploit, target),
+            'system_crash': lambda exploit, target: self._execute_system_crash(exploit, target),
             'threat_scan': lambda exploit, target: self._execute_threat_scan(),
             'log_wiper': lambda exploit, target: self._execute_log_wiper(),
             'antivirus': lambda exploit, target: self._execute_antivirus(),
-            'denial_of_service': lambda exploit, target: self._execute_denial_of_service(target, exploit.range),
+            'denial_of_service': lambda exploit, target: self._execute_denial_of_service(exploit, target),
             'memory_leak': lambda exploit, target: self._execute_memory_leak(target),
             'network_scan': lambda exploit, target: self._execute_network_scan(),
         }
@@ -67,7 +67,7 @@ class ExploitSystem:
         immediately for self-targeted effects.
 
         Args:
-            exploit_key: Unique identifier for the exploit (e.g., 'shadow_step')
+            exploit_key: Unique identifier for the exploit (e.g., 'system_hop')
 
         Returns:
             True if exploit was used/entered targeting, False if failed validation
@@ -245,50 +245,50 @@ class ExploitSystem:
             return handler(exploit, target)
         return False
     
-    def _execute_shadow_step(self, target: Position) -> bool:
+    def _execute_system_hop(self, target: Position) -> bool:
         """
-        Execute Shadow Step exploit - teleport to shadow zone.
+        Execute System Hop exploit - pivot to blind spot.
 
-        Instantly moves player to target position if it's in a shadow zone,
+        Instantly moves player to target position if it's in a blind spot zone,
         not occupied by an enemy, and is a valid walkable tile.
 
         Args:
-            target: Target shadow position
+            target: Target blind spot position
 
         Returns:
-            True if teleport succeeded, False if target invalid
+            True if hop succeeded, False if target invalid
         """
-        if self.game.game_map.is_shadow(target) and self.game.game_map.is_valid_position(target):
+        if self.game.game_map.is_blind_spot(target) and self.game.game_map.is_valid_position(target):
             if not self.game._get_enemy_at(target):
-                self.game.sound_manager.play_sound("exploit_shadow_step")
+                self.game.sound_manager.play_sound("exploit_system_hop")
                 self.game.player.position = target
-                self.game.message_log.add_message("Shadow Step executed")
+                self.game.message_log.add_message("System Hop executed")
                 return True
             else:
                 self.game.message_log.add_message("Target occupied")
         else:
-            self.game.message_log.add_message("Must target shadow zone")
+            self.game.message_log.add_message("Must target blind spot")
         return False
-    
-    def _execute_data_mimic(self) -> bool:
+
+    def _execute_traffic_masquerade(self) -> bool:
         """
-        Execute Data Mimic exploit - grant temporary invisibility.
+        Execute Traffic Masquerade exploit - masquerade as legitimate traffic.
 
         Makes player invisible to enemies for the duration specified in JSON config.
-        Enemies cannot see or pursue an invisible player.
+        Enemies cannot see or pursue a masquerading player.
 
         Returns:
             True (always succeeds)
         """
-        self.game.sound_manager.play_sound("exploit_data_mimic")
-        exploit = GameData.EXPLOITS['data_mimic']
-        self.game.player.temporary_effects['data_mimic_turns'] = exploit.effect_duration
-        self.game.message_log.add_message("Data Mimic active")
+        self.game.sound_manager.play_sound("exploit_traffic_masquerade")
+        exploit = GameData.EXPLOITS['traffic_masquerade']
+        self.game.player.temporary_effects['traffic_masquerade_turns'] = exploit.effect_duration
+        self.game.message_log.add_message("Traffic Masquerade active")
         return True
-    
-    def _execute_noise_maker(self, target: Position) -> bool:
+
+    def _execute_decoy_swarm(self, target: Position) -> bool:
         """
-        Execute Noise Maker exploit - create distraction to lure enemies.
+        Execute Decoy Swarm exploit - spawn decoys to lure enemies.
 
         Attracts nearby enemies (within effect_radius) to the target location.
         PATROL enemies become ALERT for 3 turns, others get last_seen_player set
@@ -297,13 +297,13 @@ class ExploitSystem:
         Uses grid distance so diagonals count as 1 for consistent gameplay.
 
         Args:
-            target: Location of the noise
+            target: Location of the decoy swarm
 
         Returns:
             True (always succeeds), displays count of attracted enemies
         """
-        self.game.sound_manager.play_sound("exploit_noise_maker")
-        exploit = GameData.EXPLOITS['noise_maker']
+        self.game.sound_manager.play_sound("exploit_decoy_swarm")
+        exploit = GameData.EXPLOITS['decoy_swarm']
         attracted = 0
         for enemy in self.game.enemies:
             movement_type = enemy.get_movement_type()
@@ -318,7 +318,7 @@ class ExploitSystem:
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = 2
                 attracted += 1
-        self.game.message_log.add_message(f"Noise: {attracted} enemies attracted")
+        self.game.message_log.add_message(f"Decoy Swarm: {attracted} enemies attracted")
         return True
     
     def _damage_enemy(self, enemy, damage: int) -> bool:
@@ -352,14 +352,15 @@ class ExploitSystem:
             logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) damaged, state {old_state.name} -> HOSTILE")
         return True
 
-    def _execute_code_injection(self, target: Position) -> bool:
+    def _execute_code_injection(self, exploit: ExploitDefinition, target: Position) -> bool:
         """
         Execute Code Injection exploit - single target ranged damage.
 
-        Deals 30 damage (35 to firewalls) to enemy at target position.
+        Deals damage to enemy at target position.
         Fails if no enemy at target.
 
         Args:
+            exploit: Exploit definition with damage value
             target: Target enemy position
 
         Returns:
@@ -371,20 +372,20 @@ class ExploitSystem:
             self.game.message_log.add_message("No target at location")
             return False
 
-        damage = 35 if enemy.type == 'firewall' else 30
-        return self._damage_enemy(enemy, damage)
+        return self._damage_enemy(enemy, exploit.damage)
 
-    def _execute_buffer_overflow(self, target: Position) -> bool:
+    def _execute_buffer_overflow(self, exploit: ExploitDefinition, target: Position) -> bool:
         """
         Execute Buffer Overflow exploit - high damage melee attack.
 
-        Deals 50 damage to adjacent enemy (all 8 surrounding tiles including diagonals).
+        Deals damage to adjacent enemy (all 8 surrounding tiles including diagonals).
         Requires enemy to be adjacent to player.
 
         IMPORTANT: Uses grid distance (Chebyshev), NOT Euclidean distance!
         Diagonals count as range 1, so all 8 adjacent tiles are valid targets.
 
         Args:
+            exploit: Exploit definition with damage value
             target: Target adjacent enemy position
 
         Returns:
@@ -403,7 +404,7 @@ class ExploitSystem:
             self.game.message_log.add_message("No enemy at target")
             return False
 
-        return self._damage_enemy(enemy, 50)
+        return self._damage_enemy(enemy, exploit.damage)
     
     def _disable_area_enemies(self, target: Position, radius: int, duration: int) -> int:
         """
@@ -433,36 +434,40 @@ class ExploitSystem:
                 count += 1
         return count
 
-    def _execute_system_crash(self, target: Position, exploit_range: int) -> bool:
+    def _execute_system_crash(self, exploit: ExploitDefinition, target: Position) -> bool:
         """
-        Execute System Crash exploit - emergency AoE stun around player.
+        Execute System Crash exploit - emergency AoE damage + stun around player.
 
         Untargeted AoE centered on player position (not target).
-        Disables all enemies within effect_radius for effect_duration turns.
+        Deals damage to and disables all enemies within effect_radius for effect_duration turns.
         Emergency defensive tool with high heat cost.
 
         Uses grid distance so diagonals count as 1 for consistent gameplay.
 
         Args:
+            exploit: Exploit definition with damage, radius, and duration
             target: Ignored (exploit is centered on player)
-            exploit_range: Ignored (uses effect_radius from JSON)
 
         Returns:
             True (always succeeds)
         """
         self.game.sound_manager.play_sound("exploit_system_crash")
         # System Crash is an emergency untargeted AoE centered on player
-        exploit = GameData.EXPLOITS['system_crash']
         player_pos = self.game.player.position
         count = 0
         for enemy in self.game.enemies:
             # Use grid distance for AoE radius (diagonals = 1)
             if enemy.position.grid_distance_to(player_pos) <= exploit.effect_radius:
-                enemy.disabled_turns += exploit.effect_duration  # Additive stun effect
-                enemy.state = EnemyState.UNAWARE
-                enemy.alert_timer = 0
+                # Deal damage first
+                if exploit.damage > 0:
+                    self._damage_enemy(enemy, exploit.damage)
+                # Then apply stun (enemy might be dead, but that's OK - damage_enemy handles removal)
+                if enemy in self.game.enemies:  # Check if enemy still exists after damage
+                    enemy.disabled_turns += exploit.effect_duration  # Additive stun effect
+                    enemy.state = EnemyState.UNAWARE
+                    enemy.alert_timer = 0
                 count += 1
-        self.game.message_log.add_message(f"System crash: {count} disabled")
+        self.game.message_log.add_message(f"System crash: {count} affected")
         return True
     
     def _execute_threat_scan(self) -> bool:
@@ -548,24 +553,31 @@ class ExploitSystem:
         
         return True
     
-    def _execute_denial_of_service(self, target: Position, exploit_range: int) -> bool:
+    def _execute_denial_of_service(self, exploit: ExploitDefinition, target: Position) -> bool:
         """
-        Execute Denial of Service exploit - targeted AoE stun.
+        Execute Denial of Service exploit - targeted AoE disable.
 
         Disables all enemies within effect_radius of target for effect_duration turns.
+        Denial of service attacks overwhelm availability, not damage systems.
         More targeted than System Crash, allowing tactical positioning.
 
         Args:
+            exploit: Exploit definition with radius and duration
             target: Center of AoE
-            exploit_range: Maximum range to place AoE center
 
         Returns:
             True (always succeeds)
         """
         self.game.sound_manager.play_sound("exploit_denial_of_service")
-        # Denial of Service uses configured effect_radius at the target location
-        exploit = GameData.EXPLOITS['denial_of_service']
-        count = self._disable_area_enemies(target, exploit.effect_radius, exploit.effect_duration)
+        # Denial of Service: disable in area (no damage)
+        count = 0
+        for enemy in self.game.enemies:
+            if enemy.position.grid_distance_to(target) <= exploit.effect_radius:
+                enemy.disabled_turns += exploit.effect_duration
+                enemy.state = EnemyState.UNAWARE
+                enemy.alert_timer = 0
+                count += 1
+
         self.game.message_log.add_message(f"DoS: {count} disabled")
         return True
     

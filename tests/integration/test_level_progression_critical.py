@@ -138,15 +138,15 @@ class TestLevelProgressionCritical:
         initial_inventory_count = len(basic_game_engine.player.inventory_manager.items)
 
         # Add a test exploit to player
-        if 'shadow_step' not in basic_game_engine.player.inventory_manager.equipped_exploits:
-            basic_game_engine.player.inventory_manager.equipped_exploits.append('shadow_step')
+        if 'system_hop' not in basic_game_engine.player.inventory_manager.equipped_exploits:
+            basic_game_engine.player.inventory_manager.equipped_exploits.append('system_hop')
 
         # Progress level
         basic_game_engine.next_level()
 
         # Verify inventory preserved
         assert len(basic_game_engine.player.inventory_manager.items) >= initial_inventory_count
-        assert 'shadow_step' in basic_game_engine.player.inventory_manager.equipped_exploits
+        assert 'system_hop' in basic_game_engine.player.inventory_manager.equipped_exploits
 
         # Verify initial exploits are preserved
         for exploit in initial_exploits:

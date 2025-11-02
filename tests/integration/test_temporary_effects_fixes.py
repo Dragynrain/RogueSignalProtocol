@@ -36,32 +36,32 @@ class TestTemporaryEffectsDecayFixes(unittest.TestCase):
         self.engine = self.create_test_engine()
         self.player = self.engine.player
 
-    def test_data_mimic_decays_once_per_turn(self):
-        """Test that data mimic effect decays exactly 1 per turn, not 2."""
-        # Set data mimic effect to 5 turns
-        self.player.temporary_effects['data_mimic_turns'] = 5
+    def test_traffic_masquerade_decays_once_per_turn(self):
+        """Test that traffic masquerade effect decays exactly 1 per turn, not 2."""
+        # Set traffic masquerade effect to 5 turns
+        self.player.temporary_effects['traffic_masquerade_turns'] = 5
 
         # Process one complete turn
-        initial_value = self.player.temporary_effects['data_mimic_turns']
+        initial_value = self.player.temporary_effects['traffic_masquerade_turns']
         self.engine.process_turn()
-        after_one_turn = self.player.temporary_effects['data_mimic_turns']
+        after_one_turn = self.player.temporary_effects['traffic_masquerade_turns']
 
         # Should decrease by exactly 1
         self.assertEqual(after_one_turn, initial_value - 1,
-                        f"Data mimic should decay by 1 per turn, was {initial_value} -> {after_one_turn}")
+                        f"Traffic masquerade should decay by 1 per turn, was {initial_value} -> {after_one_turn}")
 
         # Test multiple turns to ensure consistent decay
         for expected_value in [3, 2, 1, 0]:
             self.engine.process_turn()
-            actual_value = self.player.temporary_effects['data_mimic_turns']
+            actual_value = self.player.temporary_effects['traffic_masquerade_turns']
             self.assertEqual(actual_value, expected_value,
-                           f"Data mimic should be {expected_value} after turn, got {actual_value}")
+                           f"Traffic masquerade should be {expected_value} after turn, got {actual_value}")
 
     def test_all_temporary_effects_decay_consistently(self):
         """Test that all temporary effects decay at 1 per turn."""
         # Set all effects to initial values
         initial_effects = {
-            'data_mimic_turns': 4,
+            'traffic_masquerade_turns': 4,
             'speed_boost_turns': 3,
             'movement_slowed_turns': 2,
             'enhanced_vision_turns': 5,
@@ -115,14 +115,14 @@ class TestTemporaryEffectsDecayFixes(unittest.TestCase):
     def test_temporary_effects_dont_go_negative(self):
         """Test that temporary effects don't go below 0."""
         # Set effects to 1 and process multiple turns
-        self.player.temporary_effects['data_mimic_turns'] = 1
+        self.player.temporary_effects['traffic_masquerade_turns'] = 1
 
         # Process several turns
         for _ in range(5):
             self.engine.process_turn()
 
         # Effect should be 0, not negative
-        self.assertEqual(self.player.temporary_effects['data_mimic_turns'], 0,
+        self.assertEqual(self.player.temporary_effects['traffic_masquerade_turns'], 0,
                         "Temporary effects should not go below 0")
 
     def test_virus_effect_applies_damage_then_decrements(self):
@@ -157,7 +157,7 @@ class TestTemporaryEffectsDecayFixes(unittest.TestCase):
     def test_multiple_turn_processing_accumulates_correctly(self):
         """Test that processing multiple turns accumulates effects correctly."""
         # Set multiple effects with different durations
-        self.player.temporary_effects['data_mimic_turns'] = 5
+        self.player.temporary_effects['traffic_masquerade_turns'] = 5
         self.player.temporary_effects['speed_boost_turns'] = 3
         self.player.temporary_effects['virus_turns'] = 2
 
@@ -172,14 +172,14 @@ class TestTemporaryEffectsDecayFixes(unittest.TestCase):
             expected_speed = max(0, 3 - (turn + 1))
             expected_virus = max(0, 2 - (turn + 1))
 
-            self.assertEqual(self.player.temporary_effects['data_mimic_turns'], expected_mimic)
+            self.assertEqual(self.player.temporary_effects['traffic_masquerade_turns'], expected_mimic)
             self.assertEqual(self.player.temporary_effects['speed_boost_turns'], expected_speed)
             self.assertEqual(self.player.temporary_effects['virus_turns'], expected_virus)
 
     def test_no_double_processing_of_effects(self):
         """Test that effects are only processed once per turn through the unified system."""
         # This test ensures the fix for double-decrementing is working
-        self.player.temporary_effects['data_mimic_turns'] = 10
+        self.player.temporary_effects['traffic_masquerade_turns'] = 10
 
         # Manually check that only GameStateManager processes effects, not Player.update_effects
         with patch.object(self.player, 'update_effects') as mock_update:
@@ -190,7 +190,7 @@ class TestTemporaryEffectsDecayFixes(unittest.TestCase):
             mock_update.assert_not_called()
 
         # Effect should have decreased by exactly 1
-        self.assertEqual(self.player.temporary_effects['data_mimic_turns'], 9,
+        self.assertEqual(self.player.temporary_effects['traffic_masquerade_turns'], 9,
                         "Effect should decrease by exactly 1, indicating no double processing")
 
 

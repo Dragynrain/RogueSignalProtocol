@@ -251,7 +251,7 @@ class TestGhostNodeIntegration:
         engine.player.position = ghost_pos
 
         # Verify ghost node is treated as shadow
-        assert engine.game_map.is_shadow(ghost_pos), "Ghost node should be treated as shadow"
+        assert engine.game_map.is_blind_spot(ghost_pos), "Ghost node should be treated as shadow"
 
         # Create enemy at distance
         scanner = create_real_enemy("scanner", Position(25, 20))
@@ -312,7 +312,7 @@ class TestShadowMechanicsIntegration:
 
         # Create shadow path
         shadow_path = [(x, 20) for x in range(15, 26)]
-        engine.game_map.shadows.update(shadow_path)
+        engine.game_map.blind_spots.update(shadow_path)
 
         # Position player at start of shadow path
         engine.player.position = Position(15, 20)
@@ -327,7 +327,7 @@ class TestShadowMechanicsIntegration:
             engine.player.position = Position(x, 20)
 
             # Verify player in shadow
-            assert engine.game_map.is_shadow(engine.player.position), f"Position ({x}, 20) should be shadow"
+            assert engine.game_map.is_blind_spot(engine.player.position), f"Position ({x}, 20) should be shadow"
 
             # Check if enemy can see (depends on distance)
             distance = scanner.position.distance_to(engine.player.position)
@@ -342,7 +342,7 @@ class TestShadowMechanicsIntegration:
         engine = self.create_test_engine()
 
         # Create mixed light/shadow area
-        engine.game_map.shadows.add((20, 20))
+        engine.game_map.blind_spots.add((20, 20))
         # (21, 20) is light (no shadow)
 
         # Position enemy watching
@@ -389,7 +389,7 @@ class TestSpecialTileCombinations:
         # Create cooling node in shadow
         special_pos = Position(20, 20)
         engine.game_map.cooling_nodes.add((special_pos.x, special_pos.y))
-        engine.game_map.shadows.add((special_pos.x, special_pos.y))
+        engine.game_map.blind_spots.add((special_pos.x, special_pos.y))
 
         # Position player with high heat
         engine.player.position = special_pos
@@ -397,7 +397,7 @@ class TestSpecialTileCombinations:
 
         # Verify both properties
         assert engine.game_map.is_cooling_node(special_pos), "Should be cooling node"
-        assert engine.game_map.is_shadow(special_pos), "Should be shadow"
+        assert engine.game_map.is_blind_spot(special_pos), "Should be shadow"
 
         # Player should get cooling AND stealth
         initial_heat = engine.player.heat
@@ -428,7 +428,7 @@ class TestSpecialTileCombinations:
 
         # Verify both properties
         assert engine.game_map.is_cpu_recovery_node(special_pos), "Should be CPU node"
-        assert engine.game_map.is_shadow(special_pos), "Ghost node should provide shadow"
+        assert engine.game_map.is_blind_spot(special_pos), "Ghost node should provide shadow"
 
         # Both effects should work
         initial_cpu = engine.player.cpu
@@ -484,7 +484,7 @@ class TestSpecialTileEdgeCases:
         # Create alternating special tiles
         engine.game_map.cooling_nodes.add((20, 20))
         engine.game_map.cpu_recovery_nodes.add((21, 20))
-        engine.game_map.shadows.add((22, 20))
+        engine.game_map.blind_spots.add((22, 20))
 
         # Set player state
         engine.player.heat = 50

@@ -55,15 +55,15 @@ class TestBasicEffectLifecycle:
 
         # Apply multiple effects with different durations
         basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 5
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 2
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 2
         basic_game_engine.player.temporary_effects['speed_boost_turns'] = 3
 
         # Process 2 turns
         basic_game_engine.player.update_effects()
         basic_game_engine.player.update_effects()
 
-        # data_mimic should expire
-        assert basic_game_engine.player.temporary_effects.get('data_mimic_turns', 0) == 0
+        # traffic_masquerade should expire
+        assert basic_game_engine.player.temporary_effects.get('traffic_masquerade_turns', 0) == 0
         # Others should still be active
         assert basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0) == 3
         assert basic_game_engine.player.temporary_effects.get('speed_boost_turns', 0) == 1
@@ -127,7 +127,7 @@ class TestEnhancedVisionEffects:
 
 
 class TestInvisibilityEffects:
-    """Test invisibility (data_mimic) temporary effect."""
+    """Test invisibility (traffic_masquerade) temporary effect."""
 
     def test_invisibility_prevents_enemy_detection(self, basic_game_engine):
         """Test invisibility prevents normal enemy detection."""
@@ -142,7 +142,7 @@ class TestInvisibilityEffects:
         assert bool(can_see_visible), "Enemy should see visible player when adjacent"
 
         # Apply invisibility
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 5
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
 
         # With invisibility - enemy cannot see
         can_see_invisible = scanner.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
@@ -157,7 +157,7 @@ class TestInvisibilityEffects:
         basic_game_engine.enemies = [scanner]
 
         # Apply invisibility with 1 turn remaining
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 1
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 1
         can_see_invisible = scanner.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
         assert not can_see_invisible, "Should not see invisible player"
 
@@ -173,7 +173,7 @@ class TestInvisibilityEffects:
 
         # Position player and admin
         basic_game_engine.player.position = Position(20, 20)
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 5
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
         admin = enemy_builder("admin", pos=(40, 40))
         basic_game_engine.enemies = [admin]
 
@@ -290,7 +290,7 @@ class TestEffectStacking:
 
         # Apply multiple effects
         basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 5
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 3
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 3
         basic_game_engine.player.temporary_effects['speed_boost_turns'] = 4
 
         # Verify all active (check durations)
@@ -302,7 +302,7 @@ class TestEffectStacking:
 
         # All should still be active
         assert basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0) == 4
-        assert basic_game_engine.player.temporary_effects.get('data_mimic_turns', 0) == 2
+        assert basic_game_engine.player.temporary_effects.get('traffic_masquerade_turns', 0) == 2
         assert basic_game_engine.player.temporary_effects.get('speed_boost_turns', 0) == 3
 
     def test_buff_and_debuff_coexist(self, basic_game_engine):
@@ -389,7 +389,7 @@ class TestEffectEdgeCases:
 
         # Apply multiple effects with same duration
         basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 1
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 1
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 1
         basic_game_engine.player.temporary_effects['speed_boost_turns'] = 1
 
         # All active
@@ -412,18 +412,18 @@ class TestEffectWithGameplaySystems:
 
         # Create shadow area
         shadow_pos = Position(20, 20)
-        basic_game_engine.game_map.shadows.add((shadow_pos.x, shadow_pos.y))
+        basic_game_engine.game_map.blind_spots.add((shadow_pos.x, shadow_pos.y))
 
         # Position player in shadow with invisibility
         basic_game_engine.player.position = shadow_pos
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 5
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
 
         # Create enemy nearby
         scanner = enemy_builder("scanner", pos=(25, 20))
         basic_game_engine.enemies = [scanner]
 
         # Both stealth mechanisms should work
-        assert basic_game_engine.game_map.is_shadow(shadow_pos), "Should be in shadow"
+        assert basic_game_engine.game_map.is_blind_spot(shadow_pos), "Should be in shadow"
         assert basic_game_engine.player.is_invisible(), "Should be invisible"
 
         # Enemy should not see player
@@ -435,13 +435,13 @@ class TestEffectWithGameplaySystems:
 
         # Position player in shadow with enhanced vision
         shadow_pos = Position(20, 20)
-        basic_game_engine.game_map.shadows.add((shadow_pos.x, shadow_pos.y))
+        basic_game_engine.game_map.blind_spots.add((shadow_pos.x, shadow_pos.y))
         basic_game_engine.player.position = shadow_pos
         basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 5
 
         # Enhanced vision should work even in shadow
         assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] > 0, "Should have enhanced vision"
-        assert basic_game_engine.game_map.is_shadow(shadow_pos), "Should be in shadow"
+        assert basic_game_engine.game_map.is_blind_spot(shadow_pos), "Should be in shadow"
 
         # Player can see more while in shadow
         enhanced_range = basic_game_engine.player.get_vision_range()
@@ -466,7 +466,7 @@ class TestEffectWithGameplaySystems:
 
         # Apply effects
         basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 5
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 3
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 3
 
         # Set player to near-death
         basic_game_engine.player.cpu = 1

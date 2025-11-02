@@ -94,16 +94,16 @@ class TestPlayerMovementIntegration:
             assert not engine.game_map.is_valid_position(wall_pos)
 
         # Test shadow interaction
-        shadow_positions = list(engine.game_map.shadows)
+        shadow_positions = list(engine.game_map.blind_spots)
         if len(shadow_positions) > 0:
             shadow_pos = Position(shadow_positions[0][0], shadow_positions[0][1])
 
             # Player should be able to move into shadows (for stealth)
             if not engine.game_map.is_wall(shadow_pos):
                 engine.player.position = shadow_pos
-                assert engine.game_map.is_shadow(shadow_pos)
-                # Player gets stealth benefit in shadows
-                in_shadow = engine.game_map.is_shadow(engine.player.position)
+                assert engine.game_map.is_blind_spot(shadow_pos)
+                # Player gets stealth benefit in blind spots
+                in_shadow = engine.game_map.is_blind_spot(engine.player.position)
                 assert in_shadow
 
     def test_player_navigation_to_objectives(self, basic_game_engine):

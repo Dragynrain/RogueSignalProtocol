@@ -7,6 +7,7 @@ Supports movement, combat, inventory, menu navigation, and look mode.
 """
 
 import logging
+import time
 import tcod
 import tcod.event
 from typing import Optional, Tuple
@@ -584,6 +585,8 @@ class InputHandler:
         self.game.look_mode = True
         # Initialize look cursor at player position
         self.game.look_cursor_position = Position(self.game.player.x, self.game.player.y)
+        # Reset mouse throttle timer for responsive first movement
+        self.game.look_mode_mouse_last_update = 0.0
         self.game.message_log.add_message("Look mode │ ↑↓←→ Move cursor to inspect │ ESC/L to exit")
         self.game.sound_manager.play_sound("ui_menu_open")
 
@@ -823,10 +826,24 @@ class InputHandler:
     # ============================================================================
 
     def _handle_look_mode_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
-        """Handle mouse motion in look mode - update cursor position."""
+        """Handle mouse motion in look mode - update cursor position with throttling.
+
+        Optimized for smooth performance:
+        - Reduced throttle interval (50ms) for smoother updates
+        - Early-exit before expensive world conversion when throttled
+        """
+        # Throttle mouse updates to 50ms intervals for smoother, more controlled movement
+        current_time = time.time()
+        time_since_last_update = current_time - self.game.look_mode_mouse_last_update
+
+        if time_since_last_update < 0.05:  # 50ms throttle (20 updates/sec)
+            return False
+
+        # Only do expensive world conversion when not throttled
         world_pos = self._mouse_pixel_to_world(event.position.x, event.position.y)
         if world_pos:
             self.game.look_cursor_position = world_pos
+            self.game.look_mode_mouse_last_update = current_time
             return True
         return False
 

@@ -441,7 +441,7 @@ class TestCompleteEnemyAIWorkflow:
         3. Enemies detect and engage
         """
 
-        # Position player in shadows (if shadow system exists)
+        # Position player in blind spots (if shadow system exists)
         basic_game_engine.player.position.x = 10
         basic_game_engine.player.position.y = 10
 

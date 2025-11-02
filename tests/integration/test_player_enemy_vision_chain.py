@@ -34,7 +34,7 @@ class TestPlayerEnemyVisionChain:
         with patch.object(basic_game_engine.player, 'is_invisible', return_value=False):
             # Mock clear line of sight
             with patch.object(basic_game_engine.game_map, 'can_see_position', return_value=True), \
-                 patch.object(basic_game_engine.game_map, 'is_shadow', return_value=False):
+                 patch.object(basic_game_engine.game_map, 'is_blind_spot', return_value=False):
 
                 can_see = scanner1.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
 
@@ -117,7 +117,7 @@ class TestPlayerEnemyVisionChain:
         # Step 3: Check if enemy can see player with real vision system
         with patch.object(basic_game_engine.player, 'is_invisible', return_value=False), \
              patch.object(basic_game_engine.game_map, 'can_see_position', return_value=True), \
-             patch.object(basic_game_engine.game_map, 'is_shadow', return_value=False):
+             patch.object(basic_game_engine.game_map, 'is_blind_spot', return_value=False):
 
             can_see = scanner1.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
 
@@ -175,7 +175,7 @@ class TestPlayerEnemyVisionChain:
         # Test vision with invisible player
         with patch.object(basic_game_engine.player, 'is_invisible', return_value=True), \
              patch.object(basic_game_engine.game_map, 'can_see_position', return_value=True), \
-             patch.object(basic_game_engine.game_map, 'is_shadow', return_value=False):
+             patch.object(basic_game_engine.game_map, 'is_blind_spot', return_value=False):
 
             can_see = scanner1.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
 

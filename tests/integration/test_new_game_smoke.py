@@ -210,7 +210,7 @@ class TestNewGameSmokeTests:
         assert isinstance(engine.level_generator.room_generator, RoomGenerator)
 
         # Validate shadows were placed (noise-based)
-        assert len(engine.game_map.shadows) > 0
+        assert len(engine.game_map.blind_spots) > 0
 
         # Validate enemy pathfinding works (uses Dijkstra capabilities)
         if len(engine.enemies) > 0:

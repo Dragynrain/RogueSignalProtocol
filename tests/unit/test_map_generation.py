@@ -46,7 +46,7 @@ class TestGameMapBasics(TestMapGeneration):
         assert game_map.width == 80
         assert game_map.height == 40
         assert len(game_map.walls) == 0
-        assert len(game_map.shadows) == 0
+        assert len(game_map.blind_spots) == 0
         assert len(game_map.cooling_nodes) == 0
         assert len(game_map.cpu_recovery_nodes) == 0
         assert len(game_map.ghost_nodes) == 0
@@ -76,19 +76,19 @@ class TestGameMapBasics(TestMapGeneration):
         game_map = GameMap(10, 10)
 
         # No shadows initially
-        assert not game_map.is_shadow(Position(5, 5))
+        assert not game_map.is_blind_spot(Position(5, 5))
 
-        # Add a shadow
-        game_map.shadows.add((5, 5))
-        assert game_map.is_shadow(Position(5, 5))
+        # Add a blind spot
+        game_map.blind_spots.add((5, 5))
+        assert game_map.is_blind_spot(Position(5, 5))
 
         # Ghost nodes also count as shadows
         game_map.ghost_nodes.add((3, 3))
-        assert game_map.is_shadow(Position(3, 3))
+        assert game_map.is_blind_spot(Position(3, 3))
 
         # Out of bounds positions are not shadows
-        assert not game_map.is_shadow(Position(-1, 5))
-        assert not game_map.is_shadow(Position(10, 5))
+        assert not game_map.is_blind_spot(Position(-1, 5))
+        assert not game_map.is_blind_spot(Position(10, 5))
 
     def test_special_node_detection(self):
         """Special node detection works correctly."""
@@ -262,7 +262,7 @@ class TestLevelDataManagement(TestMapGeneration):
         """Level data clearing removes all existing data."""
         # Add some test data
         self.game_map.walls.add((5, 5))
-        self.game_map.shadows.add((6, 6))
+        self.game_map.blind_spots.add((6, 6))
         self.game_map.cooling_nodes.add((7, 7))
         self.game_map.cpu_recovery_nodes.add((8, 8))
         self.game_map.ghost_nodes.add((9, 9))
@@ -278,7 +278,7 @@ class TestLevelDataManagement(TestMapGeneration):
 
         # Verify everything is cleared
         assert len(self.game_map.walls) == 0
-        assert len(self.game_map.shadows) == 0
+        assert len(self.game_map.blind_spots) == 0
         assert len(self.game_map.cooling_nodes) == 0
         assert len(self.game_map.cpu_recovery_nodes) == 0
         assert len(self.game_map.ghost_nodes) == 0
@@ -366,13 +366,13 @@ class TestMapIntegration(TestMapGeneration):
         # Generate first map
         self.level_generator.generate_level(level=1, seed=12345)
         walls_1 = self.game_map.walls.copy()
-        shadows_1 = self.game_map.shadows.copy()
+        shadows_1 = self.game_map.blind_spots.copy()
 
         # Clear and generate second map with same seed
         self.level_generator._clear_level_data()
         self.level_generator.generate_level(level=1, seed=12345)
         walls_2 = self.game_map.walls.copy()
-        shadows_2 = self.game_map.shadows.copy()
+        shadows_2 = self.game_map.blind_spots.copy()
 
         # Should be identical
         assert walls_1 == walls_2

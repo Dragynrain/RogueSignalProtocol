@@ -61,7 +61,7 @@ class TestPhase4AdvancedFeatures:
         # Verify at least some shadows placed in corners
         # (Shadows are only placed if the corners are in corridor_tiles)
         corner_shadows = sum(1 for corner in [(19, 19), (21, 19), (19, 21), (21, 21)]
-                           if corner in self.game_map.shadows)
+                           if corner in self.game_map.blind_spots)
         # Since we didn't add all corners to corridor_tiles, may not get all 4 shadows
         # Just verify the method ran without error
         assert corner_shadows >= 0  # Should not crash
@@ -178,7 +178,7 @@ class TestPhase4AdvancedFeatures:
         shadow_adjacent = self.level_generator.placement_generator.get_shadow_adjacent_positions(floor_positions)
 
         # Should find some shadow-adjacent positions if shadows exist
-        if len(self.game_map.shadows) > 0:
+        if len(self.game_map.blind_spots) > 0:
             assert len(shadow_adjacent) > 0
 
         # All should be valid floor positions
@@ -250,7 +250,7 @@ class TestPhase4AdvancedFeatures:
         # Generate first level
         self.level_generator.generate_level(1, seed)
         first_walls = set(self.game_map.walls)
-        first_shadows = set(self.game_map.shadows)
+        first_shadows = set(self.game_map.blind_spots)
         first_cooling = set(self.game_map.cooling_nodes)
         first_gateway = self.game_map.gateway
 
@@ -258,7 +258,7 @@ class TestPhase4AdvancedFeatures:
         self.level_generator._clear_level_data()
         self.level_generator.generate_level(1, seed)
         second_walls = set(self.game_map.walls)
-        second_shadows = set(self.game_map.shadows)
+        second_shadows = set(self.game_map.blind_spots)
         second_cooling = set(self.game_map.cooling_nodes)
         second_gateway = self.game_map.gateway
 
@@ -372,7 +372,7 @@ class TestPhase5PolishFeatures:
         self.level_generator.room_generator.carve_rectangular_room(test_room)
 
         initial_walls = len(self.game_map.walls)
-        initial_shadows = len(self.game_map.shadows)
+        initial_shadows = len(self.game_map.blind_spots)
 
         # Create a defensive position
         self.level_generator.tactical_generator.create_corner_cover_position(17, 17)
@@ -380,7 +380,7 @@ class TestPhase5PolishFeatures:
         # Should have added some walls (cover) and possibly shadows
         # Note: Shadow creation depends on room layout and may not always increase count
         assert len(self.game_map.walls) >= initial_walls
-        assert len(self.game_map.shadows) >= initial_shadows
+        assert len(self.game_map.blind_spots) >= initial_shadows
 
     def test_loot_rooms_identified(self):
         """Test that loot rooms are correctly identified and stored."""

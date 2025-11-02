@@ -34,7 +34,7 @@ class GameMap:
         
         # Terrain sets
         self.walls: Set[Tuple[int, int]] = set()
-        self.shadows: Set[Tuple[int, int]] = set()
+        self.blind_spots: Set[Tuple[int, int]] = set()
         
         # Feature sets
         self.cooling_nodes: Set[Tuple[int, int]] = set()
@@ -63,23 +63,23 @@ class GameMap:
             return True
         return (position.x, position.y) in self.walls
     
-    def is_shadow(self, position: Position) -> bool:
+    def is_blind_spot(self, position: Position) -> bool:
         """
-        Check if position is in shadow.
+        Check if position is in a blind spot.
 
-        Shadow zones provide stealth bonuses and enable Shadow Step teleportation.
-        Ghost nodes also count as shadows in addition to their trace reduction effect.
+        Blind spots provide stealth bonuses and enable System Hop pivoting.
+        Ghost nodes also count as blind spots in addition to their trace reduction effect.
 
         Args:
             position: Position to check
 
         Returns:
-            True if position is in a shadow zone or is a ghost node
+            True if position is in a blind spot zone or is a ghost node
         """
         if not position.is_valid(self.width, self.height):
             return False
-        # Ghost nodes function as shadows in addition to their special effect
-        return ((position.x, position.y) in self.shadows or
+        # Ghost nodes function as blind spots in addition to their special effect
+        return ((position.x, position.y) in self.blind_spots or
                 (position.x, position.y) in self.ghost_nodes)
     
     def is_cooling_node(self, position: Position) -> bool:

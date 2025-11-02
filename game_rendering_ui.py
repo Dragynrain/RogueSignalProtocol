@@ -280,7 +280,7 @@ class UIRenderer:
                 condition_text = f"{display_name}({turns})"
 
                 # Color conditions based on their type
-                if effect_name == 'data_mimic_turns':
+                if effect_name == 'traffic_masquerade_turns':
                     color = Colors.BLUE  # Invisible effect
                 elif effect_name == 'speed_boost_turns':
                     color = self._get_data_code_color_for_effect(game, 'speed_boost', Colors.YELLOW)

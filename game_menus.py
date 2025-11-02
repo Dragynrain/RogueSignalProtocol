@@ -927,7 +927,7 @@ class SettingsMenu(BaseMenu):
                         # Play a random sound effect to preview volume
                         preview_sounds = [
                             "player_move", "item_pickup_code", "ui_menu_open",
-                            "node_activate", "exploit_shadow_step"
+                            "node_activate", "exploit_system_hop"
                         ]
                         sound_id = random.choice(preview_sounds)
                         if sound_id in self.sound_manager.sounds:

@@ -407,7 +407,7 @@ class TestNoFallbackValues:
         """Test that exploits are defined but can be overridden from JSON if needed."""
         # GameData.EXPLOITS exists as hardcoded data
         # This test verifies the structure is valid
-        assert 'shadow_step' in GameData.EXPLOITS
+        assert 'system_hop' in GameData.EXPLOITS
         assert 'buffer_overflow' in GameData.EXPLOITS
 
         # Verify all exploits have required attributes

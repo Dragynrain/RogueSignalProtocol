@@ -304,7 +304,7 @@ class TestEntityInspection:
                     entity_info = EntityInspector.get_entity_at_position(game, pos)
 
                     # Should return floor or shadow
-                    assert entity_info['entity_type'] in ['floor', 'shadow']
+                    assert entity_info['entity_type'] in ['floor', 'blind_spot']
                     assert entity_info['name'] != ''
                     return
 

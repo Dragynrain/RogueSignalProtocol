@@ -6,14 +6,14 @@ This module handles complex architectural features including:
 ADVANCED LAYOUT:
 - Hub-and-spoke patterns (central hub rooms with multiple connections)
 - Looping paths for stealth and multiple approach routes
-- Shadow zones (clusters of rooms with high shadow coverage)
+- Blind spot zones (clusters of rooms with high blind spot coverage)
 - Landmark rooms (distinctive themed areas: server core, vault, junction, maze, arena)
 - Map zones for different gameplay pacing (linear vs open sections)
 - Loot room identification for item clustering
 
 Hub rooms create central navigation nodes with multiple connections.
 Looping paths provide tactical flanking and stealth escape opportunities.
-Shadow zones offer stealth-focused areas with high darkness coverage.
+Blind spot zones offer stealth-focused areas with high darkness coverage.
 Landmark rooms provide memorable, distinctive locations with special rewards.
 Map zones create varied gameplay pacing through connectivity patterns.
 """
@@ -29,7 +29,7 @@ class AdvancedLayoutGenerator:
     """
     Advanced layout subsystem handling complex architectural features.
 
-    Coordinates hub rooms, looping paths, shadow zones, landmark rooms,
+    Coordinates hub rooms, looping paths, blind spot zones, landmark rooms,
     and zone-based map division.
 
     Attributes:
@@ -37,7 +37,7 @@ class AdvancedLayoutGenerator:
         corridor_tiles: Set of (x, y) tuples tracking corridor positions
         room_generator: Reference to RoomGenerator for room carving
         corridor_generator: Reference to CorridorGenerator for connections
-        tactical_generator: Reference to TacticalGenerator for cover/shadows
+        tactical_generator: Reference to TacticalGenerator for cover/blind spots
     """
 
     def __init__(self, game_map, corridor_tiles, room_generator, corridor_generator, tactical_generator):
@@ -235,29 +235,29 @@ class AdvancedLayoutGenerator:
 
         return connectivity
 
-    def create_shadow_zones(self, rooms: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
+    def create_blind_spot_zones(self, rooms: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
         """
-        Identify room clusters and designate some as shadow zones.
+        Identify room clusters and designate some as blind spot zones.
 
-        Shadow zones have higher shadow coverage, creating stealth-focused areas.
+        Blind spot zones have higher blind spot coverage, creating stealth-focused areas.
 
         Args:
             rooms: List of room tuples (x, y, width, height)
 
         Returns:
-            List of room tuples designated as shadow zones
+            List of room tuples designated as blind spot zones
         """
-        shadow_zone_chance = GameConfig._get_required('room_generation.shadow_zone_chance')
-        min_cluster_size = GameConfig._get_required('room_generation.shadow_zone_room_cluster_min')
+        blind_spot_zone_chance = GameConfig._get_required('room_generation.blind_spot_zone_chance')
+        min_cluster_size = GameConfig._get_required('room_generation.blind_spot_zone_room_cluster_min')
 
         clusters = self.find_room_clusters(rooms, min_cluster_size)
 
-        shadow_zone_rooms = []
+        blind_spot_zone_rooms = []
         for cluster in clusters:
-            if random.random() < shadow_zone_chance:
-                shadow_zone_rooms.extend(cluster)
+            if random.random() < blind_spot_zone_chance:
+                blind_spot_zone_rooms.extend(cluster)
 
-        return shadow_zone_rooms
+        return blind_spot_zone_rooms
 
     def find_room_clusters(self, rooms: List[Tuple[int, int, int, int]], min_size: int) -> List[List[Tuple[int, int, int, int]]]:
         """

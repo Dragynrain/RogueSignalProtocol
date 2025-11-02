@@ -115,7 +115,7 @@ class GlyphsMapRenderer(MapRendererBase):
                 render_char_safe(console, screen_x, screen_y, '>', fg=gateway_dark, bg=Colors.BLACK)
             return
 
-        # Check for undiscovered special nodes (to prevent them rendering as shadows)
+        # Check for undiscovered special nodes (to prevent them rendering as blind spots)
         # Undiscovered nodes should appear as regular floor until seen
         if (game.game_map.is_cooling_node(world_pos) or
             game.game_map.is_cpu_recovery_node(world_pos) or
@@ -131,10 +131,10 @@ class GlyphsMapRenderer(MapRendererBase):
             wall_char = self._get_smart_wall_character(game.game_map, world_pos.x, world_pos.y)
             wall_dark = ColorManager.get_terrain_variant_color("wall_dark")
             render_char_safe(console, screen_x, screen_y, wall_char, fg=wall_dark, bg=Colors.BLACK)
-        elif game.game_map.is_shadow(world_pos):
-            # ◘ (inverse bullet) for remembered shadows
-            shadow_remembered = ColorManager.get_terrain_variant_color("shadow")
-            render_char_safe(console, screen_x, screen_y, GameGlyphs.SHADOW, fg=shadow_remembered, bg=Colors.BLACK)
+        elif game.game_map.is_blind_spot(world_pos):
+            # ◘ (inverse bullet) for remembered blind spots
+            blind_spot_remembered = ColorManager.get_terrain_variant_color("blind_spot")
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.BLIND_SPOT, fg=blind_spot_remembered, bg=Colors.BLACK)
         else:
             # • (bullet) for remembered empty spaces
             floor_explored = ColorManager.get_terrain_variant_color("floor")
@@ -273,9 +273,9 @@ class GlyphsMapRenderer(MapRendererBase):
             # ♫ (double music note) for lore scraps with cycling colors
             fragment_color = self._get_story_fragment_color(game.turn)
             render_char_safe(console, screen_x, screen_y, GameGlyphs.STORY_FRAGMENT, fg=fragment_color, bg=Colors.BLACK)
-        elif game.game_map.is_shadow(world_pos):
-            # ◘ (inverse bullet) for shadows
-            render_char_safe(console, screen_x, screen_y, GameGlyphs.SHADOW, fg=(80, 40, 120), bg=Colors.BLACK)
+        elif game.game_map.is_blind_spot(world_pos):
+            # ◘ (inverse bullet) for blind spots
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.BLIND_SPOT, fg=(80, 40, 120), bg=Colors.BLACK)
         else:
             # • (bullet) for empty space
             render_char_safe(console, screen_x, screen_y, GameGlyphs.FLOOR_EXPLORED, fg=Colors.FLOOR, bg=Colors.BLACK)
@@ -420,9 +420,11 @@ class GlyphsMapRenderer(MapRendererBase):
 
         In classic mode: Highlights tile backgrounds with overlay_color
         In graphics mode: Draws corner brackets with overlay_color
+
+        Vision indicators are hidden on blind spot/ghost nodes since enemies can't see into blind spots.
         """
-        # Enemies have full vision range regardless of whether they're in shadow
-        # The shadow mechanic only affects whether they can see players IN shadow
+        # Enemies have full vision range regardless of whether they're in a blind spot
+        # The blind spot mechanic only affects whether they can see players IN blind spots
         actual_vision_range = enemy.type_data.vision
 
         for dx in range(-actual_vision_range, actual_vision_range + 1):
@@ -434,6 +436,11 @@ class GlyphsMapRenderer(MapRendererBase):
 
                     # Skip the enemy's own tile (no redundant indicators)
                     if world_x == enemy.x and world_y == enemy.y:
+                        continue
+
+                    # Skip blind spot/ghost nodes - enemies can't see into blind spots
+                    world_pos = Position(world_x, world_y)
+                    if game_map.is_ghost_node(world_pos):
                         continue
 
                     screen_x = world_x - camera_offset.x

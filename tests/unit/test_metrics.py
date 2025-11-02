@@ -99,10 +99,10 @@ def test_track_exploit_usage():
 
     track("exploits_used", category="code_injection")
     track("exploits_used", category="code_injection")
-    track("exploits_used", category="shadow_step")
+    track("exploits_used", category="system_hop")
 
     assert session.exploits_used["code_injection"] == 2
-    assert session.exploits_used["shadow_step"] == 1
+    assert session.exploits_used["system_hop"] == 1
 
 
 def test_finalize_session():
@@ -125,7 +125,7 @@ def test_session_serialization():
     session = init_session_metrics()
 
     track("enemies_killed", category="virus", amount=3)
-    track("exploits_used", category="shadow_step", amount=2)
+    track("exploits_used", category="system_hop", amount=2)
     track("damage_dealt", amount=50)
 
     # Convert to dict
@@ -174,7 +174,7 @@ def test_save_session_to_sqlite(clean_metrics):
     track("damage_dealt", amount=150)
     track("enemies_killed", category="virus", amount=3)
     track("enemies_killed", category="admin", amount=1)
-    track("exploits_used", category="shadow_step", amount=2)
+    track("exploits_used", category="system_hop", amount=2)
     track("turns_taken", amount=50)
 
     finalized = finalize_session(victory=True, death_cause=None, death_level=0)
@@ -204,7 +204,7 @@ def test_save_session_to_sqlite(clean_metrics):
     # Check exploit_events table
     cursor.execute("SELECT * FROM exploit_events WHERE session_id = ?", (session.session_id,))
     exploit_rows = cursor.fetchall()
-    assert len(exploit_rows) == 1  # shadow_step
+    assert len(exploit_rows) == 1  # system_hop
 
     conn.close()
 

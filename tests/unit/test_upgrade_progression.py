@@ -123,7 +123,7 @@ class TestTemporaryEffects(unittest.TestCase):
             'speed_boost_turns': 0,
             'enhanced_vision_turns': 0,
             'exploit_efficiency_turns': 0,
-            'data_mimic_turns': 0,
+            'traffic_masquerade_turns': 0,
             'movement_slowed_turns': 0,
             'virus_turns': 0
         }
@@ -249,14 +249,14 @@ class TestEffectExpiration(unittest.TestCase):
         self.assertEqual(self.player.temporary_effects['enhanced_vision_turns'], 0)
         self.assertEqual(self.player.temporary_effects['exploit_efficiency_turns'], 4)
 
-    def test_data_mimic_trace_level_method(self):
+    def test_traffic_masquerade_trace_level_method(self):
         """Test is_invisible returns correct state."""
         self.assertFalse(self.player.is_invisible())
         
-        self.player.temporary_effects['data_mimic_turns'] = 3
+        self.player.temporary_effects['traffic_masquerade_turns'] = 3
         self.assertTrue(self.player.is_invisible())
         
-        self.player.temporary_effects['data_mimic_turns'] = 0
+        self.player.temporary_effects['traffic_masquerade_turns'] = 0
         self.assertFalse(self.player.is_invisible())
 
     def test_enhanced_vision_trace_level_methods(self):

@@ -652,9 +652,9 @@ class TestComplexHeatTraceScenarios:
         """Test stealth gameplay maintains low heat and trace."""
         engine = self.create_test_engine()
 
-        # Position in shadows, don't use exploits
+        # Position in blind spots, don't use exploits
         shadow_pos = Position(20, 20)
-        engine.game_map.shadows.add((shadow_pos.x, shadow_pos.y))
+        engine.game_map.blind_spots.add((shadow_pos.x, shadow_pos.y))
         engine.player.position = shadow_pos
 
         engine.player.heat = 5

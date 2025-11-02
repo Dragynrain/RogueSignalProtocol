@@ -145,7 +145,7 @@ class TestSaveLoadMidGameplay:
                 'movement_slowed_turns': 0,
                 'enhanced_vision_turns': 3,
                 'exploit_efficiency_turns': 2,
-                'data_mimic_turns': 1,
+                'traffic_masquerade_turns': 1,
                 'virus_turns': 0
             }
             game.player.speed_moves_remaining = 2
@@ -162,7 +162,7 @@ class TestSaveLoadMidGameplay:
             assert effects['speed_boost_turns'] == 5, "Speed boost turns should be preserved"
             assert effects['enhanced_vision_turns'] == 3, "Enhanced vision turns should be preserved"
             assert effects['exploit_efficiency_turns'] == 2, "Exploit efficiency turns should be preserved"
-            assert effects['data_mimic_turns'] == 1, "Data mimic turns should be preserved"
+            assert effects['traffic_masquerade_turns'] == 1, "Traffic masquerade turns should be preserved"
             assert loaded_game.player.speed_moves_remaining == 2, "Speed moves remaining should be preserved"
 
     def test_save_and_load_game_effects_state(self, basic_game_engine):
@@ -368,7 +368,7 @@ class TestSaveLoadMidGameplay:
                 'speed_boost_turns': 3,
                 'enhanced_vision_turns': 5,
                 'exploit_efficiency_turns': 2,
-                'data_mimic_turns': 0,
+                'traffic_masquerade_turns': 0,
                 'movement_slowed_turns': 0,
                 'virus_turns': 0
             }

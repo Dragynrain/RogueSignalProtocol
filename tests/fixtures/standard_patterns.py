@@ -101,9 +101,9 @@ def create_stealth_scenario():
     """
     engine = create_basic_game_environment()
 
-    # Create shadow path
+    # Create blind spot path
     for x in range(15, 26):
-        engine.game_map.shadows.add((x, 20))
+        engine.game_map.blind_spots.add((x, 20))
 
     # Position player in shadows
     engine.player.position = Position(18, 20)

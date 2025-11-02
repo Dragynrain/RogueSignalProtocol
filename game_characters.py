@@ -354,7 +354,7 @@ class Player:
         
         # Temporary effects
         self.temporary_effects = {
-            'data_mimic_turns': 0,
+            'traffic_masquerade_turns': 0,
             'speed_boost_turns': 0,
             'movement_slowed_turns': 0,
             'enhanced_vision_turns': 0,
@@ -433,7 +433,7 @@ class Player:
     
     def is_invisible(self) -> bool:
         """Check if player is effectively invisible."""
-        return self.temporary_effects['data_mimic_turns'] > 0
+        return self.temporary_effects['traffic_masquerade_turns'] > 0
     
     def get_vision_range(self) -> int:
         """Get current vision range including bonuses."""
@@ -479,7 +479,7 @@ class Player:
             return distance <= vision_range
 
         # Enemies in shadows only visible when adjacent (use grid distance for gameplay)
-        if game_map.is_shadow(enemy_target.position) and self.position.grid_distance_to(enemy_target.position) > 1:
+        if game_map.is_blind_spot(enemy_target.position) and self.position.grid_distance_to(enemy_target.position) > 1:
             # Don't log this - it gets called every frame during rendering
             return False
 
@@ -707,7 +707,7 @@ class Enemy:
             return False
 
         # Players in shadows only visible when adjacent (use grid distance for gameplay)
-        if game_map.is_shadow(player.position) and self.position.grid_distance_to(player.position) > 1:
+        if game_map.is_blind_spot(player.position) and self.position.grid_distance_to(player.position) > 1:
             return False
 
         # Final LOS check using TCOD FOV

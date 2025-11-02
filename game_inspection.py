@@ -43,7 +43,7 @@ class EntityInspector:
         2. Enemies
         3. Items (code hacks, exploits, upgrades, story fragments)
         4. Special tiles (gateway, nodes)
-        5. Terrain (wall, shadow, floor)
+        5. Terrain (wall, blind spot, floor)
         """
         EntityInspector._load_terrain_descriptions()
 
@@ -276,7 +276,7 @@ class EntityInspector:
                 'name': terrain_desc.get('name', 'Ghost Node'),
                 'description': terrain_desc.get('description', 'Reduces trace level'),
                 'entity_type': 'ghost_node',
-                'details': 'Step on to activate; also acts as shadow',
+                'details': 'Step on to activate; also acts as blind spot',
                 'color': Colors.CYAN
             }
 
@@ -297,15 +297,15 @@ class EntityInspector:
                 'color': Colors.WALL
             }
 
-        # Check for shadow
-        if game.game_map.is_shadow(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get('shadow', {})
+        # Check for blind spot
+        if game.game_map.is_blind_spot(position):
+            terrain_desc = EntityInspector._terrain_descriptions.get('blind_spot', {})
             return {
-                'name': terrain_desc.get('name', 'Shadow Zone'),
+                'name': terrain_desc.get('name', 'Blind Spot'),
                 'description': terrain_desc.get('description', 'Reduces enemy vision'),
-                'entity_type': 'shadow',
+                'entity_type': 'blind_spot',
                 'details': 'Stealth bonus when hiding here',
-                'color': Colors.SHADOW_VISIBLE
+                'color': Colors.BLIND_SPOT_VISIBLE
             }
 
         # Default: floor

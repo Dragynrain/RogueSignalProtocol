@@ -128,11 +128,11 @@ def test_ghost_protocol_not_unlocked_if_detected(clean_achievements, sample_sess
 
 
 def test_shadow_master_achievement(clean_achievements, sample_session):
-    """Test shadow_master achievement with 5+ shadow kills."""
-    sample_session.ambushes_from_shadows = 7
+    """Test blind_spot_master achievement with 5+ shadow kills."""
+    sample_session.ambushes_from_blind_spots = 7
 
     unlocked = AchievementChecker.check_session_achievements(sample_session, set())
-    assert "shadow_master" in unlocked
+    assert "blind_spot_master" in unlocked
 
 
 def test_invisible_victory_achievement(clean_achievements, sample_session):
@@ -219,7 +219,7 @@ def test_no_trace_achievement(clean_achievements, sample_session):
 def test_minimalist_achievement(clean_achievements, sample_session):
     """Test minimalist achievement (win with ≤3 exploits)."""
     sample_session.victory = True
-    sample_session.exploits_equipped = Counter({"shadow_step": 1, "code_injection": 1, "buffer_overflow": 1})
+    sample_session.exploits_equipped = Counter({"system_hop": 1, "code_injection": 1, "buffer_overflow": 1})
 
     unlocked = AchievementChecker.check_session_achievements(sample_session, set())
     assert "minimalist" in unlocked
@@ -391,7 +391,7 @@ def test_achievement_manager_get_by_category(clean_achievements):
     assert len(combat_achievements) == 5  # first_blood, massacre, overkill, crowd_control, efficient_killer
 
     stealth_achievements = AchievementManager.get_achievements_by_category("stealth")
-    assert len(stealth_achievements) == 4  # silent_assassin, ghost_protocol, shadow_master, invisible_victory
+    assert len(stealth_achievements) == 4  # silent_assassin, ghost_protocol, blind_spot_master, invisible_victory
 
 
 # ============================================================================

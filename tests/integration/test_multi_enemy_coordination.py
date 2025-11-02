@@ -411,7 +411,7 @@ class TestAdminCoordination:
 
         # Position player in shadow
         shadow_pos = Position(20, 20)
-        basic_game_engine.game_map.shadows.add((shadow_pos.x, shadow_pos.y))
+        basic_game_engine.game_map.blind_spots.add((shadow_pos.x, shadow_pos.y))
         basic_game_engine.player.position = shadow_pos
 
         # Create admin far away and normal enemy nearby

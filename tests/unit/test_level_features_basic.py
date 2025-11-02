@@ -239,7 +239,7 @@ class TestWallAdjacentShadows:
         wall_adjacent_shadows = 0
         interior_shadows = 0
 
-        for shadow_pos in self.game_map.shadows:
+        for shadow_pos in self.game_map.blind_spots:
             x, y = shadow_pos
             # Check if adjacent to wall
             neighbors = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
@@ -270,7 +270,7 @@ class TestWallAdjacentShadows:
         wall_adjacent_count = 0
         interior_count = 0
 
-        for shadow_pos in self.game_map.shadows:
+        for shadow_pos in self.game_map.blind_spots:
             x, y = shadow_pos
             neighbors = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
             is_wall_adjacent = any(n in self.game_map.walls for n in neighbors)
@@ -292,10 +292,10 @@ class TestWallAdjacentShadows:
         self.level_generator.generate_level(1, 12345)
 
         # Should have shadows placed
-        assert len(self.game_map.shadows) > 0
+        assert len(self.game_map.blind_spots) > 0
 
         # All shadows should be on valid floor tiles
-        for shadow_pos in self.game_map.shadows:
+        for shadow_pos in self.game_map.blind_spots:
             assert shadow_pos not in self.game_map.walls
             assert 0 <= shadow_pos[0] < GameConfig.MAP_WIDTH
             assert 0 <= shadow_pos[1] < GameConfig.MAP_HEIGHT
@@ -418,7 +418,7 @@ class TestCorridorAlcoves:
         # If alcoves were created, they should have shadows
         # We can't directly verify which shadows are in alcoves without complex analysis,
         # but we can verify shadows exist and level generated successfully
-        assert len(self.game_map.shadows) > 0
+        assert len(self.game_map.blind_spots) > 0
 
     def test_level_generation_with_alcoves(self):
         """Test that full level generation works with corridor alcoves."""

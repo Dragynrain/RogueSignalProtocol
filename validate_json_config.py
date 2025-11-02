@@ -44,7 +44,7 @@ def validate_game_config():
                     'trace_increase_amount', 'cooling_node_effect', 'ghost_node_trace_reduction_percent',
                     'cpu_recovery_amount', 'enemy_elimination_cpu_reward', 'cpu_restore_min', 'cpu_restore_max',
                     'heat_reduction_instant', 'adjacent_distance_threshold', 'patrol_stuck_threshold',
-                    'pathfinding_timeout_attempts', 'enhanced_vision_bonus', 'shadow_vision_reduction_factor',
+                    'pathfinding_timeout_attempts', 'enhanced_vision_bonus', 'blind_spot_vision_reduction_factor',
                     'enemy_trace_alert_to_hostile', 'enemy_trace_continuous_hostile', 'enemy_memory_turns']
     for key in balance_keys:
         if key not in config['balance']:
@@ -125,7 +125,7 @@ def validate_game_data():
             return False
 
     # Validate exploits
-    required_exploits = ['shadow_step', 'data_mimic', 'noise_maker', 'buffer_overflow',
+    required_exploits = ['system_hop', 'traffic_masquerade', 'decoy_swarm', 'buffer_overflow',
                          'code_injection', 'system_crash', 'threat_scan', 'network_scan',
                          'log_wiper', 'antivirus', 'denial_of_service', 'memory_leak']
     for exploit in required_exploits:
@@ -141,7 +141,7 @@ def validate_game_data():
             return False
 
         config = data['network_configs'][level_str]
-        required_keys = ['enemies', 'shadow_coverage', 'name', 'cooling_nodes', 'cpu_nodes',
+        required_keys = ['enemies', 'blind_spot_coverage', 'name', 'cooling_nodes', 'cpu_nodes',
                          'ghost_nodes', 'code_hacks', 'exploit_pickups', 'permanent_upgrades']
         for key in required_keys:
             if key not in config:

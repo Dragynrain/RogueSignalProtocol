@@ -39,7 +39,7 @@
     "player_base_vision_range": 15,
     "max_save_attempts": 3,
     "adjacent_visibility_threshold": 1.5,
-    "shadow_vision_reduction_factor": 3,
+    "blind_spot_vision_reduction_factor": 3,
     "virus_base_duration": 3,
     "virus_max_duration": 10,
     "max_ram_capacity": 32,
@@ -79,7 +79,7 @@
       "medium": 0.30,
       "wide": 0.05
     },
-    "shadow_placement_weights": {
+    "blind_spot_placement_weights": {
       "wall_adjacent": 0.60,
       "interior": 0.40
     },
@@ -113,9 +113,9 @@
       "hidden_dead_end": 38,
       "gauntlet": 40
     },
-    "shadow_zone_chance": 0.10,
-    "shadow_zone_room_cluster_min": 3,
-    "shadow_zone_coverage": 0.30,
+    "blind_spot_zone_chance": 0.10,
+    "blind_spot_zone_room_cluster_min": 3,
+    "blind_spot_zone_coverage": 0.30,
     "hub_room_count": 1,
     "noise_octaves": 4,
     "noise_lacunarity": 2.0,
@@ -129,7 +129,7 @@
     "enable_landmarks": true,
     "curved_corridor_chance": 0.10,
     "defensive_position_chance": 0.15,
-    "defensive_position_types": ["corner_cover", "shadow_bunker", "crossfire"],
+    "defensive_position_types": ["corner_cover", "blind_spot_bunker", "crossfire"],
     "loot_room_percentage": 0.15,
     "loot_room_multiplier": 2.5,
     "choke_point_count": 2,
@@ -158,7 +158,7 @@
     "max_movement_queue_size": 3,
     "pathfinding_timeout_attempts": 100,
     "enhanced_vision_bonus": 2,
-    "shadow_vision_reduction_factor": 3,
+    "blind_spot_vision_reduction_factor": 3,
     "enemy_memory_turns": 20,
     "ai_behavior": {
       "enemy_trace_alert_to_hostile": 3,
@@ -191,9 +191,9 @@
     "game_elements": {
       "player": [50, 255, 50],
       "enemy": [220, 20, 60],
-      "shadow": [3, 3, 8],
-      "shadow_visible": [80, 40, 120],
-      "shadow_remembered": [50, 20, 80],
+      "blind_spot": [3, 3, 8],
+      "blind_spot_visible": [80, 40, 120],
+      "blind_spot_remembered": [50, 20, 80],
       "wall": [120, 140, 180],
       "floor": [180, 180, 220],
       "gateway": [255, 215, 0],
@@ -254,7 +254,7 @@
       "wall_dark": [60, 70, 90],
       "floor_explored": [90, 90, 130],
       "ghost_node_explored": [80, 40, 120],
-      "shadow": [50, 20, 80],
+      "blind_spot": [50, 20, 80],
       "floor": [180, 180, 220]
     },
     "targeting": {
@@ -327,7 +327,7 @@
       "info": ["activated", "active", "reduced", "boosted", "enhanced", "turns", "temperature"],
       "system": ["loading", "loaded", "starting", "initializing", "saving", "saved"],
       "combat": ["damage", "hit", "miss", "attack", "combat", "fight"],
-      "stealth": ["hidden", "invisible", "stealth", "shadow", "mimic", "distraction"]
+      "stealth": ["hidden", "invisible", "stealth", "blind_spot", "masquerade", "decoy"]
     }
   },
   "symbols": {
@@ -336,7 +336,7 @@
     "heat_recovery": 4,
     "upgrade": 15,
     "empty_space": 7,
-    "shadow": 8,
+    "blind_spot": 8,
     "enemy_intent": 9,
     "lore_scrap": 14,
     "data_code": 21
@@ -366,7 +366,7 @@
       "name": "Data Corridor",
       "description": "Standard network pathway where data flows freely. Visible to security monitoring systems."
     },
-    "shadow": {
+    "blind_spot": {
       "name": "Digital Shadows",
       "description": "Unmonitored network dead zones where surveillance coverage is weak. Concealment reduces enemy detection range."
     },
@@ -384,7 +384,7 @@
     },
     "ghost_node": {
       "name": "Ghost Node",
-      "description": "Trace obfuscation relay that reduces detection signature by 20%. Also functions as digital shadow for concealment."
+      "description": "Trace obfuscation relay that reduces detection signature by 20%. Also functions as monitoring blind spot for concealment."
     },
     "code_hack": {
       "name": "Data Code",
@@ -403,7 +403,7 @@
     "Welcome to Rogue Signal Protocol v0.8.0 Alpha!",
     "Navigate using stealth",
     "Reach the gateway (>)",
-    "Hide in digital shadows (.) to avoid detection",
+    "Hide in monitoring blind spots (.) to avoid detection",
     "Press 'L' for look mode, 'F' for fragments",
     "Starting Corporate Network infiltration..."
   ],

@@ -341,11 +341,11 @@ class GameSession:
                 self.game_engine.show_story_fragment = story_fragment.fragment_index
             del self.game_engine.game_map.story_fragments[player_pos]
 
-        # Environmental narrative: First shadow entry
-        if self.game_engine.game_map.is_shadow(pp):
-            shadow_msg = self.game_engine.narrative_manager.trigger_first_shadow()
-            if shadow_msg:
-                self.game_engine.message_log.add_message(shadow_msg)
+        # Environmental narrative: First blind spot entry
+        if self.game_engine.game_map.is_blind_spot(pp):
+            blind_spot_msg = self.game_engine.narrative_manager.trigger_first_blind_spot()
+            if blind_spot_msg:
+                self.game_engine.message_log.add_message(blind_spot_msg)
 
         # Environmental narrative: Low CPU warning
         cpu_percent = self.game_engine.player.cpu / self.game_engine.player.max_cpu
@@ -869,7 +869,7 @@ class GameSession:
     def _clear_map(self):
         """Clear all map data."""
         self.game_engine.game_map.walls.clear()
-        self.game_engine.game_map.shadows.clear()
+        self.game_engine.game_map.blind_spots.clear()
         self.game_engine.game_map.cooling_nodes.clear()
         self.game_engine.game_map.cpu_recovery_nodes.clear()
         self.game_engine.game_map.ghost_nodes.clear()
@@ -1302,7 +1302,7 @@ class GameSession:
             'movement_slowed_turns': 0,
             'enhanced_vision_turns': 0,
             'exploit_efficiency_turns': 0,
-            'data_mimic_turns': 0,
+            'traffic_masquerade_turns': 0,
             'virus_turns': 0
         })
 

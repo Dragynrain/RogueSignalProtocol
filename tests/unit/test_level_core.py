@@ -29,7 +29,7 @@ class TestLevelGenerator:
         """Test that _clear_level_data removes all existing level data."""
         # Add some data to clear
         self.game_map.walls.add((5, 5))
-        self.game_map.shadows.add((10, 10))
+        self.game_map.blind_spots.add((10, 10))
         self.game_map.cooling_nodes.add((15, 15))
         self.game_map.cpu_recovery_nodes.add((20, 20))
         self.game_map.ghost_nodes.add((25, 25))
@@ -42,7 +42,7 @@ class TestLevelGenerator:
 
         # Verify everything is cleared
         assert len(self.game_map.walls) == 0
-        assert len(self.game_map.shadows) == 0
+        assert len(self.game_map.blind_spots) == 0
         assert len(self.game_map.cooling_nodes) == 0
         assert len(self.game_map.cpu_recovery_nodes) == 0
         assert len(self.game_map.ghost_nodes) == 0
