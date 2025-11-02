@@ -131,13 +131,17 @@ class GameSession:
 
         # Check for death from ANY source (enemy attacks, virus, etc.)
         # This catches deaths that weren't caught by the virus-specific check above
-        if self.game_engine.player.cpu <= 0 and not self.game_engine.dialogue_state.is_active():
-            # Only show dialogue if one isn't already active (avoid duplicates)
-            self.game_engine.sound_manager.play_sound("player_death", priority=10)
-            self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
-            self.game_engine.game_over = True
-            # Delete save on death (permadeath)
-            if not hasattr(self, '_death_handled'):
+        if self.game_engine.player.cpu <= 0:
+            logging.info(f"DEBUG: Death detected! cpu={self.game_engine.player.cpu}, dialogue_active={self.game_engine.dialogue_state.is_active()}")
+            if not self.game_engine.dialogue_state.is_active():
+                # Only show dialogue if one isn't already active (avoid duplicates)
+                logging.info(f"DEBUG: Showing death dialogue")
+                self.game_engine.sound_manager.play_sound("player_death", priority=10)
+                self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
+                self.game_engine.game_over = True
+                # Delete save on death (permadeath)
+                if not hasattr(self, '_death_handled'):
+                    logging.info(f"DEBUG: Processing death (not previously handled)")
                 # Determine death cause for analytics
                 player = self.game_engine.player
                 death_cause = "combat"  # Default
@@ -183,6 +187,9 @@ class GameSession:
                 from game_dialogue_system import create_death_dialogue
                 self.game_engine.dialogue_state.show(create_death_dialogue())
                 self._death_handled = True  # Prevent duplicate handling
+                logging.info(f"DEBUG: Death dialogue shown and _death_handled flag set")
+            else:
+                logging.warning(f"DEBUG: Death occurred but dialogue already active - death dialogue NOT shown!")
 
     def _update_memory_system(self):
         """Update the hybrid fog of war memory system using TCOD FOV."""

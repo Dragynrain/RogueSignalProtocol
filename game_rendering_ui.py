@@ -55,8 +55,7 @@ class UIRenderer:
         self.settings = settings
         self.context = context
         self.tile_manager = tile_manager
-        self._help_menu = None  # Cached help menu instance
-        self._help_menu_graphics_mode = None  # Track graphics mode when help menu was created
+        self._active_help_menu = None  # Active help menu instance (only while help screen is shown)
 
     # ========================================================================
     # STATUS BAR RENDERING
@@ -683,30 +682,26 @@ class UIRenderer:
         Render the help screen using appropriate help menu.
 
         Uses GraphicalHelpMenu in graphics mode, HelpMenu in glyph mode.
-        Automatically recreates help menu if graphics mode changes.
+        Creates menu on first call, reuses it for pagination state.
+        Call clear_help_menu() when exiting help screen.
         """
-        # Check if graphics mode has changed - invalidate cache if so
-        current_graphics_mode = self.settings.graphics_mode if self.settings else "glyph"
-        if self._help_menu is not None and self._help_menu_graphics_mode != current_graphics_mode:
-            logging.info(f"Graphics mode changed from {self._help_menu_graphics_mode} to {current_graphics_mode}, invalidating help menu cache")
-            self._help_menu = None
-            self._help_menu_graphics_mode = None
-
-        # Create help menu if not already created
-        if self._help_menu is None:
+        # Create help menu if not already active
+        if self._active_help_menu is None:
             if self.settings is not None:
-                self._help_menu = create_help_menu(self.settings, self.context, self.tile_manager)
-                self._help_menu_graphics_mode = current_graphics_mode
-                logging.info(f"Created in-game help menu: {type(self._help_menu).__name__}")
+                self._active_help_menu = create_help_menu(self.settings, self.context, self.tile_manager)
+                logging.info(f"Created help menu: {type(self._active_help_menu).__name__}")
             else:
                 # Fallback to standard help menu if settings not provided
                 from game_menu_help_lore import HelpMenu
-                self._help_menu = HelpMenu()
-                self._help_menu_graphics_mode = "glyph"
-                logging.warning("Settings not provided to FullScreenRenderer, using standard HelpMenu")
+                self._active_help_menu = HelpMenu()
+                logging.warning("Settings not provided to UIRenderer, using standard HelpMenu")
 
         # Render help menu
-        self._help_menu.render(console)
+        self._active_help_menu.render(console)
+
+    def clear_help_menu(self):
+        """Clear active help menu when exiting help screen."""
+        self._active_help_menu = None
 
     def render_help_sprites(self):
         """
@@ -715,8 +710,8 @@ class UIRenderer:
         This should be called BEFORE render_help_screen when in graphics mode.
         Only GraphicalHelpMenu has this method.
         """
-        if self._help_menu and hasattr(self._help_menu, 'render_sprites'):
-            self._help_menu.render_sprites()
+        if self._active_help_menu and hasattr(self._active_help_menu, 'render_sprites'):
+            self._active_help_menu.render_sprites()
 
     def handle_help_input(self, event) -> str:
         """
@@ -728,8 +723,8 @@ class UIRenderer:
         Returns:
             Result from help menu input handler ('back' to exit, '' to continue)
         """
-        if self._help_menu:
-            return self._help_menu.handle_input(event)
+        if self._active_help_menu:
+            return self._active_help_menu.handle_input(event)
         return ""
 
     # === Exploit Bar Click Detection ===

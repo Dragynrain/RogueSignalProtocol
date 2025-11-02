@@ -642,15 +642,74 @@ class Enemy:
         self.position.y = value
     
     def get_color(self) -> Tuple[int, int, int]:
-        """Get the color for rendering this enemy."""
+        """
+        Get the color for rendering this enemy (glyph mode).
+
+        Color indicates both AI state and health:
+        - Alert state: Yellow (unaware), Orange (alert), Red (hostile), Blue (disabled)
+        - HP damage: Blends in red tint as HP decreases
+        """
+        # Get base color from state
         if self.disabled_turns > 0:
-            return Colors.BLUE
+            base_color = Colors.BLUE
         elif self.state == EnemyState.UNAWARE:
-            return Colors.ENEMY_UNAWARE
+            base_color = Colors.ENEMY_UNAWARE
         elif self.state == EnemyState.ALERT:
-            return Colors.ENEMY_ALERT
+            base_color = Colors.ENEMY_ALERT
         else:
-            return Colors.ENEMY_HOSTILE
+            base_color = Colors.ENEMY_HOSTILE
+
+        # Safety check to prevent division by zero
+        if self.max_cpu <= 0:
+            return base_color  # Return base color if invalid max_cpu
+
+        # Apply HP-based tinting (blend with red)
+        hp_percent = self.cpu / self.max_cpu
+
+        if hp_percent >= 1.0:
+            # Full HP - no tint
+            return base_color
+        elif hp_percent >= 0.5:
+            # 50-99% HP - slight red tint (75% base, 25% red)
+            red_tint = (255, 100, 100)
+            return tuple(
+                int(base_color[i] * 0.75 + red_tint[i] * 0.25)
+                for i in range(3)
+            )
+        else:
+            # <50% HP - heavy red tint (50% base, 50% red)
+            red_tint = (255, 80, 80)
+            return tuple(
+                int(base_color[i] * 0.5 + red_tint[i] * 0.5)
+                for i in range(3)
+            )
+
+    def get_graphics_tint(self) -> Tuple[int, int, int]:
+        """
+        Get subtle damage tint for graphics mode sprites.
+
+        Uses multiplicative blending (texture.color_mod), so tint values close to
+        (255, 255, 255) preserve original sprite colors.
+
+        Returns:
+            RGB tint: (255, 255, 255) = no tint, (255, 200, 200) = slight red wash
+        """
+        # Safety check to prevent division by zero
+        if self.max_cpu <= 0:
+            return (255, 255, 255)  # No tint if invalid max_cpu
+
+        hp_percent = self.cpu / self.max_cpu
+
+        if hp_percent >= 1.0:
+            # Full HP - no tint
+            return (255, 255, 255)
+        elif hp_percent >= 0.5:
+            # 50-99% HP - very subtle red tint (preserves ~86% of green/blue)
+            return (255, 220, 220)
+        else:
+            # <50% HP - stronger red tint (preserves ~70% of green/blue)
+            return (255, 180, 180)
+
 
     def get_movement_type(self) -> EnemyMovement:
         """Get the effective movement type for this enemy.

@@ -408,14 +408,18 @@ class GameEngine:
         Only processes a full turn (enemy moves, effects, etc.) when no speed moves remain.
         Movement inhibition causes enemies to get double moves (2 enemy turns per 1 player action).
         """
+        logging.debug(f"DEBUG: maybe_process_turn() START")
         # Consume speed move if applicable
         if self.player.speed_moves_remaining > 0:
             self.player.speed_moves_remaining -= 1
             # Don't process full turn, just grant another move
+            logging.debug(f"DEBUG: maybe_process_turn() consumed speed move, returning early")
             return
 
         # Process full turn when no speed moves remaining
+        logging.debug(f"DEBUG: maybe_process_turn() calling process_turn()")
         self.process_turn()
+        logging.debug(f"DEBUG: maybe_process_turn() process_turn() returned")
 
         # If player has movement inhibition, enemies get 2 extra moves (2 moves per 1 player move)
         if self.player.temporary_effects['movement_slowed_turns'] > 0:
@@ -423,6 +427,7 @@ class GameEngine:
             # Process enemy updates twice for the double move advantage
             self.game_session._update_enemies()
             self.game_session._update_enemies()
+        logging.debug(f"DEBUG: maybe_process_turn() END")
 
     def _perform_bump_attack(self, target_enemy: Enemy):
         """

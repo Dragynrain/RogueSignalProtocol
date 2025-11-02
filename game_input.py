@@ -124,6 +124,7 @@ class InputHandler:
                 result = self.renderer.ui_renderer.handle_help_input(event)
                 if result == "back":
                     self.game.show_help = False
+                    self.renderer.ui_renderer.clear_help_menu()  # Clear menu cache
                 return True
             else:
                 # Fallback: any key closes help
@@ -162,6 +163,8 @@ class InputHandler:
             g.show_lore_viewer, g.lore_viewer_mode, g.lore_viewer_selection = False, "list", 0
         elif g.show_help:
             g.show_help = False
+            if self.renderer and hasattr(self.renderer, 'ui_renderer'):
+                self.renderer.ui_renderer.clear_help_menu()  # Clear menu cache
         elif g.show_achievements:
             g.show_achievements = False
         elif g.show_inventory:
@@ -494,10 +497,15 @@ class InputHandler:
             
             if 0 <= item_index < len(inventory_items):
                 selected_item = inventory_items[item_index]
-                if selected_item.use(self.game.player, self.game):
+                logging.debug(f"DEBUG: _use_selected_inventory_item calling use() on {selected_item.name}")
+                use_result = selected_item.use(self.game.player, self.game)
+                logging.debug(f"DEBUG: _use_selected_inventory_item use() returned: {use_result}")
+                if use_result:
                     # Check if it was a code or exploit - both consume a turn
                     if isinstance(selected_item, (CodeHack, ExploitItem)):
+                        logging.debug(f"DEBUG: _use_selected_inventory_item calling maybe_process_turn()")
                         self.game.maybe_process_turn()
+                        logging.debug(f"DEBUG: _use_selected_inventory_item maybe_process_turn() returned")
 
                     # Update selection if item was consumed
                     new_equipped_count = len(self.game.player.inventory_manager.equipped_exploits)
@@ -506,6 +514,7 @@ class InputHandler:
 
                     if max_selection >= 0:
                         self.game.inventory_selection = min(self.game.inventory_selection, max_selection)
+                    logging.debug(f"DEBUG: _use_selected_inventory_item END")
     
     def _unequip_selected_exploit(self):
         """Unequip the specifically selected exploit."""
