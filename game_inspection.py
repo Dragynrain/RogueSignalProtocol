@@ -64,7 +64,7 @@ class EntityInspector:
         # 2. Check for enemies
         enemy = game.enemy_manager.get_enemy_at_position(position)
         if enemy:
-            return EntityInspector._inspect_enemy(enemy)
+            return EntityInspector._inspect_enemy(enemy, game)
 
         # 3. Check for items
         item_info = EntityInspector._inspect_items(game, position)
@@ -114,8 +114,14 @@ class EntityInspector:
         }
 
     @staticmethod
-    def _inspect_enemy(enemy) -> Dict[str, Any]:
-        """Inspect an enemy."""
+    def _inspect_enemy(enemy, game=None) -> Dict[str, Any]:
+        """
+        Inspect an enemy and show damage preview if in targeting mode.
+
+        Args:
+            enemy: Enemy to inspect
+            game: Optional GameEngine instance (for damage preview in targeting mode)
+        """
         enemy_type = enemy.type_data
 
         # Determine color based on state
@@ -151,6 +157,12 @@ class EntityInspector:
 
         details += f"Behavior: {movement_desc}"
 
+        # Add damage preview if in targeting mode with equipped exploits
+        if game and game.targeting_mode and game.targeting_exploit:
+            damage_preview = EntityInspector._calculate_damage_preview(game, enemy)
+            if damage_preview:
+                details += f"\n\n{damage_preview}"
+
         return {
             'name': enemy_type.name,
             'description': enemy_type.description,
@@ -158,6 +170,65 @@ class EntityInspector:
             'details': details,
             'color': color
         }
+
+    @staticmethod
+    def _calculate_damage_preview(game, enemy) -> Optional[str]:
+        """
+        Calculate compact damage preview for current targeting exploit.
+
+        Shows damage calculation in 2-3 lines:
+        - Line 1: [Exploit Name]
+        - Line 2: Damage calculation -> Result
+
+        Examples:
+        - "25 dmg -> 25/50 CPU"
+        - "25+10 -> ELIMINATED" (shadow bonus)
+        - "40 (-50%) -> 230/250 CPU" (admin resist)
+
+        Returns:
+            Formatted damage preview string, or None if exploit doesn't deal damage
+        """
+        exploit = GameData.EXPLOITS.get(game.targeting_exploit)
+        if not exploit or exploit.damage == 0:
+            return None  # Non-damaging exploit
+
+        # Calculate base damage
+        base_damage = exploit.damage
+
+        # Check for shadow bonus (+10 if attacking from blind spots or while invisible)
+        player_in_shadow = (game.game_map.is_blind_spot(game.player.position) or
+                           game.player.is_invisible())
+        shadow_bonus = 10 if player_in_shadow else 0
+        total_damage = base_damage + shadow_bonus
+
+        # Apply admin resistance if needed
+        final_damage = total_damage
+        resist_text = ""
+        if enemy.type == 'admin':
+            final_damage = max(5, total_damage // 2)  # 50% resistance, min 5
+            resist_text = " (-50%)"
+
+        # Calculate result
+        remaining_cpu = enemy.cpu - final_damage
+
+        # Format compact preview (2-3 lines max)
+        preview = f"[{exploit.name}]\n"
+
+        # Build damage line
+        if shadow_bonus > 0:
+            dmg_text = f"{base_damage}+{shadow_bonus}{resist_text}"
+        else:
+            dmg_text = f"{base_damage}{resist_text}"
+
+        # Build result
+        if remaining_cpu <= 0:
+            result_text = "ELIMINATED"
+        else:
+            result_text = f"{remaining_cpu}/{enemy.max_cpu} CPU"
+
+        preview += f"{dmg_text} -> {result_text}"
+
+        return preview
 
     @staticmethod
     def _inspect_items(game, position: Position) -> Optional[Dict[str, Any]]:

@@ -714,9 +714,12 @@ def main():
                             # Save game reference before it potentially becomes None
                             previous_game = game
                             should_continue, game = handle_game_input_events(event, game, input_handler)
+                            logging.debug(f"DEBUG: handle_game_input_events returned: should_continue={should_continue}, game={'None' if game is None else 'GameEngine'}")
                             if not should_continue:
+                                logging.info("DEBUG: Exiting program (should_continue=False)")
                                 return  # Exit program
                             if game is None:
+                                logging.info("DEBUG: Returning to main menu (game=None)")
                                 # Player returned to menu - save the active game session
                                 active_game_session = previous_game
 

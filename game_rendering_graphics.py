@@ -11,7 +11,7 @@ import math
 from typing import Tuple
 
 from game_config import GameConfig, GameBalance
-from game_entities import Position, Colors, EnemyState, ensure_color_tuple
+from game_entities import Position, Colors, EnemyState, TargetingMode, ensure_color_tuple
 from game_data import GameData, GameUpgrades
 from data_loading import DataLoader
 from game_rendering_base import MapRendererBase
@@ -344,7 +344,7 @@ class GraphicsMapRenderer(MapRendererBase):
                         # Reset color_mod
                         texture.color_mod = normal_tint
 
-        # LAYER 2B: Render entity sprites (enemies, player - NO tinting)
+        # LAYER 2B: Render entity sprites (enemies with HP tinting, player)
         # Enemies
         for enemy in game.enemies:
             if self._is_in_viewport(enemy.x, enemy.y, camera_offset):
@@ -372,8 +372,15 @@ class GraphicsMapRenderer(MapRendererBase):
                     texture = self.tile_manager.get_tile(enemy_type)
 
                     if texture:
+                        # Apply subtle HP-based damage tint (graphics mode only shows HP, not alert state)
+                        damage_tint = enemy.get_graphics_tint()
+                        texture.color_mod = damage_tint
+
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
                         renderer.copy(texture, dest=tile_rect)
+
+                        # Reset color mod to prevent affecting other sprites
+                        texture.color_mod = (255, 255, 255)
 
         # Player
         if self._is_in_viewport(game.player.x, game.player.y, camera_offset):

@@ -222,9 +222,13 @@ class ExploitItem(InventoryItem):
     
     def use(self, player, game) -> bool:
         """Equip the exploit."""
+        import logging
+        logging.info(f"DEBUG: ExploitItem.use() START for {self.exploit_key}")
         success = player.inventory_manager.equip_exploit(self)
+        logging.info(f"DEBUG: ExploitItem.use() equip_exploit returned: {success}")
         if success:
             game.message_log.add_message(f"Equipped {self.name}")
+            logging.info(f"DEBUG: ExploitItem.use() added success message")
         else:
             # Check specific failure reasons
             if self.exploit_key in player.inventory_manager.equipped_exploits:
@@ -236,6 +240,7 @@ class ExploitItem(InventoryItem):
                 current_ram = player.inventory_manager.get_ram_usage()
                 needed_ram = GameData.EXPLOITS[self.exploit_key].ram if self.exploit_key in GameData.EXPLOITS else 0
                 game.message_log.add_message(f"Not enough RAM: {current_ram + needed_ram}/{player.ram_total}")
+        logging.info(f"DEBUG: ExploitItem.use() END returning: {success}")
         return success
 
 
