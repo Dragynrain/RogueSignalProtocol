@@ -164,7 +164,11 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 
 **Commits:** See rule #0 - ask first!
 
-**Attribution:** No `Co-Authored-By` tags. Clean technical messages.
+**Attribution:** FORBIDDEN - Never add any of:
+- `Co-Authored-By: Claude` tags
+- `🤖 Generated with [Claude Code]` links
+- Any AI attribution or emoji signatures
+- Clean technical messages ONLY
 
 **.gitignore:** No inline comments with trailing spaces (`dist/  # comment` breaks). Test patterns before committing.
 
