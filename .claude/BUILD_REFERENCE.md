@@ -3,68 +3,28 @@
 ## Quick Commands
 
 ```bash
-build\build.bat alpha      # Debug build (default)
+build\build.bat alpha      # Debug build (creates debug_mode.flag)
 build\build.bat release    # Production build
 ```
 
 ## Requirements
 
-- **7zip** installed at `C:\Program Files\7-Zip\7z.exe`
-- Python with PyInstaller (`uv pip install pyinstaller`)
-- Uses `Python -m PyInstaller` (more reliable than direct exe calls)
-- Script uses `%~dp0` for directory navigation (works from any location)
+- **7zip** at `C:\Program Files\7-Zip\7z.exe` (required - PowerShell Compress-Archive doesn't work)
+- Python with PyInstaller (`pip install pyinstaller`)
+- Script uses `Python -m PyInstaller` (more reliable than direct .exe calls)
 
-## Build Process Details
-
-### What Gets Built
-
-1. **Clean previous artifacts**
-   - Removes `dist/` and `build/` directories
-   - Clears any previous PyInstaller cache
-
-2. **PyInstaller execution**
-   - Creates single-file executable
-   - Output: `dist\RogueSignalProtocol.exe` (~37MB)
-
-3. **Asset copying**
-   - JSON configs: `game_content.json`, `game_rules.json`, `story_content.json`, `user_settings.json`
-   - Font files: `*.png` tilesets
-   - LICENSE and README files
-   - Directories: `graphics/`, `sound/`, `music/`
-
-4. **Build type specific**
-   - **Alpha builds**: Creates `debug_mode.flag` for verbose logging
-   - **Release builds**: No debug flag
-
-5. **Archive creation**
-   - Uses 7zip to create timestamped archive
-   - Output: `releases/RogueSignalProtocol_[type]_[date].zip` (~103MB)
-
-## Build Outputs
+## Outputs
 
 ```
 dist/
-├── RogueSignalProtocol.exe (37MB)
-├── *.json (configs)
-├── *.png (fonts)
-├── graphics/ (sprites)
-├── sound/ (audio)
-├── music/ (tracks)
-├── LICENSE
-├── README.md
+├── RogueSignalProtocol.exe (~37MB)
+├── *.json, *.png (configs & fonts)
+├── graphics/, sound/, music/
 └── debug_mode.flag (alpha only)
 
 releases/
-└── RogueSignalProtocol_alpha_2025-10-21.zip (103MB)
+└── RogueSignalProtocol_[type]_[YYYY-MM-DD].zip (~103MB)
 ```
-
-## Archive Format
-
-7zip creates archives with these settings:
-- Compression: Standard (not ultra)
-- Includes all `dist/` contents
-- Preserves directory structure
-- Filename format: `RogueSignalProtocol_[type]_[YYYY-MM-DD].zip`
 
 ## Troubleshooting
 
@@ -74,10 +34,10 @@ releases/
 
 **PyInstaller errors:**
 - Clear cache: Delete `build/` directory manually
-- Check dependencies: `uv pip list`
-- Verify all imports work: `python -c "import tcod; import numpy"`
+- Check dependencies: `pip list`
+- Verify imports: `python -c "import tcod; import numpy"`
 
-**Archive is wrong size:**
-- Check if all asset folders copied correctly
+**Archive wrong size:**
+- Check if asset folders copied correctly
 - Verify `dist/graphics/` exists and has sprites
 - Missing assets = smaller archive

@@ -733,10 +733,10 @@ class GameSession:
         self.game_engine.level_generator.generate_level(self.game_engine.level, self.game_engine.game_state.dungeon_seed)
 
         # Generate additional game elements not handled by LevelGenerator
-        self._place_code_hacks()
-        self._place_exploit_pickups()
+        self._place_code_hacks(config["code_hacks"])
+        self._place_exploit_pickups(config["exploit_pickups"])
         self._place_story_fragment()  # Add story fragment placement
-        self._place_permanent_upgrades()
+        self._place_permanent_upgrades(config["permanent_upgrades"])
         self._place_enemies(config["enemies"])
 
         # Reset player position to spawn location and adjust stats for new level
@@ -1011,15 +1011,13 @@ class GameSession:
 
         return placed_items
 
-    def _place_code_hacks(self):
+    def _place_code_hacks(self, patch_count: int):
         """Place codes throughout the level with clustering in loot rooms."""
         # Code effects should already be initialized at game start
         # If somehow empty, this is an error - don't place patches
         if not self.game_engine.code_hack_effects:
             logging.error("Code effects not initialized - skipping patch placement")
             return
-
-        patch_count = 12 + self.game_engine.level * 4  # Much more codes (was 6 + level * 2)
 
         def create_code_hack(x, y):
             """Factory function to create a code hack item."""
@@ -1050,9 +1048,8 @@ class GameSession:
                 # Update discovered status based on global discovered effects
                 item.discovered = item.color_name in self.game_engine.discovered_code_effects
 
-    def _place_exploit_pickups(self):
+    def _place_exploit_pickups(self, exploit_count: int):
         """Place random exploit pickups throughout the level with clustering in loot rooms."""
-        exploit_count = 5 + self.game_engine.level * 2  # Much more exploits (was 2 + max(0, level - 1))
         available_exploits = list(GameData.EXPLOITS.keys())
 
         def create_exploit_item(x, y):
@@ -1103,16 +1100,8 @@ class GameSession:
                 self.game_engine.message_log.add_message("Network anomaly detected... Data fragment available")
                 break
 
-    def _place_permanent_upgrades(self):
-        """Place permanent upgrades throughout the level with level-based rarity."""
-        # Level-based upgrade counts
-        if self.game_engine.level == 1:
-            upgrade_count = 1  # Rare on level 1
-        elif self.game_engine.level == 2:
-            upgrade_count = 2  # More common on level 2
-        else:
-            upgrade_count = 3  # Most common on level 3+
-
+    def _place_permanent_upgrades(self, upgrade_count: int):
+        """Place permanent upgrades throughout the level using network config."""
         placed_upgrades = 0
         attempts = 0
         available_upgrades = list(GameUpgrades.UPGRADES.keys())
