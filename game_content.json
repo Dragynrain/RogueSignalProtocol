@@ -274,7 +274,7 @@
     },
     "2": {
       "enemies": 22,
-      "blind_spot_coverage": 0.09,
+      "blind_spot_coverage": 0.07,
       "name": "Government System",
       "background_trace": 2,
       "trace_alert_to_hostile": 2,
@@ -288,7 +288,7 @@
     },
     "3": {
       "enemies": 30,
-      "blind_spot_coverage": 0.08,
+      "blind_spot_coverage": 0.06,
       "name": "Military Backbone",
       "background_trace": 3,
       "trace_alert_to_hostile": 3,

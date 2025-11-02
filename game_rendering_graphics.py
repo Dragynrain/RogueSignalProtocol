@@ -5,6 +5,7 @@ SDL sprite/texture-based rendering.
 """
 
 import tcod
+from tcod.sdl.render import BlendMode
 import logging
 import time
 import math
@@ -630,6 +631,10 @@ class GraphicsMapRenderer(MapRendererBase):
         """Render targeting range indicator in graphics mode using transparent overlays."""
         range_color = ColorManager.get_targeting_color("range_overlay")
 
+        # Enable alpha blending for transparent overlays
+        old_blend_mode = renderer.draw_blend_mode
+        renderer.draw_blend_mode = BlendMode.BLEND
+
         for dx in range(-range_val, range_val + 1):
             for dy in range(-range_val, range_val + 1):
                 # Use Euclidean distance for circular range (matches glyphs mode)
@@ -646,6 +651,9 @@ class GraphicsMapRenderer(MapRendererBase):
                         renderer.draw_color = (*range_color, 80)  # Semi-transparent
                         renderer.fill_rect(tile_rect)
 
+        # Restore original blend mode
+        renderer.draw_blend_mode = old_blend_mode
+
     def _render_targeting_area_graphics(self, renderer, center: Position, radius: int, camera_offset: Position):
         """
         Render area effect indicator in graphics mode using transparent overlays.
@@ -654,6 +662,10 @@ class GraphicsMapRenderer(MapRendererBase):
         For radius 1: 3x3 area, radius 2: 5x5 area, etc.
         """
         area_color = ColorManager.get_targeting_color("area_overlay")
+
+        # Enable alpha blending for transparent overlays
+        old_blend_mode = renderer.draw_blend_mode
+        renderer.draw_blend_mode = BlendMode.BLEND
 
         for dx in range(-radius, radius + 1):
             for dy in range(-radius, radius + 1):
@@ -670,6 +682,9 @@ class GraphicsMapRenderer(MapRendererBase):
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
                         renderer.draw_color = (*area_color, 120)  # More opaque than range
                         renderer.fill_rect(tile_rect)
+
+        # Restore original blend mode
+        renderer.draw_blend_mode = old_blend_mode
 
     def _render_hover_highlight(self, game, camera_offset: Position):
         """Render hover highlight for mouse cursor in normal gameplay mode."""
