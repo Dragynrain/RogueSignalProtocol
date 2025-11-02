@@ -67,7 +67,7 @@
       "_comment": "Basic wall tile"
     },
     "blind_spot": {
-      "file": "shadow07.png",
+      "file": "blind_spot07.png",
       "tintable": false,
       "_comment": "Blind spot terrain tile for stealth mechanics (monitoring gaps)"
     }
