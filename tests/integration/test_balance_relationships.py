@@ -377,8 +377,9 @@ class TestExploitBalance:
 
         for exploit_id, data in combat_exploits.items():
             damage = data.get('damage', 0)
-            # memory_leak is combat but has no direct damage (confuses enemies)
-            if exploit_id != 'memory_leak':
+            # memory_leak is combat but has no direct damage (blinds enemies)
+            # denial_of_service is combat but has no direct damage (disables enemies)
+            if exploit_id not in ['memory_leak', 'denial_of_service']:
                 assert damage > 0, (
                     f"Combat exploit '{exploit_id}' should have damage > 0, got {damage}"
                 )

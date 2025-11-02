@@ -354,7 +354,7 @@ class HelpMenu:
             ("  Trace Level: Increases when spotted, Admin spawns at threshold", Colors.WHITE),
             ("  CPU: Your health - if it reaches 0, you die permanently", Colors.WHITE),
             ("  RAM: Limits how many exploits you can equip (max 5)", Colors.WHITE),
-            ("  Shadows: Hide in purple * tiles to avoid enemy trace level", Colors.WHITE),
+            ("  Shadows: Hide in purple * tiles - attacks deal +10 damage!", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("COMBAT EXPLOITS:", Colors.CYAN),
@@ -382,7 +382,7 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("SURVIVAL TIPS:", Colors.CYAN),
-            ("  Use blind spots frequently - stealth is key", Colors.WHITE),
+            ("  Use blind spots frequently - stealth gives +10 damage bonus!", Colors.WHITE),
             ("  Monitor heat and trace levels constantly", Colors.WHITE),
             ("  Plan exploit usage - heat management is critical", Colors.WHITE),
             ("  Use CPU nodes when low on health", Colors.WHITE),

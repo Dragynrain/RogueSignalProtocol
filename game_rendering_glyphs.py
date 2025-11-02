@@ -747,7 +747,7 @@ class GlyphsMapRenderer(MapRendererBase):
 
             # Show area effect for AREA targeting mode
             if exploit.targeting == TargetingMode.AREA:
-                self._render_targeting_area(console, cursor_pos, camera_offset)
+                self._render_targeting_area(console, cursor_pos, exploit.effect_radius, camera_offset)
     
     def _render_targeting_range(self, console: tcod.console.Console, center: Position, range_val: int, camera_offset: Position):
         """Render targeting range indicator."""
@@ -762,18 +762,25 @@ class GlyphsMapRenderer(MapRendererBase):
                         range_color = ColorManager.get_targeting_color("range_overlay")
                         self._safely_overlay_tile(console, range_screen_x, range_screen_y, range_color)
     
-    def _render_targeting_area(self, console: tcod.console.Console, center: Position, camera_offset: Position):
-        """Render 3x3 area effect indicator for area targeting."""
-        for dx in range(-1, 2):  # -1, 0, 1 for 3x3 area
-            for dy in range(-1, 2):
-                area_screen_x = center.x - camera_offset.x + dx
-                area_screen_y = center.y - camera_offset.y + dy + 1
+    def _render_targeting_area(self, console: tcod.console.Console, center: Position, radius: int, camera_offset: Position):
+        """
+        Render area effect indicator for area targeting.
 
-                if (0 <= area_screen_x < GameConfig.GAME_AREA_WIDTH() and
-                    1 <= area_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                    # Use a brighter overlay to distinguish from range indicator
-                    area_color = ColorManager.get_targeting_color("area_overlay")
-                    self._safely_overlay_tile(console, area_screen_x, area_screen_y, area_color)
+        Uses grid distance (Chebyshev) to match gameplay mechanics.
+        For radius 1: 3x3 area, radius 2: 5x5 area, etc.
+        """
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                # Use grid distance (Chebyshev) - matches gameplay
+                if max(abs(dx), abs(dy)) <= radius:
+                    area_screen_x = center.x - camera_offset.x + dx
+                    area_screen_y = center.y - camera_offset.y + dy + 1
+
+                    if (0 <= area_screen_x < GameConfig.GAME_AREA_WIDTH() and
+                        1 <= area_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
+                        # Use a brighter overlay to distinguish from range indicator
+                        area_color = ColorManager.get_targeting_color("area_overlay")
+                        self._safely_overlay_tile(console, area_screen_x, area_screen_y, area_color)
 
     # ===== GRAPHICS MODE SPRITE RENDERING =====
 

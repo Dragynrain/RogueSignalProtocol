@@ -197,6 +197,8 @@ class GameRenderer:
 
         # For overlay screens (inventory, help, lore), we need to present in graphics mode too
         if should_use_graphics:
+            # Set background to black before clearing
+            self.context.sdl_renderer.draw_color = (0, 0, 0, 255)
             self.context.sdl_renderer.clear()
 
             # Render sprites if the screen supports them (e.g., GraphicalHelpMenu)

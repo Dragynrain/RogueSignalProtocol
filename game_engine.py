@@ -150,6 +150,11 @@ class GameEngine:
         self.overclock_confirmation = False
         self.overclock_exploit: Optional[str] = None
 
+        # Friendly fire confirmation system
+        self.friendly_fire_confirmed = False
+        self.friendly_fire_exploit: Optional[str] = None
+        self.friendly_fire_target: Optional[Position] = None
+
         # Code hack system
         self.code_hack_effects: Dict[str, Tuple[str, str]] = {}
         self.discovered_code_effects: Dict[str, str] = {}

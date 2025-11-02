@@ -267,7 +267,7 @@ class GraphicalHelpMenu:
 
                 (42, 19, "BLIND SPOTS (*):", Colors.CYAN),
                 (42, 20, "Hide from enemies", Colors.ELECTRIC_PURPLE),
-                (42, 21, "Critical for stealth!", Colors.YELLOW),
+                (42, 21, "+10 damage bonus!", Colors.YELLOW),
 
                 (42, 23, "RAM:", Colors.CYAN),
                 (42, 24, "Limits exploit slots", Colors.WHITE),
@@ -275,7 +275,7 @@ class GraphicalHelpMenu:
 
                 # Full-width tips at bottom - centered, non-bulleted
                 (30, 31, "SURVIVAL TIPS:", Colors.YELLOW),
-                (12, 33, "Use stealth to save resources for combat when you need it", Colors.WHITE),
+                (8, 33, "Attacking from blind spots gives +10 damage bonus to all attacks!", Colors.WHITE),
                 (6, 35, "Watch your trace level to avoid the Admin Avatar and use ghost nodes", Colors.RED),
                 (18, 36, "or log wiper to reduce your trace level", Colors.RED),
                 (8, 38, "If you overheat, you take CPU damage but can still use exploits", Colors.CYAN),

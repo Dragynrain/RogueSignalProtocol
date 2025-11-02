@@ -595,6 +595,15 @@ class GraphicsMapRenderer(MapRendererBase):
 
         renderer = self.context.sdl_renderer
 
+        # Show range indicator and area effect (only for targeting mode)
+        if game.targeting_mode and game.targeting_exploit in GameData.EXPLOITS:
+            exploit = GameData.EXPLOITS[game.targeting_exploit]
+            self._render_targeting_range_graphics(renderer, game.player.position, exploit.range, camera_offset)
+
+            # Show area effect for AREA targeting mode
+            if exploit.targeting == TargetingMode.AREA:
+                self._render_targeting_area_graphics(renderer, cursor_pos, exploit.effect_radius, camera_offset)
+
         if self._is_in_viewport(cursor_pos.x, cursor_pos.y, camera_offset):
             cursor_screen_x = cursor_pos.x - camera_offset.x
             cursor_screen_y = cursor_pos.y - camera_offset.y + 1
@@ -609,6 +618,51 @@ class GraphicsMapRenderer(MapRendererBase):
                 renderer.copy(texture, dest=tile_rect)
                 # Reset color_mod
                 texture.color_mod = normal_tint
+
+    def _render_targeting_range_graphics(self, renderer, center: Position, range_val: int, camera_offset: Position):
+        """Render targeting range indicator in graphics mode using transparent overlays."""
+        range_color = ColorManager.get_targeting_color("range_overlay")
+
+        for dx in range(-range_val, range_val + 1):
+            for dy in range(-range_val, range_val + 1):
+                # Use Euclidean distance for circular range (matches glyphs mode)
+                if dx*dx + dy*dy <= range_val*range_val:
+                    world_x = center.x + dx
+                    world_y = center.y + dy
+
+                    if self._is_in_viewport(world_x, world_y, camera_offset):
+                        screen_x = world_x - camera_offset.x
+                        screen_y = world_y - camera_offset.y + 1
+
+                        # Render semi-transparent overlay using SDL rectangles
+                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        renderer.draw_color = (*range_color, 80)  # Semi-transparent
+                        renderer.fill_rect(tile_rect)
+
+    def _render_targeting_area_graphics(self, renderer, center: Position, radius: int, camera_offset: Position):
+        """
+        Render area effect indicator in graphics mode using transparent overlays.
+
+        Uses grid distance (Chebyshev) to match gameplay mechanics.
+        For radius 1: 3x3 area, radius 2: 5x5 area, etc.
+        """
+        area_color = ColorManager.get_targeting_color("area_overlay")
+
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                # Use grid distance (Chebyshev) - matches gameplay
+                if max(abs(dx), abs(dy)) <= radius:
+                    world_x = center.x + dx
+                    world_y = center.y + dy
+
+                    if self._is_in_viewport(world_x, world_y, camera_offset):
+                        screen_x = world_x - camera_offset.x
+                        screen_y = world_y - camera_offset.y + 1
+
+                        # Render brighter semi-transparent overlay
+                        tile_rect = self._get_tile_rect(screen_x, screen_y)
+                        renderer.draw_color = (*area_color, 120)  # More opaque than range
+                        renderer.fill_rect(tile_rect)
 
     def _render_hover_highlight(self, game, camera_offset: Position):
         """Render hover highlight for mouse cursor in normal gameplay mode."""
