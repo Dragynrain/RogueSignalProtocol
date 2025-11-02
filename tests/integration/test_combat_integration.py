@@ -175,13 +175,13 @@ class TestPlayerCombat:
         player = Player(5, 5)
         
         # Set some temporary effects
-        player.temporary_effects['data_mimic_turns'] = 3
+        player.temporary_effects['traffic_masquerade_turns'] = 3
         player.temporary_effects['speed_boost_turns'] = 2
         
         player.update_effects()
         
         # Effects should decrease by 1
-        assert player.temporary_effects['data_mimic_turns'] == 2
+        assert player.temporary_effects['traffic_masquerade_turns'] == 2
         assert player.temporary_effects['speed_boost_turns'] == 1
     
     def test_player_temporary_effects_minimum_zero(self):

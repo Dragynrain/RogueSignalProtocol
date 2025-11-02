@@ -241,13 +241,13 @@ class TilePlacementGenerator:
         for pos in floor_positions:
             x, y = pos
 
-            if pos in self.game_map.shadows:
+            if pos in self.game_map.blind_spots:
                 shadow_adjacent.append(pos)
                 continue
 
             for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                 neighbor = (x + dx, y + dy)
-                if neighbor in self.game_map.shadows:
+                if neighbor in self.game_map.blind_spots:
                     shadow_adjacent.append(pos)
                     break
 

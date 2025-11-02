@@ -72,9 +72,9 @@ class SessionMetrics:
     total_heat_when_dealing_damage: int = 0  # For heat efficiency
 
     # Environmental/Tactical
-    turns_in_shadows: int = 0
+    turns_in_blind_spots: int = 0
     turns_on_special_nodes: int = 0
-    ambushes_from_shadows: int = 0
+    ambushes_from_blind_spots: int = 0
     gateway_reached_undetected: bool = False
 
     # Challenge run flags (for achievements)
@@ -131,9 +131,9 @@ class SessionMetrics:
             'turns_with_kills': self.turns_with_kills,
             'total_heat_when_dealing_damage': self.total_heat_when_dealing_damage,
             # Environmental
-            'turns_in_shadows': self.turns_in_shadows,
+            'turns_in_blind_spots': self.turns_in_blind_spots,
             'turns_on_special_nodes': self.turns_on_special_nodes,
-            'ambushes_from_shadows': self.ambushes_from_shadows,
+            'ambushes_from_blind_spots': self.ambushes_from_blind_spots,
             'gateway_reached_undetected': self.gateway_reached_undetected,
             # Challenge flags
             'took_any_damage': self.took_any_damage,
@@ -171,8 +171,8 @@ class SessionMetrics:
             'current_no_damage_streak': 0, 'max_no_damage_streak': 0,
             'aoe_multi_kills': Counter(), 'max_single_hit_damage': 0,
             'turns_with_kills': 0, 'total_heat_when_dealing_damage': 0,
-            'turns_in_shadows': 0, 'turns_on_special_nodes': 0,
-            'ambushes_from_shadows': 0, 'gateway_reached_undetected': False,
+            'turns_in_blind_spots': 0, 'turns_on_special_nodes': 0,
+            'ambushes_from_blind_spots': 0, 'gateway_reached_undetected': False,
             'took_any_damage': False, 'used_any_exploits': False,
             'used_any_code_hacks': False, 'ever_detected': False,
             'unique_enemies_encountered': set(), 'unique_exploits_used_this_run': set(),

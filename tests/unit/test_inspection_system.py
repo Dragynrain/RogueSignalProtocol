@@ -671,10 +671,10 @@ class TestTerrainInspection:
         game.game_map.is_cpu_recovery_node = Mock(return_value=False)
         game.game_map.is_ghost_node = Mock(return_value=False)
         game.game_map.is_wall = Mock(return_value=False)
-        game.game_map.is_shadow = Mock(return_value=True)
+        game.game_map.is_blind_spot = Mock(return_value=True)
 
         EntityInspector._terrain_descriptions = {
-            'shadow': {
+            'blind_spot': {
                 'name': 'Shadow Zone',
                 'description': 'Reduces enemy vision'
             }
@@ -682,9 +682,9 @@ class TestTerrainInspection:
 
         result = EntityInspector.get_entity_at_position(game, Position(10, 10))
 
-        assert result['entity_type'] == 'shadow'
+        assert result['entity_type'] == 'blind_spot'
         assert 'Stealth bonus' in result['details']
-        assert result['color'] == Colors.SHADOW_VISIBLE
+        assert result['color'] == Colors.BLIND_SPOT_VISIBLE
 
     def test_floor_default(self):
         """Test that empty floor tiles are default."""
@@ -706,7 +706,7 @@ class TestTerrainInspection:
         game.game_map.is_cpu_recovery_node = Mock(return_value=False)
         game.game_map.is_ghost_node = Mock(return_value=False)
         game.game_map.is_wall = Mock(return_value=False)
-        game.game_map.is_shadow = Mock(return_value=False)
+        game.game_map.is_blind_spot = Mock(return_value=False)
 
         EntityInspector._terrain_descriptions = {
             'floor': {

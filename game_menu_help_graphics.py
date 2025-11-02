@@ -133,7 +133,7 @@ class GraphicalHelpMenu:
                 # Footer - centered
                 (15, 37, "COLORS: Yellow=Unaware  Orange=Alert  Red=Hostile", Colors.CYAN),
                 (13, 39, "Enemies alert nearby allies when they spot you!", Colors.YELLOW),
-                (12, 41, "Use shadows (*) to hide and watch patrol patterns!", Colors.ELECTRIC_PURPLE),
+                (12, 41, "Use blind spots (*) to hide and watch patrol patterns!", Colors.ELECTRIC_PURPLE),
             ]
         }
 
@@ -146,7 +146,7 @@ class GraphicalHelpMenu:
                 ('player', 2, 6, 1.0),
                 ('floor', 16, 6, 1.0),
                 ('wall', 30, 6, 1.0),
-                ('shadow', 44, 6, 1.0),
+                ('blind_spot', 44, 6, 1.0),
                 ('gateway', 58, 6, 1.0),
                 # Row 2 - Collectibles (3 centered)
                 ('codehack', 16, 13, 1.0),
@@ -213,7 +213,7 @@ class GraphicalHelpMenu:
                 # Bottom info - centered
                 (9, 35, "UPGRADES: Permanent stat increases - keep across ALL levels", Colors.CYAN),
                 (13, 37, "RESOURCE NODES: CPU=Health  Cooling=Heat  Ghost=Trace", Colors.CYAN),
-                (13, 39, "STEALTH: Hide in shadows (*) to avoid enemy detection!", Colors.ELECTRIC_PURPLE),
+                (13, 39, "STEALTH: Hide in blind spots (*) to avoid enemy detection!", Colors.ELECTRIC_PURPLE),
             ]
         }
 
@@ -258,14 +258,14 @@ class GraphicalHelpMenu:
                 (42, 9, "EMPBurst: 20dmg area", self.NEON_PINK),
 
                 (42, 11, "UTILITY EXPLOITS:", Colors.CYAN),
-                (42, 12, "ShadowStep: Teleport", self.NEON_PINK),
-                (42, 13, "DataMimic: Invisible", self.NEON_PINK),
-                (42, 14, "NoiseMaker: Distract", self.NEON_PINK),
+                (42, 12, "SystemHop: Teleport", self.NEON_PINK),
+                (42, 13, "TrafficMasquerade: Invisible", self.NEON_PINK),
+                (42, 14, "DecoySwarm: Distract", self.NEON_PINK),
                 (42, 15, "LogWiper: Cut trace", self.NEON_PINK),
                 (42, 16, "Antivirus: Cure virus", self.NEON_PINK),
                 (42, 17, "MemoryLeak: Blind 3t", self.NEON_PINK),
 
-                (42, 19, "SHADOWS (*):", Colors.CYAN),
+                (42, 19, "BLIND SPOTS (*):", Colors.CYAN),
                 (42, 20, "Hide from enemies", Colors.ELECTRIC_PURPLE),
                 (42, 21, "Critical for stealth!", Colors.YELLOW),
 

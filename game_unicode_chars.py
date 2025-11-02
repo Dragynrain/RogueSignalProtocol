@@ -19,7 +19,7 @@ class GameGlyphs:
 
     # Terrain
     FLOOR_EXPLORED = '•'  # U+2022 - Bullet
-    SHADOW = '◘'          # U+25D8 - Inverse bullet (fallback: '●' U+25CF if needed)
+    BLIND_SPOT = '◘'      # U+25D8 - Inverse bullet (fallback: '●' U+25CF if needed)
 
     # UI indicators
     TARGETING = '○'     # U+25CB - Circle

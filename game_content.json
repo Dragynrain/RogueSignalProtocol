@@ -74,8 +74,8 @@
     }
   },
   "exploits": {
-    "shadow_step": {
-      "name": "Shadow Step",
+    "system_hop": {
+      "name": "System Hop",
       "ram": 3,
       "heat": 30,
       "range": 6,
@@ -84,10 +84,10 @@
       "targeting": "SINGLE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Phase through unmonitored network pathways. Instantly teleport to any digital shadow within 6 tiles - perfect for repositioning."
+      "description": "Rapidly pivot to any monitoring blind spot within 6 tiles. Instant relocation through pre-established network connections - perfect for repositioning."
     },
-    "data_mimic": {
-      "name": "Data Mimic",
+    "traffic_masquerade": {
+      "name": "Traffic Masquerade",
       "ram": 2,
       "heat": 25,
       "range": 0,
@@ -96,10 +96,10 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 5,
-      "description": "Cloak your signal signature as benign traffic. Become completely invisible to security protocols for 5 turns - walk past enemies undetected."
+      "description": "Masquerade as legitimate traffic patterns. Become completely invisible to security protocols for 5 turns - walk past enemies undetected."
     },
-    "noise_maker": {
-      "name": "Noise Maker",
+    "decoy_swarm": {
+      "name": "Decoy Swarm",
       "ram": 1,
       "heat": 15,
       "range": 8,
@@ -108,7 +108,7 @@
       "targeting": "SINGLE",
       "effect_radius": 10,
       "effect_duration": 8,
-      "description": "Inject false traffic patterns to draw attention. Creates a convincing distraction lasting 8 turns - lure enemies away from your path."
+      "description": "Spawn false alerts and decoy processes. Creates a convincing distraction lasting 8 turns - lure enemies away from your path."
     },
     "buffer_overflow": {
       "name": "Buffer Overflow",
@@ -216,7 +216,7 @@
       "targeting": "AREA",
       "effect_radius": 1,
       "effect_duration": 3,
-      "description": "Corrupt enemy vision systems in a 3x3 area. Blinded enemies can't see you for 3 turns while they reboot - but they keep moving. Use it to dodge into shadows!"
+      "description": "Corrupt enemy vision systems in a 3x3 area. Blinded enemies can't see you for 3 turns while they reboot - but they keep moving. Use it to dodge into blind spots!"
     }
   },
   "upgrades": {
@@ -248,7 +248,7 @@
   "network_configs": {
     "1": {
       "enemies": 15,
-      "shadow_coverage": 0.08,
+      "blind_spot_coverage": 0.08,
       "name": "Corporate Network",
       "background_trace": 1,
       "trace_alert_to_hostile": 1,
@@ -262,7 +262,7 @@
     },
     "2": {
       "enemies": 22,
-      "shadow_coverage": 0.09,
+      "blind_spot_coverage": 0.09,
       "name": "Government System",
       "background_trace": 2,
       "trace_alert_to_hostile": 2,
@@ -276,7 +276,7 @@
     },
     "3": {
       "enemies": 30,
-      "shadow_coverage": 0.08,
+      "blind_spot_coverage": 0.08,
       "name": "Military Backbone",
       "background_trace": 3,
       "trace_alert_to_hostile": 3,

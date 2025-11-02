@@ -724,18 +724,18 @@ class TestLevelEnvironmentGeneration:
             if network_config.get('cpu_nodes', 0) > 0:
                 assert len(engine.game_map.cpu_recovery_nodes) > 0, f"No CPU nodes on level {level}"
 
-    def test_shadow_coverage_varies_by_level(self):
-        """Test that shadow coverage follows network configuration per level."""
-        shadow_counts = {}
+    def test_blind_spot_coverage_varies_by_level(self):
+        """Test that blind spot coverage follows network configuration per level."""
+        blind_spot_counts = {}
 
         for level in [1, 2, 3]:
             engine = self.create_test_engine(level=level)
-            shadow_counts[level] = len(engine.game_map.shadows)
+            blind_spot_counts[level] = len(engine.game_map.blind_spots)
 
-            # Verify shadows exist
+            # Verify blind spots exist
             network_config = engine.game_state.get_current_network_config()
-            if network_config.get('shadow_coverage', 0) > 0:
-                assert shadow_counts[level] > 0, f"No shadows on level {level} despite shadow_coverage > 0"
+            if network_config.get('blind_spot_coverage', 0) > 0:
+                assert blind_spot_counts[level] > 0, f"No blind spots on level {level} despite blind_spot_coverage > 0"
 
     def test_enemy_density_scales_with_level(self):
         """Test that enemy density increases or stays same across levels."""

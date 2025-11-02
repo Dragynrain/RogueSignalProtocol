@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Unit tests for room-based Level Generation features.
-Tests variable room types and Phase 3 layout improvements: looping paths, gateway strategies, shadow zones, hub-and-spoke.
+Tests variable room types and Phase 3 layout improvements: looping paths, gateway strategies, blind spot zones, hub-and-spoke.
 """
 
 import pytest
@@ -240,7 +240,7 @@ class TestVariableRoomTypes:
 
 
 class TestPhase3LayoutImprovements:
-    """Test Phase 3 layout improvements: looping paths, gateway strategies, shadow zones, hub-and-spoke."""
+    """Test Phase 3 layout improvements: looping paths, gateway strategies, blind spot zones, hub-and-spoke."""
 
     def setup_method(self):
         """Set up test environment."""
@@ -310,20 +310,20 @@ class TestPhase3LayoutImprovements:
         for room, connections in connectivity.items():
             assert connections >= 1
 
-    def test_create_shadow_zones(self):
-        """Test shadow zone creation."""
+    def test_create_blind_spot_zones(self):
+        """Test blind spot zone creation."""
         # Generate level to get rooms
         self.level_generator.generate_level(1, 77777)
         rooms = self.level_generator.last_generated_rooms
 
-        # Create shadow zones
-        shadow_zone_rooms = self.level_generator.advanced_generator.create_shadow_zones(rooms)
+        # Create blind spot zones
+        blind_spot_zone_rooms = self.level_generator.advanced_generator.create_blind_spot_zones(rooms)
 
-        # Shadow zones may or may not be created
-        assert isinstance(shadow_zone_rooms, list)
+        # Blind spot zones may or may not be created
+        assert isinstance(blind_spot_zone_rooms, list)
 
         # If created, should be subset of rooms
-        for sz_room in shadow_zone_rooms:
+        for sz_room in blind_spot_zone_rooms:
             assert sz_room in rooms
 
     def test_find_room_clusters(self):
@@ -435,18 +435,18 @@ class TestPhase3LayoutImprovements:
         gateway_pos = (self.game_map.gateway.x, self.game_map.gateway.y)
         assert gateway_pos not in self.game_map.walls
 
-    def test_shadow_zones_increase_shadow_coverage(self):
-        """Test that shadow zones have higher shadow coverage."""
-        # Generate level with shadow zones
+    def test_blind_spot_zones_increase_coverage(self):
+        """Test that blind spot zones have higher blind spot coverage."""
+        # Generate level with blind spot zones
         random.seed(42)
         self.level_generator.generate_level(1, 22222)
 
-        # Should have some shadows
-        assert len(self.game_map.shadows) > 0
+        # Should have some blind spots
+        assert len(self.game_map.blind_spots) > 0
 
-        # All shadows should be on floor
-        for shadow in self.game_map.shadows:
-            assert shadow not in self.game_map.walls
+        # All blind spots should be on floor
+        for blind_spot in self.game_map.blind_spots:
+            assert blind_spot not in self.game_map.walls
 
     def test_connect_hub_rooms(self):
         """Test hub room connection to other rooms."""
@@ -484,19 +484,19 @@ class TestPhase3LayoutImprovements:
         # Generate first level
         self.level_generator.generate_level(1, seed)
         first_walls = set(self.game_map.walls)
-        first_shadows = set(self.game_map.shadows)
+        first_blind_spots = set(self.game_map.blind_spots)
         first_gateway = self.game_map.gateway
 
         # Generate second level with same seed
         self.level_generator._clear_level_data()
         self.level_generator.generate_level(1, seed)
         second_walls = set(self.game_map.walls)
-        second_shadows = set(self.game_map.shadows)
+        second_blind_spots = set(self.game_map.blind_spots)
         second_gateway = self.game_map.gateway
 
         # Should be identical
         assert first_walls == second_walls
-        assert first_shadows == second_shadows
+        assert first_blind_spots == second_blind_spots
         assert first_gateway == second_gateway
 
     def _create_open_map(self):

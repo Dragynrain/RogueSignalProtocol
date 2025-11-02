@@ -28,7 +28,7 @@ class TestVisionLineOfSight:
 
         # Clear the map (no walls initially)
         self.game_map.walls.clear()
-        self.game_map.shadows.clear()
+        self.game_map.blind_spots.clear()
         self.game_map.invalidate_transparency_cache()
 
 
@@ -81,7 +81,7 @@ class TestShadowConcealment(TestVisionLineOfSight):
             'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(13, 10), "test_enemy")  # 3 units away
-            self.game_map.shadows.add((13, 10))
+            self.game_map.blind_spots.add((13, 10))
 
             assert self.player.can_see_enemy(enemy, self.game_map) == False
 
@@ -91,7 +91,7 @@ class TestShadowConcealment(TestVisionLineOfSight):
             'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(11, 10), "test_enemy")  # 1 unit away
-            self.game_map.shadows.add((11, 10))
+            self.game_map.blind_spots.add((11, 10))
 
             assert self.player.can_see_enemy(enemy, self.game_map) == True
 
@@ -100,7 +100,7 @@ class TestShadowConcealment(TestVisionLineOfSight):
         with patch('game_data.GameData.ENEMY_TYPES', {
             'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
         }):
-            self.game_map.shadows.add((10, 10))
+            self.game_map.blind_spots.add((10, 10))
 
             # Close enemy - visible
             enemy_close = Enemy(Position(13, 10), "test_enemy")  # 3 units
@@ -121,12 +121,12 @@ class TestShadowConcealment(TestVisionLineOfSight):
             assert self.player.can_see_enemy(enemy, self.game_map) == False
 
     def test_invisible_player_cannot_be_seen(self):
-        """Invisible player (data mimic) cannot be seen by enemies."""
+        """Invisible player (traffic masquerade) cannot be seen by enemies."""
         with patch('game_data.GameData.ENEMY_TYPES', {
             'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(12, 10), "test_enemy")
-            self.player.temporary_effects['data_mimic_turns'] = 3
+            self.player.temporary_effects['traffic_masquerade_turns'] = 3
 
             assert enemy.can_see_player(self.player, self.game_map) == False
 
@@ -136,7 +136,7 @@ class TestShadowConcealment(TestVisionLineOfSight):
             'admin': Mock(movement=Mock(), cpu=100, vision=10, damage=20)
         }):
             admin_enemy = Enemy(Position(12, 10), "admin")
-            self.player.temporary_effects['data_mimic_turns'] = 3
+            self.player.temporary_effects['traffic_masquerade_turns'] = 3
 
             assert admin_enemy.can_see_player(self.player, self.game_map) == True
 
@@ -220,7 +220,7 @@ class TestEnemyVision(TestVisionLineOfSight):
             'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(13, 10), "test_enemy")
-            self.game_map.shadows.add((10, 10))
+            self.game_map.blind_spots.add((10, 10))
 
             assert enemy.can_see_player(self.player, self.game_map) == False
 
@@ -230,7 +230,7 @@ class TestEnemyVision(TestVisionLineOfSight):
             'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(11, 10), "test_enemy")
-            self.game_map.shadows.add((10, 10))
+            self.game_map.blind_spots.add((10, 10))
 
             assert enemy.can_see_player(self.player, self.game_map) == True
 
@@ -243,8 +243,8 @@ class TestEnemyVision(TestVisionLineOfSight):
 
             # Add obstacles
             self.game_map.walls.add((15, 15))
-            self.game_map.shadows.add((10, 10))
-            self.player.temporary_effects['data_mimic_turns'] = 3
+            self.game_map.blind_spots.add((10, 10))
+            self.player.temporary_effects['traffic_masquerade_turns'] = 3
             self.game_map.invalidate_transparency_cache()
 
             # Admin should still see player
@@ -255,12 +255,12 @@ class TestStealthGameplayScenarios(TestVisionLineOfSight):
     """Test complete stealth gameplay scenarios."""
 
     def test_hiding_in_shadows(self):
-        """Player hiding in shadows is not detected from distance."""
+        """Player hiding in blind spots is not detected from distance."""
         with patch('game_data.GameData.ENEMY_TYPES', {
             'guard': Mock(movement=Mock(), cpu=50, vision=8, damage=10)
         }):
             enemy = Enemy(Position(15, 10), "guard")  # 5 units away
-            self.game_map.shadows.add((10, 10))
+            self.game_map.blind_spots.add((10, 10))
 
             # Enemy should not see player in shadow
             assert not enemy.can_see_player(self.player, self.game_map)
@@ -286,8 +286,8 @@ class TestStealthGameplayScenarios(TestVisionLineOfSight):
             assert not enemy.can_see_player(self.player, self.game_map)
             assert not self.player.can_see_enemy(enemy, self.game_map)
 
-    def test_data_mimic_invisibility(self):
-        """Data mimic makes player invisible to normal enemies."""
+    def test_traffic_masquerade_invisibility(self):
+        """Traffic masquerade makes player invisible to normal enemies."""
         with patch('game_data.GameData.ENEMY_TYPES', {
             'scanner': Mock(movement=Mock(), cpu=50, vision=10, damage=10),
             'admin': Mock(movement=Mock(), cpu=100, vision=10, damage=20)
@@ -300,7 +300,7 @@ class TestStealthGameplayScenarios(TestVisionLineOfSight):
             assert admin.can_see_player(self.player, self.game_map)
 
             # Activate invisibility
-            self.player.temporary_effects['data_mimic_turns'] = 3
+            self.player.temporary_effects['traffic_masquerade_turns'] = 3
 
             # Scanner cannot see, admin can
             assert not scanner.can_see_player(self.player, self.game_map)

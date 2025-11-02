@@ -143,7 +143,7 @@ class TestGameConfigStructure:
                         'cpu_restore_min', 'cpu_restore_max', 'heat_reduction_instant',
                         'adjacent_distance_threshold', 'patrol_stuck_threshold',
                         'pathfinding_timeout_attempts', 'enhanced_vision_bonus',
-                        'shadow_vision_reduction_factor', 'enemy_memory_turns']
+                        'blind_spot_vision_reduction_factor', 'enemy_memory_turns']
 
         for key in required_keys:
             assert key in balance, f"Missing required key 'balance.{key}' in game_rules.json"
@@ -224,7 +224,7 @@ class TestGameDataStructure:
     def test_each_network_config_has_required_keys(self, game_data):
         """Verify each network config has required attributes."""
         network_configs = game_data['network_configs']
-        required_keys = ['enemies', 'shadow_coverage', 'name', 'background_trace',
+        required_keys = ['enemies', 'blind_spot_coverage', 'name', 'background_trace',
                         'trace_alert_to_hostile', 'trace_continuous_hostile',
                         'cooling_nodes', 'cpu_nodes', 'ghost_nodes', 'code_hacks',
                         'exploit_pickups', 'permanent_upgrades']

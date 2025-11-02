@@ -138,7 +138,7 @@ class TestRealConfigIntegration:
         for level, config in configs.items():
             assert 'name' in config
             assert 'enemies' in config
-            assert 'shadow_coverage' in config
+            assert 'blind_spot_coverage' in config
             assert 'cooling_nodes' in config
             assert 'cpu_nodes' in config  # CRITICAL: verify it's cpu_nodes not cpu_recovery_nodes
             assert 'ghost_nodes' in config

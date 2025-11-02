@@ -306,8 +306,8 @@ class TurnProcessor:
                     logging.debug(f"Turn: Effect expired: {effect_name}")
                     if effect_name == 'exploit_efficiency_turns':
                         self.message_log.add_message("Exploit efficiency boost expired")
-                    elif effect_name == 'data_mimic_turns':
-                        self.message_log.add_message("Data Mimic invisibility expired")
+                    elif effect_name == 'traffic_masquerade_turns':
+                        self.message_log.add_message("Traffic Masquerade invisibility expired")
                     elif effect_name == 'speed_boost_turns':
                         self.message_log.add_message("Speed boost expired")
                     elif effect_name == 'movement_slowed_turns':

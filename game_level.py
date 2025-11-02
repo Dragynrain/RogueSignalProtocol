@@ -166,7 +166,7 @@ class LevelGenerator:
     def _clear_level_data(self) -> None:
         """Clear all existing level data."""
         self.game_map.walls.clear()
-        self.game_map.shadows.clear()
+        self.game_map.blind_spots.clear()
         self.game_map.cooling_nodes.clear()
         self.game_map.cpu_recovery_nodes.clear()
         self.game_map.ghost_nodes.clear()
@@ -261,15 +261,15 @@ class LevelGenerator:
         logging.debug(f"Level Gen: Phase 4 - Adding cover elements")
         self.tactical_generator.add_cover_elements_new()
 
-        # PHASE 3: Create shadow zones first
-        logging.debug(f"Level Gen: Phase 5 - Creating shadow zones")
-        shadow_zone_rooms = self.advanced_generator.create_shadow_zones(rooms)
-        logging.debug(f"Level Gen: Created {len(shadow_zone_rooms)} shadow zone rooms")
+        # PHASE 3: Create blind spot zones first
+        logging.debug(f"Level Gen: Phase 5 - Creating blind spot zones")
+        blind_spot_zone_rooms = self.advanced_generator.create_blind_spot_zones(rooms)
+        logging.debug(f"Level Gen: Created {len(blind_spot_zone_rooms)} blind spot zone rooms")
 
-        # Add shadow areas for stealth gameplay (with shadow zones)
-        logging.debug(f"Level Gen: Phase 5 - Placing shadow areas")
-        self.tactical_generator.place_shadow_areas(level, rooms, shadow_zone_rooms)
-        logging.debug(f"Level Gen: Placed {len(self.game_map.shadows)} shadow tiles")
+        # Add blind spot areas for stealth gameplay (with blind spot zones)
+        logging.debug(f"Level Gen: Phase 5 - Placing blind spot areas")
+        self.tactical_generator.place_blind_spot_areas(level, rooms, blind_spot_zone_rooms)
+        logging.debug(f"Level Gen: Placed {len(self.game_map.blind_spots)} blind spot tiles")
 
         # PHASE 5: Add defensive positions (cover + shadow combinations)
         self.tactical_generator.place_defensive_positions(rooms)
@@ -278,9 +278,9 @@ class LevelGenerator:
         self.advanced_generator.identify_loot_rooms(rooms)
 
         # PHASE 4: Clean up any shadows that ended up on walls (from cover placement)
-        before_cleanup = len(self.game_map.shadows)
+        before_cleanup = len(self.game_map.blind_spots)
         self.tactical_generator.cleanup_invalid_shadows()
-        after_cleanup = len(self.game_map.shadows)
+        after_cleanup = len(self.game_map.blind_spots)
         if before_cleanup != after_cleanup:
             logging.debug(f"Level Gen: Shadow cleanup removed {before_cleanup - after_cleanup} invalid shadows")
 

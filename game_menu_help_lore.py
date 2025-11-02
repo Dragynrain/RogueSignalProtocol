@@ -365,9 +365,9 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("STEALTH & UTILITY EXPLOITS:", Colors.CYAN),
-            ("  Shadow Step: Teleport to shadow zones (6 tile range)", Colors.WHITE),
-            ("  Data Mimic: Become invisible (5 turns)", Colors.WHITE),
-            ("  Noise Maker: Create distraction (8 turn duration)", Colors.WHITE),
+            ("  System Hop: Teleport to blind spots (6 tile range)", Colors.WHITE),
+            ("  Traffic Masquerade: Become invisible (5 turns)", Colors.WHITE),
+            ("  Decoy Swarm: Create distraction (8 turn duration)", Colors.WHITE),
             ("  Network Scan: Reveal all cooling, CPU, and ghost nodes", Colors.WHITE),
             ("  Log Wiper: Reduce trace level (-30%)", Colors.WHITE),
             ("  Antivirus: Purges negative status effects (virus, slow)", Colors.WHITE),
@@ -382,7 +382,7 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("SURVIVAL TIPS:", Colors.CYAN),
-            ("  Use shadows frequently - stealth is key", Colors.WHITE),
+            ("  Use blind spots frequently - stealth is key", Colors.WHITE),
             ("  Monitor heat and trace levels constantly", Colors.WHITE),
             ("  Plan exploit usage - heat management is critical", Colors.WHITE),
             ("  Use CPU nodes when low on health", Colors.WHITE),

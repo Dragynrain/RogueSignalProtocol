@@ -373,7 +373,7 @@ class TestGraphicalHelpMenuSpriteNames:
         expected_sprites = ['codehack', 'exploit',
                            'cpu_node', 'cooling_node', 'ghost_node',
                            'cpu_upgrade', 'ram_upgrade', 'cooling_upgrade',
-                           'player', 'floor', 'wall', 'shadow', 'gateway',
+                           'player', 'floor', 'wall', 'blind_spot', 'gateway',
                            'story_fragment']
 
         for sprite_name in item_sprites:

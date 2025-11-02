@@ -210,7 +210,7 @@ class GraphicsPreviewMenu:
         # Order: Terrain, Player, Enemies, Items, Special
 
         # Terrain
-        terrain_order = ["floor", "wall", "shadow"]
+        terrain_order = ["floor", "wall", "blind_spot"]
         for terrain_type in terrain_order:
             if terrain_type in entity_groups:
                 display_name = get_display_name(terrain_type)
@@ -391,12 +391,12 @@ class GraphicsPreviewMenu:
                 render_queue.append((0, y, "wall", 1))
                 render_queue.append((self.map_tiles_width - 1, y, "wall", 1))
 
-        # Shadow cluster in top-left (3x3 grid) with ghost node on ONE of them
-        if "shadow" in self.selected_variants:
+        # Blind spot cluster in top-left (3x3 grid) with ghost node on ONE of them
+        if "blind_spot" in self.selected_variants:
             for sy in range(2, 5):
                 for sx in range(2, 5):
-                    render_queue.append((sx, sy, "shadow", 1))
-            # Ghost node on top of center shadow (demonstrates layering)
+                    render_queue.append((sx, sy, "blind_spot", 1))
+            # Ghost node on top of center blind spot (demonstrates layering)
             if "ghostnode" in self.selected_variants:
                 render_queue.append((3, 3, "ghostnode", 2))
 

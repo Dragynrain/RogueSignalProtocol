@@ -106,7 +106,7 @@ class TestSoundLoading(unittest.TestCase):
             # Verify key gameplay sounds are loaded
             mock_load.assert_any_call("player_move", "player_move.wav")
             mock_load.assert_any_call("enemy_alert", "enemy_alert.wav")
-            mock_load.assert_any_call("exploit_shadow_step", "exploit_shadow_step.wav")
+            mock_load.assert_any_call("exploit_system_hop", "exploit_shadow_step.wav")  # Uses original .wav filename
 
             # Should load many sounds (30+ in actual game)
             self.assertGreater(mock_load.call_count, 30)

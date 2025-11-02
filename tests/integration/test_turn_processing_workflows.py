@@ -192,14 +192,14 @@ class TestTemporaryEffectDuration:
         """Test temporary effect expires after duration reaches 0."""
 
         # Apply temporary effect with short duration
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 2
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 2
 
         # Process 3 turns
         for _ in range(3):
             basic_game_engine.process_turn()
 
         # Verify effect expired
-        assert basic_game_engine.player.temporary_effects.get('data_mimic_turns', 0) == 0, "Effect should expire"
+        assert basic_game_engine.player.temporary_effects.get('traffic_masquerade_turns', 0) == 0, "Effect should expire"
 
     def test_multiple_temporary_effects_tracked_separately(self, basic_game_engine):
         """Test multiple temporary effects are tracked and decremented separately."""
@@ -207,7 +207,7 @@ class TestTemporaryEffectDuration:
         # Apply multiple effects
         basic_game_engine.player.temporary_effects['speed_boost_turns'] = 5
         basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 3
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 2
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 2
 
         # Process 2 turns
         for _ in range(2):
@@ -216,7 +216,7 @@ class TestTemporaryEffectDuration:
         # Verify each effect decremented independently
         assert basic_game_engine.player.temporary_effects['speed_boost_turns'] == 3
         assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] == 1
-        assert basic_game_engine.player.temporary_effects.get('data_mimic_turns', 0) == 0  # Should be expired
+        assert basic_game_engine.player.temporary_effects.get('traffic_masquerade_turns', 0) == 0  # Should be expired
 
     def test_zero_duration_effect_does_not_go_negative(self, basic_game_engine):
         """Test effect with 0 duration doesn't go negative."""
@@ -266,13 +266,13 @@ class TestEnemyTurnProcessing:
         # Position player and ensure no shadows interfere with visibility
         player_pos = Position(20, 20)
         basic_game_engine.player.position = player_pos
-        basic_game_engine.game_map.shadows.discard((player_pos.x, player_pos.y))
+        basic_game_engine.game_map.blind_spots.discard((player_pos.x, player_pos.y))
         basic_game_engine.game_map.ghost_nodes.discard((player_pos.x, player_pos.y))
 
         # Create hostile enemy ADJACENT to player to maintain continuous visibility
         # This prevents random de-escalation to UNAWARE (15% chance when can't see player)
         enemy_pos = Position(21, 20)  # Adjacent = always visible
-        basic_game_engine.game_map.shadows.discard((enemy_pos.x, enemy_pos.y))
+        basic_game_engine.game_map.blind_spots.discard((enemy_pos.x, enemy_pos.y))
         basic_game_engine.game_map.ghost_nodes.discard((enemy_pos.x, enemy_pos.y))
 
         enemy = enemy_builder("bot", pos=(enemy_pos.x, enemy_pos.y),

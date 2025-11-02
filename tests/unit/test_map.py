@@ -26,7 +26,7 @@ class TestGameMapInitialization:
         
         # Terrain sets should be empty initially
         assert len(game_map.walls) == 0
-        assert len(game_map.shadows) == 0
+        assert len(game_map.blind_spots) == 0
         
         # Feature sets should be empty initially
         assert len(game_map.cooling_nodes) == 0
@@ -55,7 +55,7 @@ class TestGameMapInitialization:
         
         # Add some content to the map
         game_map.walls.add((10, 10))
-        game_map.shadows.add((15, 15))
+        game_map.blind_spots.add((15, 15))
         
         # Dimensions should remain unchanged
         assert game_map.width == original_width
@@ -96,33 +96,33 @@ class TestTerrainQueries:
         for pos in out_of_bounds_positions:
             assert game_map.is_wall(pos) is True
     
-    def test_is_shadow_basic(self):
-        """is_shadow correctly identifies shadow areas."""
+    def test_is_blind_spot_basic(self):
+        """is_blind_spot correctly identifies blind spot areas."""
         game_map = GameMap(50, 30)
         test_pos = Position(20, 10)
-        
-        # Initially no shadows
-        assert game_map.is_shadow(test_pos) is False
-        
-        # Add shadow at position
-        game_map.shadows.add((20, 10))
-        assert game_map.is_shadow(test_pos) is True
+
+        # Initially no blind spots
+        assert game_map.is_blind_spot(test_pos) is False
+
+        # Add blind spot at position
+        game_map.blind_spots.add((20, 10))
+        assert game_map.is_blind_spot(test_pos) is True
     
-    def test_is_shadow_ghost_nodes(self):
-        """is_shadow also considers ghost nodes as shadows."""
+    def test_is_blind_spot_ghost_nodes(self):
+        """is_blind_spot also considers ghost nodes as blind spots."""
         game_map = GameMap(50, 30)
         test_pos = Position(25, 15)
-        
-        # Ghost nodes function as shadows
+
+        # Ghost nodes function as blind spots
         game_map.ghost_nodes.add((25, 15))
-        assert game_map.is_shadow(test_pos) is True
+        assert game_map.is_blind_spot(test_pos) is True
     
-    def test_is_shadow_out_of_bounds(self):
-        """is_shadow returns False for out-of-bounds positions."""
+    def test_is_blind_spot_out_of_bounds(self):
+        """is_blind_spot returns False for out-of-bounds positions."""
         game_map = GameMap(50, 30)
         
         out_of_bounds_pos = Position(-5, -5)
-        assert game_map.is_shadow(out_of_bounds_pos) is False
+        assert game_map.is_blind_spot(out_of_bounds_pos) is False
     
     def test_terrain_independence(self):
         """Different terrain types are independent."""
@@ -131,10 +131,10 @@ class TestTerrainQueries:
         
         # Position can have multiple terrain features simultaneously
         game_map.walls.add((15, 12))
-        game_map.shadows.add((15, 12))
+        game_map.blind_spots.add((15, 12))
         
         assert game_map.is_wall(pos) is True
-        assert game_map.is_shadow(pos) is True
+        assert game_map.is_blind_spot(pos) is True
 
 
 class TestFeatureNodes:
@@ -184,7 +184,7 @@ class TestFeatureNodes:
         assert game_map.is_cpu_recovery_node(pos) is True
         assert game_map.is_ghost_node(pos) is True
         # Ghost nodes also function as shadows
-        assert game_map.is_shadow(pos) is True
+        assert game_map.is_blind_spot(pos) is True
 
 
 class TestItemRetrieval:
@@ -291,7 +291,7 @@ class TestPositionValidation:
         shadow_pos = Position(20, 15)
         
         # Add shadow - should still be valid for movement
-        game_map.shadows.add((20, 15))
+        game_map.blind_spots.add((20, 15))
         assert game_map.is_valid_position(shadow_pos) is True
 
 
@@ -501,7 +501,7 @@ class TestMapIntegration:
         
         # Add various terrain features
         game_map.walls.update([(10, 10), (11, 10), (12, 10)])  # Wall line
-        game_map.shadows.update([(5, 5), (6, 6), (7, 7)])      # Shadow area
+        game_map.blind_spots.update([(5, 5), (6, 6), (7, 7)])      # Shadow area
         
         # Add special nodes
         game_map.cooling_nodes.add((20, 20))
@@ -522,7 +522,7 @@ class TestMapIntegration:
         
         # Verify all systems work together
         assert game_map.is_wall(Position(10, 10)) is True
-        assert game_map.is_shadow(Position(5, 5)) is True
+        assert game_map.is_blind_spot(Position(5, 5)) is True
         assert game_map.is_cooling_node(Position(20, 20)) is True
         assert game_map.get_code_hack(Position(15, 15)) is mock_code_hack
         assert game_map.gateway.x == 55
@@ -535,7 +535,7 @@ class TestMapIntegration:
         # Add substantial content
         for i in range(0, 100, 10):
             game_map.walls.add((i, 50))  # Horizontal wall line
-            game_map.shadows.add((50, i))  # Vertical shadow line
+            game_map.blind_spots.add((50, i))  # Vertical shadow line
 
         # Test consistency for wall position
         test_wall_pos = Position(20, 50)
@@ -545,7 +545,7 @@ class TestMapIntegration:
 
         # Test consistency for shadow position
         test_shadow_pos = Position(50, 30)
-        results = [game_map.is_shadow(test_shadow_pos) for _ in range(10)]
+        results = [game_map.is_blind_spot(test_shadow_pos) for _ in range(10)]
         assert all(r == results[0] for r in results), "Shadow query inconsistent"
         assert results[0] is True
 
@@ -562,13 +562,13 @@ class TestMapIntegration:
         # Add overlapping features at same position
         pos = Position(25, 15)
         game_map.walls.add((25, 15))
-        game_map.shadows.add((25, 15))
+        game_map.blind_spots.add((25, 15))
         game_map.cooling_nodes.add((25, 15))
         
         # Wall should block movement
         assert game_map.is_valid_position(pos) is False
         # But other features should still be detectable
-        assert game_map.is_shadow(pos) is True
+        assert game_map.is_blind_spot(pos) is True
         assert game_map.is_cooling_node(pos) is True
     
     def test_map_boundary_handling(self):
@@ -589,7 +589,7 @@ class TestMapIntegration:
         for pos in boundary_positions:
             # All boundary positions should be valid for queries
             assert game_map.is_wall(pos) is False  # No walls initially
-            assert game_map.is_shadow(pos) is False  # No shadows initially
+            assert game_map.is_blind_spot(pos) is False  # No shadows initially
             assert game_map.is_valid_position(pos) is True  # Valid for movement
             
             # Should be able to add features at boundary positions

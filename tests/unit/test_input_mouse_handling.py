@@ -43,6 +43,7 @@ def create_mock_game():
     game.look_cursor_position = Position(25, 25)
     game.cursor_position = Position(25, 25)
     game.inventory_scroll_offset = 0  # Add for mouse wheel tests
+    game.look_mode_mouse_last_update = 0.0  # Throttle timer for look mode mouse
 
     # Settings
     game.settings = Mock()

@@ -31,7 +31,7 @@ class TestEnemyAIBehavior:
         self.mock_game_map.height = 40
         self.mock_game_map.is_valid_position = Mock(return_value=True)
         self.mock_game_map.is_wall = Mock(return_value=False)
-        self.mock_game_map.is_shadow = Mock(return_value=False)
+        self.mock_game_map.is_blind_spot = Mock(return_value=False)
         self.mock_game_map.can_see_position = Mock(return_value=True)
         
         self.mock_message_log = Mock()
@@ -192,7 +192,7 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             assert result is False
     
     def test_cannot_see_invisible_player(self):
-        """Enemy cannot see invisible player (data mimic effect)."""
+        """Enemy cannot see invisible player (traffic masquerade effect)."""
         with patch('game_data.GameData.ENEMY_TYPES', {
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
@@ -216,33 +216,33 @@ class TestEnemyStateTransitions(TestEnemyAIBehavior):
             assert result is True
     
     def test_player_in_shadow_stealth_mechanics(self):
-        """Player in shadows is only visible to adjacent enemies."""
+        """Player in blind spots is only visible to adjacent enemies."""
         with patch('game_data.GameData.ENEMY_TYPES', {
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Position(5, 5)
             test_player = player(x=8, y=8)  # Within vision range but not adjacent
-            
-            # Mock player is in shadow
-            self.mock_game_map.is_shadow.return_value = True
-            
+
+            # Mock player is in blind spot
+            self.mock_game_map.is_blind_spot.return_value = True
+
             enemy_obj = Enemy(enemy, "test_enemy")
             result = enemy_obj.can_see_player(test_player, self.mock_game_map)
             assert result is False
     
-    def test_adjacent_enemy_sees_player_in_shadow(self):
-        """Adjacent enemy can see player even in shadows."""
+    def test_adjacent_enemy_sees_player_in_blind_spot(self):
+        """Adjacent enemy can see player even in blind spots."""
         with patch('game_data.GameData.ENEMY_TYPES', {
             'test_enemy': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=10)
         }):
             enemy = Enemy(Position(5, 5), "test_enemy")
             test_player = player(x=6, y=6)  # Adjacent
-            
-            # Mock player is in shadow
-            self.mock_game_map.is_shadow.return_value = True
-            
+
+            # Mock player is in blind spot
+            self.mock_game_map.is_blind_spot.return_value = True
+
             result = enemy.can_see_player(test_player, self.mock_game_map)
-            assert result is True  # Adjacent enemies can see through shadows
+            assert result is True  # Adjacent enemies can see through blind spots
 
 
 class TestEnemyAttackBehavior(TestEnemyAIBehavior):

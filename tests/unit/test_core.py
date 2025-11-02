@@ -319,7 +319,7 @@ class TestTurnProcessor:
         mock_player = Mock()
         mock_player.temporary_effects = {
             'speed_boost_turns': 3,
-            'data_mimic_turns': 1,
+            'traffic_masquerade_turns': 1,
             'exploit_efficiency_turns': 5
         }
         
@@ -327,7 +327,7 @@ class TestTurnProcessor:
         
         # Effects should decrease by 1
         assert mock_player.temporary_effects['speed_boost_turns'] == 2
-        assert mock_player.temporary_effects['data_mimic_turns'] == 0  # Will be 0
+        assert mock_player.temporary_effects['traffic_masquerade_turns'] == 0  # Will be 0
         assert mock_player.temporary_effects['exploit_efficiency_turns'] == 4
     
     def test_trace_increase_processing(self):
@@ -446,7 +446,7 @@ class TestGameLogicIntegration:
         mock_player.cpu = 100  # Add cpu attribute for potential virus damage
         mock_player.take_damage = Mock(return_value=0)  # Mock take_damage method
         mock_player.temporary_effects = {
-            'data_mimic_turns': 1,
+            'traffic_masquerade_turns': 1,
             'speed_boost_turns': 3,
             'exploit_efficiency_turns': 5,
             'virus_turns': 0  # Add virus_turns for completeness

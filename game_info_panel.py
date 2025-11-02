@@ -42,7 +42,7 @@ class InfoProvider:
         2. Enemies in viewport
         3. Items in viewport (code hacks, exploits, upgrades)
         4. Special nodes (gateway, cooling, CPU, ghost)
-        5. Terrain (wall, shadow, floor)
+        5. Terrain (wall, blind spot, floor)
         6. Default info (turn counter, time, streak)
 
         Args:

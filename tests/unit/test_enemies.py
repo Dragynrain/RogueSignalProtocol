@@ -77,10 +77,10 @@ class TestEnemyVision:
         test_enemy = enemy_builder("scanner", pos=(5, 5))
         test_player = player(10, 5, 100)  # Same row, clear line
 
-        # Mock game map with no walls blocking, not in shadow
+        # Mock game map with no walls blocking, not in blind spot
         mock_map = Mock()
         mock_map.can_see_position.return_value = True
-        mock_map.is_shadow.return_value = False
+        mock_map.is_blind_spot.return_value = False
 
         # Mock player not invisible
         with patch.object(test_player, 'is_invisible', return_value=False):

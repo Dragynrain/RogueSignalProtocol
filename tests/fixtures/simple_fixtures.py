@@ -134,7 +134,7 @@ def map_builder(width=30, height=30, walls=None, shadows=None,
         game_map.invalidate_transparency_cache()
 
     if shadows:
-        game_map.shadows.update(shadows)
+        game_map.blind_spots.update(shadows)
 
     if cooling_nodes:
         game_map.cooling_nodes.update(cooling_nodes)

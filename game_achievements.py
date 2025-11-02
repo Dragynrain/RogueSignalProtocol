@@ -104,10 +104,10 @@ STEALTH_ACHIEVEMENTS = {
         category="stealth",
     ),
 
-    "shadow_master": Achievement(
-        id="shadow_master",
-        name="Shadow Master",
-        description="Kill 5+ enemies from shadows in one run",
+    "blind_spot_master": Achievement(
+        id="blind_spot_master",
+        name="Blind Spot Master",
+        description="Kill 5+ enemies from blind spots in one run",
         icon="🌑",
         category="stealth",
     ),
@@ -332,8 +332,8 @@ class AchievementChecker:
         if "silent_assassin" not in already_unlocked and session.max_stealth_streak >= 10:
             newly_unlocked.append("silent_assassin")
 
-        if "shadow_master" not in already_unlocked and session.ambushes_from_shadows >= 5:
-            newly_unlocked.append("shadow_master")
+        if "blind_spot_master" not in already_unlocked and session.ambushes_from_blind_spots >= 5:
+            newly_unlocked.append("blind_spot_master")
 
         return newly_unlocked
 
@@ -381,8 +381,8 @@ class AchievementChecker:
         if "ghost_protocol" not in already_unlocked and session.levels_completed >= 1 and not session.ever_detected:
             newly_unlocked.append("ghost_protocol")
 
-        if "shadow_master" not in already_unlocked and session.ambushes_from_shadows >= 5:
-            newly_unlocked.append("shadow_master")
+        if "blind_spot_master" not in already_unlocked and session.ambushes_from_blind_spots >= 5:
+            newly_unlocked.append("blind_spot_master")
 
         if "invisible_victory" not in already_unlocked and session.victory and not session.ever_detected:
             newly_unlocked.append("invisible_victory")

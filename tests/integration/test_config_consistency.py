@@ -193,7 +193,7 @@ class TestConfigCompleteness:
     def test_all_network_configs_have_required_fields(self):
         """Test that all network configurations have required fields."""
         required_fields = [
-            'enemies', 'shadow_coverage', 'name', 'background_trace',
+            'enemies', 'blind_spot_coverage', 'name', 'background_trace',
             'trace_alert_to_hostile', 'trace_continuous_hostile',
             'cooling_nodes', 'cpu_nodes', 'ghost_nodes',
             'code_hacks', 'exploit_pickups', 'permanent_upgrades'
@@ -293,7 +293,7 @@ class TestConfigValueUsage:
 
         required_vision_values = [
             'enhanced_vision_bonus',         # Range increase from enhanced vision
-            'shadow_vision_reduction_factor', # Vision penalty in shadows
+            'blind_spot_vision_reduction_factor', # Vision penalty in blind spots
             'adjacent_distance_threshold',    # Adjacency threshold for detection
         ]
 

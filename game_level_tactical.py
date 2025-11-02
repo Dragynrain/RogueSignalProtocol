@@ -51,23 +51,23 @@ class TacticalGenerator:
         self.game_map = game_map
         self.corridor_tiles = corridor_tiles
 
-    def place_shadow_areas(self, level: int, rooms: List[Tuple[int, int, int, int]],
-                          shadow_zone_rooms: List[Tuple[int, int, int, int]]) -> None:
+    def place_blind_spot_areas(self, level: int, rooms: List[Tuple[int, int, int, int]],
+                          blind_spot_zone_rooms: List[Tuple[int, int, int, int]]) -> None:
         """
-        Place shadow areas for stealth gameplay using Perlin noise for organic patterns.
+        Place blind spot areas for stealth gameplay using Perlin noise for organic patterns.
 
         NEW: Uses Perlin noise to create natural-looking darkness zones!
-        Shadows are influenced by:
-        - Noise-based probability (organic shadow clusters)
+        Blind spots are influenced by:
+        - Noise-based probability (organic blind spot clusters)
         - Wall-adjacent positions (preferred for realistic lighting)
-        - Interior positions (for larger shadow areas)
+        - Interior positions (for larger blind spot areas)
 
-        Shadow zones have higher coverage for stealth-focused areas.
+        Blind spot zones have higher coverage for stealth-focused areas.
 
         Args:
-            level: Current level number (affects shadow coverage)
+            level: Current level number (affects blind spot coverage)
             rooms: List of room tuples (x, y, width, height)
-            shadow_zone_rooms: List of rooms designated as shadow zones
+            blind_spot_zone_rooms: List of rooms designated as blind spot zones
         """
         network_configs = GameConfig.NETWORK_CONFIGS()
 
@@ -79,15 +79,15 @@ class TacticalGenerator:
 
         config = network_configs[level]
 
-        if 'shadow_coverage' not in config:
-            error_msg = f"CRITICAL CONFIG ERROR: 'shadow_coverage' missing for level {level} in game_data.json network_configs"
+        if 'blind_spot_coverage' not in config:
+            error_msg = f"CRITICAL CONFIG ERROR: 'blind_spot_coverage' missing for level {level} in game_data.json network_configs"
             logging.error(error_msg)
             logging.error(f"Available config keys for level {level}: {list(config.keys())}")
-            raise KeyError(f"Required key 'shadow_coverage' missing from level {level} config")
+            raise KeyError(f"Required key 'blind_spot_coverage' missing from level {level} config")
 
-        shadow_coverage = config['shadow_coverage']
+        blind_spot_coverage = config['blind_spot_coverage']
 
-        # Create Perlin noise map for organic shadow distribution
+        # Create Perlin noise map for organic blind spot distribution
         noise_seed = level * 12345 + random.randint(0, 10000)
         noise_map = create_noise_map(
             width=GameConfig.MAP_WIDTH,
@@ -98,24 +98,24 @@ class TacticalGenerator:
         )
         logging.debug(f"Shadow Gen: Created Perlin noise map for organic shadow placement (seed={noise_seed})")
 
-        wall_adjacent_weight = GameConfig._get_required('room_generation.shadow_placement_weights.wall_adjacent')
-        interior_weight = GameConfig._get_required('room_generation.shadow_placement_weights.interior')
+        wall_adjacent_weight = GameConfig._get_required('room_generation.blind_spot_placement_weights.wall_adjacent')
+        interior_weight = GameConfig._get_required('room_generation.blind_spot_placement_weights.interior')
 
         total_floor_tiles = sum(w * h for x, y, w, h in rooms)
-        target_shadow_tiles = int(total_floor_tiles * shadow_coverage)
+        target_blind_spot_tiles = int(total_floor_tiles * blind_spot_coverage)
 
-        placed_shadows = 0
+        placed_blind_spots = 0
         for room in rooms:
-            if placed_shadows >= target_shadow_tiles:
+            if placed_blind_spots >= target_blind_spot_tiles:
                 break
 
             x, y, width, height = room
 
-            if room in shadow_zone_rooms:
-                zone_coverage = GameConfig._get_required('room_generation.shadow_zone_coverage')
-                shadows_in_room = int(width * height * zone_coverage)
+            if room in blind_spot_zone_rooms:
+                zone_coverage = GameConfig._get_required('room_generation.blind_spot_zone_coverage')
+                blind_spots_in_room = int(width * height * zone_coverage)
             else:
-                shadows_in_room = min(target_shadow_tiles - placed_shadows, width * height // 3)
+                blind_spots_in_room = min(target_blind_spot_tiles - placed_blind_spots, width * height // 3)
 
             # Get candidate positions with noise values
             wall_adjacent_positions = self._get_noise_weighted_positions(
@@ -125,7 +125,7 @@ class TacticalGenerator:
                 self.get_interior_positions(room), noise_map
             )
 
-            for _ in range(shadows_in_room):
+            for _ in range(blind_spots_in_room):
                 # Use noise to bias selection toward "darker" areas
                 if random.random() < wall_adjacent_weight:
                     if wall_adjacent_positions:
@@ -147,10 +147,10 @@ class TacticalGenerator:
                         continue
 
                 if shadow_pos not in self.game_map.walls:
-                    self.game_map.shadows.add(shadow_pos)
-                    placed_shadows += 1
+                    self.game_map.blind_spots.add(shadow_pos)
+                    placed_blind_spots += 1
 
-        logging.debug(f"Shadow Gen: Placed {placed_shadows} shadows using noise-based organic distribution")
+        logging.debug(f"Shadow Gen: Placed {placed_blind_spots} shadows using noise-based organic distribution")
 
     def _get_noise_weighted_positions(self, positions: List[Tuple[int, int]],
                                       noise_map) -> List[Tuple[Tuple[int, int], float]]:
@@ -278,12 +278,12 @@ class TacticalGenerator:
         never overlap with walls for proper rendering and gameplay.
         """
         invalid_shadows = []
-        for shadow_pos in self.game_map.shadows:
+        for shadow_pos in self.game_map.blind_spots:
             if shadow_pos in self.game_map.walls:
                 invalid_shadows.append(shadow_pos)
 
         for shadow_pos in invalid_shadows:
-            self.game_map.shadows.remove(shadow_pos)
+            self.game_map.blind_spots.remove(shadow_pos)
 
     def add_cover_elements_new(self) -> None:
         """
@@ -566,7 +566,7 @@ class TacticalGenerator:
 
         shadow_pos = (x + 1, y + 1)
         if shadow_pos not in self.game_map.walls:
-            self.game_map.shadows.add(shadow_pos)
+            self.game_map.blind_spots.add(shadow_pos)
 
     def create_shadow_bunker_position(self, x: int, y: int) -> None:
         """
@@ -592,7 +592,7 @@ class TacticalGenerator:
 
         shadow_pos = (x + 1, y + 1)
         if shadow_pos not in self.game_map.walls:
-            self.game_map.shadows.add(shadow_pos)
+            self.game_map.blind_spots.add(shadow_pos)
 
     def create_crossfire_position(self, x: int, y: int) -> None:
         """
@@ -613,7 +613,7 @@ class TacticalGenerator:
         shadow_positions = [(x + 1, y), (x + 3, y)]
         for pos in shadow_positions:
             if pos not in self.game_map.walls:
-                self.game_map.shadows.add(pos)
+                self.game_map.blind_spots.add(pos)
 
     def create_choke_points(self, rooms: List[Tuple[int, int, int, int]]) -> None:
         """

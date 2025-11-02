@@ -2,9 +2,9 @@
 Stealth and Detection Mechanics Integration Tests
 
 Tests the complete stealth and detection system:
-- Player visibility in shadows vs light
+- Player visibility in blind spots vs light
 - Enemy detection ranges and line of sight
-- Invisibility effects (data_mimic exploit)
+- Invisibility effects (traffic_masquerade exploit)
 - Enhanced vision effects
 - Shadow-based stealth gameplay
 - Detection thresholds and adjacency rules
@@ -36,7 +36,7 @@ class TestBasicShadowDetection:
         for x in range(15, 30):
             for y in range(15, 30):
                 pos = Position(x, y)
-                if not basic_game_engine.game_map.is_shadow(pos) and basic_game_engine.game_map.is_valid_position(pos):
+                if not basic_game_engine.game_map.is_blind_spot(pos) and basic_game_engine.game_map.is_valid_position(pos):
                     light_pos = pos
                     break
             if light_pos:
@@ -45,14 +45,14 @@ class TestBasicShadowDetection:
         # If all positions have shadows, explicitly remove shadow from test position
         if light_pos is None:
             light_pos = Position(20, 20)
-            basic_game_engine.game_map.shadows.discard((light_pos.x, light_pos.y))
+            basic_game_engine.game_map.blind_spots.discard((light_pos.x, light_pos.y))
             basic_game_engine.game_map.ghost_nodes.discard((light_pos.x, light_pos.y))
 
         # Position player in light
         basic_game_engine.player.position = light_pos
 
         # Verify player is not in shadow
-        assert not basic_game_engine.game_map.is_shadow(basic_game_engine.player.position), "Player should not be in shadow"
+        assert not basic_game_engine.game_map.is_blind_spot(basic_game_engine.player.position), "Player should not be in shadow"
 
         # Create scanner enemy adjacent to player (distance 1, always visible)
         enemy_pos = Position(light_pos.x + 1, light_pos.y)
@@ -66,12 +66,12 @@ class TestBasicShadowDetection:
 
     def test_player_hidden_in_shadow_beyond_adjacent(self, basic_game_engine):
         """Test enemy cannot see player in shadow unless adjacent."""
-        # Find a shadow position
+        # Find a blind spot position
         shadow_pos = None
         for x in range(10, 30):
             for y in range(10, 30):
                 pos = Position(x, y)
-                if basic_game_engine.game_map.is_shadow(pos) and basic_game_engine.game_map.is_valid_position(pos):
+                if basic_game_engine.game_map.is_blind_spot(pos) and basic_game_engine.game_map.is_valid_position(pos):
                     shadow_pos = pos
                     break
             if shadow_pos:
@@ -80,13 +80,13 @@ class TestBasicShadowDetection:
         # If no shadows exist on this map, create one manually for testing
         if shadow_pos is None:
             shadow_pos = Position(20, 20)
-            basic_game_engine.game_map.shadows.add((shadow_pos.x, shadow_pos.y))
+            basic_game_engine.game_map.blind_spots.add((shadow_pos.x, shadow_pos.y))
 
         # Position player in shadow
         basic_game_engine.player.position = shadow_pos
 
         # Verify player is in shadow
-        assert basic_game_engine.game_map.is_shadow(basic_game_engine.player.position), "Player should be in shadow"
+        assert basic_game_engine.game_map.is_blind_spot(basic_game_engine.player.position), "Player should be in shadow"
 
         # Create scanner enemy 3 tiles away (not adjacent)
         scanner = enemy_builder("scanner", pos=(shadow_pos.x + 3, shadow_pos.y))
@@ -103,12 +103,12 @@ class TestBasicShadowDetection:
 
     def test_player_visible_in_shadow_when_adjacent(self, basic_game_engine):
         """Test enemy CAN see player in shadow when adjacent."""
-        # Find a shadow position
+        # Find a blind spot position
         shadow_pos = None
         for x in range(10, 30):
             for y in range(10, 30):
                 pos = Position(x, y)
-                if basic_game_engine.game_map.is_shadow(pos) and basic_game_engine.game_map.is_valid_position(pos):
+                if basic_game_engine.game_map.is_blind_spot(pos) and basic_game_engine.game_map.is_valid_position(pos):
                     shadow_pos = pos
                     break
             if shadow_pos:
@@ -117,7 +117,7 @@ class TestBasicShadowDetection:
         # If no shadows exist, create one
         if shadow_pos is None:
             shadow_pos = Position(20, 20)
-            basic_game_engine.game_map.shadows.add((shadow_pos.x, shadow_pos.y))
+            basic_game_engine.game_map.blind_spots.add((shadow_pos.x, shadow_pos.y))
 
         # Position player in shadow
         basic_game_engine.player.position = shadow_pos
@@ -142,7 +142,7 @@ class TestBasicShadowDetection:
         basic_game_engine.game_map.ghost_nodes.add((ghost_pos.x, ghost_pos.y))
 
         # Verify ghost node is treated as shadow
-        assert basic_game_engine.game_map.is_shadow(ghost_pos), "Ghost node should be treated as shadow"
+        assert basic_game_engine.game_map.is_blind_spot(ghost_pos), "Ghost node should be treated as shadow"
 
         # Position player on ghost node
         basic_game_engine.player.position = ghost_pos
@@ -158,17 +158,17 @@ class TestBasicShadowDetection:
 
 
 class TestInvisibilityMechanics:
-    """Test invisibility effects from data_mimic exploit."""
+    """Test invisibility effects from traffic_masquerade exploit."""
 
     def test_invisible_player_not_detected_by_normal_enemy(self, basic_game_engine):
-        """Test invisible player (data_mimic) cannot be seen by normal enemies."""
+        """Test invisible player (traffic_masquerade) cannot be seen by normal enemies."""
 
         # Position player
         basic_game_engine.player.position.x = 20
         basic_game_engine.player.position.y = 20
 
-        # Apply data_mimic invisibility
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 5
+        # Apply traffic_masquerade invisibility
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
 
         # Verify player is invisible
         assert basic_game_engine.player.is_invisible(), "Player should be invisible"
@@ -190,7 +190,7 @@ class TestInvisibilityMechanics:
         basic_game_engine.player.position.y = 20
 
         # Apply invisibility
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 5
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
 
         # Create admin enemy far away
         admin = enemy_builder("admin", pos=(50, 50))
@@ -207,7 +207,7 @@ class TestInvisibilityMechanics:
         # Position player and enemy adjacent
         basic_game_engine.player.position.x = 20
         basic_game_engine.player.position.y = 20
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 5
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
 
         bot = enemy_builder("bot", pos=(21, 20))
         basic_game_engine.enemies = [bot]
@@ -223,7 +223,7 @@ class TestInvisibilityMechanics:
         # Position player and admin adjacent
         basic_game_engine.player.position.x = 20
         basic_game_engine.player.position.y = 20
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 5
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
 
         admin = enemy_builder("admin", pos=(21, 20))
         basic_game_engine.enemies = [admin]
@@ -270,7 +270,7 @@ class TestEnhancedVisionMechanics:
 
         # Find or create shadow position
         shadow_pos = Position(20, 20)
-        basic_game_engine.game_map.shadows.add((shadow_pos.x, shadow_pos.y))
+        basic_game_engine.game_map.blind_spots.add((shadow_pos.x, shadow_pos.y))
 
         # Position player in shadow
         basic_game_engine.player.position = shadow_pos
@@ -280,7 +280,7 @@ class TestEnhancedVisionMechanics:
         scanner = enemy_builder("scanner", pos=(enemy_pos.x, enemy_pos.y))
 
         # Place enemy in shadow too
-        basic_game_engine.game_map.shadows.add((enemy_pos.x, enemy_pos.y))
+        basic_game_engine.game_map.blind_spots.add((enemy_pos.x, enemy_pos.y))
         basic_game_engine.enemies = [scanner]
 
         # Player in shadow has reduced vision (1/3 normal)
@@ -297,18 +297,18 @@ class TestStealthGameplayScenarios:
     """Test real-world stealth gameplay scenarios."""
 
     def test_sneaking_past_enemy_in_shadows(self, basic_game_engine):
-        """Test player can sneak past enemy by staying in shadows."""
+        """Test player can sneak past enemy by staying in blind spots."""
 
         # Create shadow path
         for x in range(15, 26):
-            basic_game_engine.game_map.shadows.add((x, 20))
+            basic_game_engine.game_map.blind_spots.add((x, 20))
 
-        # Position player in shadows
+        # Position player in blind spots
         basic_game_engine.player.position = Position(15, 20)
 
         # Create enemy watching from light - ensure enemy position has no shadow
         enemy_pos = Position(20, 15)
-        basic_game_engine.game_map.shadows.discard((enemy_pos.x, enemy_pos.y))
+        basic_game_engine.game_map.blind_spots.discard((enemy_pos.x, enemy_pos.y))
         basic_game_engine.game_map.ghost_nodes.discard((enemy_pos.x, enemy_pos.y))
 
         scanner = enemy_builder("scanner", pos=(enemy_pos.x, enemy_pos.y))
@@ -316,17 +316,17 @@ class TestStealthGameplayScenarios:
         basic_game_engine.enemies = [scanner]
 
         # Verify player is in shadow
-        assert basic_game_engine.game_map.is_shadow(basic_game_engine.player.position), "Player should be in shadow"
+        assert basic_game_engine.game_map.is_blind_spot(basic_game_engine.player.position), "Player should be in shadow"
 
         # Verify enemy is not in shadow
-        assert not basic_game_engine.game_map.is_shadow(scanner.position), "Enemy should be in light"
+        assert not basic_game_engine.game_map.is_blind_spot(scanner.position), "Enemy should be in light"
 
         # Move player through shadows (should not be detected from distance)
         for new_x in range(16, 25):
             basic_game_engine.player.position = Position(new_x, 20)
 
             # Verify player still in shadow
-            assert basic_game_engine.game_map.is_shadow(basic_game_engine.player.position), "Player should remain in shadow"
+            assert basic_game_engine.game_map.is_blind_spot(basic_game_engine.player.position), "Player should remain in shadow"
 
             # Distance to enemy
             distance = scanner.position.distance_to(basic_game_engine.player.position)
@@ -340,7 +340,7 @@ class TestStealthGameplayScenarios:
         """Test player leaving shadow becomes visible to enemy."""
 
         # Create shadow area
-        basic_game_engine.game_map.shadows.add((20, 20))
+        basic_game_engine.game_map.blind_spots.add((20, 20))
 
         # Position player in shadow
         basic_game_engine.player.position = Position(20, 20)
@@ -351,18 +351,18 @@ class TestStealthGameplayScenarios:
         basic_game_engine.enemies = [scanner]
 
         # Verify player is hidden in shadow (enemy not adjacent on other side)
-        assert basic_game_engine.game_map.is_shadow(basic_game_engine.player.position), "Player should start in shadow"
+        assert basic_game_engine.game_map.is_blind_spot(basic_game_engine.player.position), "Player should start in shadow"
 
         # When adjacent, enemy CAN see player even in shadow
         can_see_adjacent = scanner.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
         assert bool(can_see_adjacent), "Enemy should see player when adjacent even in shadow"
 
-        # Move player to shadow position not adjacent
-        basic_game_engine.game_map.shadows.add((18, 20))
+        # Move player to blind spot position not adjacent
+        basic_game_engine.game_map.blind_spots.add((18, 20))
         basic_game_engine.player.position = Position(18, 20)
 
         # Verify player is in shadow
-        assert basic_game_engine.game_map.is_shadow(basic_game_engine.player.position), "Player should be in shadow"
+        assert basic_game_engine.game_map.is_blind_spot(basic_game_engine.player.position), "Player should be in shadow"
 
         # Now enemy should NOT see player (in shadow, not adjacent)
         distance = scanner.position.distance_to(basic_game_engine.player.position)
@@ -373,10 +373,10 @@ class TestStealthGameplayScenarios:
         # Move player out of shadow to adjacent light position
         basic_game_engine.player.position = Position(20, 20)  # Back to no-shadow position
         # Remove shadow from this position
-        basic_game_engine.game_map.shadows.discard((20, 20))
+        basic_game_engine.game_map.blind_spots.discard((20, 20))
 
         # Verify player is NOT in shadow
-        assert not basic_game_engine.game_map.is_shadow(basic_game_engine.player.position), "Player should be out of shadow"
+        assert not basic_game_engine.game_map.is_blind_spot(basic_game_engine.player.position), "Player should be out of shadow"
 
         # Verify enemy CAN now see player (adjacent in light)
         can_see_in_light = scanner.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
@@ -388,7 +388,7 @@ class TestStealthGameplayScenarios:
         # Create shadow area
         for x in range(18, 23):
             for y in range(18, 23):
-                basic_game_engine.game_map.shadows.add((x, y))
+                basic_game_engine.game_map.blind_spots.add((x, y))
 
         # Position both player and enemy in shadow
         basic_game_engine.player.position = Position(20, 20)
@@ -397,8 +397,8 @@ class TestStealthGameplayScenarios:
         basic_game_engine.enemies = [scanner]
 
         # Verify both in shadow
-        assert basic_game_engine.game_map.is_shadow(basic_game_engine.player.position), "Player should be in shadow"
-        assert basic_game_engine.game_map.is_shadow(scanner.position), "Enemy should be in shadow"
+        assert basic_game_engine.game_map.is_blind_spot(basic_game_engine.player.position), "Player should be in shadow"
+        assert basic_game_engine.game_map.is_blind_spot(scanner.position), "Enemy should be in shadow"
 
         # Distance is 2, should not see
         distance = scanner.position.distance_to(basic_game_engine.player.position)
@@ -417,8 +417,8 @@ class TestStealthGameplayScenarios:
         can_see_adjacent = scanner.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
         assert bool(can_see_adjacent), "Enemy should see player when adjacent in shadow"
 
-    def test_data_mimic_allows_passing_through_enemy_vision(self, basic_game_engine):
-        """Test data_mimic (invisibility) allows moving through enemy vision."""
+    def test_traffic_masquerade_allows_passing_through_enemy_vision(self, basic_game_engine):
+        """Test traffic_masquerade (invisibility) allows moving through enemy vision."""
 
         # Position enemy watching an area
         scanner = enemy_builder("scanner", pos=(20, 20))
@@ -427,7 +427,7 @@ class TestStealthGameplayScenarios:
 
         # Position player in enemy vision range with invisibility
         basic_game_engine.player.position = Position(23, 20)
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 5
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
 
         # Verify player is invisible
         assert basic_game_engine.player.is_invisible(), "Player should be invisible"
@@ -445,7 +445,7 @@ class TestStealthGameplayScenarios:
 
         # Position player adjacent to enemy with 1 turn of invisibility left
         basic_game_engine.player.position = Position(20, 20)
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 1
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 1
 
         scanner = enemy_builder("scanner", pos=(21, 20))  # Adjacent
         scanner.state = EnemyState.UNAWARE
@@ -550,13 +550,13 @@ class TestStealthWorkflowComplete:
         Test complete stealth infiltration:
         1. Player starts in shadow near enemy
         2. Player sneaks through shadows (not detected)
-        3. Player uses data_mimic to cross open area
+        3. Player uses traffic_masquerade to cross open area
         4. Player reaches objective without detection
         """
 
         # PHASE 1: Start in shadow
         shadow_start = Position(15, 20)
-        basic_game_engine.game_map.shadows.add((shadow_start.x, shadow_start.y))
+        basic_game_engine.game_map.blind_spots.add((shadow_start.x, shadow_start.y))
         basic_game_engine.player.position = shadow_start
 
         # Enemy patrol watching
@@ -565,22 +565,22 @@ class TestStealthWorkflowComplete:
         basic_game_engine.enemies = [guard]
 
         # Verify player hidden
-        assert basic_game_engine.game_map.is_shadow(basic_game_engine.player.position), "Player should start in shadow"
+        assert basic_game_engine.game_map.is_blind_spot(basic_game_engine.player.position), "Player should start in shadow"
         can_see_start = guard.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
         # May or may not see depending on distance, but should have shadow protection
 
         # PHASE 2: Sneak through shadows
         shadow_path = [Position(16, 20), Position(17, 20), Position(18, 20)]
         for pos in shadow_path:
-            basic_game_engine.game_map.shadows.add((pos.x, pos.y))
+            basic_game_engine.game_map.blind_spots.add((pos.x, pos.y))
 
         # Move through shadow path
         for pos in shadow_path:
             basic_game_engine.player.position = pos
-            assert basic_game_engine.game_map.is_shadow(pos), "Path should be shadowed"
+            assert basic_game_engine.game_map.is_blind_spot(pos), "Path should be shadowed"
 
-        # PHASE 3: Use data_mimic to cross open area
-        basic_game_engine.player.temporary_effects['data_mimic_turns'] = 3
+        # PHASE 3: Use traffic_masquerade to cross open area
+        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 3
         assert basic_game_engine.player.is_invisible(), "Player should be invisible"
 
         # Move through open area (no shadows)
@@ -594,7 +594,7 @@ class TestStealthWorkflowComplete:
 
         # PHASE 4: Reach objective (more shadows)
         objective_shadow = Position(22, 20)
-        basic_game_engine.game_map.shadows.add((objective_shadow.x, objective_shadow.y))
+        basic_game_engine.game_map.blind_spots.add((objective_shadow.x, objective_shadow.y))
         basic_game_engine.player.position = objective_shadow
 
         # Verify reached objective without guard becoming hostile
@@ -605,7 +605,7 @@ class TestStealthWorkflowComplete:
         Test stealth failure and recovery:
         1. Player detected in light
         2. Enemy becomes hostile
-        3. Player escapes to shadow
+        3. Player escapes to blind spot
         4. Enemy loses sight but remains alert
         """
 
@@ -624,13 +624,13 @@ class TestStealthWorkflowComplete:
         scanner.state = EnemyState.HOSTILE
         assert scanner.state == EnemyState.HOSTILE, "Enemy should become hostile"
 
-        # PHASE 3: Escape to shadow
+        # PHASE 3: Escape to blind spot
         shadow_escape = Position(18, 20)
-        basic_game_engine.game_map.shadows.add((shadow_escape.x, shadow_escape.y))
+        basic_game_engine.game_map.blind_spots.add((shadow_escape.x, shadow_escape.y))
         basic_game_engine.player.position = shadow_escape
 
         # Verify in shadow
-        assert basic_game_engine.game_map.is_shadow(basic_game_engine.player.position), "Player should be in shadow"
+        assert basic_game_engine.game_map.is_blind_spot(basic_game_engine.player.position), "Player should be in shadow"
 
         # Verify distance sufficient to break vision
         distance = scanner.position.distance_to(basic_game_engine.player.position)

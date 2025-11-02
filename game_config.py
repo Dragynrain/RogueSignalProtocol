@@ -551,7 +551,7 @@ class GameBalance:
     PATROL_STUCK_THRESHOLD = 3
     PATHFINDING_TIMEOUT_ATTEMPTS = 100
     ENHANCED_VISION_BONUS = 2
-    SHADOW_VISION_REDUCTION_FACTOR = 3
+    BLIND_SPOT_VISION_REDUCTION_FACTOR = 3
     ENEMY_TRACE_ALERT_TO_HOSTILE = 3
     ENEMY_TRACE_CONTINUOUS_HOSTILE = 0.3
     ENEMY_MEMORY_TURNS = 20
@@ -574,7 +574,7 @@ class GameBalance:
         cls.PATROL_STUCK_THRESHOLD = GameConfig._get_required('balance.patrol_stuck_threshold')
         cls.PATHFINDING_TIMEOUT_ATTEMPTS = GameConfig._get_required('balance.pathfinding_timeout_attempts')
         cls.ENHANCED_VISION_BONUS = GameConfig._get_required('balance.enhanced_vision_bonus')
-        cls.SHADOW_VISION_REDUCTION_FACTOR = GameConfig._get_required('balance.shadow_vision_reduction_factor')
+        cls.BLIND_SPOT_VISION_REDUCTION_FACTOR = GameConfig._get_required('balance.blind_spot_vision_reduction_factor')
         cls.ENEMY_TRACE_ALERT_TO_HOSTILE = GameConfig._get_required('balance.ai_behavior.enemy_trace_alert_to_hostile')
         cls.ENEMY_TRACE_CONTINUOUS_HOSTILE = GameConfig._get_required('balance.ai_behavior.enemy_trace_continuous_hostile')
         cls.ENEMY_MEMORY_TURNS = GameConfig._get_required('balance.enemy_memory_turns')

@@ -163,7 +163,7 @@ class SoundManager:
             "overclocking": "overclocking.wav",
             
             # Exploits
-            "exploit_shadow_step": "exploit_shadow_step.wav",
+            "exploit_system_hop": "exploit_shadow_step.wav",  # Using original shadow_step.wav filename
             "exploit_buffer_overflow": "exploit_buffer_overflow.wav",
             "exploit_code_injection": "exploit_code_injection.wav",
             "exploit_system_crash": "exploit_system_crash.wav",
@@ -174,8 +174,8 @@ class SoundManager:
             "exploit_memory_leak": "exploit_memory_leak.wav",
             "exploit_network_scan": "exploit_network_scan.wav",
             "exploit_failed": "exploit_failed.wav",
-            "exploit_data_mimic": "exploit_data_mimic.wav",
-            "exploit_noise_maker": "exploit_noise_maker.wav",
+            "exploit_traffic_masquerade": "exploit_data_mimic.wav",  # Using original data_mimic.wav filename
+            "exploit_decoy_swarm": "exploit_noise_maker.wav",  # Using original noise_maker.wav filename
             "exploit_targeting": "exploit_targeting.wav",
             
             # UI and system
