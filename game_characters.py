@@ -537,8 +537,9 @@ class Player:
             logging.debug(f"Player upgrade '{upgrade_key}': max_CPU {old_max_cpu} -> {self.max_cpu}, CPU {old_cpu} -> {self.cpu} (cap={max_cpu})")
         elif upgrade.stat_type == 'heat':
             old_max_heat = self.max_heat
-            self.max_heat = min(200, self.max_heat + upgrade.bonus_amount)  # Cap at 200
-            logging.debug(f"Player upgrade '{upgrade_key}': max_heat {old_max_heat} -> {self.max_heat} (cap=200)")
+            max_cap = GameBalance.get_balance("max_heat_capacity")
+            self.max_heat = min(max_cap, self.max_heat + upgrade.bonus_amount)
+            logging.debug(f"Player upgrade '{upgrade_key}': max_heat {old_max_heat} -> {self.max_heat} (cap={max_cap})")
 
         return True
     
@@ -795,8 +796,10 @@ class Enemy:
     def attack_player(self, player: Player) -> int:
         """Attack the player and return damage dealt."""
         if self.type == 'virus':
-            virus_turns = player.temporary_effects.get('virus_turns', 0) + 3
-            player.temporary_effects['virus_turns'] = min(virus_turns, 10)
+            virus_increment = GameBalance.get_balance("virus_increment_turns")
+            virus_max = GameBalance.get_gameplay("virus_max_duration")
+            virus_turns = player.temporary_effects.get('virus_turns', 0) + virus_increment
+            player.temporary_effects['virus_turns'] = min(virus_turns, virus_max)
             logging.debug(f"Enemy {self.type}@({self.x},{self.y}): infected player, virus_turns={player.temporary_effects['virus_turns']}")
             return 0
 
@@ -819,10 +822,12 @@ class Enemy:
     
     def take_damage(self, damage: int) -> bool:
         """Take damage and return True if destroyed."""
-        # Admin avatar has 50% damage resistance
+        # Admin avatar has damage resistance
         original_damage = damage
         if self.type == 'admin':
-            damage = max(5, damage // 2)  # Minimum 5 damage to prevent immunity
+            resist_percent = self.type_data.damage_resistance_percent if hasattr(self.type_data, 'damage_resistance_percent') else 50
+            resist_min = self.type_data.damage_resistance_min if hasattr(self.type_data, 'damage_resistance_min') else 5
+            damage = max(resist_min, damage * (100 - resist_percent) // 100)
             logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): damage reduced by resistance: {original_damage} -> {damage}")
 
         old_cpu = self.cpu
@@ -890,7 +895,7 @@ class Enemy:
 
         # 8. Update cooldown
         if self.get_movement_type() == EnemyMovement.STATIC:
-            self.move_cooldown = 999
+            self.move_cooldown = GameBalance.get_balance("static_enemy_cooldown")
         else:
             self.move_cooldown = 0
 
@@ -1240,14 +1245,15 @@ class Enemy:
         if self.get_movement_type() == EnemyMovement.STATIC:
             return False
 
-        # Check health threshold (30% or below)
+        # Check health threshold
         # Safety check for tests where max_cpu might be a mock
         try:
             max_cpu = int(self.type_data.max_cpu)
             if max_cpu <= 0:
                 return False
             health_percent = self.cpu / max_cpu
-            if health_percent > 0.3:
+            flee_threshold = GameBalance.get_balance("enemy_flee_health_threshold")
+            if health_percent > flee_threshold:
                 return False
         except (TypeError, ValueError, AttributeError):
             # In tests or invalid state, don't flee

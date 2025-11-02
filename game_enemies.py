@@ -35,10 +35,6 @@ class EnemyManager:
     for PATROL enemies.
     """
 
-    # Patrol generation constants
-    MIN_PATROL_SPACING = 4  # Minimum distance between patrol points
-    MAX_PATROL_SPACING = 8  # Maximum distance between patrol points
-
     def __init__(self, game_map: 'GameMap', message_log: 'MessageLog'):
         """
         Initialize enemy manager.
@@ -166,10 +162,10 @@ class EnemyManager:
         """
         # Choose a simple pattern type
         pattern_type = random.choice(['line', 'triangle', 'rectangle'])
-        step_size = random.randint(
-            EnemyManager.MIN_PATROL_SPACING,
-            EnemyManager.MAX_PATROL_SPACING
-        )
+        from game_config import GameBalance
+        min_spacing = GameBalance.get_balance("patrol_spacing_min")
+        max_spacing = GameBalance.get_balance("patrol_spacing_max")
+        step_size = random.randint(min_spacing, max_spacing)
         logging.debug(f"Patrol route: start=({start.x},{start.y}), pattern={pattern_type}, step_size={step_size}")
 
         if pattern_type == 'line':
@@ -232,15 +228,19 @@ class EnemyManager:
                     return route
 
         # Fallback: try multiple simple 2-point patterns
+        h_dist = GameBalance.get_balance("patrol_fallback_horizontal")
+        v_dist = GameBalance.get_balance("patrol_fallback_vertical")
+        d_dist = GameBalance.get_balance("patrol_fallback_diagonal")
+        s_dist = GameBalance.get_balance("patrol_fallback_short")
         fallback_patterns = [
-            Position(start.x + 4, start.y),      # Horizontal right
-            Position(start.x - 4, start.y),      # Horizontal left
-            Position(start.x, start.y + 4),      # Vertical down
-            Position(start.x, start.y - 4),      # Vertical up
-            Position(start.x + 3, start.y + 3),  # Diagonal down-right
-            Position(start.x - 3, start.y - 3),  # Diagonal up-left
-            Position(start.x + 2, start.y),      # Shorter horizontal
-            Position(start.x, start.y + 2),      # Shorter vertical
+            Position(start.x + h_dist, start.y),      # Horizontal right
+            Position(start.x - h_dist, start.y),      # Horizontal left
+            Position(start.x, start.y + v_dist),      # Vertical down
+            Position(start.x, start.y - v_dist),      # Vertical up
+            Position(start.x + d_dist, start.y + d_dist),  # Diagonal down-right
+            Position(start.x - d_dist, start.y - d_dist),  # Diagonal up-left
+            Position(start.x + s_dist, start.y),      # Shorter horizontal
+            Position(start.x, start.y + s_dist),      # Shorter vertical
         ]
 
         for fallback_end in fallback_patterns:
@@ -257,7 +257,9 @@ class EnemyManager:
     def _is_valid_patrol_point(self, point: Position) -> bool:
         """Check if a position is valid for patrol (within bounds, not a wall)."""
         # Use centralized PositionValidator for consistency
-        return PositionValidator.is_valid_for_patrol(point, self.game_map, margin=3)
+        from game_config import GameBalance
+        margin = GameBalance.get_balance("patrol_validation_margin")
+        return PositionValidator.is_valid_for_patrol(point, self.game_map, margin=margin)
 
     def _validate_patrol_connectivity(self, route: List[Position]) -> bool:
         """Verify all patrol points can reach each other via pathfinding."""

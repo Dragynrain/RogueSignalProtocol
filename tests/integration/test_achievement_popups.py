@@ -10,7 +10,7 @@ import tcod.console
 
 from game_achievement_popups import (
     AchievementPopupManager, AchievementPopup,
-    POPUP_DURATION
+    get_popup_duration
 )
 from game_achievements import AchievementManager, ALL_ACHIEVEMENTS
 
@@ -102,7 +102,7 @@ def test_auto_dismiss(popup_manager):
     popup_manager.show_popup("first_blood")
 
     # Simulate time passing
-    popup_manager.active_popup.timestamp = time.time() - POPUP_DURATION - 0.5
+    popup_manager.active_popup.timestamp = time.time() - get_popup_duration() - 0.5
 
     # Update should dismiss the popup
     popup_manager.update()
@@ -162,7 +162,7 @@ def test_popup_should_dismiss_after_duration():
     popup = AchievementPopup(
         achievement_id="first_blood",
         achievement=achievement,
-        timestamp=time.time() - POPUP_DURATION - 1.0
+        timestamp=time.time() - get_popup_duration() - 1.0
     )
 
     assert popup.should_dismiss()
@@ -184,7 +184,7 @@ def test_popup_alpha_fade():
     assert 0 <= alpha <= 255
 
     # Simulate mid-display (should be fully visible)
-    popup.timestamp = time.time() - 1.5  # Middle of POPUP_DURATION
+    popup.timestamp = time.time() - 1.5  # Middle of duration
     alpha = popup.get_alpha()
     assert alpha == 255
 

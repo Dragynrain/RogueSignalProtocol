@@ -322,11 +322,11 @@ class ExploitSystem:
                 enemy.position.grid_distance_to(target) <= exploit.effect_radius):
                 if movement_type == EnemyMovement.PATROL:
                     enemy.state = EnemyState.ALERT
-                    enemy.alert_timer = 3
+                    enemy.alert_timer = exploit.alert_duration_patrol
                 else:
                     enemy.last_seen_player = target
                     enemy.state = EnemyState.ALERT
-                    enemy.alert_timer = 2
+                    enemy.alert_timer = exploit.alert_duration_normal
                 attracted += 1
         self.game.message_log.add_message(f"Decoy Swarm: {attracted} enemies attracted")
         return True
@@ -348,7 +348,8 @@ class ExploitSystem:
 
         # Shadow bonus: extra damage if attacking from blind spots or while invisible
         if self.game.game_map.is_blind_spot(self.game.player.position) or self.game.player.is_invisible():
-            return base_damage + 10
+            shadow_bonus = self.game.config.get_balance("shadow_damage_bonus")
+            return base_damage + shadow_bonus
         return base_damage
 
     def _damage_enemy(self, enemy, damage: int) -> bool:
@@ -633,7 +634,9 @@ class ExploitSystem:
         """
         self.game.sound_manager.play_sound("exploit_log_wiper")
         old_trace = self.game.player.trace_level
-        self.game.player.trace_level = max(0, self.game.player.trace_level - 30)
+        exploit_data = self.game.content.get_exploit("log_wiper")
+        trace_reduction = exploit_data.get("trace_reduction_percent", 30)
+        self.game.player.trace_level = max(0, self.game.player.trace_level - trace_reduction)
         actual_reduction = old_trace - self.game.player.trace_level
         self.game.message_log.add_message(f"Trace Level: -{actual_reduction:.1f}%")
         return True
@@ -724,7 +727,7 @@ class ExploitSystem:
                 enemy.state = EnemyState.UNAWARE
                 enemy.last_seen_player = None
                 enemy.alert_timer = 0
-                enemy.blinded_turns = 3  # Blind for 3 turns
+                enemy.blinded_turns = exploit.effect_duration
                 count += 1
 
         msg = f"Memory Leak: {count} enemies blinded" if count > 0 else "No enemies in range"

@@ -19,12 +19,23 @@ from game_achievements import AchievementManager, ALL_ACHIEVEMENTS, Achievement
 
 logger = logging.getLogger(__name__)
 
+from game_config import GameConfig
 
-# Popup configuration
-POPUP_WIDTH = 36  # Smaller than dialogues (70)
-POPUP_HEIGHT = 7  # Smaller than dialogues (14)
-POPUP_DURATION = 3.0  # Auto-dismiss after 3 seconds
-POPUP_FADE_DURATION = 0.3  # Optional fade effect duration
+# Popup configuration loaded from JSON
+def get_popup_width():
+    return GameConfig._get_required("ui.achievement_popup_width")
+
+def get_popup_height():
+    return GameConfig._get_required("ui.achievement_popup_height")
+
+def get_popup_duration():
+    return GameConfig._get_required("ui.achievement_popup_duration")
+
+def get_popup_fade_duration():
+    return GameConfig._get_required("ui.achievement_popup_fade_duration")
+
+def get_max_description_lines():
+    return GameConfig._get_required("ui.achievement_popup_max_description_lines")
 
 
 @dataclass
@@ -38,7 +49,7 @@ class AchievementPopup:
     def should_dismiss(self) -> bool:
         """Check if this popup should be auto-dismissed."""
         elapsed = time.time() - self.timestamp
-        return elapsed >= POPUP_DURATION
+        return elapsed >= get_popup_duration()
 
     def get_alpha(self) -> int:
         """
@@ -49,19 +60,20 @@ class AchievementPopup:
         """
         elapsed = time.time() - self.timestamp
 
-        # Fade in (first 0.3 seconds)
-        if elapsed < POPUP_FADE_DURATION:
-            progress = elapsed / POPUP_FADE_DURATION
+        # Fade in
+        fade_duration = get_popup_fade_duration()
+        if elapsed < fade_duration:
+            progress = elapsed / fade_duration
             return int(255 * progress)
 
         # Fully visible
-        elif elapsed < POPUP_DURATION - POPUP_FADE_DURATION:
+        elif elapsed < get_popup_duration() - fade_duration:
             return 255
 
-        # Fade out (last 0.3 seconds)
+        # Fade out
         else:
-            remaining = POPUP_DURATION - elapsed
-            progress = remaining / POPUP_FADE_DURATION
+            remaining = get_popup_duration() - elapsed
+            progress = remaining / fade_duration
             return max(0, int(255 * progress))
 
 
@@ -150,52 +162,57 @@ class AchievementPopupManager:
 
         achievement = self.active_popup.achievement
 
+        # Get popup dimensions from config
+        popup_width = get_popup_width()
+        popup_height = get_popup_height()
+
         # Center the popup
         box_x, box_y = CoordinateHelpers.center_box(
-            POPUP_WIDTH, POPUP_HEIGHT, console.width, console.height
+            popup_width, popup_height, console.width, console.height
         )
 
         # Set popup area to opaque (critical for graphics mode)
         CoordinateHelpers.set_alpha_region(
-            console, x=box_x, y=box_y, width=POPUP_WIDTH, height=POPUP_HEIGHT, alpha=255
+            console, x=box_x, y=box_y, width=popup_width, height=popup_height, alpha=255
         )
 
-        # Color scheme - gold/yellow for achievements
-        border_color = ensure_color_tuple((255, 215, 0))  # Gold
-        bg_color = ensure_color_tuple((20, 20, 30))  # Dark blue-gray
-        title_color = ensure_color_tuple((255, 215, 0))  # Gold
-        achievement_name_color = ensure_color_tuple((255, 255, 255))  # White
-        description_color = ensure_color_tuple((200, 200, 200))  # Light gray
+        # Color scheme from JSON
+        border_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.border"))
+        bg_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.background"))
+        title_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.title"))
+        achievement_name_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.name"))
+        description_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.description"))
 
         # Draw box background and border
         from game_rendering_core import draw_bordered_box
-        draw_bordered_box(console, box_x, box_y, POPUP_WIDTH, POPUP_HEIGHT, border_color, bg_color)
+        draw_bordered_box(console, box_x, box_y, popup_width, popup_height, border_color, bg_color)
 
         # Render title with icon
         title_text = f"{achievement.icon} ACHIEVEMENT UNLOCKED!"
-        title_x = box_x + (POPUP_WIDTH - len(title_text)) // 2
+        title_x = box_x + (popup_width - len(title_text)) // 2
         render_char_safe(console, title_x, box_y + 1, title_text,
                         fg=title_color, bg=bg_color)
 
         # Render achievement name (centered)
-        name_x = box_x + (POPUP_WIDTH - len(achievement.name)) // 2
+        name_x = box_x + (popup_width - len(achievement.name)) // 2
         render_char_safe(console, name_x, box_y + 3, achievement.name,
                         fg=achievement_name_color, bg=bg_color)
 
         # Render description (word-wrapped, centered)
-        description_lines = self._wrap_text(achievement.description, POPUP_WIDTH - 4)
+        description_lines = self._wrap_text(achievement.description, popup_width - 4)
+        max_desc_lines = get_max_description_lines()
         for i, line in enumerate(description_lines):
-            if i >= 2:  # Max 2 lines for description
+            if i >= max_desc_lines:
                 break
-            line_x = box_x + (POPUP_WIDTH - len(line)) // 2
+            line_x = box_x + (popup_width - len(line)) // 2
             render_char_safe(console, line_x, box_y + 4 + i, line,
                            fg=description_color, bg=bg_color)
 
         # Optionally show hint at bottom (very subtle)
         hint_text = "(press any key or click)"
-        hint_x = box_x + (POPUP_WIDTH - len(hint_text)) // 2
-        hint_color = ensure_color_tuple((100, 100, 100))  # Very dim
-        render_char_safe(console, hint_x, box_y + POPUP_HEIGHT - 1, hint_text,
+        hint_x = box_x + (popup_width - len(hint_text)) // 2
+        hint_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.hint"))
+        render_char_safe(console, hint_x, box_y + popup_height - 1, hint_text,
                         fg=hint_color, bg=bg_color)
 
     @staticmethod

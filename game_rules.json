@@ -16,7 +16,12 @@
     "message_center_offset_small": 8,
     "message_center_offset_tiny": 10,
     "message_line_spacing": 1,
-    "message_button_spacing": 3
+    "message_button_spacing": 3,
+    "achievement_popup_width": 36,
+    "achievement_popup_height": 7,
+    "achievement_popup_duration": 3.0,
+    "achievement_popup_fade_duration": 0.3,
+    "achievement_popup_max_description_lines": 2
   },
   "rendering": {
     "status_bar_height": 1,
@@ -160,6 +165,19 @@
     "enhanced_vision_bonus": 2,
     "blind_spot_vision_reduction_factor": 3,
     "enemy_memory_turns": 20,
+    "shadow_damage_bonus": 10,
+    "virus_increment_turns": 3,
+    "enemy_flee_health_threshold": 0.3,
+    "patrol_spacing_min": 4,
+    "patrol_spacing_max": 8,
+    "static_enemy_cooldown": 999,
+    "patrol_validation_margin": 3,
+    "spawn_room_buffer": 5,
+    "max_heat_capacity": 200,
+    "patrol_fallback_horizontal": 4,
+    "patrol_fallback_vertical": 4,
+    "patrol_fallback_diagonal": 3,
+    "patrol_fallback_short": 2,
     "ai_behavior": {
       "enemy_trace_alert_to_hostile": 3,
       "enemy_trace_continuous_hostile": 0.3
@@ -278,7 +296,29 @@
       "electric_purple": [160, 20, 255],
       "help_text": [128, 128, 128],
       "dialogue_background": [30, 0, 0],
-      "neon_pink": [255, 20, 147]
+      "neon_pink": [255, 20, 147],
+      "log_bg": [8, 12, 20]
+    },
+    "achievement_popup": {
+      "border": [255, 215, 0],
+      "background": [20, 20, 30],
+      "title": [255, 215, 0],
+      "name": [255, 255, 255],
+      "description": [200, 200, 200],
+      "hint": [100, 100, 100]
+    },
+    "enemy_damage_tints": {
+      "hp_50_to_99": [255, 100, 100],
+      "hp_below_50": [255, 80, 80]
+    },
+    "graphics_mode_damage_tints": {
+      "no_damage": [255, 255, 255],
+      "hp_50_to_99": [255, 220, 220],
+      "hp_below_50": [255, 180, 180]
+    },
+    "path_colors": {
+      "cyan": [0, 200, 200],
+      "bright_cyan": [0, 255, 255]
     },
     "menu_background": {
       "pattern_colors": [
