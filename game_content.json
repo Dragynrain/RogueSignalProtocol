@@ -70,6 +70,8 @@
       "movement": "ADMIN",
       "name": "Admin Avatar",
       "damage": 45,
+      "damage_resistance_percent": 50,
+      "damage_resistance_min": 5,
       "description": "System administrator's digital enforcer. Heavily armed, relentless, and commands root-level privileges."
     }
   },
@@ -108,6 +110,8 @@
       "targeting": "SINGLE",
       "effect_radius": 10,
       "effect_duration": 8,
+      "alert_duration_patrol": 3,
+      "alert_duration_normal": 2,
       "description": "Spawn false alerts and decoy processes. Creates a convincing distraction lasting 8 turns - lure enemies away from your path."
     },
     "buffer_overflow": {
@@ -192,6 +196,7 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 0,
+      "trace_reduction_percent": 30,
       "description": "Scrub your activity from system logs and audit trails. Significantly reduces your detection level by 30% - cover your tracks."
     },
     "antivirus": {
