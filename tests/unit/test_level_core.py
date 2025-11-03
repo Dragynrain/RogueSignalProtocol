@@ -260,6 +260,28 @@ class TestSpecialTilePlacement:
         gateway_pos = (self.game_map.gateway.x, self.game_map.gateway.y)
         assert gateway_pos not in all_special_positions
 
+    def test_resource_nodes_not_on_blind_spots(self):
+        """Test that cooling/CPU nodes never spawn on blind spots (prevents unintended stealth bonuses)."""
+        self.level_generator.generate_level(1, 12345)
+
+        # Cooling nodes should never be on blind spots
+        for node_pos in self.game_map.cooling_nodes:
+            assert node_pos not in self.game_map.blind_spots, \
+                f"Cooling node at {node_pos} is on blind spot! Gives unintended stealth bonus."
+
+        # CPU recovery nodes should never be on blind spots
+        for node_pos in self.game_map.cpu_recovery_nodes:
+            assert node_pos not in self.game_map.blind_spots, \
+                f"CPU recovery node at {node_pos} is on blind spot! Gives unintended stealth bonus."
+
+        # Ghost nodes CAN be on blind spots (intentional design)
+        # Just verify they're treated as blind spots
+        from game_entities import Position
+        for ghost_pos in self.game_map.ghost_nodes:
+            pos = Position(ghost_pos[0], ghost_pos[1])
+            assert self.game_map.is_blind_spot(pos), \
+                "Ghost nodes should function as blind spots (intentional design)"
+
 
 class TestLevelProgression:
     """Test level progression and difficulty scaling."""

@@ -322,9 +322,35 @@ class TestVirusAndSpecialEnemies(TestEnemyAIBehavior):
             test_player = player()
             
             damage = enemy.attack_player(test_player)
-            
+
             assert damage == 0  # No immediate damage
             assert test_player.temporary_effects.get('movement_slowed_turns', 0) > 0
+
+    def test_inhibitor_slowdown_stacks_with_cap(self):
+        """Inhibitor slowdown extends duration (stacks) but caps at 5 turns."""
+        with patch('game_data.GameData.ENEMY_TYPES', {
+            'inhibitor': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0)
+        }):
+            enemy = Enemy(Position(5, 5), "inhibitor")
+            test_player = player()
+
+            # First hit
+            test_player.temporary_effects['movement_slowed_turns'] = 0
+            enemy.attack_player(test_player)
+            assert test_player.temporary_effects['movement_slowed_turns'] == 1, \
+                "First hit should apply 1 turn of slowdown"
+
+            # Second hit - should extend to 2
+            enemy.attack_player(test_player)
+            assert test_player.temporary_effects['movement_slowed_turns'] == 2, \
+                "BUG FIX: Slowdown should stack by extending duration, not overwrite"
+
+            # Keep hitting until cap
+            for _ in range(10):  # Hit many more times
+                enemy.attack_player(test_player)
+
+            assert test_player.temporary_effects['movement_slowed_turns'] == 5, \
+                "BUG FIX: Slowdown should cap at 5 turns (prevents infinite stacking)"
 
 
 class TestEnemyManager(TestEnemyAIBehavior):

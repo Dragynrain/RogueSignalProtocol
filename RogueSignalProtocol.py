@@ -69,13 +69,13 @@ from game_loop import main, initialize_tcod_context, WindowManager as LoopWindow
 DEBUG_MODE = os.path.exists('debug_mode.flag')
 
 if DEBUG_MODE:
-    # Alpha/Debug build - verbose logging for playtesters
-    log_level = logging.DEBUG
+    # Alpha/Debug build - INFO level logging (less spam, still useful)
+    log_level = logging.INFO
     # Use unbuffered file handler so logs are written immediately (critical for crash debugging)
     # Open with buffering=1 for line buffering
     log_file = open('game_debug.log', mode='w', buffering=1)
     file_handler = logging.StreamHandler(log_file)
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(logging.INFO)
 
     log_handlers = [
         logging.StreamHandler(),

@@ -415,6 +415,9 @@ class ExploitDefinition:
     description: str = ""
     effect_duration: int = 0  # Duration in turns for effects (stun, invisibility, scan, etc.)
     effect_radius: int = 0  # Radius of effect for area exploits (0 for single-target/no effect)
+    alert_duration_patrol: int = 0  # Alert duration for patrol enemies (decoy_swarm)
+    alert_duration_normal: int = 0  # Alert duration for normal enemies (decoy_swarm)
+    trace_reduction_percent: int = 0  # Trace reduction percentage (log_wiper)
 
     def get_detail_lines(self) -> list[str]:
         """

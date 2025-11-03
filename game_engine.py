@@ -342,10 +342,9 @@ class GameEngine:
             self._move_cursor(dx, dy)
             return
 
-        # Handle speed boost: grant extra moves only when starting a new turn
-        # Don't reset speed moves in the middle of using them
-        if self.player.temporary_effects['speed_boost_turns'] == 0:
-            self.player.speed_moves_remaining = 0
+        # Note: speed_moves_remaining is managed by game_session.process_turn()
+        # It grants moves when buff is active and remaining moves are 0
+        # Moves are consumed in maybe_process_turn() and naturally decay to 0
 
         # Check for enemy at target position first
         new_position = Position(
@@ -421,11 +420,10 @@ class GameEngine:
         self.process_turn()
         logging.debug(f"DEBUG: maybe_process_turn() process_turn() returned")
 
-        # If player has movement inhibition, enemies get 2 extra moves (2 moves per 1 player move)
+        # If player has movement inhibition, enemies get 1 extra move (2 moves per 1 player move)
         if self.player.temporary_effects['movement_slowed_turns'] > 0:
             self.message_log.add_message("Movement inhibition: Enemies get double moves")
-            # Process enemy updates twice for the double move advantage
-            self.game_session._update_enemies()
+            # Process enemy updates once for the double move advantage (already got 1 from process_turn)
             self.game_session._update_enemies()
         logging.debug(f"DEBUG: maybe_process_turn() END")
 

@@ -537,7 +537,7 @@ class Player:
             logging.debug(f"Player upgrade '{upgrade_key}': max_CPU {old_max_cpu} -> {self.max_cpu}, CPU {old_cpu} -> {self.cpu} (cap={max_cpu})")
         elif upgrade.stat_type == 'heat':
             old_max_heat = self.max_heat
-            max_cap = GameBalance.get_balance("max_heat_capacity")
+            max_cap = GameConfig.get('balance.max_heat_capacity', 200)
             self.max_heat = min(max_cap, self.max_heat + upgrade.bonus_amount)
             logging.debug(f"Player upgrade '{upgrade_key}': max_heat {old_max_heat} -> {self.max_heat} (cap={max_cap})")
 
@@ -796,8 +796,8 @@ class Enemy:
     def attack_player(self, player: Player) -> int:
         """Attack the player and return damage dealt."""
         if self.type == 'virus':
-            virus_increment = GameBalance.get_balance("virus_increment_turns")
-            virus_max = GameBalance.get_gameplay("virus_max_duration")
+            virus_increment = GameConfig.get('balance.virus_increment_turns', 3)
+            virus_max = GameConfig.get('gameplay.virus_max_duration', 10)
             virus_turns = player.temporary_effects.get('virus_turns', 0) + virus_increment
             player.temporary_effects['virus_turns'] = min(virus_turns, virus_max)
             logging.debug(f"Enemy {self.type}@({self.x},{self.y}): infected player, virus_turns={player.temporary_effects['virus_turns']}")
@@ -809,10 +809,14 @@ class Enemy:
             net_effect = current_speed - 1
 
             if net_effect >= 0:
+                # Still have speed boost remaining - just reduce it
                 player.temporary_effects['speed_boost_turns'] = net_effect
             else:
+                # No speed boost - apply slowdown by extending duration (stacking with cap)
                 player.temporary_effects['speed_boost_turns'] = 0
-                player.temporary_effects['movement_slowed_turns'] = -net_effect
+                current_slow = player.temporary_effects.get('movement_slowed_turns', 0)
+                # Add slowdown and cap at 5 turns to prevent infinite stacking
+                player.temporary_effects['movement_slowed_turns'] = min(current_slow + (-net_effect), 5)
             logging.debug(f"Enemy {self.type}@({self.x},{self.y}): inhibited player, slowed_turns={player.temporary_effects['movement_slowed_turns']}")
             return 0
 
@@ -895,7 +899,7 @@ class Enemy:
 
         # 8. Update cooldown
         if self.get_movement_type() == EnemyMovement.STATIC:
-            self.move_cooldown = GameBalance.get_balance("static_enemy_cooldown")
+            self.move_cooldown = GameConfig.get('balance.static_enemy_cooldown', 999)
         else:
             self.move_cooldown = 0
 
@@ -1252,7 +1256,7 @@ class Enemy:
             if max_cpu <= 0:
                 return False
             health_percent = self.cpu / max_cpu
-            flee_threshold = GameBalance.get_balance("enemy_flee_health_threshold")
+            flee_threshold = GameConfig.get('balance.enemy_flee_health_threshold', 0.3)
             if health_percent > flee_threshold:
                 return False
         except (TypeError, ValueError, AttributeError):

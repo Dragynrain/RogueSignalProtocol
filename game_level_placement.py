@@ -255,15 +255,19 @@ class TilePlacementGenerator:
 
     def get_all_floor_positions(self) -> List[Tuple[int, int]]:
         """
-        Get all valid floor positions (not walls).
+        Get all valid floor positions (not walls, not blind spots).
+
+        Excludes blind spots to prevent special nodes (cooling/CPU) from getting
+        stealth bonuses. Ghost nodes are placed separately and intentionally
+        can overlap with blind spots.
 
         Returns:
-            List of all floor tile positions
+            List of all floor tile positions excluding blind spots
         """
         floor_positions = []
         for x in range(GameConfig.MAP_WIDTH):
             for y in range(GameConfig.MAP_HEIGHT):
-                if (x, y) not in self.game_map.walls:
+                if (x, y) not in self.game_map.walls and (x, y) not in self.game_map.blind_spots:
                     floor_positions.append((x, y))
         return floor_positions
 
