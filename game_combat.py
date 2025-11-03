@@ -348,7 +348,7 @@ class ExploitSystem:
 
         # Shadow bonus: extra damage if attacking from blind spots or while invisible
         if self.game.game_map.is_blind_spot(self.game.player.position) or self.game.player.is_invisible():
-            shadow_bonus = self.game.config.get_balance("shadow_damage_bonus")
+            shadow_bonus = GameConfig.get('balance.shadow_damage_bonus', 10)
             return base_damage + shadow_bonus
         return base_damage
 
@@ -368,10 +368,38 @@ class ExploitSystem:
             True (always succeeds)
         """
         if enemy.take_damage(damage):
+            # Enemy destroyed
+            is_admin = enemy.type == 'admin'
+            self.game.sound_manager.play_sound("enemy_death")
             self.game.enemies.remove(enemy)
             self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
             logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) ELIMINATED, CPU reward={GameBalance.ENEMY_ELIMINATION_CPU_REWARD}")
-            self.game.message_log.add_message(f"Eliminated {enemy.type_data.name}")
+            self.game.message_log.add_message(f"Eliminated {enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")
+
+            # Track metrics
+            from game_metrics import track, get_current_session
+            track("enemies_killed", category=enemy.type)
+            track("damage_dealt", amount=damage)
+            if enemy.state == EnemyState.UNAWARE:
+                track("stealth_kills")
+
+            # Update max single hit damage for Overkill achievement
+            current_session = get_current_session()
+            if current_session and damage > current_session.max_single_hit_damage:
+                current_session.max_single_hit_damage = damage
+
+            # Check for immediate achievement unlocks (First Blood, Massacre, Overkill, etc.)
+            from game_achievements import AchievementManager
+            if current_session:
+                AchievementManager.check_immediate_achievements_and_notify(current_session, self.game)
+
+            # Add environmental narrative for first combat or admin defeat
+            if is_admin:
+                env_msg = self.game.narrative_manager.trigger_admin_defeated()
+            else:
+                env_msg = self.game.narrative_manager.trigger_first_combat()
+            if env_msg:
+                self.game.message_log.add_message(env_msg)
         else:
             self.game.message_log.add_message(f"{enemy.type_data.name} damaged")
             movement_type = enemy.get_movement_type()
@@ -634,8 +662,8 @@ class ExploitSystem:
         """
         self.game.sound_manager.play_sound("exploit_log_wiper")
         old_trace = self.game.player.trace_level
-        exploit_data = self.game.content.get_exploit("log_wiper")
-        trace_reduction = exploit_data.get("trace_reduction_percent", 30)
+        exploit = GameData.EXPLOITS['log_wiper']
+        trace_reduction = exploit.trace_reduction_percent
         self.game.player.trace_level = max(0, self.game.player.trace_level - trace_reduction)
         actual_reduction = old_trace - self.game.player.trace_level
         self.game.message_log.add_message(f"Trace Level: -{actual_reduction:.1f}%")

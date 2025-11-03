@@ -162,9 +162,8 @@ class EnemyManager:
         """
         # Choose a simple pattern type
         pattern_type = random.choice(['line', 'triangle', 'rectangle'])
-        from game_config import GameBalance
-        min_spacing = GameBalance.get_balance("patrol_spacing_min")
-        max_spacing = GameBalance.get_balance("patrol_spacing_max")
+        min_spacing = GameConfig.get('balance.patrol_spacing_min', 4)
+        max_spacing = GameConfig.get('balance.patrol_spacing_max', 8)
         step_size = random.randint(min_spacing, max_spacing)
         logging.debug(f"Patrol route: start=({start.x},{start.y}), pattern={pattern_type}, step_size={step_size}")
 
@@ -228,10 +227,10 @@ class EnemyManager:
                     return route
 
         # Fallback: try multiple simple 2-point patterns
-        h_dist = GameBalance.get_balance("patrol_fallback_horizontal")
-        v_dist = GameBalance.get_balance("patrol_fallback_vertical")
-        d_dist = GameBalance.get_balance("patrol_fallback_diagonal")
-        s_dist = GameBalance.get_balance("patrol_fallback_short")
+        h_dist = GameConfig.get('balance.patrol_fallback_horizontal', 4)
+        v_dist = GameConfig.get('balance.patrol_fallback_vertical', 4)
+        d_dist = GameConfig.get('balance.patrol_fallback_diagonal', 3)
+        s_dist = GameConfig.get('balance.patrol_fallback_short', 2)
         fallback_patterns = [
             Position(start.x + h_dist, start.y),      # Horizontal right
             Position(start.x - h_dist, start.y),      # Horizontal left
@@ -257,8 +256,7 @@ class EnemyManager:
     def _is_valid_patrol_point(self, point: Position) -> bool:
         """Check if a position is valid for patrol (within bounds, not a wall)."""
         # Use centralized PositionValidator for consistency
-        from game_config import GameBalance
-        margin = GameBalance.get_balance("patrol_validation_margin")
+        margin = GameConfig.get('balance.patrol_validation_margin', 3)
         return PositionValidator.is_valid_for_patrol(point, self.game_map, margin=margin)
 
     def _validate_patrol_connectivity(self, route: List[Position]) -> bool:
