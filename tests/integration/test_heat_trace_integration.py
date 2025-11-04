@@ -16,40 +16,17 @@ These tests use REAL game objects with minimal mocking.
 """
 
 import pytest
-from unittest.mock import Mock
 
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
-from game_config import GameSettings, GameBalance
-from tests.fixtures.simple_fixtures import create_real_player, create_real_enemy
-from tests.fixtures.real_game_data import get_real_game_data
+from game_entities import Position
+from tests.fixtures.simple_fixtures import create_real_enemy
 
 
 class TestHeatGeneration:
     """Test heat generation from player actions."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_exploit_generates_heat(self):
+    def test_exploit_generates_heat(self, basic_game_engine):
         """Test using exploit generates heat."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set up player with exploit
         engine.player.heat = 0
@@ -68,9 +45,9 @@ class TestHeatGeneration:
         # Verify heat increased
         assert engine.player.heat >= initial_heat, "Exploit should generate heat"
 
-    def test_multiple_exploits_accumulate_heat(self):
+    def test_multiple_exploits_accumulate_heat(self, basic_game_engine):
         """Test using multiple exploits accumulates heat."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set up player with exploits
         engine.player.heat = 0
@@ -91,9 +68,9 @@ class TestHeatGeneration:
         # Verify heat accumulated
         assert heat_values[-1] >= heat_values[0], "Heat should accumulate from multiple exploits"
 
-    def test_heat_caps_at_maximum(self):
+    def test_heat_caps_at_maximum(self, basic_game_engine):
         """Test heat doesn't exceed maximum value."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set heat to near maximum
         max_heat = 100  # Typical max heat value
@@ -110,27 +87,9 @@ class TestHeatGeneration:
 class TestHeatDecay:
     """Test heat decay over time."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_heat_decays_over_turns(self):
+    def test_heat_decays_over_turns(self, basic_game_engine):
         """Test heat naturally decays over multiple turns."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set initial heat
         engine.player.heat = 50
@@ -148,9 +107,9 @@ class TestHeatDecay:
         assert heat_values[0] >= 0, "Heat system should function"
         assert engine.player.heat >= 0, "Heat should not go negative"
 
-    def test_cooling_node_accelerates_heat_decay(self):
+    def test_cooling_node_accelerates_heat_decay(self, basic_game_engine):
         """Test cooling nodes provide faster heat reduction."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set up player on cooling node with heat
         cooling_pos = Position(20, 20)
@@ -167,9 +126,9 @@ class TestHeatDecay:
         # Verify enhanced cooling
         assert engine.player.heat < initial_heat, "Cooling node should reduce heat faster"
 
-    def test_heat_does_not_go_negative(self):
+    def test_heat_does_not_go_negative(self, basic_game_engine):
         """Test heat doesn't go below zero."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set low heat
         engine.player.heat = 1
@@ -185,27 +144,9 @@ class TestHeatDecay:
 class TestTraceLevelAccumulation:
     """Test trace level accumulation from player actions."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_background_trace_accumulates_per_turn(self):
+    def test_background_trace_accumulates_per_turn(self, basic_game_engine):
         """Test background trace accumulates each turn."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Record initial trace
         initial_trace = engine.player.trace_level
@@ -217,9 +158,9 @@ class TestTraceLevelAccumulation:
         # Verify trace increased (background trace)
         assert engine.player.trace_level >= initial_trace, "Trace should accumulate over time"
 
-    def test_exploit_usage_increases_trace(self):
+    def test_exploit_usage_increases_trace(self, basic_game_engine):
         """Test using exploits increases trace level."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set up player with exploit
         engine.player.trace_level = 0
@@ -238,9 +179,9 @@ class TestTraceLevelAccumulation:
         # Verify trace increased
         assert engine.player.trace_level >= initial_trace, "Exploit should increase trace"
 
-    def test_combat_actions_increase_trace(self):
+    def test_combat_actions_increase_trace(self, basic_game_engine):
         """Test combat actions increase trace level."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set up combat scenario
         engine.player.position = Position(10, 10)
@@ -262,27 +203,9 @@ class TestTraceLevelAccumulation:
 class TestTraceLevelEffects:
     """Test trace level effects on gameplay."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_high_trace_increases_enemy_detection_range(self):
+    def test_high_trace_increases_enemy_detection_range(self, basic_game_engine):
         """Test high trace level increases enemy detection range."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player with high trace
         engine.player.position = Position(20, 20)
@@ -297,9 +220,9 @@ class TestTraceLevelEffects:
         assert hasattr(engine.player, 'trace_level'), "Player should track trace level"
         assert engine.player.trace_level > 0, "Trace level should be set"
 
-    def test_low_trace_reduces_detection(self):
+    def test_low_trace_reduces_detection(self, basic_game_engine):
         """Test low trace level makes player harder to detect."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player with low trace
         engine.player.position = Position(20, 20)
@@ -317,27 +240,9 @@ class TestTraceLevelEffects:
 class TestAdminSpawnSystem:
     """Test admin spawn triggered by high trace."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_admin_spawns_at_high_trace_threshold(self):
+    def test_admin_spawns_at_high_trace_threshold(self, basic_game_engine):
         """Test admin enemy spawns when trace reaches threshold."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Ensure admin_spawned attribute is initialized (should be set during engine init)
         if not hasattr(engine.game_state, 'admin_spawned'):
@@ -356,9 +261,9 @@ class TestAdminSpawnSystem:
         assert hasattr(engine.game_state, 'admin_spawned'), "Should track admin spawn status"
         assert isinstance(engine.game_state.admin_spawned, bool), "Admin spawn flag should be boolean"
 
-    def test_admin_only_spawns_once_per_level(self):
+    def test_admin_only_spawns_once_per_level(self, basic_game_engine):
         """Test admin only spawns once per level."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Mark admin as already spawned
         engine.game_state.admin_spawned = True
@@ -375,9 +280,9 @@ class TestAdminSpawnSystem:
         # Admin should not spawn again
         assert engine.game_state.admin_spawned, "Admin spawn flag should remain true"
 
-    def test_admin_spawn_resets_on_new_level(self):
+    def test_admin_spawn_resets_on_new_level(self, basic_game_engine):
         """Test admin spawn flag resets when advancing to new level."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Mark admin as spawned
         engine.game_state.admin_spawned = True
@@ -393,27 +298,9 @@ class TestAdminSpawnSystem:
 class TestHeatDeathCondition:
     """Test heat death condition."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_maximum_heat_triggers_damage(self):
+    def test_maximum_heat_triggers_damage(self, basic_game_engine):
         """Test reaching maximum heat causes damage."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set heat to maximum
         engine.player.heat = 100
@@ -428,9 +315,9 @@ class TestHeatDeathCondition:
         # This test verifies the system exists
         assert engine.player.heat >= 0, "Heat system should function"
 
-    def test_sustained_high_heat_causes_continuous_damage(self):
+    def test_sustained_high_heat_causes_continuous_damage(self, basic_game_engine):
         """Test sustained high heat causes damage over time."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set high heat
         engine.player.heat = 95
@@ -451,27 +338,9 @@ class TestHeatDeathCondition:
 class TestHeatTraceInteraction:
     """Test interaction between heat and trace systems."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_exploit_increases_both_heat_and_trace(self):
+    def test_exploit_increases_both_heat_and_trace(self, basic_game_engine):
         """Test exploit usage increases both heat and trace."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set up player
         engine.player.heat = 0
@@ -493,9 +362,9 @@ class TestHeatTraceInteraction:
         assert engine.player.heat >= initial_heat, "Heat should increase"
         assert engine.player.trace_level >= initial_trace, "Trace should increase"
 
-    def test_high_heat_high_trace_scenario(self):
+    def test_high_heat_high_trace_scenario(self, basic_game_engine):
         """Test gameplay with both high heat and high trace."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set both high
         engine.player.heat = 85
@@ -513,9 +382,9 @@ class TestHeatTraceInteraction:
         assert engine.player.heat >= 0, "Heat should be valid"
         assert engine.player.trace_level >= 0, "Trace should be valid"
 
-    def test_heat_trace_independent_decay(self):
+    def test_heat_trace_independent_decay(self, basic_game_engine):
         """Test heat and trace decay independently."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set both high
         engine.player.heat = 60
@@ -538,27 +407,9 @@ class TestHeatTraceInteraction:
 class TestEdgeCasesAndBoundaries:
     """Test edge cases and boundary conditions."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_zero_heat_zero_trace(self):
+    def test_zero_heat_zero_trace(self, basic_game_engine):
         """Test gameplay with zero heat and trace."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set both to zero
         engine.player.heat = 0
@@ -571,9 +422,9 @@ class TestEdgeCasesAndBoundaries:
         assert engine.player.heat >= 0, "Heat should remain non-negative"
         assert engine.player.trace_level >= 0, "Trace should remain non-negative"
 
-    def test_maximum_heat_zero_trace(self):
+    def test_maximum_heat_zero_trace(self, basic_game_engine):
         """Test maximum heat with zero trace."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         engine.player.heat = 100
         engine.player.trace_level = 0
@@ -585,9 +436,9 @@ class TestEdgeCasesAndBoundaries:
         # System should handle edge case
         assert engine.player.cpu > 0, "Player should survive or die gracefully"
 
-    def test_zero_heat_maximum_trace(self):
+    def test_zero_heat_maximum_trace(self, basic_game_engine):
         """Test zero heat with maximum trace."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         engine.player.heat = 0
         engine.player.trace_level = 100
@@ -598,9 +449,9 @@ class TestEdgeCasesAndBoundaries:
         # Admin may spawn, but system should be stable
         assert engine.player.trace_level >= 0, "Trace should be valid"
 
-    def test_rapid_heat_fluctuation(self):
+    def test_rapid_heat_fluctuation(self, basic_game_engine):
         """Test rapid heat increases and decreases."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set up for rapid changes
         cooling_pos = Position(20, 20)
@@ -630,27 +481,9 @@ class TestEdgeCasesAndBoundaries:
 class TestComplexHeatTraceScenarios:
     """Test complex scenarios involving heat and trace."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_stealth_run_low_heat_low_trace(self):
+    def test_stealth_run_low_heat_low_trace(self, basic_game_engine):
         """Test stealth gameplay maintains low heat and trace."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position in blind spots, don't use exploits
         shadow_pos = Position(20, 20)
@@ -672,9 +505,9 @@ class TestComplexHeatTraceScenarios:
         assert engine.player.heat < 50, "Stealth should keep heat low"
         # Trace will increase from background, but slowly
 
-    def test_combat_heavy_high_heat_high_trace(self):
+    def test_combat_heavy_high_heat_high_trace(self, basic_game_engine):
         """Test combat-heavy gameplay generates high heat and trace."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set up combat scenario
         engine.player.position = Position(20, 20)
@@ -698,9 +531,9 @@ class TestComplexHeatTraceScenarios:
         assert engine.player.heat >= initial_heat, "Combat should increase heat"
         assert engine.player.trace_level >= initial_trace, "Combat should increase trace"
 
-    def test_heat_management_with_cooling_nodes(self):
+    def test_heat_management_with_cooling_nodes(self, basic_game_engine):
         """Test managing heat using cooling nodes strategically."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set up cooling node
         cooling_pos = Position(20, 20)

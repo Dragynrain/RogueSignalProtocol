@@ -29,41 +29,13 @@ from tests.fixtures.simple_fixtures import create_real_player
 class TestCompleteLevelPlaythrough:
     """Test complete level playthrough workflows from start to gateway."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        # Create real game data
-        self.game_data = get_real_game_data()
-
-        # Create game settings with muted audio for tests
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
     def teardown_method(self):
         """Clean up test fixtures."""
         pass
 
-    def create_test_engine(self, level=1):
-        """Create a GameEngine instance for testing."""
-        # Create mocked sound manager for testing
-        mock_sound_manager = Mock()
-
-        # Create GameEngine with mocked dependencies
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-
-        # Set initial level
-        engine.level = level
-
-        return engine
-
-    def test_level_initialization_creates_valid_game_state(self):
+    def test_level_initialization_creates_valid_game_state(self, basic_game_engine):
         """Test that level initialization creates a valid, playable game state."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Verify engine initialized correctly
         assert engine.level == 1
@@ -102,9 +74,9 @@ class TestCompleteLevelPlaythrough:
             assert (enemy.x, enemy.y) not in engine.game_map.walls
             assert enemy.state == EnemyState.UNAWARE
 
-    def test_code_hack_collection_and_usage_in_level(self):
+    def test_code_hack_collection_and_usage_in_level(self, basic_game_engine):
         """Test collecting and using code hacks during level playthrough."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Find a code hack on the map
         code_positions = list(engine.game_map.code_hacks.keys())
@@ -173,12 +145,12 @@ class TestCompleteLevelPlaythrough:
         )
         assert stats_changed, f"Code hack had no visible effect. CPU: {pre_use_cpu}->{engine.player.cpu}, Heat: {pre_use_heat}->{engine.player.heat}, Trace: {pre_use_trace}->{engine.player.trace_level}, TempEffects: {pre_use_temp_effects}->{engine.player.temporary_effects}"
 
-    def test_exploit_pickup_collection_and_equipping(self):
+    def test_exploit_pickup_collection_and_equipping(self, basic_game_engine):
         """Test collecting exploit pickups and equipping them."""
         from game_data import GameData
         from game_inventory import ExploitItem
 
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Dismiss intro dialogue (new games show intro)
         if engine.dialogue_state.is_active():
@@ -247,16 +219,16 @@ class TestCompleteLevelPlaythrough:
                 # If not enough RAM, equip should fail gracefully
                 assert not success, "Equip should fail when insufficient RAM"
 
-    def test_permanent_upgrade_collection_and_effect(self):
+    def test_permanent_upgrade_collection_and_effect(self, basic_game_engine):
         """Test collecting permanent upgrades and verifying their effects."""
-        engine = self.create_test_engine(level=2)  # Level 2 has more upgrades
+        engine = basic_game_engine  # Level 2 has more upgrades
 
         # Find a permanent upgrade on the map
         upgrade_positions = list(engine.game_map.permanent_upgrades.keys())
 
         if len(upgrade_positions) == 0:
             # Try level 3 if level 2 has no upgrades
-            engine = self.create_test_engine(level=3)
+            engine = basic_game_engine
             upgrade_positions = list(engine.game_map.permanent_upgrades.keys())
 
         assert len(upgrade_positions) > 0, "No permanent upgrades spawned on any level"
@@ -295,9 +267,9 @@ class TestCompleteLevelPlaythrough:
 
         assert stat_changed, "No stat was changed by upgrade"
 
-    def test_enemy_engagement_and_defeat(self):
+    def test_enemy_engagement_and_defeat(self, basic_game_engine):
         """Test engaging and defeating an enemy during level playthrough."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Find an enemy
         assert len(engine.enemies) > 0, "No enemies on level"
@@ -331,9 +303,9 @@ class TestCompleteLevelPlaythrough:
         assert target_enemy not in engine.enemies, f"Enemy not defeated after {attempts} attempts"
         assert len(engine.enemies) < initial_enemy_count, "Enemy count not decreased"
 
-    def test_gateway_discovery_triggers_confirmation_dialog(self):
+    def test_gateway_discovery_triggers_confirmation_dialog(self, basic_game_engine):
         """Test that reaching the gateway triggers confirmation dialog."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Get gateway position
         gateway = engine.game_map.gateway
@@ -369,9 +341,9 @@ class TestCompleteLevelPlaythrough:
         # Verify level progressed after confirmation
         assert engine.level == initial_level + 1, "Level should have progressed"
 
-    def test_gateway_confirmation_progresses_to_next_level(self):
+    def test_gateway_confirmation_progresses_to_next_level(self, basic_game_engine):
         """Test that stepping on gateway progresses to next level automatically."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Move player to gateway (this triggers automatic level progression)
         gateway = engine.game_map.gateway
@@ -403,9 +375,9 @@ class TestCompleteLevelPlaythrough:
         assert 0 <= engine.player.y < GameConfig.MAP_HEIGHT
         assert (engine.player.x, engine.player.y) not in engine.game_map.walls
 
-    def test_state_persistence_across_level_transitions(self):
+    def test_state_persistence_across_level_transitions(self, basic_game_engine):
         """Test that player state persists correctly across level transitions."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Modify player state
         engine.player.cpu = 75
@@ -436,9 +408,9 @@ class TestCompleteLevelPlaythrough:
         assert engine.player.max_cpu == pre_max_cpu, "Max CPU not preserved"
         assert engine.player.ram_total == pre_ram_total, "RAM total not preserved"
 
-    def test_complete_playthrough_level_1_to_2(self):
+    def test_complete_playthrough_level_1_to_2(self, basic_game_engine):
         """Test complete playthrough from level 1 start to level 2 arrival."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Verify starting conditions
         assert engine.level == 1
@@ -485,13 +457,13 @@ class TestCompleteLevelPlaythrough:
         assert 0 <= engine.player.x < GameConfig.MAP_WIDTH
         assert 0 <= engine.player.y < GameConfig.MAP_HEIGHT
 
-    def test_story_fragment_collection_on_level_3(self):
+    def test_story_fragment_collection_on_level_3(self, basic_game_engine):
         """Test story fragment collection on level 3 (50% spawn chance)."""
         # Run test multiple times to account for 50% spawn rate
         fragment_found = False
 
         for _ in range(10):  # Try up to 10 times
-            engine = self.create_test_engine(level=3)
+            engine = basic_game_engine
 
             if len(engine.game_map.story_fragments) > 0:
                 fragment_found = True
@@ -522,9 +494,9 @@ class TestCompleteLevelPlaythrough:
             # This is okay - 50% chance means we might not find one in 10 tries (though unlikely)
             pass
 
-    def test_resource_management_throughout_level(self):
+    def test_resource_management_throughout_level(self, basic_game_engine):
         """Test CPU, heat, and trace level management during level playthrough."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Record initial resources
         initial_cpu = engine.player.cpu
@@ -586,9 +558,9 @@ class TestCompleteLevelPlaythrough:
             # Verify heat was reduced
             assert engine.player.heat < 40, "Heat not reduced from cooling node"
 
-    def test_level_completion_with_enemies_remaining(self):
+    def test_level_completion_with_enemies_remaining(self, basic_game_engine):
         """Test that player can complete level even with enemies still alive."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Verify enemies exist
         assert len(engine.enemies) > 0
@@ -615,9 +587,9 @@ class TestCompleteLevelPlaythrough:
         # New level should have its own enemies
         assert len(engine.enemies) > 0
 
-    def test_multiple_level_transitions_preserve_progression(self):
+    def test_multiple_level_transitions_preserve_progression(self, basic_game_engine):
         """Test that multiple level transitions preserve game progression."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Record initial max_cpu (permanent upgrades affect this stat)
         initial_max_cpu = engine.player.max_cpu
@@ -643,9 +615,9 @@ class TestCompleteLevelPlaythrough:
         assert engine.level == 4
         assert engine.game_over == True
 
-    def test_level_playthrough_with_full_inventory(self):
+    def test_level_playthrough_with_full_inventory(self, basic_game_engine):
         """Test level playthrough behavior when inventory is full or nearly full."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Fill inventory with test items
         for i in range(10):  # Add several items
@@ -675,29 +647,10 @@ class TestCompleteLevelPlaythrough:
 class TestLevelEnvironmentGeneration:
     """Test level environment and feature generation."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self, level=1):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        engine.level = level
-        return engine
-
-    def test_all_essential_map_features_generated(self):
+    def test_all_essential_map_features_generated(self, basic_game_engine):
         """Test that all essential map features are generated on each level."""
         for level in [1, 2, 3]:
-            engine = self.create_test_engine(level=level)
+            engine = basic_game_engine
 
             # Verify walls exist
             assert len(engine.game_map.walls) > 0, f"No walls on level {level}"
@@ -724,12 +677,12 @@ class TestLevelEnvironmentGeneration:
             if network_config.get('cpu_nodes', 0) > 0:
                 assert len(engine.game_map.cpu_recovery_nodes) > 0, f"No CPU nodes on level {level}"
 
-    def test_blind_spot_coverage_varies_by_level(self):
+    def test_blind_spot_coverage_varies_by_level(self, basic_game_engine):
         """Test that blind spot coverage follows network configuration per level."""
         blind_spot_counts = {}
 
         for level in [1, 2, 3]:
-            engine = self.create_test_engine(level=level)
+            engine = basic_game_engine
             blind_spot_counts[level] = len(engine.game_map.blind_spots)
 
             # Verify blind spots exist
@@ -737,21 +690,21 @@ class TestLevelEnvironmentGeneration:
             if network_config.get('blind_spot_coverage', 0) > 0:
                 assert blind_spot_counts[level] > 0, f"No blind spots on level {level} despite blind_spot_coverage > 0"
 
-    def test_enemy_density_scales_with_level(self):
+    def test_enemy_density_scales_with_level(self, basic_game_engine):
         """Test that enemy density increases or stays same across levels."""
         enemy_counts = {}
 
         for level in [1, 2, 3]:
-            engine = self.create_test_engine(level=level)
+            engine = basic_game_engine
             enemy_counts[level] = len(engine.enemies)
 
         # Later levels should have same or more enemies
         assert enemy_counts[2] >= enemy_counts[1], "Level 2 has fewer enemies than level 1"
         assert enemy_counts[3] >= enemy_counts[2], "Level 3 has fewer enemies than level 2"
 
-    def test_items_spawn_in_accessible_locations(self):
+    def test_items_spawn_in_accessible_locations(self, basic_game_engine):
         """Test that all items spawn in locations the player can reach."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Check code hacks
         for pos in engine.game_map.code_hacks.keys():
@@ -771,9 +724,9 @@ class TestLevelEnvironmentGeneration:
             assert 0 <= pos[0] < GameConfig.MAP_WIDTH, f"Upgrade X coordinate {pos[0]} out of bounds"
             assert 0 <= pos[1] < GameConfig.MAP_HEIGHT, f"Upgrade Y coordinate {pos[1]} out of bounds"
 
-    def test_gateway_spawns_far_from_player_start(self):
+    def test_gateway_spawns_far_from_player_start(self, basic_game_engine):
         """Test that gateway spawns a reasonable distance from player starting position."""
-        engine = self.create_test_engine(level=1)
+        engine = basic_game_engine
 
         # Player should start in top-left spawn area (around 5,5)
         player_start = Position(engine.player.x, engine.player.y)

@@ -29,27 +29,9 @@ from tests.fixtures.real_game_data import get_real_game_data
 class TestCoolingNodeIntegration:
     """Test cooling node integration with heat management."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_player_heat_reduces_on_cooling_node(self):
+    def test_player_heat_reduces_on_cooling_node(self, basic_game_engine):
         """Test player standing on cooling node reduces heat."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player on cooling node with high heat
         cooling_pos = Position(20, 20)
@@ -68,9 +50,9 @@ class TestCoolingNodeIntegration:
         # Verify heat reduced
         assert engine.player.heat < initial_heat, "Heat should decrease on cooling node"
 
-    def test_cooling_node_multi_turn_effect(self):
+    def test_cooling_node_multi_turn_effect(self, basic_game_engine):
         """Test cooling node reduces heat over multiple turns."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player on cooling node
         cooling_pos = Position(20, 20)
@@ -89,9 +71,9 @@ class TestCoolingNodeIntegration:
         # Verify heat doesn't go below 0
         assert engine.player.heat >= 0, "Heat should not go negative"
 
-    def test_leaving_cooling_node_stops_cooling(self):
+    def test_leaving_cooling_node_stops_cooling(self, basic_game_engine):
         """Test leaving cooling node stops the cooling effect."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Start on cooling node
         cooling_pos = Position(20, 20)
@@ -119,9 +101,9 @@ class TestCoolingNodeIntegration:
         # The key test is the system works differently off the node
         assert hasattr(engine.game_map, 'is_cooling_node'), "Map should track cooling nodes"
 
-    def test_cooling_node_with_zero_heat(self):
+    def test_cooling_node_with_zero_heat(self, basic_game_engine):
         """Test cooling node with player at zero heat (edge case)."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player on cooling node with 0 heat
         cooling_pos = Position(20, 20)
@@ -139,27 +121,9 @@ class TestCoolingNodeIntegration:
 class TestCPURecoveryNodeIntegration:
     """Test CPU recovery node integration."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_player_cpu_recovers_on_cpu_node(self):
+    def test_player_cpu_recovers_on_cpu_node(self, basic_game_engine):
         """Test player standing on CPU recovery node recovers CPU."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player on CPU node with low CPU
         cpu_pos = Position(20, 20)
@@ -179,9 +143,9 @@ class TestCPURecoveryNodeIntegration:
         # Verify CPU increased
         assert engine.player.cpu >= initial_cpu, "CPU should increase on CPU recovery node"
 
-    def test_cpu_recovery_multi_turn_effect(self):
+    def test_cpu_recovery_multi_turn_effect(self, basic_game_engine):
         """Test CPU recovery node restores CPU over multiple turns."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player on CPU node
         cpu_pos = Position(20, 20)
@@ -201,9 +165,9 @@ class TestCPURecoveryNodeIntegration:
         # Verify CPU doesn't exceed max
         assert engine.player.cpu <= engine.player.max_cpu, "CPU should not exceed max"
 
-    def test_cpu_recovery_caps_at_max(self):
+    def test_cpu_recovery_caps_at_max(self, basic_game_engine):
         """Test CPU recovery doesn't exceed max CPU."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player on CPU node near max CPU
         cpu_pos = Position(20, 20)
@@ -223,27 +187,9 @@ class TestCPURecoveryNodeIntegration:
 class TestGhostNodeIntegration:
     """Test ghost node integration with stealth."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_ghost_node_provides_shadow_stealth(self):
+    def test_ghost_node_provides_shadow_stealth(self, basic_game_engine):
         """Test ghost node acts as shadow for stealth."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player on ghost node
         ghost_pos = Position(20, 20)
@@ -263,9 +209,9 @@ class TestGhostNodeIntegration:
             can_see = scanner.can_see_player(engine.player, engine.game_map)
             assert not can_see, "Enemy should not see player on ghost node from distance"
 
-    def test_ghost_node_with_adjacent_enemy(self):
+    def test_ghost_node_with_adjacent_enemy(self, basic_game_engine):
         """Test ghost node stealth with adjacent enemy."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player on ghost node
         ghost_pos = Position(20, 20)
@@ -288,27 +234,9 @@ class TestGhostNodeIntegration:
 class TestShadowMechanicsIntegration:
     """Test shadow mechanics with player movement."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_player_movement_through_shadows(self):
+    def test_player_movement_through_shadows(self, basic_game_engine):
         """Test player moving through shadowed areas."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Create shadow path
         shadow_path = [(x, 20) for x in range(15, 26)]
@@ -337,9 +265,9 @@ class TestShadowMechanicsIntegration:
             if distance > GameBalance.ADJACENT_DISTANCE_THRESHOLD:
                 assert not can_see, f"Player should be hidden in shadow at distance {distance}"
 
-    def test_shadow_transitions(self):
+    def test_shadow_transitions(self, basic_game_engine):
         """Test player transitioning between light and shadow."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Create mixed light/shadow area
         engine.game_map.blind_spots.add((20, 20))
@@ -364,27 +292,9 @@ class TestShadowMechanicsIntegration:
 class TestSpecialTileCombinations:
     """Test combinations of special tiles."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_cooling_node_in_shadow(self):
+    def test_cooling_node_in_shadow(self, basic_game_engine):
         """Test cooling node located in shadow area."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Create cooling node in shadow
         special_pos = Position(20, 20)
@@ -412,9 +322,9 @@ class TestSpecialTileCombinations:
         can_see = scanner.can_see_player(engine.player, engine.game_map)
         assert not can_see, "Stealth should work on cooling node in shadow"
 
-    def test_cpu_node_with_ghost_node(self):
+    def test_cpu_node_with_ghost_node(self, basic_game_engine):
         """Test CPU recovery on ghost node (shadow + CPU)."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Create overlapping special tiles
         special_pos = Position(20, 20)
@@ -441,27 +351,9 @@ class TestSpecialTileCombinations:
 class TestSpecialTileEdgeCases:
     """Test edge cases with special tiles."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.music_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_special_tile_with_wall(self):
+    def test_special_tile_with_wall(self, basic_game_engine):
         """Test special tiles cannot be placed on walls (edge case)."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # This tests map generation integrity
         # Special tiles should never be on walls
@@ -477,9 +369,9 @@ class TestSpecialTileEdgeCases:
             pos = Position(x, y)
             assert not engine.game_map.is_wall(pos), f"Ghost node at ({x},{y}) should not be on wall"
 
-    def test_rapid_tile_transitions(self):
+    def test_rapid_tile_transitions(self, basic_game_engine):
         """Test player rapidly moving between different special tiles."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Create alternating special tiles
         engine.game_map.cooling_nodes.add((20, 20))

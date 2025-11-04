@@ -31,25 +31,9 @@ from tests.fixtures.real_game_data import get_real_game_data
 class TestGameSessionLifecycle:
     """Test complete game session lifecycle."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_new_game_initializes_fresh_state(self):
+    def test_new_game_initializes_fresh_state(self, basic_game_engine):
         """Test starting a new game creates fresh state."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify fresh game state
         assert engine.level == 1, "New game should start at level 1"
@@ -58,9 +42,9 @@ class TestGameSessionLifecycle:
         assert engine.player.cpu > 0, "Player should have CPU"
         assert len(engine.enemies) > 0, "Enemies should be spawned"
 
-    def test_game_state_consistency_after_player_action(self):
+    def test_game_state_consistency_after_player_action(self, basic_game_engine):
         """Test game state remains consistent after player actions."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Record initial state
         initial_state = {
@@ -79,9 +63,9 @@ class TestGameSessionLifecycle:
         assert engine.player.cpu > 0, "Player should still have CPU"
         assert len(engine.enemies) >= 0, "Enemy count should be valid"
 
-    def test_multiple_consecutive_turns_maintain_state(self):
+    def test_multiple_consecutive_turns_maintain_state(self, basic_game_engine):
         """Test state remains consistent across multiple consecutive turns."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Process 20 consecutive turns
         for turn_num in range(20):
@@ -103,33 +87,17 @@ class TestGameSessionLifecycle:
 class TestAutoSaveTriggers:
     """Test auto-save triggers and timing."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_auto_save_method_exists(self):
+    def test_auto_save_method_exists(self, basic_game_engine):
         """Test that auto-save method exists and is callable."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify auto-save exists
         assert hasattr(engine, 'auto_save'), "Engine should have auto_save method"
         assert callable(engine.auto_save), "auto_save should be callable"
 
-    def test_auto_save_after_level_progression(self):
+    def test_auto_save_after_level_progression(self, basic_game_engine):
         """Test auto-save is triggered after level progression."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Mock the auto-save method
         engine.auto_save = Mock()
@@ -140,9 +108,9 @@ class TestAutoSaveTriggers:
         # Verify auto-save was called
         engine.auto_save.assert_called()
 
-    def test_game_state_persists_in_session_manager(self):
+    def test_game_state_persists_in_session_manager(self, basic_game_engine):
         """Test game state is tracked by session manager."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify session manager exists
         assert hasattr(engine, 'game_session'), "Engine should have game_session"
@@ -159,25 +127,9 @@ class TestAutoSaveTriggers:
 class TestStateConsistency:
     """Test state consistency across different game systems."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_player_state_consistent_with_inventory(self):
+    def test_player_state_consistent_with_inventory(self, basic_game_engine):
         """Test player state remains consistent with inventory."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Modify inventory
         initial_equipped_count = len(engine.player.inventory_manager.equipped_exploits)
@@ -194,9 +146,9 @@ class TestStateConsistency:
         # Verify inventory updated
         assert len(engine.player.inventory_manager.items) > 0, "Inventory should have items"
 
-    def test_level_state_consistent_with_map(self):
+    def test_level_state_consistent_with_map(self, basic_game_engine):
         """Test level state remains consistent with map."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify level and map consistency
         assert engine.game_map is not None, "Map should exist"
@@ -210,9 +162,9 @@ class TestStateConsistency:
         assert engine.level == initial_level + 1, "Level should increment"
         assert engine.game_map is not None, "New map should exist"
 
-    def test_enemy_state_consistent_with_game_engine(self):
+    def test_enemy_state_consistent_with_game_engine(self, basic_game_engine):
         """Test enemy state remains consistent with game engine."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify enemies tracked
         assert hasattr(engine, 'enemies'), "Engine should track enemies"
@@ -225,9 +177,9 @@ class TestStateConsistency:
         assert len(engine.enemies) >= 0, "Enemy count should be non-negative"
         # Enemy count might decrease if player defeats enemies
 
-    def test_trace_level_consistent_across_systems(self):
+    def test_trace_level_consistent_across_systems(self, basic_game_engine):
         """Test trace level remains consistent across different systems."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set trace level
         engine.player.trace_level = 50
@@ -260,25 +212,9 @@ class TestStateConsistency:
 class TestMenuStateTransitions:
     """Test menu state transitions."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_inventory_menu_state_transitions(self):
+    def test_inventory_menu_state_transitions(self, basic_game_engine):
         """Test opening and closing inventory maintains state."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify inventory flag exists
         assert hasattr(engine, 'show_inventory'), "Engine should have show_inventory flag"
@@ -295,9 +231,9 @@ class TestMenuStateTransitions:
         # Verify inventory closed
         assert not engine.show_inventory, "Inventory should be closed"
 
-    def test_look_mode_state_transitions(self):
+    def test_look_mode_state_transitions(self, basic_game_engine):
         """Test entering and exiting look mode maintains state."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Enter look mode
         engine.look_mode = True
@@ -312,9 +248,9 @@ class TestMenuStateTransitions:
         # Verify look mode inactive
         assert not engine.look_mode, "Look mode should be inactive"
 
-    def test_dialogue_state_system(self):
+    def test_dialogue_state_system(self, basic_game_engine):
         """Test dialogue system state management."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify dialogue system exists
         assert hasattr(engine, 'dialogue_state'), "Engine should have dialogue_state"
@@ -333,25 +269,9 @@ class TestMenuStateTransitions:
 class TestStateRecoveryAndErrors:
     """Test state recovery from error conditions."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_invalid_player_position_handled_gracefully(self):
+    def test_invalid_player_position_handled_gracefully(self, basic_game_engine):
         """Test that invalid player position is handled gracefully."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Try to set invalid position
         invalid_x = -10
@@ -369,9 +289,9 @@ class TestStateRecoveryAndErrors:
             # If rejected, that's also acceptable
             assert True, "Invalid position rejected"
 
-    def test_negative_cpu_state_detectable(self):
+    def test_negative_cpu_state_detectable(self, basic_game_engine):
         """Test that negative CPU state is detectable."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set negative CPU
         engine.player.cpu = -10
@@ -380,9 +300,9 @@ class TestStateRecoveryAndErrors:
         assert engine.player.cpu < 0, "Negative CPU should be detectable"
         assert engine.player.cpu <= 0, "System should recognize depleted state"
 
-    def test_excessive_heat_handled_correctly(self):
+    def test_excessive_heat_handled_correctly(self, basic_game_engine):
         """Test that heat exceeding maximum is handled correctly."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set heat way above maximum
         engine.player.heat = engine.player.max_heat + 50
@@ -394,9 +314,9 @@ class TestStateRecoveryAndErrors:
         # System should handle gracefully without crashing
         assert engine.player.cpu >= 0 or engine.game_over, "Excessive heat should be handled"
 
-    def test_state_consistency_after_enemy_defeat(self):
+    def test_state_consistency_after_enemy_defeat(self, basic_game_engine):
         """Test state remains consistent after defeating all enemies."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Remove all enemies
         engine.enemies = []
@@ -412,25 +332,9 @@ class TestStateRecoveryAndErrors:
 class TestCrossLevelStatePersistence:
     """Test state persistence across level transitions."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_player_cpu_persists_across_levels(self):
+    def test_player_cpu_persists_across_levels(self, basic_game_engine):
         """Test player CPU value persists across level transitions."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set specific CPU value
         engine.player.cpu = 75
@@ -441,9 +345,9 @@ class TestCrossLevelStatePersistence:
         # Verify CPU persisted
         assert engine.player.cpu == 75, "CPU should persist across levels"
 
-    def test_equipped_exploits_persist_across_levels(self):
+    def test_equipped_exploits_persist_across_levels(self, basic_game_engine):
         """Test equipped exploits persist across level transitions."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Equip exploits
         initial_exploits = copy.deepcopy(engine.player.inventory_manager.equipped_exploits)
@@ -454,9 +358,9 @@ class TestCrossLevelStatePersistence:
         # Verify exploits persisted
         assert engine.player.inventory_manager.equipped_exploits == initial_exploits
 
-    def test_permanent_upgrades_persist_across_levels(self):
+    def test_permanent_upgrades_persist_across_levels(self, basic_game_engine):
         """Test permanent upgrades persist across level transitions."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Record permanent stats
         initial_max_cpu = engine.player.max_cpu
@@ -469,9 +373,9 @@ class TestCrossLevelStatePersistence:
         assert engine.player.max_cpu == initial_max_cpu, "Max CPU should persist"
         assert engine.player.ram_total == initial_ram, "RAM should persist"
 
-    def test_trace_level_resets_on_level_transition(self):
+    def test_trace_level_resets_on_level_transition(self, basic_game_engine):
         """Test trace level resets to 0 on level transition."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set high trace
         engine.player.trace_level = 80
