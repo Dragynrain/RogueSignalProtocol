@@ -1,8 +1,6 @@
 # Debug and log files
-game_debug.log
-game_errors.log
+logs/
 debug_mode.flag
-*.log
 
 # Python cache files
 __pycache__/
@@ -20,11 +18,8 @@ releases/
 venv/
 ENV/
 
-# Save game files
-rogue_signal_save.json
-rogue_signal_progress.json
-user_settings.json
-saves/  # Player's persistent story progress
+# Save game files - all player data in saves/
+saves/
 
 # Metrics tracking data
 metrics/

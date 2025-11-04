@@ -73,7 +73,11 @@ if DEBUG_MODE:
     log_level = logging.INFO
     # Use unbuffered file handler so logs are written immediately (critical for crash debugging)
     # Open with buffering=1 for line buffering
-    log_file = open('game_debug.log', mode='w', buffering=1)
+    # Ensure logs directory exists
+    import os
+    os.makedirs('logs', exist_ok=True)
+
+    log_file = open('logs/game_debug.log', mode='w', buffering=1)
     file_handler = logging.StreamHandler(log_file)
     file_handler.setLevel(logging.INFO)
 
@@ -86,7 +90,7 @@ else:
     # Release build - minimal logging
     log_level = logging.WARNING
     log_handlers = [
-        logging.FileHandler('game_errors.log', mode='w')
+        logging.FileHandler('logs/game_errors.log', mode='w')
     ]
     print("RELEASE MODE: Minimal logging (Release build)")
 
@@ -104,14 +108,14 @@ if DEBUG_MODE:
     logging.info("[START] GAME SESSION START")
     logging.info("="*80)
     logging.info("Game started in DEBUG mode (Alpha build for playtesters)")
-    logging.info(f"Log file: game_debug.log")
+    logging.info(f"Log file: logs/game_debug.log")
     logging.info(f"Python version: {__import__('sys').version}")
     logging.info(f"TCOD version: {tcod.__version__}")
     # Force flush to ensure it's written
     for handler in logging.root.handlers:
         handler.flush()
 else:
-    logging.warning("Game started in RELEASE mode (errors only logged to game_errors.log)")
+    logging.warning("Game started in RELEASE mode (errors only logged to logs/game_errors.log)")
 
 
 # All configuration constants are loaded from JSON files via:

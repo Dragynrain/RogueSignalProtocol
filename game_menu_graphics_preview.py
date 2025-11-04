@@ -983,7 +983,7 @@ class GraphicsPreviewMenu:
 
         self.selected_variants[entity_key] = variants[new_index]
 
-    def export_selections(self, output_file: str = "graphic-preview.log"):
+    def export_selections(self, output_file: str = "logs/graphic-preview.log"):
         """Export currently selected variants to a log file."""
         try:
             with open(output_file, 'w', encoding='utf-8') as f:

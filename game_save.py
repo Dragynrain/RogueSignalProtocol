@@ -20,8 +20,8 @@ from game_characters import Enemy
 
 class SaveGameManager:
     """Manages complete game save/load operations."""
-    
-    SAVE_FILE = "rogue_signal_save.json"
+
+    SAVE_FILE = "saves/rogue_signal_save.json"
     
     @classmethod
     def save_exists(cls) -> bool:
@@ -46,11 +46,14 @@ class SaveGameManager:
         if game is None:
             logging.error("Cannot save: game object is None")
             return False
-        
+
         if game.player is None:
-            logging.error("Cannot save: player object is None") 
+            logging.error("Cannot save: player object is None")
             return False
-            
+
+        # Ensure saves directory exists
+        os.makedirs(os.path.dirname(cls.SAVE_FILE), exist_ok=True)
+
         # Attempt save with retry logic
         for attempt in range(GameConfig.MAX_SAVE_ATTEMPTS):
             try:

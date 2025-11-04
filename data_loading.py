@@ -156,25 +156,30 @@ class DataLoader:
     @classmethod
     def load_user_settings(cls) -> Dict[str, Any]:
         """Load user settings from JSON file."""
+        settings_file = 'saves/user_settings.json'
         try:
-            with open('user_settings.json', 'r', encoding='utf-8') as f:
+            with open(settings_file, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except FileNotFoundError:
             # Normal for first run - create default settings
-            logging.debug("user_settings.json not found, using defaults (normal for first run)")
+            logging.debug("saves/user_settings.json not found, using defaults (normal for first run)")
             return cls._get_default_user_settings()
         except json.JSONDecodeError as e:
             # Corrupted settings file - use defaults but warn user
-            error_msg = f"WARNING: Invalid JSON in user_settings.json, using defaults"
+            error_msg = f"WARNING: Invalid JSON in saves/user_settings.json, using defaults"
             logging.warning(error_msg)
             logging.warning(f"JSON error: {str(e)}")
             return cls._get_default_user_settings()
-    
+
     @classmethod
     def save_user_settings(cls, settings: Dict[str, Any]) -> bool:
         """Save user settings to JSON file."""
+        settings_file = 'saves/user_settings.json'
         try:
-            with open('user_settings.json', 'w', encoding='utf-8') as f:
+            # Ensure saves directory exists
+            os.makedirs(os.path.dirname(settings_file), exist_ok=True)
+
+            with open(settings_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, indent=2, ensure_ascii=False)
             logging.debug(f"Data Loading: Saved user settings ({len(settings)} entries)")
             return True
