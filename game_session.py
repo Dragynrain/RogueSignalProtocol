@@ -100,6 +100,12 @@ class GameSession:
                 self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
                 # Delete save on death (permadeath)
                 self._delete_save_on_death()
+
+                # CRITICAL: Flush logs immediately before death dialogue (ensure combat logs are written)
+                import logging
+                for handler in logging.root.handlers:
+                    handler.flush()
+
                 # Show death dialogue
                 from game_dialogue_system import create_death_dialogue
                 self.game_engine.dialogue_state.show(create_death_dialogue())
@@ -161,6 +167,10 @@ class GameSession:
                 logging.warning(f"Active Virus: {player.temporary_effects.get('virus_turns', 0)} turns")
                 logging.warning(f"Enemies nearby: {len([e for e in self.game_engine.enemies if abs(e.x - player.x) < 10 and abs(e.y - player.y) < 10])}")
                 logging.warning("="*80)
+
+                # CRITICAL: Flush logs immediately to ensure death info is written
+                for handler in logging.root.handlers:
+                    handler.flush()
 
                 # Finalize and save metrics before deleting save
                 from game_metrics import finalize_session, save_metrics, load_lifetime_metrics

@@ -297,6 +297,11 @@ class TurnProcessor:
                         logging.warning(f"Trace Level: {player.trace_level}")
                         logging.warning(f"Virus damage per turn: {virus_damage}")
                         logging.warning("="*80)
+
+                        # CRITICAL: Flush logs immediately to ensure death info is written
+                        for handler in logging.root.handlers:
+                            handler.flush()
+
                         return  # Exit early if player dies
 
                 # Now decrement the counter
