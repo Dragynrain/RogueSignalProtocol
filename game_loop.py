@@ -258,6 +258,13 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                         active_game.auto_save()
                     menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True
+                elif action == "export_debug":
+                    # Export debug package from settings menu
+                    from debug_export import export_debug_package
+                    zip_path = export_debug_package(game_engine=active_game)
+                    if zip_path:
+                        logging.info(f"Debug package exported from settings menu: {zip_path}")
+                    # Stay in settings menu
                 elif action == "settings":
                     current_menu = menus['settings_menu']
                 elif action == "help":
@@ -365,6 +372,13 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                         active_game.auto_save()
                     menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True
+                elif action == "export_debug":
+                    # Export debug package from settings menu
+                    from debug_export import export_debug_package
+                    zip_path = export_debug_package(game_engine=active_game)
+                    if zip_path:
+                        logging.info(f"Debug package exported from settings menu: {zip_path}")
+                    # Stay in settings menu
                 elif action == "settings":
                     current_menu = menus['settings_menu']
                 elif action == "help":
