@@ -35,6 +35,7 @@ from game_rendering_core import GameRenderer
 from game_input import InputHandler
 from game_graphics_tiles import TileManager
 from game_coordinate_helpers import CoordinateHelpers
+from game_mouse_utils import MenuMouseHandler
 
 
 def log_exception(e: Exception, context: str, level: str = "error"):
@@ -219,28 +220,11 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
             context.present(console)
         
         for event in tcod.event.wait():
-            # Convert pixel coordinates to console tiles for menus
-            # Menus always use console rendering, so this conversion is correct for all menu types
-            if hasattr(event, 'position') and event.position:
-                # Store original pixel coordinates for debugging
-                original_pixel_x = event.position.x
-                original_pixel_y = event.position.y
-
-                # Get window dimensions
-                if hasattr(context, 'sdl_window') and context.sdl_window:
-                    window_w, window_h = context.sdl_window.size
-                else:
-                    window_w, window_h = (800, 600)
-
-                # Convert to console tile coordinates (menus use console rendering)
-                tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-                    original_pixel_x, original_pixel_y, window_w, window_h
-                )
-
-                # Create new event with tile coordinates
-                import copy
-                event = copy.copy(event)
-                event.position = type(event.position)(tile_x, tile_y)
+            # Convert pixel coordinates to tile coordinates for menu mouse events
+            if event.type in ("MOUSEMOTION", "MOUSEBUTTONDOWN"):
+                converted_event = MenuMouseHandler.convert_to_tile_coords(event, context)
+                if converted_event is not None:
+                    event = converted_event
 
             if event.type == "QUIT":
                 menu_sound_manager.cleanup()
@@ -258,12 +242,20 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                         active_game.auto_save()
                     menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True
-                elif action == "export_debug":
-                    # Export debug package from settings menu
+                elif action == "export_debug_confirmed":
+                    # Export debug package from settings menu (user confirmed)
                     from debug_export import export_debug_package
+
+                    logging.info("Debug Export: Starting debug package creation from settings menu")
                     zip_path = export_debug_package(game_engine=active_game)
                     if zip_path:
-                        logging.info(f"Debug package exported from settings menu: {zip_path}")
+                        filename = zip_path.name
+                        logging.info(f"Debug Export: Success from settings menu - {zip_path}")
+                        # Show success message via settings menu
+                        # Note: We can't show messages directly in menu context, but logging is sufficient
+                        # The user will see the file in debug_exports/ folder
+                    else:
+                        logging.error("Debug Export: Failed to create package from settings menu")
                     # Stay in settings menu
                 elif action == "settings":
                     current_menu = menus['settings_menu']
@@ -294,6 +286,8 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
                             if graphics_available:
                                 # Graphics mode: render through SDL with preview map
+                                # CRITICAL: Set draw color to BLACK before clear() to avoid white background
+                                context.sdl_renderer.draw_color = (0, 0, 0, 255)
                                 context.sdl_renderer.clear()
 
                                 # Render the preview map graphics FIRST (background)
@@ -309,6 +303,12 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
                             # Process events (non-blocking for continuous animation)
                             for preview_event in tcod.event.get():
+                                # Convert pixel coordinates to tile coordinates for mouse events
+                                if preview_event.type in ("MOUSEMOTION", "MOUSEBUTTONDOWN"):
+                                    converted_event = MenuMouseHandler.convert_to_tile_coords(preview_event, context)
+                                    if converted_event is not None:
+                                        preview_event = converted_event
+
                                 if preview_event.type == "QUIT":
                                     # Export selections and return to main menu on quit
                                     graphics_preview_menu.export_selections()
@@ -321,6 +321,12 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                                         graphics_preview_menu.export_selections()
                                         exit_preview = True
                                         break
+                                elif preview_event.type == "MOUSEMOTION":
+                                    # Handle mouse motion (highlight arrows on hover)
+                                    graphics_preview_menu.handle_mouse_motion(preview_event)
+                                elif preview_event.type == "MOUSEBUTTONDOWN":
+                                    # Handle mouse clicks (cycle variants when clicking arrows)
+                                    graphics_preview_menu.handle_mouse_click(preview_event)
 
                             # Small delay to prevent CPU spinning (60 FPS)
                             time.sleep(1/60)
@@ -372,12 +378,20 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                         active_game.auto_save()
                     menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True
-                elif action == "export_debug":
-                    # Export debug package from settings menu
+                elif action == "export_debug_confirmed":
+                    # Export debug package from settings menu (user confirmed)
                     from debug_export import export_debug_package
+
+                    logging.info("Debug Export: Starting debug package creation from settings menu")
                     zip_path = export_debug_package(game_engine=active_game)
                     if zip_path:
-                        logging.info(f"Debug package exported from settings menu: {zip_path}")
+                        filename = zip_path.name
+                        logging.info(f"Debug Export: Success from settings menu - {zip_path}")
+                        # Show success message via settings menu
+                        # Note: We can't show messages directly in menu context, but logging is sufficient
+                        # The user will see the file in debug_exports/ folder
+                    else:
+                        logging.error("Debug Export: Failed to create package from settings menu")
                     # Stay in settings menu
                 elif action == "settings":
                     current_menu = menus['settings_menu']
@@ -408,6 +422,8 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
                             if graphics_available:
                                 # Graphics mode: render through SDL with preview map
+                                # CRITICAL: Set draw color to BLACK before clear() to avoid white background
+                                context.sdl_renderer.draw_color = (0, 0, 0, 255)
                                 context.sdl_renderer.clear()
 
                                 # Render the preview map graphics FIRST (background)
@@ -423,6 +439,12 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
                             # Process events (non-blocking for continuous animation)
                             for preview_event in tcod.event.get():
+                                # Convert pixel coordinates to tile coordinates for mouse events
+                                if preview_event.type in ("MOUSEMOTION", "MOUSEBUTTONDOWN"):
+                                    converted_event = MenuMouseHandler.convert_to_tile_coords(preview_event, context)
+                                    if converted_event is not None:
+                                        preview_event = converted_event
+
                                 if preview_event.type == "QUIT":
                                     # Export selections and return to main menu on quit
                                     graphics_preview_menu.export_selections()
@@ -435,6 +457,12 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                                         graphics_preview_menu.export_selections()
                                         exit_preview = True
                                         break
+                                elif preview_event.type == "MOUSEMOTION":
+                                    # Handle mouse motion (highlight arrows on hover)
+                                    graphics_preview_menu.handle_mouse_motion(preview_event)
+                                elif preview_event.type == "MOUSEBUTTONDOWN":
+                                    # Handle mouse clicks (cycle variants when clicking arrows)
+                                    graphics_preview_menu.handle_mouse_click(preview_event)
 
                             # Small delay to prevent CPU spinning (60 FPS)
                             time.sleep(1/60)
