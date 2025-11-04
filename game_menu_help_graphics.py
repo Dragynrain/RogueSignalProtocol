@@ -174,7 +174,7 @@ class GraphicalHelpMenu:
                 (32, 6, "Wall", Colors.WHITE),
                 (32, 7, "Blocks", Colors.LIGHT_GRAY),
 
-                (46, 6, "Shadow", Colors.ELECTRIC_PURPLE),
+                (46, 6, "Blind Spot", Colors.ELECTRIC_PURPLE),
                 (46, 7, "HIDE!", Colors.YELLOW),
 
                 (60, 6, "Gateway", Colors.CYAN),

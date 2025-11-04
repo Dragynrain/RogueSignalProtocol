@@ -49,6 +49,14 @@ class MenuRenderingUtils:
             box_right = GameConfig.SCREEN_WIDTH - 2 - 3  # Shift 3 tiles left
             box_left = box_right - box_width
 
+            # CRITICAL: Ensure box doesn't overlap the transparent graphics area (left 60%)
+            # Transparency boundary is at 60% of screen width (column 48 for 80-wide screen)
+            graphics_boundary = int(GameConfig.SCREEN_WIDTH * 0.6)
+            if box_left < graphics_boundary:
+                # Shift box right to start at transparency boundary
+                box_left = graphics_boundary
+                box_right = box_left + box_width - 1
+
             if y_offset == 0:
                 box_top = (GameConfig.SCREEN_HEIGHT - height) // 2 - 1  # Shift 1 tile up
             else:
@@ -173,6 +181,8 @@ class MenuRenderingUtils:
         """
         if layout['use_background_layout']:
             # ENFORCED SEPARATION: 60% graphics area, 40% menu area
+            # NOTE: This boundary MUST match the menu box positioning in render_right_side_box()
+            # to prevent overlap between transparent graphics area and opaque menu box
             graphics_boundary = int(console.width * 0.6)
 
             # Left 60%: Make transparent for SDL graphics
@@ -185,6 +195,7 @@ class MenuRenderingUtils:
                     )
 
             # Right 40%: Clear for text menu (opaque)
+            # Menu boxes are positioned to start at graphics_boundary or later
             for y in range(console.height):
                 for x in range(graphics_boundary, console.width):
                     render_char_safe(console, x, y, ' ', fg=(255, 255, 255), bg=(0, 0, 0))
