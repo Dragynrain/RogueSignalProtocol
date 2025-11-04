@@ -399,8 +399,8 @@ def save_session_to_sqlite(session: SessionMetrics) -> None:
 
 
 def load_lifetime_metrics() -> LifetimeMetrics:
-    """Load lifetime metrics from rogue_signal_progress.json."""
-    progress_file = Path("rogue_signal_progress.json")
+    """Load lifetime metrics from saves/rogue_signal_progress.json."""
+    progress_file = Path("saves/rogue_signal_progress.json")
 
     try:
         if progress_file.exists():
@@ -416,8 +416,8 @@ def load_lifetime_metrics() -> LifetimeMetrics:
 
 
 def load_unlocked_achievements() -> list:
-    """Load unlocked achievements from rogue_signal_progress.json."""
-    progress_file = Path("rogue_signal_progress.json")
+    """Load unlocked achievements from saves/rogue_signal_progress.json."""
+    progress_file = Path("saves/rogue_signal_progress.json")
 
     try:
         if progress_file.exists():
@@ -431,10 +431,13 @@ def load_unlocked_achievements() -> list:
 
 
 def save_unlocked_achievements(achievements: list) -> None:
-    """Save unlocked achievements to rogue_signal_progress.json."""
-    progress_file = Path("rogue_signal_progress.json")
+    """Save unlocked achievements to saves/rogue_signal_progress.json."""
+    progress_file = Path("saves/rogue_signal_progress.json")
 
     try:
+        # Ensure saves directory exists
+        progress_file.parent.mkdir(exist_ok=True)
+
         # Load existing progress data
         data = {}
         if progress_file.exists():
@@ -448,17 +451,20 @@ def save_unlocked_achievements(achievements: list) -> None:
         with open(progress_file, 'w') as f:
             json.dump(data, f, indent=2)
 
-        logging.info(f"Saved {len(achievements)} unlocked achievements to progress file")
+        logging.info(f"Saved {len(achievements)} unlocked achievements to saves/rogue_signal_progress.json")
 
     except Exception as e:
         logging.error(f"Failed to save unlocked achievements: {e}")
 
 
 def save_lifetime_metrics(lifetime: LifetimeMetrics) -> None:
-    """Save lifetime metrics to rogue_signal_progress.json."""
-    progress_file = Path("rogue_signal_progress.json")
+    """Save lifetime metrics to saves/rogue_signal_progress.json."""
+    progress_file = Path("saves/rogue_signal_progress.json")
 
     try:
+        # Ensure saves directory exists
+        progress_file.parent.mkdir(exist_ok=True)
+
         # Load existing progress data
         data = {}
         if progress_file.exists():
@@ -472,7 +478,7 @@ def save_lifetime_metrics(lifetime: LifetimeMetrics) -> None:
         with open(progress_file, 'w') as f:
             json.dump(data, f, indent=2)
 
-        logging.info("Lifetime metrics saved to rogue_signal_progress.json")
+        logging.info("Lifetime metrics saved to saves/rogue_signal_progress.json")
 
     except Exception as e:
         logging.error(f"Failed to save lifetime metrics: {e}")

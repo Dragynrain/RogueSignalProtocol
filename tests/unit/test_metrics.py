@@ -27,7 +27,7 @@ def clean_metrics():
             db_file.unlink()
 
     # Clean progress file for unit tests (to ensure clean state)
-    progress_file = Path("rogue_signal_progress.json")
+    progress_file = Path("saves/rogue_signal_progress.json")
     if progress_file.exists():
         progress_file.unlink()
 

@@ -33,7 +33,7 @@ class GameSettings:
     - Dialogue preferences (which dialogues to show/hide)
     """
 
-    SETTINGS_FILE = "user_settings.json"
+    SETTINGS_FILE = "saves/user_settings.json"
 
     def __init__(self):
         self.master_volume = 0.7
