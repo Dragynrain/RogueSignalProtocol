@@ -148,6 +148,29 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 
 ---
 
+## 7c. Mouse Event Handling
+
+**CRITICAL: Read `.claude/TCOD_GUIDE.md` section "Mouse Coordinate Conversion" (lines 48-84) BEFORE adding mouse support!**
+
+**Two different coordinate systems:**
+
+1. **Menu/UI screens** (console tiles 0-79, 0-49)
+   - Use: `MenuMouseHandler.convert_to_tile_coords(event, context)`
+   - File: `game_mouse_utils.py`
+   - For: Main menu, settings, graphics preview, help screens
+
+2. **In-game world** (map positions 0-99, 0-99)
+   - Use: `InputHandler._mouse_pixel_to_world(pixel_x, pixel_y)`
+   - File: `game_input.py`
+   - For: Gameplay clicks, targeting, look mode
+
+**Never use `context.convert_event()`** - doesn't work with our multi-layer SDL rendering.
+
+**Read first:** `.claude/TCOD_GUIDE.md` (section: Mouse Coordinate Conversion)
+**Then see:** `.claude/MOUSE_COORDINATE_HANDLING.md` (post-mortem & best practices)
+
+---
+
 ## 8. Docs & Research
 - Check official TCOD docs before assuming API behavior
 - TCOD questions: Use `tcod` skill
