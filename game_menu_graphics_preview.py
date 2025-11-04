@@ -291,7 +291,7 @@ class GraphicsPreviewMenu:
             # Clear entire console to black first
             for y in range(console.height):
                 for x in range(console.width):
-                    render_char_safe(console, x, y, ' ', fg=(255, 255, 255), bg=(0, 0, 0))
+                    render_char_safe(console, x, y, ' ', fg=(0, 0, 0), bg=(0, 0, 0))
 
             # Then make preview area transparent so SDL graphics show through
             CoordinateHelpers.set_alpha_region(

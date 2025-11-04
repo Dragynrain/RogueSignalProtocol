@@ -83,52 +83,52 @@ class GraphicalHelpMenu:
             'sprites': [
                 # Blank line after title, then sprites
                 # Left column
-                ('Scanner', 1, 6, 1.0),
-                ('Patrol', 1, 13, 1.0),
-                ('Bot', 1, 20, 1.0),
-                ('Firewall', 1, 27, 1.0),
+                ('Scanner', 4, 6, 1.0),
+                ('Patrol', 4, 13, 1.0),
+                ('Bot', 4, 20, 1.0),
+                ('Firewall', 4, 27, 1.0),
                 # Right column
-                ('Hunter', 42, 6, 1.0),
-                ('Virus', 42, 13, 1.0),
-                ('Inhibitor', 42, 20, 1.0),
-                ('Admin Avatar', 42, 27, 1.0),
+                ('Hunter', 45, 6, 1.0),
+                ('Virus', 45, 13, 1.0),
+                ('Inhibitor', 45, 20, 1.0),
+                ('Admin Avatar', 45, 27, 1.0),
             ],
             'text_lines': [
                 # Blank line after title
 
                 # Left column - 3 lines each
-                (3, 6, "Scanner (S)", self.ENEMY_UNAWARE),
-                (3, 7, "HP:35 Vis:4 Dmg:None", Colors.LIGHT_GRAY),
-                (3, 8, "Static, alerts others", Colors.LIGHT_GRAY),
+                (6, 6, "Scanner (S)", self.ENEMY_UNAWARE),
+                (6, 7, "HP:35 Vis:4 Dmg:None", Colors.LIGHT_GRAY),
+                (6, 8, "Static, alerts others", Colors.LIGHT_GRAY),
 
-                (3, 13, "Patrol (P)", self.ENEMY_UNAWARE),
-                (3, 14, "HP:40 Vis:4 Dmg:15", Colors.LIGHT_GRAY),
-                (3, 15, "Follows patrol routes", Colors.LIGHT_GRAY),
+                (6, 13, "Patrol (P)", self.ENEMY_UNAWARE),
+                (6, 14, "HP:40 Vis:4 Dmg:15", Colors.LIGHT_GRAY),
+                (6, 15, "Follows patrol routes", Colors.LIGHT_GRAY),
 
-                (3, 20, "Bot (B)", self.ENEMY_UNAWARE),
-                (3, 21, "HP:25 Vis:3 Dmg:8", Colors.LIGHT_GRAY),
-                (3, 22, "Random movement", Colors.LIGHT_GRAY),
+                (6, 20, "Bot (B)", self.ENEMY_UNAWARE),
+                (6, 21, "HP:25 Vis:3 Dmg:8", Colors.LIGHT_GRAY),
+                (6, 22, "Random movement", Colors.LIGHT_GRAY),
 
-                (3, 27, "Firewall (F)", self.ENEMY_ALERT),
-                (3, 28, "HP:80 Vis:5 Dmg:None", Colors.LIGHT_GRAY),
-                (3, 29, "Defensive wall", Colors.LIGHT_GRAY),
+                (6, 27, "Firewall (F)", self.ENEMY_ALERT),
+                (6, 28, "HP:80 Vis:5 Dmg:None", Colors.LIGHT_GRAY),
+                (6, 29, "Defensive wall", Colors.LIGHT_GRAY),
 
                 # Right column - 3 lines each
-                (44, 6, "Hunter (H)", self.ENEMY_HOSTILE),
-                (44, 7, "HP:50 Vis:6 Dmg:22", Colors.LIGHT_GRAY),
-                (44, 8, "Actively seeks player", Colors.LIGHT_GRAY),
+                (47, 6, "Hunter (H)", self.ENEMY_HOSTILE),
+                (47, 7, "HP:50 Vis:6 Dmg:22", Colors.LIGHT_GRAY),
+                (47, 8, "Actively seeks player", Colors.LIGHT_GRAY),
 
-                (44, 13, "Virus (V)", self.ENEMY_HOSTILE),
-                (44, 14, "HP:35 Vis:4 Dmg:Virus", Colors.LIGHT_GRAY),
-                (44, 15, "3CPU/turn DoT", Colors.LIGHT_GRAY),
+                (47, 13, "Virus (V)", self.ENEMY_HOSTILE),
+                (47, 14, "HP:35 Vis:4 Dmg:Virus", Colors.LIGHT_GRAY),
+                (47, 15, "3CPU/turn DoT", Colors.LIGHT_GRAY),
 
-                (44, 20, "Inhibitor (I)", self.ENEMY_UNAWARE),
-                (44, 21, "HP:30 Vis:4 Dmg:Slow", Colors.LIGHT_GRAY),
-                (44, 22, "Move every 2nd turn", Colors.LIGHT_GRAY),
+                (47, 20, "Inhibitor (I)", self.ENEMY_UNAWARE),
+                (47, 21, "HP:30 Vis:4 Dmg:Slow", Colors.LIGHT_GRAY),
+                (47, 22, "Move every 2nd turn", Colors.LIGHT_GRAY),
 
-                (44, 27, "Admin Avatar (A)", self.ENEMY_HOSTILE),
-                (44, 28, "HP:250 Vis:8 Dmg:45", Colors.RED),
-                (44, 29, "EXTREME DANGER!", Colors.RED),
+                (47, 27, "Admin Avatar (A)", self.ENEMY_HOSTILE),
+                (47, 28, "HP:250 Vis:8 Dmg:45", Colors.RED),
+                (47, 29, "EXTREME DANGER!", Colors.RED),
 
                 # Footer - centered
                 (15, 37, "COLORS: Yellow=Unaware  Orange=Alert  Red=Hostile", Colors.CYAN),
@@ -142,73 +142,73 @@ class GraphicalHelpMenu:
         return {
             'title': 'ITEMS & MAP SYMBOLS (Page 1/3)',
             'sprites': [
-                # Row 1 - Map symbols (5 columns) - shifted down 1 row
-                ('player', 2, 6, 1.0),
-                ('floor', 16, 6, 1.0),
-                ('wall', 30, 6, 1.0),
-                ('blind_spot', 44, 6, 1.0),
-                ('gateway', 58, 6, 1.0),
+                # Row 1 - Map symbols (5 columns) - shifted right for better centering
+                ('player', 5, 6, 1.0),
+                ('floor', 19, 6, 1.0),
+                ('wall', 33, 6, 1.0),
+                ('blind_spot', 47, 6, 1.0),
+                ('gateway', 61, 6, 1.0),
                 # Row 2 - Collectibles (3 centered)
-                ('codehack', 16, 13, 1.0),
-                ('exploit', 30, 13, 1.0),
-                ('story_fragment', 44, 13, 1.0),
+                ('codehack', 19, 13, 1.0),
+                ('exploit', 33, 13, 1.0),
+                ('story_fragment', 47, 13, 1.0),
                 # Row 3 - Resource Nodes (3 centered)
-                ('cpu_node', 16, 20, 1.0),
-                ('cooling_node', 30, 20, 1.0),
-                ('ghost_node', 44, 20, 1.0),
+                ('cpu_node', 19, 20, 1.0),
+                ('cooling_node', 33, 20, 1.0),
+                ('ghost_node', 47, 20, 1.0),
                 # Row 4 - Upgrades (3 centered)
-                ('cpu_upgrade', 16, 27, 1.0),
-                ('ram_upgrade', 30, 27, 1.0),
-                ('cooling_upgrade', 44, 27, 1.0),
+                ('cpu_upgrade', 19, 27, 1.0),
+                ('ram_upgrade', 33, 27, 1.0),
+                ('cooling_upgrade', 47, 27, 1.0),
             ],
             'text_lines': [
                 # Blank line after title
 
                 # Row 1 - Map symbols
-                (4, 6, "Player", Colors.WHITE),
-                (4, 7, "You!", Colors.LIGHT_GRAY),
+                (7, 6, "Player", Colors.WHITE),
+                (7, 7, "You!", Colors.LIGHT_GRAY),
 
-                (18, 6, "Floor", Colors.LIGHT_GRAY),
-                (18, 7, "Walk", Colors.LIGHT_GRAY),
+                (21, 6, "Floor", Colors.LIGHT_GRAY),
+                (21, 7, "Walk", Colors.LIGHT_GRAY),
 
-                (32, 6, "Wall", Colors.WHITE),
-                (32, 7, "Blocks", Colors.LIGHT_GRAY),
+                (35, 6, "Wall", Colors.WHITE),
+                (35, 7, "Blocks", Colors.LIGHT_GRAY),
 
-                (46, 6, "Blind Spot", Colors.ELECTRIC_PURPLE),
-                (46, 7, "HIDE!", Colors.YELLOW),
+                (49, 6, "Blind Spot", Colors.ELECTRIC_PURPLE),
+                (49, 7, "HIDE!", Colors.YELLOW),
 
-                (60, 6, "Gateway", Colors.CYAN),
-                (60, 7, "Exit!", Colors.LIGHT_GRAY),
+                (63, 6, "Gateway", Colors.CYAN),
+                (63, 7, "Exit!", Colors.LIGHT_GRAY),
 
                 # Row 2 - Collectibles
-                (18, 13, "CodePatch", Colors.ELECTRIC_PURPLE),
-                (18, 14, "Random buff", Colors.LIGHT_GRAY),
+                (21, 13, "CodePatch", Colors.ELECTRIC_PURPLE),
+                (21, 14, "Random buff", Colors.LIGHT_GRAY),
 
-                (32, 13, "Exploit", self.NEON_PINK),
-                (32, 14, "Combat/Util", Colors.LIGHT_GRAY),
+                (35, 13, "Exploit", self.NEON_PINK),
+                (35, 14, "Combat/Util", Colors.LIGHT_GRAY),
 
-                (46, 13, "Story Fragment", Colors.CYAN),
-                (46, 14, "Lore", Colors.LIGHT_GRAY),
+                (49, 13, "Story Fragment", Colors.CYAN),
+                (49, 14, "Lore", Colors.LIGHT_GRAY),
 
                 # Row 3 - Resource Nodes
-                (18, 20, "CPU Node", Colors.RED),
-                (18, 21, "Full HP", Colors.LIGHT_GRAY),
+                (21, 20, "CPU Node", Colors.RED),
+                (21, 21, "Full HP", Colors.LIGHT_GRAY),
 
-                (32, 20, "Cool Node", Colors.CYAN),
-                (32, 21, "-50C heat", Colors.LIGHT_GRAY),
+                (35, 20, "Cool Node", Colors.CYAN),
+                (35, 21, "-50C heat", Colors.LIGHT_GRAY),
 
-                (46, 20, "Ghost Node", Colors.ELECTRIC_PURPLE),
-                (46, 21, "-30% trace", Colors.LIGHT_GRAY),
+                (49, 20, "Ghost Node", Colors.ELECTRIC_PURPLE),
+                (49, 21, "-30% trace", Colors.LIGHT_GRAY),
 
                 # Row 4 - Upgrades
-                (18, 27, "CPU Upgrade", Colors.ELECTRIC_BLUE),
-                (18, 28, "PERMANENT", Colors.YELLOW),
+                (21, 27, "CPU Upgrade", Colors.ELECTRIC_BLUE),
+                (21, 28, "PERMANENT", Colors.YELLOW),
 
-                (32, 27, "RAM Upgrade", Colors.ELECTRIC_BLUE),
-                (32, 28, "PERMANENT", Colors.YELLOW),
+                (35, 27, "RAM Upgrade", Colors.ELECTRIC_BLUE),
+                (35, 28, "PERMANENT", Colors.YELLOW),
 
-                (46, 27, "Cool Upgrade", Colors.ELECTRIC_BLUE),
-                (46, 28, "PERMANENT", Colors.YELLOW),
+                (49, 27, "Cool Upgrade", Colors.ELECTRIC_BLUE),
+                (49, 28, "PERMANENT", Colors.YELLOW),
 
                 # Bottom info - centered
                 (9, 35, "UPGRADES: Permanent stat increases - keep across ALL levels", Colors.CYAN),
