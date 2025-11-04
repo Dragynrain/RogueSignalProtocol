@@ -24,6 +24,7 @@ ENV/
 rogue_signal_save.json
 rogue_signal_progress.json
 user_settings.json
+saves/  # Player's persistent story progress
 
 # Metrics tracking data
 metrics/
