@@ -106,6 +106,38 @@ class TestEnemyAlertingChains:
         # Hostile enemies maintain state without timer
         assert scanner.state == EnemyState.HOSTILE, "Should remain hostile"
 
+    def test_stunned_enemy_cannot_alert_others(self, basic_game_engine):
+        """Test that stunned enemies cannot alert nearby enemies."""
+
+        # Position player
+        basic_game_engine.player.position = Position(20, 20)
+
+        # Create enemy group - stunned spotter with nearby enemies
+        # Scanner vision range is 10, so position nearby enemies 11+ tiles away from player
+        # but within alert range of the spotter (alert range is typically 5)
+        spotter = enemy_builder("scanner", pos=(25, 20))  # Can see player (distance 5)
+        nearby1 = enemy_builder("scanner", pos=(31, 20))  # Near spotter but can't see player (distance 11 from player)
+        nearby2 = enemy_builder("scanner", pos=(33, 20))  # Near spotter but can't see player (distance 13 from player)
+
+        # Set spotter to be stunned (e.g., from Denial of Service exploit)
+        spotter.state = EnemyState.UNAWARE
+        spotter.disabled_turns = 3  # Stunned for 3 turns
+
+        nearby1.state = EnemyState.UNAWARE
+        nearby2.state = EnemyState.UNAWARE
+
+        basic_game_engine.enemies = [spotter, nearby1, nearby2]
+
+        # Process turns - spotter sees player but is stunned, so can't alert others
+        for _ in range(5):
+            basic_game_engine.process_turn()
+
+        # Verify nearby enemies are NOT alerted (because spotter is stunned)
+        # They can't see the player themselves (beyond vision range) and the
+        # stunned spotter cannot alert them
+        assert nearby1.state == EnemyState.UNAWARE, "Nearby enemy should not be alerted by stunned enemy"
+        assert nearby2.state == EnemyState.UNAWARE, "Nearby enemy should not be alerted by stunned enemy"
+
 
 class TestEnemyConvergence:
     """Test multiple enemies converging on player."""

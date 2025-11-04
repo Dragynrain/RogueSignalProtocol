@@ -562,6 +562,10 @@ class GameSession:
 
     def _alert_nearby_enemies(self, alerting_enemy):
         """Alert nearby enemies when one becomes hostile."""
+        # Stunned enemies cannot alert others
+        if alerting_enemy.disabled_turns > 0:
+            return
+
         alert_range = GameConfig.NEARBY_ENEMY_ALERT_RADIUS  # Use config value
         alerted_count = 0
 
