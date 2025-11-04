@@ -15,26 +15,12 @@ from game_achievement_popups import (
 from game_achievements import AchievementManager, ALL_ACHIEVEMENTS
 
 
-@pytest.fixture
-def clean_state():
-    """Reset popup manager and achievement manager state."""
-    AchievementManager._unlocked_achievements = set()
-    AchievementManager._pending_popups = []
-    yield
-    AchievementManager._unlocked_achievements = set()
-    AchievementManager._pending_popups = []
-
+# Note: clean_achievement_state and test_console fixtures now available from conftest.py
 
 @pytest.fixture
 def popup_manager():
     """Create a fresh popup manager."""
     return AchievementPopupManager()
-
-
-@pytest.fixture
-def console():
-    """Create a test console."""
-    return tcod.console.Console(80, 50)
 
 
 # ============================================================================
@@ -109,25 +95,25 @@ def test_auto_dismiss(popup_manager):
     assert not popup_manager.has_active_popup()
 
 
-def test_popup_rendering_no_crash(popup_manager, console):
+def test_popup_rendering_no_crash(popup_manager, test_console):
     """Test that rendering a popup doesn't crash."""
     popup_manager.show_popup("speedrunner")
 
     # Should not raise an exception
-    popup_manager.render(console)
+    popup_manager.render(test_console)
 
 
-def test_render_no_active_popup(popup_manager, console):
+def test_render_no_active_popup(popup_manager, test_console):
     """Test rendering when no popup is active."""
     # Should not crash
-    popup_manager.render(console)
+    popup_manager.render(test_console)
 
 
 # ============================================================================
 # Integration with AchievementManager
 # ============================================================================
 
-def test_integration_with_achievement_manager(clean_state, popup_manager):
+def test_integration_with_achievement_manager(clean_achievement_state, popup_manager):
     """Test popup manager integrates with achievement manager."""
     # Queue achievements in the manager
     AchievementManager._pending_popups = ["first_blood", "speedrunner"]
@@ -193,7 +179,7 @@ def test_popup_alpha_fade():
 # End-to-End Workflow
 # ============================================================================
 
-def test_full_workflow(clean_state, popup_manager, console):
+def test_full_workflow(clean_achievement_state, popup_manager, test_console):
     """Test full workflow: achievement unlock -> popup display -> dismiss."""
     # Step 1: Unlock achievement via manager
     from game_metrics import SessionMetrics
@@ -219,7 +205,7 @@ def test_full_workflow(clean_state, popup_manager, console):
     assert popup_manager.active_popup.achievement_id in newly_unlocked
 
     # Step 3: Render popup (should not crash)
-    popup_manager.render(console)
+    popup_manager.render(test_console)
 
     # Step 4: Manually dismiss
     popup_manager.dismiss_active_popup()

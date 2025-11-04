@@ -4,6 +4,53 @@ Pytest configuration and shared fixtures for RogueSignalProtocol testing.
 
 This file provides commonly-used fixtures for all tests. Import additional
 specialized fixtures from tests.fixtures.standard_patterns as needed.
+
+## Fixture Usage Guide
+
+### Game Engine Fixtures (Most Common)
+
+For most tests, use one of these pre-configured game engine fixtures:
+
+- **basic_game_engine**: Minimal game setup with player, empty map, no enemies
+  - Use for: Basic gameplay tests, simple scenarios
+  - Example: `def test_player_movement(basic_game_engine):`
+
+- **combat_game_engine**: Combat scenario with player + 1 enemy
+  - Use for: Combat tests, exploit tests, targeting tests
+  - Example: `def test_exploit_damage(combat_game_engine):`
+
+- **stealth_game_engine**: Stealth scenario with shadows and ghost nodes
+  - Use for: Stealth tests, blind spot tests, detection tests
+  - Example: `def test_shadow_detection(stealth_game_engine):`
+
+- **multi_enemy_engine**: Multiple enemies in different states
+  - Use for: Enemy coordination, alert system, area exploits
+  - Example: `def test_enemy_alerts(multi_enemy_engine):`
+
+### Entity Fixtures
+
+- **test_player**: Basic player at (10, 10) with 100 CPU
+- **test_enemy**: Basic scanner enemy at (15, 15)
+- **test_map**: 30x30 test map with real tile data
+
+### Achievement & Rendering Fixtures
+
+- **clean_achievement_state**: Resets achievement manager state (use for achievement tests)
+- **test_console**: Standard 80x50 TCOD console (use for rendering tests)
+
+### Settings Fixtures
+
+- **silent_settings**: GameSettings with all audio disabled (prevents audio spam in tests)
+
+### Advanced Fixtures
+
+For complex scenarios, import from tests.fixtures.standard_patterns:
+- create_surrounded_scenario()
+- create_resource_test_scenario()
+- create_full_gameplay_session()
+- etc.
+
+See tests/fixtures/standard_patterns.py for the full list.
 """
 
 import pytest
@@ -208,3 +255,37 @@ def silent_settings():
     settings.music_volume = 0.0
     settings.graphics_mode = "glyph"
     return settings
+
+
+# ===== Achievement Test Fixtures =====
+
+@pytest.fixture
+def clean_achievement_state():
+    """Reset achievement manager state before and after tests.
+
+    Use this fixture when testing achievements to ensure test isolation.
+    Clears both unlocked achievements and pending popups.
+    """
+    from game_achievements import AchievementManager
+
+    # Clear state before test
+    AchievementManager._unlocked_achievements = set()
+    AchievementManager._pending_popups = []
+
+    yield
+
+    # Clean up after test
+    AchievementManager._unlocked_achievements = set()
+    AchievementManager._pending_popups = []
+
+
+# ===== Rendering Test Fixtures =====
+
+@pytest.fixture
+def test_console():
+    """Create a test console for rendering tests.
+
+    Returns a standard 80x50 TCOD console for testing rendering code.
+    """
+    import tcod.console
+    return tcod.console.Console(80, 50)

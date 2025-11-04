@@ -46,9 +46,24 @@ def create_basic_game_environment():
         settings=game_settings
     )
 
-    # Position player in center
+    # Position player in center (ensure not in wall)
     engine.player.position.x = 15
     engine.player.position.y = 15
+
+    # If player ended up in a wall, find a nearby non-wall position
+    if (engine.player.x, engine.player.y) in engine.game_map.walls:
+        # Search nearby for a valid position
+        for dy in range(-2, 3):
+            for dx in range(-2, 3):
+                test_x, test_y = 15 + dx, 15 + dy
+                if 0 <= test_x < engine.game_map.width and 0 <= test_y < engine.game_map.height:
+                    if (test_x, test_y) not in engine.game_map.walls:
+                        engine.player.position.x = test_x
+                        engine.player.position.y = test_y
+                        break
+            if (engine.player.x, engine.player.y) not in engine.game_map.walls:
+                break
+
     engine.player.cpu = 100
     engine.player.heat = 0
 

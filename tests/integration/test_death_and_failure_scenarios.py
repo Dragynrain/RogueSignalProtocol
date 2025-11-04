@@ -34,26 +34,9 @@ from tests.fixtures.simple_fixtures import create_real_enemy
 class TestCombatDeath:
     """Test player death from combat."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_player_death_from_enemy_attack(self):
+    def test_player_death_from_enemy_attack(self, basic_game_engine):
         """Test player dies when CPU reaches 0 from enemy attack."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player to near-death
         engine.player.cpu = 5
@@ -76,9 +59,9 @@ class TestCombatDeath:
             # The game may or may not set game_over flag depending on when death is detected
             assert engine.player.cpu <= 0, "Player CPU should be 0 or less"
 
-    def test_player_survives_with_1_cpu(self):
+    def test_player_survives_with_1_cpu(self, basic_game_engine):
         """Test player survives with exactly 1 CPU remaining."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player to 1 CPU
         engine.player.cpu = 1
@@ -91,9 +74,9 @@ class TestCombatDeath:
         assert engine.player.cpu > 0, "Player should survive with positive CPU"
         assert not engine.game_over, "Game should not be over"
 
-    def test_multiple_enemy_attacks_leading_to_death(self):
+    def test_multiple_enemy_attacks_leading_to_death(self, basic_game_engine):
         """Test player death from multiple enemy attacks in succession."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player to moderate health
         engine.player.cpu = 30
@@ -134,25 +117,9 @@ class TestCombatDeath:
 class TestOverheatDeath:
     """Test player death from overheating."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_player_death_from_max_heat(self):
+    def test_player_death_from_max_heat(self, basic_game_engine):
         """Test player takes damage when heat reaches maximum."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player to max heat
         engine.player.heat = engine.player.max_heat
@@ -165,9 +132,9 @@ class TestOverheatDeath:
         # Note: Actual overheat damage implementation varies
         assert engine.player.heat >= engine.player.max_heat or engine.player.cpu <= 50, "Overheat should have effect"
 
-    def test_gradual_overheat_to_death(self):
+    def test_gradual_overheat_to_death(self, basic_game_engine):
         """Test player with high heat accumulation."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player to low CPU and near-max heat
         engine.player.cpu = 20
@@ -187,9 +154,9 @@ class TestOverheatDeath:
                 assert engine.player.cpu <= 0, "Player CPU depleted"
                 break
 
-    def test_cooling_prevents_overheat_death(self):
+    def test_cooling_prevents_overheat_death(self, basic_game_engine):
         """Test that using cooling prevents overheat death."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player to dangerous heat levels
         engine.player.heat = engine.player.max_heat - 10
@@ -215,25 +182,9 @@ class TestOverheatDeath:
 class TestGameOverFlow:
     """Test complete game over workflow."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_game_over_detection_on_death(self):
+    def test_game_over_detection_on_death(self, basic_game_engine):
         """Test that player death is detected when CPU reaches 0."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Kill player
         engine.player.cpu = 0
@@ -244,9 +195,9 @@ class TestGameOverFlow:
         # Death is handled when processing turns - system detects CPU <= 0
         # The game_over flag may be set by turn processing or input handling
 
-    def test_death_detection_system_exists(self):
+    def test_death_detection_system_exists(self, basic_game_engine):
         """Test that death detection system exists."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify player has CPU tracking
         assert hasattr(engine.player, 'cpu'), "Player should track CPU"
@@ -258,17 +209,17 @@ class TestGameOverFlow:
         # Verify the system can detect this state
         assert engine.player.cpu <= 0, "System should detect CPU depletion"
 
-    def test_death_sound_system_exists(self):
+    def test_death_sound_system_exists(self, basic_game_engine):
         """Test that sound system exists for death events."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify sound system exists and is callable
         assert engine.sound_manager is not None, "Sound manager should exist"
         assert hasattr(engine.sound_manager, 'play_sound'), "Should have play_sound method"
 
-    def test_save_system_integration(self):
+    def test_save_system_integration(self, basic_game_engine):
         """Test that save system is integrated with game engine."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify save system exists
         assert hasattr(engine, 'auto_save'), "Engine should have auto_save"
@@ -278,9 +229,9 @@ class TestGameOverFlow:
         assert engine.level >= 1, "Game should track level"
         assert engine.turn >= 0, "Game should track turn"
 
-    def test_game_over_state_exists(self):
+    def test_game_over_state_exists(self, basic_game_engine):
         """Test that game over state tracking exists."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify game over flag exists
         assert hasattr(engine, 'game_over'), "Engine should have game_over flag"
@@ -295,25 +246,9 @@ class TestGameOverFlow:
 class TestDeathEdgeCases:
     """Test edge cases in death detection and handling."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_negative_cpu_detected(self):
+    def test_negative_cpu_detected(self, basic_game_engine):
         """Test that negative CPU state is detectable."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set CPU to negative
         engine.player.cpu = -10
@@ -321,9 +256,9 @@ class TestDeathEdgeCases:
         # Verify negative CPU is detected
         assert engine.player.cpu <= 0, "Negative CPU should be detectable"
 
-    def test_death_detection_after_enemy_turn(self):
+    def test_death_detection_after_enemy_turn(self, basic_game_engine):
         """Test that death state is detectable after enemy attacks."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player near death
         engine.player.cpu = 1
@@ -342,9 +277,9 @@ class TestDeathEdgeCases:
         if engine.player.cpu <= 0:
             assert engine.player.cpu <= 0, "Death state should be detectable"
 
-    def test_critical_state_with_multiple_threats(self):
+    def test_critical_state_with_multiple_threats(self, basic_game_engine):
         """Test player in critical state with multiple threat sources."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player to critical state (low CPU, max heat)
         engine.player.cpu = 5
@@ -362,9 +297,9 @@ class TestDeathEdgeCases:
         # Player might die or survive depending on exact damage values
         assert engine.player.cpu >= -100, "CPU should not go extremely negative"
 
-    def test_death_during_level_transition_prevented(self):
+    def test_death_during_level_transition_prevented(self, basic_game_engine):
         """Test that player cannot die during level transition."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Position player on gateway
         gateway = engine.game_map.gateway
@@ -385,25 +320,9 @@ class TestDeathEdgeCases:
 class TestFailureRecovery:
     """Test recovery from near-failure states."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_recovery_from_critical_cpu(self):
+    def test_recovery_from_critical_cpu(self, basic_game_engine):
         """Test player can recover from critically low CPU."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player to critical CPU
         engine.player.cpu = 2
@@ -423,9 +342,9 @@ class TestFailureRecovery:
             assert engine.player.cpu > 2, "CPU should recover from node"
             assert not engine.game_over, "Player should survive with recovery"
 
-    def test_recovery_from_critical_heat(self):
+    def test_recovery_from_critical_heat(self, basic_game_engine):
         """Test player can recover from critically high heat."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player to critical heat
         engine.player.heat = engine.player.max_heat - 2
@@ -444,9 +363,9 @@ class TestFailureRecovery:
             # Verify heat reduced
             assert engine.player.heat < engine.player.max_heat - 2, "Heat should reduce from node"
 
-    def test_player_movement_capability(self):
+    def test_player_movement_capability(self, basic_game_engine):
         """Test player retains movement capability."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Set player to low CPU
         engine.player.cpu = 10
@@ -468,9 +387,9 @@ class TestFailureRecovery:
             # Verify player could move
             assert engine.player.x <= initial_x, "Player should have moved or stayed"
 
-    def test_code_hack_system_integration(self):
+    def test_code_hack_system_integration(self, basic_game_engine):
         """Test code hack system is integrated with game engine."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Verify code hack effects are randomized
         assert hasattr(engine, 'code_hack_effects'), "Engine should have code_hack_effects"
@@ -488,25 +407,9 @@ class TestFailureRecovery:
 class TestDeathStatePersistence:
     """Test that death state is handled correctly across systems."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_dead_player_state_detection(self):
+    def test_dead_player_state_detection(self, basic_game_engine):
         """Test that dead player state is detectable."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Kill player
         engine.player.cpu = 0
@@ -518,9 +421,9 @@ class TestDeathStatePersistence:
         is_dead = engine.player.cpu <= 0
         assert is_dead, "System should detect dead state"
 
-    def test_dead_player_state_tracking(self):
+    def test_dead_player_state_tracking(self, basic_game_engine):
         """Test that dead player state is properly tracked."""
-        engine = self.create_test_engine()
+        engine = basic_game_engine
 
         # Kill player and set game over
         engine.player.cpu = 0
@@ -540,30 +443,13 @@ class TestDeathStatePersistence:
 class TestDeathDialogueDismissal:
     """Test that death dialogue dismissal works correctly with both keyboard and mouse."""
 
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.game_data = get_real_game_data()
-        self.game_settings = GameSettings()
-        self.game_settings.master_volume = 0.0
-        self.game_settings.sfx_volume = 0.0
-        self.game_settings.graphics_mode = "glyph"
-
-    def create_test_engine(self):
-        """Create a GameEngine instance for testing."""
-        mock_sound_manager = Mock()
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
-        return engine
-
-    def test_death_dialogue_dismissal_with_keyboard(self):
+    def test_death_dialogue_dismissal_with_keyboard(self, basic_game_engine):
         """Test that dismissing death dialogue with keyboard returns False (exit to menu)."""
         from game_input import InputHandler
         from game_dialogue_system import create_death_dialogue
         import tcod.event
 
-        engine = self.create_test_engine()
+        engine = basic_game_engine
         input_handler = InputHandler(engine)
 
         # Close any intro dialogues that GameEngine shows on startup
@@ -593,14 +479,14 @@ class TestDeathDialogueDismissal:
         assert result == False, "Death dialogue dismissal should return False to exit to menu"
         assert not engine.dialogue_state.is_active(), "Dialogue should be closed"
 
-    def test_death_dialogue_dismissal_with_mouse_click(self):
+    def test_death_dialogue_dismissal_with_mouse_click(self, basic_game_engine):
         """Test that dismissing death dialogue with mouse click returns False (exit to menu)."""
         from game_input import InputHandler
         from game_dialogue_system import create_death_dialogue
         from game_entities import Position
         import tcod.event
 
-        engine = self.create_test_engine()
+        engine = basic_game_engine
         input_handler = InputHandler(engine)
 
         # Close any intro dialogues that GameEngine shows on startup
@@ -643,14 +529,14 @@ class TestDeathDialogueDismissal:
         assert result == False, "Death dialogue click dismissal should return False to exit to menu"
         assert not engine.dialogue_state.is_active(), "Dialogue should be closed"
 
-    def test_normal_dialogue_dismissal_returns_true(self):
+    def test_normal_dialogue_dismissal_returns_true(self, basic_game_engine):
         """Test that dismissing non-death dialogue returns True (continue game)."""
         from game_input import InputHandler
         from game_dialogue_system import DialogueBox
         from game_entities import Colors
         import tcod.event
 
-        engine = self.create_test_engine()
+        engine = basic_game_engine
         input_handler = InputHandler(engine)
 
         # Close any intro dialogues that GameEngine shows on startup
