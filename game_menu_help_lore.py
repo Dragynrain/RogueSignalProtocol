@@ -324,7 +324,7 @@ class HelpMenu:
             ("  ☺  Player (you)", Colors.WHITE),
             ("  •  Empty floor (passable)", Colors.FLOOR),
             ("  ╔╗╚╝╦╩╠╣╬═║  Walls (impassable)", Colors.WALL),
-            ("  ◘  Shadows (stealth zones)", Colors.ELECTRIC_PURPLE),
+            ("  ◘  Blind Spots (stealth zones)", Colors.ELECTRIC_PURPLE),
             ("  >  Gateway to next level", Colors.GATEWAY),
             ("  ♫  Data fragments (story/lore)", Colors.CYAN),
             ("", Colors.WHITE),
@@ -354,7 +354,7 @@ class HelpMenu:
             ("  Trace Level: Increases when spotted, Admin spawns at threshold", Colors.WHITE),
             ("  CPU: Your health - if it reaches 0, you die permanently", Colors.WHITE),
             ("  RAM: Limits how many exploits you can equip (max 5)", Colors.WHITE),
-            ("  Shadows: Hide in purple * tiles - attacks deal +10 damage!", Colors.WHITE),
+            ("  Blind Spots: Hide in purple * tiles - attacks deal +10 damage!", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("COMBAT EXPLOITS:", Colors.CYAN),

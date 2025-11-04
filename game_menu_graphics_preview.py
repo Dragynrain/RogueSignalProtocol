@@ -285,11 +285,15 @@ class GraphicsPreviewMenu:
 
     def render(self, console: tcod.console.Console) -> None:
         """Render the graphics preview screen."""
-        console.clear()
-
-        # Make preview area transparent so SDL graphics show through
+        # Clear console properly based on graphics mode
         if self.settings.graphics_mode == "graphics":
-            # Use CoordinateHelpers to set transparency correctly regardless of console order
+            # Graphics mode: make entire screen black with left side transparent for preview
+            # Clear entire console to black first
+            for y in range(console.height):
+                for x in range(console.width):
+                    render_char_safe(console, x, y, ' ', fg=(255, 255, 255), bg=(0, 0, 0))
+
+            # Then make preview area transparent so SDL graphics show through
             CoordinateHelpers.set_alpha_region(
                 console,
                 x=self.preview_offset_x,
@@ -298,13 +302,16 @@ class GraphicsPreviewMenu:
                 height=self.preview_height,
                 alpha=0
             )
+        else:
+            # Glyph mode: just clear to black
+            console.clear()
 
         # Title
         title = "GRAPHICS PREVIEW - VARIANT EXPLORER"
         render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 1,
                         title, fg=Colors.CYAN)
 
-        # Current selection info
+        # Current selection info with navigation arrows
         if self.entity_types:
             category, entity_key, display_name = self.entity_types[self.current_entity_index]
             current_variant = self.selected_variants[entity_key]
@@ -314,16 +321,30 @@ class GraphicsPreviewMenu:
             info_text = f"Selected: {display_name} - Variant {variant_index}/{total_variants}"
             render_char_safe(console, 2, 2, info_text, fg=Colors.YELLOW)
 
-            file_text = f"File: {entity_key}{current_variant:02d}.png"
-            render_char_safe(console, 2, 3, file_text, fg=Colors.LIGHT_GRAY)
+            # Navigation arrows for variant cycling (mouse clickable)
+            # Store positions for mouse detection
+            self.left_arrow_x = 2
+            self.left_arrow_y = 3
+            self.right_arrow_x = 8
+            self.right_arrow_y = 3
 
-        # Note about graphics mode
+            # Render arrows with hover highlighting
+            left_arrow_color = Colors.CYAN if hasattr(self, '_hover_left_arrow') and self._hover_left_arrow else Colors.WHITE
+            right_arrow_color = Colors.CYAN if hasattr(self, '_hover_right_arrow') and self._hover_right_arrow else Colors.WHITE
+
+            render_char_safe(console, self.left_arrow_x, self.left_arrow_y, "< Prev", fg=left_arrow_color)
+            render_char_safe(console, self.right_arrow_x, self.right_arrow_y, "Next >", fg=right_arrow_color)
+
+            file_text = f"File: {entity_key}{current_variant:02d}.png"
+            render_char_safe(console, 2, 4, file_text, fg=Colors.LIGHT_GRAY)
+
+        # Note about graphics mode (moved down to accommodate arrows)
         if self.settings.graphics_mode == "graphics":
             note = "Graphics rendering on preview map (left side)"
-            render_char_safe(console, 2, 5, note, fg=Colors.GREEN)
+            render_char_safe(console, 2, 6, note, fg=Colors.GREEN)
         else:
             note = "Enable Graphics Mode in Settings to see preview"
-            render_char_safe(console, 2, 5, note, fg=Colors.RED)
+            render_char_safe(console, 2, 6, note, fg=Colors.RED)
 
         # Render entity list (sidebar)
         self._render_entity_list(console)
@@ -331,7 +352,7 @@ class GraphicsPreviewMenu:
         # Instructions
         instructions = [
             "↑↓ or W/S: Select entity type",
-            "←→ or A/D: Change variant",
+            "←→ or A/D / Click arrows: Change variant",
             "SPACE: Cycle alert ring color",
             "ESC: Exit and save log",
         ]
@@ -901,11 +922,51 @@ class GraphicsPreviewMenu:
         return ''
 
     def handle_mouse_motion(self, event) -> bool:
-        """Handle mouse motion - not implemented for graphics preview."""
+        """Handle mouse motion - highlight arrows on hover."""
+        if not hasattr(event, 'position') or event.position is None:
+            return False
+
+        tile_x = int(event.position.x)
+        tile_y = int(event.position.y)
+
+        # Reset hover states
+        self._hover_left_arrow = False
+        self._hover_right_arrow = False
+
+        # Check if hovering over left arrow ("< Prev" at position self.left_arrow_x, self.left_arrow_y)
+        if hasattr(self, 'left_arrow_y') and tile_y == self.left_arrow_y:
+            if hasattr(self, 'left_arrow_x') and self.left_arrow_x <= tile_x < self.left_arrow_x + 6:  # "< Prev" is 6 chars
+                self._hover_left_arrow = True
+                return True
+
+        # Check if hovering over right arrow ("Next >" at position self.right_arrow_x, self.right_arrow_y)
+        if hasattr(self, 'right_arrow_y') and tile_y == self.right_arrow_y:
+            if hasattr(self, 'right_arrow_x') and self.right_arrow_x <= tile_x < self.right_arrow_x + 6:  # "Next >" is 6 chars
+                self._hover_right_arrow = True
+                return True
+
         return False
 
     def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - not implemented for graphics preview."""
+        """Handle mouse click - cycle variants when clicking arrows."""
+        if not hasattr(event, 'position') or event.position is None:
+            return ""
+
+        tile_x = int(event.position.x)
+        tile_y = int(event.position.y)
+
+        # Check if clicking left arrow
+        if hasattr(self, 'left_arrow_y') and tile_y == self.left_arrow_y:
+            if hasattr(self, 'left_arrow_x') and self.left_arrow_x <= tile_x < self.left_arrow_x + 6:
+                self._cycle_variant(-1)
+                return ""
+
+        # Check if clicking right arrow
+        if hasattr(self, 'right_arrow_y') and tile_y == self.right_arrow_y:
+            if hasattr(self, 'right_arrow_x') and self.right_arrow_x <= tile_x < self.right_arrow_x + 6:
+                self._cycle_variant(1)
+                return ""
+
         return ""
 
     def _cycle_variant(self, direction: int):
