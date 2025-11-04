@@ -55,11 +55,10 @@ class VictoryScreen:
                 self.background.settings.graphics_mode == "graphics")
 
     def _clear_text_areas_only(self, console: tcod.console.Console) -> None:
-        """Clear only the text area on the right, leaving art visible."""
-        # Clear right side where text will be (x=55 to 80)
-        for y in range(console.height):
-            for x in range(55, console.width):
-                render_char_safe(console, x, y, ' ', fg=Colors.BLACK, bg=Colors.BLACK)
+        """Clear console, allowing background art to show through transparent areas."""
+        # Clear entire console - background art (SDL texture) will show through
+        # where console transparency allows, and the victory box will render on top
+        console.clear()
 
     def _render_victory_screen(self, console: tcod.console.Console) -> None:
         """Render the victory message with decorations."""
@@ -72,12 +71,15 @@ class VictoryScreen:
             self._render_centered(console)
 
     def _render_with_background(self, console: tcod.console.Console) -> None:
-        """Render victory message in right-side box (background mode)."""
-        # Right-side box dimensions (matching main menu)
-        box_x = 55
-        box_width = 24
-        box_height = console.height - 4
-        box_y = 2
+        """Render victory message in centered dialogue box (background mode)."""
+        # Centered box dimensions (matching dialogue system but taller for long message)
+        box_width = min(50, console.width - 4)  # Standard dialogue width
+        box_height = 38  # Taller to accommodate the long victory message
+
+        # Center the box
+        box_x, box_y = CoordinateHelpers.center_box(
+            box_width, box_height, console.width, console.height
+        )
 
         # Calculate center of box
         center_x = box_x + box_width // 2
@@ -91,7 +93,7 @@ class VictoryScreen:
         render_char_safe(console, title_x, box_y + 2, title, fg=Colors.GREEN, bg=Colors.BLACK)
 
         # Render decorative line
-        line_width = 18
+        line_width = box_width - 8  # Adapt to box width
         line_x = center_x - line_width // 2
         render_char_safe(console, line_x, box_y + 3, "═" * line_width, fg=Colors.CYAN, bg=Colors.BLACK)
 
