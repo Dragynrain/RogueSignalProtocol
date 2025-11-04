@@ -102,7 +102,6 @@ class GameSession:
                 self._delete_save_on_death()
 
                 # CRITICAL: Flush logs immediately before death dialogue (ensure combat logs are written)
-                import logging
                 for handler in logging.root.handlers:
                     handler.flush()
 
