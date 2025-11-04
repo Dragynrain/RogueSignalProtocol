@@ -24,6 +24,9 @@ saves/
 # Metrics tracking data
 metrics/
 
+# Debug export packages
+debug_exports/
+
 # IDE and editor files
 .vscode/
 .idea/

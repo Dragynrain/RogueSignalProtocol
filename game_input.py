@@ -213,7 +213,12 @@ class InputHandler:
         logging.debug(f"Input: Dialogue confirm for '{dialogue.title}'")
 
         # Check dialogue type by title (since we're using DialogueBox now)
-        if "OVERCLOCK WARNING" in dialogue.title:
+        if "Export Debug Package" in dialogue.title:
+            # User confirmed debug export
+            logging.debug("Input: Debug export confirmed")
+            self._perform_debug_export()
+            self.game._pending_debug_export = False
+        elif "OVERCLOCK WARNING" in dialogue.title:
             # Player confirmed overclock - re-execute the pending exploit
             logging.debug("Input: Overclock confirmed")
             self.game.overclock_confirmation = True
@@ -263,7 +268,13 @@ class InputHandler:
         logging.debug(f"Input: Dialogue dismiss for '{dialogue.title}'")
 
         # Check dialogue type by title
-        if "UNDER ATTACK" in dialogue.title:
+        if "Export Debug Package" in dialogue.title:
+            # User cancelled debug export
+            logging.debug("Input: Debug export cancelled")
+            self.game.message_log.add_message("Debug export cancelled")
+            if hasattr(self.game, '_pending_debug_export'):
+                self.game._pending_debug_export = False
+        elif "UNDER ATTACK" in dialogue.title:
             # Close inventory when under attack (can't stay in inventory while being attacked)
             self.game.show_inventory = False
         elif "OVERCLOCK WARNING" in dialogue.title:
@@ -425,6 +436,11 @@ class InputHandler:
     
     def _handle_gameplay_input(self, event) -> bool:
         """Handle input during normal gameplay."""
+        # Global hotkey: Shift+F12 - Export Debug Package
+        if event.sym == tcod.event.KeySym.F12 and (event.mod & tcod.event.KMOD_SHIFT):
+            self._trigger_debug_export()
+            return True
+
         # Check if auto-walk is active - cancel on most keys (except UI toggles)
         if self.game.autowalk.is_active():
             # Allow UI toggles without cancelling auto-walk
@@ -620,6 +636,69 @@ class InputHandler:
         self.game.look_mode_mouse_last_update = 0.0
         self.game.message_log.add_message("Look mode │ ↑↓←→ Move cursor to inspect │ ESC/L to exit")
         self.game.sound_manager.play_sound("ui_menu_open")
+
+    def _trigger_debug_export(self):
+        """Trigger debug package export with confirmation dialog."""
+        from game_dialogue_system import Dialogue, DialogueOption
+        from game_entities import Colors
+
+        # Create confirmation dialogue
+        dialogue = Dialogue(
+            title="Export Debug Package",
+            lines=[
+                "This will create a debug package containing:",
+                "- Your save files and settings",
+                "- Game logs and metrics",
+                "- System information",
+                "",
+                "This package can help developers fix bugs.",
+                "Package will be saved to: debug_exports/",
+                "",
+                "Continue?"
+            ],
+            options=[
+                DialogueOption("Y", "Yes", "export_debug_yes"),
+                DialogueOption("N", "No", "export_debug_no")
+            ],
+            color=Colors.GOLD,
+            can_dismiss=True
+        )
+
+        # Show dialogue
+        self.game.dialogue_state.show_dialogue(dialogue)
+
+        # Store callback for when user confirms
+        self.game._pending_debug_export = True
+
+    def _perform_debug_export(self):
+        """Actually perform the debug package export."""
+        from debug_export import export_debug_package
+        from game_entities import Colors
+
+        logging.info("Debug Export: Starting debug package creation")
+        self.game.message_log.add_message("Creating debug package...", Colors.GOLD)
+
+        try:
+            # Create the debug package
+            zip_path = export_debug_package(game_engine=self.game)
+
+            if zip_path:
+                # Success!
+                filename = zip_path.name
+                self.game.message_log.add_message(f"Debug package created: {filename}", Colors.GREEN)
+                self.game.message_log.add_message("Send this file to developers for bug investigation", Colors.GOLD)
+                logging.info(f"Debug Export: Success - {zip_path}")
+            else:
+                # Failed
+                self.game.message_log.add_message("Failed to create debug package (check logs)", Colors.RED)
+                logging.error("Debug Export: Failed to create package")
+
+        except Exception as e:
+            # Unexpected error
+            self.game.message_log.add_message(f"Debug export error: {str(e)}", Colors.RED)
+            logging.error(f"Debug Export: Exception during export: {e}")
+            import traceback
+            logging.error(traceback.format_exc())
 
     def _handle_look_mode_input(self, event) -> bool:
         """Handle input while in look mode."""
