@@ -543,6 +543,7 @@ class SettingsMenu(BaseMenu):
             {"name": "UI Color", "type": "ui_color", "key": "ui_color",
              "values": ["Cyan", "Purple", "Magenta", "Golden", "Crimson", "Azure", "Emerald", "Ivory"]},
             {"name": "Overclock Warnings", "type": "dialogue_toggle", "key": "show_overclock_warning"},
+            {"name": "Export Debug Package", "type": "action"},
             {"name": "Back", "type": "action"}
         ]
 
@@ -702,6 +703,8 @@ class SettingsMenu(BaseMenu):
             if option["type"] == "action":
                 if option["name"] == "Back":
                     return "back"
+                elif option["name"] == "Export Debug Package":
+                    return "export_debug"
             elif option["type"] == "toggle":
                 # Trigger toggle with Enter key (same as in _adjust_setting)
                 self._adjust_setting(1)  # Direction doesn't matter for toggles
