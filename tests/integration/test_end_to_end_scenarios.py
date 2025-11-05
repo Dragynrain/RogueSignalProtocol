@@ -97,10 +97,10 @@ class TestEndToEndGameplayScenarios(unittest.TestCase):
         
         # Attempt save
         save_result = SaveGameManager.save_game(mock_game)
-        
+
         # If save succeeds, verify we can load
         if save_result:
-            loaded_data = SaveGameManager.load_game("save_game.json")
+            loaded_data = SaveGameManager.load_game()  # Uses SaveGameManager.SAVE_FILE constant
             self.assertIsNotNone(loaded_data)
             
             # Verify key data preserved

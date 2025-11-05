@@ -697,10 +697,10 @@ class GameSession:
         Called when player CPU reaches 0 to enforce permadeath mechanic.
         This ensures the renderer doesn't need side effects.
         """
-        save_path = "save_game.json"
-        if os.path.exists(save_path):
+        from game_save import SaveGameManager
+        if SaveGameManager.save_exists():
             try:
-                os.remove(save_path)
+                SaveGameManager.delete_save()
                 logging.info("Save file deleted on death (permadeath)")
                 self.game_engine.message_log.add_message("Save data purged")
             except OSError as e:
