@@ -18,6 +18,7 @@ import sys
 # Import game modules
 from game_config import GameSettings, GameConfig
 from game_entities import Colors
+from game_color_manager import ColorManager
 from game_save import SaveGameManager
 from game_story import StoryFragmentManager
 from game_audio import SoundManager
@@ -188,10 +189,8 @@ class MainMenu(BaseMenu):
         """Render author information."""
         author_info = "by Adam Forster"
 
-        from data_loading import DataLoader
-        from game_entities import ensure_color_tuple
-        config = DataLoader.load_config()
-        help_text_color = ensure_color_tuple(config.get("colors", {}).get("ui", {}).get("help_text", [128, 128, 128]))
+        # Use bright cyan for all control hints
+        help_text_color = Colors.CYAN
 
         if box['use_background_layout']:
             # Background mode - position within narrow box
@@ -211,7 +210,7 @@ class MainMenu(BaseMenu):
         start_y = 21  # Back to original Y position (box itself is shifted)
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
-            bg_color = (40, 40, 40) if i == self.selected_option else Colors.BLACK  # Dark gray highlight
+            bg_color = ColorManager.get("backgrounds", "menu_highlight") if i == self.selected_option else Colors.BLACK
             prefix = "> " if i == self.selected_option else "  "
 
             if box['use_background_layout']:
@@ -262,10 +261,8 @@ class MainMenu(BaseMenu):
     
     def _render_controls_help(self, console: tcod.console.Console, box: dict) -> None:
         """Render control instructions."""
-        from data_loading import DataLoader
-        from game_entities import ensure_color_tuple
-        config = DataLoader.load_config()
-        help_text_color = ensure_color_tuple(config.get("colors", {}).get("ui", {}).get("help_text", [128, 128, 128]))
+        # Use bright cyan for all control hints
+        help_text_color = Colors.CYAN
 
         if box['use_background_layout']:
             # Background mode - position within narrow box
@@ -588,7 +585,7 @@ class SettingsMenu(BaseMenu):
         spacing = 3 if box['use_background_layout'] else 2
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
-            bg_color = (40, 40, 40) if i == self.selected_option else Colors.BLACK  # Dark gray highlight
+            bg_color = ColorManager.get("backgrounds", "menu_highlight") if i == self.selected_option else Colors.BLACK
             option_y = start_y + i * spacing
 
             if box['use_background_layout']:

@@ -39,13 +39,12 @@ class ColorManager:
     
     def _load_colors(self):
         """
-        Load colors from JSON configuration with strict validation.
+        Load consolidated cyberpunk color palette from JSON configuration.
 
-        Fails fast if any required color category or specific color is missing.
-        This ensures configuration errors are caught immediately rather than
-        causing subtle bugs during gameplay. No fallback values are used.
+        Loads all color categories and creates backward-compatible aliases
+        for legacy color names (e.g., RED -> CRIMSON_RED, WHITE -> PURE_WHITE).
 
-        Required categories: basic, game_elements, data_codes, message_log, enemies, ui
+        Fails fast if colors section is missing.
         """
         import logging
 
@@ -55,78 +54,140 @@ class ColorManager:
 
             # Ensure colors section exists
             if 'colors' not in config:
-                error_msg = "CRITICAL CONFIG ERROR: 'colors' section missing from game_config.json"
+                error_msg = "CRITICAL CONFIG ERROR: 'colors' section missing from game_rules.json"
                 logging.error(error_msg)
                 logging.error(f"Available sections: {list(config.keys())}")
-                raise KeyError("Required 'colors' section missing from game_config.json")
+                raise KeyError("Required 'colors' section missing from game_rules.json")
 
             color_config = config['colors']
 
-            # Load all categories - FAIL if missing
-            required_categories = ['basic', 'game_elements', 'data_codes', 'message_log', 'enemies', 'ui']
-            for category in required_categories:
-                if category not in color_config:
-                    error_msg = f"CRITICAL CONFIG ERROR: 'colors.{category}' section missing from game_config.json"
-                    logging.error(error_msg)
-                    logging.error(f"Available color categories: {list(color_config.keys())}")
-                    raise KeyError(f"Required color category missing: {category}")
+            # Load ALL color categories dynamically
+            for category, items in color_config.items():
+                if category.startswith('_'):  # Skip comment fields
+                    continue
+                if isinstance(items, dict):
+                    for name, rgb in items.items():
+                        if name.startswith('_'):  # Skip comment fields
+                            continue
+                        if isinstance(rgb, list) and len(rgb) == 3:
+                            self._colors[name.upper()] = tuple(rgb)
 
-            # Load basic, game_elements, data_codes, message_log categories
-            for category in ['basic', 'game_elements', 'data_codes', 'message_log']:
-                for name, rgb in color_config[category].items():
-                    self._colors[name.upper()] = tuple(rgb)
+            # Backward compatibility aliases (old name -> new name)
+            self._create_aliases({
+                # Basic colors
+                'WHITE': 'PURE_WHITE',
+                'BLACK': 'VOID_BLACK',
+                'RED': 'CRIMSON_RED',
+                'GREEN': 'MATRIX_GREEN',
+                'BLUE': 'ELECTRIC_BLUE',
+                'YELLOW': 'NEON_GOLD',
+                'MAGENTA': 'HOT_MAGENTA',
+                'CYAN': 'NEON_CYAN',
+                'LIGHT_GRAY': 'STEEL_GRAY',
+                'DARK_GRAY': 'SHADOW_GRAY',
+                'ORANGE': 'SUNSET_ORANGE',
+                'BRIGHT_RED': 'BLOOD_RED',
+                'BRIGHT_GREEN': 'MATRIX_GREEN',
+                'BRIGHT_BLUE': 'ELECTRIC_BLUE',
+                'BRIGHT_YELLOW': 'NEON_GOLD',
+                'BRIGHT_MAGENTA': 'HOT_MAGENTA',
+                'BRIGHT_CYAN': 'NEON_CYAN',
+                'DARK_GREEN': 'DEEP_GREEN',
 
-            # Enemy colors - FAIL if missing
-            enemies = color_config['enemies']
-            required_enemy_colors = ['unaware', 'alert', 'hostile']
-            for color_name in required_enemy_colors:
-                if color_name not in enemies:
-                    error_msg = f"CRITICAL CONFIG ERROR: 'colors.enemies.{color_name}' missing from game_config.json"
-                    logging.error(error_msg)
-                    logging.error(f"Available enemy colors: {list(enemies.keys())}")
-                    raise KeyError(f"Required enemy color missing: {color_name}")
+                # Game elements (consolidated)
+                'PLAYER': 'MATRIX_GREEN',
+                'ENEMY': 'CRIMSON_RED',
+                'BLIND_SPOT_VISIBLE': 'GHOST_PURPLE',
+                'BLIND_SPOT_REMEMBERED': 'VOID_PURPLE',
+                'FLOOR': 'DIGITAL_FLOOR',
+                'GATEWAY': 'NEON_GOLD',
+                'CPU_RECOVERY': 'CRIMSON_RED',
+                'HEAT_RECOVERY': 'NEON_CYAN',
+                'DATA_PATCH': 'NEON_GOLD',
+                'EXPLOIT_PICKUP': 'ALERT_AMBER',
+                'UPGRADE': 'HOT_MAGENTA',
+                'STORY_FRAGMENT': 'NEON_CYAN',
 
-            self._colors['ENEMY_UNAWARE'] = tuple(enemies['unaware'])
-            self._colors['ENEMY_ALERT'] = tuple(enemies['alert'])
-            self._colors['ENEMY_HOSTILE'] = tuple(enemies['hostile'])
+                # Data codes (renamed)
+                'CRIMSON': 'COMBAT_RED',
+                'AZURE': 'AZURE_BLUE',
+                'EMERALD': 'EMERALD_GREEN',
+                'GOLDEN': 'UTILITY_GOLD',
+                'VIOLET': 'PLASMA_VIOLET',
+                'SILVER': 'SILVER_MIST',
 
-            # UI colors - FAIL if missing
-            ui = color_config['ui']
-            required_ui_colors = ['background', 'text', 'accent', 'highlight', 'electric_purple']
-            for color_name in required_ui_colors:
-                if color_name not in ui:
-                    error_msg = f"CRITICAL CONFIG ERROR: 'colors.ui.{color_name}' missing from game_config.json"
-                    logging.error(error_msg)
-                    logging.error(f"Available UI colors: {list(ui.keys())}")
-                    raise KeyError(f"Required UI color missing: {color_name}")
+                # Message log (consolidated)
+                'CRITICAL': 'CRIMSON_RED',
+                'ERROR': 'ALERT_AMBER',
+                'WARNING': 'NEON_GOLD',
+                'ALERT': 'ALERT_AMBER',
+                'SUCCESS': 'MATRIX_GREEN',
+                'INFO': 'NEON_CYAN',
+                'SYSTEM': 'SYSTEM_PURPLE',
+                'COMBAT': 'NEON_PINK',
+                'STEALTH': 'STEALTH_BLUE',
+                'DEFAULT': 'SILVER_WHITE',
 
-            self._colors['UI_BG'] = tuple(ui['background'])
-            self._colors['UI_TEXT'] = tuple(ui['text'])
-            self._colors['UI_ACCENT'] = tuple(ui['accent'])
-            self._colors['UI_HIGHLIGHT'] = tuple(ui['highlight'])
-            self._colors['ELECTRIC_PURPLE'] = tuple(ui['electric_purple'])
+                # Enemy states
+                'ENEMY_UNAWARE': 'UNAWARE',
+                'ENEMY_ALERT': 'ALERT',
+                'ENEMY_HOSTILE': 'HOSTILE',
+                'ENEMY_DISABLED': 'DISABLED',
 
-            # Derived colors
-            self._colors['VISION_UNAWARE'] = self._darken_color(self._colors['ENEMY_UNAWARE'], 0.3)
-            self._colors['VISION_ALERT'] = self._darken_color(self._colors['ENEMY_ALERT'], 0.3)
-            self._colors['VISION_HOSTILE'] = self._darken_color(self._colors['ENEMY_HOSTILE'], 0.3)
-            self._colors['LOG_BG'] = (8, 12, 20)
-            self._colors['LOG_BORDER'] = self._colors['UI_TEXT']
+                # Status effects (keeping original names)
+                'VIRUS': 'VIRUS',
+                'SLOW': 'SLOW',
+                'INVISIBLE': 'INVISIBLE',
+                'DISABLED': 'DISABLED',
 
-            # LIGHT_GRAY should be in basic colors
-            if 'LIGHT_GRAY' not in self._colors:
-                error_msg = "CRITICAL CONFIG ERROR: 'light_gray' missing from colors.basic in game_config.json"
-                logging.error(error_msg)
-                raise KeyError("Required color missing: light_gray")
+                # UI (consolidated)
+                'UI_BG': 'UI_PANEL',  # from backgrounds
+                'UI_TEXT': 'NEON_CYAN',
+                'UI_ACCENT': 'DEEP_PURPLE',
+                'UI_HIGHLIGHT': 'HOT_MAGENTA',
+                'ELECTRIC_PURPLE': 'DEEP_PURPLE',
+                'HELP_TEXT': 'SHADOW_GRAY',
+                'DIALOGUE_BACKGROUND': 'DIALOGUE',  # from backgrounds
+                'LOG_BG': 'UI_PANEL_LOG',  # from backgrounds - NO MORE HARDCODE!
+            })
+
+            # Load backgrounds into main color dict
+            if 'backgrounds' in color_config:
+                for name, rgb in color_config['backgrounds'].items():
+                    if not name.startswith('_') and isinstance(rgb, list):
+                        self._colors[name.upper()] = tuple(rgb)
+
+            # Derived colors for enemy vision ranges (darkened versions)
+            if 'UNAWARE' in self._colors:
+                self._colors['VISION_UNAWARE'] = self._darken_color(self._colors['UNAWARE'], 0.3)
+            if 'ALERT' in self._colors:
+                self._colors['VISION_ALERT'] = self._darken_color(self._colors['ALERT'], 0.3)
+            if 'HOSTILE' in self._colors:
+                self._colors['VISION_HOSTILE'] = self._darken_color(self._colors['HOSTILE'], 0.3)
+
+            # LOG_BORDER uses UI text color
+            if 'NEON_CYAN' in self._colors:
+                self._colors['LOG_BORDER'] = self._colors['NEON_CYAN']
 
         except KeyError as e:
             # Re-raise KeyError to fail immediately
             raise
         except Exception as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Failed to load colors from game_config.json"
+            error_msg = f"CRITICAL CONFIG ERROR: Failed to load colors from game_rules.json"
             logging.error(error_msg)
             logging.error(f"Exception: {str(e)}")
             raise RuntimeError(f"Failed to load colors: {e}") from e
+
+    def _create_aliases(self, alias_map: dict):
+        """
+        Create backward-compatible color aliases.
+
+        Args:
+            alias_map: Dict mapping old names to new names
+        """
+        for old_name, new_name in alias_map.items():
+            if new_name in self._colors:
+                self._colors[old_name] = self._colors[new_name]
     
     def _darken_color(self, color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
         """

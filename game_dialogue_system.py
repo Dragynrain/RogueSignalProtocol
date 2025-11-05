@@ -25,6 +25,7 @@ import tcod.event
 
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Colors, ensure_color_tuple
+from game_color_manager import ColorManager
 from game_ui import render_char_safe
 from data_loading import get_death_messages, get_intro_messages
 from game_story import StoryFragmentManager
@@ -290,7 +291,7 @@ class UnifiedRenderer:
             # Highlight if hovered
             if hovered_option == i:
                 option_fg = Colors.YELLOW
-                option_bg = (40, 40, 40)  # Dark gray highlight
+                option_bg = ColorManager.get("backgrounds", "menu_highlight")
             else:
                 option_fg = Colors.WHITE
                 option_bg = bg_color

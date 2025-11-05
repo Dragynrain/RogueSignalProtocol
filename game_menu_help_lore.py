@@ -77,7 +77,7 @@ class LoreMenu:
         if not discovered_fragments:
             render_char_safe(console, 2, 5, "No data fragments discovered yet.", fg=Colors.WHITE)
             render_char_safe(console, 2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
-            render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
+            render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.CYAN)
             return
 
         start_y = 5
@@ -115,7 +115,7 @@ class LoreMenu:
             max_height=GameConfig.SCREEN_HEIGHT - 4
         )
 
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to list", fg=Colors.LIGHT_GRAY)
+        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to list", fg=Colors.CYAN)
     
     def handle_input(self, event) -> str:
         """Handle lore menu input with proper navigation."""
@@ -236,9 +236,9 @@ class HelpMenu:
 
         # Title
         title = "ROGUE SIGNAL PROTOCOL - HELP"
-        ScreenRenderingUtils.render_centered_title(console, title, 2, Colors.YELLOW)
-        
-        y = 5
+        ScreenRenderingUtils.render_centered_title(console, title, 1, Colors.YELLOW)
+
+        y = 3
         help_sections = self._get_help_sections()
 
         for text, color in help_sections:
@@ -256,7 +256,7 @@ class HelpMenu:
                 y += 1
         
         # Back instruction
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.LIGHT_GRAY)
+        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.CYAN)
     
     def handle_input(self, event) -> str:
         """Handle help menu input. Returns 'back' on any key press."""
@@ -286,40 +286,18 @@ class HelpMenu:
         ENEMY_UNAWARE = ensure_color_tuple(enemy_colors.get("unaware_dark", [100, 100, 0]))
         ENEMY_ALERT = ensure_color_tuple(enemy_colors.get("alert_dark", [150, 75, 0]))
         ENEMY_HOSTILE = ensure_color_tuple(enemy_colors.get("hostile_dark", [150, 0, 0]))
-        NEON_PINK = ensure_color_tuple(ui_colors.get("neon_pink", [255, 20, 147]))
+        NEON_PINK = Colors.NEON_PINK
         
         return [
             ("OBJECTIVE:", Colors.CYAN),
-            ("  Navigate network levels using stealth", Colors.WHITE),
-            ("  Reach the gateway to advance", Colors.WHITE),  # Will render > separately
-            ("  Avoid trace level by enemies and Admin Avatar", Colors.WHITE),
+            ("  Navigate levels stealthily, reach gateway (>), avoid trace", Colors.WHITE),
             ("  Collect codes, exploits, and upgrades", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("MOVEMENT & CONTROLS:", Colors.CYAN),
-            ("  ↑↓←→, WASD/QEZC, or Numpad: Move/Navigate", Colors.WHITE),
-            ("  Mouse: Click tiles to move, hover/click menus", Colors.WHITE),
-            ("  1-5: Use loaded exploits (requires targeting)", Colors.WHITE),
-            ("  I: Inventory (manage codes & exploits)", Colors.WHITE),
-            ("  L: Look mode (examine map and entities)", Colors.WHITE),
-            ("  F: View discovered story fragments", Colors.WHITE),
-            ("  V: View achievements", Colors.WHITE),
-            ("  ESC: Pause menu / Close screens", Colors.WHITE),
-            ("", Colors.WHITE),
 
-            ("MOUSE CONTROLS:", Colors.CYAN),
-            ("  Left Click: Move (adjacent tiles), select/activate", Colors.WHITE),
-            ("  Right Click: Cancel/exit current mode", Colors.WHITE),
-            ("  Hover: Update cursor position (look/targeting)", Colors.WHITE),
-            ("  Scroll Wheel ↕: Navigate lists (inventory, lore)", Colors.WHITE),
-            ("", Colors.WHITE),
+            ("CONTROLS:", Colors.CYAN),
+            ("  ↑↓←→/WASD/Numpad: Move  Mouse: Click/hover  1-5: Exploits", Colors.WHITE),
+            ("  I: Inventory  L: Look mode  F: Lore  V: Achievements  ESC: Menu", Colors.WHITE),
+            ("  Mouse: L-Click=move/select, R-Click=cancel, Scroll=lists", Colors.WHITE),
 
-            ("LOOK MODE:", Colors.CYAN),
-            ("  L or ESC: Exit look mode", Colors.WHITE),
-            ("  ↑↓←→, WASD/QEZC, Numpad, or Mouse: Move cursor", Colors.WHITE),
-            ("  Inspect enemies, items, terrain, and nodes", Colors.WHITE),
-            ("", Colors.WHITE),
-            
             ("MAP SYMBOLS:", Colors.CYAN),
             ("  ☺  Player (you)", Colors.WHITE),
             ("  •  Empty floor (passable)", Colors.FLOOR),
@@ -330,65 +308,39 @@ class HelpMenu:
             ("", Colors.WHITE),
             
             ("ENEMY TYPES (HP, Vision, Behavior, Damage):", Colors.CYAN),
-            ("  S: Scanner (35hp, 4 vision, static, no attack)", ENEMY_UNAWARE),
-            ("  P: Patrol (40hp, 4 vision, linear routes, 15 dmg)", ENEMY_UNAWARE),
-            ("  B: Bot (25hp, 3 vision, random movement, 8 dmg)", ENEMY_UNAWARE),
-            ("  F: Firewall (80hp, 5 vision, static, no attack)", ENEMY_ALERT),
-            ("  H: Hunter (50hp, 6 vision, seeks players, 22 dmg)", ENEMY_HOSTILE),
-            ("  V: Virus (35hp, 4 vision, seeks players, virus attack)", ENEMY_HOSTILE),
-            ("  I: Inhibitor (30hp, 4 vision, random, slows movement)", ENEMY_UNAWARE),
-            ("  A: Admin Avatar (250hp, 8 vision, perfect tracking, 45 dmg)", ENEMY_HOSTILE),
+            ("  S: Scanner (35hp/4vis/static/none) P: Patrol (40hp/4vis/15dmg)", ENEMY_UNAWARE),
+            ("  B: Bot (25hp/3vis/8dmg) F: Firewall (80hp/5vis/none)", ENEMY_UNAWARE),
+            ("  H: Hunter (50hp/6vis/22dmg) V: Virus (35hp/4vis/virus)", ENEMY_HOSTILE),
+            ("  I: Inhibitor (30hp/4vis/slow) A: Admin (250hp/8vis/45dmg)", ENEMY_HOSTILE),
             ("", Colors.WHITE),
             
             ("ITEMS & PICKUPS:", Colors.CYAN),
-            ("  §  Code Patches (grant random bonuses)", Colors.ELECTRIC_PURPLE),
-            ("  &  Exploits (combat & utility abilities)", NEON_PINK),
-            ("  ○  Permanent upgrades (Memory/CPU/Heat)", Colors.ELECTRIC_BLUE),
-            ("  ♥  CPU recovery nodes (restore health)", Colors.RED),
-            ("  ♦  Cooling nodes (reduce heat)", Colors.CYAN),
-            ("  ♠  Ghost nodes (reduce trace level)", Colors.ELECTRIC_PURPLE),
+            ("  §: Code Patches (bonuses)  &: Exploits  ○: Upgrades", Colors.WHITE),
+            ("  ♥: CPU nodes  ♦: Cooling nodes  ♠: Ghost nodes", Colors.WHITE),
             ("", Colors.WHITE),
             
             ("CORE MECHANICS:", Colors.CYAN),
-            ("  Heat: Builds from exploit usage, causes damage at 100°C+", Colors.WHITE),
-            ("  Trace Level: Increases when spotted, Admin spawns at threshold", Colors.WHITE),
-            ("  CPU: Your health - if it reaches 0, you die permanently", Colors.WHITE),
-            ("  RAM: Limits how many exploits you can equip (max 5)", Colors.WHITE),
-            ("  Blind Spots: Hide in purple * tiles - attacks deal +10 damage!", Colors.WHITE),
+            ("  CPU: Health (0=death)  Heat: Exploit cost (100°C=dmg)", Colors.WHITE),
+            ("  Trace: Increases when spotted (Admin spawns at threshold)", Colors.WHITE),
+            ("  RAM: Exploit limit (max 5)  Blind Spots: Stealth (+10 dmg)", Colors.WHITE),
             ("", Colors.WHITE),
             
-            ("COMBAT EXPLOITS:", Colors.CYAN),
-            ("  Buffer Overflow: 40 dmg melee (1 tile range)", Colors.WHITE),
-            ("  Code Injection: 25 dmg ranged (5 tile range)", Colors.WHITE),
-            ("  System Crash: 30 dmg area (disables enemies 4 turns)", Colors.WHITE),
-            ("  EMP Burst: 20 dmg area (disables all nearby enemies)", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("STEALTH & UTILITY EXPLOITS:", Colors.CYAN),
-            ("  System Hop: Teleport to blind spots (6 tile range)", Colors.WHITE),
-            ("  Traffic Masquerade: Become invisible (5 turns)", Colors.WHITE),
-            ("  Decoy Swarm: Create distraction (8 turn duration)", Colors.WHITE),
-            ("  Network Scan: Reveal all cooling, CPU, and ghost nodes", Colors.WHITE),
-            ("  Log Wiper: Reduce trace level (-30%)", Colors.WHITE),
-            ("  Antivirus: Purges negative status effects (virus, slow)", Colors.WHITE),
-            ("  Memory Leak: 3x3 area blinds enemies for 3 turns (keep moving)", Colors.WHITE),
-            ("", Colors.WHITE),
-            
+            ("EXPLOITS - COMBAT:", Colors.CYAN),
+            ("  Buffer Overflow (40dmg/melee)  Code Injection (25dmg/range)", Colors.WHITE),
+            ("  System Crash (30dmg/area/disable)  EMP Burst (20dmg/area)", Colors.WHITE),
+
+            ("EXPLOITS - UTILITY:", Colors.CYAN),
+            ("  System Hop (teleport)  Traffic Masq (invisible)  Decoy (distract)", Colors.WHITE),
+            ("  Network Scan (reveal nodes)  Log Wiper (trace -30%)", Colors.WHITE),
+            ("  Antivirus (cure)  Memory Leak (blind 3x3)", Colors.WHITE),
+
             ("STATUS EFFECTS:", Colors.CYAN),
-            ("  Virus: 3 CPU damage per turn, cured with Antivirus", Colors.WHITE),
-            ("  Virus attacks stack virus duration (max 12 turns)", Colors.WHITE),
-            ("  Movement Slowed: Can only move every other turn", Colors.WHITE),
-            ("  Speed Boost and Movement Slow offset each other turn-for-turn", Colors.WHITE),
-            ("", Colors.WHITE),
-            
-            ("SURVIVAL TIPS:", Colors.CYAN),
-            ("  Use blind spots frequently - stealth gives +10 damage bonus!", Colors.WHITE),
-            ("  Monitor heat and trace levels constantly", Colors.WHITE),
-            ("  Plan exploit usage - heat management is critical", Colors.WHITE),
-            ("  Use CPU nodes when low on health", Colors.WHITE),
-            ("  Use Ghost nodes to reduce trace level continuously", Colors.WHITE),
-            ("  Admin Avatar spawns at high trace level - be careful!", Colors.WHITE),
-            ("  Virus enemies apply virus damage - keep Antivirus exploit handy!", Colors.WHITE),
-            ("  Inhibitor enemies add 1 slow turn that offsets speed boosts!", Colors.WHITE),
-            ("  Save cooling nodes for emergencies", Colors.WHITE),
+            ("  Virus: 3 CPU dmg/turn (stacks to 12t, cure with Antivirus)", Colors.WHITE),
+            ("  Slowed: Move every other turn (offsets speed boosts)", Colors.WHITE),
+
+            ("TIPS:", Colors.CYAN),
+            ("  Use blind spots for stealth (+10 dmg bonus)", Colors.WHITE),
+            ("  Monitor heat/trace levels - Admin spawns at high trace!", Colors.WHITE),
+            ("  Plan exploit usage carefully - heat management is critical", Colors.WHITE),
+            ("  Use CPU/Ghost nodes often - save cooling for emergencies", Colors.WHITE),
         ]

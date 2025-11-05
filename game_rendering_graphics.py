@@ -493,11 +493,11 @@ class GraphicsMapRenderer(MapRendererBase):
             if player_color == Colors.RED:
                 status_color = Colors.RED
             elif player_color == Colors.YELLOW:
-                status_color = ColorManager.get("status_effects", "invisible")
-            elif player_color == ColorManager.get("status_effects", "virus"):
-                status_color = ColorManager.get("status_effects", "virus")
+                status_color = Colors.INVISIBLE
+            elif player_color == Colors.VIRUS:
+                status_color = Colors.VIRUS
             elif player_color == Colors.CYAN:
-                status_color = ColorManager.get("status_effects", "slow")
+                status_color = Colors.SLOW
 
             if status_color:
                 player_tile_rect = self._get_tile_rect(player_screen_x, player_screen_y)
@@ -732,7 +732,7 @@ class GraphicsMapRenderer(MapRendererBase):
             return ColorManager.get("status_effects", status_type)
         except KeyError:
             # Fallback to white if status type not found
-            return ColorManager.get_basic_color("white")
+            return Colors.PURE_WHITE
 
     def _draw_corner_brackets(self, renderer, rect: Tuple[int, int, int, int], color: Tuple[int, int, int], bracket_size: int = 4):
         """
@@ -796,14 +796,14 @@ class GraphicsMapRenderer(MapRendererBase):
         Returns:
             RGB color tuple cycling through cyberpunk neon colors
         """
-        # Cyberpunk neon palette from game_rules.json
+        # Cyberpunk neon palette from game_rules.json data_codes
         cyberpunk_colors = [
-            (255, 20, 80),    # Crimson - neon red/pink
-            (0, 200, 255),    # Azure - bright cyan
-            (0, 255, 100),    # Emerald - neon green
-            (255, 240, 0),    # Golden - neon yellow
-            (200, 60, 255),   # Violet - electric purple
-            (255, 20, 147),   # Neon Pink - hot pink
+            ColorManager.get("data_codes", "combat_red"),
+            ColorManager.get("data_codes", "azure_blue"),
+            ColorManager.get("data_codes", "emerald_green"),
+            ColorManager.get("data_codes", "utility_gold"),
+            ColorManager.get("data_codes", "plasma_violet"),
+            Colors.NEON_PINK,
         ]
 
         current_time = time.time()

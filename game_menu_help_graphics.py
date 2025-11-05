@@ -60,7 +60,7 @@ class GraphicalHelpMenu:
         self.ENEMY_UNAWARE = ColorManager.get_enemy_state_color("unaware_dark")
         self.ENEMY_ALERT = ColorManager.get_enemy_state_color("alert_dark")
         self.ENEMY_HOSTILE = ColorManager.get_enemy_state_color("hostile_dark")
-        self.NEON_PINK = ColorManager.get_ui_color("neon_pink")
+        self.NEON_PINK = Colors.NEON_PINK
 
     def _build_pages(self):
         """Build all help pages with content."""
