@@ -176,11 +176,12 @@ class AchievementPopupManager:
             console, x=box_x, y=box_y, width=popup_width, height=popup_height, alpha=255
         )
 
-        # Color scheme from JSON
-        border_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.border"))
-        bg_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.background"))
-        title_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.title"))
-        achievement_name_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.name"))
+        # Color scheme using consolidated colors
+        from game_entities import Colors
+        border_color = Colors.NEON_GOLD  # Consolidated from achievement_popup.border
+        bg_color = Colors.POPUP  # Consolidated from achievement_popup.background to backgrounds.popup
+        title_color = Colors.NEON_GOLD  # Consolidated from achievement_popup.title
+        achievement_name_color = Colors.PURE_WHITE  # Consolidated from achievement_popup.name
         description_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.description"))
 
         # Draw box background and border
