@@ -100,7 +100,7 @@ class UIRenderer:
         x_pos = 1
         for part, color in zip(status_parts, colors):
             # Keep status bar in game area only
-            if x_pos + len(part) < GameConfig.GAME_AREA_WIDTH() - 1:
+            if x_pos + len(part) <= GameConfig.GAME_AREA_WIDTH() - 1:
                 render_char_safe(console, x_pos, 0, part, fg=color, bg=Colors.UI_BG)
                 x_pos += len(part) + 2
 
