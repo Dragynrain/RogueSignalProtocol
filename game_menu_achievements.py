@@ -63,13 +63,13 @@ class AchievementsMenu:
             )
 
         # Instructions
-        instructions = "Esc: Back  │  Scroll Wheel ↕: Navigate"
+        instructions = "ESC: Back  │  Scroll Wheel ↕: Navigate"
         render_char_safe(
             console,
             2,
             GameConfig.SCREEN_HEIGHT - 2,
             instructions,
-            fg=Colors.LIGHT_GRAY
+            fg=Colors.CYAN
         )
 
     def _build_achievement_lines(self) -> list:

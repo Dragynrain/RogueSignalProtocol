@@ -74,9 +74,12 @@ class MenuMouseHandler:
             pixel_x, pixel_y, window_w, window_h
         )
 
-        # Create new event with tile coordinates stored in .tile attribute
+        # Create new event with tile coordinates stored in both .tile and .position attributes
+        # (.position is TCOD standard, .tile is for backward compatibility)
         converted_event = copy.copy(event)
-        converted_event.tile = type(event.pixel)(tile_x, tile_y)
+        coord_tuple = type(event.pixel)(tile_x, tile_y)
+        converted_event.tile = coord_tuple
+        converted_event.position = coord_tuple  # TCOD standard attribute
 
         return converted_event
 

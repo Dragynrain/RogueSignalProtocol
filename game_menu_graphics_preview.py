@@ -106,9 +106,9 @@ class GraphicsPreviewMenu:
             # Fallback to default colors from preview_demo
             config = DataLoader.load_config()
             preview_demo = config.get("colors", {}).get("preview_demo", {})
-            enemy_colors_data = preview_demo.get("enemy_colors", [])
+            entity_colors_data = preview_demo.get("entity_colors", [])
             exploit_colors_data = preview_demo.get("exploit_colors", [])
-            self.codehack_colors = [ensure_color_tuple(c) for c in enemy_colors_data] if enemy_colors_data else [
+            self.codehack_colors = [ensure_color_tuple(c) for c in entity_colors_data] if entity_colors_data else [
                 (220, 20, 60), (0, 255, 255), (50, 205, 50),
                 (255, 215, 0), (138, 43, 226), (192, 192, 192)
             ]
@@ -280,8 +280,10 @@ class GraphicsPreviewMenu:
         self.preview_width = 44  # Console grid cells needed for 22 game sprites
         self.preview_height = 32  # Console grid cells needed for 16 game sprites
 
-        self.preview_offset_x = 1
-        self.preview_offset_y = 6
+        # Center the preview in the left side (entity list starts at x=50)
+        # Available space: 50 tiles, preview: 44 tiles, centered: (50-44)/2 = 3
+        self.preview_offset_x = 3
+        self.preview_offset_y = 8  # Moved down 2 rows to make space for file text and graphics mode note
 
     def render(self, console: tcod.console.Console) -> None:
         """Render the graphics preview screen."""
@@ -311,7 +313,7 @@ class GraphicsPreviewMenu:
         render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 1,
                         title, fg=Colors.CYAN)
 
-        # Current selection info with navigation arrows
+        # Current selection info (no arrows here - arrows are next to each entity in list)
         if self.entity_types:
             category, entity_key, display_name = self.entity_types[self.current_entity_index]
             current_variant = self.selected_variants[entity_key]
@@ -319,32 +321,18 @@ class GraphicsPreviewMenu:
             variant_index = self.variants[entity_key].index(current_variant) + 1
 
             info_text = f"Selected: {display_name} - Variant {variant_index}/{total_variants}"
-            render_char_safe(console, 2, 2, info_text, fg=Colors.YELLOW)
-
-            # Navigation arrows for variant cycling (mouse clickable)
-            # Store positions for mouse detection
-            self.left_arrow_x = 2
-            self.left_arrow_y = 3
-            self.right_arrow_x = 8
-            self.right_arrow_y = 3
-
-            # Render arrows with hover highlighting
-            left_arrow_color = Colors.CYAN if hasattr(self, '_hover_left_arrow') and self._hover_left_arrow else Colors.WHITE
-            right_arrow_color = Colors.CYAN if hasattr(self, '_hover_right_arrow') and self._hover_right_arrow else Colors.WHITE
-
-            render_char_safe(console, self.left_arrow_x, self.left_arrow_y, "< Prev", fg=left_arrow_color)
-            render_char_safe(console, self.right_arrow_x, self.right_arrow_y, "Next >", fg=right_arrow_color)
+            render_char_safe(console, 4, 2, info_text, fg=Colors.YELLOW)
 
             file_text = f"File: {entity_key}{current_variant:02d}.png"
-            render_char_safe(console, 2, 4, file_text, fg=Colors.LIGHT_GRAY)
+            render_char_safe(console, 4, 3, file_text, fg=Colors.LIGHT_GRAY)
 
-        # Note about graphics mode (moved down to accommodate arrows)
+        # Note about graphics mode (moved down to accommodate file text)
         if self.settings.graphics_mode == "graphics":
-            note = "Graphics rendering on preview map (left side)"
-            render_char_safe(console, 2, 6, note, fg=Colors.GREEN)
+            note = "Graphics rendering on preview map"
+            render_char_safe(console, 4, 5, note, fg=Colors.GREEN)
         else:
             note = "Enable Graphics Mode in Settings to see preview"
-            render_char_safe(console, 2, 6, note, fg=Colors.RED)
+            render_char_safe(console, 4, 5, note, fg=Colors.RED)
 
         # Render entity list (sidebar)
         self._render_entity_list(console)
@@ -352,14 +340,15 @@ class GraphicsPreviewMenu:
         # Instructions
         instructions = [
             "↑↓ or W/S: Select entity type",
-            "←→ or A/D / Click arrows: Change variant",
+            "←→ or A/D: Change variant",
+            "Click < > on entities: Change specific variant",
             "SPACE: Cycle alert ring color",
             "ESC: Exit and save log",
         ]
 
         inst_y = GameConfig.SCREEN_HEIGHT - len(instructions) - 1
         for i, instruction in enumerate(instructions):
-            render_char_safe(console, 2, inst_y + i, instruction, fg=Colors.LIGHT_GRAY)
+            render_char_safe(console, 2, inst_y + i, instruction, fg=Colors.CYAN)
 
     def _render_preview_map(self, console: tcod.console.Console):
         """Render the preview map showing all selected graphics."""
@@ -833,7 +822,7 @@ class GraphicsPreviewMenu:
             return None
 
     def _render_entity_list(self, console: tcod.console.Console):
-        """Render the sidebar list of all entity types."""
+        """Render the sidebar list of all entity types with < > arrows for variant cycling."""
         # Position list on far right side (moved further right to avoid graphics overlap)
         list_x = GameConfig.SCREEN_WIDTH - 30
         list_y = 4
@@ -844,6 +833,11 @@ class GraphicsPreviewMenu:
         # Render list (with scrolling if needed)
         visible_count = 25  # Max visible items
         scroll_offset = max(0, self.current_entity_index - visible_count + 5)
+
+        # Initialize arrow regions storage if not exists
+        if not hasattr(self, 'entity_arrow_regions'):
+            self.entity_arrow_regions = []
+        self.entity_arrow_regions = []  # Clear and rebuild each frame
 
         for i in range(visible_count):
             entity_index = scroll_offset + i
@@ -872,13 +866,60 @@ class GraphicsPreviewMenu:
                     color = Colors.WHITE
                 prefix = "  "
 
-            # Show variant count
+            # Show variant count with < > arrows
             variant_count = len(self.variants[entity_key])
             current_variant = self.selected_variants[entity_key]
             variant_index = self.variants[entity_key].index(current_variant) + 1
 
-            text = f"{prefix}{display_name} ({variant_index}/{variant_count})"
-            render_char_safe(console, list_x, list_y + i, text[:32], fg=color)
+            # Render entity name
+            name_text = f"{prefix}{display_name}"
+            render_char_safe(console, list_x, list_y + i, name_text, fg=color)
+
+            # Render < > arrows with variant info after name
+            arrows_x = list_x + len(name_text) + 1
+
+            # Check if hovering over arrows for this entity
+            hover_left = (hasattr(self, '_hover_entity_arrow') and
+                         self._hover_entity_arrow == (entity_index, 'left'))
+            hover_right = (hasattr(self, '_hover_entity_arrow') and
+                          self._hover_entity_arrow == (entity_index, 'right'))
+
+            left_color = Colors.CYAN if hover_left else Colors.WHITE
+            right_color = Colors.CYAN if hover_right else Colors.WHITE
+
+            # Format: < 2/5 >
+            arrows_text = f"< {variant_index}/{variant_count} >"
+
+            # Render left arrow
+            render_char_safe(console, arrows_x, list_y + i, "<", fg=left_color)
+            # Render middle part
+            render_char_safe(console, arrows_x + 2, list_y + i, f"{variant_index}/{variant_count}", fg=color)
+            # Render right arrow
+            right_arrow_x = arrows_x + 2 + len(f"{variant_index}/{variant_count}") + 1
+            render_char_safe(console, right_arrow_x, list_y + i, ">", fg=right_color)
+
+            # Store click regions for mouse detection
+            # Left arrow: just the '<' character
+            left_region = {
+                'entity_index': entity_index,
+                'entity_key': entity_key,  # Store for debugging
+                'direction': 'left',
+                'x': arrows_x,
+                'y': list_y + i,
+                'width': 1
+            }
+            self.entity_arrow_regions.append(left_region)
+
+            # Right arrow: just the '>' character
+            right_region = {
+                'entity_index': entity_index,
+                'entity_key': entity_key,  # Store for debugging
+                'direction': 'right',
+                'x': right_arrow_x,
+                'y': list_y + i,
+                'width': 1
+            }
+            self.entity_arrow_regions.append(right_region)
 
     def handle_input(self, event) -> str:
         """
@@ -923,49 +964,59 @@ class GraphicsPreviewMenu:
 
     def handle_mouse_motion(self, event) -> bool:
         """Handle mouse motion - highlight arrows on hover."""
-        if not hasattr(event, 'position') or event.position is None:
+        # After context.convert_event(), coordinates are in event.tile, not event.position
+        if not hasattr(event, 'tile') or event.tile is None:
             return False
 
-        tile_x = int(event.position.x)
-        tile_y = int(event.position.y)
+        tile_x = int(event.tile.x)
+        tile_y = int(event.tile.y)
 
-        # Reset hover states
-        self._hover_left_arrow = False
-        self._hover_right_arrow = False
+        # Reset hover state
+        self._hover_entity_arrow = None
 
-        # Check if hovering over left arrow ("< Prev" at position self.left_arrow_x, self.left_arrow_y)
-        if hasattr(self, 'left_arrow_y') and tile_y == self.left_arrow_y:
-            if hasattr(self, 'left_arrow_x') and self.left_arrow_x <= tile_x < self.left_arrow_x + 6:  # "< Prev" is 6 chars
-                self._hover_left_arrow = True
-                return True
-
-        # Check if hovering over right arrow ("Next >" at position self.right_arrow_x, self.right_arrow_y)
-        if hasattr(self, 'right_arrow_y') and tile_y == self.right_arrow_y:
-            if hasattr(self, 'right_arrow_x') and self.right_arrow_x <= tile_x < self.right_arrow_x + 6:  # "Next >" is 6 chars
-                self._hover_right_arrow = True
-                return True
+        # Check if hovering over any entity arrow
+        if hasattr(self, 'entity_arrow_regions'):
+            for region in self.entity_arrow_regions:
+                if (tile_y == region['y'] and
+                    region['x'] <= tile_x < region['x'] + region['width']):
+                    self._hover_entity_arrow = (region['entity_index'], region['direction'])
+                    return True
 
         return False
 
     def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - cycle variants when clicking arrows."""
-        if not hasattr(event, 'position') or event.position is None:
+        """Handle mouse click - cycle variants when clicking arrows on entity list."""
+        # After manual coordinate conversion, coordinates are in event.tile
+        if not hasattr(event, 'tile') or event.tile is None:
             return ""
 
-        tile_x = int(event.position.x)
-        tile_y = int(event.position.y)
+        # Only handle left mouse button clicks
+        if hasattr(event, 'button') and event.button != tcod.event.MouseButton.LEFT:
+            return ""
 
-        # Check if clicking left arrow
-        if hasattr(self, 'left_arrow_y') and tile_y == self.left_arrow_y:
-            if hasattr(self, 'left_arrow_x') and self.left_arrow_x <= tile_x < self.left_arrow_x + 6:
-                self._cycle_variant(-1)
-                return ""
+        tile_x = int(event.tile.x)
+        tile_y = int(event.tile.y)
 
-        # Check if clicking right arrow
-        if hasattr(self, 'right_arrow_y') and tile_y == self.right_arrow_y:
-            if hasattr(self, 'right_arrow_x') and self.right_arrow_x <= tile_x < self.right_arrow_x + 6:
-                self._cycle_variant(1)
-                return ""
+        # Check if clicking any entity arrow
+        if hasattr(self, 'entity_arrow_regions'):
+            for region in self.entity_arrow_regions:
+                if (tile_y == region['y'] and
+                    region['x'] <= tile_x < region['x'] + region['width']):
+                    # Cycle variant for this specific entity
+                    entity_index = region['entity_index']
+                    direction = -1 if region['direction'] == 'left' else 1
+
+                    # Get entity key and cycle its variant
+                    category, entity_key, display_name = self.entity_types[entity_index]
+                    variants = self.variants[entity_key]
+                    current_variant = self.selected_variants[entity_key]
+                    current_index = variants.index(current_variant)
+                    new_index = (current_index + direction) % len(variants)
+                    self.selected_variants[entity_key] = variants[new_index]
+
+                    logging.info(f"Graphics Preview: Cycled {display_name} variant from {current_variant} to {variants[new_index]} via mouse")
+
+                    return ""
 
         return ""
 

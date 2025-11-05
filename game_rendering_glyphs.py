@@ -275,7 +275,7 @@ class GlyphsMapRenderer(MapRendererBase):
             render_char_safe(console, screen_x, screen_y, GameGlyphs.STORY_FRAGMENT, fg=fragment_color, bg=Colors.BLACK)
         elif game.game_map.is_blind_spot(world_pos):
             # ◘ (inverse bullet) for blind spots
-            render_char_safe(console, screen_x, screen_y, GameGlyphs.BLIND_SPOT, fg=(80, 40, 120), bg=Colors.BLACK)
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.BLIND_SPOT, fg=Colors.GHOST_PURPLE, bg=Colors.BLACK)
         else:
             # • (bullet) for empty space
             render_char_safe(console, screen_x, screen_y, GameGlyphs.FLOOR_EXPLORED, fg=Colors.FLOOR, bg=Colors.BLACK)
@@ -656,7 +656,7 @@ class GlyphsMapRenderer(MapRendererBase):
             return
 
         # Use cyan color for auto-walk path (distinct from enemy movement prediction)
-        path_color = (0, 200, 200)  # Cyan
+        path_color = ColorManager.get("path_colors", "path_cyan")
 
         # Render each position in the path
         for i, pos in enumerate(path):
@@ -667,7 +667,7 @@ class GlyphsMapRenderer(MapRendererBase):
                 if i == len(path) - 1:
                     # Destination: use 'X' marker
                     symbol = 'X'
-                    color = (0, 255, 255)  # Bright cyan
+                    color = ColorManager.get("path_colors", "path_bright")
                 else:
                     # Path steps: use '·' (small dot)
                     symbol = '·'

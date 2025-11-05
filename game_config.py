@@ -183,18 +183,13 @@ class GameSettings:
             self.save_settings()
 
     def get_ui_color_rgb(self) -> tuple:
-        """Get RGB values for current UI color."""
-        color_map = {
-            "cyan": (20, 255, 200),
-            "purple": (200, 60, 255),  # violet from game_rules.json
-            "magenta": (255, 20, 255),
-            "golden": (255, 240, 0),
-            "crimson": (255, 20, 80),
-            "azure": (0, 200, 255),
-            "emerald": (0, 255, 100),
-            "ivory": (245, 245, 235)
-        }
-        return color_map.get(self.ui_color, (20, 255, 200))  # Default to cyan
+        """Get RGB values for current UI color from ui_themes in game_rules.json."""
+        from game_color_manager import ColorManager
+        try:
+            return ColorManager.get("ui_themes", self.ui_color)
+        except KeyError:
+            # Fallback to cyan if theme not found
+            return ColorManager.get("ui_themes", "cyan")
     
     def get_volume_percent(self, volume_type: str) -> int:
         """Get volume as percentage (0-100)"""

@@ -184,51 +184,37 @@
     }
   },
   "colors": {
+    "_comment": "Consolidated cyberpunk color palette - duplicates removed, themed names applied",
     "basic": {
-      "white": [255, 255, 255],
-      "black": [0, 0, 0],
-      "red": [220, 20, 60],
-      "green": [50, 255, 50],
-      "blue": [0, 191, 255],
-      "yellow": [255, 215, 0],
-      "magenta": [255, 20, 255],
-      "cyan": [20, 255, 200],
-      "light_gray": [192, 192, 192],
-      "dark_gray": [128, 128, 128],
-      "bright_red": [255, 128, 128],
-      "bright_green": [50, 255, 50],
-      "bright_blue": [0, 191, 255],
+      "pure_white": [255, 255, 255],
+      "void_black": [0, 0, 0],
+      "crimson_red": [220, 20, 60],
+      "matrix_green": [50, 255, 50],
       "electric_blue": [0, 191, 255],
-      "bright_yellow": [255, 215, 0],
-      "bright_magenta": [255, 20, 255],
-      "bright_cyan": [20, 255, 200],
-      "orange": [255, 165, 0],
-      "dark_green": [0, 128, 0],
+      "neon_gold": [255, 215, 0],
+      "hot_magenta": [255, 20, 255],
+      "neon_cyan": [20, 255, 200],
+      "steel_gray": [192, 192, 192],
+      "shadow_gray": [128, 128, 128],
+      "blood_red": [255, 128, 128],
+      "sunset_orange": [255, 165, 0],
+      "deep_green": [0, 128, 0],
       "acid_green": [128, 255, 0]
     },
     "game_elements": {
-      "player": [50, 255, 50],
-      "enemy": [220, 20, 60],
       "blind_spot": [3, 3, 8],
-      "blind_spot_visible": [80, 40, 120],
-      "blind_spot_remembered": [50, 20, 80],
+      "ghost_purple": [80, 40, 120],
+      "void_purple": [50, 20, 80],
       "wall": [120, 140, 180],
-      "floor": [180, 180, 220],
-      "gateway": [255, 215, 0],
-      "cpu_recovery": [220, 20, 60],
-      "heat_recovery": [20, 255, 200],
-      "data_patch": [255, 215, 0],
-      "exploit_pickup": [255, 120, 20],
-      "upgrade": [255, 20, 255],
-      "story_fragment": [20, 255, 200]
+      "digital_floor": [180, 180, 220]
     },
     "data_codes": {
-      "crimson": [255, 20, 80],
-      "azure": [0, 200, 255],
-      "emerald": [0, 255, 100],
-      "golden": [255, 240, 0],
-      "violet": [200, 60, 255],
-      "silver": [230, 230, 255]
+      "combat_red": [255, 20, 80],
+      "azure_blue": [0, 200, 255],
+      "emerald_green": [0, 255, 100],
+      "utility_gold": [255, 240, 0],
+      "plasma_violet": [200, 60, 255],
+      "silver_mist": [230, 230, 255]
     },
     "exploits": {
       "stealth": [200, 60, 255],
@@ -237,16 +223,11 @@
       "emergency": [255, 140, 0]
     },
     "message_log": {
-      "critical": [220, 20, 60],
-      "error": [255, 120, 20],
-      "warning": [255, 215, 0],
-      "alert": [255, 120, 20],
-      "success": [50, 255, 50],
-      "info": [20, 255, 200],
-      "system": [138, 43, 226],
-      "combat": [255, 20, 147],
-      "stealth": [160, 160, 255],
-      "default": [200, 200, 200]
+      "alert_amber": [255, 120, 20],
+      "system_purple": [138, 43, 226],
+      "neon_pink": [255, 20, 147],
+      "stealth_blue": [160, 160, 255],
+      "silver_white": [200, 200, 200]
     },
     "enemies": {
       "unaware": [255, 255, 0],
@@ -270,10 +251,9 @@
       "gateway": [140, 110, 0],
       "gateway_dark": [180, 150, 0],
       "wall_dark": [60, 70, 90],
-      "floor_explored": [90, 90, 130],
-      "ghost_node_explored": [80, 40, 120],
       "blind_spot": [50, 20, 80],
-      "floor": [180, 180, 220]
+      "floor": [180, 180, 220],
+      "floor_explored": [90, 90, 130]
     },
     "targeting": {
       "prediction_bright": [255, 255, 50],
@@ -284,20 +264,33 @@
       "corner_bracket": [255, 0, 0]
     },
     "graphics_tint": {
-      "explored": [80, 80, 100],
       "normal": [255, 255, 255],
+      "explored": [80, 80, 100],
       "dimmed": [179, 179, 179]
     },
     "ui": {
-      "background": [10, 15, 25],
-      "text": [20, 255, 200],
-      "accent": [160, 20, 255],
-      "highlight": [255, 20, 255],
-      "electric_purple": [160, 20, 255],
-      "help_text": [128, 128, 128],
-      "dialogue_background": [30, 0, 0],
-      "neon_pink": [255, 20, 147],
-      "log_bg": [8, 12, 20]
+      "deep_purple": [160, 20, 255]
+    },
+    "backgrounds": {
+      "_comment": "Dark backgrounds for UI panels and menus",
+      "void": [0, 0, 0],
+      "deep_space": [5, 5, 15],
+      "ui_panel": [10, 15, 25],
+      "ui_panel_log": [8, 12, 20],
+      "popup": [20, 20, 30],
+      "dialogue": [30, 0, 0],
+      "menu_highlight": [40, 40, 40]
+    },
+    "ui_themes": {
+      "_comment": "User-selectable UI color themes",
+      "cyan": [20, 255, 200],
+      "purple": [200, 60, 255],
+      "magenta": [255, 20, 255],
+      "golden": [255, 240, 0],
+      "crimson": [255, 20, 80],
+      "azure": [0, 200, 255],
+      "emerald": [0, 255, 100],
+      "ivory": [245, 245, 235]
     },
     "achievement_popup": {
       "border": [255, 215, 0],
@@ -307,20 +300,22 @@
       "description": [200, 200, 200],
       "hint": [100, 100, 100]
     },
-    "enemy_damage_tints": {
+    "damage_tints": {
+      "_comment": "Health-based tinting for enemies and player in glyphs mode",
       "hp_50_to_99": [255, 100, 100],
       "hp_below_50": [255, 80, 80]
     },
-    "graphics_mode_damage_tints": {
-      "no_damage": [255, 255, 255],
+    "damage_tints_graphics": {
+      "_comment": "Subtle health-based tinting for graphics mode sprites",
       "hp_50_to_99": [255, 220, 220],
       "hp_below_50": [255, 180, 180]
     },
     "path_colors": {
-      "cyan": [0, 200, 200],
-      "bright_cyan": [0, 255, 255]
+      "path_cyan": [0, 200, 200],
+      "path_bright": [0, 255, 255]
     },
     "menu_background": {
+      "_comment": "Animated menu background pattern colors",
       "pattern_colors": [
         [0, 80, 120],
         [0, 120, 180],
@@ -328,18 +323,17 @@
         [120, 0, 180],
         [0, 180, 120]
       ],
-      "base": [5, 5, 15],
       "border": [0, 150, 200],
-      "dots": [0, 60, 100],
-      "void": [20, 0, 20]
+      "dots": [0, 60, 100]
     },
     "preview_demo": {
+      "_comment": "Graphics preview mode demo animation colors",
       "alert_sequence": [
         [255, 255, 0],
         [255, 165, 0],
         [255, 0, 0]
       ],
-      "enemy_colors": [
+      "entity_colors": [
         [220, 20, 60],
         [0, 255, 255],
         [50, 205, 50],
@@ -351,9 +345,7 @@
         [138, 43, 226],
         [220, 20, 60],
         [255, 215, 0],
-        [255, 120, 20],
-        [138, 43, 226],
-        [220, 20, 60]
+        [255, 120, 20]
       ]
     }
   },

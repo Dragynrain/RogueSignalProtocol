@@ -664,7 +664,8 @@ class Enemy:
         if self.max_cpu <= 0:
             return base_color  # Return base color if invalid max_cpu
 
-        # Apply HP-based tinting (blend with red)
+        # Apply HP-based tinting (blend with red) from game_rules.json
+        from game_color_manager import ColorManager
         hp_percent = self.cpu / self.max_cpu
 
         if hp_percent >= 1.0:
@@ -672,14 +673,14 @@ class Enemy:
             return base_color
         elif hp_percent >= 0.5:
             # 50-99% HP - slight red tint (75% base, 25% red)
-            red_tint = (255, 100, 100)
+            red_tint = ColorManager.get("damage_tints", "hp_50_to_99")
             return tuple(
                 int(base_color[i] * 0.75 + red_tint[i] * 0.25)
                 for i in range(3)
             )
         else:
             # <50% HP - heavy red tint (50% base, 50% red)
-            red_tint = (255, 80, 80)
+            red_tint = ColorManager.get("damage_tints", "hp_below_50")
             return tuple(
                 int(base_color[i] * 0.5 + red_tint[i] * 0.5)
                 for i in range(3)
@@ -687,7 +688,7 @@ class Enemy:
 
     def get_graphics_tint(self) -> Tuple[int, int, int]:
         """
-        Get subtle damage tint for graphics mode sprites.
+        Get subtle damage tint for graphics mode sprites from game_rules.json.
 
         Uses multiplicative blending (texture.color_mod), so tint values close to
         (255, 255, 255) preserve original sprite colors.
@@ -695,21 +696,23 @@ class Enemy:
         Returns:
             RGB tint: (255, 255, 255) = no tint, (255, 200, 200) = slight red wash
         """
+        from game_color_manager import ColorManager
+
         # Safety check to prevent division by zero
         if self.max_cpu <= 0:
-            return (255, 255, 255)  # No tint if invalid max_cpu
+            return ColorManager.get("damage_tints_graphics", "hp_50_to_99")  # From JSON
 
         hp_percent = self.cpu / self.max_cpu
 
         if hp_percent >= 1.0:
-            # Full HP - no tint
-            return (255, 255, 255)
+            # Full HP - no tint (pure white)
+            return Colors.PURE_WHITE
         elif hp_percent >= 0.5:
             # 50-99% HP - very subtle red tint (preserves ~86% of green/blue)
-            return (255, 220, 220)
+            return ColorManager.get("damage_tints_graphics", "hp_50_to_99")
         else:
             # <50% HP - stronger red tint (preserves ~70% of green/blue)
-            return (255, 180, 180)
+            return ColorManager.get("damage_tints_graphics", "hp_below_50")
 
 
     def get_movement_type(self) -> EnemyMovement:
