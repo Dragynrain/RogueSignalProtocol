@@ -41,7 +41,7 @@ class GameGlyphs:
     WALL_T_UP = '╩'             # U+2569
     WALL_T_DOWN = '╦'           # U+2566
     WALL_CROSS = '╬'            # U+256C
-    WALL_ISOLATED = '■'         # U+25A0 - Small square
+    WALL_ISOLATED = '□'         # U+25A1 - Hollow square (matches double-line walls better)
 
     # Dialogue boxes use same characters (semantic alias)
     DIALOGUE_VERTICAL = WALL_VERTICAL
