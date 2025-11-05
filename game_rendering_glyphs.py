@@ -121,7 +121,7 @@ class GlyphsMapRenderer(MapRendererBase):
             game.game_map.is_cpu_recovery_node(world_pos) or
             game.game_map.is_ghost_node(world_pos)):
             # Render as floor - player hasn't discovered this node yet
-            floor_explored = ColorManager.get_terrain_variant_color("floor")
+            floor_explored = Colors.DIGITAL_FLOOR  # floor consolidated
             render_char_safe(console, screen_x, screen_y, GameGlyphs.FLOOR_EXPLORED, fg=floor_explored, bg=Colors.BLACK)
             return
 
@@ -133,11 +133,11 @@ class GlyphsMapRenderer(MapRendererBase):
             render_char_safe(console, screen_x, screen_y, wall_char, fg=wall_dark, bg=Colors.BLACK)
         elif game.game_map.is_blind_spot(world_pos):
             # ◘ (inverse bullet) for remembered blind spots
-            blind_spot_remembered = ColorManager.get_terrain_variant_color("blind_spot")
+            blind_spot_remembered = Colors.VOID_PURPLE  # blind_spot consolidated
             render_char_safe(console, screen_x, screen_y, GameGlyphs.BLIND_SPOT, fg=blind_spot_remembered, bg=Colors.BLACK)
         else:
             # • (bullet) for remembered empty spaces
-            floor_explored = ColorManager.get_terrain_variant_color("floor")
+            floor_explored = Colors.DIGITAL_FLOOR  # floor consolidated
             render_char_safe(console, screen_x, screen_y, GameGlyphs.FLOOR_EXPLORED, fg=floor_explored, bg=Colors.BLACK)
     
     def _render_tile(self, console: tcod.console.Console, screen_x: int, screen_y: int, world_pos: Position, game):
@@ -516,7 +516,7 @@ class GlyphsMapRenderer(MapRendererBase):
                                     texture.color_mod = ColorManager.get_targeting_color("prediction_dim")
                                 renderer.copy(texture, dest=tile_rect)
                                 # Reset color_mod
-                                normal_tint = ColorManager.get_tint_color("normal")
+                                normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                                 texture.color_mod = normal_tint
                             else:
                                 logging.warning("_render_movement_prediction: movement_prediction texture not found!")

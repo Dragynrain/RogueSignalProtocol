@@ -198,6 +198,7 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 ---
 
 ## 11. Verification Over Assumptions
+THIS IS CRITICAL AND ONE OF YOUR MOST COMMON MISTAKES
 - If you can verify something quickly (Read/Grep/Glob/Bash), do it before assuming
 - Don't claim "probably", "likely", "should be" when you can CHECK
 - Examples: file contents, test results, config values, API signatures

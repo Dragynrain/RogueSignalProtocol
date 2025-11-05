@@ -52,6 +52,11 @@ class ColorManager:
             config = DataLoader.load_config()
             self._colors = {}
 
+            # Load color effects settings
+            color_effects = config.get('color_effects', {})
+            self._enemy_vision_darken = color_effects.get('enemy_vision_darken_factor', 0.3)
+            logging.info(f"Loaded color effects: enemy_vision_darken={self._enemy_vision_darken}")
+
             # Ensure colors section exists
             if 'colors' not in config:
                 error_msg = "CRITICAL CONFIG ERROR: 'colors' section missing from game_rules.json"
@@ -110,7 +115,8 @@ class ColorManager:
 
                 # Data codes (renamed)
                 'CRIMSON': 'COMBAT_RED',
-                'AZURE': 'AZURE_BLUE',
+                'AZURE': 'ELECTRIC_BLUE',  # AZURE_BLUE removed, use ELECTRIC_BLUE
+                'AZURE_BLUE': 'ELECTRIC_BLUE',  # Removed duplicate
                 'EMERALD': 'EMERALD_GREEN',
                 'GOLDEN': 'UTILITY_GOLD',
                 'VIOLET': 'PLASMA_VIOLET',
@@ -126,19 +132,23 @@ class ColorManager:
                 'SYSTEM': 'SYSTEM_PURPLE',
                 'COMBAT': 'NEON_PINK',
                 'STEALTH': 'STEALTH_BLUE',
-                'DEFAULT': 'SILVER_WHITE',
+                'DEFAULT': 'STEEL_GRAY',  # SILVER_WHITE removed, use STEEL_GRAY
+                'SILVER_WHITE': 'STEEL_GRAY',  # Removed duplicate
 
                 # Enemy states
                 'ENEMY_UNAWARE': 'UNAWARE',
                 'ENEMY_ALERT': 'ALERT',
                 'ENEMY_HOSTILE': 'HOSTILE',
                 'ENEMY_DISABLED': 'DISABLED',
+                'UNAWARE_DARK': 'UNAWARE',  # Removed _dark variants (created programmatically)
+                'ALERT_DARK': 'ALERT',
+                'HOSTILE_DARK': 'HOSTILE',
 
-                # Status effects (keeping original names)
+                # Status effects (consolidated)
                 'VIRUS': 'VIRUS',
-                'SLOW': 'SLOW',
+                'SLOW': 'UNAWARE',  # Removed status_effects.slow, use enemies.unaware (same yellow)
                 'INVISIBLE': 'INVISIBLE',
-                'DISABLED': 'DISABLED',
+                'DISABLED': 'DISABLED',  # enemies.disabled still exists
 
                 # UI (consolidated)
                 'UI_BG': 'UI_PANEL',  # from backgrounds
@@ -147,8 +157,34 @@ class ColorManager:
                 'UI_HIGHLIGHT': 'HOT_MAGENTA',
                 'ELECTRIC_PURPLE': 'DEEP_PURPLE',
                 'HELP_TEXT': 'SHADOW_GRAY',
-                'DIALOGUE_BACKGROUND': 'DIALOGUE',  # from backgrounds
-                'LOG_BG': 'UI_PANEL_LOG',  # from backgrounds - NO MORE HARDCODE!
+                'DIALOGUE_BACKGROUND': 'UI_PANEL',  # backgrounds.dialogue removed, use UI_PANEL
+                'LOG_BG': 'UI_PANEL',  # backgrounds.ui_panel_log removed, use UI_PANEL
+
+                # Removed dark UI backgrounds (consolidated)
+                'VOID': 'VOID_BLACK',  # backgrounds.void removed, use basic.void_black
+                'DEEP_SPACE': 'VOID_BLACK',  # backgrounds.deep_space removed, use VOID_BLACK
+                'UI_PANEL_LOG': 'UI_PANEL',  # backgrounds.ui_panel_log removed, use UI_PANEL
+                'DIALOGUE': 'UI_PANEL',  # backgrounds.dialogue removed, use UI_PANEL
+                'BLIND_SPOT': 'VOID_PURPLE',  # game_elements.blind_spot removed, use VOID_PURPLE
+
+                # Removed terrain_variants duplicates
+                'FLOOR_TERRAIN': 'DIGITAL_FLOOR',  # terrain_variants.floor removed, use game_elements.digital_floor
+                'BLIND_SPOT_TERRAIN': 'VOID_PURPLE',  # terrain_variants.blind_spot removed, use game_elements.void_purple
+
+                # Removed achievement_popup duplicates
+                'ACHIEVEMENT_BACKGROUND': 'POPUP',  # achievement_popup.background removed, use backgrounds.popup
+                'ACHIEVEMENT_NAME': 'PURE_WHITE',  # achievement_popup.name removed, use basic.pure_white
+                'ACHIEVEMENT_BORDER': 'NEON_GOLD',  # achievement_popup.border removed, use basic.neon_gold
+                'ACHIEVEMENT_TITLE': 'NEON_GOLD',  # achievement_popup.title removed, use basic.neon_gold
+
+                # Removed graphics_tint duplicates
+                'NORMAL_TINT': 'PURE_WHITE',  # graphics_tint.normal removed, use basic.pure_white
+
+                # Removed ui_themes duplicates
+                'THEME_CYAN': 'NEON_CYAN',  # ui_themes.cyan removed, use basic.neon_cyan
+                'THEME_AZURE': 'ELECTRIC_BLUE',  # ui_themes.azure removed, use basic.electric_blue
+                'THEME_EMERALD': 'MATRIX_GREEN',  # ui_themes.emerald removed, use basic.matrix_green
+                'THEME_MAGENTA': 'HOT_MAGENTA',  # ui_themes.magenta removed, use basic.hot_magenta
             })
 
             # Load backgrounds into main color dict
@@ -157,13 +193,13 @@ class ColorManager:
                     if not name.startswith('_') and isinstance(rgb, list):
                         self._colors[name.upper()] = tuple(rgb)
 
-            # Derived colors for enemy vision ranges (darkened versions)
+            # Derived colors for enemy vision ranges (darkened versions from JSON config)
             if 'UNAWARE' in self._colors:
-                self._colors['VISION_UNAWARE'] = self._darken_color(self._colors['UNAWARE'], 0.3)
+                self._colors['VISION_UNAWARE'] = self._darken_color(self._colors['UNAWARE'], self._enemy_vision_darken)
             if 'ALERT' in self._colors:
-                self._colors['VISION_ALERT'] = self._darken_color(self._colors['ALERT'], 0.3)
+                self._colors['VISION_ALERT'] = self._darken_color(self._colors['ALERT'], self._enemy_vision_darken)
             if 'HOSTILE' in self._colors:
-                self._colors['VISION_HOSTILE'] = self._darken_color(self._colors['HOSTILE'], 0.3)
+                self._colors['VISION_HOSTILE'] = self._darken_color(self._colors['HOSTILE'], self._enemy_vision_darken)
 
             # LOG_BORDER uses UI text color
             if 'NEON_CYAN' in self._colors:

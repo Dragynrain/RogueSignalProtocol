@@ -57,9 +57,10 @@ class GraphicalHelpMenu:
 
     def _load_colors(self):
         """Load enemy and UI colors from game config."""
-        self.ENEMY_UNAWARE = ColorManager.get_enemy_state_color("unaware_dark")
-        self.ENEMY_ALERT = ColorManager.get_enemy_state_color("alert_dark")
-        self.ENEMY_HOSTILE = ColorManager.get_enemy_state_color("hostile_dark")
+        # Use base colors (help screen doesn't need darkened variants)
+        self.ENEMY_UNAWARE = ColorManager.get_enemy_state_color("unaware")
+        self.ENEMY_ALERT = ColorManager.get_enemy_state_color("alert")
+        self.ENEMY_HOSTILE = ColorManager.get_enemy_state_color("hostile")
         self.NEON_PINK = Colors.NEON_PINK
 
     def _build_pages(self):

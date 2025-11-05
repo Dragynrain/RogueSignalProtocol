@@ -81,22 +81,22 @@
     "permanent_upgrades_per_level": 1,
     "corridor_width_weights": {
       "narrow": 0.65,
-      "medium": 0.30,
+      "medium": 0.3,
       "wide": 0.05
     },
     "blind_spot_placement_weights": {
-      "wall_adjacent": 0.60,
-      "interior": 0.40
+      "wall_adjacent": 0.6,
+      "interior": 0.4
     },
     "corridor_alcove_chance": 0.15,
     "corridor_alcove_min_length": 4,
     "cover_min_open_area_size": 10,
-    "cover_cluster_chance": 0.50,
+    "cover_cluster_chance": 0.5,
     "cover_poisson_radius": 8.0,
     "room_type_weights": {
-      "rectangular": 0.60,
-      "l_shaped": 0.20,
-      "irregular": 0.10,
+      "rectangular": 0.6,
+      "l_shaped": 0.2,
+      "irregular": 0.1,
       "cross": 0.05,
       "circular": 0.05
     },
@@ -107,10 +107,10 @@
     "looping_paths_max_loops": 5,
     "looping_paths_extra_connections": 3,
     "gateway_strategy_weights": {
-      "far_corner": 0.40,
-      "central_hub": 0.30,
-      "hidden_dead_end": 0.20,
-      "gauntlet": 0.10
+      "far_corner": 0.4,
+      "central_hub": 0.3,
+      "hidden_dead_end": 0.2,
+      "gauntlet": 0.1
     },
     "gateway_minimum_distances": {
       "far_corner": 45,
@@ -118,9 +118,9 @@
       "hidden_dead_end": 38,
       "gauntlet": 40
     },
-    "blind_spot_zone_chance": 0.10,
+    "blind_spot_zone_chance": 0.1,
     "blind_spot_zone_room_cluster_min": 3,
-    "blind_spot_zone_coverage": 0.30,
+    "blind_spot_zone_coverage": 0.3,
     "hub_room_count": 1,
     "noise_octaves": 4,
     "noise_lacunarity": 2.0,
@@ -128,18 +128,26 @@
     "hub_room_size_multiplier": 1.5,
     "hub_min_connections": 4,
     "hub_max_connections": 6,
-    "corridor_intersection_chance": 0.20,
+    "corridor_intersection_chance": 0.2,
     "corridor_intersection_min_size": 3,
     "corridor_intersection_max_size": 5,
     "enable_landmarks": true,
-    "curved_corridor_chance": 0.10,
+    "curved_corridor_chance": 0.1,
     "defensive_position_chance": 0.15,
-    "defensive_position_types": ["corner_cover", "blind_spot_bunker", "crossfire"],
+    "defensive_position_types": [
+      "corner_cover",
+      "blind_spot_bunker",
+      "crossfire"
+    ],
     "loot_room_percentage": 0.15,
     "loot_room_multiplier": 2.5,
     "choke_point_count": 2,
     "choke_point_max_exits": 2,
-    "zone_types": ["linear", "open", "mixed"],
+    "zone_types": [
+      "linear",
+      "open",
+      "mixed"
+    ],
     "zone_count": 3
   },
   "balance": {
@@ -183,183 +191,580 @@
       "enemy_trace_continuous_hostile": 0.3
     }
   },
+  "color_effects": {
+    "_comment": "Settings for programmatic color modifications",
+    "enemy_vision_darken_factor": 0.3,
+    "damage_tint_factor": 0.6
+  },
   "colors": {
     "_comment": "Consolidated cyberpunk color palette - duplicates removed, themed names applied",
     "basic": {
-      "pure_white": [255, 255, 255],
-      "void_black": [0, 0, 0],
-      "crimson_red": [220, 20, 60],
-      "matrix_green": [50, 255, 50],
-      "electric_blue": [0, 191, 255],
-      "neon_gold": [255, 215, 0],
-      "hot_magenta": [255, 20, 255],
-      "neon_cyan": [20, 255, 200],
-      "steel_gray": [192, 192, 192],
-      "shadow_gray": [128, 128, 128],
-      "blood_red": [255, 128, 128],
-      "sunset_orange": [255, 165, 0],
-      "deep_green": [0, 128, 0],
-      "acid_green": [128, 255, 0]
+      "pure_white": [
+        255,
+        255,
+        255
+      ],
+      "void_black": [
+        0,
+        0,
+        0
+      ],
+      "crimson_red": [
+        220,
+        20,
+        60
+      ],
+      "matrix_green": [
+        50,
+        255,
+        50
+      ],
+      "electric_blue": [
+        0,
+        191,
+        255
+      ],
+      "neon_gold": [
+        255,
+        215,
+        0
+      ],
+      "hot_magenta": [
+        255,
+        20,
+        255
+      ],
+      "neon_cyan": [
+        20,
+        255,
+        200
+      ],
+      "steel_gray": [
+        192,
+        192,
+        192
+      ],
+      "shadow_gray": [
+        128,
+        128,
+        128
+      ],
+      "blood_red": [
+        255,
+        128,
+        128
+      ],
+      "sunset_orange": [
+        255,
+        165,
+        0
+      ],
+      "deep_green": [
+        0,
+        128,
+        0
+      ],
+      "acid_green": [
+        128,
+        255,
+        0
+      ]
     },
     "game_elements": {
-      "blind_spot": [3, 3, 8],
-      "ghost_purple": [80, 40, 120],
-      "void_purple": [50, 20, 80],
-      "wall": [120, 140, 180],
-      "digital_floor": [180, 180, 220]
+      "ghost_purple": [
+        80,
+        40,
+        120
+      ],
+      "void_purple": [
+        50,
+        20,
+        80
+      ],
+      "wall": [
+        120,
+        140,
+        180
+      ],
+      "digital_floor": [
+        180,
+        180,
+        220
+      ]
     },
     "data_codes": {
-      "combat_red": [255, 20, 80],
-      "azure_blue": [0, 200, 255],
-      "emerald_green": [0, 255, 100],
-      "utility_gold": [255, 240, 0],
-      "plasma_violet": [200, 60, 255],
-      "silver_mist": [230, 230, 255]
+      "combat_red": [
+        255,
+        20,
+        80
+      ],
+      "emerald_green": [
+        0,
+        255,
+        100
+      ],
+      "utility_gold": [
+        255,
+        240,
+        0
+      ],
+      "plasma_violet": [
+        200,
+        60,
+        255
+      ],
+      "silver_mist": [
+        230,
+        230,
+        255
+      ]
     },
     "exploits": {
-      "stealth": [200, 60, 255],
-      "combat": [255, 20, 80],
-      "utility": [255, 240, 0],
-      "emergency": [255, 140, 0]
+      "stealth": [
+        200,
+        60,
+        255
+      ],
+      "combat": [
+        255,
+        20,
+        80
+      ],
+      "utility": [
+        255,
+        240,
+        0
+      ],
+      "emergency": [
+        255,
+        140,
+        0
+      ]
     },
     "message_log": {
-      "alert_amber": [255, 120, 20],
-      "system_purple": [138, 43, 226],
-      "neon_pink": [255, 20, 147],
-      "stealth_blue": [160, 160, 255],
-      "silver_white": [200, 200, 200]
+      "alert_amber": [
+        255,
+        120,
+        20
+      ],
+      "system_purple": [
+        138,
+        43,
+        226
+      ],
+      "neon_pink": [
+        255,
+        20,
+        147
+      ],
+      "stealth_blue": [
+        160,
+        160,
+        255
+      ]
     },
     "enemies": {
-      "unaware": [255, 255, 0],
-      "alert": [255, 165, 0],
-      "hostile": [220, 20, 60],
-      "disabled": [100, 100, 255],
-      "unaware_dark": [100, 100, 0],
-      "alert_dark": [150, 75, 0],
-      "hostile_dark": [150, 0, 0]
+      "unaware": [
+        255,
+        255,
+        0
+      ],
+      "alert": [
+        255,
+        165,
+        0
+      ],
+      "hostile": [
+        220,
+        20,
+        60
+      ],
+      "disabled": [
+        100,
+        100,
+        255
+      ]
     },
     "status_effects": {
-      "virus": [0, 255, 0],
-      "slow": [255, 255, 0],
-      "invisible": [100, 100, 255],
-      "disabled": [100, 100, 255]
+      "virus": [
+        0,
+        255,
+        0
+      ],
+      "invisible": [
+        100,
+        100,
+        255
+      ]
     },
     "terrain_variants": {
-      "cooling_node": [0, 120, 120],
-      "cpu_node": [120, 0, 0],
-      "ghost_node": [80, 0, 120],
-      "gateway": [140, 110, 0],
-      "gateway_dark": [180, 150, 0],
-      "wall_dark": [60, 70, 90],
-      "blind_spot": [50, 20, 80],
-      "floor": [180, 180, 220],
-      "floor_explored": [90, 90, 130]
+      "cooling_node": [
+        0,
+        120,
+        120
+      ],
+      "cpu_node": [
+        120,
+        0,
+        0
+      ],
+      "ghost_node": [
+        80,
+        0,
+        120
+      ],
+      "gateway": [
+        140,
+        110,
+        0
+      ],
+      "gateway_dark": [
+        180,
+        150,
+        0
+      ],
+      "wall_dark": [
+        60,
+        70,
+        90
+      ],
+      "floor_explored": [
+        90,
+        90,
+        130
+      ]
     },
     "targeting": {
-      "prediction_bright": [255, 255, 50],
-      "prediction_medium": [180, 180, 35],
-      "prediction_dim": [120, 120, 25],
-      "range_overlay": [40, 40, 40],
-      "area_overlay": [60, 60, 20],
-      "corner_bracket": [255, 0, 0]
+      "prediction_bright": [
+        255,
+        255,
+        50
+      ],
+      "prediction_medium": [
+        180,
+        180,
+        35
+      ],
+      "prediction_dim": [
+        120,
+        120,
+        25
+      ],
+      "range_overlay": [
+        40,
+        40,
+        40
+      ],
+      "area_overlay": [
+        60,
+        60,
+        20
+      ],
+      "corner_bracket": [
+        255,
+        0,
+        0
+      ]
     },
     "graphics_tint": {
-      "normal": [255, 255, 255],
-      "explored": [80, 80, 100],
-      "dimmed": [179, 179, 179]
+      "explored": [
+        80,
+        80,
+        100
+      ],
+      "dimmed": [
+        179,
+        179,
+        179
+      ]
     },
     "ui": {
-      "deep_purple": [160, 20, 255]
+      "deep_purple": [
+        160,
+        20,
+        255
+      ]
     },
     "backgrounds": {
       "_comment": "Dark backgrounds for UI panels and menus",
-      "void": [0, 0, 0],
-      "deep_space": [5, 5, 15],
-      "ui_panel": [10, 15, 25],
-      "ui_panel_log": [8, 12, 20],
-      "popup": [20, 20, 30],
-      "dialogue": [30, 0, 0],
-      "menu_highlight": [40, 40, 40]
+      "ui_panel": [
+        10,
+        15,
+        25
+      ],
+      "popup": [
+        20,
+        20,
+        30
+      ],
+      "menu_highlight": [
+        40,
+        40,
+        40
+      ]
     },
     "ui_themes": {
       "_comment": "User-selectable UI color themes",
-      "cyan": [20, 255, 200],
-      "purple": [200, 60, 255],
-      "magenta": [255, 20, 255],
-      "golden": [255, 240, 0],
-      "crimson": [255, 20, 80],
-      "azure": [0, 200, 255],
-      "emerald": [0, 255, 100],
-      "ivory": [245, 245, 235]
+      "purple": [
+        200,
+        60,
+        255
+      ],
+      "golden": [
+        255,
+        240,
+        0
+      ],
+      "crimson": [
+        255,
+        20,
+        80
+      ],
+      "ivory": [
+        245,
+        245,
+        235
+      ]
     },
     "achievement_popup": {
-      "border": [255, 215, 0],
-      "background": [20, 20, 30],
-      "title": [255, 215, 0],
-      "name": [255, 255, 255],
-      "description": [200, 200, 200],
-      "hint": [100, 100, 100]
+      "description": [
+        200,
+        200,
+        200
+      ],
+      "hint": [
+        100,
+        100,
+        100
+      ]
     },
     "damage_tints": {
       "_comment": "Health-based tinting for enemies and player in glyphs mode",
-      "hp_50_to_99": [255, 100, 100],
-      "hp_below_50": [255, 80, 80]
+      "hp_50_to_99": [
+        255,
+        100,
+        100
+      ],
+      "hp_below_50": [
+        255,
+        80,
+        80
+      ]
     },
     "damage_tints_graphics": {
       "_comment": "Subtle health-based tinting for graphics mode sprites",
-      "hp_50_to_99": [255, 220, 220],
-      "hp_below_50": [255, 180, 180]
+      "hp_50_to_99": [
+        255,
+        220,
+        220
+      ],
+      "hp_below_50": [
+        255,
+        180,
+        180
+      ]
     },
     "path_colors": {
-      "path_cyan": [0, 200, 200],
-      "path_bright": [0, 255, 255]
+      "path_cyan": [
+        0,
+        200,
+        200
+      ],
+      "path_bright": [
+        0,
+        255,
+        255
+      ]
     },
     "menu_background": {
       "_comment": "Animated menu background pattern colors",
       "pattern_colors": [
-        [0, 80, 120],
-        [0, 120, 180],
-        [80, 0, 120],
-        [120, 0, 180],
-        [0, 180, 120]
+        [
+          0,
+          80,
+          120
+        ],
+        [
+          0,
+          120,
+          180
+        ],
+        [
+          80,
+          0,
+          120
+        ],
+        [
+          120,
+          0,
+          180
+        ],
+        [
+          0,
+          180,
+          120
+        ]
       ],
-      "border": [0, 150, 200],
-      "dots": [0, 60, 100]
+      "border": [
+        0,
+        150,
+        200
+      ],
+      "dots": [
+        0,
+        60,
+        100
+      ]
     },
     "preview_demo": {
       "_comment": "Graphics preview mode demo animation colors",
       "alert_sequence": [
-        [255, 255, 0],
-        [255, 165, 0],
-        [255, 0, 0]
+        [
+          255,
+          255,
+          0
+        ],
+        [
+          255,
+          165,
+          0
+        ],
+        [
+          255,
+          0,
+          0
+        ]
       ],
       "entity_colors": [
-        [220, 20, 60],
-        [0, 255, 255],
-        [50, 205, 50],
-        [255, 215, 0],
-        [138, 43, 226],
-        [192, 192, 192]
+        [
+          220,
+          20,
+          60
+        ],
+        [
+          0,
+          255,
+          255
+        ],
+        [
+          50,
+          205,
+          50
+        ],
+        [
+          255,
+          215,
+          0
+        ],
+        [
+          138,
+          43,
+          226
+        ],
+        [
+          192,
+          192,
+          192
+        ]
       ],
       "exploit_colors": [
-        [138, 43, 226],
-        [220, 20, 60],
-        [255, 215, 0],
-        [255, 120, 20]
+        [
+          138,
+          43,
+          226
+        ],
+        [
+          220,
+          20,
+          60
+        ],
+        [
+          255,
+          215,
+          0
+        ],
+        [
+          255,
+          120,
+          20
+        ]
       ]
     }
   },
   "message_types": {
     "patterns": {
-      "critical": ["ADMIN", "CRITICAL", "eliminated", "death", "failure", "destroyed", "EXFILTRATION", "COMPLETE"],
-      "error": ["failed", "error", "invalid", "cannot", "unable"],
-      "warning": ["detected", "investigating", "attracted", "attacks", "hostile", "alert"],
-      "alert": ["spawned", "patrolling", "searching", "suspicious"],
-      "success": ["restored", "collected", "equipped", "completed", "success", "gained"],
-      "info": ["activated", "active", "reduced", "boosted", "enhanced", "turns", "temperature"],
-      "system": ["loading", "loaded", "starting", "initializing", "saving", "saved"],
-      "combat": ["damage", "hit", "miss", "attack", "combat", "fight"],
-      "stealth": ["hidden", "invisible", "stealth", "blind_spot", "masquerade", "decoy"]
+      "critical": [
+        "ADMIN",
+        "CRITICAL",
+        "eliminated",
+        "death",
+        "failure",
+        "destroyed",
+        "EXFILTRATION",
+        "COMPLETE"
+      ],
+      "error": [
+        "failed",
+        "error",
+        "invalid",
+        "cannot",
+        "unable"
+      ],
+      "warning": [
+        "detected",
+        "investigating",
+        "attracted",
+        "attacks",
+        "hostile",
+        "alert"
+      ],
+      "alert": [
+        "spawned",
+        "patrolling",
+        "searching",
+        "suspicious"
+      ],
+      "success": [
+        "restored",
+        "collected",
+        "equipped",
+        "completed",
+        "success",
+        "gained"
+      ],
+      "info": [
+        "activated",
+        "active",
+        "reduced",
+        "boosted",
+        "enhanced",
+        "turns",
+        "temperature"
+      ],
+      "system": [
+        "loading",
+        "loaded",
+        "starting",
+        "initializing",
+        "saving",
+        "saved"
+      ],
+      "combat": [
+        "damage",
+        "hit",
+        "miss",
+        "attack",
+        "combat",
+        "fight"
+      ],
+      "stealth": [
+        "hidden",
+        "invisible",
+        "stealth",
+        "blind_spot",
+        "masquerade",
+        "decoy"
+      ]
     }
   },
   "symbols": {

@@ -283,9 +283,10 @@ class HelpMenu:
         enemy_colors = config.get("colors", {}).get("enemies", {})
         ui_colors = config.get("colors", {}).get("ui", {})
 
-        ENEMY_UNAWARE = ensure_color_tuple(enemy_colors.get("unaware_dark", [100, 100, 0]))
-        ENEMY_ALERT = ensure_color_tuple(enemy_colors.get("alert_dark", [150, 75, 0]))
-        ENEMY_HOSTILE = ensure_color_tuple(enemy_colors.get("hostile_dark", [150, 0, 0]))
+        # Use base colors (help screen doesn't need darkened variants)
+        ENEMY_UNAWARE = ensure_color_tuple(enemy_colors.get("unaware", [255, 255, 0]))
+        ENEMY_ALERT = ensure_color_tuple(enemy_colors.get("alert", [255, 165, 0]))
+        ENEMY_HOSTILE = ensure_color_tuple(enemy_colors.get("hostile", [220, 20, 60]))
         NEON_PINK = Colors.NEON_PINK
         
         return [
