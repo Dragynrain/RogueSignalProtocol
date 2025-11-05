@@ -114,7 +114,7 @@ class GraphicsMapRenderer(MapRendererBase):
                         tile_rect = self._get_tile_rect(console_x, console_y)
                         # Dim the texture for fog of war effect
                         explored_tint = ColorManager.get_tint_color("explored")
-                        normal_tint = ColorManager.get_tint_color("normal")
+                        normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                         texture.color_mod = explored_tint
                         renderer.copy(texture, dest=tile_rect)
                         # Reset color mod
@@ -154,7 +154,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
                     # Reset color mod
                     if self.tile_manager.is_tintable("codehack"):
-                        normal_tint = ColorManager.get_tint_color("normal")
+                        normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                         texture.color_mod = normal_tint
 
         # Exploit pickups
@@ -188,7 +188,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
                     # Reset color mod
                     if self.tile_manager.is_tintable("exploit"):
-                        normal_tint = ColorManager.get_tint_color("normal")
+                        normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                         texture.color_mod = normal_tint
 
         # Resource nodes (cooling, CPU, ghost)
@@ -246,7 +246,7 @@ class GraphicsMapRenderer(MapRendererBase):
                             tile_rect = self._get_tile_rect(screen_x, render_screen_y)
                             # Dim the texture for fog of war effect
                             explored_tint = ColorManager.get_tint_color("explored")
-                            normal_tint = ColorManager.get_tint_color("normal")
+                            normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                             texture.color_mod = explored_tint
                             renderer.copy(texture, dest=tile_rect)
                             # Reset color mod
@@ -337,7 +337,7 @@ class GraphicsMapRenderer(MapRendererBase):
                     texture = self.tile_manager.get_tile("gateway")
                     if texture:
                         dimmed_tint = ColorManager.get_tint_color("dimmed")
-                        normal_tint = ColorManager.get_tint_color("normal")
+                        normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
                         # Use color_mod to dim the sprite (70% brightness for memory)
                         texture.color_mod = dimmed_tint
@@ -619,7 +619,7 @@ class GraphicsMapRenderer(MapRendererBase):
             # Graphics mode: Render targeting cursor sprite
             texture = self.tile_manager.get_tile("targeting")
             if texture:
-                normal_tint = ColorManager.get_tint_color("normal")
+                normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                 tile_rect = self._get_tile_rect(cursor_screen_x, cursor_screen_y)
                 # Tint based on mode (red for targeting, cyan for look)
                 texture.color_mod = cursor_color
@@ -796,10 +796,10 @@ class GraphicsMapRenderer(MapRendererBase):
         Returns:
             RGB color tuple cycling through cyberpunk neon colors
         """
-        # Cyberpunk neon palette from game_rules.json data_codes
+        # Cyberpunk neon palette from game_rules.json
         cyberpunk_colors = [
             ColorManager.get("data_codes", "combat_red"),
-            ColorManager.get("data_codes", "azure_blue"),
+            Colors.ELECTRIC_BLUE,  # azure_blue consolidated to basic.electric_blue
             ColorManager.get("data_codes", "emerald_green"),
             ColorManager.get("data_codes", "utility_gold"),
             ColorManager.get("data_codes", "plasma_violet"),
@@ -922,7 +922,7 @@ class GraphicsMapRenderer(MapRendererBase):
                         # Render movement prediction sprite with color_mod
                         texture = self.tile_manager.get_tile("movement_prediction")
                         if texture:
-                            normal_tint = ColorManager.get_tint_color("normal")
+                            normal_tint = Colors.PURE_WHITE  # normal tint consolidated
                             tile_rect = self._get_tile_rect(screen_x, screen_y)
                             # Apply color based on position (brightness fades with distance)
                             if i == 0:

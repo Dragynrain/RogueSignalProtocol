@@ -188,8 +188,8 @@ class GameSettings:
         try:
             return ColorManager.get("ui_themes", self.ui_color)
         except KeyError:
-            # Fallback to cyan if theme not found
-            return ColorManager.get("ui_themes", "cyan")
+            # Fallback to neon_cyan if theme not found
+            return ColorManager.get("basic", "neon_cyan")
     
     def get_volume_percent(self, volume_type: str) -> int:
         """Get volume as percentage (0-100)"""

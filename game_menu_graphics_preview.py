@@ -477,7 +477,7 @@ class GraphicsPreviewMenu:
 
                 # Reset color mod
                 config = DataLoader.load_config()
-                normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                normal_tint = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255]))
                 codehack_texture.color_mod = normal_tint
 
         # 2. Exploits in TOP RIGHT corner - tight 3x2 cluster below CodeHacks
@@ -502,7 +502,7 @@ class GraphicsPreviewMenu:
 
                 # Reset color mod
                 config = DataLoader.load_config()
-                normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                normal_tint = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255]))
                 exploit_texture.color_mod = normal_tint
 
         # 3. Pulsing alert rings on all enemies
@@ -636,7 +636,7 @@ class GraphicsPreviewMenu:
                     prediction_texture.color_mod = prediction_colors[i]
                     renderer.copy(prediction_texture, dest=(screen_x, screen_y, tile_w, tile_h))
                 # Reset color mod
-                normal_tint = ensure_color_tuple(config.get("colors", {}).get("graphics_tint", {}).get("normal", [255, 255, 255]))
+                normal_tint = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255]))
                 prediction_texture.color_mod = normal_tint
 
     def _render_alert_ring(self, renderer, offset_pixel_x, offset_pixel_y,
