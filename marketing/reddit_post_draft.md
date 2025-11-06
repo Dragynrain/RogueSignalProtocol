@@ -45,51 +45,29 @@ This is **alpha 0.8.0** - feature complete and playtested, now looking for wider
 
 ---
 
-## The AI Development Workflow
+## How This Was Built
 
-I want to be transparent: this is a **solo dev project built using AI tools** across code, art, and audio.
+**Background:** I'm a professional software engineer by trade, so this isn't "vibe coding" - it's **vibe engineering**. I approach Claude Code more like a technical project manager: breaking down requirements, reviewing architecture decisions, curating outputs, and ensuring quality through automated testing (1580 tests!).
 
-### Tools Used:
+This game was built using AI tools (Claude Code for code, Stable Diffusion for sprites, AudioCraft for SFX), compressing the timeline from 6-12 months to 2-3 months.
 
-**Claude Code** - ~95% of codebase, 1580 automated tests, architectural decisions
-**Stable Diffusion** - All sprite prototypes (~50+ assets, heavily curated)
-**AudioCraft** - Placeholder sound effects (music is human-made from free libraries)
+**The reality:** 95%+ rejection rate on generated assets. AI accelerated prototyping and handled implementation details, but game design, architecture decisions, balance tuning, and quality control all came from me. **The tools amplified my output, but the creative direction is all human.**
 
-### What Worked:
-
-**Rapid Prototyping** - Going from "what if enemies showed their next 3 moves?" to *playing it* and feeling if it's fun took minutes instead of days. Fail fast on bad ideas, polish the good ones.
-
-**Development Speed** - 2-3 months instead of 6-12 months for a solo project of this scope.
-
-### What Didn't Work:
-
-**Curation Required** - 95%+ rejection rate on generated assets. AI doesn't have taste - you still need creative direction and lots of manual polish.
-
-**Asset Quality** - The sprites and SFX work for alpha testing, but lack the polish that human artists bring. I recognize these limitations.
-
-**Ethical Complexity** - I'm aware of the concerns around AI training data and impact on creative professionals. These are legitimate issues.
-
-### The Bottom Line:
-
-AI amplified my capabilities but didn't replace game design. Every mechanic, balance decision, and curated asset came from human judgment. The tools compressed the timeline while I focused on making it fun.
-
-**The game has to be good.** If it's not fun, being "AI-assisted" won't save it. And if it IS fun, being "AI-assisted" shouldn't disqualify it. Try it and judge for yourself.
+If you're an artist or sound designer interested in improving the game's polish, I'd love to collaborate!
 
 ---
 
-### Open to Collaboration
-
-If you're an artist or sound designer interested in improving the game's visuals or audio, I'd love to hear from you! The AI-generated assets serve as functional placeholders, but I'm absolutely open to working with human creators who want to contribute to the project. Reach out if you're interested.
+**Technical Stack:**
+* **Language:** Python + TCOD
+* **Dev Environment:** VS Code on Windows 10/11
+* **Testing:** 1580 automated tests (pytest)
+* **Runtime:** Windows standalone EXE (~30 MB download)
+* **Play Time:** 10-20 minutes per full 3-level run
+* **License:** GPL v3 (free and open source)
 
 ---
 
-**Technical Details:**
-* Windows-only for now (standalone EXE, ~30 MB download)
-* Built with Python + TCOD
-* Runs take 10-20 minutes for full 3-level campaign
-* Free and open source (GPL v3)
-
-Would love to hear thoughts from other devs on AI workflows, and feedback from players on the game itself!
+**Happy to answer any questions about the workflow** - what worked, what didn't, where AI helped vs. where it fell short, or anything about the development process. And of course, would love feedback on the game itself!
 
 ---
 
