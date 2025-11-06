@@ -60,8 +60,8 @@ I want to be transparent about how this game was built - this is a **solo dev pr
 * Iterated on style and consistency across ~50+ unique sprites
 * Curated and integrated into dual-rendering system (ASCII + graphics modes)
 
-**AudioCraft (Meta)** - Sound effects only
-* Generated 40+ SFX for movement, combat, UI interactions
+**AudioCraft (Meta)** - Prototype sound effects
+* Generated 40+ SFX for movement, combat, UI interactions as placeholders
 * All curated and balanced for gameplay feel
 * (Note: Background music is human-made, sourced from free-use libraries)
 
@@ -73,7 +73,7 @@ I want to be transparent about how this game was built - this is a **solo dev pr
 
 **Iteration Velocity:** "I want enemies to show their next 3 moves" → implemented and tested in minutes. Rapid prototyping meant more time polishing mechanics.
 
-**Asset Generation:** Rapidly prototype graphics to experiment with styles and features. Stable Diffusion let me visualize my cyberspace aesthetic and iterate on visual direction without contracting artists. AudioCraft gave professional-sounding effects without licensing nightmares.
+**Asset Generation:** Rapidly prototype graphics and audio to experiment with styles and features. Stable Diffusion let me visualize my cyberspace aesthetic and iterate on visual direction. AudioCraft provided placeholder sound effects to test gameplay feel.
 
 ### What Didn't Work (Cons):
 
@@ -83,9 +83,9 @@ I want to be transparent about how this game was built - this is a **solo dev pr
 
 **AI Limitations:** Claude Code occasionally introduced bugs or forgot architectural decisions. I had to maintain vigilance and do code reviews. Not autopilot.
 
-**Ethical Considerations:** Stable Diffusion training data issues are real. I chose to use it anyway, but I understand the concerns about artist consent.
+**Asset Quality:** AI-generated assets are functional placeholders, but they lack the polish and intentionality that human artists bring. The sprites and sound effects work for alpha testing, but I recognize their limitations.
 
-**Stigma Risk:** Saying "AI-assisted" risks immediate dismissal from some players. This post might get downvoted purely for mentioning it.
+**Ethical Complexity:** I'm aware of the concerns around AI training data and its impact on creative professionals. These are legitimate issues the industry is still grappling with.
 
 ### The Bottom Line:
 
@@ -96,6 +96,12 @@ I'm sharing this workflow because I think it's the future for solo indie devs. T
 **But the game has to be good.** If it's not fun, being "AI-assisted" won't save it. And if it IS fun, being "AI-assisted" shouldn't disqualify it.
 
 Try it and judge for yourself.
+
+---
+
+### Open to Collaboration
+
+If you're an artist or sound designer interested in improving the game's visuals or audio, I'd love to hear from you! The AI-generated assets serve as functional placeholders, but I'm absolutely open to working with human creators who want to contribute to the project. Reach out if you're interested.
 
 ---
 
