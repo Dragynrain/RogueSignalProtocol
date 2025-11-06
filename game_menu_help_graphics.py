@@ -99,11 +99,11 @@ class GraphicalHelpMenu:
 
                 # Left column - 3 lines each
                 (6, 6, "Scanner (S)", self.ENEMY_UNAWARE),
-                (6, 7, "HP:35 Vis:4 Dmg:None", Colors.LIGHT_GRAY),
+                (6, 7, "HP:35 Vis:5 Dmg:None", Colors.LIGHT_GRAY),
                 (6, 8, "Static, alerts others", Colors.LIGHT_GRAY),
 
                 (6, 13, "Patrol (P)", self.ENEMY_UNAWARE),
-                (6, 14, "HP:40 Vis:4 Dmg:15", Colors.LIGHT_GRAY),
+                (6, 14, "HP:40 Vis:4 Dmg:10", Colors.LIGHT_GRAY),
                 (6, 15, "Follows patrol routes", Colors.LIGHT_GRAY),
 
                 (6, 20, "Bot (B)", self.ENEMY_UNAWARE),
@@ -111,12 +111,12 @@ class GraphicalHelpMenu:
                 (6, 22, "Random movement", Colors.LIGHT_GRAY),
 
                 (6, 27, "Firewall (F)", self.ENEMY_ALERT),
-                (6, 28, "HP:80 Vis:5 Dmg:None", Colors.LIGHT_GRAY),
+                (6, 28, "HP:80 Vis:3 Dmg:5", Colors.LIGHT_GRAY),
                 (6, 29, "Defensive wall", Colors.LIGHT_GRAY),
 
                 # Right column - 3 lines each
                 (47, 6, "Hunter (H)", self.ENEMY_HOSTILE),
-                (47, 7, "HP:50 Vis:6 Dmg:22", Colors.LIGHT_GRAY),
+                (47, 7, "HP:50 Vis:6 Dmg:15", Colors.LIGHT_GRAY),
                 (47, 8, "Actively seeks player", Colors.LIGHT_GRAY),
 
                 (47, 13, "Virus (V)", self.ENEMY_HOSTILE),
@@ -214,7 +214,7 @@ class GraphicalHelpMenu:
                 # Bottom info - centered
                 (9, 35, "UPGRADES: Permanent stat increases - keep across ALL levels", Colors.CYAN),
                 (13, 37, "RESOURCE NODES: CPU=Health  Cooling=Heat  Ghost=Trace", Colors.CYAN),
-                (13, 39, "STEALTH: Hide in blind spots (*) to avoid enemy detection!", Colors.ELECTRIC_PURPLE),
+                (13, 39, "STEALTH: Hide in blind spots (◘) to avoid enemy detection!", Colors.ELECTRIC_PURPLE),
             ]
         }
 
@@ -255,18 +255,18 @@ class GraphicalHelpMenu:
                 (45, 5, "COMBAT EXPLOITS:", Colors.CYAN),
                 (45, 6, "BufferOverflow: 40dmg melee", self.NEON_PINK),
                 (45, 7, "CodeInject: 25dmg 5range", self.NEON_PINK),
-                (45, 8, "SystemCrash: 30dmg disable", self.NEON_PINK),
-                (45, 9, "EMPBurst: 20dmg area", self.NEON_PINK),
+                (45, 8, "LogicBomb: 15dmg area", self.NEON_PINK),
+                (45, 9, "DenialOfService: Disable", self.NEON_PINK),
 
-                (45, 11, "UTILITY EXPLOITS:", Colors.CYAN),
+                (45, 11, "UTILITY/STEALTH:", Colors.CYAN),
                 (45, 12, "SystemHop: Teleport", self.NEON_PINK),
-                (45, 13, "TrafficMasquerade: Invisible", self.NEON_PINK),
+                (45, 13, "TrafficMasq: Invisible", self.NEON_PINK),
                 (45, 14, "DecoySwarm: Distract", self.NEON_PINK),
-                (45, 15, "LogWiper: Cut trace", self.NEON_PINK),
-                (45, 16, "Antivirus: Cure virus", self.NEON_PINK),
-                (45, 17, "MemoryLeak: Blind 3t", self.NEON_PINK),
+                (45, 15, "ThreatScan: See enemies", self.NEON_PINK),
+                (45, 16, "NetworkScan: See nodes", self.NEON_PINK),
+                (45, 17, "LogWiper/Antivirus/Leak", self.NEON_PINK),
 
-                (45, 19, "BLIND SPOTS (*):", Colors.CYAN),
+                (45, 19, "BLIND SPOTS (◘):", Colors.CYAN),
                 (45, 20, "Hide from enemies", Colors.ELECTRIC_PURPLE),
                 (45, 21, "+10 damage bonus!", Colors.YELLOW),
 
