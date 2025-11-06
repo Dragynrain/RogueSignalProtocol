@@ -371,8 +371,8 @@ class TestSaveErrorRecovery:
         """Save handles permission errors gracefully."""
         mock_game = self._create_minimal_mock_game()
 
-        # Use a path that will cause permission error
-        with patch.object(SaveGameManager, 'SAVE_FILE', '/root/no_permission.json'):
+        # Simulate permission error by patching open() to raise PermissionError
+        with patch('builtins.open', side_effect=PermissionError("Permission denied")):
             with patch('logging.error') as mock_log:
                 save_success = SaveGameManager.save_game(mock_game)
 

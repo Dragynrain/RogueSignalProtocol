@@ -473,13 +473,16 @@ class MainMenu(BaseMenu):
 
     def _handle_warning_mouse_motion(self, event) -> bool:
         """Handle mouse motion in warning dialog - update selection."""
-        if not hasattr(event, 'tile') or not event.tile:
+        if not hasattr(event, 'tile') or event.tile is None:
             return False
 
         # The menu loop already converted pixel to tile coordinates
         # event.tile is already in tile space (0-79, 0-49)
-        tile_x = int(event.tile.x)
-        tile_y = int(event.tile.y)
+        try:
+            tile_x = int(event.tile.x)
+            tile_y = int(event.tile.y)
+        except (TypeError, ValueError, AttributeError):
+            return False
 
         # Check if hovering over option 0
         if (hasattr(self, 'warning_option_0_y') and
@@ -792,8 +795,11 @@ class SettingsMenu(BaseMenu):
 
         from game_config import GameConfig
 
-        tile_x = int(event.tile.x)
-        tile_y = int(event.tile.y)
+        try:
+            tile_x = int(event.tile.x)
+            tile_y = int(event.tile.y)
+        except (TypeError, ValueError, AttributeError):
+            return False
 
         # Calculate box dimensions the same way render() does
         menu_height = GameConfig.SCREEN_HEIGHT - 4  # Must match render() method (46 tiles)
@@ -829,8 +835,11 @@ class SettingsMenu(BaseMenu):
         if not hasattr(event, 'tile') or event.tile is None:
             return False
 
-        tile_x = int(event.tile.x)
-        tile_y = int(event.tile.y)
+        try:
+            tile_x = int(event.tile.x)
+            tile_y = int(event.tile.y)
+        except (TypeError, ValueError, AttributeError):
+            return False
 
         # Check if hovering over option 0
         if (hasattr(self, 'confirm_option_0_y') and
@@ -916,7 +925,10 @@ class SettingsMenu(BaseMenu):
         elif option["type"] == "ui_color":
             # UI color selector: clicking left side cycles backward, right side cycles forward
             # Determine which half of the color display was clicked
-            tile_x = int(event.tile.x)
+            try:
+                tile_x = int(event.tile.x)
+            except (TypeError, ValueError, AttributeError):
+                return ""
 
             # Calculate color display position using actual box dimensions
             menu_height = GameConfig.SCREEN_HEIGHT - 4  # Must match render() method (46 tiles)
@@ -954,7 +966,10 @@ class SettingsMenu(BaseMenu):
             # Volume sliders: clicking left side decreases, right side increases
             # (left = 0%, right = 100%)
             # Determine which half of the slider bar was clicked
-            tile_x = int(event.tile.x)
+            try:
+                tile_x = int(event.tile.x)
+            except (TypeError, ValueError, AttributeError):
+                return ""
 
             # Calculate slider bar position using actual box dimensions
             # Must match the rendering code exactly

@@ -1331,7 +1331,10 @@ class InputHandler:
             self._use_selected_inventory_item()
             return True
 
-        return False
+        # Return True even for blank space clicks - we're in inventory mode,
+        # so all clicks should be consumed. Returning False would cause
+        # game_loop to misinterpret this as a death dialogue dismissal.
+        return True
 
     def _handle_inventory_mouse_wheel(self, event: tcod.event.MouseWheel) -> bool:
         """Handle mouse wheel in inventory - scroll items."""
@@ -1415,21 +1418,22 @@ class InputHandler:
             # Fragment list starts at Y=4
             content_start_y = 4
 
-            if tile_y < content_start_y:
-                return False
+            if tile_y >= content_start_y:
+                # Calculate which fragment was clicked
+                relative_y = tile_y - content_start_y
+                fragment_index = relative_y // 3  # Each entry is 3 lines tall
 
-            # Calculate which fragment was clicked
-            relative_y = tile_y - content_start_y
-            fragment_index = relative_y // 3  # Each entry is 3 lines tall
+                discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
+                if 0 <= fragment_index < len(discovered_fragments):
+                    # Select this fragment
+                    self.game.lore_viewer_selection = fragment_index
+                    # Enter reading mode (same as pressing Enter)
+                    self.game.lore_viewer_mode = "reading"
+                    logging.debug(f"Input: Lore viewer left-click opening fragment {fragment_index}")
+                    return True
 
-            discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
-            if 0 <= fragment_index < len(discovered_fragments):
-                # Select this fragment
-                self.game.lore_viewer_selection = fragment_index
-                # Enter reading mode (same as pressing Enter)
-                self.game.lore_viewer_mode = "reading"
-                logging.debug(f"Input: Lore viewer left-click opening fragment {fragment_index}")
-                return True
+            # Clicked on blank space - consume the event to prevent menu exit
+            return True
 
         elif self.game.lore_viewer_mode == "reading":
             # Any click in reading mode returns to list view
@@ -1437,7 +1441,8 @@ class InputHandler:
             logging.debug("Input: Lore viewer left-click returning to list mode")
             return True
 
-        return False
+        # Shouldn't reach here, but consume event just in case
+        return True
 
     def _handle_lore_viewer_mouse_wheel(self, event: tcod.event.MouseWheel) -> bool:
         """Handle mouse wheel in lore viewer - scroll through fragments."""
