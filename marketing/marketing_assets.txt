@@ -146,7 +146,7 @@ a) Short Game Description
 
 
   A stealth-first roguelike where you infiltrate cyberspace as a trapped consciousness. Navigate procedurally generated networks, avoid AI security, and hack through escalating defenses.
-  Manage heat, trace signatures, and limited resources as you fight to escape. Detection means deletion. Permadeath erases everything.
+  Manage your systems carefully—overheating damages you, trace signatures alert enemies, and resources are scarce. Detection means deletion. Permadeath erases everything.
 
   ---
   b) Long Game Description
@@ -157,9 +157,8 @@ a) Short Game Description
 
   Infiltrate three increasingly hostile networks—Corporate, Government, and Military—each filled with sophisticated AI security systems designed to detect and eliminate unauthorized
   consciousnesses. Hide in digital shadows, deploy 12 powerful hacking exploits ranging from stealth tools to devastating cyberattacks, and discover 20+ narrative fragments that slowly reveal
-  what happened to you. Every action generates trace data that alerts enemies to your presence. Overuse your abilities and you'll overheat, making detection inevitable. Take damage and your CPU
-  degrades, bringing you closer to total system failure. And when you die? Your save file is deleted. Forever. Become the rogue signal that shatters the firewalls, or fade into the network's
-  ghost data like the others before you.
+  what happened to you. Every action generates trace data that alerts enemies to your presence. Overuse your abilities and you'll overheat, causing CPU damage that brings you closer to total
+  system failure. And when you die? Your save file is deleted. Forever. Become the rogue signal that shatters the firewalls, or fade into the network's ghost data like the others before you.
 
   ---
   c) Key Features

@@ -30,6 +30,7 @@ from game_menus import MenuBackground, MainMenu, SettingsMenu
 from game_menu_help_lore import create_help_menu, LoreMenu
 from game_menu_achievements import AchievementsMenu
 from game_menu_graphics_preview import GraphicsPreviewMenu
+from game_menu_about import AboutMenu
 from game_engine import GameEngine
 from game_rendering_core import GameRenderer
 from game_input import InputHandler
@@ -133,7 +134,8 @@ def initialize_game_systems(settings: GameSettings, context, menu_background=Non
         'settings_menu': SettingsMenu(settings, menu_background, sound_manager),  # Pass sound manager for live volume updates
         'help_menu': create_help_menu(settings, context, tile_manager),  # Use factory function
         'lore_menu': LoreMenu(),
-        'achievements_menu': AchievementsMenu()
+        'achievements_menu': AchievementsMenu(),
+        'about_menu': AboutMenu(menu_background, settings)
     }
 
     # Only add graphics preview menu if we have a tile manager
@@ -263,6 +265,8 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     current_menu = menus['help_menu']
                 elif action == "lore":
                     current_menu = menus['lore_menu']
+                elif action == "about":
+                    current_menu = menus['about_menu']
                 elif action == "achievements":
                     current_menu = menus['achievements_menu']
                 elif action == "graphics_preview":
@@ -399,6 +403,8 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     current_menu = menus['help_menu']
                 elif action == "lore":
                     current_menu = menus['lore_menu']
+                elif action == "about":
+                    current_menu = menus['about_menu']
                 elif action == "achievements":
                     current_menu = menus['achievements_menu']
                 elif action == "graphics_preview":

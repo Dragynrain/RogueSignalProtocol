@@ -63,7 +63,7 @@ class MainMenu(BaseMenu):
 
     def _build_options_list(self):
         """Build the options list based on save state and graphics mode."""
-        base_options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments"]
+        base_options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments", "About"]
 
         # Only show Graphics Preview if in graphics mode AND the menu exists
         if (self.settings and self.settings.graphics_mode == "graphics" and
@@ -95,7 +95,7 @@ class MainMenu(BaseMenu):
         exit_text = "Save and Exit" if can_save else "Exit"
 
         # Build base options
-        base_options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments"]
+        base_options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments", "About"]
 
         # Only show Graphics Preview if in graphics mode AND the menu exists
         if (self.settings and self.settings.graphics_mode == "graphics" and
@@ -212,17 +212,18 @@ class MainMenu(BaseMenu):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             bg_color = ColorManager.get("backgrounds", "menu_highlight") if i == self.selected_option else Colors.BLACK
             prefix = "> " if i == self.selected_option else "  "
+            full_text = f"{prefix}{option}"
 
             if box['use_background_layout']:
                 # Background mode - centered within box (box itself is shifted)
-                x_pos = box['center_x'] - len(option) // 2 - 1
+                x_pos = box['center_x'] - len(full_text) // 2
             else:
                 # Glyph mode - centered
-                x_pos = GameConfig.SCREEN_WIDTH // 2 - len(option) // 2 - 1
+                x_pos = GameConfig.SCREEN_WIDTH // 2 - len(full_text) // 2
 
             render_char_safe(console,
                 x_pos, start_y + i * 2,
-                f"{prefix}{option}", fg=color, bg=bg_color
+                full_text, fg=color, bg=bg_color
             )
     
     def _render_save_info(self, console: tcod.console.Console, box: dict) -> None:
@@ -421,6 +422,8 @@ class MainMenu(BaseMenu):
                 return "achievements"
             elif option == "Data Fragments":
                 return "lore"
+            elif option == "About":
+                return "about"
             elif option == "Graphics Preview":
                 return "graphics_preview"
             elif "Exit" in option:  # Matches both "Exit" and "Save and Exit"

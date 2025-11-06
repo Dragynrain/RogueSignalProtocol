@@ -20,6 +20,7 @@ import tcod.event
 
 from game_menus import MenuBackground, MainMenu, SettingsMenu
 from game_menu_help_lore import LoreMenu, HelpMenu
+from game_menu_about import AboutMenu
 from game_save import SaveGameManager
 from game_config import GameSettings
 
@@ -36,7 +37,7 @@ class TestMainMenu:
             assert "Continue Game" in menu.options
             assert "New Game" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
-            assert len(menu.options) == 7  # Continue, New, Settings, Help, Achievements, Data Fragments, Exit
+            assert len(menu.options) == 8  # Continue, New, Settings, Help, Achievements, Data Fragments, About, Exit
             assert menu.show_warning is False
 
             # With graphics mode settings, Graphics Preview is shown (if graphics_preview_menu exists)
@@ -45,7 +46,7 @@ class TestMainMenu:
             mock_menus = {'graphics_preview_menu': Mock()}  # Mock menus dict with graphics_preview_menu
             menu_graphics = MainMenu(settings=mock_settings, menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
-            assert len(menu_graphics.options) == 8  # Includes Graphics Preview
+            assert len(menu_graphics.options) == 9  # Includes Graphics Preview
 
     def test_main_menu_initialization_no_save(self):
         """MainMenu initializes correctly when no save file exists."""
@@ -56,7 +57,7 @@ class TestMainMenu:
             assert "Continue Game" not in menu.options
             assert "New Game" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
-            assert len(menu.options) == 6  # New, Settings, Help, Achievements, Data Fragments, Exit
+            assert len(menu.options) == 7  # New, Settings, Help, Achievements, Data Fragments, About, Exit
             assert isinstance(menu.options, list)
             assert menu.show_warning is False
 
@@ -66,7 +67,7 @@ class TestMainMenu:
             mock_menus = {'graphics_preview_menu': Mock()}  # Mock menus dict with graphics_preview_menu
             menu_graphics = MainMenu(settings=mock_settings, menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
-            assert len(menu_graphics.options) == 7  # Includes Graphics Preview
+            assert len(menu_graphics.options) == 8  # Includes Graphics Preview
 
     def test_refresh_options_with_continue(self):
         """refresh_options() correctly adds continue option when save exists."""
@@ -278,6 +279,80 @@ class TestLoreMenu:
         assert lore_menu.story_fragment_manager is not None
 
 
+class TestAboutMenu:
+    """Test the AboutMenu class functionality."""
+
+    def test_about_menu_initialization(self):
+        """AboutMenu initializes correctly."""
+        about_menu = AboutMenu()
+        assert about_menu is not None
+        assert about_menu.selected_option == 0
+        # Should have 4 items: Itch.io, Discord, GitHub, Back
+        assert len(about_menu.links) == 4
+        assert len(about_menu.options) == 4
+
+    def test_about_menu_has_correct_urls(self):
+        """AboutMenu contains correct URLs (no hallucination check)."""
+        about_menu = AboutMenu()
+
+        # Verify all URLs are exactly as expected
+        assert about_menu.links[0]["url"] == "https://dragynrain.itch.io/rogue-signal-protocol"
+        assert about_menu.links[1]["url"] == "https://discord.gg/aUZgmrpU"
+        assert about_menu.links[2]["url"] == "https://github.com/Dragynrain/RogueSignalProtocol"
+        assert about_menu.links[3]["url"] is None  # Back button has no URL
+
+    def test_about_menu_navigation(self):
+        """AboutMenu navigation works correctly."""
+        about_menu = AboutMenu()
+
+        # Start at first option
+        assert about_menu.selected_option == 0
+
+        # Navigate down
+        down_event = Mock(spec=tcod.event.KeyDown)
+        down_event.sym = tcod.event.KeySym.DOWN
+        about_menu.handle_input(down_event)
+        assert about_menu.selected_option == 1
+
+    def test_about_menu_back_action(self):
+        """AboutMenu back option returns to main menu."""
+        about_menu = AboutMenu()
+
+        # Select last option (Back)
+        about_menu.selected_option = len(about_menu.links) - 1
+
+        # Press enter
+        enter_event = Mock(spec=tcod.event.KeyDown)
+        enter_event.sym = tcod.event.KeySym.RETURN
+        result = about_menu.handle_input(enter_event)
+
+        assert result == "back"
+
+    def test_about_menu_escape_handling(self):
+        """AboutMenu handles escape key."""
+        about_menu = AboutMenu()
+
+        escape_event = Mock(spec=tcod.event.KeyDown)
+        escape_event.sym = tcod.event.KeySym.ESCAPE
+        result = about_menu.handle_input(escape_event)
+
+        assert result == "back"
+
+    def test_about_menu_rendering_safety(self):
+        """AboutMenu renders without crashing."""
+        about_menu = AboutMenu()
+        mock_console = Mock(spec=tcod.console.Console)
+        mock_console.width = 80
+        mock_console.height = 50
+        mock_console.rgba = Mock()
+
+        try:
+            about_menu.render(mock_console)
+            assert True
+        except Exception as e:
+            pytest.fail(f"About menu rendering failed: {e}")
+
+
 class TestMenuNavigation:
     """Test menu navigation logic (pure algorithmic tests)."""
 
@@ -341,6 +416,7 @@ class TestMenuIntegration:
         menus = [
             MainMenu(),
             HelpMenu(),
+            AboutMenu(),
         ]
 
         # Create mock keyboard event for ESCAPE key
