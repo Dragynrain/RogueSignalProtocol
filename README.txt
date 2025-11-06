@@ -131,7 +131,9 @@ GAME WON'T START:
 
 CRASHES/BUGS:
 - This is an alpha build - bugs expected!
-- Send game_debug.log with bug reports
+- Use Shift+F12 or Settings > Export Debug Package to create bug report
+- Debug package includes: saves, logs, metrics, system info, screenshot
+- Exports to: debug_exports/debug_YYYY-MM-DD_HHMM.zip
 - Report issues on GitHub: github.com/Dragynrain/RogueSignalProtocol
 
 SAVE FILE LOST:

@@ -24,7 +24,7 @@ if exist build\RogueSignalProtocol rmdir /s /q build\RogueSignalProtocol
 
 REM Run PyInstaller
 echo Running PyInstaller...
-.venv\Scripts\python.exe -m PyInstaller --onefile --clean RogueSignalProtocol.py
+.venv\Scripts\python.exe -m PyInstaller --clean RogueSignalProtocol.spec
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: PyInstaller failed
     pause
