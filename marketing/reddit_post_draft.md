@@ -60,10 +60,10 @@ I want to be transparent about how this game was built - this is a **solo dev pr
 * Iterated on style and consistency across ~50+ unique sprites
 * Curated and integrated into dual-rendering system (ASCII + graphics modes)
 
-**AudioCraft (Meta)** - All sound effects
+**AudioCraft (Meta)** - Sound effects only
 * Generated 40+ SFX for movement, combat, UI interactions
-* Atmospheric background music for different threat levels
 * All curated and balanced for gameplay feel
+* (Note: Background music is human-made, sourced from free-use libraries)
 
 ### What Worked (Pros):
 
@@ -73,11 +73,11 @@ I want to be transparent about how this game was built - this is a **solo dev pr
 
 **Iteration Velocity:** "I want enemies to show their next 3 moves" → implemented and tested in minutes. Rapid prototyping meant more time polishing mechanics.
 
-**Asset Generation:** No artistic skill required. Stable Diffusion let me visualize my cyberspace aesthetic without contracting artists. AudioCraft gave professional-sounding effects without licensing nightmares.
+**Asset Generation:** Rapidly prototype graphics to experiment with styles and features. Stable Diffusion let me visualize my cyberspace aesthetic and iterate on visual direction without contracting artists. AudioCraft gave professional-sounding effects without licensing nightmares.
 
 ### What Didn't Work (Cons):
 
-**Creative Direction Required:** AI tools don't have taste. I had to reject 80% of generated sprites and 90% of audio until finding the right fit. You still need vision.
+**Creative Direction Required:** AI tools don't have taste. I had to reject 95%+ of generated sprites and audio until finding the right fit. You still need vision and curation.
 
 **Integration Overhead:** Generated assets don't drop into your game magically. Sprite sizing, color palettes, audio balancing - all manual curation.
 
@@ -89,7 +89,7 @@ I want to be transparent about how this game was built - this is a **solo dev pr
 
 ### The Bottom Line:
 
-AI was a **force multiplier, not a replacement for game design**. I made every design decision, balanced every mechanic, curated every asset, and iterated based on gameplay feel. The tools let me execute faster, but the creative vision is mine.
+AI **amplified my capabilities, but didn't replace game design**. I made every design decision, balanced every mechanic, curated every asset, and iterated based on gameplay feel. The tools let me execute faster, but the creative vision is mine.
 
 I'm sharing this workflow because I think it's the future for solo indie devs. The traditional path (learn to code, learn to art, learn to audio) is a 5+ year journey. AI tools compressed that timeline while keeping quality high.
 
