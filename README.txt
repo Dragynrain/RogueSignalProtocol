@@ -21,7 +21,7 @@ KEY FEATURES
 - 8 UNIQUE ENEMIES: Scanners, Hunters, Viruses, Admin Avatar
 - 20+ STORY FRAGMENTS: Discover the truth about your existence
 - 3 NETWORK LEVELS: Corporate, Government, Military
-- DUAL RENDERING: Play with ASCII glyphs or cyberpunk graphics
+- DUAL RENDERING: Play with ASCII glyphs or cyberspace graphics
 
 OBJECTIVE
 ---------
@@ -95,9 +95,22 @@ Story fragments and settings persist across all runs.
 RENDERING MODES
 ---------------
 GLYPHS MODE: Classic ASCII/Unicode characters (default)
-GRAPHICS MODE: Cyberpunk sprite tiles (toggle in settings)
+GRAPHICS MODE: Cyberspace sprite tiles (toggle in settings)
 
 Both modes play identically - choose your aesthetic preference!
+
+GRAPHICS PREVIEW (Settings Menu)
+---------------------------------
+Preview all included sprite variants in different combinations!
+
+- Browse through all available sprites for each entity
+- Cycle between variants to find your preferred aesthetic
+- Exit the preview and your selections are automatically saved
+
+Your selections are saved to: logs/graphic-preview.log
+
+This log includes instructions for modifying graphics_tiles.json if you
+want to customize which sprites are used in-game. Perfect for modders!
 
 SYSTEM REQUIREMENTS
 -------------------

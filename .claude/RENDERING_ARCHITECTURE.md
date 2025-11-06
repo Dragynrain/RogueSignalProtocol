@@ -70,7 +70,7 @@ renderer.present()                          # Display final frame
 **Implementation:** `game_menu_background.py`
 
 - Loads random PNG backgrounds (1920x1080+)
-- 25 available cyberpunk-themed images
+- 25 available cyberspace-themed images
 - Renders directly to SDL with aspect ratio preservation
 
 ```python

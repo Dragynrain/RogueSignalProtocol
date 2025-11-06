@@ -159,7 +159,7 @@ class MainMenu(BaseMenu):
     def _render_menu_title(self, console: tcod.console.Console, box: dict) -> None:
         """Render the main menu title and decorations."""
         version = "Version 0.8.0 Alpha"
-        subtitle = "Cyberpunk Stealth Exfiltration"
+        subtitle = "Cyberspace Stealth Exfiltration"
 
         # Get UI color from settings
         ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
@@ -174,7 +174,7 @@ class MainMenu(BaseMenu):
             version_x = box['center_x'] - len(version) // 2
             render_char_safe(console, version_x, 9, version, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
             # Split subtitle into two lines
-            render_char_safe(console, box['center_x'] - 8, 11, "Cyberpunk Stealth", fg=ui_color, bg=Colors.BLACK)
+            render_char_safe(console, box['center_x'] - 8, 11, "Cyberspace Stealth", fg=ui_color, bg=Colors.BLACK)
             render_char_safe(console, box['center_x'] - 6, 12, "Exfiltration", fg=ui_color, bg=Colors.BLACK)
             render_char_safe(console, box['center_x'] - 10, 13, "═" * 20, fg=ui_color, bg=Colors.BLACK)
         else:

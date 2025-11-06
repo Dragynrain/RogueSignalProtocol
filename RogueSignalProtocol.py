@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Rogue Signal Protocol - A cyberpunk stealth roguelike
+Rogue Signal Protocol - A cyberspace stealth roguelike
 
 Main entry point that imports modular components and initializes the game.
 Sets up logging configuration for both console and file output.

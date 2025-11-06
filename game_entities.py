@@ -39,7 +39,7 @@ class ColorManager:
     
     def _load_colors(self):
         """
-        Load consolidated cyberpunk color palette from JSON configuration.
+        Load consolidated cyberspace color palette from JSON configuration.
 
         Loads all color categories and creates backward-compatible aliases
         for legacy color names (e.g., RED -> CRIMSON_RED, WHITE -> PURE_WHITE).
