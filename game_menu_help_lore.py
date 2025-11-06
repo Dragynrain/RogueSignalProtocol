@@ -340,9 +340,9 @@ class HelpMenu:
                 ("", Colors.WHITE),
 
                 ("ENEMY TYPES (HP, Vision, Behavior, Damage):", Colors.CYAN),
-                ("  S: Scanner (35hp/4vis/static/none) P: Patrol (40hp/4vis/15dmg)", ENEMY_UNAWARE),
-                ("  B: Bot (25hp/3vis/8dmg) F: Firewall (80hp/5vis/none)", ENEMY_UNAWARE),
-                ("  H: Hunter (50hp/6vis/22dmg) V: Virus (35hp/4vis/virus)", ENEMY_HOSTILE),
+                ("  S: Scanner (35hp/5vis/static/none) P: Patrol (40hp/4vis/10dmg)", ENEMY_UNAWARE),
+                ("  B: Bot (25hp/3vis/8dmg) F: Firewall (80hp/3vis/5dmg)", ENEMY_UNAWARE),
+                ("  H: Hunter (50hp/6vis/15dmg) V: Virus (35hp/4vis/virus)", ENEMY_HOSTILE),
                 ("  I: Inhibitor (30hp/4vis/slow) A: Admin (250hp/8vis/45dmg)", ENEMY_HOSTILE),
                 ("", Colors.WHITE),
 
@@ -361,13 +361,13 @@ class HelpMenu:
 
                 ("EXPLOITS - COMBAT:", Colors.CYAN),
                 ("  Buffer Overflow (40dmg/melee)  Code Injection (25dmg/range)", Colors.WHITE),
-                ("  System Crash (30dmg/area/disable)  EMP Burst (20dmg/area)", Colors.WHITE),
+                ("  Logic Bomb (15dmg/area)  Denial of Service (disable)", Colors.WHITE),
                 ("", Colors.WHITE),
 
-                ("EXPLOITS - UTILITY:", Colors.CYAN),
+                ("EXPLOITS - UTILITY/STEALTH:", Colors.CYAN),
                 ("  System Hop (teleport)  Traffic Masq (invisible)  Decoy (distract)", Colors.WHITE),
-                ("  Network Scan (reveal nodes)  Log Wiper (trace -30%)", Colors.WHITE),
-                ("  Antivirus (cure)  Memory Leak (blind 3x3)", Colors.WHITE),
+                ("  Network Scan (nodes)  Threat Scan (enemies)  Log Wiper (trace)", Colors.WHITE),
+                ("  Antivirus (cure)  Memory Leak (blind)  System Crash (emergency)", Colors.WHITE),
                 ("", Colors.WHITE),
 
                 ("STATUS EFFECTS:", Colors.CYAN),
