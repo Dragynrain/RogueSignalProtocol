@@ -4,7 +4,7 @@
 Rogue Signal Protocol - Alpha Feedback Survey
 
 ## Survey Description:
-Thank you for playing Rogue Signal Protocol! Your feedback helps shape development. This survey takes ~3-5 minutes.
+Thank you for playing Rogue Signal Protocol! Your feedback helps shape development. This survey takes ~4-5 minutes.
 
 ---
 
@@ -38,48 +38,50 @@ Thank you for playing Rogue Signal Protocol! Your feedback helps shape developme
 * [ ] No - stuck on Level 3
 * [ ] No - didn't try
 
+### Q5: How likely are you to play additional runs?
+* [ ] Already planning more runs
+* [ ] Will play more casually
+* [ ] Might revisit occasionally
+* [ ] Probably done with it
+* [ ] Definitely not playing again
+
 ---
 
 ## SECTION 2: Gameplay Mechanics
 
-### Q5: How did the stealth mechanics feel?
+### Q6: How did the stealth mechanics feel?
 * [ ] Excellent - engaging and well-balanced
 * [ ] Good - mostly worked well
 * [ ] Okay - some issues but playable
 * [ ] Poor - frustrating or unclear
 * [ ] Didn't use stealth much
 
-### Q6: Heat management (exploit usage generating heat):
+### Q7: How did heat management feel?
+_Heat increases as you use exploits_
 * [ ] Too punishing - couldn't use exploits enough
 * [ ] Well balanced - meaningful trade-off
 * [ ] Too lenient - never worried about heat
 * [ ] Unclear how it worked
 * [ ] Didn't notice this mechanic
 
-### Q7: Trace/detection system (spawns Admin Avatar):
+### Q8: How did the trace/detection system feel?
+_Being detected spawns the Admin Avatar_
 * [ ] Great tension - feared the Admin Avatar
 * [ ] Good mechanic - added pressure
 * [ ] Neutral - didn't impact my play much
 * [ ] Annoying - Admin Avatar felt unfair
 * [ ] Didn't encounter the Admin Avatar
 
-### Q8: Which exploit category did you use most?
-* [ ] Combat (Buffer Overflow, Code Injection, etc.)
-* [ ] Stealth (Shadow Step, Data Mimic, etc.)
-* [ ] Utility (Threat Scan, Network Scan, etc.)
-* [ ] Special (Memory Leak)
-* [ ] Used all equally
+### Q9: Enemy movement prediction (seeing their next 3 moves):
+* [ ] Extremely helpful - core to my strategy
+* [ ] Useful - checked occasionally
+* [ ] Neutral - didn't affect my play
+* [ ] Confusing - wasn't sure what it meant
+* [ ] Didn't notice this feature
 
 ---
 
 ## SECTION 3: Content & Narrative
-
-### Q9: How many story fragments did you discover?
-* [ ] 0-5 fragments
-* [ ] 6-10 fragments
-* [ ] 11-15 fragments
-* [ ] 16-20 fragments
-* [ ] All 21 fragments
 
 ### Q10: Did the story fragments enhance your experience?
 * [ ] Yes - loved the narrative discovery
@@ -98,26 +100,23 @@ Thank you for playing Rogue Signal Protocol! Your feedback helps shape developme
 * [ ] Inhibitor (I)
 * [ ] Admin Avatar (A)
 
-### Q12: Most frustrating enemy type?
-* [ ] Scanner (S)
-* [ ] Patrol (P)
-* [ ] Bot (B)
-* [ ] Firewall (F)
-* [ ] Hunter (H)
-* [ ] Virus (V)
-* [ ] Inhibitor (I)
-* [ ] Admin Avatar (A)
-
 ---
 
 ## SECTION 4: UI/UX
 
-### Q13: How clear was the tutorial/help system?
+### Q12: How clear was the tutorial/help system?
 * [ ] Excellent - understood everything immediately
 * [ ] Good - figured most things out
 * [ ] Okay - needed some trial and error
 * [ ] Poor - often confused about mechanics
 * [ ] Didn't use help menu
+
+### Q13: When you died, did you understand why?
+* [ ] Always clear what killed me
+* [ ] Usually understood my mistakes
+* [ ] Sometimes confused about deaths
+* [ ] Often unclear why I died
+* [ ] Felt unfair or random
 
 ### Q14: Did you find any controls confusing or awkward?
 * [ ] No - controls felt natural
@@ -126,10 +125,12 @@ Thank you for playing Rogue Signal Protocol! Your feedback helps shape developme
 * [ ] Menu navigation - [open text]
 * [ ] Other - [open text]
 
-### Q15: Graphics mode used:
-* [ ] ASCII/Terminal (default)
-* [ ] Enhanced graphics
-* [ ] Switched between both
+### Q15: Which graphics mode did you use and prefer?
+* [ ] Primarily Classic - prefer the retro aesthetic
+* [ ] Primarily Graphics - prefer modern sprites
+* [ ] Tried both - prefer Classic
+* [ ] Tried both - prefer Graphics
+* [ ] Tried both - no preference
 * [ ] Didn't know there were options
 
 ---
@@ -163,7 +164,8 @@ Thank you for playing Rogue Signal Protocol! Your feedback helps shape developme
 ## SECTION 6: Overall Feedback
 
 ### Q19: How likely are you to recommend this game to a friend?
-* [ ] 1 - Not at all likely
+* [ ] 0 - Not at all likely
+* [ ] 1
 * [ ] 2
 * [ ] 3
 * [ ] 4
@@ -194,14 +196,9 @@ Thank you for playing Rogue Signal Protocol! Your feedback helps shape developme
 * [ ] New to the genre
 * [ ] Played a few roguelikes
 * [ ] Regular roguelike player
-* [ ] Veteran (100+ hours in roguelikes)
+* [ ] Veteran (500+ hours in roguelikes)
 
-### Q25: Operating System:
-* [ ] Windows 10
-* [ ] Windows 11
-* [ ] Other (please specify)
-
-### Q26: Where did you hear about this game?
+### Q25: Where did you hear about this game?
 * [ ] Reddit (r/roguelikes)
 * [ ] Reddit (r/roguelikedev)
 * [ ] Reddit (other)
@@ -219,7 +216,7 @@ Follow development: https://github.com/Dragynrain/RogueSignalProtocol
 ---
 
 ## Survey Setup Notes:
-* Make all questions optional except Q1-Q3 (core metrics)
+* Make all questions optional except Q1-Q5 (core metrics)
 * Enable "one response per person" if using Google Forms
 * Share link on itch.io page, in README.txt, and in reddit posts
 * Consider offering small incentive (credit in game, early access to updates)
