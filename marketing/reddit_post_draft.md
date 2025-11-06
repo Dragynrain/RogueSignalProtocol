@@ -36,16 +36,15 @@ The story is told through environmental fragments you discover - each run might 
 **Feedback Survey:** [INSERT GOOGLE FORM LINK]
 
 This is **alpha 0.8.0** - feature complete and playtested, now looking for wider feedback on:
-* How the stealth/combat balance feels
-* Whether difficulty progression feels fair across the 3 levels
+* **Difficulty curve** - I might have developer blinders on, does it feel too easy/hard?
+* Stealth vs combat balance and overall fun factor
 * Any bugs or edge cases I missed
-* Overall fun factor and replayability
 
 ---
 
 ## The AI Development Workflow
 
-I want to be transparent: this is a **solo dev project built using AI tools** across code, art, and audio. I think the results speak for themselves, but there are interesting lessons for other indie devs.
+I want to be transparent: this is a **solo dev project built using AI tools** across code, art, and audio.
 
 ### Tools Used:
 
@@ -55,7 +54,7 @@ I want to be transparent: this is a **solo dev project built using AI tools** ac
 
 ### What Worked:
 
-**Rapid Prototyping** - This is AI's killer feature. Going from "what if enemies showed their next 3 moves?" to *playing it* and feeling if it's fun took minutes instead of days. Fail fast on bad ideas, polish the good ones.
+**Rapid Prototyping** - Going from "what if enemies showed their next 3 moves?" to *playing it* and feeling if it's fun took minutes instead of days. Fail fast on bad ideas, polish the good ones.
 
 **Development Speed** - 2-3 months instead of 6-12 months for a solo project of this scope.
 
