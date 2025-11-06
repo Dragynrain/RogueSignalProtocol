@@ -125,11 +125,11 @@ if __name__ == "__main__":
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
         print("[OK] DPI awareness enabled")
-    except:
+    except Exception:
         try:
             ctypes.windll.user32.SetProcessDPIAware()
             print("[OK] DPI awareness enabled (fallback)")
-        except:
+        except Exception:
             print("[WARN] Could not set DPI awareness")
 
     import tcod

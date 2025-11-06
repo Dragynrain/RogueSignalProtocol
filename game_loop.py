@@ -11,10 +11,10 @@ Coordinates rendering, input handling, and audio systems.
 import ctypes
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)  # PROCESS_PER_MONITOR_DPI_AWARE
-except:
+except Exception:
     try:
         ctypes.windll.user32.SetProcessDPIAware()  # Fallback for Windows 7/8
-    except:
+    except Exception:
         pass  # DPI awareness unavailable - game will still run but may be scaled by Windows
 
 import tcod

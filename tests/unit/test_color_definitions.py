@@ -66,7 +66,7 @@ def find_color_references():
 
         try:
             content = py_file.read_text(encoding='utf-8')
-        except:
+        except Exception:
             continue
 
         # Remove comments to avoid false positives
