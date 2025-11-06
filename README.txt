@@ -162,18 +162,19 @@ COMMUNITY & FEEDBACK
 --------------------
 This is an ALPHA release. Your feedback helps improve the game!
 
-JOIN THE DISCORD:
-Discord: https://discord.gg/aUZgmrpU
+LINKS:
+Discord:  https://discord.gg/aUZgmrpU
+Itch.io:  https://dragynrain.itch.io/rogue-signal-protocol
+GitHub:   https://github.com/Dragynrain/RogueSignalProtocol/
 
-Share your:
-- Epic runs and close calls
-- Ideas for features or improvements
-- Bug reports (include game_debug.log)
-- Balance issues (too hard/easy?)
-- Fan art and mods
+JOIN THE DISCORD:
+Share your epic runs, ideas, bug reports, balance feedback, and fan art!
+
+DOWNLOAD & FOLLOW:
+Get the latest releases and devlog updates on itch.io
 
 REPORT ISSUES:
-GitHub: https://github.com/Dragynrain/RogueSignalProtocol/issues
+Submit bug reports and feature requests on GitHub Issues
 
 CREDITS
 -------
