@@ -69,11 +69,11 @@ I want to be transparent about how this game was built - this is a **solo dev pr
 
 **Development Speed:** What would have taken me 6-12 months solo took ~2-3 months of active development. Claude Code handled the tedious parts (testing, refactoring, JSON config systems) while I focused on design.
 
+**Rapid Prototyping:** This is where AI truly excels. Going from "what if enemies showed their next 3 moves?" to playing it and feeling if it's fun took minutes instead of days. Being able to test ideas quickly meant I could fail fast on bad ideas and polish the good ones.
+
 **Quality Control:** Having AI-generated tests meant every feature was validated. 1580 passing tests gave me confidence to iterate rapidly without breaking things.
 
-**Iteration Velocity:** "I want enemies to show their next 3 moves" → implemented and tested in minutes. Rapid prototyping meant more time polishing mechanics.
-
-**Asset Generation:** Rapidly prototype graphics and audio to experiment with styles and features. Stable Diffusion let me visualize my cyberspace aesthetic and iterate on visual direction. AudioCraft provided placeholder sound effects to test gameplay feel.
+**Asset Generation:** Rapidly prototype graphics and audio to experiment with styles and features. Stable Diffusion let me visualize my cyberspace aesthetic and iterate on visual direction. AudioCraft provided placeholder sound effects to test gameplay feel before committing to final audio.
 
 ### What Didn't Work (Cons):
 
