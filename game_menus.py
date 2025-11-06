@@ -683,7 +683,7 @@ class SettingsMenu(BaseMenu):
                 "↕/WASD: Navigate",
                 "←→/A/D: Adjust",
                 "Enter: Select",
-                "Esc: Back"
+                "ESC: Back"
             ]
             inst_start_y = box['bottom'] - 6
         else:
@@ -692,7 +692,7 @@ class SettingsMenu(BaseMenu):
                 "↕/WASD: Navigate",
                 "←→ or A/D: Adjust",
                 "Enter: Select",
-                "Escape: Back"
+                "ESC: Back"
             ]
             inst_start_y = box['bottom'] - 6
         

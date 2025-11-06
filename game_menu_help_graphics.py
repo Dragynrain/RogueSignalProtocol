@@ -462,7 +462,7 @@ class GraphicalHelpMenu:
             render_char_safe(console, x, y, text, fg=color, bg=Colors.BLACK)
 
         # Render navigation help at bottom
-        nav_text = "←→: Change Page  |  ESC/Any Key: Return"
+        nav_text = "←→: Change Page  │  ESC: Back"
         nav_x = GameConfig.SCREEN_WIDTH // 2 - len(nav_text) // 2
         render_char_safe(console, nav_x, GameConfig.SCREEN_HEIGHT - 2, nav_text, fg=Colors.CYAN, bg=Colors.BLACK)
 
@@ -477,25 +477,18 @@ class GraphicalHelpMenu:
         Returns:
             'back' to exit, '' to continue
         """
-        # Check for any key that returns to menu
-        if UniversalInputHandler.handle_any_key_screen(event):
-            # Before returning, check if it's an arrow key for navigation
-            if isinstance(event, tcod.event.KeyDown):
-                if event.sym == tcod.event.KeySym.LEFT:
-                    self._previous_page()
-                    return ""  # Stay in help
-                elif event.sym == tcod.event.KeySym.RIGHT:
-                    self._next_page()
-                    return ""  # Stay in help
-                elif event.sym == tcod.event.KeySym.UP:
-                    self._previous_page()
-                    return ""  # Stay in help
-                elif event.sym == tcod.event.KeySym.DOWN:
-                    self._next_page()
-                    return ""  # Stay in help
+        # Handle page navigation keys
+        if isinstance(event, tcod.event.KeyDown):
+            if event.sym == tcod.event.KeySym.LEFT or event.sym == tcod.event.KeySym.UP:
+                self._previous_page()
+                return ""  # Stay in help
+            elif event.sym == tcod.event.KeySym.RIGHT or event.sym == tcod.event.KeySym.DOWN:
+                self._next_page()
+                return ""  # Stay in help
+            elif UniversalInputHandler.is_escape_key(event):
+                return "back"
 
-            # Any other key returns
-            return "back"
+        return ""
 
     def handle_mouse_motion(self, event) -> bool:
         """Handle mouse motion - hover zones for page navigation."""
