@@ -173,8 +173,16 @@ zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 ### 11. **Feedback collection**
 
 - [ ] Create Google Form from `marketing/feedback_survey_draft.md`
-- [ ] Add link to itch.io page
-- [ ] Add link to README.txt
+- [ ] Get shareable Google Form URL (short link preferred)
+- [ ] Add feedback form URL to all these locations:
+  - [ ] README.txt - Top section after title (MUST-HAVE)
+  - [ ] README.txt - New "FEEDBACK WANTED" section (MUST-HAVE)
+  - [ ] README.md - Add feedback badge/button at top (MUST-HAVE)
+  - [ ] Itch.io page - Prominent "Share Feedback" button (MUST-HAVE)
+  - [ ] Reddit post body - In "Where to Get It" section (MUST-HAVE)
+  - [ ] In-game death screen - "Help improve the game: [link]" (OPTIONAL)
+  - [ ] In-game victory screen (after level 3) (OPTIONAL)
+  - [ ] In-game menu - "F: Give Feedback" option (OPTIONAL)
 
 ---
 
