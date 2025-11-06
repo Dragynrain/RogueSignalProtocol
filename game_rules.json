@@ -535,9 +535,19 @@
     },
     "ui_themes": {
       "_comment": "User-selectable UI color themes",
+      "cyan": [
+        20,
+        255,
+        200
+      ],
       "purple": [
         200,
         60,
+        255
+      ],
+      "magenta": [
+        255,
+        20,
         255
       ],
       "golden": [
@@ -549,6 +559,16 @@
         255,
         20,
         80
+      ],
+      "azure": [
+        0,
+        200,
+        255
+      ],
+      "emerald": [
+        0,
+        255,
+        100
       ],
       "ivory": [
         245,
