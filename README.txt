@@ -31,13 +31,14 @@ Stay hidden, manage resources, and survive. Discovery reveals your story.
 CONTROLS
 --------
 MOVEMENT:
-  Arrow Keys, WASD, or Numpad - Move in 8 directions
+  Arrow Keys, WASD, QEZC, or Numpad - Move in 8 directions
 
 ACTIONS:
   1-5       - Use equipped exploits (shown in HUD)
   I         - Open inventory (manage codes, equip exploits)
   L         - Look mode (examine entities and terrain)
   F         - Lore fragments (view discovered story)
+  V         - Achievements (view unlocked achievements)
   ?         - Help menu (complete controls reference)
   ESC       - Pause menu
   Enter     - Confirm dialogues/menus
@@ -57,7 +58,7 @@ Trace Level: Detection risk. High trace spawns Admin Avatar.
 
 STEALTH: Hide in blind spots (◘) to break line of sight.
 RESOURCES: Cooling nodes reduce heat, CPU nodes restore health.
-PERMANENT UPGRADES: RAM/CPU/Heat capacity improvements persist on level.
+PERMANENT UPGRADES: RAM/CPU/Heat capacity improvements persist throughout run.
 
 TIPS FOR SURVIVAL
 ------------------
