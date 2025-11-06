@@ -122,7 +122,6 @@ Font: CascadiaCode (for glyphs mode)
 TROUBLESHOOTING
 ---------------
 GAME WON'T START:
-- Run as Administrator
 - Check debug_mode.flag exists for alpha logging
 - Review game_debug.log for error details
 
@@ -180,7 +179,6 @@ CREDITS
 -------
 Design & Programming: Adam Forster (@Dragynrain)
 Engine: Python + TCOD (libtcod)
-Audio: pygame
 Font: KreativeSquare by Kreative Software
 
 LICENSE

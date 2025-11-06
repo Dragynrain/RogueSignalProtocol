@@ -868,5 +868,118 @@ class TestInfoPanelRendering:
             assert '...' not in line['text'], f"Line was truncated: '{line['text']}'"
 
 
+class TestInfoPanelColorCoding:
+    """Test color-coding features in info panel."""
+
+    def test_exploit_name_uses_category_color(self):
+        """Verify exploit names are colored by category in info panel."""
+        from game_info_panel import InfoProvider
+        from game_data import GameData
+        from game_color_manager import ColorManager
+
+        game = Mock()
+        game.player = Mock()
+        game.player.temporary_effects = {'exploit_efficiency_turns': 0}
+
+        # Test different exploit categories
+        test_cases = [
+            ('system_hop', 'stealth'),      # Purple
+            ('buffer_overflow', 'combat'),   # Red/Pink
+            ('threat_scan', 'utility'),      # Cyan
+            ('system_crash', 'emergency')    # Orange
+        ]
+
+        for exploit_key, expected_category in test_cases:
+            if exploit_key in GameData.EXPLOITS:
+                exploit_def = GameData.EXPLOITS[exploit_key]
+                result = InfoProvider._format_exploit_info(game, exploit_def)
+
+                # First line should be exploit name
+                name_line = result['lines'][0]
+
+                # Should use category color, not generic cyan
+                expected_color = ColorManager.get_exploit_color(expected_category)
+                assert name_line['text'] == exploit_def.name, \
+                    f"First line should be exploit name for {exploit_key}"
+                assert name_line['color'] == expected_color, \
+                    f"{exploit_key} ({expected_category}) should use category color {expected_color}, got {name_line['color']}"
+
+    def test_code_hack_name_uses_actual_color(self):
+        """Verify code hack names are colored by their actual color in inventory info panel."""
+        from game_info_panel import InfoProvider
+        from game_inventory import CodeHack
+        from game_entities import Colors
+
+        game = Mock()
+        game.code_hack_effects = {
+            'red': ('cpu_restore', 'Restores CPU'),
+            'green': ('heat_reduction', 'Reduces heat')
+        }
+
+        # Test red code hack - CodeHack(color_name, effect, name, description, quantity)
+        red_code = CodeHack('red', 'cpu_restore', 'Crimson Code', 'Restores CPU', 1)
+        red_code.discovered = True
+
+        result = InfoProvider._format_code_hack_info_for_inventory(game, red_code)
+        name_line = result['lines'][0]
+
+        # Should use actual red color from Colors.get_color('RED')
+        expected_red = Colors.get_color('RED')
+        assert name_line['color'] == expected_red, \
+            f"Red code hack should use red color, got {name_line['color']}"
+
+        # Test green code hack
+        green_code = CodeHack('green', 'heat_reduction', 'Emerald Code', 'Reduces heat', 1)
+        green_code.discovered = True
+
+        result = InfoProvider._format_code_hack_info_for_inventory(game, green_code)
+        name_line = result['lines'][0]
+
+        # Should use actual green color
+        expected_green = Colors.get_color('GREEN')
+        assert name_line['color'] == expected_green, \
+            f"Green code hack should use green color, got {name_line['color']}"
+
+    def test_inventory_keyboard_selection_triggers_info_panel(self):
+        """Verify keyboard selection in inventory updates info panel without mouse."""
+        from game_info_panel import InfoProvider
+        from game_data import GameData
+
+        game = Mock()
+        game.show_inventory = True
+        game.inventory_selection = 0  # First item selected
+        game.player = Mock()
+        game.player.temporary_effects = {'exploit_efficiency_turns': 0}
+        game.player.inventory_manager = Mock()
+        game.player.inventory_manager.equipped_exploits = ['system_hop']
+        game.player.inventory_manager.get_display_items = Mock(return_value=[])
+
+        # Call with None mouse coordinates (no mouse movement yet)
+        result = InfoProvider.get_info_for_hover(game, None, None)
+
+        # Should still return info based on keyboard selection
+        assert result is not None, "Should return info even without mouse coordinates"
+        assert result['title'] == 'EXPLOIT INFO'
+        assert any('System Hop' in line['text'] for line in result['lines'])
+
+    def test_utility_exploit_color_is_cyan_not_yellow(self):
+        """Verify utility exploits use cyan color (not yellow which conflicts with selection)."""
+        from game_color_manager import ColorManager
+
+        utility_color = ColorManager.get_exploit_color('utility')
+
+        # Cyan is RGB(20, 255, 200) - should be greenish-blue, not yellow
+        r, g, b = utility_color
+
+        # Cyan should have low red, high green, and high blue components
+        assert r < 100, f"Utility color red component too high: {r}"
+        assert g > 200, f"Utility color green component too low: {g}"
+        assert b > 150, f"Utility color blue component too low: {b}"
+
+        # Should not be yellow (yellow is high R, high G, low B)
+        assert not (r > 200 and g > 200 and b < 50), \
+            f"Utility color {utility_color} should not be yellow"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

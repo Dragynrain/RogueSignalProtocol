@@ -53,6 +53,13 @@ class InfoProvider:
         Returns:
             Dictionary with formatted info, or None for default display
         """
+        # Priority 0: Check inventory FIRST (supports keyboard selection even without mouse)
+        if hasattr(game, 'show_inventory') and game.show_inventory:
+            inventory_info = InfoProvider._get_inventory_hover(game, mouse_tile_x, mouse_tile_y)
+            if inventory_info is not None:
+                return inventory_info
+
+        # For other info, we need valid mouse coordinates
         if mouse_tile_x is None or mouse_tile_y is None:
             return None
 
@@ -61,12 +68,6 @@ class InfoProvider:
             exploit_info = InfoProvider._get_exploit_bar_hover(game, mouse_tile_x, mouse_tile_y)
             if exploit_info is not None:
                 return exploit_info
-
-        # Priority 2: Check if hovering over inventory screen
-        if hasattr(game, 'show_inventory') and game.show_inventory:
-            inventory_info = InfoProvider._get_inventory_hover(game, mouse_tile_x, mouse_tile_y)
-            if inventory_info is not None:
-                return inventory_info
 
         # Check if hovering over game viewport area
         if mouse_tile_x >= GameConfig.GAME_AREA_WIDTH():
@@ -135,10 +136,11 @@ class InfoProvider:
     @staticmethod
     def _get_inventory_hover(game, mouse_x: int, mouse_y: int) -> Optional[Dict[str, Any]]:
         """
-        Check if mouse is hovering over an exploit in the inventory screen.
+        Check which item is selected in the inventory screen.
 
-        Uses the same hover detection logic as the inventory tooltip rendering
-        to find which exploit the mouse is over.
+        Prioritizes keyboard selection (game.inventory_selection) over mouse hover.
+        This allows both keyboard navigation and mouse hover to update the Info Panel.
+        Handles both exploits and code hacks.
 
         Args:
             game: GameEngine instance
@@ -146,42 +148,102 @@ class InfoProvider:
             mouse_y: Mouse Y position in tile coordinates
 
         Returns:
-            Formatted exploit info dict, or None if not hovering over an exploit
+            Formatted item info dict (exploit or code hack), or None if no valid selection
         """
         # Import here to avoid circular dependency
         from game_rendering_ui import UIRenderer
+        from game_inventory import CodeHack
 
-        # Use the same method as tooltip rendering to find hovered item
-        hovered_index = UIRenderer.get_inventory_item_at_click(mouse_y)
+        # Get the selected index - prefer keyboard selection, fall back to mouse hover
+        selected_index = game.inventory_selection if hasattr(game, 'inventory_selection') else None
 
-        if hovered_index is None:
+        # If no keyboard selection, check mouse hover
+        if selected_index is None and mouse_y is not None:
+            selected_index = UIRenderer.get_inventory_item_at_click(mouse_y)
+
+        if selected_index is None:
             return None
 
-        # Get the item at the hovered position
+        # Get inventory data
         equipped_exploits = game.player.inventory_manager.equipped_exploits
         display_items = game.player.inventory_manager.get_display_items()
 
-        exploit_def = None
-
-        # Check if hovered item is an equipped exploit
-        if hovered_index < len(equipped_exploits):
-            exploit_key = equipped_exploits[hovered_index]
+        # Check if selected item is an equipped exploit
+        if selected_index < len(equipped_exploits):
+            exploit_key = equipped_exploits[selected_index]
             if exploit_key in GameData.EXPLOITS:
                 exploit_def = GameData.EXPLOITS[exploit_key]
+                return InfoProvider._format_exploit_info(game, exploit_def)
 
-        # Check if hovered item is an unequipped exploit
+        # Check if selected item is an unequipped item (exploit or code hack)
         else:
-            unequipped_index = hovered_index - len(equipped_exploits)
+            unequipped_index = selected_index - len(equipped_exploits)
             if 0 <= unequipped_index < len(display_items):
-                hovered_item = display_items[unequipped_index]
-                if hasattr(hovered_item, 'exploit_key') and hovered_item.exploit_key in GameData.EXPLOITS:
-                    exploit_def = GameData.EXPLOITS[hovered_item.exploit_key]
+                selected_item = display_items[unequipped_index]
 
-        # Return formatted exploit info if found
-        if exploit_def is not None:
-            return InfoProvider._format_exploit_info(game, exploit_def)
+                # Check if it's an exploit
+                if hasattr(selected_item, 'exploit_key') and selected_item.exploit_key in GameData.EXPLOITS:
+                    exploit_def = GameData.EXPLOITS[selected_item.exploit_key]
+                    return InfoProvider._format_exploit_info(game, exploit_def)
+
+                # Check if it's a code hack
+                elif isinstance(selected_item, CodeHack):
+                    return InfoProvider._format_code_hack_info_for_inventory(game, selected_item)
 
         return None
+
+    @staticmethod
+    def _format_code_hack_info_for_inventory(game, code_hack) -> Dict[str, Any]:
+        """
+        Format code hack for info panel display in inventory.
+
+        Shows code hack name, color, effect (or ??? if undiscovered), and quantity.
+        Respects discovery state to preserve the mystery mechanic.
+
+        Args:
+            game: GameEngine instance
+            code_hack: CodeHack instance from inventory
+
+        Returns:
+            Formatted info dict for info panel
+        """
+        lines = []
+
+        # Name with color coding - convert color_name to actual color
+        code_color = Colors.get_color(code_hack.color_name.upper())
+        lines.append({'text': code_hack.name, 'color': code_color})
+        lines.append({'text': '', 'color': Colors.WHITE})
+
+        # Type
+        lines.append({'text': 'Type: Code Fragment', 'color': Colors.YELLOW})
+        lines.append({'text': '', 'color': Colors.WHITE})
+
+        # Effect - check if discovered
+        if code_hack.discovered:
+            # Show the actual effect
+            if code_hack.color_name in game.code_hack_effects:
+                effect_key, desc = game.code_hack_effects[code_hack.color_name]
+                desc_lines = InfoProvider._wrap_text(desc, 22)
+                for line in desc_lines:
+                    lines.append({'text': line, 'color': Colors.LIGHT_GRAY})
+            else:
+                lines.append({'text': 'Effect: Unknown', 'color': Colors.DARK_GRAY})
+        else:
+            # Not discovered yet - show mystery
+            lines.append({'text': 'Effect: ???', 'color': Colors.DARK_GRAY})
+            lines.append({'text': '', 'color': Colors.WHITE})
+            lines.append({'text': '(Use to discover)', 'color': Colors.DARK_GRAY})
+
+        # Quantity (if more than 1)
+        if code_hack.quantity > 1:
+            lines.append({'text': '', 'color': Colors.WHITE})
+            lines.append({'text': f'Quantity: {code_hack.quantity}', 'color': Colors.WHITE})
+
+        return {
+            'title': 'CODE HACK',
+            'lines': lines,
+            'color': Colors.CYAN
+        }
 
     @staticmethod
     def _format_exploit_info(game, exploit_def) -> Dict[str, Any]:
@@ -189,6 +251,7 @@ class InfoProvider:
         Format exploit definition for info panel display.
 
         Shows exploit name, costs (RAM, Heat), damage, range, and full description.
+        Name is colored by category (stealth=purple, combat=red, utility=cyan, emergency=orange).
 
         Args:
             game: GameEngine instance (for checking heat cost modifications)
@@ -199,8 +262,10 @@ class InfoProvider:
         """
         lines = []
 
-        # Name
-        lines.append({'text': exploit_def.name, 'color': Colors.CYAN})
+        # Name with category color
+        from game_color_manager import ColorManager
+        category_color = ColorManager.get_exploit_color(exploit_def.category)
+        lines.append({'text': exploit_def.name, 'color': category_color})
         lines.append({'text': '', 'color': Colors.WHITE})
 
         # Costs and stats

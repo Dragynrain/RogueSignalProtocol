@@ -845,23 +845,25 @@ class UIRenderer:
         lines.append({'x': 2, 'text': "EQUIPPED EXPLOITS:", 'color': Colors.CYAN, 'selectable': False})
 
         for i, exploit_key in enumerate(game.player.inventory_manager.equipped_exploits):
+            # Get exploit category color
+            if exploit_key in GameData.EXPLOITS:
+                exploit = GameData.EXPLOITS[exploit_key]
+                from game_color_manager import ColorManager
+                category_color = ColorManager.get_exploit_color(exploit.category)
+                text = f"{i+1}. {exploit.name}"
+            else:
+                category_color = Colors.RED
+                text = f"{i+1}. INVALID: {exploit_key}"
+
+            # Use yellow for selection, category color otherwise
             if i == game.inventory_selection:
                 color = Colors.YELLOW
                 prefix = ">"
-            elif exploit_key in GameData.EXPLOITS:
-                color = Colors.GREEN
-                prefix = " "
             else:
-                color = Colors.RED
+                color = category_color
                 prefix = " "
 
-            if exploit_key in GameData.EXPLOITS:
-                exploit = GameData.EXPLOITS[exploit_key]
-                text = f"{prefix} {i+1}. {exploit.name}"
-            else:
-                text = f"{prefix} {i+1}. INVALID: {exploit_key}"
-
-            lines.append({'x': 4, 'text': text, 'color': color, 'selectable': True})
+            lines.append({'x': 4, 'text': f"{prefix} {text}", 'color': color, 'selectable': True})
 
         equipped_count = len(game.player.inventory_manager.equipped_exploits)
         max_exploits = game.player.inventory_manager.max_equipped_exploits
@@ -883,11 +885,14 @@ class UIRenderer:
                 display_index = display_items.index(patch)
                 adjusted_selection_index = display_index + equipped_count
 
+                # Use the code hack's actual color (converted from color_name)
+                code_color = Colors.get_color(patch.color_name.upper())
+
                 if adjusted_selection_index == game.inventory_selection:
-                    color = Colors.YELLOW
+                    color = Colors.YELLOW  # Keep yellow for selected item (high visibility)
                     prefix = ">"
                 else:
-                    color = Colors.WHITE
+                    color = code_color  # Use actual code color when not selected
                     prefix = " "
 
                 description = patch.description if patch.discovered else "Unknown effect"
@@ -918,17 +923,21 @@ class UIRenderer:
                 except ValueError:
                     adjusted_selection_index = -1
 
-                if adjusted_selection_index == game.inventory_selection:
-                    color = Colors.YELLOW
-                    prefix = ">"
-                else:
-                    color = Colors.WHITE
-                    prefix = " "
-
                 if exploit_item.exploit_key in GameData.EXPLOITS:
                     exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
+                    from game_color_manager import ColorManager
+                    category_color = ColorManager.get_exploit_color(exploit_def.category)
+
+                    # Use yellow for selection, category color otherwise
+                    if adjusted_selection_index == game.inventory_selection:
+                        name_color = Colors.YELLOW
+                        prefix = ">"
+                    else:
+                        name_color = category_color
+                        prefix = " "
+
                     name_text = f"{prefix} {exploit_item.name}"
-                    lines.append({'x': 4, 'text': name_text, 'color': color, 'selectable': True})
+                    lines.append({'x': 4, 'text': name_text, 'color': name_color, 'selectable': True})
 
                     stats_text = f"    RAM:{exploit_def.ram} Heat:{exploit_def.heat}"
                     if exploit_def.damage > 0:
@@ -937,6 +946,13 @@ class UIRenderer:
                         stats_text += f" Range:{exploit_def.range}"
                     lines.append({'x': 4, 'text': stats_text, 'color': Colors.LIGHT_GRAY, 'selectable': False})
                 else:
+                    # Unknown exploit - use red
+                    if adjusted_selection_index == game.inventory_selection:
+                        color = Colors.YELLOW
+                        prefix = ">"
+                    else:
+                        color = Colors.RED
+                        prefix = " "
                     text = f"{prefix} {exploit_item.name} [Unknown]"
                     lines.append({'x': 4, 'text': text, 'color': color, 'selectable': True})
 
@@ -1006,7 +1022,7 @@ class UIRenderer:
         y_start = GameConfig.SCREEN_HEIGHT - 6
 
         render_char_safe(console, 2, y_start, "CONTROLS:", fg=Colors.CYAN)
-        render_char_safe(console, 4, y_start + 1, "↑↓/W/S: Navigate │ Enter: Use │ X: Examine", fg=Colors.WHITE)
+        render_char_safe(console, 4, y_start + 1, "↑↓/W/S: Navigate │ Enter: Use", fg=Colors.WHITE)
         render_char_safe(console, 4, y_start + 2, "U: Unequip selected exploit", fg=Colors.WHITE)
         render_char_safe(console, 4, y_start + 3, "ESC/I: Close inventory", fg=Colors.WHITE)
 

@@ -320,17 +320,15 @@ class InputHandler:
         # Handle navigation using universal handler with callback
         if UniversalInputHandler.handle_list_navigation(self, event, 0, True, self._navigate_inventory):
             return True
-        
+
         # Handle selection and other actions
         if UniversalInputHandler.is_confirm_key(event):
             self._use_selected_inventory_item()
         elif event.sym == tcod.event.KeySym.U:
             self._unequip_selected_exploit()
-        elif event.sym == tcod.event.KeySym.X:
-            self._examine_selected_item()
         elif event.sym == tcod.event.KeySym.I:
             self.game.show_inventory = False
-        
+
         return True
     
     def _handle_lore_viewer_input(self, event) -> bool:
@@ -548,66 +546,6 @@ class InputHandler:
                 self.game.message_log.add_message("Cannot unequip exploit")
         else:
             self.game.message_log.add_message("No exploit selected")
-    
-    def _examine_selected_item(self):
-        """Show detailed information about the selected inventory item."""
-        equipped_exploits = self.game.player.inventory_manager.equipped_exploits
-        display_items = self.game.player.inventory_manager.get_display_items()
-        
-        # Determine what is selected
-        selection_index = self.game.inventory_selection
-        
-        # Check if we're selecting an equipped exploit
-        if selection_index < len(equipped_exploits):
-            # Examining equipped exploit
-            exploit_key = equipped_exploits[selection_index]
-            if exploit_key in GameData.EXPLOITS:
-                self._show_exploit_details(GameData.EXPLOITS[exploit_key])
-            else:
-                self.game.message_log.add_message(f"Unknown exploit: {exploit_key}")
-            return
-        
-        # Check if we're selecting an unequipped item
-        unequipped_index = selection_index - len(equipped_exploits)
-        if unequipped_index >= 0 and unequipped_index < len(display_items):
-            selected_item = display_items[unequipped_index]
-            
-            # Check if it's an exploit (unequipped)
-            if hasattr(selected_item, 'exploit_key') and selected_item.exploit_key in GameData.EXPLOITS:
-                exploit_def = GameData.EXPLOITS[selected_item.exploit_key]
-                self._show_exploit_details(exploit_def)
-            elif hasattr(selected_item, 'color') and hasattr(selected_item, 'effect'):
-                # Code hack
-                self._show_code_hack_details(selected_item)
-            else:
-                # Generic item
-                self.game.message_log.add_message(f"=== {selected_item.name} ===")
-                self.game.message_log.add_message(f"Description: {selected_item.description}")
-        else:
-            self.game.message_log.add_message("No item selected")
-    
-    def _show_exploit_details(self, exploit_def):
-        """Show detailed information about an exploit."""
-        # Use shared formatting method
-        for line in exploit_def.get_detail_lines():
-            self.game.message_log.add_message(line)
-    
-    def _show_code_hack_details(self, code_hack):
-        """Show detailed information about a code."""
-        if code_hack.discovered:
-            if code_hack.color_name in self.game.code_hack_effects:
-                effect_key, desc = self.game.code_hack_effects[code_hack.color_name]
-                self.game.message_log.add_message(f"=== {code_hack.name} ===")
-                self.game.message_log.add_message(f"Effect: {desc}")
-                if code_hack.quantity > 1:
-                    self.game.message_log.add_message(f"Quantity: {code_hack.quantity}")
-            else:
-                self.game.message_log.add_message("Code effect unknown")
-        else:
-            self.game.message_log.add_message(f"=== {code_hack.name} ===")
-            self.game.message_log.add_message("Effect: Unknown until used")
-            if code_hack.quantity > 1:
-                self.game.message_log.add_message(f"Quantity: {code_hack.quantity}")
     
     def _open_inventory(self):
         """Open the inventory screen."""

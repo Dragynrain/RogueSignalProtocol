@@ -471,26 +471,9 @@ class TestInventoryInputEdgeCases:
         handler._use_selected_inventory_item()
         mock_item.use.assert_called_with(game.player, game)
     
-    def test_examine_item_edge_cases(self):
-        """Test examining items with various edge cases."""
-        game = create_mock_game()
-        handler = InputHandler(game)
-        
-        # Test examining with no selection
-        game.player.inventory_manager.equipped_exploits = []
-        game.player.inventory_manager.get_display_items.return_value = []
-        game.inventory_selection = 0
-        
-        handler._examine_selected_item()
-        game.message_log.add_message.assert_called_with("No item selected")
-        
-        # Test examining out of range selection
-        game.inventory_selection = 999
-        handler._examine_selected_item()
-        game.message_log.add_message.assert_called_with("No item selected")
-
 
 # Gateway confirmation tests removed - feature now handled by dialogue system
+# Examine item tests removed - feature now handled by automatic Info Panel display
 
 
 class TestLoreViewerInputEdgeCases:
