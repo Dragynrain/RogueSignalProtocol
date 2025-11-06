@@ -734,15 +734,15 @@ class GraphicsPreviewMenu:
 
     def _get_rainbow_color(self) -> Tuple[int, int, int]:
         """
-        Calculate cyberpunk color based on current time for data fragment highlighting.
-        Cycles through neon cyberpunk colors used in the game.
+        Calculate cyberspace color based on current time for data fragment highlighting.
+        Cycles through neon cyberspace colors used in the game.
         COPIED from game_rendering_graphics.py
 
         Returns:
-            RGB color tuple cycling through cyberpunk neon colors
+            RGB color tuple cycling through cyberspace neon colors
         """
-        # Cyberpunk neon palette from game_rules.json
-        cyberpunk_colors = [
+        # Cyberspace neon palette from game_rules.json
+        cyberspace_colors = [
             (255, 20, 80),    # Crimson - neon red/pink
             (0, 200, 255),    # Azure - bright cyan
             (0, 255, 100),    # Emerald - neon green
@@ -753,14 +753,14 @@ class GraphicsPreviewMenu:
 
         current_time = time.time()
         # Cycle through colors every 6 seconds (1 second per color)
-        color_index = int(current_time) % len(cyberpunk_colors)
+        color_index = int(current_time) % len(cyberspace_colors)
 
         # Smooth transition between colors
-        next_index = (color_index + 1) % len(cyberpunk_colors)
+        next_index = (color_index + 1) % len(cyberspace_colors)
         blend_factor = (current_time % 1.0)  # 0.0 to 1.0 within the second
 
-        current_color = cyberpunk_colors[color_index]
-        next_color = cyberpunk_colors[next_index]
+        current_color = cyberspace_colors[color_index]
+        next_color = cyberspace_colors[next_index]
 
         # Linear interpolation between colors
         r = int(current_color[0] * (1 - blend_factor) + next_color[0] * blend_factor)

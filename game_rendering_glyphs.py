@@ -338,8 +338,8 @@ class GlyphsMapRenderer(MapRendererBase):
         """Get cycling color for story fragment based on game turn."""
         import math
 
-        # Define our cyberpunk color palette for cycling
-        cyberpunk_colors = [
+        # Define our cyberspace color palette for cycling
+        cyberspace_colors = [
             Colors.ELECTRIC_BLUE,    # Electric blue
             Colors.ELECTRIC_PURPLE,  # Electric purple
             Colors.ACID_GREEN,       # Acid green
@@ -351,8 +351,8 @@ class GlyphsMapRenderer(MapRendererBase):
         ]
 
         # Cycle through colors every 5 turns for a nice pulsing effect
-        color_index = (turn // 5) % len(cyberpunk_colors)
-        base_color = cyberpunk_colors[color_index]
+        color_index = (turn // 5) % len(cyberspace_colors)
+        base_color = cyberspace_colors[color_index]
 
         # Add a subtle brightness pulse within each color phase
         pulse_phase = (turn % 5) / 5.0

@@ -1,6 +1,6 @@
 # Rogue Signal Protocol - Developer Guide
 
-**Version 0.8.0 Alpha** - A coffee break cyberpunk stealth roguelike built with Python and TCOD
+**Version 0.8.0 Alpha** - A coffee break cyberspace stealth roguelike built with Python and TCOD
 
 > 📖 **For Players**: See [README.txt](README.txt) for game instructions
 >
@@ -16,7 +16,7 @@ This program is free software: you can redistribute it and/or modify it under th
 
 ## 🎮 Game Overview
 
-Rogue Signal Protocol is a coffee break stealth-focused cyberpunk roguelike where you infiltrate corporate networks as a digital ghost. Complete runs in 10-15 minutes as you navigate procedurally generated levels, avoid sophisticated AI security systems, and discover the dark secrets hidden in the corporate data vaults.
+Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike where you infiltrate corporate networks as a digital ghost. Complete runs in 10-15 minutes as you navigate procedurally generated levels, avoid sophisticated AI security systems, and discover the dark secrets hidden in the corporate data vaults.
 
 ### Key Features
 

@@ -5,7 +5,7 @@ Rogue Signal Protocol - Menu Background System
 Manages high-resolution PNG background images for main menu.
 Loads random backgrounds from main_menu/ directory with aspect ratio preservation.
 Conditionally loads based on graphics mode setting and falls back gracefully.
-Renders cyberpunk-styled console patterns when SDL backgrounds unavailable.
+Renders cyberspace-styled console patterns when SDL backgrounds unavailable.
 """
 
 import tcod
@@ -26,7 +26,7 @@ class MenuBackground:
     Manages menu background rendering with high-res PNG images and console fallback.
 
     Dynamically loads random backgrounds from available images in the directory.
-    Uses SDL renderer for PNG display in graphics mode, falls back to cyberpunk console
+    Uses SDL renderer for PNG display in graphics mode, falls back to cyberspace console
     pattern in glyph mode. Handles window resize and mode switching gracefully.
 
     Key attributes:
@@ -272,7 +272,7 @@ class MenuBackground:
     
     def _render_console_background(self, console):
         """
-        Render cyberpunk-styled console background pattern.
+        Render cyberspace-styled console background pattern.
 
         Creates side panels with dense pattern, borders, and subtle center atmosphere.
         Used when SDL background unavailable (glyph mode or loading failure).
@@ -280,12 +280,12 @@ class MenuBackground:
         Args:
             console: TCOD console to render to
         """
-        # Create a more visible cyberpunk background with side panels
-        
-        # Fill left side with cyberpunk pattern (positions 0-25)
+        # Create a more visible cyberspace background with side panels
+
+        # Fill left side with cyberspace pattern (positions 0-25)
         self._render_side_panel(console, 0, 25)
-        
-        # Fill right side with cyberpunk pattern (positions 55-80) 
+
+        # Fill right side with cyberspace pattern (positions 55-80) 
         self._render_side_panel(console, 55, console.width)
         
         # Add top/bottom borders
@@ -295,7 +295,7 @@ class MenuBackground:
         self._render_center_atmosphere(console)
     
     def _render_side_panel(self, console, start_x, end_x):
-        """Render cyberpunk pattern in a side panel."""
+        """Render cyberspace pattern in a side panel."""
         random.seed(42)  # Consistent pattern
         
         from data_loading import DataLoader
@@ -321,7 +321,7 @@ class MenuBackground:
                     render_char_safe(console, x, y, ' ', fg=black, bg=base_bg)
 
     def _render_borders(self, console):
-        """Add cyberpunk-style borders."""
+        """Add cyberspace-style borders."""
         from data_loading import DataLoader
         config = DataLoader.load_config()
         menu_bg_colors = config.get("colors", {}).get("menu_background", {})
