@@ -36,7 +36,7 @@ The story is told through environmental fragments you discover - each run might 
 **Feedback Survey:** [INSERT GOOGLE FORM LINK]
 
 This is **alpha 0.8.0** - feature complete and playtested, now looking for wider feedback on:
-* **Difficulty curve** - I might have developer blinders on, does it feel too easy/hard?
+* **Difficulty** - Is it too easy? Too hard? Fair but challenging?
 * Stealth vs combat balance and overall fun factor
 * Any bugs or edge cases I missed
 
