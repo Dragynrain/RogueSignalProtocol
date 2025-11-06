@@ -14,7 +14,18 @@
 
 ## 🔴 CRITICAL - MUST FIX BEFORE RELEASE
 
-### 1. **Update dist/ folder with current config files**
+### 1. **Create Logic Bomb sound effect**
+
+**PROBLEM:** Logic Bomb exploit uses placeholder sound (needs dedicated sound file)
+
+**ACTION REQUIRED:**
+- Create `exploit_logic_bomb.wav` in sound/ folder
+- Should sound like a digital explosion/cascade
+- See game_combat.py:595 for reference
+
+---
+
+### 2. **Update dist/ folder with current config files**
 
 **PROBLEM:** The `dist/` folder has **OUTDATED** config files!
 
@@ -43,7 +54,7 @@ cp story_content.json dist/ # (might already be correct)
 
 ---
 
-### 2. **Fix welcome message in dist/game_config.json**
+### 3. **Fix welcome message in dist/game_config.json**
 
 Line 164 says:
 ```json
@@ -59,7 +70,7 @@ Should be:
 
 ## ⚠️ IMPORTANT - Should Do Before Release
 
-### 3. **Clean up leftover files**
+### 4. **Clean up leftover files**
 ```bash
 # Delete development artifacts
 rm game_debug.log
@@ -71,7 +82,7 @@ mkdir .archive
 mv preview_layout_new.py .archive/
 ```
 
-### 4. **Update README.md keybindings**
+### 5. **Update README.md keybindings**
 
 Line 68 in README.md says:
 ```markdown
@@ -84,7 +95,7 @@ Should be:
 - **Look Mode**: L key to examine entities and terrain
 ```
 
-### 5. **Verify .gitignore**
+### 6. **Verify .gitignore**
 
 Add these if not already present:
 ```
@@ -96,7 +107,7 @@ rogue_signal_save.json
 game_debug.log
 ```
 
-### 6. **Test the EXE**
+### 7. **Test the EXE**
 
 - [ ] Test on clean Windows 10/11 system (no Python installed)
 - [ ] Verify all config files load correctly
@@ -110,7 +121,7 @@ game_debug.log
 
 ## 📦 PACKAGING FOR ITCH.IO
 
-### 7. **Create release package**
+### 8. **Create release package**
 
 ```bash
 # Create clean distribution
@@ -134,7 +145,7 @@ cd ..
 zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 ```
 
-### 8. **Prepare itch.io page**
+### 9. **Prepare itch.io page**
 
 - [ ] Upload .zip package
 - [ ] Copy content from `marketing/itch_io_page_draft.md`
@@ -147,7 +158,7 @@ zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 
 ## 📢 LAUNCH STRATEGY
 
-### 9. **Reddit posting**
+### 10. **Reddit posting**
 
 **Option A: Start with r/roguelikedev (friendlier)**
 - Use `marketing/reddit_post_draft.md`
@@ -159,7 +170,7 @@ zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 - More exposure but more competitive
 - Include 2-3 screenshots
 
-### 10. **Feedback collection**
+### 11. **Feedback collection**
 
 - [ ] Create Google Form from `marketing/feedback_survey_draft.md`
 - [ ] Add link to itch.io page

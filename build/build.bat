@@ -35,9 +35,9 @@ REM Copy assets to dist
 echo Copying assets...
 copy /Y game_content.json dist\ >nul
 copy /Y game_rules.json dist\ >nul
-copy /Y story_content.json dist\ >nul
-copy /Y arial.ttf dist\ >nul
-copy /Y CascadiaCode-VariableFont_wght.ttf dist\ >nul
+copy /Y narrative_content.json dist\ >nul
+copy /Y graphics_tiles.json dist\ >nul
+copy /Y KreativeSquare.ttf dist\ >nul
 copy /Y LICENSE dist\ >nul
 copy /Y README.txt dist\ >nul
 xcopy /E /I /Y /Q graphics dist\graphics >nul
