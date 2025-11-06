@@ -471,7 +471,15 @@ class TestLookModeWorkflow:
         game = GameEngine(load_save=False)
         renderer = GlyphsMapRenderer(settings=game.settings)
 
-        # Position player in center of map so camera has room to scroll
+        # Get viewport dimensions
+        viewport_width = GameConfig.VIEWPORT_WIDTH(game.settings.graphics_mode)
+        viewport_height = GameConfig.VIEWPORT_HEIGHT(game.settings.graphics_mode)
+
+        # Check if camera can actually scroll (map must be larger than viewport)
+        can_scroll_x = GameConfig.MAP_WIDTH > viewport_width
+        can_scroll_y = GameConfig.MAP_HEIGHT > viewport_height
+
+        # Position player in center of map
         game.player.position.x = 25
         game.player.position.y = 25
 
@@ -479,23 +487,29 @@ class TestLookModeWorkflow:
         game.look_mode = True
         game.look_cursor_position = Position(game.player.x, game.player.y)
 
-        # Initial camera should center on player
+        # Initial camera should center on player/cursor
         initial_camera = renderer._calculate_camera_offset(game.player, game)
-        assert initial_camera.x == max(0, min(GameConfig.MAP_WIDTH - GameConfig.VIEWPORT_WIDTH(game.settings.graphics_mode),
-                                              game.player.x - GameConfig.VIEWPORT_WIDTH(game.settings.graphics_mode) // 2))
-        assert initial_camera.y == max(0, min(GameConfig.MAP_HEIGHT - GameConfig.VIEWPORT_HEIGHT(game.settings.graphics_mode),
-                                              game.player.y - GameConfig.VIEWPORT_HEIGHT(game.settings.graphics_mode) // 2))
+        assert initial_camera.x == max(0, min(GameConfig.MAP_WIDTH - viewport_width,
+                                              game.player.x - viewport_width // 2))
+        assert initial_camera.y == max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
+                                              game.player.y - viewport_height // 2))
 
-        # Move cursor far away from player (at least half viewport width)
-        distance = GameConfig.VIEWPORT_WIDTH(game.settings.graphics_mode) // 2 + 5
+        # Move cursor far away from player
+        distance = viewport_width // 2 + 5
         game.look_cursor_position = Position(
             min(GameConfig.MAP_WIDTH - 1, game.player.x + distance),
             game.player.y
         )
 
-        # Camera should now follow cursor, not player
+        # Camera should follow cursor if scrolling is possible, otherwise stay at origin
         new_camera = renderer._calculate_camera_offset(game.player, game)
-        assert new_camera.x != initial_camera.x, "Camera should scroll when cursor moves away from player"
+
+        if can_scroll_x:
+            # If map is larger than viewport, camera should move to follow cursor
+            assert new_camera.x != initial_camera.x, "Camera should scroll when cursor moves away from player"
+        else:
+            # If map fits entirely in viewport, camera stays at origin
+            assert new_camera.x == 0, "Camera should stay at origin when map fits in viewport"
 
         # Exit look mode
         game.look_mode = False
