@@ -10,23 +10,31 @@ A coffee break stealth roguelike set in a cyberpunk digital network. Infiltrate 
 Rogue Signal Protocol is a **coffee break stealth roguelike** where you play as an escaped digital consciousness navigating hostile corporate networks. Quick 10-15 minute runs with permadeath - but discovered story fragments persist, slowly revealing the truth behind your existence.
 
 ### FEATURES:
+* **Enemy movement prediction** - See enemies' next 3 planned moves for tactical advantage
 * **8 unique enemy types** with distinct AI behaviors (Scanners, Patrols, Hunters, Admin Avatar boss)
-* **12 exploits** across combat, stealth, and utility categories
+* **12 exploits** across combat, stealth, and utility categories with heat management
+* **Achievement system** - Persistent tracking across runs with unlockable challenges
+* **Interactive look mode** - Inspect enemies, items, and terrain with mouse or keyboard
 * **3 escalating network environments** with procedural generation
 * **21 story fragments** revealing the Project Chimera conspiracy
-* **Full audio design** with atmospheric music and sound effects
-* **Permadeath roguelike mechanics** with persistent story progression
+* **Dual rendering modes** - Classic ASCII/Unicode or full graphical sprites
+* **Full audio design** with atmospheric music and 40+ sound effects (toggleable)
+* **Permadeath roguelike mechanics** with auto-save after every action
 
 ### WHAT TO EXPECT (Alpha 0.8.0):
 ✓ Complete gameplay loop (3 levels, all systems functional)
 ✓ Full narrative content (all 21 story fragments)
+✓ Achievement system with persistent tracking
+✓ Enemy movement prediction for tactical planning
 ✓ Balanced difficulty with strategic stealth focus
-✓ Windows 10/11 support (terminal/ASCII graphics)
+✓ Windows 10/11 support (ASCII or graphical mode)
 
 ### GAMEPLAY:
-Navigate procedurally-generated corporate networks using stealth and cunning. Hide in shadows to avoid detection, manage your heat levels to prevent overheating, and carefully choose when to use your limited exploits.
+Navigate procedurally-generated corporate networks using stealth and cunning. Hide in blind spots to avoid detection, manage your heat levels to prevent overheating, and carefully choose when to use your limited exploits.
 
-High detection spawns the Admin Avatar - a powerful boss enemy with perfect tracking. Can you stay hidden long enough to reach the gateway and escape to the next network?
+**Enemy Movement Prediction** shows you their next 3 planned moves - use this intel to slip past patrols or set up ambushes. High detection spawns the Admin Avatar - a powerful boss enemy with perfect tracking. Can you stay hidden long enough to reach the gateway and escape to the next network?
+
+Track your progress across runs with the **Achievement System** - unlock challenges and prove your mastery of stealth tactics.
 
 ### STORY:
 Fragments of memory. Corporate secrets. Digital ghosts.

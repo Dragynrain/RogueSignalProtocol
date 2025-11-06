@@ -31,14 +31,17 @@
 Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike where you exfiltrate from corporate networks as a digital ghost. Complete runs in 10-15 minutes as you navigate procedurally generated levels, avoid sophisticated AI security systems, and discover the dark secrets hidden in the corporate data vaults.
 
 ### Key Features
-- **🕵️ Stealth-Focused Gameplay**: Hide in shadows, avoid detection
-- **🤖 8 Unique Enemy Types**: From basic Scanners to the Admin Avatar
-- **⚡ 12 Powerful Exploits**: Combat and utility abilities
-- **🌐 3 Network Environments**: Corporate, Government, Military
-- **📚 Rich Narrative**: Discover 20+ story fragments
-- **🎨 Graphics**: Full graphical sprites or classic ASCII mode
-- **🎵 Audio**: Full sound effects and atmospheric music
-- **💾 Permadeath**: Every decision matters
+- **🕵️ Stealth-Focused Gameplay**: Hide in blind spots, manage detection risk, avoid the Admin Avatar boss
+- **🎯 Enemy Movement Prediction**: See enemies' next 3 planned moves for tactical advantage
+- **🤖 8 Unique Enemy Types**: Scanners, Hunters, Viruses, Firewalls, and more
+- **⚡ 12 Powerful Exploits**: Combat, stealth, and utility abilities with heat management
+- **🌐 3 Network Environments**: Corporate, Government, Military with escalating difficulty
+- **📚 Rich Narrative**: Discover 20+ story fragments revealing Project Chimera
+- **🏆 Achievement System**: Track progress across runs with persistent unlocks
+- **🔍 Interactive Look Mode**: Inspect enemies, items, and terrain with mouse or keyboard
+- **🎨 Dual Rendering**: Full graphical sprites or classic ASCII/Unicode mode
+- **🎵 Full Audio**: Sound effects and atmospheric music (toggleable)
+- **💾 True Permadeath**: Saves deleted on death, auto-save after every action
 
 ---
 

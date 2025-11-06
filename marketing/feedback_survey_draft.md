@@ -4,7 +4,7 @@
 Rogue Signal Protocol - Alpha Feedback Survey
 
 ## Survey Description:
-Thank you for playing Rogue Signal Protocol! Your feedback helps shape development. This survey takes ~4-5 minutes.
+Thank you for playing Rogue Signal Protocol! Your feedback helps shape development. This survey takes ~5-6 minutes.
 
 ---
 
@@ -83,14 +83,21 @@ _Being detected spawns the Admin Avatar_
 
 ## SECTION 3: Content & Narrative
 
-### Q10: Did the story fragments enhance your experience?
+### Q10: How did the achievement system feel?
+* [ ] Great - loved tracking progress across runs
+* [ ] Good - nice addition but not essential
+* [ ] Neutral - didn't pay attention to it
+* [ ] Didn't notice achievements
+* [ ] Would prefer without it
+
+### Q11: Did the story fragments enhance your experience?
 * [ ] Yes - loved the narrative discovery
 * [ ] Somewhat - interesting but not essential
 * [ ] Neutral - didn't pay attention to them
 * [ ] No - prefer pure gameplay focus
 * [ ] Didn't read them
 
-### Q11: Favorite enemy type to fight/avoid?
+### Q12: Favorite enemy type to fight/avoid?
 * [ ] Scanner (S)
 * [ ] Patrol (P)
 * [ ] Bot (B)
@@ -104,31 +111,38 @@ _Being detected spawns the Admin Avatar_
 
 ## SECTION 4: UI/UX
 
-### Q12: How clear was the tutorial/help system?
+### Q13: How useful was Look Mode (L key / mouse hover)?
+* [ ] Essential - used it constantly
+* [ ] Very helpful - checked often
+* [ ] Occasionally useful
+* [ ] Rarely used it
+* [ ] Didn't know about this feature
+
+### Q14: How clear was the tutorial/help system?
 * [ ] Excellent - understood everything immediately
 * [ ] Good - figured most things out
 * [ ] Okay - needed some trial and error
 * [ ] Poor - often confused about mechanics
 * [ ] Didn't use help menu
 
-### Q13: When you died, did you understand why?
+### Q15: When you died, did you understand why?
 * [ ] Always clear what killed me
 * [ ] Usually understood my mistakes
 * [ ] Sometimes confused about deaths
 * [ ] Often unclear why I died
 * [ ] Felt unfair or random
 
-### Q14: Did you find any controls confusing or awkward?
+### Q16: Did you find any controls confusing or awkward?
 * [ ] No - controls felt natural
 * [ ] Movement keys - [open text]
 * [ ] Exploit usage - [open text]
 * [ ] Menu navigation - [open text]
 * [ ] Other - [open text]
 
-### Q15: Which graphics mode did you use and prefer?
-* [ ] Primarily Classic - prefer the retro aesthetic
+### Q17: Which graphics mode did you use and prefer?
+* [ ] Primarily ASCII/Unicode - prefer the retro aesthetic
 * [ ] Primarily Graphics - prefer modern sprites
-* [ ] Tried both - prefer Classic
+* [ ] Tried both - prefer ASCII/Unicode
 * [ ] Tried both - prefer Graphics
 * [ ] Tried both - no preference
 * [ ] Didn't know there were options
@@ -137,7 +151,7 @@ _Being detected spawns the Admin Avatar_
 
 ## SECTION 5: Technical Issues
 
-### Q16: Did you encounter any bugs or crashes?
+### Q18: Did you encounter any bugs or crashes?
 * [ ] No issues
 * [ ] Minor visual glitches
 * [ ] Gameplay bugs (please describe below)
@@ -146,13 +160,13 @@ _Being detected spawns the Admin Avatar_
 
 **If yes, please describe:** [Long text field]
 
-### Q17: Performance/frame rate:
+### Q19: Performance/frame rate:
 * [ ] Smooth throughout
 * [ ] Minor slowdowns occasionally
 * [ ] Frequent performance issues
 * [ ] Unplayable lag
 
-### Q18: Audio experience:
+### Q20: Audio experience:
 * [ ] Music and SFX enhanced the game
 * [ ] Music was good, SFX were fine
 * [ ] Audio was okay
@@ -163,7 +177,7 @@ _Being detected spawns the Admin Avatar_
 
 ## SECTION 6: Overall Feedback
 
-### Q19: How likely are you to recommend this game to a friend?
+### Q21: How likely are you to recommend this game to a friend?
 * [ ] 0 - Not at all likely
 * [ ] 1
 * [ ] 2
@@ -176,29 +190,29 @@ _Being detected spawns the Admin Avatar_
 * [ ] 9
 * [ ] 10 - Extremely likely
 
-### Q20: What was your FAVORITE aspect of the game?
+### Q22: What was your FAVORITE aspect of the game?
 [Long text field]
 
-### Q21: What was your LEAST FAVORITE aspect of the game?
+### Q23: What was your LEAST FAVORITE aspect of the game?
 [Long text field]
 
-### Q22: What would you most like to see added or changed?
+### Q24: What would you most like to see added or changed?
 [Long text field]
 
-### Q23: Any other comments, suggestions, or feedback?
+### Q25: Any other comments, suggestions, or feedback?
 [Long text field]
 
 ---
 
 ## SECTION 7: Demographics (Optional)
 
-### Q24: How familiar are you with roguelikes?
+### Q26: How familiar are you with roguelikes?
 * [ ] New to the genre
 * [ ] Played a few roguelikes
 * [ ] Regular roguelike player
 * [ ] Veteran (500+ hours in roguelikes)
 
-### Q25: Where did you hear about this game?
+### Q27: Where did you hear about this game?
 * [ ] Reddit (r/roguelikes)
 * [ ] Reddit (r/roguelikedev)
 * [ ] Reddit (other)

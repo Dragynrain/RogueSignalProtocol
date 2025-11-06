@@ -163,10 +163,15 @@ a) Short Game Description
   ---
   c) Key Features
 
-  - Stealth-First Infiltration: Hide in shadows, manage your trace signature, and avoid detection—combat is dangerous, silence is survival
-  - Permadeath with Stakes: Death deletes your save file. No second chances. Every decision carries weight
-  - 12 Powerful Exploits: From Shadow Step teleportation to System Crash emergency protocols—combine stealth, combat, and utility tools
-  - 8 Unique Enemy Types: Face surveillance Scanners, deadly Admin Avatars, corrupting Viruses, and adaptive AI hunters with predictive movement queues
+  - Enemy Movement Prediction: See enemies' next 3 planned moves for tactical advantage—slip past patrols or set up ambushes
+  - Stealth-First Infiltration: Hide in blind spots, manage your trace signature, and avoid detection—combat is dangerous, silence is survival
+  - Achievement System: Persistent tracking across runs with unlockable challenges proving your mastery
+  - Interactive Look Mode: Inspect enemies, items, and terrain with mouse or keyboard for detailed tactical intel
+  - 12 Powerful Exploits: From Shadow Step teleportation to System Crash emergency protocols—combine stealth, combat, and utility tools with heat management
+  - 8 Unique Enemy Types: Face surveillance Scanners, deadly Admin Avatars, corrupting Viruses, and adaptive AI hunters
+  - Dual Rendering Modes: Classic ASCII/Unicode or full graphical sprites—same gameplay, your choice of aesthetic
+  - Full Audio Design: Atmospheric music and 40+ sound effects (toggleable) enhance the cyberspace immersion
+  - Permadeath with Stakes: Death deletes your save file. Auto-save after every action. No second chances. Every decision carries weight
   - Procedural Generation: Every run creates new network layouts, enemy placements, and resource distributions
 
   ---
@@ -196,10 +201,15 @@ a) Short Game Description
   happened through scattered narrative fragments, but move carefully—every action leaves traces that bring the hunters closer.
 
   Key Features:
+  - Enemy movement prediction showing their next 3 planned moves for tactical planning
   - Stealth-first gameplay where avoiding detection is survival
-  - Permadeath with save file deletion—every run matters
-  - 12 unique exploits combining stealth, combat, and utility abilities
-  - 8 distinct enemy AI types with predictive movement systems showing their next 3 moves
+  - Achievement system with persistent tracking across runs
+  - Interactive look mode to inspect enemies, items, and terrain
+  - Permadeath with save file deletion—every run matters, auto-save after every action
+  - 12 unique exploits combining stealth, combat, and utility abilities with heat management
+  - 8 distinct enemy AI types with sophisticated behaviors
+  - Dual rendering modes: ASCII/Unicode or graphical sprites
+  - Full audio design: atmospheric music and 40+ sound effects
   - 20+ narrative fragments revealing the mystery through environmental storytelling
   - 3 escalating network environments: Corporate, Government, Military
   - Resource management across CPU (health), RAM, Heat, and Trace systems
@@ -244,8 +254,8 @@ a) Short Game Description
 
   Q: Is permadeath really permanent?A: Yes. When you die, your save file is deleted automatically. This is a core theme—your digital consciousness is being erased. No backups, no restores.
 
-  Q: What makes this different from other stealth roguelikes?A: Three unique elements: (1) enemies show their planned movement 3 turns ahead for tactical planning, (2) rich cyberpunk narrative
-  with 20+ story fragments, (3) every game system (heat, trace, CPU) reinforces the digital consciousness theme.
+  Q: What makes this different from other stealth roguelikes?A: Four unique elements: (1) enemies show their planned movement 3 turns ahead for tactical planning, (2) achievement system
+  tracking progress across runs, (3) rich cyberpunk narrative with 20+ story fragments, (4) every game system (heat, trace, CPU) reinforces the digital consciousness theme.
 
   Q: Can I mod the game?A: Absolutely! The game uses JSON files for all content (enemies, exploits, narrative). The codebase is open source (GPL v3). See README_DEV.md for modding details.
 
