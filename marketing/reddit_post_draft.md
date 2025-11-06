@@ -35,67 +35,43 @@ The story is told through environmental fragments you discover - each run might 
 **Source Code:** https://github.com/Dragynrain/RogueSignalProtocol
 **Feedback Survey:** [INSERT GOOGLE FORM LINK]
 
-This is **alpha 0.8.0** - all content is implemented, but I'm looking for feedback on:
-* Balance and difficulty curve
-* Stealth vs combat feel
-* Heat/trace management depth
-* Overall progression pacing
+This is **alpha 0.8.0** - feature complete and playtested, now looking for wider feedback on:
+* How the stealth/combat balance feels
+* Whether difficulty progression feels fair across the 3 levels
+* Any bugs or edge cases I missed
+* Overall fun factor and replayability
 
 ---
 
 ## The AI Development Workflow
 
-I want to be transparent about how this game was built - this is a **solo dev project built almost entirely using AI tools** across every aspect of development. I think the results speak for themselves, but there are interesting lessons here for other indie devs.
+I want to be transparent: this is a **solo dev project built using AI tools** across code, art, and audio. I think the results speak for themselves, but there are interesting lessons for other indie devs.
 
 ### Tools Used:
 
-**Claude Code (Anthropic)** - Primary development partner
-* Wrote ~95% of the codebase through conversational iteration
-* Architectural decisions, refactoring, testing, debugging
-* Real-time problem solving as issues emerged
-* 1580 automated tests, all maintained by Claude
+**Claude Code** - ~95% of codebase, 1580 automated tests, architectural decisions
+**Stable Diffusion** - All sprite prototypes (~50+ assets, heavily curated)
+**AudioCraft** - Placeholder sound effects (music is human-made from free libraries)
 
-**Stable Diffusion** - All graphical sprites
-* Generated base sprites for all enemies, items, environmental objects
-* Iterated on style and consistency across ~50+ unique sprites
-* Curated and integrated into dual-rendering system (ASCII + graphics modes)
+### What Worked:
 
-**AudioCraft (Meta)** - Prototype sound effects
-* Generated 40+ SFX for movement, combat, UI interactions as placeholders
-* All curated and balanced for gameplay feel
-* (Note: Background music is human-made, sourced from free-use libraries)
+**Rapid Prototyping** - This is AI's killer feature. Going from "what if enemies showed their next 3 moves?" to *playing it* and feeling if it's fun took minutes instead of days. Fail fast on bad ideas, polish the good ones.
 
-### What Worked (Pros):
+**Development Speed** - 2-3 months instead of 6-12 months for a solo project of this scope.
 
-**Development Speed:** What would have taken me 6-12 months solo took ~2-3 months of active development. Claude Code handled the tedious parts (testing, refactoring, JSON config systems) while I focused on design.
+### What Didn't Work:
 
-**Rapid Prototyping:** This is where AI truly excels. Going from "what if enemies showed their next 3 moves?" to playing it and feeling if it's fun took minutes instead of days. Being able to test ideas quickly meant I could fail fast on bad ideas and polish the good ones.
+**Curation Required** - 95%+ rejection rate on generated assets. AI doesn't have taste - you still need creative direction and lots of manual polish.
 
-**Quality Control:** Having AI-generated tests meant every feature was validated. 1580 passing tests gave me confidence to iterate rapidly without breaking things.
+**Asset Quality** - The sprites and SFX work for alpha testing, but lack the polish that human artists bring. I recognize these limitations.
 
-**Asset Generation:** Rapidly prototype graphics and audio to experiment with styles and features. Stable Diffusion let me visualize my cyberspace aesthetic and iterate on visual direction. AudioCraft provided placeholder sound effects to test gameplay feel before committing to final audio.
-
-### What Didn't Work (Cons):
-
-**Creative Direction Required:** AI tools don't have taste. I had to reject 95%+ of generated sprites and audio until finding the right fit. You still need vision and curation.
-
-**Integration Overhead:** Generated assets don't drop into your game magically. Sprite sizing, color palettes, audio balancing - all manual curation.
-
-**AI Limitations:** Claude Code occasionally introduced bugs or forgot architectural decisions. I had to maintain vigilance and do code reviews. Not autopilot.
-
-**Asset Quality:** AI-generated assets are functional placeholders, but they lack the polish and intentionality that human artists bring. The sprites and sound effects work for alpha testing, but I recognize their limitations.
-
-**Ethical Complexity:** I'm aware of the concerns around AI training data and its impact on creative professionals. These are legitimate issues the industry is still grappling with.
+**Ethical Complexity** - I'm aware of the concerns around AI training data and impact on creative professionals. These are legitimate issues.
 
 ### The Bottom Line:
 
-AI **amplified my capabilities, but didn't replace game design**. I made every design decision, balanced every mechanic, curated every asset, and iterated based on gameplay feel. The tools let me execute faster, but the creative vision is mine.
+AI amplified my capabilities but didn't replace game design. Every mechanic, balance decision, and curated asset came from human judgment. The tools compressed the timeline while I focused on making it fun.
 
-I'm sharing this workflow because I think it's the future for solo indie devs. The traditional path (learn to code, learn to art, learn to audio) is a 5+ year journey. AI tools compressed that timeline while keeping quality high.
-
-**But the game has to be good.** If it's not fun, being "AI-assisted" won't save it. And if it IS fun, being "AI-assisted" shouldn't disqualify it.
-
-Try it and judge for yourself.
+**The game has to be good.** If it's not fun, being "AI-assisted" won't save it. And if it IS fun, being "AI-assisted" shouldn't disqualify it. Try it and judge for yourself.
 
 ---
 
