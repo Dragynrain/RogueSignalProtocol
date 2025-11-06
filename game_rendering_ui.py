@@ -56,6 +56,7 @@ class UIRenderer:
         self.context = context
         self.tile_manager = tile_manager
         self._active_help_menu = None  # Active help menu instance (only while help screen is shown)
+        self._help_menu_graphics_mode = None  # Track which graphics mode the cached help menu was created for
 
     # ========================================================================
     # STATUS BAR RENDERING
@@ -685,6 +686,13 @@ class UIRenderer:
         Creates menu on first call, reuses it for pagination state.
         Call clear_help_menu() when exiting help screen.
         """
+        # Check if graphics mode changed - if so, clear cached menu to recreate with correct type
+        current_mode = self.settings.graphics_mode if self.settings else None
+        if self._help_menu_graphics_mode != current_mode:
+            logging.info(f"Graphics mode changed from {self._help_menu_graphics_mode} to {current_mode}, clearing help menu cache")
+            self._active_help_menu = None
+            self._help_menu_graphics_mode = current_mode
+
         # Create help menu if not already active
         if self._active_help_menu is None:
             if self.settings is not None:
@@ -702,6 +710,7 @@ class UIRenderer:
     def clear_help_menu(self):
         """Clear active help menu when exiting help screen."""
         self._active_help_menu = None
+        self._help_menu_graphics_mode = None
 
     def render_help_sprites(self):
         """

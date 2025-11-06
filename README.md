@@ -36,7 +36,8 @@ Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike whe
 - **⚡ 12 Powerful Exploits**: Combat and utility abilities
 - **🌐 3 Network Environments**: Corporate, Government, Military
 - **📚 Rich Narrative**: Discover 20+ story fragments
-- **🎵 Enhanced Audio**: Full sound effects and atmospheric music
+- **🎨 Graphics**: Full graphical sprites or classic ASCII mode
+- **🎵 Audio**: Full sound effects and atmospheric music
 - **💾 Permadeath**: Every decision matters
 
 ---
