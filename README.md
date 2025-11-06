@@ -122,4 +122,14 @@ This ensures the game remains free and open forever. See [LICENSE](LICENSE) for 
 
 **Adam Forster** ([@Dragynrain](https://github.com/Dragynrain))
 
+---
+
+## 🎨 Credits
+
+- **Design & Programming:** Adam Forster
+- **Engine:** Python + TCOD (libtcod)
+- **Font:** KreativeSquare by Kreative Software
+- **Graphics:** AI-generated sprites (Stable Diffusion, curated & edited)
+- **Audio:** AI-generated music & SFX (Suno AI, curated & edited)
+
 Copyright (C) 2025 Adam Forster

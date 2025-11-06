@@ -184,6 +184,8 @@ CREDITS
 Design & Programming: Adam Forster (@Dragynrain)
 Engine: Python + TCOD (libtcod)
 Font: KreativeSquare by Kreative Software
+Graphics: AI-generated sprites (Stable Diffusion, curated & edited)
+Audio: AI-generated music & SFX (Suno AI, curated & edited)
 
 LICENSE
 -------
