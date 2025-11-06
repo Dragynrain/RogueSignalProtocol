@@ -861,7 +861,8 @@ class GraphicsMapRenderer(MapRendererBase):
         """Render vision range for a single enemy using corner brackets in graphics mode.
         Uses TCOD FOV for perfect consistency with actual enemy vision.
 
-        Vision indicators are hidden on blind spot/ghost nodes since enemies can't see into blind spots."""
+        Vision indicators are hidden on blind spots unless the enemy is adjacent to that blind spot,
+        since enemies can only see players in blind spots when adjacent (grid distance <= 1)."""
         actual_vision_range = enemy.type_data.vision
 
         # Use TCOD FOV to get exactly what the enemy can see (matches enemy vision logic)
@@ -881,10 +882,13 @@ class GraphicsMapRenderer(MapRendererBase):
                 if world_x == enemy.x and world_y == enemy.y:
                     continue
 
-                # Skip blind spot/ghost nodes - enemies can't see into blind spots
+                # Skip blind spots - enemies can't see into blind spots unless adjacent
                 world_pos = Position(world_x, world_y)
-                if game_map.is_ghost_node(world_pos):
-                    continue
+                if game_map.is_blind_spot(world_pos):
+                    # Show vision marker if enemy is adjacent to this blind spot
+                    enemy_pos = Position(enemy.x, enemy.y)
+                    if enemy_pos.grid_distance_to(world_pos) > 1:
+                        continue
 
                 # Check if this tile is visible in FOV (TCOD array is [y, x])
                 if not fov[world_y, world_x]:

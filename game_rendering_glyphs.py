@@ -421,7 +421,8 @@ class GlyphsMapRenderer(MapRendererBase):
         In classic mode: Highlights tile backgrounds with overlay_color
         In graphics mode: Draws corner brackets with overlay_color
 
-        Vision indicators are hidden on blind spot/ghost nodes since enemies can't see into blind spots.
+        Vision indicators are hidden on blind spots unless the enemy is adjacent to that blind spot,
+        since enemies can only see players in blind spots when adjacent (grid distance <= 1).
         """
         # Enemies have full vision range regardless of whether they're in a blind spot
         # The blind spot mechanic only affects whether they can see players IN blind spots
@@ -438,10 +439,13 @@ class GlyphsMapRenderer(MapRendererBase):
                     if world_x == enemy.x and world_y == enemy.y:
                         continue
 
-                    # Skip blind spot/ghost nodes - enemies can't see into blind spots
+                    # Skip blind spots - enemies can't see into blind spots unless adjacent
                     world_pos = Position(world_x, world_y)
-                    if game_map.is_ghost_node(world_pos):
-                        continue
+                    if game_map.is_blind_spot(world_pos):
+                        # Show vision marker if enemy is adjacent to this blind spot
+                        enemy_pos = Position(enemy.x, enemy.y)
+                        if enemy_pos.grid_distance_to(world_pos) > 1:
+                            continue
 
                     screen_x = world_x - camera_offset.x
                     screen_y = world_y - camera_offset.y + 1
