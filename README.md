@@ -42,13 +42,17 @@ Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike whe
 
 ---
 
-## 💬 Community
+## 💬 Community & Links
 
-Join our Discord server to share feedback, stories, and ideas!
+**Join the community and stay connected:**
 
 [![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289da?logo=discord&logoColor=white)](https://discord.gg/aUZgmrpU)
+[![Itch.io](https://img.shields.io/badge/itch.io-Download-fa5c5c?logo=itch.io&logoColor=white)](https://dragynrain.itch.io/rogue-signal-protocol)
+[![GitHub](https://img.shields.io/badge/GitHub-Source-181717?logo=github&logoColor=white)](https://github.com/Dragynrain/RogueSignalProtocol/)
 
-**[https://discord.gg/aUZgmrpU](https://discord.gg/aUZgmrpU)**
+- **💬 Discord:** [https://discord.gg/aUZgmrpU](https://discord.gg/aUZgmrpU) - Share feedback, stories, and ideas
+- **🎮 Itch.io:** [https://dragynrain.itch.io/rogue-signal-protocol](https://dragynrain.itch.io/rogue-signal-protocol) - Download and follow development
+- **🔧 GitHub:** [https://github.com/Dragynrain/RogueSignalProtocol/](https://github.com/Dragynrain/RogueSignalProtocol/) - Source code and issues
 
 Share your:
 - 🎮 Epic runs and close calls
@@ -61,7 +65,9 @@ Share your:
 ## 🚀 Quick Start
 
 ### For Players (Pre-built Executable)
-Download the latest release from [Releases](https://github.com/Dragynrain/RogueSignalProtocol/releases)
+Download the latest release:
+- **[Itch.io](https://dragynrain.itch.io/rogue-signal-protocol)** (recommended)
+- **[GitHub Releases](https://github.com/Dragynrain/RogueSignalProtocol/releases)** (alternative)
 
 ### For Developers (From Source)
 
