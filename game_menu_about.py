@@ -184,13 +184,13 @@ class AboutMenu(BaseMenu):
             instructions = [
                 "↕: Navigate",
                 "Enter: Open",
-                "Esc: Back"
+                "ESC: Back"
             ]
         else:
             instructions = [
                 "↕ or W/S: Navigate",
                 "Enter: Open Link",
-                "Escape: Back"
+                "ESC: Back"
             ]
 
         inst_y_start = box['bottom'] - len(instructions) - 1
@@ -237,12 +237,16 @@ class AboutMenu(BaseMenu):
         return False
 
     def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - activate clicked link."""
-        # Update selection based on click position
-        self.handle_mouse_motion(event)
+        """Handle mouse click - activate clicked link or go back if clicking empty space."""
+        # Try to update selection based on click position
+        clicked_on_link = self.handle_mouse_motion(event)
 
-        # Activate the selected link
-        return self._activate_selected_link()
+        # If clicked on a link, activate it
+        if clicked_on_link:
+            return self._activate_selected_link()
+
+        # Otherwise, clicking anywhere else goes back to main menu
+        return "back"
 
     def _activate_selected_link(self) -> str:
         """

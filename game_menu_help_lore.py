@@ -77,7 +77,7 @@ class LoreMenu:
         if not discovered_fragments:
             render_char_safe(console, 2, 5, "No data fragments discovered yet.", fg=Colors.WHITE)
             render_char_safe(console, 2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
-            render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return", fg=Colors.CYAN)
+            render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "ESC: Back", fg=Colors.CYAN)
             return
 
         start_y = 5
@@ -95,7 +95,7 @@ class LoreMenu:
             render_char_safe(console, 2, start_y + i, f"{prefix}Fragment {fragment_index + 1}: {first_line}", fg=color)
 
         # Instructions
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 4, "↕: Navigate │ Enter: Read │ Esc: Back", fg=Colors.LIGHT_GRAY)
+        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 4, "↕: Navigate │ Enter: Read │ ESC: Back", fg=Colors.LIGHT_GRAY)
     
     def _render_reading_mode(self, console, discovered_fragments):
         """Render individual fragment for reading."""
@@ -115,41 +115,41 @@ class LoreMenu:
             max_height=GameConfig.SCREEN_HEIGHT - 4
         )
 
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "Press any key to return to list", fg=Colors.CYAN)
+        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "ESC: Back to list  │  Any other key: Close", fg=Colors.CYAN)
     
     def handle_input(self, event) -> str:
         """Handle lore menu input with proper navigation."""
         self._load_story_fragments()
         discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
-        
+
         if not discovered_fragments:
-            # No fragments - any key returns to main menu
-            if UniversalInputHandler.handle_any_key_screen(event):
+            # No fragments - ESC returns to main menu
+            if UniversalInputHandler.is_escape_key(event):
                 return "back"
             return ""
-        
+
         if self.lore_viewer_mode == "list":
             # Handle navigation using universal handler
             if UniversalInputHandler.handle_list_navigation(
                 self, event, len(discovered_fragments), False, self._navigate_lore_selection
             ):
                 return ""
-            
+
             # Handle selection
             if UniversalInputHandler.is_confirm_key(event):
                 self.lore_viewer_mode = "reading"
                 return ""
             elif UniversalInputHandler.is_escape_key(event):
                 return "back"
-        
+
         elif self.lore_viewer_mode == "reading":
-            # Any key except ESC returns to list
+            # ESC returns to list, any other key closes completely
             if UniversalInputHandler.is_escape_key(event):
-                return "back"
-            else:
                 self.lore_viewer_mode = "list"
                 return ""
-        
+            elif UniversalInputHandler.handle_any_key_screen(event):
+                return "back"
+
         return ""
 
     def handle_mouse_motion(self, event) -> bool:

@@ -343,7 +343,7 @@ class GraphicsPreviewMenu:
             "←→ or A/D: Change variant",
             "Click < > on entities: Change specific variant",
             "SPACE: Cycle alert ring color",
-            "ESC: Exit and save log",
+            "ESC or Click: Exit and save log",
         ]
 
         inst_y = GameConfig.SCREEN_HEIGHT - len(instructions) - 1
@@ -1018,7 +1018,8 @@ class GraphicsPreviewMenu:
 
                     return ""
 
-        return ""
+        # Click anywhere else to exit
+        return "exit"
 
     def _cycle_variant(self, direction: int):
         """Cycle the variant for currently selected entity."""
