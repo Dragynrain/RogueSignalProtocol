@@ -42,6 +42,22 @@ Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike whe
 
 ---
 
+## 💬 Community
+
+Join our Discord server to share feedback, stories, and ideas!
+
+[![Discord](https://img.shields.io/badge/Discord-Join%20Us-7289da?logo=discord&logoColor=white)](https://discord.gg/aUZgmrpU)
+
+**[https://discord.gg/aUZgmrpU](https://discord.gg/aUZgmrpU)**
+
+Share your:
+- 🎮 Epic runs and close calls
+- 💡 Ideas for features or improvements
+- 🐛 Bug reports
+- 🎨 Fan art and mods
+
+---
+
 ## 🚀 Quick Start
 
 ### For Players (Pre-built Executable)

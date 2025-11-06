@@ -158,20 +158,22 @@ DISABLE DEBUG LOGGING:
 2. Restart game
 3. Only errors logged to game_errors.log
 
-FEEDBACK
---------
+COMMUNITY & FEEDBACK
+--------------------
 This is an ALPHA release. Your feedback helps improve the game!
 
-Please report:
-- Bugs and crashes (include game_debug.log)
-- Balance issues (too hard/easy?)
-- Confusing mechanics
-- UI/UX problems
-- Feature requests
+JOIN THE DISCORD:
+Discord: https://discord.gg/aUZgmrpU
 
+Share your:
+- Epic runs and close calls
+- Ideas for features or improvements
+- Bug reports (include game_debug.log)
+- Balance issues (too hard/easy?)
+- Fan art and mods
+
+REPORT ISSUES:
 GitHub: https://github.com/Dragynrain/RogueSignalProtocol/issues
-Reddit: /r/roguelikedev
-Itch.io: [Your itch.io page]
 
 CREDITS
 -------
