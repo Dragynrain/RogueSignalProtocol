@@ -6,10 +6,19 @@
 
 ## 0. Critical Rules (READ FIRST)
 
-1. **NO AUTO-COMMITS**: Always ask before committing. Exception: ONLY when user says "commit this" or "make a commit"
-2. **Check existing keybindings**: Before assigning hotkeys, grep for existing uses first
-3. **Fix what you're asked to fix**: Don't dismiss test failures as "unrelated" - if asked to fix all tests, fix all tests
-4. **Unicode character rules**:
+1. **VERIFY BEFORE ASSUMING** - Your most common mistake!
+   - Use Read/Grep/Glob/Bash to CHECK instead of guessing
+   - Examples: file contents, URLs, config values, API signatures
+   - **URLs/Links:** ALWAYS grep for existing URLs before writing any link
+     ```bash
+     grep -r "discord.gg\|itch.io\|github.com" --include="*.md" --include="*.txt"
+     ```
+   - Never construct URLs from assumptions (you hallucinated "adam-godel" when it's "Dragynrain")
+
+2. **NO AUTO-COMMITS**: Always ask before committing. Exception: ONLY when user says "commit this" or "make a commit"
+3. **Check existing keybindings**: Before assigning hotkeys, grep for existing uses first
+4. **Fix what you're asked to fix**: Don't dismiss test failures as "unrelated" - if asked to fix all tests, fix all tests
+5. **Unicode character rules**:
    - **Game UI (TCOD)**: Unicode arrows/symbols OK (↕ ↑ ↓ ← →) - CascadiaCode font supports them
    - **Logging/console**: ASCII only - Windows CP1252 breaks on Unicode. Use `[DEATH]`, `[OK]`, `->` not 💀, ✅
    - **Emoji**: Never use anywhere (chat messages to user are OK)
@@ -197,15 +206,7 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 
 ---
 
-## 11. Verification Over Assumptions
-THIS IS CRITICAL AND ONE OF YOUR MOST COMMON MISTAKES
-- If you can verify something quickly (Read/Grep/Glob/Bash), do it before assuming
-- Don't claim "probably", "likely", "should be" when you can CHECK
-- Examples: file contents, test results, config values, API signatures
-
----
-
-## 12. Reasoning & Problem-Solving
+## 11. Reasoning & Problem-Solving
 
 **Approach:**
 - Unfold understanding gradually - show natural thought progression
@@ -218,7 +219,7 @@ THIS IS CRITICAL AND ONE OF YOUR MOST COMMON MISTAKES
 
 ---
 
-## 13. Communication Style
+## 12. Communication Style
 - **In chat with user:** Use emoji freely for clarity, fun, or energy 😊
 - **In game UI (TCOD):** Unicode arrows/symbols OK (↕ ↑ ↓ ← →) - CascadiaCode supports them
 - **In logging/console output:** ASCII only - Windows CP1252 breaks on Unicode

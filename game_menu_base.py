@@ -254,6 +254,8 @@ class BaseMenu:
             return "achievements"
         elif "Data Fragments" in option_text:
             return "lore"
+        elif "About" in option_text:
+            return "about"
         elif "Graphics Preview" in option_text:
             return "graphics_preview"
         elif "Exit" in option_text:
