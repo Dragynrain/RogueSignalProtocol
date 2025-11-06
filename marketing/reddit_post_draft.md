@@ -43,6 +43,8 @@ This is **alpha 0.8.0** - feature complete and playtested, now looking for wider
 * Stealth vs combat balance and overall fun factor
 * Any bugs or edge cases I missed
 
+**Bug reporting made easy:** Hit Shift+F12 or use Settings > Export Debug Package to create a comprehensive debug report (saves, logs, metrics, system info, screenshot). Makes bug reporting super simple!
+
 ---
 
 ## How This Was Built
