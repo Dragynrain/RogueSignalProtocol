@@ -127,23 +127,6 @@ console.print(x=10, y=5, string="Status", fg=(255,255,255), bg=(0,0,0))
 CoordinateHelpers.set_alpha_region(console, x=9, y=4, width=20, height=3, alpha=255)
 ```
 
-### The "Transparent First" Pattern
-
-```python
-# 1. Clear console (alpha=255 by default)
-console.clear()
-
-# 2. Make ENTIRE console transparent FIRST
-console.rgba["bg"][:, :, 3] = 0
-
-# 3. Render UI elements
-console.print(...)
-
-# 4. Set UI regions opaque with CoordinateHelpers
-CoordinateHelpers.set_alpha_region(console, x=box_x, y=box_y,
-                                    width=box_w, height=box_h, alpha=255)
-```
-
 ---
 
 ## CoordinateHelpers Reference
