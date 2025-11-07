@@ -304,6 +304,17 @@ class PathfindingHelper:
         """Create cost map with enemy collision avoidance."""
         cost_map = game_map.get_walkability_map().copy()
 
+        # Mark player as impassable (enemies path TO adjacent, not ONTO player)
+        if hasattr(game_engine, 'player') and game_engine.player is not None:
+            try:
+                player = game_engine.player
+                # Validate player coordinates are integers
+                px, py = int(player.x), int(player.y)
+                if 0 <= px < game_map.width and 0 <= py < game_map.height:
+                    cost_map[py, px] = 0  # TCOD uses [y, x] indexing
+            except (AttributeError, TypeError, ValueError):
+                pass  # Skip player blocking if coordinates invalid (e.g., in tests)
+
         # Mark other enemies as impassable
         for enemy in game_engine.enemies:
             if enemy.id != moving_enemy.id:
@@ -967,6 +978,15 @@ class Enemy:
         if movement_type == EnemyMovement.STATIC:
             return
 
+        # If we're already adjacent to player (in attack range), don't queue more moves
+        # Check from last queued position (or current position if queue empty)
+        check_pos = self.move_queue[-1] if self.move_queue else self.position
+        if check_pos.grid_distance_to(player.position) <= 1:
+            # Exception: non-hostile enemies can pass by the player
+            # Only stop if we're hostile and targeting the player
+            if self.state == EnemyState.HOSTILE:
+                return  # In attack range, stay put and attack
+
         # PRIORITY 1: Flee behavior for low-health enemies (unless Admin)
         if self._should_flee(player, game_map) and self.type != 'admin':
             logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): FLEEING (cpu={self.cpu}/{self.type_data.max_cpu})")
@@ -1003,16 +1023,27 @@ class Enemy:
                 if len(self.move_queue) >= 3:
                     break
                 # TCOD returns (y, x), convert to Position(x, y)
-                self.move_queue.append(Position(path[i][1], path[i][0]))
+                pos = Position(path[i][1], path[i][0])
 
-        # Pathfinding failed - try greedy fallback (add at least 1 move)
+                # NEVER queue the player's exact position
+                if pos.x == player.position.x and pos.y == player.position.y:
+                    break
+
+                # Add the move
+                self.move_queue.append(pos)
+
+                # Stop queuing once we've added an adjacent position (in attack range)
+                # Don't queue moves beyond the player - we want to attack, not path past
+                if pos.grid_distance_to(player.position) <= 1:
+                    break
+
+        # Pathfinding failed - try greedy fallback (chain up to 3 moves)
         elif target and len(self.move_queue) == 0:
-            greedy_move = self._calculate_greedy_move_toward_target(target, game_map, game_engine)
-            if greedy_move:
-                self.move_queue.append(greedy_move)
+            self._fill_greedy_moves(target, game_map, player, game_engine)
 
         # PATROL special case: If queue still not full, extend with next waypoint(s)
-        if movement_type == EnemyMovement.PATROL and self.patrol_points and len(self.move_queue) < 3:
+        # Only extend patrol queue for non-hostile enemies (hostile chase player, not patrol)
+        if movement_type == EnemyMovement.PATROL and self.state != EnemyState.HOSTILE and self.patrol_points and len(self.move_queue) < 3:
             self._extend_patrol_queue(game_map, game_engine)
 
     def _fill_random_moves(self, game_map, player, game_engine):
@@ -1166,19 +1197,53 @@ class Enemy:
             logging.warning(f"Pathfinding failed for {self.type_data.name}: {e}")
             return None
 
-    def _calculate_greedy_move_toward_target(self, target: Position, game_map, game_engine) -> Optional[Position]:
+    def _fill_greedy_moves(self, target: Position, game_map, player, game_engine):
         """
-        Calculate best adjacent move toward target using greedy distance minimization.
+        Fill queue with greedy moves toward target (up to 3 moves).
 
-        Used as fallback when pathfinding fails (e.g., blocked by other enemies).
-        Tries all 8 adjacent directions and returns the valid position closest
-        to the target. This ensures enemies can still make progress even when
-        A* pathfinding cannot find a valid path.
+        When pathfinding fails, this provides a fallback that maintains the
+        3-move lookahead for player predictability. Chains greedy moves by
+        simulating future positions and picking best direction each step.
 
         Args:
             target: Destination Position to move toward
-            game_map: GameMap instance for wall checking
-            game_engine: GameEngine instance for enemy collision checking
+            game_map: GameMap for wall checking
+            player: Player to avoid
+            game_engine: GameEngine for enemy collision checking
+        """
+        # Start from current position
+        current_pos = self.position
+
+        # Chain up to 3 greedy moves
+        while len(self.move_queue) < 3:
+            greedy_move = self._calculate_greedy_move_from(current_pos, target, game_map, player, game_engine)
+
+            # No valid move found - stop chaining
+            if not greedy_move:
+                break
+
+            # Add move to queue
+            self.move_queue.append(greedy_move)
+
+            # Stop if we've reached adjacent to player (attack range)
+            if greedy_move.grid_distance_to(player.position) <= 1:
+                break
+
+            # Continue from this new position
+            current_pos = greedy_move
+
+    def _calculate_greedy_move_from(self, from_pos: Position, target: Position, game_map, player, game_engine) -> Optional[Position]:
+        """
+        Calculate single greedy move from a given position toward target.
+
+        Helper for _fill_greedy_moves that allows chaining moves.
+
+        Args:
+            from_pos: Position to move from
+            target: Destination Position to move toward
+            game_map: GameMap for wall checking
+            player: Player to avoid
+            game_engine: GameEngine for enemy collision checking
 
         Returns:
             Position closest to target that is valid, or None if no valid moves
@@ -1193,7 +1258,7 @@ class Enemy:
         directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
 
         for dx, dy in directions:
-            next_pos = Position(self.position.x + dx, self.position.y + dy)
+            next_pos = Position(from_pos.x + dx, from_pos.y + dy)
 
             # Check if move is valid (not blocked by walls)
             if not next_pos.is_valid(game_map.width, game_map.height):
@@ -1201,10 +1266,18 @@ class Enemy:
             if game_map.is_wall(next_pos):
                 continue
 
-            # CRITICAL: Skip positions blocked by other enemies
+            # NEVER queue player's exact position
+            if next_pos.x == player.position.x and next_pos.y == player.position.y:
+                continue
+
+            # Skip positions blocked by other enemies
             enemy_blocking = any(e.position.x == next_pos.x and e.position.y == next_pos.y
                                for e in game_engine.enemies if e.id != self.id)
             if enemy_blocking:
+                continue
+
+            # Skip positions already in queue (avoid loops)
+            if any(q.x == next_pos.x and q.y == next_pos.y for q in self.move_queue):
                 continue
 
             # Calculate distance to target from this position
@@ -1216,6 +1289,7 @@ class Enemy:
                 best_move = next_pos
 
         return best_move
+
 
     def _calculate_random_move(self, game_map, player, game_engine) -> Optional[Position]:
         """Calculate a random valid adjacent move from the last queued position or current position."""
