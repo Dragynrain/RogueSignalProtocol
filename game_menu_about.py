@@ -115,6 +115,9 @@ class AboutMenu(BaseMenu):
                 "",
                 "Version 0.8.0 Alpha",
                 "by Adam Forster",
+                "",
+                "roguesignalprotocol",
+                "@gmail.com",
             ]
             info_y_start = box['top'] + 5
         else:
@@ -128,6 +131,8 @@ class AboutMenu(BaseMenu):
                 "",
                 "Version 0.8.0 Alpha",
                 "by Adam Forster",
+                "",
+                "roguesignalprotocol@gmail.com",
             ]
             info_y_start = box['top'] + 5
 

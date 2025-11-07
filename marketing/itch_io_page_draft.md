@@ -48,7 +48,10 @@ This is an **active alpha** - your feedback shapes development!
 
 **Bug reporting made easy:** Hit Shift+F12 or use Settings > Export Debug Package to create a comprehensive debug report (saves, logs, metrics, system info, screenshot). Attach the zip file when reporting bugs!
 
-Report bugs/suggestions: https://github.com/Dragynrain/RogueSignalProtocol/issues
+**Contact & Feedback:**
+- Email: roguesignalprotocol@gmail.com
+- GitHub Issues: https://github.com/Dragynrain/RogueSignalProtocol/issues
+- Discord: https://discord.gg/aUZgmrpU
 
 ### REQUIREMENTS:
 * Windows 10/11

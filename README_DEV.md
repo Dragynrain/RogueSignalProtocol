@@ -747,6 +747,8 @@ We welcome contributions! Please feel free to:
 - Submit pull requests for bug fixes
 - Share feedback on game balance
 
+📧 **Contact:** roguesignalprotocol@gmail.com for direct feedback or questions
+
 ## 📝 License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
@@ -764,6 +766,8 @@ Any derivative works must also be licensed under GPL v3, ensuring the game and i
 ## 👨‍💻 Author
 
 **Adam Forster** ([@Dragynrain](https://github.com/Dragynrain))
+
+📧 Contact: roguesignalprotocol@gmail.com
 
 ## 🙏 Acknowledgments
 
