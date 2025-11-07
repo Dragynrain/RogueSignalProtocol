@@ -96,27 +96,8 @@ if pos1.grid_distance_to(pos2) <= 1:
 
 ## Math Details
 
-### Grid Distance (Chebyshev)
-```
-distance = max(abs(x2 - x1), abs(y2 - y1))
-
-Examples:
-(0,0) → (1,0)  = 1  (orthogonal)
-(0,0) → (1,1)  = 1  (diagonal)
-(0,0) → (2,1)  = 2
-(0,0) → (3,2)  = 3
-```
-
-### Euclidean Distance
-```
-distance = sqrt((x2-x1)² + (y2-y1)²)
-
-Examples:
-(0,0) → (1,0)  = 1.0    (orthogonal)
-(0,0) → (1,1)  = 1.414  (diagonal)
-(0,0) → (2,1)  = 2.236
-(0,0) → (3,2)  = 3.606
-```
+**Grid Distance (Chebyshev):** `max(abs(x2-x1), abs(y2-y1))` - Diagonals = 1
+**Euclidean Distance:** `sqrt((x2-x1)² + (y2-y1)²)` - Diagonals ≈ 1.414
 
 ---
 
@@ -128,19 +109,3 @@ When you see:
 - Distance checks for vision/FOV → Keep as `distance_to()` (TCOD uses Euclidean)
 - Distance for level gen placement → Keep as `distance_to()` (spatial distance)
 
----
-
-## Common Pitfalls
-
-1. **❌ Using distance_to for exploit ranges**
-   - Diagonals become ~1.414, failing range-1 checks
-   - Fix: Use `grid_distance_to()`
-
-2. **❌ Using grid_distance for TCOD FOV**
-   - TCOD's internal FOV uses Euclidean
-   - Keep: Use `distance_to()` for vision pre-checks
-
-3. **❌ Mixing distance types**
-   - Be consistent within a system
-   - Exploits: ALL grid distance
-   - Vision: ALL Euclidean distance

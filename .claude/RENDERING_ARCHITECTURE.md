@@ -30,36 +30,9 @@ This is the **official TCOD API** for mixing SDL graphics with console rendering
 
 ## Why Not `context.present()`?
 
-### Standard Approach (Console-Only)
-```python
-console.clear()
-console.print(x=10, y=5, string="@", fg=(255,255,255))
-context.present(console)  # Works for ASCII-only roguelikes
-```
+**Problem:** `context.present()` clears the SDL backbuffer before rendering, destroying sprite layers.
 
-### Why This Game Can't Use It
-
-**Problem:** `context.present()` clears the SDL backbuffer before rendering.
-
-From SDL docs: *"The backbuffer should be considered invalidated after each present"*
-
-**What this means:**
-```python
-# This DOESN'T work:
-renderer.copy(background_texture)  # Render background
-renderer.copy(sprite_texture)      # Render sprites
-context.present(console)           # ← CLEARS everything above!
-```
-
-**Our solution:**
-```python
-# This DOES work (using tcod.render):
-renderer.copy(background_texture)           # Layer 1: Background
-renderer.copy(sprite_texture)               # Layer 2: Sprites
-console_texture = console_render.render(console)  # Layer 3: Console to texture
-renderer.copy(console_texture)              # Composite console
-renderer.present()                          # Display final frame
-```
+**Solution:** Use `tcod.render.SDLConsoleRender` to convert console to texture, then composite all layers with `renderer.present()`.
 
 ---
 

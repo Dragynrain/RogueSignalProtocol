@@ -94,56 +94,14 @@ if world_pos:
 
 ## Implementation Details
 
-### Menu Coordinate Conversion (game_mouse_utils.py)
+**MenuMouseHandler (game_mouse_utils.py):**
+- Converts pixel → console tile (0-79, 0-49)
+- Simple and stateless - no game state needed
 
-**Internals:**
-- Gets `event.pixel` (x, y in pixels)
-- Gets window size from `context.sdl_window.size`
-- Calls `CoordinateHelpers.pixel_to_char_coords()`
-- Returns new event with `event.tile` set to console tile coordinates
-
-**Simple and stateless** - no game state needed.
-
-### World Coordinate Conversion (game_input.py)
-
-**Internals:**
-1. Gets graphics mode (glyph vs graphics)
-2. Converts pixel → viewport coordinates:
-   - Graphics mode: Uses `pixel_to_sprite_grid()` with tile dimensions
-   - Glyph mode: Uses `pixel_to_char_coords()`
-3. Subtracts status bar height
-4. Adds camera offset (from `game.last_camera_offset`)
-5. Validates against map bounds
-6. Returns world Position or None
-
-**Complex and stateful** - needs game instance, renderer, camera position.
-
-## Why Not Unified?
-
-Attempting to unify these would require:
-
-```python
-# Hypothetical unified API - NOT RECOMMENDED
-MouseHandler.convert(
-    event,
-    context,
-    mode="world",  # or "menu"
-    graphics_mode=None,
-    renderer=None,
-    camera_offset=None,
-    map_bounds=None,
-    viewport_config=None,
-    status_bar_height=None
-)
-```
-
-That's **8 parameters** for world conversion! And you'd only use world conversion in one place (InputHandler).
-
-**Keep them separate** because:
-- Menu conversion: Simple utility (like string formatting)
-- World conversion: Complex operation needing game state (like database query)
-- They're used in different contexts by different code
-- Unifying them doesn't provide value
+**InputHandler._mouse_pixel_to_world (game_input.py):**
+- Converts pixel → world position (0-99, 0-99)
+- Complex and stateful - needs graphics mode, camera offset, map bounds, viewport config
+- Used only in InputHandler, too complex to unify with menu conversion
 
 ## Testing Checklist
 
