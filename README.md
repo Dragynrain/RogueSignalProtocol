@@ -1,3 +1,5 @@
+![Rogue Signal Protocol Banner](docs/images/banner.png)
+
 # Rogue Signal Protocol
 
 **Version 0.8.0 Alpha** - A coffee break cyberspace stealth roguelike built with Python and TCOD
@@ -42,6 +44,19 @@ Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike whe
 - **🎨 Dual Rendering**: Full graphical sprites or classic ASCII/Unicode mode
 - **🎵 Full Audio**: Sound effects and atmospheric music (toggleable)
 - **💾 True Permadeath**: Saves deleted on death, auto-save after every action
+
+---
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="docs/images/screenshots/screenshot-1.png" width="45%" alt="Gameplay Screenshot 1">
+  <img src="docs/images/screenshots/screenshot-2.png" width="45%" alt="Gameplay Screenshot 2">
+</p>
+<p align="center">
+  <img src="docs/images/screenshots/screenshot-3.png" width="45%" alt="Gameplay Screenshot 3">
+  <img src="docs/images/screenshots/screenshot-4.png" width="45%" alt="Gameplay Screenshot 4">
+</p>
 
 ---
 
