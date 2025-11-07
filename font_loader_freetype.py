@@ -54,11 +54,14 @@ def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: in
         unicode_ranges = [
             (0x0020, 0x007F),  # Basic Latin (ASCII)
             (0x0080, 0x00FF),  # Latin-1 Supplement
+            (0x2000, 0x206F),  # General Punctuation (includes •, ‣, ◦, etc.)
             (0x2190, 0x21FF),  # Arrows
+            (0x2200, 0x22FF),  # Mathematical Operators
             (0x2500, 0x257F),  # Box Drawing
             (0x2580, 0x259F),  # Block Elements
             (0x25A0, 0x25FF),  # Geometric Shapes
             (0x2600, 0x26FF),  # Miscellaneous Symbols
+            (0x2660, 0x266F),  # Card Suits (♠ ♡ ♢ ♣ ♤ ♥ ♦ ♧)
             (0x2700, 0x27BF),  # Dingbats
         ]
 

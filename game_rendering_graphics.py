@@ -898,7 +898,7 @@ class GraphicsMapRenderer(MapRendererBase):
             return ColorManager.get_enemy_state_color("unaware")
 
     def _render_enemy_vision_range(self, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map, renderer):
-        """Render vision range for a single enemy using corner brackets in graphics mode.
+        """Render vision range for a single enemy using semi-transparent tile overlays in graphics mode.
         Uses TCOD FOV for perfect consistency with actual enemy vision.
 
         Vision indicators are hidden on blind spots unless the enemy is adjacent to that blind spot,
@@ -908,7 +908,12 @@ class GraphicsMapRenderer(MapRendererBase):
         # Use TCOD FOV to get exactly what the enemy can see (matches enemy vision logic)
         fov = game_map._compute_fov_cached(enemy.x, enemy.y, actual_vision_range)
 
-        # Render brackets for all visible tiles within range
+        # Enable alpha blending for transparent overlays
+        from tcod.sdl.render import BlendMode
+        old_blend_mode = renderer.draw_blend_mode
+        renderer.draw_blend_mode = BlendMode.BLEND
+
+        # Render semi-transparent fill for all visible tiles within range
         for dx in range(-actual_vision_range, actual_vision_range + 1):
             for dy in range(-actual_vision_range, actual_vision_range + 1):
                 world_x = enemy.x + dx
@@ -938,9 +943,13 @@ class GraphicsMapRenderer(MapRendererBase):
                     screen_x = world_x - camera_offset.x
                     screen_y = world_y - camera_offset.y + 1
 
-                    # Draw corner brackets
+                    # Fill tile with semi-transparent color overlay
                     tile_rect = self._get_tile_rect(screen_x, screen_y)
-                    self._draw_corner_brackets(renderer, tile_rect, overlay_color, bracket_size=GameConfig.VISION_BRACKET_SIZE())
+                    renderer.draw_color = (*overlay_color, 60)  # Semi-transparent (lighter than targeting)
+                    renderer.fill_rect(tile_rect)
+
+        # Restore original blend mode
+        renderer.draw_blend_mode = old_blend_mode
 
     def _render_movement_prediction(self, game, camera_offset: Position, vision_range: int):
         """Render next 3 predicted moves for all moving enemies using directional arrow sprites."""

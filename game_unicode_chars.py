@@ -28,7 +28,7 @@ class GameGlyphs:
     GHOST_MODE = GHOST_NODE       # ♤ - Also used as status overlay
 
     # Terrain
-    FLOOR_EXPLORED = '•'  # U+2022 - Bullet
+    FLOOR_EXPLORED = '•'  # U+2022 - Bullet (visible floor tile)
     BLIND_SPOT = '♠'      # U+2660 - Filled spade (obscured vision area)
 
     # UI indicators
