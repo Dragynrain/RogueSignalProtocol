@@ -479,7 +479,82 @@ class Position:
     def to_tuple(self) -> Tuple[int, int]:
         """Convert position to tuple for use as dictionary key."""
         return (self.x, self.y)
-    
+
+    def angle_to(self, other: 'Position') -> float:
+        """
+        Calculate angle in degrees from this position to another.
+
+        Used for rotating sprites to point in the movement direction.
+        0° = East (right), 90° = South (down), 180° = West (left), 270° = North (up)
+
+        Args:
+            other: Target position
+
+        Returns:
+            Angle in degrees (0-360, clockwise from east)
+        """
+        if other is None:
+            return 0.0
+
+        dx = other.x - self.x
+        dy = other.y - self.y
+
+        if dx == 0 and dy == 0:
+            return 0.0  # Same position, default to east
+
+        # atan2 returns angle in radians from east (0 = right)
+        # Positive y is down in screen coordinates
+        angle_rad = math.atan2(dy, dx)
+
+        # Convert to degrees
+        angle_deg = math.degrees(angle_rad)
+
+        # Ensure positive range (0-360)
+        if angle_deg < 0:
+            angle_deg += 360
+
+        return angle_deg
+
+    def arrow_char_to(self, other: 'Position') -> str:
+        """
+        Get Unicode arrow character pointing from this position to another.
+
+        Used for rendering directional indicators in glyph mode.
+        Supports all 8 cardinal and diagonal directions.
+
+        Args:
+            other: Target position
+
+        Returns:
+            Unicode arrow character (→ ↑ ← ↓ ↗ ↖ ↙ ↘)
+        """
+        if other is None:
+            return '→'  # Default to right
+
+        dx = other.x - self.x
+        dy = other.y - self.y
+
+        if dx == 0 and dy == 0:
+            return '·'  # Same position, use dot
+
+        # Normalize to -1, 0, or 1
+        dx_norm = 0 if dx == 0 else (1 if dx > 0 else -1)
+        dy_norm = 0 if dy == 0 else (1 if dy > 0 else -1)
+
+        # Map to arrow characters (all Unicode)
+        arrow_map = {
+            (1, 0): '→',   # East
+            (1, -1): '↗',  # Northeast
+            (0, -1): '↑',  # North
+            (-1, -1): '↖', # Northwest
+            (-1, 0): '←',  # West
+            (-1, 1): '↙',  # Southwest
+            (0, 1): '↓',   # South
+            (1, 1): '↘',   # Southeast
+        }
+
+        return arrow_map.get((dx_norm, dy_norm), '→')
+
     def __eq__(self, other) -> bool:
         """Equality comparison for Position objects."""
         if not isinstance(other, Position):
