@@ -34,6 +34,7 @@ CRITICAL RULES:
 3. NEVER mix the two - they use different math!
 """
 
+import logging
 from typing import Tuple
 from game_config import GameConfig
 from game_entities import Position
@@ -109,8 +110,29 @@ class MapRendererBase:
             True if position is in viewport
         """
         graphics_mode = self._get_graphics_mode()
-        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
-        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
+
+        # Get tile dimensions and window size for accurate viewport calculation in graphics mode
+        tile_width = None
+        tile_height = None
+        window_width = None
+        window_height = None
+
+        if hasattr(self, 'tile_manager') and self.tile_manager is not None:
+            tile_width = self.tile_manager.tile_width
+            tile_height = self.tile_manager.tile_height
+
+        # Get actual window dimensions from context (dynamic for any resolution)
+        if hasattr(self, 'context') and self.context is not None:
+            if hasattr(self.context, 'sdl_renderer') and self.context.sdl_renderer is not None:
+                try:
+                    output_size = self.context.sdl_renderer.output_size
+                    if output_size:
+                        window_width, window_height = output_size
+                except:
+                    pass
+
+        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode, tile_width, window_width)
+        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode, tile_height, window_height)
 
         viewport_x = world_x - camera_offset.x
         viewport_y = world_y - camera_offset.y
@@ -131,9 +153,37 @@ class MapRendererBase:
         """
         graphics_mode = self._get_graphics_mode()
 
+        # Get tile dimensions and window size for accurate viewport calculation in graphics mode
+        tile_width = None
+        tile_height = None
+        window_width = None
+        window_height = None
+
+        if hasattr(self, 'tile_manager') and self.tile_manager is not None:
+            tile_width = self.tile_manager.tile_width
+            tile_height = self.tile_manager.tile_height
+
+        # Get actual window dimensions from context (dynamic for any resolution)
+        if hasattr(self, 'context') and self.context is not None:
+            if hasattr(self.context, 'recommended_console_size'):
+                try:
+                    # Get the current pixel size of the window
+                    pixel_width, pixel_height = self.context.recommended_console_size(
+                        min_columns=GameConfig.SCREEN_WIDTH,
+                        min_rows=GameConfig.SCREEN_HEIGHT
+                    )
+                    # This gives us console size, but we need pixel dimensions
+                    # The actual window size is stored differently - use SDL renderer if available
+                    if hasattr(self.context, 'sdl_renderer') and self.context.sdl_renderer is not None:
+                        output_size = self.context.sdl_renderer.output_size
+                        if output_size:
+                            window_width, window_height = output_size
+                except:
+                    pass
+
         # Get viewport dimensions (tiles visible, not console grid size)
-        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
-        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
+        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode, tile_width, window_width)
+        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode, tile_height, window_height)
 
         # In look mode, center camera on look cursor to allow exploring revealed distant areas
         # (e.g., tiles revealed by Network Scan ability)
@@ -147,10 +197,18 @@ class MapRendererBase:
             center_y = player.y
 
         # Center camera on target position within the viewport
-        camera_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                             center_x - viewport_width // 2))
-        camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                             center_y - viewport_height // 2))
+        # Handle case where viewport is larger than map (center map in viewport)
+        if viewport_width >= GameConfig.MAP_WIDTH:
+            camera_x = -(viewport_width - GameConfig.MAP_WIDTH) // 2
+        else:
+            camera_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
+                                 center_x - viewport_width // 2))
+
+        if viewport_height >= GameConfig.MAP_HEIGHT:
+            camera_y = -(viewport_height - GameConfig.MAP_HEIGHT) // 2
+        else:
+            camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
+                                 center_y - viewport_height // 2))
 
         camera_offset = Position(camera_x, camera_y)
 

@@ -82,44 +82,44 @@ class TestViewportRenderingBounds:
         return game
 
     def test_viewport_width_in_graphics_mode(self):
-        """Test that graphics mode uses correct viewport width (27 tiles)."""
+        """Test that graphics mode uses full viewport width (55 tiles)."""
         viewport_width = GameConfig.VIEWPORT_WIDTH("graphics")
-        assert viewport_width == 27, f"Graphics mode viewport should be 27 tiles wide, got {viewport_width}"
+        assert viewport_width == 55, f"Graphics mode viewport should be 55 tiles wide, got {viewport_width}"
 
     def test_viewport_height_in_graphics_mode(self):
-        """Test that graphics mode uses correct viewport height (22 tiles)."""
+        """Test that graphics mode uses full viewport height (44 tiles)."""
         viewport_height = GameConfig.VIEWPORT_HEIGHT("graphics")
-        assert viewport_height == 22, f"Graphics mode viewport should be 22 tiles tall, got {viewport_height}"
+        assert viewport_height == 44, f"Graphics mode viewport should be 44 tiles tall, got {viewport_height}"
 
     def test_is_in_viewport_helper_respects_graphics_mode(self, mock_renderer):
         """Test that _is_in_viewport() helper uses graphics mode viewport dimensions."""
         camera_offset = Position(0, 0)
 
-        # Test positions within graphics viewport (27x22)
+        # Test positions within graphics viewport (55x44)
         assert mock_renderer._is_in_viewport(0, 0, camera_offset) is True
-        assert mock_renderer._is_in_viewport(13, 10, camera_offset) is True  # Center
-        assert mock_renderer._is_in_viewport(26, 21, camera_offset) is True  # Bottom-right corner
+        assert mock_renderer._is_in_viewport(27, 22, camera_offset) is True  # Center
+        assert mock_renderer._is_in_viewport(54, 43, camera_offset) is True  # Bottom-right corner
 
         # Test positions outside graphics viewport
-        assert mock_renderer._is_in_viewport(27, 0, camera_offset) is False  # Right edge
-        assert mock_renderer._is_in_viewport(0, 22, camera_offset) is False  # Bottom edge
-        assert mock_renderer._is_in_viewport(50, 0, camera_offset) is False  # Far right
-        assert mock_renderer._is_in_viewport(0, 50, camera_offset) is False  # Far bottom
+        assert mock_renderer._is_in_viewport(55, 0, camera_offset) is False  # Right edge
+        assert mock_renderer._is_in_viewport(0, 44, camera_offset) is False  # Bottom edge
+        assert mock_renderer._is_in_viewport(100, 0, camera_offset) is False  # Far right
+        assert mock_renderer._is_in_viewport(0, 100, camera_offset) is False  # Far bottom
 
     def test_is_in_viewport_with_camera_offset(self, mock_renderer):
         """Test that _is_in_viewport() correctly handles camera offset."""
-        # Camera centered on player at (13, 10)
+        # Camera at origin
         camera_offset = Position(0, 0)  # Top-left corner of viewport
 
-        # Position at (5, 5) is within viewport (0-26, 0-21)
+        # Position at (5, 5) is within viewport (0-54, 0-43)
         assert mock_renderer._is_in_viewport(5, 5, camera_offset) is True
 
-        # Position at (40, 40) is outside viewport
-        assert mock_renderer._is_in_viewport(40, 40, camera_offset) is False
+        # Position at (100, 100) is outside viewport
+        assert mock_renderer._is_in_viewport(100, 100, camera_offset) is False
 
-        # Shift camera - now (40, 40) might be in viewport
-        camera_offset = Position(27, 25)  # Viewport shows tiles (27-53, 25-46)
-        assert mock_renderer._is_in_viewport(40, 40, camera_offset) is True
+        # Shift camera - now (100, 100) might be in viewport
+        camera_offset = Position(60, 60)  # Viewport shows tiles (60-114, 60-103)
+        assert mock_renderer._is_in_viewport(100, 100, camera_offset) is True
 
     def test_items_outside_viewport_not_rendered(self, mock_renderer, mock_game):
         """
@@ -160,12 +160,12 @@ class TestViewportRenderingBounds:
                 for (world_x, world_y), upgrade_key in mock_game.game_map.permanent_upgrades.items():
                     is_in_viewport = mock_renderer._is_in_viewport(world_x, world_y, camera_offset)
 
-                    if world_x >= 27 or world_y >= 22:
+                    if world_x >= 55 or world_y >= 44:
                         assert is_in_viewport is False, \
-                            f"Position ({world_x}, {world_y}) should be outside viewport (27x22)"
+                            f"Position ({world_x}, {world_y}) should be outside viewport (55x44)"
                     else:
                         assert is_in_viewport is True, \
-                            f"Position ({world_x}, {world_y}) should be inside viewport (27x22)"
+                            f"Position ({world_x}, {world_y}) should be inside viewport (55x44)"
 
     def test_glyph_mode_uses_full_viewport(self, mock_renderer):
         """Test that glyph mode uses full game area (55x44)."""

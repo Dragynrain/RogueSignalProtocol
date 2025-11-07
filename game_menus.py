@@ -543,6 +543,7 @@ class SettingsMenu(BaseMenu):
             {"name": "Music Volume", "type": "volume", "key": "music"},
             {"name": "Graphics Mode", "type": "toggle", "key": "graphics_mode",
              "values": ["Classic", "Graphics"]},
+            {"name": "Particle Effects", "type": "bool_toggle", "key": "show_particle_effects"},
             {"name": "UI Color", "type": "ui_color", "key": "ui_color",
              "values": ["Cyan", "Purple", "Magenta", "Golden", "Crimson", "Azure", "Emerald", "Ivory"]},
             {"name": "Overclock Warnings", "type": "dialogue_toggle", "key": "show_overclock_warning"},
@@ -630,6 +631,12 @@ class SettingsMenu(BaseMenu):
                     color_rgb = self.settings.get_ui_color_rgb()
                     render_char_safe(console, name_x, option_y + 1, f"< {current_value} >", fg=color_rgb, bg=bg_color)
 
+                elif option["type"] == "bool_toggle":
+                    # Boolean toggle (on/off)
+                    is_enabled = getattr(self.settings, option["key"], True)
+                    status = "ON " if is_enabled else "OFF"
+                    render_char_safe(console, name_x, option_y + 1, f"< {status} >", fg=color, bg=bg_color)
+
                 elif option["type"] == "dialogue_toggle":
                     # Get dialogue preference (default to True if not set)
                     dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
@@ -667,6 +674,12 @@ class SettingsMenu(BaseMenu):
                     # Show the color name in its actual color for preview
                     color_rgb = self.settings.get_ui_color_rgb()
                     render_char_safe(console, box['content_left'] + 18, option_y, f"< {current_value} >", fg=color_rgb, bg=bg_color)
+
+                elif option["type"] == "bool_toggle":
+                    # Boolean toggle (on/off)
+                    is_enabled = getattr(self.settings, option["key"], True)
+                    status = "ON " if is_enabled else "OFF"
+                    render_char_safe(console, box['content_left'] + 18, option_y, f"< {status} >", fg=color, bg=bg_color)
 
                 elif option["type"] == "dialogue_toggle":
                     # Get dialogue preference (default to True if not set)
@@ -730,6 +743,10 @@ class SettingsMenu(BaseMenu):
                     return ""
             elif option["type"] == "toggle":
                 # Trigger toggle with Enter key (same as in _adjust_setting)
+                self._adjust_setting(1)  # Direction doesn't matter for toggles
+                return ""
+            elif option["type"] == "bool_toggle":
+                # Trigger boolean toggle with Enter key
                 self._adjust_setting(1)  # Direction doesn't matter for toggles
                 return ""
             elif option["type"] == "dialogue_toggle":
@@ -913,6 +930,13 @@ class SettingsMenu(BaseMenu):
                 if self.menu_background:
                     self.menu_background.reload_if_mode_changed()
                     logging.info(f"Graphics mode changed to {new_mode} via mouse - background updated")
+        elif option["type"] == "bool_toggle":
+            # Toggle boolean setting
+            current_value = getattr(self.settings, option["key"], True)
+            new_value = not current_value
+            setattr(self.settings, option["key"], new_value)
+            self.settings.save_settings()
+            logging.info(f"Setting '{option['key']}' set to {new_value} via mouse")
         elif option["type"] == "dialogue_toggle":
             # Toggle dialogue preference
             dialogue_prefs = getattr(self.settings, 'dialogue_preferences', {})
@@ -1158,6 +1182,14 @@ class SettingsMenu(BaseMenu):
             new_idx = (current_idx + direction) % len(colors)
             self.settings.set_ui_color(colors[new_idx])
             logging.info(f"UI color changed to {colors[new_idx]}")
+
+        elif option["type"] == "bool_toggle":
+            # Toggle boolean setting
+            current_value = getattr(self.settings, option["key"], True)
+            new_value = not current_value
+            setattr(self.settings, option["key"], new_value)
+            self.settings.save_settings()
+            logging.info(f"Setting '{option['key']}' set to {new_value}")
 
         elif option["type"] == "dialogue_toggle":
             # Toggle dialogue preference

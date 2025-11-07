@@ -536,6 +536,46 @@ class GraphicsMapRenderer(MapRendererBase):
 
                         self._draw_outline_box(renderer, enemy_tile_rect, outline_color, thickness=1)
 
+    def render_particles_layer(self, game):
+        """
+        Render particle effects over EVERYTHING including UI (Layer 4).
+
+        Particles render in screen space (not viewport-clipped) to allow
+        dramatic explosion effects that can spill over UI panels.
+
+        Should only be called in graphics mode, after console UI is rendered.
+        """
+        if not self._should_use_graphics():
+            return
+
+        if not hasattr(game, 'particle_system') or game.particle_system is None:
+            return
+
+        renderer = self.context.sdl_renderer
+        camera_offset = self._calculate_camera_offset(game.player, game)
+
+        # Get full screen dimensions (not viewport-limited)
+        graphics_mode = self.settings.graphics_mode if self.settings else "glyph"
+        screen_pixel_width = GameConfig.SCREEN_WIDTH * self.tile_manager.tile_width
+        screen_pixel_height = GameConfig.SCREEN_HEIGHT * self.tile_manager.tile_height
+
+        # Use full map dimensions for particle rendering (no culling at viewport edges)
+        viewport_width = GameConfig.MAP_WIDTH
+        viewport_height = GameConfig.MAP_HEIGHT
+
+        # Render particles with full screen dimensions
+        game.particle_system.render(
+            sdl_renderer=renderer,
+            camera_offset_x=camera_offset.x,
+            camera_offset_y=camera_offset.y,
+            tile_width=self.tile_manager.tile_width,
+            tile_height=self.tile_manager.tile_height,
+            viewport_width=viewport_width,
+            viewport_height=viewport_height,
+            viewport_pixel_width=screen_pixel_width,
+            viewport_pixel_height=screen_pixel_height
+        )
+
     def _draw_outline_box(self, renderer, rect: Tuple[int, int, int, int], color: Tuple[int, int, int], thickness: int = 1):
         """
         Draw a colored outline rectangle (not filled).

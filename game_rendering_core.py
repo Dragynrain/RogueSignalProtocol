@@ -298,6 +298,9 @@ class GameRenderer:
             console_texture = self.context.console_render.render(console)
             self.context.sdl_renderer.copy(console_texture)
 
+            # LAYER 4: Render particle effects over EVERYTHING (including UI)
+            self.graphics_renderer.render_particles_layer(game)
+
             # Present final frame
             self.context.sdl_renderer.present()
 

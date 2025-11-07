@@ -165,6 +165,10 @@ class GameEngine:
         # Environmental narrative system
         self.narrative_manager = NarrativeManager()
 
+        # Particle system for visual effects (graphics mode only)
+        from game_particle_system import ParticleSystem
+        self.particle_system = ParticleSystem()
+
         # Mouse position tracking for hover effects
         self.last_mouse_tile_x: Optional[int] = None
         self.last_mouse_tile_y: Optional[int] = None
@@ -464,6 +468,31 @@ class GameEngine:
             # Enemy destroyed
             is_admin = target_enemy.type == 'admin'
             self.sound_manager.play_sound("enemy_death")
+
+            # Trigger particle explosion effect (graphics mode only, if enabled)
+            if (hasattr(self, 'particle_system') and
+                self.particle_system is not None and
+                hasattr(self, 'tile_manager') and
+                self.tile_manager is not None and
+                self.settings.graphics_mode == "graphics" and
+                self.settings.show_particle_effects):
+                try:
+                    # Extract colors from enemy sprite for particles
+                    from game_config import GameConfig
+                    colors = self.tile_manager.extract_sprite_colors(
+                        target_enemy.type,
+                        num_colors=GameConfig.PARTICLE_SPRITE_COLOR_COUNT()
+                    )
+
+                    # Create explosion at enemy position (uses particle_count from config)
+                    self.particle_system.create_death_explosion(
+                        world_x=target_enemy.x,
+                        world_y=target_enemy.y,
+                        colors=colors
+                    )
+                    logging.debug(f"Particle explosion created for bump attack kill")
+                except Exception as e:
+                    logging.error(f"Particle effect failed in bump attack: {e}", exc_info=True)
             self.enemy_manager.remove_enemy(target_enemy)
             self.player.cpu = min(self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)  # Small CPU recovery
             self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")

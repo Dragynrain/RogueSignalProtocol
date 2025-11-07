@@ -894,6 +894,19 @@
     "Press 'L' for look mode, 'F' for fragments",
     "Starting Corporate Network infiltration..."
   ],
+  "particles": {
+    "gravity": 300.0,
+    "default_particle_count": 80,
+    "velocity_min": 20,
+    "velocity_max": 70,
+    "upward_bias": 25,
+    "size_min": 10,
+    "size_max": 18,
+    "lifetime_min": 2.5,
+    "lifetime_max": 4.0,
+    "color_variation": 40,
+    "sprite_color_count": 10
+  },
   "metadata": {
     "version": "0.8.0 Alpha",
     "description": "Consolidated configuration for Rogue Signal Protocol",
