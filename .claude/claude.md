@@ -194,6 +194,8 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 
 ## 10. Git & Attribution
 
+**Shorthand:** "kitchen sink" means to commit and sync, with a brief summary of changes
+
 **Commits:** See rule #0 - ask first!
 
 **Attribution:** FORBIDDEN - Never add any of:
