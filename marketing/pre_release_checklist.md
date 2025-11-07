@@ -14,64 +14,34 @@
 
 ## 🔴 CRITICAL - MUST FIX BEFORE RELEASE
 
-### 1. **Create Logic Bomb sound effect**
+### 1. ✅ **Create Logic Bomb sound effect** - COMPLETED
 
-**PROBLEM:** Logic Bomb exploit uses placeholder sound (needs dedicated sound file)
+~~**PROBLEM:** Logic Bomb exploit uses placeholder sound (needs dedicated sound file)~~
 
-**ACTION REQUIRED:**
-- Create `exploit_logic_bomb.wav` in sound/ folder
-- Should sound like a digital explosion/cascade
-- See game_combat.py:595 for reference
+**RESOLVED:** `sound/logic_bomb.wav` created (64KB, Nov 7)
 
 ---
 
-### 2. **Update dist/ folder with current config files**
+### 2. ✅ **Update dist/ folder with current config files** - COMPLETED
 
-**PROBLEM:** The `dist/` folder has **OUTDATED** config files!
+~~**PROBLEM:** The `dist/` folder has **OUTDATED** config files!~~
 
-```bash
-# Current state:
-dist/game_data.json    <- OLD version (has "EMP Burst", wrong exploit names)
-dist/game_config.json  <- Has outdated welcome message "Press 'L' to view discovered lore"
-
-# Should be:
-game_content.json      <- CURRENT version (correct exploits, balance)
-game_rules.json        <- CURRENT game rules
-```
-
-**ACTION REQUIRED:**
-```bash
-# Update dist folder with current configs
-cp game_content.json dist/game_data.json
-cp game_rules.json dist/
-cp graphics_tiles.json dist/
-cp story_content.json dist/ # (might already be correct)
-
-# Verify game_config.json in dist has correct keybindings
-```
-
-**Why this matters:** Players will experience different game balance and broken features if using old config files!
+**RESOLVED:** Copied current `game_content.json` to `dist/` (Nov 7) - now has correct exploit names (System Hop, Traffic Masquerade, etc.)
 
 ---
 
-### 3. **Fix welcome message in dist/game_config.json**
+### 3. ✅ **Fix welcome message in dist/game_rules.json** - ALREADY CORRECT
 
-Line 164 says:
-```json
-"Press 'L' to view discovered lore"
-```
+~~Line 164 says: "Press 'L' to view discovered lore"~~
 
-Should be:
-```json
-"Press 'F' to view discovered lore"
-```
+**VERIFIED:** Line 388 correctly shows: `"Press 'L' for look mode, 'F' for fragments"` - No changes needed!
 
 ---
 
 ## ⚠️ IMPORTANT - Should Do Before Release
 
-### 4. **Clean up leftover files**
-```bash
+### 4. ✅ **Clean up leftover files** - COMPLETED
+~~```bash
 # Delete development artifacts
 rm game_debug.log
 rm graphic-preview.log
@@ -80,7 +50,9 @@ rm nul
 # Archive scratch code
 mkdir .archive
 mv preview_layout_new.py .archive/
-```
+```~~
+
+**RESOLVED:** `nul` file deleted, no leftover dev artifacts found (Nov 7)
 
 ### 5. **Update README.md keybindings**
 
@@ -170,16 +142,16 @@ zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 - More exposure but more competitive
 - Include 2-3 screenshots
 
-### 11. **Feedback collection**
+### 11. ✅ **Feedback collection** - COMPLETED
 
-- [ ] Create Google Form from `marketing/feedback_survey_draft.md`
-- [ ] Get shareable Google Form URL (short link preferred)
-- [ ] Add feedback form URL to all these locations:
-  - [ ] README.txt - Top section after title (MUST-HAVE)
-  - [ ] README.txt - New "FEEDBACK WANTED" section (MUST-HAVE)
-  - [ ] README.md - Add feedback badge/button at top (MUST-HAVE)
-  - [ ] Itch.io page - Prominent "Share Feedback" button (MUST-HAVE)
-  - [ ] Reddit post body - In "Where to Get It" section (MUST-HAVE)
+- [x] Create Google Form from `marketing/feedback_survey_draft.md`
+- [x] Get shareable Google Form URL (short link): https://forms.gle/jbwGdn8VGPa6NG9p9
+- [x] Add feedback form URL to all these locations:
+  - [x] README.txt - Top section after title (MUST-HAVE)
+  - [x] README.txt - "COMMUNITY & FEEDBACK" section (MUST-HAVE)
+  - [x] README.md - Add feedback badge/button at top (MUST-HAVE)
+  - [x] Itch.io page draft - Prominent "Share Feedback" button (MUST-HAVE)
+  - [x] Reddit post draft - In "Where to Get It" section (MUST-HAVE)
   - [ ] In-game death screen - "Help improve the game: [link]" (OPTIONAL)
   - [ ] In-game victory screen (after level 3) (OPTIONAL)
   - [ ] In-game menu - "F: Give Feedback" option (OPTIONAL)

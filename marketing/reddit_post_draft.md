@@ -34,9 +34,9 @@ The stealth mechanics are central - you're not meant to fight everything. High d
 The story is told through environmental fragments you discover - each run might reveal new pieces of the Project Chimera conspiracy, even if you die. Permadeath for your character, but persistent narrative discovery.
 
 ### Where to Get It:
-**Itch.io:** [INSERT LINK]
+**Itch.io:** https://dragynrain.itch.io/rogue-signal-protocol
 **Source Code:** https://github.com/Dragynrain/RogueSignalProtocol
-**Feedback Survey:** [INSERT GOOGLE FORM LINK]
+**Feedback Survey:** https://forms.gle/jbwGdn8VGPa6NG9p9
 
 This is **alpha 0.8.0** - feature complete and playtested, now looking for wider feedback on:
 * **Difficulty** - Is it too easy? Too hard? Fair but challenging?
