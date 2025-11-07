@@ -171,6 +171,7 @@ LINKS:
 Discord:  https://discord.gg/aUZgmrpU
 Itch.io:  https://dragynrain.itch.io/rogue-signal-protocol
 GitHub:   https://github.com/Dragynrain/RogueSignalProtocol/
+Email:    roguesignalprotocol@gmail.com
 
 JOIN THE DISCORD:
 Share your epic runs, ideas, bug reports, balance feedback, and fan art!

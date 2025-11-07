@@ -71,7 +71,10 @@ Thank you for playing Rogue Signal Protocol! Your feedback helps shape developme
 ## Thank You Message:
 Thank you for playing Rogue Signal Protocol and taking the time to provide feedback! Your input directly shapes future development.
 
-Follow development: https://github.com/Dragynrain/RogueSignalProtocol
+**Stay Connected:**
+- Follow development: https://github.com/Dragynrain/RogueSignalProtocol
+- Join Discord: https://discord.gg/aUZgmrpU
+- Direct contact: roguesignalprotocol@gmail.com
 
 ---
 
