@@ -19,7 +19,7 @@
 3. **Check existing keybindings**: Before assigning hotkeys, grep for existing uses first
 4. **Fix what you're asked to fix**: Don't dismiss test failures as "unrelated" - if asked to fix all tests, fix all tests
 5. **Unicode character rules**:
-   - **Game UI (TCOD)**: Unicode arrows/symbols OK (↕ ↑ ↓ ← →) - CascadiaCode font supports them
+   - **Game UI (TCOD)**: Unicode arrows/symbols OK (↕ ↑ ↓ ← → ↗ ↖ ↙ ↘) - KreativeSquare font supports them
    - **Logging/console**: ASCII only - Windows CP1252 breaks on Unicode. Use `[DEATH]`, `[OK]`, `->` not 💀, ✅
    - **Emoji**: Never use anywhere (chat messages to user are OK)
 
@@ -33,8 +33,8 @@
 ---
 
 ## 2. Compatibility
-- **Font:** CascadiaCode TrueType (32×32, scalable to any resolution)
-- **Character set:** Unicode (full box-drawing, symbols, card suits)
+- **Font:** KreativeSquare TrueType (64×64 native, scalable to any resolution via FreeType)
+- **Character set:** Unicode (full box-drawing, symbols, card suits, arrows)
 - Target: Windows 10/11 (cmd/PowerShell).
 - Rendering: Unicode console + TCOD graphics (sync both).
 
@@ -97,7 +97,7 @@
 **Logging rules:**
 - **Console/file logs:** `logging.debug/info/error()` - tech/debug info, ASCII only (Windows CP1252 limitation)
 - **Game message log:** `MessageLog.add_message()` - gameplay events, Unicode OK (rendered by TCOD)
-- **Game UI (TCOD-rendered):** Unicode arrows/symbols OK (↕ ↑ ↓ ← →) - CascadiaCode supports them
+- **Game UI (TCOD-rendered):** Unicode arrows/symbols OK (↕ ↑ ↓ ← → ↗ ↖ ↙ ↘) - KreativeSquare supports them
 - **Logging output:** ASCII only (→ = `->`, 💀 = `[DEATH]`). Windows console breaks on Unicode.
 - Don't mix console and game logs
 
@@ -223,6 +223,6 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 
 ## 12. Communication Style
 - **In chat with user:** Use emoji freely for clarity, fun, or energy 😊
-- **In game UI (TCOD):** Unicode arrows/symbols OK (↕ ↑ ↓ ← →) - CascadiaCode supports them
+- **In game UI (TCOD):** Unicode arrows/symbols OK (↕ ↑ ↓ ← → ↗ ↖ ↙ ↘) - KreativeSquare supports them
 - **In logging/console output:** ASCII only - Windows CP1252 breaks on Unicode
 - **Emoji in code:** Never use (breaks cross-platform) - see rule #0.4

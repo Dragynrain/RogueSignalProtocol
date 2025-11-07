@@ -903,40 +903,68 @@ class GraphicsMapRenderer(MapRendererBase):
                     self._draw_corner_brackets(renderer, tile_rect, overlay_color, bracket_size=GameConfig.VISION_BRACKET_SIZE())
 
     def _render_movement_prediction(self, game, camera_offset: Position, vision_range: int):
-        """Render next 3 predicted moves for all moving enemies using sprites."""
+        """Render next 3 predicted moves for all moving enemies using directional arrow sprites."""
         renderer = self.context.sdl_renderer
 
         for enemy in game.enemies:
+            # Skip disabled enemies - they can't move
+            if enemy.disabled_turns > 0:
+                continue
+
             can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
 
             # Show movement intentions for all visible enemies
             if can_see_enemy:
                 next_positions = game.get_enemy_next_positions(enemy, 3)
 
+                # Use enemy's current position as the "from" position for the first arrow
+                prev_pos = enemy.position
+
                 for i, point in enumerate(next_positions):
-                    # Skip rendering movement prediction if there's an enemy at this position
+                    # Skip rendering arrow if there's a character (player or enemy) at this position
+                    # Don't draw arrows over the player or other enemies
+                    player_at_point = (game.player.x == point.x and game.player.y == point.y)
                     enemy_at_point = any(e.position.x == point.x and e.position.y == point.y for e in game.enemies)
-                    if enemy_at_point:
+
+                    if player_at_point or enemy_at_point:
+                        prev_pos = point  # Update prev_pos for next iteration
                         continue
 
                     if self._is_in_viewport(point.x, point.y, camera_offset):
                         screen_x = point.x - camera_offset.x
                         screen_y = point.y - camera_offset.y + 1
 
-                        # Render movement prediction sprite with color_mod
-                        texture = self.tile_manager.get_tile("movement_prediction")
+                        # Get directional arrow sprite (tintable)
+                        texture = self.tile_manager.get_tile("arrow")
                         if texture:
-                            normal_tint = Colors.PURE_WHITE  # normal tint consolidated
+                            normal_tint = Colors.PURE_WHITE
                             tile_rect = self._get_tile_rect(screen_x, screen_y)
-                            # Apply color based on position (brightness fades with distance)
+
+                            # Calculate rotation angle from previous position to this position
+                            angle = prev_pos.angle_to(point)
+
+                            # Get enemy color based on alert state (yellow/orange/red/blue)
+                            enemy_color = enemy.get_color()
+
+                            # Apply dimming based on position in queue (1st=full, 2nd=75%, 3rd=50%)
                             if i == 0:
-                                texture.color_mod = ColorManager.get_targeting_color("prediction_bright")
+                                dimming_factor = 1.0  # Full brightness
                             elif i == 1:
-                                texture.color_mod = ColorManager.get_targeting_color("prediction_medium")
+                                dimming_factor = 0.75  # Medium brightness
                             else:
-                                texture.color_mod = ColorManager.get_targeting_color("prediction_dim")
-                            renderer.copy(texture, dest=tile_rect)
+                                dimming_factor = 0.5  # Dim
+
+                            # Apply dimming to enemy color
+                            dimmed_color = tuple(int(c * dimming_factor) for c in enemy_color)
+                            texture.color_mod = dimmed_color
+
+                            # Render with rotation
+                            renderer.copy(texture, dest=tile_rect, angle=angle)
+
                             # Reset color_mod
                             texture.color_mod = normal_tint
                         else:
-                            logging.warning("_render_movement_prediction: movement_prediction texture not found!")
+                            logging.warning("_render_movement_prediction: arrow texture not found!")
+
+                    # Update prev_pos for next arrow
+                    prev_pos = point

@@ -130,7 +130,12 @@
     "movement_prediction": {
       "file": "movementprediction04.png",
       "tintable": false,
-      "_comment": "Enemy movement prediction indicator"
+      "_comment": "Enemy movement prediction indicator (deprecated - use arrow)"
+    },
+    "arrow": {
+      "file": "arrow01.png",
+      "tintable": true,
+      "_comment": "Directional arrow for enemy movement prediction (tintable for alert state colors)"
     },
     "targeting": {
       "file": "targeting06.png",

@@ -51,14 +51,24 @@ def render_char_safe(console, x, y, char, fg=None, bg=None) -> None:
     bg = validate_color(bg)
 
     # Render with validated colors using TCOD
-    if fg is not None and bg is not None:
-        console.print(x, y, char, fg=fg, bg=bg)
-    elif fg is not None:
-        console.print(x, y, char, fg=fg)
-    elif bg is not None:
-        console.print(x, y, char, bg=bg)
-    else:
-        console.print(x, y, char)
+    try:
+        if fg is not None and bg is not None:
+            console.print(x, y, char, fg=fg, bg=bg)
+        elif fg is not None:
+            console.print(x, y, char, fg=fg)
+        elif bg is not None:
+            console.print(x, y, char, bg=bg)
+        else:
+            console.print(x, y, char)
+    except Exception as e:
+        # Log rendering failures (especially for Unicode characters)
+        import logging
+        logging.error(f"render_char_safe failed at ({x}, {y}): char={repr(char)}, fg={fg}, bg={bg}, error={e}")
+        # Try fallback with simple ASCII
+        try:
+            console.print(x, y, '?', fg=(255, 255, 0) if fg is None else fg, bg=(0, 0, 0) if bg is None else bg)
+        except:
+            pass  # Give up if even fallback fails
 
 
 class WindowManager:

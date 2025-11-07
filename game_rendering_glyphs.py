@@ -478,7 +478,7 @@ class GlyphsMapRenderer(MapRendererBase):
             pass
     
     def _render_movement_prediction(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
-        """Render next 3 predicted moves for all moving enemies."""
+        """Render next 3 predicted moves for all moving enemies using directional arrows."""
         threat_scan_active = game.game_state.threat_scan_turns > 0
 
         # Get renderer for graphics mode
@@ -488,6 +488,10 @@ class GlyphsMapRenderer(MapRendererBase):
 
         visible_count = 0
         for enemy in game.enemies:
+            # Skip disabled enemies - they can't move
+            if enemy.disabled_turns > 0:
+                continue
+
             # Show patrol routes for visible enemies OR if Threat Scan is active
             can_see_enemy = game.player.can_see_enemy(enemy, game.game_map)
 
@@ -496,64 +500,66 @@ class GlyphsMapRenderer(MapRendererBase):
                 visible_count += 1
                 next_positions = game.get_enemy_next_positions(enemy, 3)
 
+                # Use enemy's current position as the "from" position for the first arrow
+                prev_pos = enemy.position
+
                 for i, point in enumerate(next_positions):
-                    # Skip rendering movement prediction if there's an enemy at this position
+                    # Skip rendering arrow if there's a character (player or enemy) at this position
+                    # Don't draw arrows over the player or other enemies
+                    player_at_point = (game.player.x == point.x and game.player.y == point.y)
                     enemy_at_point = any(e.position.x == point.x and e.position.y == point.y for e in game.enemies)
-                    if enemy_at_point:
+
+                    if player_at_point or enemy_at_point:
+                        prev_pos = point  # Update prev_pos for next iteration
                         continue
 
                     screen_x = point.x - camera_offset.x
                     screen_y = point.y - camera_offset.y + 1
-                    if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
-                        1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                        if use_graphics and renderer:
-                            # Graphics mode: Render movement prediction sprite with color_mod
-                            texture = self.tile_manager.get_tile("movement_prediction")
-                            if texture:
-                                tile_rect = self._get_tile_rect(screen_x, screen_y)
-                                # Apply color based on position (brightness fades with distance)
-                                if i == 0:
-                                    texture.color_mod = ColorManager.get_targeting_color("prediction_bright")
-                                elif i == 1:
-                                    texture.color_mod = ColorManager.get_targeting_color("prediction_medium")
-                                else:
-                                    texture.color_mod = ColorManager.get_targeting_color("prediction_dim")
-                                renderer.copy(texture, dest=tile_rect)
-                                # Reset color_mod
-                                normal_tint = Colors.PURE_WHITE  # normal tint consolidated
-                                texture.color_mod = normal_tint
-                            else:
-                                logging.warning("_render_movement_prediction: movement_prediction texture not found!")
-                        else:
-                            # Classic mode: Preserve existing background color if present (e.g., vision overlay)
-                            try:
-                                # CRITICAL: TCOD arrays use [y, x] indexing, not [x, y]!
-                                current_bg = tuple(console.bg[screen_y, screen_x][:3])
-                                # Use current background if it's not black, otherwise use black
-                                bg_color = current_bg if current_bg != (0, 0, 0) else Colors.BLACK
-                            except (IndexError, AttributeError):
-                                bg_color = Colors.BLACK
+                    in_viewport = (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
+                                   1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT)
 
-                            # Ensure bg_color is a proper tuple to prevent TCOD ColorRGB errors
-                            bg_color = ensure_color_tuple(bg_color)
+                    if in_viewport:
+                        try:
+                            # Get enemy color based on alert state (yellow/orange/red/blue)
+                            enemy_color = enemy.get_color()
 
-                            # Large bright yellow shapes for all enemy movement prediction
+                            # Apply dimming based on position in queue (1st=full, 2nd=75%, 3rd=50%)
                             if i == 0:
-                                # Next immediate move - brightest and largest
-                                color = ColorManager.get_targeting_color("prediction_bright")
-                                # ○ (circle) for enemy move intent
-                                symbol = GameGlyphs.TARGETING
+                                dimming_factor = 1.0  # Full brightness
                             elif i == 1:
-                                # Second move - slightly dimmer but still bright
-                                color = ColorManager.get_targeting_color("prediction_medium")
-                                # ○ (circle) for enemy move intent
-                                symbol = GameGlyphs.TARGETING
+                                dimming_factor = 0.75  # Medium brightness
                             else:
-                                # Third+ moves - still bright yellow
-                                color = ColorManager.get_targeting_color("prediction_dim")
-                                # ○ (circle) for enemy move intent
-                                symbol = GameGlyphs.TARGETING
-                            render_char_safe(console, screen_x, screen_y, symbol, fg=color, bg=bg_color)
+                                dimming_factor = 0.5  # Dim
+
+                            # Apply dimming to enemy color
+                            dimmed_color = tuple(int(c * dimming_factor) for c in enemy_color)
+
+                            # Safety check - ensure color is visible
+                            if sum(dimmed_color) < 30:  # Too dark
+                                dimmed_color = (100, 100, 100)  # Fallback gray
+
+                            # Use black background for arrows (don't preserve vision overlay)
+                            bg_color = Colors.BLACK
+
+                            # Get arrow character
+                            arrow_char = prev_pos.arrow_char_to(point)
+                        except Exception as e:
+                            logging.error(f"Error setting up arrow: {e}")
+                            continue  # Skip this arrow
+
+                        # Render directional arrow
+                        try:
+                            render_char_safe(console, screen_x, screen_y, arrow_char, fg=dimmed_color, bg=bg_color)
+                        except Exception as e:
+                            logging.error(f"Failed to render arrow at ({screen_x},{screen_y}): {e}")
+                            # Try fallback rendering with simple values
+                            try:
+                                render_char_safe(console, screen_x, screen_y, '?', fg=(255, 255, 0), bg=(0, 0, 0))
+                            except:
+                                pass  # Give up if even fallback fails
+
+                    # Update prev_pos for next arrow
+                    prev_pos = point
 
     def _render_gateway(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
         """Render the level gateway (classic mode only - graphics mode renders in sprite layer)."""
@@ -633,21 +639,6 @@ class GlyphsMapRenderer(MapRendererBase):
                         # Normal enemy rendering
                         render_char_safe(console, console_x, console_y, enemy.type_data.symbol,
                                     fg=enemy.get_color(), bg=Colors.BLACK)
-
-    def _render_enemy_movement_prediction(self, console: tcod.console.Console, enemy, camera_offset: Position, game):
-        """Render faint indicators showing where enemy will move."""
-        # Show up to 3 queued moves
-        prediction_color = tuple(c // 2 for c in enemy.get_color())  # Half brightness
-
-        for i, next_pos in enumerate(enemy.move_queue[:3]):
-            screen_x = next_pos.x - camera_offset.x
-            screen_y = next_pos.y - camera_offset.y + 1
-
-            if (0 <= screen_x < GameConfig.GAME_AREA_WIDTH() and
-                1 <= screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
-                # Render dot or small indicator for predicted position
-                # Use '·' (small dot) for movement prediction
-                render_char_safe(console, screen_x, screen_y, '·', fg=prediction_color, bg=Colors.BLACK)
 
     def _render_autowalk_path(self, console: tcod.console.Console, game, camera_offset: Position):
         """Render the planned auto-walk path with visual indicators."""

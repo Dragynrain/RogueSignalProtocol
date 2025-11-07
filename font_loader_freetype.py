@@ -48,22 +48,31 @@ def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: in
     # Create empty tileset
     tileset = tcod.tileset.Tileset(glyph_width, glyph_height)
 
-    # Default character set: printable ASCII + box drawing + common symbols
+    # Default character set: Load ALL available glyphs from the font
     if chars is None:
-        chars = (
-            # Printable ASCII (32-126)
-            "".join(chr(i) for i in range(32, 127)) +
-            # Box drawing - double line (used everywhere: walls, UI, dialogues)
-            "║═╔╗╚╝╠╣╦╩╬" +
-            # Box drawing - heavy line
-            "┃━┏┓┗┛┣┫┳┻╋" +
-            # Card suits (used for special nodes)
-            "♠♥♦♣" +
-            # Game symbols
-            "☺•○■§♫◘◙" +
-            # Arrow symbols (used in menus and UI)
-            "↑↓←→↕↔"
-        )
+        # Scan font for all available characters (KreativeSquare has ~568 glyphs)
+        unicode_ranges = [
+            (0x0020, 0x007F),  # Basic Latin (ASCII)
+            (0x0080, 0x00FF),  # Latin-1 Supplement
+            (0x2190, 0x21FF),  # Arrows
+            (0x2500, 0x257F),  # Box Drawing
+            (0x2580, 0x259F),  # Block Elements
+            (0x25A0, 0x25FF),  # Geometric Shapes
+            (0x2600, 0x26FF),  # Miscellaneous Symbols
+            (0x2700, 0x27BF),  # Dingbats
+        ]
+
+        available_chars = []
+        for start, end in unicode_ranges:
+            for codepoint in range(start, end + 1):
+                char_index = face.get_char_index(codepoint)
+                if char_index != 0:  # Glyph exists in font
+                    try:
+                        available_chars.append(chr(codepoint))
+                    except:
+                        pass
+
+        chars = "".join(available_chars)
 
     # Load each character
     for char in chars:
