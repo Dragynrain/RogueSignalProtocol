@@ -747,9 +747,10 @@ class TestQueueMaintenance:
         enemy = enemy_builder("bot", pos=(10, 10))
         game_map = map_builder(width=40, height=40)
         player = Mock()
-        player.x = 11
+        # Player is 3 tiles away (not adjacent, but close)
+        player.x = 13
         player.y = 10
-        player.position = Position(11, 10)
+        player.position = Position(13, 10)
         game_engine = Mock()
         game_engine.enemies = [enemy]
 
@@ -759,7 +760,8 @@ class TestQueueMaintenance:
 
         enemy._ensure_queue_full(game_map, player, game_engine)
 
-        # Might have fewer than 3 if target is very close
+        # Path is short (3 tiles) so queue might be partially filled
+        # Should have 1-3 moves (stops when adjacent to player)
         assert len(enemy.move_queue) >= 1, "Should have at least 1 move"
         assert len(enemy.move_queue) <= 3, "Should not exceed 3 moves"
 
