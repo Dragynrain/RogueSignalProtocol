@@ -489,10 +489,22 @@ class TestLookModeWorkflow:
 
         # Initial camera should center on player/cursor
         initial_camera = renderer._calculate_camera_offset(game.player, game)
-        assert initial_camera.x == max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                                              game.player.x - viewport_width // 2))
-        assert initial_camera.y == max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                                              game.player.y - viewport_height // 2))
+
+        # Calculate expected camera position (handles cases where viewport > map)
+        if viewport_width >= GameConfig.MAP_WIDTH:
+            expected_x = -(viewport_width - GameConfig.MAP_WIDTH) // 2
+        else:
+            expected_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
+                                   game.player.x - viewport_width // 2))
+
+        if viewport_height >= GameConfig.MAP_HEIGHT:
+            expected_y = -(viewport_height - GameConfig.MAP_HEIGHT) // 2
+        else:
+            expected_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
+                                   game.player.y - viewport_height // 2))
+
+        assert initial_camera.x == expected_x
+        assert initial_camera.y == expected_y
 
         # Move cursor far away from player
         distance = viewport_width // 2 + 5
@@ -508,8 +520,8 @@ class TestLookModeWorkflow:
             # If map is larger than viewport, camera should move to follow cursor
             assert new_camera.x != initial_camera.x, "Camera should scroll when cursor moves away from player"
         else:
-            # If map fits entirely in viewport, camera stays at origin
-            assert new_camera.x == 0, "Camera should stay at origin when map fits in viewport"
+            # If map fits entirely in viewport, camera stays centered (may be negative to center map)
+            assert new_camera.x == expected_x, "Camera should stay centered when map fits in viewport"
 
         # Exit look mode
         game.look_mode = False
