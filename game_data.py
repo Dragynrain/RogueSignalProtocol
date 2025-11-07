@@ -72,7 +72,9 @@ class GameData:
         'memory_leak': ExploitDefinition("Memory Leak", 2, 30, 1, "combat", 0, TargetingMode.AREA,
                                         "Target enemies forget they saw you (3x3 area, blinds for 3 turns)", 3, 1),  # Non-lethal area crowd control, 3-turn blindness, radius 1
         'network_scan': ExploitDefinition("Network Scan", 1, 15, 0, "utility", 0, TargetingMode.NONE,
-                                     "Reveals all cooling nodes, CPU nodes, and ghost nodes on the level", 0, 0)  # Cheap utility
+                                     "Reveals all cooling nodes, CPU nodes, and ghost nodes on the level", 0, 0),  # Cheap utility
+        'logic_bomb': ExploitDefinition("Logic Bomb", 2, 35, 4, "combat", 15, TargetingMode.AREA,
+                                       "Deploy explosive that detonates in radius (15 damage, 2 tile radius) WARNING: Friendly fire!", 0, 2)  # AoE damage with friendly fire, radius 2
     }
 
 
