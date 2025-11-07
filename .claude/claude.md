@@ -18,10 +18,11 @@
 2. **NO AUTO-COMMITS**: Always ask before committing. Exception: ONLY when user says "commit this" or "make a commit"
 3. **Check existing keybindings**: Before assigning hotkeys, grep for existing uses first
 4. **Fix what you're asked to fix**: Don't dismiss test failures as "unrelated" - if asked to fix all tests, fix all tests
-5. **Unicode character rules**:
-   - **Game UI (TCOD)**: Unicode arrows/symbols OK (↕ ↑ ↓ ← → ↗ ↖ ↙ ↘) - KreativeSquare font supports them
-   - **Logging/console**: ASCII only - Windows CP1252 breaks on Unicode. Use `[DEATH]`, `[OK]`, `->` not 💀, ✅
-   - **Emoji**: Never use anywhere (chat messages to user are OK)
+5. **Character encoding rules**:
+   - **Game UI (TCOD)**: Unicode OK (↕ ↑ ↓ ← → ↗ ↖ ↙ ↘) - KreativeSquare font supports
+   - **Logging/console**: ASCII only - Windows CP1252 breaks. Use `[DEATH]`, `->` not 💀, →
+   - **Chat with user**: Emoji OK 😊
+   - **Code/commits**: Never use emoji
 
 ---
 
@@ -33,10 +34,9 @@
 ---
 
 ## 2. Compatibility
-- **Font:** KreativeSquare TrueType (64×64 native, scalable to any resolution via FreeType)
-- **Character set:** Unicode (full box-drawing, symbols, card suits, arrows)
-- Target: Windows 10/11 (cmd/PowerShell).
-- Rendering: Unicode console + TCOD graphics (sync both).
+- **Font:** KreativeSquare TrueType (64×64 native, scalable via FreeType)
+- Target: Windows 10/11 (cmd/PowerShell)
+- Rendering: Unicode console + TCOD graphics (sync both)
 
 ---
 
@@ -80,11 +80,7 @@
 
 **ALWAYS TEST BEFORE COMMITTING. NO EXCEPTIONS.**
 
-| Command | Purpose |
-|---------|---------|
-| `python test_commands.py full` | Full suite + coverage (pre-commit) |
-| `python test_commands.py quick` | Unit tests only |
-| `.venv/Scripts/python.exe -m pytest` | Direct pytest |
+**Test commands:** `python test_commands.py full` (pre-commit) | `quick` (unit only) | `.venv/Scripts/python.exe -m pytest` (direct)
 
 **Policy:** Update tests with code changes. Prefer integration over mocks. Run full suite after refactor.
 
@@ -95,10 +91,8 @@
 ## 6. Logging & Errors
 
 **Logging rules:**
-- **Console/file logs:** `logging.debug/info/error()` - tech/debug info, ASCII only (Windows CP1252 limitation)
+- **Console/file logs:** `logging.debug/info/error()` - tech/debug info (see rule #0.5 for encoding)
 - **Game message log:** `MessageLog.add_message()` - gameplay events, Unicode OK (rendered by TCOD)
-- **Game UI (TCOD-rendered):** Unicode arrows/symbols OK (↕ ↑ ↓ ← → ↗ ↖ ↙ ↘) - KreativeSquare supports them
-- **Logging output:** ASCII only (→ = `->`, 💀 = `[DEATH]`). Windows console breaks on Unicode.
 - Don't mix console and game logs
 
 **Config:**
@@ -159,24 +153,12 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 
 ## 7c. Mouse Event Handling
 
-**CRITICAL: Read `.claude/TCOD_GUIDE.md` section "Mouse Coordinate Conversion" (lines 48-84) BEFORE adding mouse support!**
+**CRITICAL: Read `.claude/TCOD_GUIDE.md` Mouse section (lines 48-84) BEFORE adding mouse support!**
 
-**Two different coordinate systems:**
-
-1. **Menu/UI screens** (console tiles 0-79, 0-49)
-   - Use: `MenuMouseHandler.convert_to_tile_coords(event, context)`
-   - File: `game_mouse_utils.py`
-   - For: Main menu, settings, graphics preview, help screens
-
-2. **In-game world** (map positions 0-99, 0-99)
-   - Use: `InputHandler._mouse_pixel_to_world(pixel_x, pixel_y)`
-   - File: `game_input.py`
-   - For: Gameplay clicks, targeting, look mode
-
-**Never use `context.convert_event()`** - doesn't work with our multi-layer SDL rendering.
-
-**Read first:** `.claude/TCOD_GUIDE.md` (section: Mouse Coordinate Conversion)
-**Then see:** `.claude/MOUSE_COORDINATE_HANDLING.md` (post-mortem & best practices)
+- Menu/UI: Use `MenuMouseHandler.convert_to_tile_coords()` (game_mouse_utils.py)
+- In-game world: Use `InputHandler._mouse_pixel_to_world()` (game_input.py)
+- **Never use `context.convert_event()`** - doesn't work with our SDL rendering
+- Full details: `.claude/MOUSE_COORDINATE_HANDLING.md`
 
 ---
 
@@ -222,7 +204,4 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 ---
 
 ## 12. Communication Style
-- **In chat with user:** Use emoji freely for clarity, fun, or energy 😊
-- **In game UI (TCOD):** Unicode arrows/symbols OK (↕ ↑ ↓ ← → ↗ ↖ ↙ ↘) - KreativeSquare supports them
-- **In logging/console output:** ASCII only - Windows CP1252 breaks on Unicode
-- **Emoji in code:** Never use (breaks cross-platform) - see rule #0.4
+- Follow rule #0.5 for character encoding (Unicode in game UI, ASCII in logs, emoji OK in chat)
