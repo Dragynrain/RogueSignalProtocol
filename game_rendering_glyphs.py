@@ -98,17 +98,17 @@ class GlyphsMapRenderer(MapRendererBase):
         if pos_tuple in game.game_state.revealed_special_nodes:
             node_type = game.game_state.revealed_special_nodes[pos_tuple]
             if node_type == "cooling":
-                # ♦ for cooling nodes, faded cyan
+                # ♢ hollow diamond for cooling nodes (consumable)
                 cooling_color = ColorManager.get_terrain_variant_color("cooling_node")
-                render_char_safe(console, screen_x, screen_y, GameGlyphs.COOLING, fg=cooling_color, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.COOLING_NODE, fg=cooling_color, bg=Colors.BLACK)
             elif node_type == "cpu":
-                # ♥ for CPU nodes, faded red
+                # ♡ hollow heart for CPU nodes (consumable)
                 cpu_color = ColorManager.get_terrain_variant_color("cpu_node")
-                render_char_safe(console, screen_x, screen_y, GameGlyphs.CPU_OVERLOAD, fg=cpu_color, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.CPU_NODE, fg=cpu_color, bg=Colors.BLACK)
             elif node_type == "ghost":
-                # ♠ for ghost nodes, faded purple
+                # ♤ hollow spade for ghost nodes (consumable)
                 ghost_color = ColorManager.get_terrain_variant_color("ghost_node")
-                render_char_safe(console, screen_x, screen_y, GameGlyphs.GHOST_MODE, fg=ghost_color, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.GHOST_NODE, fg=ghost_color, bg=Colors.BLACK)
             elif node_type == "gateway":
                 # Gateway in memory - darker yellow
                 gateway_dark = ColorManager.get_terrain_variant_color("gateway")
@@ -232,8 +232,8 @@ class GlyphsMapRenderer(MapRendererBase):
                 # This should never happen, but fallback to white
                 logging.warning(f"CodeHack color_name is not string: {patch.color_name} (type: {type(patch.color_name)})")
                 actual_color = Colors.WHITE
-            # § (section) for code fragments
-            render_char_safe(console, screen_x, screen_y, GameGlyphs.SECTION, fg=actual_color, bg=Colors.BLACK)
+            # ❀ (white florette) for code fragments
+            render_char_safe(console, screen_x, screen_y, GameGlyphs.CODE_HACK, fg=actual_color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.exploit_pickups:
             try:
                 exploit_item = game.game_map.exploit_pickups[(world_pos.x, world_pos.y)]
@@ -247,34 +247,45 @@ class GlyphsMapRenderer(MapRendererBase):
                         # Fallback to magenta if category not found
                         color_tuple = Colors.MAGENTA
 
-                    render_char_safe(console, screen_x, screen_y, '&', fg=color_tuple, bg=Colors.BLACK)
+                    render_char_safe(console, screen_x, screen_y, GameGlyphs.EXPLOIT, fg=color_tuple, bg=Colors.BLACK)
                 else:
                     logging.error(f"Unknown exploit key: {exploit_item.exploit_key}")
-                    render_char_safe(console, screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
+                    render_char_safe(console, screen_x, screen_y, GameGlyphs.EXPLOIT, fg=Colors.MAGENTA, bg=Colors.BLACK)
             except AttributeError as e:
                 logging.error(f"ExploitDefinition attribute error at {world_pos}: {e}")
                 logging.error(f"Available attributes: {dir(exploit_def) if 'exploit_def' in locals() else 'exploit_def not defined'}")
                 logging.error(traceback.format_exc())
                 # Fallback to default magenta color - don't change appearance due to errors
-                render_char_safe(console, screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.EXPLOIT, fg=Colors.MAGENTA, bg=Colors.BLACK)
             except Exception as e:
                 logging.error(f"Unexpected error rendering exploit at {world_pos}: {e}")
                 logging.error(traceback.format_exc())
                 # Fallback to default magenta color - don't change appearance due to errors
-                render_char_safe(console, screen_x, screen_y, '&', fg=Colors.MAGENTA, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.EXPLOIT, fg=Colors.MAGENTA, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.permanent_upgrades:
             upgrade_key = game.game_map.permanent_upgrades[(world_pos.x, world_pos.y)]
             upgrade = GameUpgrades.UPGRADES[upgrade_key]
             # upgrade.color is already a tuple, use it directly
             color = ensure_color_tuple(upgrade.color)
-            # ◙ (inverse circle) for permanent upgrades (different from movement prediction)
-            render_char_safe(console, screen_x, screen_y, GameGlyphs.CIRCLE_DOT, fg=color, bg=Colors.BLACK)
+            # Different symbols for each upgrade type (filled suits)
+            if upgrade_key == "cpu_boost":
+                # ♥ filled heart for CPU upgrades (permanent)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.CPU_UPGRADE, fg=color, bg=Colors.BLACK)
+            elif upgrade_key == "heat_boost":
+                # ♦ filled diamond for cooling upgrades (permanent)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.COOLING_UPGRADE, fg=color, bg=Colors.BLACK)
+            elif upgrade_key == "ram_boost":
+                # ▣ grid pattern for RAM upgrades (permanent)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.RAM_UPGRADE, fg=color, bg=Colors.BLACK)
+            else:
+                # Fallback to star for unknown upgrade types
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.PERMANENT_UPGRADE, fg=color, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.story_fragments:
             # ♫ (double music note) for lore scraps with cycling colors
             fragment_color = self._get_story_fragment_color(game.turn)
             render_char_safe(console, screen_x, screen_y, GameGlyphs.STORY_FRAGMENT, fg=fragment_color, bg=Colors.BLACK)
         elif game.game_map.is_blind_spot(world_pos):
-            # ◘ (inverse bullet) for blind spots
+            # ♠ filled spade for blind spots (obscured vision)
             render_char_safe(console, screen_x, screen_y, GameGlyphs.BLIND_SPOT, fg=Colors.GHOST_PURPLE, bg=Colors.BLACK)
         else:
             # • (bullet) for empty space
@@ -660,8 +671,8 @@ class GlyphsMapRenderer(MapRendererBase):
 
                 # Use different symbols for visual clarity
                 if i == len(path) - 1:
-                    # Destination: use 'X' marker
-                    symbol = 'X'
+                    # Destination: use bullseye marker
+                    symbol = GameGlyphs.TARGETING
                     color = ColorManager.get("path_colors", "path_bright")
                 else:
                     # Path steps: use '·' (small dot)
@@ -705,11 +716,11 @@ class GlyphsMapRenderer(MapRendererBase):
         if game.look_mode:
             cursor_pos = game.look_cursor_position
             cursor_color = Colors.CYAN  # Cyan for look mode
-            char = 'X'
+            char = GameGlyphs.TARGETING
         else:  # targeting_mode
             cursor_pos = game.cursor_position
             cursor_color = Colors.RED  # Red for targeting mode
-            char = 'X'
+            char = GameGlyphs.TARGETING
 
         # Get renderer for graphics mode
         renderer = None

@@ -12,22 +12,34 @@ class GameGlyphs:
     # Player and entities
     PLAYER = '☺'  # U+263A - White smiling face (☻ U+263B not in CascadiaCode)
 
-    # Status effects (overlays)
-    COOLING = '♦'       # U+2666 - Diamond
-    CPU_OVERLOAD = '♥'  # U+2665 - Heart
-    GHOST_MODE = '♠'    # U+2660 - Spade
+    # Nodes (consumable map pickups - hollow suits)
+    CPU_NODE = '♡'          # U+2661 - Hollow heart (CPU restore)
+    COOLING_NODE = '♢'      # U+2662 - Hollow diamond (cooling restore)
+    GHOST_NODE = '♤'        # U+2664 - Hollow spade (ghost mode pickup)
+
+    # Permanent upgrades (permanent stat boosts - filled suits + grid)
+    CPU_UPGRADE = '♥'       # U+2665 - Filled heart (permanent CPU boost)
+    COOLING_UPGRADE = '♦'   # U+2666 - Filled diamond (permanent heat capacity)
+    RAM_UPGRADE = '▣'       # U+25A3 - Square with fill (permanent RAM boost)
+
+    # Legacy aliases (for backward compatibility with status effect overlays)
+    CPU_OVERLOAD = CPU_UPGRADE    # ♥ - Also used as status overlay
+    COOLING = COOLING_UPGRADE     # ♦ - Also used as status overlay
+    GHOST_MODE = GHOST_NODE       # ♤ - Also used as status overlay
 
     # Terrain
     FLOOR_EXPLORED = '•'  # U+2022 - Bullet
-    BLIND_SPOT = '◘'      # U+25D8 - Inverse bullet (fallback: '●' U+25CF if needed)
+    BLIND_SPOT = '♠'      # U+2660 - Filled spade (obscured vision area)
 
     # UI indicators
-    TARGETING = '○'     # U+25CB - Circle
+    TARGETING = '◎'     # U+25CE - Bullseye (targeting/autowalk destination)
     CIRCLE_DOT = '◙'    # U+25D9 - Inverse circle (fallback: '◉' U+25C9 if needed)
+    EXPLOIT = '⚠'       # U+26A0 - Warning sign (exploits on map)
 
     # Items and special
     STORY_FRAGMENT = '♫'  # U+266B - Musical notes
-    SECTION = '§'         # U+00A7 - Section sign
+    CODE_HACK = '❀'       # U+2740 - White florette (code fragments/patches)
+    PERMANENT_UPGRADE = '★'  # U+2605 - Filled star (permanent upgrades)
 
     # Walls - Double-line (used everywhere: gameplay, menus, dialogues, frames)
     WALL_VERTICAL = '║'         # U+2551

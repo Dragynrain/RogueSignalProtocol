@@ -134,7 +134,7 @@ class GraphicalHelpMenu:
                 # Footer - centered
                 (15, 37, "COLORS: Yellow=Unaware  Orange=Alert  Red=Hostile", Colors.CYAN),
                 (13, 39, "Enemies alert nearby allies when they spot you!", Colors.YELLOW),
-                (12, 41, "Use blind spots (*) to hide and watch patrol patterns!", Colors.ELECTRIC_PURPLE),
+                (12, 41, "Use blind spots (♠) to hide and watch patrol patterns!", Colors.ELECTRIC_PURPLE),
             ]
         }
 
@@ -214,7 +214,7 @@ class GraphicalHelpMenu:
                 # Bottom info - centered
                 (9, 35, "UPGRADES: Permanent stat increases - keep across ALL levels", Colors.CYAN),
                 (13, 37, "RESOURCE NODES: CPU=Health  Cooling=Heat  Ghost=Trace", Colors.CYAN),
-                (13, 39, "STEALTH: Hide in blind spots (◘) to avoid enemy detection!", Colors.ELECTRIC_PURPLE),
+                (13, 39, "STEALTH: Hide in blind spots (♠) to avoid enemy detection!", Colors.ELECTRIC_PURPLE),
             ]
         }
 
@@ -267,7 +267,7 @@ class GraphicalHelpMenu:
                 (45, 16, "NetworkScan: See nodes", self.NEON_PINK),
                 (45, 17, "LogWiper/Antivirus/Leak", self.NEON_PINK),
 
-                (45, 19, "BLIND SPOTS (◘):", Colors.CYAN),
+                (45, 19, "BLIND SPOTS (♠):", Colors.CYAN),
                 (45, 20, "Hide from enemies", Colors.ELECTRIC_PURPLE),
                 (45, 21, "+10 damage bonus!", Colors.YELLOW),
 
@@ -278,9 +278,10 @@ class GraphicalHelpMenu:
                 # Full-width tips at bottom - centered, non-bulleted
                 (30, 31, "SURVIVAL TIPS:", Colors.YELLOW),
                 (8, 33, "Attacking from blind spots gives +10 damage bonus to all attacks!", Colors.WHITE),
-                (6, 35, "Watch your trace level to avoid the Admin Avatar and use ghost nodes", Colors.RED),
-                (18, 36, "or log wiper to reduce your trace level", Colors.RED),
-                (8, 38, "If you overheat, you take CPU damage but can still use exploits", Colors.CYAN),
+                (11, 34, "Move between attacks! Attacking from same spot adds +1 heat", Colors.YELLOW),
+                (6, 36, "Watch your trace level to avoid the Admin Avatar and use ghost nodes", Colors.RED),
+                (18, 37, "or log wiper to reduce your trace level", Colors.RED),
+                (8, 39, "If you overheat, you take CPU damage but can still use exploits", Colors.CYAN),
             ]
         }
 
