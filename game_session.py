@@ -398,7 +398,11 @@ class GameSession:
 
             if can_attack:
                 # Enemy is adjacent - attack instead of moving
-                self.game_engine.sound_manager.play_sound("enemy_attack")
+                # Play appropriate sound based on enemy type
+                if enemy.type == 'virus':
+                    self.game_engine.sound_manager.play_sound("virus_infection")
+                else:
+                    self.game_engine.sound_manager.play_sound("enemy_attack")
                 damage = enemy.attack_player(self.game_engine.player)
 
                 # Track attacks for inventory warning
