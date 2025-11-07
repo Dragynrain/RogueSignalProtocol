@@ -247,3 +247,217 @@ class TestEnemyCombat:
         # (disabled status doesn't prevent attack method execution)
         assert damage == test_enemy.type_data.damage  # Normal damage
         assert test_player.cpu == initial_cpu - test_enemy.type_data.damage  # Damage taken
+
+
+class TestConsecutiveAttackHeatPenalty:
+    """Test consecutive attack heat penalty mechanic."""
+
+    def test_first_attack_no_penalty(self, basic_game_engine):
+        """First attack has no heat penalty."""
+        from tests.fixtures.simple_fixtures import enemy
+
+        # Set up player at position (10, 10)
+        basic_game_engine.player.position = Position(10, 10)
+        basic_game_engine.player.heat = 0
+
+        # Create enemy adjacent to player
+        test_enemy = enemy("patrol", 11, 10)
+        basic_game_engine.enemies = [test_enemy]
+
+        # First attack
+        basic_game_engine._perform_bump_attack(test_enemy)
+
+        # Should be base heat (8) with no penalty
+        assert basic_game_engine.player.heat == 8
+        assert basic_game_engine.player.consecutive_attacks_here == 0
+
+    def test_consecutive_attacks_build_penalty(self, basic_game_engine):
+        """Consecutive attacks at same position increase heat penalty."""
+        from tests.fixtures.simple_fixtures import enemy
+
+        # Set up player at position (10, 10)
+        basic_game_engine.player.position = Position(10, 10)
+        basic_game_engine.player.heat = 0
+
+        # Create multiple enemies to attack
+        enemy1 = enemy("patrol", 11, 10)
+        enemy1.cpu = 100  # High HP so doesn't die
+        enemy1.max_cpu = 100
+        enemy2 = enemy("patrol", 11, 10)
+        enemy2.cpu = 100
+        enemy2.max_cpu = 100
+        enemy3 = enemy("patrol", 11, 10)
+        enemy3.cpu = 100
+        enemy3.max_cpu = 100
+
+        basic_game_engine.enemies = [enemy1, enemy2, enemy3]
+
+        # First attack at (10, 10)
+        basic_game_engine._perform_bump_attack(enemy1)
+        heat_after_1 = basic_game_engine.player.heat
+        assert heat_after_1 == 8  # Base heat
+
+        # Second attack at same position (10, 10)
+        basic_game_engine._perform_bump_attack(enemy2)
+        heat_after_2 = basic_game_engine.player.heat
+        assert heat_after_2 == 8 + 9  # 8 + (8 + 1 penalty) = 17
+
+        # Third attack at same position (10, 10)
+        basic_game_engine._perform_bump_attack(enemy3)
+        heat_after_3 = basic_game_engine.player.heat
+        assert heat_after_3 == 8 + 9 + 10  # 8 + 9 + (8 + 2 penalty) = 27
+
+    def test_moving_resets_penalty(self, basic_game_engine):
+        """Moving to a new position resets heat penalty."""
+        from tests.fixtures.simple_fixtures import enemy
+
+        # Set up player at position (10, 10)
+        basic_game_engine.player.position = Position(10, 10)
+        basic_game_engine.player.heat = 0
+
+        # Create enemies
+        enemy1 = enemy("patrol", 11, 10)
+        enemy1.cpu = 100
+        enemy1.max_cpu = 100
+        enemy2 = enemy("patrol", 11, 11)
+        enemy2.cpu = 100
+        enemy2.max_cpu = 100
+
+        basic_game_engine.enemies = [enemy1, enemy2]
+
+        # First attack at (10, 10)
+        basic_game_engine._perform_bump_attack(enemy1)
+        assert basic_game_engine.player.heat == 8
+
+        # Second attack at same position
+        basic_game_engine._perform_bump_attack(enemy1)
+        assert basic_game_engine.player.heat == 17  # 8 + 9
+
+        # Move player to new position
+        basic_game_engine.player.position = Position(11, 11)
+
+        # Third attack at NEW position (11, 11)
+        basic_game_engine._perform_bump_attack(enemy2)
+        heat_after_move = basic_game_engine.player.heat
+        # Should be previous heat (17) + base heat (8) with no penalty
+        assert heat_after_move == 25  # 17 + 8
+        assert basic_game_engine.player.consecutive_attacks_here == 0
+
+    def test_penalty_with_exploit_efficiency(self, basic_game_engine):
+        """Exploit efficiency reduces heat including penalty."""
+        from tests.fixtures.simple_fixtures import enemy
+
+        # Set up player at position (10, 10) with exploit efficiency
+        basic_game_engine.player.position = Position(10, 10)
+        basic_game_engine.player.heat = 0
+        basic_game_engine.player.temporary_effects['exploit_efficiency_turns'] = 5
+
+        # Create enemies
+        enemy1 = enemy("patrol", 11, 10)
+        enemy1.cpu = 100
+        enemy1.max_cpu = 100
+        enemy2 = enemy("patrol", 11, 10)
+        enemy2.cpu = 100
+        enemy2.max_cpu = 100
+
+        basic_game_engine.enemies = [enemy1, enemy2]
+
+        # First attack with efficiency (8 * 0.7 = 5 heat)
+        basic_game_engine._perform_bump_attack(enemy1)
+        assert basic_game_engine.player.heat == 5  # 8 * 0.7 = 5.6 -> 5
+
+        # Second attack with efficiency and penalty ((8+1) * 0.7 = 6 heat)
+        basic_game_engine._perform_bump_attack(enemy2)
+        heat_after_2 = basic_game_engine.player.heat
+        # 5 + (9 * 0.7) = 5 + 6.3 = 5 + 6 = 11
+        assert heat_after_2 == 11
+
+    def test_penalty_message_displays(self, basic_game_engine):
+        """Penalty message displays when penalty > 0."""
+        from tests.fixtures.simple_fixtures import enemy
+
+        # Set up player at position (10, 10)
+        basic_game_engine.player.position = Position(10, 10)
+        basic_game_engine.player.heat = 0
+
+        # Create enemies
+        enemy1 = enemy("patrol", 11, 10)
+        enemy1.cpu = 100
+        enemy1.max_cpu = 100
+        enemy2 = enemy("patrol", 11, 10)
+        enemy2.cpu = 100
+        enemy2.max_cpu = 100
+
+        basic_game_engine.enemies = [enemy1, enemy2]
+
+        # First attack - no penalty message
+        basic_game_engine._perform_bump_attack(enemy1)
+        messages = [msg.text for msg in basic_game_engine.message_log.messages]
+        penalty_messages = [msg for msg in messages if "Attacking from same spot:" in msg]
+        assert len(penalty_messages) == 0  # No penalty on first attack
+
+        # Second attack - should show penalty message
+        basic_game_engine._perform_bump_attack(enemy2)
+        messages = [msg.text for msg in basic_game_engine.message_log.messages]
+        penalty_messages = [msg for msg in messages if "Attacking from same spot:" in msg]
+        assert len(penalty_messages) == 1
+        assert "+1 heat penalty" in penalty_messages[0]
+
+    def test_multiple_consecutive_attacks_escalate(self, basic_game_engine):
+        """Heat penalty escalates with each consecutive attack."""
+        from tests.fixtures.simple_fixtures import enemy
+
+        # Set up player at position (10, 10)
+        basic_game_engine.player.position = Position(10, 10)
+        basic_game_engine.player.heat = 0
+
+        # Create 5 enemies with high HP
+        enemies = []
+        for i in range(5):
+            e = enemy("firewall", 11, 10)  # High HP enemy
+            e.cpu = 200
+            e.max_cpu = 200
+            enemies.append(e)
+
+        basic_game_engine.enemies = enemies
+
+        # Attack 5 times in a row at same position
+        expected_heat = 0
+        for i, e in enumerate(enemies):
+            basic_game_engine._perform_bump_attack(e)
+            expected_heat += (8 + i)  # 8, 9, 10, 11, 12
+
+        # Total should be 8 + 9 + 10 + 11 + 12 = 50
+        assert basic_game_engine.player.heat == expected_heat
+        assert expected_heat == 50
+        assert basic_game_engine.player.consecutive_attacks_here == 4  # 0-indexed
+
+    def test_penalty_resets_only_on_position_change(self, basic_game_engine):
+        """Penalty only resets when position actually changes."""
+        from tests.fixtures.simple_fixtures import enemy
+
+        # Set up player at position (10, 10)
+        basic_game_engine.player.position = Position(10, 10)
+        basic_game_engine.player.heat = 0
+
+        # Create enemies
+        enemy1 = enemy("patrol", 11, 10)
+        enemy1.cpu = 100
+        enemy1.max_cpu = 100
+        enemy2 = enemy("patrol", 11, 10)
+        enemy2.cpu = 100
+        enemy2.max_cpu = 100
+
+        basic_game_engine.enemies = [enemy1, enemy2]
+
+        # First attack
+        basic_game_engine._perform_bump_attack(enemy1)
+        assert basic_game_engine.player.consecutive_attacks_here == 0
+
+        # "Move" to same position (shouldn't reset)
+        basic_game_engine.player.position = Position(10, 10)
+
+        # Second attack - penalty should still apply
+        basic_game_engine._perform_bump_attack(enemy2)
+        assert basic_game_engine.player.heat == 17  # 8 + 9, penalty applied
+        assert basic_game_engine.player.consecutive_attacks_here == 1

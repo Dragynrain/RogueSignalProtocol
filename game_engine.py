@@ -436,7 +436,8 @@ class GameEngine:
         - Stealth bonus: +10 if attacking from shadows or while invisible
 
         Effects:
-        - Generates 8 heat (reduced by 30% if exploit efficiency active)
+        - Generates 8 base heat + 1 per consecutive attack at same position
+        - Heat reduced by 30% if exploit efficiency active
         - Restores CPU on enemy elimination
         - Makes damaged enemies hostile and aware of player position
         - Preserves patrol state for PATROL enemies before hostility
@@ -506,11 +507,30 @@ class GameEngine:
             target_enemy.last_seen_player = Position(self.player.x, self.player.y)
 
         # Generate some heat from the attack
-        heat_generated = 8
+        # Track consecutive attacks at same location for heat penalty
+        if not hasattr(self.player, 'last_attack_position'):
+            self.player.last_attack_position = None
+            self.player.consecutive_attacks_here = 0
+
+        if self.player.position == self.player.last_attack_position:
+            self.player.consecutive_attacks_here += 1
+        else:
+            self.player.consecutive_attacks_here = 0
+
+        self.player.last_attack_position = Position(self.player.x, self.player.y)
+
+        # Base heat + penalty for standing still
+        heat_penalty = self.player.consecutive_attacks_here
+        heat_generated = 8 + heat_penalty
+
         if self.player.temporary_effects['exploit_efficiency_turns'] > 0:
             heat_generated = int(heat_generated * 0.7)  # Reduced heat with efficiency
 
-        self.player.heat = min(100, self.player.heat + heat_generated)
+        # Show penalty message if it's building up
+        if heat_penalty > 0:
+            self.message_log.add_message(f"Attacking from same spot: +{heat_penalty} heat penalty", Colors.YELLOW)
+
+        self.player.heat = min(self.player.max_heat, self.player.heat + heat_generated)
 
     def _move_cursor(self, dx: int, dy: int):
         """Move targeting cursor."""
