@@ -67,7 +67,7 @@ Report bugs/suggestions: [url=https://github.com/Dragynrain/RogueSignalProtocol/
 
 [h2]LICENSE:[/h2]
 
-GPL v3 (Free and Open Source Software)
+MIT License (Free and Open Source Software)
 
 =================================================================
 ALTERNATIVE - SIMPLIFIED VERSION (Less BBCode)
@@ -131,4 +131,4 @@ REQUIREMENTS:
 
 LICENSE:
 
-GPL v3 (Free and Open Source Software)
+MIT License (Free and Open Source Software)

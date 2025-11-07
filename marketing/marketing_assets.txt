@@ -224,7 +224,7 @@ a) Short Game Description
 
   Availability
 
-  Rogue Signal Protocol is available now on [itch.io/Steam] for Windows. The game is open source under GPL v3 license.
+  Rogue Signal Protocol is available now on [itch.io/Steam] for Windows. The game is open source under MIT license.
 
   Download/Purchase: [URL]
   Official Website: [URL]
@@ -257,7 +257,7 @@ a) Short Game Description
   Q: What makes this different from other stealth roguelikes?A: Four unique elements: (1) enemies show their planned movement 3 turns ahead for tactical planning, (2) achievement system
   tracking progress across runs, (3) rich cyberpunk narrative with 20+ story fragments, (4) every game system (heat, trace, CPU) reinforces the digital consciousness theme.
 
-  Q: Can I mod the game?A: Absolutely! The game uses JSON files for all content (enemies, exploits, narrative). The codebase is open source (GPL v3). See README_DEV.md for modding details.
+  Q: Can I mod the game?A: Absolutely! The game uses JSON files for all content (enemies, exploits, narrative). The codebase is open source (MIT license). See README_DEV.md for modding details.
 
   Q: Are there difficulty options?A: No, not yet.
 
@@ -335,7 +335,7 @@ a) Short Game Description
   —Rogue Signal Protocol
   [Your Studio Name]
 
-  P.S. Every purchase supports independent game development and keeps this project open source (GPL v3).
+  P.S. Every purchase supports independent game development and keeps this project open source (MIT license).
 
   ---
   Demo Available Email Template

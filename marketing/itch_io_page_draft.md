@@ -59,7 +59,7 @@ This is an **active alpha** - your feedback shapes development!
 * No additional software needed (standalone EXE)
 
 ### LICENSE:
-GPL v3 (Free and Open Source Software)
+MIT License (Free and Open Source Software)
 
 ---
 

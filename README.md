@@ -6,7 +6,7 @@
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![Version](https://img.shields.io/badge/version-0.8.0%20Alpha-orange.svg)
-![License](https://img.shields.io/badge/license-GPL%20v3-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ---
 
@@ -128,9 +128,9 @@ We welcome contributions! See **[README_DEV.md](README_DEV.md)** for:
 
 ## 📝 License
 
-GPL v3 - Free and Open Source Software
+MIT License - Free and Open Source Software
 
-This ensures the game remains free and open forever. See [LICENSE](LICENSE) for details.
+This permissive license allows maximum freedom for both personal and commercial use. See [LICENSE](LICENSE) for details.
 
 ---
 

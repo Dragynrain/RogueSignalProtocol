@@ -65,7 +65,7 @@ If you're an artist or sound designer interested in improving the game's polish,
 * **Testing:** 1580 automated tests (pytest)
 * **Runtime:** Windows standalone EXE (~30 MB download)
 * **Play Time:** 10-20 minutes per full 3-level run
-* **License:** GPL v3 (free and open source)
+* **License:** MIT (free and open source)
 
 ---
 
