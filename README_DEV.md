@@ -8,11 +8,11 @@
 
 Copyright (C) 2025 Adam Forster
 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See LICENSE file for full details.
+This program is free software licensed under the MIT License. You can freely use, modify, and distribute it. See LICENSE file for full details.
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue.svg)
 ![Version](https://img.shields.io/badge/version-0.8.0%20Alpha-orange.svg)
-![License](https://img.shields.io/badge/license-GPL%20v3-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ## 🎮 Game Overview
 
@@ -685,21 +685,20 @@ Use GitHub Issues with:
 
 ## ⚖️ License & Redistribution
 
-GPL v3 - Free and Open Source Software
+MIT License - Free and Open Source Software
 
 **You can:**
-- ✅ Use for any purpose
+- ✅ Use for any purpose (including commercial)
 - ✅ Study and modify the code
 - ✅ Redistribute copies
 - ✅ Distribute modified versions
+- ✅ Create proprietary derivatives
 
 **You must:**
-- ✅ Keep the GPL v3 license
-- ✅ Make source code available
-- ✅ Document your changes
-- ✅ Use GPL v3 for derivative works
+- ✅ Include the original copyright notice
+- ✅ Include the MIT license text
 
-**This ensures the game remains free and open forever!**
+**Maximum freedom for everyone - use it however you want!**
 
 ## 🎨 Game Features
 
@@ -751,17 +750,18 @@ We welcome contributions! Please feel free to:
 
 ## 📝 License
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-**GPL v3 Summary**: This software is free and open source. You can use, modify, and distribute it, but any modifications must also be released under GPL v3. This ensures the game remains free and open for everyone.
+**MIT License Summary**: This software is free and open source with minimal restrictions. You can use, modify, and distribute it for any purpose, including commercial projects, without having to open-source your modifications.
 
-Key freedoms under GPL v3:
+Key freedoms under MIT:
 - ✅ Freedom to run the program for any purpose
 - ✅ Freedom to study how the program works and modify it
 - ✅ Freedom to redistribute copies
-- ✅ Freedom to distribute modified versions
+- ✅ Freedom to distribute modified versions (open or closed source)
+- ✅ Freedom to use in commercial projects
 
-Any derivative works must also be licensed under GPL v3, ensuring the game and its derivatives remain free software forever.
+The only requirement is to include the original copyright notice and license text in any copies or substantial portions of the software.
 
 ## 👨‍💻 Author
 

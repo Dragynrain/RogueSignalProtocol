@@ -192,7 +192,7 @@ Audio: AI-generated music & SFX (AudioCraft, curated & edited)
 
 LICENSE
 -------
-GPL v3 - Free and Open Source Software
+MIT License - Free and Open Source Software
 See LICENSE file for full legal text.
 
 This game is free forever. Modify it. Share it. Learn from it.
