@@ -8,6 +8,8 @@
 ![Version](https://img.shields.io/badge/version-0.8.0%20Alpha-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
+**📋 [SHARE YOUR FEEDBACK](https://forms.gle/jbwGdn8VGPa6NG9p9)** - Help shape development with this 2-minute survey!
+
 ---
 
 ## 📖 Documentation

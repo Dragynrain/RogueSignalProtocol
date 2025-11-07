@@ -12,6 +12,10 @@ and uncover the dark secrets of Project Chimera.
 
 Each run takes 10-15 minutes - perfect for a quick gaming break!
 
+** FEEDBACK WANTED **
+This is an alpha release! Please share your experience (2 minute survey):
+https://forms.gle/jbwGdn8VGPa6NG9p9
+
 KEY FEATURES
 ------------
 - STEALTH-FIRST GAMEPLAY: Hiding > fighting. Detection = danger
@@ -166,6 +170,9 @@ DISABLE DEBUG LOGGING:
 COMMUNITY & FEEDBACK
 --------------------
 This is an ALPHA release. Your feedback helps improve the game!
+
+** SHARE YOUR FEEDBACK (2 minute survey): **
+https://forms.gle/jbwGdn8VGPa6NG9p9
 
 LINKS:
 Discord:  https://discord.gg/aUZgmrpU

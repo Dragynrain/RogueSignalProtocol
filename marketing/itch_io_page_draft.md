@@ -46,9 +46,12 @@ Discover the conspiracy. Escape to freedom.
 ### FEEDBACK WELCOME:
 This is an **active alpha** - your feedback shapes development!
 
+**📋 [Share Your Feedback](https://forms.gle/jbwGdn8VGPa6NG9p9)** - Quick 2-minute survey to help improve the game!
+
 **Bug reporting made easy:** Hit Shift+F12 or use Settings > Export Debug Package to create a comprehensive debug report (saves, logs, metrics, system info, screenshot). Attach the zip file when reporting bugs!
 
 **Contact & Feedback:**
+- Feedback Survey: https://forms.gle/jbwGdn8VGPa6NG9p9
 - Email: roguesignalprotocol@gmail.com
 - GitHub Issues: https://github.com/Dragynrain/RogueSignalProtocol/issues
 - Discord: https://discord.gg/aUZgmrpU
