@@ -335,7 +335,7 @@ class HelpMenu:
                 ("  ☺  Player (you)", Colors.WHITE),
                 ("  •  Empty floor (passable)", Colors.FLOOR),
                 ("  ╔╗╚╝╦╩╠╣╬═║  Walls (impassable)", Colors.WALL),
-                ("  ◘  Blind Spots (stealth zones)", Colors.ELECTRIC_PURPLE),
+                ("  ♠  Blind Spots (stealth zones)", Colors.ELECTRIC_PURPLE),
                 ("  >  Gateway to next level", Colors.GATEWAY),
                 ("  ♫  Data fragments (story/lore)", Colors.CYAN),
                 ("", Colors.WHITE),
@@ -348,8 +348,8 @@ class HelpMenu:
                 ("", Colors.WHITE),
 
                 ("ITEMS & PICKUPS:", Colors.CYAN),
-                ("  §: Code Patches (bonuses)  &: Exploits  ○: Upgrades", Colors.WHITE),
-                ("  ♥: CPU nodes  ♦: Cooling nodes  ♠: Ghost nodes", Colors.WHITE),
+                ("  ❀: Code Patches (bonuses)  ⚠: Exploits  ♥♦▣: Upgrades", Colors.WHITE),
+                ("  ♡: CPU nodes  ♢: Cooling nodes  ♤: Ghost nodes", Colors.WHITE),
             ]
         else:
             # Page 2: Mechanics, Exploits, Status Effects, Tips
@@ -381,5 +381,6 @@ class HelpMenu:
                 ("  Enemies only detect you in blind spots when adjacent", Colors.WHITE),
                 ("  Monitor heat/trace levels - Admin spawns at high trace!", Colors.WHITE),
                 ("  Plan exploit usage carefully - heat management is critical", Colors.WHITE),
+                ("  Move between attacks! Attacking from same spot adds +1 heat", Colors.WHITE),
                 ("  Use CPU/Ghost nodes often - save cooling for emergencies", Colors.WHITE),
             ]
