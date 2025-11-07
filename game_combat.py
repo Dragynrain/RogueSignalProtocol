@@ -371,6 +371,31 @@ class ExploitSystem:
             # Enemy destroyed
             is_admin = enemy.type == 'admin'
             self.game.sound_manager.play_sound("enemy_death")
+            # Trigger particle explosion effect (graphics mode only, if enabled)
+            if (hasattr(self.game, 'particle_system') and
+                self.game.particle_system is not None and
+                hasattr(self.game, 'tile_manager') and
+                self.game.tile_manager is not None and
+                self.game.settings.graphics_mode == "graphics" and
+                self.game.settings.show_particle_effects):
+                try:
+                    # Extract colors from enemy sprite for particles
+                    colors = self.game.tile_manager.extract_sprite_colors(
+                        enemy.type,
+                        num_colors=GameConfig.PARTICLE_SPRITE_COLOR_COUNT()
+                    )
+
+                    # Create explosion at enemy position (uses particle_count from config)
+                    self.game.particle_system.create_death_explosion(
+                        world_x=enemy.x,
+                        world_y=enemy.y,
+                        colors=colors
+                    )
+                    logging.debug(f"Particle explosion created at ({enemy.x}, {enemy.y}) with {len(colors)} colors")
+                except Exception as e:
+                    # Don't crash game if particle effect fails
+                    logging.error(f"Particle effect failed: {e}", exc_info=True)
+
             self.game.enemies.remove(enemy)
             self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
             logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) ELIMINATED, CPU reward={GameBalance.ENEMY_ELIMINATION_CPU_REWARD}")

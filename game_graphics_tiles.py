@@ -251,10 +251,27 @@ class TileManager:
         for category in ["enemies", "terrain", "items", "special"]:
             if category in self.tile_mappings:
                 category_data = self.tile_mappings[category]
-                if isinstance(category_data, dict) and entity_name in category_data:
-                    entity_data = category_data[entity_name]
-                    if isinstance(entity_data, dict) and "file" in entity_data:
-                        return entity_data["file"]
+                if isinstance(category_data, dict):
+                    # Try exact match first
+                    if entity_name in category_data:
+                        entity_data = category_data[entity_name]
+                        if isinstance(entity_data, dict) and "file" in entity_data:
+                            return entity_data["file"]
+
+                    # Try case-insensitive match (for enemy types like "scanner" vs "Scanner")
+                    for key in category_data.keys():
+                        if key.lower() == entity_name.lower():
+                            entity_data = category_data[key]
+                            if isinstance(entity_data, dict) and "file" in entity_data:
+                                logging.debug(f"Graphics: Found sprite via case-insensitive match: {entity_name} -> {key}")
+                                return entity_data["file"]
+
+                        # Special case for admin -> Admin Avatar
+                        if entity_name.lower() == "admin" and key == "Admin Avatar":
+                            entity_data = category_data[key]
+                            if isinstance(entity_data, dict) and "file" in entity_data:
+                                logging.debug(f"Graphics: Found sprite for admin -> Admin Avatar")
+                                return entity_data["file"]
 
         return None
 
@@ -318,6 +335,124 @@ class TileManager:
             True if sprite is mapped and available
         """
         return self._get_sprite_filename(entity_name) is not None
+
+    def extract_sprite_colors(self, entity_name: str, num_colors: int = 5) -> list:
+        """
+        Extract representative colors from a sprite for particle effects.
+
+        Samples colors from different regions of the sprite to create a
+        varied color palette for particle explosions.
+
+        Args:
+            entity_name: Name of entity to extract colors from
+            num_colors: Number of colors to sample (default: 5)
+
+        Returns:
+            List of RGB tuples [(r, g, b), ...], or fallback white if extraction fails
+        """
+        # Look up sprite filename
+        sprite_file = self._get_sprite_filename(entity_name)
+        if not sprite_file:
+            logging.debug(f"No sprite for color extraction: {entity_name}")
+            return [(255, 255, 255)]  # Fallback to white
+
+        # Build full file path
+        filepath = os.path.join(self.graphics_dir, sprite_file)
+
+        if not os.path.exists(filepath):
+            logging.warning(f"Sprite file not found for color extraction: {filepath}")
+            return [(255, 255, 255)]
+
+        try:
+            from PIL import Image
+            import numpy as np
+
+            # Load sprite image
+            pil_image = Image.open(filepath)
+
+            # Convert to RGBA if not already
+            if pil_image.mode != 'RGBA':
+                pil_image = pil_image.convert('RGBA')
+
+            # Convert to numpy array
+            pixels = np.array(pil_image, dtype=np.uint8)
+
+            # Get dimensions
+            height, width = pixels.shape[:2]
+
+            # Sample colors from random points across the sprite
+            colors = []
+            attempts = 0
+            max_attempts = 100  # Try lots of samples to find good colors
+
+            # Sample random points until we get enough good colors
+            while len(colors) < num_colors and attempts < max_attempts:
+                attempts += 1
+
+                # Random point, avoiding edges (10% margin)
+                x = np.random.randint(int(width * 0.1), int(width * 0.9))
+                y = np.random.randint(int(height * 0.1), int(height * 0.9))
+
+                # Get pixel color (RGBA)
+                pixel = pixels[y, x]
+                r, g, b, a = pixel
+
+                # Skip transparent/semi-transparent pixels
+                if a < 200:
+                    continue
+
+                # Skip very dark pixels (likely background or shadows)
+                brightness = r + g + b
+                if brightness < 100:  # Skip near-black pixels
+                    continue
+
+                # Skip pure black pixels
+                if r == 0 and g == 0 and b == 0:
+                    continue
+
+                # Skip very desaturated colors (grays)
+                max_channel = max(r, g, b)
+                min_channel = min(r, g, b)
+                if max_channel > 0 and (max_channel - min_channel) < 30:
+                    continue
+
+                # Good color found!
+                color = (int(r), int(g), int(b))
+                if color not in colors:  # Avoid duplicates
+                    colors.append(color)
+
+            # If we didn't get enough colors from sampling points, calculate average
+            if len(colors) < 3:
+                # Calculate average color from all bright visible pixels
+                alpha_channel = pixels[:, :, 3]
+                visible_mask = alpha_channel > 200
+
+                if np.any(visible_mask):
+                    visible_pixels = pixels[visible_mask]
+                    # Filter to only bright pixels
+                    brightness = visible_pixels[:, 0].astype(int) + visible_pixels[:, 1].astype(int) + visible_pixels[:, 2].astype(int)
+                    bright_mask = brightness > 150
+
+                    if np.any(bright_mask):
+                        bright_pixels = visible_pixels[bright_mask]
+                        avg_r = int(np.mean(bright_pixels[:, 0]))
+                        avg_g = int(np.mean(bright_pixels[:, 1]))
+                        avg_b = int(np.mean(bright_pixels[:, 2]))
+                        colors.append((avg_r, avg_g, avg_b))
+
+            # Ensure we have at least one color
+            if not colors:
+                logging.debug(f"[COLOR EXTRACT] No bright colors found for {entity_name}, using fallback bright color")
+                # Use a bright fallback color instead of white
+                colors = [(200, 150, 255)]  # Light purple fallback
+            else:
+                logging.debug(f"[COLOR EXTRACT] Got {len(colors)} colors for {entity_name}: {colors}")
+
+            return colors
+
+        except Exception as e:
+            logging.warning(f"Failed to extract colors from sprite {filepath}: {e}")
+            return [(255, 255, 255)]
 
     def check_and_handle_resize(self) -> bool:
         """

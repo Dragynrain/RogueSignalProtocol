@@ -632,6 +632,9 @@ def main():
                             logging.error(f"Failed to initialize TileManager: {e}")
                             logging.error("Graphics mode will fall back to glyph mode")
 
+                    # Store tile_manager on game object for particle effects
+                    game.tile_manager = tile_manager
+
                     # Initialize game rendering systems
                     renderer = GameRenderer(settings, tile_manager=tile_manager, context=context)
                     input_handler = InputHandler(game, renderer=renderer)
@@ -717,6 +720,11 @@ def main():
 
                             # Render at fixed frame rate
                             if current_time - last_render_time >= render_interval:
+                                # Update particle system with delta time
+                                delta_time = current_time - last_render_time
+                                if hasattr(game, 'particle_system') and game.particle_system is not None:
+                                    game.particle_system.update(delta_time)
+
                                 renderer.render_game(console, game, context)
                                 last_render_time = current_time
 

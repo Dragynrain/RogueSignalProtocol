@@ -113,10 +113,23 @@ class TestGraphicsRendererIntegration(unittest.TestCase):
         camera_offset = self.renderer._calculate_camera_offset(test_player)
 
         # Camera should be offset to center player in viewport
-        expected_x = test_player.x - GameConfig.GAME_AREA_WIDTH() // 2
-        # SCREEN_HEIGHT - PANEL_HEIGHT gives game area height
-        game_area_height = GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT
-        expected_y = test_player.y - game_area_height // 2
+        # Uses viewport dimensions based on graphics mode with map boundary clamping
+        # When viewport is larger than map, camera offset is negative to center map in viewport
+        graphics_mode = self.renderer._get_graphics_mode()
+        viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
+        viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
+
+        if viewport_width >= GameConfig.MAP_WIDTH:
+            expected_x = -(viewport_width - GameConfig.MAP_WIDTH) // 2
+        else:
+            expected_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
+                                   test_player.x - viewport_width // 2))
+
+        if viewport_height >= GameConfig.MAP_HEIGHT:
+            expected_y = -(viewport_height - GameConfig.MAP_HEIGHT) // 2
+        else:
+            expected_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
+                                   test_player.y - viewport_height // 2))
 
         self.assertEqual(camera_offset.x, expected_x)
         self.assertEqual(camera_offset.y, expected_y)
@@ -281,14 +294,22 @@ class TestGlyphsRendererIntegration(unittest.TestCase):
 
         # Camera should be offset to center player in viewport
         # GlyphsMapRenderer uses VIEWPORT_WIDTH/HEIGHT based on graphics mode
+        # When viewport is larger than map, camera offset is negative to center map in viewport
         graphics_mode = self.renderer._get_graphics_mode()
         viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode)
         viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode)
 
-        expected_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                               test_player.x - viewport_width // 2))
-        expected_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                               test_player.y - viewport_height // 2))
+        if viewport_width >= GameConfig.MAP_WIDTH:
+            expected_x = -(viewport_width - GameConfig.MAP_WIDTH) // 2
+        else:
+            expected_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
+                                   test_player.x - viewport_width // 2))
+
+        if viewport_height >= GameConfig.MAP_HEIGHT:
+            expected_y = -(viewport_height - GameConfig.MAP_HEIGHT) // 2
+        else:
+            expected_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
+                                   test_player.y - viewport_height // 2))
 
         self.assertEqual(camera_offset.x, expected_x)
         self.assertEqual(camera_offset.y, expected_y)

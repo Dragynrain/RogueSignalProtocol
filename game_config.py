@@ -41,6 +41,7 @@ class GameSettings:
         self.music_volume = 0.6
         self.graphics_mode = "graphics"  # "glyph" (CP437 characters) or "graphics" (PNG sprites)
         self.show_achievement_popups = True  # Show achievement unlock popups
+        self.show_particle_effects = True  # Show particle effects (explosions) in graphics mode
         self.ui_color = "cyan"  # UI theme color for borders/headers (cyan, purple, magenta, golden, crimson, azure, emerald)
         self.dialogue_preferences = {}  # Stores user preferences for dialogue visibility
         self.load_settings()
@@ -87,6 +88,7 @@ class GameSettings:
                 self.music_volume = settings_data.get("music_volume", 0.6)
                 self.graphics_mode = settings_data.get("graphics_mode", "graphics")
                 self.show_achievement_popups = settings_data.get("show_achievement_popups", True)
+                self.show_particle_effects = settings_data.get("show_particle_effects", True)
                 self.ui_color = settings_data.get("ui_color", "cyan")
                 self.dialogue_preferences = settings_data.get("dialogue_preferences", {})
 
@@ -114,6 +116,7 @@ class GameSettings:
                 "music_volume": 0.6,
                 "graphics_mode": "graphics",
                 "show_achievement_popups": True,
+                "show_particle_effects": True,
                 "ui_color": "cyan",
                 "dialogue_preferences": {}
             }
@@ -133,6 +136,7 @@ class GameSettings:
                 "music_volume": self.music_volume,
                 "graphics_mode": self.graphics_mode,
                 "show_achievement_popups": self.show_achievement_popups,
+                "show_particle_effects": self.show_particle_effects,
                 "ui_color": self.ui_color,
                 "dialogue_preferences": self.dialogue_preferences
             }
@@ -324,52 +328,64 @@ class GameConfig:
         return cls.INFO_PANEL_HEIGHT
 
     @classmethod
-    def VIEWPORT_WIDTH(cls, graphics_mode: str = "glyph"):
+    def VIEWPORT_WIDTH(cls, graphics_mode: str = "glyph", tile_width: int = None, window_width: int = None):
         """
         Calculate viewport width (visible tiles) based on rendering mode.
 
-        In graphics mode, viewport is smaller to make sprites appear larger.
-        In glyph mode, viewport fills the full game area.
+        In glyph mode: Returns console character count (55 chars)
+        In graphics mode: Returns number of pixel-tiles that fit in game area
+            - Requires tile_width and window_width for accurate calculation
+            - Falls back to console width if parameters not provided
 
         Args:
             graphics_mode: "graphics" or "glyph"
+            tile_width: Width of one tile in pixels
+            window_width: Actual window width in pixels (dynamic, resolution-dependent)
 
         Returns:
             Number of tiles visible horizontally
         """
         cls._ensure_loaded()
-        game_area_width = cls.SCREEN_WIDTH - cls.LOG_WIDTH
+        game_area_width_chars = cls.SCREEN_WIDTH - cls.LOG_WIDTH
 
-        if graphics_mode == "graphics":
-            # Half size viewport for graphics mode (larger sprites)
-            return game_area_width // 2
+        if graphics_mode == "glyph" or tile_width is None or window_width is None:
+            # Glyph mode or missing info: return console character count
+            return game_area_width_chars
         else:
-            # Full viewport for glyph mode
-            return game_area_width
+            # Graphics mode: calculate how many pixel-tiles fit in the game area
+            # Game area is 55/80 of the total window width
+            game_area_pixel_width = int(window_width * (game_area_width_chars / cls.SCREEN_WIDTH))
+            return game_area_pixel_width // tile_width
 
     @classmethod
-    def VIEWPORT_HEIGHT(cls, graphics_mode: str = "glyph"):
+    def VIEWPORT_HEIGHT(cls, graphics_mode: str = "glyph", tile_height: int = None, window_height: int = None):
         """
         Calculate viewport height (visible tiles) based on rendering mode.
 
-        In graphics mode, viewport is smaller to make sprites appear larger.
-        In glyph mode, viewport fills the full game area.
+        In glyph mode: Returns console character count (44 chars)
+        In graphics mode: Returns number of pixel-tiles that fit in game area
+            - Requires tile_height and window_height for accurate calculation
+            - Falls back to console height if parameters not provided
 
         Args:
             graphics_mode: "graphics" or "glyph"
+            tile_height: Height of one tile in pixels
+            window_height: Actual window height in pixels (dynamic, resolution-dependent)
 
         Returns:
-            Number of tiles visible vertically (excluding top status bar)
+            Number of tiles visible vertically (excluding top status bar and panel)
         """
         cls._ensure_loaded()
-        viewable_height = cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT - 1
+        viewable_height_chars = cls.SCREEN_HEIGHT - cls.PANEL_HEIGHT - 1
 
-        if graphics_mode == "graphics":
-            # Half size viewport for graphics mode (larger sprites)
-            return viewable_height // 2
+        if graphics_mode == "glyph" or tile_height is None or window_height is None:
+            # Glyph mode or missing info: return console character count
+            return viewable_height_chars
         else:
-            # Full viewport for glyph mode
-            return viewable_height
+            # Graphics mode: calculate how many pixel-tiles fit in the game area
+            # Game area height excludes panel and status bar
+            game_area_pixel_height = int(window_height * (viewable_height_chars / cls.SCREEN_HEIGHT))
+            return game_area_pixel_height // tile_height
 
     @classmethod
     def STATUS_BAR_HEIGHT(cls):
@@ -418,6 +434,73 @@ class GameConfig:
         """Get fallback tile height from config."""
         cls._ensure_loaded()
         return cls._get_required('rendering.fallback_tile_height')
+
+    # Particle system configuration
+    @classmethod
+    def PARTICLE_GRAVITY(cls):
+        """Get particle gravity from config."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.gravity')
+
+    @classmethod
+    def PARTICLE_COUNT_DEFAULT(cls):
+        """Get default particle count from config."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.default_particle_count')
+
+    @classmethod
+    def PARTICLE_VELOCITY_MIN(cls):
+        """Get minimum particle velocity from config."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.velocity_min')
+
+    @classmethod
+    def PARTICLE_VELOCITY_MAX(cls):
+        """Get maximum particle velocity from config."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.velocity_max')
+
+    @classmethod
+    def PARTICLE_UPWARD_BIAS(cls):
+        """Get particle upward bias from config."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.upward_bias')
+
+    @classmethod
+    def PARTICLE_SIZE_MIN(cls):
+        """Get minimum particle size from config."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.size_min')
+
+    @classmethod
+    def PARTICLE_SIZE_MAX(cls):
+        """Get maximum particle size from config."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.size_max')
+
+    @classmethod
+    def PARTICLE_LIFETIME_MIN(cls):
+        """Get minimum particle lifetime from config."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.lifetime_min')
+
+    @classmethod
+    def PARTICLE_LIFETIME_MAX(cls):
+        """Get maximum particle lifetime from config."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.lifetime_max')
+
+    @classmethod
+    def PARTICLE_COLOR_VARIATION(cls):
+        """Get particle color variation from config."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.color_variation')
+
+    @classmethod
+    def PARTICLE_SPRITE_COLOR_COUNT(cls):
+        """Get number of colors to extract from sprite for particles."""
+        cls._ensure_loaded()
+        return cls._get_required('particles.sprite_color_count')
 
     @classmethod
     def _get_required(cls, key: str):
