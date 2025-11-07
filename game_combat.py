@@ -617,8 +617,7 @@ class ExploitSystem:
         self.game.friendly_fire_target = None
 
         # Execute the explosion
-        # TODO: Add dedicated exploit_logic_bomb.wav sound file
-        self.game.sound_manager.play_sound("exploit_denial_of_service")  # Placeholder
+        self.game.sound_manager.play_sound("exploit_logic_bomb")
 
         # Damage all enemies in radius
         enemy_count = 0
