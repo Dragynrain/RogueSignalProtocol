@@ -557,10 +557,17 @@ class GameSession:
 
     def _check_trace_threshold_warnings(self, old_trace: float, new_trace: float):
         """Check and play warning sounds for trace level threshold crossings."""
-        thresholds = [(75, "WARNING: High trace level!", Colors.YELLOW), (90, "CRITICAL: Admin spawn imminent!", Colors.RED)]
+        thresholds = [
+            (25, "Trace signature detected - network monitoring active", Colors.INFO),
+            (50, "Elevated trace level - detection risk increasing", Colors.WARNING),
+            (75, "WARNING: High trace level!", Colors.YELLOW),
+            (90, "CRITICAL: Admin spawn imminent!", Colors.RED)
+        ]
         for threshold, msg, color in thresholds:
             if old_trace < threshold <= new_trace:
-                self.game_engine.sound_manager.play_sound("trace_threshold")
+                # Only play sound for 75+ thresholds (avoid spam)
+                if threshold >= 75:
+                    self.game_engine.sound_manager.play_sound("trace_threshold")
                 self.game_engine.message_log.add_message(msg, color)
                 # Add environmental narrative for high trace
                 if threshold >= 75:
