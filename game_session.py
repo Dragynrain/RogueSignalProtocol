@@ -196,11 +196,12 @@ class GameSession:
                         save_unlocked_achievements(AchievementManager.get_unlocked_achievements())
 
                 self._delete_save_on_death()
-                # Show death dialogue
-                from game_dialogue_system import create_death_dialogue
-                self.game_engine.dialogue_state.show(create_death_dialogue())
+
+                # IMPORTANT: Defer death dialogue by one frame to allow damage messages
+                # to render on screen before the dialogue covers them
+                self.game_engine.pending_death_dialogue = True
                 self._death_handled = True  # Prevent duplicate handling
-                logging.info(f"DEBUG: Death dialogue shown and _death_handled flag set")
+                logging.info(f"DEBUG: Death dialogue deferred to next frame")
             else:
                 logging.warning(f"DEBUG: Death occurred but dialogue already active - death dialogue NOT shown!")
 
@@ -417,6 +418,25 @@ class GameSession:
                 else:
                     self.game_engine.sound_manager.play_sound("enemy_attack")
                 damage = enemy.attack_player(self.game_engine.player)
+
+                # Add damage message to log (always, not just when inventory is open)
+                if damage > 0:
+                    cpu_remaining = max(0, self.game_engine.player.cpu)
+                    self.game_engine.message_log.add_message(
+                        f"{enemy.type_data.name} attacked for {damage} CPU damage! ({cpu_remaining} remaining)",
+                        Colors.RED
+                    )
+                elif enemy.type == 'virus':
+                    virus_turns = self.game_engine.player.temporary_effects.get('virus_turns', 0)
+                    self.game_engine.message_log.add_message(
+                        f"{enemy.type_data.name} infected you! (Virus: {virus_turns} turns)",
+                        Colors.YELLOW
+                    )
+                elif enemy.type == 'inhibitor':
+                    self.game_engine.message_log.add_message(
+                        f"{enemy.type_data.name} inhibited your movement!",
+                        Colors.YELLOW
+                    )
 
                 # Track attacks for inventory warning
                 if damage >= 0 or (hasattr(enemy.type_data, 'effects') and
