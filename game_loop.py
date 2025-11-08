@@ -554,8 +554,7 @@ def handle_game_input_events(event, game, input_handler):
                     return True, None
                 return True, game
             # Check if any UI states are open - close those first
-            elif (game.show_story_fragment is not None or
-                game.show_lore_viewer or
+            elif (game.show_lore_viewer or
                 game.show_help or
                 game.show_achievements or
                 game.show_inventory or

@@ -36,7 +36,6 @@ class TestGameInputEventHandling(unittest.TestCase):
         self.game.game_over = False
         self.game.dialogue_state = Mock()
         self.game.dialogue_state.is_active = Mock(return_value=False)
-        self.game.show_story_fragment = None
         self.game.show_lore_viewer = False
         self.game.show_help = False
         self.game.show_inventory = False
@@ -166,9 +165,10 @@ class TestGameInputEventHandling(unittest.TestCase):
         self.input_handler._handle_escape.assert_called_once()
         self.game.auto_save.assert_not_called()
 
-    def test_escape_with_story_fragment_closes_story(self):
-        """Test ESC with story fragment open closes it."""
-        self.game.show_story_fragment = "some_fragment"
+    def test_escape_with_lore_viewer_closes_it(self):
+        """Test ESC with lore viewer open closes it."""
+        self.game.show_lore_viewer = True
+        self.game.lore_viewer_mode = "list"
 
         event = Mock()
         event.type = "KEYDOWN"
@@ -432,7 +432,6 @@ class TestAutoSaveBehavior(unittest.TestCase):
         game.show_achievements = False
         game.look_mode = False
         game.targeting_mode = False
-        game.show_story_fragment = None
         game.show_lore_viewer = False
 
         input_handler = Mock()
@@ -459,7 +458,6 @@ class TestAutoSaveBehavior(unittest.TestCase):
         game.dialogue_state = Mock()
         game.dialogue_state.is_active = Mock(return_value=False)
         game.show_inventory = True  # Inventory is open
-        game.show_story_fragment = None
         game.show_lore_viewer = False
         game.show_help = False
         game.show_achievements = False

@@ -352,9 +352,18 @@ class GameSession:
             # Discover the fragment and save progress
             if self.game_engine.story_fragment_manager.discover_fragment(story_fragment.fragment_index):
                 self.game_engine.sound_manager.play_sound("item_pickup_story")
-                self.game_engine.message_log.add_message("Data fragment recovered! Press 'F' to view fragments.")
-                # Trigger the story fragment display immediately
-                self.game_engine.show_story_fragment = story_fragment.fragment_index
+                self.game_engine.message_log.add_message("Data fragment recovered!")
+
+                # Open lore viewer in reading mode for the newly discovered fragment
+                discovered_fragments = self.game_engine.story_fragment_manager.get_discovered_fragments()
+                # Find the index of this fragment in the discovered list
+                for i, (frag_idx, _) in enumerate(discovered_fragments):
+                    if frag_idx == story_fragment.fragment_index:
+                        self.game_engine.lore_viewer_selection = i
+                        break
+
+                self.game_engine.show_lore_viewer = True
+                self.game_engine.lore_viewer_mode = "reading"
             del self.game_engine.game_map.story_fragments[player_pos]
 
         # Environmental narrative: First blind spot entry

@@ -1107,43 +1107,6 @@ class UIRenderer:
 
         return None
 
-    # === Story Fragment Screen ===
-
-    def render_story_fragment_screen(self, console: tcod.console.Console, game, fragment_index: int):
-        """
-        Render a story fragment discovery screen when player picks up a fragment.
-
-        Shows fragment title and content in centered overlay menu.
-        Prompts player to press any key to continue.
-
-        Args:
-            console: TCOD console to render to
-            game: GameEngine (for context)
-            fragment_index: Index of fragment to display
-        """
-        console.clear()
-
-        # Get the fragment text
-        story_fragments = get_story_fragments()
-        if fragment_index < 0 or fragment_index >= len(story_fragments):
-            return
-
-        fragment_text = story_fragments[fragment_index]
-
-        # Render using shared utilities
-        content_start_y = ScreenRenderingUtils.render_screen_header(console, "DATA FRAGMENT RECOVERED")
-        content_end_y = GameConfig.SCREEN_HEIGHT - 6  # Leave room for 2-line footer
-
-        ScreenRenderingUtils.render_word_wrapped_text(
-            console, fragment_text, 3, content_start_y,
-            max_width=GameConfig.SCREEN_WIDTH - 6,
-            max_height=content_end_y
-        )
-
-        ScreenRenderingUtils.render_screen_footer(
-            console, "Press any key to continue...", "Press 'F' to view all fragments"
-        )
-
     # === Lore Viewer Screen ===
 
     def render_lore_viewer_screen(self, console: tcod.console.Console, game):
@@ -1261,7 +1224,7 @@ class UIRenderer:
             max_height=content_end_y
         )
 
-        ScreenRenderingUtils.render_screen_footer(console, "Any key: Back to list, ESC: Close")
+        ScreenRenderingUtils.render_screen_footer(console, "Press any key to view all fragments...")
 
     # === Achievements Screen ===
 

@@ -508,12 +508,14 @@ class TestGameRendererIntegration(unittest.TestCase):
         # Console should be cleared for overlay
         self.assertIsNotNone(self.console)
 
-    def test_render_game_with_story_fragment(self):
-        """Test render_game handles story fragment overlay."""
+    def test_render_game_with_lore_viewer(self):
+        """Test render_game handles lore viewer overlay."""
         renderer = GameRenderer(settings=self.settings)
 
-        # Show story fragment (use integer index, not string)
-        self.engine.show_story_fragment = 0
+        # Show lore viewer in reading mode
+        self.engine.show_lore_viewer = True
+        self.engine.lore_viewer_mode = "reading"
+        self.engine.lore_viewer_selection = 0
 
         # Should execute without error
         renderer.render_game(self.console, self.engine)

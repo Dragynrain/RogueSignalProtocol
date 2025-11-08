@@ -158,45 +158,45 @@ class GlyphsMapRenderer(MapRendererBase):
                 # Wall too far away - render as explored memory instead
                 pass
         elif game.game_map.is_cooling_node(world_pos):
-            # Position 4 = ♦ (diamond) 
+            # ♢ hollow diamond for cooling nodes (consumable)
             pos_tuple = (world_pos.x, world_pos.y)
-            is_currently_visible = (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
+            is_currently_visible = (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and
                                    game.game_map.has_line_of_sight(game.player.position, world_pos))
-            is_discovered = (hasattr(game.game_state, 'revealed_special_nodes') and 
+            is_discovered = (hasattr(game.game_state, 'revealed_special_nodes') and
                            pos_tuple in game.game_state.revealed_special_nodes)
-            
+
             if is_currently_visible:
                 # Full color when currently visible - auto-discover when seen
                 if not is_discovered:
                     if not hasattr(game.game_state, 'revealed_special_nodes'):
                         game.game_state.revealed_special_nodes = {}
                     game.game_state.revealed_special_nodes[pos_tuple] = "cooling"
-                render_char_safe(console, screen_x, screen_y, GameGlyphs.COOLING, fg=Colors.CYAN, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.COOLING_NODE, fg=Colors.CYAN, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
                 cooling_faded = ColorManager.get_terrain_variant_color("cooling_node")
-                render_char_safe(console, screen_x, screen_y, GameGlyphs.COOLING, fg=cooling_faded, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.COOLING_NODE, fg=cooling_faded, bg=Colors.BLACK)
         elif game.game_map.is_cpu_recovery_node(world_pos):
-            # Position 3 = ♥ (heart)
+            # ♡ hollow heart for CPU nodes (consumable)
             pos_tuple = (world_pos.x, world_pos.y)
-            is_currently_visible = (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
+            is_currently_visible = (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and
                                    game.game_map.has_line_of_sight(game.player.position, world_pos))
-            is_discovered = (hasattr(game.game_state, 'revealed_special_nodes') and 
+            is_discovered = (hasattr(game.game_state, 'revealed_special_nodes') and
                            pos_tuple in game.game_state.revealed_special_nodes)
-            
+
             if is_currently_visible:
                 # Full color when currently visible - auto-discover when seen
                 if not is_discovered:
                     if not hasattr(game.game_state, 'revealed_special_nodes'):
                         game.game_state.revealed_special_nodes = {}
                     game.game_state.revealed_special_nodes[pos_tuple] = "cpu"
-                render_char_safe(console, screen_x, screen_y, GameGlyphs.CPU_OVERLOAD, fg=Colors.RED, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.CPU_NODE, fg=Colors.RED, bg=Colors.BLACK)
             elif is_discovered:
                 # Faded color when discovered but not currently visible
                 cpu_faded = ColorManager.get_terrain_variant_color("cpu_node")
-                render_char_safe(console, screen_x, screen_y, GameGlyphs.CPU_OVERLOAD, fg=cpu_faded, bg=Colors.BLACK)
+                render_char_safe(console, screen_x, screen_y, GameGlyphs.CPU_NODE, fg=cpu_faded, bg=Colors.BLACK)
         elif game.game_map.is_ghost_node(world_pos):
-            # Position 6 = ♠ (spade)
+            # ♤ hollow spade for ghost nodes (consumable)
             pos_tuple = (world_pos.x, world_pos.y)
             is_currently_visible = (game.player.position.distance_to(world_pos) <= game.player.get_vision_range() and 
                                    game.game_map.has_line_of_sight(game.player.position, world_pos))
