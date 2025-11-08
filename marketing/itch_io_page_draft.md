@@ -58,7 +58,7 @@ This is an **active alpha** - your feedback shapes development!
 
 ### REQUIREMENTS:
 * Windows 10/11
-* ~50 MB disk space
+* ~250 MB disk space
 * No additional software needed (standalone EXE)
 
 ### LICENSE:

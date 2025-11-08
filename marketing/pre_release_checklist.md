@@ -54,9 +54,9 @@ mv preview_layout_new.py .archive/
 
 **RESOLVED:** `nul` file deleted, no leftover dev artifacts found (Nov 7)
 
-### 5. **Update README.md keybindings**
+### 5. **Update README.txt keybindings (player-facing docs)**
 
-Line 68 in README.md says:
+Line 68 in README.txt says:
 ```markdown
 - **Lore**: L key to view discovered story fragments
 ```
@@ -81,6 +81,7 @@ game_debug.log
 
 ### 7. **Test the EXE**
 
+**Basic functionality:**
 - [ ] Test on clean Windows 10/11 system (no Python installed)
 - [ ] Verify all config files load correctly
 - [ ] Play through one complete run (all 3 levels)
@@ -88,6 +89,46 @@ game_debug.log
 - [ ] Verify permadeath deletes save
 - [ ] Check all 12 exploits work correctly
 - [ ] Verify keybindings (L=Look, F=Fragments, ?=Help)
+
+**CRITICAL: Test with TCOD 19.6.0 changes:**
+- [ ] Verify nearest-neighbor scaling looks good (graphics sharper, not broken)
+- [ ] Test fullscreen and windowed modes
+- [ ] Verify graphics mode toggle still works (G key)
+
+**Audio verification:**
+- [ ] Test all 12 exploit sounds play correctly
+- [ ] Verify music tracks load and loop
+- [ ] Check Logic Bomb sound (logic_bomb.wav) plays
+
+**Debug tools work in EXE:**
+- [ ] Shift+F12 creates debug package
+- [ ] Settings > Export Debug Package works
+- [ ] Verify package includes saves/logs/screenshots
+
+**Achievement system:**
+- [ ] Unlock an achievement and verify it persists
+- [ ] Check achievement popups display correctly
+- [ ] Verify progress tracking works across deaths
+
+**Edge cases:**
+- [ ] Test Admin Avatar spawns when trace hits 100%
+- [ ] Verify permadeath deletes save file completely
+- [ ] Test look mode (L key) mouse and keyboard interaction
+- [ ] Check fragments screen (F key) displays all discovered lore
+
+### 7.5 **Create backup before packaging**
+
+- [ ] Copy entire `dist/` folder to `dist_backup_v0.8.0/`
+- [ ] Commit current state to git
+- [ ] Tag release: `git tag v0.8.0-alpha`
+- [ ] Push to GitHub: `git push origin v0.8.0-alpha`
+
+### 7.6 **Test new player experience**
+
+- [ ] Delete `user_settings.json` and test fresh start
+- [ ] Verify intro dialogue appears
+- [ ] Check help menu (?) is comprehensive
+- [ ] Ensure first death shows feedback link clearly
 
 ---
 
@@ -125,6 +166,16 @@ zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 - [ ] Set tags: roguelike, stealth, cyberpunk, turn-based, permadeath
 - [ ] Set price: Pay what you want ($0 minimum)
 - [ ] Mark as "Alpha - In Development"
+
+### 9.5 **Update and verify screenshots**
+
+**CRITICAL - Screenshots need updating for new features:**
+- [ ] **Take new screenshot showing pixel explosion effect** (graphics mode)
+- [ ] **Take new screenshot showing queue arrows** (the new directional arrow system)
+- [ ] Verify `marketing/screenshots/` has at least 3-5 images total
+- [ ] Verify images show both ASCII and graphics modes
+- [ ] Ensure one screenshot shows the enemy movement queue UI clearly
+- [ ] Consider capturing: gameplay, inventory, lore/fragments screen, death screen with feedback link
 
 ---
 
@@ -186,11 +237,11 @@ zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 
 ## 🚀 ESTIMATED TIME TO RELEASE
 
-- **Fix config files:** 15 minutes
+- **Fix config files:** 15 minutes (DONE)
 - **Test EXE:** 30 minutes
+- **Update screenshots (pixel explosion + queue arrows):** 30 minutes
 - **Package for itch.io:** 30 minutes
 - **Create itch.io page:** 30 minutes
-- **Screenshots:** 20 minutes
 - **Post to Reddit:** 15 minutes
 
 **Total: ~2.5 hours** (assuming no major bugs found during testing)
@@ -226,3 +277,25 @@ zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 2. Balance issues (note for v0.9.0)
 3. UX confusion (clarify in README or help menu)
 4. Feature requests (consider for v1.0)
+
+---
+
+## 🚨 TCOD 19.6.0 UPDATE VERIFICATION (Added Nov 8)
+
+**Update completed:**
+- [x] Updated from 19.4.0 → 19.6.0
+- [x] All 852 unit tests pass
+- [x] Game launches successfully in dev environment
+- [x] Graphics look good with new nearest-neighbor scaling
+
+**Still required before release:**
+- [ ] **Test the actual EXE build** (not just dev environment!)
+- [ ] Verify scaling looks good in built EXE
+- [ ] No visual regressions in graphics or ASCII modes
+- [ ] Confirm controller crash fix doesn't affect non-controller gameplay
+
+**What changed in 19.6.0:**
+- Nearest-neighbor scaling is now default (sharper graphics - good for roguelikes!)
+- Fixed controller event crash (even though we don't use controllers yet)
+- Fixed key symbol regression (lowercase keys)
+- Updated to libtcod 2.2.1

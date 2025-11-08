@@ -5,7 +5,7 @@
 ## Title Options:
 
 1. `[Alpha Release] Rogue Signal Protocol - A cyberspace stealth roguelike built with AI tools`
-2. `Rogue Signal Protocol - Coffee break stealth roguelike (with transparent AI dev workflow)`
+2. `Rogue Signal Protocol - Coffee break cyberspace stealth roguelike (with AI dev workflow)`
 3. `Just released my stealth roguelike - built solo using Claude Code, Stable Diffusion, and AudioCraft`
 
 ---
@@ -15,6 +15,8 @@
 Hey r/roguelikedev!
 
 I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a coffee break stealth roguelike where you exfiltrate from corporate networks as an escaped digital consciousness. Quick 10-15 minute runs perfect for a gaming break.
+
+**[GIF/Video of gameplay here - even 10 seconds massively increases engagement]**
 
 ### Core Features:
 * **Traditional roguelike mechanics** - permadeath, turn-based, procedural generation, tactical gameplay
@@ -29,6 +31,8 @@ I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a coffee break stea
 * **Full audio design** - Atmospheric music and 40+ sound effects
 
 ### What Makes It Different:
+**Enemy movement prediction** shows you the next 3 planned moves - no guessing, pure tactical planning. It's like playing chess against enemies who show their next moves.
+
 The stealth mechanics are central - you're not meant to fight everything. High detection (trace level) spawns an Admin Avatar boss that hunts you relentlessly. Heat management from exploit usage adds another resource layer beyond typical HP/mana.
 
 The story is told through environmental fragments you discover - each run might reveal new pieces of the Project Chimera conspiracy, even if you die. Permadeath for your character, but persistent narrative discovery.
@@ -49,20 +53,20 @@ This is **alpha 0.8.0** - feature complete and playtested, now looking for wider
 
 ## How This Was Built
 
-**Background:** I'm a professional software engineer by trade, so this isn't "vibe coding" - it's **vibe engineering**. I approach Claude Code more like a technical project manager: breaking down requirements, reviewing architecture decisions, curating outputs, and ensuring quality through automated testing (1580 tests!).
+**Background:** I'm a professional software engineer, so this was built with engineering discipline: architecture reviews, code quality standards, and comprehensive automated testing. I approach Claude Code more like a technical project manager: breaking down requirements, reviewing architecture decisions, curating outputs, and ensuring quality.
 
 This game was built using AI tools (Claude Code for code, Stable Diffusion for sprites, AudioCraft for SFX), compressing the timeline from 6-12 months to 2-3 months.
 
-**The reality:** 95%+ rejection rate on generated assets. AI accelerated prototyping and handled implementation details, but game design, architecture decisions, balance tuning, and quality control all came from me. **The tools amplified my output, but the creative direction is all human.**
+**The reality:** I approached asset generation with extreme quality control - only keeping outputs that met the game's design vision. AI accelerated prototyping and iteration cycles, but game design, architecture, balance tuning, and quality standards were all human-driven. **The tools amplified my output, but the creative direction is all human.**
 
 If you're an artist or sound designer interested in improving the game's polish, I'd love to collaborate!
 
 ---
 
 **Technical Stack:**
-* **Language:** Python + TCOD
+* **Language:** Python + TCOD 19.6.0 (latest!)
 * **Dev Environment:** VS Code on Windows 10/11
-* **Testing:** 1580 automated tests (pytest)
+* **Testing:** Comprehensive automated test suite (pytest)
 * **Runtime:** Windows standalone EXE (~30 MB download)
 * **Play Time:** 10-20 minutes per full 3-level run
 * **License:** MIT (free and open source)

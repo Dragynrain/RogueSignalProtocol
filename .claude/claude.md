@@ -74,10 +74,6 @@
 - 7zip at `C:\Program Files\7-Zip\7z.exe` (PowerShell Compress-Archive doesn't work)
 - Uses `Python -m PyInstaller` (more reliable than `.exe` calls)
 
-**Outputs:**
-- `dist\RogueSignalProtocol.exe` (37MB) + assets
-- `releases\RogueSignalProtocol_[type]_[date].zip` (103MB)
-
 **Details:** See `.claude/BUILD_REFERENCE.md`
 
 ---

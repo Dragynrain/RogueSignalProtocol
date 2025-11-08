@@ -17,13 +17,13 @@ build\build.bat release    # Production build
 
 ```
 dist/
-├── RogueSignalProtocol.exe (~37MB)
+├── RogueSignalProtocol.exe (~39MB)
 ├── *.json, *.png (configs & fonts)
 ├── graphics/, sound/, music/
 └── debug_mode.flag (alpha only)
 
 releases/
-└── RogueSignalProtocol_[type]_[YYYY-MM-DD].zip (~103MB)
+└── RogueSignalProtocol_[type]_[YYYY-MM-DD].zip (~195MB)
 ```
 
 ## Troubleshooting
