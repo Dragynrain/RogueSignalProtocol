@@ -10,16 +10,15 @@
 - [ ] Play through one complete run (all 3 levels)
 - [ ] Test save/load functionality
 - [ ] Verify permadeath deletes save
-- [ ] Check all 12 exploits work correctly
-- [ ] Verify keybindings (L=Look, F=Fragments, ?=Help)
+- [ ] Check all 13 exploits work correctly
+- [ ] Verify keybindings (I=Inventory, L=Look, F=Fragments, ?=Help, V=Achievements)
 
 **CRITICAL: Test with TCOD 19.6.0 changes:**
 - [ ] Verify nearest-neighbor scaling looks good (graphics sharper, not broken)
-- [ ] Test fullscreen and windowed modes
-- [ ] Verify graphics mode toggle still works (G key)
+- [ ] Verify graphics mode toggle in Settings menu works
 
 **Audio verification:**
-- [ ] Test all 12 exploit sounds play correctly
+- [ ] Test all 13 exploit sounds play correctly
 - [ ] Verify music tracks load and loop
 - [ ] Check Logic Bomb sound (logic_bomb.wav) plays
 
