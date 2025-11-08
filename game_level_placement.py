@@ -296,6 +296,12 @@ class TilePlacementGenerator:
         spawn_area = Position(5, 5)
         floor_positions = self.get_all_floor_positions()
 
+        # Exclude positions with special nodes (cooling, CPU, ghost)
+        occupied_positions = (self.game_map.cooling_nodes |
+                            self.game_map.cpu_recovery_nodes |
+                            self.game_map.ghost_nodes)
+        floor_positions = [pos for pos in floor_positions if pos not in occupied_positions]
+
         if not floor_positions:
             logging.warning(f"Gateway: No floor positions available for level {level}")
             return

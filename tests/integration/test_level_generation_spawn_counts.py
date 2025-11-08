@@ -83,6 +83,21 @@ def _verify_level_spawn_counts(level: int, seeds: list):
                 f"Expected: {expected_count}, Actual: {actual_count}"
             )
 
+        # Verify gateway doesn't overlap with special nodes
+        gateway_pos = (game_map.gateway.x, game_map.gateway.y)
+        overlapping_nodes = []
+        if gateway_pos in game_map.cooling_nodes:
+            overlapping_nodes.append("cooling_node")
+        if gateway_pos in game_map.cpu_recovery_nodes:
+            overlapping_nodes.append("cpu_recovery_node")
+        if gateway_pos in game_map.ghost_nodes:
+            overlapping_nodes.append("ghost_node")
+
+        assert not overlapping_nodes, (
+            f"Level {level} seed {seed}: Gateway at {gateway_pos} overlaps with: "
+            f"{', '.join(overlapping_nodes)}"
+        )
+
         logging.info(f"Level {level} seed {seed}: All spawn counts match [OK]")
 
 

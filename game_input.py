@@ -113,7 +113,11 @@ class InputHandler:
 
         # Dead/game over state - any key should exit to main menu
         # Only reached if no dialogue is active (death dialogue would be active)
+        # But also check for pending death dialogue (deferred by one frame for message visibility)
         if self.game.player.cpu <= 0 or self.game.game_over:
+            # If death dialogue is pending, wait for it to appear - don't exit yet
+            if hasattr(self.game, 'pending_death_dialogue') and self.game.pending_death_dialogue:
+                return True  # Keep playing until dialogue appears
             # Exit to main menu instead of showing pause menu when dead
             return False
 
