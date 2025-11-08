@@ -368,8 +368,20 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     if active_game is not None:
                         return active_game, False
                     else:
-                        game = GameEngine(settings=settings, load_save=True)
-                        return game, False
+                        try:
+                            game = GameEngine(settings=settings, load_save=True)
+                            return game, False
+                        except Exception as e:
+                            # Handle save load failures - log error and stay at main menu
+                            from game_save import SaveLoadError
+                            if isinstance(e, SaveLoadError):
+                                logging.error(f"Save load failed: {e}")
+                                print(f"\n[SAVE LOAD ERROR] {e}")
+                                print("Returning to main menu...")
+                            else:
+                                # Re-raise unexpected exceptions
+                                raise
+                            # Stay in menu loop - don't return a game
                 elif action == "new_game":
                     # Stop any music for new game - fresh start
                     menu_sound_manager.stop_music(fade_out_ms=1000)
@@ -511,8 +523,20 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     if active_game is not None:
                         return active_game, False
                     else:
-                        game = GameEngine(settings=settings, load_save=True)
-                        return game, False
+                        try:
+                            game = GameEngine(settings=settings, load_save=True)
+                            return game, False
+                        except Exception as e:
+                            # Handle save load failures - log error and stay at main menu
+                            from game_save import SaveLoadError
+                            if isinstance(e, SaveLoadError):
+                                logging.error(f"Save load failed: {e}")
+                                print(f"\n[SAVE LOAD ERROR] {e}")
+                                print("Returning to main menu...")
+                            else:
+                                # Re-raise unexpected exceptions
+                                raise
+                            # Stay in menu loop - don't return a game
                 elif action == "new_game":
                     # Stop any music for new game - fresh start
                     menu_sound_manager.stop_music(fade_out_ms=1000)

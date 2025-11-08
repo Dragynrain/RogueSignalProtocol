@@ -189,6 +189,8 @@ class GameMap:
             del self._transparency_cache
         if hasattr(self, '_walkability_cache'):
             del self._walkability_cache
+        # Clear LRU cache for FOV computations
+        self._compute_fov_cached.cache_clear()
 
     def get_walkability_map(self):
         """Get walkability map for pathfinding (cached for performance).

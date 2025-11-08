@@ -179,9 +179,9 @@ class GameEngine:
         if load_save:
             success = self.game_session.load_from_save()
             if not success:
-                # Fallback to new game if loading fails
-                self._randomize_code_hacks()
-                self.game_session.generate_procedural_level()
+                # Raise exception instead of silently falling back to new game
+                from game_save import SaveLoadError
+                raise SaveLoadError("Failed to load save file - file may be missing, corrupted, or incompatible with current version")
         else:
             self._randomize_code_hacks()
             self.game_session.generate_procedural_level()
