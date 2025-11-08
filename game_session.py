@@ -444,6 +444,12 @@ class GameSession:
                 # Enemy is not adjacent - move toward player
                 enemy.move(self.game_engine.game_map, self.game_engine.player, self.game_engine)
 
+        # Show inventory attack warning dialogue if player was attacked while in inventory
+        if player_attacked_in_inventory:
+            from game_dialogue_system import create_inventory_attack_dialogue
+            dialogue = create_inventory_attack_dialogue()
+            self.game_engine.dialogue_state.show(dialogue)
+
     def _update_all_enemy_awareness(self):
         """
         Update awareness states and handle communication for all enemies.
