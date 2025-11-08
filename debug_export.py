@@ -62,10 +62,14 @@ class DebugExporter:
             # Create zip file
             with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
                 # 1. System information
-                cls._add_system_info(zipf, crash_info)
+                cls._add_system_info(zipf, crash_info, game_engine)
 
-                # 2. Save files
+                # 2. Save files (from disk)
                 cls._add_directory_to_zip(zipf, "saves", "saves/")
+
+                # 2b. Current game state as save file (if active game exists)
+                if game_engine:
+                    cls._add_active_save(zipf, game_engine)
 
                 # 3. Log files
                 cls._add_directory_to_zip(zipf, "logs", "logs/")
@@ -75,7 +79,10 @@ class DebugExporter:
 
                 # 5. Game state snapshot (if game engine available)
                 if game_engine:
+                    logging.info(f"Debug Export: Adding game snapshot (level={game_engine.level}, turn={game_engine.turn})")
                     cls._add_game_snapshot(zipf, game_engine)
+                else:
+                    logging.warning("Debug Export: No game engine provided - snapshot will not be included")
 
                 # 6. Reproduction steps template
                 cls._add_reproduction_template(zipf)
@@ -94,7 +101,7 @@ class DebugExporter:
             return None
 
     @classmethod
-    def _add_system_info(cls, zipf: zipfile.ZipFile, crash_info: Optional[str] = None) -> None:
+    def _add_system_info(cls, zipf: zipfile.ZipFile, crash_info: Optional[str] = None, game_engine=None) -> None:
         """Add system_info.txt with environment details."""
         info_lines = [
             "=== SYSTEM INFORMATION ===",
@@ -105,6 +112,19 @@ class DebugExporter:
             f"Architecture: {platform.machine()}",
             "",
         ]
+
+        # Note if active game state is included
+        if game_engine:
+            info_lines.extend([
+                "=== ACTIVE GAME STATE ===",
+                f"Level: {game_engine.level}",
+                f"Turn: {game_engine.turn}",
+                f"Game Over: {game_engine.game_over}",
+                f"Player CPU: {game_engine.player.cpu}/{game_engine.player.max_cpu}",
+                f"Enemies: {len(game_engine.enemies)}",
+                "Active game state saved as: saves/rogue_signal_save_ACTIVE.json",
+                "",
+            ])
 
         # Add TCOD version
         try:
@@ -188,10 +208,28 @@ class DebugExporter:
             }
 
             zipf.writestr("game_snapshot.json", json.dumps(snapshot, indent=2))
-            logging.debug("Debug Export: Added game snapshot")
+            logging.info(f"Debug Export: Game snapshot added successfully ({len(game_engine.enemies)} enemies)")
 
         except Exception as e:
-            logging.warning(f"Debug Export: Failed to create game snapshot: {e}")
+            logging.error(f"Debug Export: Failed to create game snapshot: {e}")
+            logging.error(traceback.format_exc())
+
+    @classmethod
+    def _add_active_save(cls, zipf: zipfile.ZipFile, game_engine: 'GameEngine') -> None:
+        """Save the current active game state directly to the debug package."""
+        try:
+            from game_save import SaveGameManager
+
+            # Create a temporary save of the current game state
+            save_data = SaveGameManager.create_save_data(game_engine)
+
+            # Add it to the zip as the active save
+            zipf.writestr("saves/rogue_signal_save_ACTIVE.json", json.dumps(save_data, indent=2))
+            logging.info("Debug Export: Active game state saved to package")
+
+        except Exception as e:
+            logging.error(f"Debug Export: Failed to save active game state: {e}")
+            logging.error(traceback.format_exc())
 
     @classmethod
     def _add_reproduction_template(cls, zipf: zipfile.ZipFile) -> None:

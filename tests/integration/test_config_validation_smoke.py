@@ -122,9 +122,9 @@ class TestGameConfigStructure:
         room_gen = config_data['room_generation']
         required_keys = ['min_rooms_base', 'room_level_multiplier', 'max_rooms',
                         'max_placement_attempts', 'min_room_size', 'max_room_size',
-                        'room_padding', 'cooling_nodes_per_level', 'cpu_nodes_per_level',
-                        'ghost_nodes_per_level', 'code_hacks_per_level',
-                        'exploit_pickups_per_level', 'permanent_upgrades_per_level']
+                        'room_padding']
+        # NOTE: Special node counts (cooling, cpu, ghost, code_hacks, etc)
+        # are now in game_content.json network_configs, not here
 
         for key in required_keys:
             assert key in room_gen, f"Missing required key 'room_generation.{key}' in game_rules.json"
@@ -344,8 +344,7 @@ class TestConfigRealObjectInstantiation:
         # Verify values loaded correctly
         assert RoomGenerationConfig.MIN_ROOMS_BASE > 0
         assert RoomGenerationConfig.MAX_ROOMS > 0
-        assert RoomGenerationConfig.CPU_NODES_PER_LEVEL >= 0
-        assert RoomGenerationConfig.COOLING_NODES_PER_LEVEL >= 0
+        # NOTE: Node counts are now in game_content.json network_configs
 
     def test_data_loader_loads_game_data_successfully(self):
         """Verify DataLoader can load game_content.json."""

@@ -155,10 +155,8 @@ class TestRealConfigIntegration:
         # Verify class attributes match JSON
         assert RoomGenerationConfig.MIN_ROOMS_BASE == room_gen['min_rooms_base']
         assert RoomGenerationConfig.MAX_ROOMS == room_gen['max_rooms']
-        assert RoomGenerationConfig.COOLING_NODES_PER_LEVEL == room_gen['cooling_nodes_per_level']
-        assert RoomGenerationConfig.CPU_NODES_PER_LEVEL == room_gen['cpu_nodes_per_level']
-        assert RoomGenerationConfig.GHOST_NODES_PER_LEVEL == room_gen['ghost_nodes_per_level']
-        assert RoomGenerationConfig.CODE_HACKS_PER_LEVEL == room_gen['code_hacks_per_level']
+        # NOTE: Node/item counts (cooling, cpu, ghost, code_hacks, etc) are now
+        # in game_content.json network_configs, not game_rules.json
 
     def test_difficulty_multipliers_accessible(self):
         """Verify all difficulty multipliers can be accessed."""

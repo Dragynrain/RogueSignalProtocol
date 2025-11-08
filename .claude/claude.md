@@ -18,9 +18,13 @@
 2. **NO AUTO-COMMITS**: Always ask before committing. Exception: ONLY when user says "commit this" or "make a commit"
 3. **Check existing keybindings**: Before assigning hotkeys, grep for existing uses first
 4. **Fix what you're asked to fix**: Don't dismiss test failures as "unrelated" - if asked to fix all tests, fix all tests
-5. **Character encoding rules**:
+5. **Character encoding rules** - CRITICAL FOR WINDOWS:
    - **Game UI (TCOD)**: Unicode OK (↕ ↑ ↓ ← → ↗ ↖ ↙ ↘) - KreativeSquare font supports
-   - **Logging/console**: ASCII only - Windows CP1252 breaks. Use `[DEATH]`, `->` not 💀, →
+   - **Logging/console**: **ASCII ONLY** - Windows logging handlers SILENTLY FAIL on Unicode!
+     - ❌ NEVER: `logging.info("✓ Success")` - causes silent exception, no log output
+     - ✅ ALWAYS: `logging.info("[SUCCESS]")` or `logging.info("OK")`
+     - Examples: Use `[MATCH]`/`[MISMATCH]`, `[DEATH]`, `->` not ✓/✗, 💀, →
+     - **Why**: Windows CP1252 encoding in log files silently drops Unicode, breaking logging
    - **Chat with user**: Emoji OK 😊
    - **Code/commits**: Never use emoji
 
@@ -34,8 +38,8 @@
 - ❌ **NEVER USE**: `dir`, `del`, `md`, `copy`, `move`, `type` (Windows CMD commands)
 - **Paths**: Forward slashes preferred but backslashes work: `.venv/Scripts/python.exe`
 - **Quote spaces**: Always quote paths with spaces: `cd "path with spaces"`
-- **Python**: Always use `.venv/Scripts/python.exe` (NEVER just `python` or `uv`)
-- **Pip**: Always use `.venv/Scripts/pip.exe install <pkg>` (NEVER just `pip` or `uv`)
+- **Python**: Always use `.venv/Scripts/python.exe` (not just `python`)
+- **Pip**: Always use `.venv/Scripts/pip.exe install <pkg>`
 
 ---
 

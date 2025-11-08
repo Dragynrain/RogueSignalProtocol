@@ -563,33 +563,38 @@ class InputHandler:
 
     def _trigger_debug_export(self):
         """Trigger debug package export with confirmation dialog."""
-        from game_dialogue_system import Dialogue, DialogueOption
+        from game_dialogue_system import DialogueBox
         from game_entities import Colors
+        import tcod.event
 
         # Create confirmation dialogue
-        dialogue = Dialogue(
+        message = (
+            "This will create a debug package containing:\n"
+            "- Your save files and settings\n"
+            "- Game logs and metrics\n"
+            "- System information\n"
+            "\n"
+            "This package can help developers fix bugs.\n"
+            "Package will be saved to: debug_exports/\n"
+            "\n"
+            "Continue?"
+        )
+
+        dialogue = DialogueBox(
             title="Export Debug Package",
-            lines=[
-                "This will create a debug package containing:",
-                "- Your save files and settings",
-                "- Game logs and metrics",
-                "- System information",
-                "",
-                "This package can help developers fix bugs.",
-                "Package will be saved to: debug_exports/",
-                "",
-                "Continue?"
-            ],
-            options=[
-                DialogueOption("Y", "Yes", "export_debug_yes"),
-                DialogueOption("N", "No", "export_debug_no")
-            ],
-            color=Colors.GOLD,
-            can_dismiss=True
+            message=message,
+            options=["[Y] Yes", "[N] No"],
+            valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.ESCAPE],
+            title_color=Colors.YELLOW,
+            message_color=Colors.WHITE,
+            border_color=Colors.YELLOW,
+            bg_color=Colors.BLACK,
+            format_data={},
+            priority=5
         )
 
         # Show dialogue
-        self.game.dialogue_state.show_dialogue(dialogue)
+        self.game.dialogue_state.show(dialogue)
 
         # Store callback for when user confirms
         self.game._pending_debug_export = True
@@ -600,7 +605,7 @@ class InputHandler:
         from game_entities import Colors
 
         logging.info("Debug Export: Starting debug package creation")
-        self.game.message_log.add_message("Creating debug package...", Colors.GOLD)
+        self.game.message_log.add_message("Creating debug package...", Colors.YELLOW)
 
         try:
             # Create the debug package
@@ -610,7 +615,8 @@ class InputHandler:
                 # Success!
                 filename = zip_path.name
                 self.game.message_log.add_message(f"Debug package created: {filename}", Colors.GREEN)
-                self.game.message_log.add_message("Send this file to developers for bug investigation", Colors.GOLD)
+                self.game.message_log.add_message("Location: debug_exports/ folder", Colors.CYAN)
+                self.game.message_log.add_message("Report to: github.com/Dragynrain/RogueSignalProtocol", Colors.YELLOW)
                 logging.info(f"Debug Export: Success - {zip_path}")
             else:
                 # Failed

@@ -1081,6 +1081,10 @@ class GameSession:
             max_attempts=150
         )
 
+        actual_count = len(self.game_engine.game_map.code_hacks)
+        match_status = "MATCH" if actual_count == patch_count else "MISMATCH"
+        logging.info(f"Item Placement: CODE HACKS - Expected: {patch_count}, Actual: {actual_count} [{match_status}]")
+
     def _is_code_color_discovered(self, color: str) -> bool:
         """Check if player has already discovered what this code color does."""
         # Check the global discovered effects for this game session
@@ -1111,6 +1115,10 @@ class GameSession:
             storage_dict=self.game_engine.game_map.exploit_pickups,
             max_attempts=100
         )
+
+        actual_count = len(self.game_engine.game_map.exploit_pickups)
+        match_status = "MATCH" if actual_count == exploit_count else "MISMATCH"
+        logging.info(f"Item Placement: EXPLOIT PICKUPS - Expected: {exploit_count}, Actual: {actual_count} [{match_status}]")
 
     def _place_story_fragment(self):
         """Place a story fragment on level 3 with 50% chance."""
@@ -1178,8 +1186,12 @@ class GameSession:
                 if not available_upgrades:
                     break
 
+        actual_count = len(self.game_engine.game_map.permanent_upgrades)
         if placed_upgrades < upgrade_count:
             logging.warning(f"Only placed {placed_upgrades}/{upgrade_count} permanent upgrades after {attempts} attempts")
+
+        match_status = "MATCH" if actual_count == upgrade_count else "MISMATCH"
+        logging.info(f"Item Placement: PERMANENT UPGRADES - Expected: {upgrade_count}, Actual: {actual_count} [{match_status}]")
 
     def _place_enemies(self, enemy_count: int):
         """Place enemies throughout the level with increased density."""

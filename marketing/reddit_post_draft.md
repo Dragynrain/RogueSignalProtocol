@@ -22,7 +22,7 @@ I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a coffee break stea
 * **Traditional roguelike mechanics** - permadeath, turn-based, procedural generation, tactical gameplay
 * **Stealth-first design** - detection spawns a powerful boss enemy (Admin Avatar), hiding in blind spots is key
 * **Enemy movement prediction** - See enemies' next 3 planned moves for tactical planning
-* **21 story fragments** revealing a dark conspiracy about uploading human minds to networks
+* **20+ story fragments** revealing a dark conspiracy about uploading human minds to networks
 * **8 enemy types** with unique behaviors (static guards, patrols, hunters, viruses, inhibitors)
 * **12 exploits** across combat, stealth, and utility categories with heat management
 * **Achievement system** - Persistent tracking across runs with unlockable challenges

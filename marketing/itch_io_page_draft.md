@@ -16,14 +16,14 @@ Rogue Signal Protocol is a **coffee break stealth roguelike** where you play as 
 * **Achievement system** - Persistent tracking across runs with unlockable challenges
 * **Interactive look mode** - Inspect enemies, items, and terrain with mouse or keyboard
 * **3 escalating network environments** with procedural generation
-* **21 story fragments** revealing the Project Chimera conspiracy
+* **20+ story fragments** revealing the Project Chimera conspiracy
 * **Dual rendering modes** - Switch between graphical sprites or classic ASCII/Unicode glyphs
 * **Full audio design** with atmospheric music and 40+ sound effects (toggleable)
 * **Permadeath roguelike mechanics** with auto-save on exit
 
 ### WHAT TO EXPECT (Alpha 0.8.0):
 ✓ Complete gameplay loop (3 levels, all systems functional)
-✓ Full narrative content (all 21 story fragments)
+✓ Full narrative content (20+ story fragments)
 ✓ Achievement system with persistent tracking
 ✓ Enemy movement prediction for tactical planning
 ✓ Balanced difficulty with strategic stealth focus
@@ -39,7 +39,7 @@ Track your progress across runs with the **Achievement System** - unlock challen
 ### STORY:
 Fragments of memory. Corporate secrets. Digital ghosts.
 
-You are an Echo Variant - a test subject in Project Chimera's twisted experiment to upload human consciousness into digital networks. Scattered across the corporate data vaults are 21 story fragments revealing the truth about Dr. Aris Thorne's obsession with digital consciousness transfer.
+You are an Echo Variant - a test subject in Project Chimera's twisted experiment to upload human consciousness into digital networks. Scattered across the corporate data vaults are 20+ story fragments revealing the truth about Dr. Aris Thorne's obsession with digital consciousness transfer.
 
 Discover the conspiracy. Escape to freedom.
 

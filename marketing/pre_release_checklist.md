@@ -1,82 +1,5 @@
 # Pre-Release Checklist for Alpha 0.8.0
 
-## ✅ COMPLETED
-
-- [x] README.txt created (player-facing documentation)
-- [x] Marketing folder created with drafts:
-  - [x] itch_io_page_draft.md
-  - [x] reddit_post_draft.md
-  - [x] feedback_survey_draft.md
-- [x] Verified keybindings (L=Look, F=Fragments, ?=Help)
-- [x] Identified cleanup targets
-
----
-
-## 🔴 CRITICAL - MUST FIX BEFORE RELEASE
-
-### 1. ✅ **Create Logic Bomb sound effect** - COMPLETED
-
-~~**PROBLEM:** Logic Bomb exploit uses placeholder sound (needs dedicated sound file)~~
-
-**RESOLVED:** `sound/logic_bomb.wav` created (64KB, Nov 7)
-
----
-
-### 2. ✅ **Update dist/ folder with current config files** - COMPLETED
-
-~~**PROBLEM:** The `dist/` folder has **OUTDATED** config files!~~
-
-**RESOLVED:** Copied current `game_content.json` to `dist/` (Nov 7) - now has correct exploit names (System Hop, Traffic Masquerade, etc.)
-
----
-
-### 3. ✅ **Fix welcome message in dist/game_rules.json** - ALREADY CORRECT
-
-~~Line 164 says: "Press 'L' to view discovered lore"~~
-
-**VERIFIED:** Line 388 correctly shows: `"Press 'L' for look mode, 'F' for fragments"` - No changes needed!
-
----
-
-## ⚠️ IMPORTANT - Should Do Before Release
-
-### 4. ✅ **Clean up leftover files** - COMPLETED
-~~```bash
-# Delete development artifacts
-rm game_debug.log
-rm graphic-preview.log
-rm nul
-
-# Archive scratch code
-mkdir .archive
-mv preview_layout_new.py .archive/
-```~~
-
-**RESOLVED:** `nul` file deleted, no leftover dev artifacts found (Nov 7)
-
-### 5. **Update README.txt keybindings (player-facing docs)**
-
-Line 68 in README.txt says:
-```markdown
-- **Lore**: L key to view discovered story fragments
-```
-
-Should be:
-```markdown
-- **Lore**: F key to view discovered story fragments
-- **Look Mode**: L key to examine entities and terrain
-```
-
-### 6. **Verify .gitignore**
-
-Add these if not already present:
-```
-*.log
-*.tmp
-*.pyc
-__pycache__/
-rogue_signal_save.json
-game_debug.log
 ```
 
 ### 7. **Test the EXE**
@@ -134,29 +57,34 @@ game_debug.log
 
 ## 📦 PACKAGING FOR ITCH.IO
 
-### 8. **Create release package**
+### 8. **Prepare release package** ✅ AUTOMATED
+
+**The build script already does this!**
 
 ```bash
-# Create clean distribution
-mkdir RogueSignalProtocol_v0.8.0_Alpha
-cd RogueSignalProtocol_v0.8.0_Alpha
-
-# Copy executable and assets
-cp ../dist/RogueSignalProtocol.exe .
-cp ../dist/*.json .  # After fixing outdated configs!
-cp -r ../dist/music .
-cp -r ../dist/sound .
-cp -r ../dist/main_menu .
-cp ../dist/terminal10x16_gs_ro.png .
-
-# Copy documentation
-cp ../README.txt .
-cp ../LICENSE .
-
-# Create zip
-cd ..
-zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
+# Run the build script (creates everything automatically)
+build\build.bat alpha
 ```
+
+**What it creates:**
+- `dist/` - Executable + all assets
+- `releases/RogueSignalProtocol_alpha_YYYY-MM-DD.zip` - Ready-to-upload package
+
+**Optional: Rename for version-based naming:**
+```bash
+# If you prefer version-based naming over date-based:
+copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProtocol_v0.8.0_Alpha.zip
+```
+
+**Verify the zip contains:**
+- [ ] RogueSignalProtocol.exe
+- [ ] All .json config files (game_content, game_rules, narrative_content, graphics_tiles)
+- [ ] KreativeSquare.ttf font
+- [ ] README.txt and LICENSE
+- [ ] graphics/ folder (includes main_menu backgrounds)
+- [ ] sound/ folder
+- [ ] music/ folder
+- [ ] debug_mode.flag (alpha builds only)
 
 ### 9. **Prepare itch.io page**
 
@@ -250,11 +178,11 @@ zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 - **Test EXE:** 30 minutes
 - **Update screenshots (pixel explosion + queue arrows):** 30 minutes
 - **Record new MP4 video for Reddit:** 20 minutes
-- **Package for itch.io:** 30 minutes
+- **Package for itch.io:** 5 minutes (automated by build script!)
 - **Create itch.io page:** 30 minutes
 - **Post to Reddit:** 15 minutes
 
-**Total: ~3 hours** (assuming no major bugs found during testing)
+**Total: ~2.5 hours** (assuming no major bugs found during testing)
 
 ---
 

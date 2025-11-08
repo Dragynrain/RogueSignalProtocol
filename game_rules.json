@@ -73,12 +73,6 @@
     "min_room_size": 3,
     "max_room_size": 7,
     "room_padding": 1,
-    "cooling_nodes_per_level": 3,
-    "cpu_nodes_per_level": 2,
-    "ghost_nodes_per_level": 2,
-    "code_hacks_per_level": 4,
-    "exploit_pickups_per_level": 3,
-    "permanent_upgrades_per_level": 1,
     "corridor_width_weights": {
       "narrow": 0.65,
       "medium": 0.3,
