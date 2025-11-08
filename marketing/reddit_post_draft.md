@@ -25,7 +25,7 @@ I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a coffee break stea
 * **12 exploits** across combat, stealth, and utility categories with heat management
 * **Achievement system** - Persistent tracking across runs with unlockable challenges
 * **Interactive look mode** - Inspect enemies and terrain with mouse or keyboard
-* **Dual rendering modes** - Classic ASCII/Unicode or graphical sprites
+* **Dual rendering modes** - Switch between graphical sprites or classic ASCII/Unicode glyphs
 * **Full audio design** - Atmospheric music and 40+ sound effects
 
 ### What Makes It Different:

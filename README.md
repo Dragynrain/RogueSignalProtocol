@@ -43,9 +43,9 @@ Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike whe
 - **📚 Rich Narrative**: Discover 20+ story fragments revealing Project Chimera
 - **🏆 Achievement System**: Track progress across runs with persistent unlocks
 - **🔍 Interactive Look Mode**: Inspect enemies, items, and terrain with mouse or keyboard
-- **🎨 Dual Rendering**: Full graphical sprites or classic ASCII/Unicode mode
+- **🎨 Dual Rendering Modes**: Switch between graphical sprites or classic ASCII/Unicode glyphs
 - **🎵 Full Audio**: Sound effects and atmospheric music (toggleable)
-- **💾 True Permadeath**: Saves deleted on death, auto-save after every action
+- **💾 True Permadeath**: Saves deleted on death, auto-save on exit
 
 ---
 

@@ -169,9 +169,9 @@ a) Short Game Description
   - Interactive Look Mode: Inspect enemies, items, and terrain with mouse or keyboard for detailed tactical intel
   - 12 Powerful Exploits: From Shadow Step teleportation to System Crash emergency protocols—combine stealth, combat, and utility tools with heat management
   - 8 Unique Enemy Types: Face surveillance Scanners, deadly Admin Avatars, corrupting Viruses, and adaptive AI hunters
-  - Dual Rendering Modes: Classic ASCII/Unicode or full graphical sprites—same gameplay, your choice of aesthetic
+  - Dual Rendering Modes: Switch between graphical sprites or classic ASCII/Unicode glyphs—same gameplay, your choice of aesthetic
   - Full Audio Design: Atmospheric music and 40+ sound effects (toggleable) enhance the cyberspace immersion
-  - Permadeath with Stakes: Death deletes your save file. Auto-save after every action. No second chances. Every decision carries weight
+  - Permadeath with Stakes: Death deletes your save file. Auto-save on exit. No second chances. Every decision carries weight
   - Procedural Generation: Every run creates new network layouts, enemy placements, and resource distributions
 
   ---
@@ -205,10 +205,10 @@ a) Short Game Description
   - Stealth-first gameplay where avoiding detection is survival
   - Achievement system with persistent tracking across runs
   - Interactive look mode to inspect enemies, items, and terrain
-  - Permadeath with save file deletion—every run matters, auto-save after every action
+  - Permadeath with save file deletion—every run matters, auto-save on exit
   - 12 unique exploits combining stealth, combat, and utility abilities with heat management
   - 8 distinct enemy AI types with sophisticated behaviors
-  - Dual rendering modes: ASCII/Unicode or graphical sprites
+  - Dual rendering modes: Switch between graphical sprites or ASCII/Unicode glyphs
   - Full audio design: atmospheric music and 40+ sound effects
   - 20+ narrative fragments revealing the mystery through environmental storytelling
   - 3 escalating network environments: Corporate, Government, Military

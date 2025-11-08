@@ -21,7 +21,6 @@
       "MultiEdit(./**/*.json)",
       "TodoWrite(*)",
       "Timeout(*)",
-	  "Bash(dir:*)",
       "Bash(.venv\\Scripts\\:*)",
       "Bash(python:*)",
       "Bash(pytest:*)",
