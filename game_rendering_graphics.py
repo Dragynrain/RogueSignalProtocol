@@ -938,8 +938,12 @@ class GraphicsMapRenderer(MapRendererBase):
                 if (world_x, world_y) not in game.visible_tiles:
                     continue
 
-                # Skip blind spots - enemies can't see into blind spots unless adjacent
+                # Skip walls - enemies can't see into walls anyway
                 world_pos = Position(world_x, world_y)
+                if game_map.is_wall(world_pos):
+                    continue
+
+                # Skip blind spots - enemies can't see into blind spots unless adjacent
                 if game_map.is_blind_spot(world_pos):
                     # Show vision marker if enemy is adjacent to this blind spot
                     enemy_pos = Position(enemy.x, enemy.y)

@@ -1193,10 +1193,10 @@ class GameSession:
                 if enemy_type == 'patrol':
                     enemy.patrol_points = self.game_engine.enemy_manager._generate_patrol_route(position)
                 elif enemy_type == 'virus':
-                    # Give virus enemies random movement types for variety
-                    virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.PATROL, EnemyMovement.SEEK]
-                    virus_movement_weights = [2, 3, 2, 2]  # Equal chance for each movement type
-                    chosen_movement = random.choices(virus_movement_types, weights=virus_movement_weights)[0]
+                    # Give virus enemies random passive movement types for variety
+                    # SEEK is NOT included - it's the movement type used when hostile, not a base type
+                    virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.PATROL]
+                    chosen_movement = random.choice(virus_movement_types)
                     # Store in instance variable, NOT in shared type_data!
                     enemy.original_movement_type = chosen_movement
 

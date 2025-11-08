@@ -456,6 +456,10 @@ class GlyphsMapRenderer(MapRendererBase):
                     if (world_x, world_y) not in visible_tiles:
                         continue
 
+                    # Skip walls - enemies can't see into walls anyway
+                    if game_map.is_wall(world_pos):
+                        continue
+
                     # Skip blind spots - enemies can't see into blind spots unless adjacent
                     if game_map.is_blind_spot(world_pos):
                         # Show vision marker if enemy is adjacent to this blind spot
