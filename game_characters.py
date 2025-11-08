@@ -730,11 +730,16 @@ class Enemy:
         """Get the effective movement type for this enemy.
 
         For virus enemies:
+        - If STATIC: always STATIC (even when hostile - stationary viruses never move)
         - When HOSTILE: use SEEK movement (chase player)
         - When not HOSTILE (UNAWARE/ALERT): use their original mimicked movement type
         For all other enemies: returns type_data.movement
         """
         if self.type == 'virus':
+            # Stationary viruses NEVER move, even when hostile
+            if self.original_movement_type == EnemyMovement.STATIC:
+                return EnemyMovement.STATIC
+
             if self.state == EnemyState.HOSTILE:
                 # Hostile viruses actively seek the player
                 return EnemyMovement.SEEK
@@ -872,7 +877,8 @@ class Enemy:
         # 1. Patrol waypoint advancement
         if self._should_advance_patrol_waypoint():
             self._advance_patrol_waypoint()
-            self.move_queue.clear()  # New waypoint = new plan
+            # Don't clear queue - it already has valid moves to next waypoint
+            # from _extend_patrol_queue. Queue is only cleared when blocked.
 
         # 2. Disability check
         if self.disabled_turns > 0:
@@ -1140,8 +1146,9 @@ class Enemy:
             # Start from last queued position
             start_pos = self.move_queue[-1] if self.move_queue else self.position
 
-            # Skip if already at/very close to this waypoint (use grid distance for gameplay)
-            if start_pos.grid_distance_to(next_waypoint) <= 1:
+            # Skip only if already exactly at this waypoint
+            # Don't skip if 1 tile away - we still need to queue that move for short patrols
+            if start_pos.grid_distance_to(next_waypoint) == 0:
                 continue
 
             # Calculate path to next waypoint
