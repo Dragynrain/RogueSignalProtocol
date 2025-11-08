@@ -18,7 +18,7 @@ I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a coffee break stea
 
 **[GIF/Video of gameplay here - even 10 seconds massively increases engagement]**
 
-*(Screenshots posted in comments - Reddit doesn't allow both video and images in the same post)*
+*(Screenshots in comments)*
 
 ### Core Features:
 * **Traditional roguelike mechanics** - permadeath, turn-based, procedural generation, tactical gameplay
@@ -79,7 +79,7 @@ If you're an actual artist or actual sound designer interested in improving the 
 
 ---
 
-*[Post 3-4 screenshots in the comments after submitting - gameplay, inventory, lore screen, maybe a death screen showing feedback link. Reddit doesn't allow both video and images in the main post.]*
+*[Post 3-4 screenshots in comments after submitting - gameplay, inventory, lore screen, maybe a death screen showing feedback link]*
 
 ---
 
