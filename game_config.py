@@ -579,12 +579,10 @@ class RoomGenerationConfig:
     MIN_ROOM_SIZE = 3
     MAX_ROOM_SIZE = 8
     ROOM_PADDING = 1
-    COOLING_NODES_PER_LEVEL = 3
-    CPU_NODES_PER_LEVEL = 2
-    GHOST_NODES_PER_LEVEL = 2
-    CODE_HACKS_PER_LEVEL = 4
-    EXPLOIT_PICKUPS_PER_LEVEL = 3
-    PERMANENT_UPGRADES_PER_LEVEL = 1
+
+    # NOTE: Special node counts (cooling_nodes, cpu_nodes, ghost_nodes, code_hacks,
+    # exploit_pickups, permanent_upgrades) are defined per-level in game_content.json
+    # network_configs, NOT here. Those values vary by level (1, 2, 3).
 
     @classmethod
     def load_from_json(cls):
@@ -596,12 +594,9 @@ class RoomGenerationConfig:
         cls.MIN_ROOM_SIZE = GameConfig._get_required('room_generation.min_room_size')
         cls.MAX_ROOM_SIZE = GameConfig._get_required('room_generation.max_room_size')
         cls.ROOM_PADDING = GameConfig._get_required('room_generation.room_padding')
-        cls.COOLING_NODES_PER_LEVEL = GameConfig._get_required('room_generation.cooling_nodes_per_level')
-        cls.CPU_NODES_PER_LEVEL = GameConfig._get_required('room_generation.cpu_nodes_per_level')
-        cls.GHOST_NODES_PER_LEVEL = GameConfig._get_required('room_generation.ghost_nodes_per_level')
-        cls.CODE_HACKS_PER_LEVEL = GameConfig._get_required('room_generation.code_hacks_per_level')
-        cls.EXPLOIT_PICKUPS_PER_LEVEL = GameConfig._get_required('room_generation.exploit_pickups_per_level')
-        cls.PERMANENT_UPGRADES_PER_LEVEL = GameConfig._get_required('room_generation.permanent_upgrades_per_level')
+
+        # NOTE: Node/item counts removed - use game_content.json network_configs instead
+        # (values vary per level, not a single "per_level" value)
 
     def __init__(self):
         self.min_room_size = self.MIN_ROOM_SIZE

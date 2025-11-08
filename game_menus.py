@@ -164,7 +164,6 @@ class MainMenu(BaseMenu):
         self._render_menu_options(console, box)
         self._render_save_info(console, box)
         self._render_controls_help(console, box)
-        self._render_story_progress(console, box)
     
     def _render_menu_title(self, console: tcod.console.Console, box: dict) -> None:
         """Render the main menu title and decorations."""
@@ -776,8 +775,9 @@ class SettingsMenu(BaseMenu):
 
     def _handle_confirmation_input(self, event) -> str:
         """Handle input for export confirmation dialogue."""
-        # Handle navigation using universal handler
-        if UniversalInputHandler.handle_dialog_navigation(self, event, attr_prefix="export_confirmation"):
+        # Handle navigation (up/down toggles between options)
+        if event.sym in (UniversalInputHandler.NAVIGATION_UP + UniversalInputHandler.NAVIGATION_DOWN):
+            self.export_confirmation_selection = 1 - self.export_confirmation_selection
             return ""
 
         # Handle selection

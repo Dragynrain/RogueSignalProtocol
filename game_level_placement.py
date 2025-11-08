@@ -119,7 +119,9 @@ class TilePlacementGenerator:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.cooling_nodes.add(pos)
-        logging.debug(f"Tile Placement: Placed {len(self.game_map.cooling_nodes)} cooling nodes")
+        actual_cooling = len(self.game_map.cooling_nodes)
+        match_status = "MATCH" if actual_cooling == cooling_count else "MISMATCH"
+        logging.info(f"Tile Placement: COOLING NODES - Expected: {cooling_count}, Actual: {actual_cooling} [{match_status}]")
 
         cpu_count = get_required_config('cpu_nodes')
         cpu_positions = self.get_peripheral_positions(floor_positions)
@@ -134,7 +136,9 @@ class TilePlacementGenerator:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.cpu_recovery_nodes.add(pos)
-        logging.debug(f"Tile Placement: Placed {len(self.game_map.cpu_recovery_nodes)} CPU recovery nodes")
+        actual_cpu = len(self.game_map.cpu_recovery_nodes)
+        match_status = "MATCH" if actual_cpu == cpu_count else "MISMATCH"
+        logging.info(f"Tile Placement: CPU NODES - Expected: {cpu_count}, Actual: {actual_cpu} [{match_status}]")
 
         ghost_count = get_required_config('ghost_nodes')
         ghost_positions = self.get_shadow_adjacent_positions(floor_positions)
@@ -149,7 +153,9 @@ class TilePlacementGenerator:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
                 self.game_map.ghost_nodes.add(pos)
-        logging.debug(f"Tile Placement: Placed {len(self.game_map.ghost_nodes)} ghost nodes")
+        actual_ghost = len(self.game_map.ghost_nodes)
+        match_status = "MATCH" if actual_ghost == ghost_count else "MISMATCH"
+        logging.info(f"Tile Placement: GHOST NODES - Expected: {ghost_count}, Actual: {actual_ghost} [{match_status}]")
 
     def get_high_traffic_positions(self, floor_positions: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
         """

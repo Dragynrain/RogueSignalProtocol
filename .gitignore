@@ -1,5 +1,6 @@
 # Debug and log files
 logs/
+*.log
 debug_mode.flag
 
 # Python cache files

@@ -46,26 +46,31 @@ class SaveGameManager:
         raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
     
     @classmethod
-    def save_game(cls, game: 'GameEngine') -> bool:
-        """Save complete game state to file with robust error handling."""
+    def create_save_data(cls, game: 'GameEngine') -> dict:
+        """
+        Create save data dictionary from game state.
+
+        This method extracts the current game state into a dictionary that can be:
+        - Written to a save file (via save_game)
+        - Included in debug packages (via debug_export)
+        - Used for any other serialization needs
+
+        Args:
+            game: The GameEngine instance to serialize
+
+        Returns:
+            Dictionary containing complete game state
+
+        Raises:
+            ValueError: If game or player state is invalid
+        """
         if game is None:
-            logging.error("Cannot save: game object is None")
-            return False
-
+            raise ValueError("Cannot create save data: game object is None")
         if game.player is None:
-            logging.error("Cannot save: player object is None")
-            return False
+            raise ValueError("Cannot create save data: player object is None")
 
-        # Ensure saves directory exists
-        os.makedirs(os.path.dirname(cls.SAVE_FILE), exist_ok=True)
-
-        # Attempt save with retry logic
-        for attempt in range(GameConfig.MAX_SAVE_ATTEMPTS):
-            try:
-                logging.info(f"Save: Attempt {attempt+1}/{GameConfig.MAX_SAVE_ATTEMPTS}, level={game.level}, turn={game.turn}, player_pos=({game.player.x},{game.player.y}), seed={game.game_state.dungeon_seed}")
-
-                # Gather all game state data
-                save_data = {
+        # Gather all game state data
+        save_data = {
                     "version": "0.8.0 Alpha",
                     "timestamp": time.time(),
 
@@ -135,7 +140,31 @@ class SaveGameManager:
                     # Session metrics tracking
                     "session_metrics": cls._serialize_metrics(game)
                 }
-            
+
+        return save_data
+
+    @classmethod
+    def save_game(cls, game: 'GameEngine') -> bool:
+        """Save complete game state to file with robust error handling."""
+        if game is None:
+            logging.error("Cannot save: game object is None")
+            return False
+
+        if game.player is None:
+            logging.error("Cannot save: player object is None")
+            return False
+
+        # Ensure saves directory exists
+        os.makedirs(os.path.dirname(cls.SAVE_FILE), exist_ok=True)
+
+        # Attempt save with retry logic
+        for attempt in range(GameConfig.MAX_SAVE_ATTEMPTS):
+            try:
+                logging.info(f"Save: Attempt {attempt+1}/{GameConfig.MAX_SAVE_ATTEMPTS}, level={game.level}, turn={game.turn}, player_pos=({game.player.x},{game.player.y}), seed={game.game_state.dungeon_seed}")
+
+                # Create save data using the shared method
+                save_data = cls.create_save_data(game)
+
                 # Write to temporary file first, then atomic rename for safety
                 temp_file = cls.SAVE_FILE + '.tmp'
                 try:

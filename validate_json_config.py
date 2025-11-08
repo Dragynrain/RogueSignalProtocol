@@ -53,9 +53,8 @@ def validate_game_config():
 
     # Validate room_generation section
     room_gen_keys = ['min_rooms_base', 'room_level_multiplier', 'max_rooms', 'max_placement_attempts',
-                     'min_room_size', 'max_room_size', 'room_padding', 'cooling_nodes_per_level',
-                     'cpu_nodes_per_level', 'ghost_nodes_per_level', 'code_hacks_per_level',
-                     'exploit_pickups_per_level', 'permanent_upgrades_per_level']
+                     'min_room_size', 'max_room_size', 'room_padding']
+    # NOTE: Special node counts (cooling, cpu, ghost, code_hacks, etc) moved to game_content.json network_configs
     for key in room_gen_keys:
         if key not in config['room_generation']:
             print(f"ERROR: Missing 'room_generation.{key}' in game_config.json")
