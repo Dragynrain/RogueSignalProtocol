@@ -4,6 +4,7 @@ Audio system managing sound effects and background music via pygame.
 
 This module handles:
 - Sound effect playback with priority queue (16 simultaneous channels)
+- Sound deduplication to prevent stacking/doubling (50ms cooldown)
 - Background music streaming with fade in/out
 - Volume management (master, music, SFX) synced with GameSettings
 - Sound preloading at startup for instant playback
@@ -11,6 +12,7 @@ This module handles:
 
 Key features:
 - Priority-based sound playback (higher priority interrupts lower)
+- Automatic deduplication prevents same sound playing multiple times simultaneously
 - Configurable audio directories (sound/, music/)
 - Master volume slider affects all audio (music and SFX)
 - Music loops infinitely or plays once based on loops parameter
@@ -19,12 +21,14 @@ Key features:
 Technical details:
 - Uses pygame.mixer with 22050 Hz, 16-bit, stereo, 512 buffer
 - 16 channels for simultaneous sound effects
+- 50ms cooldown per sound prevents stacking (configurable via set_sound_cooldown)
 - Music volume set from settings immediately after init (pygame defaults to 0.0)
 """
 
 import os
 import logging
 import traceback
+import time
 
 # Audio system
 try:
@@ -75,7 +79,7 @@ class SoundManager:
     
     def __init__(self, settings: GameSettings = None):
         """Initialize the sound manager with game settings.
-        
+
         Args:
             settings: Game settings containing audio preferences. Creates default if None.
         """
@@ -85,6 +89,8 @@ class SoundManager:
         self.current_music = None
         self.music_playing = False
         self.max_channels = 16  # Allow more simultaneous sound effects
+        self._sound_last_played = {}  # Track last play time for each sound
+        self._sound_cooldown = 0.05  # 50ms cooldown to prevent stacking (configurable)
         
         if self.enabled:
             try:
@@ -108,6 +114,17 @@ class SoundManager:
             new_vol = self.settings.music_volume * self.settings.master_volume
             pygame.mixer.music.set_volume(new_vol)
             logging.debug(f"Audio: Updated music volume to {new_vol:.2f}")
+
+    def set_sound_cooldown(self, cooldown_seconds: float):
+        """
+        Set the cooldown time for sound deduplication.
+
+        Args:
+            cooldown_seconds: Time in seconds before same sound can play again.
+                            Default is 0.05 (50ms). Set to 0 to disable deduplication.
+        """
+        self._sound_cooldown = max(0.0, cooldown_seconds)
+        logging.debug(f"Audio: Sound cooldown set to {self._sound_cooldown*1000:.1f}ms")
     
     def preload_sounds(self):
         """
@@ -213,9 +230,36 @@ class SoundManager:
             return False
     
     def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
-        """Play a loaded sound effect with channel management"""
+        """
+        Play a loaded sound effect with channel management and deduplication.
+
+        Prevents the same sound from playing multiple times within a short time window
+        (50ms by default) to avoid stacking/doubling. This is especially important for
+        sounds triggered multiple times per frame (e.g., multiple enemies alerting).
+
+        Args:
+            sound_id: ID of the sound to play
+            volume_modifier: Volume multiplier (0.0-1.0+)
+            priority: Priority level (0-10, higher interrupts lower)
+
+        Returns:
+            pygame.mixer.Channel if sound played, None otherwise
+        """
         if not self.enabled:
             return None
+
+        # Check cooldown to prevent stacking
+        current_time = time.time()
+        last_played = self._sound_last_played.get(sound_id, 0)
+        time_since_last = current_time - last_played
+
+        if time_since_last < self._sound_cooldown:
+            # Sound played too recently, skip to prevent stacking
+            logging.debug(f"Audio: Skipped '{sound_id}' (cooldown: {time_since_last*1000:.1f}ms < {self._sound_cooldown*1000:.1f}ms)")
+            return None
+
+        # Update last played time
+        self._sound_last_played[sound_id] = current_time
 
         sound = self.sounds[sound_id]  # Let it fail if sound doesn't exist
         final_volume = self.settings.sfx_volume * self.settings.master_volume * volume_modifier

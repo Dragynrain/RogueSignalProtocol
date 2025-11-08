@@ -688,7 +688,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
                         # Render semi-transparent overlay using SDL rectangles
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
-                        renderer.draw_color = (*range_color, 80)  # Semi-transparent
+                        renderer.draw_color = (*range_color, 140)  # More visible
                         renderer.fill_rect(tile_rect)
 
         # Restore original blend mode
@@ -720,7 +720,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
                         # Render brighter semi-transparent overlay
                         tile_rect = self._get_tile_rect(screen_x, screen_y)
-                        renderer.draw_color = (*area_color, 120)  # More opaque than range
+                        renderer.draw_color = (*area_color, 180)  # More opaque than range
                         renderer.fill_rect(tile_rect)
 
         # Restore original blend mode
