@@ -30,7 +30,6 @@ def mock_game(popup_manager):
     game.player = Mock()
     game.player.cpu = 100
     game.show_help = False
-    game.show_story_fragment = None
     game.show_lore_viewer = False
     game.show_achievements = False
     game.show_inventory = False

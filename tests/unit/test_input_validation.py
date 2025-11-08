@@ -29,7 +29,6 @@ def create_mock_game():
     # Game state
     game.game_over = False
     game.show_help = False
-    game.show_story_fragment = None
     game.show_lore_viewer = False
     game.show_inventory = False
     game.show_achievements = False
@@ -130,29 +129,26 @@ class TestInputHandler:
         assert result is True
         assert game.show_help is False
     
-    def test_story_fragment_any_key_closes(self):
-        """Test that any key closes story fragment display."""
+    def test_lore_viewer_reading_mode_goes_to_list(self):
+        """Test that any key in reading mode goes to list mode."""
         game = create_mock_game()
-        game.show_story_fragment = "some_fragment"
-        
+        game.show_lore_viewer = True
+        game.lore_viewer_mode = "reading"
+        game.story_fragment_manager.get_discovered_fragments = Mock(return_value=[(0, "Test fragment")])
+
         handler = InputHandler(game)
-        
+
         event = create_mock_event(tcod.event.KeySym.SPACE)
         result = handler.handle_keydown(event)
-        
+
         assert result is True
-        assert game.show_story_fragment is None
+        assert game.lore_viewer_mode == "list"  # Should transition to list mode
     
     def test_escape_key_handling_multiple_states(self):
         """Test escape key behavior across different UI states."""
         game = create_mock_game()
         handler = InputHandler(game)
-        
-        # Test story fragment
-        game.show_story_fragment = "test"
-        handler._handle_escape()
-        assert game.show_story_fragment is None
-        
+
         # Test lore viewer
         game.show_lore_viewer = True
         game.lore_viewer_mode = "reading"

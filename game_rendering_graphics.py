@@ -431,13 +431,13 @@ class GraphicsMapRenderer(MapRendererBase):
                         color = None
 
                         if game.game_map.is_cooling_node(world_pos):
-                            glyph = ord(GameGlyphs.COOLING)  # Diamond
+                            glyph = ord(GameGlyphs.COOLING_NODE)  # Hollow diamond
                             color = Colors.CYAN
                         elif game.game_map.is_cpu_recovery_node(world_pos):
-                            glyph = ord(GameGlyphs.CPU_OVERLOAD)  # Heart
+                            glyph = ord(GameGlyphs.CPU_NODE)  # Hollow heart
                             color = Colors.RED
                         elif game.game_map.is_ghost_node(world_pos):
-                            glyph = ord(GameGlyphs.GHOST_MODE)  # Spade
+                            glyph = ord(GameGlyphs.GHOST_NODE)  # Hollow spade
                             color = Colors.ELECTRIC_PURPLE
 
                         if glyph and color:

@@ -63,7 +63,12 @@ class MainMenu(BaseMenu):
 
     def _build_options_list(self):
         """Build the options list based on save state and graphics mode."""
-        base_options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments", "About"]
+        # Get fragment count for menu display
+        from game_story import StoryFragmentManager
+        story_manager = StoryFragmentManager()
+        discovered, total = story_manager.get_fragment_count()
+
+        base_options = ["New Game", "Settings", "Help", "Achievements", f"Data Fragments ({discovered}/{total})", "About"]
 
         # Only show Graphics Preview if in graphics mode AND the menu exists
         if (self.settings and self.settings.graphics_mode == "graphics" and
@@ -94,8 +99,13 @@ class MainMenu(BaseMenu):
         # Determine Exit button text based on whether there's a game to save
         exit_text = "Save and Exit" if can_save else "Exit"
 
+        # Get fragment count for menu display
+        from game_story import StoryFragmentManager
+        story_manager = StoryFragmentManager()
+        discovered, total = story_manager.get_fragment_count()
+
         # Build base options
-        base_options = ["New Game", "Settings", "Help", "Achievements", "Data Fragments", "About"]
+        base_options = ["New Game", "Settings", "Help", "Achievements", f"Data Fragments ({discovered}/{total})", "About"]
 
         # Only show Graphics Preview if in graphics mode AND the menu exists
         if (self.settings and self.settings.graphics_mode == "graphics" and
@@ -420,7 +430,7 @@ class MainMenu(BaseMenu):
                 return "help"
             elif option == "Achievements":
                 return "achievements"
-            elif option == "Data Fragments":
+            elif option.startswith("Data Fragments"):
                 return "lore"
             elif option == "About":
                 return "about"

@@ -131,11 +131,6 @@ class InputHandler:
                 self.game.show_help = False
                 return True
 
-        if self.game.show_story_fragment is not None:
-            # Any key closes the story fragment display
-            self.game.show_story_fragment = None
-            return True
-
         if self.game.show_lore_viewer:
             return self._handle_lore_viewer_input(event)
 
@@ -157,9 +152,7 @@ class InputHandler:
     def _handle_escape(self) -> bool:
         """Handle escape key for UI states."""
         g = self.game
-        if g.show_story_fragment is not None:
-            g.show_story_fragment = None
-        elif g.show_lore_viewer:
+        if g.show_lore_viewer:
             g.show_lore_viewer, g.lore_viewer_mode, g.lore_viewer_selection = False, "list", 0
         elif g.show_help:
             g.show_help = False
@@ -363,17 +356,10 @@ class InputHandler:
                 return True
         
         elif self.game.lore_viewer_mode == "reading":
-            # Reading mode - ESC or 'F' closes, other keys return to list
-            if event.sym == tcod.event.KeySym.F or UniversalInputHandler.is_escape_key(event):
-                # 'F' or ESC closes story fragment viewer and returns to game
-                self.game.show_lore_viewer = False
-                self.game.lore_viewer_mode = "list"
-                self.game.lore_viewer_selection = 0
-                return True
-            else:
-                # Any other key returns to list view
-                self.game.lore_viewer_mode = "list"
-                return True
+            # Reading mode - any key returns to list view (including ESC)
+            # This creates a flow: reading → list → close
+            self.game.lore_viewer_mode = "list"
+            return True
         
         # Unhandled key - consume it and stay in lore viewer
         return True

@@ -34,7 +34,6 @@ def create_mock_game():
     # Game state
     game.game_over = False
     game.show_help = False
-    game.show_story_fragment = None
     game.show_lore_viewer = False
     game.show_inventory = False
     game.show_achievements = False

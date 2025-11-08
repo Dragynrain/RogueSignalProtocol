@@ -159,10 +159,7 @@ class GameRenderer:
 
         # Only clear console for overlay screens that need full console rendering
         # Main game screen handles clearing differently for graphics vs glyph mode
-        if game.show_story_fragment is not None:
-            console.clear()
-            self.ui_renderer.render_story_fragment_screen(console, game, game.show_story_fragment)
-        elif game.show_lore_viewer:
+        if game.show_lore_viewer:
             console.clear()
             self.ui_renderer.render_lore_viewer_screen(console, game)
         elif game.show_help:

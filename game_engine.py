@@ -114,7 +114,6 @@ class GameEngine:
         # UI state
         self.show_inventory = False
         self.show_help = False
-        self.show_story_fragment: Optional[int] = None
 
         # Track when player first steps on nodes to avoid repeated sounds
         self.last_node_position: Optional[Tuple[int, int]] = None
