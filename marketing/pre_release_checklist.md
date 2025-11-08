@@ -177,6 +177,15 @@ zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 - [ ] Ensure one screenshot shows the enemy movement queue UI clearly
 - [ ] Consider capturing: gameplay, inventory, lore/fragments screen, death screen with feedback link
 
+### 9.6 **Record new MP4 video for Reddit**
+
+**CRITICAL - Reddit engagement booster:**
+- [ ] **Record new MP4 video showcasing gameplay** (10-15 seconds)
+- [ ] Show key features: movement queue arrows, pixel explosions, stealth mechanics
+- [ ] Keep file size reasonable for Reddit upload (<100 MB)
+- [ ] Consider showing: player hiding in blind spot → enemy moves past → player escapes
+- [ ] Test video plays correctly on Reddit before posting
+
 ---
 
 ## 📢 LAUNCH STRATEGY
@@ -240,11 +249,12 @@ zip -r RogueSignalProtocol_v0.8.0_Alpha.zip RogueSignalProtocol_v0.8.0_Alpha/
 - **Fix config files:** 15 minutes (DONE)
 - **Test EXE:** 30 minutes
 - **Update screenshots (pixel explosion + queue arrows):** 30 minutes
+- **Record new MP4 video for Reddit:** 20 minutes
 - **Package for itch.io:** 30 minutes
 - **Create itch.io page:** 30 minutes
 - **Post to Reddit:** 15 minutes
 
-**Total: ~2.5 hours** (assuming no major bugs found during testing)
+**Total: ~3 hours** (assuming no major bugs found during testing)
 
 ---
 
