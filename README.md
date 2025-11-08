@@ -90,6 +90,20 @@ Download the latest release:
 - **[Itch.io](https://dragynrain.itch.io/rogue-signal-protocol)** (recommended)
 - **[GitHub Releases](https://github.com/Dragynrain/RogueSignalProtocol/releases)** (alternative)
 
+#### ⚠️ Windows SmartScreen Warning
+When running the executable for the first time, Windows may display a "Windows protected your PC" warning from **Windows Defender SmartScreen**. This is normal for unsigned executables.
+
+**The game is safe to run.** This warning appears because:
+- The executable is not digitally signed with a code signing certificate
+- Code signing certificates cost hundreds of dollars annually
+- As an indie game, it's not cost-effective to purchase one
+
+**To run the game:**
+1. Click **"More info"** on the SmartScreen warning
+2. Click **"Run anyway"**
+
+The warning may appear again if you download a new version or move the file to a different location.
+
 ### For Developers (From Source)
 
 1. **Clone the repository**
