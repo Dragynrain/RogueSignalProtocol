@@ -263,7 +263,7 @@ a) Short Game Description
 
   Q: Is there multiplayer or co-op?A: No, Rogue Signal Protocol is a single-player experience focused on stealth and narrative.
 
-  Q: What are the system requirements?A: Very modest! Any Windows 10/11 PC from the last decade should run it. Requires ~150MB disk space.
+  Q: What are the system requirements?A: Very modest! Any Windows 10/11 PC from the last decade should run it. Requires ~250MB disk space.
 
   Q: Will there be updates or DLC?A: Depends upon interest.
 
@@ -326,7 +326,7 @@ a) Short Game Description
 
   Launch Week Special: [X% off for the next 7 days]
 
-  System Requirements: Windows 10/11 | 150MB disk space
+  System Requirements: Windows 10/11 | 250MB disk space
 
   [DOWNLOAD BUTTON]
 

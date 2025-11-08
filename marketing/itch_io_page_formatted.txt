@@ -61,7 +61,7 @@ Report bugs/suggestions: [url=https://github.com/Dragynrain/RogueSignalProtocol/
 
 [list]
 [*]Windows 10/11
-[*]~50 MB disk space
+[*]~250 MB disk space
 [*]No additional software needed (standalone EXE)
 [/list]
 
@@ -126,7 +126,7 @@ Report bugs/suggestions: https://github.com/Dragynrain/RogueSignalProtocol/issue
 REQUIREMENTS:
 
 • Windows 10/11
-• ~50 MB disk space
+• ~250 MB disk space
 • No additional software needed (standalone EXE)
 
 LICENSE:

@@ -123,7 +123,7 @@ want to customize which sprites are used in-game. Perfect for modders!
 SYSTEM REQUIREMENTS
 -------------------
 OS: Windows 10/11
-Disk Space: ~150 MB
+Disk Space: ~250 MB
 Display: 1280x720 or higher recommended
 Font: CascadiaCode (for glyphs mode)
 
