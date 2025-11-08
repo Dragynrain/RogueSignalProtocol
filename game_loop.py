@@ -586,6 +586,10 @@ def handle_game_input_events(event, game, input_handler):
                 game.targeting_mode):
                 input_handler._handle_escape()
             else:
+                # Don't allow ESC to menu if player is dead or dying
+                if game.player.cpu <= 0 or game.game_over or (hasattr(game, 'pending_death_dialogue') and game.pending_death_dialogue):
+                    # Player is dead - force them to see death dialogue, can't ESC to menu
+                    return True, game
                 # No UI states open, auto-save and go to main menu
                 game.auto_save()
                 # Don't stop level music - let it continue playing in the menu
