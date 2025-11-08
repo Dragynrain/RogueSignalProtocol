@@ -63,6 +63,7 @@ class GameSession:
             game_engine: GameEngine instance providing access to all game systems
         """
         self.game_engine = game_engine
+        self._enemies_alerted_played_this_turn = False  # Prevent sound stacking
 
     # ========================================================================
     # TURN PROCESSING (from GameTurnManager)
@@ -84,6 +85,9 @@ class GameSession:
         Note: Speed boost grants 2 moves per enemy turn. This is processed
         at the start of each turn to ensure consistent move counting.
         """
+        # Reset sound cooldowns at start of turn
+        self._enemies_alerted_played_this_turn = False
+
         # Grant speed boost moves at start of turn
         if self.game_engine.player.temporary_effects['speed_boost_turns'] > 0 and self.game_engine.player.speed_moves_remaining == 0:
             self.game_engine.player.speed_moves_remaining = 2  # Grant 2 moves per enemy turn
@@ -628,7 +632,10 @@ class GameSession:
 
         if alerted_count > 0:
             self.game_engine.message_log.add_message(f"{alerted_count} enemies alerted nearby!")
-            self.game_engine.sound_manager.play_sound("enemies_alerted", priority=6)
+            # Only play sound once per turn to prevent stacking
+            if not self._enemies_alerted_played_this_turn:
+                self.game_engine.sound_manager.play_sound("enemies_alerted", priority=6)
+                self._enemies_alerted_played_this_turn = True
 
     def _check_admin_spawn(self):
         """Check if admin avatar should spawn."""
