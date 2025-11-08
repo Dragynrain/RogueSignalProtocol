@@ -325,8 +325,8 @@ class HelpMenu:
                 ("", Colors.WHITE),
 
                 ("CONTROLS:", Colors.CYAN),
-                ("  ↑↓←→/WASD/Numpad: Move  Mouse: Click/hover  1-5: Exploits", Colors.WHITE),
-                ("  I: Inventory  L: Look mode  F: Lore  V: Achievements  ESC: Menu", Colors.WHITE),
+                ("  ↑↓←→/WASD/QEZC/Numpad: Move  Mouse: Click/hover  1-5: Exploits", Colors.WHITE),
+                ("  I: Inventory  L: Look mode  F: Lore  V: Achievements  ?: Help  ESC: Menu", Colors.WHITE),
                 ("  Mouse: L-Click=move/select, R-Click=cancel, Scroll=lists", Colors.WHITE),
                 ("  Shift+F12: Export debug package (saves, logs, metrics, screenshot)", Colors.WHITE),
                 ("", Colors.WHITE),

@@ -133,6 +133,9 @@ def initialize_game_systems(settings: GameSettings, context, menu_background=Non
         'main_menu': None,  # Will be set after menus dict is complete
         'settings_menu': SettingsMenu(settings, menu_background, sound_manager),  # Pass sound manager for live volume updates
         'help_menu': create_help_menu(settings, context, tile_manager),  # Use factory function
+        '_help_menu_mode': settings.graphics_mode,  # Track mode used to create help menu
+        '_context': context,  # Store for help menu recreation
+        '_tile_manager': tile_manager,  # Store for help menu recreation
         'lore_menu': LoreMenu(),
         'achievements_menu': AchievementsMenu(),
         'about_menu': AboutMenu(menu_background, settings)
@@ -262,6 +265,11 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                 elif action == "settings":
                     current_menu = menus['settings_menu']
                 elif action == "help":
+                    # Only recreate help menu if graphics mode changed (preserves page state)
+                    if menus.get('_help_menu_mode') != settings.graphics_mode:
+                        logging.info(f"Graphics mode changed, recreating help menu: {menus.get('_help_menu_mode')} -> {settings.graphics_mode}")
+                        menus['help_menu'] = create_help_menu(settings, menus['_context'], menus['_tile_manager'])
+                        menus['_help_menu_mode'] = settings.graphics_mode
                     current_menu = menus['help_menu']
                 elif action == "lore":
                     current_menu = menus['lore_menu']
@@ -400,6 +408,11 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                 elif action == "settings":
                     current_menu = menus['settings_menu']
                 elif action == "help":
+                    # Only recreate help menu if graphics mode changed (preserves page state)
+                    if menus.get('_help_menu_mode') != settings.graphics_mode:
+                        logging.info(f"Graphics mode changed, recreating help menu: {menus.get('_help_menu_mode')} -> {settings.graphics_mode}")
+                        menus['help_menu'] = create_help_menu(settings, menus['_context'], menus['_tile_manager'])
+                        menus['_help_menu_mode'] = settings.graphics_mode
                     current_menu = menus['help_menu']
                 elif action == "lore":
                     current_menu = menus['lore_menu']

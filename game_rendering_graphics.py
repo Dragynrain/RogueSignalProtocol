@@ -886,7 +886,7 @@ class GraphicsMapRenderer(MapRendererBase):
                 if threat_scan_active and not can_see_enemy:
                     overlay_color = tuple(c // 2 for c in overlay_color)  # Make it dimmer
 
-                self._render_enemy_vision_range(enemy, camera_offset, overlay_color, game.game_map, renderer)
+                self._render_enemy_vision_range(enemy, camera_offset, overlay_color, game, renderer)
 
     def _get_vision_overlay_color(self, enemy_state: EnemyState) -> Tuple[int, int, int]:
         """Get vision overlay color based on enemy state (full brightness for graphics mode)."""
@@ -897,13 +897,20 @@ class GraphicsMapRenderer(MapRendererBase):
         else:
             return ColorManager.get_enemy_state_color("unaware")
 
-    def _render_enemy_vision_range(self, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map, renderer):
+    def _render_enemy_vision_range(self, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game, renderer):
         """Render vision range for a single enemy using semi-transparent tile overlays in graphics mode.
         Uses TCOD FOV for perfect consistency with actual enemy vision.
 
+        Vision indicators are only shown on tiles the player can see (no fog of war vision).
         Vision indicators are hidden on blind spots unless the enemy is adjacent to that blind spot,
         since enemies can only see players in blind spots when adjacent (grid distance <= 1)."""
         actual_vision_range = enemy.type_data.vision
+        game_map = game.game_map
+
+        # Get configurable alpha from color manager
+        from game_entities import Colors
+        alpha = Colors._manager.vision_alpha if Colors._manager else 0.25
+        alpha_byte = int(alpha * 255)  # Convert 0.0-1.0 to 0-255
 
         # Use TCOD FOV to get exactly what the enemy can see (matches enemy vision logic)
         fov = game_map._compute_fov_cached(enemy.x, enemy.y, actual_vision_range)
@@ -927,6 +934,10 @@ class GraphicsMapRenderer(MapRendererBase):
                 if world_x == enemy.x and world_y == enemy.y:
                     continue
 
+                # Only show vision on tiles the player can actually see (no fog of war vision)
+                if (world_x, world_y) not in game.visible_tiles:
+                    continue
+
                 # Skip blind spots - enemies can't see into blind spots unless adjacent
                 world_pos = Position(world_x, world_y)
                 if game_map.is_blind_spot(world_pos):
@@ -943,9 +954,9 @@ class GraphicsMapRenderer(MapRendererBase):
                     screen_x = world_x - camera_offset.x
                     screen_y = world_y - camera_offset.y + 1
 
-                    # Fill tile with semi-transparent color overlay
+                    # Fill tile with semi-transparent color overlay (configurable alpha)
                     tile_rect = self._get_tile_rect(screen_x, screen_y)
-                    renderer.draw_color = (*overlay_color, 60)  # Semi-transparent (lighter than targeting)
+                    renderer.draw_color = (*overlay_color, alpha_byte)
                     renderer.fill_rect(tile_rect)
 
         # Restore original blend mode
