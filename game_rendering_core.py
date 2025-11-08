@@ -285,7 +285,6 @@ class GameRenderer:
                 game.pending_death_dialogue = False
                 game.sound_manager.play_sound("player_death", priority=10)
                 game.sound_manager.play_sound("critical_system_failure", priority=10)
-                logging.info("DEBUG: Pending death dialogue shown (graphics mode)")
 
             # Render dialogue system on console AFTER transparency pass (highest priority, opaque backgrounds)
             if game.dialogue_state.is_active():
@@ -329,7 +328,6 @@ class GameRenderer:
                 game.pending_death_dialogue = False
                 game.sound_manager.play_sound("player_death", priority=10)
                 game.sound_manager.play_sound("critical_system_failure", priority=10)
-                logging.info("DEBUG: Pending death dialogue shown (glyph mode)")
 
             # Render dialogue system (highest priority overlay) - handles gateway, death, victory
             if game.dialogue_state.is_active():
