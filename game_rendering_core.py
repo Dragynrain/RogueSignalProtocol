@@ -278,6 +278,15 @@ class GameRenderer:
                 console, x=log_x, y=0, width=console.width - log_x, height=panel_y, alpha=255
             )
 
+            # Check for pending death dialogue (deferred to allow damage messages to render first)
+            if hasattr(game, 'pending_death_dialogue') and game.pending_death_dialogue:
+                from game_dialogue_system import create_death_dialogue
+                game.dialogue_state.show(create_death_dialogue())
+                game.pending_death_dialogue = False
+                game.sound_manager.play_sound("player_death", priority=10)
+                game.sound_manager.play_sound("critical_system_failure", priority=10)
+                logging.info("DEBUG: Pending death dialogue shown (graphics mode)")
+
             # Render dialogue system on console AFTER transparency pass (highest priority, opaque backgrounds)
             if game.dialogue_state.is_active():
                 # Use UnifiedRenderer for all dialogue types
@@ -312,6 +321,15 @@ class GameRenderer:
             self.ui_renderer.render_bottom_panel(console, game)
             self.ui_renderer.render_system_log(console, game)
             self.ui_renderer.render_inspection_panel(console, game)
+
+            # Check for pending death dialogue (deferred to allow damage messages to render first)
+            if hasattr(game, 'pending_death_dialogue') and game.pending_death_dialogue:
+                from game_dialogue_system import create_death_dialogue
+                game.dialogue_state.show(create_death_dialogue())
+                game.pending_death_dialogue = False
+                game.sound_manager.play_sound("player_death", priority=10)
+                game.sound_manager.play_sound("critical_system_failure", priority=10)
+                logging.info("DEBUG: Pending death dialogue shown (glyph mode)")
 
             # Render dialogue system (highest priority overlay) - handles gateway, death, victory
             if game.dialogue_state.is_active():
