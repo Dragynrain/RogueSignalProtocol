@@ -193,8 +193,10 @@
   },
   "color_effects": {
     "_comment": "Settings for programmatic color modifications",
-    "enemy_vision_darken_factor": 0.3,
-    "damage_tint_factor": 0.6
+    "enemy_vision_alpha": 0.12,
+    "enemy_vision_darken_factor": 0.15,
+    "damage_tint_factor": 0.6,
+    "_vision_comment": "enemy_vision_alpha: Graphics mode tile transparency (0.0-1.0). enemy_vision_darken_factor: Glyph mode color darkening (0.0-1.0)"
   },
   "colors": {
     "_comment": "Consolidated cyberspace color palette - duplicates removed, themed names applied",

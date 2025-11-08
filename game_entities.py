@@ -54,8 +54,9 @@ class ColorManager:
 
             # Load color effects settings
             color_effects = config.get('color_effects', {})
-            self._enemy_vision_darken = color_effects.get('enemy_vision_darken_factor', 0.3)
-            logging.info(f"Loaded color effects: enemy_vision_darken={self._enemy_vision_darken}")
+            self._enemy_vision_alpha = color_effects.get('enemy_vision_alpha', 0.25)
+            self._enemy_vision_darken = color_effects.get('enemy_vision_darken_factor', 0.15)
+            logging.info(f"Loaded color effects: enemy_vision_alpha={self._enemy_vision_alpha}, enemy_vision_darken={self._enemy_vision_darken}")
 
             # Ensure colors section exists
             if 'colors' not in config:
@@ -193,7 +194,7 @@ class ColorManager:
                     if not name.startswith('_') and isinstance(rgb, list):
                         self._colors[name.upper()] = tuple(rgb)
 
-            # Derived colors for enemy vision ranges (darkened versions from JSON config)
+            # Derived colors for enemy vision ranges (darkened versions for glyph mode)
             if 'UNAWARE' in self._colors:
                 self._colors['VISION_UNAWARE'] = self._darken_color(self._colors['UNAWARE'], self._enemy_vision_darken)
             if 'ALERT' in self._colors:
@@ -258,6 +259,11 @@ class ColorManager:
             logging.error(f"Available colors: {sorted(self._colors.keys())}")
             raise KeyError(f"Color '{name}' not found in configuration. Check game_rules.json colors section.")
         return self._colors[name_upper]
+
+    @property
+    def vision_alpha(self) -> float:
+        """Get the alpha transparency value for enemy vision overlays (0.0-1.0)."""
+        return self._enemy_vision_alpha
 
     @staticmethod
     def interpolate_color(color1: Tuple[int, int, int], color2: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:

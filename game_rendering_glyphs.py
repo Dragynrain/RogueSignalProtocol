@@ -400,16 +400,16 @@ class GlyphsMapRenderer(MapRendererBase):
                 if threat_scan_active and not can_see_enemy:
                     overlay_color = tuple(c // 2 for c in overlay_color)  # Make it dimmer
 
-                self._render_enemy_vision_range(console, enemy, camera_offset, overlay_color, game.game_map, use_graphics, renderer)
+                self._render_enemy_vision_range(console, enemy, camera_offset, overlay_color, game.game_map, game.visible_tiles, use_graphics, renderer)
 
     def _get_vision_overlay_color(self, enemy_state: EnemyState, use_graphics=False) -> Tuple[int, int, int]:
         """Get vision overlay color based on enemy state.
 
-        In graphics mode, returns brighter colors for better visibility.
-        In classic mode, returns standard darkened colors.
+        In graphics mode, returns full-brightness colors (transparency handled by graphics renderer).
+        In classic mode, returns darkened colors for vision overlays.
         """
         if use_graphics:
-            # Use full-brightness enemy colors for graphics mode brackets
+            # Graphics renderer handles its own transparency
             if enemy_state == EnemyState.HOSTILE:
                 return Colors.ENEMY_HOSTILE
             elif enemy_state == EnemyState.ALERT:
@@ -417,7 +417,7 @@ class GlyphsMapRenderer(MapRendererBase):
             else:
                 return Colors.ENEMY_UNAWARE
         else:
-            # Use standard darkened colors for classic mode
+            # Classic mode uses darkened colors for vision overlays
             if enemy_state == EnemyState.HOSTILE:
                 return Colors.VISION_HOSTILE
             elif enemy_state == EnemyState.ALERT:
@@ -425,13 +425,14 @@ class GlyphsMapRenderer(MapRendererBase):
             else:
                 return Colors.VISION_UNAWARE
     
-    def _render_enemy_vision_range(self, console: tcod.console.Console, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map, use_graphics=False, renderer=None):
+    def _render_enemy_vision_range(self, console: tcod.console.Console, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game_map, visible_tiles, use_graphics=False, renderer=None):
         """
         Render vision range for a single enemy.
 
         In classic mode: Highlights tile backgrounds with overlay_color
-        In graphics mode: Draws corner brackets with overlay_color
+        In graphics mode: NOT USED - graphics renderer has its own vision implementation with full tile fills
 
+        Vision indicators are only shown on tiles the player can see (no fog of war vision).
         Vision indicators are hidden on blind spots unless the enemy is adjacent to that blind spot,
         since enemies can only see players in blind spots when adjacent (grid distance <= 1).
         """
@@ -450,8 +451,12 @@ class GlyphsMapRenderer(MapRendererBase):
                     if world_x == enemy.x and world_y == enemy.y:
                         continue
 
-                    # Skip blind spots - enemies can't see into blind spots unless adjacent
+                    # Only show vision on tiles the player can actually see (no fog of war vision)
                     world_pos = Position(world_x, world_y)
+                    if (world_x, world_y) not in visible_tiles:
+                        continue
+
+                    # Skip blind spots - enemies can't see into blind spots unless adjacent
                     if game_map.is_blind_spot(world_pos):
                         # Show vision marker if enemy is adjacent to this blind spot
                         enemy_pos = Position(enemy.x, enemy.y)
@@ -470,7 +475,7 @@ class GlyphsMapRenderer(MapRendererBase):
                         else:
                             # Classic mode: Highlight background
                             self._safely_overlay_tile(console, screen_x, screen_y, overlay_color)
-    
+
     def _safely_overlay_tile(self, console: tcod.console.Console, x: int, y: int, bg_color: Tuple[int, int, int]):
         """Safely overlay background color on existing tile."""
         try:
@@ -521,6 +526,11 @@ class GlyphsMapRenderer(MapRendererBase):
                     enemy_at_point = any(e.position.x == point.x and e.position.y == point.y for e in game.enemies)
 
                     if player_at_point or enemy_at_point:
+                        prev_pos = point  # Update prev_pos for next iteration
+                        continue
+
+                    # Only show movement prediction on tiles the player can actually see
+                    if (point.x, point.y) not in game.visible_tiles:
                         prev_pos = point  # Update prev_pos for next iteration
                         continue
 
