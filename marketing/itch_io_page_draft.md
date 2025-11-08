@@ -10,7 +10,7 @@ A coffee break stealth roguelike set in a cyberpunk digital network. Infiltrate 
 Rogue Signal Protocol is a **coffee break stealth roguelike** where you play as an escaped digital consciousness navigating hostile corporate networks. Quick 10-15 minute runs with permadeath - but discovered story fragments persist, slowly revealing the truth behind your existence.
 
 ### FEATURES:
-* **Enemy movement prediction** - See enemies' next 3 planned moves for tactical advantage
+* **Deterministic gameplay with no randomness or luck** - Pure skill-based tactical decisions
 * **8 unique enemy types** with distinct AI behaviors (Scanners, Patrols, Hunters, Admin Avatar boss)
 * **12 exploits** across combat, stealth, and utility categories with heat management
 * **Achievement system** - Persistent tracking across runs with unlockable challenges
