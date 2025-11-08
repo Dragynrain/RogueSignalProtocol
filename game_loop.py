@@ -704,13 +704,37 @@ def main():
                     # If victory screen is active, render it instead of the game
                     if victory_screen is not None:
                         try:
-                            # Render victory background
-                            if victory_background and victory_background.should_load_background():
+                            # Render victory screen content to console
+                            victory_screen.render(console)
+
+                            # Use SDL rendering pipeline (SAME as main menu!)
+                            has_background = (victory_background and
+                                            victory_background.should_load_background())
+
+                            graphics_available = (context.sdl_renderer and
+                                                hasattr(context, 'console_render') and
+                                                context.console_render and has_background)
+
+                            if graphics_available:
+                                # Graphics mode: render everything through SDL (same as main menu)
+                                context.sdl_renderer.clear()
+
+                                # Render background graphics to SDL
                                 victory_background.render_background(console)
 
-                            # Render victory screen
-                            victory_screen.render(console)
-                            context.present(console)
+                                # Render console to texture
+                                console_texture = context.console_render.render(console)
+
+                                # Copy console texture to fill window
+                                window_w, window_h = context.sdl_window.size
+                                dest_rect = (0, 0, window_w, window_h)
+                                context.sdl_renderer.copy(console_texture, dest=dest_rect)
+
+                                # Present everything through SDL
+                                context.sdl_renderer.present()
+                            else:
+                                # Fallback: normal console presentation
+                                context.present(console)
 
                             # Handle victory screen input
                             for event in tcod.event.wait():

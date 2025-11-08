@@ -14,9 +14,10 @@ from game_entities import Colors
 from game_ui import render_char_safe
 from game_menu_background import MenuBackground
 from game_coordinate_helpers import CoordinateHelpers
+from game_menu_base import BaseMenu
 
 
-class VictoryScreen:
+class VictoryScreen(BaseMenu):
     """
     Victory screen with ending art and epic victory message.
 
@@ -32,7 +33,7 @@ class VictoryScreen:
         Args:
             background: MenuBackground instance configured for ending art
         """
-        self.background = background
+        super().__init__(background)
 
     def render(self, console: tcod.console.Console) -> None:
         """
@@ -48,18 +49,6 @@ class VictoryScreen:
 
         self._render_victory_screen(console)
 
-    def _has_background(self) -> bool:
-        """Check if background system is available and loaded."""
-        return (self.background and
-                self.background.background_texture is not None and
-                self.background.settings.graphics_mode == "graphics")
-
-    def _clear_text_areas_only(self, console: tcod.console.Console) -> None:
-        """Clear console, allowing background art to show through transparent areas."""
-        # Clear entire console - background art (SDL texture) will show through
-        # where console transparency allows, and the victory box will render on top
-        console.clear()
-
     def _render_victory_screen(self, console: tcod.console.Console) -> None:
         """Render the victory message with decorations."""
         # Determine if we're using background layout
@@ -71,46 +60,38 @@ class VictoryScreen:
             self._render_centered(console)
 
     def _render_with_background(self, console: tcod.console.Console) -> None:
-        """Render victory message in centered dialogue box (background mode)."""
-        # Centered box dimensions (matching dialogue system but taller for long message)
-        box_width = min(50, console.width - 4)  # Standard dialogue width
-        box_height = 38  # Taller to accommodate the long victory message
+        """Render victory message in right-side box (background mode) - mirrors main menu layout."""
+        # Smaller box for victory message, vertically centered
+        box_height = 38  # Enough for the victory message
 
-        # Center the box
-        box_x, box_y = CoordinateHelpers.center_box(
-            box_width, box_height, console.width, console.height
-        )
-
-        # Calculate center of box
-        center_x = box_x + box_width // 2
-
-        # Render border
-        self._render_bordered_box(console, box_x, box_y, box_width, box_height)
+        # Render the right-side box using common method, centered (y_offset=0)
+        box = self._render_right_side_box(console, box_height, Colors.GREEN, y_offset=0)
 
         # Render title
         title = "SIGNAL FREE"
-        title_x = center_x - len(title) // 2
-        render_char_safe(console, title_x, box_y + 2, title, fg=Colors.GREEN, bg=Colors.BLACK)
+        title_x = box['center_x'] - len(title) // 2
+        render_char_safe(console, title_x, box['top'] + 2, title, fg=Colors.GREEN, bg=Colors.BLACK)
 
         # Render decorative line
-        line_width = box_width - 8  # Adapt to box width
-        line_x = center_x - line_width // 2
-        render_char_safe(console, line_x, box_y + 3, "═" * line_width, fg=Colors.CYAN, bg=Colors.BLACK)
+        line_width = box['content_width'] - 4
+        line_x = box['center_x'] - line_width // 2
+        render_char_safe(console, line_x, box['top'] + 3, "═" * line_width, fg=Colors.CYAN, bg=Colors.BLACK)
 
         # Render victory message (word-wrapped)
         message = self._get_victory_message()
-        wrapped_lines = self._wrap_text(message, box_width - 4)
+        wrapped_lines = self._wrap_text(message, box['content_width'] - 2)
 
-        message_y = box_y + 5
+        message_y = box['top'] + 5
+        max_message_y = box['bottom'] - 3  # Leave room for prompt
         for i, line in enumerate(wrapped_lines):
-            if message_y + i < box_y + box_height - 3:
-                line_x = box_x + 2
+            if message_y + i < max_message_y:
+                line_x = box['content_left'] + 1
                 render_char_safe(console, line_x, message_y + i, line, fg=Colors.CYAN, bg=Colors.BLACK)
 
         # Render prompt at bottom
         prompt = "[SPACE/ENTER] Continue"
-        prompt_x = center_x - len(prompt) // 2
-        prompt_y = box_y + box_height - 2
+        prompt_x = box['center_x'] - len(prompt) // 2
+        prompt_y = box['bottom'] - 2
         render_char_safe(console, prompt_x, prompt_y, prompt, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
 
     def _render_centered(self, console: tcod.console.Console) -> None:
@@ -137,28 +118,6 @@ class VictoryScreen:
         prompt_x = center_x - len(prompt) // 2
         prompt_y = message_y + len(wrapped_lines) + 3
         render_char_safe(console, prompt_x, prompt_y, prompt, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
-
-    def _render_bordered_box(self, console: tcod.console.Console, x: int, y: int,
-                            width: int, height: int) -> None:
-        """Render a bordered box for the text area."""
-        border_color = Colors.GREEN
-
-        # Top border
-        render_char_safe(console, x, y, '╔', fg=border_color, bg=Colors.BLACK)
-        for i in range(1, width):
-            render_char_safe(console, x + i, y, '═', fg=border_color, bg=Colors.BLACK)
-        render_char_safe(console, x + width, y, '╗', fg=border_color, bg=Colors.BLACK)
-
-        # Side borders
-        for row_y in range(1, height):
-            render_char_safe(console, x, y + row_y, '║', fg=border_color, bg=Colors.BLACK)
-            render_char_safe(console, x + width, y + row_y, '║', fg=border_color, bg=Colors.BLACK)
-
-        # Bottom border
-        render_char_safe(console, x, y + height, '╚', fg=border_color, bg=Colors.BLACK)
-        for i in range(1, width):
-            render_char_safe(console, x + i, y + height, '═', fg=border_color, bg=Colors.BLACK)
-        render_char_safe(console, x + width, y + height, '╝', fg=border_color, bg=Colors.BLACK)
 
     def _get_victory_message(self) -> str:
         """
