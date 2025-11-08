@@ -3,7 +3,7 @@
 Rogue Signal Protocol - Menu Background System
 
 Manages high-resolution PNG background images for main menu.
-Loads random backgrounds from main_menu/ directory with aspect ratio preservation.
+Loads random backgrounds from graphics/main_menu/ directory with aspect ratio preservation.
 Conditionally loads based on graphics mode setting and falls back gracefully.
 Renders cyberspace-styled console patterns when SDL backgrounds unavailable.
 """
@@ -33,17 +33,17 @@ class MenuBackground:
         background_texture: SDL texture for current background (None if not loaded)
         enabled: Whether background system is active (disabled on errors)
         image_size: Original PNG dimensions for aspect ratio calculations
-        art_directory: Directory to load art from (default: "main_menu")
+        art_directory: Directory to load art from (default: "graphics/main_menu")
     """
 
-    def __init__(self, context, settings, art_directory="main_menu"):
+    def __init__(self, context, settings, art_directory="graphics/main_menu"):
         """
         Initialize menu background system.
 
         Args:
             context: TCOD context with SDL renderer access
             settings: GameSettings instance with graphics_mode setting
-            art_directory: Directory containing art files (default: "main_menu")
+            art_directory: Directory containing art files (default: "graphics/main_menu")
         """
         self.context = context
         self.settings = settings
@@ -110,7 +110,7 @@ class MenuBackground:
         Dynamically discover available art files in the art directory.
 
         Scans directory for PNG files matching the pattern {directory_name}_{number}.png
-        (e.g., main_menu_01.png, ending_01.png).
+        (e.g., graphics/main_menu/main_menu_01.png, graphics/ending/ending_01.png).
 
         Returns:
             List of available image numbers (as strings with leading zeros)
