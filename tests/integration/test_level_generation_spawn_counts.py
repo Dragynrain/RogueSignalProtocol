@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+"""
+Integration test for level generation spawn counts.
+
+Verifies that procedurally generated levels spawn the correct number of
+special nodes and items as defined in game_content.json network_configs.
+
+Tests all 3 levels with multiple random seeds to ensure consistency.
+"""
+
+import random
+import logging
+from game_session import GameSession
+from game_config import GameConfig
+from tests.fixtures.quick_fixtures import quick_engine
+
+
+def test_level_1_spawn_counts():
+    """Verify Level 1 spawns correct counts."""
+    _verify_level_spawn_counts(level=1, seeds=[42, 123, 999])
+
+
+def test_level_2_spawn_counts():
+    """Verify Level 2 spawns correct counts."""
+    _verify_level_spawn_counts(level=2, seeds=[42, 123, 999])
+
+
+def test_level_3_spawn_counts():
+    """Verify Level 3 spawns correct counts."""
+    _verify_level_spawn_counts(level=3, seeds=[42, 123, 999])
+
+
+def _verify_level_spawn_counts(level: int, seeds: list):
+    """
+    Verify spawn counts for a specific level across multiple seeds.
+
+    Args:
+        level: Level number (1, 2, or 3)
+        seeds: List of random seeds to test with
+    """
+    # Get expected counts from config
+    network_configs = GameConfig.get_network_configs()
+    assert level in network_configs, f"Level {level} not found in network_configs"
+
+    config = network_configs[level]
+    expected = {
+        'cooling_nodes': config['cooling_nodes'],
+        'cpu_nodes': config['cpu_nodes'],
+        'ghost_nodes': config['ghost_nodes'],
+        'code_hacks': config['code_hacks'],
+        'exploit_pickups': config['exploit_pickups'],
+        'permanent_upgrades': config['permanent_upgrades']
+    }
+
+    # Test with multiple seeds
+    for seed in seeds:
+        random.seed(seed)
+
+        # Create game engine and session, then generate level
+        engine = quick_engine(load_save=False)
+        engine.level = level  # Set engine level for generation
+        session = GameSession(engine)
+        session.level = level  # Set session level for consistency
+        session.generate_procedural_level()
+
+        game_map = engine.game_map
+
+        # Count actual spawned items
+        actual = {
+            'cooling_nodes': len(game_map.cooling_nodes),
+            'cpu_nodes': len(game_map.cpu_recovery_nodes),
+            'ghost_nodes': len(game_map.ghost_nodes),
+            'code_hacks': len(game_map.code_hacks),
+            'exploit_pickups': len(game_map.exploit_pickups),
+            'permanent_upgrades': len(game_map.permanent_upgrades)
+        }
+
+        # Verify each count matches
+        for item_type, expected_count in expected.items():
+            actual_count = actual[item_type]
+            assert actual_count == expected_count, (
+                f"Level {level} seed {seed}: {item_type} mismatch - "
+                f"Expected: {expected_count}, Actual: {actual_count}"
+            )
+
+        logging.info(f"Level {level} seed {seed}: All spawn counts match [OK]")
+
+
+if __name__ == "__main__":
+    # Run tests manually
+    logging.basicConfig(level=logging.INFO)
+
+    print("Testing Level 1 spawn counts...")
+    test_level_1_spawn_counts()
+    print("[OK] Level 1\n")
+
+    print("Testing Level 2 spawn counts...")
+    test_level_2_spawn_counts()
+    print("[OK] Level 2\n")
+
+    print("Testing Level 3 spawn counts...")
+    test_level_3_spawn_counts()
+    print("[OK] Level 3\n")
+
+    print("All level generation spawn count tests passed!")
