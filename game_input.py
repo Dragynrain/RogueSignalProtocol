@@ -1178,7 +1178,12 @@ class InputHandler:
             # Clicked on a specific option - use that option's key
             action = DialogueInputHandler.handle_input(dialogue, dialogue.valid_keys[option_index])
         else:
-            # Clicked anywhere else - use first/default option (allows click-to-dismiss)
+            # Clicked anywhere else (not on a button)
+            # For death/victory dialogues, don't allow click-to-dismiss (prevent accidental exits)
+            if "PURGED" in dialogue.title or "BREAKTHROUGH" in dialogue.title or "ROGUE SIGNAL ESTABLISHED" in dialogue.title:
+                # Ignore clicks outside buttons for death/victory dialogues
+                return True
+            # Other dialogues: use first/default option (allows click-to-dismiss)
             action = DialogueInputHandler.handle_input(dialogue, dialogue.valid_keys[0])
 
         # Process the action (same logic as keyboard input)
