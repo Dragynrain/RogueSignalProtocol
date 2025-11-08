@@ -17,9 +17,9 @@ Rogue Signal Protocol is a [b]coffee break stealth roguelike[/b] where you play 
 [*][b]Interactive look mode[/b] - Inspect enemies, items, and terrain with mouse or keyboard
 [*][b]3 escalating network environments[/b] with procedural generation
 [*][b]21 story fragments[/b] revealing the Project Chimera conspiracy
-[*][b]Dual rendering modes[/b] - Classic ASCII/Unicode or full graphical sprites
+[*][b]Dual rendering modes[/b] - Switch between graphical sprites or classic ASCII/Unicode glyphs
 [*][b]Full audio design[/b] with atmospheric music and 40+ sound effects (toggleable)
-[*][b]Permadeath roguelike mechanics[/b] with auto-save after every action
+[*][b]Permadeath roguelike mechanics[/b] with auto-save on exit
 [/list]
 
 [h2]WHAT TO EXPECT (Alpha 0.8.0):[/h2]
@@ -86,9 +86,9 @@ FEATURES:
 • Interactive look mode - Inspect enemies, items, and terrain with mouse or keyboard
 • 3 escalating network environments with procedural generation
 • 21 story fragments revealing the Project Chimera conspiracy
-• Dual rendering modes - Classic ASCII/Unicode or full graphical sprites
+• Dual rendering modes - Switch between graphical sprites or classic ASCII/Unicode glyphs
 • Full audio design with atmospheric music and 40+ sound effects (toggleable)
-• Permadeath roguelike mechanics with auto-save after every action
+• Permadeath roguelike mechanics with auto-save on exit
 
 WHAT TO EXPECT (Alpha 0.8.0):
 

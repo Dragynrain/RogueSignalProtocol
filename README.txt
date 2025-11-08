@@ -72,7 +72,7 @@ TIPS FOR SURVIVAL
 4. AVOID DETECTION: High trace spawns unbeatable Admin Avatar
 5. EXPLORE CAREFULLY: Story fragments reveal game lore
 6. EQUIP SMARTLY: Balance combat, stealth, and utility exploits
-7. SAVE OFTEN: Game auto-saves after each action
+7. PROGRESS SAVED: Game auto-saves when returning to menu
 
 ENEMY TYPES
 -----------

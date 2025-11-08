@@ -26,10 +26,16 @@
 
 ---
 
-## 1. Bash & Environment
-- Quote paths: `cd "path with spaces"`.
-- Use bash cmds (`rm`, `ls`, `mkdir`), not Windows ones.
-- Run via `.venv/Scripts/python.exe`; install with `.venv/Scripts/pip.exe install <pkg>`.
+## 1. Bash & Environment (CRITICAL - READ FIRST)
+
+**YOU ARE IN GIT BASH ON WINDOWS** - This means Unix commands only:
+
+- ✅ **USE THESE**: `ls`, `rm`, `mkdir`, `cp`, `mv`, `cat`, `grep`, `find`
+- ❌ **NEVER USE**: `dir`, `del`, `md`, `copy`, `move`, `type` (Windows CMD commands)
+- **Paths**: Forward slashes preferred but backslashes work: `.venv/Scripts/python.exe`
+- **Quote spaces**: Always quote paths with spaces: `cd "path with spaces"`
+- **Python**: Always use `.venv/Scripts/python.exe` (NEVER just `python` or `uv`)
+- **Pip**: Always use `.venv/Scripts/pip.exe install <pkg>` (NEVER just `pip` or `uv`)
 
 ---
 
