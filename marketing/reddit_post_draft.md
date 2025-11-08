@@ -55,11 +55,11 @@ This is **alpha 0.8.0** - feature complete and playtested, now looking for wider
 
 **Background:** I'm a professional software engineer, so this was built with engineering discipline: architecture reviews, code quality standards, and comprehensive automated testing. I approach Claude Code more like a technical project manager: breaking down requirements, reviewing architecture decisions, curating outputs, and ensuring quality.
 
-This game was built using AI tools (Claude Code for code, Stable Diffusion for sprites, AudioCraft for SFX), compressing the timeline from 6-12 months to 2-3 months.
+This game was built using AI tools (Claude Code for code, Stable Diffusion for sprites and images, AudioCraft for SFX), compressing the timeline from 6-12 months to 2-3 months.
 
-**The reality:** I approached asset generation with extreme quality control - only keeping outputs that met the game's design vision. AI accelerated prototyping and iteration cycles, but game design, architecture, balance tuning, and quality standards were all human-driven. **The tools amplified my output, but the creative direction is all human.**
+**The reality:** I approached asset generation with high quality control - only keeping outputs that met the game's design vision. AI definitely accelerated the prototyping and iteration cycles, but game design, architecture, balance tuning, and quality standards were all human-driven. **The tools amplified my output, but the creative direction is all human.**
 
-If you're an artist or sound designer interested in improving the game's polish, I'd love to collaborate!
+If you're an actual artist or actual sound designer interested in improving the game's polish, I'd love to collaborate. Reach out!
 
 ---
 
@@ -67,8 +67,8 @@ If you're an artist or sound designer interested in improving the game's polish,
 * **Language:** Python + TCOD 19.6.0 (latest!)
 * **Dev Environment:** VS Code on Windows 10/11
 * **Testing:** Comprehensive automated test suite (pytest)
-* **Runtime:** Windows standalone EXE (~30 MB download)
-* **Play Time:** 10-20 minutes per full 3-level run
+* **Runtime:** Windows standalone EXE (~200 MB download)
+* **Play Time:** 5-15 minutes per full 3-level run
 * **License:** MIT (free and open source)
 
 ---
