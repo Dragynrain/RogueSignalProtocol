@@ -688,7 +688,7 @@ def main():
                     # Check if victory screen should be shown
                     if game.game_state.show_victory_screen and victory_screen is None:
                         # Create victory background with ending art
-                        victory_background = MenuBackground(context, settings, art_directory="ending")
+                        victory_background = MenuBackground(context, settings, art_directory="graphics/ending")
                         victory_background.load_random_background()
 
                         # Import and create victory screen
