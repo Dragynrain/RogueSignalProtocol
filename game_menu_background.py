@@ -241,32 +241,30 @@ class MenuBackground:
         Args:
             console: TCOD console (unused, kept for API consistency)
         """
-        if (not self.should_load_background() or 
-            not self.background_texture or 
+        if (not self.should_load_background() or
+            not self.background_texture or
             not self.image_size):
             return
-            
+
         try:
             # Render the actual PNG background to SDL renderer
             current_window_size = self.window_manager.get_window_pixel_dimensions()
-            
+
             # Calculate background rectangle with aspect ratio preservation
             bg_rect = self.window_manager.calculate_background_rect(self.image_size)
-            
+
             # Use TCOD renderer.copy() method for texture rendering
             renderer = self.context.sdl_renderer
-            
+
             # Destination rectangle (x, y, width, height)
             dest_rect = bg_rect  # Already in (x, y, w, h) format
-            
+
             # Render texture using TCOD's copy method
             renderer.copy(
                 texture=self.background_texture,
                 dest=dest_rect  # Scale to calculated rectangle
             )
-            
-            # Background rendered to SDL successfully
-            
+
         except Exception as e:
             self._handle_background_error('texture_failed', f"SDL background rendering failed", e)
     
