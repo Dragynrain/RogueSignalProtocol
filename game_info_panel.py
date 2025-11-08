@@ -586,7 +586,16 @@ class InfoPanelRenderer:
             if len(text) > panel_width - 2:
                 text = text[:panel_width - 4] + "..."
 
-            render_char_safe(console, panel_x + 1, content_y, text, fg=color, bg=Colors.LOG_BG)
+            # Pad text to full panel width to ensure complete overwrite of previous content
+            padded_text = text.ljust(panel_width - 2)
+
+            render_char_safe(console, panel_x + 1, content_y, padded_text, fg=color, bg=Colors.LOG_BG)
+            content_y += 1
+
+        # Fill any remaining lines with blank padded lines to clear previous content
+        while content_y < max_y:
+            blank_line = ' ' * (panel_width - 2)
+            render_char_safe(console, panel_x + 1, content_y, blank_line, fg=Colors.WHITE, bg=Colors.LOG_BG)
             content_y += 1
 
     @staticmethod
