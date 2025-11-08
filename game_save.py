@@ -18,6 +18,11 @@ from game_config import GameConfig
 from game_characters import Enemy
 
 
+class SaveLoadError(Exception):
+    """Raised when save file fails to load properly."""
+    pass
+
+
 class SaveGameManager:
     """Manages complete game save/load operations."""
 
