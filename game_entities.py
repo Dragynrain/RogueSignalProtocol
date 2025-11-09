@@ -676,7 +676,9 @@ def parse_position_key(key: str) -> Optional[Position]:
     try:
         x, y = map(int, key.split(','))
         return Position(x, y)
-    except (ValueError, AttributeError):
+    except (ValueError, AttributeError) as e:
+        # Expected for invalid coordinate strings - return None to signal parsing failure
+        logging.debug(f"Failed to parse position key '{key}': {e}")
         return None
 
 def parse_coordinate_string(coord_str: str) -> Optional[Position]:
@@ -684,7 +686,9 @@ def parse_coordinate_string(coord_str: str) -> Optional[Position]:
     try:
         parts = coord_str.strip().split(',')
         return Position(int(parts[0].strip()), int(parts[1].strip())) if len(parts) == 2 else None
-    except (ValueError, AttributeError):
+    except (ValueError, AttributeError) as e:
+        # Expected for invalid coordinate strings - return None to signal parsing failure
+        logging.debug(f"Failed to parse coordinate string '{coord_str}': {e}")
         return None
 
 def ensure_color_tuple(color) -> Tuple[int, int, int]:

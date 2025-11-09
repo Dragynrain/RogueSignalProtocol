@@ -17,6 +17,7 @@ import numpy as np
 from typing import List, Tuple, Optional
 from game_entities import Position, Colors, EnemyState, EnemyMovement, PositionValidator
 from game_config import GameConfig, GameBalance
+from game_errors import GameErrorHandler
 
 
 class PathfindingHelper:
@@ -98,7 +99,7 @@ class PathfindingHelper:
             return None
 
         except Exception as e:
-            logging.error(f"Pathfinding EXCEPTION from {start} to {goal}: {e}", exc_info=True)
+            GameErrorHandler.handle_error(e, "pathfinding", "Pathfinding failed", fatal=False)
             return None
 
     @staticmethod
@@ -254,15 +255,14 @@ class PathfindingHelper:
         Returns:
             True if any path exists, False otherwise
         """
-        try:
+        def _check_path():
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
             pathfinder.add_root((start.y, start.x))  # TCOD uses (y, x)
             path = pathfinder.path_to((goal.y, goal.x))
             return len(path) >= 2  # Path includes start and goal
-        except Exception as e:
-            logging.debug(f"path_exists check failed: {e}")
-            return False
+
+        return GameErrorHandler.handle_safe_operation(_check_path, "path_check", False)
 
     @staticmethod
     def calculate_simple_path(
@@ -286,7 +286,7 @@ class PathfindingHelper:
         Returns:
             List of (y, x) tuples (TCOD format), or None if no path exists
         """
-        try:
+        def _calculate_path():
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
             pathfinder.add_root((start.y, start.x))  # TCOD uses (y, x)
@@ -295,9 +295,8 @@ class PathfindingHelper:
             if len(path) >= 2:
                 return path
             return None
-        except Exception as e:
-            logging.warning(f"calculate_simple_path failed from {start} to {goal}: {e}")
-            return None
+
+        return GameErrorHandler.handle_safe_operation(_calculate_path, "simple_path", None)
 
     @staticmethod
     def _create_cost_map(game_map, game_engine, moving_enemy):
@@ -312,7 +311,8 @@ class PathfindingHelper:
                 px, py = int(player.x), int(player.y)
                 if 0 <= px < game_map.width and 0 <= py < game_map.height:
                     cost_map[py, px] = 0  # TCOD uses [y, x] indexing
-            except (AttributeError, TypeError, ValueError):
+            except (AttributeError, TypeError, ValueError) as e:
+                logging.debug(f"Failed to mark player as impassable in cost map: {e}")
                 pass  # Skip player blocking if coordinates invalid (e.g., in tests)
 
         # Mark other enemies as impassable
@@ -1201,7 +1201,7 @@ class Enemy:
                 return path
             return None
         except Exception as e:
-            logging.warning(f"Pathfinding failed for {self.type_data.name}: {e}")
+            GameErrorHandler.handle_error(e, "enemy_pathfinding", f"Pathfinding failed for {self.type_data.name}", fatal=False)
             return None
 
     def _fill_greedy_moves(self, target: Position, game_map, player, game_engine):

@@ -28,6 +28,7 @@ Technical details:
 import os
 import logging
 import traceback
+from game_errors import GameErrorHandler
 import time
 
 # Audio system
@@ -104,8 +105,7 @@ class SoundManager:
                 pygame.mixer.music.set_volume(music_vol)
                 logging.debug(f"Audio: Initialized pygame.mixer - {self.max_channels} channels, music_vol={music_vol:.2f}")
             except Exception as e:
-                logging.warning(f"Failed to initialize sound system: {e}")
-                logging.debug(traceback.format_exc())
+                GameErrorHandler.handle_error(e, "sound_init", "Sound initialization failed")
                 self.enabled = False
     
     def update_volumes(self):
@@ -225,8 +225,7 @@ class SoundManager:
             logging.debug(f"Audio: Loaded sound '{sound_id}' from {filename} ({file_size} bytes)")
             return True
         except Exception as e:
-            logging.error(f"Failed to load sound {sound_id}: {e}")
-            logging.debug(traceback.format_exc())
+            GameErrorHandler.handle_error(e, "sound_load", f"Failed to load {sound_id}")
             return False
     
     def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
@@ -315,7 +314,7 @@ class SoundManager:
             loop_info = "loop" if loops == -1 else f"{loops} times"
             logging.debug(f"Audio: Playing music '{filename}' ({loop_info}, volume={volume:.2f}, fade_in={fade_in_ms}ms)")
         except Exception as e:
-            logging.error(f"Failed to play music {filename}: {e}")
+            GameErrorHandler.handle_error(e, "music_play", f"Failed to play {filename}")
             self.current_music = None
             self.music_playing = False
     
@@ -333,8 +332,7 @@ class SoundManager:
             self.music_playing = False
             self.current_music = None
         except Exception as e:
-            logging.error(f"Failed to stop music: {e}")
-            logging.debug(traceback.format_exc())
+            GameErrorHandler.handle_error(e, "music_stop", "Failed to stop music")
     
     def pause_music(self):
         """Pause background music"""

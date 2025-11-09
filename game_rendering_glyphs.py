@@ -19,6 +19,7 @@ from game_rendering_base import MapRendererBase
 from game_color_manager import ColorManager
 from game_unicode_chars import GameGlyphs
 from game_color_thresholds import ColorThresholdManager
+from game_errors import GameErrorHandler
 
 
 class GlyphsMapRenderer(MapRendererBase):
@@ -42,14 +43,11 @@ class GlyphsMapRenderer(MapRendererBase):
             
         except Exception as e:
             # Fallback error display
-            import traceback
+            GameErrorHandler.handle_error(e, "map_render", "Map rendering failed", fatal=False)
             tb = traceback.extract_tb(e.__traceback__)
             line_no = tb[-1].lineno if tb else "?"
             error_msg = f"Map Error: {str(e)[:50]} (line {line_no})"
             render_char_safe(console, 1, 1, error_msg, fg=Colors.RED, bg=Colors.BLACK)
-            # Also log to console and file
-            logging.error(f"Map rendering error: {e}")
-            logging.error(traceback.format_exc())
     def _render_terrain(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int):
         """Render basic terrain (floors, walls, items)."""
         graphics_mode = self._get_graphics_mode()
@@ -252,14 +250,11 @@ class GlyphsMapRenderer(MapRendererBase):
                     logging.error(f"Unknown exploit key: {exploit_item.exploit_key}")
                     render_char_safe(console, screen_x, screen_y, GameGlyphs.EXPLOIT, fg=Colors.MAGENTA, bg=Colors.BLACK)
             except AttributeError as e:
-                logging.error(f"ExploitDefinition attribute error at {world_pos}: {e}")
-                logging.error(f"Available attributes: {dir(exploit_def) if 'exploit_def' in locals() else 'exploit_def not defined'}")
-                logging.error(traceback.format_exc())
+                GameErrorHandler.handle_error(e, "exploit_render_attribute", f"ExploitDefinition attribute error at {world_pos}", fatal=False)
                 # Fallback to default magenta color - don't change appearance due to errors
                 render_char_safe(console, screen_x, screen_y, GameGlyphs.EXPLOIT, fg=Colors.MAGENTA, bg=Colors.BLACK)
             except Exception as e:
-                logging.error(f"Unexpected error rendering exploit at {world_pos}: {e}")
-                logging.error(traceback.format_exc())
+                GameErrorHandler.handle_error(e, "exploit_render", f"Unexpected error rendering exploit at {world_pos}", fatal=False)
                 # Fallback to default magenta color - don't change appearance due to errors
                 render_char_safe(console, screen_x, screen_y, GameGlyphs.EXPLOIT, fg=Colors.MAGENTA, bg=Colors.BLACK)
         elif (world_pos.x, world_pos.y) in game.game_map.permanent_upgrades:
@@ -491,11 +486,8 @@ class GlyphsMapRenderer(MapRendererBase):
                     fg_tuple = tuple(current_fg[:3])
                     render_char_safe(console, x, y, chr(current_char), fg=fg_tuple, bg=bg_color)
         except (IndexError, ValueError) as e:
-            import traceback
-            tb = traceback.extract_tb(e.__traceback__)
-            line_no = tb[-1].lineno if tb else "?"
-            # Silent fail for overlay errors, but could log line_no if needed for debugging
-            pass
+            # Silent fail for overlay errors, but log for debugging
+            logging.debug(f"Overlay tile bounds error at ({x},{y}): {e}")
     
     def _render_movement_prediction(self, console: tcod.console.Console, game, camera_offset: Position, vision_range: int, use_graphics=False):
         """Render next 3 predicted moves for all moving enemies using directional arrows."""
@@ -569,19 +561,19 @@ class GlyphsMapRenderer(MapRendererBase):
                             # Get arrow character
                             arrow_char = prev_pos.arrow_char_to(point)
                         except Exception as e:
-                            logging.error(f"Error setting up arrow: {e}")
+                            GameErrorHandler.handle_error(e, "arrow_setup", "Error setting up arrow", fatal=False)
                             continue  # Skip this arrow
 
                         # Render directional arrow
                         try:
                             render_char_safe(console, screen_x, screen_y, arrow_char, fg=dimmed_color, bg=bg_color)
                         except Exception as e:
-                            logging.error(f"Failed to render arrow at ({screen_x},{screen_y}): {e}")
+                            GameErrorHandler.handle_error(e, "arrow_render", f"Failed to render arrow at ({screen_x},{screen_y})", fatal=False)
                             # Try fallback rendering with simple values
                             try:
                                 render_char_safe(console, screen_x, screen_y, '?', fg=(255, 255, 0), bg=(0, 0, 0))
-                            except:
-                                pass  # Give up if even fallback fails
+                            except Exception as e2:
+                                logging.debug(f"Arrow fallback rendering also failed: {e2}")  # Give up if even fallback fails
 
                     # Update prev_pos for next arrow
                     prev_pos = point
@@ -704,8 +696,7 @@ class GlyphsMapRenderer(MapRendererBase):
             try:
                 render_char_safe(console, console_x, console_y, GameGlyphs.PLAYER, fg=player_color, bg=Colors.BLACK)
             except Exception as e:
-                import logging
-                logging.error(f"PLAYER RENDER ERROR: {e}, color={player_color}")
+                GameErrorHandler.handle_error(e, "player_render", f"Player render error, color={player_color}", fatal=False)
                 # Fallback to simple @ character
                 render_char_safe(console, console_x, console_y, '@', fg=Colors.WHITE, bg=Colors.BLACK)
         else:

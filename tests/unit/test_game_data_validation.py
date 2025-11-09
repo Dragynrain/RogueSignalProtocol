@@ -112,7 +112,7 @@ class TestGameBalancePlayerStats:
         }
 
         with patch('game_data.DataLoader.get_balance_config', return_value=mock_balance):
-            with pytest.raises(KeyError, match="Player stat not found: nonexistent_stat"):
+            with pytest.raises(KeyError, match="required key missing"):
                 GameBalance.get_player_stat('nonexistent_stat')
 
     def test_missing_player_stats_section_raises_error(self):
@@ -142,8 +142,8 @@ class TestGameBalancePlayerStats:
             assert GameBalance.get_player_stat('base_ram') == 10
 
     @patch('logging.error')
-    def test_missing_stat_logs_available_stats(self, mock_log):
-        """Test that missing stat error logs available stats for debugging."""
+    def test_missing_stat_logs_error(self, mock_log):
+        """Test that missing stat error logs through GameErrorHandler."""
         mock_balance = {
             'player_stats': {
                 'max_cpu': 100,
@@ -157,8 +157,8 @@ class TestGameBalancePlayerStats:
             except KeyError:
                 pass
 
-            # Should log available stats
-            assert any('Available player stats' in str(call) for call in mock_log.call_args_list)
+            # Should log error through GameErrorHandler
+            assert any('CRITICAL CONFIG ERROR' in str(call) for call in mock_log.call_args_list)
 
 
 class TestGameBalanceCombatValues:
@@ -173,7 +173,7 @@ class TestGameBalanceCombatValues:
         }
 
         with patch('game_data.DataLoader.get_balance_config', return_value=mock_balance):
-            with pytest.raises(KeyError, match="Combat value not found: nonexistent"):
+            with pytest.raises(KeyError, match="required key missing"):
                 GameBalance.get_combat_value('nonexistent')
 
     def test_missing_combat_section_raises_error(self):
@@ -202,8 +202,8 @@ class TestGameBalanceCombatValues:
             assert GameBalance.get_combat_value('enemy_elimination_cpu_reward') == 20
 
     @patch('logging.error')
-    def test_missing_combat_value_logs_available_values(self, mock_log):
-        """Test that missing combat value error logs available values."""
+    def test_missing_combat_value_logs_error(self, mock_log):
+        """Test that missing combat value error logs through GameErrorHandler."""
         mock_balance = {
             'combat': {
                 'base_damage': 10,
@@ -217,7 +217,7 @@ class TestGameBalanceCombatValues:
             except KeyError:
                 pass
 
-            assert any('Available combat values' in str(call) for call in mock_log.call_args_list)
+            assert any('CRITICAL CONFIG ERROR' in str(call) for call in mock_log.call_args_list)
 
 
 class TestGameBalanceCodeHackValues:
@@ -232,7 +232,7 @@ class TestGameBalanceCodeHackValues:
         }
 
         with patch('game_data.DataLoader.get_balance_config', return_value=mock_balance):
-            with pytest.raises(KeyError, match="Code hack value not found: nonexistent"):
+            with pytest.raises(KeyError, match="required key missing"):
                 GameBalance.get_code_hack_value('nonexistent')
 
     def test_missing_code_hacks_section_raises_error(self):
@@ -274,7 +274,7 @@ class TestGameBalanceTemporaryEffects:
         }
 
         with patch('game_data.DataLoader.get_balance_config', return_value=mock_balance):
-            with pytest.raises(KeyError, match="Temporary effect value not found: nonexistent"):
+            with pytest.raises(KeyError, match="required key missing"):
                 GameBalance.get_temporary_effect_value('nonexistent')
 
     def test_missing_temporary_effects_section_raises_error(self):
@@ -447,12 +447,12 @@ class TestErrorMessagesQuality:
             except KeyError:
                 pass
 
-            # Should log CRITICAL CONFIG ERROR
+            # Should log CRITICAL CONFIG ERROR (through GameErrorHandler)
             assert any('CRITICAL CONFIG ERROR' in str(call) for call in mock_log.call_args_list)
 
     @patch('logging.error')
-    def test_missing_section_shows_available_sections(self, mock_log):
-        """Test that missing section error shows available sections."""
+    def test_missing_section_logs_error(self, mock_log):
+        """Test that missing section error logs through GameErrorHandler."""
         mock_balance = {
             'player_stats': {},
             'combat': {},
@@ -465,8 +465,8 @@ class TestErrorMessagesQuality:
             except KeyError:
                 pass
 
-            # Should log available balance sections
-            assert any('Available balance sections' in str(call) for call in mock_log.call_args_list)
+            # Should log error through GameErrorHandler
+            assert any('CRITICAL CONFIG ERROR' in str(call) for call in mock_log.call_args_list)
 
 
 if __name__ == "__main__":

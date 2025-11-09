@@ -29,6 +29,7 @@ from game_color_manager import ColorManager
 from game_ui import render_char_safe
 from data_loading import get_death_messages, get_intro_messages
 from game_story import StoryFragmentManager
+from game_errors import GameErrorHandler
 
 
 # ============================================================================
@@ -254,11 +255,15 @@ class UnifiedRenderer:
                         fg=title_color, bg=bg_color)
 
         # Format message with format_data
-        try:
-            formatted_message = dialogue.message.format(**dialogue.format_data)
-        except KeyError as e:
-            logging.error(f"DIALOGUE FORMAT ERROR: Missing key {e} in message: {dialogue.message[:100]}")
-            formatted_message = dialogue.message
+        def _format_message():
+            return dialogue.message.format(**dialogue.format_data)
+
+        formatted_message = GameErrorHandler.handle_safe_operation(
+            _format_message,
+            "dialogue_format",
+            dialogue.message,  # fallback to unformatted message
+            "Failed to format dialogue message"
+        )
 
         # Render message (word-wrapped)
         message_lines = UnifiedRenderer._wrap_text(formatted_message, box_width - 4)

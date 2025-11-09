@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from typing import Dict, Tuple
 from game_entities import EnemyTypeDefinition, ExploitDefinition, UpgradeDefinition, EnemyMovement, TargetingMode
 from data_loading import DataLoader
+from game_errors import GameErrorHandler
 
 
 class GameData:
@@ -129,15 +130,7 @@ class GameBalance:
         try:
             return balance['player_stats'][stat_name]
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Player stat '{stat_name}' not found in game_content.json balance.player_stats"
-            import logging
-            logging.error(error_msg)
-            if 'player_stats' in balance:
-                logging.error(f"Available player stats: {list(balance['player_stats'].keys())}")
-            else:
-                logging.error(f"'player_stats' section missing from balance config")
-                logging.error(f"Available balance sections: {list(balance.keys())}")
-            raise KeyError(f"Player stat not found: {stat_name}") from e
+            GameErrorHandler.handle_config_error(f"Player stat '{stat_name}' not found in game_content.json balance.player_stats", e)
 
     @classmethod
     def get_combat_value(cls, value_name: str):
@@ -146,15 +139,7 @@ class GameBalance:
         try:
             return balance['combat'][value_name]
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Combat value '{value_name}' not found in game_content.json balance.combat"
-            import logging
-            logging.error(error_msg)
-            if 'combat' in balance:
-                logging.error(f"Available combat values: {list(balance['combat'].keys())}")
-            else:
-                logging.error(f"'combat' section missing from balance config")
-                logging.error(f"Available balance sections: {list(balance.keys())}")
-            raise KeyError(f"Combat value not found: {value_name}") from e
+            GameErrorHandler.handle_config_error(f"Combat value '{value_name}' not found in game_content.json balance.combat", e)
 
     @classmethod
     def get_code_hack_value(cls, value_name: str):
@@ -163,15 +148,7 @@ class GameBalance:
         try:
             return balance['code_hacks'][value_name]
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Code hack value '{value_name}' not found in game_content.json balance.code_hacks"
-            import logging
-            logging.error(error_msg)
-            if 'code_hacks' in balance:
-                logging.error(f"Available code hack values: {list(balance['code_hacks'].keys())}")
-            else:
-                logging.error(f"'code_hacks' section missing from balance config")
-                logging.error(f"Available balance sections: {list(balance.keys())}")
-            raise KeyError(f"Code hack value not found: {value_name}") from e
+            GameErrorHandler.handle_config_error(f"Code hack value '{value_name}' not found in game_content.json balance.code_hacks", e)
 
     @classmethod
     def get_temporary_effect_value(cls, value_name: str):
@@ -180,15 +157,7 @@ class GameBalance:
         try:
             return balance['temporary_effects'][value_name]
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Temporary effect '{value_name}' not found in game_content.json balance.temporary_effects"
-            import logging
-            logging.error(error_msg)
-            if 'temporary_effects' in balance:
-                logging.error(f"Available temporary effects: {list(balance['temporary_effects'].keys())}")
-            else:
-                logging.error(f"'temporary_effects' section missing from balance config")
-                logging.error(f"Available balance sections: {list(balance.keys())}")
-            raise KeyError(f"Temporary effect value not found: {value_name}") from e
+            GameErrorHandler.handle_config_error(f"Temporary effect '{value_name}' not found in game_content.json balance.temporary_effects", e)
     
     # NO FALLBACK VALUES - All values must come from JSON
     # These properties dynamically fetch from JSON and will raise KeyError if missing

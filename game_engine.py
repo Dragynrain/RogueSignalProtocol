@@ -21,6 +21,7 @@ from game_audio import SoundManager
 from game_save import SaveGameManager
 from game_story import StoryFragmentManager
 from game_narrative import NarrativeManager
+from game_errors import GameErrorHandler
 
 # Import modular game systems
 from game_state import GameStateManager, TurnProcessor, MessageLog
@@ -491,7 +492,7 @@ class GameEngine:
                     )
                     logging.debug(f"Particle explosion created for bump attack kill")
                 except Exception as e:
-                    logging.error(f"Particle effect failed in bump attack: {e}", exc_info=True)
+                    GameErrorHandler.handle_error(e, "particle_effect", "Particle effect failed in bump attack", fatal=False)
             self.enemy_manager.remove_enemy(target_enemy)
             self.player.cpu = min(self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)  # Small CPU recovery
             self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")

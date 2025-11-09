@@ -493,7 +493,8 @@ class MainMenu(BaseMenu):
         try:
             tile_x = int(event.tile.x)
             tile_y = int(event.tile.y)
-        except (TypeError, ValueError, AttributeError):
+        except (TypeError, ValueError, AttributeError) as e:
+            logging.debug(f"Mouse event tile coordinate conversion failed in warning menu: {e}")
             return False
 
         # Check if hovering over option 0
@@ -828,7 +829,8 @@ class SettingsMenu(BaseMenu):
         try:
             tile_x = int(event.tile.x)
             tile_y = int(event.tile.y)
-        except (TypeError, ValueError, AttributeError):
+        except (TypeError, ValueError, AttributeError) as e:
+            logging.debug(f"Mouse event tile coordinate conversion failed in settings menu motion: {e}")
             return False
 
         # Calculate box dimensions the same way render() does
@@ -868,7 +870,8 @@ class SettingsMenu(BaseMenu):
         try:
             tile_x = int(event.tile.x)
             tile_y = int(event.tile.y)
-        except (TypeError, ValueError, AttributeError):
+        except (TypeError, ValueError, AttributeError) as e:
+            logging.debug(f"Mouse event tile coordinate conversion failed in confirmation dialog: {e}")
             return False
 
         # Check if hovering over option 0
@@ -964,7 +967,8 @@ class SettingsMenu(BaseMenu):
             # Determine which half of the color display was clicked
             try:
                 tile_x = int(event.tile.x)
-            except (TypeError, ValueError, AttributeError):
+            except (TypeError, ValueError, AttributeError) as e:
+                logging.debug(f"Mouse event tile X coordinate conversion failed in ui_color handler: {e}")
                 return ""
 
             # Calculate color display position using actual box dimensions
@@ -1005,7 +1009,8 @@ class SettingsMenu(BaseMenu):
             # Determine which half of the slider bar was clicked
             try:
                 tile_x = int(event.tile.x)
-            except (TypeError, ValueError, AttributeError):
+            except (TypeError, ValueError, AttributeError) as e:
+                logging.debug(f"Mouse event tile X coordinate conversion failed in volume handler: {e}")
                 return ""
 
             # Calculate slider bar position using actual box dimensions
