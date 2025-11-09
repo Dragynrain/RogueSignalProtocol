@@ -69,20 +69,24 @@ from game_loop import main, initialize_tcod_context, WindowManager as LoopWindow
 DEBUG_MODE = os.path.exists('debug_mode.flag')
 
 if DEBUG_MODE:
-    # Alpha/Debug build - INFO level logging (less spam, still useful)
-    log_level = logging.INFO
+    # Alpha/Debug build - DEBUG level logging (for playtester bug reports)
+    log_level = logging.DEBUG
     # Use unbuffered file handler so logs are written immediately (critical for crash debugging)
     # Open with buffering=1 for line buffering
     # Ensure logs directory exists
     import os
     os.makedirs('logs', exist_ok=True)
 
-    log_file = open('logs/game_debug.log', mode='w', buffering=1)
+    log_file = open('logs/game_debug.log', mode='a', buffering=1, encoding='utf-8', errors='replace')  # APPEND mode for debugging
     file_handler = logging.StreamHandler(log_file)
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.DEBUG)
+
+    # Configure console handler with UTF-8 and error handling
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)  # Keep console at INFO to reduce spam
 
     log_handlers = [
-        logging.StreamHandler(),
+        console_handler,
         file_handler
     ]
     print("DEBUG MODE: Verbose logging enabled (Alpha build)")

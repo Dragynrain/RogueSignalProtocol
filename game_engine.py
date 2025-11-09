@@ -193,7 +193,6 @@ class GameEngine:
             # Show intro dialogue
             from game_dialogue_system import create_intro_dialogue
             self.dialogue_state.show(create_intro_dialogue())
-
         # Initialize InputHandler after GameEngine is fully set up (requires self reference)
         if input_handler is None:
             self.input_handler = InputHandler(self)

@@ -657,11 +657,12 @@ def main():
                 if game is None:
                     # Pass active_game_session to handle_menu_navigation so it can resume
                     game, should_exit = handle_menu_navigation(console, context, menus, settings, menu_sound_manager, active_game_session)
+
                     if should_exit:
                         # Cleanup background before exit
                         menu_background.cleanup()
                         return
-                    
+
                     # Initialize tile manager for graphics mode
                     tile_manager = None
                     if settings.graphics_mode == "graphics":
@@ -846,7 +847,7 @@ def main():
                                     context.sdl_renderer.clear()
 
                                 break  # Return to main menu
-                        
+
                     except Exception as e:
                         log_exception(e, "SYSTEM ERROR: Rendering failure", level="error")
                         tb = traceback.extract_tb(e.__traceback__)

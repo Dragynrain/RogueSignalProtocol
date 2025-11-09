@@ -812,7 +812,7 @@ class Enemy:
         is_adjacent = dx <= 1 and dy <= 1 and (dx + dy) > 0
         return is_adjacent
     
-    def attack_player(self, player: Player) -> int:
+    def attack_player(self, player: Player, game_engine=None) -> int:
         """Attack the player and return damage dealt."""
         if self.type == 'virus':
             virus_increment = GameConfig._get_required('balance.virus_increment_turns')
@@ -841,6 +841,15 @@ class Enemy:
 
         damage = player.take_damage(self.type_data.damage)
         logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): attacked player for {damage} damage, player_cpu={player.cpu}/{player.max_cpu}")
+
+        # CRITICAL: Check for death immediately after attack
+        # Don't wait for process_turn() - death may have occurred mid-turn
+        if player.cpu <= 0 and game_engine is not None:
+            if not hasattr(game_engine, 'pending_death_dialogue') or not game_engine.pending_death_dialogue:
+                game_engine.game_over = True
+                game_engine.pending_death_dialogue = True
+                logging.warning(f"Player killed by {self.type_data.name} attack - pending_death_dialogue set")
+
         return damage
     
     def take_damage(self, damage: int) -> bool:
