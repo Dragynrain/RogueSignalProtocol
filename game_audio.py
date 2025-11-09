@@ -39,7 +39,7 @@ except ImportError:
     logging.warning("pygame not available. Sound will be disabled.")
 
 # Import game settings
-from game_config import GameSettings
+from game_config import GameSettings, GameConfig
 
 
 class SoundManager:
@@ -71,11 +71,11 @@ class SoundManager:
     # Centralized audio directory configuration
     @property
     def SOUND_DIRECTORY(self):
-        return GameConfig.get('audio.sound_directory', 'sound') if hasattr(self, '_game_config_loaded') else 'sound'
+        return GameConfig._get_required('audio.sound_directory')
 
     @property
     def MUSIC_DIRECTORY(self):
-        return GameConfig.get('audio.music_directory', 'music') if hasattr(self, '_game_config_loaded') else 'music'
+        return GameConfig._get_required('audio.music_directory')
     
     def __init__(self, settings: GameSettings = None):
         """Initialize the sound manager with game settings.
@@ -217,7 +217,7 @@ class SoundManager:
         try:
             sound_path = os.path.join(self.SOUND_DIRECTORY, filename)
             if not os.path.exists(sound_path):
-                logging.warning(f"Sound file not found: {sound_path}")
+                logging.error(f"MISSING AUDIO FILE: Sound file not found: {sound_path}")
                 return False
 
             self.sounds[sound_id] = pygame.mixer.Sound(sound_path)
@@ -295,7 +295,7 @@ class SoundManager:
 
         # Check if file exists first
         if not os.path.exists(music_path):
-            logging.warning(f"Music file not found: {music_path}")
+            logging.error(f"MISSING AUDIO FILE: Music file not found: {music_path}")
             return
 
         try:

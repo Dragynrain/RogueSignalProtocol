@@ -162,8 +162,8 @@ class EnemyManager:
         """
         # Choose a simple pattern type
         pattern_type = random.choice(['line', 'triangle', 'rectangle'])
-        min_spacing = GameConfig.get('balance.patrol_spacing_min', 4)
-        max_spacing = GameConfig.get('balance.patrol_spacing_max', 8)
+        min_spacing = GameConfig._get_required('balance.patrol_spacing_min')
+        max_spacing = GameConfig._get_required('balance.patrol_spacing_max')
         step_size = random.randint(min_spacing, max_spacing)
         logging.debug(f"Patrol route: start=({start.x},{start.y}), pattern={pattern_type}, step_size={step_size}")
 
@@ -227,10 +227,10 @@ class EnemyManager:
                     return route
 
         # Fallback: try multiple simple 2-point patterns
-        h_dist = GameConfig.get('balance.patrol_fallback_horizontal', 4)
-        v_dist = GameConfig.get('balance.patrol_fallback_vertical', 4)
-        d_dist = GameConfig.get('balance.patrol_fallback_diagonal', 3)
-        s_dist = GameConfig.get('balance.patrol_fallback_short', 2)
+        h_dist = GameConfig._get_required('balance.patrol_fallback_horizontal')
+        v_dist = GameConfig._get_required('balance.patrol_fallback_vertical')
+        d_dist = GameConfig._get_required('balance.patrol_fallback_diagonal')
+        s_dist = GameConfig._get_required('balance.patrol_fallback_short')
         fallback_patterns = [
             Position(start.x + h_dist, start.y),      # Horizontal right
             Position(start.x - h_dist, start.y),      # Horizontal left

@@ -150,7 +150,7 @@ class CodeHack(InventoryItem):
         
         elif effect_key == 'reduce_trace_level':
             from game_config import GameConfig
-            reduction = GameConfig.get('balance.trace_reduction_code_hack', 25)
+            reduction = GameConfig._get_required('balance.trace_reduction_code_hack')
             old_trace = player.trace_level
             player.trace_level = max(0, player.trace_level - reduction)
             actual_reduction = old_trace - player.trace_level
@@ -158,7 +158,7 @@ class CodeHack(InventoryItem):
         
         elif effect_key == 'speed_boost':
             from game_config import GameConfig
-            speed_to_add = GameConfig.get('balance.speed_boost_turns', 3)
+            speed_to_add = GameConfig._get_required('balance.speed_boost_turns')
 
             if player.temporary_effects.get('speed_boost_turns', 0) > 0:
                 game.message_log.add_message("Speed boost already active")

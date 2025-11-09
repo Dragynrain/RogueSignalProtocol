@@ -503,6 +503,9 @@ class TestDeathDialogueDismissal:
             'box_width': 60,
             'box_height': 20,
             'options_y': 28,
+            'options_x': 15,  # Starting x position of options text
+            'options_width': 30,  # Width of options text
+            'num_options': 1,  # Single option for death dialogue
             'option_positions': [(15, 28)]
         }
 
@@ -511,15 +514,17 @@ class TestDeathDialogueDismissal:
         active_dlg = engine.dialogue_state.get_active()
         assert "PURGED" in active_dlg.title, f"Expected death dialogue, got {active_dlg.title}"
 
-        # Simulate left click on dialogue (create event with tile coordinates)
-        # The game loop would convert pixel to tile coords, so we use tile coords here
+        # Simulate left click on dialogue button
+        # The code expects PIXEL coordinates and converts them to tiles
+        # With 800x600 window and 80x50 console: pixels_per_tile = 10 (x), 12 (y)
+        # To click tile (15, 28), we need pixel (150, 336)
         class MockPosition:
             def __init__(self, x, y):
                 self.x = x
                 self.y = y
 
         event = Mock()
-        event.position = MockPosition(40, 25)  # Tile coordinates
+        event.position = MockPosition(150, 336)  # Pixel coords -> converts to tile (15, 28)
         event.button = tcod.event.MouseButton.LEFT
 
         # Handle the dialogue left click

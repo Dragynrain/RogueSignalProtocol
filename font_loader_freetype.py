@@ -72,8 +72,8 @@ def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: in
                 if char_index != 0:  # Glyph exists in font
                     try:
                         available_chars.append(chr(codepoint))
-                    except:
-                        pass
+                    except ValueError as e:
+                        print(f"[WARN] Font loader: Invalid codepoint {codepoint}: {e}")
 
         chars = "".join(available_chars)
 

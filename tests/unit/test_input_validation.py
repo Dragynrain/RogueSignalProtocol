@@ -59,6 +59,7 @@ def create_mock_game():
     game.dialogue_state.get_active = Mock(return_value=None)
     game.achievement_popup_manager = Mock()  # Achievement popup manager
     game.achievement_popup_manager.has_active_popup = Mock(return_value=False)  # No popup by default
+    game.pending_death_dialogue = False  # No pending death dialogue by default
 
     return game
 

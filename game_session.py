@@ -654,7 +654,8 @@ class GameSession:
         # This ensures proper phase separation: awareness -> movement -> attacks
 
         if alerted_count > 0:
-            self.game_engine.message_log.add_message(f"{alerted_count} enemies alerted nearby!")
+            enemy_word = "enemy" if alerted_count == 1 else "enemies"
+            self.game_engine.message_log.add_message(f"{alerted_count} {enemy_word} alerted nearby!")
             # Only play sound once per turn to prevent stacking
             if not self._enemies_alerted_played_this_turn:
                 self.game_engine.sound_manager.play_sound("enemies_alerted", priority=6)
