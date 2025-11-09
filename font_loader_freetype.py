@@ -7,6 +7,7 @@ Based on python-tcod's examples/ttf.py.
 import numpy as np
 import freetype
 import tcod.tileset
+from game_errors import GameErrorHandler
 
 
 def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: int, chars: str = None,
@@ -124,6 +125,7 @@ def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: in
 
         except Exception as e:
             # Skip characters that can't be rendered (suppress warnings to avoid Unicode errors)
+            GameErrorHandler.handle_error(e, "font_render", "Font rendering failed")
             pass
 
     return tileset

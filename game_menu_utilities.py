@@ -136,7 +136,8 @@ class MenuRenderingUtils:
         if background and background.window_manager:
             try:
                 window_width, window_height = background.window_manager.get_window_pixel_dimensions()
-            except (AttributeError, TypeError, ValueError):
+            except (AttributeError, TypeError, ValueError) as e:
+                logging.debug(f"Failed to get window dimensions from background manager: {e}")
                 pass  # Use defaults if retrieval fails
 
         # Calculate dynamic positioning based on window aspect ratio

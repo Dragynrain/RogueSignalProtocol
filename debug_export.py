@@ -29,6 +29,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
+from game_errors import GameErrorHandler
+
 
 class DebugExporter:
     """Handles creation of debug packages for bug reporting."""
@@ -96,8 +98,7 @@ class DebugExporter:
             return zip_filename
 
         except Exception as e:
-            logging.error(f"Debug Export: Failed to create debug package: {e}")
-            logging.error(traceback.format_exc())
+            GameErrorHandler.handle_error(e, "create_debug_package", "Failed to create debug package", fatal=False)
             return None
 
     @classmethod
@@ -176,7 +177,7 @@ class DebugExporter:
                     zipf.write(file_path, arcname)
                     logging.debug(f"Debug Export: Added {arcname}")
                 except Exception as e:
-                    logging.warning(f"Debug Export: Failed to add {file_path}: {e}")
+                    GameErrorHandler.handle_error(e, "add_file_to_debug_zip", f"Failed to add {file_path} to debug package", fatal=False)
 
     @classmethod
     def _add_game_snapshot(cls, zipf: zipfile.ZipFile, game_engine: 'GameEngine') -> None:
@@ -211,8 +212,7 @@ class DebugExporter:
             logging.info(f"Debug Export: Game snapshot added successfully ({len(game_engine.enemies)} enemies)")
 
         except Exception as e:
-            logging.error(f"Debug Export: Failed to create game snapshot: {e}")
-            logging.error(traceback.format_exc())
+            GameErrorHandler.handle_error(e, "add_game_snapshot", "Failed to create game snapshot for debug package", fatal=False)
 
     @classmethod
     def _add_active_save(cls, zipf: zipfile.ZipFile, game_engine: 'GameEngine') -> None:
@@ -228,8 +228,7 @@ class DebugExporter:
             logging.info("Debug Export: Active game state saved to package")
 
         except Exception as e:
-            logging.error(f"Debug Export: Failed to save active game state: {e}")
-            logging.error(traceback.format_exc())
+            GameErrorHandler.handle_error(e, "add_active_save_to_debug", "Failed to save active game state to debug package", fatal=False)
 
     @classmethod
     def _add_reproduction_template(cls, zipf: zipfile.ZipFile) -> None:
@@ -284,6 +283,7 @@ Thank you for helping improve Rogue Signal Protocol!
                         file_hash = hashlib.sha256(f.read()).hexdigest()
                     hash_info.append(f"{config_file}: {file_hash}")
                 except Exception as e:
+                    GameErrorHandler.handle_error(e, "hash_config_file", f"Failed to hash {config_file} for debug package", fatal=False)
                     hash_info.append(f"{config_file}: ERROR - {e}")
             else:
                 hash_info.append(f"{config_file}: MISSING")

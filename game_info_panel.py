@@ -21,6 +21,7 @@ from game_entities import Position, Colors
 from game_ui import render_char_safe
 from game_data import GameData
 from game_unicode_chars import GameGlyphs
+from game_errors import GameErrorHandler
 
 
 class InfoProvider:
@@ -475,7 +476,7 @@ class InfoProvider:
                 lines.append({'text': f'Level {level}', 'color': Colors.CYAN})
                 lines.append({'text': network_name, 'color': Colors.CYAN})
             except Exception as e:
-                logging.warning(f"Info panel: Failed to get network name for level {level}: {e}")
+                GameErrorHandler.handle_error(e, "info_panel_network_name", f"Failed to get network name for level {level}", fatal=False)
                 lines.append({'text': f'Level {level}', 'color': Colors.CYAN})
         elif hasattr(game, 'level'):
             # Fallback to old attribute name
@@ -506,9 +507,9 @@ class InfoProvider:
 
                 if session.metrics.combat_kills_current_streak > 0:
                     lines.append({'text': f'Combat Streak: {session.metrics.combat_kills_current_streak}', 'color': Colors.YELLOW})
-        except (ImportError, AttributeError):
-            # Metrics system not available or session not started
-            pass
+        except (ImportError, AttributeError) as e:
+            # Metrics system not available or session not started - this is non-critical
+            logging.debug(f"Info panel: Metrics not available: {e}")
 
         # If no info available, show a simple message
         if not lines:

@@ -128,7 +128,7 @@ class MapRendererBase:
                     output_size = self.context.sdl_renderer.output_size
                     if output_size:
                         window_width, window_height = output_size
-                except:
+                except (AttributeError, TypeError):
                     pass
 
         viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode, tile_width, window_width)
@@ -178,7 +178,7 @@ class MapRendererBase:
                         output_size = self.context.sdl_renderer.output_size
                         if output_size:
                             window_width, window_height = output_size
-                except:
+                except (AttributeError, TypeError):
                     pass
 
         # Get viewport dimensions (tiles visible, not console grid size)

@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 from game_config import GameConfig, GameBalance
 from game_entities import Position, TargetingMode, ExploitDefinition, EnemyMovement, EnemyState, Colors
 from game_data import GameData
+from game_errors import GameErrorHandler
 
 # Use TYPE_CHECKING to avoid circular imports
 if TYPE_CHECKING:
@@ -395,7 +396,7 @@ class ExploitSystem:
                     logging.debug(f"Particle explosion created at ({enemy.x}, {enemy.y}) with {len(colors)} colors")
                 except Exception as e:
                     # Don't crash game if particle effect fails
-                    logging.error(f"Particle effect failed: {e}", exc_info=True)
+                    GameErrorHandler.handle_error(e, "particle_effect", "Particle effect failed", fatal=False)
 
             self.game.enemies.remove(enemy)
             self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)

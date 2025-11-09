@@ -421,7 +421,8 @@ class GraphicalHelpMenu:
                 window_width, window_height = self.context.sdl_window.size
             else:
                 window_width, window_height = 800, 600
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError) as e:
+            logging.debug(f"Failed to get SDL window size, using defaults: {e}")
             window_width, window_height = 800, 600
 
         # Use CoordinateHelpers for consistent coordinate conversion

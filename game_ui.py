@@ -67,7 +67,7 @@ def render_char_safe(console, x, y, char, fg=None, bg=None) -> None:
         # Try fallback with simple ASCII
         try:
             console.print(x, y, '?', fg=(255, 255, 0) if fg is None else fg, bg=(0, 0, 0) if bg is None else bg)
-        except:
+        except Exception:
             pass  # Give up if even fallback fails
 
 

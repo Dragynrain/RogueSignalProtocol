@@ -17,6 +17,7 @@ from game_inventory import CodeHack, ExploitItem
 from game_ui import UniversalInputHandler
 from game_entities import Position
 from game_coordinate_helpers import CoordinateHelpers
+from game_errors import GameErrorHandler
 
 
 class InputMappings:
@@ -629,10 +630,8 @@ class InputHandler:
 
         except Exception as e:
             # Unexpected error
+            GameErrorHandler.handle_error(e, "debug_export", "Debug export failed", fatal=False)
             self.game.message_log.add_message(f"Debug export error: {str(e)}", Colors.RED)
-            logging.error(f"Debug Export: Exception during export: {e}")
-            import traceback
-            logging.error(traceback.format_exc())
 
     def _handle_look_mode_input(self, event) -> bool:
         """Handle input while in look mode."""
@@ -811,7 +810,7 @@ class InputHandler:
                     pixel_x, pixel_y, window_w, window_h
                 )
             except Exception as e:
-                logging.error(f"Failed to convert pixels in glyph mode: {e}")
+                GameErrorHandler.handle_error(e, "pixel_conversion", "Failed to convert pixels in glyph mode", fatal=False)
                 return None
 
         # Use graphics_mode (already fetched above) to handle coordinate conversion

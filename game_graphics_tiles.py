@@ -21,6 +21,7 @@ import json
 from typing import Dict, Optional, Tuple
 
 from game_tile_dimension_calculator import TileDimensionCalculator
+from game_errors import GameErrorHandler
 
 
 class TileManager:
@@ -106,11 +107,9 @@ class TileManager:
             logging.debug(f"Graphics: Loaded tile mappings - {len(self.tile_mappings)} categories, {len(self.tintable_flags)} tintable flags")
 
         except json.JSONDecodeError as e:
-            logging.error(f"Failed to parse {mapping_file}: {e}")
-            logging.error("Graphics mode will use glyph fallbacks")
+            GameErrorHandler.handle_error(e, "tile_mapping_load", f"Failed to parse {mapping_file}, using glyph fallbacks")
         except Exception as e:
-            logging.error(f"Error loading tile mappings: {e}")
-            logging.error("Graphics mode will use glyph fallbacks")
+            GameErrorHandler.handle_error(e, "tile_mapping_load", "Error loading tile mappings, using glyph fallbacks")
 
     def _extract_tintable_flags(self, data: Dict):
         """
@@ -145,7 +144,7 @@ class TileManager:
             logging.debug(f"Graphics: Calculated tile dimensions {self.tile_width}x{self.tile_height} for window {window_size[0]}x{window_size[1]}")
 
         except Exception as e:
-            logging.error(f"Failed to calculate tile dimensions: {e}")
+            GameErrorHandler.handle_error(e, "tile_dimensions", "Failed to calculate tile dimensions, using fallbacks")
             # Use fallback dimensions from config
             self.tile_width, self.tile_height = TileDimensionCalculator.get_fallback_dimensions()
             logging.warning(f"Using fallback tile dimensions: {self.tile_width}x{self.tile_height}")
@@ -228,7 +227,7 @@ class TileManager:
             return texture
 
         except Exception as e:
-            logging.warning(f"Failed to load sprite {filepath}: {e}")
+            GameErrorHandler.handle_error(e, "sprite_load", f"Failed to load sprite {filepath}")
             return None
 
     def _get_sprite_filename(self, entity_name: str) -> Optional[str]:
@@ -451,7 +450,7 @@ class TileManager:
             return colors
 
         except Exception as e:
-            logging.warning(f"Failed to extract colors from sprite {filepath}: {e}")
+            GameErrorHandler.handle_error(e, "color_extract", f"Failed to extract colors from sprite {filepath}")
             return [(255, 255, 255)]
 
     def check_and_handle_resize(self) -> bool:

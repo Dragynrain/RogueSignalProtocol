@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Optional, Dict, Any
 import logging
 
+from game_errors import GameErrorHandler
+
 # Directory for metrics storage
 METRICS_DIR = Path("metrics")
 SESSION_DB = METRICS_DIR / "sessions.db"
@@ -286,10 +288,10 @@ def track(metric_name: str, category: Optional[str] = None, amount: int = 1) -> 
             else:
                 logging.error(f"Metric '{metric_name}' is not an integer type")
 
-    except AttributeError:
-        logging.error(f"Unknown metric: '{metric_name}'")
+    except AttributeError as e:
+        GameErrorHandler.handle_error(e, "metric_track", f"Unknown metric: '{metric_name}'", fatal=False)
     except Exception as e:
-        logging.error(f"Error tracking metric '{metric_name}': {e}")
+        GameErrorHandler.handle_error(e, "metric_track", f"Error tracking metric '{metric_name}'", fatal=False)
 
 
 def finalize_session(victory: bool, death_cause: Optional[str] = None,
@@ -334,7 +336,7 @@ def save_session_to_json(session: SessionMetrics) -> None:
         _cleanup_old_json_files()
 
     except Exception as e:
-        logging.error(f"Failed to save session JSON: {e}")
+        GameErrorHandler.handle_error(e, "save_session_json", "Failed to save session metrics to JSON", fatal=False)
 
 
 def save_session_to_sqlite(session: SessionMetrics) -> None:
@@ -395,7 +397,7 @@ def save_session_to_sqlite(session: SessionMetrics) -> None:
         logging.info(f"Session metrics saved to SQLite: {session.session_id}")
 
     except Exception as e:
-        logging.error(f"Failed to save session to SQLite: {e}")
+        GameErrorHandler.handle_error(e, "save_session_sqlite", "Failed to save session metrics to SQLite", fatal=False)
 
 
 def load_lifetime_metrics() -> LifetimeMetrics:
@@ -409,7 +411,7 @@ def load_lifetime_metrics() -> LifetimeMetrics:
                 if 'lifetime_metrics' in data:
                     return LifetimeMetrics.from_dict(data['lifetime_metrics'])
     except Exception as e:
-        logging.error(f"Failed to load lifetime metrics: {e}")
+        GameErrorHandler.handle_error(e, "load_lifetime_metrics", "Failed to load lifetime metrics, using defaults", fatal=False)
 
     # Return fresh metrics if loading fails
     return LifetimeMetrics()
@@ -425,7 +427,7 @@ def load_unlocked_achievements() -> list:
                 data = json.load(f)
                 return data.get('unlocked_achievements', [])
     except Exception as e:
-        logging.error(f"Failed to load unlocked achievements: {e}")
+        GameErrorHandler.handle_error(e, "load_unlocked_achievements", "Failed to load unlocked achievements, using empty list", fatal=False)
 
     return []
 
@@ -454,7 +456,7 @@ def save_unlocked_achievements(achievements: list) -> None:
         logging.info(f"Saved {len(achievements)} unlocked achievements to saves/rogue_signal_progress.json")
 
     except Exception as e:
-        logging.error(f"Failed to save unlocked achievements: {e}")
+        GameErrorHandler.handle_error(e, "save_unlocked_achievements", "Failed to save unlocked achievements", fatal=False)
 
 
 def save_lifetime_metrics(lifetime: LifetimeMetrics) -> None:
@@ -481,7 +483,7 @@ def save_lifetime_metrics(lifetime: LifetimeMetrics) -> None:
         logging.info("Lifetime metrics saved to saves/rogue_signal_progress.json")
 
     except Exception as e:
-        logging.error(f"Failed to save lifetime metrics: {e}")
+        GameErrorHandler.handle_error(e, "save_lifetime_metrics", "Failed to save lifetime metrics", fatal=False)
 
 
 def update_lifetime_metrics(session: SessionMetrics) -> None:
@@ -602,7 +604,7 @@ def _cleanup_old_json_files() -> None:
                 file.unlink()
                 logging.info(f"Cleaned up old metrics file: {file.name}")
             except Exception as e:
-                logging.error(f"Failed to clean up {file.name}: {e}")
+                GameErrorHandler.handle_error(e, "cleanup_metrics_file", f"Failed to clean up {file.name}", fatal=False)
 
 
 def load_session_metrics(save_data: Dict[str, Any]) -> Optional[SessionMetrics]:
@@ -611,7 +613,7 @@ def load_session_metrics(save_data: Dict[str, Any]) -> Optional[SessionMetrics]:
         try:
             return SessionMetrics.from_dict(save_data['session_metrics'])
         except Exception as e:
-            logging.error(f"Failed to load session metrics from save: {e}")
+            GameErrorHandler.handle_error(e, "load_session_metrics", "Failed to load session metrics from save, continuing without metrics", fatal=False)
     return None
 
 
