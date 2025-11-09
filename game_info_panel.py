@@ -474,7 +474,8 @@ class InfoProvider:
                 network_name = network_configs.get(level, {}).get('name', f'Level {level}')
                 lines.append({'text': f'Level {level}', 'color': Colors.CYAN})
                 lines.append({'text': network_name, 'color': Colors.CYAN})
-            except Exception:
+            except Exception as e:
+                logging.warning(f"Info panel: Failed to get network name for level {level}: {e}")
                 lines.append({'text': f'Level {level}', 'color': Colors.CYAN})
         elif hasattr(game, 'level'):
             # Fallback to old attribute name

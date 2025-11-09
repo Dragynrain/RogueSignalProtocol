@@ -328,7 +328,8 @@ class ExploitSystem:
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = exploit.alert_duration_normal
                 attracted += 1
-        self.game.message_log.add_message(f"Decoy Swarm: {attracted} enemies attracted")
+        enemy_word = "enemy" if attracted == 1 else "enemies"
+        self.game.message_log.add_message(f"Decoy Swarm: {attracted} {enemy_word} attracted")
         return True
     
     def _calculate_exploit_damage(self, base_damage: int) -> int:
@@ -348,7 +349,7 @@ class ExploitSystem:
 
         # Shadow bonus: extra damage if attacking from blind spots or while invisible
         if self.game.game_map.is_blind_spot(self.game.player.position) or self.game.player.is_invisible():
-            shadow_bonus = GameConfig.get('balance.shadow_damage_bonus', 10)
+            shadow_bonus = GameConfig._get_required('balance.shadow_damage_bonus')
             return base_damage + shadow_bonus
         return base_damage
 

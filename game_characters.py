@@ -98,7 +98,7 @@ class PathfindingHelper:
             return None
 
         except Exception as e:
-            logging.warning(f"Pathfinding failed from {start} to {goal}: {e}")
+            logging.error(f"Pathfinding EXCEPTION from {start} to {goal}: {e}", exc_info=True)
             return None
 
     @staticmethod
@@ -361,7 +361,7 @@ class Player:
         
         # Vision and abilities - load from config for easy balancing
         from game_config import GameConfig
-        self.base_vision_range = GameConfig.get('gameplay.player_base_vision_range', 15)
+        self.base_vision_range = GameConfig._get_required('gameplay.player_base_vision_range')
         
         # Temporary effects
         self.temporary_effects = {
@@ -533,8 +533,8 @@ class Player:
 
         upgrade = GameUpgrades.UPGRADES[upgrade_key]
 
-        max_ram = GameConfig.get('gameplay.max_ram_capacity', 32)
-        max_cpu = GameConfig.get('gameplay.max_cpu_capacity', 200)
+        max_ram = GameConfig._get_required('gameplay.max_ram_capacity')
+        max_cpu = GameConfig._get_required('gameplay.max_cpu_capacity')
 
         if upgrade.stat_type == 'ram':
             old_ram = self.ram_total
@@ -548,7 +548,7 @@ class Player:
             logging.debug(f"Player upgrade '{upgrade_key}': max_CPU {old_max_cpu} -> {self.max_cpu}, CPU {old_cpu} -> {self.cpu} (cap={max_cpu})")
         elif upgrade.stat_type == 'heat':
             old_max_heat = self.max_heat
-            max_cap = GameConfig.get('balance.max_heat_capacity', 200)
+            max_cap = GameConfig._get_required('balance.max_heat_capacity')
             self.max_heat = min(max_cap, self.max_heat + upgrade.bonus_amount)
             logging.debug(f"Player upgrade '{upgrade_key}': max_heat {old_max_heat} -> {self.max_heat} (cap={max_cap})")
 
@@ -815,8 +815,8 @@ class Enemy:
     def attack_player(self, player: Player) -> int:
         """Attack the player and return damage dealt."""
         if self.type == 'virus':
-            virus_increment = GameConfig.get('balance.virus_increment_turns', 3)
-            virus_max = GameConfig.get('gameplay.virus_max_duration', 10)
+            virus_increment = GameConfig._get_required('balance.virus_increment_turns')
+            virus_max = GameConfig._get_required('gameplay.virus_max_duration')
             virus_turns = player.temporary_effects.get('virus_turns', 0) + virus_increment
             player.temporary_effects['virus_turns'] = min(virus_turns, virus_max)
             logging.debug(f"Enemy {self.type}@({self.x},{self.y}): infected player, virus_turns={player.temporary_effects['virus_turns']}")
@@ -919,7 +919,7 @@ class Enemy:
 
         # 8. Update cooldown
         if self.get_movement_type() == EnemyMovement.STATIC:
-            self.move_cooldown = GameConfig.get('balance.static_enemy_cooldown', 999)
+            self.move_cooldown = GameConfig._get_required('balance.static_enemy_cooldown')
         else:
             self.move_cooldown = 0
 
@@ -1340,7 +1340,7 @@ class Enemy:
             if max_cpu <= 0:
                 return False
             health_percent = self.cpu / max_cpu
-            flee_threshold = GameConfig.get('balance.enemy_flee_health_threshold', 0.3)
+            flee_threshold = GameConfig._get_required('balance.enemy_flee_health_threshold')
             if health_percent > flee_threshold:
                 return False
         except (TypeError, ValueError, AttributeError):

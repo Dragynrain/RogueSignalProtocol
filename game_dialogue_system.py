@@ -257,7 +257,7 @@ class UnifiedRenderer:
         try:
             formatted_message = dialogue.message.format(**dialogue.format_data)
         except KeyError as e:
-            logging.warning(f"Missing dialogue format key: {e}")
+            logging.error(f"DIALOGUE FORMAT ERROR: Missing key {e} in message: {dialogue.message[:100]}")
             formatted_message = dialogue.message
 
         # Render message (word-wrapped)

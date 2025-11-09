@@ -67,12 +67,15 @@ class TestUpgradeApplication(unittest.TestCase):
     def test_cpu_upgrade_respects_max_boundary(self):
         """Test CPU upgrades don't exceed maximum capacity."""
         # Set player close to max
-        def mock_get(key, default):
+        original_get_required = GameConfig._get_required
+
+        def mock_get_required(key):
             if key == 'gameplay.max_cpu_capacity':
                 return 120  # Set a lower cap for testing
-            return default
+            # For any other key, call the real method
+            return original_get_required(key)
 
-        with patch.object(GameConfig, 'get', side_effect=mock_get):
+        with patch.object(GameConfig, '_get_required', side_effect=mock_get_required):
             self.player.cpu = 110
             self.player.max_cpu = 110
 
@@ -84,12 +87,14 @@ class TestUpgradeApplication(unittest.TestCase):
 
     def test_ram_upgrade_respects_max_boundary(self):
         """Test RAM upgrades don't exceed maximum capacity."""
-        def mock_get(key, default):
+        original_get_required = GameConfig._get_required
+
+        def mock_get_required(key):
             if key == 'gameplay.max_ram_capacity':
                 return 10  # Set a lower cap for testing
-            return default
+            return original_get_required(key)
 
-        with patch.object(GameConfig, 'get', side_effect=mock_get):
+        with patch.object(GameConfig, '_get_required', side_effect=mock_get_required):
             self.player.ram_total = 8
 
             result = self.player.apply_permanent_upgrade('ram_boost')
@@ -339,14 +344,16 @@ class TestStatBoundaryEnforcement(unittest.TestCase):
     def test_ram_boundary_enforcement(self):
         """Test RAM capacity has proper boundaries."""
         initial_ram = self.player.ram_total
-        
+
         # Mock a lower max for testing
-        def mock_get(key, default):
+        original_get_required = GameConfig._get_required
+
+        def mock_get_required(key):
             if key == 'gameplay.max_ram_capacity':
                 return 15  # Set a lower cap for testing
-            return default
+            return original_get_required(key)
 
-        with patch.object(GameConfig, 'get', side_effect=mock_get):
+        with patch.object(GameConfig, '_get_required', side_effect=mock_get_required):
             self.player.apply_permanent_upgrade('ram_boost')
             expected_ram = min(15, initial_ram + 4)
             self.assertEqual(self.player.ram_total, expected_ram)
