@@ -100,6 +100,11 @@ class GameSession:
         if old_cpu > self.game_engine.player.cpu and self.game_engine.player.temporary_effects.get('virus_turns', 0) > 0:
             self.game_engine.sound_manager.play_sound("virus_damage")
             if self.game_engine.player.cpu <= 0:
+                # CRITICAL: Force close any active dialogues - death has highest priority
+                if self.game_engine.dialogue_state.is_active():
+                    logging.warning(f"Virus death with dialogue already active - force-closing existing dialogue")
+                    self.game_engine.dialogue_state.close()
+
                 self.game_engine.sound_manager.play_sound("player_death", priority=10)
                 self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
                 # Delete save on death (permadeath)
@@ -141,14 +146,17 @@ class GameSession:
         # Check for death from ANY source (enemy attacks, virus, etc.)
         # This catches deaths that weren't caught by the virus-specific check above
         if self.game_engine.player.cpu <= 0:
-            if not self.game_engine.dialogue_state.is_active():
-                # Only show dialogue if one isn't already active (avoid duplicates)
-                self.game_engine.sound_manager.play_sound("player_death", priority=10)
-                self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
-                self.game_engine.game_over = True
-                # Delete save on death (permadeath)
-                if not hasattr(self, '_death_handled'):
-                    pass  # Will be set at end of death handling
+            # CRITICAL: Force close any active dialogues - death has highest priority
+            if self.game_engine.dialogue_state.is_active():
+                logging.warning(f"Death occurred with dialogue already active - force-closing existing dialogue")
+                self.game_engine.dialogue_state.close()
+
+            # Mark game as over and play death sounds
+            self.game_engine.sound_manager.play_sound("player_death", priority=10)
+            self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
+            self.game_engine.game_over = True
+
+            if not hasattr(self, '_death_handled'):
                 # Determine death cause for analytics
                 player = self.game_engine.player
                 death_cause = "combat"  # Default
@@ -194,13 +202,11 @@ class GameSession:
                         save_unlocked_achievements(AchievementManager.get_unlocked_achievements())
 
                 self._delete_save_on_death()
-
-                # IMPORTANT: Defer death dialogue by one frame to allow damage messages
-                # to render on screen before the dialogue covers them
-                self.game_engine.pending_death_dialogue = True
                 self._death_handled = True  # Prevent duplicate handling
-            else:
-                logging.warning("Death occurred but dialogue already active - death dialogue NOT shown")
+
+            # IMPORTANT: Always set pending_death_dialogue on death
+            # Defer death dialogue by one frame to allow damage messages to render
+            self.game_engine.pending_death_dialogue = True
 
     def _update_memory_system(self):
         """Update the hybrid fog of war memory system using TCOD FOV."""
@@ -414,7 +420,7 @@ class GameSession:
                     self.game_engine.sound_manager.play_sound("virus_infection")
                 else:
                     self.game_engine.sound_manager.play_sound("enemy_attack")
-                damage = enemy.attack_player(self.game_engine.player)
+                damage = enemy.attack_player(self.game_engine.player, game_engine=self.game_engine)
 
                 # Add damage message to log (always, not just when inventory is open)
                 if damage > 0:
@@ -824,11 +830,16 @@ class GameSession:
         self.game_engine.narrative_manager.reset_level_flags()
 
         self.game_engine.message_log.add_message(f"{config['name']} loaded")
+        logging.info(f"DEBUG: Level loaded message added to UI")
 
         # Add atmospheric level start message
         env_message = self.game_engine.narrative_manager.trigger_level_start()
+        logging.info(f"DEBUG: Narrative trigger returned: {repr(env_message)}")
         if env_message:
             self.game_engine.message_log.add_message(env_message)
+            logging.info(f"DEBUG: Env message added to UI")
+
+        logging.info(f"DEBUG: generate_procedural_level() RETURNING NOW")
 
     def progress_to_next_level(self):
         """
