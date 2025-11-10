@@ -332,10 +332,14 @@ class InputHandler:
     def _handle_lore_viewer_input(self, event) -> bool:
         """Handle input while lore viewer is open."""
         discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
-        
+
         if not discovered_fragments:
-            # No fragments, only ESC should work to close (handled by main loop)
-            return UniversalInputHandler.is_escape_key(event)
+            # No fragments - only ESC should close the viewer
+            if UniversalInputHandler.is_escape_key(event):
+                self.game.show_lore_viewer = False
+                self.game.lore_viewer_mode = "list"
+                self.game.lore_viewer_selection = 0
+            return True  # Consume all input, don't exit game
             
         if self.game.lore_viewer_mode == "list":
             # Handle navigation using universal handler with callback

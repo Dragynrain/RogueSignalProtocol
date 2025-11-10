@@ -480,18 +480,23 @@ class TestLoreViewerInputEdgeCases:
         """Test lore viewer behavior when no fragments are discovered."""
         game = create_mock_game()
         game.story_fragment_manager.get_discovered_fragments.return_value = []
-        
+
         handler = InputHandler(game)
-        
-        # Only escape should return True (is escape key)
+
+        # ESC should close the viewer
         escape_event = create_mock_event(tcod.event.KeySym.ESCAPE)
         result = handler._handle_lore_viewer_input(escape_event)
-        assert result is True  # Returns True because it's the escape key
-        
-        # Other keys should return False (not escape key)
+        assert result is True  # Returns True and closes viewer
+        assert game.show_lore_viewer is False  # Viewer was closed
+
+        # Reset for next test
+        game.show_lore_viewer = True
+
+        # Other keys should be consumed (return True) but not close viewer
         other_event = create_mock_event(tcod.event.KeySym.SPACE)
         result = handler._handle_lore_viewer_input(other_event)
-        assert result is False  # Returns False because it's not the escape key
+        assert result is True  # Returns True to consume input (don't exit game!)
+        assert game.show_lore_viewer is True  # Viewer still open
     
     def test_lore_viewer_navigation_modes(self):
         """Test lore viewer navigation in different modes."""
