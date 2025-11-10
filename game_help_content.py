@@ -36,6 +36,37 @@ class HelpContent:
     }
 
     @staticmethod
+    def _format_movement_keys() -> str:
+        """
+        Auto-generate movement key summary from InputMappings.
+
+        Detects which key groups (Arrows, WASD/QEZC, Numpad) are present
+        and formats them as a readable string.
+
+        Returns:
+            Formatted string like "Arrows / WASD / QEZC / Numpad"
+        """
+        from game_input import InputMappings
+
+        key_names = [key.name for key in InputMappings.MOVEMENT_MAP.keys()]
+
+        groups = []
+
+        # Check for arrow keys
+        if any(name in ['UP', 'DOWN', 'LEFT', 'RIGHT'] for name in key_names):
+            groups.append("Arrows")
+
+        # Check for WASD/QEZC
+        if any(name in ['W', 'A', 'S', 'D', 'Q', 'E', 'Z', 'C'] for name in key_names):
+            groups.append("WASD / QEZC")
+
+        # Check for numpad
+        if any('KP_' in name for name in key_names):
+            groups.append("Numpad")
+
+        return " / ".join(groups) if groups else "Not configured"
+
+    @staticmethod
     def get_objectives() -> List[Tuple[str, Any]]:
         """Get objective and core mechanics descriptions."""
         return [
@@ -55,9 +86,12 @@ class HelpContent:
     @staticmethod
     def get_controls() -> Dict[str, List[Tuple[str, str]]]:
         """Get control mappings organized by category."""
+        # Auto-generate movement key summary from InputMappings
+        movement_keys = HelpContent._format_movement_keys()
+
         return {
             'movement': [
-                ("Movement", "Arrows / WASD / QEZC / Numpad"),
+                ("Movement", movement_keys),  # Auto-synced from InputMappings
                 ("Exploits", "1-5 (use equipped)"),
             ],
             'screens': [
@@ -174,30 +208,58 @@ class HelpContent:
 
     @staticmethod
     def get_exploits() -> Dict[str, List[Tuple[str, str, Any]]]:
-        """Get exploit descriptions organized by category."""
+        """
+        Get exploit descriptions organized by category.
+
+        Loads help summaries from game_content.json to ensure
+        they stay in sync with actual exploit stats.
+        """
         colors = HelpContent.EXPLOIT_COLORS
 
-        return {
-            'combat': [
-                ("Buffer Overflow", "40dmg melee", colors['combat']),
-                ("Code Injection", "25dmg range 5", colors['combat']),
-                ("Logic Bomb", "15dmg area (radius 2)", colors['combat']),
-                ("Denial of Service", "Disable (5 turns)", colors['combat']),
-            ],
-            'stealth': [
-                ("System Hop", "Teleport range 6", colors['stealth']),
-                ("Traffic Masquerade", "Invisible 5t", colors['stealth']),
-                ("Decoy Swarm", "Distract enemies", colors['stealth']),
-                ("Memory Leak", "Blind area (3 turns)", colors['stealth']),
-            ],
-            'utility': [
-                ("Threat Scan", "Enemy vision 5 turns", colors['utility']),
-                ("Network Scan", "Show all nodes", colors['utility']),
-                ("Log Wiper", "-30% trace", colors['utility']),
-                ("Antivirus", "Cure all negatives", colors['utility']),
-                ("System Crash (emergency)", "30dmg AoE", colors['emergency']),
-            ],
+        # Load exploit data from JSON
+        try:
+            from data_loading import DataLoader
+            game_data = DataLoader.load_game_data()
+        except Exception as e:
+            logging.error(f"Failed to load exploit data: {e}")
+            # Return empty dict on error - help menu will handle gracefully
+            return {'combat': [], 'stealth': [], 'utility': [], 'emergency': []}
+
+        # Organize by category
+        exploits_by_category = {
+            'combat': [],
+            'stealth': [],
+            'utility': [],
+            'emergency': []
         }
+
+        for exploit_id, exploit_data in game_data['exploits'].items():
+            category = exploit_data.get('category', 'utility')
+
+            # Get color for this category
+            color = colors.get(category, colors['utility'])
+
+            # Use help_summary from JSON, fall back to description if missing
+            summary = exploit_data.get('help_summary', exploit_data.get('description', ''))
+
+            # Special case: System Crash is labeled as emergency in utility category
+            display_name = exploit_data['name']
+            if category == 'emergency':
+                display_name = f"{display_name} (emergency)"
+                # Add to utility section instead
+                exploits_by_category['utility'].append((
+                    display_name,
+                    summary,
+                    color
+                ))
+            else:
+                exploits_by_category[category].append((
+                    exploit_data['name'],
+                    summary,
+                    color
+                ))
+
+        return exploits_by_category
 
     @staticmethod
     def get_status_effects() -> Dict[str, List[Tuple[str, str, Any]]]:
