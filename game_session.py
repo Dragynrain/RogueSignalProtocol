@@ -1223,17 +1223,15 @@ class GameSession:
         logging.info(f"Item Placement: PERMANENT UPGRADES - Expected: {upgrade_count}, Actual: {actual_count} [{match_status}]")
 
     def _place_enemies(self, enemy_count: int):
-        """Place enemies throughout the level with increased density."""
+        """Place enemies throughout the level according to config."""
         enemy_types = ['scanner', 'patrol', 'bot', 'firewall', 'hunter', 'virus', 'inhibitor']
         # Adjust weights for challenging gameplay
         enemy_weights = [4, 3, 2, 2, 2, 1, 2]  # More scanners and firewalls for trace level challenge, virus is rare
 
-        # Increase enemy density significantly
-        actual_enemy_count = int(enemy_count * 1.6)  # 60% more enemies
         placed_enemies = 0
         attempts = 0
 
-        while placed_enemies < actual_enemy_count and attempts < actual_enemy_count * 25:
+        while placed_enemies < enemy_count and attempts < enemy_count * 25:
             attempts += 1
             # Ensure enemies spawn well away from top-left player spawn area
             x = random.randint(10, GameConfig.MAP_WIDTH - 2)
@@ -1260,6 +1258,10 @@ class GameSession:
 
                 self.game_engine.enemy_manager.enemies.append(enemy)
                 placed_enemies += 1
+
+        actual_count = len(self.game_engine.enemy_manager.enemies)
+        match_status = "MATCH" if actual_count == enemy_count else "MISMATCH"
+        logging.info(f"Item Placement: ENEMIES - Expected: {enemy_count}, Actual: {actual_count} [{match_status}]")
 
     def _is_valid_patch_placement(self, position: Position) -> bool:
         """Check if position is valid for code placement."""

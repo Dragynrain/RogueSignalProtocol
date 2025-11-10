@@ -17,7 +17,7 @@ from game_entities import Position, Colors
 from game_data import GameData, GameUpgrades
 from game_inventory import InventoryItem, CodeHack, ExploitItem, StoryFragment, InventoryManager
 from game_characters import Player, Enemy
-from game_audio import SoundManager
+from game_audio import SoundManager, NullSoundManager
 from game_save import SaveGameManager
 from game_story import StoryFragmentManager
 from game_narrative import NarrativeManager
@@ -58,7 +58,8 @@ class GameEngine:
                  input_handler: Optional[InputHandler] = None,
                  sound_manager: Optional[SoundManager] = None,
                  load_save: bool = False,
-                 settings: Optional[GameSettings] = None) -> None:
+                 settings: Optional[GameSettings] = None,
+                 headless: bool = False) -> None:
         """
         Initialize the game engine with dependency injection.
 
@@ -72,7 +73,11 @@ class GameEngine:
             sound_manager: Manages audio and music
             load_save: Whether to load from existing save file
             settings: Game settings instance, creates default if None
+            headless: Run in headless mode (no rendering/audio, for testing)
         """
+        # Store headless mode flag
+        self.headless = headless
+
         # Initialize settings first (needed by other systems)
         self.settings = settings or GameSettings()
 
@@ -84,7 +89,11 @@ class GameEngine:
         self.enemy_manager = enemy_manager or EnemyManager(self.game_map, None)  # Will set message_log below
         # ExploitSystem will be initialized after self is fully constructed
         self._exploit_system_param = exploit_system
-        self.sound_manager = sound_manager or SoundManager(self.settings)
+        # Use NullSoundManager in headless mode (no audio, but same interface)
+        if headless:
+            self.sound_manager = NullSoundManager(self.settings)
+        else:
+            self.sound_manager = sound_manager or SoundManager(self.settings)
 
         # Initialize core game objects
         self.player = Player(5, 5)
@@ -109,7 +118,7 @@ class GameEngine:
         # Initialize achievement popup manager
         self.achievement_popup_manager = AchievementPopupManager()
 
-        # Preload all sound effects
+        # Preload all sound effects (NullSoundManager will no-op in headless mode)
         self.sound_manager.preload_sounds()
 
         # UI state
@@ -165,9 +174,12 @@ class GameEngine:
         # Environmental narrative system
         self.narrative_manager = NarrativeManager()
 
-        # Particle system for visual effects (graphics mode only)
-        from game_particle_system import ParticleSystem
-        self.particle_system = ParticleSystem()
+        # Particle system for visual effects (graphics mode only, skip in headless)
+        if not headless:
+            from game_particle_system import ParticleSystem
+            self.particle_system = ParticleSystem()
+        else:
+            self.particle_system = None
 
         # Mouse position tracking for hover effects
         self.last_mouse_tile_x: Optional[int] = None

@@ -264,7 +264,7 @@
   },
   "network_configs": {
     "1": {
-      "enemies": 15,
+      "enemies": 19,
       "blind_spot_coverage": 0.08,
       "name": "Corporate Network",
       "background_trace": 1,
@@ -278,7 +278,7 @@
       "permanent_upgrades": 1
     },
     "2": {
-      "enemies": 22,
+      "enemies": 28,
       "blind_spot_coverage": 0.07,
       "name": "Government System",
       "background_trace": 2,
@@ -292,7 +292,7 @@
       "permanent_upgrades": 2
     },
     "3": {
-      "enemies": 30,
+      "enemies": 38,
       "blind_spot_coverage": 0.06,
       "name": "Military Backbone",
       "background_trace": 3,
