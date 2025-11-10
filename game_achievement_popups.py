@@ -11,6 +11,7 @@ import logging
 from dataclasses import dataclass
 from typing import Optional, List
 import tcod.console
+import tcod.constants
 
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Colors, ensure_color_tuple
@@ -199,15 +200,20 @@ class AchievementPopupManager:
         render_char_safe(console, name_x, box_y + 3, achievement.name,
                         fg=achievement_name_color, bg=bg_color)
 
-        # Render description (word-wrapped, centered)
-        description_lines = self._wrap_text(achievement.description, popup_width - 4)
+        # Render description (word-wrapped using TCOD's built-in wrapping)
         max_desc_lines = get_max_description_lines()
-        for i, line in enumerate(description_lines):
-            if i >= max_desc_lines:
-                break
-            line_x = box_x + (popup_width - len(line)) // 2
-            render_char_safe(console, line_x, box_y + 4 + i, line,
-                           fg=description_color, bg=bg_color)
+        # Note: TCOD's print() with LEFT alignment doesn't center individual wrapped lines,
+        # so we still need to calculate centering for multi-line text. However, TCOD handles
+        # the wrapping itself. For centered text, we'd need to wrap manually or accept left-aligned.
+        # Let's use TCOD's wrapping with left alignment for consistency.
+        console.print(
+            x=box_x + 2,
+            y=box_y + 4,
+            string=achievement.description,
+            fg=description_color,
+            width=popup_width - 4,
+            alignment=tcod.constants.CENTER
+        )
 
         # Optionally show hint at bottom (very subtle)
         hint_text = "(press any key or click)"
@@ -216,43 +222,6 @@ class AchievementPopupManager:
         render_char_safe(console, hint_x, box_y + popup_height - 1, hint_text,
                         fg=hint_color, bg=bg_color)
 
-    @staticmethod
-    def _wrap_text(text: str, max_width: int) -> List[str]:
-        """
-        Wrap text to fit within a maximum width.
-
-        Args:
-            text: Text to wrap
-            max_width: Maximum characters per line
-
-        Returns:
-            List of wrapped lines
-        """
-        words = text.split()
-        lines = []
-        current_line = []
-        current_length = 0
-
-        for word in words:
-            word_length = len(word)
-            # +1 for space before word (except first word)
-            space_needed = word_length + (1 if current_line else 0)
-
-            if current_length + space_needed <= max_width:
-                current_line.append(word)
-                current_length += space_needed
-            else:
-                # Start new line
-                if current_line:
-                    lines.append(' '.join(current_line))
-                current_line = [word]
-                current_length = word_length
-
-        # Add last line
-        if current_line:
-            lines.append(' '.join(current_line))
-
-        return lines
 
 
 # Global popup manager instance (initialized by GameEngine)

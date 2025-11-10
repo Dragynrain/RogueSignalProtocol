@@ -280,31 +280,8 @@ class TestUnifiedRenderer:
         # Should not crash when formatting
         UnifiedRenderer.render(console, dialogue)
 
-    def test_wrap_text_simple(self):
-        """_wrap_text() wraps text correctly."""
-        text = "This is a simple test message"
-        wrapped = UnifiedRenderer._wrap_text(text, max_width=15)
-
-        # Should wrap into multiple lines
-        assert len(wrapped) > 1
-        for line in wrapped:
-            assert len(line) <= 15
-
-    def test_wrap_text_long_word(self):
-        """_wrap_text() breaks long words."""
-        text = "Supercalifragilisticexpialidocious test"
-        wrapped = UnifiedRenderer._wrap_text(text, max_width=10)
-
-        # Long word should be broken
-        assert len(wrapped) >= 4  # Long word broken into chunks
-
-    def test_wrap_text_exact_fit(self):
-        """_wrap_text() handles text that fits exactly."""
-        text = "Exact fit"
-        wrapped = UnifiedRenderer._wrap_text(text, max_width=9)
-
-        assert len(wrapped) == 1
-        assert wrapped[0] == "Exact fit"
+    # NOTE: Text wrapping tests removed - we now use TCOD's built-in console.print()
+    # with width parameter for word wrapping, which is well-tested in TCOD itself.
 
 
 class TestDialogueInputHandler:

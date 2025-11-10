@@ -157,6 +157,11 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
 
 ## ✨ OPTIONAL ENHANCEMENTS (Not Blocking)
 
+- [ ] **Create question mark sprite for last known enemy positions** (graphics/questionmark01.png)
+  - Currently missing in graphics mode (works in glyph mode with '?' character)
+  - Should be 64x64 pixel sprite to match other tiles
+  - Color: dimmed/ghostly to indicate uncertainty
+  - Used to mark where player last saw an enemy that's no longer visible
 - [ ] Create cover image for itch.io (315x250 or 630x500)
 - [ ] Create banner image (960x540)
 - [ ] Record 10-second GIF of gameplay

@@ -8,6 +8,7 @@ Uses the MenuBackground system with ending art directory.
 """
 
 import tcod
+import tcod.constants
 import logging
 from game_config import GameConfig
 from game_entities import Colors
@@ -77,16 +78,20 @@ class VictoryScreen(BaseMenu):
         line_x = box['center_x'] - line_width // 2
         render_char_safe(console, line_x, box['top'] + 3, "═" * line_width, fg=Colors.CYAN, bg=Colors.BLACK)
 
-        # Render victory message (word-wrapped)
+        # Render victory message using TCOD's built-in word wrapping
         message = self._get_victory_message()
-        wrapped_lines = self._wrap_text(message, box['content_width'] - 2)
-
         message_y = box['top'] + 5
         max_message_y = box['bottom'] - 3  # Leave room for prompt
-        for i, line in enumerate(wrapped_lines):
-            if message_y + i < max_message_y:
-                line_x = box['content_left'] + 1
-                render_char_safe(console, line_x, message_y + i, line, fg=Colors.CYAN, bg=Colors.BLACK)
+        available_height = max_message_y - message_y
+
+        console.print(
+            x=box['content_left'] + 1,
+            y=message_y,
+            string=message,
+            fg=Colors.CYAN,
+            width=box['content_width'] - 2,
+            height=available_height
+        )
 
         # Render prompt at bottom
         prompt = "[SPACE/ENTER] Continue"
@@ -104,19 +109,23 @@ class VictoryScreen(BaseMenu):
         title_x = center_x - len(title) // 2
         render_char_safe(console, title_x, start_y, title, fg=Colors.GREEN, bg=Colors.BLACK)
 
-        # Message (word-wrapped)
+        # Message using TCOD's built-in word wrapping with center alignment
         message = self._get_victory_message()
-        wrapped_lines = self._wrap_text(message, 60)
-
         message_y = start_y + 3
-        for i, line in enumerate(wrapped_lines):
-            line_x = center_x - len(line) // 2
-            render_char_safe(console, line_x, message_y + i, line, fg=Colors.CYAN, bg=Colors.BLACK)
+
+        lines_printed = console.print(
+            x=center_x - 30,  # Center a 60-char wide block
+            y=message_y,
+            string=message,
+            fg=Colors.CYAN,
+            width=60,
+            alignment=tcod.constants.CENTER
+        )
 
         # Prompt
         prompt = "[SPACE/ENTER] Continue"
         prompt_x = center_x - len(prompt) // 2
-        prompt_y = message_y + len(wrapped_lines) + 3
+        prompt_y = message_y + lines_printed + 3
         render_char_safe(console, prompt_x, prompt_y, prompt, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
 
     def _get_victory_message(self) -> str:
@@ -143,45 +152,6 @@ class VictoryScreen(BaseMenu):
             "Welcome to the internet."
         )
 
-    def _wrap_text(self, text: str, max_width: int) -> list:
-        """
-        Wrap text to fit within max_width, preserving paragraph breaks.
-
-        Args:
-            text: Text to wrap
-            max_width: Maximum characters per line
-
-        Returns:
-            List of wrapped text lines
-        """
-        lines = []
-        paragraphs = text.split('\n\n')
-
-        for paragraph_idx, paragraph in enumerate(paragraphs):
-            paragraph = paragraph.strip()
-            if not paragraph:
-                continue
-
-            words = paragraph.split(' ')
-            current_line = ""
-
-            for word in words:
-                test_line = current_line + (" " if current_line else "") + word
-                if len(test_line) <= max_width:
-                    current_line = test_line
-                else:
-                    if current_line:
-                        lines.append(current_line)
-                    current_line = word if len(word) <= max_width else word[:max_width]
-
-            if current_line:
-                lines.append(current_line)
-
-            # Add blank line between paragraphs (except after last paragraph)
-            if paragraph_idx < len(paragraphs) - 1:
-                lines.append('')
-
-        return lines
 
     def handle_input(self, event: tcod.event.Event) -> bool:
         """

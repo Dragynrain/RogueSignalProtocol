@@ -536,75 +536,50 @@ class UIRenderer:
         render_char_safe(console, panel_x, panel_y, header, fg=Colors.YELLOW, bg=Colors.LOG_BG)
         panel_y += 1
 
-        # Render entity name (with color)
-        name_lines = self._wrap_text(entity_info['name'], GameConfig.LOG_WIDTH - 2)
-        for line in name_lines:
-            render_char_safe(console, panel_x, panel_y, line, fg=entity_info['color'], bg=Colors.LOG_BG)
-            panel_y += 1
+        # Render entity name (with color) using TCOD's built-in wrapping
+        name_lines_count = console.print(
+            x=panel_x,
+            y=panel_y,
+            string=entity_info['name'],
+            fg=entity_info['color'],
+            width=GameConfig.LOG_WIDTH - 2
+        )
+        panel_y += name_lines_count
 
         # Blank line
         panel_y += 1
 
-        # Render description
-        desc_lines = self._wrap_text(entity_info['description'], GameConfig.LOG_WIDTH - 2)
-        for line in desc_lines:
-            if panel_y < GameConfig.PANEL_Y() - 1:
-                render_char_safe(console, panel_x, panel_y, line, fg=Colors.LIGHT_GRAY, bg=Colors.LOG_BG)
-                panel_y += 1
+        # Render description using TCOD's built-in wrapping
+        if panel_y < GameConfig.PANEL_Y() - 1:
+            desc_lines_count = console.print(
+                x=panel_x,
+                y=panel_y,
+                string=entity_info['description'],
+                fg=Colors.LIGHT_GRAY,
+                width=GameConfig.LOG_WIDTH - 2
+            )
+            panel_y += desc_lines_count
 
         # Blank line
         if panel_y < GameConfig.PANEL_Y() - 1:
             panel_y += 1
 
-        # Render details if available
-        if entity_info['details']:
-            detail_lines = entity_info['details'].split('\n')
-            for detail_line in detail_lines:
-                wrapped_details = self._wrap_text(detail_line, GameConfig.LOG_WIDTH - 2)
-                for line in wrapped_details:
-                    if panel_y < GameConfig.PANEL_Y() - 1:
-                        render_char_safe(console, panel_x, panel_y, line, fg=Colors.WHITE, bg=Colors.LOG_BG)
-                        panel_y += 1
+        # Render details if available using TCOD's built-in wrapping
+        if entity_info['details'] and panel_y < GameConfig.PANEL_Y() - 1:
+            details_lines_count = console.print(
+                x=panel_x,
+                y=panel_y,
+                string=entity_info['details'],
+                fg=Colors.WHITE,
+                width=GameConfig.LOG_WIDTH - 2
+            )
+            panel_y += details_lines_count
 
         # Draw bottom separator
         if panel_y < GameConfig.PANEL_Y() - 1:
             panel_y += 1
             render_char_safe(console, panel_x, panel_y, "═" * (GameConfig.LOG_WIDTH - 1), fg=Colors.YELLOW, bg=Colors.LOG_BG)
 
-    def _wrap_text(self, text: str, max_width: int) -> list:
-        """
-        Wrap text to fit within max_width using word boundaries.
-
-        Uses word-based wrapping to maintain readability.
-        Handles single-line text and multi-line wrapping.
-
-        Args:
-            text: Text to wrap
-            max_width: Maximum characters per line
-
-        Returns:
-            List of wrapped text lines
-        """
-        if len(text) <= max_width:
-            return [text]
-
-        words = text.split(' ')
-        lines = []
-        current_line = ""
-
-        for word in words:
-            test_line = current_line + (" " if current_line else "") + word
-            if len(test_line) <= max_width:
-                current_line = test_line
-            else:
-                if current_line:
-                    lines.append(current_line)
-                current_line = word
-
-        if current_line:
-            lines.append(current_line)
-
-        return lines
 
     # ========================================================================
     # FULL-SCREEN OVERLAY RENDERING
