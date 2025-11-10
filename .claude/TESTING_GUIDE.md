@@ -18,9 +18,8 @@ pytest tests/ -q --tb=no 2>&1 | tail -20
 ```
 
 **Before commit?**
-```bash
-pytest tests/ --tb=short
-```
+- **AUTOMATED** - Pre-commit hook runs full test suite automatically
+- Manual bypass: `git commit --no-verify` (emergencies only)
 
 ---
 
