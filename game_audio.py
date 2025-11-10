@@ -363,3 +363,77 @@ class SoundManager:
             pygame.mixer.music.stop()
             pygame.mixer.stop()
             pygame.mixer.quit()
+
+
+class NullSoundManager:
+    """
+    Null object pattern for SoundManager - does nothing but implements same interface.
+
+    Used in headless mode for testing to avoid needing pygame/audio systems.
+    All methods are no-ops but maintain the same signature as SoundManager.
+    """
+
+    def __init__(self, settings=None):
+        """Initialize null sound manager (does nothing)."""
+        self.settings = settings
+        self.enabled = False
+        self.sounds = {}
+        self.current_music = None
+        self.music_playing = False
+        self.max_channels = 0
+
+    @property
+    def SOUND_DIRECTORY(self):
+        return "sound/"
+
+    @property
+    def MUSIC_DIRECTORY(self):
+        return "music/"
+
+    def update_volumes(self):
+        """No-op: Update volumes."""
+        pass
+
+    def set_sound_cooldown(self, cooldown_seconds: float):
+        """No-op: Set sound cooldown."""
+        pass
+
+    def preload_sounds(self):
+        """No-op: Preload sounds."""
+        pass
+
+    def load_sound(self, sound_id: str, filename: str) -> bool:
+        """No-op: Load sound."""
+        return False
+
+    def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
+        """No-op: Play sound."""
+        pass
+
+    def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0):
+        """No-op: Play music."""
+        pass
+
+    def stop_music(self, fade_out_ms: int = 0):
+        """No-op: Stop music."""
+        pass
+
+    def pause_music(self):
+        """No-op: Pause music."""
+        pass
+
+    def unpause_music(self):
+        """No-op: Unpause music."""
+        pass
+
+    def is_music_playing(self) -> bool:
+        """No-op: Check if music playing."""
+        return False
+
+    def update(self):
+        """No-op: Update sound system."""
+        pass
+
+    def cleanup(self):
+        """No-op: Clean up sound system."""
+        pass
