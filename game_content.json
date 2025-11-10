@@ -86,7 +86,8 @@
       "targeting": "SINGLE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Rapidly pivot to any monitoring blind spot within 6 tiles. Instant relocation through pre-established network connections - perfect for repositioning."
+      "description": "Rapidly pivot to any monitoring blind spot within 6 tiles. Instant relocation through pre-established network connections - perfect for repositioning.",
+      "help_summary": "Teleport range 6"
     },
     "traffic_masquerade": {
       "name": "Traffic Masquerade",
@@ -98,7 +99,8 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 5,
-      "description": "Masquerade as legitimate traffic patterns. Become completely invisible to security protocols for 5 turns - walk past enemies undetected."
+      "description": "Masquerade as legitimate traffic patterns. Become completely invisible to security protocols for 5 turns - walk past enemies undetected.",
+      "help_summary": "Invisible 5t"
     },
     "decoy_swarm": {
       "name": "Decoy Swarm",
@@ -112,7 +114,8 @@
       "effect_duration": 8,
       "alert_duration_patrol": 3,
       "alert_duration_normal": 2,
-      "description": "Spawn false alerts and decoy processes. Creates a convincing distraction lasting 8 turns - lure enemies away from your path."
+      "description": "Spawn false alerts and decoy processes. Creates a convincing distraction lasting 8 turns - lure enemies away from your path.",
+      "help_summary": "Distract enemies"
     },
     "buffer_overflow": {
       "name": "Buffer Overflow",
@@ -124,7 +127,8 @@
       "targeting": "SINGLE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Overload a target's memory buffer with malicious data. Devastating close-range exploit dealing 40 damage - high risk, high reward."
+      "description": "Overload a target's memory buffer with malicious data. Devastating close-range exploit dealing 40 damage - high risk, high reward.",
+      "help_summary": "40dmg melee"
     },
     "code_injection": {
       "name": "Code Injection",
@@ -136,7 +140,8 @@
       "targeting": "SINGLE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Execute hostile code remotely in a target's process space. Reliable ranged attack dealing 25 damage from up to 5 tiles away."
+      "description": "Execute hostile code remotely in a target's process space. Reliable ranged attack dealing 25 damage from up to 5 tiles away.",
+      "help_summary": "25dmg range 5"
     },
     "system_crash": {
       "name": "System Crash",
@@ -148,7 +153,8 @@
       "targeting": "NONE",
       "effect_duration": 3,
       "effect_radius": 3,
-      "description": "Force a critical system error in all nearby processes. Emergency protocol dealing 30 damage and stunning all enemies within 3 tiles for 3 turns."
+      "description": "Force a critical system error in all nearby processes. Emergency protocol dealing 30 damage and stunning all enemies within 3 tiles for 3 turns.",
+      "help_summary": "30dmg AoE"
     },
     "logic_bomb": {
       "name": "Logic Bomb",
@@ -160,7 +166,8 @@
       "targeting": "AREA",
       "effect_radius": 2,
       "effect_duration": 0,
-      "description": "Deploy a delayed-trigger exploit that detonates in a large radius. Deals 15 damage to all targets within 2 tiles of impact point. WARNING: Can damage you if detonated too close!"
+      "description": "Deploy a delayed-trigger exploit that detonates in a large radius. Deals 15 damage to all targets within 2 tiles of impact point. WARNING: Can damage you if detonated too close!",
+      "help_summary": "15dmg area (radius 2)"
     },
     "threat_scan": {
       "name": "Threat Scan",
@@ -172,7 +179,8 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 5,
-      "description": "Tap into security monitoring feeds. Reveals all hostile programs, their detection ranges, and predicted movement paths for 5 turns."
+      "description": "Tap into security monitoring feeds. Reveals all hostile programs, their detection ranges, and predicted movement paths for 5 turns.",
+      "help_summary": "Enemy vision 5 turns"
     },
     "network_scan": {
       "name": "Network Scan",
@@ -184,7 +192,8 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Query the network topology for maintenance systems. Instantly reveals locations of all cooling nodes, CPU recovery nodes, and ghost nodes."
+      "description": "Query the network topology for maintenance systems. Instantly reveals locations of all cooling nodes, CPU recovery nodes, and ghost nodes.",
+      "help_summary": "Show all nodes"
     },
     "log_wiper": {
       "name": "Log Wiper",
@@ -197,7 +206,8 @@
       "effect_radius": 0,
       "effect_duration": 0,
       "trace_reduction_percent": 30,
-      "description": "Scrub your activity from system logs and audit trails. Significantly reduces your detection level by 30% - cover your tracks."
+      "description": "Scrub your activity from system logs and audit trails. Significantly reduces your detection level by 30% - cover your tracks.",
+      "help_summary": "-30% trace"
     },
     "antivirus": {
       "name": "Antivirus",
@@ -209,7 +219,8 @@
       "targeting": "NONE",
       "effect_radius": 0,
       "effect_duration": 0,
-      "description": "Run a quarantine protocol on your own systems. Instantly purges all hostile effects like viruses and movement inhibitors."
+      "description": "Run a quarantine protocol on your own systems. Instantly purges all hostile effects like viruses and movement inhibitors.",
+      "help_summary": "Cure all negatives"
     },
     "denial_of_service": {
       "name": "Denial of Service",
@@ -221,7 +232,8 @@
       "targeting": "AREA",
       "effect_duration": 5,
       "effect_radius": 1,
-      "description": "Flood a network segment with overwhelming traffic. Area attack disabling all affected enemies for 5 turns in radius 1."
+      "description": "Flood a network segment with overwhelming traffic. Area attack disabling all affected enemies for 5 turns in radius 1.",
+      "help_summary": "Disable (5 turns)"
     },
     "memory_leak": {
       "name": "Memory Leak",
@@ -233,7 +245,8 @@
       "targeting": "AREA",
       "effect_radius": 1,
       "effect_duration": 3,
-      "description": "Corrupt enemy vision systems in a 3x3 area. Blinded enemies can't see you for 3 turns while they reboot - but they keep moving. Use it to dodge into blind spots!"
+      "description": "Corrupt enemy vision systems in a 3x3 area. Blinded enemies can't see you for 3 turns while they reboot - but they keep moving. Use it to dodge into blind spots!",
+      "help_summary": "Blind area (3 turns)"
     }
   },
   "upgrades": {
