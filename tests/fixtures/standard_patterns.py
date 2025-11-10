@@ -29,7 +29,7 @@ def create_basic_game_environment():
     - Real Player at (15, 15)
     - Real GameMap (30x30)
     - Mocked sound_manager (external dependency)
-    - Empty enemy list
+    - Enemies from level generation (clear manually if needed)
 
     Perfect for: Basic gameplay tests that need minimal setup
     """
@@ -68,8 +68,8 @@ def create_basic_game_environment():
     engine.player.cpu = 100
     engine.player.heat = 0
 
-    # Clear enemies list (basic environment should have no enemies)
-    engine.enemies = []
+    # NOTE: Engine will have enemies from level generation.
+    # For tests that need no enemies, manually clear: engine.enemies = []
 
     return engine
 

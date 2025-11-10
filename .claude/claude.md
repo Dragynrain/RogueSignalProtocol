@@ -1,6 +1,6 @@
 # Claude Code Quick Guidelines
 
-**For planning tasks:** See `.claude/PLANNING_GUIDE.md`
+**BEFORE PLANNING:** READ `.claude/PLANNING_GUIDE.md` FIRST (you are bad at time estimates - never guess!)
 
 ---
 
@@ -64,7 +64,7 @@
 - No over-engineering or new frameworks.
 - Keep `build/` + `dist/` folders for releases.
 - **Always check bounds before array access** - verify indices are valid before indexing any array.
-- **Distance calculations:** See `.claude/DISTANCE_GUIDE.md` - use `grid_distance_to()` for gameplay (exploits, adjacency, AoE), `distance_to()` for vision/spatial calculations
+- **Distance calculations:** READ `.claude/DISTANCE_GUIDE.md` BEFORE implementing - use `grid_distance_to()` for gameplay (exploits, adjacency, AoE), `distance_to()` for vision/spatial calculations
 
 ---
 
@@ -78,19 +78,31 @@
 - 7zip at `C:\Program Files\7-Zip\7z.exe` (PowerShell Compress-Archive doesn't work)
 - Uses `Python -m PyInstaller` (more reliable than `.exe` calls)
 
-**Details:** See `.claude/BUILD_REFERENCE.md`
+**Modifying build process:** READ `.claude/BUILD_REFERENCE.md` FIRST
 
 ---
 
 ## 5. Testing & Verification
 
-**ALWAYS TEST BEFORE COMMITTING. NO EXCEPTIONS.**
+**Pre-commit hook:** Tests run AUTOMATICALLY before every commit via `.git/hooks/pre-commit`
+- Runs full test suite (`.venv/Scripts/python.exe -m pytest tests/`)
+- Blocks commit if tests fail
+- Bypass only in emergencies: `git commit --no-verify`
 
-**Test commands:** `python test_commands.py full` (pre-commit) | `quick` (unit only) | `.venv/Scripts/python.exe -m pytest` (direct)
+**Manual test commands:**
+- `pytest tests/ --lf` - Re-run last failures (iterating on fixes)
+- `pytest tests/unit/test_<module>.py -v` - Single module test
+- `pytest tests/ -q --tb=no | tail -20` - Quick sanity check
+- Direct pytest: `.venv/Scripts/python.exe -m pytest`
 
-**Policy:** Update tests with code changes. Prefer integration over mocks. Run full suite after refactor.
+**Policy:** Update tests with code changes. Prefer integration over mocks. READ `.claude/TESTING_GUIDE.md` BEFORE writing tests.
 
-**Batch files:** Test before committing. See `.claude/WINDOWS_SCRIPTING.md`. No `else if` - use `) else ( if ... )`
+**Batch files:** MUST test before committing. READ `.claude/WINDOWS_SCRIPTING.md` for syntax. No `else if` - use `) else ( if ... )`
+
+**Test Agent Framework:** READ `.claude/TESTING_STRATEGY.md` and `.claude/TESTING_AUTOMATION.md` BEFORE writing agent tests
+- `GameTestAgent` (tests/test_agent.py) - Headless game simulation
+- Chaos testing (tests/integration/test_chaos_agent.py) - Keyboard fuzzing
+- Speed/slow agents (tests/test_speed_slow_agent.py) - Mechanics validation
 
 ---
 
@@ -123,7 +135,7 @@
 - Enemies alert others when spotting player
 - **Alert timer = 1 turn only**
 - Use TCOD FOV (`tcod.map.compute_fov`) and pathfinding (`tcod.path`) always
-- For TCOD API details, invoke the `tcod` skill
+- **TCOD API questions:** INVOKE the `tcod` skill BEFORE making assumptions
 
 ---
 
@@ -140,7 +152,7 @@ Rules:
 Example: `CoordinateHelpers.set_alpha_region(console, x=10, y=5, ...)` ✓
 Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 
-**Details:** `.claude/TCOD_GUIDE.md`
+**Full reference:** READ `.claude/TCOD_GUIDE.md` for complete details
 
 ---
 
@@ -153,25 +165,25 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 
 **Sprites:** Position = `console_x * (window_width / 80)`. Size = `tile_manager.tile_width/height`
 
-**Details:** `.claude/TCOD_GUIDE.md`, `.claude/RENDERING_ARCHITECTURE.md`
+**Full reference:** READ `.claude/TCOD_GUIDE.md` and `.claude/RENDERING_ARCHITECTURE.md` BEFORE implementing rendering
 
 ---
 
 ## 7c. Mouse Event Handling
 
-**CRITICAL: Read `.claude/TCOD_GUIDE.md` Mouse section (lines 48-84) BEFORE adding mouse support!**
+**CRITICAL: READ `.claude/TCOD_GUIDE.md` Mouse section (lines 48-84) BEFORE adding mouse support!**
 
 - Menu/UI: Use `MenuMouseHandler.convert_to_tile_coords()` (game_mouse_utils.py)
 - In-game world: Use `InputHandler._mouse_pixel_to_world()` (game_input.py)
 - **Never use `context.convert_event()`** - doesn't work with our SDL rendering
-- Full details: `.claude/MOUSE_COORDINATE_HANDLING.md`
+- **Full reference:** READ `.claude/MOUSE_COORDINATE_HANDLING.md` for complete implementation details
 
 ---
 
 ## 8. Docs & Research
-- Check official TCOD docs before assuming API behavior
-- TCOD questions: Use `tcod` skill
-- Rendering: See `.claude/RENDERING_ARCHITECTURE.md`
+- **ALWAYS** check official TCOD docs BEFORE assuming API behavior (you make wrong assumptions!)
+- **TCOD questions:** INVOKE the `tcod` skill FIRST
+- **Rendering work:** READ `.claude/RENDERING_ARCHITECTURE.md` BEFORE implementing
 
 ---
 
@@ -192,7 +204,7 @@ Wrong: `console.rgba["bg"][x, y, 3] = 255` ✗
 - Any AI attribution or emoji signatures
 - Clean technical messages ONLY
 
-**.gitignore:** No inline comments with trailing spaces (`dist/  # comment` breaks). Test patterns before committing.
+**.gitignore:** NEVER use inline comments with trailing spaces (`dist/  # comment` breaks). ALWAYS test patterns before committing.
 
 ---
 

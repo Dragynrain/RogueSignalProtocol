@@ -1,20 +1,29 @@
 #!/usr/bin/env python3
 """
-CRITICAL SMOKE TESTS - Configuration Validation and JSON Structure
+Configuration Validation and Consistency Tests
 
-These tests verify that:
-1. All required JSON files exist and are valid
-2. All required keys are present in config files
-3. Config values match what the code expects
-4. Real objects can be instantiated with real config
+CRITICAL SMOKE TESTS + ARCHITECTURE VALIDATION
+- Minimal mocking - tests real integration
+- Prevents config drift and redundancy
+- Verifies real objects can be instantiated with real config
 
-These tests use MINIMAL MOCKING - they test real integration.
+Test Tiers:
+1. JSON existence and validity (fail fast)
+2. Structure validation (required keys)
+3. Cross-file consistency (no duplicates/drift)
+4. Value validation (sanity checks)
+5. Real object instantiation (integration)
 """
 
 import pytest
 import json
 import os
+from pathlib import Path
 
+
+# ============================================================================
+# TIER 1: FOUNDATIONAL TESTS (Must pass first)
+# ============================================================================
 
 class TestJSONFilesExist:
     """Verify all required JSON files exist and are valid."""
@@ -34,23 +43,27 @@ class TestJSONFilesExist:
     def test_game_config_json_is_valid(self):
         """Verify game_rules.json contains valid JSON."""
         with open('game_rules.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)  # Will raise JSONDecodeError if invalid
+            data = json.load(f)
         assert isinstance(data, dict), "game_rules.json should contain a JSON object"
 
     def test_game_data_json_is_valid(self):
         """Verify game_content.json contains valid JSON."""
         with open('game_content.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)  # Will raise JSONDecodeError if invalid
+            data = json.load(f)
         assert isinstance(data, dict), "game_content.json should contain a JSON object"
 
     def test_narrative_content_json_is_valid(self):
         """Verify narrative_content.json contains valid JSON."""
         with open('narrative_content.json', 'r', encoding='utf-8') as f:
-            data = json.load(f)  # Will raise JSONDecodeError if invalid
+            data = json.load(f)
         assert isinstance(data, dict), "narrative_content.json should contain a JSON object"
 
 
-class TestGameConfigStructure:
+# ============================================================================
+# TIER 2: STRUCTURE VALIDATION
+# ============================================================================
+
+class TestGameRulesStructure:
     """Verify game_rules.json has all required sections and keys."""
 
     @pytest.fixture(scope='class')
@@ -123,8 +136,6 @@ class TestGameConfigStructure:
         required_keys = ['min_rooms_base', 'room_level_multiplier', 'max_rooms',
                         'max_placement_attempts', 'min_room_size', 'max_room_size',
                         'room_padding']
-        # NOTE: Special node counts (cooling, cpu, ghost, code_hacks, etc)
-        # are now in game_content.json network_configs, not here
 
         for key in required_keys:
             assert key in room_gen, f"Missing required key 'room_generation.{key}' in game_rules.json"
@@ -156,7 +167,7 @@ class TestGameConfigStructure:
             assert key in ai_behavior, f"Missing required key 'balance.ai_behavior.{key}' in game_rules.json"
 
 
-class TestGameDataStructure:
+class TestGameContentStructure:
     """Verify game_content.json has all required sections and keys."""
 
     @pytest.fixture(scope='class')
@@ -248,21 +259,6 @@ class TestGameDataStructure:
         """Verify balance section exists in game_content.json."""
         assert 'balance' in game_data, "Missing required 'balance' section in game_content.json"
 
-    def test_balance_has_ai_behavior(self, game_data):
-        """Verify balance section has required structure (ai_behavior in game_rules.json only)."""
-        balance = game_data['balance']
-        # NOTE: ai_behavior moved to game_rules.json, not in game_content.json
-        # This test verifies balance section exists and has expected structure
-        assert 'code_hacks' in balance, "Missing required 'balance.code_hacks' section in game_content.json"
-
-    def test_balance_has_cpu_restore_values(self, game_data):
-        """Verify balance section exists (cpu_restore values moved to game_rules.json)."""
-        balance = game_data['balance']
-        # NOTE: cpu_restore_min/max moved to game_rules.json (single source of truth)
-        # This test now just verifies the balance section exists
-        assert 'ai_behavior' in balance or 'code_hacks' in balance, \
-            "Balance section should have ai_behavior or code_hacks subsections"
-
     def test_balance_has_code_hacks_section(self, game_data):
         """Verify balance.code_hacks section exists."""
         balance = game_data['balance']
@@ -291,162 +287,152 @@ class TestNarrativeContentStructure:
         assert len(story_data['fragments']) > 0, "fragments list is empty in narrative_content.json"
 
 
-class TestConfigRealObjectInstantiation:
-    """
-    CRITICAL SMOKE TESTS - Instantiate real objects with real config.
+# ============================================================================
+# TIER 3: CROSS-FILE VALIDATION
+# ============================================================================
 
-    These tests verify that real game objects can be created using real config files.
-    NO MOCKING - this catches real integration issues.
-    """
+class TestConfigCompleteness:
+    """Verify all required top-level sections exist across files."""
 
-    def test_game_config_loads_successfully(self):
-        """Verify GameConfig can load from real JSON file."""
-        from game_config import GameConfig
+    def _load_json(self, filename):
+        """Load a JSON file from project root."""
+        path = Path(__file__).parent.parent.parent / filename
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
 
-        # Force reload to ensure fresh load
-        GameConfig._config_data = None
-        GameConfig.load_from_json()
+    def test_game_config_has_all_top_level_sections(self):
+        """Test that game_rules.json has all required top-level sections."""
+        game_config = self._load_json('game_rules.json')
 
-        # Verify some values loaded correctly
-        assert GameConfig.SCREEN_WIDTH > 0
-        assert GameConfig.SCREEN_HEIGHT > 0
-        assert GameConfig.DEFAULT_PLAYER_RAM > 0
-        assert GameConfig.DEFAULT_PLAYER_CPU > 0
+        required_sections = [
+            'display',
+            'ui',
+            'gameplay',
+            'audio',
+            'room_generation',
+            'balance',
+            'colors',
+            'message_types',
+            'symbols',
+            'characters',
+            'welcome_messages',
+            'metadata'
+        ]
 
-    def test_game_balance_loads_successfully(self):
-        """Verify GameBalance can load from real JSON file."""
-        from game_config import GameBalance, GameConfig
+        missing = [s for s in required_sections if s not in game_config]
 
-        # Ensure GameConfig is loaded first
-        GameConfig._config_data = None
-        GameConfig.load_from_json()
+        assert len(missing) == 0, f"game_rules.json is missing required sections: {missing}"
 
-        # Load GameBalance
-        GameBalance.load_from_json()
+    def test_game_data_has_all_top_level_sections(self):
+        """Test that game_content.json has all required top-level sections."""
+        game_data = self._load_json('game_content.json')
 
-        # Verify values loaded correctly
-        assert GameBalance.HEAT_REDUCTION_NORMAL > 0
-        assert GameBalance.CPU_RESTORE_MIN > 0
-        assert GameBalance.CPU_RESTORE_MAX > GameBalance.CPU_RESTORE_MIN
-        assert GameBalance.HEAT_REDUCTION_INSTANT > 0
+        required_sections = [
+            'enemy_types',
+            'exploits',
+            'upgrades',
+            'network_configs',
+            'difficulty_multipliers',
+            'metadata'
+        ]
 
-    def test_room_generation_config_loads_successfully(self):
-        """Verify RoomGenerationConfig can load from real JSON file."""
-        from game_config import RoomGenerationConfig, GameConfig
+        missing = [s for s in required_sections if s not in game_data]
 
-        # Ensure GameConfig is loaded first
-        GameConfig._config_data = None
-        GameConfig.load_from_json()
+        assert len(missing) == 0, f"game_content.json is missing required sections: {missing}"
 
-        # Load RoomGenerationConfig
-        RoomGenerationConfig.load_from_json()
 
-        # Verify values loaded correctly
-        assert RoomGenerationConfig.MIN_ROOMS_BASE > 0
-        assert RoomGenerationConfig.MAX_ROOMS > 0
-        # NOTE: Node counts are now in game_content.json network_configs
+class TestConfigRedundancy:
+    """Test for duplicate/redundant config values across JSON files."""
 
-    def test_data_loader_loads_game_data_successfully(self):
-        """Verify DataLoader can load game_content.json."""
-        from data_loading import DataLoader
+    def setup_method(self):
+        """Load all config files."""
+        self.game_config = self._load_json('game_rules.json')
+        self.game_data = self._load_json('game_content.json')
+        self.story_content = self._load_json('narrative_content.json')
 
-        # Clear cache to force fresh load
-        DataLoader._game_data = None
+    def _load_json(self, filename):
+        """Load a JSON file from project root."""
+        path = Path(__file__).parent.parent.parent / filename
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
 
-        game_data = DataLoader.load_game_data()
+    def test_no_duplicate_balance_values(self):
+        """Test that balance values are not duplicated between config files."""
+        game_config_balance = self.game_config.get('balance', {})
+        game_data_balance = self.game_data.get('balance', {})
 
-        # Verify structure
-        assert 'enemy_types' in game_data
-        assert 'exploits' in game_data
-        assert 'network_configs' in game_data
+        # Find overlapping keys
+        config_keys = set(game_config_balance.keys())
+        data_keys = set(game_data_balance.keys())
+        duplicates = config_keys.intersection(data_keys)
 
-    def test_data_loader_loads_story_fragments_successfully(self):
-        """Verify DataLoader can load narrative_content.json."""
-        from data_loading import DataLoader
+        # Report duplicates with values
+        duplicate_details = {}
+        for key in duplicates:
+            if key != 'ai_behavior':  # ai_behavior is intentionally in both (nested structure)
+                config_value = game_config_balance[key]
+                data_value = game_data_balance[key]
+                duplicate_details[key] = {
+                    'game_config': config_value,
+                    'game_data': data_value
+                }
 
-        # Clear cache to force fresh load
-        DataLoader._story_fragments = None
+        assert len(duplicate_details) == 0, (
+            f"Found duplicate balance values in both game_rules.json and game_content.json:\n"
+            f"{json.dumps(duplicate_details, indent=2)}\n"
+            f"These values should exist in only ONE file to maintain single source of truth."
+        )
 
-        fragments = DataLoader.load_story_fragments()
+    def test_ai_behavior_values_consistent(self):
+        """Test that ai_behavior values match between files if duplicated."""
+        config_ai = self.game_config.get('balance', {}).get('ai_behavior', {})
+        data_ai = self.game_data.get('balance', {}).get('ai_behavior', {})
 
-        # Verify structure
-        assert isinstance(fragments, list)
-        assert len(fragments) > 0
+        # If both exist, they should match
+        if config_ai and data_ai:
+            for key in config_ai:
+                if key in data_ai:
+                    assert config_ai[key] == data_ai[key], (
+                        f"AI behavior value '{key}' differs:\n"
+                        f"  game_rules.json: {config_ai[key]}\n"
+                        f"  game_content.json: {data_ai[key]}\n"
+                        f"These should match if duplicated, or exist in only one file."
+                    )
 
-    def test_player_creation_with_real_config(self):
-        """Verify Player can be created with real config values."""
-        from game_characters import Player
-        from game_config import GameConfig
-        from game_entities import Position
+    def test_no_duplicate_gameplay_settings(self):
+        """Test that gameplay settings are not duplicated."""
+        gameplay_config = self.game_config.get('gameplay', {})
+        balance = self.game_config.get('balance', {})
 
-        # Ensure config is loaded
-        GameConfig._config_data = None
-        GameConfig.load_from_json()
+        # These should ONLY be in gameplay, not balance
+        gameplay_only_keys = ['max_heat', 'max_trace_level', 'default_player_cpu', 'default_player_ram']
 
-        # Create player - should use real config values
-        player = Player(10, 10)
+        duplicates_found = []
+        for key in gameplay_only_keys:
+            if key in balance:
+                duplicates_found.append(f"{key} found in both gameplay and balance")
 
-        # Verify player was created successfully
-        assert player is not None
-        assert player.position == Position(10, 10)
-        assert player.ram_total > 0  # Player uses ram_total not max_ram
-        assert player.cpu > 0
+        assert len(duplicates_found) == 0, (
+            f"Found settings in wrong sections:\n" + "\n".join(duplicates_found)
+        )
 
-    def test_enemy_creation_with_real_config(self):
-        """Verify Enemy can be created with real config data."""
-        from game_characters import Enemy
-        from game_entities import Position
+    def test_metadata_versions_consistent(self):
+        """Test that version numbers are consistent across config files."""
+        config_version = self.game_config.get('metadata', {}).get('version')
+        data_version = self.game_data.get('metadata', {}).get('version')
 
-        # Create enemy with real enemy type from JSON
-        # Enemy constructor takes (position, enemy_type)
-        enemy = Enemy(Position(15, 15), "scanner")
+        if config_version and data_version:
+            assert config_version == data_version, (
+                f"Version mismatch:\n"
+                f"  game_rules.json: {config_version}\n"
+                f"  game_content.json: {data_version}\n"
+                f"All config files should have matching versions."
+            )
 
-        # Verify enemy was created successfully
-        assert enemy is not None
-        assert enemy.position == Position(15, 15)
-        assert enemy.type == "scanner"
-        assert enemy.cpu > 0
 
-    def test_code_hack_with_real_balance_values(self):
-        """Verify CodeHack uses real balance values from JSON."""
-        from game_inventory import CodeHack
-        from game_config import GameConfig, GameBalance
-        from game_characters import Player
-
-        # Ensure config is loaded
-        GameConfig._config_data = None
-        GameConfig.load_from_json()
-        GameBalance.load_from_json()  # CRITICAL: Load balance config too
-
-        # Get cpu_restore_min from GameBalance (now in game_rules.json)
-        cpu_restore_min = GameBalance.CPU_RESTORE_MIN
-
-        # Create code hack
-        code_hack = CodeHack("red", "restore_cpu", "Red Code", "Restores CPU")
-
-        # Create player with low CPU
-        player = Player(10, 10)
-        player.cpu = 50
-
-        # Create mock game object for message log
-        class MockGame:
-            class MockMessageLog:
-                def add_message(self, *args, **kwargs):
-                    pass
-
-            def __init__(self):
-                self.message_log = self.MockMessageLog()
-
-        mock_game = MockGame()
-
-        # Apply effect - should use real balance values
-        initial_cpu = player.cpu
-        code_hack._apply_effect('restore_cpu', player, mock_game)
-
-        # Verify CPU was restored using real values
-        assert player.cpu > initial_cpu
-        assert player.cpu >= initial_cpu + cpu_restore_min or player.cpu == player.max_cpu
-
+# ============================================================================
+# TIER 4: VALUE VALIDATION
+# ============================================================================
 
 class TestConfigValueConsistency:
     """Verify config values are consistent and reasonable."""
@@ -464,7 +450,7 @@ class TestConfigValueConsistency:
             return json.load(f)
 
     def test_cpu_restore_min_less_than_max(self, config_data):
-        """Verify CPU restore min is less than max (now in game_rules.json)."""
+        """Verify CPU restore min is less than max."""
         balance = config_data['balance']
         assert balance['cpu_restore_min'] < balance['cpu_restore_max'], \
             "cpu_restore_min should be less than cpu_restore_max"
@@ -502,6 +488,236 @@ class TestConfigValueConsistency:
         assert multipliers['normal'] == 1.0
         assert multipliers['hard'] > 1.0
         assert multipliers['nightmare'] > multipliers['hard']
+
+
+class TestConfigValueUsage:
+    """Test that config values exist for features that need them."""
+
+    def setup_method(self):
+        """Load config files."""
+        self.game_config = self._load_json('game_rules.json')
+        self.game_data = self._load_json('game_content.json')
+
+    def _load_json(self, filename):
+        """Load a JSON file from project root."""
+        path = Path(__file__).parent.parent.parent / filename
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    def test_cpu_restore_values_exist(self):
+        """Test that cpu_restore_min/max values exist (used by code hacks)."""
+        config_balance = self.game_config.get('balance', {})
+        data_balance = self.game_data.get('balance', {})
+
+        # At least ONE file should have these values
+        has_in_config = 'cpu_restore_min' in config_balance and 'cpu_restore_max' in config_balance
+        has_in_data = 'cpu_restore_min' in data_balance and 'cpu_restore_max' in data_balance
+
+        assert has_in_config or has_in_data, (
+            "cpu_restore_min/max not found in any config file. "
+            "These are required for restore_cpu code hack."
+        )
+
+    def test_heat_reduction_values_exist(self):
+        """Test that heat reduction values exist for various game mechanics."""
+        balance = self.game_config.get('balance', {})
+
+        required_heat_values = [
+            'heat_reduction_normal',
+            'heat_reduction_boosted',
+            'heat_reduction_instant',
+        ]
+
+        missing = [v for v in required_heat_values if v not in balance]
+
+        assert len(missing) == 0, (
+            f"Missing required heat reduction values in game_rules.json balance: {missing}"
+        )
+
+    def test_trace_management_values_exist(self):
+        """Test that trace management values exist."""
+        balance = self.game_config.get('balance', {})
+
+        required_trace_values = [
+            'trace_increase_interval',
+            'trace_increase_amount',
+            'trace_reduction_code_hack',
+            'ghost_node_trace_reduction_percent',
+        ]
+
+        missing = [v for v in required_trace_values if v not in balance]
+
+        assert len(missing) == 0, (
+            f"Missing required trace values in game_rules.json balance: {missing}"
+        )
+
+    def test_enemy_ai_values_exist(self):
+        """Test that enemy AI behavior values exist."""
+        balance = self.game_config.get('balance', {})
+
+        required_ai_values = [
+            'enemy_memory_turns',
+            'patrol_stuck_threshold',
+            'max_movement_queue_size',
+            'pathfinding_timeout_attempts',
+        ]
+
+        missing = [v for v in required_ai_values if v not in balance]
+
+        assert len(missing) == 0, (
+            f"Missing required AI values in game_rules.json balance: {missing}"
+        )
+
+    def test_vision_system_values_exist(self):
+        """Test that vision system values exist."""
+        balance = self.game_config.get('balance', {})
+
+        required_vision_values = [
+            'enhanced_vision_bonus',
+            'blind_spot_vision_reduction_factor',
+            'adjacent_distance_threshold',
+        ]
+
+        missing = [v for v in required_vision_values if v not in balance]
+
+        assert len(missing) == 0, (
+            f"Missing required vision values in game_rules.json balance: {missing}"
+        )
+
+
+# ============================================================================
+# TIER 5: INTEGRATION TESTS (Most important - NO MOCKING)
+# ============================================================================
+
+class TestConfigRealObjectInstantiation:
+    """
+    CRITICAL SMOKE TESTS - Instantiate real objects with real config.
+
+    These tests verify that real game objects can be created using real config files.
+    NO MOCKING - this catches real integration issues.
+    """
+
+    def test_game_config_loads_successfully(self):
+        """Verify GameConfig can load from real JSON file."""
+        from game_config import GameConfig
+
+        GameConfig._config_data = None
+        GameConfig.load_from_json()
+
+        assert GameConfig.SCREEN_WIDTH > 0
+        assert GameConfig.SCREEN_HEIGHT > 0
+        assert GameConfig.DEFAULT_PLAYER_RAM > 0
+        assert GameConfig.DEFAULT_PLAYER_CPU > 0
+
+    def test_game_balance_loads_successfully(self):
+        """Verify GameBalance can load from real JSON file."""
+        from game_config import GameBalance, GameConfig
+
+        GameConfig._config_data = None
+        GameConfig.load_from_json()
+
+        GameBalance.load_from_json()
+
+        assert GameBalance.HEAT_REDUCTION_NORMAL > 0
+        assert GameBalance.CPU_RESTORE_MIN > 0
+        assert GameBalance.CPU_RESTORE_MAX > GameBalance.CPU_RESTORE_MIN
+        assert GameBalance.HEAT_REDUCTION_INSTANT > 0
+
+    def test_room_generation_config_loads_successfully(self):
+        """Verify RoomGenerationConfig can load from real JSON file."""
+        from game_config import RoomGenerationConfig, GameConfig
+
+        GameConfig._config_data = None
+        GameConfig.load_from_json()
+
+        RoomGenerationConfig.load_from_json()
+
+        assert RoomGenerationConfig.MIN_ROOMS_BASE > 0
+        assert RoomGenerationConfig.MAX_ROOMS > 0
+
+    def test_data_loader_loads_game_data_successfully(self):
+        """Verify DataLoader can load game_content.json."""
+        from data_loading import DataLoader
+
+        DataLoader._game_data = None
+
+        game_data = DataLoader.load_game_data()
+
+        assert 'enemy_types' in game_data
+        assert 'exploits' in game_data
+        assert 'network_configs' in game_data
+
+    def test_data_loader_loads_story_fragments_successfully(self):
+        """Verify DataLoader can load narrative_content.json."""
+        from data_loading import DataLoader
+
+        DataLoader._story_fragments = None
+
+        fragments = DataLoader.load_story_fragments()
+
+        assert isinstance(fragments, list)
+        assert len(fragments) > 0
+
+    def test_player_creation_with_real_config(self):
+        """Verify Player can be created with real config values."""
+        from game_characters import Player
+        from game_config import GameConfig
+        from game_entities import Position
+
+        GameConfig._config_data = None
+        GameConfig.load_from_json()
+
+        player = Player(10, 10)
+
+        assert player is not None
+        assert player.position == Position(10, 10)
+        assert player.ram_total > 0
+        assert player.cpu > 0
+
+    def test_enemy_creation_with_real_config(self):
+        """Verify Enemy can be created with real config data."""
+        from game_characters import Enemy
+        from game_entities import Position
+
+        enemy = Enemy(Position(15, 15), "scanner")
+
+        assert enemy is not None
+        assert enemy.position == Position(15, 15)
+        assert enemy.type == "scanner"
+        assert enemy.cpu > 0
+
+    def test_code_hack_with_real_balance_values(self):
+        """Verify CodeHack uses real balance values from JSON."""
+        from game_inventory import CodeHack
+        from game_config import GameConfig, GameBalance
+        from game_characters import Player
+
+        GameConfig._config_data = None
+        GameConfig.load_from_json()
+        GameBalance.load_from_json()
+
+        cpu_restore_min = GameBalance.CPU_RESTORE_MIN
+
+        code_hack = CodeHack("red", "restore_cpu", "Red Code", "Restores CPU")
+
+        player = Player(10, 10)
+        player.cpu = 50
+
+        class MockGame:
+            class MockMessageLog:
+                def add_message(self, *args, **kwargs):
+                    pass
+
+            def __init__(self):
+                self.message_log = self.MockMessageLog()
+
+        mock_game = MockGame()
+
+        initial_cpu = player.cpu
+        code_hack._apply_effect('restore_cpu', player, mock_game)
+
+        assert player.cpu > initial_cpu
+        assert player.cpu >= initial_cpu + cpu_restore_min or player.cpu == player.max_cpu
 
 
 if __name__ == "__main__":
