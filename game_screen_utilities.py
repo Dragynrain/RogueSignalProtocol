@@ -200,6 +200,121 @@ class ScreenRenderingUtils:
         if show_down:
             render_char_safe(console, x, bottom_y, "v MORE v", fg=color)
 
+    @staticmethod
+    def center_x(text: str, width: int = None) -> int:
+        """
+        Calculate X position to center text.
+
+        Args:
+            text: Text to center
+            width: Width to center within (default: screen width)
+
+        Returns:
+            X position for centered text
+        """
+        if width is None:
+            width = GameConfig.SCREEN_WIDTH
+        return width // 2 - len(text) // 2
+
+    @staticmethod
+    def center_block_x(lines: List[str], width: int = None) -> int:
+        """
+        Calculate starting X position for a left-aligned block that's centered as a whole.
+
+        This creates the effect of a centered "table" where all lines are left-aligned
+        relative to each other, but the whole block is centered on screen.
+
+        Args:
+            lines: List of text lines in the block
+            width: Width to center within (default: screen width)
+
+        Returns:
+            X position where the block should start (left edge of centered block)
+
+        Example:
+            lines = ["CPU: Health", "Heat: From exploits", "Trace: Detection"]
+            start_x = center_block_x(lines)
+            # All lines render at start_x, creating left-aligned block that's centered
+        """
+        if width is None:
+            width = GameConfig.SCREEN_WIDTH
+
+        if not lines:
+            return 0
+
+        # Find the longest line in the block
+        max_len = max(len(line) for line in lines)
+
+        # Center the longest line, which centers the whole block
+        return width // 2 - max_len // 2
+
+    @staticmethod
+    def render_centered_text(console: tcod.console.Console, text: str, y: int,
+                            color: tuple = Colors.WHITE, width: int = None) -> None:
+        """
+        Render centered text (like render_centered_title but for non-title text).
+
+        Args:
+            console: Console to render to
+            text: Text to render
+            y: Y position
+            color: Text color
+            width: Width to center within (default: screen width)
+        """
+        x = ScreenRenderingUtils.center_x(text, width)
+        render_char_safe(console, x, y, text, fg=color)
+
+    @staticmethod
+    def render_indented_lines(console: tcod.console.Console, lines: List[Tuple[str, tuple]],
+                             start_y: int, indent: int = 0) -> int:
+        """
+        Render a list of (text, color) tuples as indented lines.
+
+        Args:
+            console: Console to render to
+            lines: List of (text, color) tuples
+            start_y: Starting Y position
+            indent: Left margin indent
+
+        Returns:
+            Y position after last line
+        """
+        y = start_y
+        for text, color in lines:
+            if text:  # Skip empty lines (they'll still advance y)
+                render_char_safe(console, indent, y, text, fg=color)
+            y += 1
+        return y
+
+    @staticmethod
+    def render_column_section(console: tcod.console.Console, heading: str, items: List[Tuple[str, tuple]],
+                             x: int, y: int, heading_color: tuple = Colors.CYAN) -> int:
+        """
+        Render a column section with heading and items.
+
+        Args:
+            console: Console to render to
+            heading: Section heading text
+            items: List of (text, color) tuples for items
+            x: X position for column
+            y: Y position to start
+            heading_color: Color for heading
+
+        Returns:
+            Y position after last item
+        """
+        # Render heading
+        render_char_safe(console, x, y, heading, fg=heading_color)
+        y += 1
+
+        # Render items
+        for text, color in items:
+            if text:
+                render_char_safe(console, x, y, text, fg=color)
+            y += 1
+
+        return y
+
 
 class ScrollableListManager:
     """

@@ -37,6 +37,8 @@ class TestGraphicsRendererIntegration(unittest.TestCase):
         self.sdl_renderer = Mock()
         self.context.sdl_renderer = self.sdl_renderer
         self.context.console_render = Mock()
+        self.context.recommended_console_size = Mock(return_value=(1280, 800))
+        self.context.sdl_window.size = (1280, 800)
 
         # Create renderer
         self.renderer = GraphicsMapRenderer(
@@ -406,6 +408,8 @@ class TestGameRendererIntegration(unittest.TestCase):
         self.sdl_renderer = Mock()
         self.context.sdl_renderer = self.sdl_renderer
         self.context.console_render = Mock()
+        self.context.recommended_console_size = Mock(return_value=(1280, 800))
+        self.context.sdl_window.size = (1280, 800)
 
         # Create console
         self.console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
@@ -484,7 +488,7 @@ class TestGameRendererIntegration(unittest.TestCase):
 
     def test_render_game_with_help_screen(self):
         """Test render_game handles help screen overlay."""
-        renderer = GameRenderer(settings=self.settings)
+        renderer = GameRenderer(settings=self.settings, tile_manager=self.tile_manager, context=self.context)
 
         # Show help
         self.engine.show_help = True

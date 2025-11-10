@@ -9,6 +9,7 @@ Uses same sprite scale as in-game for consistency. Supports page navigation.
 
 import tcod
 import logging
+import textwrap
 from typing import List, Tuple, Optional
 
 from game_config import GameConfig, GameBalance
@@ -18,26 +19,20 @@ from game_input import UniversalInputHandler
 from data_loading import DataLoader
 from game_color_manager import ColorManager
 from game_coordinate_helpers import CoordinateHelpers
+from game_screen_utilities import ScreenRenderingUtils
+from game_help_content import HelpContent
 
 
 class GraphicalHelpMenu:
     """
-    Graphics-mode help menu displaying enemy sprites and item sprites
-    alongside descriptive text in a paginated layout.
+    Refactored graphics-mode help menu using centralized content.
 
-    Uses the same sprite scale as the game renderer for consistency.
+    Uses HelpContent for all data and Screen Rendering Utils for layout calculations.
     Renders sprites via SDL layer, text via console overlay with transparency.
     """
 
     def __init__(self, context, settings, tile_manager):
-        """
-        Initialize graphical help menu.
-
-        Args:
-            context: TCOD context with SDL renderer access
-            settings: GameSettings instance
-            tile_manager: TileManager instance (must be pre-initialized)
-        """
+        """Initialize graphical help menu."""
         self.context = context
         self.settings = settings
         self.tile_manager = tile_manager
@@ -45,19 +40,13 @@ class GraphicalHelpMenu:
         if self.tile_manager is None:
             raise ValueError("GraphicalHelpMenu requires a valid TileManager instance")
 
-        # Current page
         self.current_page = 0
-
-        # Load colors from config
         self._load_colors()
-
-        # Build pages (deferred until first render to ensure data loaded)
         self.pages = []
         self.pages_built = False
 
     def _load_colors(self):
         """Load enemy and UI colors from game config."""
-        # Use base colors (help screen doesn't need darkened variants)
         self.ENEMY_UNAWARE = ColorManager.get_enemy_state_color("unaware")
         self.ENEMY_ALERT = ColorManager.get_enemy_state_color("alert")
         self.ENEMY_HOSTILE = ColorManager.get_enemy_state_color("hostile")
@@ -68,387 +57,387 @@ class GraphicalHelpMenu:
         if self.pages_built:
             return
 
-        # 3 pages total: Items/Map, Enemies, Controls/Mechanics
         self.pages = [
-            self._build_page_items_and_map(),    # Page 1: Items + map symbols (with sprites!)
-            self._build_page_enemies(),          # Page 2: ALL 8 enemies (2 columns)
-            self._build_page_controls_mechanics(), # Page 3: Controls + mechanics (multi-column text)
+            self._build_page_1(),  # Objectives & Mechanics
+            self._build_page_2(),  # Items & Enemies
+            self._build_page_3(),  # Exploits & Status Effects
         ]
 
         self.pages_built = True
 
-    def _build_page_enemies(self) -> dict:
-        """Page 2: All 8 enemies - better vertical spacing."""
+    def _build_page_1(self) -> dict:
+        """Page 1/3: MAP SYMBOLS, Objectives, Mechanics, Controls with sprites."""
+        utils = ScreenRenderingUtils
+
+        text_lines = []
+
+        # Start with MAP SYMBOLS at top
+        y = 4  # Start at y=4 to add blank line above
+        heading = "MAP SYMBOLS:"
+        text_lines.append((utils.center_x(heading), y, heading, Colors.CYAN))
+
+        # Row 1 labels (2 lines down from heading, sprites 2 lines after that)
+        # Sprite columns at x=21, 40, 59 (middle column centered at screen center)
+        row1_label_y = y + 2
+        text_lines.append((18, row1_label_y, "Player", Colors.WHITE))
+        text_lines.append((19, row1_label_y + 1, "(you)", Colors.LIGHT_GRAY))
+
+        text_lines.append((38, row1_label_y, "Floor", Colors.LIGHT_GRAY))
+        text_lines.append((36, row1_label_y + 1, "Walkable", Colors.LIGHT_GRAY))
+
+        text_lines.append((57, row1_label_y, "Wall", Colors.WHITE))
+        text_lines.append((55, row1_label_y + 1, "Blocking", Colors.LIGHT_GRAY))
+
+        # Row 2 labels (8 lines down from row 1 labels)
+        row2_label_y = row1_label_y + 8
+        text_lines.append((16, row2_label_y, "Blind Spot", Colors.ELECTRIC_PURPLE))
+        text_lines.append((16, row2_label_y + 1, "Hide & +10!", Colors.YELLOW))
+
+        text_lines.append((37, row2_label_y, "Gateway", Colors.CYAN))
+        text_lines.append((38, row2_label_y + 1, "Exit", Colors.LIGHT_GRAY))
+
+        text_lines.append((53, row2_label_y, "Data Fragment", Colors.CYAN))
+        text_lines.append((57, row2_label_y + 1, "Story", Colors.LIGHT_GRAY))
+
+        # Build sprites with calculated y positions (sprites are 2 lines below their labels)
+        # Centered layout: left=21, middle=40 (screen center), right=59
+        row1_sprite_y = row1_label_y + 2
+        row2_sprite_y = row2_label_y + 2
+        sprites = [
+            # Row 1: Player, Floor, Wall
+            ('player', 21, row1_sprite_y, 1.0),
+            ('floor', 40, row1_sprite_y, 1.0),
+            ('wall', 59, row1_sprite_y, 1.0),
+            # Row 2: Blind Spot, Gateway, Story Fragment
+            ('blind_spot', 21, row2_sprite_y, 1.0),
+            ('gateway', 40, row2_sprite_y, 1.0),
+            ('story_fragment', 59, row2_sprite_y, 1.0),
+        ]
+
+        # Continue with OBJECTIVE & MECHANICS after map symbols
+        y = row2_label_y + 5  # Space after map symbols section (extra blank line)
+        heading = "OBJECTIVE & MECHANICS:"
+        text_lines.append((utils.center_x(heading), y, heading, Colors.CYAN))
+
+        # Objectives
+        y += 2
+        for text, color in HelpContent.get_objectives():
+            text_lines.append((utils.center_x(text), y, text, color))
+            y += 1
+
+        # Core mechanics - left-aligned block, centered as a group
+        y += 1
+        mechanics_text = [f"{stat}: {desc}" for stat, desc, _ in HelpContent.get_core_mechanics()]
+        block_x = utils.center_block_x(mechanics_text)
+        for i, (stat, desc, color) in enumerate(HelpContent.get_core_mechanics()):
+            text = mechanics_text[i]
+            text_lines.append((block_x, y, text, color))
+            y += 1
+
+        # CONTROLS section
+        y += 2
+        heading = "CONTROLS:"
+        text_lines.append((utils.center_x(heading), y, heading, Colors.CYAN))
+
+        controls = HelpContent.get_controls()
+
+        # Movement - left-aligned block, centered as group
+        y += 2
+        movement_text = [f"{label}: {desc}" for label, desc in controls['movement']]
+        block_x = utils.center_block_x(movement_text)
+        for label, desc in controls['movement']:
+            text = f"{label}: {desc}"
+            text_lines.append((block_x, y, text, Colors.WHITE))
+            y += 1
+
+        # Screen shortcuts - left-aligned block, centered as group
+        y += 1
+        screens = controls['screens']
+        screen_text = [f"{label}: {desc}" for label, desc in screens]
+        block_x = utils.center_block_x(screen_text)
+        for label, desc in screens:
+            text = f"{label}: {desc}"
+            text_lines.append((block_x, y, text, Colors.WHITE))
+            y += 1
+
+        # Mouse - left-aligned block, centered as group
+        y += 1
+        mouse_text = []
+        for label, desc in controls['mouse']:
+            if "Click" in label:
+                mouse_text.append(f"Mouse: {label} to {desc.lower()}")
+            elif "Wheel" in label:
+                mouse_text.append(f"Wheel to {desc.lower()}")
+            else:
+                mouse_text.append(f"Right-click to {desc.lower()}")
+        block_x = utils.center_block_x(mouse_text)
+        for i, (label, desc) in enumerate(controls['mouse']):
+            text_lines.append((block_x, y, mouse_text[i], Colors.WHITE if "Right" not in label else Colors.LIGHT_GRAY))
+            y += 1
+
+        # Debug
+        for label, desc in controls['debug']:
+            text = f"{label}: {desc}"
+            text_lines.append((utils.center_x(text), y, text, Colors.LIGHT_GRAY))
+            y += 1
+
         return {
-            'title': 'ENEMY TYPES (Page 2/3)',
-            'sprites': [
-                # Blank line after title, then sprites
-                # Left column
-                ('Scanner', 4, 6, 1.0),
-                ('Patrol', 4, 13, 1.0),
-                ('Bot', 4, 20, 1.0),
-                ('Firewall', 4, 27, 1.0),
-                # Right column
-                ('Hunter', 45, 6, 1.0),
-                ('Virus', 45, 13, 1.0),
-                ('Inhibitor', 45, 20, 1.0),
-                ('Admin Avatar', 45, 27, 1.0),
-            ],
-            'text_lines': [
-                # Blank line after title
-
-                # Left column - 3 lines each
-                (6, 6, "Scanner (S)", self.ENEMY_UNAWARE),
-                (6, 7, "HP:35 Vis:5 Dmg:None", Colors.LIGHT_GRAY),
-                (6, 8, "Static, alerts others", Colors.LIGHT_GRAY),
-
-                (6, 13, "Patrol (P)", self.ENEMY_UNAWARE),
-                (6, 14, "HP:40 Vis:4 Dmg:10", Colors.LIGHT_GRAY),
-                (6, 15, "Follows patrol routes", Colors.LIGHT_GRAY),
-
-                (6, 20, "Bot (B)", self.ENEMY_UNAWARE),
-                (6, 21, "HP:25 Vis:3 Dmg:8", Colors.LIGHT_GRAY),
-                (6, 22, "Random movement", Colors.LIGHT_GRAY),
-
-                (6, 27, "Firewall (F)", self.ENEMY_ALERT),
-                (6, 28, "HP:80 Vis:3 Dmg:5", Colors.LIGHT_GRAY),
-                (6, 29, "Defensive wall", Colors.LIGHT_GRAY),
-
-                # Right column - 3 lines each
-                (47, 6, "Hunter (H)", self.ENEMY_HOSTILE),
-                (47, 7, "HP:50 Vis:6 Dmg:15", Colors.LIGHT_GRAY),
-                (47, 8, "Actively seeks player", Colors.LIGHT_GRAY),
-
-                (47, 13, "Virus (V)", self.ENEMY_HOSTILE),
-                (47, 14, "HP:35 Vis:4 Dmg:Virus", Colors.LIGHT_GRAY),
-                (47, 15, "3CPU/turn DoT", Colors.LIGHT_GRAY),
-
-                (47, 20, "Inhibitor (I)", self.ENEMY_UNAWARE),
-                (47, 21, "HP:30 Vis:4 Dmg:Slow", Colors.LIGHT_GRAY),
-                (47, 22, "Move every 2nd turn", Colors.LIGHT_GRAY),
-
-                (47, 27, "Admin Avatar (A)", self.ENEMY_HOSTILE),
-                (47, 28, "HP:250 Vis:8 Dmg:45", Colors.RED),
-                (47, 29, "EXTREME DANGER!", Colors.RED),
-
-                # Footer - centered
-                (15, 37, "COLORS: Yellow=Unaware  Orange=Alert  Red=Hostile", Colors.CYAN),
-                (13, 39, "Enemies alert nearby allies when they spot you!", Colors.YELLOW),
-                (12, 41, "Use blind spots (♠) to hide and watch patrol patterns!", Colors.ELECTRIC_PURPLE),
-            ]
+            'title': 'MAP, OBJECTIVE, & CONTROLS (Page 1/3)',
+            'sprites': sprites,
+            'text_lines': text_lines
         }
 
-    def _build_page_items_and_map(self) -> dict:
-        """Page 1: Map symbols at top, then collectibles, nodes, upgrades."""
+    def _build_page_2(self) -> dict:
+        """Page 2/3: ITEMS & ENEMIES with sprites (two-column centered layout)."""
+        utils = ScreenRenderingUtils
+
+        # Load enemy data from HelpContent
+        enemies = HelpContent.get_enemy_data()
+        enemy_order = ['Scanner', 'Firewall', 'Patrol', 'Bot', 'Hunter', 'Virus', 'Inhibitor', 'Admin Avatar']
+
+        # Calculate centered two-column layout
+        # Left column width: ~25 chars, Gap: 8 chars, Right column width: ~30 chars
+        # Total: 63 chars, centered on 80-char screen = start at (80-63)/2 = 8.5 ~= 9
+        left_col_start = 9
+        left_sprite_x = 7  # Sprite slightly left of text
+        left_text_x = 9    # Text 2 chars right of sprite position (same gap as right column)
+
+        column_gap = 8
+        right_col_start = left_col_start + 25 + column_gap  # = 42
+        right_sprite_x = 40  # Sprite slightly left of text
+        right_text_x = 42    # Text 2 chars right of sprite position
+
+        # Sprites - left column power-ups, right column enemies
+        sprites = [
+            # LEFT COLUMN - Power-ups
+            ('codehack', left_sprite_x, 8, 1.0),
+            ('exploit', left_sprite_x, 13, 1.0),
+            ('cpu_node', left_sprite_x, 18, 1.0),
+            ('cooling_node', left_sprite_x, 23, 1.0),
+            ('ghost_node', left_sprite_x, 28, 1.0),
+            ('cpu_upgrade', left_sprite_x, 33, 1.0),
+            ('ram_upgrade', left_sprite_x, 38, 1.0),
+            ('cooling_upgrade', left_sprite_x, 43, 1.0),
+        ]
+
+        # RIGHT COLUMN - Enemy sprites (more spacing between enemies)
+        enemy_y_positions = [9, 13, 17, 21, 25, 29, 33, 37]
+        for i, enemy_name in enumerate(enemy_order):
+            if i < len(enemy_y_positions):
+                sprites.append((enemy_name, right_sprite_x, enemy_y_positions[i], 1.0))
+
+        text_lines = []
+
+        # LEFT COLUMN - Power-ups
+        text_lines.append((left_text_x, 6, "POWER-UPS:", Colors.CYAN))
+
+        # Code Patch & Exploit
+        text_lines.append((left_text_x, 8, "Code Patch", Colors.ELECTRIC_PURPLE))
+        text_lines.append((left_text_x, 9, "Random stat bonus", Colors.LIGHT_GRAY))
+
+        text_lines.append((left_text_x, 13, "Exploit", self.NEON_PINK))
+        text_lines.append((left_text_x, 14, "Combat/utility tool", Colors.LIGHT_GRAY))
+
+        # Nodes
+        text_lines.append((left_text_x, 18, "CPU Node", Colors.RED))
+        text_lines.append((left_text_x, 19, "+20 HP restore", Colors.LIGHT_GRAY))
+
+        text_lines.append((left_text_x, 23, "Cooling Node", Colors.CYAN))
+        text_lines.append((left_text_x, 24, "-20 heat", Colors.LIGHT_GRAY))
+
+        text_lines.append((left_text_x, 28, "Ghost Node", Colors.ELECTRIC_PURPLE))
+        text_lines.append((left_text_x, 29, "-20% trace (blind spot)", Colors.LIGHT_GRAY))
+
+        # Upgrades
+        text_lines.append((left_text_x, 31, "PERMANENT UPGRADES:", Colors.CYAN))
+
+        text_lines.append((left_text_x, 33, "CPU Upgrade", Colors.ELECTRIC_BLUE))
+        text_lines.append((left_text_x, 34, "+20 max CPU", Colors.YELLOW))
+
+        text_lines.append((left_text_x, 38, "RAM Upgrade", Colors.ELECTRIC_BLUE))
+        text_lines.append((left_text_x, 39, "+4 RAM", Colors.YELLOW))
+
+        text_lines.append((left_text_x, 43, "Cooling Upgrade", Colors.ELECTRIC_BLUE))
+        text_lines.append((left_text_x, 44, "+20 heat tolerance", Colors.YELLOW))
+
+        # RIGHT COLUMN - Enemies
+        text_lines.append((right_text_x, 6, "ENEMIES:", Colors.CYAN))
+        text_lines.append((right_text_x, 7, "(HP / Vision / Damage)", Colors.LIGHT_GRAY))
+
+        # Render enemies from HelpContent
+        for i, enemy_name in enumerate(enemy_order):
+            if enemy_name in enemies and i < len(enemy_y_positions):
+                data = enemies[enemy_name]
+                y = enemy_y_positions[i]
+                behavior = data['behavior']
+                color = HelpContent.ENEMY_COLORS[behavior]
+
+                text_lines.append((right_text_x, y, enemy_name, color))
+
+                # Format description line - always white
+                desc = f"{data['cpu']} / {data['vision']} / {data['damage']} - {data['description']}"
+                text_lines.append((right_text_x, y + 1, desc, Colors.WHITE))
+
         return {
-            'title': 'ITEMS & MAP SYMBOLS (Page 1/3)',
-            'sprites': [
-                # Row 1 - Map symbols (5 columns) - shifted right for better centering
-                ('player', 5, 6, 1.0),
-                ('floor', 19, 6, 1.0),
-                ('wall', 33, 6, 1.0),
-                ('blind_spot', 47, 6, 1.0),
-                ('gateway', 61, 6, 1.0),
-                # Row 2 - Collectibles (3 centered)
-                ('codehack', 19, 13, 1.0),
-                ('exploit', 33, 13, 1.0),
-                ('story_fragment', 47, 13, 1.0),
-                # Row 3 - Resource Nodes (3 centered)
-                ('cpu_node', 19, 20, 1.0),
-                ('cooling_node', 33, 20, 1.0),
-                ('ghost_node', 47, 20, 1.0),
-                # Row 4 - Upgrades (3 centered)
-                ('cpu_upgrade', 19, 27, 1.0),
-                ('ram_upgrade', 33, 27, 1.0),
-                ('cooling_upgrade', 47, 27, 1.0),
-            ],
-            'text_lines': [
-                # Blank line after title
-
-                # Row 1 - Map symbols
-                (7, 6, "Player", Colors.WHITE),
-                (7, 7, "You!", Colors.LIGHT_GRAY),
-
-                (21, 6, "Floor", Colors.LIGHT_GRAY),
-                (21, 7, "Walk", Colors.LIGHT_GRAY),
-
-                (35, 6, "Wall", Colors.WHITE),
-                (35, 7, "Blocks", Colors.LIGHT_GRAY),
-
-                (49, 6, "Blind Spot", Colors.ELECTRIC_PURPLE),
-                (49, 7, "HIDE!", Colors.YELLOW),
-
-                (63, 6, "Gateway", Colors.CYAN),
-                (63, 7, "Exit!", Colors.LIGHT_GRAY),
-
-                # Row 2 - Collectibles
-                (21, 13, "CodePatch", Colors.ELECTRIC_PURPLE),
-                (21, 14, "Random buff", Colors.LIGHT_GRAY),
-
-                (35, 13, "Exploit", self.NEON_PINK),
-                (35, 14, "Combat/Util", Colors.LIGHT_GRAY),
-
-                (49, 13, "Story Fragment", Colors.CYAN),
-                (49, 14, "Lore", Colors.LIGHT_GRAY),
-
-                # Row 3 - Resource Nodes
-                (21, 20, "CPU Node", Colors.RED),
-                (21, 21, "Full HP", Colors.LIGHT_GRAY),
-
-                (35, 20, "Cool Node", Colors.CYAN),
-                (35, 21, "-50C heat", Colors.LIGHT_GRAY),
-
-                (49, 20, "Ghost Node", Colors.ELECTRIC_PURPLE),
-                (49, 21, "-30% trace", Colors.LIGHT_GRAY),
-
-                # Row 4 - Upgrades
-                (21, 27, "CPU Upgrade", Colors.ELECTRIC_BLUE),
-                (21, 28, "PERMANENT", Colors.YELLOW),
-
-                (35, 27, "RAM Upgrade", Colors.ELECTRIC_BLUE),
-                (35, 28, "PERMANENT", Colors.YELLOW),
-
-                (49, 27, "Cool Upgrade", Colors.ELECTRIC_BLUE),
-                (49, 28, "PERMANENT", Colors.YELLOW),
-
-                # Bottom info - centered
-                (9, 35, "UPGRADES: Permanent stat increases - keep across ALL levels", Colors.CYAN),
-                (13, 37, "RESOURCE NODES: CPU=Health  Cooling=Heat  Ghost=Trace", Colors.CYAN),
-                (13, 39, "STEALTH: Hide in blind spots (♠) to avoid enemy detection!", Colors.ELECTRIC_PURPLE),
-            ]
+            'title': 'ITEMS & ENEMIES (Page 2/3)',
+            'sprites': sprites,
+            'text_lines': text_lines
         }
 
-    def _build_page_controls_mechanics(self) -> dict:
-        """Page 3: 2-column layout with full-width tips at bottom."""
+    def _build_page_3(self) -> dict:
+        """Page 3/3: EXPLOITS & STATUS EFFECTS (2-column layout, no sprites)."""
+        utils = ScreenRenderingUtils
+
+        text_lines = []
+
+        # Two-column positions (narrower left column with 2-line exploits, wider gap)
+        left_x = 5
+        right_x = 42  # More gap between columns
+
+        exploits = HelpContent.get_exploits()
+        effects = HelpContent.get_status_effects()
+
+        # LEFT COLUMN - COMBAT EXPLOITS (2 lines per exploit)
+        y_left = 4
+        text_lines.append((left_x, y_left, "COMBAT EXPLOITS:", Colors.CYAN))
+        y_left += 2
+
+        for name, desc, color in exploits['combat']:
+            text_lines.append((left_x + 1, y_left, name, color))  # Name in color
+            y_left += 1
+            text_lines.append((left_x + 1, y_left, desc, Colors.WHITE))  # Description in white
+            y_left += 1
+
+        y_left += 2  # Spacing between sections
+
+        # LEFT COLUMN - STEALTH EXPLOITS (2 lines per exploit)
+        text_lines.append((left_x, y_left, "STEALTH EXPLOITS:", Colors.CYAN))
+        y_left += 2
+
+        for name, desc, color in exploits['stealth']:
+            text_lines.append((left_x + 1, y_left, name, color))  # Name in color
+            y_left += 1
+            text_lines.append((left_x + 1, y_left, desc, Colors.WHITE))  # Description in white
+            y_left += 1
+
+        y_left += 2  # Spacing between sections
+
+        # LEFT COLUMN - UTILITY EXPLOITS (2 lines per exploit)
+        text_lines.append((left_x, y_left, "UTILITY EXPLOITS:", Colors.CYAN))
+        y_left += 2
+
+        for name, desc, color in exploits['utility']:
+            text_lines.append((left_x + 1, y_left, name, color))  # Name in color
+            y_left += 1
+            text_lines.append((left_x + 1, y_left, desc, Colors.WHITE))  # Description in white
+            y_left += 1
+
+        # RIGHT COLUMN - STATUS EFFECTS (2 lines per effect)
+        y_right = 4
+        text_lines.append((right_x, y_right, "STATUS EFFECTS:", Colors.CYAN))
+        y_right += 2
+
+        for name, desc, color in effects['positive']:
+            text_lines.append((right_x + 1, y_right, name, color))  # Name in color
+            y_right += 1
+            text_lines.append((right_x + 1, y_right, desc, Colors.WHITE))  # Description in white
+            y_right += 1
+
+        y_right += 1  # Blank line between positive and negative effects
+
+        for name, desc, color in effects['negative']:
+            text_lines.append((right_x + 1, y_right, name, color))  # Name in color
+            y_right += 1
+            text_lines.append((right_x + 1, y_right, desc, Colors.WHITE))  # Description in white
+            y_right += 1
+
+        y_right += 2  # Spacing between sections
+
+        # RIGHT COLUMN - SURVIVAL TIPS (with wrapping for long lines)
+        text_lines.append((right_x, y_right, "SURVIVAL TIPS:", Colors.YELLOW))
+        y_right += 2
+
+        tips = HelpContent.get_survival_tips()
+        max_width = 28  # Right column width (reduced for more right padding)
+        for text, color in tips:
+            # Word wrap using textwrap
+            wrapped_lines = textwrap.wrap(text, width=max_width)
+            for line in wrapped_lines:
+                text_lines.append((right_x + 1, y_right, line, color))
+                y_right += 1
+            # Extra blank line after each complete tip
+            y_right += 2
+
         return {
-            'title': 'CONTROLS & MECHANICS (Page 3/3)',
+            'title': 'EXPLOITS & STATUS EFFECTS (Page 3/3)',
             'sprites': [],  # Text-only page
-            'text_lines': [
-                # Blank line after title
-
-                # Left column - Controls & Objective
-                (5, 5, "CONTROLS:", Colors.CYAN),
-                (5, 6, "Move: ↑↓←→/WASD/QEZC/Numpad", Colors.WHITE),
-                (5, 7, "1-5: Use exploits", Colors.WHITE),
-                (5, 8, "I: Inventory", Colors.WHITE),
-                (5, 9, "L: Look mode", Colors.WHITE),
-                (5, 10, "F: Story fragments", Colors.WHITE),
-                (5, 11, "V: Achievements", Colors.WHITE),
-                (5, 12, "?: Help  ESC: Menu", Colors.WHITE),
-                (5, 13, "Shift+F12: Export debug pkg", Colors.WHITE),
-
-                (5, 15, "OBJECTIVE:", Colors.CYAN),
-                (5, 16, "Reach gateway to advance", Colors.WHITE),
-                (5, 17, "Avoid trace/detection", Colors.YELLOW),
-                (5, 18, "Death = Save deleted!", Colors.RED),
-
-                (5, 20, "HEAT:", Colors.CYAN),
-                (5, 21, "Builds from exploits", Colors.WHITE),
-                (5, 22, "Damage at 100C+", Colors.RED),
-                (5, 23, "Use cooling nodes", Colors.LIGHT_GRAY),
-
-                (5, 25, "TRACE:", Colors.CYAN),
-                (5, 26, "Rises when spotted", Colors.WHITE),
-                (5, 27, "Admin spawns @ max", Colors.RED),
-                (5, 28, "Ghost nodes reduce", Colors.LIGHT_GRAY),
-
-                # Right column - Exploits & Shadows
-                (45, 5, "COMBAT EXPLOITS:", Colors.CYAN),
-                (45, 6, "BufferOverflow: 40dmg melee", self.NEON_PINK),
-                (45, 7, "CodeInject: 25dmg 5range", self.NEON_PINK),
-                (45, 8, "LogicBomb: 15dmg area", self.NEON_PINK),
-                (45, 9, "DenialOfService: Disable", self.NEON_PINK),
-
-                (45, 11, "UTILITY/STEALTH:", Colors.CYAN),
-                (45, 12, "SystemHop: Teleport", self.NEON_PINK),
-                (45, 13, "TrafficMasq: Invisible", self.NEON_PINK),
-                (45, 14, "DecoySwarm: Distract", self.NEON_PINK),
-                (45, 15, "ThreatScan: See enemies", self.NEON_PINK),
-                (45, 16, "NetworkScan: See nodes", self.NEON_PINK),
-                (45, 17, "LogWiper/Antivirus/Leak", self.NEON_PINK),
-
-                (45, 19, "BLIND SPOTS (♠):", Colors.CYAN),
-                (45, 20, "Hide from enemies", Colors.ELECTRIC_PURPLE),
-                (45, 21, "+10 damage bonus!", Colors.YELLOW),
-
-                (45, 23, "RAM:", Colors.CYAN),
-                (45, 24, "Limits exploit slots", Colors.WHITE),
-                (45, 25, "Max 5 equipped", Colors.LIGHT_GRAY),
-
-                # Full-width tips at bottom - centered, non-bulleted
-                (30, 31, "SURVIVAL TIPS:", Colors.YELLOW),
-                (8, 33, "Attacking from blind spots gives +10 damage bonus to all attacks!", Colors.WHITE),
-                (11, 34, "Move between attacks! Attacking from same spot adds +1 heat", Colors.YELLOW),
-                (6, 36, "Watch your trace level to avoid the Admin Avatar and use ghost nodes", Colors.RED),
-                (18, 37, "or log wiper to reduce your trace level", Colors.RED),
-                (8, 39, "If you overheat, you take CPU damage but can still use exploits", Colors.CYAN),
-            ]
+            'text_lines': text_lines
         }
 
+    # Rendering methods (unchanged from original)
     def render(self, console: tcod.console.Console) -> None:
-        """
-        Render the current help page.
-
-        IMPORTANT: This method only renders to the console.
-        The SDL sprite rendering is done separately in render_sprites() method.
-        The calling code (game_loop.py) will handle compositing:
-        1. Clear SDL renderer
-        2. Call render_sprites() to render sprites to SDL
-        3. Call render() to render text to console
-        4. Convert console to texture and composite over sprites
-        5. Present
-
-        This method renders text with transparency zones for sprites.
-        """
-        # Build pages on first render
+        """Render the current help page."""
         self._build_pages()
 
         if not self.pages or self.current_page >= len(self.pages):
             logging.error(f"Invalid page state: current={self.current_page}, total={len(self.pages)}")
             return
 
-        # Get current page data
         page = self.pages[self.current_page]
-
-        # Render text layer (Console with transparency)
         self._render_text_layer(console, page)
 
     def render_sprites(self):
-        """
-        Render sprites directly to SDL renderer.
-        Must be called BEFORE render() to ensure sprites appear behind text.
-        Only called when in graphics mode.
-        """
-        # Build pages on first render
-        self._build_pages()
+        """Render sprites directly to SDL renderer."""
+        if not self.pages_built:
+            self._build_pages()
 
         if not self.pages or self.current_page >= len(self.pages):
-            logging.warning(f"No pages built or invalid page index: {self.current_page}/{len(self.pages)}")
             return
 
-        # Get current page data
         page = self.pages[self.current_page]
 
-        # Render sprite layer (SDL)
-        self._render_sprite_layer(page)
-
-    def _render_sprite_layer(self, page: dict):
-        """Render sprites directly to SDL renderer."""
-        if not hasattr(self.context, 'sdl_renderer'):
-            logging.warning("SDL renderer not available for sprite rendering")
+        if not page.get('sprites'):
             return
 
         renderer = self.context.sdl_renderer
-        if renderer is None:
-            logging.warning("SDL renderer is None, cannot render sprites")
-            return
+        # Get actual window dimensions in pixels (not console dimensions!)
+        window_width, window_height = self.context.sdl_window.size
 
-        # Note: Don't clear renderer here - caller should handle that
-        # We only render our sprites
+        for sprite_data in page['sprites']:
+            sprite_name, char_x, char_y, scale = sprite_data
 
-        sprite_count = len(page.get('sprites', []))
-        logging.debug(f"Rendering {sprite_count} sprites for page '{page.get('title', 'Unknown')}'")
+            texture = self.tile_manager.get_tile(sprite_name)
+            if texture is None:
+                raise RuntimeError(
+                    f"Failed to load sprite '{sprite_name}' for help menu.\n"
+                    f"This sprite should be available in the TileManager.\n"
+                    f"Check that all sprites are properly loaded during initialization."
+                )
 
-        for sprite_data in page.get('sprites', []):
-            sprite_name, console_x, console_y, scale = sprite_data
-            self._render_sprite(renderer, sprite_name, console_x, console_y, scale)
+            # Use CoordinateHelpers to convert console coords to pixels
+            pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
+                console_x=char_x,
+                console_y=char_y,
+                window_width=window_width,
+                window_height=window_height,
+                console_width=GameConfig.SCREEN_WIDTH,
+                console_height=GameConfig.SCREEN_HEIGHT
+            )
 
-    def _render_sprite(self, renderer, sprite_name: str, console_x: int, console_y: int, scale: float):
-        """
-        Render a single sprite at the specified console position.
+            scaled_width = int(self.tile_manager.tile_width * scale)
+            scaled_height = int(self.tile_manager.tile_height * scale)
 
-        Args:
-            renderer: SDL renderer
-            sprite_name: Name of sprite to render (from tile mappings)
-            console_x: X position in console grid
-            console_y: Y position in console grid
-            scale: Scale multiplier (1.0 = normal game scale)
-        """
-        # Get texture from tile manager
-        texture = self.tile_manager.get_tile(sprite_name)
-
-        if texture is None:
-            # Fail hard - no fallback
-            raise RuntimeError(f"Failed to load sprite '{sprite_name}' for graphical help")
-
-        # Calculate pixel rect for sprite
-        tile_rect = self._get_tile_rect(console_x, console_y, scale)
-
-        logging.debug(f"Rendering sprite '{sprite_name}' at console ({console_x},{console_y}) -> pixel rect {tile_rect}")
-
-        # Render sprite
-        renderer.copy(texture, dest=tile_rect)
-
-    def _get_tile_rect(self, console_x: int, console_y: int, scale: float = 1.0):
-        """
-        Calculate pixel rectangle for a sprite at console position.
-
-        CRITICAL: Sprites must be the SAME SIZE as in-game (tile_width x tile_height).
-        The console is scaled to fit the window, so we calculate pixels per character
-        based on window size divided by console size.
-
-        Args:
-            console_x: Console grid X coordinate (0-79 for 80-wide console)
-            console_y: Console grid Y coordinate (0-49 for 50-tall console)
-            scale: Scale multiplier for sprite size (usually 1.0)
-
-        Returns:
-            Tuple of (x, y, width, height) in pixels for SDL rendering
-        """
-        # Calculate positioning using window scaling (console coords -> pixels)
-        pixel_x, pixel_y = self._console_to_pixels(console_x, console_y)
-
-        # Use TileManager for size (same as in-game for consistency)
-        sprite_width = int(self.tile_manager.tile_width * scale)
-        sprite_height = int(self.tile_manager.tile_height * scale)
-
-        return (pixel_x, pixel_y, sprite_width, sprite_height)
-
-    def _console_to_pixels(self, console_x: int, console_y: int) -> Tuple[int, int]:
-        """
-        Convert console coordinates to pixel coordinates for menu sprite positioning.
-
-        Args:
-            console_x: Console X coordinate (0-79)
-            console_y: Console Y coordinate (0-49)
-
-        Returns:
-            Tuple of (pixel_x, pixel_y)
-        """
-        # Get window size from SDL
-        try:
-            if hasattr(self.context, 'sdl_window') and self.context.sdl_window:
-                window_width, window_height = self.context.sdl_window.size
-            else:
-                window_width, window_height = 800, 600
-        except (AttributeError, TypeError) as e:
-            logging.debug(f"Failed to get SDL window size, using defaults: {e}")
-            window_width, window_height = 800, 600
-
-        # Use CoordinateHelpers for consistent coordinate conversion
-        return CoordinateHelpers.char_to_pixel_coords(
-            console_x, console_y, window_width, window_height
-        )
+            dest_rect = (pixel_x, pixel_y, scaled_width, scaled_height)
+            renderer.copy(texture, dest=dest_rect)
 
     def _render_text_layer(self, console: tcod.console.Console, page: dict):
-        """
-        Render text overlay with transparency for sprite areas.
-
-        Args:
-            console: Console to render to
-            page: Page data dictionary
-        """
-        # Clear console
+        """Render text layer with transparency for sprites."""
         console.clear()
 
-        # Make ENTIRE console transparent first (like the game does for the game area)
-        # This allows ALL sprites to show through
-        # Use CoordinateHelpers to handle transparency correctly across all console orders
         CoordinateHelpers.set_alpha_region(
             console, x=0, y=0, width=console.width, height=console.height, alpha=0
         )
 
-        # Now render text - text areas will become opaque automatically
         # Render title
         title = page.get('title', 'HELP')
         title_x = GameConfig.SCREEN_WIDTH // 2 - len(title) // 2
@@ -460,92 +449,53 @@ class GraphicalHelpMenu:
         render_char_safe(console, indicator_x, 2, page_indicator, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK)
 
         # Render text lines
-        for text_data in page.get('text_lines', []):
-            x, y, text, color = text_data
+        for x, y, text, color in page.get('text_lines', []):
             render_char_safe(console, x, y, text, fg=color, bg=Colors.BLACK)
 
-        # Render navigation help at bottom
+        # Render navigation help
         nav_text = "←→: Change Page  │  ESC: Back"
         nav_x = GameConfig.SCREEN_WIDTH // 2 - len(nav_text) // 2
         render_char_safe(console, nav_x, GameConfig.SCREEN_HEIGHT - 2, nav_text, fg=Colors.CYAN, bg=Colors.BLACK)
 
-
+    # Input handling methods (unchanged from original)
     def handle_input(self, event) -> str:
-        """
-        Handle input for graphical help menu.
-
-        Args:
-            event: TCOD event
-
-        Returns:
-            'back' to exit, '' to continue
-        """
-        # Handle page navigation keys
+        """Handle input for graphical help menu."""
         if isinstance(event, tcod.event.KeyDown):
             if event.sym == tcod.event.KeySym.LEFT or event.sym == tcod.event.KeySym.UP:
                 self._previous_page()
-                return ""  # Stay in help
+                return ""
             elif event.sym == tcod.event.KeySym.RIGHT or event.sym == tcod.event.KeySym.DOWN:
                 self._next_page()
-                return ""  # Stay in help
+                return ""
             elif UniversalInputHandler.is_escape_key(event):
                 return "back"
 
         return ""
 
     def handle_mouse_motion(self, event) -> bool:
-        """Handle mouse motion - hover zones for page navigation."""
-        # Could add visual feedback for hover zones in the future
+        """Handle mouse motion (not used in graphical help menu)."""
         return False
 
     def handle_mouse_click(self, event) -> str:
-        """
-        Handle mouse click - click left/right zones to navigate pages.
-
-        Left third of screen: previous page
-        Right third of screen: next page
-        """
-        if not hasattr(event, 'position') or not event.position:
-            return ""
-
-        from game_config import GameConfig
-
-        # Divide screen into thirds
-        left_zone = GameConfig.SCREEN_WIDTH // 3
-        right_zone = GameConfig.SCREEN_WIDTH * 2 // 3
-
-        if event.position.x < left_zone:
-            # Left zone - previous page
-            self._previous_page()
-        elif event.position.x > right_zone:
-            # Right zone - next page
-            self._next_page()
-        else:
-            # Middle zone - close help menu
-            return "back"
-
+        """Handle mouse clicks (not used in graphical help menu)."""
         return ""
 
     def handle_mouse_wheel(self, event) -> bool:
-        """Handle mouse wheel - scroll pages."""
+        """Handle mouse wheel - navigate pages."""
         if hasattr(event, 'y'):
             if event.y > 0:
-                # Scroll up = previous page
                 self._previous_page()
             elif event.y < 0:
-                # Scroll down = next page
                 self._next_page()
             return True
         return False
-
-    def _previous_page(self):
-        """Navigate to previous page."""
-        if self.current_page > 0:
-            self.current_page -= 1
-            logging.debug(f"Help page: {self.current_page + 1}/{len(self.pages)}")
 
     def _next_page(self):
         """Navigate to next page."""
         if self.current_page < len(self.pages) - 1:
             self.current_page += 1
-            logging.debug(f"Help page: {self.current_page + 1}/{len(self.pages)}")
+
+    def _previous_page(self):
+        """Navigate to previous page."""
+        if self.current_page > 0:
+            self.current_page -= 1

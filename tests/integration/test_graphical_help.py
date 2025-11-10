@@ -43,17 +43,38 @@ class TestGraphicalHelpFactory:
 
         assert isinstance(help_menu, GraphicalHelpMenu)
 
-    def test_falls_back_to_help_menu_when_tile_manager_missing(self):
-        """Factory should fall back to HelpMenu if tile_manager is None."""
+    def test_raises_error_when_tile_manager_missing(self):
+        """Factory should raise RuntimeError if tile_manager is None in graphics mode."""
         settings = GameSettings()
         settings.graphics_mode = "graphics"
 
         mock_context = Mock()
 
-        help_menu = create_help_menu(settings, context=mock_context, tile_manager=None)
+        # Should raise RuntimeError with clear message about missing TileManager
+        with pytest.raises(RuntimeError) as exc_info:
+            create_help_menu(settings, context=mock_context, tile_manager=None)
 
-        assert isinstance(help_menu, HelpMenu)
-        assert not isinstance(help_menu, GraphicalHelpMenu)
+        # Verify error message is helpful
+        error_msg = str(exc_info.value)
+        assert "TileManager" in error_msg
+        assert "tile_manager is None" in error_msg
+        assert "not initialized properly" in error_msg
+
+    def test_raises_error_when_context_missing(self):
+        """Factory should raise RuntimeError if context is None in graphics mode."""
+        settings = GameSettings()
+        settings.graphics_mode = "graphics"
+
+        mock_tile_manager = Mock()
+
+        # Should raise RuntimeError with clear message about missing context
+        with pytest.raises(RuntimeError) as exc_info:
+            create_help_menu(settings, context=None, tile_manager=mock_tile_manager)
+
+        # Verify error message is helpful
+        error_msg = str(exc_info.value)
+        assert "context" in error_msg
+        assert "context is None" in error_msg
 
 
 class TestGraphicalHelpMenuBasics:
@@ -66,6 +87,8 @@ class TestGraphicalHelpMenuBasics:
 
         self.mock_context = Mock()
         self.mock_context.sdl_renderer = Mock()
+        self.mock_context.recommended_console_size = Mock(return_value=(1280, 800))
+        self.mock_context.sdl_window.size = (1280, 800)
 
         self.mock_tile_manager = Mock()
         self.mock_tile_manager.tile_width = 20
@@ -125,6 +148,8 @@ class TestGraphicalHelpMenuNavigation:
 
         self.mock_context = Mock()
         self.mock_context.sdl_renderer = Mock()
+        self.mock_context.recommended_console_size = Mock(return_value=(1280, 800))
+        self.mock_context.sdl_window.size = (1280, 800)
 
         self.mock_tile_manager = Mock()
         self.mock_tile_manager.tile_width = 20
@@ -223,6 +248,8 @@ class TestGraphicalHelpMenuRendering:
 
         self.mock_context = Mock()
         self.mock_context.sdl_renderer = Mock()
+        self.mock_context.recommended_console_size = Mock(return_value=(1280, 800))
+        self.mock_context.sdl_window.size = (1280, 800)
 
         self.mock_tile_manager = Mock()
         self.mock_tile_manager.tile_width = 20
@@ -309,6 +336,7 @@ class TestGraphicalHelpMenuSpriteNames:
 
         mock_context = Mock()
         mock_context.sdl_renderer = Mock()
+        mock_context.recommended_console_size = Mock(return_value=(1280, 800))
 
         mock_tile_manager = Mock()
         mock_tile_manager.tile_width = 20
@@ -321,30 +349,41 @@ class TestGraphicalHelpMenuSpriteNames:
         console = tcod.console.Console(80, 50)
         menu.render(console)
 
-        # Find enemy pages
-        enemy_pages = [p for p in menu.pages if 'ENEMY' in p['title']]
+        # Find Items & Enemies page (enemies are now on Page 2)
+        items_enemies_page = None
+        for page in menu.pages:
+            if 'ITEMS' in page['title'] and 'ENEMIES' in page['title']:
+                items_enemies_page = page
+                break
 
-        # Collect all enemy sprite names
-        enemy_sprites = []
-        for page in enemy_pages:
-            for sprite_data in page['sprites']:
-                sprite_name = sprite_data[0]
-                enemy_sprites.append(sprite_name)
+        assert items_enemies_page is not None, "Items & Enemies page should exist"
 
-        # Check capitalization
+        # Collect all sprite names
+        all_sprites = [sprite_data[0] for sprite_data in items_enemies_page['sprites']]
+
+        # Filter to only enemy sprites (capitalized names)
+        enemy_sprites = [name for name in all_sprites if name[0].isupper()]
+
+        # Check all enemies are present and correctly capitalized
         expected_enemies = ['Scanner', 'Patrol', 'Bot', 'Firewall',
                            'Hunter', 'Virus', 'Inhibitor', 'Admin Avatar']
 
-        for sprite_name in enemy_sprites:
-            assert sprite_name in expected_enemies, f"Enemy sprite '{sprite_name}' not in expected list"
+        # Verify all expected enemies are in the sprite list
+        for expected in expected_enemies:
+            assert expected in enemy_sprites, f"Expected enemy '{expected}' not found in sprite list"
 
-    def test_item_sprite_names_are_lowercase(self):
-        """Test item and map sprites use lowercase names."""
+        # Verify only expected enemies are present (no extras)
+        for sprite_name in enemy_sprites:
+            assert sprite_name in expected_enemies, f"Unexpected enemy sprite '{sprite_name}' found"
+
+    def test_items_enemies_page_has_correct_sprites(self):
+        """Test Items & Enemies page has correct sprites (items lowercase, enemies capitalized)."""
         settings = GameSettings()
         settings.graphics_mode = "graphics"
 
         mock_context = Mock()
         mock_context.sdl_renderer = Mock()
+        mock_context.recommended_console_size = Mock(return_value=(1280, 800))
 
         mock_tile_manager = Mock()
         mock_tile_manager.tile_width = 20
@@ -357,27 +396,35 @@ class TestGraphicalHelpMenuSpriteNames:
         console = tcod.console.Console(80, 50)
         menu.render(console)
 
-        # Find items page
-        items_page = None
+        # Find Items & Enemies page (Page 2/3)
+        items_enemies_page = None
         for page in menu.pages:
-            if 'ITEMS' in page['title']:
-                items_page = page
+            if 'ITEMS' in page['title'] and 'ENEMIES' in page['title']:
+                items_enemies_page = page
                 break
 
-        assert items_page is not None, "Items page should exist"
+        assert items_enemies_page is not None, "Items & Enemies page should exist"
 
-        # Collect all sprite names on items page (now includes map symbols!)
-        item_sprites = [sprite_data[0] for sprite_data in items_page['sprites']]
+        # Collect all sprite names on page
+        all_sprites = [sprite_data[0] for sprite_data in items_enemies_page['sprites']]
 
-        # Check lowercase - now includes all upgrades, map symbols, and story
-        expected_sprites = ['codehack', 'exploit',
-                           'cpu_node', 'cooling_node', 'ghost_node',
-                           'cpu_upgrade', 'ram_upgrade', 'cooling_upgrade',
-                           'player', 'floor', 'wall', 'blind_spot', 'gateway',
-                           'story_fragment']
+        # Expected lowercase sprites (items, nodes, upgrades) - updated for new layout
+        expected_lowercase = ['codehack', 'exploit',
+                             'cpu_node', 'cooling_node', 'ghost_node',
+                             'cpu_upgrade', 'ram_upgrade', 'cooling_upgrade']
 
-        for sprite_name in item_sprites:
-            assert sprite_name in expected_sprites, f"Sprite '{sprite_name}' not in expected list"
+        # Expected capitalized sprites (enemies)
+        expected_capitalized = ['Scanner', 'Firewall', 'Patrol', 'Bot',
+                               'Hunter', 'Virus', 'Inhibitor', 'Admin Avatar']
+
+        # Verify all expected sprites are present
+        for sprite_name in expected_lowercase + expected_capitalized:
+            assert sprite_name in all_sprites, f"Expected sprite '{sprite_name}' not found in page"
+
+        # Verify no unexpected sprites
+        for sprite_name in all_sprites:
+            assert sprite_name in expected_lowercase + expected_capitalized, \
+                f"Unexpected sprite '{sprite_name}' found in page"
 
 
 if __name__ == '__main__':
