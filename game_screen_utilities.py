@@ -122,7 +122,7 @@ class ScreenRenderingUtils:
                                 start_x: int, start_y: int, max_width: int,
                                 max_height: int = None, color: tuple = Colors.WHITE) -> int:
         """
-        Render text with word wrapping.
+        Render text with word wrapping using TCOD's built-in wrapping.
 
         Args:
             console: Console to render to
@@ -136,46 +136,35 @@ class ScreenRenderingUtils:
         Returns:
             Final Y position after rendering (or max_height if truncated)
         """
-        lines = text.split('\n')
-        y_offset = start_y
-
-        for line in lines:
-            # Check if we've reached the height limit
-            if max_height and y_offset >= max_height:
-                render_char_safe(console, start_x, y_offset - 1, "... [Text continues]", fg=Colors.YELLOW)
+        # Use TCOD's built-in word wrapping with console.print()
+        # The height parameter limits how many lines are rendered
+        if max_height:
+            available_height = max_height - start_y
+            lines_printed = console.print(
+                x=start_x,
+                y=start_y,
+                string=text,
+                fg=color,
+                width=max_width,
+                height=available_height
+            )
+            # Check if text was truncated
+            if start_y + lines_printed >= max_height:
+                # Show truncation indicator
+                if max_height > start_y:
+                    render_char_safe(console, start_x, max_height - 1, "... [Text continues]", fg=Colors.YELLOW)
                 return max_height
-
-            line = line.strip()
-            if not line:
-                y_offset += 1
-                continue
-
-            # Word wrap long lines
-            if len(line) <= max_width:
-                render_char_safe(console, start_x, y_offset, line, fg=color)
-                y_offset += 1
-            else:
-                words = line.split(' ')
-                current_line = ""
-
-                for word in words:
-                    if len(current_line + word) + 1 <= max_width:
-                        current_line += (word if not current_line else " " + word)
-                    else:
-                        if current_line:
-                            render_char_safe(console, start_x, y_offset, current_line, fg=color)
-                            y_offset += 1
-                            if max_height and y_offset >= max_height:
-                                render_char_safe(console, start_x, y_offset - 1, "...", fg=Colors.YELLOW)
-                                return max_height
-                        current_line = word
-
-                if current_line:
-                    if not max_height or y_offset < max_height:
-                        render_char_safe(console, start_x, y_offset, current_line, fg=color)
-                        y_offset += 1
-
-        return y_offset
+            return start_y + lines_printed
+        else:
+            # No height limit, render all text
+            lines_printed = console.print(
+                x=start_x,
+                y=start_y,
+                string=text,
+                fg=color,
+                width=max_width
+            )
+            return start_y + lines_printed
 
     @staticmethod
     def render_scroll_indicators(console: tcod.console.Console, x: int,

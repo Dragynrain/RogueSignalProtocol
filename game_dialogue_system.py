@@ -22,6 +22,7 @@ from typing import List, Tuple, Optional, Dict, Any
 
 import tcod.console
 import tcod.event
+import tcod.constants
 
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Colors, ensure_color_tuple
@@ -265,13 +266,18 @@ class UnifiedRenderer:
             "Failed to format dialogue message"
         )
 
-        # Render message (word-wrapped)
-        message_lines = UnifiedRenderer._wrap_text(formatted_message, box_width - 4)
+        # Render message (word-wrapped using TCOD's built-in wrapping)
         message_y = box_y + 3
-        for i, line in enumerate(message_lines):
-            if message_y + i < box_y + box_height - 3:  # Leave room for options
-                render_char_safe(console, box_x + 2, message_y + i, line,
-                               fg=message_color, bg=bg_color)
+        max_message_lines = box_height - 6  # Leave room for title, options, and padding
+        console.print(
+            x=box_x + 2,
+            y=message_y,
+            string=formatted_message,
+            fg=message_color,
+            bg=message_color,  # TCOD ignores bg in print(), handled by draw_bordered_box
+            width=box_width - 4,
+            alignment=tcod.constants.LEFT
+        )
 
         # Render options (centered at bottom) with hover highlighting
         options_y = box_y + box_height - 2
@@ -372,55 +378,6 @@ class UnifiedRenderer:
         else:
             return 1
 
-    @staticmethod
-    def _wrap_text(text: str, max_width: int) -> List[str]:
-        """
-        Wrap text to fit within max_width characters.
-
-        Handles long words by breaking them. Reused from old system.
-
-        Args:
-            text: Text to wrap
-            max_width: Maximum line width in characters
-
-        Returns:
-            List of wrapped lines
-        """
-        words = text.split()
-        lines = []
-        current_line = []
-        current_length = 0
-
-        for word in words:
-            word_length = len(word)
-
-            # If word itself is longer than max_width, break it
-            if word_length > max_width:
-                if current_line:
-                    lines.append(" ".join(current_line))
-                    current_line = []
-                    current_length = 0
-
-                # Break long word into chunks
-                for i in range(0, word_length, max_width):
-                    lines.append(word[i:i+max_width])
-                continue
-
-            # If adding word would exceed max_width, start new line
-            if current_length + word_length + len(current_line) > max_width:
-                if current_line:
-                    lines.append(" ".join(current_line))
-                current_line = [word]
-                current_length = word_length
-            else:
-                current_line.append(word)
-                current_length += word_length
-
-        # Add remaining words
-        if current_line:
-            lines.append(" ".join(current_line))
-
-        return lines
 
 
 # ============================================================================
