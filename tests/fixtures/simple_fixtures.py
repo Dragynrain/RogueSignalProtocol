@@ -146,3 +146,68 @@ def map_builder(width=30, height=30, walls=None, shadows=None,
         game_map.ghost_nodes.update(ghost_nodes)
 
     return game_map
+
+
+def minimal_mock_game():
+    """Create minimal mock game object for save/load testing.
+    Returns a Mock object that mimics GameEngine structure for SaveGameManager.
+    """
+    from unittest.mock import Mock
+
+    mock_game = Mock()
+    mock_game.level = 1
+    mock_game.turn = 10
+    mock_game.game_over = False
+    mock_game.admin_spawned = False
+
+    mock_player = Mock()
+    mock_player.x = 5
+    mock_player.y = 8
+    mock_player.last_position = Position(5, 8)
+    mock_player.cpu = 90
+    mock_player.max_cpu = 100
+    mock_player.heat = 15
+    mock_player.max_heat = 100
+    mock_player.trace_level = 0
+    mock_player.ram_total = 8
+    mock_player.speed_moves_remaining = 0
+    mock_player.temporary_effects = {}
+
+    mock_inventory = Mock()
+    mock_inventory.equipped_exploits = {}
+    mock_inventory.max_equipped_exploits = 8
+    mock_inventory.items = []
+    mock_player.inventory_manager = mock_inventory
+
+    mock_game.player = mock_player
+
+    mock_game_state = Mock()
+    mock_game_state.dungeon_seed = 54321
+    mock_game_state.threat_scan_turns = 0
+    mock_game_state.noise_locations = []
+    mock_game_state.distraction_points = {}
+    mock_game_state.revealed_special_nodes = {}
+    mock_game.game_state = mock_game_state
+
+    mock_map = Mock()
+    mock_map.code_hacks = {}
+    mock_map.exploit_pickups = {}
+    mock_map.permanent_upgrades = {}
+    mock_map.story_fragments = {}
+    mock_map.gateway = None
+    mock_map.explored_tiles = set()
+    mock_map.last_known_enemy_positions = {}
+    mock_game.game_map = mock_map
+
+    mock_game.enemies = []
+    mock_game.enemy_manager = Mock()
+    mock_game.enemy_manager.enemies = []
+
+    mock_game.code_hack_effects = {}
+    mock_game.discovered_code_effects = {}
+    mock_game.inventory_selection = 0
+    mock_game.lore_viewer_selection = 0
+    mock_game.overclock_confirmation = False
+    mock_game.overclock_exploit = None
+
+    return mock_game
