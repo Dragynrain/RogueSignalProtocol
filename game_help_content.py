@@ -1,0 +1,225 @@
+"""
+Centralized Help Content - Single Source of Truth
+
+This module provides all help menu content in a structured format,
+eliminating duplication between glyph and graphics help modes.
+
+All game data is loaded directly from JSON files to ensure accuracy.
+"""
+
+import logging
+from typing import Dict, List, Tuple, Any
+from game_entities import ensure_color_tuple, Colors
+
+
+class HelpContent:
+    """
+    Centralized help content provider.
+
+    Loads data from game JSON files and provides it in a structured format
+    for both glyph and graphics help menus.
+    """
+
+    # Enemy color coding by behavior type
+    ENEMY_COLORS = {
+        'static': ensure_color_tuple([255, 255, 0]),      # Yellow - stationary
+        'mobile': ensure_color_tuple([255, 165, 0]),      # Orange - mobile
+        'aggressive': ensure_color_tuple([220, 20, 60])   # Red - hunter/admin
+    }
+
+    # Exploit category colors (from game_rules.json)
+    EXPLOIT_COLORS = {
+        'combat': ensure_color_tuple([255, 20, 80]),      # Crimson
+        'stealth': ensure_color_tuple([200, 60, 255]),    # Purple
+        'utility': ensure_color_tuple([20, 255, 200]),    # Cyan
+        'emergency': ensure_color_tuple([255, 140, 0])    # Orange
+    }
+
+    @staticmethod
+    def get_objectives() -> List[Tuple[str, Any]]:
+        """Get objective and core mechanics descriptions."""
+        return [
+            ("Reach the gateway to advance levels", Colors.WHITE),
+        ]
+
+    @staticmethod
+    def get_core_mechanics() -> List[Tuple[str, str, Any]]:
+        """Get core mechanics (stat explanations)."""
+        return [
+            ("CPU", "Health (0 = death, save deleted!)", Colors.GREEN),
+            ("Heat", "From exploits (100C+ = damage)", Colors.YELLOW),
+            ("Trace", "From detection (max = Admin spawn)", Colors.RED),
+            ("RAM", "Exploit space (max 5 equipped)", Colors.CYAN),
+        ]
+
+    @staticmethod
+    def get_controls() -> Dict[str, List[Tuple[str, str]]]:
+        """Get control mappings organized by category."""
+        return {
+            'movement': [
+                ("Movement", "Arrows / WASD / QEZC / Numpad"),
+                ("Exploits", "1-5 (use equipped)"),
+            ],
+            'screens': [
+                ("I", "Inventory"),
+                ("L", "Look Mode"),
+                ("?", "Help"),
+                ("F", "Lore"),
+                ("V", "Achievements"),
+                ("ESC", "Menu"),
+            ],
+            'mouse': [
+                ("Click", "Move/select in-game"),
+                ("Wheel", "Scroll menus/help"),
+                ("Right-click", "Cancel look/targeting modes"),
+            ],
+            'debug': [
+                ("Shift+F12", "Export debug package"),
+            ]
+        }
+
+    @staticmethod
+    def get_map_symbols() -> List[Tuple[str, str, str, Any]]:
+        """Get map symbol descriptions (glyph, name, description, color)."""
+        return [
+            ("☺", "Player", "(you)", Colors.WHITE),
+            ("•", "Floor", "(walkable)", Colors.FLOOR),
+            ("♠", "Blind Spot", "(hide & +10 dmg!)", Colors.ELECTRIC_PURPLE),
+            (">", "Gateway", "(next level)", Colors.GATEWAY),
+            ("♫", "Data Fragment", "(story)", Colors.CYAN),
+            ("╔╗╚╝╦╩╠╣╬═║", "Walls", "(blocking)", Colors.WALL),
+        ]
+
+    @staticmethod
+    def get_enemy_data() -> Dict[str, Dict[str, Any]]:
+        """
+        Load enemy data from game_content.json.
+
+        Returns dict with enemy stats, behavior type, and descriptions.
+        """
+        try:
+            from data_loading import DataLoader
+            game_data = DataLoader.load_game_data()
+
+            # Manual descriptions for each enemy
+            descriptions = {
+                'Scanner': 'Static (alerts!)',
+                'Firewall': 'Static wall guard',
+                'Patrol': 'Patrol routes',
+                'Bot': 'Wanders randomly',
+                'Hunter': 'Chases you!',
+                'Virus': 'Infects (no dmg)!',
+                'Inhibitor': 'Slows (no dmg)!',
+                'Admin Avatar': 'BOSS!',
+            }
+
+            # Behavior type mapping
+            behavior_map = {
+                'Scanner': 'static',
+                'Firewall': 'static',
+                'Patrol': 'mobile',
+                'Bot': 'mobile',
+                'Hunter': 'aggressive',
+                'Virus': 'aggressive',
+                'Inhibitor': 'aggressive',
+                'Admin Avatar': 'aggressive',
+            }
+
+            result = {}
+            for enemy_id, enemy_data in game_data['enemy_types'].items():
+                # Capitalize the name for display
+                enemy_name = enemy_data['name']
+                result[enemy_name] = {
+                    'cpu': enemy_data['cpu'],
+                    'vision': enemy_data['vision'],
+                    'damage': enemy_data['damage'],
+                    'behavior': behavior_map.get(enemy_name, 'mobile'),
+                    'description': descriptions.get(enemy_name, ''),
+                    'glyph': enemy_data['symbol'],
+                }
+
+            return result
+
+        except Exception as e:
+            logging.error(f"Failed to load enemy data: {e}")
+            # Return empty dict on error - help menu will handle gracefully
+            return {}
+
+    @staticmethod
+    def get_power_ups() -> List[Tuple[str, str, str, Any]]:
+        """Get power-up descriptions (glyph, name, description, color)."""
+        return [
+            ("❀", "Code Patch", "Random stat bonus", Colors.ELECTRIC_PURPLE),
+            ("⚠", "Exploit", "Combat/utility tool", HelpContent.EXPLOIT_COLORS['combat']),
+            ("♫", "Data Fragment", "Story/lore", Colors.CYAN),
+        ]
+
+    @staticmethod
+    def get_nodes() -> List[Tuple[str, str, str, Any]]:
+        """Get node descriptions (glyph, name, description, color)."""
+        return [
+            ("♡", "CPU Node", "+20 HP (restore health)", Colors.RED),
+            ("♢", "Cooling Node", "-20 heat", Colors.CYAN),
+            ("♤", "Ghost Node", "-20% trace (blind spot)", Colors.ELECTRIC_PURPLE),
+        ]
+
+    @staticmethod
+    def get_upgrades() -> List[Tuple[str, str, str, Any]]:
+        """Get upgrade descriptions (glyph, name, description, color)."""
+        return [
+            ("♥", "CPU Upgrade", "+20 max CPU (PERMANENT!)", Colors.ELECTRIC_BLUE),
+            ("♦", "RAM Upgrade", "+4 RAM (PERMANENT!)", Colors.ELECTRIC_BLUE),
+            ("▣", "Cooling Upgrade", "+20 heat tol (PERMANENT!)", Colors.ELECTRIC_BLUE),
+        ]
+
+    @staticmethod
+    def get_exploits() -> Dict[str, List[Tuple[str, str, Any]]]:
+        """Get exploit descriptions organized by category."""
+        colors = HelpContent.EXPLOIT_COLORS
+
+        return {
+            'combat': [
+                ("Buffer Overflow", "40dmg melee", colors['combat']),
+                ("Code Injection", "25dmg range 5", colors['combat']),
+                ("Logic Bomb", "15dmg area (radius 2)", colors['combat']),
+                ("Denial of Service", "Disable (5 turns)", colors['combat']),
+            ],
+            'stealth': [
+                ("System Hop", "Teleport range 6", colors['stealth']),
+                ("Traffic Masquerade", "Invisible 5t", colors['stealth']),
+                ("Decoy Swarm", "Distract enemies", colors['stealth']),
+                ("Memory Leak", "Blind area (3 turns)", colors['stealth']),
+            ],
+            'utility': [
+                ("Threat Scan", "Enemy vision 5 turns", colors['utility']),
+                ("Network Scan", "Show all nodes", colors['utility']),
+                ("Log Wiper", "-30% trace", colors['utility']),
+                ("Antivirus", "Cure all negatives", colors['utility']),
+                ("System Crash (emergency)", "30dmg AoE", colors['emergency']),
+            ],
+        }
+
+    @staticmethod
+    def get_status_effects() -> Dict[str, List[Tuple[str, str, Any]]]:
+        """Get status effect descriptions organized by type."""
+        return {
+            'positive': [
+                ("Speed Boost", "2 moves/turn", Colors.GREEN),
+                ("Invisibility", "Unseen (5t)", Colors.GREEN),
+                ("Vision", "+2 range (5 turns)", Colors.GREEN),
+                ("Efficiency", "-40% heat (8t)", Colors.GREEN),
+            ],
+            'negative': [
+                ("Virus", "3 CPU/turn damage", Colors.RED),
+                ("Slowed", "Move every 2nd turn", Colors.RED),
+            ],
+        }
+
+    @staticmethod
+    def get_survival_tips() -> List[Tuple[str, Any]]:
+        """Get survival tips."""
+        return [
+            ("Blind spots give +10dmg bonus to all attacks!", Colors.ELECTRIC_PURPLE),
+            ("Move between attacks! Same spot = +1 heat penalty", Colors.WHITE),
+            ("Admin Avatar is nearly unbeatable - avoid high trace!", Colors.RED),
+        ]

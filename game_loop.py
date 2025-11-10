@@ -268,6 +268,18 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     # Only recreate help menu if graphics mode changed (preserves page state)
                     if menus.get('_help_menu_mode') != settings.graphics_mode:
                         logging.info(f"Graphics mode changed, recreating help menu: {menus.get('_help_menu_mode')} -> {settings.graphics_mode}")
+
+                        # Create TileManager if switching to graphics mode and it doesn't exist
+                        if settings.graphics_mode == "graphics" and menus.get('_tile_manager') is None:
+                            try:
+                                from game_graphics_tiles import TileManager
+                                menus['_tile_manager'] = TileManager(menus['_context'], settings)
+                                logging.info("Created TileManager for graphics mode help menu")
+                            except Exception as e:
+                                logging.error(f"Failed to create TileManager: {e}")
+                                # Fall back to glyph mode
+                                settings.graphics_mode = "glyph"
+
                         menus['help_menu'] = create_help_menu(settings, menus['_context'], menus['_tile_manager'])
                         menus['_help_menu_mode'] = settings.graphics_mode
                     current_menu = menus['help_menu']
@@ -423,6 +435,18 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                     # Only recreate help menu if graphics mode changed (preserves page state)
                     if menus.get('_help_menu_mode') != settings.graphics_mode:
                         logging.info(f"Graphics mode changed, recreating help menu: {menus.get('_help_menu_mode')} -> {settings.graphics_mode}")
+
+                        # Create TileManager if switching to graphics mode and it doesn't exist
+                        if settings.graphics_mode == "graphics" and menus.get('_tile_manager') is None:
+                            try:
+                                from game_graphics_tiles import TileManager
+                                menus['_tile_manager'] = TileManager(menus['_context'], settings)
+                                logging.info("Created TileManager for graphics mode help menu")
+                            except Exception as e:
+                                logging.error(f"Failed to create TileManager: {e}")
+                                # Fall back to glyph mode
+                                settings.graphics_mode = "glyph"
+
                         menus['help_menu'] = create_help_menu(settings, menus['_context'], menus['_tile_manager'])
                         menus['_help_menu_mode'] = settings.graphics_mode
                     current_menu = menus['help_menu']

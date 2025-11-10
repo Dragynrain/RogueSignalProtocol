@@ -246,13 +246,16 @@ class TestHelpMenu:
     def test_help_menu_has_help_sections(self):
         """HelpMenu contains help information."""
         help_menu = HelpMenu()
-        # Should have help sections method
-        assert hasattr(help_menu, '_get_help_sections')
+        # Should have page building methods
+        assert hasattr(help_menu, '_build_page_1')
+        assert hasattr(help_menu, '_build_page_2')
+        assert hasattr(help_menu, '_build_page_3')
+        assert hasattr(help_menu, '_build_page_content')
 
-        # Get help sections should return content
-        help_sections = help_menu._get_help_sections()
-        assert help_sections is not None
-        assert len(help_sections) > 0
+        # Should be able to build page content and return lines
+        page_content = help_menu._build_page_content()
+        assert page_content is not None
+        assert len(page_content) > 0
 
 
 class TestLoreMenu:
