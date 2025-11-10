@@ -29,45 +29,32 @@ git commit -m "fix"
 # → Fix tests, then commit succeeds
 ```
 
-### Set Up Pre-Commit Hook
+### Pre-Commit Hook (ALREADY CONFIGURED)
 
-Create `.git/hooks/pre-commit` (no extension!):
+The pre-commit hook is already set up at `.git/hooks/pre-commit`:
 
 ```bash
 #!/bin/bash
-# Pre-commit hook: Run fast tests before allowing commit
-
-echo "Running pre-commit tests..."
-
-# Run fast tests only (unit + integration)
-.venv/Scripts/python.exe -m pytest tests/unit/ tests/integration/ \
-    -q --tb=line --maxfail=5 -x
-
-# Check exit code
+echo "Running full test suite before commit..."
+.venv/Scripts/python.exe -m pytest tests/
 if [ $? -ne 0 ]; then
     echo ""
-    echo "❌ Tests failed! Commit blocked."
-    echo "Fix the tests, then try again."
-    echo ""
-    echo "To bypass (EMERGENCY ONLY): git commit --no-verify"
+    echo "=========================================="
+    echo "Tests failed! Commit aborted."
+    echo "Fix the failing tests or use --no-verify to skip"
+    echo "=========================================="
     exit 1
 fi
-
-echo "✅ All tests passed!"
-exit 0
-```
-
-Make it executable:
-```bash
-chmod +x .git/hooks/pre-commit
 ```
 
 **What this does:**
 - Runs automatically before every commit
 - Blocks commit if tests fail
-- Runs FAST tests only (< 5 seconds)
-- Gives clear error messages
-- Can be bypassed in emergencies
+- Runs FULL test suite (all unit + integration tests)
+- Shows all test output for immediate debugging
+- Can be bypassed in emergencies: `git commit --no-verify`
+
+**No manual testing needed** - The hook handles it automatically!
 
 ---
 

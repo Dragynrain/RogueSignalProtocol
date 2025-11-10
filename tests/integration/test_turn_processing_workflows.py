@@ -204,6 +204,9 @@ class TestTemporaryEffectDuration:
     def test_multiple_temporary_effects_tracked_separately(self, basic_game_engine):
         """Test multiple temporary effects are tracked and decremented separately."""
 
+        # Clear enemies to avoid inhibitor attacks interfering with test
+        basic_game_engine.enemies = []
+
         # Apply multiple effects
         basic_game_engine.player.temporary_effects['speed_boost_turns'] = 5
         basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 3
