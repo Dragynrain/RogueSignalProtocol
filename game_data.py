@@ -60,8 +60,8 @@ class GameData:
                                            "Devastating melee attack (40 damage, 1 tile range)", 0, 0),  # High single-target damage
         'code_injection': ExploitDefinition("Code Injection", 2, 20, 5, "combat", 25, TargetingMode.SINGLE,
                                           "Ranged attack (25 damage, 5 tile range)", 0, 0),  # Moderate ranged damage
-        'system_crash': ExploitDefinition("System Crash", 3, 50, 0, "emergency", 30, TargetingMode.NONE,
-                                        "Emergency panic button - crashes and stuns all enemies within 3 spaces for 3 turns", 3, 3),  # Emergency untargeted AoE with 3-turn stun duration, radius 3
+        'system_crash': ExploitDefinition("System Crash", 3, 35, 0, "emergency", 30, TargetingMode.NONE,
+                                        "CRASHES THE SYSTEM YOU'RE ON! Self-damage + AoE stun (30 self-dmg, 30 dmg to enemies, 3t stun, radius 3)", 3, 3, 0, 0, 0, 30, "30dmg AoE + stun (SELF-DAMAGE!)"),  # Emergency with self-damage
         'threat_scan': ExploitDefinition("Threat Scan", 3, 20, 0, "utility", 0, TargetingMode.NONE,
                                         "Reveals ALL enemies, vision ranges, & movement paths (5 turns)", 5, 0),  # No damage, 5 turn duration, intel
         'log_wiper': ExploitDefinition("Log Wiper", 2, 20, 0, "utility", 0, TargetingMode.NONE,

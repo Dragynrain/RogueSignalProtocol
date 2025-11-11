@@ -374,6 +374,8 @@ class ExploitDefinition:
     alert_duration_patrol: int = 0  # Alert duration for patrol enemies (decoy_swarm)
     alert_duration_normal: int = 0  # Alert duration for normal enemies (decoy_swarm)
     trace_reduction_percent: int = 0  # Trace reduction percentage (log_wiper)
+    self_damage: int = 0  # Damage dealt to player when using exploit (system_crash)
+    help_summary: str = ""  # Short help text shown in UI
 
     def get_detail_lines(self) -> list[str]:
         """
@@ -393,6 +395,8 @@ class ExploitDefinition:
 
         if self.damage > 0:
             lines.append(f"Damage: {self.damage}")
+        if self.self_damage > 0:
+            lines.append(f"Self-Damage: {self.self_damage} (HITS YOU!)")
         if self.range > 0:
             lines.append(f"Range: {self.range} tiles")
 

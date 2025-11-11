@@ -509,19 +509,58 @@ class ExploitSystem:
         Execute System Crash exploit - emergency AoE damage + stun around player.
 
         Untargeted AoE centered on player position (not target).
-        Deals damage to and disables all enemies within effect_radius for effect_duration turns.
-        Emergency defensive tool with high heat cost.
+        SELF-DAMAGE: Also damages the player for 30 CPU (crashes the system you're on!).
+        Shows warning dialogue if this would kill the player or if warning not disabled.
         Applies +10 shadow bonus if attacking from blind spots.
 
         Uses grid distance so diagonals count as 1 for consistent gameplay.
 
         Args:
-            exploit: Exploit definition with damage, radius, and duration
+            exploit: Exploit definition with damage, self_damage, radius, and duration
             target: Ignored (exploit is centered on player)
 
         Returns:
-            True (always succeeds)
+            True if executed, False if cancelled by warning dialogue
         """
+        # Check for self-damage warning
+        if exploit.self_damage > 0 and not self.game.system_crash_confirmed:
+            remaining_cpu = self.game.player.cpu - exploit.self_damage
+            would_die = remaining_cpu <= 0
+
+            # Show warning dialogue
+            from game_dialogue_system import create_system_crash_warning_dialogue
+            dialogue = create_system_crash_warning_dialogue(
+                damage=exploit.self_damage,
+                remaining_cpu=remaining_cpu,
+                max_cpu=self.game.player.max_cpu,
+                would_die=would_die
+            )
+            was_shown = self.game.dialogue_state.show(dialogue)
+
+            if not was_shown:
+                # User disabled System Crash warnings - auto-confirm
+                logging.debug("Combat: System Crash warning suppressed by user preference, auto-confirming")
+                self.game.system_crash_confirmed = True
+                # Recursively call - will bypass this check now
+                return self._execute_system_crash(exploit, target)
+
+            # Dialogue was shown - block and wait for confirmation
+            self.game.sound_manager.play_sound("exploit_failed")
+            logging.debug("Combat: System Crash warning shown, awaiting confirmation")
+            return False
+
+        # Clear confirmation flag
+        self.game.system_crash_confirmed = False
+
+        # Apply self-damage FIRST (before enemies, for dramatic effect)
+        if exploit.self_damage > 0:
+            actual_self_damage = self.game.player.take_damage(exploit.self_damage)
+            self.game.message_log.add_message(
+                f"CRITICAL SYSTEM FAILURE! Taking {actual_self_damage} collateral damage!",
+                Colors.RED
+            )
+            logging.debug(f"Combat: System Crash self-damage: {actual_self_damage} CPU")
+
         self.game.sound_manager.play_sound("exploit_system_crash")
         # System Crash is an emergency untargeted AoE centered on player
         player_pos = self.game.player.position

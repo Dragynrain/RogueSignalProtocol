@@ -636,6 +636,49 @@ def create_friendly_fire_warning_dialogue(exploit_name: str, damage: int,
     )
 
 
+def create_system_crash_warning_dialogue(damage: int, remaining_cpu: int,
+                                         max_cpu: int, would_die: bool) -> DialogueBox:
+    """
+    Create System Crash warning dialogue for self-damage exploit.
+
+    Args:
+        damage: Self-damage that will be taken (30)
+        remaining_cpu: CPU remaining after damage
+        max_cpu: Maximum CPU
+        would_die: Whether this would kill the player
+
+    Returns:
+        DialogueBox for System Crash warning
+    """
+    if would_die:
+        warning_text = "*** FATAL ERROR ***\n\nSystem Crash will deal {damage} damage to YOU!\n\nThis will KILL you!\n\nYour CPU: {current_cpu}/{max_cpu} -> DEAD"
+        title_color = Colors.RED
+        border_color = Colors.RED
+    else:
+        warning_text = "*** SYSTEM CRASH WARNING ***\n\nThis crashes the system YOU'RE ON!\n\nYou will take {damage} CPU damage\nAll enemies in radius 3 will take {damage} damage + 3 turn stun\n\nYour CPU: {current_cpu}/{max_cpu} -> {remaining_cpu}/{max_cpu}"
+        title_color = Colors.YELLOW
+        border_color = Colors.YELLOW
+
+    return DialogueBox(
+        title="!!! SYSTEM CRASH !!!",
+        message=warning_text,
+        options=["[Y] Crash System", "[N] Cancel", "[D] Don't ask again"],
+        valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.D, tcod.event.KeySym.ESCAPE],
+        title_color=title_color,
+        message_color=Colors.WHITE,
+        border_color=border_color,
+        bg_color=Colors.BLACK,
+        format_data={
+            'damage': damage,
+            'remaining_cpu': remaining_cpu,
+            'max_cpu': max_cpu,
+            'current_cpu': remaining_cpu + damage
+        },
+        priority=6,  # Higher priority than overclock (this can kill you!)
+        user_pref_key="show_system_crash_warning"
+    )
+
+
 def create_inventory_attack_dialogue() -> DialogueBox:
     """
     Create inventory attack warning dialogue.

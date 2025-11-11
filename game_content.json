@@ -146,15 +146,16 @@
     "system_crash": {
       "name": "System Crash",
       "ram": 3,
-      "heat": 50,
+      "heat": 35,
       "range": 0,
       "category": "emergency",
       "damage": 30,
+      "self_damage": 30,
       "targeting": "NONE",
       "effect_duration": 3,
       "effect_radius": 3,
-      "description": "Force a critical system error in all nearby processes. Emergency protocol dealing 30 damage and stunning all enemies within 3 tiles for 3 turns.",
-      "help_summary": "30dmg AoE"
+      "description": "Force a critical system error - CRASHES THE SYSTEM YOU'RE ON! Deals 30 damage to YOU and all nearby enemies, stunning them for 3 turns. Last resort when surrounded.",
+      "help_summary": "30dmg AoE + stun (SELF-DAMAGE!)"
     },
     "logic_bomb": {
       "name": "Logic Bomb",
