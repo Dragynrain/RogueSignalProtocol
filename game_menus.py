@@ -557,6 +557,7 @@ class SettingsMenu(BaseMenu):
             {"name": "UI Color", "type": "ui_color", "key": "ui_color",
              "values": ["Cyan", "Purple", "Magenta", "Golden", "Crimson", "Azure", "Emerald", "Ivory"]},
             {"name": "Overclock Warnings", "type": "dialogue_toggle", "key": "show_overclock_warning"},
+            {"name": "System Crash Warnings", "type": "dialogue_toggle", "key": "show_system_crash_warning"},
             {"name": "Export Debug Package", "type": "action"},
             {"name": "Back", "type": "action"}
         ]
