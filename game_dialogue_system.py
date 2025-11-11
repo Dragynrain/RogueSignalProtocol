@@ -97,7 +97,7 @@ class DialogueState:
         # Last rendered coordinates for click detection
         self.last_render_coords: Optional[Dict[str, int]] = None
 
-    def show(self, dialogue: DialogueBox) -> None:
+    def show(self, dialogue: DialogueBox) -> bool:
         """
         Show a dialogue box.
 
@@ -106,18 +106,22 @@ class DialogueState:
 
         Args:
             dialogue: DialogueBox to show
+
+        Returns:
+            True if dialogue was shown/queued, False if suppressed by preferences
         """
         # Check user preferences
         if not self.should_show_dialogue(dialogue):
-            return
+            return False  # Suppressed by user preference
 
         # If dialogue already active, queue this one
         if self.active_dialogue:
             self._queue_dialogue(dialogue)
-            return
+            return True  # Queued for later display
 
         # Show immediately
         self.active_dialogue = dialogue
+        return True  # Shown immediately
 
     def close(self) -> None:
         """

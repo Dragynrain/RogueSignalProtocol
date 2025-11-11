@@ -761,13 +761,19 @@ class GlyphsMapRenderer(MapRendererBase):
                 self._render_targeting_area(console, cursor_pos, exploit.effect_radius, camera_offset)
     
     def _render_targeting_range(self, console: tcod.console.Console, center: Position, range_val: int, camera_offset: Position):
-        """Render targeting range indicator."""
+        """
+        Render targeting range indicator.
+
+        Uses Chebyshev distance (grid distance) to match gameplay validation.
+        This ensures visual range matches actual usable range - diagonals count as 1.
+        """
         for dx in range(-range_val, range_val + 1):
             for dy in range(-range_val, range_val + 1):
-                if dx*dx + dy*dy <= range_val*range_val:
+                # Use Chebyshev distance (max of abs values) to match gameplay
+                if max(abs(dx), abs(dy)) <= range_val:
                     range_screen_x = center.x - camera_offset.x + dx
                     range_screen_y = center.y - camera_offset.y + dy + 1
-                    
+
                     if (0 <= range_screen_x < GameConfig.GAME_AREA_WIDTH() and
                         1 <= range_screen_y < GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT):
                         range_color = ColorManager.get_targeting_color("range_overlay")

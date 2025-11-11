@@ -331,3 +331,16 @@ class GameTestAgent:
         print(f"Visible tiles: {state['visible_tiles']}")
         print(f"Messages: {len(self.get_messages())}")
         print("=" * 40)
+
+    def get_position_by_offset(self, dx: int, dy: int) -> Position:
+        """
+        Get position offset from player's current position.
+
+        Args:
+            dx: Offset in x direction
+            dy: Offset in y direction
+
+        Returns:
+            Position object at player_x + dx, player_y + dy
+        """
+        return Position(self.player.x + dx, self.player.y + dy)
