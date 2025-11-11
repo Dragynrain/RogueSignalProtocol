@@ -324,7 +324,7 @@ class InputHandler:
             self._use_selected_inventory_item()
         elif event.sym == tcod.event.KeySym.U:
             self._unequip_selected_exploit()
-        elif event.sym == tcod.event.KeySym.I:
+        elif event.sym == tcod.event.KeySym.I or UniversalInputHandler.is_escape_key(event):
             self.game.show_inventory = False
 
         return True

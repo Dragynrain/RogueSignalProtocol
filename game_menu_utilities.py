@@ -7,6 +7,7 @@ Handles background-aware layout calculations, box rendering, and transparency ma
 Consolidated from game_menus.py refactoring for consistency across MainMenu, SettingsMenu, etc.
 """
 
+import logging
 import tcod
 from game_config import GameConfig
 from game_entities import Colors
