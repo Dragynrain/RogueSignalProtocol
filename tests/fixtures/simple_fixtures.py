@@ -210,4 +210,19 @@ def minimal_mock_game():
     mock_game.overclock_confirmation = False
     mock_game.overclock_exploit = None
 
+    # Methods required by SaveGameManager
+    mock_game.get_enemy_id_counter = Mock(return_value=1)
+
+    # Mock session metrics (return minimal valid structure)
+    mock_game.session_metrics = Mock()
+    mock_game.session_metrics.enemies_killed = 0
+    mock_game.session_metrics.stealth_kills = 0
+    mock_game.session_metrics.exploits_used = 0
+    mock_game.session_metrics.damage_dealt = 0
+    mock_game.session_metrics.damage_taken = 0
+    mock_game.session_metrics.heat_generated = 0
+    mock_game.session_metrics.levels_completed = 0
+    mock_game.session_metrics.turns_taken = 0
+    mock_game.session_metrics.max_single_hit_damage = 0
+
     return mock_game
