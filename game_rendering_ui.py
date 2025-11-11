@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Rogue Signal Protocol - Game Rendering UI
+Rogue Signal Protocol - Game Rendering UI Coordinator
 
-Consolidated UI rendering module combining all UI rendering responsibilities:
-- Status bars (top bar with CPU/heat/trace/RAM, bottom panel with exploits/conditions)
-- Message log (scrolling system log in right panel)
-- Inspection panel (look mode entity details)
-- Full-screen overlays (help, inventory, story fragments, lore viewer)
+Coordinates UI rendering by delegating to specialized modules:
+- StatusBarRenderer: Top/bottom status panels (extracted)
+- MessageLogRenderer: System message log (extracted)
+- InfoPanelRenderer: Info panel (already in game_info_panel.py)
+- Full-screen overlays: Help, inventory, lore viewer, achievements (in this file)
 
-Previously split across 4 separate files, now unified for easier navigation.
+Refactored to improve modularity while preserving full functionality.
 """
 
 import tcod
@@ -24,27 +24,28 @@ from game_screen_utilities import ScreenRenderingUtils, ScrollableListManager
 from game_color_thresholds import ColorThresholdManager
 from game_unicode_chars import GameGlyphs
 
+# Import extracted renderers
+from game_status_bar_renderer import StatusBarRenderer
+from game_message_log_renderer import MessageLogRenderer
+
 
 class UIRenderer:
     """
-    Unified UI renderer combining all UI rendering responsibilities.
+    UI rendering coordinator delegating to specialized modules.
 
-    Handles all UI elements:
-    - Status bars: Top resource bar (CPU/heat/trace/RAM) and bottom panel (exploits/conditions)
-    - Message log: System message log in right panel with scrolling
-    - Inspection panel: Look mode overlay showing entity details
-    - Full-screen overlays: Help screen, inventory, story fragments, lore viewer
+    Delegates to:
+    - StatusBarRenderer: Top/bottom panels (game_status_bar_renderer.py)
+    - MessageLogRenderer: Message log (game_message_log_renderer.py)
+    - InfoPanelRenderer: Info panel (game_info_panel.py)
+    - EntityInspector: Inspection panel (game_inspection.py)
 
-    Methods are organized by responsibility for easy navigation:
-    - Status rendering: render_top_status_bar, render_bottom_panel
-    - Message log: render_system_log
-    - Inspection: render_inspection_panel
-    - Full screens: render_help_screen, render_inventory_screen, etc.
+    Directly handles:
+    - Full-screen overlays: Help, inventory, lore viewer, achievements
     """
 
     def __init__(self, settings=None, context=None, tile_manager=None):
         """
-        Initialize UI renderer.
+        Initialize UI renderer and sub-renderers.
 
         Args:
             settings: GameSettings instance (optional, for context)
@@ -55,449 +56,67 @@ class UIRenderer:
         self.context = context
         self.tile_manager = tile_manager
 
+        # Initialize extracted renderers
+        self.status_bar_renderer = StatusBarRenderer(settings)
+        self.message_log_renderer = MessageLogRenderer(settings)
+
     # ========================================================================
-    # STATUS BAR RENDERING
+    # STATUS BAR RENDERING (Delegated to StatusBarRenderer)
     # ========================================================================
 
     def render_top_status_bar(self, console: tcod.console.Console, game):
-        """
-        Render the top status bar with player resources.
-
-        Displays CPU, heat, trace, and RAM with color-coded values.
-        Stays within game area width (help text is in log panel).
-
-        Args:
-            console: TCOD console to render to
-            game: GameEngine with player stats
-        """
-        # Get UI color from settings
-        ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
-
-        # Clear the entire top status area (rows 0-1)
-        for y in range(2):
-            for x in range(GameConfig.SCREEN_WIDTH):
-                render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
-
-        # Color coding for status values (using centralized thresholds)
-        cpu_color = ColorThresholdManager.get_cpu_color(game.player.cpu)
-        heat_color = ColorThresholdManager.get_heat_color(game.player.heat)
-        trace_color = ColorThresholdManager.get_trace_color(game.player.trace_level)
-        ram_color = Colors.RED if game.player.ram_used > game.player.ram_total else Colors.GREEN
-
-        # Build status line (only left side stats - help text goes in log panel)
-        status_parts = [
-            f"CPU:{game.player.cpu:3d}/{game.player.max_cpu}",
-            f"Heat:{game.player.heat:3d}°C/{game.player.max_heat}°C" if game.player.max_heat > 100 else f"Heat:{game.player.heat:3d}°C",
-            f"Trace:{int(game.player.trace_level):3d}%",
-            f"RAM:{game.player.ram_used}/{game.player.ram_total}GB"
-        ]
-
-        colors = [cpu_color, heat_color, trace_color, ram_color]
-
-        # Render status text on row 0
-        x_pos = 1
-        for part, color in zip(status_parts, colors):
-            # Keep status bar in game area only
-            if x_pos + len(part) <= GameConfig.GAME_AREA_WIDTH() - 1:
-                render_char_safe(console, x_pos, 0, part, fg=color, bg=Colors.UI_BG)
-                x_pos += len(part) + 2
-
-        # Bottom border of status bar (row 1) - horizontal line with UI color
-        # Use T-piece where it meets the vertical log border
-        for x in range(GameConfig.SCREEN_WIDTH):
-            if x == GameConfig.GAME_AREA_WIDTH():
-                # T-piece where horizontal status bar meets vertical log border (╦ points down)
-                render_char_safe(console, x, 1, GameGlyphs.WALL_T_DOWN, fg=ui_color, bg=Colors.UI_BG)
-            else:
-                render_char_safe(console, x, 1, GameGlyphs.WALL_HORIZONTAL, fg=ui_color, bg=Colors.UI_BG)
+        """Delegate to StatusBarRenderer."""
+        self.status_bar_renderer.render_top_status_bar(console, game)
+        # Update class variable for backward compatibility
+        UIRenderer.last_exploit_positions = StatusBarRenderer.last_exploit_positions
 
     def render_bottom_panel(self, console: tcod.console.Console, game):
-        """
-        Render the bottom panel with exploits and conditions.
+        """Delegate to StatusBarRenderer."""
+        self.status_bar_renderer.render_bottom_panel(console, game)
+        # Update class variable for backward compatibility
+        UIRenderer.last_exploit_positions = StatusBarRenderer.last_exploit_positions
 
-        Displays:
-        - Equipped exploits (up to 5, with heat feasibility colors)
-        - Active temporary conditions with turn counts
-
-        Args:
-            console: TCOD console to render to
-            game: GameEngine with player inventory and effects
-        """
-        # Get UI color from settings
-        ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
-
-        # Clear panel area (full screen width to accommodate all exploits)
-        for x in range(GameConfig.SCREEN_WIDTH):
-            for y in range(GameConfig.PANEL_Y(), GameConfig.SCREEN_HEIGHT):
-                render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
-
-        # Panel border - horizontal line with UI color
-        # Use T-piece where it meets the vertical log border
-        for x in range(GameConfig.SCREEN_WIDTH):
-            if x == GameConfig.GAME_AREA_WIDTH():
-                # T-piece where horizontal bottom panel meets vertical log border (╩ points up)
-                render_char_safe(console, x, GameConfig.PANEL_Y(), GameGlyphs.WALL_T_UP, fg=ui_color, bg=Colors.UI_BG)
-            else:
-                render_char_safe(console, x, GameConfig.PANEL_Y(), GameGlyphs.WALL_HORIZONTAL, fg=ui_color, bg=Colors.UI_BG)
-
-        # Equipped exploits (2 lines)
-        self._render_equipped_exploits_panel(console, game)
-
-        # Temporary conditions/effects (1 line)
-        self._render_temporary_conditions(console, game)
-
-        # Render "Inv" button in bottom right corner for mouse users
-        inv_button_text = "[Inv]"
-        inv_button_x = GameConfig.SCREEN_WIDTH - len(inv_button_text) - 1
-        inv_button_y = GameConfig.SCREEN_HEIGHT - 1  # Bottom row
-        render_char_safe(console, inv_button_x, inv_button_y, inv_button_text, fg=Colors.YELLOW, bg=Colors.UI_BG)
-
-    def _render_equipped_exploits_panel(self, console: tcod.console.Console, game):
-        """
-        Render equipped exploits across two lines.
-
-        Shows exploits 1-3 on first line, 4-5 on second line.
-        Colors exploits green if usable (heat cost fits), red if too hot.
-        Accounts for exploit efficiency temporary effect reducing heat cost.
-        Stores positions for mouse click detection.
-
-        Args:
-            console: TCOD console to render to
-            game: GameEngine with player inventory and heat
-        """
-        y1 = GameConfig.PANEL_Y() + 1
-        y2 = GameConfig.PANEL_Y() + 2
-
-        render_char_safe(console, 1, y1, "Exploits:", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)
-
-        equipped_exploits = game.player.inventory_manager.equipped_exploits[:5]
-
-        # Clear stored positions for this render
-        UIRenderer.last_exploit_positions = []
-
-        # Check if mouse is hovering over exploit bar area
-        mouse_tile_x = game.last_mouse_tile_x
-        mouse_tile_y = game.last_mouse_tile_y
-        hovered_slot = None
-
-        # Fixed layout: exploits 1,2,3 on first line, 4,5 on second line
-        line1_exploits = []
-        line2_exploits = []
-
-        for i, exploit_key in enumerate(equipped_exploits):
-            if exploit_key in GameData.EXPLOITS:
-                exploit = GameData.EXPLOITS[exploit_key]
-                heat_cost = exploit.heat
-                if game.player.temporary_effects['exploit_efficiency_turns'] > 0:
-                    heat_cost = int(heat_cost * 0.6)
-
-                heat_ok = game.player.heat + heat_cost <= game.player.max_heat
-                color = Colors.GREEN if heat_ok else Colors.RED
-                exploit_text = f"{i+1}.{exploit.name}"
-
-                # First 3 exploits go on first line, remaining on second line
-                if i < 3:
-                    line1_exploits.append((exploit_key, exploit_text, color, i))
-                else:
-                    line2_exploits.append((exploit_key, exploit_text, color, i))
-
-        # Render first line exploits
-        x_pos = 11
-        for exploit_key, exploit_text, color, slot in line1_exploits:
-            # Check if mouse is hovering over this exploit
-            text_width = len(exploit_text)
-            is_hovered = (mouse_tile_x is not None and mouse_tile_y is not None and
-                         mouse_tile_y == y1 and
-                         x_pos <= mouse_tile_x < x_pos + text_width)
-
-            # Store position for click detection
-            UIRenderer.last_exploit_positions.append({
-                'slot': slot,
-                'x': x_pos,
-                'y': y1,
-                'width': text_width,
-                'exploit_key': exploit_key
-            })
-
-            # Use highlight background if hovered
-            bg = Colors.UI_HIGHLIGHT if is_hovered else Colors.UI_BG
-            if is_hovered:
-                hovered_slot = slot
-
-            render_char_safe(console, x_pos, y1, exploit_text, fg=color, bg=bg)
-            x_pos += text_width + 2
-
-        # Render second line exploits
-        if line2_exploits:
-            render_char_safe(console, 1, y2, "        ", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)  # Indent to align
-            x_pos = 11
-            for exploit_key, exploit_text, color, slot in line2_exploits:
-                # Check if mouse is hovering over this exploit
-                text_width = len(exploit_text)
-                is_hovered = (mouse_tile_x is not None and mouse_tile_y is not None and
-                             mouse_tile_y == y2 and
-                             x_pos <= mouse_tile_x < x_pos + text_width)
-
-                # Store position for click detection
-                UIRenderer.last_exploit_positions.append({
-                    'slot': slot,
-                    'x': x_pos,
-                    'y': y2,
-                    'width': text_width,
-                    'exploit_key': exploit_key
-                })
-
-                # Use highlight background if hovered
-                bg = Colors.UI_HIGHLIGHT if is_hovered else Colors.UI_BG
-                if is_hovered:
-                    hovered_slot = slot
-
-                render_char_safe(console, x_pos, y2, exploit_text, fg=color, bg=bg)
-                x_pos += text_width + 2
-
-    def _render_temporary_conditions(self, console: tcod.console.Console, game):
-        """
-        Render all active temporary conditions with turn counts.
-
-        Displays player effects (speed boost, data mimic, etc.), threat scan,
-        and speed moves remaining. Uses color-coded display matching the
-        effect type (e.g., data code colors for code effects).
-
-        Args:
-            console: TCOD console to render to
-            game: GameEngine with player temporary_effects and game_state
-        """
-        y = GameConfig.PANEL_Y() + 3
-
-        conditions = []
-
-        # Player temporary effects (from codes and other sources)
-        for effect_name, turns in game.player.temporary_effects.items():
-            if turns > 0:
-                display_name = effect_name.replace('_turns', '').replace('_', ' ').title()
-                condition_text = f"{display_name}({turns})"
-
-                # Color conditions based on their type
-                if effect_name == 'traffic_masquerade_turns':
-                    color = Colors.BLUE  # Invisible effect
-                elif effect_name == 'speed_boost_turns':
-                    color = self._get_data_code_color_for_effect(game, 'speed_boost', Colors.YELLOW)
-                elif effect_name == 'movement_slowed_turns':
-                    color = Colors.ORANGE  # Movement slowed effect
-                elif effect_name == 'enhanced_vision_turns':
-                    color = self._get_data_code_color_for_effect(game, 'enhanced_vision', Colors.ELECTRIC_BLUE)
-                elif effect_name == 'exploit_efficiency_turns':
-                    color = self._get_data_code_color_for_effect(game, 'exploit_efficiency', Colors.ELECTRIC_PURPLE)
-                elif effect_name == 'virus_turns':
-                    color = Colors.DARK_GREEN  # Virus effect
-                else:
-                    color = Colors.WHITE  # Default color for other effects
-
-                conditions.append((condition_text, color))
-
-        # Threat scan effect
-        if game.game_state.threat_scan_turns > 0:
-            conditions.append((f"Threat Scan({game.game_state.threat_scan_turns})", Colors.ELECTRIC_PURPLE))
-
-        # Speed moves remaining (from speed boost)
-        if game.player.speed_moves_remaining > 0:
-            conditions.append((f"Speed Moves({game.player.speed_moves_remaining})", Colors.YELLOW))
-
-        if conditions:
-            # Print the "Conditions:" label
-            x = 1
-            render_char_safe(console, x, y, "Conditions: ", fg=Colors.CYAN, bg=Colors.UI_BG)
-            x += len("Conditions: ")
-
-            # Print each condition with its appropriate color
-            for i, (condition_text, color) in enumerate(conditions):
-                if i > 0:
-                    render_char_safe(console, x, y, " ", fg=Colors.CYAN, bg=Colors.UI_BG)
-                    x += 1
-                render_char_safe(console, x, y, condition_text, fg=color, bg=Colors.UI_BG)
-                x += len(condition_text)
-        else:
-            render_char_safe(console, 1, y, "Conditions: None", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
-
-    def _get_data_code_color_for_effect(self, game, effect_key: str, fallback_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
-        """
-        Get the data code color for a specific effect from current game.
-
-        Looks up which color code provides the given effect in this game
-        instance (since code effects are randomized per game). Returns
-        the matching color or fallback if not found.
-
-        Args:
-            game: GameEngine with code_hack_effects mapping
-            effect_key: Effect name (e.g., 'speed_boost', 'enhanced_vision')
-            fallback_color: Color to use if effect not found in mapping
-
-        Returns:
-            RGB color tuple matching the code that provides this effect
-        """
-        color_map = {
-            'crimson': Colors.CRIMSON,
-            'azure': Colors.AZURE,
-            'emerald': Colors.EMERALD,
-            'golden': Colors.GOLDEN,
-            'violet': Colors.VIOLET,
-            'silver': Colors.SILVER
-        }
-
-        # Find which color has this effect in the current game
-        for color_name, (effect, _) in game.code_hack_effects.items():
-            if effect == effect_key:
-                return color_map.get(color_name, fallback_color)
-
-        return fallback_color
+    # Old implementation removed - now delegated to game_status_bar_renderer.py
+    # The following methods are no longer needed here:
+    # - render_top_status_bar (original implementation)
+    # - render_bottom_panel (original implementation)
+    # - _render_equipped_exploits_panel
+    # - _render_temporary_conditions
+    # - _get_data_code_color_for_effect
 
     # ========================================================================
-    # INFO PANEL RENDERING
+    # MESSAGE LOG RENDERING (Delegated to MessageLogRenderer)
+    # ========================================================================
+
+    def render_system_log(self, console: tcod.console.Console, game):
+        """Delegate to MessageLogRenderer."""
+        self.message_log_renderer.render_system_log(console, game)
+
+    # Old implementation removed - now delegated to game_message_log_renderer.py
+    # The following methods are no longer needed here:
+    # - render_system_log (original implementation)
+    # - _render_log_messages
+    # - _wrap_messages
+
+    # Preserve the rest of the file starting from INFO PANEL section
+    # The line numbers below are adjusted after removal of delegated code
+
+    # ========================================================================
+    # INFO PANEL RENDERING (Delegated to InfoPanelRenderer)
     # ========================================================================
 
     def render_info_panel(self, console: tcod.console.Console, game):
         """
         Render the info panel in the top-right corner.
 
-        Shows context-aware information based on mouse hover:
-        - Enemies: name, stats, state, movement queue
-        - Items: name, effects, costs
-        - Nodes: type, effect, activation
-        - Default: turn counter, level, streaks
-
-        Location: x=55-79, y=0-10 (11 lines, 25 chars wide)
-
-        Args:
-            console: TCOD console to render to
-            game: GameEngine with current game state
+        Delegates to InfoPanelRenderer (already extracted to game_info_panel.py).
         """
         from game_info_panel import InfoPanelRenderer
-        # Get UI color from settings
         ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
         InfoPanelRenderer.render(console, game, ui_color=ui_color)
 
     # ========================================================================
-    # MESSAGE LOG RENDERING
-    # ========================================================================
-
-    def render_system_log(self, console: tcod.console.Console, game):
-        """
-        Render the system message log on the right side.
-
-        Draws border, header, and scrolling messages.
-        Now starts at y=11 (after info panel) instead of y=3.
-        Hides messages when in look mode to avoid overlap with inspection panel.
-        Stops at PANEL_Y to make room for bottom panel.
-
-        Args:
-            console: TCOD console to render to
-            game: GameEngine with message_log and look_mode state
-        """
-        # Get UI color from settings
-        ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
-
-        log_start_y = GameConfig.LOG_START_Y()
-
-        # T-piece at left where log border meets the header line
-        render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), log_start_y, GameGlyphs.WALL_T_RIGHT, fg=ui_color, bg=Colors.LOG_BG)
-
-        # Build header line: "SYSTEM LOG" embedded in ═ border
-        header_text = " SYSTEM LOG "
-        log_width = GameConfig.SCREEN_WIDTH - GameConfig.GAME_AREA_WIDTH() - 1
-
-        # Center the text in the header line
-        header_start = GameConfig.GAME_AREA_WIDTH() + 1 + (log_width - len(header_text)) // 2
-
-        # Render the header line
-        for i in range(GameConfig.GAME_AREA_WIDTH() + 1, GameConfig.SCREEN_WIDTH):
-            if i >= header_start and i < header_start + len(header_text):
-                # SYSTEM LOG text in bright cyan
-                char_idx = i - header_start
-                render_char_safe(console, i, log_start_y, header_text[char_idx], fg=Colors.CYAN, bg=Colors.LOG_BG)
-            else:
-                # ═ character fill
-                render_char_safe(console, i, log_start_y, '═', fg=ui_color, bg=Colors.LOG_BG)
-
-        # Draw log border (from LOG_START_Y + 1 to panel start) with UI color
-        for y in range(log_start_y + 1, GameConfig.PANEL_Y()):
-            render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '║', fg=ui_color, bg=Colors.LOG_BG)
-
-        # Clear log area - start from log_start_y + 1
-        for x in range(GameConfig.GAME_AREA_WIDTH() + 1, GameConfig.SCREEN_WIDTH):
-            for y in range(log_start_y + 1, GameConfig.PANEL_Y()):
-                render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
-
-        # Process and display messages (skip if in look mode - inspection panel will use this area)
-        if not game.look_mode:
-            self._render_log_messages(console, game)
-
-    def _render_log_messages(self, console: tcod.console.Console, game):
-        """
-        Render scrolling log messages with automatic wrapping.
-
-        Shows the most recent messages that fit in the available vertical space.
-        Starts at LOG_START_Y + 2 (one blank line below header for breathing space).
-        Delegates text wrapping to _wrap_messages().
-
-        Args:
-            console: TCOD console to render to
-            game: GameEngine with message_log
-        """
-        log_start_y = GameConfig.LOG_START_Y()
-        wrapped_lines = self._wrap_messages(game.message_log.messages)
-        log_height = GameConfig.PANEL_Y() - (log_start_y + 2)  # Available space (with blank line for breathing space)
-        visible_lines = wrapped_lines[-log_height:] if len(wrapped_lines) > log_height else wrapped_lines
-
-        for i, (line, color) in enumerate(visible_lines):
-            y_pos = log_start_y + 2 + i  # Start from LOG_START_Y + 2 for breathing space
-            if y_pos < GameConfig.PANEL_Y():
-                render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
-
-    def _wrap_messages(self, messages: List) -> List[Tuple[str, Tuple[int, int, int]]]:
-        """
-        Wrap long messages across multiple lines for display.
-
-        Uses word-based wrapping to keep messages readable.
-        Handles both Message objects and (text, color) tuples for flexibility.
-
-        Args:
-            messages: List of Message objects or (text, color) tuples
-
-        Returns:
-            List of (wrapped_text, color) tuples ready for rendering
-        """
-        wrapped_lines = []
-        max_msg_width = GameConfig.LOG_WIDTH - 2
-
-        for message in messages:
-            # Handle both Message objects and tuple formats
-            if hasattr(message, 'text') and hasattr(message, 'color'):
-                text, color = message.text, message.color
-            else:
-                text, color = message
-            if len(text) <= max_msg_width:
-                wrapped_lines.append((text, color))
-            else:
-                # Wrap long messages
-                words = text.split(' ')
-                current_line = ""
-
-                for word in words:
-                    test_line = current_line + (" " if current_line else "") + word
-                    if len(test_line) <= max_msg_width:
-                        current_line = test_line
-                    else:
-                        if current_line:
-                            wrapped_lines.append((current_line, color))
-                        current_line = word
-
-                if current_line:
-                    wrapped_lines.append((current_line, color))
-
-        return wrapped_lines
-
-    # ========================================================================
-    # INSPECTION PANEL RENDERING
+    # INSPECTION PANEL RENDERING (Delegated to EntityInspector)
     # ========================================================================
 
     def render_inspection_panel(self, console: tcod.console.Console, game):
