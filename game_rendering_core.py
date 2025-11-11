@@ -14,59 +14,16 @@ import logging
 from typing import List
 
 from game_config import GameConfig
-from game_entities import Position, Colors, ensure_color_tuple
-from game_ui import render_char_safe
+from game_entities import Position, Colors
 from game_coordinate_helpers import CoordinateHelpers
-from game_unicode_chars import GameGlyphs
 
 # Import specialized renderers
 from game_rendering_ui import UIRenderer
 from game_rendering_glyphs import GlyphsMapRenderer
 from game_rendering_graphics import GraphicsMapRenderer
 from game_dialogue_system import UnifiedRenderer
-
-
-def draw_bordered_box(console: tcod.console.Console, start_x: int, start_y: int,
-                     width: int, height: int, border_color: tuple, bg_color: tuple):
-    """
-    Draw a bordered box with background fill using TCOD primitives.
-
-    Uses TCOD's built-in draw_rect and draw_frame for efficiency.
-    Ensures color values are tuples to prevent TCOD ColorRGB errors.
-
-    Args:
-        console: TCOD console to draw on
-        start_x: Left edge of box
-        start_y: Top edge of box
-        width: Box width in characters
-        height: Box height in characters
-        border_color: RGB tuple for border color
-        bg_color: RGB tuple for background fill
-    """
-    # Ensure colors are tuples to prevent TCOD ColorRGB errors
-    border_color = ensure_color_tuple(border_color)
-    bg_color = ensure_color_tuple(bg_color)
-
-    # Draw background
-    console.draw_rect(start_x, start_y, width, height, ord(' '), fg=Colors.WHITE, bg=bg_color)
-
-    # Draw double-line border manually (using GameGlyphs constants)
-    # Top border
-    render_char_safe(console, start_x, start_y, GameGlyphs.WALL_TOP_LEFT, fg=border_color, bg=bg_color)
-    for x in range(start_x + 1, start_x + width - 1):
-        render_char_safe(console, x, start_y, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=bg_color)
-    render_char_safe(console, start_x + width - 1, start_y, GameGlyphs.WALL_TOP_RIGHT, fg=border_color, bg=bg_color)
-
-    # Side borders
-    for y in range(start_y + 1, start_y + height - 1):
-        render_char_safe(console, start_x, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=bg_color)
-        render_char_safe(console, start_x + width - 1, y, GameGlyphs.WALL_VERTICAL, fg=border_color, bg=bg_color)
-
-    # Bottom border
-    render_char_safe(console, start_x, start_y + height - 1, GameGlyphs.WALL_BOTTOM_LEFT, fg=border_color, bg=bg_color)
-    for x in range(start_x + 1, start_x + width - 1):
-        render_char_safe(console, x, start_y + height - 1, GameGlyphs.WALL_HORIZONTAL, fg=border_color, bg=bg_color)
-    render_char_safe(console, start_x + width - 1, start_y + height - 1, GameGlyphs.WALL_BOTTOM_RIGHT, fg=border_color, bg=bg_color)
+from game_menu_help_lore import create_help_menu
+from game_rendering_utils import draw_bordered_box
 
 
 class GameRenderer:
@@ -116,6 +73,41 @@ class GameRenderer:
         self.glyphs_renderer = GlyphsMapRenderer(settings=settings)
         self.graphics_renderer = GraphicsMapRenderer(tile_manager=tile_manager, context=context, settings=settings)
 
+        # Help menu management (lazily created, cached here instead of in ui_renderer)
+        self._active_help_menu = None
+        self._help_menu_graphics_mode = None
+
+    def _get_or_create_help_menu(self):
+        """
+        Get or create help menu, caching it at orchestration layer.
+
+        Recreates menu if graphics mode changes to ensure correct menu type.
+        """
+        # Check if graphics mode changed (requires recreating help menu)
+        current_mode = self.settings.graphics_mode if self.settings else None
+        if self._help_menu_graphics_mode != current_mode:
+            logging.info(f"Graphics mode changed from {self._help_menu_graphics_mode} to {current_mode}, clearing help menu cache")
+            self._active_help_menu = None
+            self._help_menu_graphics_mode = current_mode
+
+        # Create help menu if not already cached
+        if self._active_help_menu is None:
+            if self.settings is not None:
+                self._active_help_menu = create_help_menu(self.settings, self.context, self.tile_manager)
+                logging.info(f"Created help menu: {type(self._active_help_menu).__name__}")
+            else:
+                # Fallback to standard help menu if settings not provided
+                from game_menu_help_lore import HelpMenu
+                self._active_help_menu = HelpMenu()
+                logging.warning("Settings not provided to GameRenderer, using standard HelpMenu")
+
+        return self._active_help_menu
+
+    def clear_help_menu(self):
+        """Clear cached help menu when exiting help screen."""
+        self._active_help_menu = None
+        self._help_menu_graphics_mode = None
+
     def _is_graphics_mode_available(self) -> bool:
         """
         Check if graphics rendering is available and enabled.
@@ -164,7 +156,9 @@ class GameRenderer:
             self.ui_renderer.render_lore_viewer_screen(console, game)
         elif game.show_help:
             console.clear()
-            self.ui_renderer.render_help_screen(console)
+            # Create/cache help menu at orchestration layer, pass to renderer
+            help_menu = self._get_or_create_help_menu()
+            self.ui_renderer.render_help_screen(console, help_menu)
         elif game.show_achievements:
             console.clear()
             self.ui_renderer.render_achievements_screen(console, game)
@@ -200,7 +194,8 @@ class GameRenderer:
 
             # Render sprites if the screen supports them (e.g., GraphicalHelpMenu)
             if game.show_help:
-                self.ui_renderer.render_help_sprites()
+                help_menu = self._get_or_create_help_menu()
+                self.ui_renderer.render_help_sprites(help_menu)
 
             console_texture = self.context.console_render.render(console)
             self.context.sdl_renderer.copy(console_texture)

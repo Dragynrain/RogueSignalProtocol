@@ -15,7 +15,6 @@ from typing import List, Dict, Any, Optional
 
 # Import game modules
 from game_config import GameConfig
-from game_characters import Enemy
 
 
 class SaveLoadError(Exception):
@@ -121,7 +120,8 @@ class SaveGameManager:
                     
                     # Enemies
                     "enemies": cls._serialize_enemies(game.enemies),
-                    "enemy_next_id": getattr(Enemy, '_next_id', 1),
+                    # Enemy ID counter passed from game engine (avoids importing Enemy class)
+                    "enemy_next_id": game.get_enemy_id_counter(),
                     
                     # Code hack effects for this run
                     "code_hack_effects": game.code_hack_effects,

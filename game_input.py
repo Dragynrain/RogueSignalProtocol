@@ -126,10 +126,11 @@ class InputHandler:
         if self.game.show_help:
             # Delegate to help menu's input handler (supports pagination)
             if self.renderer and hasattr(self.renderer, 'ui_renderer'):
-                result = self.renderer.ui_renderer.handle_help_input(event)
+                help_menu = self.renderer._get_or_create_help_menu()
+                result = self.renderer.ui_renderer.handle_help_input(event, help_menu)
                 if result == "back":
                     self.game.show_help = False
-                    self.renderer.ui_renderer.clear_help_menu()  # Clear menu cache
+                    self.renderer.clear_help_menu()  # Clear menu cache
                 return True
             else:
                 # Fallback: any key closes help
@@ -162,7 +163,7 @@ class InputHandler:
         elif g.show_help:
             g.show_help = False
             if self.renderer and hasattr(self.renderer, 'ui_renderer'):
-                self.renderer.ui_renderer.clear_help_menu()  # Clear menu cache
+                self.renderer.clear_help_menu()  # Clear menu cache
         elif g.show_achievements:
             g.show_achievements = False
         elif g.show_inventory:
@@ -430,7 +431,7 @@ class InputHandler:
     def _handle_gameplay_input(self, event) -> bool:
         """Handle input during normal gameplay."""
         # Global hotkey: Shift+F12 - Export Debug Package
-        if event.sym == tcod.event.KeySym.F12 and (event.mod & tcod.event.KMOD_SHIFT):
+        if event.sym == tcod.event.KeySym.F12 and (event.mod & tcod.event.Modifier.SHIFT):
             self._trigger_debug_export()
             return True
 

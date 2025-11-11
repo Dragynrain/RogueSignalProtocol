@@ -9,11 +9,13 @@ Tests pathfinding, FOV, and map generation.
 import pytest
 import sys
 import os
+import numpy as np
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
 from tests.test_agent import GameTestAgent
 from game_entities import Position
+from game_characters import PathfindingHelper
 
 
 class ExplorationAgent:
@@ -75,6 +77,10 @@ class ExplorationAgent:
         for turn in range(max_turns):
             stats['turns_taken'] = turn + 1
 
+            # Stop if player died
+            if self.agent.engine.game_over:
+                break
+
             # Mark current position as visited
             current = (self.agent.player.x, self.agent.player.y)
             self.visited_tiles.add(current)
@@ -98,32 +104,35 @@ class ExplorationAgent:
                 # This would require more sophisticated pathfinding
                 break
 
-            # Try to move toward target
-            target_x, target_y = target
-            player_x, player_y = self.agent.player.x, self.agent.player.y
+            # Use proper TCOD pathfinding to reach target
+            target_pos = Position(target[0], target[1])
+            player_pos = Position(self.agent.player.x, self.agent.player.y)
 
-            # Simple greedy movement toward target
-            dx = 0 if target_x == player_x else (1 if target_x > player_x else -1)
-            dy = 0 if target_y == player_y else (1 if target_y > player_y else -1)
+            # Create cost map for pathfinding
+            walkability = self.agent.game_map.get_walkability_map()
+            cost_map = np.where(walkability, 10, 0).astype(np.int32)
+
+            # Calculate path using PathfindingHelper
+            path = PathfindingHelper.calculate_simple_path(player_pos, target_pos, cost_map)
+
+            if path is None or len(path) < 2:
+                # No path found - wait a turn
+                self.agent.wait(1)
+                continue
+
+            # Get next step in path (skip current position)
+            next_step = path[1]  # path[0] is current position
+            next_x, next_y = next_step[1], next_step[0]  # Convert from (y, x) to (x, y)
+
+            # Calculate movement delta
+            dx = next_x - self.agent.player.x
+            dy = next_y - self.agent.player.y
 
             # Try to move
             if not self.agent.move_player(dx, dy):
-                # Blocked - try alternative directions
-                alternatives = [
-                    (dx, 0),   # Try horizontal only
-                    (0, dy),   # Try vertical only
-                    (dx, -dy), # Try diagonal variation
-                    (-dx, dy)  # Try other diagonal
-                ]
-                moved = False
-                for alt_dx, alt_dy in alternatives:
-                    if self.agent.move_player(alt_dx, alt_dy):
-                        moved = True
-                        break
-
-                if not moved:
-                    # Completely stuck - wait a turn
-                    self.agent.wait(1)
+                # Path is blocked (shouldn't happen with proper pathfinding)
+                # Wait a turn
+                self.agent.wait(1)
 
         # Calculate stats
         stats['tiles_explored'] = len(self.visited_tiles)

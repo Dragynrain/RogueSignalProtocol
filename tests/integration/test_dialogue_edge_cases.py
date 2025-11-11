@@ -189,9 +189,8 @@ class TestDialoguePreferencesPersistence:
         settings.dialogue_preferences = {}
         state = DialogueState(settings)
 
-        # Disable multiple dialogues
+        # Disable dialogue
         state.disable_dialogue("show_overclock_warning")
-        state.disable_dialogue("intro_dialogue")
 
         # Simulate multiple save/load cycles
         for _ in range(3):
@@ -202,7 +201,6 @@ class TestDialoguePreferencesPersistence:
 
         # Verify preferences still set
         assert settings.dialogue_preferences["show_overclock_warning"] is False
-        assert settings.dialogue_preferences["intro_dialogue"] is False
 
     def test_enabling_disabled_dialogue_works(self):
         """Can re-enable a disabled dialogue."""

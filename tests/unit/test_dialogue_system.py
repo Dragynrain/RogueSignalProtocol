@@ -375,7 +375,7 @@ class TestFactoryFunctions:
         assert len(dialogue.options) == 1
         assert tcod.event.KeySym.SPACE in dialogue.valid_keys
         assert dialogue.priority == 10  # Critical
-        assert dialogue.user_pref_key == "intro_dialogue"
+        assert dialogue.user_pref_key is None  # Always show intro
 
     def test_create_victory_dialogue(self):
         """create_victory_dialogue() creates valid DialogueBox."""

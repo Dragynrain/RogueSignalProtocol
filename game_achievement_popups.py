@@ -186,7 +186,7 @@ class AchievementPopupManager:
         description_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.description"))
 
         # Draw box background and border
-        from game_rendering_core import draw_bordered_box
+        from game_rendering_utils import draw_bordered_box
         draw_bordered_box(console, box_x, box_y, popup_width, popup_height, border_color, bg_color)
 
         # Render title with icon
