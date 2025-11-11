@@ -132,6 +132,9 @@ class ExploitSystem:
             # Store pending exploit info for confirmation
             self.game.overclock_exploit = exploit_key
             self.game.overclock_confirmation = False
+            # Store target position if not in targeting mode (for direct execute_exploit calls)
+            if not self.game.targeting_mode:
+                self.game.cursor_position = target
 
             # Show overclock warning dialogue
             from game_dialogue_system import create_overclock_warning_dialogue
@@ -569,7 +572,7 @@ class ExploitSystem:
         damage = self._calculate_exploit_damage(exploit.damage)
 
         count = 0
-        for enemy in self.game.enemies:
+        for enemy in self.game.enemies[:]:  # Iterate over copy to avoid skipping when enemies die
             # Use grid distance for AoE radius (diagonals = 1)
             if enemy.position.grid_distance_to(player_pos) <= exploit.effect_radius:
                 # Deal damage first

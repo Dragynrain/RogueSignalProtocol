@@ -73,7 +73,9 @@ class TestOverclockDialoguePreferences:
         """When overclock warning enabled, dialogue shows and blocks."""
         # Setup with warning ENABLED (default)
         agent = GameTestAgent(seed=43)
-        # Don't set dialogue_preferences (defaults to enabled)
+
+        # Explicitly enable warnings (clear any user settings)
+        agent.engine.settings.dialogue_preferences = {}
 
         agent.player.heat = agent.player.max_heat - 2
         agent.player.inventory_manager.equipped_exploits.append('code_injection')
@@ -91,6 +93,10 @@ class TestOverclockDialoguePreferences:
     def test_overclock_warning_dont_show_again_button_works(self):
         """Pressing 'D' disables warning and executes exploit."""
         agent = GameTestAgent(seed=44)
+
+        # Ensure warnings are enabled for this test
+        agent.engine.settings.dialogue_preferences = {}
+
         agent.player.heat = agent.player.max_heat - 2
         agent.player.inventory_manager.equipped_exploits.append('code_injection')
         enemy = agent.spawn_enemy("bot", agent.player.x + 1, agent.player.y)
@@ -135,6 +141,9 @@ class TestOverclockDialoguePreferences:
     def test_overclock_confirmation_flag_resets_after_use(self):
         """Overclock confirmation flag is cleared after exploit executes."""
         agent = GameTestAgent(seed=46)
+
+        # Ensure warnings are enabled for this test
+        agent.engine.settings.dialogue_preferences = {}
 
         agent.player.heat = agent.player.max_heat - 2
         agent.player.inventory_manager.equipped_exploits.append('code_injection')

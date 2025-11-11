@@ -224,9 +224,9 @@ class TestResourceBalance:
             assert heat_cost >= 0, f"Exploit '{exploit_id}' heat cost cannot be negative"
             assert heat_cost <= 100, f"Exploit '{exploit_id}' heat cost ({heat_cost}) exceeds max heat"
 
-            # Emergency exploits should have high heat
+            # Emergency exploits should have high heat (35+ due to System Crash self-damage rebalance)
             if category == 'emergency':
-                assert heat_cost >= 40, f"Emergency exploit '{exploit_id}' should have high heat cost"
+                assert heat_cost >= 35, f"Emergency exploit '{exploit_id}' should have high heat cost"
 
     def test_exploit_ram_costs_within_capacity(self):
         """Test that exploit RAM costs don't exceed max capacity."""
