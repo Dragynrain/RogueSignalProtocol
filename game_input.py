@@ -222,13 +222,14 @@ class InputHandler:
             logging.debug("Input: Overclock confirmed")
             self.game.overclock_confirmation = True
             # Re-execute the exploit that was cancelled
-            if self.game.overclock_exploit and self.game.targeting_mode and self.game.cursor_position:
+            if self.game.overclock_exploit and self.game.cursor_position:
+                # Use stored cursor position (from targeting mode or direct execute_exploit call)
                 self.game.exploit_system.execute_exploit(
                     self.game.overclock_exploit,
                     self.game.cursor_position
                 )
             elif self.game.overclock_exploit:
-                # Non-targeting exploit - use player position
+                # No cursor position - use player position (untargeted exploits)
                 self.game.exploit_system.execute_exploit(
                     self.game.overclock_exploit,
                     self.game.player.position
@@ -317,8 +318,8 @@ class InputHandler:
             Colors.YELLOW
         )
 
-        # For overclock warning, pressing D should still execute the exploit
-        if "OVERCLOCK WARNING" in dialogue.title:
+        # For overclock and system crash warnings, pressing D should still execute the exploit
+        if "OVERCLOCK WARNING" in dialogue.title or "SYSTEM CRASH" in dialogue.title:
             self._handle_dialogue_confirm()
         else:
             self.game.dialogue_state.close()
