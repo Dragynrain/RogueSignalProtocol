@@ -24,6 +24,70 @@ console.print(x=10, y=5, "text")  # (x, y) order!
 
 ---
 
+## Critical: Pathfinding Returns Include Starting Position
+
+**TCOD's `Pathfinder.path_to()` includes the starting position as the first element!**
+
+```python
+# Common mistake:
+pathfinder = tcod.path.Pathfinder(graph)
+pathfinder.add_root((player_x, player_y))
+path = pathfinder.path_to((target_x, target_y))
+
+next_x, next_y = path[0]  # BUG: This is the starting position!
+dx = next_x - player_x    # dx = 0, dy = 0 → no movement!
+dy = next_y - player_y
+```
+
+**Correct approach:**
+
+```python
+# Skip starting position:
+pathfinder.add_root((player_x, player_y))
+path = pathfinder.path_to((target_x, target_y))
+
+# Filter out starting position
+path_to_walk = [p for p in path if tuple(p) != (player_x, player_y)]
+
+if len(path_to_walk) == 0:
+    return True  # Already at destination
+
+next_x, next_y = path_to_walk[0]  # First actual move
+dx = next_x - player_x
+dy = next_y - player_y
+```
+
+**Why this happens:** `path_to()` returns the full path including start → step1 → step2 → ... → goal. Many pathfinding libraries only return the steps (excluding start), but TCOD includes it.
+
+**Symptom if you get this wrong:** Movement fails silently - entities stay at starting position forever, trying to "move" with dx=0, dy=0.
+
+---
+
+## Critical: Pathfinding Uses (y, x) Coordinates
+
+**TCOD's pathfinding functions use (y, x) order, NOT (x, y)!**
+
+```python
+# WRONG - will path through walls!
+pathfinder.add_root((player_x, player_y))  # ❌
+path = pathfinder.path_to((target_x, target_y))  # ❌
+
+# CORRECT - swap to (y, x)
+pathfinder.add_root((player_y, player_x))  # ✓
+path = pathfinder.path_to((target_y, target_x))  # ✓
+
+# Path output is also (y, x), need to swap back
+next_y, next_x = path[1]  # ✓ (skip starting position at path[0])
+dx = next_x - player_x
+dy = next_y - player_y
+```
+
+**Why:** TCOD's pathfinding matches numpy array indexing [y, x], unlike most function calls which use (x, y).
+
+**Symptom if you get this wrong:** Pathfinder returns paths through walls! It treats X as Y and Y as X, so it's navigating a transposed/rotated map.
+
+---
+
 ## Three Coordinate Systems
 
 **DO NOT MIX THESE!**
