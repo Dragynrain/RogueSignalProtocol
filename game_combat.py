@@ -142,9 +142,17 @@ class ExploitSystem:
                 remaining_cpu=remaining_cpu,
                 max_cpu=self.game.player.max_cpu
             )
-            self.game.dialogue_state.show(dialogue)
-            self.game.sound_manager.play_sound("exploit_failed")
+            was_shown = self.game.dialogue_state.show(dialogue)
 
+            if not was_shown:
+                # User disabled overclock warnings - auto-confirm and proceed
+                logging.debug(f"Combat: Overclock warning suppressed by user preference, auto-confirming for '{exploit.name}'")
+                self.game.overclock_confirmation = True
+                # Recursively call execute_exploit - will bypass this check now
+                return self.execute_exploit(exploit_key, target)
+
+            # Dialogue was shown - block and wait for user confirmation
+            self.game.sound_manager.play_sound("exploit_failed")
             logging.debug(f"Combat: Overheat warning shown for '{exploit.name}', awaiting confirmation")
             return False
 
