@@ -262,6 +262,18 @@ class GameEngine:
         """Set the enemies list."""
         self.enemy_manager.enemies = value
 
+    def get_enemy_id_counter(self) -> int:
+        """
+        Get current enemy ID counter for save game serialization.
+
+        This method provides the Enemy class's ID counter without requiring
+        the save system to import the Enemy class directly (dependency inversion).
+
+        Returns:
+            Current enemy ID counter value
+        """
+        return Enemy.get_next_id_counter()
+
     def _get_enemy_at(self, position: Position) -> Optional[Enemy]:
         """Get enemy at position - for backward compatibility."""
         return self.enemy_manager.get_enemy_at_position(position)

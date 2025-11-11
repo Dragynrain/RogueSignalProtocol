@@ -176,7 +176,7 @@ def test_shift_f12_triggers_debug_export_dialogue(input_handler, mock_game_engin
     event = tcod.event.KeyDown(
         scancode=tcod.event.Scancode.F12,
         sym=tcod.event.KeySym.F12,
-        mod=tcod.event.KMOD_SHIFT
+        mod=tcod.event.Modifier.SHIFT
     )
 
     # Simulate gameplay input
@@ -202,7 +202,7 @@ def test_shift_f12_confirm_creates_debug_package(input_handler, mock_game_engine
     event = tcod.event.KeyDown(
         scancode=tcod.event.Scancode.F12,
         sym=tcod.event.KeySym.F12,
-        mod=tcod.event.KMOD_SHIFT
+        mod=tcod.event.Modifier.SHIFT
     )
     input_handler._handle_gameplay_input(event)
 
@@ -394,7 +394,7 @@ def test_settings_menu_mouse_click_export_button(settings_menu, monkeypatch):
     event = tcod.event.MouseButtonDown(
         pixel=(400, 300),
         tile=(20, 15),
-        button=tcod.event.BUTTON_LEFT
+        button=tcod.event.MouseButton.LEFT
     )
 
     # Test that clicking triggers the same flow as Enter key

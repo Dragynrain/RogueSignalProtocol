@@ -1334,7 +1334,7 @@ class GameSession:
 
             # Restore Enemy class counter
             if "enemy_next_id" in save_data:
-                Enemy._next_id = save_data["enemy_next_id"]
+                Enemy.set_next_id_counter(save_data["enemy_next_id"])
 
             self.game_engine.message_log.add_message_typed("Game loaded successfully!", Colors.GREEN)
             return True

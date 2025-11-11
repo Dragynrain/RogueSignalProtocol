@@ -14,8 +14,7 @@ from typing import List, Tuple, Optional
 
 from game_config import GameConfig, GameBalance
 from game_entities import Colors, ensure_color_tuple
-from game_ui import render_char_safe
-from game_input import UniversalInputHandler
+from game_ui import render_char_safe, UniversalInputHandler
 from data_loading import DataLoader
 from game_color_manager import ColorManager
 from game_coordinate_helpers import CoordinateHelpers

@@ -247,7 +247,7 @@ class UnifiedRenderer:
         )
 
         # Draw box background and border using shared utility
-        from game_rendering_core import draw_bordered_box
+        from game_rendering_utils import draw_bordered_box
         draw_bordered_box(console, box_x, box_y, box_width, box_height, border_color, bg_color)
 
         # Render title (centered)
@@ -274,7 +274,7 @@ class UnifiedRenderer:
             y=message_y,
             string=formatted_message,
             fg=message_color,
-            bg=message_color,  # TCOD ignores bg in print(), handled by draw_bordered_box
+            bg=None,  # Leave background unchanged (already set by draw_bordered_box)
             width=box_width - 4,
             alignment=tcod.constants.LEFT
         )
@@ -535,7 +535,7 @@ def create_intro_dialogue() -> DialogueBox:
         bg_color=Colors.BLACK,
         format_data={},
         priority=10,  # Critical priority
-        user_pref_key="intro_dialogue"
+        user_pref_key=None  # No user preference - always show intro
     )
 
 

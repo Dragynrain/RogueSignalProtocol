@@ -43,6 +43,10 @@ class GameTestAgent:
         # Create headless engine (no rendering, no audio)
         self.engine = GameEngine(headless=True, load_save=False)
 
+        # Dismiss intro dialogue for clean test state
+        if self.engine.dialogue_state.is_active():
+            self.engine.dialogue_state.close()
+
         # Set level if different from default
         if level != 1:
             self.engine.level = level

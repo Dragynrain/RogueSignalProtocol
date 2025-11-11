@@ -19,7 +19,6 @@ from game_config import GameConfig, GameBalance
 from game_entities import Colors
 from game_data import GameData
 from game_ui import render_char_safe
-from game_menu_help_lore import create_help_menu
 from data_loading import get_story_fragments
 from game_screen_utilities import ScreenRenderingUtils, ScrollableListManager
 from game_color_thresholds import ColorThresholdManager
@@ -48,15 +47,13 @@ class UIRenderer:
         Initialize UI renderer.
 
         Args:
-            settings: GameSettings instance (optional, for graphical help)
-            context: TCOD context (optional, for graphical help)
-            tile_manager: TileManager instance (optional, for graphical help)
+            settings: GameSettings instance (optional, for context)
+            context: TCOD context (optional, for context)
+            tile_manager: TileManager instance (optional, for context)
         """
         self.settings = settings
         self.context = context
         self.tile_manager = tile_manager
-        self._active_help_menu = None  # Active help menu instance (only while help screen is shown)
-        self._help_menu_graphics_mode = None  # Track which graphics mode the cached help menu was created for
 
     # ========================================================================
     # STATUS BAR RENDERING
@@ -653,62 +650,45 @@ class UIRenderer:
 
     # === Help Screen ===
 
-    def render_help_screen(self, console: tcod.console.Console):
+    def render_help_screen(self, console: tcod.console.Console, help_menu):
         """
-        Render the help screen using appropriate help menu.
+        Render the help screen using provided help menu.
 
-        Uses GraphicalHelpMenu in graphics mode, HelpMenu in glyph mode.
-        Creates menu on first call, reuses it for pagination state.
-        Call clear_help_menu() when exiting help screen.
+        Help menu creation and caching is handled by the orchestration layer
+        (GameRenderer) to avoid backwards dependency from rendering layer to menus layer.
+
+        Args:
+            console: TCOD console to render to
+            help_menu: Pre-created help menu instance to render
         """
-        # Check if graphics mode changed - if so, clear cached menu to recreate with correct type
-        current_mode = self.settings.graphics_mode if self.settings else None
-        if self._help_menu_graphics_mode != current_mode:
-            logging.info(f"Graphics mode changed from {self._help_menu_graphics_mode} to {current_mode}, clearing help menu cache")
-            self._active_help_menu = None
-            self._help_menu_graphics_mode = current_mode
+        help_menu.render(console)
 
-        # Create help menu if not already active
-        if self._active_help_menu is None:
-            if self.settings is not None:
-                self._active_help_menu = create_help_menu(self.settings, self.context, self.tile_manager)
-                logging.info(f"Created help menu: {type(self._active_help_menu).__name__}")
-            else:
-                # Fallback to standard help menu if settings not provided
-                from game_menu_help_lore import HelpMenu
-                self._active_help_menu = HelpMenu()
-                logging.warning("Settings not provided to UIRenderer, using standard HelpMenu")
-
-        # Render help menu
-        self._active_help_menu.render(console)
-
-    def clear_help_menu(self):
-        """Clear active help menu when exiting help screen."""
-        self._active_help_menu = None
-        self._help_menu_graphics_mode = None
-
-    def render_help_sprites(self):
+    def render_help_sprites(self, help_menu):
         """
         Render help screen sprites (for GraphicalHelpMenu only).
 
         This should be called BEFORE render_help_screen when in graphics mode.
         Only GraphicalHelpMenu has this method.
-        """
-        if self._active_help_menu and hasattr(self._active_help_menu, 'render_sprites'):
-            self._active_help_menu.render_sprites()
 
-    def handle_help_input(self, event) -> str:
+        Args:
+            help_menu: Pre-created help menu instance
+        """
+        if help_menu and hasattr(help_menu, 'render_sprites'):
+            help_menu.render_sprites()
+
+    def handle_help_input(self, event, help_menu) -> str:
         """
         Handle input for help screen.
 
         Args:
             event: TCOD event
+            help_menu: Pre-created help menu instance
 
         Returns:
             Result from help menu input handler ('back' to exit, '' to continue)
         """
-        if self._active_help_menu:
-            return self._active_help_menu.handle_input(event)
+        if help_menu:
+            return help_menu.handle_input(event)
         return ""
 
     # === Exploit Bar Click Detection ===

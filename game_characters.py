@@ -591,6 +591,16 @@ class Enemy:
 
     _next_id = 1  # Class variable for unique IDs
 
+    @classmethod
+    def get_next_id_counter(cls) -> int:
+        """Get current enemy ID counter for serialization."""
+        return cls._next_id
+
+    @classmethod
+    def set_next_id_counter(cls, value: int):
+        """Set enemy ID counter when deserializing saved games."""
+        cls._next_id = value
+
     def __init__(self, position: Position, enemy_type: str):
         """
         Initialize enemy with type-specific stats and AI state.

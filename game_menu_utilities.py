@@ -14,7 +14,7 @@ from game_entities import Colors
 from game_ui import render_char_safe
 from game_coordinate_helpers import CoordinateHelpers
 from game_unicode_chars import GameGlyphs
-from game_rendering_core import draw_bordered_box
+from game_rendering_utils import draw_bordered_box
 
 
 class MenuRenderingUtils:
