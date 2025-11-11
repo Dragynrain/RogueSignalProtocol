@@ -81,16 +81,6 @@ class ColorManager:
         return cls.get("enemies", state)
 
     @classmethod
-    def get_basic_color(cls, color_name: str) -> Tuple[int, int, int]:
-        """Get basic color. Raises KeyError if not in config."""
-        return cls.get("basic", color_name)
-
-    @classmethod
-    def get_game_element_color(cls, element: str) -> Tuple[int, int, int]:
-        """Get game element color. Raises KeyError if not in config."""
-        return cls.get("game_elements", element)
-
-    @classmethod
     def get_terrain_variant_color(cls, variant: str) -> Tuple[int, int, int]:
         """Get terrain variant color. Raises KeyError if not in config."""
         return cls.get("terrain_variants", variant)
@@ -99,13 +89,3 @@ class ColorManager:
     def get_targeting_color(cls, element: str) -> Tuple[int, int, int]:
         """Get targeting overlay color. Raises KeyError if not in config."""
         return cls.get("targeting", element)
-
-    @classmethod
-    def get_ui_color(cls, element: str) -> Tuple[int, int, int]:
-        """Get UI color. Raises KeyError if not in config."""
-        return cls.get("ui", element)
-
-    @classmethod
-    def get_menu_background_color(cls, element: str) -> Tuple[int, int, int]:
-        """Get menu background color. Raises KeyError if not in config."""
-        return cls.get("menu_background", element)

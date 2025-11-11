@@ -102,26 +102,6 @@ class DataLoader:
         return cls._get_section('balance', cls.load_game_data())
 
     @classmethod
-    def get_item_effects(cls) -> Dict[str, Any]:
-        """Get item effects configuration from game data."""
-        return cls._get_section('item_effects', cls.load_game_data())
-
-    @classmethod
-    def get_ai_behavior_config(cls) -> Dict[str, Any]:
-        """Get AI behavior configuration from game config."""
-        config = cls.load_config()
-        try:
-            return config['balance']['ai_behavior']
-        except KeyError as e:
-            # Provide additional context for debugging
-            if 'balance' in config:
-                logging.error(f"Available balance keys: {list(config['balance'].keys())}")
-            else:
-                logging.error("No 'balance' section found")
-                logging.error(f"Available sections: {list(config.keys())}")
-            GameErrorHandler.handle_config_error("Missing AI behavior config in game_rules.json", e)
-    
-    @classmethod
     def load_config(cls) -> Dict[str, Any]:
         """
         Load configuration from game_rules.json with caching.
@@ -152,51 +132,6 @@ class DataLoader:
                 logging.error(f"Exception: {str(e)}")
                 raise json.JSONDecodeError(f"game_rules.json contains invalid JSON", e.doc, e.pos) from e
         return cls._config
-    
-    @classmethod
-    def load_user_settings(cls) -> Dict[str, Any]:
-        """Load user settings from JSON file."""
-        settings_file = 'saves/user_settings.json'
-        try:
-            with open(settings_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            # Normal for first run - create default settings
-            logging.debug("saves/user_settings.json not found, using defaults (normal for first run)")
-            return cls._get_default_user_settings()
-        except json.JSONDecodeError as e:
-            # Corrupted settings file - use defaults but warn user
-            error_msg = f"WARNING: Invalid JSON in saves/user_settings.json, using defaults"
-            logging.warning(error_msg)
-            logging.warning(f"JSON error: {str(e)}")
-            return cls._get_default_user_settings()
-
-    @classmethod
-    def save_user_settings(cls, settings: Dict[str, Any]) -> bool:
-        """Save user settings to JSON file."""
-        settings_file = 'saves/user_settings.json'
-        try:
-            # Ensure saves directory exists
-            os.makedirs(os.path.dirname(settings_file), exist_ok=True)
-
-            with open(settings_file, 'w', encoding='utf-8') as f:
-                json.dump(settings, f, indent=2, ensure_ascii=False)
-            logging.debug(f"Data Loading: Saved user settings ({len(settings)} entries)")
-            return True
-        except Exception as e:
-            logging.error(f"Failed to save user settings: {e}")
-            return False
-    
-    @classmethod
-    def _get_default_user_settings(cls) -> Dict[str, Any]:
-        """Default user settings if file doesn't exist."""
-        return {
-            "master_volume": 0.7,
-            "sfx_volume": 0.75,
-            "music_volume": 0.6,
-            "graphics_mode": "graphics",
-            "dialogue_preferences": {}
-        }
 
 
 class PersistentStorage:
@@ -238,16 +173,6 @@ class PersistentStorage:
             # Handle corrupted save files
             logging.warning(f"Invalid JSON in save file {filename}: {e}")
             return {}
-    
-    def file_exists(self, filename: str) -> bool:
-        """Check if save file exists."""
-        filepath = os.path.join(self.base_dir, filename)
-        return os.path.exists(filepath)
-    
-    def list_save_files(self) -> List[str]:
-        """List all save files in the directory."""
-        files = [f for f in os.listdir(self.base_dir) if f.endswith('.json')]
-        return sorted(files)
 
 
 def get_story_fragments() -> List[str]:

@@ -495,34 +495,6 @@ class ExploitSystem:
 
         damage = self._calculate_exploit_damage(exploit.damage)
         return self._damage_enemy(enemy, damage)
-    
-    def _disable_area_enemies(self, target: Position, radius: int, duration: int) -> int:
-        """
-        Disable enemies in area for the specified duration.
-
-        Stun effect is additive - multiple stuns stack duration.
-        Disabled enemies cannot move or attack. Resets their state to UNAWARE.
-
-        Uses grid distance so diagonals count as 1 for consistent gameplay.
-
-        Args:
-            target: Center of AoE
-            radius: Effect radius (grid distance)
-            duration: Number of turns enemies are disabled
-
-        Returns:
-            Count of enemies disabled
-        """
-        count = 0
-        for enemy in self.game.enemies:
-            # Use grid distance for AoE radius (diagonals = 1)
-            if enemy.position.grid_distance_to(target) <= radius:
-                enemy.disabled_turns += duration  # Additive stun effect
-                enemy.state = EnemyState.UNAWARE
-                enemy.alert_timer = 0
-                logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) STUNNED for {duration} turns, total={enemy.disabled_turns}")
-                count += 1
-        return count
 
     def _execute_system_crash(self, exploit: ExploitDefinition, target: Position) -> bool:
         """
