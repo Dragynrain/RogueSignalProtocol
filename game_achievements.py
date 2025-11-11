@@ -29,14 +29,6 @@ class Achievement:
     category: str  # "combat", "stealth", "efficiency", "mastery", "challenge", "lifetime"
     hidden: bool = False  # Don't show in menu until unlocked
 
-    def check(self, session: Optional[SessionMetrics] = None,
-              lifetime: Optional[LifetimeMetrics] = None) -> bool:
-        """
-        Check if this achievement should be unlocked.
-        Override in subclasses or use lambda in definition.
-        """
-        return False
-
 
 # ============================================================================
 # ACHIEVEMENT DEFINITIONS

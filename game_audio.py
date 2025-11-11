@@ -333,17 +333,7 @@ class SoundManager:
             self.current_music = None
         except Exception as e:
             GameErrorHandler.handle_error(e, "music_stop", "Failed to stop music")
-    
-    def pause_music(self):
-        """Pause background music"""
-        if self.enabled:
-            pygame.mixer.music.pause()
-    
-    def unpause_music(self):
-        """Resume paused background music"""
-        if self.enabled:
-            pygame.mixer.music.unpause()
-    
+
     def is_music_playing(self) -> bool:
         """Check if music is currently playing"""
         if not self.enabled:
@@ -416,14 +406,6 @@ class NullSoundManager:
 
     def stop_music(self, fade_out_ms: int = 0):
         """No-op: Stop music."""
-        pass
-
-    def pause_music(self):
-        """No-op: Pause music."""
-        pass
-
-    def unpause_music(self):
-        """No-op: Unpause music."""
         pass
 
     def is_music_playing(self) -> bool:

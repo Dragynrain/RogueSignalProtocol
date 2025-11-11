@@ -191,51 +191,6 @@ class PathfindingHelper:
         return best_move
 
     @staticmethod
-    def get_chase_move(
-        current_pos: Position,
-        dijkstra_map: np.ndarray,
-        game_map
-    ) -> Optional[Tuple[int, int]]:
-        """
-        Get best move to CHASE target using Dijkstra map.
-
-        Finds the adjacent cell with the LOWEST distance value (closest to target).
-
-        Args:
-            current_pos: Current position of the chasing enemy
-            dijkstra_map: Dijkstra map with distances to target
-            game_map: GameMap for boundary checking
-
-        Returns:
-            Tuple (dx, dy) for the best chase direction, or None if no valid move
-        """
-        best_move = None
-        best_distance = dijkstra_map[current_pos.y, current_pos.x]  # [y, x] indexing
-
-        # Check all 8 adjacent cells
-        for dx, dy in [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]:
-            new_pos = Position(current_pos.x + dx, current_pos.y + dy)
-
-            # Validate position
-            if not new_pos.is_valid(game_map.width, game_map.height):
-                continue
-            if game_map.is_wall(new_pos):
-                continue
-
-            # Get distance at this position
-            distance = dijkstra_map[new_pos.y, new_pos.x]
-
-            # We want LOWER distance (chase) - skip unreachable cells
-            if distance == np.inf:
-                continue
-
-            if distance < best_distance:
-                best_distance = distance
-                best_move = (dx, dy)
-
-        return best_move
-
-    @staticmethod
     def path_exists(
         start: Position,
         goal: Position,
@@ -1189,40 +1144,6 @@ class Enemy:
                 # Can't pathfind to next waypoint, stop trying
                 break
 
-    def _calculate_path_to_target(self, target: Optional[Position], game_map, game_engine):
-        """Calculate full path to target using A* pathfinding with reasonable distance limits."""
-        if not target:
-            return None
-
-        try:
-            # Calculate direct distance to target
-            direct_distance = self.position.distance_to(target)
-
-            # Set maximum reasonable path length - allow longer paths to route around obstacles
-            # For short distances, be more generous to allow routing around other enemies
-            if direct_distance <= 5:
-                max_reasonable_path_length = max(15, int(direct_distance * 5))
-            else:
-                max_reasonable_path_length = max(15, int(direct_distance * 3))
-
-            # TCOD pathfinding uses (y, x) coordinate order for numpy arrays
-            cost_map = PathfindingHelper._create_cost_map(game_map, game_engine, self)
-            graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
-            pathfinder = tcod.path.Pathfinder(graph)
-            pathfinder.add_root((self.position.y, self.position.x))
-            path = pathfinder.path_to((target.y, target.x))
-
-            # Check if path exists and is reasonable
-            if len(path) > 1:
-                # If path is too long compared to direct distance, enemy should wait instead
-                if len(path) > max_reasonable_path_length:
-                    return None
-                return path
-            return None
-        except Exception as e:
-            GameErrorHandler.handle_error(e, "enemy_pathfinding", f"Pathfinding failed for {self.type_data.name}", fatal=False)
-            return None
-
     def _fill_greedy_moves(self, target: Position, game_map, player, game_engine):
         """
         Fill queue with greedy moves toward target (up to 3 moves).
@@ -1315,22 +1236,6 @@ class Enemy:
                 best_move = next_pos
 
         return best_move
-
-
-    def _calculate_random_move(self, game_map, player, game_engine) -> Optional[Position]:
-        """Calculate a random valid adjacent move from the last queued position or current position."""
-        # Calculate from the last position in queue (for rolling queue behavior)
-        start_pos = self.move_queue[-1] if self.move_queue else self.position
-
-        directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
-        random.shuffle(directions)
-
-        for dx, dy in directions:
-            next_pos = Position(start_pos.x + dx, start_pos.y + dy)
-            if self._is_move_valid(next_pos, game_map, player, game_engine):
-                return next_pos
-
-        return None
 
     def _should_flee(self, player, game_map) -> bool:
         """
