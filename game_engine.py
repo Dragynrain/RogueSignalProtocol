@@ -159,6 +159,9 @@ class GameEngine:
         self.overclock_confirmation = False
         self.overclock_exploit: Optional[str] = None
 
+        # System Crash confirmation system
+        self.system_crash_confirmed = False
+
         # Friendly fire confirmation system
         self.friendly_fire_confirmed = False
         self.friendly_fire_exploit: Optional[str] = None

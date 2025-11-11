@@ -243,6 +243,15 @@ class InputHandler:
                     self.game.friendly_fire_exploit,
                     self.game.friendly_fire_target
                 )
+        elif "SYSTEM CRASH" in dialogue.title:
+            # Player confirmed System Crash - re-execute
+            logging.debug("Input: System Crash confirmed")
+            self.game.system_crash_confirmed = True
+            # Re-execute System Crash
+            self.game.exploit_system.execute_exploit(
+                'system_crash',
+                self.game.player.position
+            )
         elif "GATEWAY" in dialogue.title:
             # Player confirmed gateway - proceed to next level
             logging.debug(f"Input: Gateway confirmed, advancing from level {self.game.level}")
