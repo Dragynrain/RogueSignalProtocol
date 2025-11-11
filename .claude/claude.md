@@ -99,10 +99,11 @@
 
 **Batch files:** MUST test before committing. READ `.claude/WINDOWS_SCRIPTING.md` for syntax. No `else if` - use `) else ( if ... )`
 
-**Test Agent Framework:** READ `.claude/TESTING_STRATEGY.md` and `.claude/TESTING_AUTOMATION.md` BEFORE writing agent tests
-- `GameTestAgent` (tests/test_agent.py) - Headless game simulation
-- Chaos testing (tests/integration/test_chaos_agent.py) - Keyboard fuzzing
-- Speed/slow agents (tests/test_speed_slow_agent.py) - Mechanics validation
+**Test Agent Framework:** READ `.claude/AGENT_DEVELOPMENT.md` BEFORE creating new agents
+- Development guide: `.claude/AGENT_DEVELOPMENT.md` - Step-by-step agent creation, common mistakes
+- Testing strategy: `.claude/TESTING_STRATEGY.md` and `.claude/TESTING_AUTOMATION.md`
+- Base class: `GameTestAgent` (tests/test_agent.py) - Headless game simulation
+- Examples: Chaos testing (tests/integration/test_chaos_agent.py), Speed/slow agents (tests/test_speed_slow_agent.py)
 
 ---
 

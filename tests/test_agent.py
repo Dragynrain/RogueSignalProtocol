@@ -109,14 +109,31 @@ class GameTestAgent:
             dy: Change in y (-1, 0, or 1)
 
         Returns:
-            True if move was successful, False if blocked
+            True if move was successful (including bump attacks), False if blocked by wall
         """
-        old_pos = (self.player.x, self.player.y)
-        self.engine.move_player(dx, dy)
-        new_pos = (self.player.x, self.player.y)
-        return old_pos != new_pos
+        from game_entities import Position
 
-    def move_to(self, x: int, y: int, max_steps: int = 100) -> bool:
+        old_pos = (self.player.x, self.player.y)
+
+        # Check if there's an enemy at target position (before move)
+        target_x = self.player.x + dx
+        target_y = self.player.y + dy
+        target_pos = Position(target_x, target_y)
+        had_enemy = self._get_enemy_at(target_pos) is not None
+
+        # Perform move (or bump attack if enemy present)
+        self.engine.move_player(dx, dy)
+
+        new_pos = (self.player.x, self.player.y)
+
+        # Success if position changed (moved) OR we attacked an enemy (stayed but attacked)
+        return old_pos != new_pos or had_enemy
+
+    def _get_enemy_at(self, position):
+        """Get enemy at position (helper for move_player)."""
+        return self.engine._get_enemy_at(position)
+
+    def move_to(self, x: int, y: int, max_steps: int = 100, debug: bool = False) -> bool:
         """
         Move player to absolute position using pathfinding.
 
@@ -124,41 +141,75 @@ class GameTestAgent:
             x: Target x coordinate
             y: Target y coordinate
             max_steps: Maximum number of steps to take (prevents infinite loops)
+            debug: Enable debug logging for pathfinding diagnostics
 
         Returns:
-            True if reached destination, False if blocked or max_steps exceeded
+            True if made progress (moved or attacked), False if blocked
+            Note: Returns True even if destination not reached (when max_steps < full path)
         """
         import tcod
         import numpy as np
         from game_config import GameConfig
+        import logging
+
+        made_progress = False
 
         for step in range(max_steps):
             if self.player.x == x and self.player.y == y:
                 return True
 
-            # Build cost map from walls (1 = walkable, 0 = blocked)
-            # TCOD pathfinding needs numpy array
-            cost = np.ones((GameConfig.MAP_HEIGHT, GameConfig.MAP_WIDTH), dtype=np.int8)
+            # Build cost map from walls
+            # TCOD expects: 0 or negative = blocked, positive = walkable with that cost
+            # But pathfinder seems to prefer LOW costs, so use high values for walls
+            cost = np.ones((GameConfig.MAP_HEIGHT, GameConfig.MAP_WIDTH), dtype=np.uint8)
             for wall_x, wall_y in self.game_map.walls:
-                cost[wall_y, wall_x] = 0
+                cost[wall_y, wall_x] = 0  # Blocked (0 or negative)
+
+            if debug:
+                logging.debug(f"[PATHFIND] Step {step}: ({self.player.x},{self.player.y}) -> ({x},{y})")
+                # Check for obvious problems
+                if cost[y, x] == 0:
+                    logging.warning(f"[PATHFIND] Target ({x},{y}) is a wall!")
+                if cost[self.player.y, self.player.x] == 0:
+                    logging.warning(f"[PATHFIND] Player at ({self.player.x},{self.player.y}) is in a wall!")
 
             graph = tcod.path.SimpleGraph(cost=cost, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
 
-            pathfinder.add_root((self.player.x, self.player.y))
-            path = pathfinder.path_to((x, y))
+            # CRITICAL: TCOD pathfinding uses (y, x) coordinates, not (x, y)!
+            pathfinder.add_root((self.player.y, self.player.x))
+            path = pathfinder.path_to((y, x))
 
             if len(path) == 0:
-                return False  # No path found
+                if debug:
+                    logging.debug(f"[PATHFIND] No path found from ({self.player.x},{self.player.y}) to ({x},{y})")
+                return made_progress  # Return True if we made any progress before this
 
-            next_x, next_y = path[0]
+            # TCOD includes starting position as first element - skip it
+            # Path returns (y, x) coordinates, so we need to swap them
+            path_to_walk = [p for p in path if tuple(p) != (self.player.y, self.player.x)]
+
+            if len(path_to_walk) == 0:
+                # Already at destination (path only contains current position)
+                return True
+
+            # Path returns (y, x), swap to (x, y)
+            next_y, next_x = path_to_walk[0]
             dx = next_x - self.player.x
             dy = next_y - self.player.y
 
-            if not self.move_player(dx, dy):
-                return False  # Blocked
+            move_success = self.move_player(dx, dy)
 
-        return False  # Max steps exceeded
+            if debug and not move_success:
+                logging.debug(f"[PATHFIND] Move blocked at ({self.player.x},{self.player.y}) with delta ({dx},{dy})")
+
+            if not move_success:
+                return made_progress  # Return True if we made progress before getting blocked
+
+            made_progress = True  # Successfully moved or attacked
+
+        # Reached max steps but made progress
+        return made_progress
 
     def wait(self, turns: int = 1):
         """
