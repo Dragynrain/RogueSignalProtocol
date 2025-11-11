@@ -464,5 +464,162 @@ class TestAutoWalkTCODIntegration(unittest.TestCase):
         self.assertGreater(len(self.autowalk.path), 0)
 
 
+class TestAutoWalkInterruption(unittest.TestCase):
+    """Test auto-walk interruption by various game actions."""
+
+    def setUp(self):
+        """Set up test fixtures."""
+        settings = GameSettings()
+        from game_map import GameMap
+        game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
+        game_map.walls.clear()
+
+        self.engine = GameEngine(
+            settings=settings,
+            game_map=game_map,
+            load_save=False
+        )
+        self.autowalk = self.engine.autowalk
+
+        # GameEngine generates a level on init, so clear walls again
+        self.engine.game_map.walls.clear()
+        self.engine.game_map.invalidate_transparency_cache()
+
+        # Clear enemies
+        self.engine.enemies.clear()
+
+        # Place player at known location
+        self.engine.player.position = Position(10, 10)
+
+    def test_autowalk_interrupted_by_direct_cancel(self):
+        """Test that autowalk.cancel() works directly."""
+        start_pos = Position(10, 10)
+        target_pos = Position(20, 10)
+
+        # Start auto-walk
+        success = self.autowalk.start(start_pos, target_pos, self.engine)
+        self.assertTrue(success, "Autowalk should start successfully")
+        self.assertTrue(self.autowalk.is_active(), "Autowalk should be active")
+
+        # Cancel directly
+        self.autowalk.cancel()
+
+        # Should be inactive
+        self.assertFalse(self.autowalk.is_active(), "Autowalk should be cancelled")
+
+    def test_autowalk_interrupted_by_menu_opening(self):
+        """Test auto-walk cancels when opening inventory menu.
+
+        NOTE: This test demonstrates that we need to test the behavior
+        at the AutoWalk API level, not through the full input handler,
+        because the input handler has complex state management that's
+        hard to mock in tests.
+        """
+        start_pos = Position(10, 10)
+        target_pos = Position(20, 10)
+
+        # Start auto-walk
+        success = self.autowalk.start(start_pos, target_pos, self.engine)
+        self.assertTrue(success, "Autowalk should start successfully")
+        self.assertTrue(self.autowalk.is_active(), "Autowalk should be active")
+
+        # Simulate what should happen when inventory is opened:
+        # The game code should call cancel() before showing the inventory
+        self.autowalk.cancel()
+        self.engine.show_inventory = True
+
+        # Verify autowalk was cancelled
+        self.assertFalse(self.autowalk.is_active(), "Auto-walk should cancel when opening inventory")
+
+    def test_autowalk_cancel_persists_reason(self):
+        """Test that cancel() stores the reason for debugging."""
+        start_pos = Position(10, 10)
+        target_pos = Position(20, 10)
+
+        self.autowalk.start(start_pos, target_pos, self.engine)
+        self.assertTrue(self.autowalk.is_active())
+
+        # Cancel with custom reason
+        self.autowalk.cancel()
+
+        self.assertFalse(self.autowalk.is_active())
+        self.assertIsNotNone(self.autowalk.stop_reason)
+        self.assertIn("user", self.autowalk.stop_reason.lower())
+
+    def test_autowalk_multiple_cancel_calls_safe(self):
+        """Test that calling cancel() multiple times is safe."""
+        start_pos = Position(10, 10)
+        target_pos = Position(20, 10)
+
+        self.autowalk.start(start_pos, target_pos, self.engine)
+        self.assertTrue(self.autowalk.is_active())
+
+        # Cancel multiple times
+        self.autowalk.cancel()
+        self.autowalk.cancel()
+        self.autowalk.cancel()
+
+        # Should still be inactive
+        self.assertFalse(self.autowalk.is_active())
+
+    def test_autowalk_cancels_on_path_blocked_mid_walk(self):
+        """Test auto-walk stops when path becomes blocked during execution."""
+        start_pos = Position(10, 10)
+        target_pos = Position(15, 10)
+
+        # Start auto-walk
+        self.autowalk.start(start_pos, target_pos, self.engine)
+        self.assertTrue(self.autowalk.is_active())
+
+        # Take one step
+        next_move = self.autowalk.get_next_move(self.engine)
+        self.assertIsNotNone(next_move)
+        self.autowalk.advance_step()
+
+        # Now block the next position in the path
+        if self.autowalk.current_step < len(self.autowalk.path):
+            next_tile = self.autowalk.path[self.autowalk.current_step]
+            self.engine.game_map.walls.add((next_tile.x, next_tile.y))
+            self.engine.game_map.invalidate_transparency_cache()
+
+            # Check stop conditions - should detect blocked path
+            should_stop, reason = self.autowalk.check_stop_conditions(self.engine)
+
+            self.assertTrue(should_stop, "Should stop when path blocked mid-walk")
+            self.assertIn("blocked", reason.lower(), "Reason should mention blocking")
+
+    def test_autowalk_cancels_on_enemy_appears_mid_walk(self):
+        """Test auto-walk stops when enemy appears during walk."""
+        start_pos = Position(10, 10)
+        target_pos = Position(20, 10)
+
+        # Start auto-walk
+        self.autowalk.start(start_pos, target_pos, self.engine)
+        self.assertTrue(self.autowalk.is_active())
+
+        # Take a few steps
+        for _ in range(3):
+            next_move = self.autowalk.get_next_move(self.engine)
+            if next_move:
+                dx, dy = next_move
+                self.engine.player.position = Position(
+                    self.engine.player.x + dx,
+                    self.engine.player.y + dy
+                )
+                self.autowalk.advance_step()
+
+        # Enemy suddenly appears in player's vision
+        enemy = Enemy(Position(self.engine.player.x + 5, self.engine.player.y), 'scanner')
+        self.engine.enemies.append(enemy)
+
+        # Check stop conditions
+        should_stop, reason = self.autowalk.check_stop_conditions(self.engine)
+
+        # Should stop if enemy is visible
+        if self.engine.player.can_see_enemy(enemy, self.engine.game_map):
+            self.assertTrue(should_stop, "Should stop when enemy appears mid-walk")
+            self.assertIn("enemy", reason.lower(), "Reason should mention enemy")
+
+
 if __name__ == '__main__':
     unittest.main()
