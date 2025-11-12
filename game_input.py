@@ -473,20 +473,49 @@ class InputHandler:
         return self._handle_gameplay_left_click(event)
 
     def _handle_right_click(self, event: tcod.event.MouseButtonDown) -> bool:
-        """Handle right mouse click - typically cancel/exit actions."""
-        if self.game.look_mode:
-            logging.debug("Input: Right-click exiting look mode")
-            self.game.look_mode = False
-            self.game.message_log.add_message("Look mode exited")
-            return True
-        elif self.game.targeting_mode:
+        """Handle right mouse click - universal cancel/close for in-game modals."""
+        # Priority order: Handle most specific states first
+        if self.game.targeting_mode:
             logging.debug("Input: Right-click cancelling targeting")
             self.game.targeting_mode = False
             self.game.targeting_exploit = None
             self.game.message_log.add_message("Targeting cancelled")
             return True
-
-        return False
+        elif self.game.look_mode:
+            logging.debug("Input: Right-click exiting look mode")
+            self.game.look_mode = False
+            self.game.message_log.add_message("Look mode exited")
+            return True
+        elif self.game.show_inventory:
+            logging.debug("Input: Right-click closing inventory")
+            self.game.show_inventory = False
+            return True
+        elif self.game.show_lore_viewer:
+            logging.debug("Input: Right-click closing lore viewer")
+            if self.game.lore_viewer_mode == "reading":
+                # In reading mode, go back to list
+                self.game.lore_viewer_mode = "list"
+            else:
+                # In list mode, close entirely
+                self.game.show_lore_viewer = False
+                self.game.lore_viewer_mode = "list"
+                self.game.lore_viewer_selection = 0
+            return True
+        elif self.game.show_achievements:
+            logging.debug("Input: Right-click closing achievements")
+            self.game.show_achievements = False
+            return True
+        elif self.game.show_help:
+            logging.debug("Input: Right-click closing help")
+            self.game.show_help = False
+            if self.renderer and hasattr(self.renderer, 'clear_help_menu'):
+                self.renderer.clear_help_menu()
+            return True
+        else:
+            # Normal gameplay - consume the event to prevent any default behavior
+            # Right-click during normal gameplay does nothing (safe!)
+            logging.debug("Input: Right-click in normal gameplay (no action)")
+            return True
 
     def _handle_look_mode_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
         """Handle left click in look mode - delegated to LookModeInputHandler."""

@@ -485,7 +485,13 @@ class GraphicalHelpMenu:
         return False
 
     def handle_mouse_click(self, event) -> str:
-        """Handle mouse clicks (not used in graphical help menu)."""
+        """Handle mouse clicks - right-click to return."""
+        import tcod.event
+
+        # Right-click = go back (standard behavior)
+        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+            return "back"
+
         return ""
 
     def handle_mouse_wheel(self, event) -> bool:

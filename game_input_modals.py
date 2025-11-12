@@ -50,15 +50,17 @@ class InventoryInputHandler:
             self.game.inventory_selection = (self.game.inventory_selection + direction) % total_items
 
     def use_selected_item(self):
-        """Use or equip the selected inventory item."""
+        """Use or equip the selected inventory item, or unequip if clicking equipped exploit."""
         equipped = self.game.player.inventory_manager.equipped_exploits
         display_items = self.game.player.inventory_manager.get_display_items()
         selection = self.game.inventory_selection
 
         # Check if selecting an equipped exploit (first N items)
         if selection < len(equipped):
-            # Can't "use" equipped exploits from inventory - only unequip them
-            self.game.message_log.add_message("Use 'U' to unequip, or select an exploit from inventory to equip")
+            # Left-click on equipped exploit = unequip it
+            exploit_name = equipped[selection]
+            logging.debug(f"Inventory: Unequipping {exploit_name} from slot {selection} via left-click")
+            self.game.player.inventory_manager.unequip_exploit(exploit_name)
             return
 
         # Check if selecting an inventory item
@@ -66,7 +68,8 @@ class InventoryInputHandler:
         if 0 <= inventory_idx < len(display_items):
             item = display_items[inventory_idx]
             logging.debug(f"Inventory: Using item {item} at inventory index {inventory_idx}")
-            self.game.player.inventory_manager.use_item(inventory_idx, self.game)
+            # Call the item's use method directly
+            item.use(self.game.player, self.game)
         else:
             logging.warning(f"Inventory: Invalid selection {selection} (equipped={len(equipped)}, inventory={len(display_items)})")
 
@@ -79,7 +82,7 @@ class InventoryInputHandler:
         if selection < len(equipped):
             exploit_name = equipped[selection]
             logging.debug(f"Inventory: Unequipping {exploit_name} from slot {selection}")
-            self.game.player.inventory_manager.unequip_exploit(selection, self.game)
+            self.game.player.inventory_manager.unequip_exploit(exploit_name)
         else:
             self.game.message_log.add_message("Select an equipped exploit to unequip")
 

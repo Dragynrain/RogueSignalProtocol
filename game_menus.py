@@ -1061,6 +1061,32 @@ class SettingsMenu(BaseMenu):
 
         return ""
 
+    def handle_mouse_wheel(self, event) -> bool:
+        """Handle mouse wheel - navigate through settings options."""
+        if not hasattr(event, 'y'):
+            return False
+
+        if event.y > 0:
+            # Scroll up - move selection up
+            if self.selected_option > 0:
+                # Skip section headers
+                self.selected_option -= 1
+                while (self.selected_option > 0 and
+                       self.options[self.selected_option]["type"] == "section_header"):
+                    self.selected_option -= 1
+            return True
+        elif event.y < 0:
+            # Scroll down - move selection down
+            if self.selected_option < len(self.options) - 1:
+                # Skip section headers
+                self.selected_option += 1
+                while (self.selected_option < len(self.options) - 1 and
+                       self.options[self.selected_option]["type"] == "section_header"):
+                    self.selected_option += 1
+            return True
+
+        return False
+
     def _render_export_confirmation_dialog(self, console: tcod.console.Console) -> None:
         """Render debug export confirmation dialog with background-aware positioning."""
         # Calculate dialog height

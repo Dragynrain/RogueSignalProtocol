@@ -81,6 +81,19 @@ Navigate through 3 increasingly dangerous network levels, reach the gateway (>) 
 - **Pause**: ESC key
 - **Confirm**: Enter key for dialogues and menus
 
+### Mouse Controls
+
+**Universal Mouse Behavior (Standardized):**
+- **Left-Click**: Select/activate items, click buttons, move in-game
+- **Right-Click**: Go back to previous screen, cancel action/mode (works in ALL menus)
+- **Mouse Wheel**: Scroll through lists, menus, help pages (works in ALL scrollable screens)
+- **Hover**: Highlight menu options, show tooltips and entity info
+
+**Consistency:**
+- Right-click ALWAYS returns to previous screen or cancels current action
+- Mouse wheel ALWAYS scrolls in lists, settings, achievements, help, inventory, lore viewer
+- All mouse controls have keyboard equivalents for full keyboard-only play
+
 ### Core Mechanics
 
 - **Stealth**: Hide in shadows (*) to avoid enemy detection

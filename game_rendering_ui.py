@@ -596,9 +596,9 @@ class UIRenderer:
         y_start = GameConfig.SCREEN_HEIGHT - 6
 
         render_char_safe(console, 2, y_start, "CONTROLS:", fg=Colors.CYAN)
-        render_char_safe(console, 4, y_start + 1, "↑↓/W/S: Navigate │ Enter: Use", fg=Colors.WHITE)
-        render_char_safe(console, 4, y_start + 2, "U: Unequip selected exploit", fg=Colors.WHITE)
-        render_char_safe(console, 4, y_start + 3, "ESC/I: Close inventory", fg=Colors.WHITE)
+        render_char_safe(console, 4, y_start + 1, "↑↓/W/S: Navigate │ Enter/Click: Use/Unequip", fg=Colors.WHITE)
+        render_char_safe(console, 4, y_start + 2, "U: Unequip (same as clicking equipped)", fg=Colors.WHITE)
+        render_char_safe(console, 4, y_start + 3, "ESC/I/Right-Click: Close inventory", fg=Colors.WHITE)
 
     @staticmethod
     def get_inventory_item_at_click(tile_y: int) -> Optional[int]:
@@ -735,7 +735,7 @@ class UIRenderer:
             ScreenRenderingUtils.render_centered_title(
                 console, "Reach the Military Network (Level 3) to find them.", no_fragments_y + 2, Colors.WHITE
             )
-            ScreenRenderingUtils.render_screen_footer(console, "Press ESC to close")
+            ScreenRenderingUtils.render_screen_footer(console, "ESC/Right-Click: Close")
         else:
             # Show list of discovered fragments with brief previews
             y_offset = content_start_y
@@ -769,7 +769,7 @@ class UIRenderer:
 
                 y_offset += 1  # Space between entries
 
-            ScreenRenderingUtils.render_screen_footer(console, "↑↓ Navigate │ Enter: Read │ ESC: Close")
+            ScreenRenderingUtils.render_screen_footer(console, "↑↓ Navigate │ Enter: Read │ ESC/Right-Click: Close")
 
     def _render_lore_reading_mode(self, console: tcod.console.Console, game, discovered_fragments):
         """
@@ -798,7 +798,7 @@ class UIRenderer:
             max_height=content_end_y
         )
 
-        ScreenRenderingUtils.render_screen_footer(console, "Press any key to view all fragments...")
+        ScreenRenderingUtils.render_screen_footer(console, "ESC/Right-Click: Back to list │ Any key: Close")
 
     # === Achievements Screen ===
 

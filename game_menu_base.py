@@ -183,9 +183,10 @@ class BaseMenu:
 
     def handle_mouse_click(self, event) -> Optional[str]:
         """
-        Handle mouse click events - activate clicked option.
+        Handle mouse click events - activate clicked option or go back.
 
         Default implementation for menus with vertical option lists.
+        Right-click returns "back" for universal cancel/exit behavior.
         Subclasses can override for custom behavior.
 
         Args:
@@ -194,6 +195,12 @@ class BaseMenu:
         Returns:
             Action string (same as handle_input would return), or None
         """
+        import tcod.event
+
+        # Right-click = universal go back / cancel
+        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+            return "back"
+
         if not self.options:
             return None
 
@@ -209,7 +216,7 @@ class BaseMenu:
         start_y = 21
         spacing = 2
 
-        # Calculate which option was clicked
+        # Calculate which option was clicked (left-click only)
         if tile_y >= start_y:
             option_index = (tile_y - start_y) // spacing
 

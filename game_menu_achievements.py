@@ -63,7 +63,7 @@ class AchievementsMenu:
             )
 
         # Instructions
-        instructions = "ESC: Back  │  Scroll Wheel ↕: Navigate"
+        instructions = "ESC/Right-Click: Back  │  Mouse Wheel: Scroll"
         render_char_safe(
             console,
             2,
@@ -188,9 +188,14 @@ class AchievementsMenu:
         return False
 
     def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - click anywhere to return to main menu."""
-        if hasattr(event, 'position') and event.position:
+        """Handle mouse click - right-click to return to main menu."""
+        import tcod.event
+
+        # Right-click = go back (standard behavior)
+        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
             return "back"
+
+        # Left-click on empty space does nothing (removed confusing click-anywhere-to-exit)
         return ""
 
     def handle_mouse_wheel(self, event) -> bool:

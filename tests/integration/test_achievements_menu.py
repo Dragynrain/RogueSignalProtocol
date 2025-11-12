@@ -186,18 +186,33 @@ class TestAchievementsMenuInput:
 
         assert action == "back"
 
-    def test_mouse_click_returns_back(self):
-        """Test mouse click returns 'back' action."""
+    def test_mouse_right_click_returns_back(self):
+        """Test right-click returns 'back' action (standardized behavior)."""
         menu = AchievementsMenu()
 
-        # Create fake mouse click event
+        # Create fake right-click event
         event = type('Event', (), {
+            'button': tcod.event.MouseButton.RIGHT,
             'position': type('Position', (), {'x': 40, 'y': 25})()
         })()
 
         action = menu.handle_mouse_click(event)
 
         assert action == "back"
+
+    def test_mouse_left_click_on_empty_space_does_nothing(self):
+        """Test left-click on empty space does nothing (removed confusing click-anywhere-to-exit)."""
+        menu = AchievementsMenu()
+
+        # Create fake left-click event
+        event = type('Event', (), {
+            'button': tcod.event.MouseButton.LEFT,
+            'position': type('Position', (), {'x': 40, 'y': 25})()
+        })()
+
+        action = menu.handle_mouse_click(event)
+
+        assert action == ""  # Empty string, not "back"
 
     def test_mouse_motion_returns_false(self):
         """Test mouse motion is ignored."""
