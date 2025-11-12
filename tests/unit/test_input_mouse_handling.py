@@ -15,6 +15,7 @@ from unittest.mock import Mock, patch, MagicMock
 import tcod.event
 
 from game_input import InputHandler
+from game_input_coordinates import InputCoordinateConverter
 from game_entities import Position
 from game_config import GameConfig
 
@@ -101,7 +102,7 @@ class TestMouseTileBoundsChecking:
 
 
 class TestMousePixelToWorldConversion:
-    """Test _mouse_pixel_to_world() coordinate conversion and bounds."""
+    """Test InputCoordinateConverter.pixel_to_world_position() coordinate conversion and bounds."""
 
     def test_glyph_mode_conversion_valid_coords(self):
         """Test pixel to world conversion in glyph mode with valid coordinates."""
@@ -109,8 +110,7 @@ class TestMousePixelToWorldConversion:
         game.settings.graphics_mode = "glyph"
         game.last_camera_offset = Position(10, 10)
 
-        handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(return_value=(800, 600))
+        renderer = None  # Not needed for glyph mode
 
         # Get status bar height and viewport dimensions
         status_bar_height = GameConfig.STATUS_BAR_HEIGHT()
@@ -121,28 +121,32 @@ class TestMousePixelToWorldConversion:
         valid_tile_x = min(10, viewport_width - 1)  # Safe X within viewport
         valid_tile_y = status_bar_height + 5  # 5 tiles into viewport
 
-        with patch('game_input.CoordinateHelpers.pixel_to_char_coords',
-                   return_value=(valid_tile_x, valid_tile_y)):
-            world_pos = handler._mouse_pixel_to_world(400, 300)
+        with patch('game_input_coordinates.InputCoordinateConverter.get_window_dimensions', return_value=(800, 600)):
+            with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords',
+                       return_value=(valid_tile_x, valid_tile_y)):
+                world_pos = InputCoordinateConverter.pixel_to_world_position(
+                    400, 300, renderer, game, "glyph"
+                )
 
-            # Should return a valid position
-            assert world_pos is not None
-            assert isinstance(world_pos, Position)
-            # World position should be within map bounds
-            assert 0 <= world_pos.x < GameConfig.MAP_WIDTH
-            assert 0 <= world_pos.y < GameConfig.MAP_HEIGHT
+                # Should return a valid position
+                assert world_pos is not None
+                assert isinstance(world_pos, Position)
+                # World position should be within map bounds
+                assert 0 <= world_pos.x < GameConfig.MAP_WIDTH
+                assert 0 <= world_pos.y < GameConfig.MAP_HEIGHT
 
     def test_glyph_mode_out_of_viewport_bounds(self):
         """Test that clicks outside viewport return None."""
         game = create_mock_game()
         game.settings.graphics_mode = "glyph"
 
-        handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(return_value=(800, 600))
+        renderer = None
 
         # Click in status bar (y=0, which is < status bar height)
-        with patch('game_input.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 0)):
-            world_pos = handler._mouse_pixel_to_world(400, 10)
+        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 0)):
+            world_pos = InputCoordinateConverter.pixel_to_world_position(
+                400, 10, renderer, game, "glyph"
+            )
 
             # Should return None (in status bar, not gameplay area)
             assert world_pos is None
@@ -153,13 +157,14 @@ class TestMousePixelToWorldConversion:
         game.settings.graphics_mode = "glyph"
         game.last_camera_offset = Position(0, 0)
 
-        handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(return_value=(800, 600))
+        renderer = None
 
         # Click that would result in world coords beyond map bounds
         # Viewport coords that, when added to camera offset, exceed MAP_WIDTH/HEIGHT
-        with patch('game_input.CoordinateHelpers.pixel_to_char_coords', return_value=(100, 100)):
-            world_pos = handler._mouse_pixel_to_world(800, 600)
+        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(100, 100)):
+            world_pos = InputCoordinateConverter.pixel_to_world_position(
+                800, 600, renderer, game, "glyph"
+            )
 
             # Should return None (outside world bounds)
             assert world_pos is None
@@ -169,10 +174,11 @@ class TestMousePixelToWorldConversion:
         game = create_mock_game()
         game.settings.graphics_mode = "graphics"
 
-        handler = InputHandler(game)
-        handler.renderer = None  # No renderer
+        renderer = None  # No renderer
 
-        world_pos = handler._mouse_pixel_to_world(400, 300)
+        world_pos = InputCoordinateConverter.pixel_to_world_position(
+            400, 300, renderer, game, "graphics"
+        )
 
         # Should return None and log error
         assert world_pos is None
@@ -183,18 +189,17 @@ class TestMousePixelToWorldConversion:
         game.settings.graphics_mode = "graphics"
         game.last_camera_offset = Position(5, 5)
 
-        handler = InputHandler(game)
-
         # Mock renderer with tile manager
         mock_renderer = Mock()
         mock_renderer.tile_manager = Mock()
         mock_renderer.tile_manager.tile_width = 32
         mock_renderer.tile_manager.tile_height = 32
-        handler.renderer = mock_renderer
 
         # Mock the coordinate conversion
-        with patch('game_input.CoordinateHelpers.pixel_to_sprite_grid', return_value=(15, 15)):
-            world_pos = handler._mouse_pixel_to_world(480, 480)
+        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_sprite_grid', return_value=(15, 15)):
+            world_pos = InputCoordinateConverter.pixel_to_world_position(
+                480, 480, mock_renderer, game, "graphics"
+            )
 
             assert world_pos is not None
             assert isinstance(world_pos, Position)
@@ -205,18 +210,21 @@ class TestMousePixelToWorldConversion:
         game.settings.graphics_mode = "glyph"
         game.last_camera_offset = Position(0, 0)
 
-        handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(return_value=(800, 600))
+        renderer = None
 
         # Test viewport x bounds
-        with patch('game_input.CoordinateHelpers.pixel_to_char_coords', return_value=(-5, 10)):
-            assert handler._mouse_pixel_to_world(0, 200) is None
+        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(-5, 10)):
+            assert InputCoordinateConverter.pixel_to_world_position(
+                0, 200, renderer, game, "glyph"
+            ) is None
 
         # Test viewport x upper bound (depends on VIEWPORT_WIDTH)
         viewport_width = GameConfig.VIEWPORT_WIDTH("glyph")
-        with patch('game_input.CoordinateHelpers.pixel_to_char_coords',
+        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords',
                    return_value=(viewport_width + 10, 10)):
-            assert handler._mouse_pixel_to_world(900, 200) is None
+            assert InputCoordinateConverter.pixel_to_world_position(
+                900, 200, renderer, game, "glyph"
+            ) is None
 
     def test_world_bounds_checking(self):
         """Test that world coordinates are validated against map bounds."""
@@ -224,12 +232,13 @@ class TestMousePixelToWorldConversion:
         game.settings.graphics_mode = "glyph"
         game.last_camera_offset = Position(GameConfig.MAP_WIDTH - 5, GameConfig.MAP_HEIGHT - 5)
 
-        handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(return_value=(800, 600))
+        renderer = None
 
         # Click that would put world coords beyond map width
-        with patch('game_input.CoordinateHelpers.pixel_to_char_coords', return_value=(20, 10)):
-            world_pos = handler._mouse_pixel_to_world(600, 200)
+        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(20, 10)):
+            world_pos = InputCoordinateConverter.pixel_to_world_position(
+                600, 200, renderer, game, "glyph"
+            )
 
             # Should return None (world x would be camera_x + viewport_x > MAP_WIDTH)
             if world_pos:
@@ -248,7 +257,6 @@ class TestLookModeMouseHandlers:
         game.last_camera_offset = Position(0, 0)
 
         handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(return_value=(800, 600))
 
         # Create mouse motion event
         event = Mock()
@@ -256,7 +264,7 @@ class TestLookModeMouseHandlers:
         event.position.x = 400
         event.position.y = 300
 
-        with patch.object(handler, '_mouse_pixel_to_world', return_value=Position(20, 15)):
+        with patch('game_input_coordinates.InputCoordinateConverter.pixel_to_world_position', return_value=Position(20, 15)):
             handler._handle_look_mode_mouse_motion(event)
 
             # Cursor should be updated
@@ -277,7 +285,7 @@ class TestLookModeMouseHandlers:
         event.position.x = -100  # Out of bounds
         event.position.y = -100
 
-        with patch.object(handler, '_mouse_pixel_to_world', return_value=None):
+        with patch('game_input_coordinates.InputCoordinateConverter.pixel_to_world_position', return_value=None):
             handler._handle_look_mode_mouse_motion(event)
 
             # Cursor should remain unchanged
@@ -301,7 +309,7 @@ class TestTargetingMouseHandlers:
         event.position.x = 500
         event.position.y = 400
 
-        with patch.object(handler, '_mouse_pixel_to_world', return_value=Position(30, 25)):
+        with patch('game_input_coordinates.InputCoordinateConverter.pixel_to_world_position', return_value=Position(30, 25)):
             handler._handle_targeting_mouse_motion(event)
 
             # Targeting cursor should be updated
@@ -322,7 +330,7 @@ class TestTargetingMouseHandlers:
         event.position.x = 10000
         event.position.y = 10000
 
-        with patch.object(handler, '_mouse_pixel_to_world', return_value=None):
+        with patch('game_input_coordinates.InputCoordinateConverter.pixel_to_world_position', return_value=None):
             handler._handle_targeting_mouse_motion(event)
 
             # Cursor should remain unchanged
@@ -401,7 +409,6 @@ class TestMouseMotionIntegration:
         game.look_mode = True
 
         handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(return_value=(800, 600))
 
         event = Mock(spec=tcod.event.MouseMotion)
         event.position = Mock()
@@ -409,9 +416,10 @@ class TestMouseMotionIntegration:
         event.position.y = 300
 
         with patch.object(handler, '_handle_look_mode_mouse_motion') as mock_handler:
-            with patch('game_input.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 25)):
-                handler.handle_mouse_motion(event)
-                mock_handler.assert_called_once()
+            with patch('game_input_coordinates.InputCoordinateConverter.get_window_dimensions', return_value=(800, 600)):
+                with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 25)):
+                    handler.handle_mouse_motion(event)
+                    mock_handler.assert_called_once()
 
     def test_handle_mouse_motion_routes_to_targeting(self):
         """Test that handle_mouse_motion routes to targeting handler."""
@@ -420,7 +428,6 @@ class TestMouseMotionIntegration:
         game.look_mode = False
 
         handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(return_value=(800, 600))
 
         event = Mock(spec=tcod.event.MouseMotion)
         event.position = Mock()
@@ -428,9 +435,10 @@ class TestMouseMotionIntegration:
         event.position.y = 300
 
         with patch.object(handler, '_handle_targeting_mouse_motion') as mock_handler:
-            with patch('game_input.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 25)):
-                handler.handle_mouse_motion(event)
-                mock_handler.assert_called_once()
+            with patch('game_input_coordinates.InputCoordinateConverter.get_window_dimensions', return_value=(800, 600)):
+                with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 25)):
+                    handler.handle_mouse_motion(event)
+                    mock_handler.assert_called_once()
 
     def test_handle_mouse_motion_routes_to_inventory(self):
         """Test that handle_mouse_motion routes to inventory handler."""
@@ -440,7 +448,6 @@ class TestMouseMotionIntegration:
         game.targeting_mode = False
 
         handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(return_value=(800, 600))
 
         event = Mock(spec=tcod.event.MouseMotion)
         event.position = Mock()
@@ -448,9 +455,10 @@ class TestMouseMotionIntegration:
         event.position.y = 300
 
         with patch.object(handler, '_handle_inventory_mouse_motion') as mock_handler:
-            with patch('game_input.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 25)):
-                handler.handle_mouse_motion(event)
-                mock_handler.assert_called_once()
+            with patch('game_input_coordinates.InputCoordinateConverter.get_window_dimensions', return_value=(800, 600)):
+                with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 25)):
+                    handler.handle_mouse_motion(event)
+                    mock_handler.assert_called_once()
 
 
 class TestMouseWheelIntegration:
@@ -496,23 +504,28 @@ class TestEdgeCasesAndErrorHandling:
         game = create_mock_game()
         game.settings.graphics_mode = "glyph"
 
-        handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(side_effect=Exception("Test error"))
+        renderer = None
 
-        # Should return None, not crash
-        world_pos = handler._mouse_pixel_to_world(400, 300)
-        assert world_pos is None
+        # Mock CoordinateHelpers to raise an exception
+        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', side_effect=Exception("Test error")):
+            # Should return None, not crash
+            world_pos = InputCoordinateConverter.pixel_to_world_position(
+                400, 300, renderer, game, "glyph"
+            )
+            assert world_pos is None
 
     def test_mouse_motion_with_no_game_settings(self):
         """Test mouse handling when game.settings is missing."""
         game = create_mock_game()
         del game.settings  # Remove settings
 
-        handler = InputHandler(game)
+        renderer = None
 
         # Should default to glyph mode and not crash
-        with patch('game_input.CoordinateHelpers.pixel_to_char_coords', return_value=(10, 10)):
-            world_pos = handler._mouse_pixel_to_world(400, 300)
+        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(10, 10)):
+            world_pos = InputCoordinateConverter.pixel_to_world_position(
+                400, 300, renderer, game, "glyph"  # Explicitly pass "glyph" as fallback
+            )
             # Might return None or valid position depending on fallback, but shouldn't crash
             assert world_pos is None or isinstance(world_pos, Position)
 
@@ -524,11 +537,12 @@ class TestEdgeCasesAndErrorHandling:
         game.player.x = 40
         game.player.y = 30
 
-        handler = InputHandler(game)
-        handler._get_window_dimensions = Mock(return_value=(800, 600))
+        renderer = None
 
-        with patch('game_input.CoordinateHelpers.pixel_to_char_coords', return_value=(15, 15)):
-            world_pos = handler._mouse_pixel_to_world(400, 300)
+        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(15, 15)):
+            world_pos = InputCoordinateConverter.pixel_to_world_position(
+                400, 300, renderer, game, "glyph"
+            )
 
             # Should still work with fallback calculation
             assert world_pos is None or isinstance(world_pos, Position)
