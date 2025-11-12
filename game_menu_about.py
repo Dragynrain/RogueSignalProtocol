@@ -189,13 +189,13 @@ class AboutMenu(BaseMenu):
             instructions = [
                 "↕: Navigate",
                 "Enter: Open",
-                "ESC: Back"
+                "ESC/Right-Click: Back"
             ]
         else:
             instructions = [
                 "↕ or W/S: Navigate",
                 "Enter: Open Link",
-                "ESC: Back"
+                "ESC/Right-Click: Back"
             ]
 
         inst_y_start = box['bottom'] - len(instructions) - 1
@@ -242,16 +242,22 @@ class AboutMenu(BaseMenu):
         return False
 
     def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - activate clicked link or go back if clicking empty space."""
-        # Try to update selection based on click position
+        """Handle mouse click - activate clicked link or right-click to go back."""
+        import tcod.event
+
+        # Right-click = go back (standard behavior)
+        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+            return "back"
+
+        # Try to update selection based on click position (left-click only)
         clicked_on_link = self.handle_mouse_motion(event)
 
         # If clicked on a link, activate it
         if clicked_on_link:
             return self._activate_selected_link()
 
-        # Otherwise, clicking anywhere else goes back to main menu
-        return "back"
+        # Left-click on empty space does nothing (removed confusing click-anywhere-to-exit)
+        return ""
 
     def _activate_selected_link(self) -> str:
         """

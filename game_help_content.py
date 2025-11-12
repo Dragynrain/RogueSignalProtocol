@@ -111,9 +111,10 @@ class HelpContent:
                 ("I/ESC", "Close inventory"),
             ],
             'mouse': [
-                ("Click", "Move/select in-game"),
-                ("Wheel", "Scroll menus/help"),
-                ("Right-click", "Cancel look/targeting modes"),
+                ("Left-Click", "Select/activate items"),
+                ("Right-Click", "Go back/cancel"),
+                ("Mouse Wheel", "Scroll lists & menus"),
+                ("Hover", "Highlight elements"),
             ],
             'debug': [
                 ("Shift+F12", "Export debug package"),

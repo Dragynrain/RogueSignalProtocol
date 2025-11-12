@@ -99,7 +99,7 @@ class LoreMenu:
         if not discovered_fragments:
             render_char_safe(console, 2, 5, "No data fragments discovered yet.", fg=Colors.WHITE)
             render_char_safe(console, 2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
-            render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "ESC: Back", fg=Colors.CYAN)
+            render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "ESC/Right-Click: Back", fg=Colors.CYAN)
             return
 
         start_y = 5
@@ -117,7 +117,7 @@ class LoreMenu:
             render_char_safe(console, 2, start_y + i, f"{prefix}Fragment {fragment_index + 1}: {first_line}", fg=color)
 
         # Instructions
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 4, "↕: Navigate │ Enter: Read │ ESC: Back", fg=Colors.LIGHT_GRAY)
+        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 4, "↕/Wheel: Navigate │ Enter/Click: Read │ ESC/Right-Click: Back", fg=Colors.LIGHT_GRAY)
     
     def _render_reading_mode(self, console, discovered_fragments):
         """Render individual fragment for reading."""
@@ -137,7 +137,7 @@ class LoreMenu:
             max_height=GameConfig.SCREEN_HEIGHT - 4
         )
 
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "ESC: Back to list  │  Any other key: Close", fg=Colors.CYAN)
+        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "ESC/Right-Click: Back to list │ Click/Any key: Close", fg=Colors.CYAN)
     
     def handle_input(self, event) -> str:
         """Handle lore menu input with proper navigation."""
@@ -199,16 +199,28 @@ class LoreMenu:
         return False
 
     def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - select fragment or navigate."""
+        """Handle mouse click - select fragment, navigate, or go back."""
+        import tcod.event
+
+        # Right-click = go back (standard behavior)
+        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+            if self.lore_viewer_mode == "reading":
+                # In reading mode, go back to list
+                self.lore_viewer_mode = "list"
+                return ""
+            else:
+                # In list mode, go back to main menu
+                return "back"
+
         if not hasattr(event, 'position') or not event.position:
             return ""
 
         if self.lore_viewer_mode == "reading":
-            # Click anywhere in reading mode returns to list
+            # Left-click anywhere in reading mode returns to list
             self.lore_viewer_mode = "list"
             return ""
         else:
-            # In list mode, update selection and open
+            # In list mode, update selection and open (left-click only)
             if self.handle_mouse_motion(event):
                 # Mouse was over a valid item, open it
                 self.lore_viewer_mode = "reading"
@@ -281,7 +293,7 @@ class HelpMenu:
                     y += 1
 
         # Page navigation and back instruction
-        nav_text = "← →/PgUp/PgDn: Change page │ ESC: Back"
+        nav_text = "← →/Mouse Wheel: Change page │ ESC/Right-Click: Back"
         render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, nav_text, fg=Colors.CYAN)
 
     def _build_page_content(self):
@@ -583,9 +595,14 @@ class HelpMenu:
         return False
 
     def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - click anywhere to return."""
-        if hasattr(event, 'position') and event.position:
+        """Handle mouse click - right-click to return."""
+        import tcod.event
+
+        # Right-click = go back (standard behavior)
+        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
             return "back"
+
+        # Left-click on empty space does nothing (removed confusing click-anywhere-to-exit)
         return ""
 
     def handle_mouse_wheel(self, event) -> bool:

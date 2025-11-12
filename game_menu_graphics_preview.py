@@ -341,9 +341,9 @@ class GraphicsPreviewMenu:
         instructions = [
             "↑↓ or W/S: Select entity type",
             "←→ or A/D: Change variant",
-            "Click < > on entities: Change specific variant",
+            "Click < > arrows: Change specific variant",
             "SPACE: Cycle alert ring color",
-            "ESC or Click: Exit and save log",
+            "ESC/Right-Click: Exit and save log",
         ]
 
         inst_y = GameConfig.SCREEN_HEIGHT - len(instructions) - 1
@@ -985,12 +985,18 @@ class GraphicsPreviewMenu:
         return False
 
     def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - cycle variants when clicking arrows on entity list."""
+        """Handle mouse click - cycle variants when clicking arrows, right-click to exit."""
+        import tcod.event
+
+        # Right-click = go back (standard behavior)
+        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+            return "exit"
+
         # After manual coordinate conversion, coordinates are in event.tile
         if not hasattr(event, 'tile') or event.tile is None:
             return ""
 
-        # Only handle left mouse button clicks
+        # Only handle left mouse button clicks for variant cycling
         if hasattr(event, 'button') and event.button != tcod.event.MouseButton.LEFT:
             return ""
 
@@ -1018,8 +1024,8 @@ class GraphicsPreviewMenu:
 
                     return ""
 
-        # Click anywhere else to exit
-        return "exit"
+        # Left-click on empty space does nothing (removed confusing click-anywhere-to-exit)
+        return ""
 
     def _cycle_variant(self, direction: int):
         """Cycle the variant for currently selected entity."""

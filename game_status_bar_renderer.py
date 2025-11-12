@@ -127,11 +127,21 @@ class StatusBarRenderer:
         # Temporary conditions/effects (1 line)
         self._render_temporary_conditions(console, game)
 
-        # Render "Inv" button in bottom right corner for mouse users
+        # Render "Inv" button in bottom right corner for mouse users with hover highlighting
         inv_button_text = "[Inv]"
         inv_button_x = GameConfig.SCREEN_WIDTH - len(inv_button_text) - 1
         inv_button_y = GameConfig.SCREEN_HEIGHT - 1  # Bottom row
-        render_char_safe(console, inv_button_x, inv_button_y, inv_button_text, fg=Colors.YELLOW, bg=Colors.UI_BG)
+
+        # Check if mouse is hovering over Inv button
+        mouse_tile_x = game.last_mouse_tile_x
+        mouse_tile_y = game.last_mouse_tile_y
+        is_inv_hovered = (mouse_tile_x is not None and mouse_tile_y is not None and
+                         mouse_tile_y == inv_button_y and
+                         inv_button_x <= mouse_tile_x < inv_button_x + len(inv_button_text))
+
+        # Use highlight background if hovered
+        inv_bg = Colors.UI_HIGHLIGHT if is_inv_hovered else Colors.UI_BG
+        render_char_safe(console, inv_button_x, inv_button_y, inv_button_text, fg=Colors.YELLOW, bg=inv_bg)
 
     def _render_equipped_exploits_panel(self, console: tcod.console.Console, game):
         """

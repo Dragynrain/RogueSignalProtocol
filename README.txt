@@ -54,11 +54,17 @@ INVENTORY CONTROLS:
   U         - Unequip selected exploit
   I / ESC   - Close inventory
 
-MOUSE:
-  Left-Click  - Move to location (autowalk)
-  Right-Click - Cancel action/menu
-  Scroll      - Navigate lists/menus
-  Hover       - Show entity info in Look mode
+MOUSE CONTROLS:
+  Left-Click  - Select/activate items, move in-game, click buttons
+  Right-Click - Go back to previous screen, cancel action/mode
+  Mouse Wheel - Scroll through lists, menus, and help pages
+  Hover       - Highlight menu options, show entity info
+
+UNIVERSAL MOUSE BEHAVIOR:
+  - Right-click ALWAYS goes back or cancels (menus, dialogs, modes)
+  - Mouse wheel ALWAYS scrolls (achievements, settings, help, inventory)
+  - Left-click activates buttons, options, and clickable elements
+  - Hover provides visual feedback on interactive elements
 
 CORE MECHANICS
 --------------
@@ -156,9 +162,9 @@ AUDIO ISSUES:
 - Adjust volume in Settings menu
 - Disable music/SFX separately if needed
 
-NO MOUSE:
-- Keyboard-only play is fully supported
-- Mouse is optional quality-of-life feature
+KEYBOARD ONLY:
+- Full keyboard-only support - mouse is entirely optional
+- All mouse actions have keyboard equivalents (ESC = right-click, arrows = wheel)
 
 ADVANCED - LOGGING CONTROL
 ---------------------------
