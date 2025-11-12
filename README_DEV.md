@@ -66,12 +66,20 @@ Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike whe
 Navigate through 3 increasingly dangerous network levels, reach the gateway (>) on each level, and uncover the truth behind the Omni-Lyra Cognitive Resilience Initiative.
 
 ### Controls
-- **Movement**: Arrow Keys, WASD, or Numpad
+- **Movement**: Arrow Keys, WASD, QEZC (diagonals), or Numpad (8-directional)
+- **Wait/Rest**: Space, Period (.), or Numpad 5 to pass turn
 - **Exploits**: 1-5 keys to use equipped exploits
 - **Inventory**: I key to manage codes and exploits
+  - Up/Down: Navigate items
+  - Enter: Use/equip selected item
+  - U: Unequip selected exploit
+  - I/ESC: Close inventory
 - **Look Mode**: L key to examine entities and terrain
 - **Lore Fragments**: F key to view discovered story fragments
+- **Achievements**: V key to view unlocked achievements
+- **Help**: ? (Shift+/) for complete controls reference
 - **Pause**: ESC key
+- **Confirm**: Enter key for dialogues and menus
 
 ### Core Mechanics
 

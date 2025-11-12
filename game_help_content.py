@@ -92,6 +92,7 @@ class HelpContent:
         return {
             'movement': [
                 ("Movement", movement_keys),  # Auto-synced from InputMappings
+                ("Wait/Rest", "Space / . / Numpad5"),
                 ("Exploits", "1-5 (use equipped)"),
             ],
             'screens': [
@@ -101,6 +102,13 @@ class HelpContent:
                 ("F", "Lore"),
                 ("V", "Achievements"),
                 ("ESC", "Menu"),
+                ("Enter", "Confirm/Select"),
+            ],
+            'inventory': [
+                ("Up/Down", "Navigate items"),
+                ("Enter", "Use/Equip selected"),
+                ("U", "Unequip exploit"),
+                ("I/ESC", "Close inventory"),
             ],
             'mouse': [
                 ("Click", "Move/select in-game"),

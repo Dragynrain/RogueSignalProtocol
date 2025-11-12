@@ -159,6 +159,15 @@ class GraphicalHelpMenu:
             text_lines.append((block_x, y, text, Colors.WHITE))
             y += 1
 
+        # Inventory controls - left-aligned block, centered as group
+        y += 1
+        inventory_text = [f"{label}: {desc}" for label, desc in controls['inventory']]
+        block_x = utils.center_block_x(inventory_text)
+        for label, desc in controls['inventory']:
+            text = f"{label}: {desc}"
+            text_lines.append((block_x, y, text, Colors.WHITE))
+            y += 1
+
         # Mouse - left-aligned block, centered as group
         y += 1
         mouse_text = []
