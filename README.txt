@@ -39,6 +39,7 @@ MOVEMENT:
 
 ACTIONS:
   1-5       - Use equipped exploits (shown in HUD)
+  Space / . - Wait/rest (pass turn in place)
   I         - Open inventory (manage codes, equip exploits)
   L         - Look mode (examine entities and terrain)
   F         - Lore fragments (view discovered story)
@@ -46,6 +47,12 @@ ACTIONS:
   ?         - Help menu (complete controls reference)
   ESC       - Pause menu
   Enter     - Confirm dialogues/menus
+
+INVENTORY CONTROLS:
+  Up/Down   - Navigate items
+  Enter     - Use/equip selected item
+  U         - Unequip selected exploit
+  I / ESC   - Close inventory
 
 MOUSE:
   Left-Click  - Move to location (autowalk)

@@ -362,6 +362,15 @@ class HelpMenu:
 
         lines.append((0, "", Colors.WHITE))
 
+        # Inventory controls - left-aligned block, centered as a group
+        inventory_text = [f"{label}: {desc}" for label, desc in controls['inventory']]
+        block_x = utils.center_block_x(inventory_text)
+        for label, desc in controls['inventory']:
+            text = f"{label}: {desc}"
+            lines.append((block_x, text, Colors.WHITE))
+
+        lines.append((0, "", Colors.WHITE))
+
         # Mouse controls - left-aligned block, centered as a group
         mouse_text = []
         for label, desc in controls['mouse']:
