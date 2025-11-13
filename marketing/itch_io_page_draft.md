@@ -53,6 +53,7 @@ This is an **active alpha** - your feedback shapes development!
 **Contact & Feedback:**
 - Feedback Survey: https://forms.gle/jbwGdn8VGPa6NG9p9
 - Email: roguesignalprotocol@gmail.com
+- GitHub Wiki: https://github.com/Dragynrain/RogueSignalProtocol/wiki
 - GitHub Issues: https://github.com/Dragynrain/RogueSignalProtocol/issues
 - Discord: https://discord.gg/aUZgmrpU
 
