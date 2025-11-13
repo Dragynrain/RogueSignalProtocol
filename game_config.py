@@ -45,6 +45,13 @@ class GameSettings:
         self.show_particle_effects = True  # Show particle effects (explosions) in graphics mode
         self.ui_color = "cyan"  # UI theme color for borders/headers (cyan, purple, magenta, golden, crimson, azure, emerald)
         self.dialogue_preferences = {}  # Stores user preferences for dialogue visibility
+
+        # Input customization (Phase 1: Gamepad Support)
+        self.custom_keyboard_bindings = {}  # Custom key bindings for remapping
+        self.custom_gamepad_bindings = {}  # Custom gamepad button bindings
+        self.gamepad_deadzone = 0.15  # Analog stick deadzone (15% default)
+        self.gamepad_enabled = True  # Enable/disable gamepad input
+
         self.load_settings()
 
     def load_settings(self) -> None:
@@ -95,6 +102,12 @@ class GameSettings:
                 self.ui_color = settings_data.get("ui_color", "cyan")
                 self.dialogue_preferences = settings_data.get("dialogue_preferences", {})
 
+                # Input customization (Phase 1: Gamepad Support)
+                self.custom_keyboard_bindings = settings_data.get("custom_keyboard_bindings", {})
+                self.custom_gamepad_bindings = settings_data.get("custom_gamepad_bindings", {})
+                self.gamepad_deadzone = settings_data.get("gamepad_deadzone", 0.15)
+                self.gamepad_enabled = settings_data.get("gamepad_enabled", True)
+
                 # Migrate old "ascii" setting to "glyph"
                 if self.graphics_mode == "ascii":
                     self.graphics_mode = "glyph"
@@ -124,6 +137,10 @@ class GameSettings:
                 "show_particle_effects": True,
                 "ui_color": "cyan",
                 "dialogue_preferences": {},
+                "custom_keyboard_bindings": {},
+                "custom_gamepad_bindings": {},
+                "gamepad_deadzone": 0.15,
+                "gamepad_enabled": True,
             }
             with open(self.SETTINGS_FILE, "w") as f:
                 json.dump(default_settings, f, indent=2)
@@ -144,6 +161,10 @@ class GameSettings:
                 "show_particle_effects": self.show_particle_effects,
                 "ui_color": self.ui_color,
                 "dialogue_preferences": self.dialogue_preferences,
+                "custom_keyboard_bindings": self.custom_keyboard_bindings,
+                "custom_gamepad_bindings": self.custom_gamepad_bindings,
+                "gamepad_deadzone": self.gamepad_deadzone,
+                "gamepad_enabled": self.gamepad_enabled,
             }
             with open(self.SETTINGS_FILE, "w") as f:
                 json.dump(settings_data, f, indent=2)
