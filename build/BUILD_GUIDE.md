@@ -17,10 +17,11 @@ build.bat release
 ```
 
 Both will:
-1. Build the .exe with PyInstaller
-2. Copy all assets to `dist/`
-3. Configure logging based on build type
-4. Create a timestamped zip in `releases/`
+1. **Regenerate wiki documentation** from game JSON files (Enemy, Exploit, Network databases)
+2. Build the .exe with PyInstaller
+3. Copy all assets to `dist/`
+4. Configure logging based on build type
+5. Create a timestamped zip in `releases/`
 
 **See BUILD_TYPES.md for detailed information about build types and logging.**
 

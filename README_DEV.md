@@ -4,6 +4,8 @@
 
 > 📖 **For Players**: See [README.txt](README.txt) for game instructions
 >
+> 📚 **For Game Knowledge**: See the [Comprehensive Wiki](https://github.com/Dragynrain/RogueSignalProtocol/wiki) for all game systems, mechanics, and guides
+>
 > 🔧 **For Developers/Modders**: This guide covers building from source, modding, and contributing
 
 Copyright (C) 2025 Adam Forster

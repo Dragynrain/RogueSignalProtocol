@@ -10,6 +10,13 @@ if "%BUILD_TYPE%"=="" set BUILD_TYPE=alpha
 
 echo Building RogueSignalProtocol (%BUILD_TYPE% mode)...
 
+REM Generate wiki documentation from game data
+echo Generating wiki documentation...
+.venv\Scripts\python.exe docs\generate_wiki.py
+if %ERRORLEVEL% NEQ 0 (
+    echo WARNING: Wiki generation failed - continuing with build
+)
+
 REM Set log level based on build type
 if /i "%BUILD_TYPE%"=="release" (
     set LOG_LEVEL=WARNING
