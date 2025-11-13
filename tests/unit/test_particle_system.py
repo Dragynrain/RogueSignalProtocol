@@ -7,13 +7,10 @@ and memory cleanup. The particle system is CRITICAL for visual effects
 during combat (every exploit uses particles).
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
 import time
-import math
 
-from game_particle_system import Particle, ParticleSystem
 from game_config import GameConfig
+from game_particle_system import Particle, ParticleSystem
 
 
 class TestParticleDataclass:
@@ -31,7 +28,7 @@ class TestParticleDataclass:
             color=(255, 0, 0),
             size=4,
             birth_time=current_time,
-            lifetime=1.0
+            lifetime=1.0,
         )
 
         assert particle.x == 10.5
@@ -48,12 +45,14 @@ class TestParticleDataclass:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=1.0
+            lifetime=1.0,
         )
 
         assert particle.is_alive(current_time) is True
@@ -63,12 +62,14 @@ class TestParticleDataclass:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=1.0
+            lifetime=1.0,
         )
 
         # Check 0.5 seconds later (still alive)
@@ -79,12 +80,14 @@ class TestParticleDataclass:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=1.0
+            lifetime=1.0,
         )
 
         # Check 1.5 seconds later (dead)
@@ -95,12 +98,14 @@ class TestParticleDataclass:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=1.0
+            lifetime=1.0,
         )
 
         # Check exactly at lifetime (should be dead)
@@ -115,12 +120,14 @@ class TestParticleAlpha:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=1.0
+            lifetime=1.0,
         )
 
         assert particle.get_alpha(current_time) == 255
@@ -130,12 +137,14 @@ class TestParticleAlpha:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=1.0
+            lifetime=1.0,
         )
 
         alpha = particle.get_alpha(current_time + 0.5)
@@ -147,12 +156,14 @@ class TestParticleAlpha:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=1.0
+            lifetime=1.0,
         )
 
         assert particle.get_alpha(current_time + 1.5) == 0
@@ -162,12 +173,14 @@ class TestParticleAlpha:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=1.0
+            lifetime=1.0,
         )
 
         # Sample alpha at different times
@@ -206,10 +219,7 @@ class TestDeathExplosion:
         ps = ParticleSystem()
 
         ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=[(255, 0, 0), (0, 255, 0)],
-            particle_count=10
+            world_x=10, world_y=10, colors=[(255, 0, 0), (0, 255, 0)], particle_count=10
         )
 
         assert len(ps.particles) == 10
@@ -218,11 +228,7 @@ class TestDeathExplosion:
         """create_death_explosion uses default count from config."""
         ps = ParticleSystem()
 
-        ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=[(255, 0, 0)]
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=[(255, 0, 0)])
 
         expected_count = GameConfig.PARTICLE_COUNT_DEFAULT()
         assert len(ps.particles) == expected_count
@@ -231,12 +237,7 @@ class TestDeathExplosion:
         """Particles spawn at explosion center."""
         ps = ParticleSystem()
 
-        ps.create_death_explosion(
-            world_x=15,
-            world_y=20,
-            colors=[(255, 0, 0)],
-            particle_count=5
-        )
+        ps.create_death_explosion(world_x=15, world_y=20, colors=[(255, 0, 0)], particle_count=5)
 
         # All particles should start at (15, 20)
         for particle in ps.particles:
@@ -247,19 +248,11 @@ class TestDeathExplosion:
         """Particles have non-zero velocity for explosion effect."""
         ps = ParticleSystem()
 
-        ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=[(255, 0, 0)],
-            particle_count=20
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=[(255, 0, 0)], particle_count=20)
 
         # At least some particles should have velocity
         # (random, so check that not all are zero)
-        non_zero_velocity = sum(
-            1 for p in ps.particles
-            if p.velocity_x != 0 or p.velocity_y != 0
-        )
+        non_zero_velocity = sum(1 for p in ps.particles if p.velocity_x != 0 or p.velocity_y != 0)
 
         assert non_zero_velocity > 15  # Most should have velocity
 
@@ -268,12 +261,7 @@ class TestDeathExplosion:
         ps = ParticleSystem()
 
         colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255)]
-        ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=colors,
-            particle_count=30
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=colors, particle_count=30)
 
         # Check that particle colors are based on palette
         # (with variation, so check they're close to one of the colors)
@@ -288,12 +276,7 @@ class TestDeathExplosion:
         """Empty color list uses fallback white."""
         ps = ParticleSystem()
 
-        ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=[],
-            particle_count=5
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=[], particle_count=5)
 
         # Should still create particles with white color
         assert len(ps.particles) == 5
@@ -305,12 +288,7 @@ class TestDeathExplosion:
         """Particles have randomized lifetime from config range."""
         ps = ParticleSystem()
 
-        ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=[(255, 0, 0)],
-            particle_count=20
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=[(255, 0, 0)], particle_count=20)
 
         min_lifetime = GameConfig.PARTICLE_LIFETIME_MIN()
         max_lifetime = GameConfig.PARTICLE_LIFETIME_MAX()
@@ -322,12 +300,7 @@ class TestDeathExplosion:
         """Particles have randomized size from config range."""
         ps = ParticleSystem()
 
-        ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=[(255, 0, 0)],
-            particle_count=20
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=[(255, 0, 0)], particle_count=20)
 
         min_size = GameConfig.PARTICLE_SIZE_MIN()
         max_size = GameConfig.PARTICLE_SIZE_MAX()
@@ -346,12 +319,14 @@ class TestParticleUpdate:
 
         # Create a particle with very short lifetime
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time - 2.0,  # Born 2 seconds ago
-            lifetime=1.0  # Lives for 1 second (already dead)
+            lifetime=1.0,  # Lives for 1 second (already dead)
         )
         ps.particles.append(particle)
 
@@ -367,12 +342,14 @@ class TestParticleUpdate:
 
         # Create a particle that's alive
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=10.0  # Long lifetime
+            lifetime=10.0,  # Long lifetime
         )
         ps.particles.append(particle)
 
@@ -387,13 +364,14 @@ class TestParticleUpdate:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
+            x=10.0,
+            y=10.0,
             velocity_x=5.0,
             velocity_y=0.0,  # Start with no vertical velocity
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=10.0
+            lifetime=10.0,
         )
         ps.particles.append(particle)
 
@@ -411,13 +389,14 @@ class TestParticleUpdate:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=20.0,
+            x=10.0,
+            y=20.0,
             velocity_x=5.0,
             velocity_y=3.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=10.0
+            lifetime=10.0,
         )
         ps.particles.append(particle)
 
@@ -442,12 +421,7 @@ class TestParticleMemoryManagement:
         ps = ParticleSystem()
 
         # Create many particles
-        ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=[(255, 0, 0)],
-            particle_count=100
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=[(255, 0, 0)], particle_count=100)
 
         assert len(ps.particles) > 0
 
@@ -462,21 +436,13 @@ class TestParticleMemoryManagement:
         ps = ParticleSystem()
 
         # First explosion
-        ps.create_death_explosion(
-            world_x=10, world_y=10,
-            colors=[(255, 0, 0)],
-            particle_count=10
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=[(255, 0, 0)], particle_count=10)
 
         count_after_first = len(ps.particles)
         assert count_after_first == 10
 
         # Second explosion
-        ps.create_death_explosion(
-            world_x=20, world_y=20,
-            colors=[(0, 255, 0)],
-            particle_count=15
-        )
+        ps.create_death_explosion(world_x=20, world_y=20, colors=[(0, 255, 0)], particle_count=15)
 
         # Should have particles from both explosions
         assert len(ps.particles) == 25
@@ -487,11 +453,7 @@ class TestParticleMemoryManagement:
 
         assert ps.get_particle_count() == 0
 
-        ps.create_death_explosion(
-            world_x=10, world_y=10,
-            colors=[(255, 0, 0)],
-            particle_count=42
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=[(255, 0, 0)], particle_count=42)
 
         assert ps.get_particle_count() == 42
 
@@ -507,7 +469,7 @@ class TestParticlePerformance:
             world_x=10,
             world_y=10,
             colors=[(255, 0, 0), (0, 255, 0), (0, 0, 255)],
-            particle_count=100
+            particle_count=100,
         )
 
         assert len(ps.particles) == 100
@@ -522,12 +484,7 @@ class TestParticlePerformance:
         """System handles 500 particles (stress test)."""
         ps = ParticleSystem()
 
-        ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=[(255, 0, 0)],
-            particle_count=500
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=[(255, 0, 0)], particle_count=500)
 
         assert len(ps.particles) == 500
 
@@ -546,12 +503,7 @@ class TestParticleEdgeCases:
         """Zero particle count creates no particles."""
         ps = ParticleSystem()
 
-        ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=[(255, 0, 0)],
-            particle_count=0
-        )
+        ps.create_death_explosion(world_x=10, world_y=10, colors=[(255, 0, 0)], particle_count=0)
 
         assert len(ps.particles) == 0
 
@@ -561,12 +513,14 @@ class TestParticleEdgeCases:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=5.0, velocity_y=3.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=5.0,
+            velocity_y=3.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=10.0
+            lifetime=10.0,
         )
         ps.particles.append(particle)
 
@@ -582,12 +536,14 @@ class TestParticleEdgeCases:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=5.0, velocity_y=3.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=5.0,
+            velocity_y=3.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=10.0
+            lifetime=10.0,
         )
         ps.particles.append(particle)
 
@@ -602,12 +558,14 @@ class TestParticleEdgeCases:
         current_time = time.time()
 
         particle = Particle(
-            x=10.0, y=10.0,
-            velocity_x=0.0, velocity_y=0.0,
+            x=10.0,
+            y=10.0,
+            velocity_x=0.0,
+            velocity_y=0.0,
             color=(255, 255, 255),
             size=3,
             birth_time=current_time,
-            lifetime=0.0
+            lifetime=0.0,
         )
 
         # Should be dead immediately
@@ -620,10 +578,7 @@ class TestParticleEdgeCases:
 
         # Use extreme color that might get varied out of range
         ps.create_death_explosion(
-            world_x=10,
-            world_y=10,
-            colors=[(255, 255, 255), (0, 0, 0)],
-            particle_count=20
+            world_x=10, world_y=10, colors=[(255, 255, 255), (0, 0, 0)], particle_count=20
         )
 
         # All particle colors should be valid RGB

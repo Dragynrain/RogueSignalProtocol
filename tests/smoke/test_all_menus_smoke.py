@@ -6,17 +6,18 @@ Validates that all menu classes can be instantiated and have basic properties.
 Quick sanity check that menu definitions are not broken.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 import tcod
 
-from game_menus import MainMenu, SettingsMenu
+from game_config import GameSettings
 from game_menu_about import AboutMenu
 from game_menu_achievements import AchievementsMenu
-from game_menu_help_lore import HelpMenu, LoreMenu
 from game_menu_graphics_preview import GraphicsPreviewMenu
 from game_menu_help_graphics import GraphicalHelpMenu
-from game_config import GameSettings
+from game_menu_help_lore import HelpMenu, LoreMenu
+from game_menus import MainMenu, SettingsMenu
 
 
 class TestAllMenusSmoke:
@@ -24,10 +25,10 @@ class TestAllMenusSmoke:
 
     def test_main_menu_instantiation(self):
         """MainMenu can be instantiated without errors."""
-        with patch('game_menus.SaveGameManager.save_exists', return_value=False):
+        with patch("game_menus.SaveGameManager.save_exists", return_value=False):
             menu = MainMenu()
             assert menu is not None
-            assert hasattr(menu, 'options')
+            assert hasattr(menu, "options")
             assert len(menu.options) > 0
 
     def test_settings_menu_instantiation(self):
@@ -41,7 +42,7 @@ class TestAllMenusSmoke:
 
         menu = SettingsMenu(mock_settings)
         assert menu is not None
-        assert hasattr(menu, 'options')
+        assert hasattr(menu, "options")
         assert len(menu.options) > 0
 
     def test_about_menu_instantiation(self):
@@ -49,7 +50,7 @@ class TestAllMenusSmoke:
         menu = AboutMenu()
         assert menu is not None
         # About menu may not have selectable options (just display)
-        assert hasattr(menu, 'options')
+        assert hasattr(menu, "options")
 
     def test_achievements_menu_instantiation(self):
         """AchievementsMenu can be instantiated without errors."""
@@ -95,7 +96,7 @@ class TestAllMenusSmoke:
         """All menu classes have a render method."""
         menu_classes = [
             (MainMenu, {}),
-            (SettingsMenu, {'settings': Mock(spec=GameSettings)}),
+            (SettingsMenu, {"settings": Mock(spec=GameSettings)}),
             (AboutMenu, {}),
             (HelpMenu, {}),
             (LoreMenu, {}),
@@ -110,24 +111,24 @@ class TestAllMenusSmoke:
                 mock_settings.music_volume = 0.5
                 mock_settings.sfx_volume = 0.5
                 mock_settings.dialogue_skip = False
-                kwargs['settings'] = mock_settings
+                kwargs["settings"] = mock_settings
 
             # Instantiate menu
             if menu_class == MainMenu:
-                with patch('game_menus.SaveGameManager.save_exists', return_value=False):
+                with patch("game_menus.SaveGameManager.save_exists", return_value=False):
                     menu = menu_class(**kwargs)
             else:
                 menu = menu_class(**kwargs)
 
             # Check render method exists
-            assert hasattr(menu, 'render'), f"{menu_class.__name__} missing render method"
+            assert hasattr(menu, "render"), f"{menu_class.__name__} missing render method"
             assert callable(menu.render), f"{menu_class.__name__}.render is not callable"
 
     def test_all_menus_have_handle_input_method(self):
         """All menu classes have a handle_input method."""
         menu_classes = [
             (MainMenu, {}),
-            (SettingsMenu, {'settings': Mock(spec=GameSettings)}),
+            (SettingsMenu, {"settings": Mock(spec=GameSettings)}),
             (AboutMenu, {}),
             (HelpMenu, {}),
             (LoreMenu, {}),
@@ -142,22 +143,26 @@ class TestAllMenusSmoke:
                 mock_settings.music_volume = 0.5
                 mock_settings.sfx_volume = 0.5
                 mock_settings.dialogue_skip = False
-                kwargs['settings'] = mock_settings
+                kwargs["settings"] = mock_settings
 
             # Instantiate menu
             if menu_class == MainMenu:
-                with patch('game_menus.SaveGameManager.save_exists', return_value=False):
+                with patch("game_menus.SaveGameManager.save_exists", return_value=False):
                     menu = menu_class(**kwargs)
             else:
                 menu = menu_class(**kwargs)
 
             # Check handle_input method exists
-            assert hasattr(menu, 'handle_input'), f"{menu_class.__name__} missing handle_input method"
-            assert callable(menu.handle_input), f"{menu_class.__name__}.handle_input is not callable"
+            assert hasattr(
+                menu, "handle_input"
+            ), f"{menu_class.__name__} missing handle_input method"
+            assert callable(
+                menu.handle_input
+            ), f"{menu_class.__name__}.handle_input is not callable"
 
     def test_main_menu_has_expected_options(self):
         """MainMenu has expected options."""
-        with patch('game_menus.SaveGameManager.save_exists', return_value=False):
+        with patch("game_menus.SaveGameManager.save_exists", return_value=False):
             menu = MainMenu()
 
             # Should have at least these core options
@@ -195,7 +200,7 @@ class TestAllMenusSmoke:
         test_console = tcod.console.Console(width=80, height=50)
 
         # Test a simple menu
-        with patch('game_menus.SaveGameManager.save_exists', return_value=False):
+        with patch("game_menus.SaveGameManager.save_exists", return_value=False):
             menu = MainMenu()
             try:
                 menu.render(test_console)

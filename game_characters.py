@@ -12,11 +12,12 @@ This module handles all character logic including:
 
 import logging
 import random
-import tcod
+
 import numpy as np
-from typing import List, Tuple, Optional
-from game_entities import Position, Colors, EnemyState, EnemyMovement, PositionValidator
-from game_config import GameConfig, GameBalance
+import tcod
+
+from game_config import GameConfig
+from game_entities import Colors, EnemyMovement, EnemyState, Position, PositionValidator
 from game_errors import GameErrorHandler
 
 
@@ -49,8 +50,8 @@ class PathfindingHelper:
         game_map,
         game_engine,
         moving_enemy,
-        max_length_multiplier: float = 3.0
-    ) -> Optional[List[Tuple[int, int]]]:
+        max_length_multiplier: float = 3.0,
+    ) -> list[tuple[int, int]] | None:
         """
         Calculate path from start to goal.
 
@@ -70,12 +71,11 @@ class PathfindingHelper:
         if direct_distance <= PathfindingHelper.SHORT_DISTANCE_THRESHOLD:
             max_length = max(
                 PathfindingHelper.MIN_PATH_LENGTH,
-                int(direct_distance * PathfindingHelper.SHORT_DISTANCE_MULTIPLIER)
+                int(direct_distance * PathfindingHelper.SHORT_DISTANCE_MULTIPLIER),
             )
         else:
             max_length = max(
-                PathfindingHelper.MIN_PATH_LENGTH,
-                int(direct_distance * max_length_multiplier)
+                PathfindingHelper.MIN_PATH_LENGTH, int(direct_distance * max_length_multiplier)
             )
 
         try:
@@ -90,12 +90,18 @@ class PathfindingHelper:
 
             # Validate path (TCOD returns numpy array)
             if len(path) > 1 and len(path) <= max_length:
-                logging.debug(f"Pathfinding: ({start.x},{start.y}) -> ({goal.x},{goal.y}), path_length={len(path)}, max={max_length}")
+                logging.debug(
+                    f"Pathfinding: ({start.x},{start.y}) -> ({goal.x},{goal.y}), path_length={len(path)}, max={max_length}"
+                )
                 return path
             elif len(path) > max_length:
-                logging.debug(f"Pathfinding: ({start.x},{start.y}) -> ({goal.x},{goal.y}), path too long: {len(path)} > {max_length}")
+                logging.debug(
+                    f"Pathfinding: ({start.x},{start.y}) -> ({goal.x},{goal.y}), path too long: {len(path)} > {max_length}"
+                )
             else:
-                logging.debug(f"Pathfinding: ({start.x},{start.y}) -> ({goal.x},{goal.y}), no path found")
+                logging.debug(
+                    f"Pathfinding: ({start.x},{start.y}) -> ({goal.x},{goal.y}), no path found"
+                )
             return None
 
         except Exception as e:
@@ -104,11 +110,7 @@ class PathfindingHelper:
 
     @staticmethod
     def create_dijkstra_map(
-        goals: List[Position],
-        game_map,
-        game_engine,
-        moving_enemy,
-        max_distance: int = 100
+        goals: list[Position], game_map, game_engine, moving_enemy, max_distance: int = 100
     ) -> np.ndarray:
         """
         Create a Dijkstra map showing distance to nearest goal from any position.
@@ -147,10 +149,8 @@ class PathfindingHelper:
 
     @staticmethod
     def get_flee_move(
-        current_pos: Position,
-        dijkstra_map: np.ndarray,
-        game_map
-    ) -> Optional[Tuple[int, int]]:
+        current_pos: Position, dijkstra_map: np.ndarray, game_map
+    ) -> tuple[int, int] | None:
         """
         Get best move to FLEE from threats using Dijkstra map.
 
@@ -191,11 +191,7 @@ class PathfindingHelper:
         return best_move
 
     @staticmethod
-    def path_exists(
-        start: Position,
-        goal: Position,
-        cost_map: np.ndarray
-    ) -> bool:
+    def path_exists(start: Position, goal: Position, cost_map: np.ndarray) -> bool:
         """
         Check if a valid path exists between two points.
 
@@ -210,6 +206,7 @@ class PathfindingHelper:
         Returns:
             True if any path exists, False otherwise
         """
+
         def _check_path():
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
@@ -221,10 +218,8 @@ class PathfindingHelper:
 
     @staticmethod
     def calculate_simple_path(
-        start: Position,
-        goal: Position,
-        cost_map: np.ndarray
-    ) -> Optional[List[Tuple[int, int]]]:
+        start: Position, goal: Position, cost_map: np.ndarray
+    ) -> list[tuple[int, int]] | None:
         """
         Calculate path using a custom cost map without enemy collision.
 
@@ -241,6 +236,7 @@ class PathfindingHelper:
         Returns:
             List of (y, x) tuples (TCOD format), or None if no path exists
         """
+
         def _calculate_path():
             graph = tcod.path.SimpleGraph(cost=cost_map, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
@@ -259,7 +255,7 @@ class PathfindingHelper:
         cost_map = game_map.get_walkability_map().copy()
 
         # Mark player as impassable (enemies path TO adjacent, not ONTO player)
-        if hasattr(game_engine, 'player') and game_engine.player is not None:
+        if hasattr(game_engine, "player") and game_engine.player is not None:
             try:
                 player = game_engine.player
                 # Validate player coordinates are integers
@@ -297,7 +293,7 @@ class Player:
 
     def __init__(self, x: int, y: int):
         """Initialize player character at the specified position.
-        
+
         Args:
             x: Initial X coordinate on the game map
             y: Initial Y coordinate on the game map
@@ -305,7 +301,7 @@ class Player:
         # Position and movement
         self.position = Position(x, y)
         self.last_position = Position(x, y)
-        
+
         # Core stats
         self.cpu = 100
         self.max_cpu = 100
@@ -313,47 +309,49 @@ class Player:
         self._max_heat = 100  # Initialize max heat capacity
         self.trace_level = 0.0  # Global trace level (float for fractional increments)
         self.ram_total = 8
-        
+
         # Vision and abilities - load from config for easy balancing
         from game_config import GameConfig
-        self.base_vision_range = GameConfig._get_required('gameplay.player_base_vision_range')
-        
+
+        self.base_vision_range = GameConfig._get_required("gameplay.player_base_vision_range")
+
         # Temporary effects
         self.temporary_effects = {
-            'traffic_masquerade_turns': 0,
-            'speed_boost_turns': 0,
-            'movement_slowed_turns': 0,
-            'enhanced_vision_turns': 0,
-            'exploit_efficiency_turns': 0,
-            'virus_turns': 0
+            "traffic_masquerade_turns": 0,
+            "speed_boost_turns": 0,
+            "movement_slowed_turns": 0,
+            "enhanced_vision_turns": 0,
+            "exploit_efficiency_turns": 0,
+            "virus_turns": 0,
         }
         self.speed_moves_remaining = 0
-        
+
         # Inventory system - imported later to avoid circular imports
         # Delayed import to avoid circular dependency
         from game_inventory import InventoryManager
+
         self.inventory_manager = InventoryManager(self)
-    
+
     @property
     def x(self) -> int:
         return self.position.x
-    
+
     @x.setter
     def x(self, value: int):
         self.position.x = value
-    
+
     @property
     def y(self) -> int:
         return self.position.y
-    
+
     @y.setter
     def y(self, value: int):
         self.position.y = value
-    
+
     @property
     def ram_used(self) -> int:
         return self.inventory_manager.get_ram_usage()
-    
+
     def move(self, dx: int, dy: int, game_map) -> bool:
         """
         Move player with boundary and collision checking.
@@ -370,49 +368,53 @@ class Player:
             True if move was successful, False if blocked
         """
         self.last_position = Position(self.x, self.y)
-        
+
         # Calculate the intended destination (unclamped)
         intended_x = self.x + dx
         intended_y = self.y + dy
-        
+
         # Create the position and validate it using centralized utilities
         new_position = Position(intended_x, intended_y)
 
         # Use centralized validation
         if PositionValidator.is_basic_valid_position(new_position, game_map):
-            logging.debug(f"Player: moved from ({self.last_position.x},{self.last_position.y}) to ({new_position.x},{new_position.y})")
+            logging.debug(
+                f"Player: moved from ({self.last_position.x},{self.last_position.y}) to ({new_position.x},{new_position.y})"
+            )
             self.position = new_position
             return True
 
         # Log boundary violations for debugging
         if not PositionValidator.is_within_bounds(new_position, game_map.width, game_map.height):
-            logging.warning(f"Player movement out of bounds: intended=({intended_x}, {intended_y}), map_bounds=({game_map.width}, {game_map.height})")
+            logging.warning(
+                f"Player movement out of bounds: intended=({intended_x}, {intended_y}), map_bounds=({game_map.width}, {game_map.height})"
+            )
         else:
             logging.debug(f"Player movement blocked: intended=({intended_x}, {intended_y})")
 
         return False
-    
+
     def update_effects(self) -> None:
         """Update temporary effects each turn."""
         for effect in self.temporary_effects:
             self.temporary_effects[effect] = max(0, self.temporary_effects[effect] - 1)
-    
+
     def is_invisible(self) -> bool:
         """Check if player is effectively invisible."""
-        return self.temporary_effects['traffic_masquerade_turns'] > 0
-    
+        return self.temporary_effects["traffic_masquerade_turns"] > 0
+
     def get_vision_range(self) -> int:
         """Get current vision range including bonuses."""
         base_range = self.base_vision_range
-        if self.temporary_effects['enhanced_vision_turns'] > 0:
+        if self.temporary_effects["enhanced_vision_turns"] > 0:
             base_range += 2
         return base_range
-    
+
     def can_see_through_walls(self) -> bool:
         """Check if player can see through walls."""
-        return self.temporary_effects['enhanced_vision_turns'] > 0
-    
-    def can_see_enemy(self, enemy_target: 'Enemy', game_map) -> bool:
+        return self.temporary_effects["enhanced_vision_turns"] > 0
+
+    def can_see_enemy(self, enemy_target: "Enemy", game_map) -> bool:
         """
         Check if player can see an enemy using vision range and shadow mechanics.
 
@@ -445,7 +447,10 @@ class Player:
             return distance <= vision_range
 
         # Enemies in shadows only visible when adjacent (use grid distance for gameplay)
-        if game_map.is_blind_spot(enemy_target.position) and self.position.grid_distance_to(enemy_target.position) > 1:
+        if (
+            game_map.is_blind_spot(enemy_target.position)
+            and self.position.grid_distance_to(enemy_target.position) > 1
+        ):
             # Don't log this - it gets called every frame during rendering
             return False
 
@@ -454,17 +459,17 @@ class Player:
 
         can_see = game_map.can_see_position(self.position, enemy_target.position, vision_range)
         return can_see
-    
+
     @property
     def max_heat(self) -> int:
         """Get maximum heat capacity."""
-        return getattr(self, '_max_heat', 100)  # Default 100 if not set
-    
-    @max_heat.setter  
+        return getattr(self, "_max_heat", 100)  # Default 100 if not set
+
+    @max_heat.setter
     def max_heat(self, value: int):
         """Set maximum heat capacity."""
         self._max_heat = value
-    
+
     def apply_permanent_upgrade(self, upgrade_key: str) -> bool:
         """
         Apply a permanent stat upgrade with configurable caps.
@@ -488,36 +493,47 @@ class Player:
 
         upgrade = GameUpgrades.UPGRADES[upgrade_key]
 
-        max_ram = GameConfig._get_required('gameplay.max_ram_capacity')
-        max_cpu = GameConfig._get_required('gameplay.max_cpu_capacity')
+        max_ram = GameConfig._get_required("gameplay.max_ram_capacity")
+        max_cpu = GameConfig._get_required("gameplay.max_cpu_capacity")
 
-        if upgrade.stat_type == 'ram':
+        if upgrade.stat_type == "ram":
             old_ram = self.ram_total
             self.ram_total = min(max_ram, self.ram_total + upgrade.bonus_amount)
-            logging.debug(f"Player upgrade '{upgrade_key}': RAM {old_ram} -> {self.ram_total} (cap={max_ram})")
-        elif upgrade.stat_type == 'cpu':
+            logging.debug(
+                f"Player upgrade '{upgrade_key}': RAM {old_ram} -> {self.ram_total} (cap={max_ram})"
+            )
+        elif upgrade.stat_type == "cpu":
             old_max_cpu = self.max_cpu
             old_cpu = self.cpu
             self.max_cpu = min(max_cpu, self.max_cpu + upgrade.bonus_amount)
-            self.cpu = min(self.max_cpu, self.cpu + upgrade.bonus_amount)  # Boost current as well but cap at max
-            logging.debug(f"Player upgrade '{upgrade_key}': max_CPU {old_max_cpu} -> {self.max_cpu}, CPU {old_cpu} -> {self.cpu} (cap={max_cpu})")
-        elif upgrade.stat_type == 'heat':
+            self.cpu = min(
+                self.max_cpu, self.cpu + upgrade.bonus_amount
+            )  # Boost current as well but cap at max
+            logging.debug(
+                f"Player upgrade '{upgrade_key}': max_CPU {old_max_cpu} -> {self.max_cpu}, CPU {old_cpu} -> {self.cpu} (cap={max_cpu})"
+            )
+        elif upgrade.stat_type == "heat":
             old_max_heat = self.max_heat
-            max_cap = GameConfig._get_required('balance.max_heat_capacity')
+            max_cap = GameConfig._get_required("balance.max_heat_capacity")
             self.max_heat = min(max_cap, self.max_heat + upgrade.bonus_amount)
-            logging.debug(f"Player upgrade '{upgrade_key}': max_heat {old_max_heat} -> {self.max_heat} (cap={max_cap})")
+            logging.debug(
+                f"Player upgrade '{upgrade_key}': max_heat {old_max_heat} -> {self.max_heat} (cap={max_cap})"
+            )
 
         return True
-    
+
     def take_damage(self, damage: int) -> int:
         """Take damage and return actual damage taken."""
         actual_damage = min(damage, self.cpu)
         old_cpu = self.cpu
         self.cpu -= actual_damage
-        logging.debug(f"Player: took {actual_damage} damage, CPU {old_cpu} -> {self.cpu}/{self.max_cpu}")
+        logging.debug(
+            f"Player: took {actual_damage} damage, CPU {old_cpu} -> {self.cpu}/{self.max_cpu}"
+        )
 
         # Track metrics
         from game_metrics import track
+
         track("damage_taken", amount=actual_damage)
 
         return actual_damage
@@ -577,6 +593,7 @@ class Enemy:
 
         # Load type data - imported here to avoid circular imports
         from game_data import GameData
+
         self.type_data = GameData.ENEMY_TYPES[enemy_type]
 
         # Stats
@@ -584,41 +601,41 @@ class Enemy:
         self.max_cpu = self.type_data.cpu
 
         # AI state - admin starts hostile since it can always see player
-        self.state = EnemyState.HOSTILE if enemy_type == 'admin' else EnemyState.UNAWARE
+        self.state = EnemyState.HOSTILE if enemy_type == "admin" else EnemyState.UNAWARE
         self.alert_timer = 0
         self.disabled_turns = 0
         self.move_cooldown = 0
         self.blinded_turns = 0  # Memory Leak blindness - can't see player
 
         # Movement data
-        self.patrol_points: List[Position] = []
+        self.patrol_points: list[Position] = []
         self.patrol_index = 0
-        self.last_seen_player: Optional[Position] = None
+        self.last_seen_player: Position | None = None
         self.original_patrol_index = 0  # Store original patrol index when becoming hostile
 
         # Virus-specific: Store the original non-hostile movement type
-        self.original_movement_type: Optional[EnemyMovement] = None
+        self.original_movement_type: EnemyMovement | None = None
 
         # Movement queue system - stores next 3 planned moves
-        self.move_queue: List[Position] = []
-    
+        self.move_queue: list[Position] = []
+
     @property
     def x(self) -> int:
         return self.position.x
-    
+
     @x.setter
     def x(self, value: int):
         self.position.x = value
-    
+
     @property
     def y(self) -> int:
         return self.position.y
-    
+
     @y.setter
     def y(self, value: int):
         self.position.y = value
-    
-    def get_color(self) -> Tuple[int, int, int]:
+
+    def get_color(self) -> tuple[int, int, int]:
         """
         Get the color for rendering this enemy (glyph mode).
 
@@ -642,6 +659,7 @@ class Enemy:
 
         # Apply HP-based tinting (blend with red) from game_rules.json
         from game_color_manager import ColorManager
+
         hp_percent = self.cpu / self.max_cpu
 
         if hp_percent >= 1.0:
@@ -650,19 +668,13 @@ class Enemy:
         elif hp_percent >= 0.5:
             # 50-99% HP - slight red tint (75% base, 25% red)
             red_tint = ColorManager.get("damage_tints", "hp_50_to_99")
-            return tuple(
-                int(base_color[i] * 0.75 + red_tint[i] * 0.25)
-                for i in range(3)
-            )
+            return tuple(int(base_color[i] * 0.75 + red_tint[i] * 0.25) for i in range(3))
         else:
             # <50% HP - heavy red tint (50% base, 50% red)
             red_tint = ColorManager.get("damage_tints", "hp_below_50")
-            return tuple(
-                int(base_color[i] * 0.5 + red_tint[i] * 0.5)
-                for i in range(3)
-            )
+            return tuple(int(base_color[i] * 0.5 + red_tint[i] * 0.5) for i in range(3))
 
-    def get_graphics_tint(self) -> Tuple[int, int, int]:
+    def get_graphics_tint(self) -> tuple[int, int, int]:
         """
         Get subtle damage tint for graphics mode sprites from game_rules.json.
 
@@ -690,7 +702,6 @@ class Enemy:
             # <50% HP - stronger red tint (preserves ~70% of green/blue)
             return ColorManager.get("damage_tints_graphics", "hp_below_50")
 
-
     def get_movement_type(self) -> EnemyMovement:
         """Get the effective movement type for this enemy.
 
@@ -700,7 +711,7 @@ class Enemy:
         - When not HOSTILE (UNAWARE/ALERT): use their original mimicked movement type
         For all other enemies: returns type_data.movement
         """
-        if self.type == 'virus':
+        if self.type == "virus":
             # Stationary viruses NEVER move, even when hostile
             if self.original_movement_type == EnemyMovement.STATIC:
                 return EnemyMovement.STATIC
@@ -738,7 +749,7 @@ class Enemy:
             return False
 
         # Admin always sees player
-        if self.type == 'admin':
+        if self.type == "admin":
             return True
 
         # Check basic range (use Euclidean - TCOD FOV uses Euclidean internally)
@@ -751,88 +762,116 @@ class Enemy:
             return False
 
         # Players in shadows only visible when adjacent (use grid distance for gameplay)
-        if game_map.is_blind_spot(player.position) and self.position.grid_distance_to(player.position) > 1:
+        if (
+            game_map.is_blind_spot(player.position)
+            and self.position.grid_distance_to(player.position) > 1
+        ):
             return False
 
         # Final LOS check using TCOD FOV
         return game_map.can_see_position(self.position, player.position, self.type_data.vision)
-    
+
     def can_attack_player(self, player: Player) -> bool:
         """Check if enemy can attack player (adjacent including diagonally)."""
         # Can't attack if disabled
         if self.disabled_turns > 0:
             return False
-            
+
         # Can't attack invisible players unless this is an admin
-        if player.is_invisible() and self.type != 'admin':
+        if player.is_invisible() and self.type != "admin":
             return False
-            
+
         # Can't attack if no damage, unless it's a virus or inhibitor (which apply status effects)
-        if self.type_data.damage <= 0 and self.type not in ('virus', 'inhibitor'):
+        if self.type_data.damage <= 0 and self.type not in ("virus", "inhibitor"):
             return False
-            
+
         dx = abs(self.position.x - player.position.x)
         dy = abs(self.position.y - player.position.y)
         # Adjacent in any direction (including diagonal)
         is_adjacent = dx <= 1 and dy <= 1 and (dx + dy) > 0
         return is_adjacent
-    
+
     def attack_player(self, player: Player, game_engine=None) -> int:
         """Attack the player and return damage dealt."""
-        if self.type == 'virus':
-            virus_increment = GameConfig._get_required('balance.virus_increment_turns')
-            virus_max = GameConfig._get_required('gameplay.virus_max_duration')
-            virus_turns = player.temporary_effects.get('virus_turns', 0) + virus_increment
-            player.temporary_effects['virus_turns'] = min(virus_turns, virus_max)
-            logging.debug(f"Enemy {self.type}@({self.x},{self.y}): infected player, virus_turns={player.temporary_effects['virus_turns']}")
+        if self.type == "virus":
+            virus_increment = GameConfig._get_required("balance.virus_increment_turns")
+            virus_max = GameConfig._get_required("gameplay.virus_max_duration")
+            virus_turns = player.temporary_effects.get("virus_turns", 0) + virus_increment
+            player.temporary_effects["virus_turns"] = min(virus_turns, virus_max)
+            logging.debug(
+                f"Enemy {self.type}@({self.x},{self.y}): infected player, virus_turns={player.temporary_effects['virus_turns']}"
+            )
             return 0
 
-        if self.type == 'inhibitor':
+        if self.type == "inhibitor":
             player.speed_moves_remaining = 0
-            current_speed = player.temporary_effects['speed_boost_turns']
+            current_speed = player.temporary_effects["speed_boost_turns"]
             net_effect = current_speed - 1
 
             if net_effect >= 0:
                 # Still have speed boost remaining - just reduce it
-                player.temporary_effects['speed_boost_turns'] = net_effect
+                player.temporary_effects["speed_boost_turns"] = net_effect
             else:
                 # No speed boost - apply slowdown by extending duration (stacking with cap)
-                player.temporary_effects['speed_boost_turns'] = 0
-                current_slow = player.temporary_effects.get('movement_slowed_turns', 0)
+                player.temporary_effects["speed_boost_turns"] = 0
+                current_slow = player.temporary_effects.get("movement_slowed_turns", 0)
                 # Add slowdown and cap at 5 turns to prevent infinite stacking
-                player.temporary_effects['movement_slowed_turns'] = min(current_slow + (-net_effect), 5)
-            logging.debug(f"Enemy {self.type}@({self.x},{self.y}): inhibited player, slowed_turns={player.temporary_effects['movement_slowed_turns']}")
+                player.temporary_effects["movement_slowed_turns"] = min(
+                    current_slow + (-net_effect), 5
+                )
+            logging.debug(
+                f"Enemy {self.type}@({self.x},{self.y}): inhibited player, slowed_turns={player.temporary_effects['movement_slowed_turns']}"
+            )
             return 0
 
         damage = player.take_damage(self.type_data.damage)
-        logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): attacked player for {damage} damage, player_cpu={player.cpu}/{player.max_cpu}")
+        logging.debug(
+            f"Enemy {self.type_data.name}@({self.x},{self.y}): attacked player for {damage} damage, player_cpu={player.cpu}/{player.max_cpu}"
+        )
 
         # CRITICAL: Check for death immediately after attack
         # Don't wait for process_turn() - death may have occurred mid-turn
         if player.cpu <= 0 and game_engine is not None:
-            if not hasattr(game_engine, 'pending_death_dialogue') or not game_engine.pending_death_dialogue:
+            if (
+                not hasattr(game_engine, "pending_death_dialogue")
+                or not game_engine.pending_death_dialogue
+            ):
                 game_engine.game_over = True
                 game_engine.pending_death_dialogue = True
-                logging.warning(f"Player killed by {self.type_data.name} attack - pending_death_dialogue set")
+                logging.warning(
+                    f"Player killed by {self.type_data.name} attack - pending_death_dialogue set"
+                )
 
         return damage
-    
+
     def take_damage(self, damage: int) -> bool:
         """Take damage and return True if destroyed."""
         # Admin avatar has damage resistance
         original_damage = damage
-        if self.type == 'admin':
-            resist_percent = self.type_data.damage_resistance_percent if hasattr(self.type_data, 'damage_resistance_percent') else 50
-            resist_min = self.type_data.damage_resistance_min if hasattr(self.type_data, 'damage_resistance_min') else 5
+        if self.type == "admin":
+            resist_percent = (
+                self.type_data.damage_resistance_percent
+                if hasattr(self.type_data, "damage_resistance_percent")
+                else 50
+            )
+            resist_min = (
+                self.type_data.damage_resistance_min
+                if hasattr(self.type_data, "damage_resistance_min")
+                else 5
+            )
             damage = max(resist_min, damage * (100 - resist_percent) // 100)
-            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): damage reduced by resistance: {original_damage} -> {damage}")
+            logging.debug(
+                f"Enemy {self.type_data.name}@({self.x},{self.y}): damage reduced by resistance: {original_damage} -> {damage}"
+            )
 
         old_cpu = self.cpu
         self.cpu -= damage
         is_dead = self.cpu <= 0
-        logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): took {damage} damage, cpu {old_cpu} -> {self.cpu}, destroyed={is_dead}")
+        logging.debug(
+            f"Enemy {self.type_data.name}@({self.x},{self.y}): took {damage} damage, cpu {old_cpu} -> {self.cpu}, destroyed={is_dead}"
+        )
         return is_dead
-    
+
     def move(self, game_map, player, game_engine) -> bool:
         """
         Execute next queued move, maintaining fixed 3-length queue.
@@ -859,7 +898,7 @@ class Enemy:
             self.disabled_turns -= 1
             return False
 
-        if self.move_cooldown > 0 and self.type != 'admin':
+        if self.move_cooldown > 0 and self.type != "admin":
             self.move_cooldown -= 1
             return False
 
@@ -881,7 +920,9 @@ class Enemy:
         # 5. Validate move
         if not self._is_move_valid(next_position, game_map, player, game_engine):
             # Blocked - clear queue and replan next turn
-            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): move to ({next_position.x},{next_position.y}) BLOCKED, clearing queue")
+            logging.debug(
+                f"Enemy {self.type_data.name}@({self.x},{self.y}): move to ({next_position.x},{next_position.y}) BLOCKED, clearing queue"
+            )
             self.move_queue.clear()
             return False
 
@@ -893,7 +934,7 @@ class Enemy:
 
         # 8. Update cooldown
         if self.get_movement_type() == EnemyMovement.STATIC:
-            self.move_cooldown = GameConfig._get_required('balance.static_enemy_cooldown')
+            self.move_cooldown = GameConfig._get_required("balance.static_enemy_cooldown")
         else:
             self.move_cooldown = 0
 
@@ -968,14 +1009,20 @@ class Enemy:
                 return  # In attack range, stay put and attack
 
         # PRIORITY 1: Flee behavior for low-health enemies (unless Admin)
-        if self._should_flee(player, game_map) and self.type != 'admin':
-            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): FLEEING (cpu={self.cpu}/{self.type_data.max_cpu})")
+        if self._should_flee(player, game_map) and self.type != "admin":
+            logging.debug(
+                f"Enemy {self.type_data.name}@({self.x},{self.y}): FLEEING (cpu={self.cpu}/{self.type_data.max_cpu})"
+            )
             self._fill_flee_moves(game_map, player, game_engine)
             return
 
         # Random movement - fill with random moves (but only if not hostile/admin)
         # Hostile and admin enemies always use pathfinding, regardless of base movement type
-        if movement_type == EnemyMovement.RANDOM and self.type != 'admin' and self.state != EnemyState.HOSTILE:
+        if (
+            movement_type == EnemyMovement.RANDOM
+            and self.type != "admin"
+            and self.state != EnemyState.HOSTILE
+        ):
             self._fill_random_moves(game_map, player, game_engine)
             return
 
@@ -993,7 +1040,7 @@ class Enemy:
             goal=target,
             game_map=game_map,
             game_engine=game_engine,
-            moving_enemy=self
+            moving_enemy=self,
         )
 
         # Fill queue from path
@@ -1023,7 +1070,12 @@ class Enemy:
 
         # PATROL special case: If queue still not full, extend with next waypoint(s)
         # Only extend patrol queue for non-hostile enemies (hostile chase player, not patrol)
-        if movement_type == EnemyMovement.PATROL and self.state != EnemyState.HOSTILE and self.patrol_points and len(self.move_queue) < 3:
+        if (
+            movement_type == EnemyMovement.PATROL
+            and self.state != EnemyState.HOSTILE
+            and self.patrol_points
+            and len(self.move_queue) < 3
+        ):
             self._extend_patrol_queue(game_map, game_engine)
 
     def _fill_random_moves(self, game_map, player, game_engine):
@@ -1051,7 +1103,9 @@ class Enemy:
             else:
                 break  # No valid random moves
 
-    def _calculate_random_move_from(self, from_pos: Position, game_map, player, game_engine) -> Optional[Position]:
+    def _calculate_random_move_from(
+        self, from_pos: Position, game_map, player, game_engine
+    ) -> Position | None:
         """
         Calculate a random valid move from given position.
 
@@ -1075,7 +1129,9 @@ class Enemy:
                 return next_pos
         return None
 
-    def _is_move_valid_from(self, position: Position, from_position: Position, game_map, player, game_engine) -> bool:
+    def _is_move_valid_from(
+        self, position: Position, from_position: Position, game_map, player, game_engine
+    ) -> bool:
         """
         Check if move from from_position to position is valid.
 
@@ -1131,7 +1187,7 @@ class Enemy:
                 goal=next_waypoint,
                 game_map=game_map,
                 game_engine=game_engine,
-                moving_enemy=self
+                moving_enemy=self,
             )
 
             # Add moves from path
@@ -1163,7 +1219,9 @@ class Enemy:
 
         # Chain up to 3 greedy moves
         while len(self.move_queue) < 3:
-            greedy_move = self._calculate_greedy_move_from(current_pos, target, game_map, player, game_engine)
+            greedy_move = self._calculate_greedy_move_from(
+                current_pos, target, game_map, player, game_engine
+            )
 
             # No valid move found - stop chaining
             if not greedy_move:
@@ -1179,7 +1237,9 @@ class Enemy:
             # Continue from this new position
             current_pos = greedy_move
 
-    def _calculate_greedy_move_from(self, from_pos: Position, target: Position, game_map, player, game_engine) -> Optional[Position]:
+    def _calculate_greedy_move_from(
+        self, from_pos: Position, target: Position, game_map, player, game_engine
+    ) -> Position | None:
         """
         Calculate single greedy move from a given position toward target.
 
@@ -1199,7 +1259,7 @@ class Enemy:
             return None
 
         best_move = None
-        best_distance = float('inf')
+        best_distance = float("inf")
 
         # Try all 8 adjacent directions
         directions = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
@@ -1218,8 +1278,11 @@ class Enemy:
                 continue
 
             # Skip positions blocked by other enemies
-            enemy_blocking = any(e.position.x == next_pos.x and e.position.y == next_pos.y
-                               for e in game_engine.enemies if e.id != self.id)
+            enemy_blocking = any(
+                e.position.x == next_pos.x and e.position.y == next_pos.y
+                for e in game_engine.enemies
+                if e.id != self.id
+            )
             if enemy_blocking:
                 continue
 
@@ -1264,7 +1327,7 @@ class Enemy:
             if max_cpu <= 0:
                 return False
             health_percent = self.cpu / max_cpu
-            flee_threshold = GameConfig._get_required('balance.enemy_flee_health_threshold')
+            flee_threshold = GameConfig._get_required("balance.enemy_flee_health_threshold")
             if health_percent > flee_threshold:
                 return False
         except (TypeError, ValueError, AttributeError):
@@ -1291,10 +1354,7 @@ class Enemy:
         """
         # Create Dijkstra map with player as threat
         dijkstra_map = PathfindingHelper.create_dijkstra_map(
-            goals=[player.position],
-            game_map=game_map,
-            game_engine=game_engine,
-            moving_enemy=self
+            goals=[player.position], game_map=game_map, game_engine=game_engine, moving_enemy=self
         )
 
         # Fill queue with up to 3 flee moves
@@ -1303,14 +1363,14 @@ class Enemy:
         while len(self.move_queue) < 3:
             # Get best flee move from current position
             flee_direction = PathfindingHelper.get_flee_move(
-                current_pos=current_pos,
-                dijkstra_map=dijkstra_map,
-                game_map=game_map
+                current_pos=current_pos, dijkstra_map=dijkstra_map, game_map=game_map
             )
 
             if flee_direction is None:
                 # No valid flee move, stop filling
-                logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): No valid flee move from ({current_pos.x},{current_pos.y})")
+                logging.debug(
+                    f"Enemy {self.type_data.name}@({self.x},{self.y}): No valid flee move from ({current_pos.x},{current_pos.y})"
+                )
                 break
 
             # Calculate next position
@@ -1319,21 +1379,27 @@ class Enemy:
 
             # Validate move
             if not self._is_move_valid_from(next_pos, current_pos, game_map, player, game_engine):
-                logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): Flee move to ({next_pos.x},{next_pos.y}) invalid")
+                logging.debug(
+                    f"Enemy {self.type_data.name}@({self.x},{self.y}): Flee move to ({next_pos.x},{next_pos.y}) invalid"
+                )
                 break
 
             # Add to queue
             self.move_queue.append(next_pos)
             current_pos = next_pos
-            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): Added flee move to ({next_pos.x},{next_pos.y})")
+            logging.debug(
+                f"Enemy {self.type_data.name}@({self.x},{self.y}): Added flee move to ({next_pos.x},{next_pos.y})"
+            )
 
         if len(self.move_queue) > 0:
-            logging.debug(f"Enemy {self.type_data.name}@({self.x},{self.y}): Flee queue filled with {len(self.move_queue)} moves")
+            logging.debug(
+                f"Enemy {self.type_data.name}@({self.x},{self.y}): Flee queue filled with {len(self.move_queue)} moves"
+            )
 
     def _get_current_target(self, player, game_map):
         """Get the current target position based on enemy state and movement type."""
         # Admin always targets player (can always see them)
-        if self.type == 'admin':
+        if self.type == "admin":
             self.last_seen_player = player.position
             return player.position
 
@@ -1362,5 +1428,3 @@ class Enemy:
 
 
 # Pathfinding helper functions
-
-

@@ -9,11 +9,13 @@ testable modal interaction logic separate from main game input routing.
 """
 
 import logging
+
 import tcod.event
-from game_ui import UniversalInputHandler
+
+from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Position
 from game_input_coordinates import InputCoordinateConverter
-from game_coordinate_helpers import CoordinateHelpers
+from game_ui import UniversalInputHandler
 
 
 class InventoryInputHandler:
@@ -47,7 +49,9 @@ class InventoryInputHandler:
         total_items = equipped_count + inventory_items
 
         if total_items > 0:
-            self.game.inventory_selection = (self.game.inventory_selection + direction) % total_items
+            self.game.inventory_selection = (
+                self.game.inventory_selection + direction
+            ) % total_items
 
     def use_selected_item(self):
         """Use or equip the selected inventory item, or unequip if clicking equipped exploit."""
@@ -59,7 +63,9 @@ class InventoryInputHandler:
         if selection < len(equipped):
             # Left-click on equipped exploit = unequip it
             exploit_name = equipped[selection]
-            logging.debug(f"Inventory: Unequipping {exploit_name} from slot {selection} via left-click")
+            logging.debug(
+                f"Inventory: Unequipping {exploit_name} from slot {selection} via left-click"
+            )
             self.game.player.inventory_manager.unequip_exploit(exploit_name)
             return
 
@@ -71,7 +77,9 @@ class InventoryInputHandler:
             # Call the item's use method directly
             item.use(self.game.player, self.game)
         else:
-            logging.warning(f"Inventory: Invalid selection {selection} (equipped={len(equipped)}, inventory={len(display_items)})")
+            logging.warning(
+                f"Inventory: Invalid selection {selection} (equipped={len(equipped)}, inventory={len(display_items)})"
+            )
 
     def unequip_selected_exploit(self):
         """Unequip the selected exploit if it's in the equipped section."""
@@ -95,7 +103,9 @@ class InventoryInputHandler:
         from game_rendering_ui import UIRenderer
 
         # Convert pixel coordinates to console tile coordinates
-        window_w, window_h = InputCoordinateConverter.get_window_dimensions(self.renderer, self.game)
+        window_w, window_h = InputCoordinateConverter.get_window_dimensions(
+            self.renderer, self.game
+        )
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
             event.position.x, event.position.y, window_w, window_h
         )
@@ -116,7 +126,9 @@ class InventoryInputHandler:
         from game_rendering_ui import UIRenderer
 
         # Convert pixel coordinates to console tile coordinates
-        window_w, window_h = InputCoordinateConverter.get_window_dimensions(self.renderer, self.game)
+        window_w, window_h = InputCoordinateConverter.get_window_dimensions(
+            self.renderer, self.game
+        )
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
             event.position.x, event.position.y, window_w, window_h
         )
@@ -142,7 +154,9 @@ class InventoryInputHandler:
         if event.y < 0:
             # Scroll down - increase offset
             max_offset = max(0, len(display_items) - 1)
-            self.game.inventory_scroll_offset = min(self.game.inventory_scroll_offset + 1, max_offset)
+            self.game.inventory_scroll_offset = min(
+                self.game.inventory_scroll_offset + 1, max_offset
+            )
         elif event.y > 0:
             # Scroll up - decrease offset
             self.game.inventory_scroll_offset = max(0, self.game.inventory_scroll_offset - 1)
@@ -163,7 +177,9 @@ class LookModeInputHandler:
 
         # ESC or L exits look mode
         if UniversalInputHandler.is_escape_key(event) or event.sym == tcod.event.KeySym.L:
-            logging.debug(f"Input: Exiting look mode from cursor ({self.game.look_cursor_position.x},{self.game.look_cursor_position.y})")
+            logging.debug(
+                f"Input: Exiting look mode from cursor ({self.game.look_cursor_position.x},{self.game.look_cursor_position.y})"
+            )
             self.game.look_mode = False
             self.game.message_log.add_message("Look mode exited")
             return True
@@ -182,7 +198,9 @@ class LookModeInputHandler:
         self.game.look_mode = True
         self.game.look_cursor_position = Position(self.game.player.x, self.game.player.y)
         self.game.message_log.add_message("Look mode activated (ESC or L to exit)")
-        logging.debug(f"Input: Entered look mode at player position ({self.game.player.x},{self.game.player.y})")
+        logging.debug(
+            f"Input: Entered look mode at player position ({self.game.player.x},{self.game.player.y})"
+        )
 
     def move_cursor(self, dx: int, dy: int):
         """Move look mode cursor and update inspection info."""
@@ -208,7 +226,9 @@ class LookModeInputHandler:
             return False
 
         # Only do expensive world conversion when not throttled
-        graphics_mode = self.game.settings.graphics_mode if hasattr(self.game, 'settings') else "glyph"
+        graphics_mode = (
+            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+        )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
         )
@@ -220,7 +240,9 @@ class LookModeInputHandler:
 
     def handle_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
         """Handle left click in look mode - inspect entity at cursor."""
-        graphics_mode = self.game.settings.graphics_mode if hasattr(self.game, 'settings') else "glyph"
+        graphics_mode = (
+            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+        )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
         )
@@ -247,17 +269,20 @@ class TargetingInputHandler:
             dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
             self.game._move_cursor(dx, dy)
         elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
-            logging.debug(f"Input: Targeting confirm - exploit={self.game.targeting_exploit}, target=({self.game.cursor_position.x},{self.game.cursor_position.y})")
+            logging.debug(
+                f"Input: Targeting confirm - exploit={self.game.targeting_exploit}, target=({self.game.cursor_position.x},{self.game.cursor_position.y})"
+            )
             self.game.exploit_system.execute_exploit(
-                self.game.targeting_exploit,
-                self.game.cursor_position
+                self.game.targeting_exploit, self.game.cursor_position
             )
 
         return True
 
     def handle_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
         """Handle mouse motion in targeting mode - update cursor position."""
-        graphics_mode = self.game.settings.graphics_mode if hasattr(self.game, 'settings') else "glyph"
+        graphics_mode = (
+            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+        )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
         )
@@ -268,18 +293,19 @@ class TargetingInputHandler:
 
     def handle_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
         """Handle left click in targeting mode - execute exploit."""
-        graphics_mode = self.game.settings.graphics_mode if hasattr(self.game, 'settings') else "glyph"
+        graphics_mode = (
+            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+        )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
         )
         if world_pos:
             self.game.cursor_position = world_pos
             # Execute exploit at clicked position
-            logging.debug(f"Input: Mouse targeting confirm - exploit={self.game.targeting_exploit}, target=({world_pos.x},{world_pos.y})")
-            self.game.exploit_system.execute_exploit(
-                self.game.targeting_exploit,
-                world_pos
+            logging.debug(
+                f"Input: Mouse targeting confirm - exploit={self.game.targeting_exploit}, target=({world_pos.x},{world_pos.y})"
             )
+            self.game.exploit_system.execute_exploit(self.game.targeting_exploit, world_pos)
             return True
         return False
 
@@ -305,7 +331,9 @@ class LoreViewerInputHandler:
 
         if self.game.lore_viewer_mode == "list":
             # Handle navigation using universal handler with callback
-            if UniversalInputHandler.handle_list_navigation(self, event, len(discovered_fragments), False, self.navigate):
+            if UniversalInputHandler.handle_list_navigation(
+                self, event, len(discovered_fragments), False, self.navigate
+            ):
                 return True
 
             # Handle selection
@@ -340,7 +368,9 @@ class LoreViewerInputHandler:
         discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
         fragment_count = len(discovered_fragments)
         if fragment_count > 0:
-            self.game.lore_viewer_selection = (self.game.lore_viewer_selection + direction) % fragment_count
+            self.game.lore_viewer_selection = (
+                self.game.lore_viewer_selection + direction
+            ) % fragment_count
 
     def handle_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
         """Handle mouse motion in lore viewer - update selection on hover."""
@@ -351,7 +381,9 @@ class LoreViewerInputHandler:
             return False
 
         # Convert pixel coordinates to console tile coordinates
-        window_w, window_h = InputCoordinateConverter.get_window_dimensions(self.renderer, self.game)
+        window_w, window_h = InputCoordinateConverter.get_window_dimensions(
+            self.renderer, self.game
+        )
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
             event.position.x, event.position.y, window_w, window_h
         )
@@ -371,7 +403,9 @@ class LoreViewerInputHandler:
         from game_rendering_ui import UIRenderer
 
         # Convert pixel coordinates to console tile coordinates
-        window_w, window_h = InputCoordinateConverter.get_window_dimensions(self.renderer, self.game)
+        window_w, window_h = InputCoordinateConverter.get_window_dimensions(
+            self.renderer, self.game
+        )
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
             event.position.x, event.position.y, window_w, window_h
         )
@@ -414,8 +448,7 @@ class LoreViewerInputHandler:
         if event.y < 0:
             # Scroll down - move selection down
             self.game.lore_viewer_selection = min(
-                self.game.lore_viewer_selection + 1,
-                len(discovered_fragments) - 1
+                self.game.lore_viewer_selection + 1, len(discovered_fragments) - 1
             )
         elif event.y > 0:
             # Scroll up - move selection up
@@ -434,8 +467,12 @@ class AchievementsInputHandler:
     def handle_input(self, event: tcod.event.KeyDown) -> bool:
         """Handle keyboard input while achievements screen is open."""
         # Get achievements menu from renderer
-        if self.renderer and hasattr(self.renderer, 'ui_renderer'):
-            achievements_menu = self.renderer.ui_renderer._achievements_menu if hasattr(self.renderer.ui_renderer, '_achievements_menu') else None
+        if self.renderer and hasattr(self.renderer, "ui_renderer"):
+            achievements_menu = (
+                self.renderer.ui_renderer._achievements_menu
+                if hasattr(self.renderer.ui_renderer, "_achievements_menu")
+                else None
+            )
 
             if achievements_menu:
                 # Delegate to achievements menu's input handler

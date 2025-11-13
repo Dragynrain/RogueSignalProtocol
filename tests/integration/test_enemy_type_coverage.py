@@ -13,9 +13,8 @@ Coverage:
 - Enemy type balance validation
 """
 
-import pytest
-from tests.test_agent import GameTestAgent
 from game_entities import EnemyState
+from tests.test_agent import GameTestAgent
 
 
 class TestAdminInStealthScenarios:
@@ -216,8 +215,16 @@ class TestAllEnemyTypesSpawning:
         """Every enemy type in game_content.json spawns successfully."""
         agent = GameTestAgent(seed=56789)
 
-        enemy_types = ["scanner", "patrol", "bot", "firewall", "hunter",
-                       "virus", "inhibitor", "admin"]
+        enemy_types = [
+            "scanner",
+            "patrol",
+            "bot",
+            "firewall",
+            "hunter",
+            "virus",
+            "inhibitor",
+            "admin",
+        ]
 
         spawned = []
         x, y = 10, 10
@@ -244,7 +251,7 @@ class TestAllEnemyTypesSpawning:
             "hunter": "H",
             "virus": "V",
             "inhibitor": "I",
-            "admin": "A"
+            "admin": "A",
         }
 
         x = 10
@@ -257,8 +264,16 @@ class TestAllEnemyTypesSpawning:
         """All enemy types have sensible stat values."""
         agent = GameTestAgent(seed=56791)
 
-        enemy_types = ["scanner", "patrol", "bot", "firewall", "hunter",
-                       "virus", "inhibitor", "admin"]
+        enemy_types = [
+            "scanner",
+            "patrol",
+            "bot",
+            "firewall",
+            "hunter",
+            "virus",
+            "inhibitor",
+            "admin",
+        ]
 
         x = 10
         for enemy_type in enemy_types:

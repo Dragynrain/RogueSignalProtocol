@@ -3,10 +3,8 @@ Simple test fixtures that create real game objects quickly.
 No complex builder patterns - just create what you need.
 """
 
-import pytest
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
-from game_map import GameMap
+from game_characters import Player
+from game_entities import Position
 from tests.fixtures.real_game_data import create_real_enemy, create_test_map_with_real_tiles
 
 
@@ -36,9 +34,9 @@ def create_test_map(width=20, height=20):
 def game_scenario():
     """Create a complete game scenario for testing."""
     return {
-        'player': player(),
-        'enemies': [enemy(), enemy("patrol", 15, 15)],
-        'map': create_test_map()
+        "player": player(),
+        "enemies": [enemy(), enemy("patrol", 15, 15)],
+        "map": create_test_map(),
     }
 
 
@@ -46,23 +44,15 @@ def combat_scenario():
     """Create a scenario for combat testing."""
     test_player = player(10, 10, 100)
     test_enemy = enemy("scanner", 11, 10)  # Adjacent for combat
-    return {
-        'player': test_player,
-        'enemy': test_enemy,
-        'map': create_test_map(30, 30)
-    }
+    return {"player": test_player, "enemy": test_enemy, "map": create_test_map(30, 30)}
 
 
 def vision_scenario():
     """Create a scenario for vision/trace level testing."""
     test_player = player(5, 5)
     scanner = enemy("scanner", 10, 5)  # Same row, different column
-    patrol = enemy("patrol", 20, 20)   # Far away
-    return {
-        'player': test_player,
-        'enemies': [scanner, patrol],
-        'map': create_test_map(40, 40)
-    }
+    patrol = enemy("patrol", 20, 20)  # Far away
+    return {"player": test_player, "enemies": [scanner, patrol], "map": create_test_map(40, 40)}
 
 
 def movement_scenario():
@@ -71,14 +61,20 @@ def movement_scenario():
     moving_enemy = enemy("bot", 10, 10)  # RANDOM movement
     patrolling_enemy = enemy("patrol", 5, 5)  # PATROL movement
     return {
-        'player': test_player,
-        'enemies': [moving_enemy, patrolling_enemy],
-        'map': create_test_map(30, 30)
+        "player": test_player,
+        "enemies": [moving_enemy, patrolling_enemy],
+        "map": create_test_map(30, 30),
     }
 
 
-def enemy_builder(enemy_type="scanner", pos=(10, 10), state=None,
-                  last_seen=None, patrol_points=None, move_queue=None):
+def enemy_builder(
+    enemy_type="scanner",
+    pos=(10, 10),
+    state=None,
+    last_seen=None,
+    patrol_points=None,
+    move_queue=None,
+):
     """Flexible enemy builder with sensible defaults.
 
     Args:
@@ -104,14 +100,24 @@ def enemy_builder(enemy_type="scanner", pos=(10, 10), state=None,
         e.patrol_points = [Position(p[0], p[1]) for p in patrol_points]
 
     if move_queue:
-        e.move_queue = move_queue if isinstance(move_queue[0], Position) else \
-                          [Position(p[0], p[1]) for p in move_queue]
+        e.move_queue = (
+            move_queue
+            if isinstance(move_queue[0], Position)
+            else [Position(p[0], p[1]) for p in move_queue]
+        )
 
     return e
 
 
-def map_builder(width=30, height=30, walls=None, shadows=None,
-                cooling_nodes=None, cpu_nodes=None, ghost_nodes=None):
+def map_builder(
+    width=30,
+    height=30,
+    walls=None,
+    shadows=None,
+    cooling_nodes=None,
+    cpu_nodes=None,
+    ghost_nodes=None,
+):
     """Create test map with custom features.
 
     Args:

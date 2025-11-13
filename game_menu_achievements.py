@@ -5,14 +5,14 @@ Displays all unlocked and locked achievements organized by category.
 Shows progress tracking and handles hidden achievements.
 """
 
-import tcod
-import logging
 
+import tcod
+
+from game_achievements import AchievementManager
 from game_config import GameConfig
 from game_entities import Colors
-from game_ui import render_char_safe, UniversalInputHandler
 from game_screen_utilities import ScreenRenderingUtils
-from game_achievements import AchievementManager, ALL_ACHIEVEMENTS
+from game_ui import UniversalInputHandler, render_char_safe
 
 
 class AchievementsMenu:
@@ -38,39 +38,31 @@ class AchievementsMenu:
 
         # Render visible portion based on scroll
         start_y = 5
-        visible_lines = all_lines[self.scroll_offset:self.scroll_offset + self.max_visible_lines]
+        visible_lines = all_lines[self.scroll_offset : self.scroll_offset + self.max_visible_lines]
 
         for i, line_data in enumerate(visible_lines):
             render_char_safe(
-                console,
-                line_data['x'],
-                start_y + i,
-                line_data['text'],
-                fg=line_data['color']
+                console, line_data["x"], start_y + i, line_data["text"], fg=line_data["color"]
             )
 
         # Scroll indicator
         if len(all_lines) > self.max_visible_lines:
             total_pages = (len(all_lines) + self.max_visible_lines - 1) // self.max_visible_lines
             current_page = (self.scroll_offset // self.max_visible_lines) + 1
-            scroll_text = f"Page {current_page}/{total_pages}  │  ↑↓ Scroll  │  PgUp/PgDn: Fast scroll"
+            scroll_text = (
+                f"Page {current_page}/{total_pages}  │  ↑↓ Scroll  │  PgUp/PgDn: Fast scroll"
+            )
             render_char_safe(
                 console,
                 GameConfig.SCREEN_WIDTH // 2 - len(scroll_text) // 2,
                 GameConfig.SCREEN_HEIGHT - 4,
                 scroll_text,
-                fg=Colors.LIGHT_GRAY
+                fg=Colors.LIGHT_GRAY,
             )
 
         # Instructions
         instructions = "ESC/Right-Click: Back  │  Mouse Wheel: Scroll"
-        render_char_safe(
-            console,
-            2,
-            GameConfig.SCREEN_HEIGHT - 2,
-            instructions,
-            fg=Colors.CYAN
-        )
+        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, instructions, fg=Colors.CYAN)
 
     def _build_achievement_lines(self) -> list:
         """Build all achievement lines organized by category."""
@@ -88,12 +80,10 @@ class AchievementsMenu:
 
         for category_id, category_title in categories:
             # Category header
-            lines.append({
-                'x': 2,
-                'text': f"═══ {category_title} ═══",
-                'color': Colors.ELECTRIC_PURPLE
-            })
-            lines.append({'x': 2, 'text': '', 'color': Colors.WHITE})  # Blank line
+            lines.append(
+                {"x": 2, "text": f"═══ {category_title} ═══", "color": Colors.ELECTRIC_PURPLE}
+            )
+            lines.append({"x": 2, "text": "", "color": Colors.WHITE})  # Blank line
 
             # Get achievements for this category
             achievements = AchievementManager.get_achievements_by_category(category_id)
@@ -117,14 +107,14 @@ class AchievementsMenu:
 
                 # Achievement line with icon
                 achievement_text = f"  {icon} {achievement.icon} {name}"
-                lines.append({'x': 4, 'text': achievement_text, 'color': color})
+                lines.append({"x": 4, "text": achievement_text, "color": color})
 
                 # Description (indented, word-wrapped)
                 desc_lines = self._wrap_text(description, 70)
                 for desc_line in desc_lines:
-                    lines.append({'x': 10, 'text': desc_line, 'color': Colors.LIGHT_GRAY})
+                    lines.append({"x": 10, "text": desc_line, "color": Colors.LIGHT_GRAY})
 
-                lines.append({'x': 2, 'text': '', 'color': Colors.WHITE})  # Blank line
+                lines.append({"x": 2, "text": "", "color": Colors.WHITE})  # Blank line
 
         return lines
 
@@ -147,12 +137,12 @@ class AchievementsMenu:
                 current_length += space_needed
             else:
                 if current_line:
-                    lines.append(' '.join(current_line))
+                    lines.append(" ".join(current_line))
                 current_line = [word]
                 current_length = word_length
 
         if current_line:
-            lines.append(' '.join(current_line))
+            lines.append(" ".join(current_line))
 
         return lines
 
@@ -192,7 +182,7 @@ class AchievementsMenu:
         import tcod.event
 
         # Right-click = go back (standard behavior)
-        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
             return "back"
 
         # Left-click on empty space does nothing (removed confusing click-anywhere-to-exit)
@@ -200,7 +190,7 @@ class AchievementsMenu:
 
     def handle_mouse_wheel(self, event) -> bool:
         """Handle mouse wheel - scroll through achievements."""
-        if hasattr(event, 'y'):
+        if hasattr(event, "y"):
             all_lines = self._build_achievement_lines()
             max_scroll = max(0, len(all_lines) - self.max_visible_lines)
 

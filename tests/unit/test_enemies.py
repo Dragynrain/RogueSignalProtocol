@@ -4,17 +4,16 @@ Unit tests for Enemy functionality testing real enemy behavior.
 Tests the actual Enemy class and its AI/combat methods using real GameData.
 """
 
-import pytest
 from unittest.mock import Mock, patch
-import random
+
+import pytest
 
 # Import actual classes
-from game_characters import Enemy, Player
-from game_entities import Position, EnemyState, EnemyMovement
+from game_characters import Enemy
 from game_enemies import EnemyManager
-from game_map import GameMap
-from tests.fixtures.real_game_data import create_real_enemy, create_test_map_with_real_tiles
-from tests.fixtures.simple_fixtures import enemy_builder, player, create_test_map
+from game_entities import EnemyState, Position
+from tests.fixtures.real_game_data import create_test_map_with_real_tiles
+from tests.fixtures.simple_fixtures import create_test_map, enemy_builder, player
 
 
 class TestEnemyCreation:
@@ -83,7 +82,7 @@ class TestEnemyVision:
         mock_map.is_blind_spot.return_value = False
 
         # Mock player not invisible
-        with patch.object(test_player, 'is_invisible', return_value=False):
+        with patch.object(test_player, "is_invisible", return_value=False):
             can_see = test_enemy.can_see_player(test_player, mock_map)
 
             # Should be able to see player if within vision range (using real vision value)
@@ -92,7 +91,7 @@ class TestEnemyVision:
                 assert can_see is True
             else:
                 assert can_see is False
-    
+
     def test_can_see_player_blocked(self):
         """Enemy cannot see player through walls using real data."""
         test_enemy = enemy_builder("scanner", pos=(5, 5))
@@ -158,7 +157,7 @@ class TestEnemyAttack:
         """Virus enemy applies virus effect using real GameData."""
         test_enemy = enemy_builder("virus", pos=(5, 5))
         test_player = player(6, 5, 100)
-        initial_virus = test_player.temporary_effects['virus_turns']
+        initial_virus = test_player.temporary_effects["virus_turns"]
 
         damage_dealt = test_enemy.attack_player(test_player)
 
@@ -282,12 +281,12 @@ class TestEnemyManager:
         """EnemyManager can spawn enemies correctly using real data."""
         game_map = create_test_map_with_real_tiles(20, 20)
         mock_message_log = Mock()
-        
+
         enemy_manager = EnemyManager(game_map, mock_message_log)
         pos = Position(10, 10)
-        
+
         enemy = enemy_manager.spawn_enemy(pos, "virus")
-        
+
         assert enemy is not None
         assert enemy.type == "virus"
         assert enemy.position == pos
@@ -295,106 +294,106 @@ class TestEnemyManager:
         # Verify enemy has real GameData properties
         assert enemy.type_data is not None
         assert enemy.cpu > 0
-    
+
     def test_enemy_manager_spawn_on_wall_fails(self):
         """EnemyManager cannot spawn enemy on wall using real map."""
         game_map = create_test_map_with_real_tiles(20, 20)
         mock_message_log = Mock()
-        
+
         # Add a wall at position 5,5 (walls are stored as (x,y) tuples)
         wall_pos = Position(5, 5)
         game_map.walls.add((wall_pos.x, wall_pos.y))
-        
+
         enemy_manager = EnemyManager(game_map, mock_message_log)
-        
+
         # Test that spawning on wall raises ValueError
         with pytest.raises(ValueError, match="Cannot spawn enemy on wall"):
             enemy_manager.spawn_enemy(wall_pos, "scanner")
-    
+
     def test_enemy_manager_get_enemy_at_position(self):
         """EnemyManager can find enemy at specific position using real data."""
         game_map = create_test_map_with_real_tiles(20, 20)
         mock_message_log = Mock()
-        
+
         enemy_manager = EnemyManager(game_map, mock_message_log)
         pos = Position(15, 10)  # Use position within map bounds
-        
+
         enemy = enemy_manager.spawn_enemy(pos, "patrol")
         found_enemy = enemy_manager.get_enemy_at_position(pos)
-        
+
         assert found_enemy is enemy
         assert found_enemy.position == pos
         assert found_enemy.type == "patrol"
-    
+
     def test_enemy_manager_no_enemy_at_position(self):
         """EnemyManager returns None when no enemy at position using real data."""
         game_map = create_test_map_with_real_tiles(20, 20)
         mock_message_log = Mock()
-        
+
         enemy_manager = EnemyManager(game_map, mock_message_log)
         pos = Position(15, 15)  # Empty position within bounds
-        
+
         found_enemy = enemy_manager.get_enemy_at_position(pos)
-        
+
         assert found_enemy is None
-    
+
     def test_enemy_manager_spawn_multiple_types(self):
         """EnemyManager can spawn different enemy types with real GameData."""
         game_map = create_test_map_with_real_tiles(30, 30)
         mock_message_log = Mock()
-        
+
         enemy_manager = EnemyManager(game_map, mock_message_log)
-        
+
         # Spawn different enemy types
         scanner = enemy_manager.spawn_enemy(Position(5, 5), "scanner")
         patrol = enemy_manager.spawn_enemy(Position(10, 10), "patrol")
         bot = enemy_manager.spawn_enemy(Position(15, 15), "bot")
-        
+
         assert len(enemy_manager.enemies) == 3
         assert scanner.type == "scanner"
         assert patrol.type == "patrol"
         assert bot.type == "bot"
-        
+
         # Each should have different characteristics from real GameData
         assert scanner.type_data.movement != patrol.type_data.movement
 
 
 class TestEnemyAIBehavior:
     """Test enemy AI state changes and behavior patterns."""
-    
+
     def test_enemy_ai_state_transitions(self):
         """Enemy AI states can be changed appropriately."""
         pos = Position(10, 10)
-        
-        with patch('game_data.GameData') as mock_game_data:
+
+        with patch("game_data.GameData") as mock_game_data:
             mock_enemy_type = Mock()
             mock_enemy_type.cpu = 50
-            mock_game_data.ENEMY_TYPES = {'scanner': mock_enemy_type}
-            
+            mock_game_data.ENEMY_TYPES = {"scanner": mock_enemy_type}
+
             enemy = Enemy(pos, "scanner")
-            
+
             # Start in UNAWARE state
             assert enemy.state == EnemyState.UNAWARE
-            
+
             # Can transition to ALERT
             enemy.state = EnemyState.ALERT
             assert enemy.state == EnemyState.ALERT
-            
+
             # Can transition to HOSTILE
             enemy.state = EnemyState.HOSTILE
             assert enemy.state == EnemyState.HOSTILE
-    
+
     def test_enemy_cooldown_system(self):
         """Enemy movement cooldown system works."""
         pos = Position(5, 5)
-        
-        with patch('game_data.GameData') as mock_game_data:
+
+        with patch("game_data.GameData") as mock_game_data:
             mock_enemy_type = Mock()
             mock_enemy_type.cpu = 50
-            mock_game_data.ENEMY_TYPES = {'virus': mock_enemy_type}
-            
+            mock_game_data.ENEMY_TYPES = {"virus": mock_enemy_type}
+
             enemy = Enemy(pos, "virus")
-            
+
             # Set movement cooldown
             enemy.move_cooldown = 3
             assert enemy.move_cooldown == 3

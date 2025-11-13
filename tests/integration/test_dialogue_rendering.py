@@ -6,22 +6,22 @@ Tests the complete rendering pipeline including transparency handling,
 multiple dialogue types, and coordinate system correctness.
 """
 
-import pytest
-import tcod.console
-import numpy as np
 from unittest.mock import Mock
 
+import numpy as np
+import tcod.console
+
+from game_coordinate_helpers import CoordinateHelpers
 from game_dialogue_system import (
     DialogueState,
     UnifiedRenderer,
-    create_gateway_dialogue,
     create_death_dialogue,
+    create_gateway_dialogue,
     create_intro_dialogue,
-    create_victory_dialogue,
+    create_inventory_attack_dialogue,
     create_overclock_warning_dialogue,
-    create_inventory_attack_dialogue
+    create_victory_dialogue,
 )
-from game_coordinate_helpers import CoordinateHelpers
 
 
 class TestDialogueRendering:
@@ -78,7 +78,7 @@ class TestDialogueRendering:
             create_intro_dialogue(),
             create_victory_dialogue(),
             create_overclock_warning_dialogue("Test Exploit", 10, 5, 15, 20),
-            create_inventory_attack_dialogue()
+            create_inventory_attack_dialogue(),
         ]
 
         for dialogue in dialogues:
@@ -139,7 +139,7 @@ class TestDialogueRendering:
             overheat_amount=25,
             damage=10,
             remaining_cpu=5,
-            max_cpu=20
+            max_cpu=20,
         )
 
         UnifiedRenderer.render(console, dialogue)
@@ -226,7 +226,7 @@ class TestTransparencyHandling:
 
         # Dialogue should still be opaque, outside should still be transparent
         assert console.rgba["bg"][25, 40, 3] == 255  # Center opaque
-        assert console.rgba["bg"][0, 0, 3] == 0      # Corner transparent
+        assert console.rgba["bg"][0, 0, 3] == 0  # Corner transparent
 
     def test_dialogue_alpha_doesnt_leak_outside_bounds(self):
         """Alpha setting doesn't affect pixels outside dialogue box."""
@@ -241,7 +241,7 @@ class TestTransparencyHandling:
         UnifiedRenderer.render(console, dialogue)
 
         # Far corners should maintain original pattern
-        assert console.rgba["bg"][0, 0, 3] == 0    # Even row, should be transparent
+        assert console.rgba["bg"][0, 0, 3] == 0  # Even row, should be transparent
         assert console.rgba["bg"][1, 0, 3] == 255  # Odd row, should be opaque
 
 
@@ -281,9 +281,7 @@ class TestCoordinateCorrectness:
         # Note: Dialogue width is 50 (updated from 70 for better UX)
         box_width = 50
         box_height = 14
-        expected_x, expected_y = CoordinateHelpers.center_box(
-            box_width, box_height, 80, 50
-        )
+        expected_x, expected_y = CoordinateHelpers.center_box(box_width, box_height, 80, 50)
 
         console.rgba["bg"][:, :, 3] = 0
         dialogue = create_gateway_dialogue()
@@ -294,8 +292,9 @@ class TestCoordinateCorrectness:
         check_y = expected_y + 1
         check_x = expected_x + 1
 
-        assert console.rgba["bg"][check_y, check_x, 3] == 255, \
-            f"Expected dialogue at ({check_x}, {check_y}) to be opaque"
+        assert (
+            console.rgba["bg"][check_y, check_x, 3] == 255
+        ), f"Expected dialogue at ({check_x}, {check_y}) to be opaque"
 
 
 class TestEdgeCases:
@@ -306,6 +305,7 @@ class TestEdgeCases:
         console = tcod.console.Console(width=80, height=50)
 
         from game_dialogue_system import DialogueBox
+
         dialogue = DialogueBox(
             title="Empty",
             message="",
@@ -315,7 +315,7 @@ class TestEdgeCases:
             message_color=(255, 255, 255),
             border_color=(255, 255, 255),
             bg_color=(0, 0, 0),
-            format_data={}
+            format_data={},
         )
 
         UnifiedRenderer.render(console, dialogue)
@@ -329,6 +329,7 @@ class TestEdgeCases:
         console = tcod.console.Console(width=80, height=50)
 
         from game_dialogue_system import DialogueBox
+
         long_message = "This is a very long message " * 20
 
         dialogue = DialogueBox(
@@ -340,7 +341,7 @@ class TestEdgeCases:
             message_color=(255, 255, 255),
             border_color=(255, 255, 255),
             bg_color=(0, 0, 0),
-            format_data={}
+            format_data={},
         )
 
         UnifiedRenderer.render(console, dialogue)
@@ -354,11 +355,7 @@ class TestEdgeCases:
         console = tcod.console.Console(width=80, height=50)
 
         dialogue = create_overclock_warning_dialogue(
-            exploit_name="Test",
-            overheat_amount=10,
-            damage=5,
-            remaining_cpu=15,
-            max_cpu=20
+            exploit_name="Test", overheat_amount=10, damage=5, remaining_cpu=15, max_cpu=20
         )
 
         # Clear format_data to simulate missing keys
@@ -400,7 +397,7 @@ class TestWorkflowSimulation:
             overheat_amount=10,
             damage=5,
             remaining_cpu=15,
-            max_cpu=20
+            max_cpu=20,
         )
         state.show(dialogue1)
 

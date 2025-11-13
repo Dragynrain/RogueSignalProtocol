@@ -12,16 +12,16 @@ Rendering Modes:
 This module is only active when graphics_mode == "graphics" in settings.
 """
 
-import tcod
-import tcod.sdl
+import json
 import logging
 import os
 import sys
-import json
-from typing import Dict, Optional, Tuple
 
-from game_tile_dimension_calculator import TileDimensionCalculator
+import tcod
+import tcod.sdl
+
 from game_errors import GameErrorHandler
+from game_tile_dimension_calculator import TileDimensionCalculator
 
 
 class TileManager:
@@ -49,22 +49,22 @@ class TileManager:
         self.settings = settings
 
         # Texture cache: entity_name (str) -> SDL texture
-        self.texture_cache: Dict[str, tcod.sdl.render.Texture] = {}
+        self.texture_cache: dict[str, tcod.sdl.render.Texture] = {}
 
         # Tintable flags: entity_name (str) -> bool
         # True = white sprite, use color_mod tinting
         # False = colored sprite, use outline boxes for status
-        self.tintable_flags: Dict[str, bool] = {}
+        self.tintable_flags: dict[str, bool] = {}
 
         # Tile mapping: entity_name -> sprite filename
-        self.tile_mappings: Dict[str, Dict] = {}
+        self.tile_mappings: dict[str, dict] = {}
 
         # Calculated tile dimensions in pixels
         self.tile_width = 0
         self.tile_height = 0
 
         # Window resize tracking
-        self.last_window_size: Optional[Tuple[int, int]] = None
+        self.last_window_size: tuple[int, int] | None = None
 
         # Graphics directory path
         self.graphics_dir = self._get_graphics_dir()
@@ -77,7 +77,7 @@ class TileManager:
 
     def _get_graphics_dir(self) -> str:
         """Get absolute path to graphics directory."""
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             # Running as compiled executable
             base_path = os.path.dirname(sys.executable)
         else:
@@ -95,7 +95,7 @@ class TileManager:
                 logging.warning("Graphics mode will use glyph fallbacks for all entities")
                 return
 
-            with open(mapping_file, 'r', encoding='utf-8') as f:
+            with open(mapping_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Parse mappings and tintable flags
@@ -104,14 +104,20 @@ class TileManager:
             # Extract tintable flags for quick lookup
             self._extract_tintable_flags(data)
 
-            logging.debug(f"Graphics: Loaded tile mappings - {len(self.tile_mappings)} categories, {len(self.tintable_flags)} tintable flags")
+            logging.debug(
+                f"Graphics: Loaded tile mappings - {len(self.tile_mappings)} categories, {len(self.tintable_flags)} tintable flags"
+            )
 
         except json.JSONDecodeError as e:
-            GameErrorHandler.handle_error(e, "tile_mapping_load", f"Failed to parse {mapping_file}, using glyph fallbacks")
+            GameErrorHandler.handle_error(
+                e, "tile_mapping_load", f"Failed to parse {mapping_file}, using glyph fallbacks"
+            )
         except Exception as e:
-            GameErrorHandler.handle_error(e, "tile_mapping_load", "Error loading tile mappings, using glyph fallbacks")
+            GameErrorHandler.handle_error(
+                e, "tile_mapping_load", "Error loading tile mappings, using glyph fallbacks"
+            )
 
-    def _extract_tintable_flags(self, data: Dict):
+    def _extract_tintable_flags(self, data: dict):
         """
         Extract tintable flags from tile mappings for quick lookup.
 
@@ -141,29 +147,33 @@ class TileManager:
             self.tile_width, self.tile_height = TileDimensionCalculator.calculate_from_window(
                 window_size, self.settings.graphics_mode
             )
-            logging.debug(f"Graphics: Calculated tile dimensions {self.tile_width}x{self.tile_height} for window {window_size[0]}x{window_size[1]}")
+            logging.debug(
+                f"Graphics: Calculated tile dimensions {self.tile_width}x{self.tile_height} for window {window_size[0]}x{window_size[1]}"
+            )
 
         except Exception as e:
-            GameErrorHandler.handle_error(e, "tile_dimensions", "Failed to calculate tile dimensions, using fallbacks")
+            GameErrorHandler.handle_error(
+                e, "tile_dimensions", "Failed to calculate tile dimensions, using fallbacks"
+            )
             # Use fallback dimensions from config
             self.tile_width, self.tile_height = TileDimensionCalculator.get_fallback_dimensions()
             logging.warning(f"Using fallback tile dimensions: {self.tile_width}x{self.tile_height}")
 
-    def _get_window_size(self) -> Tuple[int, int]:
+    def _get_window_size(self) -> tuple[int, int]:
         """
         Get current window pixel dimensions from SDL.
 
         Returns:
             Tuple of (width, height) in pixels
         """
-        if hasattr(self.context, 'sdl_window') and self.context.sdl_window:
+        if hasattr(self.context, "sdl_window") and self.context.sdl_window:
             return self.context.sdl_window.size
 
         # Fallback to reasonable default
         logging.warning("Could not get window size from context, using default 800x600")
         return (800, 600)
 
-    def load_tile(self, entity_name: str) -> Optional[tcod.sdl.render.Texture]:
+    def load_tile(self, entity_name: str) -> tcod.sdl.render.Texture | None:
         """
         Load a tile sprite from disk, scale it, and create SDL texture.
 
@@ -194,20 +204,20 @@ class TileManager:
             return None
 
         try:
-            from PIL import Image
             import numpy as np
+            from PIL import Image
 
             # Load image preserving alpha channel
             pil_image = Image.open(filepath)
 
             # Convert to RGBA if not already (ensure alpha channel exists)
-            if pil_image.mode != 'RGBA':
-                pil_image = pil_image.convert('RGBA')
+            if pil_image.mode != "RGBA":
+                pil_image = pil_image.convert("RGBA")
 
             # Scale to calculated tile size (512x512 -> tile_width x tile_height)
             pil_image = pil_image.resize(
                 (self.tile_width, self.tile_height),
-                Image.Resampling.LANCZOS  # High-quality downscaling
+                Image.Resampling.LANCZOS,  # High-quality downscaling
             )
 
             # Convert to numpy array (height, width, 4) for RGBA
@@ -223,14 +233,16 @@ class TileManager:
 
             # Set blend mode for proper transparency rendering
             texture.blend_mode = tcod.sdl.render.BlendMode.BLEND
-            logging.debug(f"Graphics: Loaded sprite '{entity_name}' from {sprite_file} ({self.tile_width}x{self.tile_height}px)")
+            logging.debug(
+                f"Graphics: Loaded sprite '{entity_name}' from {sprite_file} ({self.tile_width}x{self.tile_height}px)"
+            )
             return texture
 
         except Exception as e:
             GameErrorHandler.handle_error(e, "sprite_load", f"Failed to load sprite {filepath}")
             return None
 
-    def _get_sprite_filename(self, entity_name: str) -> Optional[str]:
+    def _get_sprite_filename(self, entity_name: str) -> str | None:
         """
         Look up sprite filename for an entity from tile mappings.
 
@@ -262,19 +274,23 @@ class TileManager:
                         if key.lower() == entity_name.lower():
                             entity_data = category_data[key]
                             if isinstance(entity_data, dict) and "file" in entity_data:
-                                logging.debug(f"Graphics: Found sprite via case-insensitive match: {entity_name} -> {key}")
+                                logging.debug(
+                                    f"Graphics: Found sprite via case-insensitive match: {entity_name} -> {key}"
+                                )
                                 return entity_data["file"]
 
                         # Special case for admin -> Admin Avatar
                         if entity_name.lower() == "admin" and key == "Admin Avatar":
                             entity_data = category_data[key]
                             if isinstance(entity_data, dict) and "file" in entity_data:
-                                logging.debug(f"Graphics: Found sprite for admin -> Admin Avatar")
+                                logging.debug("Graphics: Found sprite for admin -> Admin Avatar")
                                 return entity_data["file"]
 
         return None
 
-    def get_tile(self, entity_name: str, fail_silently: bool = False) -> Optional[tcod.sdl.render.Texture]:
+    def get_tile(
+        self, entity_name: str, fail_silently: bool = False
+    ) -> tcod.sdl.render.Texture | None:
         """
         Get tile texture for an entity (cached or load on-demand).
 
@@ -363,15 +379,15 @@ class TileManager:
             return [(255, 255, 255)]
 
         try:
-            from PIL import Image
             import numpy as np
+            from PIL import Image
 
             # Load sprite image
             pil_image = Image.open(filepath)
 
             # Convert to RGBA if not already
-            if pil_image.mode != 'RGBA':
-                pil_image = pil_image.convert('RGBA')
+            if pil_image.mode != "RGBA":
+                pil_image = pil_image.convert("RGBA")
 
             # Convert to numpy array
             pixels = np.array(pil_image, dtype=np.uint8)
@@ -429,7 +445,11 @@ class TileManager:
                 if np.any(visible_mask):
                     visible_pixels = pixels[visible_mask]
                     # Filter to only bright pixels
-                    brightness = visible_pixels[:, 0].astype(int) + visible_pixels[:, 1].astype(int) + visible_pixels[:, 2].astype(int)
+                    brightness = (
+                        visible_pixels[:, 0].astype(int)
+                        + visible_pixels[:, 1].astype(int)
+                        + visible_pixels[:, 2].astype(int)
+                    )
                     bright_mask = brightness > 150
 
                     if np.any(bright_mask):
@@ -441,16 +461,22 @@ class TileManager:
 
             # Ensure we have at least one color
             if not colors:
-                logging.debug(f"[COLOR EXTRACT] No bright colors found for {entity_name}, using fallback bright color")
+                logging.debug(
+                    f"[COLOR EXTRACT] No bright colors found for {entity_name}, using fallback bright color"
+                )
                 # Use a bright fallback color instead of white
                 colors = [(200, 150, 255)]  # Light purple fallback
             else:
-                logging.debug(f"[COLOR EXTRACT] Got {len(colors)} colors for {entity_name}: {colors}")
+                logging.debug(
+                    f"[COLOR EXTRACT] Got {len(colors)} colors for {entity_name}: {colors}"
+                )
 
             return colors
 
         except Exception as e:
-            GameErrorHandler.handle_error(e, "color_extract", f"Failed to extract colors from sprite {filepath}")
+            GameErrorHandler.handle_error(
+                e, "color_extract", f"Failed to extract colors from sprite {filepath}"
+            )
             return [(255, 255, 255)]
 
     def check_and_handle_resize(self) -> bool:
@@ -481,7 +507,7 @@ class TileManager:
 
         return False
 
-    def _reload_all_textures(self, new_window_size: Tuple[int, int]):
+    def _reload_all_textures(self, new_window_size: tuple[int, int]):
         """
         Recalculate tile size and reload all cached textures.
 
@@ -494,10 +520,13 @@ class TileManager:
         new_size = (self.tile_width, self.tile_height)
 
         # Get list of entities that were loaded
-        loaded_entities = [name for name, texture in self.texture_cache.items()
-                          if texture is not None]
+        loaded_entities = [
+            name for name, texture in self.texture_cache.items() if texture is not None
+        ]
 
-        logging.debug(f"Graphics: Window resize {new_window_size[0]}x{new_window_size[1]}px - reloading {len(loaded_entities)} textures (tile size {old_size[0]}x{old_size[1]} -> {new_size[0]}x{new_size[1]})")
+        logging.debug(
+            f"Graphics: Window resize {new_window_size[0]}x{new_window_size[1]}px - reloading {len(loaded_entities)} textures (tile size {old_size[0]}x{old_size[1]} -> {new_size[0]}x{new_size[1]})"
+        )
 
         # Clear cache (textures will be garbage collected)
         self.texture_cache.clear()
@@ -529,14 +558,16 @@ class TileManager:
             if self.get_tile(entity_name):
                 loaded_count += 1
 
-        logging.debug(f"Graphics: Preloaded {loaded_count}/{len(common_entities)} common tiles successfully")
+        logging.debug(
+            f"Graphics: Preloaded {loaded_count}/{len(common_entities)} common tiles successfully"
+        )
 
     def cleanup(self):
         """Free all cached textures and reset state."""
         self.texture_cache.clear()
         self.last_window_size = None
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """
         Get statistics about tile manager state (for debugging).
 

@@ -8,9 +8,8 @@ Tests settings validation and color theme handling:
 - Invalid configuration handling
 """
 
-import pytest
-from game_config import GameSettings
 from game_color_manager import ColorManager
+from game_config import GameSettings
 
 
 class TestSettingsValidation:
@@ -43,8 +42,8 @@ class TestSettingsValidation:
     def test_settings_has_defaults(self):
         """Settings should have sensible defaults."""
         settings = GameSettings()
-        assert hasattr(settings, 'master_volume')
-        assert hasattr(settings, 'graphics_mode')
+        assert hasattr(settings, "master_volume")
+        assert hasattr(settings, "graphics_mode")
 
     def test_settings_serializable(self):
         """Settings values should be serializable (simple types)."""

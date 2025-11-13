@@ -14,16 +14,14 @@ These tests use REAL game objects with minimal mocking.
 Only external dependencies (sound, rendering) are mocked.
 """
 
-import pytest
-from unittest.mock import Mock
 
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
-from game_config import GameSettings, GameBalance
-from game_map import GameMap
-from tests.fixtures.simple_fixtures import player, create_real_player, create_real_enemy, map_builder
-from tests.fixtures.real_game_data import get_real_game_data
+import pytest
+
+from game_config import GameBalance
+from game_entities import EnemyState, Position
+from tests.fixtures.simple_fixtures import (
+    create_real_enemy,
+)
 
 
 class TestCoolingNodeIntegration:
@@ -87,7 +85,9 @@ class TestCoolingNodeIntegration:
 
         # Move off cooling node
         engine.player.position = Position(21, 20)
-        assert not engine.game_map.is_cooling_node(engine.player.position), "Should not be on cooling node"
+        assert not engine.game_map.is_cooling_node(
+            engine.player.position
+        ), "Should not be on cooling node"
 
         # Add heat manually to test
         engine.player.heat = 50
@@ -99,7 +99,7 @@ class TestCoolingNodeIntegration:
         # Heat should not decrease as much (or at all) without cooling node
         # This depends on whether background cooling exists
         # The key test is the system works differently off the node
-        assert hasattr(engine.game_map, 'is_cooling_node'), "Map should track cooling nodes"
+        assert hasattr(engine.game_map, "is_cooling_node"), "Map should track cooling nodes"
 
     def test_cooling_node_with_zero_heat(self, basic_game_engine):
         """Test cooling node with player at zero heat (edge case)."""
@@ -133,7 +133,9 @@ class TestCPURecoveryNodeIntegration:
         engine.player.max_cpu = 100
 
         # Verify on CPU node
-        assert engine.game_map.is_cpu_recovery_node(cpu_pos), "Player should be on CPU recovery node"
+        assert engine.game_map.is_cpu_recovery_node(
+            cpu_pos
+        ), "Player should be on CPU recovery node"
 
         initial_cpu = engine.player.cpu
 
@@ -255,7 +257,9 @@ class TestShadowMechanicsIntegration:
             engine.player.position = Position(x, 20)
 
             # Verify player in shadow
-            assert engine.game_map.is_blind_spot(engine.player.position), f"Position ({x}, 20) should be shadow"
+            assert engine.game_map.is_blind_spot(
+                engine.player.position
+            ), f"Position ({x}, 20) should be shadow"
 
             # Check if enemy can see (depends on distance)
             distance = scanner.position.distance_to(engine.player.position)
@@ -314,7 +318,9 @@ class TestSpecialTileCombinations:
         engine.process_turn()
 
         # Verify cooling works
-        assert engine.player.heat < initial_heat or engine.player.heat == 0, "Cooling should work in shadow"
+        assert (
+            engine.player.heat < initial_heat or engine.player.heat == 0
+        ), "Cooling should work in shadow"
 
         # Verify stealth works
         scanner = create_real_enemy("scanner", Position(25, 20))
@@ -359,7 +365,9 @@ class TestSpecialTileEdgeCases:
         # Special tiles should never be on walls
         for x, y in engine.game_map.cooling_nodes:
             pos = Position(x, y)
-            assert not engine.game_map.is_wall(pos), f"Cooling node at ({x},{y}) should not be on wall"
+            assert not engine.game_map.is_wall(
+                pos
+            ), f"Cooling node at ({x},{y}) should not be on wall"
 
         for x, y in engine.game_map.cpu_recovery_nodes:
             pos = Position(x, y)
@@ -367,7 +375,9 @@ class TestSpecialTileEdgeCases:
 
         for x, y in engine.game_map.ghost_nodes:
             pos = Position(x, y)
-            assert not engine.game_map.is_wall(pos), f"Ghost node at ({x},{y}) should not be on wall"
+            assert not engine.game_map.is_wall(
+                pos
+            ), f"Ghost node at ({x},{y}) should not be on wall"
 
     def test_rapid_tile_transitions(self, basic_game_engine):
         """Test player rapidly moving between different special tiles."""
@@ -396,5 +406,5 @@ class TestSpecialTileEdgeCases:
             assert engine.player.cpu <= engine.player.max_cpu, "CPU should not exceed max"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

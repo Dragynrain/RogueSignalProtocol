@@ -22,25 +22,24 @@ def test_no_unicode_in_logging_statements():
     # Matches: logging.info("..."), logging.debug(f"..."), etc.
     # Captures everything after the opening quote/paren
     logging_pattern = re.compile(
-        r'logging\.(debug|info|warning|error|critical)\s*\((.+)\)',
-        re.DOTALL
+        r"logging\.(debug|info|warning|error|critical)\s*\((.+)\)", re.DOTALL
     )
 
     violations = []
 
     # Scan all Python files except tests and this file
     project_root = Path(__file__).parent.parent
-    for py_file in project_root.glob('*.py'):
-        if py_file.name == 'test_no_unicode_in_logging.py':
+    for py_file in project_root.glob("*.py"):
+        if py_file.name == "test_no_unicode_in_logging.py":
             continue
 
         try:
-            content = py_file.read_text(encoding='utf-8')
+            content = py_file.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             # Skip files with encoding issues
             continue
 
-        lines = content.split('\n')
+        lines = content.split("\n")
 
         for line_num, line in enumerate(lines, 1):
             # Check if this line contains a logging call
@@ -52,13 +51,15 @@ def test_no_unicode_in_logging_statements():
                 for char in log_content:
                     # Check if character is non-ASCII (ord > 127)
                     if ord(char) > 127:
-                        violations.append({
-                            'file': py_file.name,
-                            'line': line_num,
-                            'char': char,
-                            'ord': ord(char),
-                            'content': line.strip()
-                        })
+                        violations.append(
+                            {
+                                "file": py_file.name,
+                                "line": line_num,
+                                "char": char,
+                                "ord": ord(char),
+                                "content": line.strip(),
+                            }
+                        )
                         break  # Only report first Unicode char per line
 
     # Report violations

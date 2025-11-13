@@ -15,8 +15,9 @@ by focusing on specific edge cases and timing mechanics.
 """
 
 import pytest
-from game_entities import Position
+
 from game_config import GameBalance
+from game_entities import Position
 from tests.fixtures.simple_fixtures import create_real_enemy
 
 
@@ -29,7 +30,7 @@ class TestHeatAtMaximum:
 
         # Set heat to maximum
         engine.player.heat = engine.player.max_heat
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         # Create target enemy
         bot = create_real_enemy("bot", Position(11, 10))
@@ -37,7 +38,7 @@ class TestHeatAtMaximum:
         engine.enemies = [bot]
 
         # Try to use exploit at max heat
-        result = engine.exploit_system.use_exploit('code_injection')
+        result = engine.exploit_system.use_exploit("code_injection")
 
         # Should still work (heat caps, doesn't prevent action)
         assert result is True, "Exploit should be usable at max heat"
@@ -48,7 +49,7 @@ class TestHeatAtMaximum:
 
         # Set heat near max
         engine.player.heat = engine.player.max_heat - 5
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         # Create target
         bot = create_real_enemy("bot", Position(11, 10))
@@ -56,18 +57,19 @@ class TestHeatAtMaximum:
         engine.enemies = [bot]
 
         # Use exploit (generates ~8 heat)
-        engine.exploit_system.use_exploit('code_injection')
+        engine.exploit_system.use_exploit("code_injection")
 
         # Heat should cap at max
-        assert engine.player.heat <= engine.player.max_heat, \
-            f"Heat should cap at {engine.player.max_heat}, got {engine.player.heat}"
+        assert (
+            engine.player.heat <= engine.player.max_heat
+        ), f"Heat should cap at {engine.player.max_heat}, got {engine.player.heat}"
 
     def test_overheat_mechanism_exists(self, basic_game_engine):
         """Test overheat system is properly configured."""
         engine = basic_game_engine
 
         # Verify max heat is defined
-        assert hasattr(engine.player, 'max_heat'), "Player should have max_heat attribute"
+        assert hasattr(engine.player, "max_heat"), "Player should have max_heat attribute"
         assert engine.player.max_heat > 0, "Max heat should be positive"
 
         # Verify overheat damage formula exists (checked in game_engine.py line 398-403)
@@ -76,8 +78,9 @@ class TestHeatAtMaximum:
         engine.player.cpu = 100
 
         # System should remain stable
-        assert engine.player.heat == engine.player.max_heat, \
-            f"Heat should be settable to max ({engine.player.max_heat})"
+        assert (
+            engine.player.heat == engine.player.max_heat
+        ), f"Heat should be settable to max ({engine.player.max_heat})"
 
 
 class TestCoolingNodeTiming:
@@ -104,8 +107,9 @@ class TestCoolingNodeTiming:
         engine.process_turn()
 
         # Heat should be reduced
-        assert engine.player.heat < initial_heat, \
-            "Cooling node should reduce heat on the turn player steps on it"
+        assert (
+            engine.player.heat < initial_heat
+        ), "Cooling node should reduce heat on the turn player steps on it"
 
     def test_cooling_node_applies_each_turn(self, basic_game_engine):
         """Test cooling node reduces heat each turn while standing on it."""
@@ -125,12 +129,14 @@ class TestCoolingNodeTiming:
             heat_values.append(engine.player.heat)
 
         # Heat should decrease each turn
-        assert heat_values[-1] < heat_values[0], \
-            f"Heat should decrease over multiple turns on cooling node"
+        assert (
+            heat_values[-1] < heat_values[0]
+        ), "Heat should decrease over multiple turns on cooling node"
         # Each turn should show reduction
         for i in range(len(heat_values) - 1):
-            assert heat_values[i + 1] <= heat_values[i], \
-                f"Heat should not increase while on cooling node"
+            assert (
+                heat_values[i + 1] <= heat_values[i]
+            ), "Heat should not increase while on cooling node"
 
     def test_cooling_node_stacks_with_passive_decay(self, basic_game_engine):
         """Test cooling node effect stacks with passive heat decay."""
@@ -151,8 +157,9 @@ class TestCoolingNodeTiming:
         expected_reduction_min = 20 + GameBalance.HEAT_REDUCTION_NORMAL
         actual_reduction = initial_heat - engine.player.heat
 
-        assert actual_reduction >= expected_reduction_min - 1, \
-            f"Cooling node should stack with passive decay, expected ~{expected_reduction_min}, got {actual_reduction}"
+        assert (
+            actual_reduction >= expected_reduction_min - 1
+        ), f"Cooling node should stack with passive decay, expected ~{expected_reduction_min}, got {actual_reduction}"
 
 
 class TestHeatDecayRates:
@@ -167,7 +174,7 @@ class TestHeatDecayRates:
 
         # Set initial heat
         engine.player.heat = 50
-        engine.player.temporary_effects['exploit_efficiency_turns'] = 0  # Ensure normal rate
+        engine.player.temporary_effects["exploit_efficiency_turns"] = 0  # Ensure normal rate
 
         # Process several turns
         heat_before = engine.player.heat
@@ -180,8 +187,9 @@ class TestHeatDecayRates:
         actual_reduction = heat_before - engine.player.heat
 
         # Allow small tolerance
-        assert abs(actual_reduction - expected_reduction) <= 1, \
-            f"Heat should decay by {expected_reduction} over {turns} turns, got {actual_reduction}"
+        assert (
+            abs(actual_reduction - expected_reduction) <= 1
+        ), f"Heat should decay by {expected_reduction} over {turns} turns, got {actual_reduction}"
 
     def test_boosted_heat_decay_with_exploit_efficiency(self, basic_game_engine):
         """Test heat decays faster with exploit efficiency active."""
@@ -192,7 +200,7 @@ class TestHeatDecayRates:
 
         # Set initial heat and activate exploit efficiency
         engine.player.heat = 50
-        engine.player.temporary_effects['exploit_efficiency_turns'] = 10  # Active
+        engine.player.temporary_effects["exploit_efficiency_turns"] = 10  # Active
 
         # Process several turns
         heat_before = engine.player.heat
@@ -205,8 +213,9 @@ class TestHeatDecayRates:
         actual_reduction = heat_before - engine.player.heat
 
         # Allow small tolerance
-        assert abs(actual_reduction - expected_reduction) <= 1, \
-            f"With exploit efficiency, heat should decay by {expected_reduction} over {turns} turns, got {actual_reduction}"
+        assert (
+            abs(actual_reduction - expected_reduction) <= 1
+        ), f"With exploit efficiency, heat should decay by {expected_reduction} over {turns} turns, got {actual_reduction}"
 
     def test_heat_doesnt_decay_below_zero(self, basic_game_engine):
         """Test heat stops at zero and doesn't go negative."""
@@ -220,8 +229,7 @@ class TestHeatDecayRates:
             engine.process_turn()
 
         # Heat should be 0, not negative
-        assert engine.player.heat == 0, \
-            f"Heat should not go below 0, got {engine.player.heat}"
+        assert engine.player.heat == 0, f"Heat should not go below 0, got {engine.player.heat}"
 
 
 class TestConsecutiveAttackHeatPenalty:
@@ -233,7 +241,7 @@ class TestConsecutiveAttackHeatPenalty:
 
         engine.player.heat = 0
         engine.player.position = Position(10, 10)
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         # Create enemies
         bot1 = create_real_enemy("bot", Position(11, 10))
@@ -241,14 +249,14 @@ class TestConsecutiveAttackHeatPenalty:
         engine.enemies = [bot1, bot2]
 
         # Attack from first position
-        engine.exploit_system.use_exploit('code_injection')
+        engine.exploit_system.use_exploit("code_injection")
         heat_after_first = engine.player.heat
 
         # Move to new position
         engine.player.position = Position(11, 11)
 
         # Attack from new position
-        engine.exploit_system.use_exploit('code_injection')
+        engine.exploit_system.use_exploit("code_injection")
         heat_after_second = engine.player.heat
 
         # Second attack heat generation should be similar to first (reset penalty)
@@ -256,8 +264,9 @@ class TestConsecutiveAttackHeatPenalty:
         second_attack_heat = heat_after_second - heat_after_first
 
         # Should be within ~2 of each other (both base heat ~8)
-        assert abs(first_attack_heat - second_attack_heat) <= 2, \
-            f"Moving should reset heat penalty, first={first_attack_heat}, second={second_attack_heat}"
+        assert (
+            abs(first_attack_heat - second_attack_heat) <= 2
+        ), f"Moving should reset heat penalty, first={first_attack_heat}, second={second_attack_heat}"
 
 
 class TestExploitEfficiencyHeatReduction:
@@ -270,33 +279,34 @@ class TestExploitEfficiencyHeatReduction:
         # Test without efficiency
         engine.player.heat = 0
         engine.player.position = Position(10, 10)
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
-        engine.player.temporary_effects['exploit_efficiency_turns'] = 0
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
+        engine.player.temporary_effects["exploit_efficiency_turns"] = 0
 
         bot1 = create_real_enemy("bot", Position(11, 10))
         engine.enemies = [bot1]
 
         # Attack without efficiency
-        engine.exploit_system.use_exploit('code_injection')
+        engine.exploit_system.use_exploit("code_injection")
         heat_normal = engine.player.heat
 
         # Reset and test with efficiency
         engine.player.heat = 0
         engine.player.position = Position(10, 10)
-        engine.player.temporary_effects['exploit_efficiency_turns'] = 5
+        engine.player.temporary_effects["exploit_efficiency_turns"] = 5
 
         bot2 = create_real_enemy("bot", Position(11, 10))
         engine.enemies = [bot2]
 
         # Attack with efficiency
-        engine.exploit_system.use_exploit('code_injection')
+        engine.exploit_system.use_exploit("code_injection")
         heat_efficient = engine.player.heat
 
         # Efficient heat should be ~70% of normal (30% reduction)
         expected_efficient = int(heat_normal * 0.7)
 
-        assert abs(heat_efficient - expected_efficient) <= 1, \
-            f"Exploit efficiency should reduce heat to ~{expected_efficient}, got {heat_efficient} (normal: {heat_normal})"
+        assert (
+            abs(heat_efficient - expected_efficient) <= 1
+        ), f"Exploit efficiency should reduce heat to ~{expected_efficient}, got {heat_efficient} (normal: {heat_normal})"
 
 
 class TestSpeedBoostHeatInteraction:
@@ -307,15 +317,16 @@ class TestSpeedBoostHeatInteraction:
         engine = basic_game_engine
 
         # Activate speed boost
-        engine.player.temporary_effects['speed_boost_turns'] = 5
+        engine.player.temporary_effects["speed_boost_turns"] = 5
         engine.player.speed_moves_remaining = 0
 
         # Process turn (should grant 2 moves)
         engine.process_turn()
 
         # Should have 2 moves available
-        assert engine.player.speed_moves_remaining == 2, \
-            f"Speed boost should grant 2 moves, got {engine.player.speed_moves_remaining}"
+        assert (
+            engine.player.speed_moves_remaining == 2
+        ), f"Speed boost should grant 2 moves, got {engine.player.speed_moves_remaining}"
 
     def test_heat_decay_applies_per_turn_not_per_move(self, basic_game_engine):
         """Test heat decay happens once per turn, not per speed boost move."""
@@ -326,7 +337,7 @@ class TestSpeedBoostHeatInteraction:
 
         # Set heat and activate speed boost
         engine.player.heat = 50
-        engine.player.temporary_effects['speed_boost_turns'] = 5
+        engine.player.temporary_effects["speed_boost_turns"] = 5
         engine.player.speed_moves_remaining = 2  # Simulate having 2 moves
 
         initial_heat = engine.player.heat
@@ -338,9 +349,10 @@ class TestSpeedBoostHeatInteraction:
         expected_reduction = GameBalance.HEAT_REDUCTION_NORMAL
         actual_reduction = initial_heat - engine.player.heat
 
-        assert abs(actual_reduction - expected_reduction) <= 1, \
-            f"Heat should decay once per turn, not per move. Expected {expected_reduction}, got {actual_reduction}"
+        assert (
+            abs(actual_reduction - expected_reduction) <= 1
+        ), f"Heat should decay once per turn, not per move. Expected {expected_reduction}, got {actual_reduction}"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

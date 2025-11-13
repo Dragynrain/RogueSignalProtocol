@@ -30,7 +30,7 @@ class TestHeatGeneration:
 
         # Set up player with exploit
         engine.player.heat = 0
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         # Create target enemy
         bot = create_real_enemy("bot", Position(11, 10))
@@ -40,7 +40,7 @@ class TestHeatGeneration:
         initial_heat = engine.player.heat
 
         # Use exploit
-        result = engine.exploit_system.use_exploit('code_injection')
+        result = engine.exploit_system.use_exploit("code_injection")
 
         # Verify heat increased
         assert engine.player.heat >= initial_heat, "Exploit should generate heat"
@@ -51,7 +51,7 @@ class TestHeatGeneration:
 
         # Set up player with exploits
         engine.player.heat = 0
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         # Create target
         bot = create_real_enemy("bot", Position(11, 10))
@@ -62,7 +62,7 @@ class TestHeatGeneration:
 
         # Use exploit multiple times
         for _ in range(3):
-            engine.exploit_system.use_exploit('code_injection')
+            engine.exploit_system.use_exploit("code_injection")
             heat_values.append(engine.player.heat)
 
         # Verify heat accumulated
@@ -164,7 +164,7 @@ class TestTraceLevelAccumulation:
 
         # Set up player with exploit
         engine.player.trace_level = 0
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         # Create target
         bot = create_real_enemy("bot", Position(11, 10))
@@ -174,7 +174,7 @@ class TestTraceLevelAccumulation:
         initial_trace = engine.player.trace_level
 
         # Use exploit
-        engine.exploit_system.use_exploit('code_injection')
+        engine.exploit_system.use_exploit("code_injection")
 
         # Verify trace increased
         assert engine.player.trace_level >= initial_trace, "Exploit should increase trace"
@@ -186,7 +186,7 @@ class TestTraceLevelAccumulation:
         # Set up combat scenario
         engine.player.position = Position(10, 10)
         engine.player.trace_level = 20
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         bot = create_real_enemy("bot", Position(11, 10))
         engine.enemies = [bot]
@@ -194,7 +194,7 @@ class TestTraceLevelAccumulation:
         initial_trace = engine.player.trace_level
 
         # Perform combat action
-        engine.exploit_system.use_exploit('code_injection')
+        engine.exploit_system.use_exploit("code_injection")
 
         # Trace should increase from combat
         assert engine.player.trace_level >= initial_trace, "Combat should increase trace"
@@ -217,7 +217,7 @@ class TestTraceLevelEffects:
 
         # High trace should make player more detectable
         # This test verifies the system considers trace level
-        assert hasattr(engine.player, 'trace_level'), "Player should track trace level"
+        assert hasattr(engine.player, "trace_level"), "Player should track trace level"
         assert engine.player.trace_level > 0, "Trace level should be set"
 
     def test_low_trace_reduces_detection(self, basic_game_engine):
@@ -245,7 +245,7 @@ class TestAdminSpawnSystem:
         engine = basic_game_engine
 
         # Ensure admin_spawned attribute is initialized (should be set during engine init)
-        if not hasattr(engine.game_state, 'admin_spawned'):
+        if not hasattr(engine.game_state, "admin_spawned"):
             engine.game_state.admin_spawned = False
 
         # Set trace to threshold
@@ -258,8 +258,10 @@ class TestAdminSpawnSystem:
         engine.process_turn()
 
         # Verify admin spawn system exists and is boolean
-        assert hasattr(engine.game_state, 'admin_spawned'), "Should track admin spawn status"
-        assert isinstance(engine.game_state.admin_spawned, bool), "Admin spawn flag should be boolean"
+        assert hasattr(engine.game_state, "admin_spawned"), "Should track admin spawn status"
+        assert isinstance(
+            engine.game_state.admin_spawned, bool
+        ), "Admin spawn flag should be boolean"
 
     def test_admin_only_spawns_once_per_level(self, basic_game_engine):
         """Test admin only spawns once per level."""
@@ -345,7 +347,7 @@ class TestHeatTraceInteraction:
         # Set up player
         engine.player.heat = 0
         engine.player.trace_level = 0
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         # Create target
         bot = create_real_enemy("bot", Position(11, 10))
@@ -356,7 +358,7 @@ class TestHeatTraceInteraction:
         initial_trace = engine.player.trace_level
 
         # Use exploit
-        engine.exploit_system.use_exploit('code_injection')
+        engine.exploit_system.use_exploit("code_injection")
 
         # Verify both increased
         assert engine.player.heat >= initial_heat, "Heat should increase"
@@ -456,7 +458,7 @@ class TestEdgeCasesAndBoundaries:
         # Set up for rapid changes
         cooling_pos = Position(20, 20)
         engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         bot = create_real_enemy("bot", Position(11, 10))
         engine.enemies = [bot]
@@ -469,7 +471,7 @@ class TestEdgeCasesAndBoundaries:
             else:
                 # Use exploit (generate heat)
                 engine.player.position = Position(10, 10)
-                engine.exploit_system.use_exploit('code_injection')
+                engine.exploit_system.use_exploit("code_injection")
 
             engine.process_turn()
 
@@ -511,7 +513,7 @@ class TestComplexHeatTraceScenarios:
 
         # Set up combat scenario
         engine.player.position = Position(20, 20)
-        engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         # Create multiple enemies
         for i in range(3):
@@ -524,7 +526,7 @@ class TestComplexHeatTraceScenarios:
         # Perform multiple combat actions
         for _ in range(5):
             if len(engine.enemies) > 0:
-                engine.exploit_system.use_exploit('code_injection')
+                engine.exploit_system.use_exploit("code_injection")
             engine.process_turn()
 
         # Heat and trace should increase significantly
@@ -556,5 +558,5 @@ class TestComplexHeatTraceScenarios:
         assert engine.player.heat < initial_heat, "Cooling node should reduce heat"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

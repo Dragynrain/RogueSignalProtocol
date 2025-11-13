@@ -7,13 +7,11 @@ The Visibility Manager is CRITICAL for gameplay as it handles all vision
 calculations for the stealth-based game mechanics.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
-import numpy as np
+from unittest.mock import Mock, patch
 
-from game_visibility_manager import VisibilityManager
 from game_entities import Position
 from game_map import GameMap
+from game_visibility_manager import VisibilityManager
 
 
 class TestVisibilityManagerInitialization:
@@ -56,7 +54,7 @@ class TestPlayerVisibility:
         mock_player.get_vision_range.return_value = 5
 
         # Mock FOV computation
-        with patch.object(vm, '_compute_fov_set', return_value={(10, 10), (11, 10), (10, 11)}):
+        with patch.object(vm, "_compute_fov_set", return_value={(10, 10), (11, 10), (10, 11)}):
             visible_tiles = vm.get_player_visible_tiles(mock_player, current_turn=1)
 
             # Should have computed FOV
@@ -77,7 +75,7 @@ class TestPlayerVisibility:
         mock_player.get_vision_range.return_value = 5
 
         # First call
-        with patch.object(vm, '_compute_fov_set', return_value={(10, 10)}) as mock_compute:
+        with patch.object(vm, "_compute_fov_set", return_value={(10, 10)}) as mock_compute:
             vm.get_player_visible_tiles(mock_player, current_turn=1)
             assert mock_compute.call_count == 1
 
@@ -99,7 +97,7 @@ class TestPlayerVisibility:
 
         # First call at position (10, 10)
         mock_player.position = Position(10, 10)
-        with patch.object(vm, '_compute_fov_set', return_value={(10, 10)}) as mock_compute:
+        with patch.object(vm, "_compute_fov_set", return_value={(10, 10)}) as mock_compute:
             vm.get_player_visible_tiles(mock_player, current_turn=1)
             assert mock_compute.call_count == 1
 
@@ -122,7 +120,7 @@ class TestPlayerVisibility:
 
         # First call with vision range 5
         mock_player.get_vision_range.return_value = 5
-        with patch.object(vm, '_compute_fov_set', return_value={(10, 10)}) as mock_compute:
+        with patch.object(vm, "_compute_fov_set", return_value={(10, 10)}) as mock_compute:
             vm.get_player_visible_tiles(mock_player, current_turn=1)
             assert mock_compute.call_count == 1
 
@@ -147,12 +145,14 @@ class TestEnhancedVision:
         mock_player.position = Position(10, 10)
         mock_player.get_vision_range.return_value = 5
 
-        with patch.object(vm, '_compute_fov_set', return_value={(10, 10)}):
+        with patch.object(vm, "_compute_fov_set", return_value={(10, 10)}):
             # Get normal vision
             normal_tiles = vm.get_player_visible_tiles(mock_player, current_turn=1)
 
             # Get enhanced vision with same range
-            enhanced_tiles = vm.get_enhanced_visible_tiles(mock_player, current_turn=1, enhanced_range=5)
+            enhanced_tiles = vm.get_enhanced_visible_tiles(
+                mock_player, current_turn=1, enhanced_range=5
+            )
 
             # Should be the same
             assert normal_tiles == enhanced_tiles
@@ -175,13 +175,15 @@ class TestEnhancedVision:
             elif radius == 8:
                 return {(10, 10), (11, 10), (12, 10), (13, 10)}
 
-        with patch.object(vm, '_compute_fov_set', side_effect=compute_fov_mock):
+        with patch.object(vm, "_compute_fov_set", side_effect=compute_fov_mock):
             # Normal vision (radius 5)
             normal_tiles = vm.get_player_visible_tiles(mock_player, current_turn=1)
             assert len(normal_tiles) == 2
 
             # Enhanced vision (radius 8)
-            enhanced_tiles = vm.get_enhanced_visible_tiles(mock_player, current_turn=1, enhanced_range=8)
+            enhanced_tiles = vm.get_enhanced_visible_tiles(
+                mock_player, current_turn=1, enhanced_range=8
+            )
             assert len(enhanced_tiles) == 4
 
     def test_get_enhanced_visible_tiles_caches_separately(self):
@@ -195,7 +197,7 @@ class TestEnhancedVision:
         mock_player.position = Position(10, 10)
         mock_player.get_vision_range.return_value = 5
 
-        with patch.object(vm, '_compute_fov_set', return_value={(10, 10)}) as mock_compute:
+        with patch.object(vm, "_compute_fov_set", return_value={(10, 10)}) as mock_compute:
             # Call regular vision first to initialize turn cache
             vm.get_player_visible_tiles(mock_player, current_turn=1)
             assert mock_compute.call_count == 1
@@ -224,7 +226,7 @@ class TestCanPlayerSee:
         mock_player.position = Position(10, 10)
         mock_player.get_vision_range.return_value = 5
 
-        with patch.object(vm, '_compute_fov_set', return_value={(10, 10), (11, 10), (10, 11)}):
+        with patch.object(vm, "_compute_fov_set", return_value={(10, 10), (11, 10), (10, 11)}):
             # Check visible position
             assert vm.can_player_see(mock_player, Position(11, 10), current_turn=1) is True
             assert vm.can_player_see(mock_player, Position(10, 11), current_turn=1) is True
@@ -240,7 +242,7 @@ class TestCanPlayerSee:
         mock_player.position = Position(10, 10)
         mock_player.get_vision_range.return_value = 5
 
-        with patch.object(vm, '_compute_fov_set', return_value={(10, 10), (11, 10)}):
+        with patch.object(vm, "_compute_fov_set", return_value={(10, 10), (11, 10)}):
             # Check invisible position
             assert vm.can_player_see(mock_player, Position(20, 20), current_turn=1) is False
 
@@ -264,7 +266,7 @@ class TestEnemyVision:
         mock_player.x = 16
         mock_player.y = 15
 
-        with patch.object(vm, '_compute_fov_set', return_value={(16, 15), (15, 15)}):
+        with patch.object(vm, "_compute_fov_set", return_value={(16, 15), (15, 15)}):
             result = vm.can_enemy_see_player(mock_enemy, mock_player, current_turn=1)
             assert result is True
 
@@ -284,7 +286,7 @@ class TestEnemyVision:
         mock_player.x = 30
         mock_player.y = 30
 
-        with patch.object(vm, '_compute_fov_set', return_value={(16, 15), (15, 15)}):
+        with patch.object(vm, "_compute_fov_set", return_value={(16, 15), (15, 15)}):
             result = vm.can_enemy_see_player(mock_enemy, mock_player, current_turn=1)
             assert result is False
 
@@ -304,7 +306,7 @@ class TestEnemyVision:
         mock_player.x = 16
         mock_player.y = 15
 
-        with patch.object(vm, '_compute_fov_set', return_value={(16, 15)}) as mock_compute:
+        with patch.object(vm, "_compute_fov_set", return_value={(16, 15)}) as mock_compute:
             # First call
             vm.can_enemy_see_player(mock_enemy, mock_player, current_turn=1)
             assert mock_compute.call_count == 1
@@ -330,7 +332,7 @@ class TestEnemyVision:
         mock_player.x = 16
         mock_player.y = 15
 
-        with patch.object(vm, '_compute_fov_set', return_value={(16, 15)}) as mock_compute:
+        with patch.object(vm, "_compute_fov_set", return_value={(16, 15)}) as mock_compute:
             # Turn 1
             vm.can_enemy_see_player(mock_enemy, mock_player, current_turn=1)
             assert len(vm._enemy_fov_cache) == 1
@@ -376,7 +378,7 @@ class TestCacheInvalidation:
         mock_player.position = Position(10, 10)
         mock_player.get_vision_range.return_value = 5
 
-        with patch.object(vm, '_compute_fov_set', return_value={(10, 10)}) as mock_compute:
+        with patch.object(vm, "_compute_fov_set", return_value={(10, 10)}) as mock_compute:
             # First call
             vm.get_player_visible_tiles(mock_player, current_turn=1)
             assert mock_compute.call_count == 1
@@ -399,11 +401,11 @@ class TestVisionStats:
 
         stats = vm.get_vision_stats()
 
-        assert stats['cached_turn'] == -1
-        assert stats['player_fov_cached'] is False
-        assert stats['enhanced_fov_cached'] is False
-        assert stats['enemy_fov_entries'] == 0
-        assert stats['player_fov_tiles'] == 0
+        assert stats["cached_turn"] == -1
+        assert stats["player_fov_cached"] is False
+        assert stats["enhanced_fov_cached"] is False
+        assert stats["enemy_fov_entries"] == 0
+        assert stats["player_fov_tiles"] == 0
 
     def test_get_vision_stats_with_cached_data(self):
         """get_vision_stats returns correct stats with cached data."""
@@ -416,14 +418,14 @@ class TestVisionStats:
         mock_player.position = Position(10, 10)
         mock_player.get_vision_range.return_value = 5
 
-        with patch.object(vm, '_compute_fov_set', return_value={(10, 10), (11, 10), (10, 11)}):
+        with patch.object(vm, "_compute_fov_set", return_value={(10, 10), (11, 10), (10, 11)}):
             vm.get_player_visible_tiles(mock_player, current_turn=5)
 
         stats = vm.get_vision_stats()
 
-        assert stats['cached_turn'] == 5
-        assert stats['player_fov_cached'] is True
-        assert stats['player_fov_tiles'] == 3
+        assert stats["cached_turn"] == 5
+        assert stats["player_fov_cached"] is True
+        assert stats["player_fov_tiles"] == 3
 
 
 class TestIsPositionVisible:

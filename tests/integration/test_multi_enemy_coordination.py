@@ -16,15 +16,11 @@ Tests complex enemy interactions and coordination:
 These tests use REAL game objects with minimal mocking.
 """
 
-import pytest
-from unittest.mock import Mock
 
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
-from game_config import GameSettings, GameBalance
+import pytest
+
+from game_entities import EnemyState, Position
 from tests.fixtures.simple_fixtures import enemy_builder
-from tests.fixtures.real_game_data import get_real_game_data
 
 
 class TestEnemyAlertingChains:
@@ -53,8 +49,8 @@ class TestEnemyAlertingChains:
 
         # Verify alerting system exists
         for enemy in basic_game_engine.enemies:
-            assert hasattr(enemy, 'state'), "Enemy should track state"
-            assert hasattr(enemy, 'alert_timer'), "Enemy should have alert timer"
+            assert hasattr(enemy, "state"), "Enemy should track state"
+            assert hasattr(enemy, "alert_timer"), "Enemy should have alert timer"
 
     def test_alert_spreads_through_enemy_network(self, basic_game_engine):
         """Test alert spreads from enemy to enemy."""
@@ -78,7 +74,9 @@ class TestEnemyAlertingChains:
             basic_game_engine.process_turn()
 
         # Verify coordination system
-        assert all(hasattr(e, 'state') for e in basic_game_engine.enemies), "All enemies should track state"
+        assert all(
+            hasattr(e, "state") for e in basic_game_engine.enemies
+        ), "All enemies should track state"
 
     def test_alert_timer_expires(self, basic_game_engine):
         """Test alert timer expires after one turn (per specs)."""
@@ -116,8 +114,12 @@ class TestEnemyAlertingChains:
         # Scanner vision range is 10, so position nearby enemies 11+ tiles away from player
         # but within alert range of the spotter (alert range is typically 5)
         spotter = enemy_builder("scanner", pos=(25, 20))  # Can see player (distance 5)
-        nearby1 = enemy_builder("scanner", pos=(31, 20))  # Near spotter but can't see player (distance 11 from player)
-        nearby2 = enemy_builder("scanner", pos=(33, 20))  # Near spotter but can't see player (distance 13 from player)
+        nearby1 = enemy_builder(
+            "scanner", pos=(31, 20)
+        )  # Near spotter but can't see player (distance 11 from player)
+        nearby2 = enemy_builder(
+            "scanner", pos=(33, 20)
+        )  # Near spotter but can't see player (distance 13 from player)
 
         # Set spotter to be stunned (e.g., from Denial of Service exploit)
         spotter.state = EnemyState.UNAWARE
@@ -135,8 +137,12 @@ class TestEnemyAlertingChains:
         # Verify nearby enemies are NOT alerted (because spotter is stunned)
         # They can't see the player themselves (beyond vision range) and the
         # stunned spotter cannot alert them
-        assert nearby1.state == EnemyState.UNAWARE, "Nearby enemy should not be alerted by stunned enemy"
-        assert nearby2.state == EnemyState.UNAWARE, "Nearby enemy should not be alerted by stunned enemy"
+        assert (
+            nearby1.state == EnemyState.UNAWARE
+        ), "Nearby enemy should not be alerted by stunned enemy"
+        assert (
+            nearby2.state == EnemyState.UNAWARE
+        ), "Nearby enemy should not be alerted by stunned enemy"
 
 
 class TestEnemyConvergence:
@@ -162,10 +168,10 @@ class TestEnemyConvergence:
 
         # Record initial distances
         initial_distances = {
-            'north': north.position.distance_to(basic_game_engine.player.position),
-            'south': south.position.distance_to(basic_game_engine.player.position),
-            'east': east.position.distance_to(basic_game_engine.player.position),
-            'west': west.position.distance_to(basic_game_engine.player.position)
+            "north": north.position.distance_to(basic_game_engine.player.position),
+            "south": south.position.distance_to(basic_game_engine.player.position),
+            "east": east.position.distance_to(basic_game_engine.player.position),
+            "west": west.position.distance_to(basic_game_engine.player.position),
         }
 
         # Process multiple turns
@@ -174,8 +180,8 @@ class TestEnemyConvergence:
 
         # Verify enemies have pathfinding
         for enemy in basic_game_engine.enemies:
-            assert hasattr(enemy, 'move'), "Enemy should have move capability"
-            assert hasattr(enemy, 'move_queue'), "Enemy should have move queue"
+            assert hasattr(enemy, "move"), "Enemy should have move capability"
+            assert hasattr(enemy, "move_queue"), "Enemy should have move queue"
 
     def test_enemies_surround_player(self, basic_game_engine):
         """Test enemies attempt to surround player."""
@@ -185,11 +191,7 @@ class TestEnemyConvergence:
 
         # Create enemies around player
         enemies = []
-        positions = [
-            (19, 19), (20, 19), (21, 19),
-            (19, 20),           (21, 20),
-            (19, 21), (20, 21), (21, 21)
-        ]
+        positions = [(19, 19), (20, 19), (21, 19), (19, 20), (21, 20), (19, 21), (20, 21), (21, 21)]
 
         for x, y in positions:
             enemy = enemy_builder("bot", pos=(x, y))
@@ -205,7 +207,9 @@ class TestEnemyConvergence:
         basic_game_engine.process_turn()
 
         # Verify system handles multiple adjacent enemies
-        assert all(hasattr(e, 'state') for e in basic_game_engine.enemies), "All enemies should function"
+        assert all(
+            hasattr(e, "state") for e in basic_game_engine.enemies
+        ), "All enemies should function"
 
 
 class TestEnemyCollisionAndBlocking:
@@ -222,7 +226,9 @@ class TestEnemyCollisionAndBlocking:
         basic_game_engine.enemies = [enemy1, enemy2]
 
         # Verify game map checks for enemy positions
-        assert hasattr(basic_game_engine.game_map, 'is_valid_position'), "Map should validate positions"
+        assert hasattr(
+            basic_game_engine.game_map, "is_valid_position"
+        ), "Map should validate positions"
 
     def test_enemy_pathfinding_avoids_other_enemies(self, basic_game_engine):
         """Test enemy pathfinding routes around other enemies."""
@@ -248,7 +254,7 @@ class TestEnemyCollisionAndBlocking:
             basic_game_engine.process_turn()
 
         # Mover should path around blockers (or handle blocking)
-        assert hasattr(mover, 'move_queue'), "Should use pathfinding"
+        assert hasattr(mover, "move_queue"), "Should use pathfinding"
 
     def test_enemy_blocked_movement_invalidates_queue(self, basic_game_engine):
         """Test enemy movement queue invalidates when blocked."""
@@ -269,7 +275,7 @@ class TestEnemyCollisionAndBlocking:
         basic_game_engine.process_turn()
 
         # Queue should be handled appropriately
-        assert hasattr(mover, 'move_queue'), "Should maintain queue system"
+        assert hasattr(mover, "move_queue"), "Should maintain queue system"
 
 
 class TestSimultaneousCombat:
@@ -299,7 +305,9 @@ class TestSimultaneousCombat:
 
         # Verify multiple attacks possible
         # CPU may decrease from multiple attacks
-        assert basic_game_engine.player.cpu <= initial_cpu, "Player may take damage from multiple enemies"
+        assert (
+            basic_game_engine.player.cpu <= initial_cpu
+        ), "Player may take damage from multiple enemies"
 
     def test_virus_and_bot_combined_attack(self, basic_game_engine):
         """Test virus (DoT) and bot (direct damage) attacking together."""
@@ -324,7 +332,9 @@ class TestSimultaneousCombat:
 
         # Verify both attack types work
         # Bot deals direct damage, virus applies infection
-        assert hasattr(basic_game_engine.player.temporary_effects, '__getitem__'), "Effects system should exist"
+        assert hasattr(
+            basic_game_engine.player.temporary_effects, "__getitem__"
+        ), "Effects system should exist"
 
     def test_mass_combat_scenario(self, basic_game_engine):
         """Test player vs many enemies simultaneously."""
@@ -332,7 +342,7 @@ class TestSimultaneousCombat:
         # Position player
         basic_game_engine.player.position = Position(25, 25)
         basic_game_engine.player.cpu = 100
-        basic_game_engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        basic_game_engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         # Create many enemies
         enemies = []
@@ -379,7 +389,7 @@ class TestPatrolCoordination:
 
         # Verify patrols have routes
         for patrol in patrols:
-            assert hasattr(patrol, 'patrol_points'), "Patrol should have route"
+            assert hasattr(patrol, "patrol_points"), "Patrol should have route"
             assert len(patrol.patrol_points) > 0, "Patrol should have patrol points"
 
     def test_patrol_switches_to_chase_when_detecting_player(self, basic_game_engine):
@@ -408,7 +418,7 @@ class TestPatrolCoordination:
             basic_game_engine.process_turn()
 
         # Patrol should have reacted to player
-        assert hasattr(patrol, 'state'), "Patrol should track state"
+        assert hasattr(patrol, "state"), "Patrol should track state"
 
 
 class TestAdminCoordination:
@@ -486,14 +496,16 @@ class TestComplexCoordinationScenarios:
             basic_game_engine.process_turn()
 
         # Verify all types function together
-        assert all(hasattr(e, 'state') for e in basic_game_engine.enemies), "All types should coexist"
+        assert all(
+            hasattr(e, "state") for e in basic_game_engine.enemies
+        ), "All types should coexist"
 
     def test_enemy_reinforcement_scenario(self, basic_game_engine):
         """Test enemies reinforcing each other during combat."""
 
         # Position player in combat
         basic_game_engine.player.position = Position(25, 25)
-        basic_game_engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        basic_game_engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         # Create initial enemies
         initial_enemy = enemy_builder("bot", pos=(26, 25))
@@ -530,7 +542,7 @@ class TestComplexCoordinationScenarios:
 
         # Verify enemies are managed correctly
         assert isinstance(len(basic_game_engine.enemies), int), "Enemy count should be valid"
-        assert hasattr(basic_game_engine, 'enemy_manager'), "Should have enemy manager"
+        assert hasattr(basic_game_engine, "enemy_manager"), "Should have enemy manager"
 
     def test_pincer_movement_coordination(self, basic_game_engine):
         """Test enemies executing pincer movement."""
@@ -542,13 +554,13 @@ class TestComplexCoordinationScenarios:
         north_group = [
             enemy_builder("bot", pos=(25, 15)),
             enemy_builder("bot", pos=(24, 16)),
-            enemy_builder("bot", pos=(26, 16))
+            enemy_builder("bot", pos=(26, 16)),
         ]
 
         south_group = [
             enemy_builder("bot", pos=(25, 35)),
             enemy_builder("bot", pos=(24, 34)),
-            enemy_builder("bot", pos=(26, 34))
+            enemy_builder("bot", pos=(26, 34)),
         ]
 
         all_enemies = north_group + south_group
@@ -565,8 +577,10 @@ class TestComplexCoordinationScenarios:
             basic_game_engine.process_turn()
 
         # Enemies should have moved (pathfinding toward player)
-        assert all(hasattr(e, 'move_queue') for e in basic_game_engine.enemies), "All should use pathfinding"
+        assert all(
+            hasattr(e, "move_queue") for e in basic_game_engine.enemies
+        ), "All should use pathfinding"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

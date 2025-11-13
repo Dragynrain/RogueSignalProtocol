@@ -13,8 +13,9 @@ and that menus don't interfere with game state.
 """
 
 import pytest
-from game_input import InputHandler
 import tcod.event
+
+from game_input import InputHandler
 
 
 class TestBasicMenuNavigation:
@@ -34,10 +35,7 @@ class TestBasicMenuNavigation:
 
         # Close with Escape
         key_esc = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier.NONE, repeat=False
         )
         handler.handle_keydown(key_esc)
 
@@ -57,10 +55,7 @@ class TestBasicMenuNavigation:
 
         # Close with Escape
         key_esc = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier.NONE, repeat=False
         )
         handler.handle_keydown(key_esc)
 
@@ -80,10 +75,7 @@ class TestBasicMenuNavigation:
 
         # Close with Escape
         key_esc = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier.NONE, repeat=False
         )
         handler.handle_keydown(key_esc)
 
@@ -103,11 +95,7 @@ class TestMenuStackBehavior:
         engine.show_lore_viewer = True
 
         # At least one should be open
-        menus_open = [
-            engine.show_inventory,
-            engine.show_help,
-            engine.show_lore_viewer
-        ]
+        menus_open = [engine.show_inventory, engine.show_help, engine.show_lore_viewer]
 
         # Just verify state is valid (no crash)
         assert any(menus_open) or not any(menus_open)
@@ -126,10 +114,7 @@ class TestMenuStackBehavior:
 
         # Escape closes it
         key_esc = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier.NONE, repeat=False
         )
         handler.handle_keydown(key_esc)
         assert not engine.show_inventory
@@ -185,10 +170,7 @@ class TestMenuEscapeHandling:
 
         # Press Escape
         key_esc = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier.NONE, repeat=False
         )
         handler.handle_keydown(key_esc)
 
@@ -202,19 +184,13 @@ class TestMenuEscapeHandling:
 
         # Open inventory
         key_i = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.I,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.I, mod=tcod.event.Modifier.NONE, repeat=False
         )
         handler.handle_keydown(key_i)
 
         # Press Escape multiple times
         key_esc = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier.NONE, repeat=False
         )
 
         for _ in range(5):
@@ -226,5 +202,5 @@ class TestMenuEscapeHandling:
         assert not engine.show_lore_viewer
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

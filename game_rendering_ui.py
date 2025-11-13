@@ -11,22 +11,18 @@ Coordinates UI rendering by delegating to specialized modules:
 Refactored to improve modularity while preserving full functionality.
 """
 
-import tcod
-import logging
-from typing import List, Tuple, Optional
 
-from game_config import GameConfig, GameBalance
-from game_entities import Colors
+import tcod
+
+from game_config import GameConfig
 from game_data import GameData
-from game_ui import render_char_safe
-from data_loading import get_story_fragments
+from game_entities import Colors
+from game_message_log_renderer import MessageLogRenderer
 from game_screen_utilities import ScreenRenderingUtils, ScrollableListManager
-from game_color_thresholds import ColorThresholdManager
-from game_unicode_chars import GameGlyphs
 
 # Import extracted renderers
 from game_status_bar_renderer import StatusBarRenderer
-from game_message_log_renderer import MessageLogRenderer
+from game_ui import render_char_safe
 
 
 class UIRenderer:
@@ -112,6 +108,7 @@ class UIRenderer:
         Delegates to InfoPanelRenderer (already extracted to game_info_panel.py).
         """
         from game_info_panel import InfoPanelRenderer
+
         ui_color = self.settings.get_ui_color_rgb() if self.settings else Colors.CYAN
         InfoPanelRenderer.render(console, game, ui_color=ui_color)
 
@@ -144,7 +141,14 @@ class UIRenderer:
         panel_y = 3  # Start below log header
 
         # Draw separator
-        render_char_safe(console, panel_x, panel_y, "═" * (GameConfig.LOG_WIDTH - 1), fg=Colors.YELLOW, bg=Colors.LOG_BG)
+        render_char_safe(
+            console,
+            panel_x,
+            panel_y,
+            "═" * (GameConfig.LOG_WIDTH - 1),
+            fg=Colors.YELLOW,
+            bg=Colors.LOG_BG,
+        )
         panel_y += 1
 
         # Render inspection header
@@ -156,9 +160,9 @@ class UIRenderer:
         name_lines_count = console.print(
             x=panel_x,
             y=panel_y,
-            string=entity_info['name'],
-            fg=entity_info['color'],
-            width=GameConfig.LOG_WIDTH - 2
+            string=entity_info["name"],
+            fg=entity_info["color"],
+            width=GameConfig.LOG_WIDTH - 2,
         )
         panel_y += name_lines_count
 
@@ -170,9 +174,9 @@ class UIRenderer:
             desc_lines_count = console.print(
                 x=panel_x,
                 y=panel_y,
-                string=entity_info['description'],
+                string=entity_info["description"],
                 fg=Colors.LIGHT_GRAY,
-                width=GameConfig.LOG_WIDTH - 2
+                width=GameConfig.LOG_WIDTH - 2,
             )
             panel_y += desc_lines_count
 
@@ -181,21 +185,27 @@ class UIRenderer:
             panel_y += 1
 
         # Render details if available using TCOD's built-in wrapping
-        if entity_info['details'] and panel_y < GameConfig.PANEL_Y() - 1:
+        if entity_info["details"] and panel_y < GameConfig.PANEL_Y() - 1:
             details_lines_count = console.print(
                 x=panel_x,
                 y=panel_y,
-                string=entity_info['details'],
+                string=entity_info["details"],
                 fg=Colors.WHITE,
-                width=GameConfig.LOG_WIDTH - 2
+                width=GameConfig.LOG_WIDTH - 2,
             )
             panel_y += details_lines_count
 
         # Draw bottom separator
         if panel_y < GameConfig.PANEL_Y() - 1:
             panel_y += 1
-            render_char_safe(console, panel_x, panel_y, "═" * (GameConfig.LOG_WIDTH - 1), fg=Colors.YELLOW, bg=Colors.LOG_BG)
-
+            render_char_safe(
+                console,
+                panel_x,
+                panel_y,
+                "═" * (GameConfig.LOG_WIDTH - 1),
+                fg=Colors.YELLOW,
+                bg=Colors.LOG_BG,
+            )
 
     # ========================================================================
     # FULL-SCREEN OVERLAY RENDERING
@@ -214,8 +224,10 @@ class UIRenderer:
         from game_coordinate_helpers import CoordinateHelpers
 
         for x in range(GameConfig.GAME_AREA_WIDTH()):
-            for y in range(2, GameConfig.PANEL_Y()):  # Start from row 2 (after status bar on rows 0-1)
-                render_char_safe(console, x, y, ' ', fg=Colors.WHITE, bg=Colors.BLACK)
+            for y in range(
+                2, GameConfig.PANEL_Y()
+            ):  # Start from row 2 (after status bar on rows 0-1)
+                render_char_safe(console, x, y, " ", fg=Colors.WHITE, bg=Colors.BLACK)
 
         # Set alpha to opaque for the cleared area
         CoordinateHelpers.set_alpha_region(
@@ -224,10 +236,12 @@ class UIRenderer:
             y=2,
             width=GameConfig.GAME_AREA_WIDTH(),
             height=GameConfig.PANEL_Y() - 2,
-            alpha=255
+            alpha=255,
         )
 
-    def _render_overlay_menu(self, console: tcod.console.Console, title: str, options: list, menu_width: int = 30) -> tuple:
+    def _render_overlay_menu(
+        self, console: tcod.console.Console, title: str, options: list, menu_width: int = 30
+    ) -> tuple:
         """
         Render a centered overlay menu with title and options.
 
@@ -250,12 +264,14 @@ class UIRenderer:
         # Menu background
         for y in range(menu_y, menu_y + menu_height):
             for x in range(menu_x, menu_x + menu_width):
-                render_char_safe(console, x, y, ' ', fg=Colors.WHITE, bg=Colors.UI_BG)
+                render_char_safe(console, x, y, " ", fg=Colors.WHITE, bg=Colors.UI_BG)
 
         # Menu borders (top and bottom)
         for x in range(menu_x, menu_x + menu_width):
-            render_char_safe(console, x, menu_y, '═', fg=Colors.CYAN, bg=Colors.UI_BG)
-            render_char_safe(console, x, menu_y + menu_height - 1, '═', fg=Colors.CYAN, bg=Colors.UI_BG)
+            render_char_safe(console, x, menu_y, "═", fg=Colors.CYAN, bg=Colors.UI_BG)
+            render_char_safe(
+                console, x, menu_y + menu_height - 1, "═", fg=Colors.CYAN, bg=Colors.UI_BG
+            )
 
         # Title (centered)
         title_x = menu_x + (menu_width - len(title)) // 2
@@ -263,7 +279,9 @@ class UIRenderer:
 
         # Options
         for i, option in enumerate(options):
-            render_char_safe(console, menu_x + 3, menu_y + 4 + i, option, fg=Colors.WHITE, bg=Colors.UI_BG)
+            render_char_safe(
+                console, menu_x + 3, menu_y + 4 + i, option, fg=Colors.WHITE, bg=Colors.UI_BG
+            )
 
         return menu_x, menu_y, menu_height
 
@@ -292,7 +310,7 @@ class UIRenderer:
         Args:
             help_menu: Pre-created help menu instance
         """
-        if help_menu and hasattr(help_menu, 'render_sprites'):
+        if help_menu and hasattr(help_menu, "render_sprites"):
             help_menu.render_sprites()
 
     def handle_help_input(self, event, help_menu) -> str:
@@ -375,7 +393,7 @@ class UIRenderer:
 
         for i in range(start, end):
             line_data = inventory_lines[i]
-            render_char_safe(console, line_data['x'], y, line_data['text'], fg=line_data['color'])
+            render_char_safe(console, line_data["x"], y, line_data["text"], fg=line_data["color"])
             y += 1
 
         # Show scroll indicators using utility
@@ -385,7 +403,7 @@ class UIRenderer:
             top_y=content_start_y,
             bottom_y=controls_y - 2,
             show_up=scroll_manager.should_show_scroll_up(),
-            show_down=scroll_manager.should_show_scroll_down()
+            show_down=scroll_manager.should_show_scroll_down(),
         )
 
         # Controls
@@ -395,7 +413,9 @@ class UIRenderer:
         UIRenderer.last_inventory_lines = inventory_lines
         UIRenderer.last_inventory_content_start_y = content_start_y
         UIRenderer.last_inventory_scroll_offset = scroll_manager.get_scroll_offset()
-        UIRenderer.last_inventory_equipped_count = len(game.player.inventory_manager.equipped_exploits)
+        UIRenderer.last_inventory_equipped_count = len(
+            game.player.inventory_manager.equipped_exploits
+        )
 
         # Note: Exploit details are now shown in the info panel instead of a tooltip
         # The InfoProvider handles hover detection and formatting
@@ -416,13 +436,16 @@ class UIRenderer:
         lines = []
 
         # Equipped exploits section
-        lines.append({'x': 2, 'text': "EQUIPPED EXPLOITS:", 'color': Colors.CYAN, 'selectable': False})
+        lines.append(
+            {"x": 2, "text": "EQUIPPED EXPLOITS:", "color": Colors.CYAN, "selectable": False}
+        )
 
         for i, exploit_key in enumerate(game.player.inventory_manager.equipped_exploits):
             # Get exploit category color
             if exploit_key in GameData.EXPLOITS:
                 exploit = GameData.EXPLOITS[exploit_key]
                 from game_color_manager import ColorManager
+
                 category_color = ColorManager.get_exploit_color(exploit.category)
                 text = f"{i+1}. {exploit.name}"
             else:
@@ -437,21 +460,37 @@ class UIRenderer:
                 color = category_color
                 prefix = " "
 
-            lines.append({'x': 4, 'text': f"{prefix} {text}", 'color': color, 'selectable': True})
+            lines.append({"x": 4, "text": f"{prefix} {text}", "color": color, "selectable": True})
 
         equipped_count = len(game.player.inventory_manager.equipped_exploits)
         max_exploits = game.player.inventory_manager.max_equipped_exploits
         if equipped_count < max_exploits:
-            lines.append({'x': 4, 'text': f"[{equipped_count}/{max_exploits} slots used]", 'color': Colors.YELLOW, 'selectable': False})
+            lines.append(
+                {
+                    "x": 4,
+                    "text": f"[{equipped_count}/{max_exploits} slots used]",
+                    "color": Colors.YELLOW,
+                    "selectable": False,
+                }
+            )
 
-        lines.append({'x': 2, 'text': "", 'color': Colors.WHITE, 'selectable': False})  # Spacer
+        lines.append({"x": 2, "text": "", "color": Colors.WHITE, "selectable": False})  # Spacer
 
         # Code hacks section
         code_hacks = game.player.inventory_manager.get_items_by_type("code_hack")
-        lines.append({'x': 2, 'text': f"CODES ({len(code_hacks)}):", 'color': Colors.CYAN, 'selectable': False})
+        lines.append(
+            {
+                "x": 2,
+                "text": f"CODES ({len(code_hacks)}):",
+                "color": Colors.CYAN,
+                "selectable": False,
+            }
+        )
 
         if not code_hacks:
-            lines.append({'x': 4, 'text': "No codes collected", 'color': Colors.WHITE, 'selectable': False})
+            lines.append(
+                {"x": 4, "text": "No codes collected", "color": Colors.WHITE, "selectable": False}
+            )
         else:
             display_items = game.player.inventory_manager.get_display_items()
 
@@ -475,18 +514,32 @@ class UIRenderer:
 
                 max_width = GameConfig.GAME_AREA_WIDTH() - 6
                 if len(patch_text) > max_width:
-                    patch_text = patch_text[:max_width-3] + "..."
+                    patch_text = patch_text[: max_width - 3] + "..."
 
-                lines.append({'x': 4, 'text': patch_text, 'color': color, 'selectable': True})
+                lines.append({"x": 4, "text": patch_text, "color": color, "selectable": True})
 
-        lines.append({'x': 2, 'text': "", 'color': Colors.WHITE, 'selectable': False})  # Spacer
+        lines.append({"x": 2, "text": "", "color": Colors.WHITE, "selectable": False})  # Spacer
 
         # Unequipped exploits section
         exploit_items = game.player.inventory_manager.get_items_by_type("exploit")
-        lines.append({'x': 2, 'text': f"UNEQUIPPED EXPLOITS ({len(exploit_items)}):", 'color': Colors.CYAN, 'selectable': False})
+        lines.append(
+            {
+                "x": 2,
+                "text": f"UNEQUIPPED EXPLOITS ({len(exploit_items)}):",
+                "color": Colors.CYAN,
+                "selectable": False,
+            }
+        )
 
         if not exploit_items:
-            lines.append({'x': 4, 'text': "No unequipped exploits", 'color': Colors.WHITE, 'selectable': False})
+            lines.append(
+                {
+                    "x": 4,
+                    "text": "No unequipped exploits",
+                    "color": Colors.WHITE,
+                    "selectable": False,
+                }
+            )
         else:
             display_items = game.player.inventory_manager.get_display_items()
 
@@ -500,6 +553,7 @@ class UIRenderer:
                 if exploit_item.exploit_key in GameData.EXPLOITS:
                     exploit_def = GameData.EXPLOITS[exploit_item.exploit_key]
                     from game_color_manager import ColorManager
+
                     category_color = ColorManager.get_exploit_color(exploit_def.category)
 
                     # Use yellow for selection, category color otherwise
@@ -511,14 +565,23 @@ class UIRenderer:
                         prefix = " "
 
                     name_text = f"{prefix} {exploit_item.name}"
-                    lines.append({'x': 4, 'text': name_text, 'color': name_color, 'selectable': True})
+                    lines.append(
+                        {"x": 4, "text": name_text, "color": name_color, "selectable": True}
+                    )
 
                     stats_text = f"    RAM:{exploit_def.ram} Heat:{exploit_def.heat}"
                     if exploit_def.damage > 0:
                         stats_text += f" Damage:{exploit_def.damage}"
                     if exploit_def.range > 0:
                         stats_text += f" Range:{exploit_def.range}"
-                    lines.append({'x': 4, 'text': stats_text, 'color': Colors.LIGHT_GRAY, 'selectable': False})
+                    lines.append(
+                        {
+                            "x": 4,
+                            "text": stats_text,
+                            "color": Colors.LIGHT_GRAY,
+                            "selectable": False,
+                        }
+                    )
                 else:
                     # Unknown exploit - use red
                     if adjusted_selection_index == game.inventory_selection:
@@ -528,7 +591,7 @@ class UIRenderer:
                         color = Colors.RED
                         prefix = " "
                     text = f"{prefix} {exploit_item.name} [Unknown]"
-                    lines.append({'x': 4, 'text': text, 'color': color, 'selectable': True})
+                    lines.append({"x": 4, "text": text, "color": color, "selectable": True})
 
         return lines
 
@@ -596,12 +659,18 @@ class UIRenderer:
         y_start = GameConfig.SCREEN_HEIGHT - 6
 
         render_char_safe(console, 2, y_start, "CONTROLS:", fg=Colors.CYAN)
-        render_char_safe(console, 4, y_start + 1, "↑↓/W/S: Navigate │ Enter/Click: Use/Unequip", fg=Colors.WHITE)
-        render_char_safe(console, 4, y_start + 2, "U: Unequip (same as clicking equipped)", fg=Colors.WHITE)
-        render_char_safe(console, 4, y_start + 3, "ESC/I/Right-Click: Close inventory", fg=Colors.WHITE)
+        render_char_safe(
+            console, 4, y_start + 1, "↑↓/W/S: Navigate │ Enter/Click: Use/Unequip", fg=Colors.WHITE
+        )
+        render_char_safe(
+            console, 4, y_start + 2, "U: Unequip (same as clicking equipped)", fg=Colors.WHITE
+        )
+        render_char_safe(
+            console, 4, y_start + 3, "ESC/I/Right-Click: Close inventory", fg=Colors.WHITE
+        )
 
     @staticmethod
-    def get_inventory_item_at_click(tile_y: int) -> Optional[int]:
+    def get_inventory_item_at_click(tile_y: int) -> int | None:
         """
         Get the selection index of the inventory item clicked at the given tile Y coordinate.
 
@@ -638,19 +707,19 @@ class UIRenderer:
         line_data = UIRenderer.last_inventory_lines[line_index]
 
         # Check if this line is selectable
-        if not line_data.get('selectable', False):
+        if not line_data.get("selectable", False):
             return None
 
         # Count how many selectable lines came before this one to get selection index
         selection_index = 0
         for i in range(line_index):
-            if UIRenderer.last_inventory_lines[i].get('selectable', False):
+            if UIRenderer.last_inventory_lines[i].get("selectable", False):
                 selection_index += 1
 
         return selection_index
 
     @staticmethod
-    def get_exploit_at_click(tile_x: int, tile_y: int) -> Optional[int]:
+    def get_exploit_at_click(tile_x: int, tile_y: int) -> int | None:
         """
         Get the slot number (0-4) of the exploit clicked at the given tile coordinates.
 
@@ -670,10 +739,10 @@ class UIRenderer:
 
         # Check each stored exploit position
         for exploit_data in UIRenderer.last_exploit_positions:
-            x = exploit_data['x']
-            y = exploit_data['y']
-            width = exploit_data['width']
-            slot = exploit_data['slot']
+            x = exploit_data["x"]
+            y = exploit_data["y"]
+            width = exploit_data["width"]
+            slot = exploit_data["slot"]
 
             # Check if click is within this exploit's bounds
             if y == tile_y and x <= tile_x < x + width:
@@ -707,9 +776,18 @@ class UIRenderer:
             self._render_lore_reading_mode(console, game, discovered_fragments)
         else:
             # List mode - show fragment list with navigation
-            self._render_lore_list_mode(console, game, discovered_fragments, discovered_count, total_count)
+            self._render_lore_list_mode(
+                console, game, discovered_fragments, discovered_count, total_count
+            )
 
-    def _render_lore_list_mode(self, console: tcod.console.Console, game, discovered_fragments, discovered_count: int, total_count: int):
+    def _render_lore_list_mode(
+        self,
+        console: tcod.console.Console,
+        game,
+        discovered_fragments,
+        discovered_count: int,
+        total_count: int,
+    ):
         """
         Render lore viewer list mode showing all discovered fragments.
 
@@ -733,7 +811,10 @@ class UIRenderer:
                 console, "No data fragments discovered yet.", no_fragments_y, Colors.YELLOW
             )
             ScreenRenderingUtils.render_centered_title(
-                console, "Reach the Military Network (Level 3) to find them.", no_fragments_y + 2, Colors.WHITE
+                console,
+                "Reach the Military Network (Level 3) to find them.",
+                no_fragments_y + 2,
+                Colors.WHITE,
             )
             ScreenRenderingUtils.render_screen_footer(console, "ESC/Right-Click: Close")
         else:
@@ -743,33 +824,51 @@ class UIRenderer:
 
             for i, (fragment_index, fragment_text) in enumerate(discovered_fragments):
                 if y_offset >= max_display_height:
-                    render_char_safe(console, 3, y_offset, f"... and {len(discovered_fragments) - i} more fragments", fg=Colors.YELLOW)
+                    render_char_safe(
+                        console,
+                        3,
+                        y_offset,
+                        f"... and {len(discovered_fragments) - i} more fragments",
+                        fg=Colors.YELLOW,
+                    )
                     break
 
                 # Highlight selected entry
-                is_selected = (i == game.lore_viewer_selection)
+                is_selected = i == game.lore_viewer_selection
                 title_color = Colors.YELLOW if is_selected else Colors.WHITE
                 cursor = ">" if is_selected else " "
 
                 # Fragment title (first line of the fragment)
-                first_line = fragment_text.split('\n')[0]
+                first_line = fragment_text.split("\n")[0]
                 if len(first_line) > 58:  # Leave room for cursor and number
                     first_line = first_line[:55] + "..."
 
-                render_char_safe(console, 2, y_offset, f"{cursor}{fragment_index + 1:2d}. {first_line}", fg=title_color)
+                render_char_safe(
+                    console,
+                    2,
+                    y_offset,
+                    f"{cursor}{fragment_index + 1:2d}. {first_line}",
+                    fg=title_color,
+                )
                 y_offset += 1
 
                 # Brief preview (first few words of actual content)
-                content_lines = [line.strip() for line in fragment_text.split('\n') if line.strip()]
+                content_lines = [line.strip() for line in fragment_text.split("\n") if line.strip()]
                 if len(content_lines) > 1:
-                    preview = content_lines[1][:70] + "..." if len(content_lines[1]) > 70 else content_lines[1]
+                    preview = (
+                        content_lines[1][:70] + "..."
+                        if len(content_lines[1]) > 70
+                        else content_lines[1]
+                    )
                     preview_color = (200, 200, 150) if is_selected else (128, 128, 128)
                     render_char_safe(console, 6, y_offset, preview, fg=preview_color)
                     y_offset += 1
 
                 y_offset += 1  # Space between entries
 
-            ScreenRenderingUtils.render_screen_footer(console, "↑↓ Navigate │ Enter: Read │ ESC/Right-Click: Close")
+            ScreenRenderingUtils.render_screen_footer(
+                console, "↑↓ Navigate │ Enter: Read │ ESC/Right-Click: Close"
+            )
 
     def _render_lore_reading_mode(self, console: tcod.console.Console, game, discovered_fragments):
         """
@@ -793,12 +892,17 @@ class UIRenderer:
         content_end_y = GameConfig.SCREEN_HEIGHT - 4  # Leave room for footer
 
         ScreenRenderingUtils.render_word_wrapped_text(
-            console, fragment_text, 3, content_start_y,
+            console,
+            fragment_text,
+            3,
+            content_start_y,
             max_width=GameConfig.SCREEN_WIDTH - 6,
-            max_height=content_end_y
+            max_height=content_end_y,
         )
 
-        ScreenRenderingUtils.render_screen_footer(console, "ESC/Right-Click: Back to list │ Any key: Close")
+        ScreenRenderingUtils.render_screen_footer(
+            console, "ESC/Right-Click: Back to list │ Any key: Close"
+        )
 
     # === Achievements Screen ===
 
@@ -813,8 +917,9 @@ class UIRenderer:
             game: GameEngine (not actively used but kept for consistency)
         """
         # Create achievements menu if not already created
-        if not hasattr(self, '_achievements_menu'):
+        if not hasattr(self, "_achievements_menu"):
             from game_menu_achievements import AchievementsMenu
+
             self._achievements_menu = AchievementsMenu()
 
         self._achievements_menu.render(console)

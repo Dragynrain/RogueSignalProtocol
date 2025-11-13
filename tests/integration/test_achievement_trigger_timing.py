@@ -7,9 +7,8 @@ Tests achievement-related timing scenarios that can be validated in headless mod
 - Special game states (death, victory, combat)
 """
 
-import pytest
-from tests.test_agent import GameTestAgent
 from game_entities import EnemyState
+from tests.test_agent import GameTestAgent
 
 
 class TestAchievementTiming:

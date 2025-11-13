@@ -17,15 +17,12 @@ These tests verify state management integrates correctly with:
 - Menu system
 """
 
-import pytest
-from unittest.mock import Mock, patch
 import copy
+from unittest.mock import Mock
 
-from game_engine import GameEngine
-from game_characters import Player
+import pytest
+
 from game_entities import Position
-from game_config import GameSettings
-from tests.fixtures.real_game_data import get_real_game_data
 
 
 class TestGameSessionLifecycle:
@@ -48,18 +45,18 @@ class TestGameSessionLifecycle:
 
         # Record initial state
         initial_state = {
-            'level': engine.level,
-            'turn': engine.turn,
-            'player_cpu': engine.player.cpu,
-            'enemy_count': len(engine.enemies)
+            "level": engine.level,
+            "turn": engine.turn,
+            "player_cpu": engine.player.cpu,
+            "enemy_count": len(engine.enemies),
         }
 
         # Perform player movement
         engine.move_player(1, 0)
 
         # Verify state consistency
-        assert engine.level == initial_state['level'], "Level should not change from movement"
-        assert engine.turn >= initial_state['turn'], "Turn should advance or stay same"
+        assert engine.level == initial_state["level"], "Level should not change from movement"
+        assert engine.turn >= initial_state["turn"], "Turn should advance or stay same"
         assert engine.player.cpu > 0, "Player should still have CPU"
         assert len(engine.enemies) >= 0, "Enemy count should be valid"
 
@@ -92,7 +89,7 @@ class TestAutoSaveTriggers:
         engine = basic_game_engine
 
         # Verify auto-save exists
-        assert hasattr(engine, 'auto_save'), "Engine should have auto_save method"
+        assert hasattr(engine, "auto_save"), "Engine should have auto_save method"
         assert callable(engine.auto_save), "auto_save should be callable"
 
     def test_auto_save_after_level_progression(self, basic_game_engine):
@@ -113,15 +110,15 @@ class TestAutoSaveTriggers:
         engine = basic_game_engine
 
         # Verify session manager exists
-        assert hasattr(engine, 'game_session'), "Engine should have game_session"
+        assert hasattr(engine, "game_session"), "Engine should have game_session"
 
         # Modify game state
         engine.player.cpu = 75
         engine.level = 2
 
         # Verify session can access current state
-        assert hasattr(engine, 'player'), "Session should track player"
-        assert hasattr(engine, 'level'), "Session should track level"
+        assert hasattr(engine, "player"), "Session should track player"
+        assert hasattr(engine, "level"), "Session should track level"
 
 
 class TestStateConsistency:
@@ -135,8 +132,9 @@ class TestStateConsistency:
         initial_equipped_count = len(engine.player.inventory_manager.equipped_exploits)
 
         # Add an exploit
-        from game_inventory import ExploitItem
         from game_data import GameData
+        from game_inventory import ExploitItem
+
         exploit_key = list(GameData.EXPLOITS.keys())[0]
         exploit_def = GameData.EXPLOITS[exploit_key]
         test_exploit = ExploitItem(exploit_key, exploit_def)
@@ -167,7 +165,7 @@ class TestStateConsistency:
         engine = basic_game_engine
 
         # Verify enemies tracked
-        assert hasattr(engine, 'enemies'), "Engine should track enemies"
+        assert hasattr(engine, "enemies"), "Engine should track enemies"
         initial_enemy_count = len(engine.enemies)
 
         # Process turn (enemies act)
@@ -194,9 +192,11 @@ class TestStateConsistency:
             for x in range(15, 25):
                 for y in range(15, 25):
                     test_pos = (x, y)
-                    if (not engine.game_map.is_wall(Position(x, y)) and
-                        test_pos not in engine.game_map.cooling_nodes and
-                        test_pos not in engine.game_map.ghost_nodes):
+                    if (
+                        not engine.game_map.is_wall(Position(x, y))
+                        and test_pos not in engine.game_map.cooling_nodes
+                        and test_pos not in engine.game_map.ghost_nodes
+                    ):
                         engine.player.x = x
                         engine.player.y = y
                         break
@@ -206,7 +206,9 @@ class TestStateConsistency:
         engine.process_turn()
 
         # Trace should increase or stay same (no cooling nodes to reduce it)
-        assert engine.player.trace_level >= initial_trace, "Trace should not decrease without cooling nodes"
+        assert (
+            engine.player.trace_level >= initial_trace
+        ), "Trace should not decrease without cooling nodes"
 
 
 class TestMenuStateTransitions:
@@ -217,7 +219,7 @@ class TestMenuStateTransitions:
         engine = basic_game_engine
 
         # Verify inventory flag exists
-        assert hasattr(engine, 'show_inventory'), "Engine should have show_inventory flag"
+        assert hasattr(engine, "show_inventory"), "Engine should have show_inventory flag"
 
         # Open inventory
         engine.show_inventory = True
@@ -253,12 +255,12 @@ class TestMenuStateTransitions:
         engine = basic_game_engine
 
         # Verify dialogue system exists
-        assert hasattr(engine, 'dialogue_state'), "Engine should have dialogue_state"
+        assert hasattr(engine, "dialogue_state"), "Engine should have dialogue_state"
 
         # Verify dialogue state methods exist
-        assert hasattr(engine.dialogue_state, 'is_active'), "Should have is_active method"
-        assert hasattr(engine.dialogue_state, 'get_active'), "Should have get_active method"
-        assert hasattr(engine.dialogue_state, 'close'), "Should have close method"
+        assert hasattr(engine.dialogue_state, "is_active"), "Should have is_active method"
+        assert hasattr(engine.dialogue_state, "get_active"), "Should have get_active method"
+        assert hasattr(engine.dialogue_state, "close"), "Should have close method"
 
         # Dialogue system is functional
         # Note: May have initial dialogue active (tutorial, gateway, etc)
@@ -387,5 +389,5 @@ class TestCrossLevelStatePersistence:
         assert engine.player.trace_level == 0, "Trace should reset to 0 on new level"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

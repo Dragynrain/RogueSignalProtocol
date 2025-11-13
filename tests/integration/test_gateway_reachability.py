@@ -5,8 +5,6 @@ Integration tests for gateway reachability validation.
 Ensures that generated levels always have a path from spawn to gateway.
 """
 
-import pytest
-from game_engine import GameEngine
 from game_entities import Position
 
 
@@ -19,8 +17,9 @@ class TestGatewayReachability:
         gateway_pos = basic_game_engine.game_map.gateway
 
         # Validate using the same method as level generation
-        assert basic_game_engine.level_generator._validate_gateway_reachability(spawn_pos, gateway_pos), \
-            f"Gateway at {gateway_pos} is NOT reachable from spawn {spawn_pos}!"
+        assert basic_game_engine.level_generator._validate_gateway_reachability(
+            spawn_pos, gateway_pos
+        ), f"Gateway at {gateway_pos} is NOT reachable from spawn {spawn_pos}!"
 
     def test_multiple_level_generations_all_reachable(self, basic_game_engine):
         """Test that multiple level generations all produce reachable gateways."""
@@ -36,11 +35,17 @@ class TestGatewayReachability:
             spawn_pos = Position(basic_game_engine.player.x, basic_game_engine.player.y)
             gateway_pos = basic_game_engine.game_map.gateway
 
-            is_reachable = basic_game_engine.level_generator._validate_gateway_reachability(spawn_pos, gateway_pos)
+            is_reachable = basic_game_engine.level_generator._validate_gateway_reachability(
+                spawn_pos, gateway_pos
+            )
             if not is_reachable:
-                failures.append(f"Seed {seed}: Gateway at {gateway_pos} unreachable from {spawn_pos}")
+                failures.append(
+                    f"Seed {seed}: Gateway at {gateway_pos} unreachable from {spawn_pos}"
+                )
 
-        assert len(failures) == 0, f"Found {len(failures)} unreachable gateways:\n" + "\n".join(failures)
+        assert len(failures) == 0, f"Found {len(failures)} unreachable gateways:\n" + "\n".join(
+            failures
+        )
 
     def test_level_transitions_maintain_reachability(self, basic_game_engine):
         """Test that advancing to next level maintains gateway reachability."""
@@ -48,13 +53,16 @@ class TestGatewayReachability:
             spawn_pos = Position(basic_game_engine.player.x, basic_game_engine.player.y)
             gateway_pos = basic_game_engine.game_map.gateway
 
-            assert basic_game_engine.level_generator._validate_gateway_reachability(spawn_pos, gateway_pos), \
-                f"Level {level_num}: Gateway at {gateway_pos} is NOT reachable from spawn {spawn_pos}!"
+            assert basic_game_engine.level_generator._validate_gateway_reachability(
+                spawn_pos, gateway_pos
+            ), f"Level {level_num}: Gateway at {gateway_pos} is NOT reachable from spawn {spawn_pos}!"
 
             # Advance to next level if not at max
             if level_num < 3:
                 basic_game_engine.game_state.level = level_num + 1
-                basic_game_engine.level_generator.generate_level(level_num + 1, basic_game_engine.game_state.dungeon_seed)
+                basic_game_engine.level_generator.generate_level(
+                    level_num + 1, basic_game_engine.game_state.dungeon_seed
+                )
                 basic_game_engine.player.x = 6  # Reset to spawn
                 basic_game_engine.player.y = 6
 
@@ -69,8 +77,7 @@ class TestGatewayReachability:
                     # Check if this floor tile has a neighbor outside spawn room
                     for dx, dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
                         neighbor = Position(x + dx, y + dy)
-                        if (neighbor.x < 2 or neighbor.x >= 10 or
-                            neighbor.y < 2 or neighbor.y >= 10):
+                        if neighbor.x < 2 or neighbor.x >= 10 or neighbor.y < 2 or neighbor.y >= 10:
                             # This is an edge of spawn room
                             if not basic_game_engine.game_map.is_wall(neighbor):
                                 spawn_room_exits += 1
@@ -83,7 +90,8 @@ class TestGatewayReachability:
         gateway = basic_game_engine.game_map.gateway
 
         # Gateway should not be in spawn room bounds (2,2,8,8)
-        in_spawn_room = (2 <= gateway.x < 10 and 2 <= gateway.y < 10)
+        in_spawn_room = 2 <= gateway.x < 10 and 2 <= gateway.y < 10
 
-        assert not in_spawn_room, \
-            f"Gateway at {gateway} is inside spawn room (2,2,8,8) - too close to start!"
+        assert (
+            not in_spawn_room
+        ), f"Gateway at {gateway} is inside spawn room (2,2,8,8) - too close to start!"

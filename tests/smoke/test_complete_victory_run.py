@@ -17,6 +17,7 @@ This test is CRITICAL because:
 """
 
 import pytest
+
 from tests.agents.test_victory_run_agent import VictoryRunAgent
 
 
@@ -55,6 +56,7 @@ class TestCompleteVictoryRun:
 
             # Try to move
             import random
+
             dx, dy = random.choice([(1, 0), (0, 1), (-1, 0), (0, -1)])
             try:
                 agent.move_player(dx, dy)
@@ -75,9 +77,9 @@ class TestCompleteVictoryRun:
 
         # Verify state consistency
         state = agent.get_state()
-        assert state['player_hp'] >= 0
-        assert state['player_hp'] <= state['player_max_hp']
-        assert state['turn'] >= 0
+        assert state["player_hp"] >= 0
+        assert state["player_hp"] <= state["player_max_hp"]
+        assert state["turn"] >= 0
         assert 0 <= agent.player.heat
 
     def test_no_memory_leaks_during_long_session(self):

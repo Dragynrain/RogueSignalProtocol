@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 
-def flatten_dict(d, parent_key='', sep='.'):
+def flatten_dict(d, parent_key="", sep="."):
     """Flatten nested dictionary into dot-notation keys."""
     items = []
     for k, v in d.items():
@@ -24,10 +24,10 @@ def flatten_dict(d, parent_key='', sep='.'):
 def compare_json_files(file1_path, file2_path):
     """Compare two JSON files and find duplicate keys."""
 
-    with open(file1_path, 'r', encoding='utf-8') as f:
+    with open(file1_path, encoding="utf-8") as f:
         data1 = json.load(f)
 
-    with open(file2_path, 'r', encoding='utf-8') as f:
+    with open(file2_path, encoding="utf-8") as f:
         data2 = json.load(f)
 
     flat1 = flatten_dict(data1)
@@ -37,8 +37,8 @@ def compare_json_files(file1_path, file2_path):
     common_keys = set(flat1.keys()) & set(flat2.keys())
 
     duplicates = {
-        'matching': [],      # Same key, same value
-        'conflicting': [],   # Same key, different value
+        "matching": [],  # Same key, same value
+        "conflicting": [],  # Same key, different value
     }
 
     for key in sorted(common_keys):
@@ -46,9 +46,9 @@ def compare_json_files(file1_path, file2_path):
         val2 = flat2[key]
 
         if val1 == val2:
-            duplicates['matching'].append((key, val1, val2))
+            duplicates["matching"].append((key, val1, val2))
         else:
-            duplicates['conflicting'].append((key, val1, val2))
+            duplicates["conflicting"].append((key, val1, val2))
 
     return duplicates
 
@@ -77,7 +77,7 @@ def main():
 
     duplicates = compare_json_files(file1, file2)
 
-    total_duplicates = len(duplicates['matching']) + len(duplicates['conflicting'])
+    total_duplicates = len(duplicates["matching"]) + len(duplicates["conflicting"])
 
     if total_duplicates == 0:
         print("[OK] No duplicate keys found across files")
@@ -87,31 +87,31 @@ def main():
     print()
 
     # Report conflicting duplicates (same key, different value) - HIGH PRIORITY
-    if duplicates['conflicting']:
+    if duplicates["conflicting"]:
         print("=" * 80)
         print(f"CONFLICTING DUPLICATES ({len(duplicates['conflicting'])})")
         print("Same key exists in both files but with DIFFERENT values")
         print("=" * 80)
         print()
 
-        for key, val1, val2 in duplicates['conflicting']:
+        for key, val1, val2 in duplicates["conflicting"]:
             print(f"Key: {key}")
             print(f"  {file1.name}: {val1}")
             print(f"  {file2.name}: {val2}")
             print()
 
     # Report matching duplicates (same key, same value) - LOWER PRIORITY
-    if duplicates['matching']:
+    if duplicates["matching"]:
         print("=" * 80)
         print(f"MATCHING DUPLICATES ({len(duplicates['matching'])})")
         print("Same key exists in both files with SAME value")
         print("=" * 80)
         print()
 
-        for key, val1, val2 in duplicates['matching']:
+        for key, val1, val2 in duplicates["matching"]:
             print(f"Key: {key}")
             print(f"  Value: {val1}")
-            print(f"  (appears in both files)")
+            print("  (appears in both files)")
             print()
 
     print("=" * 80)
@@ -119,14 +119,14 @@ def main():
     print("=" * 80)
     print()
 
-    if duplicates['conflicting']:
+    if duplicates["conflicting"]:
         print("CONFLICTING DUPLICATES:")
         print("  - These are CRITICAL issues - same key with different values")
         print("  - Code may be using wrong value depending on load order")
         print("  - Remove from one file and establish single source of truth")
         print()
 
-    if duplicates['matching']:
+    if duplicates["matching"]:
         print("MATCHING DUPLICATES:")
         print("  - These are redundant but not breaking")
         print("  - Consider removing duplicates to reduce maintenance burden")

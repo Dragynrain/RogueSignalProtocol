@@ -4,14 +4,17 @@ Unit tests for achievement system (game_achievements.py).
 Tests achievement checking logic, unlocking conditions, and manager functionality.
 """
 
-import pytest
-from game_achievements import (
-    AchievementChecker, AchievementManager, ALL_ACHIEVEMENTS,
-    TOTAL_EXPLOITS, TOTAL_CODE_HACK_TYPES
-)
-from game_metrics import SessionMetrics, LifetimeMetrics
 from collections import Counter
 
+import pytest
+
+from game_achievements import (
+    ALL_ACHIEVEMENTS,
+    TOTAL_EXPLOITS,
+    AchievementChecker,
+    AchievementManager,
+)
+from game_metrics import LifetimeMetrics, SessionMetrics
 
 # Note: clean_achievement_state fixture is now available from conftest.py
 
@@ -24,7 +27,7 @@ def sample_session():
         timestamp_start=1000.0,
         victory=False,
         death_cause=None,
-        death_level=0
+        death_level=0,
     )
 
 
@@ -37,6 +40,7 @@ def sample_lifetime():
 # ============================================================================
 # Combat Achievements
 # ============================================================================
+
 
 def test_first_blood_achievement(clean_achievement_state, sample_session):
     """Test first_blood achievement unlocks on first kill."""
@@ -94,6 +98,7 @@ def test_efficient_killer_not_unlocked_low_average(clean_achievement_state, samp
 # Stealth Achievements
 # ============================================================================
 
+
 def test_silent_assassin_achievement(clean_achievement_state, sample_session):
     """Test silent_assassin achievement with 10+ stealth streak."""
     sample_session.max_stealth_streak = 12
@@ -140,6 +145,7 @@ def test_invisible_victory_achievement(clean_achievement_state, sample_session):
 # ============================================================================
 # Efficiency & Speed Achievements
 # ============================================================================
+
 
 def test_speedrunner_achievement(clean_achievement_state, sample_session):
     """Test speedrunner achievement (win in <100 turns)."""
@@ -191,6 +197,7 @@ def test_pure_skill_achievement(clean_achievement_state, sample_session):
 # Challenge Achievements
 # ============================================================================
 
+
 def test_untouchable_achievement(clean_achievement_state, sample_session):
     """Test untouchable achievement (win without damage)."""
     sample_session.victory = True
@@ -212,7 +219,9 @@ def test_no_trace_achievement(clean_achievement_state, sample_session):
 def test_minimalist_achievement(clean_achievement_state, sample_session):
     """Test minimalist achievement (win with ≤3 exploits)."""
     sample_session.victory = True
-    sample_session.exploits_equipped = Counter({"system_hop": 1, "code_injection": 1, "buffer_overflow": 1})
+    sample_session.exploits_equipped = Counter(
+        {"system_hop": 1, "code_injection": 1, "buffer_overflow": 1}
+    )
 
     unlocked = AchievementChecker.check_session_achievements(sample_session, set())
     assert "minimalist" in unlocked
@@ -232,6 +241,7 @@ def test_pacifist_achievement(clean_achievement_state, sample_session):
 # Mastery Achievements
 # ============================================================================
 
+
 def test_master_hacker_achievement(clean_achievement_state, sample_session):
     """Test master_hacker achievement (use all 12 exploits)."""
     # Create 12 unique exploits
@@ -244,8 +254,12 @@ def test_master_hacker_achievement(clean_achievement_state, sample_session):
 def test_code_collector_achievement(clean_achievement_state, sample_session):
     """Test code_collector achievement (use all 6 code hack types)."""
     sample_session.unique_code_hacks_used_this_run = {
-        "restore_cpu", "reduce_heat", "reduce_trace_level",
-        "speed_boost", "enhanced_vision", "exploit_efficiency"
+        "restore_cpu",
+        "reduce_heat",
+        "reduce_trace_level",
+        "speed_boost",
+        "enhanced_vision",
+        "exploit_efficiency",
     }
 
     unlocked = AchievementChecker.check_session_achievements(sample_session, set())
@@ -280,6 +294,7 @@ def test_survivor_achievement(clean_achievement_state, sample_session):
 # Lifetime Achievements
 # ============================================================================
 
+
 def test_veteran_achievement(clean_achievement_state, sample_lifetime):
     """Test veteran achievement (10 games played)."""
     sample_lifetime.total_games = 12
@@ -307,6 +322,7 @@ def test_legendary_achievement(clean_achievement_state, sample_lifetime):
 # ============================================================================
 # AchievementManager Tests
 # ============================================================================
+
 
 def test_achievement_manager_load_achievements(clean_achievement_state):
     """Test loading unlocked achievements."""
@@ -381,15 +397,20 @@ def test_achievement_manager_get_unlock_progress(clean_achievement_state):
 def test_achievement_manager_get_by_category(clean_achievement_state):
     """Test getting achievements by category."""
     combat_achievements = AchievementManager.get_achievements_by_category("combat")
-    assert len(combat_achievements) == 5  # first_blood, massacre, overkill, crowd_control, efficient_killer
+    assert (
+        len(combat_achievements) == 5
+    )  # first_blood, massacre, overkill, crowd_control, efficient_killer
 
     stealth_achievements = AchievementManager.get_achievements_by_category("stealth")
-    assert len(stealth_achievements) == 4  # silent_assassin, ghost_protocol, blind_spot_master, invisible_victory
+    assert (
+        len(stealth_achievements) == 4
+    )  # silent_assassin, ghost_protocol, blind_spot_master, invisible_victory
 
 
 # ============================================================================
 # Edge Cases
 # ============================================================================
+
 
 def test_multiple_achievements_one_session(clean_achievement_state, sample_session):
     """Test unlocking multiple achievements in a single session."""

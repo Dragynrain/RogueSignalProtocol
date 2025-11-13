@@ -15,7 +15,8 @@ GameConfig and GameBalance load from game_rules.json (fail-fast if missing).
 import json
 import logging
 import os
-from typing import Dict, Any
+from typing import Any
+
 from data_loading import DataLoader
 
 
@@ -45,7 +46,7 @@ class GameSettings:
         self.ui_color = "cyan"  # UI theme color for borders/headers (cyan, purple, magenta, golden, crimson, azure, emerald)
         self.dialogue_preferences = {}  # Stores user preferences for dialogue visibility
         self.load_settings()
-    
+
     def load_settings(self) -> None:
         """
         Load settings from user_settings.json.
@@ -61,9 +62,9 @@ class GameSettings:
             if os.path.exists(self.SETTINGS_FILE):
                 # Read file content first to check for corruption
                 try:
-                    with open(self.SETTINGS_FILE, 'r') as f:
+                    with open(self.SETTINGS_FILE) as f:
                         content = f.read().strip()
-                except (PermissionError, OSError, IOError) as e:
+                except (PermissionError, OSError) as e:
                     logging.error(f"Cannot read settings file: {e}")
                     self._create_default_settings_file()
                     return
@@ -78,7 +79,9 @@ class GameSettings:
                 try:
                     settings_data = json.loads(content)
                 except json.JSONDecodeError as e:
-                    logging.warning(f"Settings file corrupted (JSON decode error: {e}), recreating with defaults")
+                    logging.warning(
+                        f"Settings file corrupted (JSON decode error: {e}), recreating with defaults"
+                    )
                     self._create_default_settings_file()
                     return
 
@@ -98,15 +101,17 @@ class GameSettings:
                     try:
                         self.save_settings()
                         logging.info("Migrated graphics_mode from 'ascii' to 'glyph'")
-                    except (PermissionError, OSError, IOError) as e:
+                    except (PermissionError, OSError) as e:
                         logging.error(f"Failed to save migrated settings: {e}")
                         # Game can still run, just won't persist migration
 
-                logging.debug(f"Settings: Loaded from {self.SETTINGS_FILE} - graphics={self.graphics_mode}, master_vol={self.master_volume:.2f}, dialogues={len(self.dialogue_preferences)}")
-        except (PermissionError, OSError, IOError) as e:
+                logging.debug(
+                    f"Settings: Loaded from {self.SETTINGS_FILE} - graphics={self.graphics_mode}, master_vol={self.master_volume:.2f}, dialogues={len(self.dialogue_preferences)}"
+                )
+        except (PermissionError, OSError) as e:
             logging.error(f"File I/O error loading settings: {e}")
             self._create_default_settings_file()
-    
+
     def _create_default_settings_file(self) -> None:
         """Create a default settings file."""
         try:
@@ -118,15 +123,15 @@ class GameSettings:
                 "show_achievement_popups": True,
                 "show_particle_effects": True,
                 "ui_color": "cyan",
-                "dialogue_preferences": {}
+                "dialogue_preferences": {},
             }
-            with open(self.SETTINGS_FILE, 'w') as f:
+            with open(self.SETTINGS_FILE, "w") as f:
                 json.dump(default_settings, f, indent=2)
             logging.info("Created default settings file")
-        except (PermissionError, OSError, IOError) as e:
+        except (PermissionError, OSError) as e:
             logging.error(f"Failed to create default settings file: {e}")
             # Game will use in-memory defaults
-    
+
     def save_settings(self) -> None:
         """Save settings to file."""
         try:
@@ -138,18 +143,19 @@ class GameSettings:
                 "show_achievement_popups": self.show_achievement_popups,
                 "show_particle_effects": self.show_particle_effects,
                 "ui_color": self.ui_color,
-                "dialogue_preferences": self.dialogue_preferences
+                "dialogue_preferences": self.dialogue_preferences,
             }
-            with open(self.SETTINGS_FILE, 'w') as f:
+            with open(self.SETTINGS_FILE, "w") as f:
                 json.dump(settings_data, f, indent=2)
             logging.debug(f"Settings: Saved to {self.SETTINGS_FILE}")
-        except (PermissionError, OSError, IOError) as e:
+        except (PermissionError, OSError) as e:
             logging.error(f"Failed to save settings: {e}")
             # Settings won't persist, but game continues with current values
-    
+
     def _set_volume_attribute(self, volume_type: str, volume: float):
         """Generic volume setter for any volume type."""
         from game_entities import clamp
+
         old_value = getattr(self, f"{volume_type}_volume", 0.0)
         new_value = clamp(volume, 0.0, 1.0)
         setattr(self, f"{volume_type}_volume", new_value)
@@ -164,7 +170,7 @@ class GameSettings:
 
     def set_music_volume(self, volume: float):
         self._set_volume_attribute("music", volume)
-    
+
     def set_graphics_mode(self, mode: str):
         """Set graphics mode ('glyph' for CP437 characters or 'graphics' for PNG sprites)"""
         if mode in ["glyph", "graphics", "ascii"]:  # Accept "ascii" for backwards compatibility
@@ -179,7 +185,16 @@ class GameSettings:
 
     def set_ui_color(self, color: str):
         """Set UI theme color for borders/headers."""
-        valid_colors = ["cyan", "purple", "magenta", "golden", "crimson", "azure", "emerald", "ivory"]
+        valid_colors = [
+            "cyan",
+            "purple",
+            "magenta",
+            "golden",
+            "crimson",
+            "azure",
+            "emerald",
+            "ivory",
+        ]
         if color in valid_colors:
             old_color = self.ui_color
             self.ui_color = color
@@ -189,20 +204,29 @@ class GameSettings:
     def get_ui_color_rgb(self) -> tuple:
         """Get RGB values for current UI color from ui_themes in game_rules.json."""
         from game_color_manager import ColorManager
+
         try:
             return ColorManager.get("ui_themes", self.ui_color)
         except KeyError:
             # Fallback to neon_cyan if theme not found
             return ColorManager.get("basic", "neon_cyan")
-    
+
     def get_volume_percent(self, volume_type: str) -> int:
         """Get volume as percentage (0-100)"""
-        volume_map = {"master": self.master_volume, "sfx": self.sfx_volume, "music": self.music_volume}
+        volume_map = {
+            "master": self.master_volume,
+            "sfx": self.sfx_volume,
+            "music": self.music_volume,
+        }
         return int(volume_map.get(volume_type, 0) * 100)
 
     def set_volume_percent(self, volume_type: str, percent: int):
         """Set volume from percentage (0-100)"""
-        setter_map = {"master": self.set_master_volume, "sfx": self.set_sfx_volume, "music": self.set_music_volume}
+        setter_map = {
+            "master": self.set_master_volume,
+            "sfx": self.set_sfx_volume,
+            "music": self.set_music_volume,
+        }
         if volume_type in setter_map:
             setter_map[volume_type](percent / 100.0)
 
@@ -254,48 +278,52 @@ class GameConfig:
     def load_from_json(cls):
         """Load configuration from JSON file - FAILS if required values missing."""
         try:
-            with open('game_rules.json', 'r', encoding='utf-8') as f:
+            with open("game_rules.json", encoding="utf-8") as f:
                 cls._config_data = json.load(f)
 
             # Update class attributes - NO FALLBACKS, fail if missing
-            cls.SCREEN_WIDTH = cls._get_required('display.screen_width')
-            cls.SCREEN_HEIGHT = cls._get_required('display.screen_height')
-            cls.MAP_WIDTH = cls._get_required('display.map_width')
-            cls.MAP_HEIGHT = cls._get_required('display.map_height')
-            cls.UI_HEIGHT = cls._get_required('display.ui_height')
-            cls.SIDEBAR_WIDTH = cls._get_required('display.sidebar_width')
-            cls.LOG_WIDTH = cls._get_required('display.log_width')
-            cls.PANEL_HEIGHT = cls._get_required('display.panel_height')
-            cls.DEFAULT_PLAYER_RAM = cls._get_required('gameplay.default_player_ram')
-            cls.DEFAULT_PLAYER_CPU = cls._get_required('gameplay.default_player_cpu')
-            cls.MAX_HEAT = cls._get_required('gameplay.max_heat')
-            cls.MAX_TRACE_LEVEL = cls._get_required('gameplay.max_trace_level')
-            cls.DETECTION_REDUCTION_ON_LEVEL = cls._get_required('gameplay.trace_reduction_on_level')
-            cls.DUNGEON_SEED_RANGE = cls._get_required('gameplay.dungeon_seed_range')
-            cls.DEFAULT_VISION_RANGE = cls._get_required('gameplay.default_vision_range')
-            cls.MAX_SAVE_ATTEMPTS = cls._get_required('gameplay.max_save_attempts')
-            cls.NEARBY_ENEMY_ALERT_RADIUS = cls._get_required('gameplay.nearby_enemy_alert_radius')
-            cls.VIRUS_DAMAGE_PER_TURN = cls._get_required('gameplay.virus_damage_per_turn')
-            cls.DEFAULT_FADE_TIME = cls._get_required('audio.default_fade_time')
-            cls.MESSAGE_CENTER_OFFSET_LARGE = cls._get_required('ui.message_center_offset_large')
-            cls.MESSAGE_CENTER_OFFSET_MEDIUM = cls._get_required('ui.message_center_offset_medium')
-            cls.MESSAGE_CENTER_OFFSET_SMALL = cls._get_required('ui.message_center_offset_small')
-            cls.MESSAGE_CENTER_OFFSET_TINY = cls._get_required('ui.message_center_offset_tiny')
-            cls.MESSAGE_LINE_SPACING = cls._get_required('ui.message_line_spacing')
-            cls.MESSAGE_BUTTON_SPACING = cls._get_required('ui.message_button_spacing')
+            cls.SCREEN_WIDTH = cls._get_required("display.screen_width")
+            cls.SCREEN_HEIGHT = cls._get_required("display.screen_height")
+            cls.MAP_WIDTH = cls._get_required("display.map_width")
+            cls.MAP_HEIGHT = cls._get_required("display.map_height")
+            cls.UI_HEIGHT = cls._get_required("display.ui_height")
+            cls.SIDEBAR_WIDTH = cls._get_required("display.sidebar_width")
+            cls.LOG_WIDTH = cls._get_required("display.log_width")
+            cls.PANEL_HEIGHT = cls._get_required("display.panel_height")
+            cls.DEFAULT_PLAYER_RAM = cls._get_required("gameplay.default_player_ram")
+            cls.DEFAULT_PLAYER_CPU = cls._get_required("gameplay.default_player_cpu")
+            cls.MAX_HEAT = cls._get_required("gameplay.max_heat")
+            cls.MAX_TRACE_LEVEL = cls._get_required("gameplay.max_trace_level")
+            cls.DETECTION_REDUCTION_ON_LEVEL = cls._get_required(
+                "gameplay.trace_reduction_on_level"
+            )
+            cls.DUNGEON_SEED_RANGE = cls._get_required("gameplay.dungeon_seed_range")
+            cls.DEFAULT_VISION_RANGE = cls._get_required("gameplay.default_vision_range")
+            cls.MAX_SAVE_ATTEMPTS = cls._get_required("gameplay.max_save_attempts")
+            cls.NEARBY_ENEMY_ALERT_RADIUS = cls._get_required("gameplay.nearby_enemy_alert_radius")
+            cls.VIRUS_DAMAGE_PER_TURN = cls._get_required("gameplay.virus_damage_per_turn")
+            cls.DEFAULT_FADE_TIME = cls._get_required("audio.default_fade_time")
+            cls.MESSAGE_CENTER_OFFSET_LARGE = cls._get_required("ui.message_center_offset_large")
+            cls.MESSAGE_CENTER_OFFSET_MEDIUM = cls._get_required("ui.message_center_offset_medium")
+            cls.MESSAGE_CENTER_OFFSET_SMALL = cls._get_required("ui.message_center_offset_small")
+            cls.MESSAGE_CENTER_OFFSET_TINY = cls._get_required("ui.message_center_offset_tiny")
+            cls.MESSAGE_LINE_SPACING = cls._get_required("ui.message_line_spacing")
+            cls.MESSAGE_BUTTON_SPACING = cls._get_required("ui.message_button_spacing")
 
         except FileNotFoundError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: game_rules.json not found"
+            error_msg = "CRITICAL CONFIG ERROR: game_rules.json not found"
             logging.error(error_msg)
             logging.error(f"Exception: {str(e)}")
-            raise FileNotFoundError(f"Required file game_rules.json is missing") from e
+            raise FileNotFoundError("Required file game_rules.json is missing") from e
         except json.JSONDecodeError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in game_rules.json"
+            error_msg = "CRITICAL CONFIG ERROR: Invalid JSON in game_rules.json"
             logging.error(error_msg)
             logging.error(f"Exception: {str(e)}")
-            raise json.JSONDecodeError(f"game_rules.json contains invalid JSON", e.doc, e.pos) from e
+            raise json.JSONDecodeError(
+                "game_rules.json contains invalid JSON", e.doc, e.pos
+            ) from e
         except KeyError as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Missing required config value in game_rules.json"
+            error_msg = "CRITICAL CONFIG ERROR: Missing required config value in game_rules.json"
             logging.error(error_msg)
             logging.error(f"Exception: {str(e)}")
             if cls._config_data:
@@ -328,7 +356,9 @@ class GameConfig:
         return cls.INFO_PANEL_HEIGHT
 
     @classmethod
-    def VIEWPORT_WIDTH(cls, graphics_mode: str = "glyph", tile_width: int = None, window_width: int = None):
+    def VIEWPORT_WIDTH(
+        cls, graphics_mode: str = "glyph", tile_width: int = None, window_width: int = None
+    ):
         """
         Calculate viewport width (visible tiles) based on rendering mode.
 
@@ -358,7 +388,9 @@ class GameConfig:
             return game_area_pixel_width // tile_width
 
     @classmethod
-    def VIEWPORT_HEIGHT(cls, graphics_mode: str = "glyph", tile_height: int = None, window_height: int = None):
+    def VIEWPORT_HEIGHT(
+        cls, graphics_mode: str = "glyph", tile_height: int = None, window_height: int = None
+    ):
         """
         Calculate viewport height (visible tiles) based on rendering mode.
 
@@ -384,123 +416,125 @@ class GameConfig:
         else:
             # Graphics mode: calculate how many pixel-tiles fit in the game area
             # Game area height excludes panel and status bar
-            game_area_pixel_height = int(window_height * (viewable_height_chars / cls.SCREEN_HEIGHT))
+            game_area_pixel_height = int(
+                window_height * (viewable_height_chars / cls.SCREEN_HEIGHT)
+            )
             return game_area_pixel_height // tile_height
 
     @classmethod
     def STATUS_BAR_HEIGHT(cls):
         """Get status bar height from config."""
         cls._ensure_loaded()
-        return cls._get_required('rendering.status_bar_height')
+        return cls._get_required("rendering.status_bar_height")
 
     @classmethod
     def VISION_BRACKET_SIZE(cls):
         """Get vision bracket size from config."""
         cls._ensure_loaded()
-        return cls._get_required('rendering.vision_bracket_size')
+        return cls._get_required("rendering.vision_bracket_size")
 
     @classmethod
     def STATUS_OUTLINE_THICKNESS(cls):
         """Get status outline thickness from config."""
         cls._ensure_loaded()
-        return cls._get_required('rendering.status_outline_thickness')
+        return cls._get_required("rendering.status_outline_thickness")
 
     @classmethod
     def ENEMY_OUTLINE_THICKNESS(cls):
         """Get enemy outline thickness from config."""
         cls._ensure_loaded()
-        return cls._get_required('rendering.enemy_outline_thickness')
+        return cls._get_required("rendering.enemy_outline_thickness")
 
     @classmethod
     def MIN_TILE_WIDTH(cls):
         """Get minimum tile width from config."""
         cls._ensure_loaded()
-        return cls._get_required('rendering.min_tile_width')
+        return cls._get_required("rendering.min_tile_width")
 
     @classmethod
     def MIN_TILE_HEIGHT(cls):
         """Get minimum tile height from config."""
         cls._ensure_loaded()
-        return cls._get_required('rendering.min_tile_height')
+        return cls._get_required("rendering.min_tile_height")
 
     @classmethod
     def FALLBACK_TILE_WIDTH(cls):
         """Get fallback tile width from config."""
         cls._ensure_loaded()
-        return cls._get_required('rendering.fallback_tile_width')
+        return cls._get_required("rendering.fallback_tile_width")
 
     @classmethod
     def FALLBACK_TILE_HEIGHT(cls):
         """Get fallback tile height from config."""
         cls._ensure_loaded()
-        return cls._get_required('rendering.fallback_tile_height')
+        return cls._get_required("rendering.fallback_tile_height")
 
     # Particle system configuration
     @classmethod
     def PARTICLE_GRAVITY(cls):
         """Get particle gravity from config."""
         cls._ensure_loaded()
-        return cls._get_required('particles.gravity')
+        return cls._get_required("particles.gravity")
 
     @classmethod
     def PARTICLE_COUNT_DEFAULT(cls):
         """Get default particle count from config."""
         cls._ensure_loaded()
-        return cls._get_required('particles.default_particle_count')
+        return cls._get_required("particles.default_particle_count")
 
     @classmethod
     def PARTICLE_VELOCITY_MIN(cls):
         """Get minimum particle velocity from config."""
         cls._ensure_loaded()
-        return cls._get_required('particles.velocity_min')
+        return cls._get_required("particles.velocity_min")
 
     @classmethod
     def PARTICLE_VELOCITY_MAX(cls):
         """Get maximum particle velocity from config."""
         cls._ensure_loaded()
-        return cls._get_required('particles.velocity_max')
+        return cls._get_required("particles.velocity_max")
 
     @classmethod
     def PARTICLE_UPWARD_BIAS(cls):
         """Get particle upward bias from config."""
         cls._ensure_loaded()
-        return cls._get_required('particles.upward_bias')
+        return cls._get_required("particles.upward_bias")
 
     @classmethod
     def PARTICLE_SIZE_MIN(cls):
         """Get minimum particle size from config."""
         cls._ensure_loaded()
-        return cls._get_required('particles.size_min')
+        return cls._get_required("particles.size_min")
 
     @classmethod
     def PARTICLE_SIZE_MAX(cls):
         """Get maximum particle size from config."""
         cls._ensure_loaded()
-        return cls._get_required('particles.size_max')
+        return cls._get_required("particles.size_max")
 
     @classmethod
     def PARTICLE_LIFETIME_MIN(cls):
         """Get minimum particle lifetime from config."""
         cls._ensure_loaded()
-        return cls._get_required('particles.lifetime_min')
+        return cls._get_required("particles.lifetime_min")
 
     @classmethod
     def PARTICLE_LIFETIME_MAX(cls):
         """Get maximum particle lifetime from config."""
         cls._ensure_loaded()
-        return cls._get_required('particles.lifetime_max')
+        return cls._get_required("particles.lifetime_max")
 
     @classmethod
     def PARTICLE_COLOR_VARIATION(cls):
         """Get particle color variation from config."""
         cls._ensure_loaded()
-        return cls._get_required('particles.color_variation')
+        return cls._get_required("particles.color_variation")
 
     @classmethod
     def PARTICLE_SPRITE_COLOR_COUNT(cls):
         """Get number of colors to extract from sprite for particles."""
         cls._ensure_loaded()
-        return cls._get_required('particles.sprite_color_count')
+        return cls._get_required("particles.sprite_color_count")
 
     @classmethod
     def _get_required(cls, key: str):
@@ -508,7 +542,7 @@ class GameConfig:
         if cls._config_data is None:
             raise RuntimeError("Config data not loaded - call load_from_json first")
 
-        keys = key.split('.')
+        keys = key.split(".")
         value = cls._config_data
         try:
             for k in keys:
@@ -529,11 +563,13 @@ class GameConfig:
                     break
 
             if partial_keys:
-                path_str = '.'.join(partial_keys[:-1]) if len(partial_keys) > 1 else "root"
+                path_str = ".".join(partial_keys[:-1]) if len(partial_keys) > 1 else "root"
                 if isinstance(partial_value, dict):
                     logging.error(f"Available keys at '{path_str}': {list(partial_value.keys())}")
                 else:
-                    logging.error(f"Value at '{path_str}' is {type(partial_value).__name__}, not a dict")
+                    logging.error(
+                        f"Value at '{path_str}' is {type(partial_value).__name__}, not a dict"
+                    )
 
             raise KeyError(f"Required config key missing: {key}") from e
 
@@ -544,7 +580,7 @@ class GameConfig:
             cls.load_from_json()
 
         if cls._config_data:
-            keys = key.split('.')
+            keys = key.split(".")
             value = cls._config_data
             try:
                 for k in keys:
@@ -554,16 +590,16 @@ class GameConfig:
                 pass
 
         return default
-    
+
     @classmethod
-    def get_network_configs(cls) -> Dict[int, Dict[str, Any]]:
+    def get_network_configs(cls) -> dict[int, dict[str, Any]]:
         """Get network configurations from game data."""
         game_data = DataLoader.load_game_data()
         configs = game_data["network_configs"]
         return {int(k): v for k, v in configs.items()}
-    
+
     @classmethod
-    def NETWORK_CONFIGS(cls) -> Dict[int, Dict[str, Any]]:
+    def NETWORK_CONFIGS(cls) -> dict[int, dict[str, Any]]:
         """Get network configurations from game data."""
         return cls.get_network_configs()
 
@@ -587,13 +623,17 @@ class RoomGenerationConfig:
     @classmethod
     def load_from_json(cls):
         """Load room generation config from JSON - NO FALLBACKS."""
-        cls.MIN_ROOMS_BASE = GameConfig._get_required('room_generation.min_rooms_base')
-        cls.ROOM_LEVEL_MULTIPLIER = GameConfig._get_required('room_generation.room_level_multiplier')
-        cls.MAX_ROOMS = GameConfig._get_required('room_generation.max_rooms')
-        cls.MAX_PLACEMENT_ATTEMPTS = GameConfig._get_required('room_generation.max_placement_attempts')
-        cls.MIN_ROOM_SIZE = GameConfig._get_required('room_generation.min_room_size')
-        cls.MAX_ROOM_SIZE = GameConfig._get_required('room_generation.max_room_size')
-        cls.ROOM_PADDING = GameConfig._get_required('room_generation.room_padding')
+        cls.MIN_ROOMS_BASE = GameConfig._get_required("room_generation.min_rooms_base")
+        cls.ROOM_LEVEL_MULTIPLIER = GameConfig._get_required(
+            "room_generation.room_level_multiplier"
+        )
+        cls.MAX_ROOMS = GameConfig._get_required("room_generation.max_rooms")
+        cls.MAX_PLACEMENT_ATTEMPTS = GameConfig._get_required(
+            "room_generation.max_placement_attempts"
+        )
+        cls.MIN_ROOM_SIZE = GameConfig._get_required("room_generation.min_room_size")
+        cls.MAX_ROOM_SIZE = GameConfig._get_required("room_generation.max_room_size")
+        cls.ROOM_PADDING = GameConfig._get_required("room_generation.room_padding")
 
         # NOTE: Node/item counts removed - use game_content.json network_configs instead
         # (values vary per level, not a single "per_level" value)
@@ -632,40 +672,56 @@ class GameBalance:
     @classmethod
     def load_from_json(cls):
         """Load balance config from JSON - NO FALLBACKS."""
-        cls.HEAT_REDUCTION_NORMAL = GameConfig._get_required('balance.heat_reduction_normal')
-        cls.HEAT_REDUCTION_BOOSTED = GameConfig._get_required('balance.heat_reduction_boosted')
-        cls.TRACE_INCREASE_INTERVAL = GameConfig._get_required('balance.trace_increase_interval')
-        cls.TRACE_INCREASE_AMOUNT = GameConfig._get_required('balance.trace_increase_amount')
-        cls.COOLING_NODE_EFFECT = GameConfig._get_required('balance.cooling_node_effect')
-        cls.GHOST_NODE_DETECTION_REDUCTION_PERCENT = GameConfig._get_required('balance.ghost_node_trace_reduction_percent')
-        cls.CPU_RECOVERY_AMOUNT = GameConfig._get_required('balance.cpu_recovery_amount')
-        cls.ENEMY_ELIMINATION_CPU_REWARD = GameConfig._get_required('balance.enemy_elimination_cpu_reward')
-        cls.CPU_RESTORE_MIN = GameConfig._get_required('balance.cpu_restore_min')
-        cls.CPU_RESTORE_MAX = GameConfig._get_required('balance.cpu_restore_max')
-        cls.HEAT_REDUCTION_INSTANT = GameConfig._get_required('balance.heat_reduction_instant')
-        cls.ADJACENT_DISTANCE_THRESHOLD = GameConfig._get_required('balance.adjacent_distance_threshold')
-        cls.PATROL_STUCK_THRESHOLD = GameConfig._get_required('balance.patrol_stuck_threshold')
-        cls.PATHFINDING_TIMEOUT_ATTEMPTS = GameConfig._get_required('balance.pathfinding_timeout_attempts')
-        cls.ENHANCED_VISION_BONUS = GameConfig._get_required('balance.enhanced_vision_bonus')
-        cls.BLIND_SPOT_VISION_REDUCTION_FACTOR = GameConfig._get_required('balance.blind_spot_vision_reduction_factor')
-        cls.ENEMY_TRACE_ALERT_TO_HOSTILE = GameConfig._get_required('balance.ai_behavior.enemy_trace_alert_to_hostile')
-        cls.ENEMY_TRACE_CONTINUOUS_HOSTILE = GameConfig._get_required('balance.ai_behavior.enemy_trace_continuous_hostile')
-        cls.ENEMY_MEMORY_TURNS = GameConfig._get_required('balance.enemy_memory_turns')
+        cls.HEAT_REDUCTION_NORMAL = GameConfig._get_required("balance.heat_reduction_normal")
+        cls.HEAT_REDUCTION_BOOSTED = GameConfig._get_required("balance.heat_reduction_boosted")
+        cls.TRACE_INCREASE_INTERVAL = GameConfig._get_required("balance.trace_increase_interval")
+        cls.TRACE_INCREASE_AMOUNT = GameConfig._get_required("balance.trace_increase_amount")
+        cls.COOLING_NODE_EFFECT = GameConfig._get_required("balance.cooling_node_effect")
+        cls.GHOST_NODE_DETECTION_REDUCTION_PERCENT = GameConfig._get_required(
+            "balance.ghost_node_trace_reduction_percent"
+        )
+        cls.CPU_RECOVERY_AMOUNT = GameConfig._get_required("balance.cpu_recovery_amount")
+        cls.ENEMY_ELIMINATION_CPU_REWARD = GameConfig._get_required(
+            "balance.enemy_elimination_cpu_reward"
+        )
+        cls.CPU_RESTORE_MIN = GameConfig._get_required("balance.cpu_restore_min")
+        cls.CPU_RESTORE_MAX = GameConfig._get_required("balance.cpu_restore_max")
+        cls.HEAT_REDUCTION_INSTANT = GameConfig._get_required("balance.heat_reduction_instant")
+        cls.ADJACENT_DISTANCE_THRESHOLD = GameConfig._get_required(
+            "balance.adjacent_distance_threshold"
+        )
+        cls.PATROL_STUCK_THRESHOLD = GameConfig._get_required("balance.patrol_stuck_threshold")
+        cls.PATHFINDING_TIMEOUT_ATTEMPTS = GameConfig._get_required(
+            "balance.pathfinding_timeout_attempts"
+        )
+        cls.ENHANCED_VISION_BONUS = GameConfig._get_required("balance.enhanced_vision_bonus")
+        cls.BLIND_SPOT_VISION_REDUCTION_FACTOR = GameConfig._get_required(
+            "balance.blind_spot_vision_reduction_factor"
+        )
+        cls.ENEMY_TRACE_ALERT_TO_HOSTILE = GameConfig._get_required(
+            "balance.ai_behavior.enemy_trace_alert_to_hostile"
+        )
+        cls.ENEMY_TRACE_CONTINUOUS_HOSTILE = GameConfig._get_required(
+            "balance.ai_behavior.enemy_trace_continuous_hostile"
+        )
+        cls.ENEMY_MEMORY_TURNS = GameConfig._get_required("balance.enemy_memory_turns")
 
     @staticmethod
     def get_enemy_difficulty_multiplier(difficulty: str) -> float:
         """Get difficulty multiplier for enemies - FAILS if not found."""
         game_data = DataLoader.load_game_data()
         try:
-            multipliers = game_data['difficulty_multipliers']
+            multipliers = game_data["difficulty_multipliers"]
             return multipliers[difficulty]
         except KeyError as e:
             error_msg = f"CRITICAL CONFIG ERROR: Difficulty '{difficulty}' not found in game_content.json difficulty_multipliers"
             logging.error(error_msg)
-            if 'difficulty_multipliers' in game_data:
-                logging.error(f"Available difficulties: {list(game_data['difficulty_multipliers'].keys())}")
+            if "difficulty_multipliers" in game_data:
+                logging.error(
+                    f"Available difficulties: {list(game_data['difficulty_multipliers'].keys())}"
+                )
             else:
-                logging.error(f"'difficulty_multipliers' section missing from game_content.json")
+                logging.error("'difficulty_multipliers' section missing from game_content.json")
                 logging.error(f"Available sections: {list(game_data.keys())}")
             raise KeyError(f"Difficulty multiplier not found for: {difficulty}") from e
 

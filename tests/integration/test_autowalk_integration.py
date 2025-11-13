@@ -10,18 +10,17 @@ Tests the complete auto-walk flow including:
 - Mouse click integration
 """
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
-from game_autowalk import AutoWalk
-from game_entities import Position
-from game_characters import Player, Enemy
-from game_map import GameMap
-from game_engine import GameEngine
+from game_characters import Enemy
 from game_config import GameConfig, GameSettings
+from game_engine import GameEngine
+from game_entities import Position
+from game_map import GameMap
 
 
 class TestAutoWalkBasic(unittest.TestCase):
@@ -31,15 +30,11 @@ class TestAutoWalkBasic(unittest.TestCase):
         """Set up test fixtures."""
         settings = GameSettings()
         # Create a minimal game map instead of full level generation
-        from game_map import GameMap
+
         game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
         game_map.walls.clear()  # Start with no walls
 
-        self.engine = GameEngine(
-            settings=settings,
-            game_map=game_map,
-            load_save=False
-        )
+        self.engine = GameEngine(settings=settings, game_map=game_map, load_save=False)
         self.autowalk = self.engine.autowalk
 
         # GameEngine generates a level on init, so clear walls again
@@ -135,15 +130,11 @@ class TestAutoWalkStopConditions(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         settings = GameSettings()
-        from game_map import GameMap
+
         game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
         game_map.walls.clear()
 
-        self.engine = GameEngine(
-            settings=settings,
-            game_map=game_map,
-            load_save=False
-        )
+        self.engine = GameEngine(settings=settings, game_map=game_map, load_save=False)
         self.autowalk = self.engine.autowalk
 
         # GameEngine generates a level on init, so clear walls again
@@ -166,7 +157,7 @@ class TestAutoWalkStopConditions(unittest.TestCase):
         self.assertTrue(self.autowalk.is_active())
 
         # Place enemy in vision range (but not initially visible)
-        enemy = Enemy(Position(25, 10), 'scanner')
+        enemy = Enemy(Position(25, 10), "scanner")
         self.engine.enemies.append(enemy)
 
         # Move player closer so enemy becomes visible
@@ -243,15 +234,11 @@ class TestAutoWalkExecution(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         settings = GameSettings()
-        from game_map import GameMap
+
         game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
         game_map.walls.clear()
 
-        self.engine = GameEngine(
-            settings=settings,
-            game_map=game_map,
-            load_save=False
-        )
+        self.engine = GameEngine(settings=settings, game_map=game_map, load_save=False)
         self.autowalk = self.engine.autowalk
 
         # GameEngine generates a level on init, so clear walls again
@@ -325,15 +312,11 @@ class TestAutoWalkPathPreview(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         settings = GameSettings()
-        from game_map import GameMap
+
         game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
         game_map.walls.clear()
 
-        self.engine = GameEngine(
-            settings=settings,
-            game_map=game_map,
-            load_save=False
-        )
+        self.engine = GameEngine(settings=settings, game_map=game_map, load_save=False)
         self.autowalk = self.engine.autowalk
 
         # GameEngine generates a level on init, so clear walls again
@@ -387,15 +370,11 @@ class TestAutoWalkTCODIntegration(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         settings = GameSettings()
-        from game_map import GameMap
+
         game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
         game_map.walls.clear()
 
-        self.engine = GameEngine(
-            settings=settings,
-            game_map=game_map,
-            load_save=False
-        )
+        self.engine = GameEngine(settings=settings, game_map=game_map, load_save=False)
         self.autowalk = self.engine.autowalk
 
         # GameEngine generates a level on init, so clear walls again
@@ -428,8 +407,7 @@ class TestAutoWalkTCODIntegration(unittest.TestCase):
         # Verify path doesn't go through walls
         for pos in self.autowalk.path:
             self.assertFalse(
-                self.engine.game_map.is_wall(pos),
-                f"Path should not go through wall at {pos}"
+                self.engine.game_map.is_wall(pos), f"Path should not go through wall at {pos}"
             )
 
     def test_tcod_pathfinding_finds_optimal_path(self):
@@ -470,15 +448,11 @@ class TestAutoWalkInterruption(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         settings = GameSettings()
-        from game_map import GameMap
+
         game_map = GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
         game_map.walls.clear()
 
-        self.engine = GameEngine(
-            settings=settings,
-            game_map=game_map,
-            load_save=False
-        )
+        self.engine = GameEngine(settings=settings, game_map=game_map, load_save=False)
         self.autowalk = self.engine.autowalk
 
         # GameEngine generates a level on init, so clear walls again
@@ -529,7 +503,9 @@ class TestAutoWalkInterruption(unittest.TestCase):
         self.engine.show_inventory = True
 
         # Verify autowalk was cancelled
-        self.assertFalse(self.autowalk.is_active(), "Auto-walk should cancel when opening inventory")
+        self.assertFalse(
+            self.autowalk.is_active(), "Auto-walk should cancel when opening inventory"
+        )
 
     def test_autowalk_cancel_persists_reason(self):
         """Test that cancel() stores the reason for debugging."""
@@ -603,13 +579,12 @@ class TestAutoWalkInterruption(unittest.TestCase):
             if next_move:
                 dx, dy = next_move
                 self.engine.player.position = Position(
-                    self.engine.player.x + dx,
-                    self.engine.player.y + dy
+                    self.engine.player.x + dx, self.engine.player.y + dy
                 )
                 self.autowalk.advance_step()
 
         # Enemy suddenly appears in player's vision
-        enemy = Enemy(Position(self.engine.player.x + 5, self.engine.player.y), 'scanner')
+        enemy = Enemy(Position(self.engine.player.x + 5, self.engine.player.y), "scanner")
         self.engine.enemies.append(enemy)
 
         # Check stop conditions
@@ -621,5 +596,5 @@ class TestAutoWalkInterruption(unittest.TestCase):
             self.assertIn("enemy", reason.lower(), "Reason should mention enemy")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -9,10 +9,10 @@ testable coordinate conversion logic separate from input handling.
 """
 
 import logging
-from typing import Optional, Tuple
+
 from game_config import GameConfig
-from game_entities import Position
 from game_coordinate_helpers import CoordinateHelpers
+from game_entities import Position
 from game_errors import GameErrorHandler
 
 
@@ -20,7 +20,7 @@ class InputCoordinateConverter:
     """Handles pixel-to-world coordinate conversion for input system."""
 
     @staticmethod
-    def get_window_dimensions(renderer, game) -> Tuple[int, int]:
+    def get_window_dimensions(renderer, game) -> tuple[int, int]:
         """
         Get window dimensions from context.
 
@@ -34,12 +34,12 @@ class InputCoordinateConverter:
             Tuple of (window_width, window_height) in pixels
         """
         context = None
-        if renderer and hasattr(renderer, 'context'):
+        if renderer and hasattr(renderer, "context"):
             context = renderer.context
-        elif hasattr(game, 'context'):
+        elif hasattr(game, "context"):
             context = game.context
 
-        if context and hasattr(context, 'sdl_window'):
+        if context and hasattr(context, "sdl_window"):
             return context.sdl_window.size
         return (800, 600)  # Fallback
 
@@ -50,8 +50,8 @@ class InputCoordinateConverter:
         renderer,
         game,
         graphics_mode: str,
-        camera_offset: Optional[Position] = None
-    ) -> Optional[Position]:
+        camera_offset: Position | None = None,
+    ) -> Position | None:
         """Convert mouse pixel coords to world coords.
 
         Conversion flow:
@@ -74,14 +74,17 @@ class InputCoordinateConverter:
         # Convert pixels to grid coordinates
         if graphics_mode == "graphics":
             # In graphics mode, sprites are rendered at pixel = grid * tile_dimension
-            if renderer and hasattr(renderer, 'tile_manager') and renderer.tile_manager:
+            if renderer and hasattr(renderer, "tile_manager") and renderer.tile_manager:
                 tile_x, tile_y = CoordinateHelpers.pixel_to_sprite_grid(
-                    pixel_x, pixel_y,
+                    pixel_x,
+                    pixel_y,
                     renderer.tile_manager.tile_width,
-                    renderer.tile_manager.tile_height
+                    renderer.tile_manager.tile_height,
                 )
             else:
-                logging.error(f"Graphics mode but renderer not available: renderer={renderer}, has_tile_mgr={hasattr(renderer, 'tile_manager') if renderer else False}")
+                logging.error(
+                    f"Graphics mode but renderer not available: renderer={renderer}, has_tile_mgr={hasattr(renderer, 'tile_manager') if renderer else False}"
+                )
                 return None
         else:
             # In glyph mode, use console character conversion
@@ -91,7 +94,9 @@ class InputCoordinateConverter:
                     pixel_x, pixel_y, window_w, window_h
                 )
             except Exception as e:
-                GameErrorHandler.handle_error(e, "pixel_conversion", "Failed to convert pixels in glyph mode", fatal=False)
+                GameErrorHandler.handle_error(
+                    e, "pixel_conversion", "Failed to convert pixels in glyph mode", fatal=False
+                )
                 return None
 
         # Use graphics_mode to handle coordinate conversion
@@ -124,17 +129,19 @@ class InputCoordinateConverter:
         # This ensures input conversion matches what's actually displayed on screen
         if camera_offset is None:
             # Try to use last_camera_offset from game
-            if hasattr(game, 'last_camera_offset') and game.last_camera_offset:
+            if hasattr(game, "last_camera_offset") and game.last_camera_offset:
                 camera_x = game.last_camera_offset.x
                 camera_y = game.last_camera_offset.y
             else:
                 # Fallback: calculate fresh (shouldn't happen after first render)
                 center_x = game.player.x
                 center_y = game.player.y
-                camera_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                                     center_x - viewport_width // 2))
-                camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                                     center_y - viewport_height // 2))
+                camera_x = max(
+                    0, min(GameConfig.MAP_WIDTH - viewport_width, center_x - viewport_width // 2)
+                )
+                camera_y = max(
+                    0, min(GameConfig.MAP_HEIGHT - viewport_height, center_y - viewport_height // 2)
+                )
         else:
             camera_x = camera_offset.x
             camera_y = camera_offset.y
@@ -144,8 +151,7 @@ class InputCoordinateConverter:
         world_y = viewport_y + camera_y
 
         # Validate against map bounds
-        if not (0 <= world_x < GameConfig.MAP_WIDTH and
-                0 <= world_y < GameConfig.MAP_HEIGHT):
+        if not (0 <= world_x < GameConfig.MAP_WIDTH and 0 <= world_y < GameConfig.MAP_HEIGHT):
             return None
 
         return Position(world_x, world_y)

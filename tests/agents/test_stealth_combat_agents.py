@@ -13,8 +13,9 @@ These agents validate:
 """
 
 import pytest
-from tests.test_agent import GameTestAgent
+
 from game_entities import EnemyState
+from tests.test_agent import GameTestAgent
 
 
 class StealthAgent(GameTestAgent):
@@ -129,15 +130,15 @@ class StealthAgent(GameTestAgent):
         final_states = self.get_enemy_states()
 
         return {
-            'moves_made': moves_made,
-            'was_detected': self.was_detected,
-            'detection_count': self.detection_count,
-            'turns_taken': self.turns_taken,
-            'initial_enemy_count': initial_enemies,
-            'final_enemy_count': len(self.enemies),
-            'initial_states': initial_states,
-            'final_states': final_states,
-            'player_alive': self.player.cpu > 0
+            "moves_made": moves_made,
+            "was_detected": self.was_detected,
+            "detection_count": self.detection_count,
+            "turns_taken": self.turns_taken,
+            "initial_enemy_count": initial_enemies,
+            "final_enemy_count": len(self.enemies),
+            "initial_states": initial_states,
+            "final_states": final_states,
+            "player_alive": self.player.cpu > 0,
         }
 
 
@@ -181,7 +182,7 @@ class CombatAgent(GameTestAgent):
             return None
 
         player_pos = (self.player.x, self.player.y)
-        min_dist = float('inf')
+        min_dist = float("inf")
         nearest = None
 
         for enemy in self.enemies:
@@ -287,20 +288,21 @@ class CombatAgent(GameTestAgent):
         enemies_defeated = initial_enemy_count - final_enemy_count
 
         return {
-            'engaged': engaged,
-            'initial_enemies': initial_enemy_count,
-            'final_enemies': final_enemy_count,
-            'enemies_defeated': enemies_defeated,
-            'initial_hp': initial_hp,
-            'final_hp': self.player.cpu,
-            'hp_lost': initial_hp - self.player.cpu,
-            'player_alive': self.player.cpu > 0,
-            'combat_encounters': self.combat_encounters,
-            'turns_taken': self.turns_taken
+            "engaged": engaged,
+            "initial_enemies": initial_enemy_count,
+            "final_enemies": final_enemy_count,
+            "enemies_defeated": enemies_defeated,
+            "initial_hp": initial_hp,
+            "final_hp": self.player.cpu,
+            "hp_lost": initial_hp - self.player.cpu,
+            "player_alive": self.player.cpu > 0,
+            "combat_encounters": self.combat_encounters,
+            "turns_taken": self.turns_taken,
         }
 
 
 # ===== Tests =====
+
 
 class TestStealthAgent:
     """Test StealthAgent behavior and stealth mechanics."""
@@ -332,10 +334,10 @@ class TestStealthAgent:
         result = agent.run_stealth_attempt(moves=10)
 
         # Should make some moves
-        assert result['moves_made'] >= 0
-        assert result['turns_taken'] >= 0
-        assert isinstance(result['was_detected'], bool)
-        assert result['player_alive']
+        assert result["moves_made"] >= 0
+        assert result["turns_taken"] >= 0
+        assert isinstance(result["was_detected"], bool)
+        assert result["player_alive"]
 
     def test_stealth_agent_tracks_detection(self):
         """Test stealth agent tracks detection events."""
@@ -344,8 +346,8 @@ class TestStealthAgent:
         result = agent.run_stealth_attempt(moves=30)
 
         # Detection tracking should work
-        assert isinstance(result['detection_count'], int)
-        assert result['detection_count'] >= 0
+        assert isinstance(result["detection_count"], int)
+        assert result["detection_count"] >= 0
 
     def test_stealth_agent_monitors_enemy_states(self):
         """Test stealth agent monitors enemy awareness states."""
@@ -405,9 +407,9 @@ class TestCombatAgent:
         result = agent.run_combat_session(max_enemies=2)
 
         # Should attempt engagement
-        assert result['engaged'] >= 0
-        assert result['turns_taken'] >= 0
-        assert result['player_alive']  # Should survive (or have valid reason for dying)
+        assert result["engaged"] >= 0
+        assert result["turns_taken"] >= 0
+        assert result["player_alive"]  # Should survive (or have valid reason for dying)
 
     def test_combat_agent_tracks_results(self):
         """Test combat agent tracks combat results."""
@@ -416,18 +418,18 @@ class TestCombatAgent:
         result = agent.run_combat_session(max_enemies=2)
 
         # All tracking fields should exist
-        assert 'engaged' in result
-        assert 'initial_enemies' in result
-        assert 'final_enemies' in result
-        assert 'enemies_defeated' in result
-        assert 'initial_hp' in result
-        assert 'final_hp' in result
-        assert 'combat_encounters' in result
+        assert "engaged" in result
+        assert "initial_enemies" in result
+        assert "final_enemies" in result
+        assert "enemies_defeated" in result
+        assert "initial_hp" in result
+        assert "final_hp" in result
+        assert "combat_encounters" in result
 
         # Values should be reasonable
-        assert result['enemies_defeated'] >= 0
-        assert result['final_enemies'] >= 0
+        assert result["enemies_defeated"] >= 0
+        assert result["final_enemies"] >= 0
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

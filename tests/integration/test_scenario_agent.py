@@ -6,14 +6,14 @@ Tests concrete scenarios that should work in the game.
 This is the "traditional" testing approach - exact inputs, exact outputs.
 """
 
-import pytest
-import sys
 import os
+import sys
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+import pytest
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from tests.test_agent import GameTestAgent
-from game_entities import Position
 
 
 class TestGameplayScenarios:
@@ -28,8 +28,8 @@ class TestGameplayScenarios:
         agent = GameTestAgent(seed=42)
 
         # Spawn enemies to attack
-        enemy1 = agent.spawn_enemy('bot', agent.player.x + 1, agent.player.y)
-        enemy2 = agent.spawn_enemy('bot', agent.player.x + 2, agent.player.y)
+        enemy1 = agent.spawn_enemy("bot", agent.player.x + 1, agent.player.y)
+        enemy2 = agent.spawn_enemy("bot", agent.player.x + 2, agent.player.y)
 
         initial_heat = agent.player.heat
 
@@ -47,7 +47,7 @@ class TestGameplayScenarios:
                 heat_after_2 = agent.player.heat
                 assert heat_after_2 > heat_after_1, "Heat should keep increasing"
 
-        print(f"\n=== Heat Management ===")
+        print("\n=== Heat Management ===")
         print(f"Initial: {initial_heat}")
         print(f"After attack: {heat_after_1}")
         print(f"Heat gain: +{heat_after_1 - initial_heat}")
@@ -61,23 +61,25 @@ class TestGameplayScenarios:
         agent = GameTestAgent(seed=42)
 
         # Spawn an unaware enemy
-        enemy = agent.spawn_enemy('bot', agent.player.x + 1, agent.player.y)
+        enemy = agent.spawn_enemy("bot", agent.player.x + 1, agent.player.y)
 
         from game_entities import EnemyState
 
         # Should start unaware
-        assert enemy.state == EnemyState.UNAWARE, \
-            f"Enemy started as {enemy.state.name}, expected UNAWARE"
+        assert (
+            enemy.state == EnemyState.UNAWARE
+        ), f"Enemy started as {enemy.state.name}, expected UNAWARE"
 
         # Attack it
         agent.move_player(1, 0)
 
         # Should now be hostile (if it survived)
         if enemy in agent.enemies:
-            assert enemy.state == EnemyState.HOSTILE, \
-                f"Enemy is {enemy.state.name} after attack, expected HOSTILE"
-            print(f"\n=== Enemy State Transition ===")
-            print(f"Transition: UNAWARE -> HOSTILE after taking damage")
+            assert (
+                enemy.state == EnemyState.HOSTILE
+            ), f"Enemy is {enemy.state.name} after attack, expected HOSTILE"
+            print("\n=== Enemy State Transition ===")
+            print("Transition: UNAWARE -> HOSTILE after taking damage")
             print(f"Enemy HP: {enemy.cpu}/{enemy.max_cpu}")
 
     def test_scenario_turn_advancement(self):
@@ -93,14 +95,15 @@ class TestGameplayScenarios:
         agent.wait(5)
 
         # Turn should have advanced
-        assert agent.turn == initial_turn + 5, \
-            f"Turn counter should be {initial_turn + 5}, got {agent.turn}"
+        assert (
+            agent.turn == initial_turn + 5
+        ), f"Turn counter should be {initial_turn + 5}, got {agent.turn}"
 
         # Heat should have decreased (passive cooling)
         # Note: This depends on your game's cooling rate
         final_heat = agent.player.heat
 
-        print(f"\n=== Turn Processing ===")
+        print("\n=== Turn Processing ===")
         print(f"Turns: {initial_turn} -> {agent.turn}")
         print(f"Heat: {initial_heat} -> {final_heat} (change: {final_heat - initial_heat})")
 
@@ -119,7 +122,7 @@ class TestGameplayScenarios:
         gateway_x = agent.game_map.gateway.x
         gateway_y = agent.game_map.gateway.y
 
-        print(f"\n=== Gateway Test ===")
+        print("\n=== Gateway Test ===")
         print(f"Current level: {initial_level}")
         print(f"Player at: ({agent.player.x}, {agent.player.y})")
         print(f"Gateway at: ({gateway_x}, {gateway_y})")
@@ -158,9 +161,12 @@ class TestGameplayScenarios:
                 enemy_x = check_x + dx
                 enemy_y = check_y + dy
 
-                if (0 <= enemy_x < 80 and 0 <= enemy_y < 50 and
-                    (enemy_x, enemy_y) not in agent.game_map.walls):
-                    enemy = agent.spawn_enemy('bot', enemy_x, enemy_y)
+                if (
+                    0 <= enemy_x < 80
+                    and 0 <= enemy_y < 50
+                    and (enemy_x, enemy_y) not in agent.game_map.walls
+                ):
+                    enemy = agent.spawn_enemy("bot", enemy_x, enemy_y)
 
                     initial_hp = agent.player.cpu
 
@@ -168,10 +174,11 @@ class TestGameplayScenarios:
                     agent.wait(5)
 
                     # Player HP should be unchanged
-                    assert agent.player.cpu == initial_hp, \
-                        "Player took damage from enemy through wall!"
+                    assert (
+                        agent.player.cpu == initial_hp
+                    ), "Player took damage from enemy through wall!"
 
-                    print(f"\n=== Wall Collision Test ===")
+                    print("\n=== Wall Collision Test ===")
                     print(f"Enemy at ({enemy_x}, {enemy_y})")
                     print(f"Wall at ({check_x}, {check_y})")
                     print(f"Player at ({player_x}, {player_y})")
@@ -193,10 +200,10 @@ class TestGameplayScenarios:
         spawn_x = agent.player.x + 5
         spawn_y = agent.player.y + 5
 
-        enemy1 = agent.spawn_enemy('bot', spawn_x, spawn_y)
+        enemy1 = agent.spawn_enemy("bot", spawn_x, spawn_y)
 
         # Try to spawn another at same position
-        enemy2 = agent.spawn_enemy('scanner', spawn_x, spawn_y)
+        enemy2 = agent.spawn_enemy("scanner", spawn_x, spawn_y)
 
         # Both exist but should not overlap (unless we allow it)
         assert enemy1 in agent.enemies
@@ -206,7 +213,7 @@ class TestGameplayScenarios:
         pos1 = (enemy1.x, enemy1.y)
         pos2 = (enemy2.x, enemy2.y)
 
-        print(f"\n=== Multi-Spawn Test ===")
+        print("\n=== Multi-Spawn Test ===")
         print(f"Enemy 1 at: {pos1}")
         print(f"Enemy 2 at: {pos2}")
         print(f"Same position: {pos1 == pos2}")

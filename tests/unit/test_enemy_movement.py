@@ -4,8 +4,7 @@ Tests for enemy movement queue system.
 Queue maintains fixed length of 3 for player predictability.
 """
 
-import pytest
-from game_entities import Position, EnemyState
+from game_entities import EnemyState, Position
 from tests.fixtures.simple_fixtures import enemy_builder, map_builder
 
 
@@ -58,8 +57,13 @@ class TestMovementQueueSizeLimit:
         enemy = enemy_builder("patrol", pos=(5, 5))
 
         # Try to add 5 moves
-        full_path = [Position(6, 5), Position(7, 5), Position(8, 5),
-                     Position(9, 5), Position(10, 5)]
+        full_path = [
+            Position(6, 5),
+            Position(7, 5),
+            Position(8, 5),
+            Position(9, 5),
+            Position(10, 5),
+        ]
 
         # Queue should only store first 3
         enemy.move_queue = full_path[:3]
@@ -84,8 +88,7 @@ class TestQueueRefillBehavior:
 
     def test_empty_queue_triggers_refill(self):
         """When queue is empty, enemy should calculate new path."""
-        enemy = enemy_builder("patrol", pos=(10, 10),
-                             patrol_points=[(15, 15), (20, 20)])
+        enemy = enemy_builder("patrol", pos=(10, 10), patrol_points=[(15, 15), (20, 20)])
         game_map = map_builder(width=40, height=40)
 
         # Start with empty queue
@@ -97,8 +100,7 @@ class TestQueueRefillBehavior:
 
     def test_queue_exhaustion_during_patrol(self):
         """Patrol enemy exhausts queue and needs new path to next point."""
-        enemy = enemy_builder("patrol", pos=(10, 10),
-                             patrol_points=[(10, 15), (15, 15)])
+        enemy = enemy_builder("patrol", pos=(10, 10), patrol_points=[(10, 15), (15, 15)])
 
         # Simulate exhausting queue
         enemy.move_queue = [Position(10, 11)]
@@ -115,10 +117,13 @@ class TestStateChangeQueueBehavior:
 
     def test_becoming_hostile_clears_old_patrol_queue(self):
         """When enemy becomes HOSTILE, old patrol queue should be cleared."""
-        enemy = enemy_builder("patrol", pos=(10, 10),
-                             state=EnemyState.UNAWARE,
-                             patrol_points=[(15, 15)],
-                             move_queue=[(11, 10), (12, 10)])
+        enemy = enemy_builder(
+            "patrol",
+            pos=(10, 10),
+            state=EnemyState.UNAWARE,
+            patrol_points=[(15, 15)],
+            move_queue=[(11, 10), (12, 10)],
+        )
 
         # Enemy has patrol queue
         assert len(enemy.move_queue) == 2
@@ -133,9 +138,9 @@ class TestStateChangeQueueBehavior:
 
     def test_alert_state_keeps_queue(self):
         """ALERT state (heard something) may keep partial queue."""
-        enemy = enemy_builder("scanner", pos=(10, 10),
-                             state=EnemyState.UNAWARE,
-                             move_queue=[(11, 10), (12, 10)])
+        enemy = enemy_builder(
+            "scanner", pos=(10, 10), state=EnemyState.UNAWARE, move_queue=[(11, 10), (12, 10)]
+        )
 
         # Enemy becomes ALERT (heard player)
         enemy.state = EnemyState.ALERT
@@ -149,11 +154,11 @@ class TestQueueBlockageRecovery:
 
     def test_blocked_move_in_queue(self):
         """If queued move is blocked, enemy should handle gracefully."""
-        game_map = map_builder(width=30, height=30,
-                              walls=[(11, 10), (12, 10)])  # Block path
+        game_map = map_builder(width=30, height=30, walls=[(11, 10), (12, 10)])  # Block path
 
-        enemy = enemy_builder("scanner", pos=(10, 10),
-                             move_queue=[(11, 10), (12, 10)])  # Blocked path
+        enemy = enemy_builder(
+            "scanner", pos=(10, 10), move_queue=[(11, 10), (12, 10)]
+        )  # Blocked path
 
         # Enemy has moves queued to blocked positions
         assert len(enemy.move_queue) == 2
@@ -166,11 +171,9 @@ class TestQueueBlockageRecovery:
 
     def test_queue_with_partial_blockage(self):
         """Queue where second move is blocked but first is valid."""
-        game_map = map_builder(width=30, height=30,
-                              walls=[(12, 10)])  # Only second move blocked
+        game_map = map_builder(width=30, height=30, walls=[(12, 10)])  # Only second move blocked
 
-        enemy = enemy_builder("scanner", pos=(10, 10),
-                             move_queue=[(11, 10), (12, 10), (13, 10)])
+        enemy = enemy_builder("scanner", pos=(10, 10), move_queue=[(11, 10), (12, 10), (13, 10)])
 
         # First move should be valid
         assert not game_map.is_wall(enemy.move_queue[0])
@@ -212,8 +215,9 @@ class TestPathfindingHelper:
 
     def test_pathfinding_finds_straight_path(self):
         """PathfindingHelper finds basic straight path."""
-        from game_characters import PathfindingHelper
         from unittest.mock import Mock
+
+        from game_characters import PathfindingHelper
 
         game_map = map_builder(width=30, height=30)
         enemy = enemy_builder("scanner", pos=(10, 10))
@@ -227,7 +231,7 @@ class TestPathfindingHelper:
             goal=Position(15, 10),
             game_map=game_map,
             game_engine=game_engine,
-            moving_enemy=enemy
+            moving_enemy=enemy,
         )
 
         assert path is not None, "Should find path"
@@ -237,12 +241,12 @@ class TestPathfindingHelper:
 
     def test_pathfinding_around_walls(self):
         """PathfindingHelper routes around walls."""
-        from game_characters import PathfindingHelper
         from unittest.mock import Mock
 
+        from game_characters import PathfindingHelper
+
         # Create map with wall blocking direct path
-        game_map = map_builder(width=30, height=30,
-                              walls=[(11, 10), (12, 10), (13, 10)])
+        game_map = map_builder(width=30, height=30, walls=[(11, 10), (12, 10), (13, 10)])
         enemy = enemy_builder("scanner", pos=(10, 10))
 
         game_engine = Mock()
@@ -253,7 +257,7 @@ class TestPathfindingHelper:
             goal=Position(15, 10),
             game_map=game_map,
             game_engine=game_engine,
-            moving_enemy=enemy
+            moving_enemy=enemy,
         )
 
         # Should find path around wall (or None if completely blocked)
@@ -262,8 +266,9 @@ class TestPathfindingHelper:
 
     def test_pathfinding_routes_around_enemies(self):
         """PathfindingHelper routes around other enemies."""
-        from game_characters import PathfindingHelper
         from unittest.mock import Mock
+
+        from game_characters import PathfindingHelper
 
         game_map = map_builder(width=30, height=30)
         enemy1 = enemy_builder("scanner", pos=(10, 10))
@@ -277,7 +282,7 @@ class TestPathfindingHelper:
             goal=Position(15, 10),
             game_map=game_map,
             game_engine=game_engine,
-            moving_enemy=enemy1
+            moving_enemy=enemy1,
         )
 
         # Path should exist and route around enemy2
@@ -287,12 +292,15 @@ class TestPathfindingHelper:
             # Check that no step in path goes through enemy2
             for step in path[1:]:  # Skip start position
                 # step is a tuple (y, x), compare correctly
-                assert not (step[0] == enemy2.y and step[1] == enemy2.x), "Path should not go through other enemy"
+                assert not (
+                    step[0] == enemy2.y and step[1] == enemy2.x
+                ), "Path should not go through other enemy"
 
     def test_pathfinding_unreachable_target(self):
         """PathfindingHelper returns None for unreachable targets."""
-        from game_characters import PathfindingHelper
         from unittest.mock import Mock
+
+        from game_characters import PathfindingHelper
 
         # Create map with walls completely surrounding the goal
         walls = []
@@ -311,15 +319,16 @@ class TestPathfindingHelper:
             goal=Position(15, 15),  # Completely walled off
             game_map=game_map,
             game_engine=game_engine,
-            moving_enemy=enemy
+            moving_enemy=enemy,
         )
 
         assert path is None, "Should return None for unreachable target"
 
     def test_pathfinding_path_length_limit(self):
         """PathfindingHelper respects path length limits."""
-        from game_characters import PathfindingHelper
         from unittest.mock import Mock
+
+        from game_characters import PathfindingHelper
 
         game_map = map_builder(width=100, height=100)
         enemy = enemy_builder("scanner", pos=(10, 10))
@@ -334,7 +343,7 @@ class TestPathfindingHelper:
             game_map=game_map,
             game_engine=game_engine,
             moving_enemy=enemy,
-            max_length_multiplier=1.5  # Strict limit
+            max_length_multiplier=1.5,  # Strict limit
         )
 
         # Path should either be None or within reasonable length
@@ -345,8 +354,9 @@ class TestPathfindingHelper:
 
     def test_pathfinding_adjacent_positions(self):
         """PathfindingHelper handles adjacent positions correctly."""
-        from game_characters import PathfindingHelper
         from unittest.mock import Mock
+
+        from game_characters import PathfindingHelper
 
         game_map = map_builder(width=30, height=30)
         enemy = enemy_builder("scanner", pos=(10, 10))
@@ -360,7 +370,7 @@ class TestPathfindingHelper:
             goal=Position(11, 10),
             game_map=game_map,
             game_engine=game_engine,
-            moving_enemy=enemy
+            moving_enemy=enemy,
         )
 
         assert path is not None, "Should find path to adjacent position"
@@ -445,6 +455,7 @@ class TestEnsureQueueFull:
     def test_ensure_queue_full_random_movement(self):
         """Random movement enemies fill queue with random moves."""
         from unittest.mock import Mock
+
         from game_entities import EnemyMovement
 
         enemy = enemy_builder("scanner", pos=(10, 10))
@@ -468,6 +479,7 @@ class TestEnsureQueueFull:
     def test_ensure_queue_full_static_enemy(self):
         """Static enemies don't fill queue."""
         from unittest.mock import Mock
+
         from game_entities import EnemyMovement
 
         enemy = enemy_builder("scanner", pos=(10, 10))
@@ -597,7 +609,9 @@ class TestIsMoveValidFrom:
         game_engine = Mock()
         game_engine.enemies = [enemy]
 
-        is_valid = enemy._is_move_valid_from(Position(15, 15), Position(14, 15), game_map, player, game_engine)
+        is_valid = enemy._is_move_valid_from(
+            Position(15, 15), Position(14, 15), game_map, player, game_engine
+        )
 
         assert is_valid is True
 
@@ -614,7 +628,9 @@ class TestIsMoveValidFrom:
         game_engine = Mock()
         game_engine.enemies = [enemy]
 
-        is_valid = enemy._is_move_valid_from(Position(15, 15), Position(14, 15), game_map, player, game_engine)
+        is_valid = enemy._is_move_valid_from(
+            Position(15, 15), Position(14, 15), game_map, player, game_engine
+        )
 
         assert is_valid is False
 
@@ -632,7 +648,9 @@ class TestIsMoveValidFrom:
         game_engine = Mock()
         game_engine.enemies = [enemy1, enemy2]
 
-        is_valid = enemy1._is_move_valid_from(Position(15, 15), Position(14, 15), game_map, player, game_engine)
+        is_valid = enemy1._is_move_valid_from(
+            Position(15, 15), Position(14, 15), game_map, player, game_engine
+        )
 
         assert is_valid is False
 
@@ -649,7 +667,9 @@ class TestIsMoveValidFrom:
         game_engine = Mock()
         game_engine.enemies = [enemy]
 
-        is_valid = enemy._is_move_valid_from(Position(50, 50), Position(10, 10), game_map, player, game_engine)
+        is_valid = enemy._is_move_valid_from(
+            Position(50, 50), Position(10, 10), game_map, player, game_engine
+        )
 
         assert is_valid is False
 

@@ -6,15 +6,14 @@ Tests VictoryScreen rendering, input handling, and display modes.
 Validates victory message content, layout, and user interaction.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
+
 import tcod
 import tcod.console
 import tcod.event
 
-from game_victory_screen import VictoryScreen
 from game_menu_background import MenuBackground
-from game_entities import Colors
+from game_victory_screen import VictoryScreen
 
 
 class TestVictoryScreenInitialization:
@@ -77,7 +76,7 @@ class TestVictoryScreenRendering:
         mock_background.window_manager.get_window_pixel_dimensions.return_value = (800, 800)
         victory_screen = VictoryScreen(background=mock_background)
 
-        with patch.object(victory_screen, '_clear_text_areas_only') as mock_clear_text:
+        with patch.object(victory_screen, "_clear_text_areas_only") as mock_clear_text:
             victory_screen.render(test_console)
 
             # Should call _clear_text_areas_only instead of console.clear()

@@ -14,9 +14,11 @@ prevents regression and catches issues early in development.
 Reference: .claude/TCOD_GUIDE.md section on coordinate systems
 """
 
-import pytest
-import numpy as np
 from unittest.mock import Mock
+
+import numpy as np
+import pytest
+
 from game_coordinate_helpers import CoordinateHelpers
 
 
@@ -233,14 +235,13 @@ class TestCharToPixelConversion:
         """Test conversion with 1920x1080 window."""
         # Console 80x50, window 1920x1080
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=10, console_y=5,
-            window_width=1920, window_height=1080
+            console_x=10, console_y=5, window_width=1920, window_height=1080
         )
 
         # pixels_per_char_x = 1920 / 80 = 24
         # pixels_per_char_y = 1080 / 50 = 21.6
         expected_x = int(10 * (1920 / 80))  # 10 * 24 = 240
-        expected_y = int(5 * (1080 / 50))   # 5 * 21.6 = 108
+        expected_y = int(5 * (1080 / 50))  # 5 * 21.6 = 108
 
         assert pixel_x == expected_x
         assert pixel_y == expected_y
@@ -248,14 +249,13 @@ class TestCharToPixelConversion:
     def test_char_to_pixel_4k_resolution(self):
         """Test conversion with 4K resolution."""
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=40, console_y=25,
-            window_width=3840, window_height=2160
+            console_x=40, console_y=25, window_width=3840, window_height=2160
         )
 
         # pixels_per_char_x = 3840 / 80 = 48
         # pixels_per_char_y = 2160 / 50 = 43.2
-        expected_x = int(40 * 48)      # 1920
-        expected_y = int(25 * 43.2)    # 1080
+        expected_x = int(40 * 48)  # 1920
+        expected_y = int(25 * 43.2)  # 1080
 
         assert pixel_x == expected_x
         assert pixel_y == expected_y
@@ -263,8 +263,7 @@ class TestCharToPixelConversion:
     def test_char_to_pixel_origin(self):
         """Test conversion at origin (0, 0)."""
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=0, console_y=0,
-            window_width=1280, window_height=800
+            console_x=0, console_y=0, window_width=1280, window_height=800
         )
 
         assert pixel_x == 0
@@ -273,8 +272,10 @@ class TestCharToPixelConversion:
     def test_char_to_pixel_bottom_right(self):
         """Test conversion at bottom-right corner."""
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=79, console_y=49,  # Last valid console position
-            window_width=1920, window_height=1080
+            console_x=79,
+            console_y=49,  # Last valid console position
+            window_width=1920,
+            window_height=1080,
         )
 
         # Should be near but not at window edge (since char occupies space)
@@ -293,8 +294,7 @@ class TestPixelToCharConversion:
     def test_pixel_to_char_standard_click(self):
         """Test converting mouse click to console coordinates."""
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=400, pixel_y=300,
-            window_width=1280, window_height=800
+            pixel_x=400, pixel_y=300, window_width=1280, window_height=800
         )
 
         # pixels_per_tile_x = 1280 / 80 = 16
@@ -307,8 +307,7 @@ class TestPixelToCharConversion:
     def test_pixel_to_char_clamping_beyond_bounds(self):
         """Test that out-of-bounds pixels clamp to console edges."""
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=9999, pixel_y=9999,  # Way beyond window
-            window_width=1280, window_height=800
+            pixel_x=9999, pixel_y=9999, window_width=1280, window_height=800  # Way beyond window
         )
 
         # Should clamp to max valid console position
@@ -318,8 +317,7 @@ class TestPixelToCharConversion:
     def test_pixel_to_char_negative_position(self):
         """Test that negative pixels clamp to (0, 0)."""
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=-100, pixel_y=-200,
-            window_width=1280, window_height=800
+            pixel_x=-100, pixel_y=-200, window_width=1280, window_height=800
         )
 
         assert tile_x == 0, "Negative X should clamp to 0"
@@ -328,8 +326,7 @@ class TestPixelToCharConversion:
     def test_pixel_to_char_origin(self):
         """Test conversion at pixel origin."""
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=0, pixel_y=0,
-            window_width=1920, window_height=1080
+            pixel_x=0, pixel_y=0, window_width=1920, window_height=1080
         )
 
         assert tile_x == 0
@@ -343,8 +340,7 @@ class TestPixelToSpriteGrid:
         """Test converting player sprite position."""
         # Player at viewport (13, 11) with 97x80 tiles renders at (1261, 880)
         grid_x, grid_y = CoordinateHelpers.pixel_to_sprite_grid(
-            pixel_x=1261, pixel_y=880,
-            sprite_tile_width=97, sprite_tile_height=80
+            pixel_x=1261, pixel_y=880, sprite_tile_width=97, sprite_tile_height=80
         )
 
         assert grid_x == 13, "Should convert back to grid x=13"
@@ -353,8 +349,7 @@ class TestPixelToSpriteGrid:
     def test_pixel_to_sprite_grid_origin(self):
         """Test sprite grid conversion at origin."""
         grid_x, grid_y = CoordinateHelpers.pixel_to_sprite_grid(
-            pixel_x=0, pixel_y=0,
-            sprite_tile_width=100, sprite_tile_height=80
+            pixel_x=0, pixel_y=0, sprite_tile_width=100, sprite_tile_height=80
         )
 
         assert grid_x == 0
@@ -364,8 +359,7 @@ class TestPixelToSpriteGrid:
         """Test sprite grid with large tiles (4K resolution)."""
         # 4K window with large sprite tiles
         grid_x, grid_y = CoordinateHelpers.pixel_to_sprite_grid(
-            pixel_x=2000, pixel_y=1600,
-            sprite_tile_width=200, sprite_tile_height=160
+            pixel_x=2000, pixel_y=1600, sprite_tile_width=200, sprite_tile_height=160
         )
 
         assert grid_x == 10  # 2000 / 200
@@ -375,8 +369,7 @@ class TestPixelToSpriteGrid:
         """Test that fractional grid positions round down."""
         # Click at pixel 150 with tile width 100 -> grid 1 (not 1.5)
         grid_x, grid_y = CoordinateHelpers.pixel_to_sprite_grid(
-            pixel_x=150, pixel_y=125,
-            sprite_tile_width=100, sprite_tile_height=100
+            pixel_x=150, pixel_y=125, sprite_tile_width=100, sprite_tile_height=100
         )
 
         assert grid_x == 1, "Should truncate to grid 1"

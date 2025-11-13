@@ -13,10 +13,11 @@ The goal is to catch issues like:
 """
 
 import pytest
-from game_config import GameConfig, GameBalance, RoomGenerationConfig
-from game_characters import Player, Enemy
-from game_inventory import CodeHack, ExploitItem
+
 from data_loading import DataLoader
+from game_characters import Enemy, Player
+from game_config import GameBalance, GameConfig, RoomGenerationConfig
+from game_inventory import CodeHack, ExploitItem
 
 
 class TestRealConfigIntegration:
@@ -47,7 +48,7 @@ class TestRealConfigIntegration:
         from game_entities import Position
 
         game_data = DataLoader.load_game_data()
-        enemy_types = game_data['enemy_types']
+        enemy_types = game_data["enemy_types"]
 
         for enemy_type_id in enemy_types.keys():
             # Should be able to create enemy without errors
@@ -57,10 +58,10 @@ class TestRealConfigIntegration:
             # Verify attributes match JSON (or game-modified values)
             expected = enemy_types[enemy_type_id]
             assert enemy.type == enemy_type_id
-            assert enemy.type_data.symbol == expected['symbol']
-            assert enemy.cpu == expected['cpu']
+            assert enemy.type_data.symbol == expected["symbol"]
+            assert enemy.cpu == expected["cpu"]
             # Vision may be game-enhanced, just verify it exists
-            assert hasattr(enemy.type_data, 'vision')
+            assert hasattr(enemy.type_data, "vision")
             assert enemy.type_data.vision > 0
 
     def test_code_hack_effects_use_real_balance(self):
@@ -74,22 +75,23 @@ class TestRealConfigIntegration:
             class MockMessageLog:
                 def add_message(self, *args, **kwargs):
                     pass
+
             def __init__(self):
                 self.message_log = self.MockMessageLog()
 
         mock_game = MockGame()
 
         # Load balance values from game_rules.json (single source of truth)
-        with open('game_rules.json', 'r') as f:
+        with open("game_rules.json") as f:
             config_data = json.load(f)
 
-        cpu_restore_min = config_data['balance']['cpu_restore_min']
-        cpu_restore_max = config_data['balance']['cpu_restore_max']
+        cpu_restore_min = config_data["balance"]["cpu_restore_min"]
+        cpu_restore_max = config_data["balance"]["cpu_restore_max"]
 
         # Test CPU restore effect
         player.cpu = 50
         code_hack = CodeHack("red", "restore_cpu", "Red Code", "Restores CPU")
-        code_hack._apply_effect('restore_cpu', player, mock_game)
+        code_hack._apply_effect("restore_cpu", player, mock_game)
 
         # Should use real CPU_RESTORE_MIN/MAX from balance config
         assert player.cpu >= 50 + cpu_restore_min or player.cpu == player.max_cpu
@@ -105,21 +107,22 @@ class TestRealConfigIntegration:
             class MockMessageLog:
                 def add_message(self, *args, **kwargs):
                     pass
+
             def __init__(self):
                 self.message_log = self.MockMessageLog()
 
         mock_game = MockGame()
 
         # Load heat reduction value from JSON
-        with open('game_content.json', 'r') as f:
+        with open("game_content.json") as f:
             game_data = json.load(f)
 
-        heat_reduction_instant = game_data['balance']['code_hacks']['heat_reduction_instant']
+        heat_reduction_instant = game_data["balance"]["code_hacks"]["heat_reduction_instant"]
 
         # Test heat reduction effect
         player.heat = 75
         code_hack = CodeHack("blue", "reduce_heat", "Blue Code", "Reduces heat")
-        code_hack._apply_effect('reduce_heat', player, mock_game)
+        code_hack._apply_effect("reduce_heat", player, mock_game)
 
         # Should reduce by exact amount from config
         expected_heat = max(0, 75 - heat_reduction_instant)
@@ -136,31 +139,32 @@ class TestRealConfigIntegration:
 
         # Each config should have required fields
         for level, config in configs.items():
-            assert 'name' in config
-            assert 'enemies' in config
-            assert 'blind_spot_coverage' in config
-            assert 'cooling_nodes' in config
-            assert 'cpu_nodes' in config  # CRITICAL: verify it's cpu_nodes not cpu_recovery_nodes
-            assert 'ghost_nodes' in config
+            assert "name" in config
+            assert "enemies" in config
+            assert "blind_spot_coverage" in config
+            assert "cooling_nodes" in config
+            assert "cpu_nodes" in config  # CRITICAL: verify it's cpu_nodes not cpu_recovery_nodes
+            assert "ghost_nodes" in config
 
     def test_room_generation_config_matches_json(self):
         """Verify RoomGenerationConfig loads correct values from JSON."""
         # Get values from JSON directly
-        with open('game_rules.json', 'r') as f:
+        with open("game_rules.json") as f:
             import json
+
             config_json = json.load(f)
 
-        room_gen = config_json['room_generation']
+        room_gen = config_json["room_generation"]
 
         # Verify class attributes match JSON
-        assert RoomGenerationConfig.MIN_ROOMS_BASE == room_gen['min_rooms_base']
-        assert RoomGenerationConfig.MAX_ROOMS == room_gen['max_rooms']
+        assert RoomGenerationConfig.MIN_ROOMS_BASE == room_gen["min_rooms_base"]
+        assert RoomGenerationConfig.MAX_ROOMS == room_gen["max_rooms"]
         # NOTE: Node/item counts (cooling, cpu, ghost, code_hacks, etc) are now
         # in game_content.json network_configs, not game_rules.json
 
     def test_difficulty_multipliers_accessible(self):
         """Verify all difficulty multipliers can be accessed."""
-        difficulties = ['easy', 'normal', 'hard', 'nightmare']
+        difficulties = ["easy", "normal", "hard", "nightmare"]
 
         for difficulty in difficulties:
             multiplier = GameBalance.get_enemy_difficulty_multiplier(difficulty)
@@ -185,27 +189,27 @@ class TestRealConfigIntegration:
         from game_entities import ExploitDefinition
 
         game_data = DataLoader.load_game_data()
-        exploits = game_data['exploits']
+        exploits = game_data["exploits"]
 
         for exploit_id, exploit_data in exploits.items():
             # Should be able to create exploit without errors
             # ExploitItem takes (exploit_key, exploit_def)
             exploit_def = ExploitDefinition(
-                name=exploit_data['name'],
-                ram=exploit_data['ram'],
-                heat=exploit_data['heat'],
-                range=exploit_data['range'],
-                category=exploit_data['category'],
-                damage=exploit_data['damage'],
-                targeting=exploit_data['targeting'],
-                description=exploit_data['description']
+                name=exploit_data["name"],
+                ram=exploit_data["ram"],
+                heat=exploit_data["heat"],
+                range=exploit_data["range"],
+                category=exploit_data["category"],
+                damage=exploit_data["damage"],
+                targeting=exploit_data["targeting"],
+                description=exploit_data["description"],
             )
             exploit_item = ExploitItem(exploit_id, exploit_def)
 
             # Verify attributes match JSON
             assert exploit_item.exploit_key == exploit_id
-            assert exploit_item.name == exploit_data['name']
-            assert exploit_item.ram_cost == exploit_data['ram']
+            assert exploit_item.name == exploit_data["name"]
+            assert exploit_item.ram_cost == exploit_data["ram"]
 
 
 class TestConfigValueConsistency:
@@ -272,55 +276,61 @@ class TestNoFallbackValuesUsed:
         import json
 
         # Load JSON directly
-        with open('game_rules.json', 'r') as f:
+        with open("game_rules.json") as f:
             config_json = json.load(f)
 
-        balance = config_json['balance']
+        balance = config_json["balance"]
 
         # Verify class attributes match JSON exactly
-        assert GameBalance.HEAT_REDUCTION_NORMAL == balance['heat_reduction_normal']
-        assert GameBalance.HEAT_REDUCTION_BOOSTED == balance['heat_reduction_boosted']
-        assert GameBalance.COOLING_NODE_EFFECT == balance['cooling_node_effect']
-        assert GameBalance.CPU_RECOVERY_AMOUNT == balance['cpu_recovery_amount']
-        assert GameBalance.CPU_RESTORE_MIN == balance['cpu_restore_min']
-        assert GameBalance.CPU_RESTORE_MAX == balance['cpu_restore_max']
-        assert GameBalance.HEAT_REDUCTION_INSTANT == balance['heat_reduction_instant']
+        assert GameBalance.HEAT_REDUCTION_NORMAL == balance["heat_reduction_normal"]
+        assert GameBalance.HEAT_REDUCTION_BOOSTED == balance["heat_reduction_boosted"]
+        assert GameBalance.COOLING_NODE_EFFECT == balance["cooling_node_effect"]
+        assert GameBalance.CPU_RECOVERY_AMOUNT == balance["cpu_recovery_amount"]
+        assert GameBalance.CPU_RESTORE_MIN == balance["cpu_restore_min"]
+        assert GameBalance.CPU_RESTORE_MAX == balance["cpu_restore_max"]
+        assert GameBalance.HEAT_REDUCTION_INSTANT == balance["heat_reduction_instant"]
 
     def test_gameplay_values_come_from_json_not_defaults(self):
         """Verify gameplay values match JSON, not hardcoded defaults."""
         import json
 
-        with open('game_rules.json', 'r') as f:
+        with open("game_rules.json") as f:
             config_json = json.load(f)
 
-        gameplay = config_json['gameplay']
+        gameplay = config_json["gameplay"]
 
         # Verify class attributes match JSON exactly
-        assert GameConfig.DEFAULT_PLAYER_RAM == gameplay['default_player_ram']
-        assert GameConfig.DEFAULT_PLAYER_CPU == gameplay['default_player_cpu']
-        assert GameConfig.MAX_HEAT == gameplay['max_heat']
-        assert GameConfig.MAX_TRACE_LEVEL == gameplay['max_trace_level']
-        assert GameConfig.VIRUS_DAMAGE_PER_TURN == gameplay['virus_damage_per_turn']
+        assert GameConfig.DEFAULT_PLAYER_RAM == gameplay["default_player_ram"]
+        assert GameConfig.DEFAULT_PLAYER_CPU == gameplay["default_player_cpu"]
+        assert GameConfig.MAX_HEAT == gameplay["max_heat"]
+        assert GameConfig.MAX_TRACE_LEVEL == gameplay["max_trace_level"]
+        assert GameConfig.VIRUS_DAMAGE_PER_TURN == gameplay["virus_damage_per_turn"]
 
     def test_cpu_restore_values_only_in_game_config(self):
         """Verify CPU restore values exist only in game_rules.json (single source of truth)."""
         import json
 
         # Load both config files
-        with open('game_rules.json', 'r') as f:
+        with open("game_rules.json") as f:
             config = json.load(f)
-        with open('game_content.json', 'r') as f:
+        with open("game_content.json") as f:
             data = json.load(f)
 
         # Should exist in game_rules.json
-        assert 'cpu_restore_min' in config['balance'], "cpu_restore_min should be in game_rules.json"
-        assert 'cpu_restore_max' in config['balance'], "cpu_restore_max should be in game_rules.json"
+        assert (
+            "cpu_restore_min" in config["balance"]
+        ), "cpu_restore_min should be in game_rules.json"
+        assert (
+            "cpu_restore_max" in config["balance"]
+        ), "cpu_restore_max should be in game_rules.json"
 
         # Should NOT exist in game_content.json (removed to prevent duplication)
-        assert 'cpu_restore_min' not in data.get('balance', {}), \
-            "cpu_restore_min should NOT be in game_content.json (duplicates removed)"
-        assert 'cpu_restore_max' not in data.get('balance', {}), \
-            "cpu_restore_max should NOT be in game_content.json (duplicates removed)"
+        assert "cpu_restore_min" not in data.get(
+            "balance", {}
+        ), "cpu_restore_min should NOT be in game_content.json (duplicates removed)"
+        assert "cpu_restore_max" not in data.get(
+            "balance", {}
+        ), "cpu_restore_max should NOT be in game_content.json (duplicates removed)"
 
 
 class TestEnemyAIUsesRealConfig:
@@ -341,22 +351,29 @@ class TestEnemyAIUsesRealConfig:
 
         # Should match what's in JSON (moved to ai_behavior subsection)
         import json
-        with open('game_rules.json', 'r') as f:
+
+        with open("game_rules.json") as f:
             config = json.load(f)
 
-        ai_behavior = config['balance']['ai_behavior']
-        assert GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE == ai_behavior['enemy_trace_alert_to_hostile']
-        assert GameBalance.ENEMY_TRACE_CONTINUOUS_HOSTILE == ai_behavior['enemy_trace_continuous_hostile']
+        ai_behavior = config["balance"]["ai_behavior"]
+        assert (
+            GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE == ai_behavior["enemy_trace_alert_to_hostile"]
+        )
+        assert (
+            GameBalance.ENEMY_TRACE_CONTINUOUS_HOSTILE
+            == ai_behavior["enemy_trace_continuous_hostile"]
+        )
 
     def test_enemy_memory_uses_real_value(self):
         """Verify enemy memory duration uses real config."""
         assert GameBalance.ENEMY_MEMORY_TURNS > 0
 
         import json
-        with open('game_rules.json', 'r') as f:
+
+        with open("game_rules.json") as f:
             config = json.load(f)
 
-        assert GameBalance.ENEMY_MEMORY_TURNS == config['balance']['enemy_memory_turns']
+        assert GameBalance.ENEMY_MEMORY_TURNS == config["balance"]["enemy_memory_turns"]
 
 
 if __name__ == "__main__":

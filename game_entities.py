@@ -10,15 +10,35 @@ Now streamlined with extracted modules:
 - PositionValidator: Centralized position validation logic
 """
 
-import math
 import logging
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
+
 from data_loading import DataLoader
 
-# Import extracted modules
-from game_entity_enums import EnemyState, EnemyMovement, TargetingMode
+# Import extracted modules (and re-export for backward compatibility)
+from game_entity_enums import EnemyMovement, EnemyState, TargetingMode
 from game_position import Position, parse_coordinate_string
+
+# Explicit exports (prevents ruff from removing "unused" imports)
+__all__ = [
+    # Re-exports from other modules
+    "Position",
+    "parse_coordinate_string",
+    "EnemyState",
+    "EnemyMovement",
+    "TargetingMode",
+    # Classes defined in this file
+    "ColorManager",
+    "ExploitDefinition",
+    "EnemyTypeDefinition",
+    "UpgradeDefinition",
+    "PositionValidator",
+    # Utility functions
+    "clamp",
+    "ensure_color_tuple",
+    "format_position_key",
+    "parse_position_key",
+]
 
 
 class ColorManager:
@@ -34,13 +54,13 @@ class ColorManager:
 
     _instance = None
     _colors = None
-    
+
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
             cls._instance._load_colors()
         return cls._instance
-    
+
     def _load_colors(self):
         """
         Load consolidated cyberspace color palette from JSON configuration.
@@ -57,164 +77,163 @@ class ColorManager:
             self._colors = {}
 
             # Load color effects settings
-            color_effects = config.get('color_effects', {})
-            self._enemy_vision_alpha = color_effects.get('enemy_vision_alpha', 0.25)
-            self._enemy_vision_darken = color_effects.get('enemy_vision_darken_factor', 0.15)
-            logging.info(f"Loaded color effects: enemy_vision_alpha={self._enemy_vision_alpha}, enemy_vision_darken={self._enemy_vision_darken}")
+            color_effects = config.get("color_effects", {})
+            self._enemy_vision_alpha = color_effects.get("enemy_vision_alpha", 0.25)
+            self._enemy_vision_darken = color_effects.get("enemy_vision_darken_factor", 0.15)
+            logging.info(
+                f"Loaded color effects: enemy_vision_alpha={self._enemy_vision_alpha}, enemy_vision_darken={self._enemy_vision_darken}"
+            )
 
             # Ensure colors section exists
-            if 'colors' not in config:
+            if "colors" not in config:
                 error_msg = "CRITICAL CONFIG ERROR: 'colors' section missing from game_rules.json"
                 logging.error(error_msg)
                 logging.error(f"Available sections: {list(config.keys())}")
                 raise KeyError("Required 'colors' section missing from game_rules.json")
 
-            color_config = config['colors']
+            color_config = config["colors"]
 
             # Load ALL color categories dynamically
             for category, items in color_config.items():
-                if category.startswith('_'):  # Skip comment fields
+                if category.startswith("_"):  # Skip comment fields
                     continue
                 if isinstance(items, dict):
                     for name, rgb in items.items():
-                        if name.startswith('_'):  # Skip comment fields
+                        if name.startswith("_"):  # Skip comment fields
                             continue
                         if isinstance(rgb, list) and len(rgb) == 3:
                             self._colors[name.upper()] = tuple(rgb)
 
             # Backward compatibility aliases (old name -> new name)
-            self._create_aliases({
-                # Basic colors
-                'WHITE': 'PURE_WHITE',
-                'BLACK': 'VOID_BLACK',
-                'RED': 'CRIMSON_RED',
-                'GREEN': 'MATRIX_GREEN',
-                'BLUE': 'ELECTRIC_BLUE',
-                'YELLOW': 'NEON_GOLD',
-                'MAGENTA': 'HOT_MAGENTA',
-                'CYAN': 'NEON_CYAN',
-                'LIGHT_GRAY': 'STEEL_GRAY',
-                'DARK_GRAY': 'SHADOW_GRAY',
-                'ORANGE': 'SUNSET_ORANGE',
-                'BRIGHT_RED': 'BLOOD_RED',
-                'BRIGHT_GREEN': 'MATRIX_GREEN',
-                'BRIGHT_BLUE': 'ELECTRIC_BLUE',
-                'BRIGHT_YELLOW': 'NEON_GOLD',
-                'BRIGHT_MAGENTA': 'HOT_MAGENTA',
-                'BRIGHT_CYAN': 'NEON_CYAN',
-                'DARK_GREEN': 'DEEP_GREEN',
-
-                # Game elements (consolidated)
-                'PLAYER': 'MATRIX_GREEN',
-                'ENEMY': 'CRIMSON_RED',
-                'BLIND_SPOT_VISIBLE': 'GHOST_PURPLE',
-                'BLIND_SPOT_REMEMBERED': 'VOID_PURPLE',
-                'FLOOR': 'DIGITAL_FLOOR',
-                'GATEWAY': 'NEON_GOLD',
-                'CPU_RECOVERY': 'CRIMSON_RED',
-                'HEAT_RECOVERY': 'NEON_CYAN',
-                'DATA_PATCH': 'NEON_GOLD',
-                'EXPLOIT_PICKUP': 'ALERT_AMBER',
-                'UPGRADE': 'HOT_MAGENTA',
-                'STORY_FRAGMENT': 'NEON_CYAN',
-
-                # Data codes (renamed)
-                'CRIMSON': 'COMBAT_RED',
-                'AZURE': 'ELECTRIC_BLUE',  # AZURE_BLUE removed, use ELECTRIC_BLUE
-                'AZURE_BLUE': 'ELECTRIC_BLUE',  # Removed duplicate
-                'EMERALD': 'EMERALD_GREEN',
-                'GOLDEN': 'UTILITY_GOLD',
-                'VIOLET': 'PLASMA_VIOLET',
-                'SILVER': 'SILVER_MIST',
-
-                # Message log (consolidated)
-                'CRITICAL': 'CRIMSON_RED',
-                'ERROR': 'ALERT_AMBER',
-                'WARNING': 'NEON_GOLD',
-                'ALERT': 'ALERT_AMBER',
-                'SUCCESS': 'MATRIX_GREEN',
-                'INFO': 'NEON_CYAN',
-                'SYSTEM': 'SYSTEM_PURPLE',
-                'COMBAT': 'NEON_PINK',
-                'STEALTH': 'STEALTH_BLUE',
-                'DEFAULT': 'STEEL_GRAY',  # SILVER_WHITE removed, use STEEL_GRAY
-                'SILVER_WHITE': 'STEEL_GRAY',  # Removed duplicate
-
-                # Enemy states
-                'ENEMY_UNAWARE': 'UNAWARE',
-                'ENEMY_ALERT': 'ALERT',
-                'ENEMY_HOSTILE': 'HOSTILE',
-                'ENEMY_DISABLED': 'DISABLED',
-                'UNAWARE_DARK': 'UNAWARE',  # Removed _dark variants (created programmatically)
-                'ALERT_DARK': 'ALERT',
-                'HOSTILE_DARK': 'HOSTILE',
-
-                # Status effects (consolidated)
-                'VIRUS': 'VIRUS',
-                'SLOW': 'UNAWARE',  # Removed status_effects.slow, use enemies.unaware (same yellow)
-                'INVISIBLE': 'INVISIBLE',
-                'DISABLED': 'DISABLED',  # enemies.disabled still exists
-
-                # UI (consolidated)
-                'UI_BG': 'UI_PANEL',  # from backgrounds
-                'UI_TEXT': 'NEON_CYAN',
-                'UI_ACCENT': 'DEEP_PURPLE',
-                'UI_HIGHLIGHT': 'HOT_MAGENTA',
-                'ELECTRIC_PURPLE': 'DEEP_PURPLE',
-                'HELP_TEXT': 'SHADOW_GRAY',
-                'DIALOGUE_BACKGROUND': 'UI_PANEL',  # backgrounds.dialogue removed, use UI_PANEL
-                'LOG_BG': 'UI_PANEL',  # backgrounds.ui_panel_log removed, use UI_PANEL
-
-                # Removed dark UI backgrounds (consolidated)
-                'VOID': 'VOID_BLACK',  # backgrounds.void removed, use basic.void_black
-                'DEEP_SPACE': 'VOID_BLACK',  # backgrounds.deep_space removed, use VOID_BLACK
-                'UI_PANEL_LOG': 'UI_PANEL',  # backgrounds.ui_panel_log removed, use UI_PANEL
-                'DIALOGUE': 'UI_PANEL',  # backgrounds.dialogue removed, use UI_PANEL
-                'BLIND_SPOT': 'VOID_PURPLE',  # game_elements.blind_spot removed, use VOID_PURPLE
-
-                # Removed terrain_variants duplicates
-                'FLOOR_TERRAIN': 'DIGITAL_FLOOR',  # terrain_variants.floor removed, use game_elements.digital_floor
-                'BLIND_SPOT_TERRAIN': 'VOID_PURPLE',  # terrain_variants.blind_spot removed, use game_elements.void_purple
-
-                # Removed achievement_popup duplicates
-                'ACHIEVEMENT_BACKGROUND': 'POPUP',  # achievement_popup.background removed, use backgrounds.popup
-                'ACHIEVEMENT_NAME': 'PURE_WHITE',  # achievement_popup.name removed, use basic.pure_white
-                'ACHIEVEMENT_BORDER': 'NEON_GOLD',  # achievement_popup.border removed, use basic.neon_gold
-                'ACHIEVEMENT_TITLE': 'NEON_GOLD',  # achievement_popup.title removed, use basic.neon_gold
-
-                # Removed graphics_tint duplicates
-                'NORMAL_TINT': 'PURE_WHITE',  # graphics_tint.normal removed, use basic.pure_white
-
-                # Removed ui_themes duplicates
-                'THEME_CYAN': 'NEON_CYAN',  # ui_themes.cyan removed, use basic.neon_cyan
-                'THEME_AZURE': 'ELECTRIC_BLUE',  # ui_themes.azure removed, use basic.electric_blue
-                'THEME_EMERALD': 'MATRIX_GREEN',  # ui_themes.emerald removed, use basic.matrix_green
-                'THEME_MAGENTA': 'HOT_MAGENTA',  # ui_themes.magenta removed, use basic.hot_magenta
-            })
+            self._create_aliases(
+                {
+                    # Basic colors
+                    "WHITE": "PURE_WHITE",
+                    "BLACK": "VOID_BLACK",
+                    "RED": "CRIMSON_RED",
+                    "GREEN": "MATRIX_GREEN",
+                    "BLUE": "ELECTRIC_BLUE",
+                    "YELLOW": "NEON_GOLD",
+                    "MAGENTA": "HOT_MAGENTA",
+                    "CYAN": "NEON_CYAN",
+                    "LIGHT_GRAY": "STEEL_GRAY",
+                    "DARK_GRAY": "SHADOW_GRAY",
+                    "ORANGE": "SUNSET_ORANGE",
+                    "BRIGHT_RED": "BLOOD_RED",
+                    "BRIGHT_GREEN": "MATRIX_GREEN",
+                    "BRIGHT_BLUE": "ELECTRIC_BLUE",
+                    "BRIGHT_YELLOW": "NEON_GOLD",
+                    "BRIGHT_MAGENTA": "HOT_MAGENTA",
+                    "BRIGHT_CYAN": "NEON_CYAN",
+                    "DARK_GREEN": "DEEP_GREEN",
+                    # Game elements (consolidated)
+                    "PLAYER": "MATRIX_GREEN",
+                    "ENEMY": "CRIMSON_RED",
+                    "BLIND_SPOT_VISIBLE": "GHOST_PURPLE",
+                    "BLIND_SPOT_REMEMBERED": "VOID_PURPLE",
+                    "FLOOR": "DIGITAL_FLOOR",
+                    "GATEWAY": "NEON_GOLD",
+                    "CPU_RECOVERY": "CRIMSON_RED",
+                    "HEAT_RECOVERY": "NEON_CYAN",
+                    "DATA_PATCH": "NEON_GOLD",
+                    "EXPLOIT_PICKUP": "ALERT_AMBER",
+                    "UPGRADE": "HOT_MAGENTA",
+                    "STORY_FRAGMENT": "NEON_CYAN",
+                    # Data codes (renamed)
+                    "CRIMSON": "COMBAT_RED",
+                    "AZURE": "ELECTRIC_BLUE",  # AZURE_BLUE removed, use ELECTRIC_BLUE
+                    "AZURE_BLUE": "ELECTRIC_BLUE",  # Removed duplicate
+                    "EMERALD": "EMERALD_GREEN",
+                    "GOLDEN": "UTILITY_GOLD",
+                    "VIOLET": "PLASMA_VIOLET",
+                    "SILVER": "SILVER_MIST",
+                    # Message log (consolidated)
+                    "CRITICAL": "CRIMSON_RED",
+                    "ERROR": "ALERT_AMBER",
+                    "WARNING": "NEON_GOLD",
+                    "ALERT": "ALERT_AMBER",
+                    "SUCCESS": "MATRIX_GREEN",
+                    "INFO": "NEON_CYAN",
+                    "SYSTEM": "SYSTEM_PURPLE",
+                    "COMBAT": "NEON_PINK",
+                    "STEALTH": "STEALTH_BLUE",
+                    "DEFAULT": "STEEL_GRAY",  # SILVER_WHITE removed, use STEEL_GRAY
+                    "SILVER_WHITE": "STEEL_GRAY",  # Removed duplicate
+                    # Enemy states
+                    "ENEMY_UNAWARE": "UNAWARE",
+                    "ENEMY_ALERT": "ALERT",
+                    "ENEMY_HOSTILE": "HOSTILE",
+                    "ENEMY_DISABLED": "DISABLED",
+                    "UNAWARE_DARK": "UNAWARE",  # Removed _dark variants (created programmatically)
+                    "ALERT_DARK": "ALERT",
+                    "HOSTILE_DARK": "HOSTILE",
+                    # Status effects (consolidated)
+                    "VIRUS": "VIRUS",
+                    "SLOW": "UNAWARE",  # Removed status_effects.slow, use enemies.unaware (same yellow)
+                    "INVISIBLE": "INVISIBLE",
+                    "DISABLED": "DISABLED",  # enemies.disabled still exists
+                    # UI (consolidated)
+                    "UI_BG": "UI_PANEL",  # from backgrounds
+                    "UI_TEXT": "NEON_CYAN",
+                    "UI_ACCENT": "DEEP_PURPLE",
+                    "UI_HIGHLIGHT": "HOT_MAGENTA",
+                    "ELECTRIC_PURPLE": "DEEP_PURPLE",
+                    "HELP_TEXT": "SHADOW_GRAY",
+                    "DIALOGUE_BACKGROUND": "UI_PANEL",  # backgrounds.dialogue removed, use UI_PANEL
+                    "LOG_BG": "UI_PANEL",  # backgrounds.ui_panel_log removed, use UI_PANEL
+                    # Removed dark UI backgrounds (consolidated)
+                    "VOID": "VOID_BLACK",  # backgrounds.void removed, use basic.void_black
+                    "DEEP_SPACE": "VOID_BLACK",  # backgrounds.deep_space removed, use VOID_BLACK
+                    "UI_PANEL_LOG": "UI_PANEL",  # backgrounds.ui_panel_log removed, use UI_PANEL
+                    "DIALOGUE": "UI_PANEL",  # backgrounds.dialogue removed, use UI_PANEL
+                    "BLIND_SPOT": "VOID_PURPLE",  # game_elements.blind_spot removed, use VOID_PURPLE
+                    # Removed terrain_variants duplicates
+                    "FLOOR_TERRAIN": "DIGITAL_FLOOR",  # terrain_variants.floor removed, use game_elements.digital_floor
+                    "BLIND_SPOT_TERRAIN": "VOID_PURPLE",  # terrain_variants.blind_spot removed, use game_elements.void_purple
+                    # Removed achievement_popup duplicates
+                    "ACHIEVEMENT_BACKGROUND": "POPUP",  # achievement_popup.background removed, use backgrounds.popup
+                    "ACHIEVEMENT_NAME": "PURE_WHITE",  # achievement_popup.name removed, use basic.pure_white
+                    "ACHIEVEMENT_BORDER": "NEON_GOLD",  # achievement_popup.border removed, use basic.neon_gold
+                    "ACHIEVEMENT_TITLE": "NEON_GOLD",  # achievement_popup.title removed, use basic.neon_gold
+                    # Removed graphics_tint duplicates
+                    "NORMAL_TINT": "PURE_WHITE",  # graphics_tint.normal removed, use basic.pure_white
+                    # Removed ui_themes duplicates
+                    "THEME_CYAN": "NEON_CYAN",  # ui_themes.cyan removed, use basic.neon_cyan
+                    "THEME_AZURE": "ELECTRIC_BLUE",  # ui_themes.azure removed, use basic.electric_blue
+                    "THEME_EMERALD": "MATRIX_GREEN",  # ui_themes.emerald removed, use basic.matrix_green
+                    "THEME_MAGENTA": "HOT_MAGENTA",  # ui_themes.magenta removed, use basic.hot_magenta
+                }
+            )
 
             # Load backgrounds into main color dict
-            if 'backgrounds' in color_config:
-                for name, rgb in color_config['backgrounds'].items():
-                    if not name.startswith('_') and isinstance(rgb, list):
+            if "backgrounds" in color_config:
+                for name, rgb in color_config["backgrounds"].items():
+                    if not name.startswith("_") and isinstance(rgb, list):
                         self._colors[name.upper()] = tuple(rgb)
 
             # Derived colors for enemy vision ranges (darkened versions for glyph mode)
-            if 'UNAWARE' in self._colors:
-                self._colors['VISION_UNAWARE'] = self._darken_color(self._colors['UNAWARE'], self._enemy_vision_darken)
-            if 'ALERT' in self._colors:
-                self._colors['VISION_ALERT'] = self._darken_color(self._colors['ALERT'], self._enemy_vision_darken)
-            if 'HOSTILE' in self._colors:
-                self._colors['VISION_HOSTILE'] = self._darken_color(self._colors['HOSTILE'], self._enemy_vision_darken)
+            if "UNAWARE" in self._colors:
+                self._colors["VISION_UNAWARE"] = self._darken_color(
+                    self._colors["UNAWARE"], self._enemy_vision_darken
+                )
+            if "ALERT" in self._colors:
+                self._colors["VISION_ALERT"] = self._darken_color(
+                    self._colors["ALERT"], self._enemy_vision_darken
+                )
+            if "HOSTILE" in self._colors:
+                self._colors["VISION_HOSTILE"] = self._darken_color(
+                    self._colors["HOSTILE"], self._enemy_vision_darken
+                )
 
             # LOG_BORDER uses UI text color
-            if 'NEON_CYAN' in self._colors:
-                self._colors['LOG_BORDER'] = self._colors['NEON_CYAN']
+            if "NEON_CYAN" in self._colors:
+                self._colors["LOG_BORDER"] = self._colors["NEON_CYAN"]
 
-        except KeyError as e:
+        except KeyError:
             # Re-raise KeyError to fail immediately
             raise
         except Exception as e:
-            error_msg = f"CRITICAL CONFIG ERROR: Failed to load colors from game_rules.json"
+            error_msg = "CRITICAL CONFIG ERROR: Failed to load colors from game_rules.json"
             logging.error(error_msg)
             logging.error(f"Exception: {str(e)}")
             raise RuntimeError(f"Failed to load colors: {e}") from e
@@ -229,8 +248,8 @@ class ColorManager:
         for old_name, new_name in alias_map.items():
             if new_name in self._colors:
                 self._colors[old_name] = self._colors[new_name]
-    
-    def _darken_color(self, color: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
+
+    def _darken_color(self, color: tuple[int, int, int], factor: float) -> tuple[int, int, int]:
         """
         Darken a color by multiplying each RGB component by the factor.
 
@@ -243,7 +262,7 @@ class ColorManager:
         """
         return tuple(int(c * factor) for c in color)
 
-    def get_color(self, name: str) -> Tuple[int, int, int]:
+    def get_color(self, name: str) -> tuple[int, int, int]:
         """
         Get color by name (case-insensitive).
 
@@ -259,9 +278,12 @@ class ColorManager:
         name_upper = name.upper()
         if name_upper not in self._colors:
             import logging
+
             logging.error(f"CRITICAL CONFIG ERROR: Color '{name}' not found in game configuration")
             logging.error(f"Available colors: {sorted(self._colors.keys())}")
-            raise KeyError(f"Color '{name}' not found in configuration. Check game_rules.json colors section.")
+            raise KeyError(
+                f"Color '{name}' not found in configuration. Check game_rules.json colors section."
+            )
         return self._colors[name_upper]
 
     @property
@@ -270,7 +292,9 @@ class ColorManager:
         return self._enemy_vision_alpha
 
     @staticmethod
-    def interpolate_color(color1: Tuple[int, int, int], color2: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
+    def interpolate_color(
+        color1: tuple[int, int, int], color2: tuple[int, int, int], factor: float
+    ) -> tuple[int, int, int]:
         """
         Interpolate between two colors.
 
@@ -298,27 +322,29 @@ class Colors:
     Provides attribute-style access to colors (e.g., Colors.WHITE, Colors.ENEMY_HOSTILE).
     Delegates to the singleton ColorManager instance under the hood.
     """
-    
+
     _manager = None
-    
+
     def __init__(self):
         if Colors._manager is None:
             Colors._manager = ColorManager()
-    
+
     def __getattr__(self, name: str):
         if Colors._manager is None:
             Colors._manager = ColorManager()
         return Colors._manager.get_color(name)
-    
+
     @classmethod
-    def get_color(cls, name: str) -> Tuple[int, int, int]:
+    def get_color(cls, name: str) -> tuple[int, int, int]:
         """Get color by name."""
         if cls._manager is None:
             cls._manager = ColorManager()
         return cls._manager.get_color(name)
-    
+
     @staticmethod
-    def interpolate_color(color1: Tuple[int, int, int], color2: Tuple[int, int, int], factor: float) -> Tuple[int, int, int]:
+    def interpolate_color(
+        color1: tuple[int, int, int], color2: tuple[int, int, int], factor: float
+    ) -> tuple[int, int, int]:
         """Interpolate between two colors by the given factor (0.0 to 1.0)."""
         return ColorManager.interpolate_color(color1, color2, factor)
 
@@ -331,7 +357,7 @@ Colors = Colors()
 # (Position, parse_coordinate_string from game_position.py)
 
 
-def ensure_color_tuple(color) -> Tuple[int, int, int]:
+def ensure_color_tuple(color) -> tuple[int, int, int]:
     """Ensure color is a valid RGB tuple."""
     if isinstance(color, str):
         # Handle string color names - convert to Colors class attributes
@@ -349,6 +375,7 @@ def ensure_color_tuple(color) -> Tuple[int, int, int]:
 @dataclass
 class EnemyTypeDefinition:
     """Definition of an enemy type with all its properties."""
+
     symbol: str
     cpu: int
     vision: int
@@ -361,6 +388,7 @@ class EnemyTypeDefinition:
 @dataclass
 class ExploitDefinition:
     """Definition of an exploit with all its properties."""
+
     name: str
     ram: int
     heat: int
@@ -409,9 +437,10 @@ class ExploitDefinition:
 @dataclass
 class UpgradeDefinition:
     """Definition of an upgrade item."""
+
     name: str
     symbol: str
-    color: Tuple[int, int, int]
+    color: tuple[int, int, int]
     stat_type: str
     bonus_amount: int
     description: str = ""  # Add missing description field
@@ -445,7 +474,8 @@ def format_position_key(pos: Position) -> str:
     """
     return f"{pos.x},{pos.y}"
 
-def parse_position_key(key: str) -> Optional[Position]:
+
+def parse_position_key(key: str) -> Position | None:
     """
     Parse string key back to Position.
 
@@ -456,7 +486,7 @@ def parse_position_key(key: str) -> Optional[Position]:
         Position object, or None if parsing fails
     """
     try:
-        x, y = map(int, key.split(','))
+        x, y = map(int, key.split(","))
         return Position(x, y)
     except (ValueError, AttributeError) as e:
         # Expected for invalid coordinate strings - return None to signal parsing failure
@@ -498,18 +528,27 @@ class PositionValidator:
     @staticmethod
     def is_not_on_border(position: Position, width: int, height: int) -> bool:
         """Check if position is not on the map border."""
-        return (position.x != 0 and position.x != width - 1 and
-                position.y != 0 and position.y != height - 1)
+        return (
+            position.x != 0
+            and position.x != width - 1
+            and position.y != 0
+            and position.y != height - 1
+        )
 
     @staticmethod
     def is_basic_valid_position(position: Position, game_map) -> bool:
         """Basic position validation - within bounds and not a wall."""
-        return (PositionValidator.is_within_bounds(position, game_map.width, game_map.height) and
-                game_map.is_valid_position(position))
+        return PositionValidator.is_within_bounds(
+            position, game_map.width, game_map.height
+        ) and game_map.is_valid_position(position)
 
     @staticmethod
-    def is_valid_for_placement(position: Position, game_map, min_distance_from_spawn: float = 5.0,
-                              check_existing_items: bool = False) -> bool:
+    def is_valid_for_placement(
+        position: Position,
+        game_map,
+        min_distance_from_spawn: float = 5.0,
+        check_existing_items: bool = False,
+    ) -> bool:
         """Check if position is valid for item/node placement.
 
         Ensures items don't spawn on gateway or other critical locations.
@@ -517,12 +556,19 @@ class PositionValidator:
         from game_config import GameConfig
 
         # Boundary and wall check
-        if not (0 < position.x < GameConfig.MAP_WIDTH - 1 and 0 < position.y < GameConfig.MAP_HEIGHT - 1
-                and game_map.is_valid_position(position)):
+        if not (
+            0 < position.x < GameConfig.MAP_WIDTH - 1
+            and 0 < position.y < GameConfig.MAP_HEIGHT - 1
+            and game_map.is_valid_position(position)
+        ):
             return False
 
         # Gateway check - never place items on gateway
-        if game_map.gateway and position.x == game_map.gateway.x and position.y == game_map.gateway.y:
+        if (
+            game_map.gateway
+            and position.x == game_map.gateway.x
+            and position.y == game_map.gateway.y
+        ):
             return False
 
         # Spawn distance check
@@ -533,22 +579,41 @@ class PositionValidator:
         # Check existing items
         if check_existing_items:
             pos_tuple = (position.x, position.y)
-            if any(pos_tuple in items for items in [game_map.code_hacks, game_map.cooling_nodes,
-                   game_map.cpu_recovery_nodes, game_map.ghost_nodes, game_map.exploit_pickups]):
+            if any(
+                pos_tuple in items
+                for items in [
+                    game_map.code_hacks,
+                    game_map.cooling_nodes,
+                    game_map.cpu_recovery_nodes,
+                    game_map.ghost_nodes,
+                    game_map.exploit_pickups,
+                ]
+            ):
                 return False
 
         return True
 
     @staticmethod
-    def is_valid_for_enemy_placement(position: Position, game_map, enemies_list, player_position: Position,
-                                   check_existing_items: bool = True) -> bool:
+    def is_valid_for_enemy_placement(
+        position: Position,
+        game_map,
+        enemies_list,
+        player_position: Position,
+        check_existing_items: bool = True,
+    ) -> bool:
         """Check if position is valid for enemy placement."""
-        return (position.x != player_position.x or position.y != player_position.y) and \
-               PositionValidator.is_valid_for_placement(position, game_map, 12.0, check_existing_items) and \
-               (position.x, position.y) not in {(e.x, e.y) for e in enemies_list}
+        return (
+            (position.x != player_position.x or position.y != player_position.y)
+            and PositionValidator.is_valid_for_placement(
+                position, game_map, 12.0, check_existing_items
+            )
+            and (position.x, position.y) not in {(e.x, e.y) for e in enemies_list}
+        )
 
     @staticmethod
-    def is_valid_for_enemy_movement(position: Position, game_map, enemies_list, player_position: Position, current_enemy) -> bool:
+    def is_valid_for_enemy_movement(
+        position: Position, game_map, enemies_list, player_position: Position, current_enemy
+    ) -> bool:
         """Check if position is valid for enemy movement."""
         # Basic position validation
         if not PositionValidator.is_basic_valid_position(position, game_map):
@@ -560,7 +625,11 @@ class PositionValidator:
 
         # Can't move to a position occupied by another enemy
         for other_enemy in enemies_list:
-            if other_enemy != current_enemy and other_enemy.x == position.x and other_enemy.y == position.y:
+            if (
+                other_enemy != current_enemy
+                and other_enemy.x == position.x
+                and other_enemy.y == position.y
+            ):
                 return False
 
         return True
@@ -584,8 +653,10 @@ class PositionValidator:
         from game_config import GameConfig
 
         # Check bounds with margin
-        if not (margin <= position.x < GameConfig.MAP_WIDTH - margin and
-                margin <= position.y < GameConfig.MAP_HEIGHT - margin):
+        if not (
+            margin <= position.x < GameConfig.MAP_WIDTH - margin
+            and margin <= position.y < GameConfig.MAP_HEIGHT - margin
+        ):
             return False
 
         # Must be walkable (not a wall)

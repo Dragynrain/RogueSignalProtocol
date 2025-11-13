@@ -6,11 +6,11 @@ Uses ASCII-only output to avoid Windows terminal encoding issues.
 
 import json
 import sys
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 
-def flatten_dict(d, parent_key='', sep='.'):
+def flatten_dict(d, parent_key="", sep="."):
     """Flatten nested dictionary into dot-notation keys."""
     items = []
     for k, v in d.items():
@@ -28,7 +28,7 @@ def compare_all_json_files(file_paths):
     # Load and flatten all files
     all_data = {}
     for file_path in file_paths:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
         all_data[file_path.name] = flatten_dict(data)
 
@@ -41,9 +41,9 @@ def compare_all_json_files(file_paths):
 
     # Filter to only keys that appear in 2+ files
     duplicates = {
-        'metadata': [],       # Metadata fields (intentionally duplicated)
-        'matching': [],       # Same key, same value across files
-        'conflicting': [],    # Same key, different values
+        "metadata": [],  # Metadata fields (intentionally duplicated)
+        "matching": [],  # Same key, same value across files
+        "conflicting": [],  # Same key, different values
     }
 
     for key, locations in key_locations.items():
@@ -51,8 +51,8 @@ def compare_all_json_files(file_paths):
             continue  # Not a duplicate
 
         # Check if it's a metadata field
-        if key.startswith('metadata.'):
-            duplicates['metadata'].append((key, locations))
+        if key.startswith("metadata."):
+            duplicates["metadata"].append((key, locations))
             continue
 
         # Check if all values match
@@ -60,9 +60,9 @@ def compare_all_json_files(file_paths):
         all_match = all(loc[1] == first_value for loc in locations)
 
         if all_match:
-            duplicates['matching'].append((key, locations))
+            duplicates["matching"].append((key, locations))
         else:
-            duplicates['conflicting'].append((key, locations))
+            duplicates["conflicting"].append((key, locations))
 
     return duplicates
 
@@ -101,9 +101,7 @@ def main():
     duplicates = compare_all_json_files(json_files)
 
     total_duplicates = (
-        len(duplicates['metadata']) +
-        len(duplicates['matching']) +
-        len(duplicates['conflicting'])
+        len(duplicates["metadata"]) + len(duplicates["matching"]) + len(duplicates["conflicting"])
     )
 
     if total_duplicates == 0:
@@ -114,42 +112,42 @@ def main():
     print()
 
     # Report conflicting duplicates (CRITICAL)
-    if duplicates['conflicting']:
+    if duplicates["conflicting"]:
         print("=" * 80)
         print(f"CONFLICTING DUPLICATES ({len(duplicates['conflicting'])})")
         print("Same key exists in multiple files with DIFFERENT values - CRITICAL ISSUE")
         print("=" * 80)
         print()
 
-        for key, locations in duplicates['conflicting']:
+        for key, locations in duplicates["conflicting"]:
             print(f"Key: {key}")
             for filename, value in locations:
                 print(f"  {filename}: {value}")
             print()
 
     # Report metadata duplicates (INTENTIONAL)
-    if duplicates['metadata']:
+    if duplicates["metadata"]:
         print("=" * 80)
         print(f"METADATA DUPLICATES ({len(duplicates['metadata'])})")
         print("Metadata fields (version tracking) - INTENTIONAL")
         print("=" * 80)
         print()
 
-        for key, locations in duplicates['metadata']:
+        for key, locations in duplicates["metadata"]:
             print(f"Key: {key}")
             for filename, value in locations:
                 print(f"  {filename}: {value}")
             print()
 
     # Report matching duplicates (REDUNDANT)
-    if duplicates['matching']:
+    if duplicates["matching"]:
         print("=" * 80)
         print(f"MATCHING DUPLICATES ({len(duplicates['matching'])})")
         print("Same key exists in multiple files with SAME value - REDUNDANT")
         print("=" * 80)
         print()
 
-        for key, locations in duplicates['matching']:
+        for key, locations in duplicates["matching"]:
             print(f"Key: {key}")
             print(f"  Value: {locations[0][1]}")
             print(f"  Files: {', '.join(loc[0] for loc in locations)}")
@@ -160,28 +158,28 @@ def main():
     print("=" * 80)
     print()
 
-    if duplicates['conflicting']:
+    if duplicates["conflicting"]:
         print("CRITICAL: CONFLICTING DUPLICATES FOUND")
         print("  - Same key with different values in different files")
         print("  - Code may be using wrong value depending on load order")
         print("  - ACTION REQUIRED: Remove from one file, establish single source of truth")
         print()
 
-    if duplicates['metadata']:
+    if duplicates["metadata"]:
         print("METADATA DUPLICATES:")
         print("  - These are intentional for version consistency tracking")
         print("  - test_config_consistency.py verifies versions match")
         print("  - NO ACTION NEEDED (working as designed)")
         print()
 
-    if duplicates['matching']:
+    if duplicates["matching"]:
         print("MATCHING DUPLICATES:")
         print("  - These are redundant but not breaking")
         print("  - Consider removing duplicates to reduce maintenance burden")
         print("  - ACTION OPTIONAL: Consolidate to single source of truth")
         print()
 
-    if not duplicates['conflicting']:
+    if not duplicates["conflicting"]:
         print("[OK] No critical issues found - all duplicates are intentional or benign")
         return 0
 

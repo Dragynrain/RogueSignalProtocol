@@ -7,19 +7,18 @@ Displays enemy sprites, item sprites alongside descriptions using SDL rendering.
 Uses same sprite scale as in-game for consistency. Supports page navigation.
 """
 
-import tcod
 import logging
 import textwrap
-from typing import List, Tuple, Optional
 
-from game_config import GameConfig, GameBalance
-from game_entities import Colors, ensure_color_tuple
-from game_ui import render_char_safe, UniversalInputHandler
-from data_loading import DataLoader
+import tcod
+
 from game_color_manager import ColorManager
+from game_config import GameConfig
 from game_coordinate_helpers import CoordinateHelpers
-from game_screen_utilities import ScreenRenderingUtils
+from game_entities import Colors
 from game_help_content import HelpContent
+from game_screen_utilities import ScreenRenderingUtils
+from game_ui import UniversalInputHandler, render_char_safe
 
 
 class GraphicalHelpMenu:
@@ -104,13 +103,13 @@ class GraphicalHelpMenu:
         row2_sprite_y = row2_label_y + 2
         sprites = [
             # Row 1: Player, Floor, Wall
-            ('player', 21, row1_sprite_y, 1.0),
-            ('floor', 40, row1_sprite_y, 1.0),
-            ('wall', 59, row1_sprite_y, 1.0),
+            ("player", 21, row1_sprite_y, 1.0),
+            ("floor", 40, row1_sprite_y, 1.0),
+            ("wall", 59, row1_sprite_y, 1.0),
             # Row 2: Blind Spot, Gateway, Story Fragment
-            ('blind_spot', 21, row2_sprite_y, 1.0),
-            ('gateway', 40, row2_sprite_y, 1.0),
-            ('story_fragment', 59, row2_sprite_y, 1.0),
+            ("blind_spot", 21, row2_sprite_y, 1.0),
+            ("gateway", 40, row2_sprite_y, 1.0),
+            ("story_fragment", 59, row2_sprite_y, 1.0),
         ]
 
         # Continue with OBJECTIVE & MECHANICS after map symbols
@@ -142,16 +141,16 @@ class GraphicalHelpMenu:
 
         # Movement - left-aligned block, centered as group
         y += 2
-        movement_text = [f"{label}: {desc}" for label, desc in controls['movement']]
+        movement_text = [f"{label}: {desc}" for label, desc in controls["movement"]]
         block_x = utils.center_block_x(movement_text)
-        for label, desc in controls['movement']:
+        for label, desc in controls["movement"]:
             text = f"{label}: {desc}"
             text_lines.append((block_x, y, text, Colors.WHITE))
             y += 1
 
         # Screen shortcuts - left-aligned block, centered as group
         y += 1
-        screens = controls['screens']
+        screens = controls["screens"]
         screen_text = [f"{label}: {desc}" for label, desc in screens]
         block_x = utils.center_block_x(screen_text)
         for label, desc in screens:
@@ -161,9 +160,9 @@ class GraphicalHelpMenu:
 
         # Inventory controls - left-aligned block, centered as group
         y += 1
-        inventory_text = [f"{label}: {desc}" for label, desc in controls['inventory']]
+        inventory_text = [f"{label}: {desc}" for label, desc in controls["inventory"]]
         block_x = utils.center_block_x(inventory_text)
-        for label, desc in controls['inventory']:
+        for label, desc in controls["inventory"]:
             text = f"{label}: {desc}"
             text_lines.append((block_x, y, text, Colors.WHITE))
             y += 1
@@ -171,7 +170,7 @@ class GraphicalHelpMenu:
         # Mouse - left-aligned block, centered as group
         y += 1
         mouse_text = []
-        for label, desc in controls['mouse']:
+        for label, desc in controls["mouse"]:
             if "Click" in label:
                 mouse_text.append(f"Mouse: {label} to {desc.lower()}")
             elif "Wheel" in label:
@@ -179,20 +178,27 @@ class GraphicalHelpMenu:
             else:
                 mouse_text.append(f"Right-click to {desc.lower()}")
         block_x = utils.center_block_x(mouse_text)
-        for i, (label, desc) in enumerate(controls['mouse']):
-            text_lines.append((block_x, y, mouse_text[i], Colors.WHITE if "Right" not in label else Colors.LIGHT_GRAY))
+        for i, (label, desc) in enumerate(controls["mouse"]):
+            text_lines.append(
+                (
+                    block_x,
+                    y,
+                    mouse_text[i],
+                    Colors.WHITE if "Right" not in label else Colors.LIGHT_GRAY,
+                )
+            )
             y += 1
 
         # Debug
-        for label, desc in controls['debug']:
+        for label, desc in controls["debug"]:
             text = f"{label}: {desc}"
             text_lines.append((utils.center_x(text), y, text, Colors.LIGHT_GRAY))
             y += 1
 
         return {
-            'title': 'MAP, OBJECTIVE, & CONTROLS (Page 1/3)',
-            'sprites': sprites,
-            'text_lines': text_lines
+            "title": "MAP, OBJECTIVE, & CONTROLS (Page 1/3)",
+            "sprites": sprites,
+            "text_lines": text_lines,
         }
 
     def _build_page_2(self) -> dict:
@@ -201,31 +207,40 @@ class GraphicalHelpMenu:
 
         # Load enemy data from HelpContent
         enemies = HelpContent.get_enemy_data()
-        enemy_order = ['Scanner', 'Firewall', 'Patrol', 'Bot', 'Hunter', 'Virus', 'Inhibitor', 'Admin Avatar']
+        enemy_order = [
+            "Scanner",
+            "Firewall",
+            "Patrol",
+            "Bot",
+            "Hunter",
+            "Virus",
+            "Inhibitor",
+            "Admin Avatar",
+        ]
 
         # Calculate centered two-column layout
         # Left column width: ~25 chars, Gap: 8 chars, Right column width: ~30 chars
         # Total: 63 chars, centered on 80-char screen = start at (80-63)/2 = 8.5 ~= 9
         left_col_start = 9
         left_sprite_x = 7  # Sprite slightly left of text
-        left_text_x = 9    # Text 2 chars right of sprite position (same gap as right column)
+        left_text_x = 9  # Text 2 chars right of sprite position (same gap as right column)
 
         column_gap = 8
         right_col_start = left_col_start + 25 + column_gap  # = 42
         right_sprite_x = 40  # Sprite slightly left of text
-        right_text_x = 42    # Text 2 chars right of sprite position
+        right_text_x = 42  # Text 2 chars right of sprite position
 
         # Sprites - left column power-ups, right column enemies
         sprites = [
             # LEFT COLUMN - Power-ups
-            ('codehack', left_sprite_x, 8, 1.0),
-            ('exploit', left_sprite_x, 13, 1.0),
-            ('cpu_node', left_sprite_x, 18, 1.0),
-            ('cooling_node', left_sprite_x, 23, 1.0),
-            ('ghost_node', left_sprite_x, 28, 1.0),
-            ('cpu_upgrade', left_sprite_x, 33, 1.0),
-            ('ram_upgrade', left_sprite_x, 38, 1.0),
-            ('cooling_upgrade', left_sprite_x, 43, 1.0),
+            ("codehack", left_sprite_x, 8, 1.0),
+            ("exploit", left_sprite_x, 13, 1.0),
+            ("cpu_node", left_sprite_x, 18, 1.0),
+            ("cooling_node", left_sprite_x, 23, 1.0),
+            ("ghost_node", left_sprite_x, 28, 1.0),
+            ("cpu_upgrade", left_sprite_x, 33, 1.0),
+            ("ram_upgrade", left_sprite_x, 38, 1.0),
+            ("cooling_upgrade", left_sprite_x, 43, 1.0),
         ]
 
         # RIGHT COLUMN - Enemy sprites (more spacing between enemies)
@@ -277,20 +292,18 @@ class GraphicalHelpMenu:
             if enemy_name in enemies and i < len(enemy_y_positions):
                 data = enemies[enemy_name]
                 y = enemy_y_positions[i]
-                behavior = data['behavior']
+                behavior = data["behavior"]
                 color = HelpContent.ENEMY_COLORS[behavior]
 
                 text_lines.append((right_text_x, y, enemy_name, color))
 
                 # Format description line - always white
-                desc = f"{data['cpu']} / {data['vision']} / {data['damage']} - {data['description']}"
+                desc = (
+                    f"{data['cpu']} / {data['vision']} / {data['damage']} - {data['description']}"
+                )
                 text_lines.append((right_text_x, y + 1, desc, Colors.WHITE))
 
-        return {
-            'title': 'ITEMS & ENEMIES (Page 2/3)',
-            'sprites': sprites,
-            'text_lines': text_lines
-        }
+        return {"title": "ITEMS & ENEMIES (Page 2/3)", "sprites": sprites, "text_lines": text_lines}
 
     def _build_page_3(self) -> dict:
         """Page 3/3: EXPLOITS & STATUS EFFECTS (2-column layout, no sprites)."""
@@ -310,7 +323,7 @@ class GraphicalHelpMenu:
         text_lines.append((left_x, y_left, "COMBAT EXPLOITS:", Colors.CYAN))
         y_left += 2
 
-        for name, desc, color in exploits['combat']:
+        for name, desc, color in exploits["combat"]:
             text_lines.append((left_x + 1, y_left, name, color))  # Name in color
             y_left += 1
             text_lines.append((left_x + 1, y_left, desc, Colors.WHITE))  # Description in white
@@ -322,7 +335,7 @@ class GraphicalHelpMenu:
         text_lines.append((left_x, y_left, "STEALTH EXPLOITS:", Colors.CYAN))
         y_left += 2
 
-        for name, desc, color in exploits['stealth']:
+        for name, desc, color in exploits["stealth"]:
             text_lines.append((left_x + 1, y_left, name, color))  # Name in color
             y_left += 1
             text_lines.append((left_x + 1, y_left, desc, Colors.WHITE))  # Description in white
@@ -334,7 +347,7 @@ class GraphicalHelpMenu:
         text_lines.append((left_x, y_left, "UTILITY EXPLOITS:", Colors.CYAN))
         y_left += 2
 
-        for name, desc, color in exploits['utility']:
+        for name, desc, color in exploits["utility"]:
             text_lines.append((left_x + 1, y_left, name, color))  # Name in color
             y_left += 1
             text_lines.append((left_x + 1, y_left, desc, Colors.WHITE))  # Description in white
@@ -345,7 +358,7 @@ class GraphicalHelpMenu:
         text_lines.append((right_x, y_right, "STATUS EFFECTS:", Colors.CYAN))
         y_right += 2
 
-        for name, desc, color in effects['positive']:
+        for name, desc, color in effects["positive"]:
             text_lines.append((right_x + 1, y_right, name, color))  # Name in color
             y_right += 1
             text_lines.append((right_x + 1, y_right, desc, Colors.WHITE))  # Description in white
@@ -353,7 +366,7 @@ class GraphicalHelpMenu:
 
         y_right += 1  # Blank line between positive and negative effects
 
-        for name, desc, color in effects['negative']:
+        for name, desc, color in effects["negative"]:
             text_lines.append((right_x + 1, y_right, name, color))  # Name in color
             y_right += 1
             text_lines.append((right_x + 1, y_right, desc, Colors.WHITE))  # Description in white
@@ -377,9 +390,9 @@ class GraphicalHelpMenu:
             y_right += 2
 
         return {
-            'title': 'EXPLOITS & STATUS EFFECTS (Page 3/3)',
-            'sprites': [],  # Text-only page
-            'text_lines': text_lines
+            "title": "EXPLOITS & STATUS EFFECTS (Page 3/3)",
+            "sprites": [],  # Text-only page
+            "text_lines": text_lines,
         }
 
     # Rendering methods (unchanged from original)
@@ -388,7 +401,9 @@ class GraphicalHelpMenu:
         self._build_pages()
 
         if not self.pages or self.current_page >= len(self.pages):
-            logging.error(f"Invalid page state: current={self.current_page}, total={len(self.pages)}")
+            logging.error(
+                f"Invalid page state: current={self.current_page}, total={len(self.pages)}"
+            )
             return
 
         page = self.pages[self.current_page]
@@ -404,14 +419,14 @@ class GraphicalHelpMenu:
 
         page = self.pages[self.current_page]
 
-        if not page.get('sprites'):
+        if not page.get("sprites"):
             return
 
         renderer = self.context.sdl_renderer
         # Get actual window dimensions in pixels (not console dimensions!)
         window_width, window_height = self.context.sdl_window.size
 
-        for sprite_data in page['sprites']:
+        for sprite_data in page["sprites"]:
             sprite_name, char_x, char_y, scale = sprite_data
 
             texture = self.tile_manager.get_tile(sprite_name)
@@ -429,7 +444,7 @@ class GraphicalHelpMenu:
                 window_width=window_width,
                 window_height=window_height,
                 console_width=GameConfig.SCREEN_WIDTH,
-                console_height=GameConfig.SCREEN_HEIGHT
+                console_height=GameConfig.SCREEN_HEIGHT,
             )
 
             scaled_width = int(self.tile_manager.tile_width * scale)
@@ -447,23 +462,27 @@ class GraphicalHelpMenu:
         )
 
         # Render title
-        title = page.get('title', 'HELP')
+        title = page.get("title", "HELP")
         title_x = GameConfig.SCREEN_WIDTH // 2 - len(title) // 2
         render_char_safe(console, title_x, 2, title, fg=Colors.YELLOW, bg=Colors.BLACK)
 
         # Render page indicator
         page_indicator = f"Page {self.current_page + 1}/{len(self.pages)}"
         indicator_x = GameConfig.SCREEN_WIDTH - len(page_indicator) - 2
-        render_char_safe(console, indicator_x, 2, page_indicator, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK)
+        render_char_safe(
+            console, indicator_x, 2, page_indicator, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK
+        )
 
         # Render text lines
-        for x, y, text, color in page.get('text_lines', []):
+        for x, y, text, color in page.get("text_lines", []):
             render_char_safe(console, x, y, text, fg=color, bg=Colors.BLACK)
 
         # Render navigation help
         nav_text = "←→: Change Page  │  ESC: Back"
         nav_x = GameConfig.SCREEN_WIDTH // 2 - len(nav_text) // 2
-        render_char_safe(console, nav_x, GameConfig.SCREEN_HEIGHT - 2, nav_text, fg=Colors.CYAN, bg=Colors.BLACK)
+        render_char_safe(
+            console, nav_x, GameConfig.SCREEN_HEIGHT - 2, nav_text, fg=Colors.CYAN, bg=Colors.BLACK
+        )
 
     # Input handling methods (unchanged from original)
     def handle_input(self, event) -> str:
@@ -489,14 +508,14 @@ class GraphicalHelpMenu:
         import tcod.event
 
         # Right-click = go back (standard behavior)
-        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
             return "back"
 
         return ""
 
     def handle_mouse_wheel(self, event) -> bool:
         """Handle mouse wheel - navigate pages."""
-        if hasattr(event, 'y'):
+        if hasattr(event, "y"):
             if event.y > 0:
                 self._previous_page()
             elif event.y < 0:

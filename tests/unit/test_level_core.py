@@ -4,13 +4,14 @@ Unit tests for core Level Generation functionality.
 Tests basic level generation, room creation, special tile placement, and error handling.
 """
 
-import pytest
-import random
 from unittest.mock import Mock, patch
+
+import pytest
+
+from game_config import GameConfig
+from game_entities import Position
 from game_level import LevelGenerator
 from game_map import GameMap
-from game_entities import Position
-from game_config import GameConfig
 
 
 class TestLevelGenerator:
@@ -104,10 +105,10 @@ class TestLevelGenerator:
 
         # At least some special tiles should be placed (cooling nodes are common)
         total_special_tiles = (
-            len(self.game_map.cooling_nodes) +
-            len(self.game_map.cpu_recovery_nodes) +
-            len(self.game_map.code_hacks) +
-            len(self.game_map.exploit_pickups)
+            len(self.game_map.cooling_nodes)
+            + len(self.game_map.cpu_recovery_nodes)
+            + len(self.game_map.code_hacks)
+            + len(self.game_map.exploit_pickups)
         )
 
         assert total_special_tiles > 0
@@ -129,7 +130,7 @@ class TestLevelGenerator:
 
     def test_transparency_cache_invalidation(self):
         """Test that transparency cache is invalidated after level generation."""
-        with patch.object(self.game_map, 'invalidate_transparency_cache') as mock_invalidate:
+        with patch.object(self.game_map, "invalidate_transparency_cache") as mock_invalidate:
             self.level_generator.generate_level(1, 12345)
 
             # Should be called during generation
@@ -155,10 +156,10 @@ class TestRoomGeneration:
             for y in range(1, GameConfig.MAP_HEIGHT - 1):
                 if (x, y) not in self.game_map.walls:
                     # Check if surrounded by floor (room interior)
-                    neighbors = [
-                        (x-1, y), (x+1, y), (x, y-1), (x, y+1)
-                    ]
-                    open_neighbors = sum(1 for nx, ny in neighbors if (nx, ny) not in self.game_map.walls)
+                    neighbors = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
+                    open_neighbors = sum(
+                        1 for nx, ny in neighbors if (nx, ny) not in self.game_map.walls
+                    )
                     if open_neighbors >= 3:  # Likely inside a room
                         open_areas.append((x, y))
 
@@ -175,8 +176,11 @@ class TestRoomGeneration:
             for y in range(1, GameConfig.MAP_HEIGHT - 1):
                 if (x, y) not in self.game_map.walls:
                     # Check if it's a narrow passage
-                    wall_neighbors = sum(1 for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]
-                                       if (x+dx, y+dy) in self.game_map.walls)
+                    wall_neighbors = sum(
+                        1
+                        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+                        if (x + dx, y + dy) in self.game_map.walls
+                    )
                     if wall_neighbors >= 2:  # Narrow passage
                         corridors.append((x, y))
 
@@ -266,21 +270,25 @@ class TestSpecialTilePlacement:
 
         # Cooling nodes should never be on blind spots
         for node_pos in self.game_map.cooling_nodes:
-            assert node_pos not in self.game_map.blind_spots, \
-                f"Cooling node at {node_pos} is on blind spot! Gives unintended stealth bonus."
+            assert (
+                node_pos not in self.game_map.blind_spots
+            ), f"Cooling node at {node_pos} is on blind spot! Gives unintended stealth bonus."
 
         # CPU recovery nodes should never be on blind spots
         for node_pos in self.game_map.cpu_recovery_nodes:
-            assert node_pos not in self.game_map.blind_spots, \
-                f"CPU recovery node at {node_pos} is on blind spot! Gives unintended stealth bonus."
+            assert (
+                node_pos not in self.game_map.blind_spots
+            ), f"CPU recovery node at {node_pos} is on blind spot! Gives unintended stealth bonus."
 
         # Ghost nodes CAN be on blind spots (intentional design)
         # Just verify they're treated as blind spots
         from game_entities import Position
+
         for ghost_pos in self.game_map.ghost_nodes:
             pos = Position(ghost_pos[0], ghost_pos[1])
-            assert self.game_map.is_blind_spot(pos), \
-                "Ghost nodes should function as blind spots (intentional design)"
+            assert self.game_map.is_blind_spot(
+                pos
+            ), "Ghost nodes should function as blind spots (intentional design)"
 
 
 class TestLevelProgression:
@@ -296,19 +304,23 @@ class TestLevelProgression:
         # Generate level 1
         self.level_generator.generate_level(1, 12345)
         l1_walls = len(self.game_map.walls)
-        l1_special = (len(self.game_map.cooling_nodes) +
-                     len(self.game_map.cpu_recovery_nodes) +
-                     len(self.game_map.code_hacks) +
-                     len(self.game_map.exploit_pickups))
+        l1_special = (
+            len(self.game_map.cooling_nodes)
+            + len(self.game_map.cpu_recovery_nodes)
+            + len(self.game_map.code_hacks)
+            + len(self.game_map.exploit_pickups)
+        )
 
         # Generate level 2 (within valid range)
         self.level_generator._clear_level_data()
         self.level_generator.generate_level(1, 12345)
         l2_walls = len(self.game_map.walls)
-        l2_special = (len(self.game_map.cooling_nodes) +
-                     len(self.game_map.cpu_recovery_nodes) +
-                     len(self.game_map.code_hacks) +
-                     len(self.game_map.exploit_pickups))
+        l2_special = (
+            len(self.game_map.cooling_nodes)
+            + len(self.game_map.cpu_recovery_nodes)
+            + len(self.game_map.code_hacks)
+            + len(self.game_map.exploit_pickups)
+        )
 
         # Both levels should have content
         assert l1_walls > 0
@@ -364,7 +376,7 @@ class TestLevelGenerationErrorHandling:
 
     def test_extreme_seeds(self):
         """Test level generation handles extreme seed values."""
-        extreme_seeds = [0, -1, 2**31 - 1, -2**31]
+        extreme_seeds = [0, -1, 2**31 - 1, -(2**31)]
 
         for seed in extreme_seeds:
             try:

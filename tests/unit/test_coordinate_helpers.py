@@ -6,7 +6,6 @@ Tests coordinate calculations, bounds clamping, alpha region setting,
 and character-to-pixel coordinate conversion.
 """
 
-import pytest
 import numpy as np
 import tcod.console
 
@@ -55,7 +54,7 @@ class TestCenterBox:
         x, y = CoordinateHelpers.center_box(20, 15, 54, 27)
 
         assert x == 17  # (54 - 20) // 2 = 17
-        assert y == 6   # (27 - 15) // 2 = 6
+        assert y == 6  # (27 - 15) // 2 = 6
 
 
 class TestClampBounds:
@@ -106,7 +105,7 @@ class TestClampBounds:
         assert x == 70
         assert y == 45
         assert w == 10  # Truncated
-        assert h == 5   # Truncated
+        assert h == 5  # Truncated
 
     def test_clamp_bounds_completely_out_of_bounds(self):
         """clamp_bounds handles completely out-of-bounds box."""
@@ -114,8 +113,8 @@ class TestClampBounds:
 
         assert x == 79  # Clamped to max_width - 1
         assert y == 49  # Clamped to max_height - 1
-        assert w == 1   # Only 1 column available
-        assert h == 1   # Only 1 row available
+        assert w == 1  # Only 1 column available
+        assert h == 1  # Only 1 row available
 
     def test_clamp_bounds_zero_dimensions(self):
         """clamp_bounds handles zero-sized boxes."""
@@ -167,7 +166,7 @@ class TestSetAlphaRegion:
                 assert console.rgba["bg"][y, x, 3] == 0
 
         # Check that outside the region is still opaque
-        assert console.rgba["bg"][0, 0, 3] == 255   # Above game area
+        assert console.rgba["bg"][0, 0, 3] == 255  # Above game area
         assert console.rgba["bg"][28, 0, 3] == 255  # Below game area
         assert console.rgba["bg"][1, 54, 3] == 255  # Right of game area
 
@@ -243,8 +242,7 @@ class TestCharToPixelCoords:
     def test_char_to_pixel_origin(self):
         """char_to_pixel_coords handles origin (0, 0)."""
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=0, console_y=0,
-            window_width=1920, window_height=1080
+            console_x=0, console_y=0, window_width=1920, window_height=1080
         )
 
         assert pixel_x == 0
@@ -255,8 +253,7 @@ class TestCharToPixelCoords:
         # 1920x1080 window with 80x50 console
         # Each char = 24x21.6 pixels
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=10, console_y=5,
-            window_width=1920, window_height=1080
+            console_x=10, console_y=5, window_width=1920, window_height=1080
         )
 
         assert pixel_x == 240  # 10 * (1920/80) = 10 * 24 = 240
@@ -266,31 +263,32 @@ class TestCharToPixelCoords:
         """char_to_pixel_coords works with high-resolution windows."""
         # 2560x1440 window
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=40, console_y=25,
-            window_width=2560, window_height=1440
+            console_x=40, console_y=25, window_width=2560, window_height=1440
         )
 
         assert pixel_x == 1280  # 40 * (2560/80) = 40 * 32 = 1280
-        assert pixel_y == 720   # 25 * (1440/50) = 25 * 28.8 = 720
+        assert pixel_y == 720  # 25 * (1440/50) = 25 * 28.8 = 720
 
     def test_char_to_pixel_corner(self):
         """char_to_pixel_coords handles bottom-right corner."""
         # Bottom-right of 80x50 console
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=79, console_y=49,
-            window_width=1600, window_height=1000
+            console_x=79, console_y=49, window_width=1600, window_height=1000
         )
 
         assert pixel_x == 1580  # 79 * (1600/80) = 79 * 20 = 1580
-        assert pixel_y == 980   # 49 * (1000/50) = 49 * 20 = 980
+        assert pixel_y == 980  # 49 * (1000/50) = 49 * 20 = 980
 
     def test_char_to_pixel_custom_console_size(self):
         """char_to_pixel_coords works with custom console dimensions."""
         # Game area is 54x27 in graphics mode
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=27, console_y=13,
-            window_width=1920, window_height=1080,
-            console_width=54, console_height=27
+            console_x=27,
+            console_y=13,
+            window_width=1920,
+            window_height=1080,
+            console_width=54,
+            console_height=27,
         )
 
         # Each char = 1920/54 = 35.55 pixels wide, 1080/27 = 40 pixels tall
@@ -301,8 +299,7 @@ class TestCharToPixelCoords:
         """char_to_pixel_coords handles fractional pixel positions."""
         # Position that results in fractional pixels
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=15, console_y=7,
-            window_width=1366, window_height=768
+            console_x=15, console_y=7, window_width=1366, window_height=768
         )
 
         # Should be integer values (truncated)
@@ -317,8 +314,7 @@ class TestCharToPixelCoords:
     def test_char_to_pixel_small_window(self):
         """char_to_pixel_coords works with small windows."""
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=40, console_y=25,
-            window_width=800, window_height=600
+            console_x=40, console_y=25, window_width=800, window_height=600
         )
 
         assert pixel_x == 400  # 40 * (800/80) = 40 * 10 = 400
@@ -331,8 +327,7 @@ class TestPixelToCharCoords:
     def test_pixel_to_char_origin(self):
         """pixel_to_char_coords handles origin (0, 0)."""
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=0, pixel_y=0,
-            window_width=1920, window_height=1080
+            pixel_x=0, pixel_y=0, window_width=1920, window_height=1080
         )
 
         assert tile_x == 0
@@ -343,12 +338,11 @@ class TestPixelToCharCoords:
         # 1920x1080 window with 80x50 console
         # Click at pixel (240, 108) should be tile (10, 5)
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=240, pixel_y=108,
-            window_width=1920, window_height=1080
+            pixel_x=240, pixel_y=108, window_width=1920, window_height=1080
         )
 
         assert tile_x == 10  # 240 * (80/1920) = 240 * 0.0416... = 10
-        assert tile_y == 5   # 108 * (50/1080) = 108 * 0.0462... = 5
+        assert tile_y == 5  # 108 * (50/1080) = 108 * 0.0462... = 5
 
     def test_pixel_to_char_inverse_of_char_to_pixel(self):
         """pixel_to_char_coords is the inverse of char_to_pixel_coords."""
@@ -359,9 +353,7 @@ class TestPixelToCharCoords:
             original_x, original_y, 1920, 1080
         )
 
-        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x, pixel_y, 1920, 1080
-        )
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(pixel_x, pixel_y, 1920, 1080)
 
         assert tile_x == original_x
         assert tile_y == original_y
@@ -370,8 +362,7 @@ class TestPixelToCharCoords:
         """pixel_to_char_coords handles fractional tile positions."""
         # Click at pixel (250, 110) - between tiles
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=250, pixel_y=110,
-            window_width=1920, window_height=1080
+            pixel_x=250, pixel_y=110, window_width=1920, window_height=1080
         )
 
         # Should be integer values (truncated)
@@ -387,8 +378,7 @@ class TestPixelToCharCoords:
         """pixel_to_char_coords handles bottom-right corner."""
         # Click near bottom-right of window
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=1580, pixel_y=980,
-            window_width=1600, window_height=1000
+            pixel_x=1580, pixel_y=980, window_width=1600, window_height=1000
         )
 
         assert tile_x == 79  # 1580 * (80/1600) = 1580 * 0.05 = 79
@@ -398,8 +388,7 @@ class TestPixelToCharCoords:
         """pixel_to_char_coords works with small windows."""
         # 800x600 window, click at (400, 300)
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=400, pixel_y=300,
-            window_width=800, window_height=600
+            pixel_x=400, pixel_y=300, window_width=800, window_height=600
         )
 
         assert tile_x == 40  # 400 * (80/800) = 400 * 0.1 = 40
@@ -461,8 +450,10 @@ class TestIntegration:
         # Verify: dialogue region opaque, rest transparent
         for y in range(50):
             for x in range(80):
-                if dialogue_x <= x < dialogue_x + dialogue_w and \
-                   dialogue_y <= y < dialogue_y + dialogue_h:
+                if (
+                    dialogue_x <= x < dialogue_x + dialogue_w
+                    and dialogue_y <= y < dialogue_y + dialogue_h
+                ):
                     assert console.rgba["bg"][y, x, 3] == 255  # Dialogue area opaque
                 else:
-                    assert console.rgba["bg"][y, x, 3] == 0    # Rest transparent
+                    assert console.rgba["bg"][y, x, 3] == 0  # Rest transparent

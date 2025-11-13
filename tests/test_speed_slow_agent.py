@@ -13,19 +13,18 @@ Test scenarios:
 6. Slowed player moves once, enemy moves + attacks per player move
 """
 
-import sys
-import os
 import logging
+import os
+import sys
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tests.test_agent import GameTestAgent
 from game_inventory import CodeHack
-from game_config import GameConfig
+from tests.test_agent import GameTestAgent
 
 # Configure logging to see the test details
-logging.basicConfig(level=logging.INFO, format='%(message)s', force=True)
+logging.basicConfig(level=logging.INFO, format="%(message)s", force=True)
 
 
 class SpeedSlowTestAgent(GameTestAgent):
@@ -35,15 +34,18 @@ class SpeedSlowTestAgent(GameTestAgent):
         """Apply a speed boost code hack to the player."""
         # Create a speed boost code hack and add it to inventory
         speed_hack = CodeHack(
-            color_name='test_speed',
-            effect='speed_boost',
-            name='Test Speed Hack',
-            description='Test speed boost',
-            quantity=1
+            color_name="test_speed",
+            effect="speed_boost",
+            name="Test Speed Hack",
+            description="Test speed boost",
+            quantity=1,
         )
 
         # Register this effect in the engine so it's recognized
-        self.engine.code_hack_effects['test_speed'] = ('speed_boost', 'Speed boost: 2 moves per turn (3 enemy turns)')
+        self.engine.code_hack_effects["test_speed"] = (
+            "speed_boost",
+            "Speed boost: 2 moves per turn (3 enemy turns)",
+        )
 
         # Add to inventory and use
         self.player.inventory_manager.add_item(speed_hack)
@@ -56,8 +58,8 @@ class SpeedSlowTestAgent(GameTestAgent):
         Args:
             stacks: Number of slow stacks to apply (default 1)
         """
-        current_slow = self.player.temporary_effects.get('movement_slowed_turns', 0)
-        self.player.temporary_effects['movement_slowed_turns'] = min(current_slow + stacks, 5)
+        current_slow = self.player.temporary_effects.get("movement_slowed_turns", 0)
+        self.player.temporary_effects["movement_slowed_turns"] = min(current_slow + stacks, 5)
 
     def count_enemy_actions(self, enemy) -> dict:
         """
@@ -67,9 +69,9 @@ class SpeedSlowTestAgent(GameTestAgent):
             Dictionary with initial position and player HP
         """
         return {
-            'pos': (enemy.x, enemy.y),
-            'player_hp': self.player.cpu,
-            'enemy_can_attack': enemy.can_attack_player(self.player)
+            "pos": (enemy.x, enemy.y),
+            "player_hp": self.player.cpu,
+            "enemy_can_attack": enemy.can_attack_player(self.player),
         }
 
 
@@ -88,14 +90,16 @@ def test_slow_enemy_double_attack():
 
     # Spawn inhibitor adjacent to player
     player_x, player_y = agent.player.x, agent.player.y
-    inhibitor = agent.spawn_enemy('inhibitor', player_x + 1, player_y)
+    inhibitor = agent.spawn_enemy("inhibitor", player_x + 1, player_y)
 
     logging.info(f"Player at ({player_x}, {player_y}), Inhibitor at ({inhibitor.x}, {inhibitor.y})")
     logging.info(f"Player HP: {agent.player.cpu}/{agent.player.max_cpu}")
 
     # Apply slow effect to player
     agent.apply_slow_effect(stacks=1)
-    logging.info(f"Applied slow: movement_slowed_turns = {agent.player.temporary_effects['movement_slowed_turns']}")
+    logging.info(
+        f"Applied slow: movement_slowed_turns = {agent.player.temporary_effects['movement_slowed_turns']}"
+    )
 
     # Player tries to move (triggers turn processing)
     initial_hp = agent.player.cpu
@@ -109,10 +113,12 @@ def test_slow_enemy_double_attack():
 
     logging.info(f"Final HP: {final_hp}")
     logging.info(f"Damage taken: {damage_taken}")
-    logging.info(f"Expected: Inhibitor should have attacked TWICE (0 damage each, but 2 slow stacks added)")
+    logging.info(
+        "Expected: Inhibitor should have attacked TWICE (0 damage each, but 2 slow stacks added)"
+    )
 
     # Check that slow stacks increased (inhibitor attacks don't do damage but add slow)
-    final_slow = agent.player.temporary_effects['movement_slowed_turns']
+    final_slow = agent.player.temporary_effects["movement_slowed_turns"]
     logging.info(f"Final slow stacks: {final_slow}")
 
     # Note: Inhibitor attacks don't deal damage, but we should see it attacked twice
@@ -135,12 +141,14 @@ def test_speed_player_double_attack():
     # Apply speed hack to player
     agent.apply_speed_hack()
 
-    logging.info(f"Speed boost applied: speed_boost_turns = {agent.player.temporary_effects['speed_boost_turns']}")
+    logging.info(
+        f"Speed boost applied: speed_boost_turns = {agent.player.temporary_effects['speed_boost_turns']}"
+    )
     logging.info(f"Speed moves remaining: {agent.player.speed_moves_remaining}")
 
     # Spawn enemy adjacent to player
     player_x, player_y = agent.player.x, agent.player.y
-    enemy = agent.spawn_enemy('bot', player_x + 1, player_y)
+    enemy = agent.spawn_enemy("bot", player_x + 1, player_y)
 
     initial_enemy_hp = enemy.cpu
     logging.info(f"Enemy HP: {initial_enemy_hp}")
@@ -166,7 +174,7 @@ def test_speed_player_double_attack():
 
         logging.info(f"Speed moves remaining after attack 2: {agent.player.speed_moves_remaining}")
 
-    logging.info(f"Expected: Player attacked twice before enemy could react")
+    logging.info("Expected: Player attacked twice before enemy could react")
 
 
 def test_speed_reduced_by_inhibitor():
@@ -184,20 +192,21 @@ def test_speed_reduced_by_inhibitor():
 
     # Apply speed hack
     agent.apply_speed_hack()
-    initial_speed = agent.player.temporary_effects['speed_boost_turns']
+    initial_speed = agent.player.temporary_effects["speed_boost_turns"]
     logging.info(f"Initial speed boost: {initial_speed} turns")
 
     # Spawn inhibitor adjacent and make it hostile so it attacks
     player_x, player_y = agent.player.x, agent.player.y
-    inhibitor = agent.spawn_enemy('inhibitor', player_x + 1, player_y)
+    inhibitor = agent.spawn_enemy("inhibitor", player_x + 1, player_y)
 
     from game_entities import EnemyState
+
     inhibitor.state = EnemyState.HOSTILE
 
     # Wait for inhibitor to attack (turn processor will also decrement speed_boost_turns)
     agent.wait(1)
 
-    final_speed = agent.player.temporary_effects['speed_boost_turns']
+    final_speed = agent.player.temporary_effects["speed_boost_turns"]
     logging.info(f"Final speed boost: {final_speed} turns")
 
     # After wait(1):
@@ -206,7 +215,9 @@ def test_speed_reduced_by_inhibitor():
     expected_speed = initial_speed - 2  # -1 from turn processor, -1 from inhibitor
     logging.info(f"Expected: Speed reduced to {expected_speed} (turn decay + inhibitor attack)")
 
-    assert final_speed == expected_speed, f"Speed not reduced correctly: {final_speed} != {expected_speed}"
+    assert (
+        final_speed == expected_speed
+    ), f"Speed not reduced correctly: {final_speed} != {expected_speed}"
     logging.info("[PASS] Speed correctly reduced by inhibitor")
 
 
@@ -225,14 +236,14 @@ def test_slow_reduced_by_speed_hack():
 
     # Apply slow effect
     agent.apply_slow_effect(stacks=2)
-    initial_slow = agent.player.temporary_effects['movement_slowed_turns']
+    initial_slow = agent.player.temporary_effects["movement_slowed_turns"]
     logging.info(f"Initial slow: {initial_slow} turns")
 
     # Apply speed hack (should counter the slow)
     agent.apply_speed_hack()
 
-    final_slow = agent.player.temporary_effects['movement_slowed_turns']
-    final_speed = agent.player.temporary_effects['speed_boost_turns']
+    final_slow = agent.player.temporary_effects["movement_slowed_turns"]
+    final_speed = agent.player.temporary_effects["speed_boost_turns"]
 
     logging.info(f"Final slow: {final_slow} turns")
     logging.info(f"Final speed: {final_speed} turns")
@@ -264,9 +275,10 @@ def test_speed_chase_scenario():
 
     # Spawn enemy some distance away
     player_x, player_y = agent.player.x, agent.player.y
-    enemy = agent.spawn_enemy('bot', player_x + 3, player_y)
+    enemy = agent.spawn_enemy("bot", player_x + 3, player_y)
 
     from game_entities import EnemyState
+
     enemy.state = EnemyState.HOSTILE  # Make it chase
 
     logging.info(f"Player at ({player_x}, {player_y}), Enemy at ({enemy.x}, {enemy.y})")
@@ -292,7 +304,7 @@ def test_speed_chase_scenario():
 
     # Enemy should NOT have moved yet (both moves consumed speed_moves_remaining)
     logging.info(f"Enemy moved: {initial_enemy_pos != enemy_pos_2}")
-    logging.info(f"Expected: Enemy should NOT have moved yet")
+    logging.info("Expected: Enemy should NOT have moved yet")
 
 
 def test_slow_chase_scenario():
@@ -314,10 +326,11 @@ def test_slow_chase_scenario():
 
     # Spawn enemy some distance away
     player_x, player_y = agent.player.x, agent.player.y
-    enemy = agent.spawn_enemy('bot', player_x + 5, player_y)
+    enemy = agent.spawn_enemy("bot", player_x + 5, player_y)
 
     # Make enemy hostile so it chases
     from game_entities import EnemyState
+
     enemy.state = EnemyState.HOSTILE
 
     logging.info(f"Player at ({player_x}, {player_y}), Enemy at ({enemy.x}, {enemy.y})")
@@ -332,13 +345,15 @@ def test_slow_chase_scenario():
     final_enemy_pos = (enemy.x, enemy.y)
     final_distance = abs(enemy.x - agent.player.x) + abs(enemy.y - agent.player.y)
 
-    enemy_moved_squares = abs(initial_enemy_pos[0] - final_enemy_pos[0]) + abs(initial_enemy_pos[1] - final_enemy_pos[1])
+    enemy_moved_squares = abs(initial_enemy_pos[0] - final_enemy_pos[0]) + abs(
+        initial_enemy_pos[1] - final_enemy_pos[1]
+    )
 
     logging.info(f"Initial enemy pos: {initial_enemy_pos}")
     logging.info(f"Final enemy pos: {final_enemy_pos}")
     logging.info(f"Enemy moved {enemy_moved_squares} squares")
     logging.info(f"Initial distance: {initial_distance}, Final distance: {final_distance}")
-    logging.info(f"Expected: Enemy should have moved TWICE (gotten 2 moves from slow mechanic)")
+    logging.info("Expected: Enemy should have moved TWICE (gotten 2 moves from slow mechanic)")
 
 
 def run_all_tests():

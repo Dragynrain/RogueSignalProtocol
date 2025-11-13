@@ -10,14 +10,15 @@ Tests focus on:
 - Edge cases and out-of-bounds handling
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 import tcod.event
 
+from game_config import GameConfig
+from game_entities import Position
 from game_input import InputHandler
 from game_input_coordinates import InputCoordinateConverter
-from game_entities import Position
-from game_config import GameConfig
 
 
 def create_mock_game():
@@ -121,9 +122,14 @@ class TestMousePixelToWorldConversion:
         valid_tile_x = min(10, viewport_width - 1)  # Safe X within viewport
         valid_tile_y = status_bar_height + 5  # 5 tiles into viewport
 
-        with patch('game_input_coordinates.InputCoordinateConverter.get_window_dimensions', return_value=(800, 600)):
-            with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords',
-                       return_value=(valid_tile_x, valid_tile_y)):
+        with patch(
+            "game_input_coordinates.InputCoordinateConverter.get_window_dimensions",
+            return_value=(800, 600),
+        ):
+            with patch(
+                "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+                return_value=(valid_tile_x, valid_tile_y),
+            ):
                 world_pos = InputCoordinateConverter.pixel_to_world_position(
                     400, 300, renderer, game, "glyph"
                 )
@@ -143,7 +149,9 @@ class TestMousePixelToWorldConversion:
         renderer = None
 
         # Click in status bar (y=0, which is < status bar height)
-        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 0)):
+        with patch(
+            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(40, 0)
+        ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 400, 10, renderer, game, "glyph"
             )
@@ -161,7 +169,9 @@ class TestMousePixelToWorldConversion:
 
         # Click that would result in world coords beyond map bounds
         # Viewport coords that, when added to camera offset, exceed MAP_WIDTH/HEIGHT
-        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(100, 100)):
+        with patch(
+            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(100, 100)
+        ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 800, 600, renderer, game, "glyph"
             )
@@ -196,7 +206,9 @@ class TestMousePixelToWorldConversion:
         mock_renderer.tile_manager.tile_height = 32
 
         # Mock the coordinate conversion
-        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_sprite_grid', return_value=(15, 15)):
+        with patch(
+            "game_input_coordinates.CoordinateHelpers.pixel_to_sprite_grid", return_value=(15, 15)
+        ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 480, 480, mock_renderer, game, "graphics"
             )
@@ -213,18 +225,24 @@ class TestMousePixelToWorldConversion:
         renderer = None
 
         # Test viewport x bounds
-        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(-5, 10)):
-            assert InputCoordinateConverter.pixel_to_world_position(
-                0, 200, renderer, game, "glyph"
-            ) is None
+        with patch(
+            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(-5, 10)
+        ):
+            assert (
+                InputCoordinateConverter.pixel_to_world_position(0, 200, renderer, game, "glyph")
+                is None
+            )
 
         # Test viewport x upper bound (depends on VIEWPORT_WIDTH)
         viewport_width = GameConfig.VIEWPORT_WIDTH("glyph")
-        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords',
-                   return_value=(viewport_width + 10, 10)):
-            assert InputCoordinateConverter.pixel_to_world_position(
-                900, 200, renderer, game, "glyph"
-            ) is None
+        with patch(
+            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+            return_value=(viewport_width + 10, 10),
+        ):
+            assert (
+                InputCoordinateConverter.pixel_to_world_position(900, 200, renderer, game, "glyph")
+                is None
+            )
 
     def test_world_bounds_checking(self):
         """Test that world coordinates are validated against map bounds."""
@@ -235,7 +253,9 @@ class TestMousePixelToWorldConversion:
         renderer = None
 
         # Click that would put world coords beyond map width
-        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(20, 10)):
+        with patch(
+            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(20, 10)
+        ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 600, 200, renderer, game, "glyph"
             )
@@ -264,7 +284,10 @@ class TestLookModeMouseHandlers:
         event.position.x = 400
         event.position.y = 300
 
-        with patch('game_input_coordinates.InputCoordinateConverter.pixel_to_world_position', return_value=Position(20, 15)):
+        with patch(
+            "game_input_coordinates.InputCoordinateConverter.pixel_to_world_position",
+            return_value=Position(20, 15),
+        ):
             handler._handle_look_mode_mouse_motion(event)
 
             # Cursor should be updated
@@ -285,7 +308,10 @@ class TestLookModeMouseHandlers:
         event.position.x = -100  # Out of bounds
         event.position.y = -100
 
-        with patch('game_input_coordinates.InputCoordinateConverter.pixel_to_world_position', return_value=None):
+        with patch(
+            "game_input_coordinates.InputCoordinateConverter.pixel_to_world_position",
+            return_value=None,
+        ):
             handler._handle_look_mode_mouse_motion(event)
 
             # Cursor should remain unchanged
@@ -309,7 +335,10 @@ class TestTargetingMouseHandlers:
         event.position.x = 500
         event.position.y = 400
 
-        with patch('game_input_coordinates.InputCoordinateConverter.pixel_to_world_position', return_value=Position(30, 25)):
+        with patch(
+            "game_input_coordinates.InputCoordinateConverter.pixel_to_world_position",
+            return_value=Position(30, 25),
+        ):
             handler._handle_targeting_mouse_motion(event)
 
             # Targeting cursor should be updated
@@ -330,7 +359,10 @@ class TestTargetingMouseHandlers:
         event.position.x = 10000
         event.position.y = 10000
 
-        with patch('game_input_coordinates.InputCoordinateConverter.pixel_to_world_position', return_value=None):
+        with patch(
+            "game_input_coordinates.InputCoordinateConverter.pixel_to_world_position",
+            return_value=None,
+        ):
             handler._handle_targeting_mouse_motion(event)
 
             # Cursor should remain unchanged
@@ -345,8 +377,10 @@ class TestMouseWheelHandlers:
         game = create_mock_game()
         game.show_inventory = True
         game.inventory_scroll_offset = 0
-        game.player.inventory_manager.equipped_exploits = ['exploit1', 'exploit2']
-        game.player.inventory_manager.get_display_items = Mock(return_value=[Mock(), Mock(), Mock()])
+        game.player.inventory_manager.equipped_exploits = ["exploit1", "exploit2"]
+        game.player.inventory_manager.get_display_items = Mock(
+            return_value=[Mock(), Mock(), Mock()]
+        )
 
         handler = InputHandler(game)
 
@@ -365,9 +399,9 @@ class TestMouseWheelHandlers:
         game.show_lore_viewer = True
         game.lore_viewer_mode = "list"
         game.lore_viewer_selection = 0
-        game.story_fragment_manager.get_discovered_fragments = Mock(return_value=[
-            'fragment1', 'fragment2', 'fragment3'
-        ])
+        game.story_fragment_manager.get_discovered_fragments = Mock(
+            return_value=["fragment1", "fragment2", "fragment3"]
+        )
 
         handler = InputHandler(game)
 
@@ -415,9 +449,15 @@ class TestMouseMotionIntegration:
         event.position.x = 400
         event.position.y = 300
 
-        with patch.object(handler, '_handle_look_mode_mouse_motion') as mock_handler:
-            with patch('game_input_coordinates.InputCoordinateConverter.get_window_dimensions', return_value=(800, 600)):
-                with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 25)):
+        with patch.object(handler, "_handle_look_mode_mouse_motion") as mock_handler:
+            with patch(
+                "game_input_coordinates.InputCoordinateConverter.get_window_dimensions",
+                return_value=(800, 600),
+            ):
+                with patch(
+                    "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+                    return_value=(40, 25),
+                ):
                     handler.handle_mouse_motion(event)
                     mock_handler.assert_called_once()
 
@@ -434,9 +474,15 @@ class TestMouseMotionIntegration:
         event.position.x = 400
         event.position.y = 300
 
-        with patch.object(handler, '_handle_targeting_mouse_motion') as mock_handler:
-            with patch('game_input_coordinates.InputCoordinateConverter.get_window_dimensions', return_value=(800, 600)):
-                with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 25)):
+        with patch.object(handler, "_handle_targeting_mouse_motion") as mock_handler:
+            with patch(
+                "game_input_coordinates.InputCoordinateConverter.get_window_dimensions",
+                return_value=(800, 600),
+            ):
+                with patch(
+                    "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+                    return_value=(40, 25),
+                ):
                     handler.handle_mouse_motion(event)
                     mock_handler.assert_called_once()
 
@@ -454,9 +500,15 @@ class TestMouseMotionIntegration:
         event.position.x = 400
         event.position.y = 300
 
-        with patch.object(handler, '_handle_inventory_mouse_motion') as mock_handler:
-            with patch('game_input_coordinates.InputCoordinateConverter.get_window_dimensions', return_value=(800, 600)):
-                with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(40, 25)):
+        with patch.object(handler, "_handle_inventory_mouse_motion") as mock_handler:
+            with patch(
+                "game_input_coordinates.InputCoordinateConverter.get_window_dimensions",
+                return_value=(800, 600),
+            ):
+                with patch(
+                    "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+                    return_value=(40, 25),
+                ):
                     handler.handle_mouse_motion(event)
                     mock_handler.assert_called_once()
 
@@ -475,7 +527,7 @@ class TestMouseWheelIntegration:
         event = Mock(spec=tcod.event.MouseWheel)
         event.y = -1
 
-        with patch.object(handler, '_handle_inventory_mouse_wheel') as mock_handler:
+        with patch.object(handler, "_handle_inventory_mouse_wheel") as mock_handler:
             handler.handle_mouse_wheel(event)
             mock_handler.assert_called_once()
 
@@ -484,14 +536,14 @@ class TestMouseWheelIntegration:
         game = create_mock_game()
         game.show_lore_viewer = True
         game.show_inventory = False
-        game.story_fragment_manager.get_discovered_fragments = Mock(return_value=['frag'])
+        game.story_fragment_manager.get_discovered_fragments = Mock(return_value=["frag"])
 
         handler = InputHandler(game)
 
         event = Mock(spec=tcod.event.MouseWheel)
         event.y = -1
 
-        with patch.object(handler, '_handle_lore_viewer_mouse_wheel') as mock_handler:
+        with patch.object(handler, "_handle_lore_viewer_mouse_wheel") as mock_handler:
             handler.handle_mouse_wheel(event)
             mock_handler.assert_called_once()
 
@@ -507,7 +559,10 @@ class TestEdgeCasesAndErrorHandling:
         renderer = None
 
         # Mock CoordinateHelpers to raise an exception
-        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', side_effect=Exception("Test error")):
+        with patch(
+            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords",
+            side_effect=Exception("Test error"),
+        ):
             # Should return None, not crash
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 400, 300, renderer, game, "glyph"
@@ -522,7 +577,9 @@ class TestEdgeCasesAndErrorHandling:
         renderer = None
 
         # Should default to glyph mode and not crash
-        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(10, 10)):
+        with patch(
+            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(10, 10)
+        ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 400, 300, renderer, game, "glyph"  # Explicitly pass "glyph" as fallback
             )
@@ -539,7 +596,9 @@ class TestEdgeCasesAndErrorHandling:
 
         renderer = None
 
-        with patch('game_input_coordinates.CoordinateHelpers.pixel_to_char_coords', return_value=(15, 15)):
+        with patch(
+            "game_input_coordinates.CoordinateHelpers.pixel_to_char_coords", return_value=(15, 15)
+        ):
             world_pos = InputCoordinateConverter.pixel_to_world_position(
                 400, 300, renderer, game, "glyph"
             )

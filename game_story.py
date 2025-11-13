@@ -19,7 +19,6 @@ Delegation:
 - get_story_fragments(): Loads fragment text from narrative_content.json
 """
 
-from typing import List, Tuple, Optional
 
 # Import data loading functions
 from data_loading import PersistentStorage, get_story_fragments
@@ -49,13 +48,12 @@ class StoryFragmentManager:
         storage = PersistentStorage()
         self.progress_data = storage.load_data("rogue_signal_progress.json")
         if not self.progress_data:
-            self.progress_data = {
-                "discovered_story_fragments": [],
-                "version": "0.8.0 Alpha"
-            }
-        self.discovered_fragments: List[int] = self.progress_data.get("discovered_story_fragments", [])
-    
-    def get_next_undiscovered_fragment(self) -> Optional[int]:
+            self.progress_data = {"discovered_story_fragments": [], "version": "0.8.0 Alpha"}
+        self.discovered_fragments: list[int] = self.progress_data.get(
+            "discovered_story_fragments", []
+        )
+
+    def get_next_undiscovered_fragment(self) -> int | None:
         """
         Get the next fragment index that hasn't been discovered yet.
 
@@ -70,7 +68,7 @@ class StoryFragmentManager:
             if i not in self.discovered_fragments:
                 return i
         return None  # All fragments discovered
-    
+
     def discover_fragment(self, fragment_index: int) -> bool:
         """
         Mark a fragment as discovered and save progress immediately.
@@ -87,22 +85,22 @@ class StoryFragmentManager:
         """
         if fragment_index in self.discovered_fragments:
             return False  # Already discovered
-            
+
         story_fragments = get_story_fragments()
         if fragment_index < 0 or fragment_index >= len(story_fragments):
             return False  # Invalid fragment index
-            
+
         self.discovered_fragments.append(fragment_index)
         self.discovered_fragments.sort()  # Keep in order
-        
+
         # Save progress immediately
         self.progress_data["discovered_story_fragments"] = self.discovered_fragments
         storage = PersistentStorage()
         storage.save_data("rogue_signal_progress.json", self.progress_data)
-        
+
         return True
-    
-    def get_discovered_fragments(self) -> List[Tuple[int, str]]:
+
+    def get_discovered_fragments(self) -> list[tuple[int, str]]:
         """
         Get all discovered fragments in order for display in fragments menu.
 
@@ -115,8 +113,8 @@ class StoryFragmentManager:
             if fragment_index < len(story_fragments):
                 fragments.append((fragment_index, story_fragments[fragment_index]))
         return fragments
-    
-    def get_fragment_count(self) -> Tuple[int, int]:
+
+    def get_fragment_count(self) -> tuple[int, int]:
         """
         Get fragment counts for UI display (e.g., "Fragments: 3/10").
 

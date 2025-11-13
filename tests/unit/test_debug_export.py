@@ -5,13 +5,14 @@ Unit tests for debug export system.
 Tests the debug package creation, file collection, and ZIP generation.
 """
 
-import pytest
+import json
 import os
 import zipfile
-import json
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-from debug_export import DebugExporter, export_debug_package, export_crash_report
+from unittest.mock import Mock, patch
+
+import pytest
+
+from debug_export import DebugExporter, export_crash_report, export_debug_package
 
 
 @pytest.fixture
@@ -122,11 +123,11 @@ def test_debug_package_contains_system_info(temp_export_dir, temp_game_dirs):
     """Test that debug package includes system_info.txt."""
     zip_path = DebugExporter.create_debug_package()
 
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
+    with zipfile.ZipFile(zip_path, "r") as zipf:
         assert "system_info.txt" in zipf.namelist()
 
         # Read and verify system info content
-        system_info = zipf.read("system_info.txt").decode('utf-8')
+        system_info = zipf.read("system_info.txt").decode("utf-8")
         assert "SYSTEM INFORMATION" in system_info
         assert "Python Version" in system_info
         assert "Platform" in system_info
@@ -137,7 +138,7 @@ def test_debug_package_includes_saves(temp_export_dir, temp_game_dirs):
     """Test that debug package includes saves directory."""
     zip_path = DebugExporter.create_debug_package()
 
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
+    with zipfile.ZipFile(zip_path, "r") as zipf:
         filenames = zipf.namelist()
 
         # Check for saves files
@@ -150,7 +151,7 @@ def test_debug_package_includes_logs(temp_export_dir, temp_game_dirs):
     """Test that debug package includes logs directory."""
     zip_path = DebugExporter.create_debug_package()
 
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
+    with zipfile.ZipFile(zip_path, "r") as zipf:
         filenames = zipf.namelist()
 
         # Check for log files
@@ -162,7 +163,7 @@ def test_debug_package_includes_metrics(temp_export_dir, temp_game_dirs):
     """Test that debug package includes metrics directory."""
     zip_path = DebugExporter.create_debug_package()
 
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
+    with zipfile.ZipFile(zip_path, "r") as zipf:
         filenames = zipf.namelist()
 
         # Check for metrics files
@@ -173,11 +174,11 @@ def test_debug_package_includes_reproduction_template(temp_export_dir, temp_game
     """Test that debug package includes reproduction steps template."""
     zip_path = DebugExporter.create_debug_package()
 
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
+    with zipfile.ZipFile(zip_path, "r") as zipf:
         assert "PLEASE_FILL_OUT.txt" in zipf.namelist()
 
         # Verify template content
-        template = zipf.read("PLEASE_FILL_OUT.txt").decode('utf-8')
+        template = zipf.read("PLEASE_FILL_OUT.txt").decode("utf-8")
         assert "REPRODUCTION STEPS" in template
         assert "What were you doing" in template
         assert "What did you expect" in template
@@ -187,11 +188,11 @@ def test_debug_package_includes_config_hashes(temp_export_dir, temp_game_dirs):
     """Test that debug package includes config file hashes."""
     zip_path = DebugExporter.create_debug_package()
 
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
+    with zipfile.ZipFile(zip_path, "r") as zipf:
         assert "config_hashes.txt" in zipf.namelist()
 
         # Verify hash content
-        hashes = zipf.read("config_hashes.txt").decode('utf-8')
+        hashes = zipf.read("config_hashes.txt").decode("utf-8")
         assert "CONFIG FILE HASHES" in hashes
 
 
@@ -199,11 +200,11 @@ def test_debug_package_with_game_snapshot(temp_export_dir, temp_game_dirs, mock_
     """Test that debug package includes game snapshot when game engine provided."""
     zip_path = DebugExporter.create_debug_package(game_engine=mock_game_engine)
 
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
+    with zipfile.ZipFile(zip_path, "r") as zipf:
         assert "game_snapshot.json" in zipf.namelist()
 
         # Read and verify snapshot content
-        snapshot_data = zipf.read("game_snapshot.json").decode('utf-8')
+        snapshot_data = zipf.read("game_snapshot.json").decode("utf-8")
         snapshot = json.loads(snapshot_data)
 
         assert snapshot["level"] == 3
@@ -218,15 +219,17 @@ def test_debug_package_with_crash_info(temp_export_dir, temp_game_dirs):
     crash_info = "Exception: ValueError\nStack trace: line 42"
     zip_path = DebugExporter.create_debug_package(crash_info=crash_info)
 
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
-        system_info = zipf.read("system_info.txt").decode('utf-8')
+    with zipfile.ZipFile(zip_path, "r") as zipf:
+        system_info = zipf.read("system_info.txt").decode("utf-8")
 
         assert "CRASH INFORMATION" in system_info
         assert "ValueError" in system_info
         assert "Stack trace" in system_info
 
 
-def test_export_debug_package_convenience_function(temp_export_dir, temp_game_dirs, mock_game_engine):
+def test_export_debug_package_convenience_function(
+    temp_export_dir, temp_game_dirs, mock_game_engine
+):
     """Test the convenience function for exporting debug packages."""
     zip_path = export_debug_package(game_engine=mock_game_engine)
 
@@ -246,8 +249,8 @@ def test_export_crash_report_function(temp_export_dir, temp_game_dirs, mock_game
     assert zip_path.exists()
 
     # Verify crash info is included
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
-        system_info = zipf.read("system_info.txt").decode('utf-8')
+    with zipfile.ZipFile(zip_path, "r") as zipf:
+        system_info = zipf.read("system_info.txt").decode("utf-8")
         assert "CRASH INFORMATION" in system_info
         assert "ValueError" in system_info
         assert "Test exception for crash report" in system_info
@@ -263,14 +266,14 @@ def test_debug_package_handles_missing_directories(temp_export_dir):
     assert zip_path.exists()
 
     # Should still have system info
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
+    with zipfile.ZipFile(zip_path, "r") as zipf:
         assert "system_info.txt" in zipf.namelist()
 
 
 def test_debug_package_error_handling(temp_export_dir, temp_game_dirs):
     """Test error handling when package creation fails."""
     # Mock zipfile to raise an exception
-    with patch('zipfile.ZipFile', side_effect=Exception("Simulated failure")):
+    with patch("zipfile.ZipFile", side_effect=Exception("Simulated failure")):
         zip_path = DebugExporter.create_debug_package()
 
         # Should return None on failure

@@ -27,26 +27,21 @@ specific input handling to focused, testable submodules.
 """
 
 import logging
-import time
+
 import tcod
 import tcod.event
-from typing import Optional, Tuple
+
 from game_config import GameConfig
-from game_data import GameData
-from game_inventory import CodeHack, ExploitItem
-from game_ui import UniversalInputHandler
-from game_entities import Position
 from game_coordinate_helpers import CoordinateHelpers
-from game_errors import GameErrorHandler
 from game_input_coordinates import InputCoordinateConverter
 from game_input_dialogue import DialogueInputManager
 from game_input_gameplay import GameplayInputHandler
 from game_input_modals import (
+    AchievementsInputHandler,
     InventoryInputHandler,
     LookModeInputHandler,
-    TargetingInputHandler,
     LoreViewerInputHandler,
-    AchievementsInputHandler
+    TargetingInputHandler,
 )
 
 
@@ -77,7 +72,7 @@ class InputMappings:
         tcod.event.KeySym.KP_2: (0, 1),
         tcod.event.KeySym.KP_1: (-1, 1),
         tcod.event.KeySym.KP_4: (-1, 0),
-        tcod.event.KeySym.KP_7: (-1, -1)
+        tcod.event.KeySym.KP_7: (-1, -1),
     }
 
 
@@ -120,7 +115,10 @@ class InputHandler:
             state_context.append("targeting")
 
         # Priority 0: Achievement popup (highest priority - must consume input to prevent double-processing)
-        if hasattr(self.game, 'achievement_popup_manager') and self.game.achievement_popup_manager.has_active_popup():
+        if (
+            hasattr(self.game, "achievement_popup_manager")
+            and self.game.achievement_popup_manager.has_active_popup()
+        ):
             self.game.achievement_popup_manager.dismiss_active_popup()
             logging.debug("Input: Dismissed achievement popup with key press")
             return True  # Consume the event - don't process further
@@ -135,7 +133,7 @@ class InputHandler:
         # But also check for pending death dialogue (deferred by one frame for message visibility)
         if self.game.player.cpu <= 0 or self.game.game_over:
             # If death dialogue is pending, wait for it to appear - don't exit yet
-            if hasattr(self.game, 'pending_death_dialogue') and self.game.pending_death_dialogue:
+            if hasattr(self.game, "pending_death_dialogue") and self.game.pending_death_dialogue:
                 return True  # Keep playing until dialogue appears
             # Exit to main menu instead of showing pause menu when dead
             return False
@@ -143,7 +141,7 @@ class InputHandler:
         # Modal screens - handle non-escape keys
         if self.game.show_help:
             # Delegate to help menu's input handler (supports pagination)
-            if self.renderer and hasattr(self.renderer, 'ui_renderer'):
+            if self.renderer and hasattr(self.renderer, "ui_renderer"):
                 help_menu = self.renderer._get_or_create_help_menu()
                 result = self.renderer.ui_renderer.handle_help_input(event, help_menu)
                 if result == "back":
@@ -172,7 +170,7 @@ class InputHandler:
 
         # Normal gameplay
         return self._handle_gameplay_input(event)
-    
+
     def _handle_escape(self) -> bool:
         """Handle escape key for UI states."""
         g = self.game
@@ -180,7 +178,7 @@ class InputHandler:
             g.show_lore_viewer, g.lore_viewer_mode, g.lore_viewer_selection = False, "list", 0
         elif g.show_help:
             g.show_help = False
-            if self.renderer and hasattr(self.renderer, 'ui_renderer'):
+            if self.renderer and hasattr(self.renderer, "ui_renderer"):
                 self.renderer.clear_help_menu()  # Clear menu cache
         elif g.show_achievements:
             g.show_achievements = False
@@ -214,11 +212,10 @@ class InputHandler:
         """Perform debug package export - delegated to DialogueInputManager."""
         return self.dialogue_manager._perform_debug_export()
 
-
     def _handle_inventory_input(self, event) -> bool:
         """Handle input while inventory is open - delegated to InventoryInputHandler."""
         return self.inventory_handler.handle_input(event)
-    
+
     def _handle_lore_viewer_input(self, event) -> bool:
         """Handle input while lore viewer is open - delegated to LoreViewerInputHandler."""
         return self.lore_viewer_handler.handle_input(event)
@@ -239,33 +236,33 @@ class InputHandler:
     def _navigate_lore_viewer(self, direction: int):
         """Navigate lore viewer selection - delegated to LoreViewerInputHandler."""
         self.lore_viewer_handler.navigate(direction)
-    
+
     def _handle_targeting_input(self, event) -> bool:
         """Handle input while in targeting mode - delegated to TargetingInputHandler."""
         return self.targeting_handler.handle_input(event)
-    
+
     def _handle_gameplay_input(self, event) -> bool:
         """Handle input during normal gameplay - delegated to GameplayInputHandler."""
         return self.gameplay_handler.handle_input(event)
-    
+
     def _navigate_inventory(self, direction: int):
         """Navigate inventory selection - delegated to InventoryInputHandler."""
         self.inventory_handler.navigate(direction)
-    
+
     def _use_selected_inventory_item(self):
         """Use the currently selected item - delegated to InventoryInputHandler."""
         self.inventory_handler.use_selected_item()
-    
+
     def _unequip_selected_exploit(self):
         """Unequip the specifically selected exploit - delegated to InventoryInputHandler."""
         self.inventory_handler.unequip_selected_exploit()
-    
+
     def _open_inventory(self):
         """Open the inventory screen - delegated to InventoryInputHandler."""
         logging.debug("Input: Opening inventory")
         self.game.sound_manager.play_sound("ui_menu_open")
         self.inventory_handler.open_inventory()
-    
+
     def _use_exploit_slot(self, slot: int):
         """Use exploit in specified slot - delegated to GameplayInputHandler."""
         self.gameplay_handler.use_exploit_slot(slot)
@@ -279,9 +276,10 @@ class InputHandler:
 
     def _trigger_debug_export(self):
         """Trigger debug package export with confirmation dialog."""
+        import tcod.event
+
         from game_dialogue_system import DialogueBox
         from game_entities import Colors
-        import tcod.event
 
         # Create confirmation dialogue
         message = (
@@ -306,7 +304,7 @@ class InputHandler:
             border_color=Colors.YELLOW,
             bg_color=Colors.BLACK,
             format_data={},
-            priority=5
+            priority=5,
         )
 
         # Show dialogue
@@ -314,7 +312,6 @@ class InputHandler:
 
         # Store callback for when user confirms
         self.game._pending_debug_export = True
-
 
     def _handle_look_mode_input(self, event) -> bool:
         """Handle input while in look mode - delegated to LookModeInputHandler."""
@@ -334,7 +331,7 @@ class InputHandler:
             True if event was handled, False otherwise
         """
         # After context.convert_event(), position contains TILE coordinates
-        if not hasattr(event, 'position') or event.position is None:
+        if not hasattr(event, "position") or event.position is None:
             return False
 
         # event.position contains RAW PIXEL coordinates from SDL
@@ -343,7 +340,9 @@ class InputHandler:
         pixel_y = event.position.y
 
         # Convert to console tile coordinates and store for hover effects
-        window_width, window_height = InputCoordinateConverter.get_window_dimensions(self.renderer, self.game)
+        window_width, window_height = InputCoordinateConverter.get_window_dimensions(
+            self.renderer, self.game
+        )
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
             pixel_x, pixel_y, window_width, window_height
         )
@@ -377,7 +376,7 @@ class InputHandler:
         """
         # event.position contains RAW PIXEL coordinates from SDL
         # Handlers will convert to appropriate coordinate system (console or sprite grid)
-        if not hasattr(event, 'position') or event.position is None:
+        if not hasattr(event, "position") or event.position is None:
             return False
 
         pixel_x = event.position.x
@@ -421,10 +420,8 @@ class InputHandler:
         Returns:
             True if coordinates are valid, False otherwise
         """
-        from game_config import GameConfig
-        return (0 <= tile_x < GameConfig.SCREEN_WIDTH and
-                0 <= tile_y < GameConfig.SCREEN_HEIGHT)
 
+        return 0 <= tile_x < GameConfig.SCREEN_WIDTH and 0 <= tile_y < GameConfig.SCREEN_HEIGHT
 
     # ============================================================================
     # GAMEPLAY MOUSE HANDLERS (Phase 2)
@@ -445,7 +442,10 @@ class InputHandler:
     def _handle_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
         """Handle left mouse click based on current game state."""
         # Priority 0: Achievement popup (highest - must consume to prevent double-processing)
-        if hasattr(self.game, 'achievement_popup_manager') and self.game.achievement_popup_manager.has_active_popup():
+        if (
+            hasattr(self.game, "achievement_popup_manager")
+            and self.game.achievement_popup_manager.has_active_popup()
+        ):
             self.game.achievement_popup_manager.dismiss_active_popup()
             logging.debug("Input: Dismissed achievement popup with mouse click")
             return True  # Consume the event - don't process further
@@ -508,7 +508,7 @@ class InputHandler:
         elif self.game.show_help:
             logging.debug("Input: Right-click closing help")
             self.game.show_help = False
-            if self.renderer and hasattr(self.renderer, 'clear_help_menu'):
+            if self.renderer and hasattr(self.renderer, "clear_help_menu"):
                 self.renderer.clear_help_menu()
             return True
         else:
@@ -548,6 +548,7 @@ class InputHandler:
     def _handle_dialogue_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
         """Handle left click on dialogue buttons - delegated to DialogueInputManager."""
         return self.dialogue_manager.handle_dialogue_left_click(event)
+
     def _handle_inventory_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
         """Handle mouse motion in inventory - update selection on hover.
 
@@ -558,11 +559,11 @@ class InputHandler:
         # Convert pixel coordinates to console tile coordinates
         # Try to get context from renderer first, then game
         context = None
-        if self.renderer and hasattr(self.renderer, 'context'):
+        if self.renderer and hasattr(self.renderer, "context"):
             context = self.renderer.context
-        elif hasattr(self.game, 'context'):
+        elif hasattr(self.game, "context"):
             context = self.game.context
-        if context and hasattr(context, 'sdl_window'):
+        if context and hasattr(context, "sdl_window"):
             window_w, window_h = context.sdl_window.size
         else:
             window_w, window_h = (800, 600)
@@ -594,11 +595,11 @@ class InputHandler:
         # Convert pixel coordinates to console tile coordinates
         # Try to get context from renderer first, then game
         context = None
-        if self.renderer and hasattr(self.renderer, 'context'):
+        if self.renderer and hasattr(self.renderer, "context"):
             context = self.renderer.context
-        elif hasattr(self.game, 'context'):
+        elif hasattr(self.game, "context"):
             context = self.game.context
-        if context and hasattr(context, 'sdl_window'):
+        if context and hasattr(context, "sdl_window"):
             window_w, window_h = context.sdl_window.size
         else:
             window_w, window_h = (800, 600)
@@ -652,11 +653,11 @@ class InputHandler:
         # Convert pixel coordinates to console tile coordinates
         # Try to get context from renderer first, then game
         context = None
-        if self.renderer and hasattr(self.renderer, 'context'):
+        if self.renderer and hasattr(self.renderer, "context"):
             context = self.renderer.context
-        elif hasattr(self.game, 'context'):
+        elif hasattr(self.game, "context"):
             context = self.game.context
-        if context and hasattr(context, 'sdl_window'):
+        if context and hasattr(context, "sdl_window"):
             window_w, window_h = context.sdl_window.size
         else:
             window_w, window_h = (800, 600)
@@ -686,11 +687,11 @@ class InputHandler:
         # Convert pixel coordinates to console tile coordinates
         # Try to get context from renderer first, then game
         context = None
-        if self.renderer and hasattr(self.renderer, 'context'):
+        if self.renderer and hasattr(self.renderer, "context"):
             context = self.renderer.context
-        elif hasattr(self.game, 'context'):
+        elif hasattr(self.game, "context"):
             context = self.game.context
-        if context and hasattr(context, 'sdl_window'):
+        if context and hasattr(context, "sdl_window"):
             window_w, window_h = context.sdl_window.size
         else:
             window_w, window_h = (800, 600)
@@ -714,7 +715,9 @@ class InputHandler:
                     self.game.lore_viewer_selection = fragment_index
                     # Enter reading mode (same as pressing Enter)
                     self.game.lore_viewer_mode = "reading"
-                    logging.debug(f"Input: Lore viewer left-click opening fragment {fragment_index}")
+                    logging.debug(
+                        f"Input: Lore viewer left-click opening fragment {fragment_index}"
+                    )
                     return True
 
             # Clicked on blank space - consume the event to prevent menu exit

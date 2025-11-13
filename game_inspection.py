@@ -7,10 +7,11 @@ EntityInspector examines positions and returns formatted entity information.
 Loads terrain descriptions from game_rules.json. Used by inspection panel rendering.
 """
 
-from typing import Optional, Dict, Any
-from game_entities import Position, Colors
-from game_data import GameData
+from typing import Any
+
 from data_loading import DataLoader
+from game_data import GameData
+from game_entities import Colors, Position
 
 
 class EntityInspector:
@@ -24,10 +25,10 @@ class EntityInspector:
         """Load terrain descriptions from game_rules.json."""
         if cls._terrain_descriptions is None:
             config = DataLoader.load_config()
-            cls._terrain_descriptions = config.get('terrain_descriptions', {})
+            cls._terrain_descriptions = config.get("terrain_descriptions", {})
 
     @staticmethod
-    def get_entity_at_position(game, position: Position) -> Dict[str, Any]:
+    def get_entity_at_position(game, position: Position) -> dict[str, Any]:
         """
         Get information about the entity at the specified position.
 
@@ -50,11 +51,11 @@ class EntityInspector:
         # Check if position is valid
         if not position.is_valid(game.game_map.width, game.game_map.height):
             return {
-                'name': 'Out of Bounds',
-                'description': 'Invalid position',
-                'entity_type': 'invalid',
-                'details': '',
-                'color': Colors.DARK_GRAY
+                "name": "Out of Bounds",
+                "description": "Invalid position",
+                "entity_type": "invalid",
+                "details": "",
+                "color": Colors.DARK_GRAY,
             }
 
         # 1. Check for player
@@ -80,24 +81,34 @@ class EntityInspector:
         return EntityInspector._inspect_terrain(game, position)
 
     @staticmethod
-    def _inspect_player(game) -> Dict[str, Any]:
+    def _inspect_player(game) -> dict[str, Any]:
         """Inspect the player."""
         player = game.player
 
         # Build status effects list
         status_effects = []
-        if player.temporary_effects['speed_boost_turns'] > 0:
-            status_effects.append(f"Speed Boost ({player.temporary_effects['speed_boost_turns']} turns)")
-        if player.temporary_effects['enhanced_vision_turns'] > 0:
-            status_effects.append(f"Enhanced Vision ({player.temporary_effects['enhanced_vision_turns']} turns)")
-        if player.temporary_effects['exploit_efficiency_turns'] > 0:
-            status_effects.append(f"Exploit Efficiency ({player.temporary_effects['exploit_efficiency_turns']} turns)")
-        if player.temporary_effects.get('invisible_turns', 0) > 0:
-            status_effects.append(f"Invisible ({player.temporary_effects['invisible_turns']} turns)")
-        if player.temporary_effects['virus_turns'] > 0:
+        if player.temporary_effects["speed_boost_turns"] > 0:
+            status_effects.append(
+                f"Speed Boost ({player.temporary_effects['speed_boost_turns']} turns)"
+            )
+        if player.temporary_effects["enhanced_vision_turns"] > 0:
+            status_effects.append(
+                f"Enhanced Vision ({player.temporary_effects['enhanced_vision_turns']} turns)"
+            )
+        if player.temporary_effects["exploit_efficiency_turns"] > 0:
+            status_effects.append(
+                f"Exploit Efficiency ({player.temporary_effects['exploit_efficiency_turns']} turns)"
+            )
+        if player.temporary_effects.get("invisible_turns", 0) > 0:
+            status_effects.append(
+                f"Invisible ({player.temporary_effects['invisible_turns']} turns)"
+            )
+        if player.temporary_effects["virus_turns"] > 0:
             status_effects.append(f"VIRUS ({player.temporary_effects['virus_turns']} turns)")
-        if player.temporary_effects['movement_slowed_turns'] > 0:
-            status_effects.append(f"Slowed ({player.temporary_effects['movement_slowed_turns']} turns)")
+        if player.temporary_effects["movement_slowed_turns"] > 0:
+            status_effects.append(
+                f"Slowed ({player.temporary_effects['movement_slowed_turns']} turns)"
+            )
 
         status_text = "; ".join(status_effects) if status_effects else "None"
 
@@ -106,15 +117,15 @@ class EntityInspector:
         details += f"Status: {status_text}"
 
         return {
-            'name': 'Player (You)',
-            'description': 'Your digital infiltration agent',
-            'entity_type': 'player',
-            'details': details,
-            'color': Colors.GREEN
+            "name": "Player (You)",
+            "description": "Your digital infiltration agent",
+            "entity_type": "player",
+            "details": details,
+            "color": Colors.GREEN,
         }
 
     @staticmethod
-    def _inspect_enemy(enemy, game=None) -> Dict[str, Any]:
+    def _inspect_enemy(enemy, game=None) -> dict[str, Any]:
         """
         Inspect an enemy and show damage preview if in targeting mode.
 
@@ -126,6 +137,7 @@ class EntityInspector:
 
         # Determine color based on state
         from game_entities import EnemyState
+
         if enemy.state == EnemyState.UNAWARE:
             color = Colors.ENEMY_UNAWARE
             state_text = "Unaware"
@@ -145,6 +157,7 @@ class EntityInspector:
 
         # Add movement pattern info
         from game_entities import EnemyMovement
+
         movement_desc = {
             EnemyMovement.STATIC: "Static guard",
             EnemyMovement.PATROL: "Patrols route",
@@ -152,7 +165,7 @@ class EntityInspector:
             EnemyMovement.SEEK: "Actively hunting",
             EnemyMovement.ADMIN: "Relentless pursuer",
             EnemyMovement.TRACK: "Tracking target",
-            EnemyMovement.VIRUS: "Unpredictable"
+            EnemyMovement.VIRUS: "Unpredictable",
         }.get(enemy_type.movement, "Unknown")
 
         details += f"Behavior: {movement_desc}"
@@ -164,15 +177,15 @@ class EntityInspector:
                 details += f"\n\n{damage_preview}"
 
         return {
-            'name': enemy_type.name,
-            'description': enemy_type.description,
-            'entity_type': 'enemy',
-            'details': details,
-            'color': color
+            "name": enemy_type.name,
+            "description": enemy_type.description,
+            "entity_type": "enemy",
+            "details": details,
+            "color": color,
         }
 
     @staticmethod
-    def _calculate_damage_preview(game, enemy) -> Optional[str]:
+    def _calculate_damage_preview(game, enemy) -> str | None:
         """
         Calculate compact damage preview for current targeting exploit.
 
@@ -196,15 +209,16 @@ class EntityInspector:
         base_damage = exploit.damage
 
         # Check for shadow bonus (+10 if attacking from blind spots or while invisible)
-        player_in_shadow = (game.game_map.is_blind_spot(game.player.position) or
-                           game.player.is_invisible())
+        player_in_shadow = (
+            game.game_map.is_blind_spot(game.player.position) or game.player.is_invisible()
+        )
         shadow_bonus = 10 if player_in_shadow else 0
         total_damage = base_damage + shadow_bonus
 
         # Apply admin resistance if needed
         final_damage = total_damage
         resist_text = ""
-        if enemy.type == 'admin':
+        if enemy.type == "admin":
             final_damage = max(5, total_damage // 2)  # 50% resistance, min 5
             resist_text = " (-50%)"
 
@@ -231,7 +245,7 @@ class EntityInspector:
         return preview
 
     @staticmethod
-    def _inspect_items(game, position: Position) -> Optional[Dict[str, Any]]:
+    def _inspect_items(game, position: Position) -> dict[str, Any] | None:
         """Check for items at position (code hacks, exploits, upgrades, story fragments)."""
         from game_entities import Colors
 
@@ -240,7 +254,9 @@ class EntityInspector:
         if code_hack:
             # Check if we know the effect
             if code_hack.discovered or code_hack.color_name in game.discovered_code_effects:
-                effect_desc = game.code_hack_effects.get(code_hack.color_name, (None, "Unknown effect"))[1]
+                effect_desc = game.code_hack_effects.get(
+                    code_hack.color_name, (None, "Unknown effect")
+                )[1]
                 description = effect_desc
             else:
                 description = "Unknown effect until used"
@@ -249,11 +265,11 @@ class EntityInspector:
             code_color = Colors.get_color(code_hack.color_name.upper())
 
             return {
-                'name': f"{code_hack.name}",
-                'description': description,
-                'entity_type': 'code_hack',
-                'details': f"Color: {code_hack.color_name.title()}",
-                'color': code_color
+                "name": f"{code_hack.name}",
+                "description": description,
+                "entity_type": "code_hack",
+                "details": f"Color: {code_hack.color_name.title()}",
+                "color": code_color,
             }
 
         # Check for exploit pickup
@@ -267,124 +283,129 @@ class EntityInspector:
                     details += f" | Damage: {exploit_def.damage}"
 
                 return {
-                    'name': exploit_def.name,
-                    'description': exploit_def.description,
-                    'entity_type': 'exploit_pickup',
-                    'details': details,
-                    'color': Colors.EXPLOIT_PICKUP
+                    "name": exploit_def.name,
+                    "description": exploit_def.description,
+                    "entity_type": "exploit_pickup",
+                    "details": details,
+                    "color": Colors.EXPLOIT_PICKUP,
                 }
 
         # Check for permanent upgrade
         upgrade_key = game.game_map.permanent_upgrades.get((position.x, position.y))
         if upgrade_key:
             from game_data import GameUpgrades
+
             upgrade_def = GameUpgrades.UPGRADES.get(upgrade_key)
             if upgrade_def:
                 details = f"Bonus: +{upgrade_def.bonus_amount} {upgrade_def.stat_type.upper()}"
 
                 return {
-                    'name': upgrade_def.name,
-                    'description': upgrade_def.description,
-                    'entity_type': 'upgrade',
-                    'details': details,
-                    'color': Colors.UPGRADE
+                    "name": upgrade_def.name,
+                    "description": upgrade_def.description,
+                    "entity_type": "upgrade",
+                    "details": details,
+                    "color": Colors.UPGRADE,
                 }
 
         # Check for story fragment
         story_fragment = game.game_map.story_fragments.get((position.x, position.y))
         if story_fragment:
             return {
-                'name': 'Data Fragment',
-                'description': 'Piece of hidden lore - collect to read',
-                'entity_type': 'story_fragment',
-                'details': f"Fragment #{story_fragment.fragment_index}",
-                'color': Colors.STORY_FRAGMENT
+                "name": "Data Fragment",
+                "description": "Piece of hidden lore - collect to read",
+                "entity_type": "story_fragment",
+                "details": f"Fragment #{story_fragment.fragment_index}",
+                "color": Colors.STORY_FRAGMENT,
             }
 
         return None
 
     @staticmethod
-    def _inspect_special_tiles(game, position: Position) -> Optional[Dict[str, Any]]:
+    def _inspect_special_tiles(game, position: Position) -> dict[str, Any] | None:
         """Check for special tiles (gateway, nodes)."""
 
         # Check for gateway
-        if game.game_map.gateway and position.x == game.game_map.gateway.x and position.y == game.game_map.gateway.y:
-            terrain_desc = EntityInspector._terrain_descriptions.get('gateway', {})
+        if (
+            game.game_map.gateway
+            and position.x == game.game_map.gateway.x
+            and position.y == game.game_map.gateway.y
+        ):
+            terrain_desc = EntityInspector._terrain_descriptions.get("gateway", {})
             return {
-                'name': terrain_desc.get('name', 'Network Gateway'),
-                'description': terrain_desc.get('description', 'Exit to next network level'),
-                'entity_type': 'gateway',
-                'details': f"Level {game.level} exit",
-                'color': Colors.GATEWAY
+                "name": terrain_desc.get("name", "Network Gateway"),
+                "description": terrain_desc.get("description", "Exit to next network level"),
+                "entity_type": "gateway",
+                "details": f"Level {game.level} exit",
+                "color": Colors.GATEWAY,
             }
 
         # Check for cooling node
         if game.game_map.is_cooling_node(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get('cooling_node', {})
+            terrain_desc = EntityInspector._terrain_descriptions.get("cooling_node", {})
             return {
-                'name': terrain_desc.get('name', 'Cooling Node'),
-                'description': terrain_desc.get('description', 'Reduces heat'),
-                'entity_type': 'cooling_node',
-                'details': 'Step on to activate',
-                'color': Colors.HEAT_RECOVERY
+                "name": terrain_desc.get("name", "Cooling Node"),
+                "description": terrain_desc.get("description", "Reduces heat"),
+                "entity_type": "cooling_node",
+                "details": "Step on to activate",
+                "color": Colors.HEAT_RECOVERY,
             }
 
         # Check for CPU recovery node
         if game.game_map.is_cpu_recovery_node(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get('cpu_recovery_node', {})
+            terrain_desc = EntityInspector._terrain_descriptions.get("cpu_recovery_node", {})
             return {
-                'name': terrain_desc.get('name', 'CPU Recovery Node'),
-                'description': terrain_desc.get('description', 'Restores CPU'),
-                'entity_type': 'cpu_recovery_node',
-                'details': 'Step on to activate',
-                'color': Colors.CPU_RECOVERY
+                "name": terrain_desc.get("name", "CPU Recovery Node"),
+                "description": terrain_desc.get("description", "Restores CPU"),
+                "entity_type": "cpu_recovery_node",
+                "details": "Step on to activate",
+                "color": Colors.CPU_RECOVERY,
             }
 
         # Check for ghost node
         if game.game_map.is_ghost_node(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get('ghost_node', {})
+            terrain_desc = EntityInspector._terrain_descriptions.get("ghost_node", {})
             return {
-                'name': terrain_desc.get('name', 'Ghost Node'),
-                'description': terrain_desc.get('description', 'Reduces trace level'),
-                'entity_type': 'ghost_node',
-                'details': 'Step on to activate; also acts as blind spot',
-                'color': Colors.CYAN
+                "name": terrain_desc.get("name", "Ghost Node"),
+                "description": terrain_desc.get("description", "Reduces trace level"),
+                "entity_type": "ghost_node",
+                "details": "Step on to activate; also acts as blind spot",
+                "color": Colors.CYAN,
             }
 
         return None
 
     @staticmethod
-    def _inspect_terrain(game, position: Position) -> Dict[str, Any]:
+    def _inspect_terrain(game, position: Position) -> dict[str, Any]:
         """Inspect terrain at position."""
 
         # Check for wall
         if game.game_map.is_wall(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get('wall', {})
+            terrain_desc = EntityInspector._terrain_descriptions.get("wall", {})
             return {
-                'name': terrain_desc.get('name', 'Security Barrier'),
-                'description': terrain_desc.get('description', 'Blocks movement and vision'),
-                'entity_type': 'wall',
-                'details': '',
-                'color': Colors.WALL
+                "name": terrain_desc.get("name", "Security Barrier"),
+                "description": terrain_desc.get("description", "Blocks movement and vision"),
+                "entity_type": "wall",
+                "details": "",
+                "color": Colors.WALL,
             }
 
         # Check for blind spot
         if game.game_map.is_blind_spot(position):
-            terrain_desc = EntityInspector._terrain_descriptions.get('blind_spot', {})
+            terrain_desc = EntityInspector._terrain_descriptions.get("blind_spot", {})
             return {
-                'name': terrain_desc.get('name', 'Blind Spot'),
-                'description': terrain_desc.get('description', 'Reduces enemy vision'),
-                'entity_type': 'blind_spot',
-                'details': 'Stealth bonus when hiding here',
-                'color': Colors.BLIND_SPOT_VISIBLE
+                "name": terrain_desc.get("name", "Blind Spot"),
+                "description": terrain_desc.get("description", "Reduces enemy vision"),
+                "entity_type": "blind_spot",
+                "details": "Stealth bonus when hiding here",
+                "color": Colors.BLIND_SPOT_VISIBLE,
             }
 
         # Default: floor
-        terrain_desc = EntityInspector._terrain_descriptions.get('floor', {})
+        terrain_desc = EntityInspector._terrain_descriptions.get("floor", {})
         return {
-            'name': terrain_desc.get('name', 'Data Corridor'),
-            'description': terrain_desc.get('description', 'Open network pathway'),
-            'entity_type': 'floor',
-            'details': '',
-            'color': Colors.FLOOR
+            "name": terrain_desc.get("name", "Data Corridor"),
+            "description": terrain_desc.get("description", "Open network pathway"),
+            "entity_type": "floor",
+            "details": "",
+            "color": Colors.FLOOR,
         }

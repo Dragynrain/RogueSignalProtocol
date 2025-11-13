@@ -21,6 +21,7 @@ class EnemyState(Enum):
     ALERT: Enemy suspects player presence, searching (yellow) - lasts 1 turn
     HOSTILE: Enemy actively pursuing player (red)
     """
+
     UNAWARE = "unaware"
     ALERT = "alert"
     HOSTILE = "hostile"
@@ -38,6 +39,7 @@ class EnemyMovement(Enum):
     TRACK: Legacy tracking behavior
     VIRUS: Randomly selects STATIC, PATROL, or RANDOM on spawn (unpredictable)
     """
+
     STATIC = "static"
     PATROL = "patrol"
     RANDOM = "random"
@@ -56,6 +58,7 @@ class TargetingMode(Enum):
     AREA: Area of effect around target point
     DIRECTION: Directional targeting (not currently used)
     """
+
     NONE = "none"
     SINGLE = "single"
     AREA = "area"

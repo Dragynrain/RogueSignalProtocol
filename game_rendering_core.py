@@ -8,22 +8,19 @@ specialized rendering tasks to dedicated subsystems (UI, map, dialogue).
 Uses layered SDL rendering in graphics mode for sprite-over-UI composition.
 """
 
-import tcod
-import os
 import logging
-from typing import List
+
+import tcod
 
 from game_config import GameConfig
-from game_entities import Position, Colors
 from game_coordinate_helpers import CoordinateHelpers
+from game_dialogue_system import UnifiedRenderer
+from game_menu_help_lore import create_help_menu
+from game_rendering_glyphs import GlyphsMapRenderer
+from game_rendering_graphics import GraphicsMapRenderer
 
 # Import specialized renderers
 from game_rendering_ui import UIRenderer
-from game_rendering_glyphs import GlyphsMapRenderer
-from game_rendering_graphics import GraphicsMapRenderer
-from game_dialogue_system import UnifiedRenderer
-from game_menu_help_lore import create_help_menu
-from game_rendering_utils import draw_bordered_box
 
 
 class GameRenderer:
@@ -71,7 +68,9 @@ class GameRenderer:
 
         # Initialize both map renderers
         self.glyphs_renderer = GlyphsMapRenderer(settings=settings)
-        self.graphics_renderer = GraphicsMapRenderer(tile_manager=tile_manager, context=context, settings=settings)
+        self.graphics_renderer = GraphicsMapRenderer(
+            tile_manager=tile_manager, context=context, settings=settings
+        )
 
         # Help menu management (lazily created, cached here instead of in ui_renderer)
         self._active_help_menu = None
@@ -86,18 +85,23 @@ class GameRenderer:
         # Check if graphics mode changed (requires recreating help menu)
         current_mode = self.settings.graphics_mode if self.settings else None
         if self._help_menu_graphics_mode != current_mode:
-            logging.info(f"Graphics mode changed from {self._help_menu_graphics_mode} to {current_mode}, clearing help menu cache")
+            logging.info(
+                f"Graphics mode changed from {self._help_menu_graphics_mode} to {current_mode}, clearing help menu cache"
+            )
             self._active_help_menu = None
             self._help_menu_graphics_mode = current_mode
 
         # Create help menu if not already cached
         if self._active_help_menu is None:
             if self.settings is not None:
-                self._active_help_menu = create_help_menu(self.settings, self.context, self.tile_manager)
+                self._active_help_menu = create_help_menu(
+                    self.settings, self.context, self.tile_manager
+                )
                 logging.info(f"Created help menu: {type(self._active_help_menu).__name__}")
             else:
                 # Fallback to standard help menu if settings not provided
                 from game_menu_help_lore import HelpMenu
+
                 self._active_help_menu = HelpMenu()
                 logging.warning("Settings not provided to GameRenderer, using standard HelpMenu")
 
@@ -121,14 +125,16 @@ class GameRenderer:
         Returns:
             bool: True if graphics mode can be used, False otherwise
         """
-        return (self.settings and
-                self.settings.graphics_mode == "graphics" and
-                self.tile_manager is not None and
-                self.context is not None and
-                hasattr(self.context, 'sdl_renderer') and
-                self.context.sdl_renderer is not None and
-                hasattr(self.context, 'console_render') and
-                self.context.console_render is not None)
+        return (
+            self.settings
+            and self.settings.graphics_mode == "graphics"
+            and self.tile_manager is not None
+            and self.context is not None
+            and hasattr(self.context, "sdl_renderer")
+            and self.context.sdl_renderer is not None
+            and hasattr(self.context, "console_render")
+            and self.context.console_render is not None
+        )
 
     def render_game(self, console: tcod.console.Console, game, context=None):
         """
@@ -175,14 +181,21 @@ class GameRenderer:
             # Use UnifiedRenderer for all dialogue types
             dialogue = game.dialogue_state.get_active()
             if dialogue:
-                UnifiedRenderer.render(console, dialogue, game.dialogue_state,
-                                     game.last_mouse_tile_x, game.last_mouse_tile_y)
+                UnifiedRenderer.render(
+                    console,
+                    dialogue,
+                    game.dialogue_state,
+                    game.last_mouse_tile_x,
+                    game.last_mouse_tile_y,
+                )
 
         # Render achievement popups (high priority, after dialogue or at same level)
         # Only show if enabled in settings (default: True)
-        if (hasattr(game, 'achievement_popup_manager') and
-            hasattr(game, 'settings') and
-            game.settings.show_achievement_popups):
+        if (
+            hasattr(game, "achievement_popup_manager")
+            and hasattr(game, "settings")
+            and game.settings.show_achievement_popups
+        ):
             game.achievement_popup_manager.update()
             game.achievement_popup_manager.render(console)
 
@@ -266,7 +279,12 @@ class GameRenderer:
             )
             # Bottom panel (full width, from PANEL_Y to bottom)
             CoordinateHelpers.set_alpha_region(
-                console, x=0, y=panel_y, width=console.width, height=console.height - panel_y, alpha=255
+                console,
+                x=0,
+                y=panel_y,
+                width=console.width,
+                height=console.height - panel_y,
+                alpha=255,
             )
             # Info panel and system log (from GAME_AREA_WIDTH to right edge, from top to panel start)
             CoordinateHelpers.set_alpha_region(
@@ -274,8 +292,9 @@ class GameRenderer:
             )
 
             # Check for pending death dialogue (deferred to allow damage messages to render first)
-            if hasattr(game, 'pending_death_dialogue') and game.pending_death_dialogue:
+            if hasattr(game, "pending_death_dialogue") and game.pending_death_dialogue:
                 from game_dialogue_system import create_death_dialogue
+
                 game.dialogue_state.show(create_death_dialogue())
                 game.pending_death_dialogue = False
                 game.sound_manager.play_sound("player_death", priority=10)
@@ -286,11 +305,16 @@ class GameRenderer:
                 # Use UnifiedRenderer for all dialogue types
                 dialogue = game.dialogue_state.get_active()
                 if dialogue:
-                    UnifiedRenderer.render(console, dialogue, game.dialogue_state,
-                                         game.last_mouse_tile_x, game.last_mouse_tile_y)
+                    UnifiedRenderer.render(
+                        console,
+                        dialogue,
+                        game.dialogue_state,
+                        game.last_mouse_tile_x,
+                        game.last_mouse_tile_y,
+                    )
 
             # Render achievement popups (high priority, after dialogue or at same level)
-            if hasattr(game, 'achievement_popup_manager'):
+            if hasattr(game, "achievement_popup_manager"):
                 game.achievement_popup_manager.update()
                 game.achievement_popup_manager.render(console)
 
@@ -317,8 +341,9 @@ class GameRenderer:
             self.ui_renderer.render_inspection_panel(console, game)
 
             # Check for pending death dialogue (deferred to allow damage messages to render first)
-            if hasattr(game, 'pending_death_dialogue') and game.pending_death_dialogue:
+            if hasattr(game, "pending_death_dialogue") and game.pending_death_dialogue:
                 from game_dialogue_system import create_death_dialogue
+
                 game.dialogue_state.show(create_death_dialogue())
                 game.pending_death_dialogue = False
                 game.sound_manager.play_sound("player_death", priority=10)
@@ -329,11 +354,16 @@ class GameRenderer:
                 # Use UnifiedRenderer for all dialogue types
                 dialogue = game.dialogue_state.get_active()
                 if dialogue:
-                    UnifiedRenderer.render(console, dialogue, game.dialogue_state,
-                                         game.last_mouse_tile_x, game.last_mouse_tile_y)
+                    UnifiedRenderer.render(
+                        console,
+                        dialogue,
+                        game.dialogue_state,
+                        game.last_mouse_tile_x,
+                        game.last_mouse_tile_y,
+                    )
 
             # Render achievement popups (high priority, after dialogue or at same level)
-            if hasattr(game, 'achievement_popup_manager'):
+            if hasattr(game, "achievement_popup_manager"):
                 game.achievement_popup_manager.update()
                 game.achievement_popup_manager.render(console)
 

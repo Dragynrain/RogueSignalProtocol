@@ -4,12 +4,14 @@ Unit tests for room-based Level Generation features.
 Tests variable room types and Phase 3 layout improvements: looping paths, gateway strategies, blind spot zones, hub-and-spoke.
 """
 
-import pytest
 import random
+
+import pytest
+
+from game_config import GameConfig
+from game_entities import Position
 from game_level import LevelGenerator
 from game_map import GameMap
-from game_entities import Position
-from game_config import GameConfig
 
 
 class TestVariableRoomTypes:
@@ -27,7 +29,7 @@ class TestVariableRoomTypes:
         for _ in range(50):
             room_type = self.level_generator.room_generator.select_room_type(1, 8, 8)
             room_types.add(room_type)
-            assert room_type in ['rectangular', 'l_shaped', 'irregular', 'cross', 'circular']
+            assert room_type in ["rectangular", "l_shaped", "irregular", "cross", "circular"]
 
         # Should use multiple types over 50 iterations
         assert len(room_types) >= 2
@@ -37,7 +39,7 @@ class TestVariableRoomTypes:
         # Small room should only get rectangular or limited types
         for _ in range(20):
             small_room_type = self.level_generator.room_generator.select_room_type(1, 3, 3)
-            assert small_room_type in ['rectangular']
+            assert small_room_type in ["rectangular"]
 
         # Large room should be able to get all types
         large_room_types = set()
@@ -164,13 +166,17 @@ class TestVariableRoomTypes:
         room = (10, 10, 10, 10)
         self.level_generator.room_generator.carve_rectangular_room(room)
 
-        floor_before = sum(1 for x in range(10, 20) for y in range(10, 20) if (x, y) not in self.game_map.walls)
+        floor_before = sum(
+            1 for x in range(10, 20) for y in range(10, 20) if (x, y) not in self.game_map.walls
+        )
 
         # Apply pillars
         random.seed(1)  # Seed that triggers pillar placement
         self.level_generator.room_generator.apply_pillar_pattern(room, level=1)
 
-        floor_after = sum(1 for x in range(10, 20) for y in range(10, 20) if (x, y) not in self.game_map.walls)
+        floor_after = sum(
+            1 for x in range(10, 20) for y in range(10, 20) if (x, y) not in self.game_map.walls
+        )
 
         # Pillars may or may not be added based on chance
         # If added, floor tiles should decrease
@@ -204,11 +210,11 @@ class TestVariableRoomTypes:
         weights_l3 = self.level_generator.room_generator.get_room_type_weights(3)
 
         # Verify all levels have rectangular as most common or second most common
-        assert all('rectangular' in w for w in [weights_l1, weights_l2, weights_l3])
+        assert all("rectangular" in w for w in [weights_l1, weights_l2, weights_l3])
 
         # Level 1 should favor rectangular more than or equal to level 3
         # (Equal is acceptable if per-level configs not loaded, > if they are loaded)
-        assert weights_l1['rectangular'] >= weights_l3['rectangular']
+        assert weights_l1["rectangular"] >= weights_l3["rectangular"]
 
         # Verify weights are valid (sum to 1.0 or close to it)
         for weights in [weights_l1, weights_l2, weights_l3]:
@@ -217,7 +223,7 @@ class TestVariableRoomTypes:
 
     def test_all_room_types_can_be_generated(self):
         """Test that all room types can be successfully generated."""
-        room_types = ['rectangular', 'l_shaped', 'irregular', 'cross', 'circular']
+        room_types = ["rectangular", "l_shaped", "irregular", "cross", "circular"]
 
         for room_type in room_types:
             # Clear map
@@ -317,7 +323,9 @@ class TestPhase3LayoutImprovements:
         rooms = self.level_generator.last_generated_rooms
 
         # Create blind spot zones
-        blind_spot_zone_rooms = self.level_generator.advanced_generator.create_blind_spot_zones(rooms)
+        blind_spot_zone_rooms = self.level_generator.advanced_generator.create_blind_spot_zones(
+            rooms
+        )
 
         # Blind spot zones may or may not be created
         assert isinstance(blind_spot_zone_rooms, list)
@@ -359,7 +367,9 @@ class TestPhase3LayoutImprovements:
         assert self.level_generator.advanced_generator.room_distance(room1, room1) == 0
 
         # Distance should be symmetric
-        assert self.level_generator.advanced_generator.room_distance(room1, room2) == self.level_generator.advanced_generator.room_distance(room2, room1)
+        assert self.level_generator.advanced_generator.room_distance(
+            room1, room2
+        ) == self.level_generator.advanced_generator.room_distance(room2, room1)
 
     def test_gateway_strategy_selection(self):
         """Test gateway placement strategy selection."""
@@ -368,7 +378,7 @@ class TestPhase3LayoutImprovements:
         for _ in range(50):
             strategy = self.level_generator.placement_generator.select_gateway_strategy()
             strategies.add(strategy)
-            assert strategy in ['far_corner', 'central_hub', 'hidden_dead_end', 'gauntlet']
+            assert strategy in ["far_corner", "central_hub", "hidden_dead_end", "gauntlet"]
 
         # Should use multiple strategies over iterations
         assert len(strategies) >= 2
@@ -378,7 +388,9 @@ class TestPhase3LayoutImprovements:
         floor_positions = self._create_open_map()
         spawn = Position(5, 5)
 
-        gateway_pos = self.level_generator.placement_generator.gateway_far_corner(spawn, floor_positions)
+        gateway_pos = self.level_generator.placement_generator.gateway_far_corner(
+            spawn, floor_positions
+        )
 
         # Gateway should be far from spawn
         gateway = Position(gateway_pos[0], gateway_pos[1])
@@ -403,7 +415,9 @@ class TestPhase3LayoutImprovements:
         """Test hidden dead end gateway placement strategy."""
         floor_positions = self._create_open_map()
 
-        gateway_pos = self.level_generator.placement_generator.gateway_hidden_dead_end(floor_positions)
+        gateway_pos = self.level_generator.placement_generator.gateway_hidden_dead_end(
+            floor_positions
+        )
 
         # Should return a valid position
         assert gateway_pos in floor_positions
@@ -413,7 +427,9 @@ class TestPhase3LayoutImprovements:
         floor_positions = self._create_open_map()
         spawn = Position(5, 5)
 
-        gateway_pos = self.level_generator.placement_generator.gateway_gauntlet(spawn, floor_positions)
+        gateway_pos = self.level_generator.placement_generator.gateway_gauntlet(
+            spawn, floor_positions
+        )
 
         # Should return a valid position
         assert gateway_pos in floor_positions
@@ -472,9 +488,12 @@ class TestPhase3LayoutImprovements:
             assert gateway_pos not in self.game_map.walls
 
             # Should have floor tiles
-            floor_count = sum(1 for x in range(GameConfig.MAP_WIDTH)
-                            for y in range(GameConfig.MAP_HEIGHT)
-                            if (x, y) not in self.game_map.walls)
+            floor_count = sum(
+                1
+                for x in range(GameConfig.MAP_WIDTH)
+                for y in range(GameConfig.MAP_HEIGHT)
+                if (x, y) not in self.game_map.walls
+            )
             assert floor_count > 50
 
     def test_phase3_deterministic_generation(self):
@@ -508,9 +527,12 @@ class TestPhase3LayoutImprovements:
                     self.game_map.walls.remove((x, y))
 
         # Return floor positions
-        return [(x, y) for x in range(5, GameConfig.MAP_WIDTH - 5)
-                for y in range(5, GameConfig.MAP_HEIGHT - 5)
-                if (x, y) not in self.game_map.walls]
+        return [
+            (x, y)
+            for x in range(5, GameConfig.MAP_WIDTH - 5)
+            for y in range(5, GameConfig.MAP_HEIGHT - 5)
+            if (x, y) not in self.game_map.walls
+        ]
 
 
 if __name__ == "__main__":

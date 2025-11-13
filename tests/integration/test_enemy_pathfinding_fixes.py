@@ -6,14 +6,12 @@ Rewritten for on-demand movement calculation system (no movement queue).
 """
 
 import unittest
-from unittest.mock import Mock, patch
-import random
+from unittest.mock import Mock
 
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState, EnemyMovement
-from game_map import GameMap
+from game_characters import Enemy
 from game_config import GameConfig, GameSettings
+from game_engine import GameEngine
+from game_entities import EnemyState, Position
 
 
 class TestEnemyPathfindingFixes(unittest.TestCase):
@@ -25,10 +23,7 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         mock_sound_manager = Mock()
 
         # Create GameEngine with mocked dependencies
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
+        engine = GameEngine(sound_manager=mock_sound_manager, settings=self.game_settings)
 
         return engine
 
@@ -54,7 +49,7 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         self.player.x, self.player.y = 15, 10
 
         # Place enemy on one side of player
-        enemy = Enemy(Position(10, 10), 'virus')
+        enemy = Enemy(Position(10, 10), "virus")
         enemy.state = EnemyState.HOSTILE
         enemy.last_seen_player = Position(self.player.x, self.player.y)
         self.engine.enemies = [enemy]
@@ -65,8 +60,11 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         moved = enemy.move(self.game_map, self.player, self.engine)
 
         # Verify enemy didn't move to player position
-        self.assertNotEqual((enemy.position.x, enemy.position.y), (self.player.x, self.player.y),
-                          "Enemy moved to player position")
+        self.assertNotEqual(
+            (enemy.position.x, enemy.position.y),
+            (self.player.x, self.player.y),
+            "Enemy moved to player position",
+        )
 
         # Execute several moves and ensure enemy never moves onto player
         for _ in range(10):
@@ -74,8 +72,11 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
             moved = enemy.move(self.game_map, self.player, self.engine)
 
             # Enemy should never be on player position
-            self.assertNotEqual((enemy.position.x, enemy.position.y), (self.player.x, self.player.y),
-                              "Enemy moved to player position")
+            self.assertNotEqual(
+                (enemy.position.x, enemy.position.y),
+                (self.player.x, self.player.y),
+                "Enemy moved to player position",
+            )
 
             # If adjacent to player, should stop moving
             if enemy.position.is_adjacent_to(Position(self.player.x, self.player.y)):
@@ -98,7 +99,7 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
                     self.game_map.walls.add((wall_x, wall_y))
 
         # Place enemy far away who wants to reach player
-        enemy = Enemy(Position(5, 5), 'bot')
+        enemy = Enemy(Position(5, 5), "bot")
         enemy.state = EnemyState.HOSTILE
         enemy.last_seen_player = Position(self.player.x, self.player.y)
         self.engine.enemies = [enemy]
@@ -110,23 +111,28 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
         # Enemy should have either moved or have valid planned moves
         if moved:
-            self.assertFalse(self.game_map.is_wall(enemy.position),
-                           "Enemy should not move to a wall")
-            self.assertNotEqual((enemy.position.x, enemy.position.y), (self.player.x, self.player.y),
-                              "Enemy should not move to player position")
+            self.assertFalse(
+                self.game_map.is_wall(enemy.position), "Enemy should not move to a wall"
+            )
+            self.assertNotEqual(
+                (enemy.position.x, enemy.position.y),
+                (self.player.x, self.player.y),
+                "Enemy should not move to player position",
+            )
 
         # Enemy should have planned moves in queue for pathfinding
         if enemy.move_queue:
             next_planned = enemy.move_queue[0]
-            self.assertFalse(self.game_map.is_wall(next_planned),
-                           "Planned move should not be a wall")
+            self.assertFalse(
+                self.game_map.is_wall(next_planned), "Planned move should not be a wall"
+            )
 
     def test_enemy_movement_prediction_respects_pathfinding(self):
         """Test that movement prediction uses correct pathfinding logic."""
         # Set up scenario where enemy would want to go through player
         self.player.x, self.player.y = 25, 25
 
-        enemy = Enemy(Position(20, 25), 'bot')
+        enemy = Enemy(Position(20, 25), "bot")
         enemy.state = EnemyState.HOSTILE
         enemy.last_seen_player = Position(self.player.x, self.player.y)
         self.engine.enemies = [enemy]
@@ -136,8 +142,11 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
         # Verify prediction doesn't include player position
         for predicted_pos in predicted_positions:
-            self.assertNotEqual((predicted_pos.x, predicted_pos.y), (self.player.x, self.player.y),
-                              "Movement prediction should not include player position")
+            self.assertNotEqual(
+                (predicted_pos.x, predicted_pos.y),
+                (self.player.x, self.player.y),
+                "Movement prediction should not include player position",
+            )
 
     def test_blocked_enemy_gets_close_and_stops(self):
         """Test that enemy gets as close as possible when fully blocked."""
@@ -154,7 +163,7 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
                     self.game_map.walls.add((wall_x, wall_y))
 
         # Place enemy outside the wall box
-        enemy = Enemy(Position(25, 30), 'admin')
+        enemy = Enemy(Position(25, 30), "admin")
         enemy.state = EnemyState.HOSTILE
         enemy.last_seen_player = Position(self.player.x, self.player.y)
         self.engine.enemies = [enemy]
@@ -171,23 +180,25 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
         # Enemy should try to get closer (or may get stuck at walls)
         # Just verify enemy didn't break through walls to player
-        self.assertNotEqual((enemy.position.x, enemy.position.y), (self.player.x, self.player.y),
-                           "Enemy should not teleport through walls to player")
+        self.assertNotEqual(
+            (enemy.position.x, enemy.position.y),
+            (self.player.x, self.player.y),
+            "Enemy should not teleport through walls to player",
+        )
 
         # Verify enemy position is valid (not in a wall)
-        self.assertFalse(self.game_map.is_wall(enemy.position),
-                        "Enemy should not end up in a wall")
+        self.assertFalse(self.game_map.is_wall(enemy.position), "Enemy should not end up in a wall")
 
     def test_multiple_enemies_pathfind_independently(self):
         """Test that multiple enemies calculate their own paths correctly."""
         self.player.x, self.player.y = 30, 30
 
         # Create multiple enemies at different positions
-        enemy1 = Enemy(Position(20, 20), 'virus')
+        enemy1 = Enemy(Position(20, 20), "virus")
         enemy1.state = EnemyState.HOSTILE
         enemy1.last_seen_player = Position(self.player.x, self.player.y)
 
-        enemy2 = Enemy(Position(40, 40), 'bot')
+        enemy2 = Enemy(Position(40, 40), "bot")
         enemy2.state = EnemyState.HOSTILE
         enemy2.last_seen_player = Position(self.player.x, self.player.y)
 
@@ -223,12 +234,12 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         self.player.x, self.player.y = 10, 10  # P
 
         # Enemy 1 is adjacent to player (in attack range)
-        enemy1 = Enemy(Position(11, 10), 'virus')  # 1 - directly right of P
+        enemy1 = Enemy(Position(11, 10), "virus")  # 1 - directly right of P
         enemy1.state = EnemyState.HOSTILE
         enemy1.last_seen_player = Position(self.player.x, self.player.y)
 
         # Enemy 2 is blocked behind enemy 1
-        enemy2 = Enemy(Position(12, 10), 'bot')  # 2 - blocked behind 1
+        enemy2 = Enemy(Position(12, 10), "bot")  # 2 - blocked behind 1
         enemy2.state = EnemyState.HOSTILE
         enemy2.last_seen_player = Position(self.player.x, self.player.y)
 
@@ -240,8 +251,10 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         enemy1.move(self.game_map, self.player, self.engine)
 
         # Enemy 1 should remain adjacent to player (in attack range, no need to move)
-        self.assertTrue(enemy1.position.is_adjacent_to(Position(self.player.x, self.player.y)),
-                       "Enemy 1 should stay adjacent to player")
+        self.assertTrue(
+            enemy1.position.is_adjacent_to(Position(self.player.x, self.player.y)),
+            "Enemy 1 should stay adjacent to player",
+        )
 
         # Enemy 2 should pathfind around enemy 1
         initial_e2_pos = (enemy2.position.x, enemy2.position.y)
@@ -252,14 +265,18 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
             moved = enemy2.move(self.game_map, self.player, self.engine)
 
             # Enemy 2 should never move onto enemy 1's position
-            self.assertNotEqual((enemy2.position.x, enemy2.position.y),
-                              (enemy1.position.x, enemy1.position.y),
-                              "Enemy 2 should not move onto enemy 1")
+            self.assertNotEqual(
+                (enemy2.position.x, enemy2.position.y),
+                (enemy1.position.x, enemy1.position.y),
+                "Enemy 2 should not move onto enemy 1",
+            )
 
             # Enemy 2 should never move onto player's position
-            self.assertNotEqual((enemy2.position.x, enemy2.position.y),
-                              (self.player.x, self.player.y),
-                              "Enemy 2 should not move onto player")
+            self.assertNotEqual(
+                (enemy2.position.x, enemy2.position.y),
+                (self.player.x, self.player.y),
+                "Enemy 2 should not move onto player",
+            )
 
             # Check if enemy 2 is now adjacent to player (found diagonal route)
             if enemy2.position.is_adjacent_to(Position(self.player.x, self.player.y)):
@@ -269,12 +286,17 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
                 e1_attack_pos = (enemy1.position.x, enemy1.position.y)
 
                 # They should be attacking from different positions
-                self.assertNotEqual(e2_attack_pos, e1_attack_pos,
-                                  "Enemy 2 should attack from different position than enemy 1")
+                self.assertNotEqual(
+                    e2_attack_pos,
+                    e1_attack_pos,
+                    "Enemy 2 should attack from different position than enemy 1",
+                )
 
                 # Enemy 2 should be adjacent (in attack range)
-                self.assertTrue(enemy2.position.is_adjacent_to(Position(self.player.x, self.player.y)),
-                              "Enemy 2 should be adjacent to player")
+                self.assertTrue(
+                    enemy2.position.is_adjacent_to(Position(self.player.x, self.player.y)),
+                    "Enemy 2 should be adjacent to player",
+                )
 
                 # Success - enemy 2 pathfound around enemy 1
                 break
@@ -285,12 +307,16 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
         # Final verification: Enemy 2 should have moved closer to player or be adjacent
         final_distance = enemy2.position.distance_to(Position(self.player.x, self.player.y))
-        initial_distance = Position(*initial_e2_pos).distance_to(Position(self.player.x, self.player.y))
+        initial_distance = Position(*initial_e2_pos).distance_to(
+            Position(self.player.x, self.player.y)
+        )
 
         # Enemy 2 should be closer now or adjacent
-        self.assertLessEqual(final_distance, initial_distance + 0.5,
-                           f"Enemy 2 should move closer to player (was {initial_distance:.2f}, now {final_distance:.2f})")
-
+        self.assertLessEqual(
+            final_distance,
+            initial_distance + 0.5,
+            f"Enemy 2 should move closer to player (was {initial_distance:.2f}, now {final_distance:.2f})",
+        )
 
     def test_queue_never_contains_player_position(self):
         """Test that movement queue never includes the player's exact position.
@@ -302,7 +328,7 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         self.player.x, self.player.y = 20, 20
 
         # Enemy far from player, will pathfind toward them
-        enemy = Enemy(Position(10, 10), 'virus')
+        enemy = Enemy(Position(10, 10), "virus")
         enemy.state = EnemyState.HOSTILE
         enemy.last_seen_player = Position(self.player.x, self.player.y)
         self.engine.enemies = [enemy]
@@ -313,9 +339,11 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
             # Check every position in the queue
             for queued_pos in enemy.move_queue:
-                self.assertNotEqual((queued_pos.x, queued_pos.y),
-                                  (self.player.x, self.player.y),
-                                  f"Queue should never contain player position, found at turn {turn}")
+                self.assertNotEqual(
+                    (queued_pos.x, queued_pos.y),
+                    (self.player.x, self.player.y),
+                    f"Queue should never contain player position, found at turn {turn}",
+                )
 
             # If adjacent, we should stop
             if enemy.position.is_adjacent_to(Position(self.player.x, self.player.y)):
@@ -330,14 +358,16 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         self.player.x, self.player.y = 20, 20
 
         # Place enemy already adjacent to player
-        enemy = Enemy(Position(21, 20), 'virus')  # One tile to the right
+        enemy = Enemy(Position(21, 20), "virus")  # One tile to the right
         enemy.state = EnemyState.HOSTILE
         enemy.last_seen_player = Position(self.player.x, self.player.y)
         self.engine.enemies = [enemy]
 
         # Verify enemy is already adjacent
-        self.assertTrue(enemy.position.is_adjacent_to(Position(self.player.x, self.player.y)),
-                       "Enemy should start adjacent to player")
+        self.assertTrue(
+            enemy.position.is_adjacent_to(Position(self.player.x, self.player.y)),
+            "Enemy should start adjacent to player",
+        )
 
         initial_pos = (enemy.position.x, enemy.position.y)
 
@@ -346,17 +376,25 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
             enemy.move(self.game_map, self.player, self.engine)
 
             # Enemy should never move onto player
-            self.assertNotEqual((enemy.position.x, enemy.position.y),
-                              (self.player.x, self.player.y),
-                              "Enemy should not move onto player position")
+            self.assertNotEqual(
+                (enemy.position.x, enemy.position.y),
+                (self.player.x, self.player.y),
+                "Enemy should not move onto player position",
+            )
 
             # Enemy should stay in EXACT same position (not shuffle around)
-            self.assertEqual((enemy.position.x, enemy.position.y), initial_pos,
-                           f"Enemy should stay at initial position, not shuffle around (turn {turn})")
+            self.assertEqual(
+                (enemy.position.x, enemy.position.y),
+                initial_pos,
+                f"Enemy should stay at initial position, not shuffle around (turn {turn})",
+            )
 
             # Queue should be empty (no moves to make when in attack range)
-            self.assertEqual(len(enemy.move_queue), 0,
-                           f"Enemy should have empty queue when adjacent to player (turn {turn})")
+            self.assertEqual(
+                len(enemy.move_queue),
+                0,
+                f"Enemy should have empty queue when adjacent to player (turn {turn})",
+            )
 
     def test_multiple_enemies_surround_player_from_different_angles(self):
         """Test that 3-4 enemies all converge on player from different directions.
@@ -368,19 +406,19 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         self.player.x, self.player.y = 25, 25
 
         # Create 4 enemies approaching from different cardinal directions
-        enemy_north = Enemy(Position(25, 15), 'virus')  # North
+        enemy_north = Enemy(Position(25, 15), "virus")  # North
         enemy_north.state = EnemyState.HOSTILE
         enemy_north.last_seen_player = Position(self.player.x, self.player.y)
 
-        enemy_south = Enemy(Position(25, 35), 'bot')  # South
+        enemy_south = Enemy(Position(25, 35), "bot")  # South
         enemy_south.state = EnemyState.HOSTILE
         enemy_south.last_seen_player = Position(self.player.x, self.player.y)
 
-        enemy_west = Enemy(Position(15, 25), 'scanner')  # West
+        enemy_west = Enemy(Position(15, 25), "scanner")  # West
         enemy_west.state = EnemyState.HOSTILE
         enemy_west.last_seen_player = Position(self.player.x, self.player.y)
 
-        enemy_east = Enemy(Position(35, 25), 'firewall')  # East
+        enemy_east = Enemy(Position(35, 25), "firewall")  # East
         enemy_east.state = EnemyState.HOSTILE
         enemy_east.last_seen_player = Position(self.player.x, self.player.y)
 
@@ -397,9 +435,11 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
         for enemy in self.engine.enemies:
             # Should not be on player position
-            self.assertNotEqual((enemy.position.x, enemy.position.y),
-                              (self.player.x, self.player.y),
-                              f"Enemy {enemy.type} should not be on player position")
+            self.assertNotEqual(
+                (enemy.position.x, enemy.position.y),
+                (self.player.x, self.player.y),
+                f"Enemy {enemy.type} should not be on player position",
+            )
 
             # Check if adjacent
             if enemy.position.is_adjacent_to(Position(self.player.x, self.player.y)):
@@ -407,14 +447,19 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
                 occupied_positions.add((enemy.position.x, enemy.position.y))
 
         # At least 2-3 enemies should reach adjacent tiles
-        self.assertGreaterEqual(adjacent_count, 2,
-                               "At least 2 enemies should reach attack range")
+        self.assertGreaterEqual(adjacent_count, 2, "At least 2 enemies should reach attack range")
 
         # All adjacent enemies should occupy different tiles
-        adjacent_enemies = [e for e in self.engine.enemies
-                           if e.position.is_adjacent_to(Position(self.player.x, self.player.y))]
-        self.assertEqual(len(occupied_positions), len(adjacent_enemies),
-                        "Adjacent enemies should not stack on same tile")
+        adjacent_enemies = [
+            e
+            for e in self.engine.enemies
+            if e.position.is_adjacent_to(Position(self.player.x, self.player.y))
+        ]
+        self.assertEqual(
+            len(occupied_positions),
+            len(adjacent_enemies),
+            "Adjacent enemies should not stack on same tile",
+        )
 
     def test_enemy_prefers_diagonal_over_two_orthogonal_moves(self):
         """Test that enemies prefer 1 diagonal move over 2 orthogonal moves.
@@ -428,7 +473,7 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         self.player.x, self.player.y = 12, 12
 
         # Place enemy at position where diagonal is clearly better
-        enemy = Enemy(Position(10, 10), 'virus')
+        enemy = Enemy(Position(10, 10), "virus")
         enemy.state = EnemyState.HOSTILE
         enemy.last_seen_player = Position(self.player.x, self.player.y)
         self.engine.enemies = [enemy]
@@ -445,9 +490,9 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         self.assertNotEqual(new_pos.y, 10, "Enemy should move diagonally, y should change")
 
         # Should be at (11, 11) - the diagonal step
-        self.assertEqual((new_pos.x, new_pos.y), (11, 11),
-                        "Enemy should take diagonal step to (11, 11)")
-
+        self.assertEqual(
+            (new_pos.x, new_pos.y), (11, 11), "Enemy should take diagonal step to (11, 11)"
+        )
 
     def test_greedy_fallback_when_path_blocked_by_enemies(self):
         """Test greedy fallback activates when pathfinding fails due to enemy blockage.
@@ -463,12 +508,12 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
         for i in range(15, 26):
             if i == 20:  # Leave a gap that requires routing around
                 continue
-            blocker = Enemy(Position(i, 18), 'scanner')
+            blocker = Enemy(Position(i, 18), "scanner")
             blocker.state = EnemyState.UNAWARE  # Not moving
             blocking_enemies.append(blocker)
 
         # Enemy that wants to reach player (behind the wall)
-        enemy = Enemy(Position(20, 15), 'virus')
+        enemy = Enemy(Position(20, 15), "virus")
         enemy.state = EnemyState.HOSTILE
         enemy.last_seen_player = Position(self.player.x, self.player.y)
 
@@ -484,17 +529,22 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
             # Enemy should make progress (even if just via greedy)
             if moved:
-                self.assertNotEqual((enemy.position.x, enemy.position.y), initial_pos,
-                                  "Enemy should move from initial position")
+                self.assertNotEqual(
+                    (enemy.position.x, enemy.position.y),
+                    initial_pos,
+                    "Enemy should move from initial position",
+                )
 
             # Should have moves queued UNLESS adjacent to player (attack range)
             if not enemy.position.is_adjacent_to(Position(self.player.x, self.player.y)):
-                self.assertGreater(len(enemy.move_queue), 0,
-                                 "Enemy should have moves queued (greedy or pathfinding)")
+                self.assertGreater(
+                    len(enemy.move_queue),
+                    0,
+                    "Enemy should have moves queued (greedy or pathfinding)",
+                )
 
             # Greedy should now queue up to 3 moves
-            self.assertLessEqual(len(enemy.move_queue), 3,
-                               "Queue should not exceed 3 moves")
+            self.assertLessEqual(len(enemy.move_queue), 3, "Queue should not exceed 3 moves")
 
             # If adjacent, stop testing (enemy reached attack range)
             if enemy.position.is_adjacent_to(Position(self.player.x, self.player.y)):
@@ -513,14 +563,14 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
         # Create complex blocking scenario where A* might fail
         # Surround enemy with other enemies on 3 sides
-        enemy = Enemy(Position(20, 20), 'virus')
+        enemy = Enemy(Position(20, 20), "virus")
         enemy.state = EnemyState.HOSTILE
         enemy.last_seen_player = Position(self.player.x, self.player.y)
 
         # Block 3 directions, leave 1 open
-        blocker1 = Enemy(Position(19, 20), 'scanner')  # West
-        blocker2 = Enemy(Position(20, 19), 'bot')      # North
-        blocker3 = Enemy(Position(21, 20), 'firewall') # East
+        blocker1 = Enemy(Position(19, 20), "scanner")  # West
+        blocker2 = Enemy(Position(20, 19), "bot")  # North
+        blocker3 = Enemy(Position(21, 20), "firewall")  # East
         # South (20, 21) is open
 
         for blocker in [blocker1, blocker2, blocker3]:
@@ -534,21 +584,21 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
         # After optimization, greedy should chain moves
         # Should have 1-3 moves (greedy chains toward target)
-        self.assertGreater(len(enemy.move_queue), 0,
-                          "Greedy should add at least 1 move")
+        self.assertGreater(len(enemy.move_queue), 0, "Greedy should add at least 1 move")
 
         # After optimization: greedy should chain up to 3
         # If greedy activated, we want 3 moves for predictability
         if len(enemy.move_queue) > 0:
             first_move = enemy.move_queue[0]
             # First move should be valid
-            self.assertFalse(self.game_map.is_wall(first_move),
-                           "Greedy move should not be on wall")
+            self.assertFalse(self.game_map.is_wall(first_move), "Greedy move should not be on wall")
             # Should not be on another enemy
             for blocker in [blocker1, blocker2, blocker3]:
-                self.assertNotEqual((first_move.x, first_move.y),
-                                  (blocker.position.x, blocker.position.y),
-                                  "Greedy move should not be on another enemy")
+                self.assertNotEqual(
+                    (first_move.x, first_move.y),
+                    (blocker.position.x, blocker.position.y),
+                    "Greedy move should not be on another enemy",
+                )
 
     def test_greedy_never_queues_player_position(self):
         """Test that greedy fallback never queues the player's exact position.
@@ -560,7 +610,7 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
         # Place enemy adjacent to player (greedy might activate)
         self.player.x, self.player.y = 20, 20
-        enemy = Enemy(Position(21, 20), 'virus')
+        enemy = Enemy(Position(21, 20), "virus")
         enemy.state = EnemyState.HOSTILE
         enemy.last_seen_player = Position(self.player.x, self.player.y)
         self.engine.enemies = [enemy]
@@ -571,9 +621,12 @@ class TestEnemyPathfindingFixes(unittest.TestCase):
 
         # Check queue doesn't contain player position
         for pos in enemy.move_queue:
-            self.assertNotEqual((pos.x, pos.y), (self.player.x, self.player.y),
-                              "Greedy should never queue player position")
+            self.assertNotEqual(
+                (pos.x, pos.y),
+                (self.player.x, self.player.y),
+                "Greedy should never queue player position",
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -4,12 +4,14 @@ Unit tests for basic Level Generation features.
 Tests Phase 1-2 features: variable corridor widths, wall-adjacent shadows, alcoves, and cover clusters.
 """
 
-import pytest
-import random
 import math
+import random
+
+import pytest
+
+from game_config import GameConfig
 from game_level import LevelGenerator
 from game_map import GameMap
-from game_config import GameConfig
 
 
 class TestVariableCorridorWidths:
@@ -55,7 +57,9 @@ class TestVariableCorridorWidths:
                 self.game_map.walls.add((x, y))
 
         # Test width 1 horizontal corridor
-        self.level_generator.corridor_generator.carve_corridor_segment(10, 20, 15, 15, 1, horizontal=True)
+        self.level_generator.corridor_generator.carve_corridor_segment(
+            10, 20, 15, 15, 1, horizontal=True
+        )
 
         # Verify corridor carved correctly
         for x in range(10, 21):
@@ -73,7 +77,9 @@ class TestVariableCorridorWidths:
                 self.game_map.walls.add((x, y))
 
         # Test width 3 horizontal corridor
-        self.level_generator.corridor_generator.carve_corridor_segment(10, 20, 15, 15, 3, horizontal=True)
+        self.level_generator.corridor_generator.carve_corridor_segment(
+            10, 20, 15, 15, 3, horizontal=True
+        )
 
         # Verify corridor carved with width 3 (y=14, 15, 16)
         for x in range(10, 21):
@@ -93,7 +99,9 @@ class TestVariableCorridorWidths:
                 self.game_map.walls.add((x, y))
 
         # Test width 2 vertical corridor
-        self.level_generator.corridor_generator.carve_corridor_segment(15, 15, 10, 20, 2, horizontal=False)
+        self.level_generator.corridor_generator.carve_corridor_segment(
+            15, 15, 10, 20, 2, horizontal=False
+        )
 
         # Verify corridor carved with width 2 (x=14, 15)
         for y in range(10, 21):
@@ -171,7 +179,7 @@ class TestWallAdjacentShadows:
         for pos in wall_adjacent:
             x, y = pos
             # Check that at least one neighbor is a wall
-            neighbors = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+            neighbors = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
             has_wall_neighbor = any(n in self.game_map.walls for n in neighbors)
             assert has_wall_neighbor, f"Position {pos} is not adjacent to any wall"
 
@@ -193,9 +201,11 @@ class TestWallAdjacentShadows:
         for pos in interior:
             x, y = pos
             # Check that NO neighbor is a wall
-            neighbors = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+            neighbors = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
             has_wall_neighbor = any(n in self.game_map.walls for n in neighbors)
-            assert not has_wall_neighbor, f"Position {pos} is adjacent to a wall but marked as interior"
+            assert (
+                not has_wall_neighbor
+            ), f"Position {pos} is adjacent to a wall but marked as interior"
 
     def test_wall_adjacent_and_interior_are_mutually_exclusive(self):
         """Test that wall-adjacent and interior positions don't overlap."""
@@ -203,12 +213,16 @@ class TestWallAdjacentShadows:
         room = (10, 10, 7, 7)
         self.level_generator.room_generator.carve_room(room)
 
-        wall_adjacent = set(self.level_generator.tactical_generator.get_wall_adjacent_positions(room))
+        wall_adjacent = set(
+            self.level_generator.tactical_generator.get_wall_adjacent_positions(room)
+        )
         interior = set(self.level_generator.tactical_generator.get_interior_positions(room))
 
         # Sets should not overlap
         overlap = wall_adjacent.intersection(interior)
-        assert len(overlap) == 0, f"Found {len(overlap)} positions in both wall-adjacent and interior sets"
+        assert (
+            len(overlap) == 0
+        ), f"Found {len(overlap)} positions in both wall-adjacent and interior sets"
 
     def test_small_room_has_no_interior(self):
         """Test that small rooms (3x3) have minimal interior positions when surrounded by walls."""
@@ -242,7 +256,7 @@ class TestWallAdjacentShadows:
         for shadow_pos in self.game_map.blind_spots:
             x, y = shadow_pos
             # Check if adjacent to wall
-            neighbors = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+            neighbors = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
             is_wall_adjacent = any(n in self.game_map.walls for n in neighbors)
 
             if is_wall_adjacent:
@@ -272,7 +286,7 @@ class TestWallAdjacentShadows:
 
         for shadow_pos in self.game_map.blind_spots:
             x, y = shadow_pos
-            neighbors = [(x-1, y), (x+1, y), (x, y-1), (x, y+1)]
+            neighbors = [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)]
             is_wall_adjacent = any(n in self.game_map.walls for n in neighbors)
 
             if is_wall_adjacent:
@@ -317,7 +331,9 @@ class TestCorridorAlcoves:
                 self.game_map.walls.add((x, y))
 
         # Carve a horizontal corridor segment
-        self.level_generator.corridor_generator.carve_corridor_segment(10, 20, 15, 15, 1, horizontal=True)
+        self.level_generator.corridor_generator.carve_corridor_segment(
+            10, 20, 15, 15, 1, horizontal=True
+        )
 
         # Verify corridor tiles were tracked
         assert len(self.level_generator.corridor_tiles) > 0
@@ -339,7 +355,9 @@ class TestCorridorAlcoves:
             self.level_generator.corridor_tiles.add((x, 15))
 
         # Find horizontal segments
-        segments = self.level_generator.corridor_generator.find_straight_corridor_segments(horizontal=True)
+        segments = self.level_generator.corridor_generator.find_straight_corridor_segments(
+            horizontal=True
+        )
 
         # Should find at least one segment
         assert len(segments) > 0
@@ -367,7 +385,9 @@ class TestCorridorAlcoves:
             self.level_generator.corridor_tiles.add((15, y))
 
         # Find vertical segments
-        segments = self.level_generator.corridor_generator.find_straight_corridor_segments(horizontal=False)
+        segments = self.level_generator.corridor_generator.find_straight_corridor_segments(
+            horizontal=False
+        )
 
         # Should find at least one segment
         assert len(segments) > 0
@@ -488,7 +508,9 @@ class TestStrategicCoverClusters:
             for j, (px2, py2) in enumerate(points):
                 if i != j:
                     dist = math.sqrt((px1 - px2) ** 2 + (py1 - py2) ** 2)
-                    assert dist >= radius, f"Points {(px1, py1)} and {(px2, py2)} are too close: {dist} < {radius}"
+                    assert (
+                        dist >= radius
+                    ), f"Points {(px1, py1)} and {(px2, py2)} are too close: {dist} < {radius}"
 
     def test_find_large_open_areas(self):
         """Test identification of large open floor areas."""
@@ -532,7 +554,9 @@ class TestStrategicCoverClusters:
 
         # Test out of bounds
         assert not self.level_generator.tactical_generator.is_valid_cover_position((-1, -1))
-        assert not self.level_generator.tactical_generator.is_valid_cover_position((GameConfig.MAP_WIDTH + 1, GameConfig.MAP_HEIGHT + 1))
+        assert not self.level_generator.tactical_generator.is_valid_cover_position(
+            (GameConfig.MAP_WIDTH + 1, GameConfig.MAP_HEIGHT + 1)
+        )
 
     def test_create_cover_cluster_small(self):
         """Test creation of small cover cluster."""

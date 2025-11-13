@@ -6,12 +6,13 @@ A simple agent that randomly walks around like a drunk player.
 Great for finding movement-related crashes, edge cases, and pathfinding bugs.
 """
 
-import pytest
+import os
 import random
 import sys
-import os
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+import pytest
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from tests.test_agent import GameTestAgent
 
@@ -39,27 +40,23 @@ class DrunkAgent:
             Statistics about the chaos session
         """
         stats = {
-            'turns_survived': 0,
-            'moves_made': 0,
-            'walls_hit': 0,
-            'enemies_encountered': 0,
-            'crashed': False,
-            'crash_reason': None,
-            'final_state': None
+            "turns_survived": 0,
+            "moves_made": 0,
+            "walls_hit": 0,
+            "enemies_encountered": 0,
+            "crashed": False,
+            "crash_reason": None,
+            "final_state": None,
         }
 
-        directions = [
-            (-1, -1), (0, -1), (1, -1),
-            (-1, 0),           (1, 0),
-            (-1, 1),  (0, 1),  (1, 1)
-        ]
+        directions = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
 
         try:
             for turn in range(max_turns):
                 if self.agent.engine.game_over:
                     break
 
-                stats['turns_survived'] = turn
+                stats["turns_survived"] = turn
 
                 # Random action: 80% move, 20% wait
                 if random.random() < 0.8:
@@ -71,9 +68,9 @@ class DrunkAgent:
                     new_pos = (self.agent.player.x, self.agent.player.y)
 
                     if success:
-                        stats['moves_made'] += 1
+                        stats["moves_made"] += 1
                     else:
-                        stats['walls_hit'] += 1
+                        stats["walls_hit"] += 1
 
                     # Check if we bumped an enemy
                     enemy = self.agent.get_enemy_at(new_pos[0], new_pos[1])
@@ -83,26 +80,28 @@ class DrunkAgent:
                             # We moved - check destination
                             enemy_at_dest = self.agent.get_enemy_at(new_pos[0], new_pos[1])
                             if enemy_at_dest:
-                                stats['enemies_encountered'] += 1
+                                stats["enemies_encountered"] += 1
                 else:
                     # Wait
                     self.agent.wait(1)
 
-                self.actions_taken.append({
-                    'turn': turn,
-                    'player_pos': (self.agent.player.x, self.agent.player.y),
-                    'player_hp': self.agent.player.cpu,
-                    'num_enemies': len(self.agent.enemies)
-                })
+                self.actions_taken.append(
+                    {
+                        "turn": turn,
+                        "player_pos": (self.agent.player.x, self.agent.player.y),
+                        "player_hp": self.agent.player.cpu,
+                        "num_enemies": len(self.agent.enemies),
+                    }
+                )
 
         except Exception as e:
-            stats['crashed'] = True
-            stats['crash_reason'] = str(e)
-            stats['crash_type'] = type(e).__name__
+            stats["crashed"] = True
+            stats["crash_reason"] = str(e)
+            stats["crash_type"] = type(e).__name__
             # Re-raise so test framework catches it
             raise
         finally:
-            stats['final_state'] = self.agent.get_state()
+            stats["final_state"] = self.agent.get_state()
 
         return stats
 
@@ -118,10 +117,10 @@ class TestDrunkAgent:
         stats = chaos.run_chaos(max_turns=100)
 
         # We don't care about success, just that it didn't crash
-        assert not stats['crashed'], f"Game crashed: {stats['crash_reason']}"
+        assert not stats["crashed"], f"Game crashed: {stats['crash_reason']}"
 
         # Log interesting stats
-        print(f"\n=== Drunk Agent Test Results ===")
+        print("\n=== Drunk Agent Test Results ===")
         print(f"Survived {stats['turns_survived']} turns")
         print(f"Made {stats['moves_made']} successful moves")
         print(f"Hit {stats['walls_hit']} walls")
@@ -139,21 +138,14 @@ class TestDrunkAgent:
                 chaos = DrunkAgent(agent)
                 stats = chaos.run_chaos(max_turns=50)
 
-                if stats['crashed']:
-                    crashes.append({
-                        'seed': seed,
-                        'reason': stats['crash_reason']
-                    })
+                if stats["crashed"]:
+                    crashes.append({"seed": seed, "reason": stats["crash_reason"]})
             except Exception as e:
-                crashes.append({
-                    'seed': seed,
-                    'reason': str(e),
-                    'type': type(e).__name__
-                })
+                crashes.append({"seed": seed, "reason": str(e), "type": type(e).__name__})
 
         # Report crashes
         if crashes:
-            print(f"\n=== Crashes Found ===")
+            print("\n=== Crashes Found ===")
             for crash in crashes:
                 print(f"Seed {crash['seed']}: {crash.get('type', 'Unknown')} - {crash['reason']}")
 
@@ -168,9 +160,9 @@ class TestDrunkAgent:
         # This is more of a stress test
         stats = chaos.run_chaos(max_turns=500)
 
-        assert not stats['crashed'], f"Long session crashed: {stats['crash_reason']}"
+        assert not stats["crashed"], f"Long session crashed: {stats['crash_reason']}"
 
-        print(f"\n=== Long Drunk Session ===")
+        print("\n=== Long Drunk Session ===")
         print(f"Survived {stats['turns_survived']}/500 turns")
         print(f"Total moves: {stats['moves_made']}")
         print(f"Wall collisions: {stats['walls_hit']}")

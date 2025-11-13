@@ -10,23 +10,23 @@ Tests dialogue behavior in complex scenarios:
 - Rapid dialogue triggering
 """
 
-import pytest
+import time
+from unittest.mock import Mock
+
 import tcod.console
 import tcod.event
-from unittest.mock import Mock, MagicMock, patch
-import time
 
-from game_dialogue_system import (
-    DialogueState,
-    UnifiedRenderer,
-    create_gateway_dialogue,
-    create_death_dialogue,
-    create_overclock_warning_dialogue,
-    create_inventory_attack_dialogue
-)
 from game_achievement_popups import AchievementPopup, AchievementPopupManager
 from game_achievements import Achievement
 from game_config import GameSettings
+from game_dialogue_system import (
+    DialogueState,
+    UnifiedRenderer,
+    create_death_dialogue,
+    create_gateway_dialogue,
+    create_inventory_attack_dialogue,
+    create_overclock_warning_dialogue,
+)
 from tests.test_agent import GameTestAgent
 
 
@@ -234,12 +234,10 @@ class TestDialogueAchievementPopupOverlap:
             description="This is a test achievement.",
             icon="*",
             category="test",
-            hidden=False
+            hidden=False,
         )
         popup = AchievementPopup(
-            achievement_id="test_achievement",
-            achievement=achievement,
-            timestamp=time.time()
+            achievement_id="test_achievement", achievement=achievement, timestamp=time.time()
         )
 
         # Create dialogue
@@ -269,12 +267,10 @@ class TestDialogueAchievementPopupOverlap:
             description="Defeated first enemy",
             icon="!",
             category="combat",
-            hidden=False
+            hidden=False,
         )
         popup = AchievementPopup(
-            achievement_id="first_kill",
-            achievement=achievement,
-            timestamp=time.time()
+            achievement_id="first_kill", achievement=achievement, timestamp=time.time()
         )
         achievement_mgr.active_popup = popup
 
@@ -310,12 +306,10 @@ class TestDialogueAchievementPopupOverlap:
                 description=f"Description {i}",
                 icon=str(i),
                 category="test",
-                hidden=False
+                hidden=False,
             )
             popup = AchievementPopup(
-                achievement_id=f"achievement_{i}",
-                achievement=achievement,
-                timestamp=time.time()
+                achievement_id=f"achievement_{i}", achievement=achievement, timestamp=time.time()
             )
             # Queue them (manager only shows one at a time)
             achievement_mgr.popup_queue.append(f"achievement_{i}")
@@ -380,7 +374,7 @@ class TestDialogueDuringMenuNavigation:
 
         # Queue multiple dialogues with different priorities
         dialogue1 = create_gateway_dialogue()  # Priority 2
-        dialogue2 = create_death_dialogue()     # Priority 10 (higher, should queue)
+        dialogue2 = create_death_dialogue()  # Priority 10 (higher, should queue)
 
         agent.engine.dialogue_state.show(dialogue1)
         agent.engine.dialogue_state.show(dialogue2)
@@ -408,9 +402,7 @@ class TestRapidDialogueTriggers:
         # Rapidly trigger 10 dialogues
         dialogues = []
         for i in range(10):
-            dialogue = create_overclock_warning_dialogue(
-                f"Exploit{i}", 10, 5, 15, 20
-            )
+            dialogue = create_overclock_warning_dialogue(f"Exploit{i}", 10, 5, 15, 20)
             dialogues.append(dialogue)
             state.show(dialogue)
 
@@ -435,9 +427,7 @@ class TestRapidDialogueTriggers:
         state = DialogueState(settings)
 
         # Trigger same dialogue 3 times
-        dialogue_factory = lambda: create_overclock_warning_dialogue(
-            "Same Exploit", 10, 5, 15, 20
-        )
+        dialogue_factory = lambda: create_overclock_warning_dialogue("Same Exploit", 10, 5, 15, 20)
 
         dialogue1 = dialogue_factory()
         dialogue2 = dialogue_factory()
@@ -467,9 +457,7 @@ class TestRapidDialogueTriggers:
 
         # Spam 100 dialogues
         for i in range(100):
-            dialogue = create_overclock_warning_dialogue(
-                f"Spam{i}", 10, 5, 15, 20
-            )
+            dialogue = create_overclock_warning_dialogue(f"Spam{i}", 10, 5, 15, 20)
             state.show(dialogue)
 
         # All queued
@@ -495,6 +483,7 @@ class TestDialogueResolutionWrapping:
         long_message = "This is a very long dialogue message that should wrap " * 5
 
         from game_dialogue_system import DialogueBox
+
         dialogue = DialogueBox(
             title="Long Message Test",
             message=long_message,
@@ -504,13 +493,14 @@ class TestDialogueResolutionWrapping:
             message_color=(255, 255, 255),
             border_color=(255, 255, 255),
             bg_color=(0, 0, 0),
-            format_data={}
+            format_data={},
         )
 
         UnifiedRenderer.render(console, dialogue)
 
         # Should render without crash
         import numpy as np
+
         assert np.any(console.ch != 0)
 
     def test_dialogue_wraps_at_1440p(self):
@@ -521,6 +511,7 @@ class TestDialogueResolutionWrapping:
         long_message = "Extended dialogue for high resolution display " * 10
 
         from game_dialogue_system import DialogueBox
+
         dialogue = DialogueBox(
             title="High Res Test",
             message=long_message,
@@ -530,12 +521,13 @@ class TestDialogueResolutionWrapping:
             message_color=(255, 255, 255),
             border_color=(255, 255, 255),
             bg_color=(0, 0, 0),
-            format_data={}
+            format_data={},
         )
 
         UnifiedRenderer.render(console, dialogue)
 
         import numpy as np
+
         assert np.any(console.ch != 0)
 
     def test_dialogue_wraps_at_ultrawide(self):
@@ -543,10 +535,7 @@ class TestDialogueResolutionWrapping:
         # Ultrawide approximation (120x50 chars)
         console = tcod.console.Console(width=120, height=50)
 
-        dialogue = create_overclock_warning_dialogue(
-            "Ultra Wide Exploit Test",
-            25, 15, 10, 30
-        )
+        dialogue = create_overclock_warning_dialogue("Ultra Wide Exploit Test", 25, 15, 10, 30)
 
         UnifiedRenderer.render(console, dialogue)
 
@@ -555,7 +544,7 @@ class TestDialogueResolutionWrapping:
         center_x = 60
 
         # Check dialogue rendered near center
-        import numpy as np
+
         opaque_near_center = False
         for y in range(center_y - 5, center_y + 5):
             for x in range(center_x - 10, center_x + 10):

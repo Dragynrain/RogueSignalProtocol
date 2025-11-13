@@ -25,22 +25,23 @@ Technical details:
 - Music volume set from settings immediately after init (pygame defaults to 0.0)
 """
 
-import os
 import logging
-import traceback
-from game_errors import GameErrorHandler
+import os
 import time
+
+from game_errors import GameErrorHandler
 
 # Audio system
 try:
     import pygame
+
     AUDIO_AVAILABLE = True
 except ImportError:
     AUDIO_AVAILABLE = False
     logging.warning("pygame not available. Sound will be disabled.")
 
 # Import game settings
-from game_config import GameSettings, GameConfig
+from game_config import GameConfig, GameSettings
 
 
 class SoundManager:
@@ -72,12 +73,12 @@ class SoundManager:
     # Centralized audio directory configuration
     @property
     def SOUND_DIRECTORY(self):
-        return GameConfig._get_required('audio.sound_directory')
+        return GameConfig._get_required("audio.sound_directory")
 
     @property
     def MUSIC_DIRECTORY(self):
-        return GameConfig._get_required('audio.music_directory')
-    
+        return GameConfig._get_required("audio.music_directory")
+
     def __init__(self, settings: GameSettings = None):
         """Initialize the sound manager with game settings.
 
@@ -92,7 +93,7 @@ class SoundManager:
         self.max_channels = 16  # Allow more simultaneous sound effects
         self._sound_last_played = {}  # Track last play time for each sound
         self._sound_cooldown = 0.05  # 50ms cooldown to prevent stacking (configurable)
-        
+
         if self.enabled:
             try:
                 pygame.mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=512)
@@ -103,11 +104,13 @@ class SoundManager:
                 # pygame.mixer starts at volume 0.0 by default
                 music_vol = self.settings.music_volume * self.settings.master_volume
                 pygame.mixer.music.set_volume(music_vol)
-                logging.debug(f"Audio: Initialized pygame.mixer - {self.max_channels} channels, music_vol={music_vol:.2f}")
+                logging.debug(
+                    f"Audio: Initialized pygame.mixer - {self.max_channels} channels, music_vol={music_vol:.2f}"
+                )
             except Exception as e:
                 GameErrorHandler.handle_error(e, "sound_init", "Sound initialization failed")
                 self.enabled = False
-    
+
     def update_volumes(self):
         """Update volumes from settings"""
         if self.enabled:
@@ -125,7 +128,7 @@ class SoundManager:
         """
         self._sound_cooldown = max(0.0, cooldown_seconds)
         logging.debug(f"Audio: Sound cooldown set to {self._sound_cooldown*1000:.1f}ms")
-    
+
     def preload_sounds(self):
         """
         Preload all sound effects at startup for instant playback.
@@ -144,14 +147,13 @@ class SoundManager:
         """
         if not self.enabled:
             return
-            
+
         # Define all sound effects that should be loaded
         sound_files = {
             # Movement and actions
             "player_move": "player_move.wav",
             "player_attack": "player_attack.wav",
             "stealth_attack": "stealth_attack.wav",
-            
             # Combat and alerts
             "enemy_attack": "enemy_attack.wav",
             "enemy_death": "enemy_death.wav",
@@ -159,17 +161,14 @@ class SoundManager:
             "enemy_hostile": "enemy_hostile.wav",
             "admin_spawn": "admin_spawn.wav",
             "enemies_alerted": "enemies_alerted.wav",
-            
             # Item interactions
             "item_pickup_code": "item_pickup_code.wav",
             "item_pickup_exploit": "item_pickup_exploit.wav",
             "item_pickup_upgrade": "item_pickup_upgrade.wav",
             "item_pickup_story": "item_pickup_story.wav",
             "item_use_code": "item_use_code.wav",
-            
             # Environmental
             "node_activate": "node_activate.wav",
-            
             # Player status
             "player_death": "player_death.wav",
             "player_overheat": "player_overheat.wav",
@@ -178,7 +177,6 @@ class SoundManager:
             "critical_system_failure": "critical_system_failure.wav",
             "trace_threshold": "trace_threshold.wav",
             "overclocking": "overclocking.wav",
-            
             # Exploits
             "exploit_system_hop": "exploit_system_hop.wav",
             "exploit_buffer_overflow": "exploit_buffer_overflow.wav",
@@ -195,12 +193,11 @@ class SoundManager:
             "exploit_traffic_masquerade": "exploit_traffic_masquerade.wav",
             "exploit_decoy_swarm": "exploit_decoy_swarm.wav",
             "exploit_targeting": "exploit_targeting.wav",
-            
             # UI and system
             "ui_menu_open": "ui_menu_open.wav",
             "level_complete": "level_complete.wav",
         }
-        
+
         # Load each sound file
         logging.debug(f"Audio: Preloading {len(sound_files)} sound effects")
         loaded_count = 0
@@ -208,7 +205,7 @@ class SoundManager:
             if self.load_sound(sound_id, filename):
                 loaded_count += 1
         logging.debug(f"Audio: Preloaded {loaded_count}/{len(sound_files)} sounds successfully")
-    
+
     def load_sound(self, sound_id: str, filename: str) -> bool:
         """Load a sound effect from file"""
         if not self.enabled:
@@ -227,7 +224,7 @@ class SoundManager:
         except Exception as e:
             GameErrorHandler.handle_error(e, "sound_load", f"Failed to load {sound_id}")
             return False
-    
+
     def play_sound(self, sound_id: str, volume_modifier: float = 1.0, priority: int = 0):
         """
         Play a loaded sound effect with channel management and deduplication.
@@ -254,7 +251,9 @@ class SoundManager:
 
         if time_since_last < self._sound_cooldown:
             # Sound played too recently, skip to prevent stacking
-            logging.debug(f"Audio: Skipped '{sound_id}' (cooldown: {time_since_last*1000:.1f}ms < {self._sound_cooldown*1000:.1f}ms)")
+            logging.debug(
+                f"Audio: Skipped '{sound_id}' (cooldown: {time_since_last*1000:.1f}ms < {self._sound_cooldown*1000:.1f}ms)"
+            )
             return None
 
         # Update last played time
@@ -276,6 +275,7 @@ class SoundManager:
             elif priority >= 5:
                 # High priority: stop a random channel
                 import random
+
                 channel_id = random.randint(0, self.max_channels - 1)
                 channel = pygame.mixer.Channel(channel_id)
                 channel.stop()
@@ -284,7 +284,7 @@ class SoundManager:
                 return sound.play()
 
         return channel.play(sound)
-    
+
     def play_music(self, filename: str, loops: int = -1, fade_in_ms: int = 0):
         """Play background music (OGG format recommended)"""
         if not self.enabled:
@@ -312,12 +312,14 @@ class SoundManager:
             self.current_music = filename
             self.music_playing = True
             loop_info = "loop" if loops == -1 else f"{loops} times"
-            logging.debug(f"Audio: Playing music '{filename}' ({loop_info}, volume={volume:.2f}, fade_in={fade_in_ms}ms)")
+            logging.debug(
+                f"Audio: Playing music '{filename}' ({loop_info}, volume={volume:.2f}, fade_in={fade_in_ms}ms)"
+            )
         except Exception as e:
             GameErrorHandler.handle_error(e, "music_play", f"Failed to play {filename}")
             self.current_music = None
             self.music_playing = False
-    
+
     def stop_music(self, fade_out_ms: int = 0):
         """Stop background music"""
         if not self.enabled:
@@ -339,14 +341,14 @@ class SoundManager:
         if not self.enabled:
             return False
         return pygame.mixer.music.get_busy()
-    
+
     def update(self):
         """Update sound system (call each frame)"""
         if self.enabled and self.music_playing and not pygame.mixer.music.get_busy():
             # Music stopped playing
             self.music_playing = False
             self.current_music = None
-    
+
     def cleanup(self):
         """Clean up sound system"""
         if self.enabled:

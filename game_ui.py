@@ -7,12 +7,11 @@ Provides safe console rendering, window management, and universal input handling
 Extracted from RogueSignalProtocol.py for better organization.
 """
 
-import logging
 import time
+
 import tcod.event
 
 # Import game modules
-from game_entities import Colors
 
 
 def render_char_safe(console, x, y, char, fg=None, bg=None) -> None:
@@ -33,6 +32,7 @@ def render_char_safe(console, x, y, char, fg=None, bg=None) -> None:
     Raises:
         ValueError: If color format is invalid
     """
+
     def validate_color(color):
         """Validate and convert color to RGB tuple."""
         if color is None:
@@ -63,10 +63,19 @@ def render_char_safe(console, x, y, char, fg=None, bg=None) -> None:
     except Exception as e:
         # Log rendering failures (especially for Unicode characters)
         import logging
-        logging.error(f"render_char_safe failed at ({x}, {y}): char={repr(char)}, fg={fg}, bg={bg}, error={e}")
+
+        logging.error(
+            f"render_char_safe failed at ({x}, {y}): char={repr(char)}, fg={fg}, bg={bg}, error={e}"
+        )
         # Try fallback with simple ASCII
         try:
-            console.print(x, y, '?', fg=(255, 255, 0) if fg is None else fg, bg=(0, 0, 0) if bg is None else bg)
+            console.print(
+                x,
+                y,
+                "?",
+                fg=(255, 255, 0) if fg is None else fg,
+                bg=(0, 0, 0) if bg is None else bg,
+            )
         except Exception:
             pass  # Give up if even fallback fails
 
@@ -88,7 +97,7 @@ class WindowManager:
         self.context = context
         self._cached_dimensions = None
         self._last_check_time = 0
-        
+
     def get_window_pixel_dimensions(self):
         """
         Get current window pixel dimensions with caching.
@@ -101,9 +110,8 @@ class WindowManager:
         """
         # Cache dimensions for 0.1 seconds to avoid excessive SDL calls
         current_time = time.time()
-        if (self._cached_dimensions is None or 
-            current_time - self._last_check_time > 0.1):
-            
+        if self._cached_dimensions is None or current_time - self._last_check_time > 0.1:
+
             # Get actual window size via SDL
             window = self.context.sdl_window
             if window:
@@ -113,9 +121,9 @@ class WindowManager:
             else:
                 # Fallback to estimated dimensions
                 self._cached_dimensions = (800, 600)  # Conservative estimate
-                
+
         return self._cached_dimensions
-    
+
     def calculate_background_rect(self, image_size):
         """
         Calculate rectangle for background image constrained to left 60% of window.
@@ -131,21 +139,21 @@ class WindowManager:
         """
         window_width, window_height = self.get_window_pixel_dimensions()
         img_width, img_height = image_size
-        
+
         # CONSTRAINT: Limit graphics to left 60% of screen width for true separation
         graphics_area_width = int(window_width * 0.6)  # Graphics get 60% of width
-        
+
         # Calculate scale to fit within LEFT AREA ONLY (not full screen)
         scale_x = graphics_area_width / img_width  # Scale to fit in left area width
         scale_y = window_height / img_height
         scale = min(scale_x, scale_y)  # Use smaller scale to fit entirely in left area
-        
+
         # Position within left area only
         scaled_width = int(img_width * scale)
         scaled_height = int(img_height * scale)
         x = 0  # Left-align within graphics area
         y = (window_height - scaled_height) // 2  # Center vertically
-        
+
         return (x, y, scaled_width, scaled_height)
 
 
@@ -169,18 +177,20 @@ class UniversalInputHandler:
     NAVIGATION_LEFT = (tcod.event.KeySym.LEFT, tcod.event.KeySym.A, tcod.event.KeySym.KP_4)
     NAVIGATION_RIGHT = (tcod.event.KeySym.RIGHT, tcod.event.KeySym.D, tcod.event.KeySym.KP_6)
     CONFIRM = (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER)
-    
+
     @staticmethod
-    def handle_list_navigation(screen_instance, event, option_count: int, wrap_around: bool = True, callback=None) -> bool:
+    def handle_list_navigation(
+        screen_instance, event, option_count: int, wrap_around: bool = True, callback=None
+    ) -> bool:
         """Handle up/down navigation for list-based screens.
-        
+
         Args:
             screen_instance: The screen object with selected_option attribute
             event: The input event
             option_count: Number of options in the list
             wrap_around: Whether to wrap around at ends
             callback: Optional callback function to call with direction (-1 or 1)
-            
+
         Returns:
             True if input was handled, False otherwise
         """
@@ -188,7 +198,9 @@ class UniversalInputHandler:
             if callback:
                 callback(-1)
             elif wrap_around:
-                screen_instance.selected_option = (screen_instance.selected_option - 1) % option_count
+                screen_instance.selected_option = (
+                    screen_instance.selected_option - 1
+                ) % option_count
             else:
                 screen_instance.selected_option = max(0, screen_instance.selected_option - 1)
             return True
@@ -196,46 +208,54 @@ class UniversalInputHandler:
             if callback:
                 callback(1)
             elif wrap_around:
-                screen_instance.selected_option = (screen_instance.selected_option + 1) % option_count
+                screen_instance.selected_option = (
+                    screen_instance.selected_option + 1
+                ) % option_count
             else:
-                screen_instance.selected_option = min(option_count - 1, screen_instance.selected_option + 1)
+                screen_instance.selected_option = min(
+                    option_count - 1, screen_instance.selected_option + 1
+                )
             return True
         return False
-    
+
     @staticmethod
     def handle_dialog_navigation(screen_instance, event, option_count: int = 2) -> bool:
         """Handle navigation for simple dialogs (usually 2 options).
-        
+
         Args:
             screen_instance: The screen object with a selection attribute
             event: The input event
             option_count: Number of options (default 2 for Yes/No dialogs)
-            
+
         Returns:
             True if input was handled, False otherwise
         """
-        selection_attr = getattr(screen_instance, 'warning_selection', getattr(screen_instance, 'selected_option', None))
+        selection_attr = getattr(
+            screen_instance, "warning_selection", getattr(screen_instance, "selected_option", None)
+        )
         if selection_attr is None:
             return False
-            
-        if event.sym in (UniversalInputHandler.NAVIGATION_UP + UniversalInputHandler.NAVIGATION_DOWN):
+
+        if event.sym in (
+            UniversalInputHandler.NAVIGATION_UP + UniversalInputHandler.NAVIGATION_DOWN
+        ):
             # For simple dialogs, any up/down toggles between options
-            if hasattr(screen_instance, 'warning_selection'):
+            if hasattr(screen_instance, "warning_selection"):
                 screen_instance.warning_selection = 1 - screen_instance.warning_selection
             else:
                 screen_instance.selected_option = 1 - screen_instance.selected_option
             return True
         return False
-    
+
     @staticmethod
     def handle_value_adjustment(screen_instance, event, adjust_callback) -> bool:
         """Handle left/right adjustment for settings or values.
-        
+
         Args:
             screen_instance: The screen object
             event: The input event
             adjust_callback: Function to call with direction (-1 or 1)
-            
+
         Returns:
             True if input was handled, False otherwise
         """
@@ -246,19 +266,18 @@ class UniversalInputHandler:
             adjust_callback(1)
             return True
         return False
-    
+
     @staticmethod
     def is_confirm_key(event) -> bool:
         """Check if the event is a confirm key (Enter/Return)."""
         return event.sym in UniversalInputHandler.CONFIRM
-    
+
     @staticmethod
     def is_escape_key(event) -> bool:
         """Check if the event is an escape key."""
         return event.sym == tcod.event.KeySym.ESCAPE
-    
+
     @staticmethod
     def handle_any_key_screen(event) -> bool:
         """Handle input for screens that return on any key press."""
         return True  # Any key should trigger a return action
-

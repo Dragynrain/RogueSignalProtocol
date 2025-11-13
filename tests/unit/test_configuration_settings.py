@@ -5,13 +5,14 @@ Tests user settings (GameSettings) behavior with real objects.
 File loading and validation tests moved to smoke tests (test_config_validation_smoke.py).
 """
 
-import pytest
 import json
 import os
 import tempfile
 
-from game_config import GameConfig, GameBalance, GameSettings
+import pytest
+
 from data_loading import PersistentStorage
+from game_config import GameBalance, GameConfig, GameSettings
 
 
 class TestGameSettings:
@@ -53,9 +54,9 @@ class TestGameSettings:
             "master_volume": 0.9,
             "sfx_volume": 0.6,
             "music_volume": 0.3,
-            "graphics_mode": "graphics"
+            "graphics_mode": "graphics",
         }
-        with open(self.temp_settings_file, 'w') as f:
+        with open(self.temp_settings_file, "w") as f:
             json.dump(test_settings, f)
 
         settings = GameSettings()
@@ -69,14 +70,14 @@ class TestGameSettings:
         """Test that missing keys in settings file use default values."""
         # Create partial settings file
         partial_settings = {"master_volume": 0.5}
-        with open(self.temp_settings_file, 'w') as f:
+        with open(self.temp_settings_file, "w") as f:
             json.dump(partial_settings, f)
 
         settings = GameSettings()
 
         assert settings.master_volume == 0.5  # From file
-        assert settings.sfx_volume == 0.75    # Default
-        assert settings.music_volume == 0.6   # Default
+        assert settings.sfx_volume == 0.75  # Default
+        assert settings.music_volume == 0.6  # Default
         assert settings.graphics_mode == "graphics"  # Default
 
     def test_save_settings_creates_file(self):
@@ -88,7 +89,7 @@ class TestGameSettings:
 
         # Verify file was created with correct content
         assert os.path.exists(self.temp_settings_file)
-        with open(self.temp_settings_file, 'r') as f:
+        with open(self.temp_settings_file) as f:
             saved_data = json.load(f)
 
         assert saved_data["master_volume"] == 0.95
@@ -224,6 +225,7 @@ class TestPersistentStorage:
     def teardown_method(self):
         """Clean up test fixtures."""
         import shutil
+
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def test_persistent_storage_initialization(self):
@@ -242,7 +244,7 @@ class TestPersistentStorage:
         assert os.path.exists(filepath)
 
         # Verify content
-        with open(filepath, 'r') as f:
+        with open(filepath) as f:
             saved_data = json.load(f)
         assert saved_data == test_data
 
@@ -267,7 +269,7 @@ class TestPersistentStorage:
         """Test loading invalid JSON returns empty dict."""
         # Create file with invalid JSON
         filepath = os.path.join(self.temp_dir, "invalid.json")
-        with open(filepath, 'w') as f:
+        with open(filepath, "w") as f:
             f.write("{ invalid json content")
 
         loaded_data = self.storage.load_data("invalid.json")

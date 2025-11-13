@@ -12,7 +12,6 @@ Critical because:
 - Part of CI/CD smoke test suite
 """
 
-import pytest
 from tests.test_agent import GameTestAgent
 
 
@@ -24,7 +23,7 @@ class TestGraphicsModeSwitchSmoke:
         agent = GameTestAgent(seed=42)
 
         # Switch to glyph mode
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
 
         # Play a few turns
         agent.move_player(1, 0)
@@ -38,7 +37,7 @@ class TestGraphicsModeSwitchSmoke:
         agent = GameTestAgent(seed=42)
 
         # Switch to graphics mode
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Play a few turns
         agent.move_player(1, 0)
@@ -52,13 +51,13 @@ class TestGraphicsModeSwitchSmoke:
         agent = GameTestAgent(seed=42)
 
         # Switch glyph -> graphics -> glyph
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
         agent.move_player(1, 0)
 
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
         agent.move_player(0, 1)
 
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
         agent.move_player(1, 0)
 
         # Should complete successfully
@@ -75,7 +74,7 @@ class TestGraphicsModeSwitchSmoke:
             agent.move_player(1, 0)
 
         # Switch mode mid-game
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Continue playing
         for _ in range(10):
@@ -100,7 +99,7 @@ class TestGraphicsModeSwitchSmoke:
         turn_before = agent.turn
 
         # Switch mode
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
 
         # State should be preserved
         assert agent.player.cpu == hp_before
@@ -113,7 +112,7 @@ class TestGraphicsModeSwitchSmoke:
 
         # Switch 10 times
         for i in range(10):
-            mode = 'glyph' if i % 2 == 0 else 'graphics'
+            mode = "glyph" if i % 2 == 0 else "graphics"
             agent.engine.settings.graphics_mode = mode
 
             # Play a turn
@@ -130,7 +129,7 @@ class TestGraphicsModeSwitchSmoke:
         assert len(agent.enemies) > 0
 
         # Switch mode
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Continue playing
         agent.move_player(1, 0)
@@ -150,7 +149,7 @@ class TestGraphicsModeSwitchSmoke:
 
             # Switch every 10 turns
             if turn_num % 10 == 0:
-                mode = 'glyph' if turn_num % 20 == 0 else 'graphics'
+                mode = "glyph" if turn_num % 20 == 0 else "graphics"
                 agent.engine.settings.graphics_mode = mode
 
             # Play turn
@@ -167,14 +166,14 @@ class TestGraphicsModeSwitchQuickValidation:
         """Settings object is accessible."""
         agent = GameTestAgent(seed=42)
 
-        assert hasattr(agent.engine, 'settings')
-        assert hasattr(agent.engine.settings, 'graphics_mode')
+        assert hasattr(agent.engine, "settings")
+        assert hasattr(agent.engine.settings, "graphics_mode")
 
     def test_default_graphics_mode_is_valid(self):
         """Default graphics mode is valid."""
         agent = GameTestAgent(seed=42)
 
-        assert agent.engine.settings.graphics_mode in ['glyph', 'graphics']
+        assert agent.engine.settings.graphics_mode in ["glyph", "graphics"]
 
     def test_can_read_graphics_mode(self):
         """Can read current graphics mode."""
@@ -190,19 +189,19 @@ class TestGraphicsModeSwitchQuickValidation:
         agent = GameTestAgent(seed=42)
 
         # Change mode
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
 
         # Verify change took effect
-        assert agent.engine.settings.graphics_mode == 'glyph'
+        assert agent.engine.settings.graphics_mode == "glyph"
 
     def test_mode_switch_doesnt_crash_game(self):
         """Mode switch doesn't crash the game engine."""
         agent = GameTestAgent(seed=42)
 
         # Switch modes
-        agent.engine.settings.graphics_mode = 'graphics'
-        agent.engine.settings.graphics_mode = 'glyph'
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
+        agent.engine.settings.graphics_mode = "glyph"
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Game should still be functional
         agent.move_player(1, 0)
@@ -218,7 +217,7 @@ class TestGraphicsModeSwitchRapidFire:
 
         # Rapidly switch 20 times
         for i in range(20):
-            mode = 'glyph' if i % 2 == 0 else 'graphics'
+            mode = "glyph" if i % 2 == 0 else "graphics"
             agent.engine.settings.graphics_mode = mode
 
         # Game should still work
@@ -231,7 +230,7 @@ class TestGraphicsModeSwitchRapidFire:
 
         for i in range(10):
             # Switch mode
-            mode = 'glyph' if i % 2 == 0 else 'graphics'
+            mode = "glyph" if i % 2 == 0 else "graphics"
             agent.engine.settings.graphics_mode = mode
 
             # Play turn
@@ -249,7 +248,7 @@ class TestGraphicsModeSwitchRapidFire:
                 break
 
             # Alternate mode every turn
-            mode = 'glyph' if i % 2 == 0 else 'graphics'
+            mode = "glyph" if i % 2 == 0 else "graphics"
             agent.engine.settings.graphics_mode = mode
 
             # Play turn
@@ -267,9 +266,9 @@ class TestGraphicsModeSwitchEdgeCases:
         agent = GameTestAgent(seed=42)
 
         # Switch to same mode multiple times
-        agent.engine.settings.graphics_mode = 'glyph'
-        agent.engine.settings.graphics_mode = 'glyph'
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
+        agent.engine.settings.graphics_mode = "glyph"
+        agent.engine.settings.graphics_mode = "glyph"
 
         # Should still work
         agent.move_player(1, 0)
@@ -281,7 +280,7 @@ class TestGraphicsModeSwitchEdgeCases:
 
         # Switch before any gameplay
         assert agent.turn == 0
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Now play
         agent.move_player(1, 0)
@@ -298,7 +297,7 @@ class TestGraphicsModeSwitchEdgeCases:
             agent.move_player(1, 0)
 
         # Now switch
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
 
         # Continue playing if still alive
         if not agent.engine.game_over:

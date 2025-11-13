@@ -31,18 +31,17 @@ Corridor types:
 - Variable width: Narrow (1 tile), medium (2 tiles), or wide (3 tiles)
 """
 
-import random
 import logging
+import random
+
 import tcod.bsp
-import tcod.random
 import tcod.noise
-from typing import List, Tuple, Dict, Set, Optional
+import tcod.random
 
 from game_config import GameConfig, RoomGenerationConfig
 
-
 # Module-level RNG instance - will be seeded by LevelGenerator
-_rng: Optional[tcod.random.Random] = None
+_rng: tcod.random.Random | None = None
 
 
 def get_rng() -> tcod.random.Random:
@@ -60,7 +59,9 @@ def seed_rng(seed: int) -> None:
     logging.debug(f"RNG: Seeded TCOD RNG with seed={seed}")
 
 
-def create_noise_map(width: int, height: int, seed: int, octaves: int = 4, scale: float = 0.1) -> tcod.noise.Noise:
+def create_noise_map(
+    width: int, height: int, seed: int, octaves: int = 4, scale: float = 0.1
+) -> tcod.noise.Noise:
     """
     Create a Perlin noise generator for organic pattern generation.
 
@@ -87,7 +88,7 @@ def create_noise_map(width: int, height: int, seed: int, octaves: int = 4, scale
         hurst=0.5,
         lacunarity=2.0,
         octaves=octaves,
-        seed=seed
+        seed=seed,
     )
     return noise
 
@@ -112,6 +113,7 @@ def get_noise_value(noise: tcod.noise.Noise, x: int, y: int, scale: float = 0.1)
 # ROOM GENERATION
 # ============================================================================
 
+
 class RoomGenerator:
     """
     Room generation subsystem handling room creation and carving.
@@ -132,7 +134,7 @@ class RoomGenerator:
         """
         self.game_map = game_map
 
-    def create_varied_rooms(self, level: int) -> List[Tuple[int, int, int, int]]:
+    def create_varied_rooms(self, level: int) -> list[tuple[int, int, int, int]]:
         """
         Create varied rooms including a guaranteed spawn room in top-left corner.
 
@@ -143,14 +145,16 @@ class RoomGenerator:
             List of room tuples (x, y, width, height) including spawn room
         """
         spawn_room = (2, 2, 8, 8)
-        logging.debug(f"Room Gen: Creating spawn room at {spawn_room[:2]}, size={spawn_room[2]}x{spawn_room[3]}")
-        self.carve_room(spawn_room, room_type='rectangular', level=level)
+        logging.debug(
+            f"Room Gen: Creating spawn room at {spawn_room[:2]}, size={spawn_room[2]}x{spawn_room[3]}"
+        )
+        self.carve_room(spawn_room, room_type="rectangular", level=level)
         rooms = [spawn_room]
         rooms.extend(self.generate_rooms_avoiding_existing(level, [spawn_room]))
         logging.debug(f"Room Gen: Total rooms created: {len(rooms)}")
         return rooms
 
-    def get_room_type_weights(self, level: int) -> Dict[str, float]:
+    def get_room_type_weights(self, level: int) -> dict[str, float]:
         """
         Get room type weights for the given level, with per-level overrides.
 
@@ -161,18 +165,23 @@ class RoomGenerator:
             Dictionary mapping room type names to their selection weights
         """
         default_weights = {
-            'rectangular': GameConfig._get_required('room_generation.room_type_weights.rectangular'),
-            'l_shaped': GameConfig._get_required('room_generation.room_type_weights.l_shaped'),
-            'irregular': GameConfig._get_required('room_generation.room_type_weights.irregular'),
-            'cross': GameConfig._get_required('room_generation.room_type_weights.cross'),
-            'circular': GameConfig._get_required('room_generation.room_type_weights.circular')
+            "rectangular": GameConfig._get_required(
+                "room_generation.room_type_weights.rectangular"
+            ),
+            "l_shaped": GameConfig._get_required("room_generation.room_type_weights.l_shaped"),
+            "irregular": GameConfig._get_required("room_generation.room_type_weights.irregular"),
+            "cross": GameConfig._get_required("room_generation.room_type_weights.cross"),
+            "circular": GameConfig._get_required("room_generation.room_type_weights.circular"),
         }
 
         network_configs = GameConfig.NETWORK_CONFIGS()
         if level in network_configs:
             level_config = network_configs[level]
-            if 'level_generation' in level_config and 'room_type_weights' in level_config['level_generation']:
-                level_weights = level_config['level_generation']['room_type_weights']
+            if (
+                "level_generation" in level_config
+                and "room_type_weights" in level_config["level_generation"]
+            ):
+                level_weights = level_config["level_generation"]["room_type_weights"]
                 for room_type in default_weights:
                     if room_type in level_weights:
                         default_weights[room_type] = level_weights[room_type]
@@ -203,28 +212,28 @@ class RoomGenerator:
         available_types = []
         available_weights = []
 
-        available_types.append('rectangular')
-        available_weights.append(weights['rectangular'])
+        available_types.append("rectangular")
+        available_weights.append(weights["rectangular"])
 
         if width >= 5 and height >= 5:
-            available_types.append('l_shaped')
-            available_weights.append(weights['l_shaped'])
+            available_types.append("l_shaped")
+            available_weights.append(weights["l_shaped"])
 
         if width >= 4 and height >= 4:
-            available_types.append('irregular')
-            available_weights.append(weights['irregular'])
+            available_types.append("irregular")
+            available_weights.append(weights["irregular"])
 
         if width >= 7 and height >= 7:
-            available_types.append('cross')
-            available_weights.append(weights['cross'])
+            available_types.append("cross")
+            available_weights.append(weights["cross"])
 
         if width >= 7 and height >= 7:
-            available_types.append('circular')
-            available_weights.append(weights['circular'])
+            available_types.append("circular")
+            available_weights.append(weights["circular"])
 
         total_weight = sum(available_weights)
         if total_weight == 0:
-            return 'rectangular'
+            return "rectangular"
 
         normalized_weights = [w / total_weight for w in available_weights]
 
@@ -239,7 +248,9 @@ class RoomGenerator:
 
         return available_types[-1]
 
-    def carve_room(self, room: Tuple[int, int, int, int], room_type: str = 'rectangular', level: int = 1) -> None:
+    def carve_room(
+        self, room: tuple[int, int, int, int], room_type: str = "rectangular", level: int = 1
+    ) -> None:
         """
         Carve out a room by removing walls based on the room type.
 
@@ -248,24 +259,24 @@ class RoomGenerator:
             room_type: Type of room to carve ('rectangular', 'l_shaped', etc.)
             level: Current level number (affects pillar placement)
         """
-        if room_type == 'rectangular':
+        if room_type == "rectangular":
             self.carve_rectangular_room(room)
-        elif room_type == 'l_shaped':
+        elif room_type == "l_shaped":
             self.carve_l_shaped_room(room)
-        elif room_type == 'irregular':
+        elif room_type == "irregular":
             self.carve_irregular_room(room)
-        elif room_type == 'cross':
+        elif room_type == "cross":
             self.carve_cross_room(room)
-        elif room_type == 'circular':
+        elif room_type == "circular":
             self.carve_circular_room(room)
         else:
             self.carve_rectangular_room(room)
 
         x, y, width, height = room
-        if room_type == 'rectangular' and width >= 7 and height >= 7:
+        if room_type == "rectangular" and width >= 7 and height >= 7:
             self.apply_pillar_pattern(room, level)
 
-    def carve_rectangular_room(self, room: Tuple[int, int, int, int]) -> None:
+    def carve_rectangular_room(self, room: tuple[int, int, int, int]) -> None:
         """
         Carve out a standard rectangular room.
 
@@ -278,7 +289,7 @@ class RoomGenerator:
                 if (rx, ry) in self.game_map.walls:
                     self.game_map.walls.remove((rx, ry))
 
-    def carve_l_shaped_room(self, room: Tuple[int, int, int, int]) -> None:
+    def carve_l_shaped_room(self, room: tuple[int, int, int, int]) -> None:
         """
         Carve out an L-shaped room by creating two overlapping rectangles.
         Creates natural ambush corners and multiple approach angles.
@@ -288,23 +299,23 @@ class RoomGenerator:
         """
         x, y, width, height = room
 
-        orientation = random.choice(['top_left', 'top_right', 'bottom_left', 'bottom_right'])
+        orientation = random.choice(["top_left", "top_right", "bottom_left", "bottom_right"])
 
-        if orientation == 'top_left':
+        if orientation == "top_left":
             rect1_width = width
             rect1_height = height // 2 + 1
             rect2_width = width // 2 + 1
             rect2_height = height - rect1_height + 1
             rect1 = (x, y, rect1_width, rect1_height)
             rect2 = (x, y + rect1_height - 1, rect2_width, rect2_height)
-        elif orientation == 'top_right':
+        elif orientation == "top_right":
             rect1_width = width
             rect1_height = height // 2 + 1
             rect2_width = width // 2 + 1
             rect2_height = height - rect1_height + 1
             rect1 = (x, y, rect1_width, rect1_height)
             rect2 = (x + width - rect2_width, y + rect1_height - 1, rect2_width, rect2_height)
-        elif orientation == 'bottom_left':
+        elif orientation == "bottom_left":
             rect1_width = width // 2 + 1
             rect1_height = height // 2 + 1
             rect2_width = width
@@ -322,7 +333,7 @@ class RoomGenerator:
         self.carve_rectangular_room(rect1)
         self.carve_rectangular_room(rect2)
 
-    def carve_irregular_room(self, room: Tuple[int, int, int, int]) -> None:
+    def carve_irregular_room(self, room: tuple[int, int, int, int]) -> None:
         """
         Carve out an irregular/damaged room by starting with a rectangle
         and randomly removing corner sections.
@@ -343,18 +354,18 @@ class RoomGenerator:
             if removed_area >= total_area * 0.3:
                 break
 
-            corner = random.choice(['top_left', 'top_right', 'bottom_left', 'bottom_right'])
+            corner = random.choice(["top_left", "top_right", "bottom_left", "bottom_right"])
 
             remove_width = random.randint(1, min(3, width // 2))
             remove_height = random.randint(1, min(3, height // 2))
 
-            if corner == 'top_left':
+            if corner == "top_left":
                 remove_x = x
                 remove_y = y
-            elif corner == 'top_right':
+            elif corner == "top_right":
                 remove_x = x + width - remove_width
                 remove_y = y
-            elif corner == 'bottom_left':
+            elif corner == "bottom_left":
                 remove_x = x
                 remove_y = y + height - remove_height
             else:
@@ -367,7 +378,7 @@ class RoomGenerator:
                         self.game_map.walls.add((rx, ry))
                         removed_area += 1
 
-    def carve_cross_room(self, room: Tuple[int, int, int, int]) -> None:
+    def carve_cross_room(self, room: tuple[int, int, int, int]) -> None:
         """
         Carve out a cross/plus-shaped room with 4 cardinal exit points.
         Creates interesting sightlines and forces checking multiple directions.
@@ -388,7 +399,7 @@ class RoomGenerator:
         self.carve_rectangular_room(vert_rect)
         self.carve_rectangular_room(horiz_rect)
 
-    def carve_circular_room(self, room: Tuple[int, int, int, int]) -> None:
+    def carve_circular_room(self, room: tuple[int, int, int, int]) -> None:
         """
         Carve out a circular/oval room using midpoint circle algorithm.
         No corners to hide in - forces different tactical approach.
@@ -412,7 +423,7 @@ class RoomGenerator:
                     if (rx, ry) in self.game_map.walls:
                         self.game_map.walls.remove((rx, ry))
 
-    def apply_pillar_pattern(self, room: Tuple[int, int, int, int], level: int) -> None:
+    def apply_pillar_pattern(self, room: tuple[int, int, int, int], level: int) -> None:
         """
         Apply pillar pattern to a large room, creating server hall aesthetics.
         Excellent for stealth gameplay - many breaking points for line of sight.
@@ -424,25 +435,30 @@ class RoomGenerator:
         network_configs = GameConfig.NETWORK_CONFIGS()
         if level in network_configs:
             level_config = network_configs[level]
-            if 'level_generation' in level_config and 'pillar_room_chance' in level_config['level_generation']:
-                pillar_chance = level_config['level_generation']['pillar_room_chance']
+            if (
+                "level_generation" in level_config
+                and "pillar_room_chance" in level_config["level_generation"]
+            ):
+                pillar_chance = level_config["level_generation"]["pillar_room_chance"]
             else:
-                pillar_chance = GameConfig._get_required('room_generation.pillar_room_chance')
+                pillar_chance = GameConfig._get_required("room_generation.pillar_room_chance")
         else:
-            pillar_chance = GameConfig._get_required('room_generation.pillar_room_chance')
+            pillar_chance = GameConfig._get_required("room_generation.pillar_room_chance")
 
         if random.random() > pillar_chance:
             return
 
         x, y, width, height = room
-        pillar_spacing = GameConfig._get_required('room_generation.pillar_grid_spacing')
+        pillar_spacing = GameConfig._get_required("room_generation.pillar_grid_spacing")
 
         for rx in range(x + pillar_spacing, x + width - 1, pillar_spacing + 1):
             for ry in range(y + pillar_spacing, y + height - 1, pillar_spacing + 1):
                 if (rx, ry) not in self.game_map.walls:
                     self.game_map.walls.add((rx, ry))
 
-    def generate_rooms_avoiding_existing(self, level: int, existing_rooms: List[Tuple[int, int, int, int]]) -> List[Tuple[int, int, int, int]]:
+    def generate_rooms_avoiding_existing(
+        self, level: int, existing_rooms: list[tuple[int, int, int, int]]
+    ) -> list[tuple[int, int, int, int]]:
         """
         Generate room layouts for the level with zone-based placement.
 
@@ -453,11 +469,15 @@ class RoomGenerator:
         Returns:
             List of newly generated room tuples (x, y, width, height)
         """
-        num_rooms = RoomGenerationConfig.MIN_ROOMS_BASE + level * RoomGenerationConfig.ROOM_LEVEL_MULTIPLIER
+        num_rooms = (
+            RoomGenerationConfig.MIN_ROOMS_BASE + level * RoomGenerationConfig.ROOM_LEVEL_MULTIPLIER
+        )
         max_rooms = min(num_rooms, RoomGenerationConfig.MAX_ROOMS)
         max_attempts = RoomGenerationConfig.MAX_PLACEMENT_ATTEMPTS
 
-        logging.debug(f"Room Gen: Attempting to generate {max_rooms} rooms (max_attempts={max_attempts})")
+        logging.debug(
+            f"Room Gen: Attempting to generate {max_rooms} rooms (max_attempts={max_attempts})"
+        )
 
         new_rooms = []
         all_rooms = existing_rooms.copy()
@@ -467,8 +487,12 @@ class RoomGenerator:
             if len(new_rooms) >= max_rooms:
                 break
 
-            room_width = random.randint(RoomGenerationConfig.MIN_ROOM_SIZE, RoomGenerationConfig.MAX_ROOM_SIZE)
-            room_height = random.randint(RoomGenerationConfig.MIN_ROOM_SIZE, RoomGenerationConfig.MAX_ROOM_SIZE)
+            room_width = random.randint(
+                RoomGenerationConfig.MIN_ROOM_SIZE, RoomGenerationConfig.MAX_ROOM_SIZE
+            )
+            room_height = random.randint(
+                RoomGenerationConfig.MIN_ROOM_SIZE, RoomGenerationConfig.MAX_ROOM_SIZE
+            )
             room_x = random.randint(12, GameConfig.MAP_WIDTH - room_width - 2)
             room_y = random.randint(12, GameConfig.MAP_HEIGHT - room_height - 2)
 
@@ -482,12 +506,18 @@ class RoomGenerator:
                 all_rooms.append(new_room)
 
                 self.carve_room(new_room, room_type, level)
-                logging.debug(f"Room Gen: Room {len(new_rooms)}: type={room_type}, pos=({room_x},{room_y}), size={room_width}x{room_height}")
+                logging.debug(
+                    f"Room Gen: Room {len(new_rooms)}: type={room_type}, pos=({room_x},{room_y}), size={room_width}x{room_height}"
+                )
 
-        logging.debug(f"Room Gen: Successfully placed {len(new_rooms)} rooms, types={room_type_counts}")
+        logging.debug(
+            f"Room Gen: Successfully placed {len(new_rooms)} rooms, types={room_type_counts}"
+        )
         return new_rooms
 
-    def room_overlaps(self, new_room: Tuple[int, int, int, int], existing_rooms: List[Tuple[int, int, int, int]]) -> bool:
+    def room_overlaps(
+        self, new_room: tuple[int, int, int, int], existing_rooms: list[tuple[int, int, int, int]]
+    ) -> bool:
         """
         Check if a new room overlaps with existing rooms.
 
@@ -502,8 +532,12 @@ class RoomGenerator:
         pad = RoomGenerationConfig.ROOM_PADDING
 
         for x2, y2, w2, h2 in existing_rooms:
-            if (x1 < x2 + w2 + pad and x1 + w1 + pad > x2 and
-                y1 < y2 + h2 + pad and y1 + h1 + pad > y2):
+            if (
+                x1 < x2 + w2 + pad
+                and x1 + w1 + pad > x2
+                and y1 < y2 + h2 + pad
+                and y1 + h1 + pad > y2
+            ):
                 return True
         return False
 
@@ -511,6 +545,7 @@ class RoomGenerator:
 # ============================================================================
 # BSP-BASED ROOM GENERATION
 # ============================================================================
+
 
 class BSPRoomGenerator(RoomGenerator):
     """
@@ -539,10 +574,10 @@ class BSPRoomGenerator(RoomGenerator):
             game_map: GameMap instance to modify
         """
         super().__init__(game_map)
-        self.bsp_tree: Optional[tcod.bsp.BSP] = None
-        self.leaf_rooms: List[Tuple[int, int, int, int]] = []
+        self.bsp_tree: tcod.bsp.BSP | None = None
+        self.leaf_rooms: list[tuple[int, int, int, int]] = []
 
-    def create_bsp_rooms(self, level: int) -> List[Tuple[int, int, int, int]]:
+    def create_bsp_rooms(self, level: int) -> list[tuple[int, int, int, int]]:
         """
         Create rooms using BSP space partitioning.
 
@@ -564,7 +599,7 @@ class BSPRoomGenerator(RoomGenerator):
             x=margin,
             y=margin,
             width=GameConfig.MAP_WIDTH - margin * 2,
-            height=GameConfig.MAP_HEIGHT - margin * 2
+            height=GameConfig.MAP_HEIGHT - margin * 2,
         )
 
         # Configure BSP splitting
@@ -572,7 +607,9 @@ class BSPRoomGenerator(RoomGenerator):
         depth = min(7, 5 + (level // 2))  # 5-7 depth based on level
         min_room_size = RoomGenerationConfig.MIN_ROOM_SIZE + 2  # Add padding
 
-        logging.debug(f"BSP Gen: Partitioning with depth={depth}, min_size={min_room_size}x{min_room_size}")
+        logging.debug(
+            f"BSP Gen: Partitioning with depth={depth}, min_size={min_room_size}x{min_room_size}"
+        )
 
         # Recursively split the space
         self.bsp_tree.split_recursive(
@@ -580,7 +617,7 @@ class BSPRoomGenerator(RoomGenerator):
             min_width=min_room_size,
             min_height=min_room_size,
             max_horizontal_ratio=1.5,  # Prefer more square-ish partitions
-            max_vertical_ratio=1.5
+            max_vertical_ratio=1.5,
         )
 
         # Create rooms in leaf nodes
@@ -612,7 +649,10 @@ class BSPRoomGenerator(RoomGenerator):
         room_height = node.height - padding * 2
 
         # Ensure minimum room size
-        if room_width < RoomGenerationConfig.MIN_ROOM_SIZE or room_height < RoomGenerationConfig.MIN_ROOM_SIZE:
+        if (
+            room_width < RoomGenerationConfig.MIN_ROOM_SIZE
+            or room_height < RoomGenerationConfig.MIN_ROOM_SIZE
+        ):
             logging.debug(f"BSP Gen: Skipping too-small partition: {room_width}x{room_height}")
             return
 
@@ -638,7 +678,9 @@ class BSPRoomGenerator(RoomGenerator):
         self.carve_room(room, room_type, level)
         self.leaf_rooms.append(room)
 
-        logging.debug(f"BSP Gen: Leaf room created: type={room_type}, pos=({room_x},{room_y}), size={room_width}x{room_height}")
+        logging.debug(
+            f"BSP Gen: Leaf room created: type={room_type}, pos=({room_x},{room_y}), size={room_width}x{room_height}"
+        )
 
     def connect_bsp_rooms(self, corridor_generator) -> None:
         """
@@ -657,7 +699,7 @@ class BSPRoomGenerator(RoomGenerator):
         logging.debug(f"BSP Gen: Connecting {len(self.leaf_rooms)} BSP rooms via tree structure")
         self._connect_nodes(self.bsp_tree, corridor_generator)
 
-    def _connect_nodes(self, node: tcod.bsp.BSP, corridor_generator) -> Tuple[int, int]:
+    def _connect_nodes(self, node: tcod.bsp.BSP, corridor_generator) -> tuple[int, int]:
         """
         Recursively connect BSP nodes.
 
@@ -702,6 +744,7 @@ class BSPRoomGenerator(RoomGenerator):
 # CORRIDOR GENERATION
 # ============================================================================
 
+
 class CorridorGenerator:
     """
     Corridor generation subsystem handling room connections and corridor features.
@@ -714,7 +757,7 @@ class CorridorGenerator:
         corridor_tiles: Set of (x, y) tuples tracking corridor positions
     """
 
-    def __init__(self, game_map, corridor_tiles: Set[Tuple[int, int]]):
+    def __init__(self, game_map, corridor_tiles: set[tuple[int, int]]):
         """
         Initialize corridor generator with game map and corridor tracking.
 
@@ -725,7 +768,7 @@ class CorridorGenerator:
         self.game_map = game_map
         self.corridor_tiles = corridor_tiles
 
-    def connect_rooms_mst(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+    def connect_rooms_mst(self, rooms: list[tuple[int, int, int, int]]) -> None:
         """
         Connect rooms using minimum spanning tree approach.
 
@@ -745,7 +788,7 @@ class CorridorGenerator:
         edges_created = 0
 
         while unconnected:
-            min_distance = float('inf')
+            min_distance = float("inf")
             closest_pair = None
 
             for connected_room in connected:
@@ -770,7 +813,7 @@ class CorridorGenerator:
 
         logging.debug(f"Corridor Gen: MST complete, created {edges_created} corridor connections")
 
-    def add_extra_paths(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+    def add_extra_paths(self, rooms: list[tuple[int, int, int, int]]) -> None:
         """
         Add extra corridors for multiple paths.
 
@@ -794,7 +837,9 @@ class CorridorGenerator:
             if room1 != room2:
                 self.create_corridor_between_rooms(room1, room2)
 
-    def create_corridor_between_rooms(self, room1: Tuple[int, int, int, int], room2: Tuple[int, int, int, int]) -> None:
+    def create_corridor_between_rooms(
+        self, room1: tuple[int, int, int, int], room2: tuple[int, int, int, int]
+    ) -> None:
         """
         Create corridor between two rooms - either L-shaped or curved.
 
@@ -815,16 +860,24 @@ class CorridorGenerator:
 
         width = self.get_corridor_width()
 
-        curved_chance = GameConfig._get_required('room_generation.curved_corridor_chance')
+        curved_chance = GameConfig._get_required("room_generation.curved_corridor_chance")
         if random.random() < curved_chance:
             self.create_curved_corridor(x1, y1, x2, y2, width)
         else:
             if random.choice([True, False]):
-                self.carve_corridor_segment(min(x1, x2), max(x1, x2), y1, y1, width, horizontal=True)
-                self.carve_corridor_segment(x2, x2, min(y1, y2), max(y1, y2), width, horizontal=False)
+                self.carve_corridor_segment(
+                    min(x1, x2), max(x1, x2), y1, y1, width, horizontal=True
+                )
+                self.carve_corridor_segment(
+                    x2, x2, min(y1, y2), max(y1, y2), width, horizontal=False
+                )
             else:
-                self.carve_corridor_segment(x1, x1, min(y1, y2), max(y1, y2), width, horizontal=False)
-                self.carve_corridor_segment(min(x1, x2), max(x1, x2), y2, y2, width, horizontal=True)
+                self.carve_corridor_segment(
+                    x1, x1, min(y1, y2), max(y1, y2), width, horizontal=False
+                )
+                self.carve_corridor_segment(
+                    min(x1, x2), max(x1, x2), y2, y2, width, horizontal=True
+                )
 
     def get_corridor_width(self) -> int:
         """
@@ -840,9 +893,9 @@ class CorridorGenerator:
         """
         rand = random.random()
 
-        narrow_weight = GameConfig._get_required('room_generation.corridor_width_weights.narrow')
-        medium_weight = GameConfig._get_required('room_generation.corridor_width_weights.medium')
-        wide_weight = GameConfig._get_required('room_generation.corridor_width_weights.wide')
+        narrow_weight = GameConfig._get_required("room_generation.corridor_width_weights.narrow")
+        medium_weight = GameConfig._get_required("room_generation.corridor_width_weights.medium")
+        wide_weight = GameConfig._get_required("room_generation.corridor_width_weights.wide")
 
         if rand < narrow_weight:
             return 1
@@ -877,7 +930,7 @@ class CorridorGenerator:
                         self.game_map.walls.discard((px, py))
                         self.corridor_tiles.add((px, py))
 
-    def bresenham_line(self, x1: int, y1: int, x2: int, y2: int) -> List[Tuple[int, int]]:
+    def bresenham_line(self, x1: int, y1: int, x2: int, y2: int) -> list[tuple[int, int]]:
         """
         Bresenham's line algorithm to get all points along a line.
 
@@ -916,8 +969,9 @@ class CorridorGenerator:
 
         return points
 
-    def carve_corridor_segment(self, x_start: int, x_end: int, y_start: int, y_end: int,
-                                width: int, horizontal: bool) -> None:
+    def carve_corridor_segment(
+        self, x_start: int, x_end: int, y_start: int, y_end: int, width: int, horizontal: bool
+    ) -> None:
         """
         Carve a corridor segment with specified width and track corridor tiles.
 
@@ -954,8 +1008,8 @@ class CorridorGenerator:
         - Tactical cover positions
         - Visual variety in corridor design
         """
-        alcove_chance = GameConfig._get_required('room_generation.corridor_alcove_chance')
-        min_segment_length = GameConfig._get_required('room_generation.corridor_alcove_min_length')
+        alcove_chance = GameConfig._get_required("room_generation.corridor_alcove_chance")
+        min_segment_length = GameConfig._get_required("room_generation.corridor_alcove_min_length")
 
         horizontal_segments = self.find_straight_corridor_segments(horizontal=True)
         vertical_segments = self.find_straight_corridor_segments(horizontal=False)
@@ -971,9 +1025,11 @@ class CorridorGenerator:
                 self.create_alcoves_on_segment(segment, horizontal=False)
                 alcoves_created += 1
 
-        logging.debug(f"Corridor Gen: Created {alcoves_created} alcoves from {len(horizontal_segments)} H + {len(vertical_segments)} V segments")
+        logging.debug(
+            f"Corridor Gen: Created {alcoves_created} alcoves from {len(horizontal_segments)} H + {len(vertical_segments)} V segments"
+        )
 
-    def find_straight_corridor_segments(self, horizontal: bool) -> List[List[Tuple[int, int]]]:
+    def find_straight_corridor_segments(self, horizontal: bool) -> list[list[tuple[int, int]]]:
         """
         Find straight corridor segments (either horizontal or vertical).
 
@@ -1025,7 +1081,7 @@ class CorridorGenerator:
 
         return segments
 
-    def create_alcoves_on_segment(self, segment: List[Tuple[int, int]], horizontal: bool) -> None:
+    def create_alcoves_on_segment(self, segment: list[tuple[int, int]], horizontal: bool) -> None:
         """
         Create 1-2 alcoves along a corridor segment.
 
@@ -1057,9 +1113,11 @@ class CorridorGenerator:
                 direction = random.choice([-1, 1])
                 alcove_pos = (x + direction, y)
 
-            if (0 <= alcove_pos[0] < GameConfig.MAP_WIDTH and
-                0 <= alcove_pos[1] < GameConfig.MAP_HEIGHT and
-                alcove_pos in self.game_map.walls):
+            if (
+                0 <= alcove_pos[0] < GameConfig.MAP_WIDTH
+                and 0 <= alcove_pos[1] < GameConfig.MAP_HEIGHT
+                and alcove_pos in self.game_map.walls
+            ):
 
                 self.game_map.walls.discard(alcove_pos)
 
@@ -1074,9 +1132,15 @@ class CorridorGenerator:
         - Corner shadows for stealth
         - Multiple approach angles
         """
-        intersection_chance = GameConfig._get_required('room_generation.corridor_intersection_chance')
-        min_junction_size = GameConfig._get_required('room_generation.corridor_intersection_min_size')
-        max_junction_size = GameConfig._get_required('room_generation.corridor_intersection_max_size')
+        intersection_chance = GameConfig._get_required(
+            "room_generation.corridor_intersection_chance"
+        )
+        min_junction_size = GameConfig._get_required(
+            "room_generation.corridor_intersection_min_size"
+        )
+        max_junction_size = GameConfig._get_required(
+            "room_generation.corridor_intersection_max_size"
+        )
 
         intersections = self.find_corridor_intersections()
         logging.debug(f"Corridor Gen: Found {len(intersections)} corridor intersections")
@@ -1090,7 +1154,7 @@ class CorridorGenerator:
 
         logging.debug(f"Corridor Gen: Created {junctions_created} T-junction/4-way rooms")
 
-    def find_corridor_intersections(self) -> List[Tuple[int, int]]:
+    def find_corridor_intersections(self) -> list[tuple[int, int]]:
         """
         Find points where 3 or more corridor segments meet.
 
@@ -1115,7 +1179,7 @@ class CorridorGenerator:
 
         return intersections
 
-    def expand_intersection_into_junction(self, center: Tuple[int, int], size: int) -> None:
+    def expand_intersection_into_junction(self, center: tuple[int, int], size: int) -> None:
         """
         Expand an intersection point into a larger junction room.
 
@@ -1142,13 +1206,15 @@ class CorridorGenerator:
             (x - half_size, y - half_size),
             (x + half_size, y - half_size),
             (x - half_size, y + half_size),
-            (x + half_size, y + half_size)
+            (x + half_size, y + half_size),
         ]
 
         for corner in corners:
             cx, cy = corner
-            if (0 <= cx < GameConfig.MAP_WIDTH and
-                0 <= cy < GameConfig.MAP_HEIGHT and
-                (cx, cy) not in self.game_map.walls and
-                (cx, cy) in self.corridor_tiles):
+            if (
+                0 <= cx < GameConfig.MAP_WIDTH
+                and 0 <= cy < GameConfig.MAP_HEIGHT
+                and (cx, cy) not in self.game_map.walls
+                and (cx, cy) in self.corridor_tiles
+            ):
                 self.game_map.blind_spots.add((cx, cy))

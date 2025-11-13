@@ -7,15 +7,15 @@ These tests run the actual game engine in headless mode to catch
 integration bugs that unit tests might miss.
 """
 
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from tests.test_agent import GameTestAgent
-from game_entities import Position
 
 
 class TestMovement:
@@ -28,13 +28,13 @@ class TestMovement:
 
         # Test all 8 directions
         directions = [
-            (0, -1),   # North
-            (1, -1),   # Northeast
-            (1, 0),    # East
-            (1, 1),    # Southeast
-            (0, 1),    # South
-            (-1, 1),   # Southwest
-            (-1, 0),   # West
+            (0, -1),  # North
+            (1, -1),  # Northeast
+            (1, 0),  # East
+            (1, 1),  # Southeast
+            (0, 1),  # South
+            (-1, 1),  # Southwest
+            (-1, 0),  # West
             (-1, -1),  # Northwest
         ]
 
@@ -78,8 +78,12 @@ class TestMovement:
                         # This should work
                         success = agent.move_player(dx, dy)
                         if success:
-                            assert agent.player.x == new_x, f"Expected x={new_x}, got {agent.player.x}"
-                            assert agent.player.y == new_y, f"Expected y={new_y}, got {agent.player.y}"
+                            assert (
+                                agent.player.x == new_x
+                            ), f"Expected x={new_x}, got {agent.player.x}"
+                            assert (
+                                agent.player.y == new_y
+                            ), f"Expected y={new_y}, got {agent.player.y}"
                             return  # Test passed
 
         # If we couldn't find any walkable tile, that's suspicious but not necessarily wrong
@@ -128,7 +132,7 @@ class TestCombat:
         # Spawn an enemy next to player
         enemy_x = agent.player.x + 1
         enemy_y = agent.player.y
-        enemy = agent.spawn_enemy('bot', enemy_x, enemy_y)
+        enemy = agent.spawn_enemy("bot", enemy_x, enemy_y)
         initial_hp = enemy.cpu
 
         # Move into enemy (bump attack)
@@ -146,7 +150,7 @@ class TestCombat:
         # Spawn a weak enemy next to player
         enemy_x = agent.player.x + 1
         enemy_y = agent.player.y
-        enemy = agent.spawn_enemy('bot', enemy_x, enemy_y)
+        enemy = agent.spawn_enemy("bot", enemy_x, enemy_y)
         enemy.cpu = 1  # Make it very weak
 
         initial_enemy_count = len(agent.enemies)
@@ -207,8 +211,9 @@ class TestFieldOfView:
         agent = GameTestAgent(seed=42)
 
         player_pos = (agent.player.x, agent.player.y)
-        assert agent.is_visible(agent.player.x, agent.player.y), \
-            f"Player position {player_pos} is not visible"
+        assert agent.is_visible(
+            agent.player.x, agent.player.y
+        ), f"Player position {player_pos} is not visible"
 
     def test_explored_tiles_persist(self):
         """Tiles remain explored after leaving FOV."""
@@ -225,8 +230,9 @@ class TestFieldOfView:
 
         # Explored tiles should have grown or stayed the same
         final_explored = set(agent.game_map.explored_tiles)
-        assert len(final_explored) >= len(initial_explored), \
-            "Explored tiles decreased (should only grow)"
+        assert len(final_explored) >= len(
+            initial_explored
+        ), "Explored tiles decreased (should only grow)"
 
 
 class TestGameState:
@@ -266,17 +272,17 @@ class TestGameState:
         state = agent.get_state()
 
         # Validate state structure
-        assert 'player_hp' in state
-        assert 'player_pos' in state
-        assert 'enemies' in state
-        assert 'turn' in state
-        assert 'level' in state
+        assert "player_hp" in state
+        assert "player_pos" in state
+        assert "enemies" in state
+        assert "turn" in state
+        assert "level" in state
 
         # Validate data types
-        assert isinstance(state['player_hp'], int)
-        assert isinstance(state['player_pos'], tuple)
-        assert isinstance(state['enemies'], list)
-        assert isinstance(state['turn'], int)
+        assert isinstance(state["player_hp"], int)
+        assert isinstance(state["player_pos"], tuple)
+        assert isinstance(state["enemies"], list)
+        assert isinstance(state["turn"], int)
 
     def test_deterministic_with_seed(self):
         """Same seed should produce same initial state."""

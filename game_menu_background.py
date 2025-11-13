@@ -8,17 +8,14 @@ Conditionally loads based on graphics mode setting and falls back gracefully.
 Renders cyberspace-styled console patterns when SDL backgrounds unavailable.
 """
 
-import tcod
 import logging
-import time
 import os
 import random
 import sys
 
 # Import game modules
-from game_config import GameSettings, GameConfig
-from game_entities import Colors, ensure_color_tuple
-from game_ui import render_char_safe, WindowManager
+from game_entities import ensure_color_tuple
+from game_ui import WindowManager, render_char_safe
 
 
 class MenuBackground:
@@ -71,10 +68,12 @@ class MenuBackground:
         Returns:
             True if graphics mode is enabled, system is enabled, and SDL renderer available
         """
-        return (self.settings.graphics_mode == "graphics" and 
-                self.enabled and 
-                self.context.sdl_renderer is not None)
-    
+        return (
+            self.settings.graphics_mode == "graphics"
+            and self.enabled
+            and self.context.sdl_renderer is not None
+        )
+
     def _handle_background_error(self, message, exception=None):
         """
         Handle background errors by logging and disabling the system.
@@ -90,7 +89,7 @@ class MenuBackground:
         if exception:
             logging.warning(f"Exception: {str(exception)}")
         self.enabled = False
-    
+
     def _get_base_path(self):
         """
         Get base path for art directories.
@@ -100,7 +99,7 @@ class MenuBackground:
         Returns:
             Absolute base path
         """
-        if getattr(sys, 'frozen', False):
+        if getattr(sys, "frozen", False):
             return os.path.dirname(sys.executable)
         else:
             return os.path.dirname(os.path.abspath(__file__))
@@ -131,7 +130,7 @@ class MenuBackground:
         for filename in os.listdir(art_dir):
             if filename.startswith(prefix) and filename.endswith(suffix):
                 # Extract number from filename (e.g., "main_menu_01.png" -> "01")
-                number_str = filename[len(prefix):-len(suffix)]
+                number_str = filename[len(prefix) : -len(suffix)]
                 if number_str.isdigit():
                     art_files.append(number_str)
 
@@ -152,7 +151,7 @@ class MenuBackground:
         base_path = self._get_base_path()
         dir_name = os.path.basename(self.art_directory)
         return os.path.join(base_path, self.art_directory, f"{dir_name}_{image_number}.png")
-        
+
     def load_random_background(self):
         """
         Load one random menu background from available images.
@@ -185,8 +184,7 @@ class MenuBackground:
         except Exception as e:
             self._handle_background_error(f"Failed to load {image_path}", e)
             return False
-    
-    
+
     def _load_image_file(self, image_path):
         """
         Load PNG image file and create SDL texture.
@@ -204,17 +202,17 @@ class MenuBackground:
             return False
 
         try:
-            from PIL import Image
             import numpy as np
+            from PIL import Image
 
             # Load and convert image
             pil_image = Image.open(image_path)
-            if pil_image.mode == 'RGBA':
-                background = Image.new('RGB', pil_image.size, (0, 0, 0))
+            if pil_image.mode == "RGBA":
+                background = Image.new("RGB", pil_image.size, (0, 0, 0))
                 background.paste(pil_image, mask=pil_image.split()[-1])
                 pil_image = background
-            elif pil_image.mode != 'RGB':
-                pil_image = pil_image.convert('RGB')
+            elif pil_image.mode != "RGB":
+                pil_image = pil_image.convert("RGB")
 
             self.image_size = pil_image.size
             pixels = np.array(pil_image, dtype=np.uint8)
@@ -241,9 +239,7 @@ class MenuBackground:
         Args:
             console: TCOD console (unused, kept for API consistency)
         """
-        if (not self.should_load_background() or
-            not self.background_texture or
-            not self.image_size):
+        if not self.should_load_background() or not self.background_texture or not self.image_size:
             return
 
         try:
@@ -261,13 +257,12 @@ class MenuBackground:
 
             # Render texture using TCOD's copy method
             renderer.copy(
-                texture=self.background_texture,
-                dest=dest_rect  # Scale to calculated rectangle
+                texture=self.background_texture, dest=dest_rect  # Scale to calculated rectangle
             )
 
         except Exception as e:
-            self._handle_background_error('texture_failed', f"SDL background rendering failed", e)
-    
+            self._handle_background_error("texture_failed", "SDL background rendering failed", e)
+
     def _render_console_background(self, console):
         """
         Render cyberspace-styled console background pattern.
@@ -283,28 +278,31 @@ class MenuBackground:
         # Fill left side with cyberspace pattern (positions 0-25)
         self._render_side_panel(console, 0, 25)
 
-        # Fill right side with cyberspace pattern (positions 55-80) 
+        # Fill right side with cyberspace pattern (positions 55-80)
         self._render_side_panel(console, 55, console.width)
-        
+
         # Add top/bottom borders
         self._render_borders(console)
-        
+
         # Add some scattered elements in the center for atmosphere
         self._render_center_atmosphere(console)
-    
+
     def _render_side_panel(self, console, start_x, end_x):
         """Render cyberspace pattern in a side panel."""
         random.seed(42)  # Consistent pattern
-        
+
         from data_loading import DataLoader
+
         config = DataLoader.load_config()
         menu_bg_colors = config.get("colors", {}).get("menu_background", {})
         pattern_colors_data = menu_bg_colors.get("pattern_colors", [])
         colors = [ensure_color_tuple(c) for c in pattern_colors_data]
         base_bg = ensure_color_tuple(menu_bg_colors.get("base", [5, 5, 15]))
-        black = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("black", [0, 0, 0]))
+        black = ensure_color_tuple(
+            config.get("colors", {}).get("basic", {}).get("black", [0, 0, 0])
+        )
 
-        patterns = ['▓', '▒', '░', '·', '▪', '▫']
+        patterns = ["▓", "▒", "░", "·", "▪", "▫"]
 
         for y in range(console.height):
             for x in range(start_x, min(end_x, console.width)):
@@ -316,11 +314,12 @@ class MenuBackground:
                     render_char_safe(console, x, y, pattern_char, fg=fg_color, bg=base_bg)
                 else:
                     # Fill with dark background
-                    render_char_safe(console, x, y, ' ', fg=black, bg=base_bg)
+                    render_char_safe(console, x, y, " ", fg=black, bg=base_bg)
 
     def _render_borders(self, console):
         """Add cyberspace-style borders."""
         from data_loading import DataLoader
+
         config = DataLoader.load_config()
         menu_bg_colors = config.get("colors", {}).get("menu_background", {})
         border_color = ensure_color_tuple(menu_bg_colors.get("border", [0, 150, 200]))
@@ -328,38 +327,41 @@ class MenuBackground:
 
         # Top border
         for x in range(console.width):
-            render_char_safe(console, x, 0, '─', fg=border_color, bg=base_bg)
+            render_char_safe(console, x, 0, "─", fg=border_color, bg=base_bg)
 
         # Bottom border
         for x in range(console.width):
-            render_char_safe(console, x, console.height - 1, '─', fg=border_color, bg=base_bg)
-    
+            render_char_safe(console, x, console.height - 1, "─", fg=border_color, bg=base_bg)
+
     def _render_center_atmosphere(self, console):
         """Add subtle atmospheric elements to center area."""
         random.seed(123)  # Different seed for center
-        
+
         # Very subtle dots in center area (positions 26-54)
         from data_loading import DataLoader
+
         config = DataLoader.load_config()
         menu_bg_colors = config.get("colors", {}).get("menu_background", {})
         dots_color = ensure_color_tuple(menu_bg_colors.get("dots", [0, 60, 100]))
-        black = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("black", [0, 0, 0]))
+        black = ensure_color_tuple(
+            config.get("colors", {}).get("basic", {}).get("black", [0, 0, 0])
+        )
 
         for y in range(2, console.height - 2):
             for x in range(26, 54):
                 if random.random() < 0.02:  # Very low density - 2%
-                    render_char_safe(console, x, y, '·', fg=dots_color, bg=black)
-        
+                    render_char_safe(console, x, y, "·", fg=dots_color, bg=black)
+
     def reload_if_mode_changed(self):
         """Reload or unload background based on current graphics mode."""
         current_mode = self.settings.graphics_mode
         has_texture = self.background_texture is not None
         mode_changed = current_mode != self.last_known_mode
-        
+
         if mode_changed:
             logging.info(f"Graphics mode change detected: {self.last_known_mode} -> {current_mode}")
             self.last_known_mode = current_mode
-        
+
         if current_mode == "graphics" and not has_texture:
             # Mode switched to graphics - load background
             if mode_changed:
@@ -370,18 +372,18 @@ class MenuBackground:
             if mode_changed:
                 logging.info("Glyph mode enabled - cleaning up background")
             self.cleanup()
-        
+
         # Force layout recalculation on next render by clearing cached dimensions
-        if hasattr(self, 'window_manager') and self.window_manager:
+        if hasattr(self, "window_manager") and self.window_manager:
             self.window_manager._cached_dimensions = None
-    
+
     def force_reload(self):
         """Force immediate background reload regardless of current state."""
         logging.info("Forcing background reload")
         self.cleanup()  # Clean up current background
         if self.settings.graphics_mode == "graphics":
             self.load_random_background()  # Load new background if in graphics mode
-    
+
     def cleanup(self):
         """
         Free background texture memory and reset state.

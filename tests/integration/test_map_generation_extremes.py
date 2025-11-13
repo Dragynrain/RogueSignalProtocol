@@ -11,12 +11,14 @@ Tests map generation system under extreme conditions and fuzzing:
 - Performance under stress
 """
 
-import pytest
 import time
-from tests.test_agent import GameTestAgent
-from game_config import GameConfig
-import tcod.path
+
 import numpy as np
+import pytest
+import tcod.path
+
+from game_config import GameConfig
+from tests.test_agent import GameTestAgent
 
 
 class TestMapGenerationFuzzing:
@@ -39,17 +41,18 @@ class TestMapGenerationFuzzing:
 
                 # Player not in wall
                 player_pos = (agent.player.x, agent.player.y)
-                assert player_pos not in agent.game_map.walls, \
-                    f"Seed {seed}: Player in wall at {player_pos}"
+                assert (
+                    player_pos not in agent.game_map.walls
+                ), f"Seed {seed}: Player in wall at {player_pos}"
 
                 # Gateway exists
-                assert agent.game_map.gateway is not None, \
-                    f"Seed {seed}: No gateway found"
+                assert agent.game_map.gateway is not None, f"Seed {seed}: No gateway found"
 
                 # Gateway not in wall
                 gateway_pos = (agent.game_map.gateway.x, agent.game_map.gateway.y)
-                assert gateway_pos not in agent.game_map.walls, \
-                    f"Seed {seed}: Gateway in wall at {gateway_pos}"
+                assert (
+                    gateway_pos not in agent.game_map.walls
+                ), f"Seed {seed}: Gateway in wall at {gateway_pos}"
 
                 elapsed = time.time() - start_time
                 generation_times.append(elapsed)
@@ -60,8 +63,8 @@ class TestMapGenerationFuzzing:
                 failures.append((seed, f"Exception: {e}"))
 
         # Report results
-        print(f"\n=== Fuzzing Results ===")
-        print(f"Seeds tested: 100")
+        print("\n=== Fuzzing Results ===")
+        print("Seeds tested: 100")
         print(f"Failures: {len(failures)}")
         if generation_times:
             avg_time = sum(generation_times) / len(generation_times)
@@ -70,24 +73,25 @@ class TestMapGenerationFuzzing:
             print(f"Max generation time: {max_time*1000:.2f}ms")
 
         if failures:
-            print(f"\nFailed seeds:")
+            print("\nFailed seeds:")
             for seed, error in failures[:10]:  # Show first 10
                 print(f"  Seed {seed}: {error}")
 
         # Test passes if < 5% failure rate
         failure_rate = len(failures) / 100.0
-        assert failure_rate < 0.05, \
-            f"Too many failures: {len(failures)}/100 ({failure_rate*100:.1f}%)"
+        assert (
+            failure_rate < 0.05
+        ), f"Too many failures: {len(failures)}/100 ({failure_rate*100:.1f}%)"
 
     def test_extreme_seeds_no_crash(self):
         """Test extreme seed values don't crash."""
         extreme_seeds = [
-            0,           # Minimum
-            1,           # Edge case
-            2**31 - 1,   # Max 32-bit
-            999999999,   # Large value
-            42,          # Common test seed
-            12345,       # Another common seed
+            0,  # Minimum
+            1,  # Edge case
+            2**31 - 1,  # Max 32-bit
+            999999999,  # Large value
+            42,  # Common test seed
+            12345,  # Another common seed
         ]
 
         for seed in extreme_seeds:
@@ -123,8 +127,9 @@ class TestGatewayReachability:
 
             path = pathfinder.path_to(gateway_pos)
 
-            assert len(path) > 0, \
-                f"Seed {seed}: Gateway at {gateway_pos} unreachable from player at {player_pos}"
+            assert (
+                len(path) > 0
+            ), f"Seed {seed}: Gateway at {gateway_pos} unreachable from player at {player_pos}"
 
     def test_gateway_not_in_isolated_room(self):
         """Gateway should not be in a room isolated from player (allows small failure rate)."""
@@ -160,15 +165,16 @@ class TestGatewayReachability:
 
         # Report failures
         if failures:
-            print(f"\n=== Gateway Isolation Test ===")
+            print("\n=== Gateway Isolation Test ===")
             print(f"Failed seeds: {failures}")
             print(f"Failure rate: {len(failures)}/50 ({len(failures)/50*100:.1f}%)")
 
         # Allow up to 10% failure rate (procedural generation isn't perfect)
         # Real game would regenerate these seeds
         # NOTE: Current algorithm has ~8% failure rate - should be improved
-        assert len(failures) <= 5, \
-            f"Too many isolated gateways: {len(failures)}/50 seeds ({len(failures)/50*100:.1f}%)"
+        assert (
+            len(failures) <= 5
+        ), f"Too many isolated gateways: {len(failures)}/50 seeds ({len(failures)/50*100:.1f}%)"
 
 
 class TestPlayerSpawnValidation:
@@ -180,8 +186,9 @@ class TestPlayerSpawnValidation:
             agent = GameTestAgent(seed=seed)
             player_pos = (agent.player.x, agent.player.y)
 
-            assert player_pos not in agent.game_map.walls, \
-                f"Seed {seed}: Player spawned in wall at {player_pos}"
+            assert (
+                player_pos not in agent.game_map.walls
+            ), f"Seed {seed}: Player spawned in wall at {player_pos}"
 
     def test_player_has_adjacent_walkable_space(self):
         """Player spawn should have at least one adjacent walkable tile."""
@@ -191,16 +198,15 @@ class TestPlayerSpawnValidation:
 
             # Check all 8 adjacent tiles
             adjacent_walkable = []
-            for dx, dy in [(-1, -1), (0, -1), (1, -1),
-                           (-1, 0),           (1, 0),
-                           (-1, 1),  (0, 1),  (1, 1)]:
+            for dx, dy in [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]:
                 nx, ny = px + dx, py + dy
                 if 0 <= nx < GameConfig.MAP_WIDTH and 0 <= ny < GameConfig.MAP_HEIGHT:
                     if (nx, ny) not in agent.game_map.walls:
                         adjacent_walkable.append((nx, ny))
 
-            assert len(adjacent_walkable) > 0, \
-                f"Seed {seed}: Player at {(px, py)} has no adjacent walkable tiles"
+            assert (
+                len(adjacent_walkable) > 0
+            ), f"Seed {seed}: Player at {(px, py)} has no adjacent walkable tiles"
 
     def test_player_not_adjacent_to_gateway(self):
         """Player shouldn't spawn right next to gateway (too easy)."""
@@ -214,8 +220,7 @@ class TestPlayerSpawnValidation:
             distance = abs(px - gx) + abs(py - gy)
 
             # Should be at least 10 tiles away (configurable game design choice)
-            assert distance >= 10, \
-                f"Seed {seed}: Player too close to gateway (distance={distance})"
+            assert distance >= 10, f"Seed {seed}: Player too close to gateway (distance={distance})"
 
 
 class TestEnemyCountEdgeCases:
@@ -231,19 +236,17 @@ class TestEnemyCountEdgeCases:
             counts.append(enemy_count)
 
             # Should have at least 1 enemy (game design)
-            assert enemy_count > 0, \
-                f"Seed {seed}: Level 1 has no enemies"
+            assert enemy_count > 0, f"Seed {seed}: Level 1 has no enemies"
 
             # Should not have excessive enemies (< 30 for level 1)
-            assert enemy_count < 30, \
-                f"Seed {seed}: Level 1 has too many enemies ({enemy_count})"
+            assert enemy_count < 30, f"Seed {seed}: Level 1 has too many enemies ({enemy_count})"
 
         # Report statistics
         avg_enemies = sum(counts) / len(counts)
         min_enemies = min(counts)
         max_enemies = max(counts)
 
-        print(f"\n=== Enemy Count Stats (Level 1, 50 seeds) ===")
+        print("\n=== Enemy Count Stats (Level 1, 50 seeds) ===")
         print(f"Average: {avg_enemies:.1f}")
         print(f"Min: {min_enemies}")
         print(f"Max: {max_enemies}")
@@ -257,13 +260,15 @@ class TestEnemyCountEdgeCases:
                 enemy_pos = (enemy.x, enemy.y)
 
                 # Not in wall
-                assert enemy_pos not in agent.game_map.walls, \
-                    f"Seed {seed}: Enemy {enemy.type} in wall at {enemy_pos}"
+                assert (
+                    enemy_pos not in agent.game_map.walls
+                ), f"Seed {seed}: Enemy {enemy.type} in wall at {enemy_pos}"
 
                 # Not on player
                 player_pos = (agent.player.x, agent.player.y)
-                assert enemy_pos != player_pos, \
-                    f"Seed {seed}: Enemy {enemy.type} on player at {enemy_pos}"
+                assert (
+                    enemy_pos != player_pos
+                ), f"Seed {seed}: Enemy {enemy.type} on player at {enemy_pos}"
 
     def test_enemies_have_minimum_spacing(self):
         """Enemies should have some spacing from each other."""
@@ -273,8 +278,9 @@ class TestEnemyCountEdgeCases:
             enemy_positions = [(e.x, e.y) for e in agent.enemies]
 
             # Check for exact overlaps (shouldn't happen)
-            assert len(enemy_positions) == len(set(enemy_positions)), \
-                f"Seed {seed}: Multiple enemies at same position"
+            assert len(enemy_positions) == len(
+                set(enemy_positions)
+            ), f"Seed {seed}: Multiple enemies at same position"
 
 
 class TestRoomSizeValidation:
@@ -321,8 +327,9 @@ class TestRoomSizeValidation:
             small_components = [c for c in components if len(c) < 4]
 
             # Allow a few tiny components (disconnected artifacts) but not many
-            assert len(small_components) <= 5, \
-                f"Seed {seed}: Too many tiny components ({len(small_components)})"
+            assert (
+                len(small_components) <= 5
+            ), f"Seed {seed}: Too many tiny components ({len(small_components)})"
 
     def test_map_has_reasonable_open_space(self):
         """Map should have reasonable amount of open space (not too cramped)."""
@@ -334,8 +341,9 @@ class TestRoomSizeValidation:
             walkable_percentage = ((total_tiles - wall_count) / total_tiles) * 100
 
             # Should be between 20% and 80% walkable
-            assert 20 <= walkable_percentage <= 80, \
-                f"Seed {seed}: Walkable percentage {walkable_percentage:.1f}% out of range"
+            assert (
+                20 <= walkable_percentage <= 80
+            ), f"Seed {seed}: Walkable percentage {walkable_percentage:.1f}% out of range"
 
 
 class TestMapGenerationPerformance:
@@ -354,17 +362,15 @@ class TestMapGenerationPerformance:
         avg_time = sum(times) / len(times)
         max_time = max(times)
 
-        print(f"\n=== Generation Performance (50 seeds) ===")
+        print("\n=== Generation Performance (50 seeds) ===")
         print(f"Average time: {avg_time*1000:.2f}ms")
         print(f"Max time: {max_time*1000:.2f}ms")
 
         # Average should be < 50ms per generation
-        assert avg_time < 0.05, \
-            f"Generation too slow: avg {avg_time*1000:.2f}ms"
+        assert avg_time < 0.05, f"Generation too slow: avg {avg_time*1000:.2f}ms"
 
         # No single generation should take > 200ms
-        assert max_time < 0.2, \
-            f"Slowest generation: {max_time*1000:.2f}ms"
+        assert max_time < 0.2, f"Slowest generation: {max_time*1000:.2f}ms"
 
     def test_rapid_successive_generations(self):
         """Rapidly generating many maps doesn't slow down over time."""
@@ -385,10 +391,11 @@ class TestMapGenerationPerformance:
         first_batch = batch_times[0]
         last_batch = batch_times[-1]
 
-        print(f"\n=== Successive Generation Performance ===")
+        print("\n=== Successive Generation Performance ===")
         print(f"First batch (20 maps): {first_batch*1000:.2f}ms")
         print(f"Last batch (20 maps): {last_batch*1000:.2f}ms")
 
         # Last batch shouldn't be more than 50% slower than first
-        assert last_batch < first_batch * 1.5, \
-            f"Performance degradation: {last_batch/first_batch:.2f}x slower"
+        assert (
+            last_batch < first_batch * 1.5
+        ), f"Performance degradation: {last_batch/first_batch:.2f}x slower"

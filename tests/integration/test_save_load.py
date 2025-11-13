@@ -13,18 +13,18 @@ Covers:
 - Real game engine integration
 """
 
-import pytest
+import json
 import os
 import tempfile
-import json
 from unittest.mock import Mock, patch
 
-from game_save import SaveGameManager, SaveLoadError
+import pytest
+
+from game_characters import Enemy
 from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
-from tests.fixtures.simple_fixtures import minimal_mock_game, enemy_builder
-from tests.fixtures.real_game_data import create_real_enemy
+from game_entities import EnemyState, Position
+from game_save import SaveGameManager
+from tests.fixtures.simple_fixtures import enemy_builder, minimal_mock_game
 
 
 class TestSaveGameManagerValidation:
@@ -67,7 +67,7 @@ class TestSaveGameManagerValidation:
 
     def test_save_game_none_game_object(self):
         """save_game returns False when game object is None."""
-        with patch('logging.error') as mock_log:
+        with patch("logging.error") as mock_log:
             result = SaveGameManager.save_game(None)
 
             assert result is False
@@ -78,7 +78,7 @@ class TestSaveGameManagerValidation:
         mock_game = Mock()
         mock_game.player = None
 
-        with patch('logging.error') as mock_log:
+        with patch("logging.error") as mock_log:
             result = SaveGameManager.save_game(mock_game)
 
             assert result is False
@@ -92,11 +92,11 @@ class TestSaveLoadBasicCycles:
         """Basic save/load cycle preserves essential data."""
         mock_game = minimal_mock_game()
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
                 # Save the game
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
@@ -115,17 +115,17 @@ class TestSaveLoadBasicCycles:
 
     def test_save_load_enemy_state_enum(self):
         """Enemy state enum is properly serialized and deserialized in save/load cycle."""
-        enemy = Enemy(Position(10, 10), 'scanner')
+        enemy = Enemy(Position(10, 10), "scanner")
         enemy.state = EnemyState.ALERT
 
         mock_game = minimal_mock_game()
         mock_game.enemies = [enemy]
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
                 # Save with enum state
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
@@ -141,8 +141,12 @@ class TestSaveLoadBasicCycles:
                 assert saved_enemy_state == "alert"
 
                 # Simulate restoration (string back to enum)
-                restored_enemy = Enemy(Position(10, 10), 'scanner')
-                restored_enemy.state = EnemyState(saved_enemy_state) if isinstance(saved_enemy_state, str) else saved_enemy_state
+                restored_enemy = Enemy(Position(10, 10), "scanner")
+                restored_enemy.state = (
+                    EnemyState(saved_enemy_state)
+                    if isinstance(saved_enemy_state, str)
+                    else saved_enemy_state
+                )
 
                 # Verify the restored enemy has proper EnemyState enum
                 assert isinstance(restored_enemy.state, EnemyState)
@@ -163,13 +167,13 @@ class TestCorruptedDataHandling:
 
     def test_load_corrupted_json_syntax_error(self):
         """Loading save with invalid JSON syntax returns None and logs error."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
             temp_file.write("{invalid json syntax: missing brace")
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
-                with patch('logging.error') as mock_log:
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+                with patch("logging.error") as mock_log:
                     loaded_data = SaveGameManager.load_game()
 
                     assert loaded_data is None, "Should return None for corrupted JSON"
@@ -180,12 +184,12 @@ class TestCorruptedDataHandling:
 
     def test_load_empty_file(self):
         """Loading empty save file returns None gracefully."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
-                with patch('logging.error'):
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+                with patch("logging.error"):
                     loaded_data = SaveGameManager.load_game()
                     assert loaded_data is None, "Should return None for empty file"
         finally:
@@ -194,12 +198,12 @@ class TestCorruptedDataHandling:
 
     def test_load_missing_required_fields(self):
         """Loading save with missing required fields returns partial data."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
             json.dump({"level": 1}, temp_file)
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
                 loaded_data = SaveGameManager.load_game()
 
                 # System is robust - loads partial data
@@ -211,18 +215,14 @@ class TestCorruptedDataHandling:
 
     def test_load_corrupted_player_data(self):
         """Loading save with invalid player data structure returns None."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
-            corrupted_data = {
-                "level": 1,
-                "player": ["not", "a", "dict"],
-                "enemies": []
-            }
+            corrupted_data = {"level": 1, "player": ["not", "a", "dict"], "enemies": []}
             json.dump(corrupted_data, temp_file)
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
-                with patch('logging.error') as mock_log:
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+                with patch("logging.error") as mock_log:
                     loaded_data = SaveGameManager.load_game()
 
                     assert loaded_data is None, "Should return None for corrupted player data"
@@ -235,7 +235,7 @@ class TestCorruptedDataHandling:
         """Loading non-existent save file returns None."""
         non_existent_path = "/tmp/this_file_does_not_exist_test_12345.json"
 
-        with patch.object(SaveGameManager, 'SAVE_FILE', non_existent_path):
+        with patch.object(SaveGameManager, "SAVE_FILE", non_existent_path):
             loaded_data = SaveGameManager.load_game()
             assert loaded_data is None, "Should return None for missing file"
 
@@ -246,16 +246,13 @@ class TestTemporaryEffects:
     def test_save_load_with_temporary_effects(self):
         """Temporary effects persist through save/load."""
         mock_game = minimal_mock_game()
-        mock_game.player.temporary_effects = {
-            "armor": 5,
-            "damage": 10
-        }
+        mock_game.player.temporary_effects = {"armor": 5, "damage": 10}
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
 
@@ -276,11 +273,11 @@ class TestTemporaryEffects:
         mock_game = minimal_mock_game()
         mock_game.player.temporary_effects = {}
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
 
@@ -300,24 +297,24 @@ class TestComplexEnemyStates:
         mock_game = minimal_mock_game()
 
         # Create enemies in different states
-        unaware_enemy = Enemy(Position(10, 10), 'patrol')
+        unaware_enemy = Enemy(Position(10, 10), "patrol")
         unaware_enemy.state = EnemyState.UNAWARE
         unaware_enemy.move_queue = [Position(11, 10), Position(12, 10)]
 
-        alert_enemy = Enemy(Position(15, 15), 'scanner')
+        alert_enemy = Enemy(Position(15, 15), "scanner")
         alert_enemy.state = EnemyState.ALERT
         alert_enemy.last_seen_player_position = Position(14, 14)
 
-        hostile_enemy = Enemy(Position(20, 20), 'firewall')
+        hostile_enemy = Enemy(Position(20, 20), "firewall")
         hostile_enemy.state = EnemyState.HOSTILE
 
         mock_game.enemies = [unaware_enemy, alert_enemy, hostile_enemy]
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
 
@@ -338,16 +335,16 @@ class TestComplexEnemyStates:
         """Enemy move queue persists through save/load."""
         mock_game = minimal_mock_game()
 
-        enemy = Enemy(Position(10, 10), 'patrol')
+        enemy = Enemy(Position(10, 10), "patrol")
         enemy.move_queue = [Position(11, 10), Position(12, 10), Position(13, 10)]
 
         mock_game.enemies = [enemy]
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
 
@@ -370,8 +367,8 @@ class TestErrorRecovery:
         """Save handles permission errors gracefully."""
         mock_game = minimal_mock_game()
 
-        with patch('builtins.open', side_effect=PermissionError("Permission denied")):
-            with patch('logging.error') as mock_log:
+        with patch("builtins.open", side_effect=PermissionError("Permission denied")):
+            with patch("logging.error") as mock_log:
                 save_success = SaveGameManager.save_game(mock_game)
 
                 assert save_success is False
@@ -381,13 +378,13 @@ class TestErrorRecovery:
         """Save handles disk full errors gracefully."""
         mock_game = minimal_mock_game()
 
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_file:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_file:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, 'SAVE_FILE', temp_path):
-                with patch('builtins.open', side_effect=OSError("No space left on device")):
-                    with patch('logging.error') as mock_log:
+            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+                with patch("builtins.open", side_effect=OSError("No space left on device")):
+                    with patch("logging.error") as mock_log:
                         save_success = SaveGameManager.save_game(mock_game)
 
                         assert save_success is False
@@ -412,7 +409,7 @@ class TestRealGameEngineIntegration:
 
     def test_save_and_load_basic_player_state(self, basic_game_engine):
         """Test that basic player state is preserved through save/load cycle."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             game = basic_game_engine
 
             # Set dungeon seed and regenerate map for deterministic layout
@@ -449,7 +446,7 @@ class TestRealGameEngineIntegration:
 
     def test_save_and_load_enemy_states(self, basic_game_engine):
         """Test that enemy positions, states, and AI data are preserved."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             game = basic_game_engine
 
             game.game_state.dungeon_seed = 42
@@ -483,37 +480,39 @@ class TestRealGameEngineIntegration:
             assert len(loaded_game.enemy_manager.enemies) == 3
 
             # Verify enemies by position
-            loaded_enemies = {(e.position.x, e.position.y): e for e in loaded_game.enemy_manager.enemies}
+            loaded_enemies = {
+                (e.position.x, e.position.y): e for e in loaded_game.enemy_manager.enemies
+            }
 
             loaded_scanner = loaded_enemies.get((10, 10))
             assert loaded_scanner is not None
-            assert loaded_scanner.state in (EnemyState.ALERT, 'alert')
+            assert loaded_scanner.state in (EnemyState.ALERT, "alert")
             assert loaded_scanner.alert_timer == 3
 
             loaded_patrol = loaded_enemies.get((20, 20))
             assert loaded_patrol is not None
-            assert loaded_patrol.state in (EnemyState.HOSTILE, 'hostile')
+            assert loaded_patrol.state in (EnemyState.HOSTILE, "hostile")
             assert loaded_patrol.patrol_index == 1
             assert len(loaded_patrol.patrol_points) == 3
 
             loaded_bot = loaded_enemies.get((5, 5))
             assert loaded_bot is not None
-            assert loaded_bot.state in (EnemyState.UNAWARE, 'unaware')
+            assert loaded_bot.state in (EnemyState.UNAWARE, "unaware")
             assert loaded_bot.disabled_turns == 2
 
     def test_save_and_load_temporary_effects_integration(self, basic_game_engine):
         """Test that player temporary effects are preserved."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             game = basic_game_engine
 
             # Set various temporary effects
             game.player.temporary_effects = {
-                'speed_boost_turns': 5,
-                'movement_slowed_turns': 0,
-                'enhanced_vision_turns': 3,
-                'exploit_efficiency_turns': 2,
-                'traffic_masquerade_turns': 1,
-                'virus_turns': 0
+                "speed_boost_turns": 5,
+                "movement_slowed_turns": 0,
+                "enhanced_vision_turns": 3,
+                "exploit_efficiency_turns": 2,
+                "traffic_masquerade_turns": 1,
+                "virus_turns": 0,
             }
             game.player.speed_moves_remaining = 2
 
@@ -524,15 +523,15 @@ class TestRealGameEngineIntegration:
 
             # Verify temporary effects preserved
             effects = loaded_game.player.temporary_effects
-            assert effects['speed_boost_turns'] == 5
-            assert effects['enhanced_vision_turns'] == 3
-            assert effects['exploit_efficiency_turns'] == 2
-            assert effects['traffic_masquerade_turns'] == 1
+            assert effects["speed_boost_turns"] == 5
+            assert effects["enhanced_vision_turns"] == 3
+            assert effects["exploit_efficiency_turns"] == 2
+            assert effects["traffic_masquerade_turns"] == 1
             assert loaded_game.player.speed_moves_remaining == 2
 
     def test_save_and_load_complex_gameplay_scenario(self, basic_game_engine):
         """Integration test: Complex gameplay scenario with multiple systems active."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             game = basic_game_engine
 
             # Set dungeon seed for deterministic map
@@ -548,12 +547,12 @@ class TestRealGameEngineIntegration:
             game.player.ram_total = 16
             game.player.speed_moves_remaining = 1
             game.player.temporary_effects = {
-                'speed_boost_turns': 3,
-                'enhanced_vision_turns': 5,
-                'exploit_efficiency_turns': 2,
-                'traffic_masquerade_turns': 0,
-                'movement_slowed_turns': 0,
-                'virus_turns': 0
+                "speed_boost_turns": 3,
+                "enhanced_vision_turns": 5,
+                "exploit_efficiency_turns": 2,
+                "traffic_masquerade_turns": 0,
+                "movement_slowed_turns": 0,
+                "virus_turns": 0,
             }
 
             # Multiple enemies
@@ -595,7 +594,7 @@ class TestRealGameEngineIntegration:
             assert loaded_game.player.x == 35 and loaded_game.player.y == 28
             assert loaded_game.player.cpu == 65
             assert loaded_game.player.heat == 55
-            assert loaded_game.player.temporary_effects['speed_boost_turns'] == 3
+            assert loaded_game.player.temporary_effects["speed_boost_turns"] == 3
             assert len(loaded_game.enemy_manager.enemies) == 3
             assert loaded_game.game_state.level == 1
             assert loaded_game.game_state.turn == 100
@@ -612,7 +611,7 @@ class TestRealGameEngineIntegration:
 
     def test_save_file_timestamp(self, basic_game_engine):
         """Test that save file includes valid timestamp."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             game = basic_game_engine
 
             success = SaveGameManager.save_game(game)
@@ -626,14 +625,14 @@ class TestRealGameEngineIntegration:
 
     def test_save_atomic_write_safety(self, basic_game_engine):
         """Test that save uses atomic write (temp file + rename) for safety."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             game = basic_game_engine
 
             success = SaveGameManager.save_game(game)
             assert success
 
             # Verify no temp file left behind
-            temp_file = SaveGameManager.SAVE_FILE + '.tmp'
+            temp_file = SaveGameManager.SAVE_FILE + ".tmp"
             assert not os.path.exists(temp_file)
 
             # Verify actual save file exists

@@ -6,11 +6,9 @@ Tests tile size calculations for different resolutions, aspect ratios,
 and graphics modes. Validates minimum size enforcement and fallback handling.
 """
 
-import pytest
-from unittest.mock import patch
 
-from game_tile_dimension_calculator import TileDimensionCalculator
 from game_config import GameConfig
+from game_tile_dimension_calculator import TileDimensionCalculator
 
 
 class TestTileDimensionCalculatorGraphicsMode:
@@ -21,19 +19,19 @@ class TestTileDimensionCalculatorGraphicsMode:
         # Test various resolutions - all should return (64, 64)
         resolutions = [
             (1920, 1080),  # 1080p
-            (1280, 720),   # 720p
+            (1280, 720),  # 720p
             (3840, 2160),  # 4K
             (7680, 4320),  # 8K
-            (800, 600),    # Small window
+            (800, 600),  # Small window
             (2560, 1080),  # Ultrawide
         ]
 
         for width, height in resolutions:
-            result = TileDimensionCalculator.calculate_from_window(
-                (width, height), "graphics"
-            )
-            assert result == (64, 64), \
-                f"Graphics mode should always return (64, 64) for {width}x{height}"
+            result = TileDimensionCalculator.calculate_from_window((width, height), "graphics")
+            assert result == (
+                64,
+                64,
+            ), f"Graphics mode should always return (64, 64) for {width}x{height}"
 
     def test_graphics_mode_direct_calculation(self):
         """Direct call to _calc_graphics_mode returns 64x64."""
@@ -55,9 +53,7 @@ class TestTileDimensionCalculatorGlyphMode:
     def test_glyph_mode_1920x1080(self):
         """Glyph mode calculates correct tile size for 1920x1080."""
         # 1920 / 80 = 24px width, 1080 / 50 = 21.6 -> 21px height
-        result = TileDimensionCalculator.calculate_from_window(
-            (1920, 1080), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((1920, 1080), "glyph")
 
         assert result[0] == 1920 // GameConfig.SCREEN_WIDTH
         assert result[1] == 1080 // GameConfig.SCREEN_HEIGHT
@@ -65,9 +61,7 @@ class TestTileDimensionCalculatorGlyphMode:
     def test_glyph_mode_1280x720(self):
         """Glyph mode calculates correct tile size for 1280x720."""
         # 1280 / 80 = 16px width, 720 / 50 = 14.4 -> 14px height
-        result = TileDimensionCalculator.calculate_from_window(
-            (1280, 720), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((1280, 720), "glyph")
 
         assert result[0] == 1280 // GameConfig.SCREEN_WIDTH
         assert result[1] == 720 // GameConfig.SCREEN_HEIGHT
@@ -75,9 +69,7 @@ class TestTileDimensionCalculatorGlyphMode:
     def test_glyph_mode_4k_3840x2160(self):
         """Glyph mode calculates correct tile size for 4K."""
         # 3840 / 80 = 48px width, 2160 / 50 = 43.2 -> 43px height
-        result = TileDimensionCalculator.calculate_from_window(
-            (3840, 2160), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((3840, 2160), "glyph")
 
         assert result[0] == 3840 // GameConfig.SCREEN_WIDTH
         assert result[1] == 2160 // GameConfig.SCREEN_HEIGHT
@@ -85,9 +77,7 @@ class TestTileDimensionCalculatorGlyphMode:
     def test_glyph_mode_8k_7680x4320(self):
         """Glyph mode calculates correct tile size for 8K."""
         # 7680 / 80 = 96px width, 4320 / 50 = 86.4 -> 86px height
-        result = TileDimensionCalculator.calculate_from_window(
-            (7680, 4320), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((7680, 4320), "glyph")
 
         assert result[0] == 7680 // GameConfig.SCREEN_WIDTH
         assert result[1] == 4320 // GameConfig.SCREEN_HEIGHT
@@ -95,9 +85,7 @@ class TestTileDimensionCalculatorGlyphMode:
     def test_glyph_mode_ultrawide_2560x1080(self):
         """Glyph mode handles ultrawide 21:9 aspect ratio."""
         # 2560 / 80 = 32px width, 1080 / 50 = 21.6 -> 21px height
-        result = TileDimensionCalculator.calculate_from_window(
-            (2560, 1080), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((2560, 1080), "glyph")
 
         assert result[0] == 2560 // GameConfig.SCREEN_WIDTH
         assert result[1] == 1080 // GameConfig.SCREEN_HEIGHT
@@ -105,9 +93,7 @@ class TestTileDimensionCalculatorGlyphMode:
     def test_glyph_mode_superultrawide_3440x1440(self):
         """Glyph mode handles super ultrawide 21:9 aspect ratio."""
         # 3440 / 80 = 43px width, 1440 / 50 = 28.8 -> 28px height
-        result = TileDimensionCalculator.calculate_from_window(
-            (3440, 1440), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((3440, 1440), "glyph")
 
         assert result[0] == 3440 // GameConfig.SCREEN_WIDTH
         assert result[1] == 1440 // GameConfig.SCREEN_HEIGHT
@@ -175,9 +161,7 @@ class TestTileDimensionTinyWindows:
     def test_tiny_window_400x300(self):
         """Very small window enforces minimum tile sizes."""
         # 400 / 80 = 5px width, 300 / 50 = 6px height
-        result = TileDimensionCalculator.calculate_from_window(
-            (400, 300), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((400, 300), "glyph")
 
         # Should be clamped to minimums
         min_width = GameConfig.MIN_TILE_WIDTH()
@@ -189,9 +173,7 @@ class TestTileDimensionTinyWindows:
     def test_tiny_window_200x200(self):
         """Extremely small window enforces minimum tile sizes."""
         # 200 / 80 = 2.5 -> 2px width, 200 / 50 = 4px height
-        result = TileDimensionCalculator.calculate_from_window(
-            (200, 200), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((200, 200), "glyph")
 
         # Should be clamped to minimums
         min_width = GameConfig.MIN_TILE_WIDTH()
@@ -203,9 +185,7 @@ class TestTileDimensionTinyWindows:
     def test_tiny_window_100x100(self):
         """Absurdly small window enforces minimum tile sizes."""
         # 100 / 80 = 1.25 -> 1px width, 100 / 50 = 2px height
-        result = TileDimensionCalculator.calculate_from_window(
-            (100, 100), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((100, 100), "glyph")
 
         # Should be clamped to minimums
         min_width = GameConfig.MIN_TILE_WIDTH()
@@ -243,9 +223,7 @@ class TestTileDimensionEdgeCases:
 
     def test_square_window_1000x1000(self):
         """Square aspect ratio window."""
-        result = TileDimensionCalculator.calculate_from_window(
-            (1000, 1000), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((1000, 1000), "glyph")
 
         # 1000 / 80 = 12.5 -> 12px width, 1000 / 50 = 20px height
         assert result[0] == 1000 // GameConfig.SCREEN_WIDTH
@@ -253,9 +231,7 @@ class TestTileDimensionEdgeCases:
 
     def test_extreme_ultrawide_5120x1440(self):
         """Extreme ultrawide 32:9 aspect ratio."""
-        result = TileDimensionCalculator.calculate_from_window(
-            (5120, 1440), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((5120, 1440), "glyph")
 
         # 5120 / 80 = 64px width, 1440 / 50 = 28.8 -> 28px height
         assert result[0] == 5120 // GameConfig.SCREEN_WIDTH
@@ -263,9 +239,7 @@ class TestTileDimensionEdgeCases:
 
     def test_portrait_orientation_1080x1920(self):
         """Portrait orientation (height > width)."""
-        result = TileDimensionCalculator.calculate_from_window(
-            (1080, 1920), "glyph"
-        )
+        result = TileDimensionCalculator.calculate_from_window((1080, 1920), "glyph")
 
         # 1080 / 80 = 13.5 -> 13px width, 1920 / 50 = 38.4 -> 38px height
         assert result[0] == 1080 // GameConfig.SCREEN_WIDTH
@@ -274,27 +248,19 @@ class TestTileDimensionEdgeCases:
     def test_calculate_from_window_unknown_mode_defaults_to_glyph(self):
         """Unknown graphics mode defaults to glyph mode behavior."""
         # Test with an invalid mode string
-        result = TileDimensionCalculator.calculate_from_window(
-            (1920, 1080), "unknown_mode"
-        )
+        result = TileDimensionCalculator.calculate_from_window((1920, 1080), "unknown_mode")
 
         # Should behave like glyph mode (not graphics mode which returns 64x64)
-        expected = TileDimensionCalculator.calculate_from_window(
-            (1920, 1080), "glyph"
-        )
+        expected = TileDimensionCalculator.calculate_from_window((1920, 1080), "glyph")
 
         assert result == expected
 
     def test_calculate_from_window_empty_string_mode(self):
         """Empty string mode defaults to glyph mode behavior."""
-        result = TileDimensionCalculator.calculate_from_window(
-            (1920, 1080), ""
-        )
+        result = TileDimensionCalculator.calculate_from_window((1920, 1080), "")
 
         # Should behave like glyph mode
-        expected = TileDimensionCalculator.calculate_from_window(
-            (1920, 1080), "glyph"
-        )
+        expected = TileDimensionCalculator.calculate_from_window((1920, 1080), "glyph")
 
         assert result == expected
 
@@ -323,15 +289,9 @@ class TestTileDimensionScaling:
 
     def test_graphics_mode_unaffected_by_resolution_scaling(self):
         """Graphics mode tiles don't scale with resolution."""
-        result_1x = TileDimensionCalculator.calculate_from_window(
-            (1280, 720), "graphics"
-        )
-        result_2x = TileDimensionCalculator.calculate_from_window(
-            (2560, 1440), "graphics"
-        )
-        result_4x = TileDimensionCalculator.calculate_from_window(
-            (5120, 2880), "graphics"
-        )
+        result_1x = TileDimensionCalculator.calculate_from_window((1280, 720), "graphics")
+        result_2x = TileDimensionCalculator.calculate_from_window((2560, 1440), "graphics")
+        result_4x = TileDimensionCalculator.calculate_from_window((5120, 2880), "graphics")
 
         # All should be fixed at 64x64
         assert result_1x == result_2x == result_4x == (64, 64)
@@ -344,9 +304,7 @@ class TestTileDimensionConsistency:
         """calculate_from_window with 'glyph' matches _calc_glyph_mode."""
         window_size = (1920, 1080)
 
-        result_wrapper = TileDimensionCalculator.calculate_from_window(
-            window_size, "glyph"
-        )
+        result_wrapper = TileDimensionCalculator.calculate_from_window(window_size, "glyph")
         result_direct = TileDimensionCalculator._calc_glyph_mode(*window_size)
 
         assert result_wrapper == result_direct
@@ -355,9 +313,7 @@ class TestTileDimensionConsistency:
         """calculate_from_window with 'graphics' matches _calc_graphics_mode."""
         window_size = (1920, 1080)
 
-        result_wrapper = TileDimensionCalculator.calculate_from_window(
-            window_size, "graphics"
-        )
+        result_wrapper = TileDimensionCalculator.calculate_from_window(window_size, "graphics")
         result_direct = TileDimensionCalculator._calc_graphics_mode(*window_size)
 
         assert result_wrapper == result_direct

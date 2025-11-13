@@ -19,10 +19,9 @@ Tactical elements provide:
 All shadow placement uses organic Perlin noise patterns for natural-looking darkness zones.
 """
 
-import random
 import logging
 import math
-from typing import List, Tuple, Set
+import random
 
 from game_config import GameConfig
 from game_level_structure import create_noise_map, get_noise_value
@@ -40,7 +39,7 @@ class TacticalGenerator:
         corridor_tiles: Set of (x, y) tuples tracking corridor positions
     """
 
-    def __init__(self, game_map, corridor_tiles: Set[Tuple[int, int]]):
+    def __init__(self, game_map, corridor_tiles: set[tuple[int, int]]):
         """
         Initialize tactical generator with game map and corridor tracking.
 
@@ -51,8 +50,12 @@ class TacticalGenerator:
         self.game_map = game_map
         self.corridor_tiles = corridor_tiles
 
-    def place_blind_spot_areas(self, level: int, rooms: List[Tuple[int, int, int, int]],
-                          blind_spot_zone_rooms: List[Tuple[int, int, int, int]]) -> None:
+    def place_blind_spot_areas(
+        self,
+        level: int,
+        rooms: list[tuple[int, int, int, int]],
+        blind_spot_zone_rooms: list[tuple[int, int, int, int]],
+    ) -> None:
         """
         Place blind spot areas for stealth gameplay using Perlin noise for organic patterns.
 
@@ -79,13 +82,13 @@ class TacticalGenerator:
 
         config = network_configs[level]
 
-        if 'blind_spot_coverage' not in config:
+        if "blind_spot_coverage" not in config:
             error_msg = f"CRITICAL CONFIG ERROR: 'blind_spot_coverage' missing for level {level} in game_data.json network_configs"
             logging.error(error_msg)
             logging.error(f"Available config keys for level {level}: {list(config.keys())}")
             raise KeyError(f"Required key 'blind_spot_coverage' missing from level {level} config")
 
-        blind_spot_coverage = config['blind_spot_coverage']
+        blind_spot_coverage = config["blind_spot_coverage"]
 
         # Create Perlin noise map for organic blind spot distribution
         noise_seed = level * 12345 + random.randint(0, 10000)
@@ -94,12 +97,18 @@ class TacticalGenerator:
             height=GameConfig.MAP_HEIGHT,
             seed=noise_seed,
             octaves=3,
-            scale=0.15  # Larger scale = bigger shadow clusters
+            scale=0.15,  # Larger scale = bigger shadow clusters
         )
-        logging.debug(f"Shadow Gen: Created Perlin noise map for organic shadow placement (seed={noise_seed})")
+        logging.debug(
+            f"Shadow Gen: Created Perlin noise map for organic shadow placement (seed={noise_seed})"
+        )
 
-        wall_adjacent_weight = GameConfig._get_required('room_generation.blind_spot_placement_weights.wall_adjacent')
-        interior_weight = GameConfig._get_required('room_generation.blind_spot_placement_weights.interior')
+        wall_adjacent_weight = GameConfig._get_required(
+            "room_generation.blind_spot_placement_weights.wall_adjacent"
+        )
+        interior_weight = GameConfig._get_required(
+            "room_generation.blind_spot_placement_weights.interior"
+        )
 
         total_floor_tiles = sum(w * h for x, y, w, h in rooms)
         target_blind_spot_tiles = int(total_floor_tiles * blind_spot_coverage)
@@ -112,10 +121,12 @@ class TacticalGenerator:
             x, y, width, height = room
 
             if room in blind_spot_zone_rooms:
-                zone_coverage = GameConfig._get_required('room_generation.blind_spot_zone_coverage')
+                zone_coverage = GameConfig._get_required("room_generation.blind_spot_zone_coverage")
                 blind_spots_in_room = int(width * height * zone_coverage)
             else:
-                blind_spots_in_room = min(target_blind_spot_tiles - placed_blind_spots, width * height // 3)
+                blind_spots_in_room = min(
+                    target_blind_spot_tiles - placed_blind_spots, width * height // 3
+                )
 
             # Get candidate positions with noise values
             wall_adjacent_positions = self._get_noise_weighted_positions(
@@ -130,19 +141,31 @@ class TacticalGenerator:
                 if random.random() < wall_adjacent_weight:
                     if wall_adjacent_positions:
                         shadow_pos = self._select_by_noise_weight(wall_adjacent_positions)
-                        wall_adjacent_positions = [(pos, noise) for pos, noise in wall_adjacent_positions if pos != shadow_pos]
+                        wall_adjacent_positions = [
+                            (pos, noise)
+                            for pos, noise in wall_adjacent_positions
+                            if pos != shadow_pos
+                        ]
                     elif interior_positions:
                         shadow_pos = self._select_by_noise_weight(interior_positions)
-                        interior_positions = [(pos, noise) for pos, noise in interior_positions if pos != shadow_pos]
+                        interior_positions = [
+                            (pos, noise) for pos, noise in interior_positions if pos != shadow_pos
+                        ]
                     else:
                         continue
                 else:
                     if interior_positions:
                         shadow_pos = self._select_by_noise_weight(interior_positions)
-                        interior_positions = [(pos, noise) for pos, noise in interior_positions if pos != shadow_pos]
+                        interior_positions = [
+                            (pos, noise) for pos, noise in interior_positions if pos != shadow_pos
+                        ]
                     elif wall_adjacent_positions:
                         shadow_pos = self._select_by_noise_weight(wall_adjacent_positions)
-                        wall_adjacent_positions = [(pos, noise) for pos, noise in wall_adjacent_positions if pos != shadow_pos]
+                        wall_adjacent_positions = [
+                            (pos, noise)
+                            for pos, noise in wall_adjacent_positions
+                            if pos != shadow_pos
+                        ]
                     else:
                         continue
 
@@ -150,10 +173,13 @@ class TacticalGenerator:
                     self.game_map.blind_spots.add(shadow_pos)
                     placed_blind_spots += 1
 
-        logging.debug(f"Shadow Gen: Placed {placed_blind_spots} shadows using noise-based organic distribution")
+        logging.debug(
+            f"Shadow Gen: Placed {placed_blind_spots} shadows using noise-based organic distribution"
+        )
 
-    def _get_noise_weighted_positions(self, positions: List[Tuple[int, int]],
-                                      noise_map) -> List[Tuple[Tuple[int, int], float]]:
+    def _get_noise_weighted_positions(
+        self, positions: list[tuple[int, int]], noise_map
+    ) -> list[tuple[tuple[int, int], float]]:
         """
         Add noise values to positions for weighted selection.
 
@@ -171,7 +197,9 @@ class TacticalGenerator:
             weighted.append((pos, noise_value))
         return weighted
 
-    def _select_by_noise_weight(self, weighted_positions: List[Tuple[Tuple[int, int], float]]) -> Tuple[int, int]:
+    def _select_by_noise_weight(
+        self, weighted_positions: list[tuple[tuple[int, int], float]]
+    ) -> tuple[int, int]:
         """
         Select position biased by noise value (higher noise = more likely).
 
@@ -205,7 +233,7 @@ class TacticalGenerator:
         # Fallback to last position
         return normalized_weights[-1][0]
 
-    def get_wall_adjacent_positions(self, room: Tuple[int, int, int, int]) -> List[Tuple[int, int]]:
+    def get_wall_adjacent_positions(self, room: tuple[int, int, int, int]) -> list[tuple[int, int]]:
         """
         Get floor positions that are adjacent to walls (1 tile from wall).
 
@@ -238,7 +266,7 @@ class TacticalGenerator:
 
         return wall_adjacent
 
-    def get_interior_positions(self, room: Tuple[int, int, int, int]) -> List[Tuple[int, int]]:
+    def get_interior_positions(self, room: tuple[int, int, int, int]) -> list[tuple[int, int]]:
         """
         Get floor positions that are NOT adjacent to walls (interior tiles).
 
@@ -296,9 +324,9 @@ class TacticalGenerator:
 
         Uses Poisson disc sampling for natural, evenly-distributed placement.
         """
-        min_open_area_size = GameConfig._get_required('room_generation.cover_min_open_area_size')
-        cluster_chance = GameConfig._get_required('room_generation.cover_cluster_chance')
-        poisson_radius = GameConfig._get_required('room_generation.cover_poisson_radius')
+        min_open_area_size = GameConfig._get_required("room_generation.cover_min_open_area_size")
+        cluster_chance = GameConfig._get_required("room_generation.cover_cluster_chance")
+        poisson_radius = GameConfig._get_required("room_generation.cover_poisson_radius")
 
         open_areas = self.find_large_open_areas(min_open_area_size)
         logging.debug(f"Tactical Gen: Found {len(open_areas)} open areas for cover placement")
@@ -314,7 +342,7 @@ class TacticalGenerator:
 
         logging.debug(f"Tactical Gen: Placed {clusters_placed} cover clusters")
 
-    def find_large_open_areas(self, min_size: int) -> List[Tuple[int, int, int, int]]:
+    def find_large_open_areas(self, min_size: int) -> list[tuple[int, int, int, int]]:
         """
         Find large contiguous open floor areas.
 
@@ -356,7 +384,9 @@ class TacticalGenerator:
 
         return open_areas
 
-    def poisson_disc_sampling(self, area: Tuple[int, int, int, int], radius: float) -> List[Tuple[int, int]]:
+    def poisson_disc_sampling(
+        self, area: tuple[int, int, int, int], radius: float
+    ) -> list[tuple[int, int]]:
         """
         Generate points using Poisson disc sampling for natural distribution.
 
@@ -404,7 +434,7 @@ class TacticalGenerator:
 
         return points
 
-    def create_cover_cluster(self, center: Tuple[int, int]) -> None:
+    def create_cover_cluster(self, center: tuple[int, int]) -> None:
         """
         Create a cluster of cover walls at the specified position.
 
@@ -418,31 +448,28 @@ class TacticalGenerator:
         """
         x, y = center
 
-        cluster_type = random.choice(['small', 'l_shaped', 'scattered'])
+        cluster_type = random.choice(["small", "l_shaped", "scattered"])
 
-        if cluster_type == 'small':
+        if cluster_type == "small":
             for dx in range(2):
                 for dy in range(2):
                     pos = (x + dx, y + dy)
                     if self.is_valid_cover_position(pos):
                         self.game_map.walls.add(pos)
 
-        elif cluster_type == 'l_shaped':
+        elif cluster_type == "l_shaped":
             positions = [(x, y), (x + 1, y), (x + 2, y), (x, y + 1), (x, y + 2)]
             for pos in positions:
                 if self.is_valid_cover_position(pos):
                     self.game_map.walls.add(pos)
 
-        elif cluster_type == 'scattered':
-            positions = [
-                (x, y), (x + 2, y), (x + 1, y + 1),
-                (x, y + 2), (x + 2, y + 2)
-            ]
+        elif cluster_type == "scattered":
+            positions = [(x, y), (x + 2, y), (x + 1, y + 1), (x, y + 2), (x + 2, y + 2)]
             for pos in positions:
                 if self.is_valid_cover_position(pos):
                     self.game_map.walls.add(pos)
 
-    def is_valid_cover_position(self, pos: Tuple[int, int]) -> bool:
+    def is_valid_cover_position(self, pos: tuple[int, int]) -> bool:
         """
         Check if a position is valid for placing cover.
 
@@ -469,14 +496,16 @@ class TacticalGenerator:
         if pos in self.corridor_tiles:
             return False
 
-        if (pos in self.game_map.cooling_nodes or
-            pos in self.game_map.cpu_recovery_nodes or
-            pos in self.game_map.ghost_nodes):
+        if (
+            pos in self.game_map.cooling_nodes
+            or pos in self.game_map.cpu_recovery_nodes
+            or pos in self.game_map.ghost_nodes
+        ):
             return False
 
         return True
 
-    def place_defensive_positions(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+    def place_defensive_positions(self, rooms: list[tuple[int, int, int, int]]) -> None:
         """
         Place defensive positions (cover + shadow combinations) in strategic locations.
 
@@ -493,8 +522,8 @@ class TacticalGenerator:
         Args:
             rooms: List of room tuples (x, y, width, height)
         """
-        defensive_chance = GameConfig._get_required('room_generation.defensive_position_chance')
-        position_types = GameConfig._get_required('room_generation.defensive_position_types')
+        defensive_chance = GameConfig._get_required("room_generation.defensive_position_chance")
+        position_types = GameConfig._get_required("room_generation.defensive_position_types")
 
         strategic_rooms = []
 
@@ -517,7 +546,9 @@ class TacticalGenerator:
 
             self.create_defensive_position(room, position_type)
 
-    def create_defensive_position(self, room: Tuple[int, int, int, int], position_type: str) -> None:
+    def create_defensive_position(
+        self, room: tuple[int, int, int, int], position_type: str
+    ) -> None:
         """
         Create a specific type of defensive position within a room.
 
@@ -540,11 +571,11 @@ class TacticalGenerator:
         pos_x = max(x + 2, min(x + w - 3, center_x + offset_x))
         pos_y = max(y + 2, min(y + h - 3, center_y + offset_y))
 
-        if position_type == 'corner_cover':
+        if position_type == "corner_cover":
             self.create_corner_cover_position(pos_x, pos_y)
-        elif position_type == 'shadow_bunker':
+        elif position_type == "shadow_bunker":
             self.create_shadow_bunker_position(pos_x, pos_y)
-        elif position_type == 'crossfire':
+        elif position_type == "crossfire":
             self.create_crossfire_position(pos_x, pos_y)
 
     def create_corner_cover_position(self, x: int, y: int) -> None:
@@ -582,9 +613,12 @@ class TacticalGenerator:
             y: Y position for the bunker
         """
         cover_positions = [
-            (x, y), (x + 1, y), (x + 2, y),
-            (x, y + 1), (x + 2, y + 1),
-            (x + 1, y + 2)
+            (x, y),
+            (x + 1, y),
+            (x + 2, y),
+            (x, y + 1),
+            (x + 2, y + 1),
+            (x + 1, y + 2),
         ]
         for pos in cover_positions:
             if self.is_valid_cover_position(pos):
@@ -615,7 +649,7 @@ class TacticalGenerator:
             if pos not in self.game_map.walls:
                 self.game_map.blind_spots.add(pos)
 
-    def create_choke_points(self, rooms: List[Tuple[int, int, int, int]]) -> None:
+    def create_choke_points(self, rooms: list[tuple[int, int, int, int]]) -> None:
         """
         Create choke points by narrowing corridors near strategic rooms.
 
@@ -627,8 +661,8 @@ class TacticalGenerator:
         Args:
             rooms: List of room tuples (x, y, width, height)
         """
-        choke_point_count = GameConfig._get_required('room_generation.choke_point_count')
-        max_exits = GameConfig._get_required('room_generation.choke_point_max_exits')
+        choke_point_count = GameConfig._get_required("room_generation.choke_point_count")
+        max_exits = GameConfig._get_required("room_generation.choke_point_max_exits")
 
         if not self.corridor_tiles:
             return
@@ -652,7 +686,7 @@ class TacticalGenerator:
         for choke_pos in choke_positions:
             self.narrow_corridor_at_position(choke_pos)
 
-    def narrow_corridor_at_position(self, position: Tuple[int, int]) -> None:
+    def narrow_corridor_at_position(self, position: tuple[int, int]) -> None:
         """
         Narrow a corridor at the given position by adding walls on sides.
 
@@ -663,8 +697,8 @@ class TacticalGenerator:
         """
         x, y = position
 
-        has_horizontal_flow = ((x - 1, y) in self.corridor_tiles or (x + 1, y) in self.corridor_tiles)
-        has_vertical_flow = ((x, y - 1) in self.corridor_tiles or (x, y + 1) in self.corridor_tiles)
+        has_horizontal_flow = (x - 1, y) in self.corridor_tiles or (x + 1, y) in self.corridor_tiles
+        has_vertical_flow = (x, y - 1) in self.corridor_tiles or (x, y + 1) in self.corridor_tiles
 
         if has_horizontal_flow and not has_vertical_flow:
             if (x, y + 1) not in self.game_map.walls and (x, y + 1) in self.corridor_tiles:

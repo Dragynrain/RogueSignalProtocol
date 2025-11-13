@@ -8,7 +8,6 @@ Agent that validates item spawn distribution and collection mechanics:
 - Ensures items are accessible (not in walls)
 """
 
-import pytest
 from tests.test_agent import GameTestAgent
 
 
@@ -33,28 +32,36 @@ class ItemCollectorAgent(GameTestAgent):
         item_positions = []
 
         # Code hacks
-        item_positions.extend([
-            {'pos': pos, 'type': 'code_hack', 'item': item}
-            for pos, item in self.game_map.code_hacks.items()
-        ])
+        item_positions.extend(
+            [
+                {"pos": pos, "type": "code_hack", "item": item}
+                for pos, item in self.game_map.code_hacks.items()
+            ]
+        )
 
         # Exploit pickups
-        item_positions.extend([
-            {'pos': pos, 'type': 'exploit', 'item': item}
-            for pos, item in self.game_map.exploit_pickups.items()
-        ])
+        item_positions.extend(
+            [
+                {"pos": pos, "type": "exploit", "item": item}
+                for pos, item in self.game_map.exploit_pickups.items()
+            ]
+        )
 
         # Permanent upgrades
-        item_positions.extend([
-            {'pos': pos, 'type': 'upgrade', 'item': upgrade_key}
-            for pos, upgrade_key in self.game_map.permanent_upgrades.items()
-        ])
+        item_positions.extend(
+            [
+                {"pos": pos, "type": "upgrade", "item": upgrade_key}
+                for pos, upgrade_key in self.game_map.permanent_upgrades.items()
+            ]
+        )
 
         # Story fragments
-        item_positions.extend([
-            {'pos': pos, 'type': 'story', 'item': fragment}
-            for pos, fragment in self.game_map.story_fragments.items()
-        ])
+        item_positions.extend(
+            [
+                {"pos": pos, "type": "story", "item": fragment}
+                for pos, fragment in self.game_map.story_fragments.items()
+            ]
+        )
 
         self.items_found = len(item_positions)
         return item_positions
@@ -76,7 +83,7 @@ class ItemCollectorAgent(GameTestAgent):
             if self.turn >= max_moves:
                 break
 
-            x, y = item_data['pos']
+            x, y = item_data["pos"]
             if self.collect_item_at(x, y):
                 collected_count += 1
 
@@ -128,10 +135,10 @@ class TestItemCollectorAgent:
 
         # Each item should have position and type
         for item in all_items:
-            assert 'pos' in item
-            assert 'type' in item
-            assert 'item' in item
-            assert item['type'] in ['code_hack', 'exploit', 'upgrade', 'story']
+            assert "pos" in item
+            assert "type" in item
+            assert "item" in item
+            assert item["type"] in ["code_hack", "exploit", "upgrade", "story"]
 
     def test_items_not_in_walls(self):
         """Items should not spawn inside walls."""
@@ -140,10 +147,12 @@ class TestItemCollectorAgent:
         all_items = agent.find_all_items()
 
         for item in all_items:
-            x, y = item['pos']
+            x, y = item["pos"]
             # Item position should not be a wall
-            assert (x, y) not in agent.game_map.walls, \
-                f"{item['type']} at ({x}, {y}) is inside a wall!"
+            assert (
+                x,
+                y,
+            ) not in agent.game_map.walls, f"{item['type']} at ({x}, {y}) is inside a wall!"
 
     def test_items_within_map_bounds(self):
         """All items should be within map boundaries."""
@@ -152,11 +161,9 @@ class TestItemCollectorAgent:
         all_items = agent.find_all_items()
 
         for item in all_items:
-            x, y = item['pos']
-            assert 0 <= x < agent.game_map.width, \
-                f"Item at ({x}, {y}) is outside map width!"
-            assert 0 <= y < agent.game_map.height, \
-                f"Item at ({x}, {y}) is outside map height!"
+            x, y = item["pos"]
+            assert 0 <= x < agent.game_map.width, f"Item at ({x}, {y}) is outside map width!"
+            assert 0 <= y < agent.game_map.height, f"Item at ({x}, {y}) is outside map height!"
 
     def test_item_spawn_distribution(self):
         """Items should be distributed across map, not all clustered."""
@@ -166,7 +173,7 @@ class TestItemCollectorAgent:
 
         if len(all_items) >= 3:
             # Get all positions
-            positions = [item['pos'] for item in all_items]
+            positions = [item["pos"] for item in all_items]
             x_coords = [x for x, y in positions]
             y_coords = [y for x, y in positions]
 
@@ -175,8 +182,7 @@ class TestItemCollectorAgent:
             y_range = max(y_coords) - min(y_coords)
 
             # Items shouldn't all be in a 2x2 cluster
-            assert x_range > 2 or y_range > 2, \
-                "All items clustered in tiny area!"
+            assert x_range > 2 or y_range > 2, "All items clustered in tiny area!"
 
     def test_agent_can_pathfind_to_items(self):
         """Agent should be able to pathfind to item locations."""
@@ -187,7 +193,7 @@ class TestItemCollectorAgent:
         if len(all_items) > 0:
             # Try to move to first item
             first_item = all_items[0]
-            x, y = first_item['pos']
+            x, y = first_item["pos"]
 
             success = agent.collect_item_at(x, y)
 
@@ -216,10 +222,10 @@ class TestItemCollectorAgent:
         all_items = agent.find_all_items()
 
         # Count items by type
-        code_hacks = [i for i in all_items if i['type'] == 'code_hack']
-        exploits = [i for i in all_items if i['type'] == 'exploit']
-        upgrades = [i for i in all_items if i['type'] == 'upgrade']
-        stories = [i for i in all_items if i['type'] == 'story']
+        code_hacks = [i for i in all_items if i["type"] == "code_hack"]
+        exploits = [i for i in all_items if i["type"] == "exploit"]
+        upgrades = [i for i in all_items if i["type"] == "upgrade"]
+        stories = [i for i in all_items if i["type"] == "story"]
 
         # Should match direct dictionary access
         assert len(code_hacks) == len(agent.game_map.code_hacks)
@@ -232,8 +238,7 @@ class TestItemCollectorAgent:
         agent = ItemCollectorAgent(seed=77011, level=1)
 
         all_items = agent.find_all_items()
-        positions = [item['pos'] for item in all_items]
+        positions = [item["pos"] for item in all_items]
 
         # No duplicate positions
-        assert len(positions) == len(set(positions)), \
-            "Multiple items at same position!"
+        assert len(positions) == len(set(positions)), "Multiple items at same position!"

@@ -6,11 +6,11 @@ Tests the AutoWalk class methods and state management without
 complex game engine setup.
 """
 
-import unittest
-import sys
 import os
+import sys
+import unittest
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from game_autowalk import AutoWalk
 from game_entities import Position
@@ -106,5 +106,5 @@ class TestAutoWalkPathManagement(unittest.TestCase):
         self.assertEqual(self.autowalk.destination, dest)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

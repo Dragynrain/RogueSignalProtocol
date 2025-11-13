@@ -16,9 +16,9 @@ Key responsibilities:
 - Maintain backward compatibility with existing code
 """
 
-from game_turn_manager import GameTurnManager
 from game_level_coordinator import GameLevelCoordinator
 from game_state_persistence import GameStatePersistence
+from game_turn_manager import GameTurnManager
 
 
 class GameSession:

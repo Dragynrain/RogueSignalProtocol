@@ -6,9 +6,9 @@ Tests mouse coordinate conversion for menu/UI screens, helper methods,
 and edge cases.
 """
 
-import pytest
-import tcod.event
 from unittest.mock import Mock
+
+import tcod.event
 
 from game_mouse_utils import MenuMouseHandler
 
@@ -18,6 +18,7 @@ class FakePixel:
 
     TCOD's pixel object supports both tuple unpacking and attribute access.
     """
+
     def __init__(self, x, y):
         self.x = x
         self.y = y
@@ -45,7 +46,7 @@ class TestConvertToTileCoords:
         converted = MenuMouseHandler.convert_to_tile_coords(event, context)
 
         assert converted is not None
-        assert hasattr(converted, 'tile')
+        assert hasattr(converted, "tile")
         # Center of 80x50 console should be around (40, 25)
         assert converted.tile.x == 40
         assert converted.tile.y == 25
@@ -96,7 +97,7 @@ class TestConvertToTileCoords:
         converted = MenuMouseHandler.convert_to_tile_coords(event, context)
 
         assert converted is not None
-        assert hasattr(converted, 'tile')
+        assert hasattr(converted, "tile")
         # Center of 80x50 console
         assert converted.tile.x == 40
         assert converted.tile.y == 25
@@ -115,7 +116,7 @@ class TestConvertToTileCoords:
         converted = MenuMouseHandler.convert_to_tile_coords(original_event, context)
 
         # Converted event should have tile attribute
-        assert hasattr(converted, 'tile')
+        assert hasattr(converted, "tile")
         assert converted.tile is not None
         # Other attributes should be preserved
         assert converted.type == "MOUSEMOTION"
@@ -162,7 +163,7 @@ class TestConvertToTileCoords:
         converted = MenuMouseHandler.convert_to_tile_coords(event, context)
 
         assert converted is not None
-        assert hasattr(converted, 'tile')
+        assert hasattr(converted, "tile")
         assert converted.tile.x == 40
         assert converted.tile.y == 25
 
@@ -349,16 +350,31 @@ class TestIsInRect:
         button_width, button_height = 10, 1
 
         # Mouse over button
-        assert MenuMouseHandler.is_in_rect(35, 20, button_x, button_y, button_width, button_height) is True
+        assert (
+            MenuMouseHandler.is_in_rect(35, 20, button_x, button_y, button_width, button_height)
+            is True
+        )
 
         # Mouse just left of button
-        assert MenuMouseHandler.is_in_rect(29, 20, button_x, button_y, button_width, button_height) is False
+        assert (
+            MenuMouseHandler.is_in_rect(29, 20, button_x, button_y, button_width, button_height)
+            is False
+        )
 
         # Mouse just right of button
-        assert MenuMouseHandler.is_in_rect(40, 20, button_x, button_y, button_width, button_height) is False
+        assert (
+            MenuMouseHandler.is_in_rect(40, 20, button_x, button_y, button_width, button_height)
+            is False
+        )
 
         # Mouse above button
-        assert MenuMouseHandler.is_in_rect(35, 19, button_x, button_y, button_width, button_height) is False
+        assert (
+            MenuMouseHandler.is_in_rect(35, 19, button_x, button_y, button_width, button_height)
+            is False
+        )
 
         # Mouse below button
-        assert MenuMouseHandler.is_in_rect(35, 21, button_x, button_y, button_width, button_height) is False
+        assert (
+            MenuMouseHandler.is_in_rect(35, 21, button_x, button_y, button_width, button_height)
+            is False
+        )

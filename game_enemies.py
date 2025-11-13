@@ -12,18 +12,19 @@ The EnemyManager class:
 Individual enemy AI and movement logic is in game_characters.py.
 """
 
-import random
 import logging
-from typing import List, Optional, TYPE_CHECKING
+import random
+from typing import TYPE_CHECKING
+
+from game_characters import Enemy, PathfindingHelper, Player
 
 # Import necessary entities and configurations
 from game_config import GameConfig
-from game_entities import Position, EnemyMovement, PositionValidator
-from game_characters import Enemy, Player, PathfindingHelper
+from game_entities import EnemyMovement, Position, PositionValidator
 
 # Forward references to avoid circular imports
 if TYPE_CHECKING:
-    from RogueSignalProtocol import MessageLog, GameStateManager, GameEngine, GameMap
+    from RogueSignalProtocol import GameEngine, GameMap, GameStateManager, MessageLog
 
 
 class EnemyManager:
@@ -35,7 +36,7 @@ class EnemyManager:
     for PATROL enemies.
     """
 
-    def __init__(self, game_map: 'GameMap', message_log: 'MessageLog'):
+    def __init__(self, game_map: "GameMap", message_log: "MessageLog"):
         """
         Initialize enemy manager.
 
@@ -43,7 +44,7 @@ class EnemyManager:
             game_map: GameMap instance for position validation
             message_log: MessageLog instance for AI messages
         """
-        self.enemies: List[Enemy] = []
+        self.enemies: list[Enemy] = []
         self.game_map = game_map
         self.message_log = message_log
 
@@ -71,12 +72,18 @@ class EnemyManager:
         enemy = Enemy(position, enemy_type)
 
         # Set up patrol route for patrol enemies
-        if enemy.type == 'patrol':
+        if enemy.type == "patrol":
             enemy.patrol_points = self._generate_patrol_route(position)
-            logging.debug(f"Spawned {enemy_type} at ({position.x},{position.y}), movement=PATROL, patrol_points={len(enemy.patrol_points)}")
-        elif enemy.type == 'virus':
+            logging.debug(
+                f"Spawned {enemy_type} at ({position.x},{position.y}), movement=PATROL, patrol_points={len(enemy.patrol_points)}"
+            )
+        elif enemy.type == "virus":
             # Virus enemies mimic other infected enemies - randomly pick base movement type
-            virus_movement_types = [EnemyMovement.STATIC, EnemyMovement.RANDOM, EnemyMovement.PATROL]
+            virus_movement_types = [
+                EnemyMovement.STATIC,
+                EnemyMovement.RANDOM,
+                EnemyMovement.PATROL,
+            ]
             chosen_movement = random.choice(virus_movement_types)
             # Store in instance variable, NOT in shared type_data!
             enemy.original_movement_type = chosen_movement
@@ -84,17 +91,25 @@ class EnemyManager:
             # Generate patrol route if virus got PATROL movement
             if chosen_movement == EnemyMovement.PATROL:
                 enemy.patrol_points = self._generate_patrol_route(position)
-                logging.debug(f"Spawned {enemy_type} at ({position.x},{position.y}), movement={chosen_movement.name}, patrol_points={len(enemy.patrol_points)}")
+                logging.debug(
+                    f"Spawned {enemy_type} at ({position.x},{position.y}), movement={chosen_movement.name}, patrol_points={len(enemy.patrol_points)}"
+                )
             else:
-                logging.debug(f"Spawned {enemy_type} at ({position.x},{position.y}), movement={chosen_movement.name}")
+                logging.debug(
+                    f"Spawned {enemy_type} at ({position.x},{position.y}), movement={chosen_movement.name}"
+                )
         else:
             movement_type = enemy.get_movement_type()
-            logging.debug(f"Spawned {enemy_type} at ({position.x},{position.y}), movement={movement_type.name}")
+            logging.debug(
+                f"Spawned {enemy_type} at ({position.x},{position.y}), movement={movement_type.name}"
+            )
 
         self.enemies.append(enemy)
         return enemy
-    
-    def update_all_enemies(self, player: Player, game_state: 'GameStateManager', game_engine: 'GameEngine') -> None:
+
+    def update_all_enemies(
+        self, player: Player, game_state: "GameStateManager", game_engine: "GameEngine"
+    ) -> None:
         """
         Update AI and movement for all enemies.
 
@@ -109,21 +124,24 @@ class EnemyManager:
         for enemy in self.enemies[:]:  # Use slice copy for safe iteration
             if enemy.disabled_turns > 0:
                 continue
-                
+
             # Enemy state is now handled by the main game's _process_enemies method
-            
+
             # Move enemy
             enemy.move(self.game_map, player, game_engine)
-    
-    def get_enemy_at_position(self, position: Position) -> Optional[Enemy]:
+
+    def get_enemy_at_position(self, position: Position) -> Enemy | None:
         """Get enemy at the specified position."""
-        return next((e for e in self.enemies if e.position.x == position.x and e.position.y == position.y), None)
-    
+        return next(
+            (e for e in self.enemies if e.position.x == position.x and e.position.y == position.y),
+            None,
+        )
+
     def remove_enemy(self, enemy: Enemy) -> None:
         """Remove an enemy from the game."""
         if enemy in self.enemies:
             self.enemies.remove(enemy)
-    
+
     def _resume_patrol_route(self, enemy: Enemy) -> None:
         """Resume patrol route from the nearest patrol point."""
         if not enemy.patrol_points:
@@ -134,11 +152,14 @@ class EnemyManager:
         nearest_index, min_distance = min(distances, key=lambda x: x[1])
 
         # Advance if already at nearest point
-        enemy.patrol_index = (nearest_index + 1) % len(enemy.patrol_points) \
-                           if min_distance <= GameConfig.ADJACENT_VISIBILITY_THRESHOLD else nearest_index
+        enemy.patrol_index = (
+            (nearest_index + 1) % len(enemy.patrol_points)
+            if min_distance <= GameConfig.ADJACENT_VISIBILITY_THRESHOLD
+            else nearest_index
+        )
         # patrol_stuck_counter removed in simplified movement system
-    
-    def _generate_patrol_route(self, start: Position) -> List[Position]:
+
+    def _generate_patrol_route(self, start: Position) -> list[Position]:
         """
         Generate simple geometric patrol routes with 2-4 points.
 
@@ -161,18 +182,20 @@ class EnemyManager:
             List of Position objects forming the patrol route
         """
         # Choose a simple pattern type
-        pattern_type = random.choice(['line', 'triangle', 'rectangle'])
-        min_spacing = GameConfig._get_required('balance.patrol_spacing_min')
-        max_spacing = GameConfig._get_required('balance.patrol_spacing_max')
+        pattern_type = random.choice(["line", "triangle", "rectangle"])
+        min_spacing = GameConfig._get_required("balance.patrol_spacing_min")
+        max_spacing = GameConfig._get_required("balance.patrol_spacing_max")
         step_size = random.randint(min_spacing, max_spacing)
-        logging.debug(f"Patrol route: start=({start.x},{start.y}), pattern={pattern_type}, step_size={step_size}")
+        logging.debug(
+            f"Patrol route: start=({start.x},{start.y}), pattern={pattern_type}, step_size={step_size}"
+        )
 
-        if pattern_type == 'line':
+        if pattern_type == "line":
             # 2-point line pattern (back and forth)
-            direction = random.choice(['horizontal', 'vertical', 'diagonal'])
-            if direction == 'horizontal':
+            direction = random.choice(["horizontal", "vertical", "diagonal"])
+            if direction == "horizontal":
                 end_point = Position(start.x + step_size, start.y)
-            elif direction == 'vertical':
+            elif direction == "vertical":
                 end_point = Position(start.x, start.y + step_size)
             else:  # diagonal
                 end_point = Position(start.x + step_size, start.y + step_size)
@@ -182,17 +205,29 @@ class EnemyManager:
                 if self._validate_patrol_connectivity(route):
                     return route
 
-        elif pattern_type == 'triangle':
+        elif pattern_type == "triangle":
             # 3-point triangle pattern - try multiple orientations
             triangle_patterns = [
                 # Standard triangle
-                (Position(start.x + step_size, start.y), Position(start.x + step_size//2, start.y + step_size)),
+                (
+                    Position(start.x + step_size, start.y),
+                    Position(start.x + step_size // 2, start.y + step_size),
+                ),
                 # Inverted triangle
-                (Position(start.x + step_size, start.y), Position(start.x + step_size//2, start.y - step_size)),
+                (
+                    Position(start.x + step_size, start.y),
+                    Position(start.x + step_size // 2, start.y - step_size),
+                ),
                 # Left-pointing triangle
-                (Position(start.x, start.y + step_size), Position(start.x - step_size//2, start.y + step_size//2)),
+                (
+                    Position(start.x, start.y + step_size),
+                    Position(start.x - step_size // 2, start.y + step_size // 2),
+                ),
                 # Right-pointing triangle
-                (Position(start.x, start.y + step_size), Position(start.x + step_size//2, start.y + step_size//2)),
+                (
+                    Position(start.x, start.y + step_size),
+                    Position(start.x + step_size // 2, start.y + step_size // 2),
+                ),
             ]
 
             for point2, point3 in triangle_patterns:
@@ -205,7 +240,7 @@ class EnemyManager:
                 if len(route) >= 3 and self._validate_patrol_connectivity(route):
                     return route
 
-        elif pattern_type == 'rectangle':
+        elif pattern_type == "rectangle":
             # 4-point rectangle pattern - try different sizes
             rectangle_sizes = [step_size, step_size // 2, step_size * 2 // 3]
 
@@ -227,19 +262,19 @@ class EnemyManager:
                     return route
 
         # Fallback: try multiple simple 2-point patterns
-        h_dist = GameConfig._get_required('balance.patrol_fallback_horizontal')
-        v_dist = GameConfig._get_required('balance.patrol_fallback_vertical')
-        d_dist = GameConfig._get_required('balance.patrol_fallback_diagonal')
-        s_dist = GameConfig._get_required('balance.patrol_fallback_short')
+        h_dist = GameConfig._get_required("balance.patrol_fallback_horizontal")
+        v_dist = GameConfig._get_required("balance.patrol_fallback_vertical")
+        d_dist = GameConfig._get_required("balance.patrol_fallback_diagonal")
+        s_dist = GameConfig._get_required("balance.patrol_fallback_short")
         fallback_patterns = [
-            Position(start.x + h_dist, start.y),      # Horizontal right
-            Position(start.x - h_dist, start.y),      # Horizontal left
-            Position(start.x, start.y + v_dist),      # Vertical down
-            Position(start.x, start.y - v_dist),      # Vertical up
+            Position(start.x + h_dist, start.y),  # Horizontal right
+            Position(start.x - h_dist, start.y),  # Horizontal left
+            Position(start.x, start.y + v_dist),  # Vertical down
+            Position(start.x, start.y - v_dist),  # Vertical up
             Position(start.x + d_dist, start.y + d_dist),  # Diagonal down-right
             Position(start.x - d_dist, start.y - d_dist),  # Diagonal up-left
-            Position(start.x + s_dist, start.y),      # Shorter horizontal
-            Position(start.x, start.y + s_dist),      # Shorter vertical
+            Position(start.x + s_dist, start.y),  # Shorter horizontal
+            Position(start.x, start.y + s_dist),  # Shorter vertical
         ]
 
         for fallback_end in fallback_patterns:
@@ -250,16 +285,18 @@ class EnemyManager:
                     return route
 
         # Last resort: single point (static guard)
-        logging.debug(f"Patrol route: all patterns failed, using single-point patrol at ({start.x},{start.y})")
+        logging.debug(
+            f"Patrol route: all patterns failed, using single-point patrol at ({start.x},{start.y})"
+        )
         return [start]
 
     def _is_valid_patrol_point(self, point: Position) -> bool:
         """Check if a position is valid for patrol (within bounds, not a wall)."""
         # Use centralized PositionValidator for consistency
-        margin = GameConfig.get('balance.patrol_validation_margin', 3)
+        margin = GameConfig.get("balance.patrol_validation_margin", 3)
         return PositionValidator.is_valid_for_patrol(point, self.game_map, margin=margin)
 
-    def _validate_patrol_connectivity(self, route: List[Position]) -> bool:
+    def _validate_patrol_connectivity(self, route: list[Position]) -> bool:
         """Verify all patrol points can reach each other via pathfinding."""
         if len(route) < 2:
             return True

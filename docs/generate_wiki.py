@@ -10,25 +10,26 @@ Usage:
 """
 
 import json
-import os
 from pathlib import Path
 
 
 def load_game_content():
     """Load game_content.json"""
     content_path = Path("game_content.json")
-    with open(content_path, 'r') as f:
+    with open(content_path) as f:
         return json.load(f)
 
 
 def generate_enemy_database(content):
     """Generate Enemy-Database.md from game_content.json"""
-    enemies = content['enemy_types']
+    enemies = content["enemy_types"]
 
     md = ["# Enemy Database\n"]
     md.append("Complete reference for all enemy types in Rogue Signal Protocol.\n")
     md.append("## Overview\n")
-    md.append(f"There are **{len(enemies)} unique enemy types** with different behaviors, stats, and threat levels.\n")
+    md.append(
+        f"There are **{len(enemies)} unique enemy types** with different behaviors, stats, and threat levels.\n"
+    )
 
     # Group enemies by behavior
     static_enemies = []
@@ -36,9 +37,9 @@ def generate_enemy_database(content):
     special_enemies = []
 
     for enemy_id, enemy in enemies.items():
-        if enemy['symbol'] == 'A':
+        if enemy["symbol"] == "A":
             special_enemies.append((enemy_id, enemy))
-        elif enemy['movement'] == 'STATIC':
+        elif enemy["movement"] == "STATIC":
             static_enemies.append((enemy_id, enemy))
         else:
             mobile_enemies.append((enemy_id, enemy))
@@ -50,7 +51,7 @@ def generate_enemy_database(content):
     md.append("Stationary enemies that guard fixed positions.\n")
     for enemy_id, enemy in static_enemies:
         md.append(f"#### {enemy['name']} ({enemy['symbol']})\n")
-        md.append(f"**Stats:**\n")
+        md.append("**Stats:**\n")
         md.append(f"- CPU: {enemy['cpu']}\n")
         md.append(f"- Vision: {enemy['vision']} tiles\n")
         md.append(f"- Damage: {enemy['damage']}\n")
@@ -58,12 +59,12 @@ def generate_enemy_database(content):
         md.append(f"\n{enemy['description']}\n")
 
         # Tactical notes
-        if enemy['symbol'] == 'S':
+        if enemy["symbol"] == "S":
             md.append("**Tactical Notes:**\n")
             md.append("- Cannot attack but alerts nearby enemies\n")
             md.append("- Extended vision range makes them dangerous sentries\n")
             md.append("- Eliminate early if stealth approach required\n")
-        elif enemy['symbol'] == 'F':
+        elif enemy["symbol"] == "F":
             md.append("**Tactical Notes:**\n")
             md.append("- Extremely high CPU makes them hard to kill\n")
             md.append("- Often blocks critical paths\n")
@@ -75,7 +76,7 @@ def generate_enemy_database(content):
     md.append("Enemies that patrol or pursue actively.\n")
     for enemy_id, enemy in mobile_enemies:
         md.append(f"#### {enemy['name']} ({enemy['symbol']})\n")
-        md.append(f"**Stats:**\n")
+        md.append("**Stats:**\n")
         md.append(f"- CPU: {enemy['cpu']}\n")
         md.append(f"- Vision: {enemy['vision']} tiles\n")
         md.append(f"- Damage: {enemy['damage']}\n")
@@ -83,27 +84,27 @@ def generate_enemy_database(content):
         md.append(f"\n{enemy['description']}\n")
 
         # Tactical notes based on type
-        if enemy['symbol'] == 'P':
+        if enemy["symbol"] == "P":
             md.append("**Tactical Notes:**\n")
             md.append("- Shows next 3 planned moves - highly predictable\n")
             md.append("- Easy to avoid with proper timing\n")
             md.append("- Alerts other enemies when detecting player\n")
-        elif enemy['symbol'] == 'B':
+        elif enemy["symbol"] == "B":
             md.append("**Tactical Notes:**\n")
             md.append("- Unpredictable movement makes them dangerous\n")
             md.append("- Lower stats compensate for chaos factor\n")
             md.append("- Can accidentally discover you in blind spots\n")
-        elif enemy['symbol'] == 'H':
+        elif enemy["symbol"] == "H":
             md.append("**Tactical Notes:**\n")
             md.append("- Highest vision range of standard enemies\n")
             md.append("- Very dangerous in combat (15 damage)\n")
             md.append("- Avoid or ambush from blind spots\n")
-        elif enemy['symbol'] == 'V':
+        elif enemy["symbol"] == "V":
             md.append("**Tactical Notes:**\n")
             md.append("- No direct damage but inflicts virus status\n")
             md.append("- Virus deals 3 CPU per turn for 3-10 turns\n")
             md.append("- Use Antivirus exploit to cure infection\n")
-        elif enemy['symbol'] == 'I':
+        elif enemy["symbol"] == "I":
             md.append("**Tactical Notes:**\n")
             md.append("- Slows your movement on contact\n")
             md.append("- No damage but tactical nuisance\n")
@@ -115,11 +116,13 @@ def generate_enemy_database(content):
     md.append("Special enemy that only appears under specific conditions.\n")
     for enemy_id, enemy in special_enemies:
         md.append(f"#### {enemy['name']} ({enemy['symbol']})\n")
-        md.append(f"**Stats:**\n")
+        md.append("**Stats:**\n")
         md.append(f"- CPU: {enemy['cpu']}\n")
         md.append(f"- Vision: {enemy['vision']} tiles\n")
         md.append(f"- Damage: {enemy['damage']}\n")
-        md.append(f"- Damage Resistance: {enemy.get('damage_resistance_percent', 0)}% (min {enemy.get('damage_resistance_min', 0)})\n")
+        md.append(
+            f"- Damage Resistance: {enemy.get('damage_resistance_percent', 0)}% (min {enemy.get('damage_resistance_min', 0)})\n"
+        )
         md.append(f"- Movement: {enemy['movement']}\n")
         md.append(f"\n{enemy['description']}\n")
         md.append("\n**Spawn Conditions:**\n")
@@ -139,10 +142,12 @@ def generate_enemy_database(content):
     md.append("|-------|--------|-----|--------|--------|----------|\n")
 
     # Sort by CPU
-    sorted_enemies = sorted(enemies.items(), key=lambda x: x[1]['cpu'])
+    sorted_enemies = sorted(enemies.items(), key=lambda x: x[1]["cpu"])
     for enemy_id, enemy in sorted_enemies:
-        movement = enemy['movement'].title()
-        md.append(f"| {enemy['name']} | {enemy['symbol']} | {enemy['cpu']} | {enemy['vision']} | {enemy['damage']} | {movement} |\n")
+        movement = enemy["movement"].title()
+        md.append(
+            f"| {enemy['name']} | {enemy['symbol']} | {enemy['cpu']} | {enemy['vision']} | {enemy['damage']} | {movement} |\n"
+        )
 
     md.append("\n## Movement Behaviors\n")
     md.append("### STATIC\n")
@@ -181,12 +186,12 @@ def generate_enemy_database(content):
     md.append("7. **Target priority:** Eliminate Scanners first, avoid Firewalls\n")
     md.append("8. **Stealth over combat:** Killing alerts nearby enemies\n")
 
-    return ''.join(md)
+    return "".join(md)
 
 
 def generate_exploit_database(content):
     """Generate Exploit-Database.md from game_content.json"""
-    exploits = content['exploits']
+    exploits = content["exploits"]
 
     md = ["# Exploit Database\n"]
     md.append("Complete reference for all exploits (abilities) in Rogue Signal Protocol.\n")
@@ -195,32 +200,32 @@ def generate_exploit_database(content):
     # Group by category
     categories = {}
     for exploit_id, exploit in exploits.items():
-        category = exploit['category']
+        category = exploit["category"]
         if category not in categories:
             categories[category] = []
         categories[category].append((exploit_id, exploit))
 
     # Category order and descriptions
     category_info = {
-        'stealth': {
-            'title': 'Stealth Exploits',
-            'description': 'Abilities focused on avoiding detection, repositioning, and manipulating enemy awareness.'
+        "stealth": {
+            "title": "Stealth Exploits",
+            "description": "Abilities focused on avoiding detection, repositioning, and manipulating enemy awareness.",
         },
-        'combat': {
-            'title': 'Combat Exploits',
-            'description': 'Offensive abilities for damaging or disabling enemies.'
+        "combat": {
+            "title": "Combat Exploits",
+            "description": "Offensive abilities for damaging or disabling enemies.",
         },
-        'utility': {
-            'title': 'Utility Exploits',
-            'description': 'Support abilities for information gathering, resource management, and status effects.'
+        "utility": {
+            "title": "Utility Exploits",
+            "description": "Support abilities for information gathering, resource management, and status effects.",
         },
-        'emergency': {
-            'title': 'Emergency Exploits',
-            'description': 'High-risk, high-reward last resort abilities.'
-        }
+        "emergency": {
+            "title": "Emergency Exploits",
+            "description": "High-risk, high-reward last resort abilities.",
+        },
     }
 
-    for category in ['stealth', 'combat', 'utility', 'emergency']:
+    for category in ["stealth", "combat", "utility", "emergency"]:
         if category not in categories:
             continue
 
@@ -232,85 +237,87 @@ def generate_exploit_database(content):
             md.append(f"\n### {exploit['name']}\n")
 
             # Stats table
-            md.append(f"**Cost:** {exploit['ram']} RAM | **Heat:** {exploit['heat']}° | **Range:** {exploit['range']} tiles\n")
+            md.append(
+                f"**Cost:** {exploit['ram']} RAM | **Heat:** {exploit['heat']}° | **Range:** {exploit['range']} tiles\n"
+            )
 
             md.append(f"\n{exploit['description']}\n")
 
             # Technical details
-            md.append(f"\n**Technical Details:**\n")
+            md.append("\n**Technical Details:**\n")
             md.append(f"- Targeting: {exploit['targeting']}\n")
 
-            if exploit.get('damage', 0) > 0:
+            if exploit.get("damage", 0) > 0:
                 md.append(f"- Damage: {exploit['damage']}\n")
 
-            if exploit.get('self_damage', 0) > 0:
+            if exploit.get("self_damage", 0) > 0:
                 md.append(f"- Self Damage: {exploit['self_damage']} ⚠️\n")
 
-            if exploit.get('effect_radius', 0) > 0:
+            if exploit.get("effect_radius", 0) > 0:
                 md.append(f"- Effect Radius: {exploit['effect_radius']} tiles\n")
 
-            if exploit.get('effect_duration', 0) > 0:
+            if exploit.get("effect_duration", 0) > 0:
                 md.append(f"- Duration: {exploit['effect_duration']} turns\n")
 
-            if 'trace_reduction_percent' in exploit:
+            if "trace_reduction_percent" in exploit:
                 md.append(f"- Trace Reduction: {exploit['trace_reduction_percent']}%\n")
 
-            if 'alert_duration_patrol' in exploit:
+            if "alert_duration_patrol" in exploit:
                 md.append(f"- Alert Duration (Patrol): {exploit['alert_duration_patrol']} turns\n")
                 md.append(f"- Alert Duration (Normal): {exploit['alert_duration_normal']} turns\n")
 
             # Tactical notes
-            md.append(f"\n**Tactical Notes:**\n")
+            md.append("\n**Tactical Notes:**\n")
 
-            if exploit_id == 'system_hop':
+            if exploit_id == "system_hop":
                 md.append("- Instant repositioning for escapes or flanking\n")
                 md.append("- No line of sight required\n")
                 md.append("- Low heat cost for frequent use\n")
-            elif exploit_id == 'traffic_masquerade':
+            elif exploit_id == "traffic_masquerade":
                 md.append("- Complete invisibility for 5 turns\n")
                 md.append("- Walk past enemies freely\n")
                 md.append("- Attacking breaks invisibility\n")
-            elif exploit_id == 'decoy_swarm':
+            elif exploit_id == "decoy_swarm":
                 md.append("- Lures enemies away from your position\n")
                 md.append("- Long duration (8 turns) for extended distraction\n")
                 md.append("- Patrol enemies stay distracted longer\n")
-            elif exploit_id == 'buffer_overflow':
+            elif exploit_id == "buffer_overflow":
                 md.append("- Highest damage single-target exploit\n")
                 md.append("- Melee range only (1 tile)\n")
                 md.append("- Combine with blind spot ambush for 50 total damage\n")
-            elif exploit_id == 'code_injection':
+            elif exploit_id == "code_injection":
                 md.append("- Reliable ranged damage\n")
                 md.append("- 5 tile range for safe attacks\n")
                 md.append("- Moderate heat cost for repeated use\n")
-            elif exploit_id == 'system_crash':
+            elif exploit_id == "system_crash":
                 md.append("- **DEALS SELF-DAMAGE!** Use as last resort\n")
                 md.append("- Stuns all enemies in radius for 3 turns\n")
                 md.append("- Effective when surrounded\n")
-            elif exploit_id == 'logic_bomb':
+            elif exploit_id == "logic_bomb":
                 md.append("- Area damage centered on target location\n")
                 md.append("- Can damage you if too close!\n")
                 md.append("- Good for grouped enemies\n")
-            elif exploit_id == 'threat_scan':
+            elif exploit_id == "threat_scan":
                 md.append("- Reveals enemy vision cones\n")
                 md.append("- Shows predicted movement paths\n")
                 md.append("- Essential for stealth planning\n")
-            elif exploit_id == 'network_scan':
+            elif exploit_id == "network_scan":
                 md.append("- Reveals all special nodes instantly\n")
                 md.append("- Find cooling/CPU/ghost nodes\n")
                 md.append("- One-time use per level recommended\n")
-            elif exploit_id == 'log_wiper':
+            elif exploit_id == "log_wiper":
                 md.append("- Reduces trace by 30%\n")
                 md.append("- Prevents Admin Avatar spawn\n")
                 md.append("- Use when trace exceeds 70%\n")
-            elif exploit_id == 'antivirus':
+            elif exploit_id == "antivirus":
                 md.append("- Cures virus and slow effects\n")
                 md.append("- Instant cleanse, no duration\n")
                 md.append("- Keep equipped when Viruses present\n")
-            elif exploit_id == 'denial_of_service':
+            elif exploit_id == "denial_of_service":
                 md.append("- Disables enemies without killing\n")
                 md.append("- 5 turn duration for repositioning\n")
                 md.append("- Area effect (radius 1)\n")
-            elif exploit_id == 'memory_leak':
+            elif exploit_id == "memory_leak":
                 md.append("- Blinds enemies in 3x3 area\n")
                 md.append("- Enemies keep moving while blind\n")
                 md.append("- Use to slip past patrols\n")
@@ -323,9 +330,13 @@ def generate_exploit_database(content):
     md.append("|---------|----------|-----|------|-------|--------|----------|\n")
 
     for exploit_id, exploit in exploits.items():
-        damage = str(exploit.get('damage', 0)) if exploit.get('damage', 0) > 0 else '-'
-        duration = str(exploit.get('effect_duration', 0)) if exploit.get('effect_duration', 0) > 0 else '-'
-        md.append(f"| {exploit['name']} | {exploit['category'].title()} | {exploit['ram']} | {exploit['heat']} | {exploit['range']} | {damage} | {duration} |\n")
+        damage = str(exploit.get("damage", 0)) if exploit.get("damage", 0) > 0 else "-"
+        duration = (
+            str(exploit.get("effect_duration", 0)) if exploit.get("effect_duration", 0) > 0 else "-"
+        )
+        md.append(
+            f"| {exploit['name']} | {exploit['category'].title()} | {exploit['ram']} | {exploit['heat']} | {exploit['range']} | {damage} | {duration} |\n"
+        )
 
     md.append("\n## Loadout Strategies\n")
     md.append("### Stealth Build\n")
@@ -361,36 +372,40 @@ def generate_exploit_database(content):
     md.append("2. **RAM management:** Prioritize low-cost exploits early game\n")
     md.append("3. **Heat awareness:** Don't overheat - 2-3 exploits per combat\n")
     md.append("4. **Synergies:** Threat Scan + System Hop = perfect positioning\n")
-    md.append("5. **Emergency options:** Always have an escape (System Hop or Traffic Masquerade)\n")
+    md.append(
+        "5. **Emergency options:** Always have an escape (System Hop or Traffic Masquerade)\n"
+    )
     md.append("6. **Adapt per level:** Corporate needs stealth, Military needs combat\n")
     md.append("7. **Upgrade wisely:** RAM upgrades unlock better loadouts\n")
 
-    return ''.join(md)
+    return "".join(md)
 
 
 def generate_network_configuration(content):
     """Generate Network-Configuration.md from game_content.json"""
-    networks = content['network_configs']
-    difficulties = content['difficulty_multipliers']
+    networks = content["network_configs"]
+    difficulties = content["difficulty_multipliers"]
 
     md = ["# Network Configuration\n"]
     md.append("Level progression, difficulty settings, and resource distribution.\n")
 
     md.append("\n## Network Levels\n")
-    md.append("Rogue Signal Protocol has **3 progressive network levels** with escalating difficulty.\n")
+    md.append(
+        "Rogue Signal Protocol has **3 progressive network levels** with escalating difficulty.\n"
+    )
 
     for level_id in sorted(networks.keys(), key=int):
         network = networks[level_id]
         md.append(f"\n### Level {level_id}: {network['name']}\n")
 
-        md.append(f"\n**Threat Level:**\n")
+        md.append("\n**Threat Level:**\n")
         md.append(f"- Enemies: {network['enemies']}\n")
         md.append(f"- Blind Spot Coverage: {network['blind_spot_coverage']*100:.0f}%\n")
         md.append(f"- Background Trace: {network['background_trace']}/25 turns\n")
         md.append(f"- Trace Alert -> Hostile: {network['trace_alert_to_hostile']}%\n")
         md.append(f"- Trace Continuous Hostile: {network['trace_continuous_hostile']}%/turn\n")
 
-        md.append(f"\n**Resources:**\n")
+        md.append("\n**Resources:**\n")
         md.append(f"- Cooling Nodes: {network['cooling_nodes']}\n")
         md.append(f"- CPU Recovery Nodes: {network['cpu_nodes']}\n")
         md.append(f"- Ghost Nodes: {network['ghost_nodes']}\n")
@@ -399,25 +414,25 @@ def generate_network_configuration(content):
         md.append(f"- Permanent Upgrades: {network['permanent_upgrades']}\n")
 
         # Strategic notes
-        if level_id == '1':
-            md.append(f"\n**Strategic Notes:**\n")
-            md.append(f"- Easiest level with most resources\n")
-            md.append(f"- Use to learn mechanics and collect exploits\n")
-            md.append(f"- Low enemy count allows exploration\n")
-            md.append(f"- Stock up on upgrades before advancing\n")
-        elif level_id == '2':
-            md.append(f"\n**Strategic Notes:**\n")
-            md.append(f"- Moderate difficulty spike\n")
-            md.append(f"- Fewer resources require careful management\n")
-            md.append(f"- More enemies increase stealth importance\n")
-            md.append(f"- Critical upgrade opportunities\n")
-        elif level_id == '3':
-            md.append(f"\n**Strategic Notes:**\n")
-            md.append(f"- **Hardest level** - minimal resources\n")
-            md.append(f"- Admin Avatar can spawn at high trace\n")
-            md.append(f"- 38 enemies make stealth essential\n")
-            md.append(f"- Final upgrades before victory\n")
-            md.append(f"- Consider going loud if well-equipped\n")
+        if level_id == "1":
+            md.append("\n**Strategic Notes:**\n")
+            md.append("- Easiest level with most resources\n")
+            md.append("- Use to learn mechanics and collect exploits\n")
+            md.append("- Low enemy count allows exploration\n")
+            md.append("- Stock up on upgrades before advancing\n")
+        elif level_id == "2":
+            md.append("\n**Strategic Notes:**\n")
+            md.append("- Moderate difficulty spike\n")
+            md.append("- Fewer resources require careful management\n")
+            md.append("- More enemies increase stealth importance\n")
+            md.append("- Critical upgrade opportunities\n")
+        elif level_id == "3":
+            md.append("\n**Strategic Notes:**\n")
+            md.append("- **Hardest level** - minimal resources\n")
+            md.append("- Admin Avatar can spawn at high trace\n")
+            md.append("- 38 enemies make stealth essential\n")
+            md.append("- Final upgrades before victory\n")
+            md.append("- Consider going loud if well-equipped\n")
 
     md.append("\n## Difficulty Multipliers\n")
     md.append("Four difficulty settings affect enemy stats and resource availability.\n")
@@ -493,7 +508,7 @@ def generate_network_configuration(content):
     md.append("7. **Learning curve:** Each network teaches new lessons\n")
     md.append("8. **Permadeath:** Your decisions matter - plan carefully\n")
 
-    return ''.join(md)
+    return "".join(md)
 
 
 def main():
@@ -509,15 +524,15 @@ def main():
 
     # Generate pages
     pages = {
-        'Enemy-Database.md': generate_enemy_database(content),
-        'Exploit-Database.md': generate_exploit_database(content),
-        'Network-Configuration.md': generate_network_configuration(content),
+        "Enemy-Database.md": generate_enemy_database(content),
+        "Exploit-Database.md": generate_exploit_database(content),
+        "Network-Configuration.md": generate_network_configuration(content),
     }
 
     # Write pages
     for filename, content in pages.items():
         filepath = output_dir / filename
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(content)
         print(f"Generated: {filepath}")
 
@@ -529,9 +544,9 @@ def main():
     print("3. Copy files: cp -r RogueSignalProtocol/docs/wiki/*.md RogueSignalProtocol.wiki/")
     print("4. cd RogueSignalProtocol.wiki")
     print("5. git add .")
-    print("6. git commit -m \"Update wiki content\"")
+    print('6. git commit -m "Update wiki content"')
     print("7. git push")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

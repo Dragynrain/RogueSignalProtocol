@@ -9,32 +9,30 @@ Delegates specialized tasks to coordinator classes for better modularity.
 
 import logging
 import random
-from typing import List, Tuple, Optional, Dict, Any
+
+from game_achievement_popups import AchievementPopupManager
+from game_audio import NullSoundManager, SoundManager
+from game_characters import Enemy, Player
+from game_combat import ExploitSystem
 
 # Import all necessary modules
-from game_config import GameSettings, GameConfig, GameBalance
-from game_entities import Position, Colors
-from game_data import GameData, GameUpgrades
-from game_inventory import InventoryItem, CodeHack, ExploitItem, StoryFragment, InventoryManager
-from game_characters import Player, Enemy
-from game_audio import SoundManager, NullSoundManager
-from game_save import SaveGameManager
-from game_story import StoryFragmentManager
-from game_narrative import NarrativeManager
-from game_errors import GameErrorHandler
-
-# Import modular game systems
-from game_state import GameStateManager, TurnProcessor, MessageLog
-from game_level import LevelGenerator
+from game_config import GameBalance, GameConfig, GameSettings
+from game_dialogue_system import DialogueState
 from game_enemies import EnemyManager
-from game_combat import ExploitSystem
-from game_map import GameMap
+from game_entities import Colors, Position
+from game_errors import GameErrorHandler
 from game_input import InputHandler
+from game_level import LevelGenerator
+from game_map import GameMap
+from game_narrative import NarrativeManager
+from game_save import SaveGameManager
 
 # Import new specialized modules
 from game_session import GameSession
-from game_dialogue_system import DialogueState
-from game_achievement_popups import AchievementPopupManager
+
+# Import modular game systems
+from game_state import GameStateManager, MessageLog, TurnProcessor
+from game_story import StoryFragmentManager
 from game_visibility_manager import VisibilityManager
 
 
@@ -49,17 +47,19 @@ class GameEngine:
     - GameTurnManager: Turn processing and enemy updates
     """
 
-    def __init__(self,
-                 game_state_manager: Optional[GameStateManager] = None,
-                 game_map: Optional[GameMap] = None,
-                 level_generator: Optional[LevelGenerator] = None,
-                 enemy_manager: Optional[EnemyManager] = None,
-                 exploit_system: Optional[ExploitSystem] = None,
-                 input_handler: Optional[InputHandler] = None,
-                 sound_manager: Optional[SoundManager] = None,
-                 load_save: bool = False,
-                 settings: Optional[GameSettings] = None,
-                 headless: bool = False) -> None:
+    def __init__(
+        self,
+        game_state_manager: GameStateManager | None = None,
+        game_map: GameMap | None = None,
+        level_generator: LevelGenerator | None = None,
+        enemy_manager: EnemyManager | None = None,
+        exploit_system: ExploitSystem | None = None,
+        input_handler: InputHandler | None = None,
+        sound_manager: SoundManager | None = None,
+        load_save: bool = False,
+        settings: GameSettings | None = None,
+        headless: bool = False,
+    ) -> None:
         """
         Initialize the game engine with dependency injection.
 
@@ -86,7 +86,9 @@ class GameEngine:
         self.game_map = game_map or GameMap(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT)
         self.visibility_manager = VisibilityManager(self.game_map)  # Centralized FOV caching
         self.level_generator = level_generator or LevelGenerator(self.game_map)
-        self.enemy_manager = enemy_manager or EnemyManager(self.game_map, None)  # Will set message_log below
+        self.enemy_manager = enemy_manager or EnemyManager(
+            self.game_map, None
+        )  # Will set message_log below
         # ExploitSystem will be initialized after self is fully constructed
         self._exploit_system_param = exploit_system
         # Use NullSoundManager in headless mode (no audio, but same interface)
@@ -101,6 +103,7 @@ class GameEngine:
 
         # Initialize metrics tracking system (will be overwritten if loading save)
         from game_metrics import init_session_metrics
+
         self.metrics = init_session_metrics()
 
         # Update enemy manager with message log
@@ -126,7 +129,7 @@ class GameEngine:
         self.show_help = False
 
         # Track when player first steps on nodes to avoid repeated sounds
-        self.last_node_position: Optional[Tuple[int, int]] = None
+        self.last_node_position: tuple[int, int] | None = None
         self.show_lore_viewer = False
         self.show_achievements = False
         self.lore_viewer_selection = 0
@@ -136,7 +139,7 @@ class GameEngine:
 
         # Targeting system
         self.targeting_mode = False
-        self.targeting_exploit: Optional[str] = None
+        self.targeting_exploit: str | None = None
         self.cursor_position = Position(0, 0)
 
         # Look mode system
@@ -145,31 +148,34 @@ class GameEngine:
         self.look_mode_mouse_last_update: float = 0.0  # Throttle mouse updates in look mode
 
         # Mouse hover tracking (for visual feedback)
-        self.mouse_hover_world_pos: Optional[Position] = None
-        self.mouse_tile_pos: Optional[Tuple[int, int]] = None  # Mouse position in console tile coords
+        self.mouse_hover_world_pos: Position | None = None
+        self.mouse_tile_pos: tuple[int, int] | None = (
+            None  # Mouse position in console tile coords
+        )
 
         # Camera offset tracking (for consistent input/rendering in look mode)
-        self.last_camera_offset: Optional[Position] = None
+        self.last_camera_offset: Position | None = None
 
         # Auto-walk system (click-to-walk for distant tiles)
         from game_autowalk import AutoWalk
+
         self.autowalk = AutoWalk()
 
         # Overclocking system
         self.overclock_confirmation = False
-        self.overclock_exploit: Optional[str] = None
+        self.overclock_exploit: str | None = None
 
         # System Crash confirmation system
         self.system_crash_confirmed = False
 
         # Friendly fire confirmation system
         self.friendly_fire_confirmed = False
-        self.friendly_fire_exploit: Optional[str] = None
-        self.friendly_fire_target: Optional[Position] = None
+        self.friendly_fire_exploit: str | None = None
+        self.friendly_fire_target: Position | None = None
 
         # Code hack system
-        self.code_hack_effects: Dict[str, Tuple[str, str]] = {}
-        self.discovered_code_effects: Dict[str, str] = {}
+        self.code_hack_effects: dict[str, tuple[str, str]] = {}
+        self.discovered_code_effects: dict[str, str] = {}
 
         # Story fragment system
         self.story_fragment_manager = StoryFragmentManager()
@@ -180,13 +186,14 @@ class GameEngine:
         # Particle system for visual effects (graphics mode only, skip in headless)
         if not headless:
             from game_particle_system import ParticleSystem
+
             self.particle_system = ParticleSystem()
         else:
             self.particle_system = None
 
         # Mouse position tracking for hover effects
-        self.last_mouse_tile_x: Optional[int] = None
-        self.last_mouse_tile_y: Optional[int] = None
+        self.last_mouse_tile_x: int | None = None
+        self.last_mouse_tile_y: int | None = None
 
         # Initialize ExploitSystem after game engine is mostly constructed
         self.exploit_system = self._exploit_system_param or ExploitSystem(self)
@@ -197,16 +204,20 @@ class GameEngine:
             if not success:
                 # Raise exception instead of silently falling back to new game
                 from game_save import SaveLoadError
-                raise SaveLoadError("Failed to load save file - file may be missing, corrupted, or incompatible with current version")
+
+                raise SaveLoadError(
+                    "Failed to load save file - file may be missing, corrupted, or incompatible with current version"
+                )
         else:
             self._randomize_code_hacks()
             self.game_session.generate_procedural_level()
             # Show intro messages for new games
-            self.message_log.add_message_typed("CONSCIOUSNESS RESTORED", 'cyan')
+            self.message_log.add_message_typed("CONSCIOUSNESS RESTORED", "cyan")
             self.message_log.add_message("The simulation is failing. They're coming for you.")
             self.message_log.add_message("Find the gateway - escape before De-Resolution.")
             # Show intro dialogue
             from game_dialogue_system import create_intro_dialogue
+
             self.dialogue_state.show(create_intro_dialogue())
         # Initialize InputHandler after GameEngine is fully set up (requires self reference)
         if input_handler is None:
@@ -256,12 +267,12 @@ class GameEngine:
         self.game_state.admin_spawned = value
 
     @property
-    def enemies(self) -> List[Enemy]:
+    def enemies(self) -> list[Enemy]:
         """List of all enemies."""
         return self.enemy_manager.enemies
 
     @enemies.setter
-    def enemies(self, value: List[Enemy]) -> None:
+    def enemies(self, value: list[Enemy]) -> None:
         """Set the enemies list."""
         self.enemy_manager.enemies = value
 
@@ -277,7 +288,7 @@ class GameEngine:
         """
         return Enemy.get_next_id_counter()
 
-    def _get_enemy_at(self, position: Position) -> Optional[Enemy]:
+    def _get_enemy_at(self, position: Position) -> Enemy | None:
         """Get enemy at position - for backward compatibility."""
         return self.enemy_manager.get_enemy_at_position(position)
 
@@ -319,9 +330,7 @@ class GameEngine:
     @property
     def visible_tiles(self):
         """Get cached set of visible tiles for the current turn."""
-        return self.visibility_manager.get_player_visible_tiles(
-            self.player, self.game_state.turn
-        )
+        return self.visibility_manager.get_player_visible_tiles(self.player, self.game_state.turn)
 
     def _randomize_code_hacks(self):
         """
@@ -334,14 +343,17 @@ class GameEngine:
         # Clear discovered effects when starting new game
         self.discovered_code_effects.clear()
 
-        colors = ['crimson', 'azure', 'emerald', 'golden', 'violet', 'silver']
+        colors = ["crimson", "azure", "emerald", "golden", "violet", "silver"]
         effects = [
-            ('restore_cpu', f'Restore {GameBalance.CPU_RESTORE_MIN}-{GameBalance.CPU_RESTORE_MAX} CPU'),
-            ('reduce_heat', f'Reduce heat by {GameBalance.HEAT_REDUCTION_INSTANT}°C instantly'),
-            ('reduce_trace_level', '-25% trace level'),
-            ('speed_boost', 'Speed boost: 2 moves per turn (3 enemy turns)'),
-            ('enhanced_vision', 'Enhanced vision (5 turns)'),
-            ('exploit_efficiency', 'Exploit efficiency (8 turns)')
+            (
+                "restore_cpu",
+                f"Restore {GameBalance.CPU_RESTORE_MIN}-{GameBalance.CPU_RESTORE_MAX} CPU",
+            ),
+            ("reduce_heat", f"Reduce heat by {GameBalance.HEAT_REDUCTION_INSTANT}°C instantly"),
+            ("reduce_trace_level", "-25% trace level"),
+            ("speed_boost", "Speed boost: 2 moves per turn (3 enemy turns)"),
+            ("enhanced_vision", "Enhanced vision (5 turns)"),
+            ("exploit_efficiency", "Exploit efficiency (8 turns)"),
         ]
 
         random.shuffle(effects)
@@ -379,7 +391,7 @@ class GameEngine:
         # Check for enemy at target position first
         new_position = Position(
             max(0, min(GameConfig.MAP_WIDTH - 1, self.player.x + dx)),
-            max(0, min(GameConfig.MAP_HEIGHT - 1, self.player.y + dy))
+            max(0, min(GameConfig.MAP_HEIGHT - 1, self.player.y + dy)),
         )
 
         target_enemy = self._get_enemy_at(new_position)
@@ -395,14 +407,18 @@ class GameEngine:
 
                 # Track metrics
                 from game_metrics import track
+
                 track("steps_taken")
 
                 # Check for gateway - show dialogue for user confirmation
-                if (self.game_map.gateway and
-                    self.player.position.distance_to(self.game_map.gateway) == 0):
+                if (
+                    self.game_map.gateway
+                    and self.player.position.distance_to(self.game_map.gateway) == 0
+                ):
                     self.sound_manager.play_sound("ui_menu_open")
                     # Show dialogue - level transition happens on confirmation
                     from game_dialogue_system import create_gateway_dialogue
+
                     gateway_dialogue = create_gateway_dialogue(self.game_state.level)
                     if self.dialogue_state.should_show_dialogue(gateway_dialogue):
                         self.dialogue_state.show(gateway_dialogue)
@@ -414,11 +430,14 @@ class GameEngine:
                     self.sound_manager.play_sound("player_overheat", priority=8)
                     damage = 5 + (self.player.heat - self.player.max_heat)
                     self.player.take_damage(damage)
-                    self.player.heat = max(85, self.player.max_heat - 15)  # Cool down to 15 below max, minimum 85
+                    self.player.heat = max(
+                        85, self.player.max_heat - 15
+                    )  # Cool down to 15 below max, minimum 85
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
 
                     # Track metrics
                     from game_metrics import track
+
                     track("overheating_events")
 
                     # Death handling moved to game_turn_manager.py (called via maybe_process_turn)
@@ -437,25 +456,25 @@ class GameEngine:
         Only processes a full turn (enemy moves, effects, etc.) when no speed moves remain.
         Movement inhibition causes enemies to get double moves (2 enemy turns per 1 player action).
         """
-        logging.debug(f"DEBUG: maybe_process_turn() START")
+        logging.debug("DEBUG: maybe_process_turn() START")
         # Consume speed move if applicable
         if self.player.speed_moves_remaining > 0:
             self.player.speed_moves_remaining -= 1
             # Don't process full turn, just grant another move
-            logging.debug(f"DEBUG: maybe_process_turn() consumed speed move, returning early")
+            logging.debug("DEBUG: maybe_process_turn() consumed speed move, returning early")
             return
 
         # Process full turn when no speed moves remaining
-        logging.debug(f"DEBUG: maybe_process_turn() calling process_turn()")
+        logging.debug("DEBUG: maybe_process_turn() calling process_turn()")
         self.process_turn()
-        logging.debug(f"DEBUG: maybe_process_turn() process_turn() returned")
+        logging.debug("DEBUG: maybe_process_turn() process_turn() returned")
 
         # If player has movement inhibition, enemies get 1 extra move (2 moves per 1 player move)
-        if self.player.temporary_effects['movement_slowed_turns'] > 0:
+        if self.player.temporary_effects["movement_slowed_turns"] > 0:
             self.message_log.add_message("Movement inhibition: Enemies get double moves")
             # Process enemy updates once for the double move advantage (already got 1 from process_turn)
             self.game_session._update_enemies()
-        logging.debug(f"DEBUG: maybe_process_turn() END")
+        logging.debug("DEBUG: maybe_process_turn() END")
 
     def _perform_bump_attack(self, target_enemy: Enemy):
         """
@@ -492,40 +511,47 @@ class GameEngine:
         # Apply damage
         if target_enemy.take_damage(total_damage):
             # Enemy destroyed
-            is_admin = target_enemy.type == 'admin'
+            is_admin = target_enemy.type == "admin"
             self.sound_manager.play_sound("enemy_death")
 
             # Trigger particle explosion effect (graphics mode only, if enabled)
-            if (hasattr(self, 'particle_system') and
-                self.particle_system is not None and
-                hasattr(self, 'tile_manager') and
-                self.tile_manager is not None and
-                self.settings.graphics_mode == "graphics" and
-                self.settings.show_particle_effects):
+            if (
+                hasattr(self, "particle_system")
+                and self.particle_system is not None
+                and hasattr(self, "tile_manager")
+                and self.tile_manager is not None
+                and self.settings.graphics_mode == "graphics"
+                and self.settings.show_particle_effects
+            ):
                 try:
                     # Extract colors from enemy sprite for particles
                     from game_config import GameConfig
+
                     colors = self.tile_manager.extract_sprite_colors(
-                        target_enemy.type,
-                        num_colors=GameConfig.PARTICLE_SPRITE_COLOR_COUNT()
+                        target_enemy.type, num_colors=GameConfig.PARTICLE_SPRITE_COLOR_COUNT()
                     )
 
                     # Create explosion at enemy position (uses particle_count from config)
                     self.particle_system.create_death_explosion(
-                        world_x=target_enemy.x,
-                        world_y=target_enemy.y,
-                        colors=colors
+                        world_x=target_enemy.x, world_y=target_enemy.y, colors=colors
                     )
-                    logging.debug(f"Particle explosion created for bump attack kill")
+                    logging.debug("Particle explosion created for bump attack kill")
                 except Exception as e:
-                    GameErrorHandler.handle_error(e, "particle_effect", "Particle effect failed in bump attack", fatal=False)
+                    GameErrorHandler.handle_error(
+                        e, "particle_effect", "Particle effect failed in bump attack", fatal=False
+                    )
             self.enemy_manager.remove_enemy(target_enemy)
-            self.player.cpu = min(self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)  # Small CPU recovery
-            self.message_log.add_message(f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")
+            self.player.cpu = min(
+                self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD
+            )  # Small CPU recovery
+            self.message_log.add_message(
+                f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)"
+            )
 
             # Track metrics
-            from game_metrics import track, get_current_session
             from game_entities import EnemyState
+            from game_metrics import get_current_session, track
+
             track("enemies_killed", category=target_enemy.type)
             track("damage_dealt", amount=total_damage)
             if target_enemy.state == EnemyState.UNAWARE:
@@ -538,6 +564,7 @@ class GameEngine:
 
             # Check for immediate achievement unlocks (First Blood, Massacre, Overkill, etc.)
             from game_achievements import AchievementManager
+
             if current_session:
                 AchievementManager.check_immediate_achievements_and_notify(current_session, self)
 
@@ -550,20 +577,24 @@ class GameEngine:
                 self.message_log.add_message(env_msg)
         else:
             # Enemy damaged but alive - show remaining health
-            self.message_log.add_message(f"{target_enemy.type_data.name} health: {target_enemy.cpu}/{target_enemy.max_cpu}")
+            self.message_log.add_message(
+                f"{target_enemy.type_data.name} health: {target_enemy.cpu}/{target_enemy.max_cpu}"
+            )
             # Store patrol information for PATROL enemies before becoming hostile
             from game_entities import EnemyMovement
+
             movement_type = target_enemy.get_movement_type()
             if movement_type == EnemyMovement.PATROL and target_enemy.patrol_points:
                 target_enemy.original_patrol_index = target_enemy.patrol_index
             # Make enemy hostile and aware of player
             from game_entities import EnemyState
+
             target_enemy.state = EnemyState.HOSTILE
             target_enemy.last_seen_player = Position(self.player.x, self.player.y)
 
         # Generate some heat from the attack
         # Track consecutive attacks at same location for heat penalty
-        if not hasattr(self.player, 'last_attack_position'):
+        if not hasattr(self.player, "last_attack_position"):
             self.player.last_attack_position = None
             self.player.consecutive_attacks_here = 0
 
@@ -578,12 +609,14 @@ class GameEngine:
         heat_penalty = self.player.consecutive_attacks_here
         heat_generated = 8 + heat_penalty
 
-        if self.player.temporary_effects['exploit_efficiency_turns'] > 0:
+        if self.player.temporary_effects["exploit_efficiency_turns"] > 0:
             heat_generated = int(heat_generated * 0.7)  # Reduced heat with efficiency
 
         # Show penalty message if it's building up
         if heat_penalty > 0:
-            self.message_log.add_message(f"Attacking from same spot: +{heat_penalty} heat penalty", Colors.YELLOW)
+            self.message_log.add_message(
+                f"Attacking from same spot: +{heat_penalty} heat penalty", Colors.YELLOW
+            )
 
         self.player.heat = min(self.player.max_heat, self.player.heat + heat_generated)
 
@@ -593,7 +626,7 @@ class GameEngine:
         new_y = max(0, min(GameConfig.MAP_HEIGHT - 1, self.cursor_position.y + dy))
         self.cursor_position = Position(new_x, new_y)
 
-    def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> List[Position]:
+    def get_enemy_next_positions(self, enemy: Enemy, steps: int = 3) -> list[Position]:
         """
         Get predicted next positions for an enemy from their movement queue.
 
@@ -636,20 +669,19 @@ class GameEngine:
             Dictionary containing all serialized game state
         """
         import time
-        from game_save import SaveGameManager
+
         from game_characters import Enemy
+        from game_save import SaveGameManager
 
         return {
             "version": "0.8.0 Alpha",
             "timestamp": time.time(),
-
             # Game state
             "level": self.level,
             "turn": self.turn,
             "game_over": self.game_over,
             "admin_spawned": self.admin_spawned,
             "dungeon_seed": self.game_state.dungeon_seed,
-
             # Player state
             "player": {
                 "x": self.player.x,
@@ -666,42 +698,58 @@ class GameEngine:
                 "temporary_effects": dict(self.player.temporary_effects),
                 "equipped_exploits": self.player.inventory_manager.equipped_exploits.copy(),
                 "max_equipped_exploits": self.player.inventory_manager.max_equipped_exploits,
-                "inventory_items": SaveGameManager._serialize_inventory(self.player.inventory_manager.items)
+                "inventory_items": SaveGameManager._serialize_inventory(
+                    self.player.inventory_manager.items
+                ),
             },
-
             # Game effects and state
             "game_effects": {
                 "threat_scan_turns": self.game_state.threat_scan_turns,
-                "noise_locations": [{"x": pos.x, "y": pos.y} for pos in self.game_state.noise_locations],
-                "distraction_points": {f"{pos.x},{pos.y}": turns for pos, turns in self.game_state.distraction_points.items()}
+                "noise_locations": [
+                    {"x": pos.x, "y": pos.y} for pos in self.game_state.noise_locations
+                ],
+                "distraction_points": {
+                    f"{pos.x},{pos.y}": turns
+                    for pos, turns in self.game_state.distraction_points.items()
+                },
             },
-
             # Map state (items and special locations only - layout regenerated)
             "map_state": {
                 "code_hacks": SaveGameManager._serialize_code_hacks(self.game_map.code_hacks),
-                "exploit_pickups": SaveGameManager._serialize_exploit_pickups(self.game_map.exploit_pickups),
-                "permanent_upgrades": {f"{pos[0]},{pos[1]}": upgrade_key for pos, upgrade_key in self.game_map.permanent_upgrades.items()},
-                "story_fragments": {f"{pos[0]},{pos[1]}": fragment.fragment_index for pos, fragment in self.game_map.story_fragments.items()},
-                "gateway": {"x": self.game_map.gateway.x, "y": self.game_map.gateway.y} if self.game_map.gateway else None,
+                "exploit_pickups": SaveGameManager._serialize_exploit_pickups(
+                    self.game_map.exploit_pickups
+                ),
+                "permanent_upgrades": {
+                    f"{pos[0]},{pos[1]}": upgrade_key
+                    for pos, upgrade_key in self.game_map.permanent_upgrades.items()
+                },
+                "story_fragments": {
+                    f"{pos[0]},{pos[1]}": fragment.fragment_index
+                    for pos, fragment in self.game_map.story_fragments.items()
+                },
+                "gateway": (
+                    {"x": self.game_map.gateway.x, "y": self.game_map.gateway.y}
+                    if self.game_map.gateway
+                    else None
+                ),
                 "explored_tiles": [f"{x},{y}" for x, y in self.game_map.explored_tiles],
-                "last_known_enemy_positions": {str(enemy_id): {"x": pos.x, "y": pos.y, "turn": turn} for enemy_id, (pos, turn) in self.game_map.last_known_enemy_positions.items()}
+                "last_known_enemy_positions": {
+                    str(enemy_id): {"x": pos.x, "y": pos.y, "turn": turn}
+                    for enemy_id, (pos, turn) in self.game_map.last_known_enemy_positions.items()
+                },
             },
-
             # Enemies
             "enemies": SaveGameManager._serialize_enemies(self.enemies),
-            "enemy_next_id": getattr(Enemy, '_next_id', 1),
-
+            "enemy_next_id": getattr(Enemy, "_next_id", 1),
             # Code hack effects for this run
             "code_hack_effects": self.code_hack_effects,
             "discovered_code_effects": self.discovered_code_effects,
-
             # Overclocking state
-            "overclock_confirmation": getattr(self, 'overclock_confirmation', False),
-            "overclock_exploit": getattr(self, 'overclock_exploit', None),
-
+            "overclock_confirmation": getattr(self, "overclock_confirmation", False),
+            "overclock_exploit": getattr(self, "overclock_exploit", None),
             # UI state (optional - for better user experience)
             "ui_state": {
                 "inventory_selection": self.inventory_selection,
-                "lore_viewer_selection": self.lore_viewer_selection
-            }
+                "lore_viewer_selection": self.lore_viewer_selection,
+            },
         }

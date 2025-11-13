@@ -13,11 +13,10 @@ Use these to quickly set up common test scenarios like:
 """
 
 from unittest.mock import Mock
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
+
 from game_config import GameSettings
-from tests.fixtures.simple_fixtures import player, create_test_map, create_real_player
+from game_engine import GameEngine
+from game_entities import EnemyState, Position
 from tests.fixtures.real_game_data import create_real_enemy
 
 
@@ -42,10 +41,7 @@ def create_basic_game_environment():
 
     mock_sound_manager = Mock()
 
-    engine = GameEngine(
-        sound_manager=mock_sound_manager,
-        settings=game_settings
-    )
+    engine = GameEngine(sound_manager=mock_sound_manager, settings=game_settings)
 
     # Position player in center (ensure not in wall)
     engine.player.position.x = 15
@@ -274,7 +270,7 @@ def create_level_completion_scenario():
     engine.player.trace_level = 30.0
 
     # Player has collected some exploits
-    engine.player.inventory_manager.equipped_exploits = ['buffer_overflow', 'threat_scan']
+    engine.player.inventory_manager.equipped_exploits = ["buffer_overflow", "threat_scan"]
 
     # Place gateway
     gateway_pos = Position(30, 30)
@@ -388,10 +384,14 @@ def create_full_gameplay_session():
     engine.player.max_cpu = 120
     engine.player.heat = 35
     engine.player.trace_level = 45.0
-    engine.player.inventory_manager.equipped_exploits = ['code_injection', 'threat_scan', 'antivirus']
+    engine.player.inventory_manager.equipped_exploits = [
+        "code_injection",
+        "threat_scan",
+        "antivirus",
+    ]
 
     # Active temporary effects
-    engine.player.temporary_effects['exploit_efficiency_turns'] = 3
+    engine.player.temporary_effects["exploit_efficiency_turns"] = 3
 
     # Mix of enemies in different states
     enemies = [

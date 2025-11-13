@@ -14,9 +14,16 @@ import logging
 from typing import TYPE_CHECKING
 
 # Import required modules
-from game_config import GameConfig, GameBalance
-from game_entities import Position, TargetingMode, ExploitDefinition, EnemyMovement, EnemyState, Colors
+from game_config import GameBalance, GameConfig
 from game_data import GameData
+from game_entities import (
+    Colors,
+    EnemyMovement,
+    EnemyState,
+    ExploitDefinition,
+    Position,
+    TargetingMode,
+)
 from game_errors import GameErrorHandler
 
 # Use TYPE_CHECKING to avoid circular imports
@@ -45,21 +52,25 @@ class ExploitSystem:
         # Exploit handler dispatch table
         # Lambdas normalize different handler signatures (no params, target only, target + range)
         self.exploit_handlers = {
-            'system_hop': lambda exploit, target: self._execute_system_hop(target),
-            'traffic_masquerade': lambda exploit, target: self._execute_traffic_masquerade(),
-            'decoy_swarm': lambda exploit, target: self._execute_decoy_swarm(target),
-            'code_injection': lambda exploit, target: self._execute_code_injection(exploit, target),
-            'buffer_overflow': lambda exploit, target: self._execute_buffer_overflow(exploit, target),
-            'system_crash': lambda exploit, target: self._execute_system_crash(exploit, target),
-            'logic_bomb': lambda exploit, target: self._execute_logic_bomb(exploit, target),
-            'threat_scan': lambda exploit, target: self._execute_threat_scan(),
-            'log_wiper': lambda exploit, target: self._execute_log_wiper(),
-            'antivirus': lambda exploit, target: self._execute_antivirus(),
-            'denial_of_service': lambda exploit, target: self._execute_denial_of_service(exploit, target),
-            'memory_leak': lambda exploit, target: self._execute_memory_leak(target),
-            'network_scan': lambda exploit, target: self._execute_network_scan(),
+            "system_hop": lambda exploit, target: self._execute_system_hop(target),
+            "traffic_masquerade": lambda exploit, target: self._execute_traffic_masquerade(),
+            "decoy_swarm": lambda exploit, target: self._execute_decoy_swarm(target),
+            "code_injection": lambda exploit, target: self._execute_code_injection(exploit, target),
+            "buffer_overflow": lambda exploit, target: self._execute_buffer_overflow(
+                exploit, target
+            ),
+            "system_crash": lambda exploit, target: self._execute_system_crash(exploit, target),
+            "logic_bomb": lambda exploit, target: self._execute_logic_bomb(exploit, target),
+            "threat_scan": lambda exploit, target: self._execute_threat_scan(),
+            "log_wiper": lambda exploit, target: self._execute_log_wiper(),
+            "antivirus": lambda exploit, target: self._execute_antivirus(),
+            "denial_of_service": lambda exploit, target: self._execute_denial_of_service(
+                exploit, target
+            ),
+            "memory_leak": lambda exploit, target: self._execute_memory_leak(target),
+            "network_scan": lambda exploit, target: self._execute_network_scan(),
         }
-    
+
     def use_exploit(self, exploit_key: str) -> bool:
         """
         Attempt to use an equipped exploit.
@@ -89,11 +100,11 @@ class ExploitSystem:
             self.game.cursor_position = Position(self.game.player.x, self.game.player.y)
             self.game.message_log.add_message(f"Targeting {exploit.name}")
             return True
-        
+
         # Execute non-targeting exploits immediately
 
         return self.execute_exploit(exploit_key, self.game.player.position)
-    
+
     def execute_exploit(self, exploit_key: str, target: Position) -> bool:
         """
         Execute an exploit at target location.
@@ -116,7 +127,9 @@ class ExploitSystem:
 
         # Validate target
         if not self._validate_target(exploit, target):
-            logging.debug(f"Combat: Exploit '{exploit.name}' failed validation for target ({target.x},{target.y})")
+            logging.debug(
+                f"Combat: Exploit '{exploit.name}' failed validation for target ({target.x},{target.y})"
+            )
             return False
 
         # Check heat limit - show overclock warning dialogue if needed
@@ -138,25 +151,30 @@ class ExploitSystem:
 
             # Show overclock warning dialogue
             from game_dialogue_system import create_overclock_warning_dialogue
+
             dialogue = create_overclock_warning_dialogue(
                 exploit_name=exploit.name,
                 overheat_amount=overheat_amount,
                 damage=cpu_damage,
                 remaining_cpu=remaining_cpu,
-                max_cpu=self.game.player.max_cpu
+                max_cpu=self.game.player.max_cpu,
             )
             was_shown = self.game.dialogue_state.show(dialogue)
 
             if not was_shown:
                 # User disabled overclock warnings - auto-confirm and proceed
-                logging.debug(f"Combat: Overclock warning suppressed by user preference, auto-confirming for '{exploit.name}'")
+                logging.debug(
+                    f"Combat: Overclock warning suppressed by user preference, auto-confirming for '{exploit.name}'"
+                )
                 self.game.overclock_confirmation = True
                 # Recursively call execute_exploit - will bypass this check now
                 return self.execute_exploit(exploit_key, target)
 
             # Dialogue was shown - block and wait for user confirmation
             self.game.sound_manager.play_sound("exploit_failed")
-            logging.debug(f"Combat: Overheat warning shown for '{exploit.name}', awaiting confirmation")
+            logging.debug(
+                f"Combat: Overheat warning shown for '{exploit.name}', awaiting confirmation"
+            )
             return False
 
         # Clear overclock confirmation if it was set
@@ -165,7 +183,9 @@ class ExploitSystem:
             self.game.overclock_confirmation = False
             self.game.overclock_exploit = None
 
-        logging.debug(f"Combat: Executing exploit '{exploit.name}' on target ({target.x},{target.y})")
+        logging.debug(
+            f"Combat: Executing exploit '{exploit.name}' on target ({target.x},{target.y})"
+        )
 
         # Execute specific exploit
         success = self._execute_specific_exploit(exploit_key, exploit, target)
@@ -177,6 +197,7 @@ class ExploitSystem:
 
             # Track metrics
             from game_metrics import track
+
             track("exploits_used", category=exploit_key)
             track("heat_generated", amount=heat_cost)
 
@@ -185,7 +206,9 @@ class ExploitSystem:
                 # Apply overclock damage (confirmed via dialogue)
                 overheat_amount = new_heat - self.game.player.max_heat
                 actual_damage = self.game.player.take_damage(overheat_amount)
-                logging.debug(f"Combat: OVERCLOCKING! overheat={overheat_amount}, damage={actual_damage}, heat capped at {self.game.player.max_heat}")
+                logging.debug(
+                    f"Combat: OVERCLOCKING! overheat={overheat_amount}, damage={actual_damage}, heat capped at {self.game.player.max_heat}"
+                )
                 self.game.message_log.add_message(f"OVERCLOCKING: {actual_damage} CPU damage!")
                 self.game.sound_manager.play_sound("overclocking")
                 # Set heat to max (not over)
@@ -194,7 +217,9 @@ class ExploitSystem:
                 # Normal heat application
                 old_heat = self.game.player.heat
                 self.game.player.heat = new_heat
-                logging.debug(f"Combat: Heat applied for '{exploit.name}': {old_heat} -> {new_heat} (+{heat_cost})")
+                logging.debug(
+                    f"Combat: Heat applied for '{exploit.name}': {old_heat} -> {new_heat} (+{heat_cost})"
+                )
 
         if success:
             self.game.targeting_mode = False
@@ -202,7 +227,7 @@ class ExploitSystem:
             self.game.maybe_process_turn()
 
         return success
-    
+
     def _calculate_heat_cost(self, exploit: ExploitDefinition) -> int:
         """
         Calculate heat cost with exploit efficiency bonus.
@@ -215,7 +240,9 @@ class ExploitSystem:
         Returns:
             Final heat cost after efficiency bonus
         """
-        multiplier = 0.6 if self.game.player.temporary_effects['exploit_efficiency_turns'] > 0 else 1.0
+        multiplier = (
+            0.6 if self.game.player.temporary_effects["exploit_efficiency_turns"] > 0 else 1.0
+        )
         return int(exploit.heat * multiplier)
 
     def _validate_target(self, exploit: ExploitDefinition, target: Position) -> bool:
@@ -247,7 +274,9 @@ class ExploitSystem:
 
         return True
 
-    def _execute_specific_exploit(self, exploit_key: str, exploit: ExploitDefinition, target: Position) -> bool:
+    def _execute_specific_exploit(
+        self, exploit_key: str, exploit: ExploitDefinition, target: Position
+    ) -> bool:
         """
         Execute the specific exploit effect by dispatching to appropriate handler.
 
@@ -266,7 +295,7 @@ class ExploitSystem:
         if handler:
             return handler(exploit, target)
         return False
-    
+
     def _execute_system_hop(self, target: Position) -> bool:
         """
         Execute System Hop exploit - pivot to blind spot.
@@ -280,7 +309,9 @@ class ExploitSystem:
         Returns:
             True if hop succeeded, False if target invalid
         """
-        if self.game.game_map.is_blind_spot(target) and self.game.game_map.is_valid_position(target):
+        if self.game.game_map.is_blind_spot(target) and self.game.game_map.is_valid_position(
+            target
+        ):
             if not self.game._get_enemy_at(target):
                 self.game.sound_manager.play_sound("exploit_system_hop")
                 self.game.player.position = target
@@ -303,8 +334,8 @@ class ExploitSystem:
             True (always succeeds)
         """
         self.game.sound_manager.play_sound("exploit_traffic_masquerade")
-        exploit = GameData.EXPLOITS['traffic_masquerade']
-        self.game.player.temporary_effects['traffic_masquerade_turns'] = exploit.effect_duration
+        exploit = GameData.EXPLOITS["traffic_masquerade"]
+        self.game.player.temporary_effects["traffic_masquerade_turns"] = exploit.effect_duration
         self.game.message_log.add_message("Traffic Masquerade active")
         return True
 
@@ -325,13 +356,15 @@ class ExploitSystem:
             True (always succeeds), displays count of attracted enemies
         """
         self.game.sound_manager.play_sound("exploit_decoy_swarm")
-        exploit = GameData.EXPLOITS['decoy_swarm']
+        exploit = GameData.EXPLOITS["decoy_swarm"]
         attracted = 0
         for enemy in self.game.enemies:
             movement_type = enemy.get_movement_type()
             # Use grid distance for AoE radius (diagonals = 1)
-            if (movement_type in [EnemyMovement.SEEK, EnemyMovement.RANDOM, EnemyMovement.PATROL] and
-                enemy.position.grid_distance_to(target) <= exploit.effect_radius):
+            if (
+                movement_type in [EnemyMovement.SEEK, EnemyMovement.RANDOM, EnemyMovement.PATROL]
+                and enemy.position.grid_distance_to(target) <= exploit.effect_radius
+            ):
                 if movement_type == EnemyMovement.PATROL:
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = exploit.alert_duration_patrol
@@ -343,7 +376,7 @@ class ExploitSystem:
         enemy_word = "enemy" if attracted == 1 else "enemies"
         self.game.message_log.add_message(f"Decoy Swarm: {attracted} {enemy_word} attracted")
         return True
-    
+
     def _calculate_exploit_damage(self, base_damage: int) -> int:
         """
         Calculate final exploit damage with shadow bonus.
@@ -360,8 +393,11 @@ class ExploitSystem:
             return 0  # No bonus for non-damaging exploits
 
         # Shadow bonus: extra damage if attacking from blind spots or while invisible
-        if self.game.game_map.is_blind_spot(self.game.player.position) or self.game.player.is_invisible():
-            shadow_bonus = GameConfig._get_required('balance.shadow_damage_bonus')
+        if (
+            self.game.game_map.is_blind_spot(self.game.player.position)
+            or self.game.player.is_invisible()
+        ):
+            shadow_bonus = GameConfig._get_required("balance.shadow_damage_bonus")
             return base_damage + shadow_bonus
         return base_damage
 
@@ -382,40 +418,51 @@ class ExploitSystem:
         """
         if enemy.take_damage(damage):
             # Enemy destroyed
-            is_admin = enemy.type == 'admin'
+            is_admin = enemy.type == "admin"
             self.game.sound_manager.play_sound("enemy_death")
             # Trigger particle explosion effect (graphics mode only, if enabled)
-            if (hasattr(self.game, 'particle_system') and
-                self.game.particle_system is not None and
-                hasattr(self.game, 'tile_manager') and
-                self.game.tile_manager is not None and
-                self.game.settings.graphics_mode == "graphics" and
-                self.game.settings.show_particle_effects):
+            if (
+                hasattr(self.game, "particle_system")
+                and self.game.particle_system is not None
+                and hasattr(self.game, "tile_manager")
+                and self.game.tile_manager is not None
+                and self.game.settings.graphics_mode == "graphics"
+                and self.game.settings.show_particle_effects
+            ):
                 try:
                     # Extract colors from enemy sprite for particles
                     colors = self.game.tile_manager.extract_sprite_colors(
-                        enemy.type,
-                        num_colors=GameConfig.PARTICLE_SPRITE_COLOR_COUNT()
+                        enemy.type, num_colors=GameConfig.PARTICLE_SPRITE_COLOR_COUNT()
                     )
 
                     # Create explosion at enemy position (uses particle_count from config)
                     self.game.particle_system.create_death_explosion(
-                        world_x=enemy.x,
-                        world_y=enemy.y,
-                        colors=colors
+                        world_x=enemy.x, world_y=enemy.y, colors=colors
                     )
-                    logging.debug(f"Particle explosion created at ({enemy.x}, {enemy.y}) with {len(colors)} colors")
+                    logging.debug(
+                        f"Particle explosion created at ({enemy.x}, {enemy.y}) with {len(colors)} colors"
+                    )
                 except Exception as e:
                     # Don't crash game if particle effect fails
-                    GameErrorHandler.handle_error(e, "particle_effect", "Particle effect failed", fatal=False)
+                    GameErrorHandler.handle_error(
+                        e, "particle_effect", "Particle effect failed", fatal=False
+                    )
 
             self.game.enemies.remove(enemy)
-            self.game.player.cpu = min(self.game.player.max_cpu, self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD)
-            logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) ELIMINATED, CPU reward={GameBalance.ENEMY_ELIMINATION_CPU_REWARD}")
-            self.game.message_log.add_message(f"Eliminated {enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)")
+            self.game.player.cpu = min(
+                self.game.player.max_cpu,
+                self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD,
+            )
+            logging.debug(
+                f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) ELIMINATED, CPU reward={GameBalance.ENEMY_ELIMINATION_CPU_REWARD}"
+            )
+            self.game.message_log.add_message(
+                f"Eliminated {enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)"
+            )
 
             # Track metrics
-            from game_metrics import track, get_current_session
+            from game_metrics import get_current_session, track
+
             track("enemies_killed", category=enemy.type)
             track("damage_dealt", amount=damage)
             if enemy.state == EnemyState.UNAWARE:
@@ -428,8 +475,11 @@ class ExploitSystem:
 
             # Check for immediate achievement unlocks (First Blood, Massacre, Overkill, etc.)
             from game_achievements import AchievementManager
+
             if current_session:
-                AchievementManager.check_immediate_achievements_and_notify(current_session, self.game)
+                AchievementManager.check_immediate_achievements_and_notify(
+                    current_session, self.game
+                )
 
             # Add environmental narrative for first combat or admin defeat
             if is_admin:
@@ -446,7 +496,9 @@ class ExploitSystem:
                 enemy.original_patrol_index = enemy.patrol_index
             enemy.state = EnemyState.HOSTILE
             enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
-            logging.debug(f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) damaged, state {old_state.name} -> HOSTILE")
+            logging.debug(
+                f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) damaged, state {old_state.name} -> HOSTILE"
+            )
         return True
 
     def _execute_code_injection(self, exploit: ExploitDefinition, target: Position) -> bool:
@@ -532,17 +584,20 @@ class ExploitSystem:
 
             # Show warning dialogue
             from game_dialogue_system import create_system_crash_warning_dialogue
+
             dialogue = create_system_crash_warning_dialogue(
                 damage=exploit.self_damage,
                 remaining_cpu=remaining_cpu,
                 max_cpu=self.game.player.max_cpu,
-                would_die=would_die
+                would_die=would_die,
             )
             was_shown = self.game.dialogue_state.show(dialogue)
 
             if not was_shown:
                 # User disabled System Crash warnings - auto-confirm
-                logging.debug("Combat: System Crash warning suppressed by user preference, auto-confirming")
+                logging.debug(
+                    "Combat: System Crash warning suppressed by user preference, auto-confirming"
+                )
                 self.game.system_crash_confirmed = True
                 # Recursively call - will bypass this check now
                 return self._execute_system_crash(exploit, target)
@@ -560,7 +615,7 @@ class ExploitSystem:
             actual_self_damage = self.game.player.take_damage(exploit.self_damage)
             self.game.message_log.add_message(
                 f"CRITICAL SYSTEM FAILURE! Taking {actual_self_damage} collateral damage!",
-                Colors.RED
+                Colors.RED,
             )
             logging.debug(f"Combat: System Crash self-damage: {actual_self_damage} CPU")
 
@@ -620,16 +675,17 @@ class ExploitSystem:
             remaining_cpu = self.game.player.cpu - damage
 
             # Store pending exploit info
-            self.game.friendly_fire_exploit = 'logic_bomb'
+            self.game.friendly_fire_exploit = "logic_bomb"
             self.game.friendly_fire_target = target
 
             # Show friendly fire warning
             from game_dialogue_system import create_friendly_fire_warning_dialogue
+
             dialogue = create_friendly_fire_warning_dialogue(
                 exploit_name=exploit.name,
                 damage=damage,
                 remaining_cpu=remaining_cpu,
-                max_cpu=self.game.player.max_cpu
+                max_cpu=self.game.player.max_cpu,
             )
             self.game.dialogue_state.show(dialogue)
             self.game.sound_manager.play_sound("exploit_failed")
@@ -677,25 +733,32 @@ class ExploitSystem:
             True (always succeeds)
         """
         self.game.sound_manager.play_sound("exploit_threat_scan")
-        exploit = GameData.EXPLOITS['threat_scan']
-        self.game.game_state.threat_scan_turns = exploit.effect_duration  # Duration from JSON config
-        
+        exploit = GameData.EXPLOITS["threat_scan"]
+        self.game.game_state.threat_scan_turns = (
+            exploit.effect_duration
+        )  # Duration from JSON config
+
         # Threat scan reveals only enemy positions and immediate surroundings, not entire map
         enemy_count = 0
         for enemy in self.game.enemies:
             # Update enemy position in memory
-            self.game.game_map.last_known_enemy_positions[enemy.id] = (enemy.position, self.game.turn)
-            
+            self.game.game_map.last_known_enemy_positions[enemy.id] = (
+                enemy.position,
+                self.game.turn,
+            )
+
             # Reveal a small area around each enemy (3x3) to show their local context
             for dx in range(-1, 2):
                 for dy in range(-1, 2):
                     reveal_x = enemy.position.x + dx
                     reveal_y = enemy.position.y + dy
-                    if (0 <= reveal_x < GameConfig.MAP_WIDTH and 
-                        0 <= reveal_y < GameConfig.MAP_HEIGHT):
+                    if (
+                        0 <= reveal_x < GameConfig.MAP_WIDTH
+                        and 0 <= reveal_y < GameConfig.MAP_HEIGHT
+                    ):
                         self.game.game_map.explored_tiles.add((reveal_x, reveal_y))
             enemy_count += 1
-        
+
         self.game.message_log.add_message(f"THREAT SCAN ACTIVE - {enemy_count} hostiles detected!")
         return True
 
@@ -710,13 +773,13 @@ class ExploitSystem:
         """
         self.game.sound_manager.play_sound("exploit_log_wiper")
         old_trace = self.game.player.trace_level
-        exploit = GameData.EXPLOITS['log_wiper']
+        exploit = GameData.EXPLOITS["log_wiper"]
         trace_reduction = exploit.trace_reduction_percent
         self.game.player.trace_level = max(0, self.game.player.trace_level - trace_reduction)
         actual_reduction = old_trace - self.game.player.trace_level
         self.game.message_log.add_message(f"Trace Level: -{actual_reduction:.1f}%")
         return True
-    
+
     def _execute_antivirus(self) -> bool:
         """
         Execute Antivirus exploit - purge negative status effects.
@@ -728,27 +791,27 @@ class ExploitSystem:
             True (always succeeds)
         """
         self.game.sound_manager.play_sound("exploit_antivirus")
-        
+
         # Check if player has any negative effects to cure
-        negative_effects = ['virus_turns', 'movement_slowed_turns']
+        negative_effects = ["virus_turns", "movement_slowed_turns"]
         effects_cured = []
-        
+
         for effect in negative_effects:
             if self.game.player.temporary_effects.get(effect, 0) > 0:
                 effects_cured.append(effect)
                 self.game.player.temporary_effects[effect] = 0
-        
+
         if effects_cured:
-            if 'virus_turns' in effects_cured:
+            if "virus_turns" in effects_cured:
                 self.game.message_log.add_message("Virus purged from system")
-            if 'movement_slowed_turns' in effects_cured:
+            if "movement_slowed_turns" in effects_cured:
                 self.game.message_log.add_message("Movement inhibition removed")
             self.game.message_log.add_message("System cleansed of negative effects")
         else:
             self.game.message_log.add_message("No negative effects detected")
-        
+
         return True
-    
+
     def _execute_denial_of_service(self, exploit: ExploitDefinition, target: Position) -> bool:
         """
         Execute Denial of Service exploit - targeted AoE disable.
@@ -776,7 +839,7 @@ class ExploitSystem:
 
         self.game.message_log.add_message(f"DoS: {count} disabled")
         return True
-    
+
     def _execute_memory_leak(self, target: Position) -> bool:
         """
         Execute Memory Leak exploit - blind enemies temporarily.
@@ -795,7 +858,7 @@ class ExploitSystem:
             True (always succeeds)
         """
         self.game.sound_manager.play_sound("exploit_memory_leak")
-        exploit = GameData.EXPLOITS['memory_leak']
+        exploit = GameData.EXPLOITS["memory_leak"]
         count = 0
         for enemy in self.game.enemies:
             # Use grid distance for AoE radius (diagonals = 1)
@@ -809,7 +872,7 @@ class ExploitSystem:
         msg = f"Memory Leak: {count} enemies blinded" if count > 0 else "No enemies in range"
         self.game.message_log.add_message(msg)
         return True
-    
+
     def _execute_network_scan(self) -> bool:
         """
         Execute Network Scan exploit - reveal all special nodes on the level.
@@ -824,7 +887,7 @@ class ExploitSystem:
         self.game.sound_manager.play_sound("exploit_network_scan")
 
         # Add all special nodes to revealed dict
-        if not hasattr(self.game.game_state, 'revealed_special_nodes'):
+        if not hasattr(self.game.game_state, "revealed_special_nodes"):
             self.game.game_state.revealed_special_nodes = {}
 
         # Count nodes on the map for debugging
@@ -840,8 +903,10 @@ class ExploitSystem:
                 for dy in range(-1, 2):
                     explore_x = node_pos[0] + dx
                     explore_y = node_pos[1] + dy
-                    if (0 <= explore_x < GameConfig.MAP_WIDTH and
-                        0 <= explore_y < GameConfig.MAP_HEIGHT):
+                    if (
+                        0 <= explore_x < GameConfig.MAP_WIDTH
+                        and 0 <= explore_y < GameConfig.MAP_HEIGHT
+                    ):
                         self.game.game_map.explored_tiles.add((explore_x, explore_y))
 
         # Reveal all CPU recovery nodes and add to explored tiles
@@ -852,8 +917,10 @@ class ExploitSystem:
                 for dy in range(-1, 2):
                     explore_x = node_pos[0] + dx
                     explore_y = node_pos[1] + dy
-                    if (0 <= explore_x < GameConfig.MAP_WIDTH and
-                        0 <= explore_y < GameConfig.MAP_HEIGHT):
+                    if (
+                        0 <= explore_x < GameConfig.MAP_WIDTH
+                        and 0 <= explore_y < GameConfig.MAP_HEIGHT
+                    ):
                         self.game.game_map.explored_tiles.add((explore_x, explore_y))
 
         # Reveal all ghost nodes and add to explored tiles
@@ -864,11 +931,15 @@ class ExploitSystem:
                 for dy in range(-1, 2):
                     explore_x = node_pos[0] + dx
                     explore_y = node_pos[1] + dy
-                    if (0 <= explore_x < GameConfig.MAP_WIDTH and
-                        0 <= explore_y < GameConfig.MAP_HEIGHT):
+                    if (
+                        0 <= explore_x < GameConfig.MAP_WIDTH
+                        and 0 <= explore_y < GameConfig.MAP_HEIGHT
+                    ):
                         self.game.game_map.explored_tiles.add((explore_x, explore_y))
 
         total_revealed = len(self.game.game_state.revealed_special_nodes)
-        self.game.message_log.add_message(f"Network Scan: {cooling_count} cooling, {cpu_count} CPU, {ghost_count} ghost nodes found")
+        self.game.message_log.add_message(
+            f"Network Scan: {cooling_count} cooling, {cpu_count} CPU, {ghost_count} ghost nodes found"
+        )
         self.game.message_log.add_message(f"Total {total_revealed} special nodes revealed")
         return True

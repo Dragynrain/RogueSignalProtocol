@@ -6,34 +6,39 @@ rendering principles as the dialogue system but with smaller dimensions
 and auto-dismiss functionality.
 """
 
-import time
 import logging
+import time
 from dataclasses import dataclass
-from typing import Optional, List
+
 import tcod.console
 import tcod.constants
 
+from game_achievements import ALL_ACHIEVEMENTS, Achievement, AchievementManager
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Colors, ensure_color_tuple
 from game_ui import render_char_safe
-from game_achievements import AchievementManager, ALL_ACHIEVEMENTS, Achievement
 
 logger = logging.getLogger(__name__)
 
 from game_config import GameConfig
 
+
 # Popup configuration loaded from JSON
 def get_popup_width():
     return GameConfig._get_required("ui.achievement_popup_width")
 
+
 def get_popup_height():
     return GameConfig._get_required("ui.achievement_popup_height")
+
 
 def get_popup_duration():
     return GameConfig._get_required("ui.achievement_popup_duration")
 
+
 def get_popup_fade_duration():
     return GameConfig._get_required("ui.achievement_popup_fade_duration")
+
 
 def get_max_description_lines():
     return GameConfig._get_required("ui.achievement_popup_max_description_lines")
@@ -88,8 +93,8 @@ class AchievementPopupManager:
 
     def __init__(self):
         """Initialize the popup manager."""
-        self.active_popup: Optional[AchievementPopup] = None
-        self.popup_queue: List[str] = []  # Achievement IDs waiting to be shown
+        self.active_popup: AchievementPopup | None = None
+        self.popup_queue: list[str] = []  # Achievement IDs waiting to be shown
 
     def check_and_show_popups(self) -> None:
         """
@@ -114,7 +119,9 @@ class AchievementPopupManager:
         # Handle active popup
         if self.active_popup:
             if self.active_popup.should_dismiss():
-                logger.info(f"Auto-dismissing achievement popup: {self.active_popup.achievement_id}")
+                logger.info(
+                    f"Auto-dismissing achievement popup: {self.active_popup.achievement_id}"
+                )
                 self.active_popup = None
 
         # Show next queued popup if none active
@@ -135,9 +142,7 @@ class AchievementPopupManager:
             return
 
         self.active_popup = AchievementPopup(
-            achievement_id=achievement_id,
-            achievement=achievement,
-            timestamp=time.time()
+            achievement_id=achievement_id, achievement=achievement, timestamp=time.time()
         )
         logger.info(f"Showing achievement popup: {achievement.name}")
 
@@ -178,27 +183,32 @@ class AchievementPopupManager:
         )
 
         # Color scheme using consolidated colors
-        from game_entities import Colors
+
         border_color = Colors.NEON_GOLD  # Consolidated from achievement_popup.border
-        bg_color = Colors.POPUP  # Consolidated from achievement_popup.background to backgrounds.popup
+        bg_color = (
+            Colors.POPUP
+        )  # Consolidated from achievement_popup.background to backgrounds.popup
         title_color = Colors.NEON_GOLD  # Consolidated from achievement_popup.title
         achievement_name_color = Colors.PURE_WHITE  # Consolidated from achievement_popup.name
-        description_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.description"))
+        description_color = ensure_color_tuple(
+            GameConfig._get_required("colors.achievement_popup.description")
+        )
 
         # Draw box background and border
         from game_rendering_utils import draw_bordered_box
+
         draw_bordered_box(console, box_x, box_y, popup_width, popup_height, border_color, bg_color)
 
         # Render title with icon
         title_text = f"{achievement.icon} ACHIEVEMENT UNLOCKED!"
         title_x = box_x + (popup_width - len(title_text)) // 2
-        render_char_safe(console, title_x, box_y + 1, title_text,
-                        fg=title_color, bg=bg_color)
+        render_char_safe(console, title_x, box_y + 1, title_text, fg=title_color, bg=bg_color)
 
         # Render achievement name (centered)
         name_x = box_x + (popup_width - len(achievement.name)) // 2
-        render_char_safe(console, name_x, box_y + 3, achievement.name,
-                        fg=achievement_name_color, bg=bg_color)
+        render_char_safe(
+            console, name_x, box_y + 3, achievement.name, fg=achievement_name_color, bg=bg_color
+        )
 
         # Render description (word-wrapped using TCOD's built-in wrapping)
         max_desc_lines = get_max_description_lines()
@@ -212,12 +222,13 @@ class AchievementPopupManager:
             string=achievement.description,
             fg=description_color,
             width=popup_width - 4,
-            alignment=tcod.constants.CENTER
+            alignment=tcod.constants.CENTER,
         )
 
         # Optionally show hint at bottom (very subtle)
         hint_text = "(press any key or click)"
         hint_x = box_x + (popup_width - len(hint_text)) // 2
         hint_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.hint"))
-        render_char_safe(console, hint_x, box_y + popup_height - 1, hint_text,
-                        fg=hint_color, bg=bg_color)
+        render_char_safe(
+            console, hint_x, box_y + popup_height - 1, hint_text, fg=hint_color, bg=bg_color
+        )

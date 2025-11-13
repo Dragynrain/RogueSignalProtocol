@@ -34,11 +34,9 @@ CRITICAL RULES:
 3. NEVER mix the two - they use different math!
 """
 
-import logging
-from typing import Tuple
 from game_config import GameConfig
-from game_entities import Position
 from game_coordinate_helpers import CoordinateHelpers
+from game_entities import Position
 
 
 class MapRendererBase:
@@ -59,10 +57,12 @@ class MapRendererBase:
 
     def _should_use_graphics(self):
         """Check if graphics mode is available and should be used."""
-        return (self.tile_manager is not None and
-                self.context is not None and
-                hasattr(self.context, 'sdl_renderer') and
-                self.context.sdl_renderer is not None)
+        return (
+            self.tile_manager is not None
+            and self.context is not None
+            and hasattr(self.context, "sdl_renderer")
+            and self.context.sdl_renderer is not None
+        )
 
     def _get_graphics_mode(self):
         """Get current graphics mode from settings."""
@@ -70,7 +70,9 @@ class MapRendererBase:
             return self.settings.graphics_mode
         return "glyph"
 
-    def _world_to_console(self, world_x: int, world_y: int, camera_offset: Position) -> Tuple[int, int]:
+    def _world_to_console(
+        self, world_x: int, world_y: int, camera_offset: Position
+    ) -> tuple[int, int]:
         """
         Convert world coordinates to console coordinates based on viewport.
 
@@ -117,13 +119,13 @@ class MapRendererBase:
         window_width = None
         window_height = None
 
-        if hasattr(self, 'tile_manager') and self.tile_manager is not None:
+        if hasattr(self, "tile_manager") and self.tile_manager is not None:
             tile_width = self.tile_manager.tile_width
             tile_height = self.tile_manager.tile_height
 
         # Get actual window dimensions from context (dynamic for any resolution)
-        if hasattr(self, 'context') and self.context is not None:
-            if hasattr(self.context, 'sdl_renderer') and self.context.sdl_renderer is not None:
+        if hasattr(self, "context") and self.context is not None:
+            if hasattr(self.context, "sdl_renderer") and self.context.sdl_renderer is not None:
                 try:
                     output_size = self.context.sdl_renderer.output_size
                     if output_size:
@@ -137,8 +139,7 @@ class MapRendererBase:
         viewport_x = world_x - camera_offset.x
         viewport_y = world_y - camera_offset.y
 
-        return (0 <= viewport_x < viewport_width and
-                0 <= viewport_y < viewport_height)
+        return 0 <= viewport_x < viewport_width and 0 <= viewport_y < viewport_height
 
     def _calculate_camera_offset(self, player, game=None) -> Position:
         """
@@ -159,22 +160,24 @@ class MapRendererBase:
         window_width = None
         window_height = None
 
-        if hasattr(self, 'tile_manager') and self.tile_manager is not None:
+        if hasattr(self, "tile_manager") and self.tile_manager is not None:
             tile_width = self.tile_manager.tile_width
             tile_height = self.tile_manager.tile_height
 
         # Get actual window dimensions from context (dynamic for any resolution)
-        if hasattr(self, 'context') and self.context is not None:
-            if hasattr(self.context, 'recommended_console_size'):
+        if hasattr(self, "context") and self.context is not None:
+            if hasattr(self.context, "recommended_console_size"):
                 try:
                     # Get the current pixel size of the window
                     pixel_width, pixel_height = self.context.recommended_console_size(
-                        min_columns=GameConfig.SCREEN_WIDTH,
-                        min_rows=GameConfig.SCREEN_HEIGHT
+                        min_columns=GameConfig.SCREEN_WIDTH, min_rows=GameConfig.SCREEN_HEIGHT
                     )
                     # This gives us console size, but we need pixel dimensions
                     # The actual window size is stored differently - use SDL renderer if available
-                    if hasattr(self.context, 'sdl_renderer') and self.context.sdl_renderer is not None:
+                    if (
+                        hasattr(self.context, "sdl_renderer")
+                        and self.context.sdl_renderer is not None
+                    ):
                         output_size = self.context.sdl_renderer.output_size
                         if output_size:
                             window_width, window_height = output_size
@@ -187,7 +190,7 @@ class MapRendererBase:
 
         # In look mode, center camera on look cursor to allow exploring revealed distant areas
         # (e.g., tiles revealed by Network Scan ability)
-        if game and game.look_mode and hasattr(game, 'look_cursor_position'):
+        if game and game.look_mode and hasattr(game, "look_cursor_position"):
             # Center on cursor position - allows free camera movement across the map
             center_x = game.look_cursor_position.x
             center_y = game.look_cursor_position.y
@@ -201,14 +204,16 @@ class MapRendererBase:
         if viewport_width >= GameConfig.MAP_WIDTH:
             camera_x = -(viewport_width - GameConfig.MAP_WIDTH) // 2
         else:
-            camera_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                                 center_x - viewport_width // 2))
+            camera_x = max(
+                0, min(GameConfig.MAP_WIDTH - viewport_width, center_x - viewport_width // 2)
+            )
 
         if viewport_height >= GameConfig.MAP_HEIGHT:
             camera_y = -(viewport_height - GameConfig.MAP_HEIGHT) // 2
         else:
-            camera_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                                 center_y - viewport_height // 2))
+            camera_y = max(
+                0, min(GameConfig.MAP_HEIGHT - viewport_height, center_y - viewport_height // 2)
+            )
 
         camera_offset = Position(camera_x, camera_y)
 
@@ -218,7 +223,7 @@ class MapRendererBase:
 
         return camera_offset
 
-    def _grid_to_pixel(self, screen_x: int, screen_y: int) -> Tuple[int, int]:
+    def _grid_to_pixel(self, screen_x: int, screen_y: int) -> tuple[int, int]:
         """
         Convert grid coordinates to pixel coordinates for IN-GAME rendering.
 
@@ -244,7 +249,7 @@ class MapRendererBase:
         pixel_y = screen_y * self.tile_manager.tile_height
         return (pixel_x, pixel_y)
 
-    def _get_tile_rect(self, screen_x: int, screen_y: int) -> Tuple[int, int, int, int]:
+    def _get_tile_rect(self, screen_x: int, screen_y: int) -> tuple[int, int, int, int]:
         """
         Get pixel rectangle for a tile at grid coordinates.
 
@@ -261,7 +266,7 @@ class MapRendererBase:
         px, py = self._grid_to_pixel(screen_x, screen_y)
         return (px, py, self.tile_manager.tile_width, self.tile_manager.tile_height)
 
-    def _console_to_pixels(self, console_x: int, console_y: int) -> Tuple[int, int]:
+    def _console_to_pixels(self, console_x: int, console_y: int) -> tuple[int, int]:
         """
         Convert console coordinates to pixel coordinates for MENU rendering.
 
@@ -287,7 +292,7 @@ class MapRendererBase:
             console_x, console_y, window_width, window_height
         )
 
-    def _get_window_size(self) -> Tuple[int, int]:
+    def _get_window_size(self) -> tuple[int, int]:
         """
         Get current window dimensions with fallback.
 
@@ -295,7 +300,7 @@ class MapRendererBase:
             Tuple of (width, height) in pixels
         """
         try:
-            if hasattr(self.context, 'sdl_window') and self.context.sdl_window:
+            if hasattr(self.context, "sdl_window") and self.context.sdl_window:
                 return self.context.sdl_window.size
         except (AttributeError, TypeError):
             pass

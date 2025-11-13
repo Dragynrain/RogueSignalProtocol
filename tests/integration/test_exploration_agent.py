@@ -6,16 +6,17 @@ Smart agent that tries to explore the entire map.
 Tests pathfinding, FOV, and map generation.
 """
 
-import pytest
-import sys
 import os
+import sys
+
 import numpy as np
+import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from tests.test_agent import GameTestAgent
-from game_entities import Position
 from game_characters import PathfindingHelper
+from game_entities import Position
+from tests.test_agent import GameTestAgent
 
 
 class ExplorationAgent:
@@ -41,9 +42,9 @@ class ExplorationAgent:
         player_pos = (self.agent.player.x, self.agent.player.y)
 
         unexplored_visible = [
-            tile for tile in visible
-            if tile not in self.visited_tiles
-            and tile not in self.agent.game_map.walls
+            tile
+            for tile in visible
+            if tile not in self.visited_tiles and tile not in self.agent.game_map.walls
         ]
 
         if not unexplored_visible:
@@ -63,19 +64,19 @@ class ExplorationAgent:
             Statistics about exploration
         """
         stats = {
-            'turns_taken': 0,
-            'tiles_explored': 0,
-            'tiles_visible': 0,
-            'got_stuck': False,
-            'exploration_percentage': 0.0,
-            'path_found': True
+            "turns_taken": 0,
+            "tiles_explored": 0,
+            "tiles_visible": 0,
+            "got_stuck": False,
+            "exploration_percentage": 0.0,
+            "path_found": True,
         }
 
         last_position = None
         stuck_counter = 0
 
         for turn in range(max_turns):
-            stats['turns_taken'] = turn + 1
+            stats["turns_taken"] = turn + 1
 
             # Stop if player died
             if self.agent.engine.game_over:
@@ -89,7 +90,7 @@ class ExplorationAgent:
             if current == last_position:
                 stuck_counter += 1
                 if stuck_counter > self.max_stuck:
-                    stats['got_stuck'] = True
+                    stats["got_stuck"] = True
                     break
             else:
                 stuck_counter = 0
@@ -135,14 +136,14 @@ class ExplorationAgent:
                 self.agent.wait(1)
 
         # Calculate stats
-        stats['tiles_explored'] = len(self.visited_tiles)
-        stats['tiles_visible'] = len(self.agent.engine.visible_tiles)
+        stats["tiles_explored"] = len(self.visited_tiles)
+        stats["tiles_visible"] = len(self.agent.engine.visible_tiles)
 
         # Estimate total walkable tiles (rough approximation)
         # In a typical roguelike, about 30-40% of tiles are walkable
         total_tiles = 80 * 50
         estimated_walkable = total_tiles * 0.35
-        stats['exploration_percentage'] = (len(self.visited_tiles) / estimated_walkable) * 100
+        stats["exploration_percentage"] = (len(self.visited_tiles) / estimated_walkable) * 100
 
         return stats
 
@@ -157,16 +158,17 @@ class TestExplorationAgent:
 
         stats = explorer.explore_map(max_turns=300)
 
-        print(f"\n=== Exploration Stats ===")
+        print("\n=== Exploration Stats ===")
         print(f"Turns taken: {stats['turns_taken']}")
         print(f"Tiles explored: {stats['tiles_explored']}")
         print(f"Estimated coverage: {stats['exploration_percentage']:.1f}%")
         print(f"Got stuck: {stats['got_stuck']}")
 
         # Agent should explore at least 50 tiles without getting stuck
-        assert stats['tiles_explored'] >= 50, \
-            f"Only explored {stats['tiles_explored']} tiles - pathfinding issue?"
-        assert not stats['got_stuck'], "Agent got stuck - pathfinding failure"
+        assert (
+            stats["tiles_explored"] >= 50
+        ), f"Only explored {stats['tiles_explored']} tiles - pathfinding issue?"
+        assert not stats["got_stuck"], "Agent got stuck - pathfinding failure"
 
     def test_exploration_across_seeds(self):
         """Test exploration on different random seeds."""
@@ -177,25 +179,26 @@ class TestExplorationAgent:
             explorer = ExplorationAgent(agent)
             stats = explorer.explore_map(max_turns=200)
 
-            results.append({
-                'seed': seed,
-                'explored': stats['tiles_explored'],
-                'stuck': stats['got_stuck']
-            })
+            results.append(
+                {"seed": seed, "explored": stats["tiles_explored"], "stuck": stats["got_stuck"]}
+            )
 
-        print(f"\n=== Multi-Seed Exploration ===")
+        print("\n=== Multi-Seed Exploration ===")
         for result in results:
-            print(f"Seed {result['seed']}: {result['explored']} tiles explored "
-                  f"(Stuck: {result['stuck']})")
+            print(
+                f"Seed {result['seed']}: {result['explored']} tiles explored "
+                f"(Stuck: {result['stuck']})"
+            )
 
         # No seed should get the agent stuck
-        stuck_seeds = [r['seed'] for r in results if r['stuck']]
+        stuck_seeds = [r["seed"] for r in results if r["stuck"]]
         assert len(stuck_seeds) == 0, f"Agent got stuck on seeds: {stuck_seeds}"
 
         # All seeds should allow some exploration
-        min_explored = min(r['explored'] for r in results)
-        assert min_explored >= 30, \
-            f"Minimum exploration was only {min_explored} tiles - possible map generation issue"
+        min_explored = min(r["explored"] for r in results)
+        assert (
+            min_explored >= 30
+        ), f"Minimum exploration was only {min_explored} tiles - possible map generation issue"
 
 
 if __name__ == "__main__":

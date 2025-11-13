@@ -9,11 +9,12 @@ Tests mouse and keyboard interactions with menus:
 - Hover highlighting
 """
 
-import pytest
+from unittest.mock import Mock, patch
+
 import tcod
-from unittest.mock import Mock, MagicMock, patch
-from game_menus import MainMenu, SettingsMenu
+
 from game_config import GameConfig, GameSettings
+from game_menus import MainMenu, SettingsMenu
 
 
 class TestMenuMouseInteractions:
@@ -21,9 +22,9 @@ class TestMenuMouseInteractions:
 
     def test_settings_menu_volume_click_increases(self):
         """Clicking right side of volume slider increases volume."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             settings = GameSettings()
-            settings.set_volume_percent('master', 50)
+            settings.set_volume_percent("master", 50)
 
             menu = SettingsMenu(settings)
 
@@ -31,7 +32,7 @@ class TestMenuMouseInteractions:
             # Volume bars are at content_left + 18, length 20
             # Right side = bar_x + 15 (middle is at 10)
             layout = menu._get_menu_layout_params()
-            if layout['use_background_layout']:
+            if layout["use_background_layout"]:
                 box_left = GameConfig.SCREEN_WIDTH - 32
                 bar_x = box_left + 3 + 18
             else:
@@ -56,24 +57,24 @@ class TestMenuMouseInteractions:
             assert menu.selected_option == 0  # Master Volume is first
 
             # Then click it
-            initial_volume = settings.get_volume_percent('master')
+            initial_volume = settings.get_volume_percent("master")
             menu.handle_mouse_click(event)
 
             # Volume should increase by 5%
-            assert settings.get_volume_percent('master') == initial_volume + 5
+            assert settings.get_volume_percent("master") == initial_volume + 5
 
     def test_settings_menu_volume_click_decreases(self):
         """Clicking left side of volume slider decreases volume."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             settings = GameSettings()
-            settings.set_volume_percent('master', 50)
+            settings.set_volume_percent("master", 50)
 
             menu = SettingsMenu(settings)
 
             # Create mock mouse click event on left side of volume bar
             # Must match the actual box calculation in game_menus.py
             layout = menu._get_menu_layout_params()
-            if layout['use_background_layout']:
+            if layout["use_background_layout"]:
                 box_width = 28
                 box_right = GameConfig.SCREEN_WIDTH - 2 - 3
                 box_left = box_right - box_width
@@ -109,24 +110,24 @@ class TestMenuMouseInteractions:
             assert menu.selected_option == 0  # Master Volume is first
 
             # Then click it
-            initial_volume = settings.get_volume_percent('master')
+            initial_volume = settings.get_volume_percent("master")
             menu.handle_mouse_click(event)
 
             # Volume should decrease by 5%
-            assert settings.get_volume_percent('master') == initial_volume - 5
+            assert settings.get_volume_percent("master") == initial_volume - 5
 
     def test_settings_menu_volume_respects_bounds(self):
         """Volume slider clicks respect 0-100% bounds."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             settings = GameSettings()
 
             # Test lower bound
-            settings.set_volume_percent('master', 0)
+            settings.set_volume_percent("master", 0)
             menu = SettingsMenu(settings)
 
             # Calculate bar position (must match game_menus.py)
             layout = menu._get_menu_layout_params()
-            if layout['use_background_layout']:
+            if layout["use_background_layout"]:
                 box_width = 28
                 box_right = GameConfig.SCREEN_WIDTH - 2 - 3
                 box_left = box_right - box_width
@@ -157,10 +158,10 @@ class TestMenuMouseInteractions:
             menu.handle_mouse_click(event)
 
             # Should stay at 0%
-            assert settings.get_volume_percent('master') == 0
+            assert settings.get_volume_percent("master") == 0
 
             # Test upper bound
-            settings.set_volume_percent('master', 100)
+            settings.set_volume_percent("master", 100)
             menu = SettingsMenu(settings)
 
             # Click right side when at 100%
@@ -171,11 +172,11 @@ class TestMenuMouseInteractions:
             menu.handle_mouse_click(event)
 
             # Should stay at 100%
-            assert settings.get_volume_percent('master') == 100
+            assert settings.get_volume_percent("master") == 100
 
     def test_settings_menu_toggle_click(self):
         """Clicking toggle options changes their value."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             settings = GameSettings()
             initial_mode = settings.graphics_mode
 
@@ -184,7 +185,7 @@ class TestMenuMouseInteractions:
             # Find graphics mode option (should be option 3)
             graphics_option_index = None
             for i, opt in enumerate(menu.options):
-                if opt.get('key') == 'graphics_mode':
+                if opt.get("key") == "graphics_mode":
                     graphics_option_index = i
                     break
 
@@ -193,7 +194,7 @@ class TestMenuMouseInteractions:
             # Create click event on graphics toggle
             # Calculate correct Y position based on layout
             layout = menu._get_menu_layout_params()
-            spacing = 3 if layout['use_background_layout'] else 2
+            spacing = 3 if layout["use_background_layout"] else 2
             menu_height = GameConfig.SCREEN_HEIGHT - 4  # Matches actual Settings menu height
             box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
             start_y = box_top + 5
@@ -216,7 +217,7 @@ class TestMenuMouseInteractions:
 
     def test_main_menu_mouse_hover_changes_selection(self):
         """Moving mouse over menu options changes selection."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             menu = MainMenu()
 
             initial_selection = menu.selected_option
@@ -234,7 +235,7 @@ class TestMenuMouseInteractions:
 
     def test_settings_menu_back_button_click(self):
         """Clicking Back button returns 'back' action."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             settings = GameSettings()
             menu = SettingsMenu(settings)
 
@@ -244,7 +245,7 @@ class TestMenuMouseInteractions:
             # Create click event on Back
             # Calculate correct Y position based on layout
             layout = menu._get_menu_layout_params()
-            spacing = 3 if layout['use_background_layout'] else 2
+            spacing = 3 if layout["use_background_layout"] else 2
             menu_height = GameConfig.SCREEN_HEIGHT - 4  # Matches actual Settings menu height
             box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
             start_y = box_top + 5
@@ -266,7 +267,7 @@ class TestMenuMouseInteractions:
 
     def test_menu_renders_without_crash(self):
         """Menus render without crashing."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             console = tcod.console.Console(width=80, height=50)
 
             # Test main menu
@@ -280,7 +281,7 @@ class TestMenuMouseInteractions:
 
     def test_volume_slider_visual_indicators(self):
         """Volume sliders show directional indicators."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             console = tcod.console.Console(width=80, height=50)
             settings = GameSettings()
             menu = SettingsMenu(settings)
@@ -298,35 +299,33 @@ class TestMenuKeyboardInteractions:
 
     def test_settings_menu_arrow_keys_adjust_volume(self):
         """Left/Right arrow keys adjust volume."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             settings = GameSettings()
-            settings.set_volume_percent('master', 50)
+            settings.set_volume_percent("master", 50)
 
             menu = SettingsMenu(settings)
             menu.selected_option = 0  # Master Volume
 
             # Press right arrow
             event = tcod.event.KeyDown(
-                scancode=0,
-                sym=tcod.event.KeySym.RIGHT,
-                mod=tcod.event.Modifier(0)
+                scancode=0, sym=tcod.event.KeySym.RIGHT, mod=tcod.event.Modifier(0)
             )
 
             menu.handle_input(event)
 
             # Volume should increase
-            assert settings.get_volume_percent('master') == 55
+            assert settings.get_volume_percent("master") == 55
 
             # Press left arrow
             event.sym = tcod.event.KeySym.LEFT
             menu.handle_input(event)
 
             # Volume should decrease back
-            assert settings.get_volume_percent('master') == 50
+            assert settings.get_volume_percent("master") == 50
 
     def test_settings_menu_enter_toggles_option(self):
         """Pressing Enter on toggle options changes them."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             settings = GameSettings()
             initial_mode = settings.graphics_mode
 
@@ -334,15 +333,13 @@ class TestMenuKeyboardInteractions:
 
             # Find and select graphics mode option
             for i, opt in enumerate(menu.options):
-                if opt.get('key') == 'graphics_mode':
+                if opt.get("key") == "graphics_mode":
                     menu.selected_option = i
                     break
 
             # Press Enter
             event = tcod.event.KeyDown(
-                scancode=0,
-                sym=tcod.event.KeySym.RETURN,
-                mod=tcod.event.Modifier(0)
+                scancode=0, sym=tcod.event.KeySym.RETURN, mod=tcod.event.Modifier(0)
             )
 
             menu.handle_input(event)
@@ -356,7 +353,7 @@ class TestMenuEdgeCases:
 
     def test_menu_handles_invalid_mouse_coordinates(self):
         """Menu doesn't crash with out-of-bounds mouse coordinates."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             settings = GameSettings()
             menu = SettingsMenu(settings)
 
@@ -375,7 +372,7 @@ class TestMenuEdgeCases:
 
     def test_menu_handles_missing_event_attributes(self):
         """Menu handles events with missing attributes gracefully."""
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             settings = GameSettings()
             menu = SettingsMenu(settings)
 

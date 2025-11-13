@@ -14,7 +14,6 @@ Tests:
 - No immediate crashes in core gameplay loop
 """
 
-import pytest
 from tests.test_agent import GameTestAgent
 
 
@@ -40,8 +39,8 @@ class TestFirst5MinutesSmoke:
         # Try moving in various directions
         # Note: Some moves might be blocked by walls, but should not crash
         moves_attempted = [
-            (1, 0),   # Right
-            (0, 1),   # Down
+            (1, 0),  # Right
+            (0, 1),  # Down
             (-1, 0),  # Left
             (0, -1),  # Up
         ]
@@ -93,8 +92,8 @@ class TestFirst5MinutesSmoke:
         new_state = agent.get_state()
 
         # State should have changed
-        assert new_state['turn'] > initial_state['turn']
-        assert new_state['player_pos'] != initial_state['player_pos']
+        assert new_state["turn"] > initial_state["turn"]
+        assert new_state["player_pos"] != initial_state["player_pos"]
 
     def test_player_can_wait(self):
         """Player can wait/pass turn without crashing."""
@@ -148,9 +147,10 @@ class TestFirst5MinutesSmoke:
 
             # Perform random valid action
             import random
-            action = random.choice(['move', 'wait'])
 
-            if action == 'move':
+            action = random.choice(["move", "wait"])
+
+            if action == "move":
                 dx, dy = random.choice([(1, 0), (0, 1), (-1, 0), (0, -1)])
                 try:
                     agent.move_player(dx, dy)
@@ -234,9 +234,9 @@ class TestFirst5MinutesSmoke:
 
         # Game state should be valid
         state = agent.get_state()
-        assert state['player_hp'] > 0
-        assert state['turn'] == 0
-        assert not state['game_over']
+        assert state["player_hp"] > 0
+        assert state["turn"] == 0
+        assert not state["game_over"]
 
     def test_multiple_game_instances(self):
         """Multiple game instances can coexist (for integration testing)."""
@@ -267,6 +267,6 @@ class TestFirst5MinutesSmoke:
             state_after = agent.get_state()
 
             # Verify state consistency
-            assert state_after['turn'] >= state_before['turn']
-            assert state_after['player_hp'] <= state_before['player_max_hp']
-            assert not (state_after['game_over'] and state_after['player_hp'] > 0)
+            assert state_after["turn"] >= state_before["turn"]
+            assert state_after["player_hp"] <= state_before["player_max_hp"]
+            assert not (state_after["game_over"] and state_after["player_hp"] > 0)
