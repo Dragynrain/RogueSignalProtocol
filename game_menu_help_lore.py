@@ -93,74 +93,103 @@ class LoreMenu:
             self._render_list_mode(console, discovered_fragments, discovered_count, total_count)
 
     def _render_list_mode(self, console, discovered_fragments, discovered_count, total_count):
-        """Render data fragment list."""
-        title = f"DISCOVERED DATA FRAGMENTS ({discovered_count}/{total_count})"
-        ScreenRenderingUtils.render_centered_title(console, title, 2, Colors.YELLOW)
+        """Render data fragment list - matches in-game viewer."""
+        title = f"RECOVERED DATA FRAGMENTS ({discovered_count}/{total_count})"
+        content_start_y = ScreenRenderingUtils.render_screen_header(console, title)
 
         if not discovered_fragments:
-            render_char_safe(console, 2, 5, "No data fragments discovered yet.", fg=Colors.WHITE)
-            render_char_safe(console, 2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
-            render_char_safe(
-                console, 2, GameConfig.SCREEN_HEIGHT - 2, "ESC/Right-Click: Back", fg=Colors.CYAN
+            # No fragments discovered yet - center the message (matches in-game viewer)
+            no_fragments_y = GameConfig.SCREEN_HEIGHT // 2
+            ScreenRenderingUtils.render_centered_title(
+                console, "No data fragments discovered yet.", no_fragments_y, Colors.YELLOW
             )
+            ScreenRenderingUtils.render_centered_title(
+                console,
+                "Reach the Military Network (Level 3) to find them.",
+                no_fragments_y + 2,
+                Colors.WHITE,
+            )
+            ScreenRenderingUtils.render_screen_footer(console, "ESC/Right-Click: Back")
             return
 
-        start_y = 5
+        # Show list of discovered fragments with brief previews (matches in-game viewer)
+        y_offset = content_start_y
+        max_display_height = GameConfig.SCREEN_HEIGHT - 6  # Leave room for footer
+
         for i, (fragment_index, fragment_text) in enumerate(discovered_fragments):
+            if y_offset >= max_display_height:
+                render_char_safe(
+                    console,
+                    3,
+                    y_offset,
+                    f"... and {len(discovered_fragments) - i} more fragments",
+                    fg=Colors.YELLOW,
+                )
+                break
+
             # Clamp selection
             if self.lore_viewer_selection >= len(discovered_fragments):
                 self.lore_viewer_selection = len(discovered_fragments) - 1
 
+            # Highlight selected entry
             is_selected = i == self.lore_viewer_selection
-            color = Colors.CYAN if is_selected else Colors.WHITE
-            prefix = "▶ " if is_selected else "  "
+            title_color = Colors.YELLOW if is_selected else Colors.WHITE
+            cursor = ">" if is_selected else " "
 
-            # Show first line of fragment as title
-            first_line = fragment_text.split("\n")[0][:60]
+            # Fragment title (first line of the fragment)
+            first_line = fragment_text.split("\n")[0]
+            if len(first_line) > 58:  # Leave room for cursor and number
+                first_line = first_line[:55] + "..."
+
             render_char_safe(
                 console,
                 2,
-                start_y + i,
-                f"{prefix}Fragment {fragment_index + 1}: {first_line}",
-                fg=color,
+                y_offset,
+                f"{cursor}{fragment_index + 1:2d}. {first_line}",
+                fg=title_color,
             )
+            y_offset += 1
 
-        # Instructions
-        render_char_safe(
-            console,
-            2,
-            GameConfig.SCREEN_HEIGHT - 4,
-            "↕/Wheel: Navigate │ Enter/Click: Read │ ESC/Right-Click: Back",
-            fg=Colors.LIGHT_GRAY,
+            # Brief preview (first few words of actual content)
+            content_lines = [line.strip() for line in fragment_text.split("\n") if line.strip()]
+            if len(content_lines) > 1:
+                preview = (
+                    content_lines[1][:70] + "..." if len(content_lines[1]) > 70 else content_lines[1]
+                )
+                preview_color = (200, 200, 150) if is_selected else (128, 128, 128)
+                render_char_safe(console, 6, y_offset, preview, fg=preview_color)
+                y_offset += 1
+
+            y_offset += 1  # Space between entries
+
+        ScreenRenderingUtils.render_screen_footer(
+            console, "↑↓ Navigate │ Enter: Read │ ESC/Right-Click: Back"
         )
 
     def _render_reading_mode(self, console, discovered_fragments):
-        """Render individual fragment for reading."""
+        """Render individual fragment for reading - matches in-game viewer."""
         if self.lore_viewer_selection >= len(discovered_fragments):
             self.lore_viewer_mode = "list"
             return
 
         fragment_index, fragment_text = discovered_fragments[self.lore_viewer_selection]
 
-        title = f"DATA FRAGMENT {fragment_index + 1}"
-        ScreenRenderingUtils.render_centered_title(console, title, 2, Colors.YELLOW)
+        title = f"DATA FRAGMENT #{fragment_index + 1}"
+        content_start_y = ScreenRenderingUtils.render_screen_header(console, title)
+        content_end_y = GameConfig.SCREEN_HEIGHT - 4  # Leave room for footer
 
-        # Render fragment text with word wrapping utility
+        # Render fragment text with word wrapping
         ScreenRenderingUtils.render_word_wrapped_text(
             console,
             fragment_text,
-            2,
-            5,
-            max_width=GameConfig.SCREEN_WIDTH - 4,
-            max_height=GameConfig.SCREEN_HEIGHT - 4,
+            3,
+            content_start_y,
+            max_width=GameConfig.SCREEN_WIDTH - 6,
+            max_height=content_end_y - content_start_y,
         )
 
-        render_char_safe(
-            console,
-            2,
-            GameConfig.SCREEN_HEIGHT - 2,
-            "ESC/Right-Click: Back to list │ Click/Any key: Close",
-            fg=Colors.CYAN,
+        ScreenRenderingUtils.render_screen_footer(
+            console, "ESC/Right-Click: Back to list │ Any key: Close"
         )
 
     def handle_input(self, event) -> str:

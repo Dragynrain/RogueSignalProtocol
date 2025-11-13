@@ -18,7 +18,6 @@ Architecture:
     * InventoryInputHandler: Inventory screen navigation and item use
     * LookModeInputHandler: Look mode cursor and examination
     * TargetingInputHandler: Targeting mode for exploits
-    * LoreViewerInputHandler: Story fragment navigation
     * AchievementsInputHandler: Achievement screen browsing
     * InputCoordinateConverter: Pixel-to-world coordinate conversion
 
@@ -40,9 +39,9 @@ from game_input_modals import (
     AchievementsInputHandler,
     InventoryInputHandler,
     LookModeInputHandler,
-    LoreViewerInputHandler,
     TargetingInputHandler,
 )
+from game_ui import UniversalInputHandler
 
 
 class InputMappings:
@@ -87,7 +86,6 @@ class InputHandler:
         self.inventory_handler = InventoryInputHandler(game, renderer)
         self.look_mode_handler = LookModeInputHandler(game, renderer)
         self.targeting_handler = TargetingInputHandler(game, renderer)
-        self.lore_viewer_handler = LoreViewerInputHandler(game, renderer)
         self.achievements_handler = AchievementsInputHandler(game, renderer)
 
     def handle_keydown(self, event: tcod.event.KeyDown) -> bool:
@@ -154,7 +152,19 @@ class InputHandler:
                 return True
 
         if self.game.show_lore_viewer:
-            return self._handle_lore_viewer_input(event)
+            # Delegate to lore menu's input handler (same pattern as help)
+            if self.renderer and hasattr(self.renderer, "_get_or_create_lore_menu"):
+                lore_menu = self.renderer._get_or_create_lore_menu()
+                result = lore_menu.handle_input(event)
+                if result == "back":
+                    self.game.show_lore_viewer = False
+                    self.renderer.clear_lore_menu()  # Clear menu cache
+                return True
+            else:
+                # Fallback: ESC closes lore viewer
+                if UniversalInputHandler.is_escape_key(event):
+                    self.game.show_lore_viewer = False
+                return True
 
         if self.game.show_achievements:
             return self._handle_achievements_input(event)
@@ -216,10 +226,6 @@ class InputHandler:
         """Handle input while inventory is open - delegated to InventoryInputHandler."""
         return self.inventory_handler.handle_input(event)
 
-    def _handle_lore_viewer_input(self, event) -> bool:
-        """Handle input while lore viewer is open - delegated to LoreViewerInputHandler."""
-        return self.lore_viewer_handler.handle_input(event)
-
     def _handle_achievements_input(self, event) -> bool:
         """Handle input while achievements screen is open - delegated to AchievementsInputHandler."""
         return self.achievements_handler.handle_input(event)
@@ -232,10 +238,6 @@ class InputHandler:
             else:
                 return min(list_length - 1, current_index + 1)
         return current_index
-
-    def _navigate_lore_viewer(self, direction: int):
-        """Navigate lore viewer selection - delegated to LoreViewerInputHandler."""
-        self.lore_viewer_handler.navigate(direction)
 
     def _handle_targeting_input(self, event) -> bool:
         """Handle input while in targeting mode - delegated to TargetingInputHandler."""
@@ -360,7 +362,11 @@ class InputHandler:
         elif self.game.show_inventory:
             return self._handle_inventory_mouse_motion(event)
         elif self.game.show_lore_viewer:
-            return self._handle_lore_viewer_mouse_motion(event)
+            # Delegate to lore menu's mouse handler
+            if self.renderer and hasattr(self.renderer, "_get_or_create_lore_menu"):
+                lore_menu = self.renderer._get_or_create_lore_menu()
+                return lore_menu.handle_mouse_motion(event)
+            return False
 
         # Normal gameplay: update hover position for visual feedback
         return self._handle_gameplay_mouse_motion(event)
@@ -406,7 +412,11 @@ class InputHandler:
         if self.game.show_inventory:
             return self._handle_inventory_mouse_wheel(event)
         elif self.game.show_lore_viewer:
-            return self._handle_lore_viewer_mouse_wheel(event)
+            # Delegate to lore menu's wheel handler
+            if self.renderer and hasattr(self.renderer, "_get_or_create_lore_menu"):
+                lore_menu = self.renderer._get_or_create_lore_menu()
+                return lore_menu.handle_mouse_wheel(event)
+            return False
 
         return False
 
@@ -460,7 +470,15 @@ class InputHandler:
         elif self.game.show_inventory:
             return self._handle_inventory_left_click(event)
         elif self.game.show_lore_viewer:
-            return self._handle_lore_viewer_left_click(event)
+            # Delegate to lore menu's click handler
+            if self.renderer and hasattr(self.renderer, "_get_or_create_lore_menu"):
+                lore_menu = self.renderer._get_or_create_lore_menu()
+                result = lore_menu.handle_mouse_click(event)
+                if result == "back":
+                    self.game.show_lore_viewer = False
+                    self.renderer.clear_lore_menu()
+                return True
+            return False
 
         # Check for UI button clicks (normal gameplay only)
         # These need to be checked before gameplay movement to intercept UI clicks
@@ -638,117 +656,3 @@ class InputHandler:
 
         return False
 
-    def _handle_lore_viewer_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
-        """Handle mouse motion in lore viewer - update selection.
-
-        In list mode, hovering over a fragment highlights it.
-        In reading mode, no hover effect.
-        """
-        if self.game.lore_viewer_mode != "list":
-            return False
-
-        # Fragment list starts at Y=4 (after header)
-        # Each fragment takes 3 lines (title, preview, spacer)
-
-        # Convert pixel coordinates to console tile coordinates
-        # Try to get context from renderer first, then game
-        context = None
-        if self.renderer and hasattr(self.renderer, "context"):
-            context = self.renderer.context
-        elif hasattr(self.game, "context"):
-            context = self.game.context
-        if context and hasattr(context, "sdl_window"):
-            window_w, window_h = context.sdl_window.size
-        else:
-            window_w, window_h = (800, 600)
-
-        _, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            event.position.x, event.position.y, window_w, window_h
-        )
-
-        content_start_y = 4
-        if tile_y < content_start_y:
-            return False
-
-        # Calculate which fragment was hovered
-        relative_y = tile_y - content_start_y
-        fragment_index = relative_y // 3  # Each entry is 3 lines tall
-
-        discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
-        if 0 <= fragment_index < len(discovered_fragments):
-            self.game.lore_viewer_selection = fragment_index
-            return True
-
-        return False
-
-    def _handle_lore_viewer_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
-        """Handle left click in lore viewer - select fragment or toggle mode."""
-
-        # Convert pixel coordinates to console tile coordinates
-        # Try to get context from renderer first, then game
-        context = None
-        if self.renderer and hasattr(self.renderer, "context"):
-            context = self.renderer.context
-        elif hasattr(self.game, "context"):
-            context = self.game.context
-        if context and hasattr(context, "sdl_window"):
-            window_w, window_h = context.sdl_window.size
-        else:
-            window_w, window_h = (800, 600)
-
-        _, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            event.position.x, event.position.y, window_w, window_h
-        )
-
-        if self.game.lore_viewer_mode == "list":
-            # Fragment list starts at Y=4
-            content_start_y = 4
-
-            if tile_y >= content_start_y:
-                # Calculate which fragment was clicked
-                relative_y = tile_y - content_start_y
-                fragment_index = relative_y // 3  # Each entry is 3 lines tall
-
-                discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
-                if 0 <= fragment_index < len(discovered_fragments):
-                    # Select this fragment
-                    self.game.lore_viewer_selection = fragment_index
-                    # Enter reading mode (same as pressing Enter)
-                    self.game.lore_viewer_mode = "reading"
-                    logging.debug(
-                        f"Input: Lore viewer left-click opening fragment {fragment_index}"
-                    )
-                    return True
-
-            # Clicked on blank space - consume the event to prevent menu exit
-            return True
-
-        elif self.game.lore_viewer_mode == "reading":
-            # Any click in reading mode returns to list view
-            self.game.lore_viewer_mode = "list"
-            logging.debug("Input: Lore viewer left-click returning to list mode")
-            return True
-
-        # Shouldn't reach here, but consume event just in case
-        return True
-
-    def _handle_lore_viewer_mouse_wheel(self, event: tcod.event.MouseWheel) -> bool:
-        """Handle mouse wheel in lore viewer - scroll through fragments."""
-        if self.game.lore_viewer_mode != "list":
-            return False
-
-        discovered_fragments = self.game.story_fragment_manager.get_discovered_fragments()
-        if not discovered_fragments:
-            return False
-
-        if event.y > 0:
-            # Scroll up (previous fragment)
-            self.game.lore_viewer_selection = max(0, self.game.lore_viewer_selection - 1)
-            return True
-        elif event.y < 0:
-            # Scroll down (next fragment)
-            max_index = len(discovered_fragments) - 1
-            self.game.lore_viewer_selection = min(max_index, self.game.lore_viewer_selection + 1)
-            return True
-
-        return False

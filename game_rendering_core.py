@@ -76,6 +76,9 @@ class GameRenderer:
         self._active_help_menu = None
         self._help_menu_graphics_mode = None
 
+        # Lore menu management (lazily created, cached here)
+        self._active_lore_menu = None
+
     def _get_or_create_help_menu(self):
         """
         Get or create help menu, caching it at orchestration layer.
@@ -111,6 +114,25 @@ class GameRenderer:
         """Clear cached help menu when exiting help screen."""
         self._active_help_menu = None
         self._help_menu_graphics_mode = None
+
+    def _get_or_create_lore_menu(self):
+        """
+        Get or create lore menu, caching it at orchestration layer.
+
+        Returns:
+            LoreMenu instance (cached)
+        """
+        if self._active_lore_menu is None:
+            from game_menu_help_lore import LoreMenu
+
+            self._active_lore_menu = LoreMenu()
+            logging.info("Created lore menu")
+
+        return self._active_lore_menu
+
+    def clear_lore_menu(self):
+        """Clear cached lore menu when exiting lore screen."""
+        self._active_lore_menu = None
 
     def _is_graphics_mode_available(self) -> bool:
         """
@@ -159,7 +181,9 @@ class GameRenderer:
         # Main game screen handles clearing differently for graphics vs glyph mode
         if game.show_lore_viewer:
             console.clear()
-            self.ui_renderer.render_lore_viewer_screen(console, game)
+            # Use LoreMenu for rendering (same as main menu)
+            lore_menu = self._get_or_create_lore_menu()
+            lore_menu.render(console)
         elif game.show_help:
             console.clear()
             # Create/cache help menu at orchestration layer, pass to renderer
@@ -263,10 +287,9 @@ class GameRenderer:
 
             # Render UI panels - we'll set their alpha explicitly after
             self.ui_renderer.render_top_status_bar(console, game)
-            self.ui_renderer.render_info_panel(console, game)
+            self.ui_renderer.render_info_panel(console, game)  # Handles both hover and look mode
             self.ui_renderer.render_bottom_panel(console, game)
             self.ui_renderer.render_system_log(console, game)
-            self.ui_renderer.render_inspection_panel(console, game)
 
             # Set UI panel areas back to opaque using CoordinateHelpers
             panel_y = GameConfig.PANEL_Y()
@@ -335,10 +358,9 @@ class GameRenderer:
 
             self.ui_renderer.render_top_status_bar(console, game)
             self.glyphs_renderer.render_map(console, game)
-            self.ui_renderer.render_info_panel(console, game)
+            self.ui_renderer.render_info_panel(console, game)  # Handles both hover and look mode
             self.ui_renderer.render_bottom_panel(console, game)
             self.ui_renderer.render_system_log(console, game)
-            self.ui_renderer.render_inspection_panel(console, game)
 
             # Check for pending death dialogue (deferred to allow damage messages to render first)
             if hasattr(game, "pending_death_dialogue") and game.pending_death_dialogue:

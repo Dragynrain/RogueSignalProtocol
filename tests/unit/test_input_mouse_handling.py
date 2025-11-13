@@ -397,22 +397,25 @@ class TestMouseWheelHandlers:
         """Test that mouse wheel scrolls lore viewer."""
         game = create_mock_game()
         game.show_lore_viewer = True
-        game.lore_viewer_mode = "list"
-        game.lore_viewer_selection = 0
-        game.story_fragment_manager.get_discovered_fragments = Mock(
-            return_value=["fragment1", "fragment2", "fragment3"]
-        )
 
-        handler = InputHandler(game)
+        # Mock renderer with lore menu that handles mouse wheel
+        mock_lore_menu = Mock()
+        mock_lore_menu.handle_mouse_wheel = Mock(return_value=True)
+
+        mock_renderer = Mock()
+        mock_renderer._get_or_create_lore_menu = Mock(return_value=mock_lore_menu)
+
+        handler = InputHandler(game, mock_renderer)
 
         # Mock mouse wheel event (scroll down)
         event = Mock()
         event.y = -1
 
-        handler._handle_lore_viewer_mouse_wheel(event)
+        result = handler.handle_mouse_wheel(event)
 
-        # Selection should increase
-        assert game.lore_viewer_selection > 0
+        # Verify lore menu's handle_mouse_wheel was called
+        assert result is True
+        mock_lore_menu.handle_mouse_wheel.assert_called_once_with(event)
 
     def test_mouse_wheel_no_crash_with_empty_inventory(self):
         """Test that mouse wheel doesn't crash with empty inventory."""
@@ -536,16 +539,24 @@ class TestMouseWheelIntegration:
         game = create_mock_game()
         game.show_lore_viewer = True
         game.show_inventory = False
-        game.story_fragment_manager.get_discovered_fragments = Mock(return_value=["frag"])
 
-        handler = InputHandler(game)
+        # Mock renderer with lore menu
+        mock_lore_menu = Mock()
+        mock_lore_menu.handle_mouse_wheel = Mock(return_value=True)
+
+        mock_renderer = Mock()
+        mock_renderer._get_or_create_lore_menu = Mock(return_value=mock_lore_menu)
+
+        handler = InputHandler(game, mock_renderer)
 
         event = Mock(spec=tcod.event.MouseWheel)
         event.y = -1
 
-        with patch.object(handler, "_handle_lore_viewer_mouse_wheel") as mock_handler:
-            handler.handle_mouse_wheel(event)
-            mock_handler.assert_called_once()
+        result = handler.handle_mouse_wheel(event)
+
+        # Verify lore menu's handle_mouse_wheel was called
+        assert result is True
+        mock_lore_menu.handle_mouse_wheel.assert_called_once_with(event)
 
 
 class TestEdgeCasesAndErrorHandling:

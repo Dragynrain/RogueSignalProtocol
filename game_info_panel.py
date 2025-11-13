@@ -40,15 +40,17 @@ class InfoProvider:
         game, mouse_tile_x: int | None, mouse_tile_y: int | None
     ) -> dict[str, Any] | None:
         """
-        Get information for the currently hovered element.
+        Get information for the currently hovered element or look mode cursor.
 
         Priority order:
-        1. UI elements (exploit bar, inventory items)
-        2. Enemies in viewport
-        3. Items in viewport (code hacks, exploits, upgrades)
-        4. Special nodes (gateway, cooling, CPU, ghost)
-        5. Terrain (wall, blind spot, floor)
-        6. Default info (turn counter, time, streak)
+        1. Inventory selection (keyboard or mouse)
+        2. Look mode cursor (keyboard-based inspection)
+        3. UI elements (exploit bar hover)
+        4. Mouse hover over enemies/items/nodes/terrain in viewport
+        5. Default info (level, turns, enemies, streaks)
+
+        Look mode and mouse hover use the same entity inspection system,
+        ensuring consistent information display regardless of input method.
 
         Args:
             game: GameEngine instance
@@ -64,11 +66,33 @@ class InfoProvider:
             if inventory_info is not None:
                 return inventory_info
 
-        # For other info, we need valid mouse coordinates
+        # Priority 1: Check look mode cursor (keyboard-based inspection)
+        # Look mode takes precedence over mouse hover to ensure consistent behavior
+        if hasattr(game, "look_mode") and game.look_mode:
+            if hasattr(game, "look_cursor_position") and game.look_cursor_position is not None:
+                position = game.look_cursor_position
+
+                from game_inspection import EntityInspector
+
+                # Only show info for tiles that are visible or explored
+                pos_tuple = (position.x, position.y)
+                is_visible = hasattr(game, "visible_tiles") and pos_tuple in game.visible_tiles
+                is_explored = (
+                    hasattr(game.game_map, "explored_tiles")
+                    and pos_tuple in game.game_map.explored_tiles
+                )
+
+                if is_visible or is_explored:
+                    # Get entity at position using existing inspector
+                    entity_info = EntityInspector.get_entity_at_position(game, position)
+                    # Format for info panel display
+                    return InfoProvider._format_entity_info(game, entity_info)
+
+        # For mouse hover info, we need valid mouse coordinates
         if mouse_tile_x is None or mouse_tile_y is None:
             return None
 
-        # Priority 1: Check if hovering over exploit bar (bottom panel)
+        # Priority 2: Check if hovering over exploit bar (bottom panel)
         if mouse_tile_y >= GameConfig.PANEL_Y():
             exploit_info = InfoProvider._get_exploit_bar_hover(game, mouse_tile_x, mouse_tile_y)
             if exploit_info is not None:

@@ -208,6 +208,8 @@ def handle_menu_navigation(
 
         if graphics_available:
             # Graphics mode: render everything through SDL
+            # CRITICAL: Set draw color to BLACK before clear() to avoid white background
+            context.sdl_renderer.draw_color = (0, 0, 0, 255)
             context.sdl_renderer.clear()
 
             # Render background graphics to SDL first (if menu has background)
@@ -427,6 +429,10 @@ def handle_menu_navigation(
                 elif action == "new_game":
                     # Stop any music for new game - fresh start
                     menu_sound_manager.stop_music(fade_out_ms=1000)
+                    # Clear any pending achievement popups from previous game
+                    from game_achievements import AchievementManager
+
+                    AchievementManager.clear_pending_popups()
                     game = GameEngine(settings=settings)
                     return game, False
 
@@ -613,6 +619,10 @@ def handle_menu_navigation(
                 elif action == "new_game":
                     # Stop any music for new game - fresh start
                     menu_sound_manager.stop_music(fade_out_ms=1000)
+                    # Clear any pending achievement popups from previous game
+                    from game_achievements import AchievementManager
+
+                    AchievementManager.clear_pending_popups()
                     game = GameEngine(settings=settings)
                     return game, False
 
@@ -637,6 +647,9 @@ def handle_game_input_events(event, game, input_handler):
         should_continue = input_handler.handle_mouse_click(event)
         if should_continue is not None and not should_continue:
             # Death/victory dialogue was dismissed with click - return to main menu
+            from game_achievements import AchievementManager
+
+            AchievementManager.clear_pending_popups()
             return True, None
     elif event.type == "MOUSEWHEEL":
         # Handle mouse wheel events (scrolling)
@@ -648,6 +661,9 @@ def handle_game_input_events(event, game, input_handler):
                 should_continue = input_handler._handle_dialogue_dismiss()
                 if not should_continue:
                     # Death/victory dialogue wants to exit to menu
+                    from game_achievements import AchievementManager
+
+                    AchievementManager.clear_pending_popups()
                     return True, None
                 return True, game
             # Check if any UI states are open - close those first
@@ -672,11 +688,17 @@ def handle_game_input_events(event, game, input_handler):
                 # No UI states open, auto-save and go to main menu
                 game.auto_save()
                 # Don't stop level music - let it continue playing in the menu
+                from game_achievements import AchievementManager
+
+                AchievementManager.clear_pending_popups()
                 return True, None  # Return to main menu
         else:
             should_continue = input_handler.handle_keydown(event)
             if not should_continue:
                 # Player is dead and pressed ESC - return to main menu
+                from game_achievements import AchievementManager
+
+                AchievementManager.clear_pending_popups()
                 return True, None
     return True, game
 
@@ -811,6 +833,8 @@ def main():
 
                             if graphics_available:
                                 # Graphics mode: render everything through SDL (same as main menu)
+                                # CRITICAL: Set draw color to BLACK before clear() to avoid white background
+                                context.sdl_renderer.draw_color = (0, 0, 0, 255)
                                 context.sdl_renderer.clear()
 
                                 # Render background graphics to SDL
@@ -839,12 +863,18 @@ def main():
                                     logging.info(
                                         "Victory screen dismissed - returning to main menu"
                                     )
+                                    from game_achievements import AchievementManager
+
+                                    AchievementManager.clear_pending_popups()
                                     victory_background.cleanup()
                                     game = None
                                     break
                         except Exception as e:
                             log_exception(e, "Victory screen rendering/input")
                             # On error, return to main menu
+                            from game_achievements import AchievementManager
+
+                            AchievementManager.clear_pending_popups()
                             if victory_background:
                                 victory_background.cleanup()
                             game = None
