@@ -255,10 +255,6 @@ class InputHandler:
         """Use the currently selected item - delegated to InventoryInputHandler."""
         self.inventory_handler.use_selected_item()
 
-    def _unequip_selected_exploit(self):
-        """Unequip the specifically selected exploit - delegated to InventoryInputHandler."""
-        self.inventory_handler.unequip_selected_exploit()
-
     def _open_inventory(self):
         """Open the inventory screen - delegated to InventoryInputHandler."""
         logging.debug("Input: Opening inventory")

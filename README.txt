@@ -50,8 +50,7 @@ ACTIONS:
 
 INVENTORY CONTROLS:
   Up/Down   - Navigate items
-  Enter     - Use/equip selected item
-  U         - Unequip selected exploit
+  Enter     - Use/equip/unequip selected item
   I / ESC   - Close inventory
 
 MOUSE CONTROLS:
