@@ -52,8 +52,7 @@ You can use any of the following control schemes:
 | Key | Action | Description |
 |-----|--------|-------------|
 | **Up/Down** | Navigate | Scroll through items in inventory |
-| **Enter** | Use/Equip | Activate selected item or equip exploit |
-| **U** | Unequip | Unequip the selected exploit |
+| **Enter** | Use/Equip/Unequip | Activate selected item, equip, or unequip exploit |
 | **I** / **ESC** | Close | Exit inventory screen |
 
 ## Mouse Controls

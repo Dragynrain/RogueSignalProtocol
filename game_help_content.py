@@ -107,8 +107,7 @@ class HelpContent:
             ],
             "inventory": [
                 ("Up/Down", "Navigate items"),
-                ("Enter", "Use/Equip selected"),
-                ("U", "Unequip exploit"),
+                ("Enter", "Use/Equip/Unequip"),
                 ("I/ESC", "Close inventory"),
             ],
             "mouse": [

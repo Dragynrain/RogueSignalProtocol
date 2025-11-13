@@ -73,8 +73,7 @@ Navigate through 3 increasingly dangerous network levels, reach the gateway (>) 
 - **Exploits**: 1-5 keys to use equipped exploits
 - **Inventory**: I key to manage codes and exploits
   - Up/Down: Navigate items
-  - Enter: Use/equip selected item
-  - U: Unequip selected exploit
+  - Enter: Use/equip/unequip selected item
   - I/ESC: Close inventory
 - **Look Mode**: L key to examine entities and terrain
 - **Lore Fragments**: F key to view discovered story fragments

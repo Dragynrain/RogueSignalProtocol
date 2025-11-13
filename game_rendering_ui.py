@@ -556,7 +556,7 @@ class UIRenderer:
         """
         Render inventory screen controls at the bottom.
 
-        Shows available actions: equip, unequip, install, use, drop, and close.
+        Shows available actions: equip, unequip, install, use, and close.
 
         Args:
             console: TCOD console to render to
@@ -565,13 +565,10 @@ class UIRenderer:
 
         render_char_safe(console, 2, y_start, "CONTROLS:", fg=Colors.CYAN)
         render_char_safe(
-            console, 4, y_start + 1, "↑↓/W/S: Navigate │ Enter/Click: Use/Unequip", fg=Colors.WHITE
+            console, 4, y_start + 1, "↑↓/W/S: Navigate │ Enter/Click: Use/Equip/Unequip", fg=Colors.WHITE
         )
         render_char_safe(
-            console, 4, y_start + 2, "U: Unequip (same as clicking equipped)", fg=Colors.WHITE
-        )
-        render_char_safe(
-            console, 4, y_start + 3, "ESC/I/Right-Click: Close inventory", fg=Colors.WHITE
+            console, 4, y_start + 2, "ESC/I/Right-Click: Close inventory", fg=Colors.WHITE
         )
 
     @staticmethod

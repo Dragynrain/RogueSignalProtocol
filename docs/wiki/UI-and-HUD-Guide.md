@@ -340,8 +340,7 @@ attack protocols.
 
 **Navigation:**
 - Up/Down to navigate
-- Enter to use/equip
-- U to unequip
+- Enter to use/equip/unequip
 - I/ESC to close
 
 ---
