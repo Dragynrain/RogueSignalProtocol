@@ -208,11 +208,15 @@ class MenuRenderingUtils:
                         (0, 0, 0, 0),  # Transparent background
                     )
 
-            # Right 40%: Clear for text menu (opaque)
+            # Right 40%: Clear for text menu (opaque with explicit alpha = 255)
             # Menu boxes are positioned to start at graphics_boundary or later
             for y in range(console.height):
                 for x in range(graphics_boundary, console.width):
-                    render_char_safe(console, x, y, " ", fg=(255, 255, 255), bg=(0, 0, 0))
+                    console.rgba[y, x] = (
+                        ord(" "),  # Empty character
+                        (255, 255, 255, 255),  # Opaque foreground
+                        (0, 0, 0, 255),  # Opaque BLACK background
+                    )
         else:
             # ASCII mode: clear entire console
             console.clear()
