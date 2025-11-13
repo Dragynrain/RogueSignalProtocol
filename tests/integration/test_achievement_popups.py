@@ -4,18 +4,15 @@ Integration tests for achievement popup system.
 Tests popup rendering, auto-dismiss, and integration with achievement manager.
 """
 
-import pytest
 import time
-import tcod.console
 
-from game_achievement_popups import (
-    AchievementPopupManager, AchievementPopup,
-    get_popup_duration
-)
-from game_achievements import AchievementManager, ALL_ACHIEVEMENTS
+import pytest
 
+from game_achievement_popups import AchievementPopup, AchievementPopupManager, get_popup_duration
+from game_achievements import ALL_ACHIEVEMENTS, AchievementManager
 
 # Note: clean_achievement_state and test_console fixtures now available from conftest.py
+
 
 @pytest.fixture
 def popup_manager():
@@ -26,6 +23,7 @@ def popup_manager():
 # ============================================================================
 # Popup Manager Tests
 # ============================================================================
+
 
 def test_popup_manager_initialization(popup_manager):
     """Test popup manager starts with no active popup."""
@@ -113,6 +111,7 @@ def test_render_no_active_popup(popup_manager, test_console):
 # Integration with AchievementManager
 # ============================================================================
 
+
 def test_integration_with_achievement_manager(clean_achievement_state, popup_manager):
     """Test popup manager integrates with achievement manager."""
     # Queue achievements in the manager
@@ -132,9 +131,7 @@ def test_popup_data_structure():
     """Test AchievementPopup data structure."""
     achievement = ALL_ACHIEVEMENTS["first_blood"]
     popup = AchievementPopup(
-        achievement_id="first_blood",
-        achievement=achievement,
-        timestamp=time.time()
+        achievement_id="first_blood", achievement=achievement, timestamp=time.time()
     )
 
     assert popup.achievement_id == "first_blood"
@@ -148,7 +145,7 @@ def test_popup_should_dismiss_after_duration():
     popup = AchievementPopup(
         achievement_id="first_blood",
         achievement=achievement,
-        timestamp=time.time() - get_popup_duration() - 1.0
+        timestamp=time.time() - get_popup_duration() - 1.0,
     )
 
     assert popup.should_dismiss()
@@ -160,9 +157,7 @@ def test_popup_alpha_fade():
     timestamp = time.time()
 
     popup = AchievementPopup(
-        achievement_id="first_blood",
-        achievement=achievement,
-        timestamp=timestamp
+        achievement_id="first_blood", achievement=achievement, timestamp=timestamp
     )
 
     # Just created - should be fading in or fully visible
@@ -179,15 +174,14 @@ def test_popup_alpha_fade():
 # End-to-End Workflow
 # ============================================================================
 
+
 def test_full_workflow(clean_achievement_state, popup_manager, test_console):
     """Test full workflow: achievement unlock -> popup display -> dismiss."""
     # Step 1: Unlock achievement via manager
     from game_metrics import SessionMetrics
+
     session = SessionMetrics(
-        session_id="test",
-        timestamp_start=1000.0,
-        victory=True,
-        turns_taken=85
+        session_id="test", timestamp_start=1000.0, victory=True, turns_taken=85
     )
     session.enemies_killed["virus"] = 1
 

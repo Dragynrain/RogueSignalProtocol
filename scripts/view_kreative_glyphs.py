@@ -10,9 +10,11 @@ Controls:
   Home/End - Jump to start/end
   ESC/Q - Exit
 """
+
+import ctypes
+
 import freetype
 import tcod
-import ctypes
 
 # Set DPI awareness first
 try:
@@ -37,6 +39,7 @@ UNICODE_RANGES = [
     (0x2700, 0x27BF, "Dingbats"),
 ]
 
+
 def get_available_glyphs():
     """Scan KreativeSquare font and return ONLY glyphs that actually exist (no blanks)."""
     face = freetype.Face("KreativeSquare.ttf")
@@ -58,6 +61,7 @@ def get_available_glyphs():
 
     return available
 
+
 def main():
     print("=" * 80)
     print("KREATIVE SQUARE GLYPH VIEWER")
@@ -78,7 +82,7 @@ def main():
     glyphs_per_row = 8
     rows_visible = 20
     console_width = glyphs_per_row * 6  # Each glyph takes 6 columns (glyph + code)
-    console_height = rows_visible + 2   # +2 for header and footer
+    console_height = rows_visible + 2  # +2 for header and footer
 
     # Calculate window size
     pixel_width = console_width * tileset.tile_width
@@ -99,7 +103,7 @@ def main():
         title="KreativeSquare Glyph Reference (64x64)",
         vsync=True,
         width=pixel_width,
-        height=pixel_height
+        height=pixel_height,
     ) as context:
         console = tcod.console.Console(console_width, console_height)
 
@@ -163,6 +167,7 @@ def main():
                         scroll_offset = max_scroll
 
     print("\nViewer closed.")
+
 
 if __name__ == "__main__":
     main()

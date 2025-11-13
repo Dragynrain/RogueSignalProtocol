@@ -6,9 +6,10 @@ For complex scenarios, use standard_patterns.py instead.
 """
 
 from unittest.mock import Mock
-from game_engine import GameEngine
+
 from game_config import GameSettings
-from game_entities import Position, EnemyState
+from game_engine import GameEngine
+from game_entities import EnemyState, Position
 from tests.fixtures.real_game_data import create_real_enemy
 from tests.fixtures.simple_fixtures import player
 
@@ -50,8 +51,8 @@ def quick_engine(**kwargs):
         # ... test logic
     """
     defaults = {
-        'settings': silent_settings(),
-        'load_save': False,
+        "settings": silent_settings(),
+        "load_save": False,
     }
     defaults.update(kwargs)
 
@@ -186,9 +187,9 @@ def map_with_features(width=30, height=30, **features):
     return map_builder(
         width=width,
         height=height,
-        walls=features.get('walls'),
-        shadows=features.get('shadows'),
-        cooling_nodes=features.get('cooling_nodes'),
-        cpu_nodes=features.get('cpu_nodes'),
-        ghost_nodes=features.get('ghost_nodes')
+        walls=features.get("walls"),
+        shadows=features.get("shadows"),
+        cooling_nodes=features.get("cooling_nodes"),
+        cpu_nodes=features.get("cpu_nodes"),
+        ghost_nodes=features.get("ghost_nodes"),
     )

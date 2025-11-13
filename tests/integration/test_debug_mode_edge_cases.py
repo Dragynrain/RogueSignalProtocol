@@ -7,10 +7,8 @@ Tests debug export functionality in various game states and edge cases:
 - Error handling for debug operations
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-from tests.test_agent import GameTestAgent
 from game_entities import EnemyState
+from tests.test_agent import GameTestAgent
 
 
 class TestDebugExportGameStates:
@@ -94,11 +92,9 @@ class TestDebugExportGameStates:
 
         # Fill inventory with items (using inventory manager)
         for i in range(50):
-            agent.player.inventory_manager.items.append({
-                "id": f"item_{i}",
-                "name": f"Test Item {i}",
-                "type": "code_hack"
-            })
+            agent.player.inventory_manager.items.append(
+                {"id": f"item_{i}", "name": f"Test Item {i}", "type": "code_hack"}
+            )
 
         # Large inventory should be captured
         assert len(agent.player.inventory_manager.items) >= 50

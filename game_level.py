@@ -25,20 +25,20 @@ The LevelGenerator now coordinates specialized subsystems:
 - TilePlacementGenerator: Special tiles and gateway placement
 """
 
-import random
 import logging
-from typing import List, Tuple
+import random
+
+from game_characters import PathfindingHelper
 
 # Import required classes and configs
 from game_config import GameConfig
 from game_entities import Position
-from game_characters import PathfindingHelper
-
-# Import specialized level generation subsystems
-from game_level_structure import RoomGenerator, BSPRoomGenerator, CorridorGenerator
-from game_level_tactical import TacticalGenerator
 from game_level_layout import AdvancedLayoutGenerator
 from game_level_placement import TilePlacementGenerator
+
+# Import specialized level generation subsystems
+from game_level_structure import BSPRoomGenerator, CorridorGenerator, RoomGenerator
+from game_level_tactical import TacticalGenerator
 
 
 class LevelGenerator:
@@ -105,7 +105,7 @@ class LevelGenerator:
             self.corridor_tiles,
             self.room_generator,
             self.corridor_generator,
-            self.tactical_generator
+            self.tactical_generator,
         )
 
     def generate_level(self, level: int, seed: int) -> None:
@@ -125,11 +125,13 @@ class LevelGenerator:
         """
         logging.debug(f"Level Gen: === Level {level} Generation START (seed={seed}) ===")
         import time
+
         start_time = time.time()
 
         # Seed both Python random (for legacy code) and TCOD random (for new code)
         random.seed(seed + level)
         from game_level_structure import seed_rng
+
         seed_rng(seed + level)
 
         # Clear existing level data
@@ -140,7 +142,7 @@ class LevelGenerator:
 
         # Place special tiles and items
         # Pass landmark rooms for objective-oriented placement
-        landmark_rooms = getattr(self, '_landmark_rooms', [])
+        landmark_rooms = getattr(self, "_landmark_rooms", [])
         self.placement_generator.place_special_tiles(level, landmark_rooms=landmark_rooms)
 
         # Use strategic gateway placement
@@ -151,17 +153,21 @@ class LevelGenerator:
         gateway_pos = self.game_map.gateway
 
         if not self._validate_gateway_reachability(spawn_pos, gateway_pos):
-            logging.error(f"Level Gen: CRITICAL - Gateway at {gateway_pos} is NOT reachable from spawn {spawn_pos}!")
+            logging.error(
+                f"Level Gen: CRITICAL - Gateway at {gateway_pos} is NOT reachable from spawn {spawn_pos}!"
+            )
             self._fix_unreachable_gateway(level, seed, spawn_pos, gateway_pos)
 
         # Final invalidation to ensure FOV calculations use the correct wall layout
         self.game_map.invalidate_transparency_cache()
 
         generation_time = time.time() - start_time
-        rooms_count = len(getattr(self, 'last_generated_rooms', []))
+        rooms_count = len(getattr(self, "last_generated_rooms", []))
         corridor_count = len(self.corridor_tiles)
 
-        logging.debug(f"Level Gen: Level {level} complete in {generation_time:.3f}s: rooms={rooms_count}, corridor_tiles={corridor_count}")
+        logging.debug(
+            f"Level Gen: Level {level} complete in {generation_time:.3f}s: rooms={rooms_count}, corridor_tiles={corridor_count}"
+        )
 
     def _clear_level_data(self) -> None:
         """Clear all existing level data."""
@@ -214,60 +220,66 @@ class LevelGenerator:
             logging.debug(f"Level Gen: Phase 1 complete: {len(rooms)} rooms created")
 
         # PHASE 3: Identify hub rooms before connecting
-        logging.debug(f"Level Gen: Phase 2 - Identifying hub rooms")
+        logging.debug("Level Gen: Phase 2 - Identifying hub rooms")
         hub_rooms = self.advanced_generator.identify_hub_rooms(rooms)
         logging.debug(f"Level Gen: Identified {len(hub_rooms)} hub rooms")
 
         # PHASE 2: Connect rooms (BSP tree-based or MST)
         if self.use_bsp:
-            logging.debug(f"Level Gen: Phase 2 - Connecting rooms via BSP tree")
+            logging.debug("Level Gen: Phase 2 - Connecting rooms via BSP tree")
             self.room_generator.connect_bsp_rooms(self.corridor_generator)
-            logging.debug(f"Level Gen: Phase 2 complete: {len(self.corridor_tiles)} corridor tiles created (BSP)")
+            logging.debug(
+                f"Level Gen: Phase 2 complete: {len(self.corridor_tiles)} corridor tiles created (BSP)"
+            )
         else:
-            logging.debug(f"Level Gen: Phase 2 - Connecting rooms with MST")
+            logging.debug("Level Gen: Phase 2 - Connecting rooms with MST")
             self.corridor_generator.connect_rooms_mst(rooms)
-            logging.debug(f"Level Gen: Phase 2 complete: {len(self.corridor_tiles)} corridor tiles created (MST)")
+            logging.debug(
+                f"Level Gen: Phase 2 complete: {len(self.corridor_tiles)} corridor tiles created (MST)"
+            )
 
         # Add extra paths for multiple routes (good for stealth) - works for both BSP and traditional
         self.corridor_generator.add_extra_paths(rooms)
-        logging.debug(f"Level Gen: Added extra paths for routing options")
+        logging.debug("Level Gen: Added extra paths for routing options")
 
         # PHASE 3: Create looping paths for better stealth options
-        logging.debug(f"Level Gen: Phase 3 - Creating looping paths")
+        logging.debug("Level Gen: Phase 3 - Creating looping paths")
         self.advanced_generator.create_looping_paths(rooms)
 
         # PHASE 3: Connect hub rooms to create hub-and-spoke pattern
         self.advanced_generator.connect_hub_rooms(hub_rooms, rooms)
 
         # PHASE 5: Create choke points along critical path
-        logging.debug(f"Level Gen: Phase 3 - Creating choke points")
+        logging.debug("Level Gen: Phase 3 - Creating choke points")
         self.tactical_generator.create_choke_points(rooms)
 
         # PHASE 4: Create landmark rooms
-        logging.debug(f"Level Gen: Phase 4 - Creating landmark rooms")
+        logging.debug("Level Gen: Phase 4 - Creating landmark rooms")
         landmark_rooms = self.advanced_generator.create_landmark_rooms(level, rooms)
         # Store for later use in special tile placement
         self._landmark_rooms = landmark_rooms
-        logging.debug(f"Level Gen: Created {len(landmark_rooms)} landmark rooms: {[lm['type'] for lm in landmark_rooms]}")
+        logging.debug(
+            f"Level Gen: Created {len(landmark_rooms)} landmark rooms: {[lm['type'] for lm in landmark_rooms]}"
+        )
 
         # Add alcoves to corridors for stealth hiding spots
-        logging.debug(f"Level Gen: Phase 4 - Adding corridor alcoves")
+        logging.debug("Level Gen: Phase 4 - Adding corridor alcoves")
         self.corridor_generator.add_corridor_alcoves()
 
         # PHASE 4: Create T-junctions and 4-way intersections
         self.corridor_generator.create_corridor_intersections()
 
         # Add strategic cover elements in open areas
-        logging.debug(f"Level Gen: Phase 4 - Adding cover elements")
+        logging.debug("Level Gen: Phase 4 - Adding cover elements")
         self.tactical_generator.add_cover_elements_new()
 
         # PHASE 3: Create blind spot zones first
-        logging.debug(f"Level Gen: Phase 5 - Creating blind spot zones")
+        logging.debug("Level Gen: Phase 5 - Creating blind spot zones")
         blind_spot_zone_rooms = self.advanced_generator.create_blind_spot_zones(rooms)
         logging.debug(f"Level Gen: Created {len(blind_spot_zone_rooms)} blind spot zone rooms")
 
         # Add blind spot areas for stealth gameplay (with blind spot zones)
-        logging.debug(f"Level Gen: Phase 5 - Placing blind spot areas")
+        logging.debug("Level Gen: Phase 5 - Placing blind spot areas")
         self.tactical_generator.place_blind_spot_areas(level, rooms, blind_spot_zone_rooms)
         logging.debug(f"Level Gen: Placed {len(self.game_map.blind_spots)} blind spot tiles")
 
@@ -282,7 +294,9 @@ class LevelGenerator:
         self.tactical_generator.cleanup_invalid_shadows()
         after_cleanup = len(self.game_map.blind_spots)
         if before_cleanup != after_cleanup:
-            logging.debug(f"Level Gen: Shadow cleanup removed {before_cleanup - after_cleanup} invalid shadows")
+            logging.debug(
+                f"Level Gen: Shadow cleanup removed {before_cleanup - after_cleanup} invalid shadows"
+            )
 
         # Ensure border walls are intact
         self.placement_generator.ensure_border_walls_new()
@@ -318,14 +332,20 @@ class LevelGenerator:
         path = PathfindingHelper.calculate_simple_path(spawn_pos, gateway_pos, cost_map)
 
         if path is None or len(path) == 0:
-            logging.error(f"Level Gen: Pathfinding returned empty path from {spawn_pos} to {gateway_pos}")
+            logging.error(
+                f"Level Gen: Pathfinding returned empty path from {spawn_pos} to {gateway_pos}"
+            )
             return False
 
         path_length = len(path)
-        logging.debug(f"Level Gen: Gateway reachability validated - path length={path_length} tiles")
+        logging.debug(
+            f"Level Gen: Gateway reachability validated - path length={path_length} tiles"
+        )
         return True
 
-    def _fix_unreachable_gateway(self, level: int, seed: int, spawn_pos: Position, gateway_pos: Position) -> None:
+    def _fix_unreachable_gateway(
+        self, level: int, seed: int, spawn_pos: Position, gateway_pos: Position
+    ) -> None:
         """
         Fix an unreachable gateway by carving a deterministic emergency corridor.
 
@@ -343,14 +363,20 @@ class LevelGenerator:
         import numpy as np
 
         # Carve emergency corridor (deterministic approach)
-        logging.warning(f"Level Gen: Gateway at {gateway_pos} unreachable! Carving emergency corridor...")
+        logging.warning(
+            f"Level Gen: Gateway at {gateway_pos} unreachable! Carving emergency corridor..."
+        )
         final_gateway = self.game_map.gateway
 
         # Use PathfindingHelper to get path treating walls as walkable
         # Create cost map where everything is walkable (we'll carve through walls)
-        cost_map_all_walkable = np.ones((GameConfig.MAP_HEIGHT, GameConfig.MAP_WIDTH), dtype=np.uint8, order="F")
+        cost_map_all_walkable = np.ones(
+            (GameConfig.MAP_HEIGHT, GameConfig.MAP_WIDTH), dtype=np.uint8, order="F"
+        )
 
-        emergency_path = PathfindingHelper.calculate_simple_path(spawn_pos, final_gateway, cost_map_all_walkable)
+        emergency_path = PathfindingHelper.calculate_simple_path(
+            spawn_pos, final_gateway, cost_map_all_walkable
+        )
 
         if emergency_path is not None and len(emergency_path) > 0:
             # Carve corridor along path
@@ -362,12 +388,18 @@ class LevelGenerator:
                     # Add to corridor tiles for consistency
                     self.corridor_tiles.add((x, y))
 
-            logging.warning(f"Level Gen: Emergency corridor carved ({len(emergency_path)} tiles) from {spawn_pos} to {final_gateway}")
+            logging.warning(
+                f"Level Gen: Emergency corridor carved ({len(emergency_path)} tiles) from {spawn_pos} to {final_gateway}"
+            )
 
             # Final validation
             if self._validate_gateway_reachability(spawn_pos, final_gateway):
-                logging.info(f"Level Gen: Emergency corridor successful - gateway now reachable!")
+                logging.info("Level Gen: Emergency corridor successful - gateway now reachable!")
             else:
-                logging.critical(f"Level Gen: CRITICAL FAILURE - Emergency corridor failed to connect spawn to gateway!")
+                logging.critical(
+                    "Level Gen: CRITICAL FAILURE - Emergency corridor failed to connect spawn to gateway!"
+                )
         else:
-            logging.critical(f"Level Gen: CRITICAL FAILURE - Could not find path even ignoring walls!")
+            logging.critical(
+                "Level Gen: CRITICAL FAILURE - Could not find path even ignoring walls!"
+            )

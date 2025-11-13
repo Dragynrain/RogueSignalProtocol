@@ -1,0 +1,3369 @@
+{
+    "PIL": {
+        "bacon": 3,
+        "imported_by": [
+            "PIL",
+            "PIL.Image",
+            "game_graphics_tiles",
+            "game_menu_background",
+            "game_menu_graphics_preview"
+        ],
+        "imports": [
+            "PIL"
+        ],
+        "name": "PIL",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\PIL\\__init__.py"
+    },
+    "PIL.Image": {
+        "bacon": 3,
+        "imported_by": [
+            "game_graphics_tiles",
+            "game_menu_background",
+            "game_menu_graphics_preview"
+        ],
+        "imports": [
+            "PIL"
+        ],
+        "name": "PIL.Image",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\PIL\\Image.py"
+    },
+    "RogueSignalProtocol": {
+        "bacon": 2,
+        "imported_by": [
+            "game_enemies"
+        ],
+        "imports": [
+            "data_loading",
+            "game_audio",
+            "game_characters",
+            "game_combat",
+            "game_config",
+            "game_data",
+            "game_enemies",
+            "game_engine",
+            "game_entities",
+            "game_input",
+            "game_inventory",
+            "game_level",
+            "game_loop",
+            "game_map",
+            "game_menus",
+            "game_rendering_core",
+            "game_rendering_glyphs",
+            "game_rendering_ui",
+            "game_save",
+            "game_state",
+            "game_story",
+            "game_ui",
+            "tcod",
+            "tcod.libtcodpy"
+        ],
+        "name": "RogueSignalProtocol",
+        "path": "D:\\Projects\\RogueSignalProtocol\\RogueSignalProtocol.py"
+    },
+    "RogueSignalProtocol.py": {
+        "bacon": 0,
+        "imports": [
+            "data_loading",
+            "game_audio",
+            "game_characters",
+            "game_combat",
+            "game_config",
+            "game_data",
+            "game_enemies",
+            "game_engine",
+            "game_entities",
+            "game_input",
+            "game_inventory",
+            "game_level",
+            "game_loop",
+            "game_map",
+            "game_menus",
+            "game_rendering_core",
+            "game_rendering_glyphs",
+            "game_rendering_ui",
+            "game_save",
+            "game_state",
+            "game_story",
+            "game_ui",
+            "tcod",
+            "tcod.libtcodpy"
+        ],
+        "name": "RogueSignalProtocol.py",
+        "path": "RogueSignalProtocol.py"
+    },
+    "cffi": {
+        "bacon": 3,
+        "imported_by": [
+            "tcod.cffi"
+        ],
+        "name": "cffi",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\cffi\\__init__.py"
+    },
+    "data_loading": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_color_manager",
+            "game_config",
+            "game_data",
+            "game_dialogue_system",
+            "game_entities",
+            "game_help_content",
+            "game_inspection",
+            "game_level_coordinator",
+            "game_menu_background",
+            "game_menu_graphics_preview",
+            "game_menu_help_graphics",
+            "game_narrative",
+            "game_rendering_glyphs",
+            "game_rendering_graphics",
+            "game_rendering_ui",
+            "game_state",
+            "game_story"
+        ],
+        "imports": [
+            "game_errors"
+        ],
+        "name": "data_loading",
+        "path": "D:\\Projects\\RogueSignalProtocol\\data_loading.py"
+    },
+    "debug_export": {
+        "bacon": 2,
+        "imported_by": [
+            "game_input_dialogue",
+            "game_loop"
+        ],
+        "imports": [
+            "game_errors",
+            "game_save",
+            "pygame",
+            "tcod"
+        ],
+        "name": "debug_export",
+        "path": "D:\\Projects\\RogueSignalProtocol\\debug_export.py"
+    },
+    "font_loader_freetype": {
+        "bacon": 2,
+        "imported_by": [
+            "game_loop"
+        ],
+        "imports": [
+            "freetype",
+            "game_errors",
+            "numpy",
+            "tcod",
+            "tcod.tileset"
+        ],
+        "name": "font_loader_freetype",
+        "path": "D:\\Projects\\RogueSignalProtocol\\font_loader_freetype.py"
+    },
+    "freetype": {
+        "bacon": 3,
+        "imported_by": [
+            "font_loader_freetype",
+            "freetype"
+        ],
+        "imports": [
+            "freetype"
+        ],
+        "name": "freetype",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\freetype\\__init__.py"
+    },
+    "game_achievement_popups": {
+        "bacon": 2,
+        "imported_by": [
+            "game_engine"
+        ],
+        "imports": [
+            "game_achievements",
+            "game_config",
+            "game_coordinate_helpers",
+            "game_entities",
+            "game_rendering_utils",
+            "game_ui",
+            "tcod",
+            "tcod.console",
+            "tcod.constants"
+        ],
+        "name": "game_achievement_popups",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_achievement_popups.py"
+    },
+    "game_achievements": {
+        "bacon": 2,
+        "imported_by": [
+            "game_achievement_popups",
+            "game_combat",
+            "game_engine",
+            "game_level_coordinator",
+            "game_loop",
+            "game_menu_achievements",
+            "game_turn_manager"
+        ],
+        "imports": [
+            "game_metrics"
+        ],
+        "name": "game_achievements",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_achievements.py"
+    },
+    "game_audio": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_engine",
+            "game_loop",
+            "game_menus"
+        ],
+        "imports": [
+            "game_config",
+            "game_errors",
+            "pygame"
+        ],
+        "name": "game_audio",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_audio.py"
+    },
+    "game_autowalk": {
+        "bacon": 2,
+        "imported_by": [
+            "game_engine"
+        ],
+        "imports": [
+            "game_characters",
+            "game_engine",
+            "game_entities",
+            "numpy"
+        ],
+        "name": "game_autowalk",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_autowalk.py"
+    },
+    "game_characters": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_autowalk",
+            "game_enemies",
+            "game_engine",
+            "game_level",
+            "game_level_coordinator",
+            "game_rendering_graphics",
+            "game_state_persistence"
+        ],
+        "imports": [
+            "game_color_manager",
+            "game_config",
+            "game_data",
+            "game_entities",
+            "game_errors",
+            "game_inventory",
+            "game_metrics",
+            "numpy",
+            "tcod"
+        ],
+        "name": "game_characters",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_characters.py"
+    },
+    "game_color_manager": {
+        "bacon": 2,
+        "imported_by": [
+            "game_characters",
+            "game_color_thresholds",
+            "game_config",
+            "game_dialogue_system",
+            "game_info_panel",
+            "game_menu_about",
+            "game_menu_help_graphics",
+            "game_menus",
+            "game_rendering_glyphs",
+            "game_rendering_graphics",
+            "game_rendering_ui"
+        ],
+        "imports": [
+            "data_loading",
+            "game_entities"
+        ],
+        "name": "game_color_manager",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_color_manager.py"
+    },
+    "game_color_thresholds": {
+        "bacon": 2,
+        "imported_by": [
+            "game_rendering_glyphs",
+            "game_rendering_graphics",
+            "game_rendering_ui",
+            "game_status_bar_renderer"
+        ],
+        "imports": [
+            "game_color_manager",
+            "game_entities"
+        ],
+        "name": "game_color_thresholds",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_color_thresholds.py"
+    },
+    "game_combat": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_engine"
+        ],
+        "imports": [
+            "game_achievements",
+            "game_config",
+            "game_data",
+            "game_dialogue_system",
+            "game_entities",
+            "game_errors",
+            "game_metrics"
+        ],
+        "name": "game_combat",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_combat.py"
+    },
+    "game_config": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_achievement_popups",
+            "game_audio",
+            "game_characters",
+            "game_combat",
+            "game_data",
+            "game_enemies",
+            "game_engine",
+            "game_entities",
+            "game_info_panel",
+            "game_input",
+            "game_input_coordinates",
+            "game_input_dialogue",
+            "game_input_gameplay",
+            "game_input_modals",
+            "game_inventory",
+            "game_level",
+            "game_level_coordinator",
+            "game_level_layout",
+            "game_level_placement",
+            "game_level_structure",
+            "game_level_tactical",
+            "game_loop",
+            "game_menu_about",
+            "game_menu_achievements",
+            "game_menu_background",
+            "game_menu_base",
+            "game_menu_graphics_preview",
+            "game_menu_help_graphics",
+            "game_menu_help_lore",
+            "game_menu_utilities",
+            "game_menus",
+            "game_message_log_renderer",
+            "game_particle_system",
+            "game_rendering_base",
+            "game_rendering_core",
+            "game_rendering_glyphs",
+            "game_rendering_graphics",
+            "game_rendering_ui",
+            "game_save",
+            "game_screen_utilities",
+            "game_state",
+            "game_state_persistence",
+            "game_status_bar_renderer",
+            "game_tile_dimension_calculator",
+            "game_turn_manager",
+            "game_victory_screen"
+        ],
+        "imports": [
+            "data_loading",
+            "game_color_manager",
+            "game_entities"
+        ],
+        "name": "game_config",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_config.py"
+    },
+    "game_coordinate_helpers": {
+        "bacon": 2,
+        "imported_by": [
+            "game_achievement_popups",
+            "game_dialogue_system",
+            "game_input",
+            "game_input_coordinates",
+            "game_input_dialogue",
+            "game_input_gameplay",
+            "game_input_modals",
+            "game_loop",
+            "game_menu_graphics_preview",
+            "game_menu_help_graphics",
+            "game_menu_utilities",
+            "game_menus",
+            "game_mouse_utils",
+            "game_rendering_base",
+            "game_rendering_core",
+            "game_rendering_ui",
+            "game_victory_screen"
+        ],
+        "imports": [
+            "tcod",
+            "tcod.console"
+        ],
+        "name": "game_coordinate_helpers",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_coordinate_helpers.py"
+    },
+    "game_data": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_characters",
+            "game_combat",
+            "game_engine",
+            "game_info_panel",
+            "game_input",
+            "game_inspection",
+            "game_inventory",
+            "game_level_coordinator",
+            "game_rendering_glyphs",
+            "game_rendering_graphics",
+            "game_rendering_ui",
+            "game_state_persistence",
+            "game_status_bar_renderer",
+            "game_turn_manager"
+        ],
+        "imports": [
+            "data_loading",
+            "game_config",
+            "game_entities",
+            "game_errors"
+        ],
+        "name": "game_data",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_data.py"
+    },
+    "game_dialogue_system": {
+        "bacon": 2,
+        "imported_by": [
+            "game_combat",
+            "game_engine",
+            "game_input",
+            "game_input_dialogue",
+            "game_rendering_core",
+            "game_turn_manager"
+        ],
+        "imports": [
+            "data_loading",
+            "game_color_manager",
+            "game_coordinate_helpers",
+            "game_entities",
+            "game_errors",
+            "game_rendering_utils",
+            "game_story",
+            "game_ui",
+            "tcod",
+            "tcod.console",
+            "tcod.constants",
+            "tcod.event"
+        ],
+        "name": "game_dialogue_system",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_dialogue_system.py"
+    },
+    "game_enemies": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_engine"
+        ],
+        "imports": [
+            "RogueSignalProtocol",
+            "game_characters",
+            "game_config",
+            "game_entities"
+        ],
+        "name": "game_enemies",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_enemies.py"
+    },
+    "game_engine": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_autowalk",
+            "game_loop"
+        ],
+        "imports": [
+            "game_achievement_popups",
+            "game_achievements",
+            "game_audio",
+            "game_autowalk",
+            "game_characters",
+            "game_combat",
+            "game_config",
+            "game_data",
+            "game_dialogue_system",
+            "game_enemies",
+            "game_entities",
+            "game_errors",
+            "game_input",
+            "game_inventory",
+            "game_level",
+            "game_map",
+            "game_metrics",
+            "game_narrative",
+            "game_particle_system",
+            "game_save",
+            "game_session",
+            "game_state",
+            "game_story",
+            "game_visibility_manager"
+        ],
+        "name": "game_engine",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_engine.py"
+    },
+    "game_entities": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_achievement_popups",
+            "game_autowalk",
+            "game_characters",
+            "game_color_manager",
+            "game_color_thresholds",
+            "game_combat",
+            "game_config",
+            "game_data",
+            "game_dialogue_system",
+            "game_enemies",
+            "game_engine",
+            "game_help_content",
+            "game_info_panel",
+            "game_input",
+            "game_input_coordinates",
+            "game_input_dialogue",
+            "game_input_gameplay",
+            "game_input_modals",
+            "game_inspection",
+            "game_inventory",
+            "game_level",
+            "game_level_coordinator",
+            "game_level_placement",
+            "game_loop",
+            "game_map",
+            "game_menu_about",
+            "game_menu_achievements",
+            "game_menu_background",
+            "game_menu_graphics_preview",
+            "game_menu_help_graphics",
+            "game_menu_help_lore",
+            "game_menu_utilities",
+            "game_menus",
+            "game_message_log_renderer",
+            "game_rendering_base",
+            "game_rendering_core",
+            "game_rendering_glyphs",
+            "game_rendering_graphics",
+            "game_rendering_ui",
+            "game_rendering_utils",
+            "game_screen_utilities",
+            "game_state",
+            "game_state_persistence",
+            "game_status_bar_renderer",
+            "game_turn_manager",
+            "game_ui",
+            "game_victory_screen",
+            "game_visibility_manager"
+        ],
+        "imports": [
+            "data_loading",
+            "game_config",
+            "game_entity_enums",
+            "game_position"
+        ],
+        "name": "game_entities",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_entities.py"
+    },
+    "game_entity_enums": {
+        "bacon": 2,
+        "imported_by": [
+            "game_entities"
+        ],
+        "name": "game_entity_enums",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_entity_enums.py"
+    },
+    "game_errors": {
+        "bacon": 2,
+        "imported_by": [
+            "data_loading",
+            "debug_export",
+            "font_loader_freetype",
+            "game_audio",
+            "game_characters",
+            "game_combat",
+            "game_data",
+            "game_dialogue_system",
+            "game_engine",
+            "game_graphics_tiles",
+            "game_info_panel",
+            "game_input",
+            "game_input_coordinates",
+            "game_metrics",
+            "game_rendering_glyphs"
+        ],
+        "name": "game_errors",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_errors.py"
+    },
+    "game_graphics_tiles": {
+        "bacon": 2,
+        "imported_by": [
+            "game_loop",
+            "game_menu_graphics_preview"
+        ],
+        "imports": [
+            "PIL",
+            "PIL.Image",
+            "game_errors",
+            "game_tile_dimension_calculator",
+            "numpy",
+            "tcod",
+            "tcod.sdl"
+        ],
+        "name": "game_graphics_tiles",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_graphics_tiles.py"
+    },
+    "game_help_content": {
+        "bacon": 3,
+        "imported_by": [
+            "game_menu_help_graphics",
+            "game_menu_help_lore"
+        ],
+        "imports": [
+            "data_loading",
+            "game_entities",
+            "game_input"
+        ],
+        "name": "game_help_content",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_help_content.py"
+    },
+    "game_info_panel": {
+        "bacon": 2,
+        "imported_by": [
+            "game_rendering_ui"
+        ],
+        "imports": [
+            "game_color_manager",
+            "game_config",
+            "game_data",
+            "game_entities",
+            "game_errors",
+            "game_inspection",
+            "game_inventory",
+            "game_metrics",
+            "game_rendering_ui",
+            "game_ui",
+            "game_unicode_chars",
+            "tcod"
+        ],
+        "name": "game_info_panel",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_info_panel.py"
+    },
+    "game_input": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_engine",
+            "game_help_content",
+            "game_input_gameplay",
+            "game_input_modals",
+            "game_loop"
+        ],
+        "imports": [
+            "game_config",
+            "game_coordinate_helpers",
+            "game_data",
+            "game_dialogue_system",
+            "game_entities",
+            "game_errors",
+            "game_input_coordinates",
+            "game_input_dialogue",
+            "game_input_gameplay",
+            "game_input_modals",
+            "game_inventory",
+            "game_rendering_ui",
+            "game_ui",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_input",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_input.py"
+    },
+    "game_input_coordinates": {
+        "bacon": 2,
+        "imported_by": [
+            "game_input",
+            "game_input_dialogue",
+            "game_input_gameplay",
+            "game_input_modals"
+        ],
+        "imports": [
+            "game_config",
+            "game_coordinate_helpers",
+            "game_entities",
+            "game_errors"
+        ],
+        "name": "game_input_coordinates",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_input_coordinates.py"
+    },
+    "game_input_dialogue": {
+        "bacon": 2,
+        "imported_by": [
+            "game_input"
+        ],
+        "imports": [
+            "debug_export",
+            "game_config",
+            "game_coordinate_helpers",
+            "game_dialogue_system",
+            "game_entities",
+            "game_input_coordinates",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_input_dialogue",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_input_dialogue.py"
+    },
+    "game_input_gameplay": {
+        "bacon": 2,
+        "imported_by": [
+            "game_input"
+        ],
+        "imports": [
+            "game_config",
+            "game_coordinate_helpers",
+            "game_entities",
+            "game_input",
+            "game_input_coordinates",
+            "game_rendering_ui",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_input_gameplay",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_input_gameplay.py"
+    },
+    "game_input_modals": {
+        "bacon": 2,
+        "imported_by": [
+            "game_input"
+        ],
+        "imports": [
+            "game_config",
+            "game_coordinate_helpers",
+            "game_entities",
+            "game_input",
+            "game_input_coordinates",
+            "game_rendering_ui",
+            "game_ui",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_input_modals",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_input_modals.py"
+    },
+    "game_inspection": {
+        "bacon": 2,
+        "imported_by": [
+            "game_info_panel",
+            "game_rendering_ui"
+        ],
+        "imports": [
+            "data_loading",
+            "game_data",
+            "game_entities"
+        ],
+        "name": "game_inspection",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_inspection.py"
+    },
+    "game_inventory": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_characters",
+            "game_engine",
+            "game_info_panel",
+            "game_input",
+            "game_level_coordinator",
+            "game_map",
+            "game_state_persistence",
+            "game_turn_manager"
+        ],
+        "imports": [
+            "game_config",
+            "game_data",
+            "game_entities",
+            "game_metrics"
+        ],
+        "name": "game_inventory",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_inventory.py"
+    },
+    "game_level": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_engine"
+        ],
+        "imports": [
+            "game_characters",
+            "game_config",
+            "game_entities",
+            "game_level_layout",
+            "game_level_placement",
+            "game_level_structure",
+            "game_level_tactical",
+            "numpy"
+        ],
+        "name": "game_level",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_level.py"
+    },
+    "game_level_coordinator": {
+        "bacon": 3,
+        "imported_by": [
+            "game_session"
+        ],
+        "imports": [
+            "data_loading",
+            "game_achievements",
+            "game_characters",
+            "game_config",
+            "game_data",
+            "game_entities",
+            "game_inventory",
+            "game_metrics",
+            "game_save"
+        ],
+        "name": "game_level_coordinator",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_level_coordinator.py"
+    },
+    "game_level_layout": {
+        "bacon": 2,
+        "imported_by": [
+            "game_level"
+        ],
+        "imports": [
+            "game_config"
+        ],
+        "name": "game_level_layout",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_level_layout.py"
+    },
+    "game_level_placement": {
+        "bacon": 2,
+        "imported_by": [
+            "game_level"
+        ],
+        "imports": [
+            "game_config",
+            "game_entities"
+        ],
+        "name": "game_level_placement",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_level_placement.py"
+    },
+    "game_level_structure": {
+        "bacon": 2,
+        "imported_by": [
+            "game_level",
+            "game_level_tactical"
+        ],
+        "imports": [
+            "game_config",
+            "tcod",
+            "tcod.bsp",
+            "tcod.noise",
+            "tcod.random"
+        ],
+        "name": "game_level_structure",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_level_structure.py"
+    },
+    "game_level_tactical": {
+        "bacon": 2,
+        "imported_by": [
+            "game_level"
+        ],
+        "imports": [
+            "game_config",
+            "game_level_structure"
+        ],
+        "name": "game_level_tactical",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_level_tactical.py"
+    },
+    "game_loop": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py"
+        ],
+        "imports": [
+            "debug_export",
+            "font_loader_freetype",
+            "game_achievements",
+            "game_audio",
+            "game_config",
+            "game_coordinate_helpers",
+            "game_engine",
+            "game_entities",
+            "game_graphics_tiles",
+            "game_input",
+            "game_menu_about",
+            "game_menu_achievements",
+            "game_menu_graphics_preview",
+            "game_menu_help_lore",
+            "game_menus",
+            "game_metrics",
+            "game_mouse_utils",
+            "game_rendering_core",
+            "game_save",
+            "game_ui",
+            "game_victory_screen",
+            "pygame",
+            "tcod",
+            "tcod.render"
+        ],
+        "name": "game_loop",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_loop.py"
+    },
+    "game_map": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_engine"
+        ],
+        "imports": [
+            "game_entities",
+            "game_inventory",
+            "numpy",
+            "tcod",
+            "tcod.constants"
+        ],
+        "name": "game_map",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_map.py"
+    },
+    "game_menu_about": {
+        "bacon": 2,
+        "imported_by": [
+            "game_loop"
+        ],
+        "imports": [
+            "game_color_manager",
+            "game_config",
+            "game_entities",
+            "game_menu_base",
+            "game_ui",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_menu_about",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_menu_about.py"
+    },
+    "game_menu_achievements": {
+        "bacon": 2,
+        "imported_by": [
+            "game_loop",
+            "game_rendering_ui"
+        ],
+        "imports": [
+            "game_achievements",
+            "game_config",
+            "game_entities",
+            "game_screen_utilities",
+            "game_ui",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_menu_achievements",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_menu_achievements.py"
+    },
+    "game_menu_background": {
+        "bacon": 2,
+        "imported_by": [
+            "game_menus",
+            "game_victory_screen"
+        ],
+        "imports": [
+            "PIL",
+            "PIL.Image",
+            "data_loading",
+            "game_config",
+            "game_entities",
+            "game_ui",
+            "numpy",
+            "tcod"
+        ],
+        "name": "game_menu_background",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_menu_background.py"
+    },
+    "game_menu_base": {
+        "bacon": 2,
+        "imported_by": [
+            "game_menu_about",
+            "game_menus",
+            "game_victory_screen"
+        ],
+        "imports": [
+            "game_config",
+            "game_menu_utilities",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_menu_base",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_menu_base.py"
+    },
+    "game_menu_graphics_preview": {
+        "bacon": 2,
+        "imported_by": [
+            "game_loop"
+        ],
+        "imports": [
+            "PIL",
+            "PIL.Image",
+            "data_loading",
+            "game_config",
+            "game_coordinate_helpers",
+            "game_entities",
+            "game_graphics_tiles",
+            "game_ui",
+            "numpy",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_menu_graphics_preview",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_menu_graphics_preview.py"
+    },
+    "game_menu_help_graphics": {
+        "bacon": 3,
+        "imported_by": [
+            "game_menu_help_lore"
+        ],
+        "imports": [
+            "data_loading",
+            "game_color_manager",
+            "game_config",
+            "game_coordinate_helpers",
+            "game_entities",
+            "game_help_content",
+            "game_screen_utilities",
+            "game_ui",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_menu_help_graphics",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_menu_help_graphics.py"
+    },
+    "game_menu_help_lore": {
+        "bacon": 2,
+        "imported_by": [
+            "game_loop",
+            "game_menus",
+            "game_rendering_core"
+        ],
+        "imports": [
+            "game_config",
+            "game_entities",
+            "game_help_content",
+            "game_menu_help_graphics",
+            "game_screen_utilities",
+            "game_story",
+            "game_ui",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_menu_help_lore",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_menu_help_lore.py"
+    },
+    "game_menu_utilities": {
+        "bacon": 2,
+        "imported_by": [
+            "game_menu_base",
+            "game_menus"
+        ],
+        "imports": [
+            "game_config",
+            "game_coordinate_helpers",
+            "game_entities",
+            "game_rendering_utils",
+            "game_ui",
+            "game_unicode_chars",
+            "tcod"
+        ],
+        "name": "game_menu_utilities",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_menu_utilities.py"
+    },
+    "game_menus": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_loop"
+        ],
+        "imports": [
+            "game_audio",
+            "game_color_manager",
+            "game_config",
+            "game_coordinate_helpers",
+            "game_entities",
+            "game_menu_background",
+            "game_menu_base",
+            "game_menu_help_lore",
+            "game_menu_utilities",
+            "game_save",
+            "game_story",
+            "game_ui",
+            "tcod"
+        ],
+        "name": "game_menus",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_menus.py"
+    },
+    "game_message_log_renderer": {
+        "bacon": 2,
+        "imported_by": [
+            "game_rendering_ui"
+        ],
+        "imports": [
+            "game_config",
+            "game_entities",
+            "game_ui",
+            "game_unicode_chars",
+            "tcod"
+        ],
+        "name": "game_message_log_renderer",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_message_log_renderer.py"
+    },
+    "game_metrics": {
+        "bacon": 2,
+        "imported_by": [
+            "game_achievements",
+            "game_characters",
+            "game_combat",
+            "game_engine",
+            "game_info_panel",
+            "game_inventory",
+            "game_level_coordinator",
+            "game_loop",
+            "game_save",
+            "game_state",
+            "game_state_persistence",
+            "game_turn_manager"
+        ],
+        "imports": [
+            "game_errors"
+        ],
+        "name": "game_metrics",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_metrics.py"
+    },
+    "game_mouse_utils": {
+        "bacon": 2,
+        "imported_by": [
+            "game_loop"
+        ],
+        "imports": [
+            "game_coordinate_helpers",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_mouse_utils",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_mouse_utils.py"
+    },
+    "game_narrative": {
+        "bacon": 2,
+        "imported_by": [
+            "game_engine"
+        ],
+        "imports": [
+            "data_loading"
+        ],
+        "name": "game_narrative",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_narrative.py"
+    },
+    "game_particle_system": {
+        "bacon": 2,
+        "imported_by": [
+            "game_engine"
+        ],
+        "imports": [
+            "game_config",
+            "tcod",
+            "tcod.sdl",
+            "tcod.sdl.render"
+        ],
+        "name": "game_particle_system",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_particle_system.py"
+    },
+    "game_position": {
+        "bacon": 2,
+        "imported_by": [
+            "game_entities"
+        ],
+        "name": "game_position",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_position.py"
+    },
+    "game_rendering_base": {
+        "bacon": 2,
+        "imported_by": [
+            "game_rendering_glyphs",
+            "game_rendering_graphics"
+        ],
+        "imports": [
+            "game_config",
+            "game_coordinate_helpers",
+            "game_entities"
+        ],
+        "name": "game_rendering_base",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_rendering_base.py"
+    },
+    "game_rendering_core": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_loop"
+        ],
+        "imports": [
+            "game_config",
+            "game_coordinate_helpers",
+            "game_dialogue_system",
+            "game_entities",
+            "game_menu_help_lore",
+            "game_rendering_glyphs",
+            "game_rendering_graphics",
+            "game_rendering_ui",
+            "game_rendering_utils",
+            "tcod"
+        ],
+        "name": "game_rendering_core",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_rendering_core.py"
+    },
+    "game_rendering_glyphs": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_rendering_core"
+        ],
+        "imports": [
+            "data_loading",
+            "game_color_manager",
+            "game_color_thresholds",
+            "game_config",
+            "game_data",
+            "game_entities",
+            "game_errors",
+            "game_rendering_base",
+            "game_ui",
+            "game_unicode_chars",
+            "tcod"
+        ],
+        "name": "game_rendering_glyphs",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_rendering_glyphs.py"
+    },
+    "game_rendering_graphics": {
+        "bacon": 2,
+        "imported_by": [
+            "game_rendering_core"
+        ],
+        "imports": [
+            "data_loading",
+            "game_characters",
+            "game_color_manager",
+            "game_color_thresholds",
+            "game_config",
+            "game_data",
+            "game_entities",
+            "game_rendering_base",
+            "game_unicode_chars",
+            "tcod",
+            "tcod.sdl",
+            "tcod.sdl.render"
+        ],
+        "name": "game_rendering_graphics",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_rendering_graphics.py"
+    },
+    "game_rendering_ui": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_info_panel",
+            "game_input",
+            "game_input_gameplay",
+            "game_input_modals",
+            "game_rendering_core"
+        ],
+        "imports": [
+            "data_loading",
+            "game_color_manager",
+            "game_color_thresholds",
+            "game_config",
+            "game_coordinate_helpers",
+            "game_data",
+            "game_entities",
+            "game_info_panel",
+            "game_inspection",
+            "game_menu_achievements",
+            "game_message_log_renderer",
+            "game_screen_utilities",
+            "game_status_bar_renderer",
+            "game_ui",
+            "game_unicode_chars",
+            "tcod"
+        ],
+        "name": "game_rendering_ui",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_rendering_ui.py"
+    },
+    "game_rendering_utils": {
+        "bacon": 2,
+        "imported_by": [
+            "game_achievement_popups",
+            "game_dialogue_system",
+            "game_menu_utilities",
+            "game_rendering_core"
+        ],
+        "imports": [
+            "game_entities",
+            "game_ui",
+            "game_unicode_chars",
+            "tcod"
+        ],
+        "name": "game_rendering_utils",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_rendering_utils.py"
+    },
+    "game_save": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "debug_export",
+            "game_engine",
+            "game_level_coordinator",
+            "game_loop",
+            "game_menus",
+            "game_state",
+            "game_state_persistence",
+            "game_turn_manager"
+        ],
+        "imports": [
+            "game_config",
+            "game_metrics",
+            "numpy"
+        ],
+        "name": "game_save",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_save.py"
+    },
+    "game_screen_utilities": {
+        "bacon": 2,
+        "imported_by": [
+            "game_menu_achievements",
+            "game_menu_help_graphics",
+            "game_menu_help_lore",
+            "game_rendering_ui"
+        ],
+        "imports": [
+            "game_config",
+            "game_entities",
+            "game_ui",
+            "tcod"
+        ],
+        "name": "game_screen_utilities",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_screen_utilities.py"
+    },
+    "game_session": {
+        "bacon": 2,
+        "imported_by": [
+            "game_engine"
+        ],
+        "imports": [
+            "game_level_coordinator",
+            "game_state_persistence",
+            "game_turn_manager"
+        ],
+        "name": "game_session",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_session.py"
+    },
+    "game_state": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_engine"
+        ],
+        "imports": [
+            "data_loading",
+            "game_config",
+            "game_entities",
+            "game_metrics",
+            "game_save"
+        ],
+        "name": "game_state",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_state.py"
+    },
+    "game_state_persistence": {
+        "bacon": 3,
+        "imported_by": [
+            "game_session"
+        ],
+        "imports": [
+            "game_characters",
+            "game_config",
+            "game_data",
+            "game_entities",
+            "game_inventory",
+            "game_metrics",
+            "game_save"
+        ],
+        "name": "game_state_persistence",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_state_persistence.py"
+    },
+    "game_status_bar_renderer": {
+        "bacon": 2,
+        "imported_by": [
+            "game_rendering_ui"
+        ],
+        "imports": [
+            "game_color_thresholds",
+            "game_config",
+            "game_data",
+            "game_entities",
+            "game_ui",
+            "game_unicode_chars",
+            "tcod"
+        ],
+        "name": "game_status_bar_renderer",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_status_bar_renderer.py"
+    },
+    "game_story": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_dialogue_system",
+            "game_engine",
+            "game_menu_help_lore",
+            "game_menus"
+        ],
+        "imports": [
+            "data_loading"
+        ],
+        "name": "game_story",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_story.py"
+    },
+    "game_tile_dimension_calculator": {
+        "bacon": 3,
+        "imported_by": [
+            "game_graphics_tiles"
+        ],
+        "imports": [
+            "game_config"
+        ],
+        "name": "game_tile_dimension_calculator",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_tile_dimension_calculator.py"
+    },
+    "game_turn_manager": {
+        "bacon": 3,
+        "imported_by": [
+            "game_session"
+        ],
+        "imports": [
+            "game_achievements",
+            "game_config",
+            "game_data",
+            "game_dialogue_system",
+            "game_entities",
+            "game_inventory",
+            "game_metrics",
+            "game_save",
+            "tcod",
+            "tcod.constants"
+        ],
+        "name": "game_turn_manager",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_turn_manager.py"
+    },
+    "game_ui": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_achievement_popups",
+            "game_dialogue_system",
+            "game_info_panel",
+            "game_input",
+            "game_input_modals",
+            "game_loop",
+            "game_menu_about",
+            "game_menu_achievements",
+            "game_menu_background",
+            "game_menu_graphics_preview",
+            "game_menu_help_graphics",
+            "game_menu_help_lore",
+            "game_menu_utilities",
+            "game_menus",
+            "game_message_log_renderer",
+            "game_rendering_glyphs",
+            "game_rendering_ui",
+            "game_rendering_utils",
+            "game_screen_utilities",
+            "game_status_bar_renderer",
+            "game_victory_screen"
+        ],
+        "imports": [
+            "game_entities",
+            "tcod",
+            "tcod.event"
+        ],
+        "name": "game_ui",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_ui.py"
+    },
+    "game_unicode_chars": {
+        "bacon": 2,
+        "imported_by": [
+            "game_info_panel",
+            "game_menu_utilities",
+            "game_message_log_renderer",
+            "game_rendering_glyphs",
+            "game_rendering_graphics",
+            "game_rendering_ui",
+            "game_rendering_utils",
+            "game_status_bar_renderer"
+        ],
+        "name": "game_unicode_chars",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_unicode_chars.py"
+    },
+    "game_victory_screen": {
+        "bacon": 2,
+        "imported_by": [
+            "game_loop"
+        ],
+        "imports": [
+            "game_config",
+            "game_coordinate_helpers",
+            "game_entities",
+            "game_menu_background",
+            "game_menu_base",
+            "game_ui",
+            "tcod",
+            "tcod.constants"
+        ],
+        "name": "game_victory_screen",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_victory_screen.py"
+    },
+    "game_visibility_manager": {
+        "bacon": 2,
+        "imported_by": [
+            "game_engine"
+        ],
+        "imports": [
+            "game_entities",
+            "tcod",
+            "tcod.libtcodpy"
+        ],
+        "name": "game_visibility_manager",
+        "path": "D:\\Projects\\RogueSignalProtocol\\game_visibility_manager.py"
+    },
+    "numpy": {
+        "bacon": 2,
+        "imported_by": [
+            "font_loader_freetype",
+            "game_autowalk",
+            "game_characters",
+            "game_graphics_tiles",
+            "game_level",
+            "game_map",
+            "game_menu_background",
+            "game_menu_graphics_preview",
+            "game_save",
+            "numpy",
+            "numpy.__config__",
+            "numpy._array_api_info",
+            "numpy._core",
+            "numpy._core.memmap",
+            "numpy._distributor_init",
+            "numpy._pytesttester",
+            "numpy.char",
+            "numpy.core",
+            "numpy.dtypes",
+            "numpy.f2py",
+            "numpy.fft",
+            "numpy.lib",
+            "numpy.lib._arraypad_impl",
+            "numpy.lib._arraysetops_impl",
+            "numpy.lib._function_base_impl",
+            "numpy.lib._histograms_impl",
+            "numpy.lib._index_tricks_impl",
+            "numpy.lib._nanfunctions_impl",
+            "numpy.lib._npyio_impl",
+            "numpy.lib._polynomial_impl",
+            "numpy.lib._shape_base_impl",
+            "numpy.lib._stride_tricks_impl",
+            "numpy.lib._twodim_base_impl",
+            "numpy.lib._type_check_impl",
+            "numpy.lib._ufunclike_impl",
+            "numpy.lib._utils_impl",
+            "numpy.linalg",
+            "numpy.ma",
+            "numpy.matlib",
+            "numpy.matrixlib",
+            "numpy.polynomial",
+            "numpy.random",
+            "numpy.rec",
+            "numpy.strings",
+            "numpy.testing",
+            "numpy.typing",
+            "pygame",
+            "pygame.sndarray",
+            "pygame.surfarray",
+            "tcod.console",
+            "tcod.event",
+            "tcod.image",
+            "tcod.libtcodpy",
+            "tcod.los",
+            "tcod.map",
+            "tcod.noise",
+            "tcod.path",
+            "tcod.sdl.render",
+            "tcod.sdl.video",
+            "tcod.tileset"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.__config__",
+            "numpy._array_api_info",
+            "numpy._core",
+            "numpy._core.memmap",
+            "numpy._core.printoptions",
+            "numpy._distributor_init",
+            "numpy._expired_attrs_2_0",
+            "numpy._globals",
+            "numpy._pytesttester",
+            "numpy.char",
+            "numpy.core",
+            "numpy.ctypeslib",
+            "numpy.dtypes",
+            "numpy.exceptions",
+            "numpy.f2py",
+            "numpy.fft",
+            "numpy.lib",
+            "numpy.lib._arraypad_impl",
+            "numpy.lib._arraysetops_impl",
+            "numpy.lib._function_base_impl",
+            "numpy.lib._histograms_impl",
+            "numpy.lib._index_tricks_impl",
+            "numpy.lib._nanfunctions_impl",
+            "numpy.lib._npyio_impl",
+            "numpy.lib._polynomial_impl",
+            "numpy.lib._shape_base_impl",
+            "numpy.lib._stride_tricks_impl",
+            "numpy.lib._twodim_base_impl",
+            "numpy.lib._type_check_impl",
+            "numpy.lib._ufunclike_impl",
+            "numpy.lib._utils_impl",
+            "numpy.lib.scimath",
+            "numpy.linalg",
+            "numpy.ma",
+            "numpy.matlib",
+            "numpy.matrixlib",
+            "numpy.polynomial",
+            "numpy.random",
+            "numpy.rec",
+            "numpy.strings",
+            "numpy.testing",
+            "numpy.typing",
+            "numpy.version"
+        ],
+        "name": "numpy",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\__init__.py"
+    },
+    "numpy.__config__": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.__config__",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\__config__.py"
+    },
+    "numpy._array_api_info": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy._array_api_info",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\_array_api_info.py"
+    },
+    "numpy._core": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.__config__",
+            "numpy._array_api_info",
+            "numpy._core",
+            "numpy.char",
+            "numpy.core",
+            "numpy.lib",
+            "numpy.lib._arraypad_impl",
+            "numpy.lib._arraysetops_impl",
+            "numpy.lib._function_base_impl",
+            "numpy.lib._histograms_impl",
+            "numpy.lib._index_tricks_impl",
+            "numpy.lib._nanfunctions_impl",
+            "numpy.lib._npyio_impl",
+            "numpy.lib._polynomial_impl",
+            "numpy.lib._shape_base_impl",
+            "numpy.lib._stride_tricks_impl",
+            "numpy.lib._twodim_base_impl",
+            "numpy.lib._type_check_impl",
+            "numpy.lib._ufunclike_impl",
+            "numpy.lib._utils_impl",
+            "numpy.rec",
+            "numpy.strings"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy._core.memmap",
+            "numpy._pytesttester",
+            "numpy.version"
+        ],
+        "name": "numpy._core",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\_core\\__init__.py"
+    },
+    "numpy._core.memmap": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy._core"
+        ],
+        "imports": [
+            "numpy"
+        ],
+        "name": "numpy._core.memmap",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\_core\\memmap.py"
+    },
+    "numpy._core.printoptions": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "name": "numpy._core.printoptions",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\_core\\printoptions.py"
+    },
+    "numpy._distributor_init": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "imports": [
+            "numpy"
+        ],
+        "name": "numpy._distributor_init",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\_distributor_init.py"
+    },
+    "numpy._expired_attrs_2_0": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "name": "numpy._expired_attrs_2_0",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\_expired_attrs_2_0.py"
+    },
+    "numpy._globals": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "name": "numpy._globals",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\_globals.py"
+    },
+    "numpy._pytesttester": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy._core",
+            "numpy.f2py",
+            "numpy.fft",
+            "numpy.lib",
+            "numpy.linalg",
+            "numpy.ma",
+            "numpy.matrixlib",
+            "numpy.polynomial",
+            "numpy.random",
+            "numpy.testing",
+            "numpy.typing"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.testing"
+        ],
+        "name": "numpy._pytesttester",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\_pytesttester.py"
+    },
+    "numpy._typing": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy.typing"
+        ],
+        "name": "numpy._typing",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\_typing\\__init__.py"
+    },
+    "numpy._typing._add_docstring": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy.typing"
+        ],
+        "name": "numpy._typing._add_docstring",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\_typing\\_add_docstring.py"
+    },
+    "numpy.char": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.char",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\char\\__init__.py"
+    },
+    "numpy.core": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.core",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\core\\__init__.py"
+    },
+    "numpy.ctypeslib": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "name": "numpy.ctypeslib",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\ctypeslib\\__init__.py"
+    },
+    "numpy.dtypes": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.dtypes"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.dtypes"
+        ],
+        "name": "numpy.dtypes",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\dtypes.py"
+    },
+    "numpy.exceptions": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.f2py",
+            "numpy.lib._polynomial_impl"
+        ],
+        "name": "numpy.exceptions",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\exceptions.py"
+    },
+    "numpy.f2py": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.f2py"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._pytesttester",
+            "numpy.exceptions",
+            "numpy.f2py"
+        ],
+        "name": "numpy.f2py",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\f2py\\__init__.py"
+    },
+    "numpy.fft": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.fft"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._pytesttester",
+            "numpy.fft"
+        ],
+        "name": "numpy.fft",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\fft\\__init__.py"
+    },
+    "numpy.lib": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib",
+            "numpy.lib._arraypad_impl",
+            "numpy.lib._function_base_impl",
+            "numpy.lib._index_tricks_impl",
+            "numpy.lib._nanfunctions_impl",
+            "numpy.lib._npyio_impl",
+            "numpy.lib._polynomial_impl",
+            "numpy.lib._shape_base_impl",
+            "numpy.lib._twodim_base_impl"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy._pytesttester",
+            "numpy.lib",
+            "numpy.lib._arraypad_impl",
+            "numpy.lib._arraysetops_impl",
+            "numpy.lib._function_base_impl",
+            "numpy.lib._histograms_impl",
+            "numpy.lib._index_tricks_impl",
+            "numpy.lib._nanfunctions_impl",
+            "numpy.lib._npyio_impl",
+            "numpy.lib._polynomial_impl",
+            "numpy.lib._shape_base_impl",
+            "numpy.lib._stride_tricks_impl",
+            "numpy.lib._twodim_base_impl",
+            "numpy.lib._type_check_impl",
+            "numpy.lib._ufunclike_impl",
+            "numpy.lib._utils_impl",
+            "numpy.lib.scimath"
+        ],
+        "name": "numpy.lib",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\__init__.py"
+    },
+    "numpy.lib._arraypad_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy.lib",
+            "numpy.lib._index_tricks_impl"
+        ],
+        "name": "numpy.lib._arraypad_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_arraypad_impl.py"
+    },
+    "numpy.lib._arraysetops_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.lib._arraysetops_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_arraysetops_impl.py"
+    },
+    "numpy.lib._function_base_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib",
+            "numpy.lib._index_tricks_impl",
+            "numpy.lib._nanfunctions_impl",
+            "numpy.lib._polynomial_impl"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy.lib",
+            "numpy.lib._histograms_impl",
+            "numpy.lib._twodim_base_impl"
+        ],
+        "name": "numpy.lib._function_base_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_function_base_impl.py"
+    },
+    "numpy.lib._histograms_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib",
+            "numpy.lib._function_base_impl"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.lib._histograms_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_histograms_impl.py"
+    },
+    "numpy.lib._index_tricks_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib",
+            "numpy.lib._arraypad_impl",
+            "numpy.lib._shape_base_impl"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy.lib",
+            "numpy.lib._function_base_impl",
+            "numpy.matrixlib"
+        ],
+        "name": "numpy.lib._index_tricks_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_index_tricks_impl.py"
+    },
+    "numpy.lib._nanfunctions_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy.lib",
+            "numpy.lib._function_base_impl"
+        ],
+        "name": "numpy.lib._nanfunctions_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_nanfunctions_impl.py"
+    },
+    "numpy.lib._npyio_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy.lib",
+            "numpy.ma"
+        ],
+        "name": "numpy.lib._npyio_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_npyio_impl.py"
+    },
+    "numpy.lib._polynomial_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy.exceptions",
+            "numpy.lib",
+            "numpy.lib._function_base_impl",
+            "numpy.lib._twodim_base_impl",
+            "numpy.lib._type_check_impl",
+            "numpy.linalg"
+        ],
+        "name": "numpy.lib._polynomial_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_polynomial_impl.py"
+    },
+    "numpy.lib._shape_base_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy.lib",
+            "numpy.lib._index_tricks_impl",
+            "numpy.matrixlib"
+        ],
+        "name": "numpy.lib._shape_base_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_shape_base_impl.py"
+    },
+    "numpy.lib._stride_tricks_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib",
+            "numpy.lib._twodim_base_impl"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.lib._stride_tricks_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_stride_tricks_impl.py"
+    },
+    "numpy.lib._twodim_base_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib",
+            "numpy.lib._function_base_impl",
+            "numpy.lib._polynomial_impl"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy.lib",
+            "numpy.lib._stride_tricks_impl"
+        ],
+        "name": "numpy.lib._twodim_base_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_twodim_base_impl.py"
+    },
+    "numpy.lib._type_check_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib",
+            "numpy.lib._polynomial_impl"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core",
+            "numpy.lib._ufunclike_impl"
+        ],
+        "name": "numpy.lib._type_check_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_type_check_impl.py"
+    },
+    "numpy.lib._ufunclike_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib",
+            "numpy.lib._type_check_impl"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.lib._ufunclike_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_ufunclike_impl.py"
+    },
+    "numpy.lib._utils_impl": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.lib._utils_impl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\_utils_impl.py"
+    },
+    "numpy.lib.scimath": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib"
+        ],
+        "name": "numpy.lib.scimath",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\lib\\scimath.py"
+    },
+    "numpy.linalg": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib._polynomial_impl",
+            "numpy.linalg"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._pytesttester",
+            "numpy.linalg"
+        ],
+        "name": "numpy.linalg",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\linalg\\__init__.py"
+    },
+    "numpy.ma": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib._npyio_impl",
+            "numpy.ma"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._pytesttester",
+            "numpy.ma"
+        ],
+        "name": "numpy.ma",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\ma\\__init__.py"
+    },
+    "numpy.matlib": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.matrixlib"
+        ],
+        "name": "numpy.matlib",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\matlib.py"
+    },
+    "numpy.matrixlib": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.lib._index_tricks_impl",
+            "numpy.lib._shape_base_impl",
+            "numpy.matlib",
+            "numpy.matrixlib"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._pytesttester",
+            "numpy.matrixlib"
+        ],
+        "name": "numpy.matrixlib",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\matrixlib\\__init__.py"
+    },
+    "numpy.polynomial": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._pytesttester"
+        ],
+        "name": "numpy.polynomial",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\polynomial\\__init__.py"
+    },
+    "numpy.random": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy.random"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._pytesttester",
+            "numpy.random"
+        ],
+        "name": "numpy.random",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\random\\__init__.py"
+    },
+    "numpy.rec": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.rec",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\rec\\__init__.py"
+    },
+    "numpy.strings": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.strings",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\strings\\__init__.py"
+    },
+    "numpy.testing": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy._pytesttester",
+            "numpy.testing"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._pytesttester",
+            "numpy.testing"
+        ],
+        "name": "numpy.testing",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\testing\\__init__.py"
+    },
+    "numpy.typing": {
+        "bacon": 2,
+        "imported_by": [
+            "numpy",
+            "tcod.console",
+            "tcod.event",
+            "tcod.image",
+            "tcod.libtcodpy",
+            "tcod.los",
+            "tcod.map",
+            "tcod.noise",
+            "tcod.path",
+            "tcod.sdl.render",
+            "tcod.sdl.video",
+            "tcod.tileset"
+        ],
+        "imports": [
+            "numpy",
+            "numpy._pytesttester",
+            "numpy._typing",
+            "numpy._typing._add_docstring"
+        ],
+        "name": "numpy.typing",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\typing\\__init__.py"
+    },
+    "numpy.version": {
+        "bacon": 3,
+        "imported_by": [
+            "numpy",
+            "numpy._core"
+        ],
+        "name": "numpy.version",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\numpy\\version.py"
+    },
+    "pygame": {
+        "bacon": 2,
+        "imported_by": [
+            "debug_export",
+            "game_audio",
+            "game_loop",
+            "pygame",
+            "pygame.cursors",
+            "pygame.fastevent",
+            "pygame.ftfont",
+            "pygame.sndarray",
+            "pygame.sprite",
+            "pygame.surfarray",
+            "pygame.sysfont",
+            "pygame.threads",
+            "pygame.version"
+        ],
+        "imports": [
+            "numpy",
+            "pygame",
+            "pygame.base",
+            "pygame.bufferproxy",
+            "pygame.color",
+            "pygame.colordict",
+            "pygame.constants",
+            "pygame.cursors",
+            "pygame.display",
+            "pygame.draw",
+            "pygame.event",
+            "pygame.fastevent",
+            "pygame.font",
+            "pygame.ftfont",
+            "pygame.image",
+            "pygame.imageext",
+            "pygame.joystick",
+            "pygame.key",
+            "pygame.macosx",
+            "pygame.mask",
+            "pygame.math",
+            "pygame.mixer",
+            "pygame.mixer_music",
+            "pygame.mouse",
+            "pygame.pixelarray",
+            "pygame.pixelcopy",
+            "pygame.pkgdata",
+            "pygame.rect",
+            "pygame.rwobject",
+            "pygame.scrap",
+            "pygame.sndarray",
+            "pygame.sprite",
+            "pygame.surface",
+            "pygame.surfarray",
+            "pygame.surflock",
+            "pygame.sysfont",
+            "pygame.threads",
+            "pygame.time",
+            "pygame.transform",
+            "pygame.version"
+        ],
+        "name": "pygame",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\__init__.py"
+    },
+    "pygame.base": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.version"
+        ],
+        "name": "pygame.base",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\base.cp313-win_amd64.pyd"
+    },
+    "pygame.bufferproxy": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.bufferproxy",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\bufferproxy.cp313-win_amd64.pyd"
+    },
+    "pygame.color": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.color",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\color.cp313-win_amd64.pyd"
+    },
+    "pygame.colordict": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.colordict",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\colordict.py"
+    },
+    "pygame.constants": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.constants",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\constants.cp313-win_amd64.pyd"
+    },
+    "pygame.cursors": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "imports": [
+            "pygame"
+        ],
+        "name": "pygame.cursors",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\cursors.py"
+    },
+    "pygame.display": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.fastevent"
+        ],
+        "name": "pygame.display",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\display.cp313-win_amd64.pyd"
+    },
+    "pygame.draw": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.draw",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\draw.cp313-win_amd64.pyd"
+    },
+    "pygame.event": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.fastevent"
+        ],
+        "name": "pygame.event",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\event.cp313-win_amd64.pyd"
+    },
+    "pygame.fastevent": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "imports": [
+            "pygame",
+            "pygame.display",
+            "pygame.event"
+        ],
+        "name": "pygame.fastevent",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\fastevent.py"
+    },
+    "pygame.font": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.sysfont"
+        ],
+        "name": "pygame.font",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\font.cp313-win_amd64.pyd"
+    },
+    "pygame.ftfont": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "imports": [
+            "pygame",
+            "pygame.sysfont"
+        ],
+        "name": "pygame.ftfont",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\ftfont.py"
+    },
+    "pygame.image": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.image",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\image.cp313-win_amd64.pyd"
+    },
+    "pygame.imageext": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.imageext",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\imageext.cp313-win_amd64.pyd"
+    },
+    "pygame.joystick": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.joystick",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\joystick.cp313-win_amd64.pyd"
+    },
+    "pygame.key": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.key",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\key.cp313-win_amd64.pyd"
+    },
+    "pygame.macosx": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.macosx",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\macosx.py"
+    },
+    "pygame.mask": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.sprite"
+        ],
+        "name": "pygame.mask",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\mask.cp313-win_amd64.pyd"
+    },
+    "pygame.math": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.math",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\math.cp313-win_amd64.pyd"
+    },
+    "pygame.mixer": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.sndarray"
+        ],
+        "name": "pygame.mixer",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\mixer.cp313-win_amd64.pyd"
+    },
+    "pygame.mixer_music": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.mixer_music",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\mixer_music.cp313-win_amd64.pyd"
+    },
+    "pygame.mouse": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.mouse",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\mouse.cp313-win_amd64.pyd"
+    },
+    "pygame.pixelarray": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.pixelarray",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\pixelarray.cp313-win_amd64.pyd"
+    },
+    "pygame.pixelcopy": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.surfarray"
+        ],
+        "name": "pygame.pixelcopy",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\pixelcopy.cp313-win_amd64.pyd"
+    },
+    "pygame.pkgdata": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.pkgdata",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\pkgdata.py"
+    },
+    "pygame.rect": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.sprite"
+        ],
+        "name": "pygame.rect",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\rect.cp313-win_amd64.pyd"
+    },
+    "pygame.rwobject": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.rwobject",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\rwobject.cp313-win_amd64.pyd"
+    },
+    "pygame.scrap": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.scrap",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\scrap.cp313-win_amd64.pyd"
+    },
+    "pygame.sndarray": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "imports": [
+            "numpy",
+            "pygame",
+            "pygame.mixer"
+        ],
+        "name": "pygame.sndarray",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\sndarray.py"
+    },
+    "pygame.sprite": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "imports": [
+            "pygame",
+            "pygame.mask",
+            "pygame.rect",
+            "pygame.time"
+        ],
+        "name": "pygame.sprite",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\sprite.py"
+    },
+    "pygame.surface": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.surface",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\surface.cp313-win_amd64.pyd"
+    },
+    "pygame.surfarray": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "imports": [
+            "numpy",
+            "pygame",
+            "pygame.pixelcopy"
+        ],
+        "name": "pygame.surfarray",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\surfarray.py"
+    },
+    "pygame.surflock": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "name": "pygame.surflock",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\surflock.cp313-win_amd64.pyd"
+    },
+    "pygame.sysfont": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.ftfont"
+        ],
+        "imports": [
+            "pygame",
+            "pygame.font"
+        ],
+        "name": "pygame.sysfont",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\sysfont.py"
+    },
+    "pygame.threads": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "imports": [
+            "pygame",
+            "pygame.transform"
+        ],
+        "name": "pygame.threads",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\threads\\__init__.py"
+    },
+    "pygame.time": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.sprite"
+        ],
+        "name": "pygame.time",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\time.cp313-win_amd64.pyd"
+    },
+    "pygame.transform": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame",
+            "pygame.threads"
+        ],
+        "name": "pygame.transform",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\transform.cp313-win_amd64.pyd"
+    },
+    "pygame.version": {
+        "bacon": 3,
+        "imported_by": [
+            "pygame"
+        ],
+        "imports": [
+            "pygame",
+            "pygame.base"
+        ],
+        "name": "pygame.version",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\pygame\\version.py"
+    },
+    "tcod": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "debug_export",
+            "font_loader_freetype",
+            "game_achievement_popups",
+            "game_characters",
+            "game_coordinate_helpers",
+            "game_dialogue_system",
+            "game_graphics_tiles",
+            "game_info_panel",
+            "game_input",
+            "game_input_dialogue",
+            "game_input_gameplay",
+            "game_input_modals",
+            "game_level_structure",
+            "game_loop",
+            "game_map",
+            "game_menu_about",
+            "game_menu_achievements",
+            "game_menu_background",
+            "game_menu_base",
+            "game_menu_graphics_preview",
+            "game_menu_help_graphics",
+            "game_menu_help_lore",
+            "game_menu_utilities",
+            "game_menus",
+            "game_message_log_renderer",
+            "game_mouse_utils",
+            "game_particle_system",
+            "game_rendering_core",
+            "game_rendering_glyphs",
+            "game_rendering_graphics",
+            "game_rendering_ui",
+            "game_rendering_utils",
+            "game_screen_utilities",
+            "game_status_bar_renderer",
+            "game_turn_manager",
+            "game_ui",
+            "game_victory_screen",
+            "game_visibility_manager",
+            "tcod",
+            "tcod._internal",
+            "tcod.bsp",
+            "tcod.cffi",
+            "tcod.color",
+            "tcod.console",
+            "tcod.constants",
+            "tcod.context",
+            "tcod.event",
+            "tcod.image",
+            "tcod.libtcodpy",
+            "tcod.los",
+            "tcod.map",
+            "tcod.noise",
+            "tcod.path",
+            "tcod.random",
+            "tcod.render",
+            "tcod.sdl.joystick",
+            "tcod.sdl.render",
+            "tcod.sdl.sys",
+            "tcod.sdl.video",
+            "tcod.tcod",
+            "tcod.tileset"
+        ],
+        "imports": [
+            "tcod",
+            "tcod.bsp",
+            "tcod.cffi",
+            "tcod.color",
+            "tcod.console",
+            "tcod.context",
+            "tcod.event",
+            "tcod.image",
+            "tcod.los",
+            "tcod.map",
+            "tcod.noise",
+            "tcod.path",
+            "tcod.random",
+            "tcod.tcod",
+            "tcod.tileset",
+            "tcod.version"
+        ],
+        "name": "tcod",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\__init__.py"
+    },
+    "tcod._internal": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod.color",
+            "tcod.console",
+            "tcod.context",
+            "tcod.image",
+            "tcod.libtcodpy",
+            "tcod.map",
+            "tcod.path",
+            "tcod.render",
+            "tcod.tileset"
+        ],
+        "imports": [
+            "tcod",
+            "tcod.cffi",
+            "typing_extensions"
+        ],
+        "name": "tcod._internal",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\_internal.py"
+    },
+    "tcod._libtcod": {
+        "bacon": 3,
+        "imported_by": [
+            "tcod.cffi"
+        ],
+        "name": "tcod._libtcod",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\_libtcod.pyd"
+    },
+    "tcod.bsp": {
+        "bacon": 2,
+        "imported_by": [
+            "game_level_structure",
+            "tcod",
+            "tcod.libtcodpy",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "tcod",
+            "tcod.cffi",
+            "tcod.random",
+            "typing_extensions"
+        ],
+        "name": "tcod.bsp",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\bsp.py"
+    },
+    "tcod.cffi": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod",
+            "tcod._internal",
+            "tcod.bsp",
+            "tcod.color",
+            "tcod.console",
+            "tcod.context",
+            "tcod.event",
+            "tcod.image",
+            "tcod.libtcodpy",
+            "tcod.los",
+            "tcod.map",
+            "tcod.noise",
+            "tcod.path",
+            "tcod.random",
+            "tcod.render",
+            "tcod.sdl.joystick",
+            "tcod.sdl.render",
+            "tcod.sdl.sys",
+            "tcod.sdl.video",
+            "tcod.tileset"
+        ],
+        "imports": [
+            "cffi",
+            "tcod",
+            "tcod._libtcod"
+        ],
+        "name": "tcod.cffi",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\cffi.py"
+    },
+    "tcod.color": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod",
+            "tcod.constants",
+            "tcod.libtcodpy",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "tcod",
+            "tcod._internal",
+            "tcod.cffi"
+        ],
+        "name": "tcod.color",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\color.py"
+    },
+    "tcod.console": {
+        "bacon": 2,
+        "imported_by": [
+            "game_achievement_popups",
+            "game_coordinate_helpers",
+            "game_dialogue_system",
+            "tcod",
+            "tcod.context",
+            "tcod.image",
+            "tcod.libtcodpy",
+            "tcod.render",
+            "tcod.tcod",
+            "tcod.tileset"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod._internal",
+            "tcod.cffi",
+            "tcod.constants",
+            "tcod.image",
+            "typing_extensions"
+        ],
+        "name": "tcod.console",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\console.py"
+    },
+    "tcod.constants": {
+        "bacon": 2,
+        "imported_by": [
+            "game_achievement_popups",
+            "game_dialogue_system",
+            "game_map",
+            "game_turn_manager",
+            "game_victory_screen",
+            "tcod.console",
+            "tcod.libtcodpy",
+            "tcod.map",
+            "tcod.noise",
+            "tcod.random",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "tcod",
+            "tcod.color"
+        ],
+        "name": "tcod.constants",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\constants.py"
+    },
+    "tcod.context": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "tcod",
+            "tcod._internal",
+            "tcod.cffi",
+            "tcod.console",
+            "tcod.event",
+            "tcod.render",
+            "tcod.sdl",
+            "tcod.sdl.render",
+            "tcod.sdl.video",
+            "tcod.tileset",
+            "typing_extensions"
+        ],
+        "name": "tcod.context",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\context.py"
+    },
+    "tcod.event": {
+        "bacon": 2,
+        "imported_by": [
+            "game_dialogue_system",
+            "game_input",
+            "game_input_dialogue",
+            "game_input_gameplay",
+            "game_input_modals",
+            "game_menu_about",
+            "game_menu_achievements",
+            "game_menu_base",
+            "game_menu_graphics_preview",
+            "game_menu_help_graphics",
+            "game_menu_help_lore",
+            "game_mouse_utils",
+            "game_ui",
+            "tcod",
+            "tcod.context",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod.cffi",
+            "tcod.event_constants",
+            "tcod.sdl",
+            "tcod.sdl.joystick",
+            "tcod.sdl.sys",
+            "typing_extensions"
+        ],
+        "name": "tcod.event",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\event.py"
+    },
+    "tcod.event_constants": {
+        "bacon": 3,
+        "imported_by": [
+            "tcod.event"
+        ],
+        "name": "tcod.event_constants",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\event_constants.py"
+    },
+    "tcod.image": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod",
+            "tcod.console",
+            "tcod.libtcodpy",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod._internal",
+            "tcod.cffi",
+            "tcod.console",
+            "typing_extensions"
+        ],
+        "name": "tcod.image",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\image.py"
+    },
+    "tcod.libtcodpy": {
+        "bacon": 1,
+        "imported_by": [
+            "RogueSignalProtocol",
+            "RogueSignalProtocol.py",
+            "game_visibility_manager",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod._internal",
+            "tcod.bsp",
+            "tcod.cffi",
+            "tcod.color",
+            "tcod.console",
+            "tcod.constants",
+            "tcod.image",
+            "tcod.los",
+            "tcod.map",
+            "tcod.noise",
+            "tcod.path",
+            "tcod.random",
+            "typing_extensions"
+        ],
+        "name": "tcod.libtcodpy",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\libtcodpy.py"
+    },
+    "tcod.los": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod",
+            "tcod.libtcodpy",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod.cffi"
+        ],
+        "name": "tcod.los",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\los.py"
+    },
+    "tcod.map": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod",
+            "tcod.libtcodpy",
+            "tcod.path",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod._internal",
+            "tcod.cffi",
+            "tcod.constants",
+            "typing_extensions"
+        ],
+        "name": "tcod.map",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\map.py"
+    },
+    "tcod.noise": {
+        "bacon": 2,
+        "imported_by": [
+            "game_level_structure",
+            "tcod",
+            "tcod.libtcodpy",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod.cffi",
+            "tcod.constants",
+            "tcod.random"
+        ],
+        "name": "tcod.noise",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\noise.py"
+    },
+    "tcod.path": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod",
+            "tcod.libtcodpy",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod._internal",
+            "tcod.cffi",
+            "tcod.map",
+            "typing_extensions"
+        ],
+        "name": "tcod.path",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\path.py"
+    },
+    "tcod.random": {
+        "bacon": 2,
+        "imported_by": [
+            "game_level_structure",
+            "tcod",
+            "tcod.bsp",
+            "tcod.libtcodpy",
+            "tcod.noise",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "tcod",
+            "tcod.cffi",
+            "tcod.constants",
+            "typing_extensions"
+        ],
+        "name": "tcod.random",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\random.py"
+    },
+    "tcod.render": {
+        "bacon": 2,
+        "imported_by": [
+            "game_loop",
+            "tcod.context"
+        ],
+        "imports": [
+            "tcod",
+            "tcod._internal",
+            "tcod.cffi",
+            "tcod.console",
+            "tcod.sdl",
+            "tcod.sdl.render",
+            "tcod.tileset"
+        ],
+        "name": "tcod.render",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\render.py"
+    },
+    "tcod.sdl": {
+        "bacon": 3,
+        "imported_by": [
+            "game_graphics_tiles",
+            "game_particle_system",
+            "game_rendering_graphics",
+            "tcod.context",
+            "tcod.event",
+            "tcod.render",
+            "tcod.sdl.joystick",
+            "tcod.sdl.render",
+            "tcod.sdl.sys",
+            "tcod.sdl.video"
+        ],
+        "name": "tcod.sdl",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\sdl\\__init__.py"
+    },
+    "tcod.sdl.joystick": {
+        "bacon": 3,
+        "imported_by": [
+            "tcod.event"
+        ],
+        "imports": [
+            "tcod",
+            "tcod.cffi",
+            "tcod.sdl",
+            "tcod.sdl.sys"
+        ],
+        "name": "tcod.sdl.joystick",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\sdl\\joystick.py"
+    },
+    "tcod.sdl.render": {
+        "bacon": 3,
+        "imported_by": [
+            "game_particle_system",
+            "game_rendering_graphics",
+            "tcod.context",
+            "tcod.render"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod.cffi",
+            "tcod.sdl",
+            "tcod.sdl.video",
+            "typing_extensions"
+        ],
+        "name": "tcod.sdl.render",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\sdl\\render.py"
+    },
+    "tcod.sdl.sys": {
+        "bacon": 3,
+        "imported_by": [
+            "tcod.event",
+            "tcod.sdl.joystick"
+        ],
+        "imports": [
+            "tcod",
+            "tcod.cffi",
+            "tcod.sdl",
+            "typing_extensions"
+        ],
+        "name": "tcod.sdl.sys",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\sdl\\sys.py"
+    },
+    "tcod.sdl.video": {
+        "bacon": 3,
+        "imported_by": [
+            "tcod.context",
+            "tcod.sdl.render"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod.cffi",
+            "tcod.sdl",
+            "typing_extensions"
+        ],
+        "name": "tcod.sdl.video",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\sdl\\video.py"
+    },
+    "tcod.tcod": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod"
+        ],
+        "imports": [
+            "tcod",
+            "tcod.bsp",
+            "tcod.color",
+            "tcod.console",
+            "tcod.constants",
+            "tcod.context",
+            "tcod.event",
+            "tcod.image",
+            "tcod.libtcodpy",
+            "tcod.los",
+            "tcod.map",
+            "tcod.noise",
+            "tcod.path",
+            "tcod.random",
+            "tcod.tileset",
+            "tcod.version"
+        ],
+        "name": "tcod.tcod",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\tcod.py"
+    },
+    "tcod.tileset": {
+        "bacon": 2,
+        "imported_by": [
+            "font_loader_freetype",
+            "tcod",
+            "tcod.context",
+            "tcod.render",
+            "tcod.tcod"
+        ],
+        "imports": [
+            "numpy",
+            "numpy.typing",
+            "tcod",
+            "tcod._internal",
+            "tcod.cffi",
+            "tcod.console",
+            "typing_extensions"
+        ],
+        "name": "tcod.tileset",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\tileset.py"
+    },
+    "tcod.version": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod",
+            "tcod.tcod"
+        ],
+        "name": "tcod.version",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\tcod\\version.py"
+    },
+    "typing_extensions": {
+        "bacon": 2,
+        "imported_by": [
+            "tcod._internal",
+            "tcod.bsp",
+            "tcod.console",
+            "tcod.context",
+            "tcod.event",
+            "tcod.image",
+            "tcod.libtcodpy",
+            "tcod.map",
+            "tcod.path",
+            "tcod.random",
+            "tcod.sdl.render",
+            "tcod.sdl.sys",
+            "tcod.sdl.video",
+            "tcod.tileset"
+        ],
+        "name": "typing_extensions",
+        "path": "D:\\Projects\\RogueSignalProtocol\\.venv\\Lib\\site-packages\\typing_extensions.py"
+    }
+}'dot' is not recognized as an internal or external command,
+operable program or batch file.
+

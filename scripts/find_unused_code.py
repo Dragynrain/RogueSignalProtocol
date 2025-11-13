@@ -6,9 +6,8 @@ Finds potentially unused functions, classes, variables, and imports.
 
 import ast
 import os
-from pathlib import Path
 from collections import defaultdict
-from typing import Dict, List, Set, Tuple
+from pathlib import Path
 
 
 class CodeAnalyzer(ast.NodeVisitor):
@@ -16,9 +15,9 @@ class CodeAnalyzer(ast.NodeVisitor):
 
     def __init__(self, filepath: str):
         self.filepath = filepath
-        self.definitions: Dict[str, List[int]] = defaultdict(list)
-        self.usages: Set[str] = set()
-        self.imports: Dict[str, int] = {}
+        self.definitions: dict[str, list[int]] = defaultdict(list)
+        self.usages: set[str] = set()
+        self.imports: dict[str, int] = {}
         self.current_class = None
 
     def visit_FunctionDef(self, node):
@@ -29,16 +28,19 @@ class CodeAnalyzer(ast.NodeVisitor):
             full_name = node.name
 
         # Skip test functions, magic methods, and common overrides
-        if not (node.name.startswith('test_') or
-                node.name.startswith('_') and node.name.endswith('_') or
-                node.name in ['__init__', '__str__', '__repr__']):
-            self.definitions['function'].append((full_name, node.lineno))
+        if not (
+            node.name.startswith("test_")
+            or node.name.startswith("_")
+            and node.name.endswith("_")
+            or node.name in ["__init__", "__str__", "__repr__"]
+        ):
+            self.definitions["function"].append((full_name, node.lineno))
 
         self.generic_visit(node)
 
     def visit_ClassDef(self, node):
         """Track class definitions."""
-        self.definitions['class'].append((node.name, node.lineno))
+        self.definitions["class"].append((node.name, node.lineno))
         old_class = self.current_class
         self.current_class = node.name
         self.generic_visit(node)
@@ -54,7 +56,7 @@ class CodeAnalyzer(ast.NodeVisitor):
     def visit_ImportFrom(self, node):
         """Track from imports."""
         for alias in node.names:
-            if alias.name != '*':
+            if alias.name != "*":
                 name = alias.asname if alias.asname else alias.name
                 self.imports[name] = node.lineno
         self.generic_visit(node)
@@ -82,7 +84,7 @@ class CodeAnalyzer(ast.NodeVisitor):
 def analyze_file(filepath: Path) -> CodeAnalyzer:
     """Analyze a single Python file."""
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, encoding="utf-8") as f:
             tree = ast.parse(f.read(), filename=str(filepath))
         analyzer = CodeAnalyzer(str(filepath))
         analyzer.visit(tree)
@@ -92,23 +94,23 @@ def analyze_file(filepath: Path) -> CodeAnalyzer:
         return None
 
 
-def find_python_files(root_dir: Path) -> List[Path]:
+def find_python_files(root_dir: Path) -> list[Path]:
     """Find all Python files in the project."""
     python_files = []
-    exclude_dirs = {'.venv', 'build', 'dist', '__pycache__', '.git', '.pytest_cache'}
+    exclude_dirs = {".venv", "build", "dist", "__pycache__", ".git", ".pytest_cache"}
 
     for root, dirs, files in os.walk(root_dir):
         # Remove excluded directories from search
         dirs[:] = [d for d in dirs if d not in exclude_dirs]
 
         for file in files:
-            if file.endswith('.py'):
+            if file.endswith(".py"):
                 python_files.append(Path(root) / file)
 
     return python_files
 
 
-def analyze_project(root_dir: Path) -> Dict[str, any]:
+def analyze_project(root_dir: Path) -> dict[str, any]:
     """Analyze entire project for unused code."""
     python_files = find_python_files(root_dir)
 
@@ -133,44 +135,42 @@ def analyze_project(root_dir: Path) -> Dict[str, any]:
             for imp_name, lineno in analyzer.imports.items():
                 all_imports[imp_name].append((str(filepath), lineno))
 
-    return {
-        'definitions': all_definitions,
-        'usages': all_usages,
-        'imports': all_imports
-    }
+    return {"definitions": all_definitions, "usages": all_usages, "imports": all_imports}
 
 
-def find_unused_code(analysis: Dict) -> Dict[str, List]:
+def find_unused_code(analysis: dict) -> dict[str, list]:
     """Find potentially unused code."""
     unused = defaultdict(list)
 
     # Find unused functions
-    for name, filepath, lineno in analysis['definitions']['function']:
-        simple_name = name.split('.')[-1]
-        if simple_name not in analysis['usages'] and name not in analysis['usages']:
+    for name, filepath, lineno in analysis["definitions"]["function"]:
+        simple_name = name.split(".")[-1]
+        if simple_name not in analysis["usages"] and name not in analysis["usages"]:
             # Skip if it's a property, callback, or has common patterns
-            if not any([
-                simple_name.startswith('on_'),
-                simple_name.startswith('handle_'),
-                simple_name.startswith('render_'),
-                simple_name == 'main',
-                simple_name == 'run',
-                simple_name == 'setup',
-                simple_name == 'teardown'
-            ]):
-                unused['functions'].append((name, filepath, lineno))
+            if not any(
+                [
+                    simple_name.startswith("on_"),
+                    simple_name.startswith("handle_"),
+                    simple_name.startswith("render_"),
+                    simple_name == "main",
+                    simple_name == "run",
+                    simple_name == "setup",
+                    simple_name == "teardown",
+                ]
+            ):
+                unused["functions"].append((name, filepath, lineno))
 
     # Find unused classes
-    for name, filepath, lineno in analysis['definitions']['class']:
-        if name not in analysis['usages']:
+    for name, filepath, lineno in analysis["definitions"]["class"]:
+        if name not in analysis["usages"]:
             # Skip base classes and exceptions
-            if not (name.endswith('Base') or name.endswith('Error') or name.endswith('Exception')):
-                unused['classes'].append((name, filepath, lineno))
+            if not (name.endswith("Base") or name.endswith("Error") or name.endswith("Exception")):
+                unused["classes"].append((name, filepath, lineno))
 
     # Find unused imports
-    for imp_name, locations in analysis['imports'].items():
-        if imp_name not in analysis['usages']:
-            unused['imports'].extend([(imp_name, loc[0], loc[1]) for loc in locations])
+    for imp_name, locations in analysis["imports"].items():
+        if imp_name not in analysis["usages"]:
+            unused["imports"].extend([(imp_name, loc[0], loc[1]) for loc in locations])
 
     return unused
 
@@ -191,8 +191,8 @@ def main():
     print("\n" + "=" * 70)
     print("POTENTIALLY UNUSED FUNCTIONS")
     print("=" * 70)
-    if unused['functions']:
-        for name, filepath, lineno in sorted(unused['functions'], key=lambda x: x[1]):
+    if unused["functions"]:
+        for name, filepath, lineno in sorted(unused["functions"], key=lambda x: x[1]):
             rel_path = os.path.relpath(filepath, root_dir)
             print(f"  {rel_path}:{lineno} - {name}")
     else:
@@ -201,8 +201,8 @@ def main():
     print("\n" + "=" * 70)
     print("POTENTIALLY UNUSED CLASSES")
     print("=" * 70)
-    if unused['classes']:
-        for name, filepath, lineno in sorted(unused['classes'], key=lambda x: x[1]):
+    if unused["classes"]:
+        for name, filepath, lineno in sorted(unused["classes"], key=lambda x: x[1]):
             rel_path = os.path.relpath(filepath, root_dir)
             print(f"  {rel_path}:{lineno} - {name}")
     else:
@@ -211,8 +211,8 @@ def main():
     print("\n" + "=" * 70)
     print("POTENTIALLY UNUSED IMPORTS")
     print("=" * 70)
-    if unused['imports']:
-        for name, filepath, lineno in sorted(unused['imports'], key=lambda x: (x[1], x[2])):
+    if unused["imports"]:
+        for name, filepath, lineno in sorted(unused["imports"], key=lambda x: (x[1], x[2])):
             rel_path = os.path.relpath(filepath, root_dir)
             print(f"  {rel_path}:{lineno} - {name}")
     else:
@@ -234,5 +234,5 @@ def main():
     print()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

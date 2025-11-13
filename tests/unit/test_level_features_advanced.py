@@ -4,11 +4,12 @@ Unit tests for advanced Level Generation features.
 Tests Phase 4-5 features: T-junctions, landmark rooms, objective-oriented placement, curved corridors, defensive positions, choke points, and zones.
 """
 
+
 import pytest
-import random
+
+from game_config import GameConfig
 from game_level import LevelGenerator
 from game_map import GameMap
-from game_config import GameConfig
 
 
 class TestPhase4AdvancedFeatures:
@@ -60,8 +61,11 @@ class TestPhase4AdvancedFeatures:
 
         # Verify at least some shadows placed in corners
         # (Shadows are only placed if the corners are in corridor_tiles)
-        corner_shadows = sum(1 for corner in [(19, 19), (21, 19), (19, 21), (21, 21)]
-                           if corner in self.game_map.blind_spots)
+        corner_shadows = sum(
+            1
+            for corner in [(19, 19), (21, 19), (19, 21), (21, 21)]
+            if corner in self.game_map.blind_spots
+        )
         # Since we didn't add all corners to corridor_tiles, may not get all 4 shadows
         # Just verify the method ran without error
         assert corner_shadows >= 0  # Should not crash
@@ -88,10 +92,10 @@ class TestPhase4AdvancedFeatures:
 
         # Each landmark should have required fields
         for landmark in landmark_rooms:
-            assert 'type' in landmark
-            assert 'room' in landmark
-            assert 'position' in landmark
-            assert 'description' in landmark
+            assert "type" in landmark
+            assert "room" in landmark
+            assert "position" in landmark
+            assert "description" in landmark
 
     def test_create_server_core_landmark(self):
         """Test server core landmark creation."""
@@ -104,9 +108,9 @@ class TestPhase4AdvancedFeatures:
 
         # May or may not succeed depending on room placement
         if landmark:
-            assert landmark['type'] == 'server_core'
-            assert 'position' in landmark
-            x, y = landmark['position']
+            assert landmark["type"] == "server_core"
+            assert "position" in landmark
+            x, y = landmark["position"]
             assert 0 <= x < GameConfig.MAP_WIDTH
             assert 0 <= y < GameConfig.MAP_HEIGHT
 
@@ -121,8 +125,8 @@ class TestPhase4AdvancedFeatures:
 
         # May or may not succeed
         if landmark:
-            assert landmark['type'] == 'vault'
-            assert 'position' in landmark
+            assert landmark["type"] == "vault"
+            assert "position" in landmark
 
     def test_create_arena_landmark(self):
         """Test arena landmark creation."""
@@ -135,8 +139,8 @@ class TestPhase4AdvancedFeatures:
 
         # May or may not succeed
         if landmark:
-            assert landmark['type'] == 'arena'
-            assert 'position' in landmark
+            assert landmark["type"] == "arena"
+            assert "position" in landmark
 
     def test_get_high_traffic_positions(self):
         """Test identification of high-traffic positions."""
@@ -145,7 +149,9 @@ class TestPhase4AdvancedFeatures:
         floor_positions = self.level_generator.placement_generator.get_all_floor_positions()
 
         # Get high-traffic positions
-        high_traffic = self.level_generator.placement_generator.get_high_traffic_positions(floor_positions)
+        high_traffic = self.level_generator.placement_generator.get_high_traffic_positions(
+            floor_positions
+        )
 
         # Should find some high-traffic positions
         assert len(high_traffic) > 0
@@ -161,7 +167,9 @@ class TestPhase4AdvancedFeatures:
         floor_positions = self.level_generator.placement_generator.get_all_floor_positions()
 
         # Get peripheral positions
-        peripheral = self.level_generator.placement_generator.get_peripheral_positions(floor_positions)
+        peripheral = self.level_generator.placement_generator.get_peripheral_positions(
+            floor_positions
+        )
 
         # Should find some peripheral positions (unless map is very small)
         # All should be valid floor positions
@@ -175,7 +183,9 @@ class TestPhase4AdvancedFeatures:
         floor_positions = self.level_generator.placement_generator.get_all_floor_positions()
 
         # Get shadow-adjacent positions
-        shadow_adjacent = self.level_generator.placement_generator.get_shadow_adjacent_positions(floor_positions)
+        shadow_adjacent = self.level_generator.placement_generator.get_shadow_adjacent_positions(
+            floor_positions
+        )
 
         # Should find some shadow-adjacent positions if shadows exist
         if len(self.game_map.blind_spots) > 0:
@@ -211,7 +221,7 @@ class TestPhase4AdvancedFeatures:
         self.level_generator.generate_level(1, 99999)
 
         # Check if landmark rooms were stored
-        if hasattr(self.level_generator, '_landmark_rooms'):
+        if hasattr(self.level_generator, "_landmark_rooms"):
             landmark_rooms = self.level_generator._landmark_rooms
             assert isinstance(landmark_rooms, list)
 
@@ -235,9 +245,12 @@ class TestPhase4AdvancedFeatures:
             assert gateway_pos not in self.game_map.walls
 
             # Should have floor tiles
-            floor_count = sum(1 for x in range(GameConfig.MAP_WIDTH)
-                            for y in range(GameConfig.MAP_HEIGHT)
-                            if (x, y) not in self.game_map.walls)
+            floor_count = sum(
+                1
+                for x in range(GameConfig.MAP_WIDTH)
+                for y in range(GameConfig.MAP_HEIGHT)
+                if (x, y) not in self.game_map.walls
+            )
             assert floor_count > 50
 
             # Should have special nodes
@@ -387,7 +400,7 @@ class TestPhase5PolishFeatures:
         self.level_generator.generate_level(1, 12345)
 
         # Loot room positions should be populated
-        assert hasattr(self.game_map, 'loot_room_positions')
+        assert hasattr(self.game_map, "loot_room_positions")
         assert isinstance(self.game_map.loot_room_positions, set)
 
         # Should have some loot room positions (20% of rooms)
@@ -422,14 +435,14 @@ class TestPhase5PolishFeatures:
         zones = self.level_generator.advanced_generator.create_map_zones()
 
         # Should create configured number of zones
-        zone_count = GameConfig._get_required('room_generation.zone_count')
+        zone_count = GameConfig._get_required("room_generation.zone_count")
         assert len(zones) == zone_count
 
         # Each zone should have type and bounds
         for zone in zones:
-            assert 'type' in zone
-            assert 'bounds' in zone
-            assert zone['type'] in ['linear', 'open', 'mixed']
+            assert "type" in zone
+            assert "bounds" in zone
+            assert zone["type"] in ["linear", "open", "mixed"]
 
     def test_zone_assignment_for_rooms(self):
         """Test that rooms are correctly assigned to zones."""
@@ -445,9 +458,9 @@ class TestPhase5PolishFeatures:
         bottom_zone = self.level_generator.advanced_generator.get_zone_for_room(bottom_room, zones)
 
         # Should all return valid zone types
-        assert top_zone in ['linear', 'open', 'mixed']
-        assert middle_zone in ['linear', 'open', 'mixed']
-        assert bottom_zone in ['linear', 'open', 'mixed']
+        assert top_zone in ["linear", "open", "mixed"]
+        assert middle_zone in ["linear", "open", "mixed"]
+        assert bottom_zone in ["linear", "open", "mixed"]
 
     def test_full_phase5_level_generation(self):
         """Integration test: Generate a complete level with all Phase 5 features."""
@@ -458,8 +471,8 @@ class TestPhase5PolishFeatures:
         assert self.game_map.gateway is not None
 
         # Verify Phase 5 features are present
-        assert hasattr(self.game_map, 'loot_room_positions')
-        assert hasattr(self.level_generator, '_room_zones') or True  # May not always be set
+        assert hasattr(self.game_map, "loot_room_positions")
+        assert hasattr(self.level_generator, "_room_zones") or True  # May not always be set
 
         # Verify level is playable (gateway not on wall, etc.)
         gateway_pos = (self.game_map.gateway.x, self.game_map.gateway.y)

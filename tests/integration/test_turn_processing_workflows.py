@@ -19,14 +19,10 @@ These tests verify turn processing integrates correctly with:
 - Environmental systems
 """
 
-import pytest
-from unittest.mock import Mock
 
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
-from game_config import GameSettings, GameBalance
-from tests.fixtures.real_game_data import get_real_game_data
+import pytest
+
+from game_entities import EnemyState, Position
 from tests.fixtures.simple_fixtures import enemy_builder
 
 
@@ -61,7 +57,7 @@ class TestBasicTurnProcessing:
 
         # Verify initial state
         assert basic_game_engine.game_state is not None
-        assert hasattr(basic_game_engine, 'turn')
+        assert hasattr(basic_game_engine, "turn")
 
         initial_turn = basic_game_engine.turn
 
@@ -83,14 +79,16 @@ class TestBackgroundTraceAccumulation:
 
         # Get background trace rate
         network_config = basic_game_engine.game_state.get_current_network_config()
-        background_trace = network_config.get('background_trace', 0)
+        background_trace = network_config.get("background_trace", 0)
 
         # Process turn
         basic_game_engine.process_turn()
 
         # Verify trace increased
         if background_trace > 0:
-            assert basic_game_engine.player.trace_level >= initial_trace, "Trace should increase with background trace"
+            assert (
+                basic_game_engine.player.trace_level >= initial_trace
+            ), "Trace should increase with background trace"
 
     def test_trace_accumulation_over_many_turns(self, basic_game_engine):
         """Test trace accumulates correctly over many turns."""
@@ -102,7 +100,9 @@ class TestBackgroundTraceAccumulation:
             basic_game_engine.process_turn()
 
         # Trace should have increased or stayed same (background trace might be 0)
-        assert basic_game_engine.player.trace_level >= initial_trace, "Trace should not decrease over turns"
+        assert (
+            basic_game_engine.player.trace_level >= initial_trace
+        ), "Trace should not decrease over turns"
 
     def test_trace_level_caps_at_maximum(self, basic_game_engine):
         """Test trace level cannot exceed maximum."""
@@ -137,7 +137,9 @@ class TestHeatDissipation:
             basic_game_engine.process_turn()
 
         # Heat should have dissipated (or stayed same if dissipation is 0)
-        assert basic_game_engine.player.heat <= initial_heat, "Heat should not increase without actions"
+        assert (
+            basic_game_engine.player.heat <= initial_heat
+        ), "Heat should not increase without actions"
 
     def test_heat_dissipation_rate_consistent(self, basic_game_engine):
         """Test heat dissipation rate is consistent across turns."""
@@ -180,26 +182,30 @@ class TestTemporaryEffectDuration:
         """Test temporary effect duration decrements each turn."""
 
         # Apply temporary effect
-        basic_game_engine.player.temporary_effects['speed_boost_turns'] = 5
+        basic_game_engine.player.temporary_effects["speed_boost_turns"] = 5
 
         # Process turn
         basic_game_engine.process_turn()
 
         # Verify effect decremented
-        assert basic_game_engine.player.temporary_effects['speed_boost_turns'] == 4, "Effect duration should decrement"
+        assert (
+            basic_game_engine.player.temporary_effects["speed_boost_turns"] == 4
+        ), "Effect duration should decrement"
 
     def test_temporary_effect_expires_after_duration(self, basic_game_engine):
         """Test temporary effect expires after duration reaches 0."""
 
         # Apply temporary effect with short duration
-        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 2
+        basic_game_engine.player.temporary_effects["traffic_masquerade_turns"] = 2
 
         # Process 3 turns
         for _ in range(3):
             basic_game_engine.process_turn()
 
         # Verify effect expired
-        assert basic_game_engine.player.temporary_effects.get('traffic_masquerade_turns', 0) == 0, "Effect should expire"
+        assert (
+            basic_game_engine.player.temporary_effects.get("traffic_masquerade_turns", 0) == 0
+        ), "Effect should expire"
 
     def test_multiple_temporary_effects_tracked_separately(self, basic_game_engine):
         """Test multiple temporary effects are tracked and decremented separately."""
@@ -208,31 +214,33 @@ class TestTemporaryEffectDuration:
         basic_game_engine.enemies = []
 
         # Apply multiple effects
-        basic_game_engine.player.temporary_effects['speed_boost_turns'] = 5
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 3
-        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 2
+        basic_game_engine.player.temporary_effects["speed_boost_turns"] = 5
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 3
+        basic_game_engine.player.temporary_effects["traffic_masquerade_turns"] = 2
 
         # Process 2 turns
         for _ in range(2):
             basic_game_engine.process_turn()
 
         # Verify each effect decremented independently
-        assert basic_game_engine.player.temporary_effects['speed_boost_turns'] == 3
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] == 1
-        assert basic_game_engine.player.temporary_effects.get('traffic_masquerade_turns', 0) == 0  # Should be expired
+        assert basic_game_engine.player.temporary_effects["speed_boost_turns"] == 3
+        assert basic_game_engine.player.temporary_effects["enhanced_vision_turns"] == 1
+        assert (
+            basic_game_engine.player.temporary_effects.get("traffic_masquerade_turns", 0) == 0
+        )  # Should be expired
 
     def test_zero_duration_effect_does_not_go_negative(self, basic_game_engine):
         """Test effect with 0 duration doesn't go negative."""
 
         # Set effect to 0
-        basic_game_engine.player.temporary_effects['speed_boost_turns'] = 0
+        basic_game_engine.player.temporary_effects["speed_boost_turns"] = 0
 
         # Process turns
         for _ in range(5):
             basic_game_engine.process_turn()
 
         # Verify stayed at 0
-        assert basic_game_engine.player.temporary_effects.get('speed_boost_turns', 0) >= 0
+        assert basic_game_engine.player.temporary_effects.get("speed_boost_turns", 0) >= 0
 
 
 class TestEnemyTurnProcessing:
@@ -261,7 +269,9 @@ class TestEnemyTurnProcessing:
 
         # Verify enemies were processed (they should have attempted to take actions)
         # Note: Enemies might not move if patrol queue is empty, but processing should occur
-        assert len(basic_game_engine.enemies) == len(initial_positions), "All enemies should still exist"
+        assert len(basic_game_engine.enemies) == len(
+            initial_positions
+        ), "All enemies should still exist"
 
     def test_hostile_enemy_processes_during_turn(self, basic_game_engine):
         """Test hostile enemy is processed during turn."""
@@ -278,9 +288,12 @@ class TestEnemyTurnProcessing:
         basic_game_engine.game_map.blind_spots.discard((enemy_pos.x, enemy_pos.y))
         basic_game_engine.game_map.ghost_nodes.discard((enemy_pos.x, enemy_pos.y))
 
-        enemy = enemy_builder("bot", pos=(enemy_pos.x, enemy_pos.y),
-                              state=EnemyState.HOSTILE,
-                              last_seen=(player_pos.x, player_pos.y))
+        enemy = enemy_builder(
+            "bot",
+            pos=(enemy_pos.x, enemy_pos.y),
+            state=EnemyState.HOSTILE,
+            last_seen=(player_pos.x, player_pos.y),
+        )
         basic_game_engine.enemies = [enemy]
 
         # Process several turns - enemy should remain hostile since it can always see player
@@ -289,7 +302,9 @@ class TestEnemyTurnProcessing:
 
         # Enemy should have been processed and remain hostile (continuous visibility)
         assert enemy in basic_game_engine.enemies, "Enemy should still be tracked"
-        assert enemy.state == EnemyState.HOSTILE, f"Enemy should remain hostile with continuous visibility, not {enemy.state}"
+        assert (
+            enemy.state == EnemyState.HOSTILE
+        ), f"Enemy should remain hostile with continuous visibility, not {enemy.state}"
 
     def test_disabled_enemy_skips_turn(self, basic_game_engine):
         """Test disabled enemy does not act during turn."""
@@ -388,14 +403,18 @@ class TestTurnProcessingEdgeCases:
         basic_game_engine.process_turn()
 
         # Verify turn still processed
-        assert basic_game_engine.turn == initial_turn + 1, "Turn should process even without enemies"
+        assert (
+            basic_game_engine.turn == initial_turn + 1
+        ), "Turn should process even without enemies"
 
     def test_dialogue_system_integration(self, basic_game_engine):
         """Test dialogue system integrates with game basic_game_engine."""
 
         # Verify dialogue system exists and is integrated
-        assert hasattr(basic_game_engine, 'dialogue_state'), "Engine should have dialogue_state"
-        assert hasattr(basic_game_engine.dialogue_state, 'is_active'), "Should have is_active method"
+        assert hasattr(basic_game_engine, "dialogue_state"), "Engine should have dialogue_state"
+        assert hasattr(
+            basic_game_engine.dialogue_state, "is_active"
+        ), "Should have is_active method"
 
         # Check current dialogue state
         has_dialogue = basic_game_engine.dialogue_state.is_active()
@@ -465,23 +484,29 @@ class TestCrossSystemTurnEffects:
         """Test temporary effects correctly interact with turn-based systems."""
 
         # Apply speed boost
-        basic_game_engine.player.temporary_effects['speed_boost_turns'] = 3
+        basic_game_engine.player.temporary_effects["speed_boost_turns"] = 3
 
         # Verify effect is active (check value directly, not method)
-        assert basic_game_engine.player.temporary_effects['speed_boost_turns'] > 0, "Speed boost should be active"
+        assert (
+            basic_game_engine.player.temporary_effects["speed_boost_turns"] > 0
+        ), "Speed boost should be active"
 
         # Process turn
         basic_game_engine.process_turn()
 
         # Effect should have been decremented
-        assert basic_game_engine.player.temporary_effects['speed_boost_turns'] <= 3, "Effect should decrement or stay"
+        assert (
+            basic_game_engine.player.temporary_effects["speed_boost_turns"] <= 3
+        ), "Effect should decrement or stay"
 
         # Process more turns until expiry
         for _ in range(5):
             basic_game_engine.process_turn()
 
         # Effect should be expired
-        assert basic_game_engine.player.temporary_effects['speed_boost_turns'] == 0, "Speed boost should expire"
+        assert (
+            basic_game_engine.player.temporary_effects["speed_boost_turns"] == 0
+        ), "Speed boost should expire"
 
     def test_alert_timer_decrements_per_turn(self, basic_game_engine):
         """Test enemy alert timer decrements correctly per turn."""
@@ -501,5 +526,5 @@ class TestCrossSystemTurnEffects:
         assert enemy.alert_timer >= 0, "Alert timer should not go negative"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

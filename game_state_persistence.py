@@ -16,14 +16,14 @@ Extracted from GameSession to improve modularity and maintainability.
 import logging
 import random
 import traceback
-from typing import Dict, List, Any
+from typing import Any
 
-from game_config import GameConfig
-from game_entities import Position, parse_coordinate_string, Colors
-from game_inventory import CodeHack, ExploitItem, StoryFragment
-from game_data import GameData
-from game_save import SaveGameManager
 from game_characters import Enemy
+from game_config import GameConfig
+from game_data import GameData
+from game_entities import Colors, Position, parse_coordinate_string
+from game_inventory import CodeHack, ExploitItem, StoryFragment
+from game_save import SaveGameManager
 
 
 class GameStatePersistence:
@@ -77,21 +77,30 @@ class GameStatePersistence:
             self._restore_ui_state(save_data)
 
             # Generate level layout for map structure
-            logging.info(f"Load: Generating level {self.game_engine.game_state.level} with seed={self.game_engine.game_state.dungeon_seed}")
-            self.game_engine.level_generator.generate_level(
-                self.game_engine.game_state.level,
-                self.game_engine.game_state.dungeon_seed
+            logging.info(
+                f"Load: Generating level {self.game_engine.game_state.level} with seed={self.game_engine.game_state.dungeon_seed}"
             )
-            logging.info(f"Load: Level generation complete, player at ({self.game_engine.player.x}, {self.game_engine.player.y})")
+            self.game_engine.level_generator.generate_level(
+                self.game_engine.game_state.level, self.game_engine.game_state.dungeon_seed
+            )
+            logging.info(
+                f"Load: Level generation complete, player at ({self.game_engine.player.x}, {self.game_engine.player.y})"
+            )
 
             # Validate player position after map generation
             # If player position is invalid, the save is incompatible (likely due to map generation changes)
             player_pos = Position(self.game_engine.player.x, self.game_engine.player.y)
             if self.game_engine.game_map.is_wall(player_pos):
-                logging.error(f"Load: SAVE INCOMPATIBLE - Player position {player_pos} is in a wall!")
-                logging.error(f"Load: This likely means the save is from an older version with different map generation.")
-                logging.error(f"Load: Refusing to load - game will start fresh.")
-                self.game_engine.message_log.add_message_typed("Save file incompatible with current version!", Colors.RED)
+                logging.error(
+                    f"Load: SAVE INCOMPATIBLE - Player position {player_pos} is in a wall!"
+                )
+                logging.error(
+                    "Load: This likely means the save is from an older version with different map generation."
+                )
+                logging.error("Load: Refusing to load - game will start fresh.")
+                self.game_engine.message_log.add_message_typed(
+                    "Save file incompatible with current version!", Colors.RED
+                )
                 self.game_engine.message_log.add_message("Starting new game...")
                 return False
 
@@ -103,7 +112,9 @@ class GameStatePersistence:
             if "enemy_next_id" in save_data:
                 Enemy.set_next_id_counter(save_data["enemy_next_id"])
 
-            self.game_engine.message_log.add_message_typed("Game loaded successfully!", Colors.GREEN)
+            self.game_engine.message_log.add_message_typed(
+                "Game loaded successfully!", Colors.GREEN
+            )
             return True
 
         except Exception as e:
@@ -111,7 +122,7 @@ class GameStatePersistence:
             logging.debug(traceback.format_exc())
             return False
 
-    def _restore_game_state(self, save_data: Dict[str, Any]) -> None:
+    def _restore_game_state(self, save_data: dict[str, Any]) -> None:
         """Restore core game state from save data."""
         self.game_engine.game_state.level = save_data.get("level", 1)
         self.game_engine.game_state.turn = save_data.get("turn", 0)
@@ -122,12 +133,14 @@ class GameStatePersistence:
         saved_seed = save_data.get("dungeon_seed")
         if saved_seed is None:
             logging.warning("Load: No dungeon_seed in save file! Generating new random seed.")
-            self.game_engine.game_state.dungeon_seed = random.randint(1, GameConfig.DUNGEON_SEED_RANGE)
+            self.game_engine.game_state.dungeon_seed = random.randint(
+                1, GameConfig.DUNGEON_SEED_RANGE
+            )
         else:
             self.game_engine.game_state.dungeon_seed = saved_seed
             logging.info(f"Load: Restored dungeon_seed={saved_seed}")
 
-    def _restore_player_state(self, player_data: Dict[str, Any]) -> None:
+    def _restore_player_state(self, player_data: dict[str, Any]) -> None:
         """Restore player state from save data."""
         player = self.game_engine.player
 
@@ -149,14 +162,17 @@ class GameStatePersistence:
         player.speed_moves_remaining = player_data.get("speed_moves_remaining", 0)
 
         # Temporary effects with defaults
-        player.temporary_effects = player_data.get("temporary_effects", {
-            'speed_boost_turns': 0,
-            'movement_slowed_turns': 0,
-            'enhanced_vision_turns': 0,
-            'exploit_efficiency_turns': 0,
-            'traffic_masquerade_turns': 0,
-            'virus_turns': 0
-        })
+        player.temporary_effects = player_data.get(
+            "temporary_effects",
+            {
+                "speed_boost_turns": 0,
+                "movement_slowed_turns": 0,
+                "enhanced_vision_turns": 0,
+                "exploit_efficiency_turns": 0,
+                "traffic_masquerade_turns": 0,
+                "virus_turns": 0,
+            },
+        )
 
         # Restore inventory with defaults
         player.inventory_manager.equipped_exploits = player_data.get("equipped_exploits", [])
@@ -164,7 +180,7 @@ class GameStatePersistence:
         inventory_items = player_data.get("inventory_items", [])
         player.inventory_manager.items = self._deserialize_inventory(inventory_items)
 
-    def _restore_game_effects(self, save_data: Dict[str, Any]) -> None:
+    def _restore_game_effects(self, save_data: dict[str, Any]) -> None:
         """Restore game effects and environmental state from save data."""
         # Handle both old and new save format for backward compatibility
         if "game_effects" in save_data:
@@ -193,25 +209,27 @@ class GameStatePersistence:
         self.game_engine.overclock_confirmation = save_data.get("overclock_confirmation", False)
         self.game_engine.overclock_exploit = save_data.get("overclock_exploit", None)
 
-    def _restore_metrics(self, save_data: Dict[str, Any]) -> None:
+    def _restore_metrics(self, save_data: dict[str, Any]) -> None:
         """Restore session metrics from save data."""
         if "session_metrics" in save_data and save_data["session_metrics"]:
             from game_metrics import load_session_metrics
+
             metrics = load_session_metrics(save_data)
             if metrics:
                 # Replace the default initialized metrics with loaded ones
                 self.game_engine.metrics = metrics
                 import game_metrics
+
                 game_metrics._current_session = metrics
                 logging.info("Metrics restored from save")
 
-    def _restore_ui_state(self, save_data: Dict[str, Any]) -> None:
+    def _restore_ui_state(self, save_data: dict[str, Any]) -> None:
         """Restore UI state from save data."""
         ui_state = save_data.get("ui_state", {})
         self.game_engine.inventory_selection = ui_state.get("inventory_selection", 0)
         self.game_engine.lore_viewer_selection = ui_state.get("lore_viewer_selection", 0)
 
-    def _deserialize_inventory(self, items_data: List[Dict]) -> List:
+    def _deserialize_inventory(self, items_data: list[dict]) -> list:
         """Deserialize inventory items from save data."""
         items = []
         for item_data in items_data:
@@ -227,7 +245,7 @@ class GameStatePersistence:
                     effect=item_data["effect"],
                     name=item_data["name"],
                     description=desc,
-                    quantity=item_data.get("quantity", 1)
+                    quantity=item_data.get("quantity", 1),
                 )
                 item.discovered = item_data.get("discovered", False)
                 items.append(item)
@@ -242,7 +260,7 @@ class GameStatePersistence:
 
         return items
 
-    def _restore_map_items(self, map_data: Dict) -> None:
+    def _restore_map_items(self, map_data: dict) -> None:
         """Restore items on the map from save data."""
         game_map = self.game_engine.game_map
 
@@ -271,7 +289,7 @@ class GameStatePersistence:
                 effect=patch_data["effect"],
                 name=patch_data["name"],
                 description=desc,
-                quantity=patch_data["quantity"]
+                quantity=patch_data["quantity"],
             )
             patch.discovered = patch_data["discovered"]
             game_map.code_hacks[(x, y)] = patch
@@ -325,7 +343,7 @@ class GameStatePersistence:
                 turn_seen = pos_data["turn"]
                 game_map.last_known_enemy_positions[enemy_id] = (position, turn_seen)
 
-    def _restore_enemies(self, enemies_data: List[Dict]) -> None:
+    def _restore_enemies(self, enemies_data: list[dict]) -> None:
         """Restore enemies from save data."""
         self.game_engine.enemy_manager.enemies.clear()
 
@@ -341,30 +359,36 @@ class GameStatePersistence:
             enemy.cpu = enemy_data["cpu"]
             # Convert state string back to EnemyState enum
             from game_entities import EnemyState
-            enemy.state = EnemyState(enemy_data["state"]) if isinstance(enemy_data["state"], str) else enemy_data["state"]
+
+            enemy.state = (
+                EnemyState(enemy_data["state"])
+                if isinstance(enemy_data["state"], str)
+                else enemy_data["state"]
+            )
             enemy.move_cooldown = enemy_data["move_cooldown"]
             enemy.disabled_turns = enemy_data["disabled_turns"]
             enemy.alert_timer = enemy_data["alert_timer"]
             enemy.patrol_index = enemy_data["patrol_index"]
-            enemy.last_target = Position(enemy_data["last_target"]["x"], enemy_data["last_target"]["y"]) if enemy_data.get("last_target") else None
+            enemy.last_target = (
+                Position(enemy_data["last_target"]["x"], enemy_data["last_target"]["y"])
+                if enemy_data.get("last_target")
+                else None
+            )
 
             if enemy_data["last_seen_player"]:
                 enemy.last_seen_player = Position(
-                    enemy_data["last_seen_player"]["x"],
-                    enemy_data["last_seen_player"]["y"]
+                    enemy_data["last_seen_player"]["x"], enemy_data["last_seen_player"]["y"]
                 )
 
             if "patrol_points" in enemy_data:
                 enemy.patrol_points = [
-                    Position(point["x"], point["y"])
-                    for point in enemy_data["patrol_points"]
+                    Position(point["x"], point["y"]) for point in enemy_data["patrol_points"]
                 ]
 
             # Restore movement queue
             if "move_queue" in enemy_data:
                 enemy.move_queue = [
-                    Position(point["x"], point["y"])
-                    for point in enemy_data["move_queue"]
+                    Position(point["x"], point["y"]) for point in enemy_data["move_queue"]
                 ]
 
             self.game_engine.enemy_manager.enemies.append(enemy)
@@ -372,6 +396,7 @@ class GameStatePersistence:
     def _sync_code_discovered_status(self) -> None:
         """Sync discovered status of inventory code hacks with global discovered effects."""
         from game_inventory import CodeHack
+
         for item in self.game_engine.player.inventory_manager.items:
             if isinstance(item, CodeHack):
                 # Update discovered status based on global discovered effects

@@ -10,12 +10,10 @@ Tests audio behavior in extreme and edge case scenarios:
 - Audio performance impact on gameplay
 """
 
-import pytest
 import time
-from unittest.mock import Mock, patch, MagicMock
-import threading
+from unittest.mock import patch
 
-from game_audio import SoundManager, AUDIO_AVAILABLE
+from game_audio import AUDIO_AVAILABLE, SoundManager
 from game_config import GameSettings
 from tests.test_agent import GameTestAgent
 
@@ -445,7 +443,7 @@ class TestAudioGameplayPerformance:
 class TestAudioDisabledMode:
     """Test audio system when pygame is unavailable."""
 
-    @patch('game_audio.AUDIO_AVAILABLE', False)
+    @patch("game_audio.AUDIO_AVAILABLE", False)
     def test_audio_disabled_all_methods_safe(self):
         """When audio disabled, all methods are safe to call."""
         settings = GameSettings()
@@ -465,7 +463,7 @@ class TestAudioDisabledMode:
 
         # Success = no crashes
 
-    @patch('game_audio.AUDIO_AVAILABLE', False)
+    @patch("game_audio.AUDIO_AVAILABLE", False)
     def test_game_playable_without_audio(self):
         """Game is fully playable when audio is disabled."""
         agent = GameTestAgent(seed=51)
@@ -481,7 +479,7 @@ class TestAudioDisabledMode:
 
         # Game should work perfectly without audio
 
-    @patch('game_audio.AUDIO_AVAILABLE', False)
+    @patch("game_audio.AUDIO_AVAILABLE", False)
     def test_audio_disabled_doesnt_affect_performance(self):
         """Disabled audio has zero performance impact."""
         agent = GameTestAgent(seed=52)

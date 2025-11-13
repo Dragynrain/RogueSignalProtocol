@@ -8,10 +8,11 @@ special nodes and items as defined in game_content.json network_configs.
 Tests all 3 levels with multiple random seeds to ensure consistency.
 """
 
-import random
 import logging
-from game_session import GameSession
+import random
+
 from game_config import GameConfig
+from game_session import GameSession
 from tests.fixtures.quick_fixtures import quick_engine
 
 
@@ -44,12 +45,12 @@ def _verify_level_spawn_counts(level: int, seeds: list):
 
     config = network_configs[level]
     expected = {
-        'cooling_nodes': config['cooling_nodes'],
-        'cpu_nodes': config['cpu_nodes'],
-        'ghost_nodes': config['ghost_nodes'],
-        'code_hacks': config['code_hacks'],
-        'exploit_pickups': config['exploit_pickups'],
-        'permanent_upgrades': config['permanent_upgrades']
+        "cooling_nodes": config["cooling_nodes"],
+        "cpu_nodes": config["cpu_nodes"],
+        "ghost_nodes": config["ghost_nodes"],
+        "code_hacks": config["code_hacks"],
+        "exploit_pickups": config["exploit_pickups"],
+        "permanent_upgrades": config["permanent_upgrades"],
     }
 
     # Test with multiple seeds
@@ -67,12 +68,12 @@ def _verify_level_spawn_counts(level: int, seeds: list):
 
         # Count actual spawned items
         actual = {
-            'cooling_nodes': len(game_map.cooling_nodes),
-            'cpu_nodes': len(game_map.cpu_recovery_nodes),
-            'ghost_nodes': len(game_map.ghost_nodes),
-            'code_hacks': len(game_map.code_hacks),
-            'exploit_pickups': len(game_map.exploit_pickups),
-            'permanent_upgrades': len(game_map.permanent_upgrades)
+            "cooling_nodes": len(game_map.cooling_nodes),
+            "cpu_nodes": len(game_map.cpu_recovery_nodes),
+            "ghost_nodes": len(game_map.ghost_nodes),
+            "code_hacks": len(game_map.code_hacks),
+            "exploit_pickups": len(game_map.exploit_pickups),
+            "permanent_upgrades": len(game_map.permanent_upgrades),
         }
 
         # Verify each count matches

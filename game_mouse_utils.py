@@ -16,9 +16,10 @@ See .claude/MOUSE_COORDINATE_HANDLING.md for details.
 See .claude/TCOD_GUIDE.md section "Mouse Coordinate Conversion" for technical background.
 """
 
-from typing import Optional
 import copy
+
 import tcod.event
+
 from game_coordinate_helpers import CoordinateHelpers
 
 
@@ -34,7 +35,7 @@ class MenuMouseHandler:
     """
 
     @staticmethod
-    def convert_to_tile_coords(event: tcod.event.Event, context) -> Optional[tcod.event.Event]:
+    def convert_to_tile_coords(event: tcod.event.Event, context) -> tcod.event.Event | None:
         """
         Convert mouse event from pixel coordinates to tile coordinates.
 
@@ -57,13 +58,13 @@ class MenuMouseHandler:
             ...         print(f"Clicked tile: ({tile_x}, {tile_y})")
         """
         # Must have pixel coordinates
-        if not hasattr(event, 'pixel') or event.pixel is None:
+        if not hasattr(event, "pixel") or event.pixel is None:
             return None
 
         pixel_x, pixel_y = event.pixel
 
         # Get window size dynamically
-        if hasattr(context, 'sdl_window') and context.sdl_window:
+        if hasattr(context, "sdl_window") and context.sdl_window:
             window_w, window_h = context.sdl_window.size
         else:
             # Fallback to default (should rarely be needed)
@@ -84,7 +85,7 @@ class MenuMouseHandler:
         return converted_event
 
     @staticmethod
-    def get_tile_coords(event: tcod.event.Event) -> Optional[tuple[int, int]]:
+    def get_tile_coords(event: tcod.event.Event) -> tuple[int, int] | None:
         """
         Extract tile coordinates from a converted mouse event.
 
@@ -100,7 +101,7 @@ class MenuMouseHandler:
             ...     tile_x, tile_y = coords
             ...     print(f"Mouse at: ({tile_x}, {tile_y})")
         """
-        if not hasattr(event, 'tile') or event.tile is None:
+        if not hasattr(event, "tile") or event.tile is None:
             return None
 
         return (int(event.tile.x), int(event.tile.y))
@@ -116,9 +117,11 @@ class MenuMouseHandler:
         Returns:
             True if this is a left button click, False otherwise
         """
-        return (event.type == "MOUSEBUTTONDOWN" and
-                hasattr(event, 'button') and
-                event.button == tcod.event.MouseButton.LEFT)
+        return (
+            event.type == "MOUSEBUTTONDOWN"
+            and hasattr(event, "button")
+            and event.button == tcod.event.MouseButton.LEFT
+        )
 
     @staticmethod
     def is_right_click(event: tcod.event.Event) -> bool:
@@ -131,13 +134,16 @@ class MenuMouseHandler:
         Returns:
             True if this is a right button click, False otherwise
         """
-        return (event.type == "MOUSEBUTTONDOWN" and
-                hasattr(event, 'button') and
-                event.button == tcod.event.MouseButton.RIGHT)
+        return (
+            event.type == "MOUSEBUTTONDOWN"
+            and hasattr(event, "button")
+            and event.button == tcod.event.MouseButton.RIGHT
+        )
 
     @staticmethod
-    def is_in_rect(tile_x: int, tile_y: int, rect_x: int, rect_y: int,
-                   rect_width: int, rect_height: int) -> bool:
+    def is_in_rect(
+        tile_x: int, tile_y: int, rect_x: int, rect_y: int, rect_width: int, rect_height: int
+    ) -> bool:
         """
         Check if tile coordinates are within a rectangular region.
 
@@ -158,5 +164,4 @@ class MenuMouseHandler:
             >>> if coords and MouseEventHandler.is_in_rect(*coords, button_x, button_y, 10, 2):
             ...     print("Mouse over button!")
         """
-        return (rect_x <= tile_x < rect_x + rect_width and
-                rect_y <= tile_y < rect_y + rect_height)
+        return rect_x <= tile_x < rect_x + rect_width and rect_y <= tile_y < rect_y + rect_height

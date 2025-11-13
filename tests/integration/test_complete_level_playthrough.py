@@ -12,18 +12,12 @@ Tests the entire level playthrough workflow including:
 This test suite focuses on real gameplay behavior, not mocked interactions.
 """
 
-import pytest
-from unittest.mock import Mock
 import copy
 
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
-from game_config import GameConfig, GameSettings, GameBalance
-from game_inventory import CodeHack, ExploitItem, StoryFragment
+from game_config import GameConfig
 from game_data import GameData, GameUpgrades
-from tests.fixtures.real_game_data import get_real_game_data
-from tests.fixtures.simple_fixtures import create_real_player
+from game_entities import EnemyState, Position
+from game_inventory import CodeHack, ExploitItem, StoryFragment
 
 
 class TestCompleteLevelPlaythrough:
@@ -98,7 +92,9 @@ class TestCompleteLevelPlaythrough:
 
         # Verify code hack was collected
         assert code_pos not in engine.game_map.code_hacks, "Code hack not removed from map"
-        assert len(engine.player.inventory_manager.items) > initial_inventory_count, "Code hack not added to inventory"
+        assert (
+            len(engine.player.inventory_manager.items) > initial_inventory_count
+        ), "Code hack not added to inventory"
 
         # Verify code hack is in inventory
         code_in_inventory = None
@@ -131,19 +127,21 @@ class TestCompleteLevelPlaythrough:
         # Verify code hack was consumed (quantity decreased or item removed)
         post_use_count = len(engine.player.inventory_manager.items)
         consumed = (post_use_count < pre_use_inventory_count) or (
-            code_in_inventory in engine.player.inventory_manager.items and
-            code_in_inventory.quantity < 1
+            code_in_inventory in engine.player.inventory_manager.items
+            and code_in_inventory.quantity < 1
         )
 
         # Verify some stat changed (CPU, heat, trace level, or temporary effects like speed_boost)
         # Code hack effects: restore_cpu, reduce_heat, reduce_trace_level, speed_boost
         stats_changed = (
-            engine.player.cpu != pre_use_cpu or
-            engine.player.heat != pre_use_heat or
-            engine.player.trace_level != pre_use_trace or
-            engine.player.temporary_effects != pre_use_temp_effects
+            engine.player.cpu != pre_use_cpu
+            or engine.player.heat != pre_use_heat
+            or engine.player.trace_level != pre_use_trace
+            or engine.player.temporary_effects != pre_use_temp_effects
         )
-        assert stats_changed, f"Code hack had no visible effect. CPU: {pre_use_cpu}->{engine.player.cpu}, Heat: {pre_use_heat}->{engine.player.heat}, Trace: {pre_use_trace}->{engine.player.trace_level}, TempEffects: {pre_use_temp_effects}->{engine.player.temporary_effects}"
+        assert (
+            stats_changed
+        ), f"Code hack had no visible effect. CPU: {pre_use_cpu}->{engine.player.cpu}, Heat: {pre_use_heat}->{engine.player.heat}, Trace: {pre_use_trace}->{engine.player.trace_level}, TempEffects: {pre_use_temp_effects}->{engine.player.temporary_effects}"
 
     def test_exploit_pickup_collection_and_equipping(self, basic_game_engine):
         """Test collecting exploit pickups and equipping them."""
@@ -213,8 +211,12 @@ class TestCompleteLevelPlaythrough:
 
             # Only assert success if player has enough RAM
             if has_enough_ram:
-                assert success, f"Failed to equip exploit (RAM: {current_ram_usage}/{engine.player.ram_total}, cost: {exploit_ram_cost})"
-                assert exploit_item.exploit_key in engine.player.inventory_manager.equipped_exploits, "Exploit not in equipped list"
+                assert (
+                    success
+                ), f"Failed to equip exploit (RAM: {current_ram_usage}/{engine.player.ram_total}, cost: {exploit_ram_cost})"
+                assert (
+                    exploit_item.exploit_key in engine.player.inventory_manager.equipped_exploits
+                ), "Exploit not in equipped list"
             else:
                 # If not enough RAM, equip should fail gracefully
                 assert not success, "Equip should fail when insufficient RAM"
@@ -255,13 +257,13 @@ class TestCompleteLevelPlaythrough:
 
         # Verify upgrade effect was applied (based on upgrade type)
         stat_changed = False
-        if upgrade_def.stat_type == 'cpu':
+        if upgrade_def.stat_type == "cpu":
             assert engine.player.max_cpu > pre_max_cpu, "Max CPU not increased"
             stat_changed = True
-        elif upgrade_def.stat_type == 'heat':
+        elif upgrade_def.stat_type == "heat":
             assert engine.player.max_heat > pre_max_heat, "Max heat not increased"
             stat_changed = True
-        elif upgrade_def.stat_type == 'ram':
+        elif upgrade_def.stat_type == "ram":
             assert engine.player.ram_total > pre_ram_total, "RAM total not increased"
             stat_changed = True
 
@@ -402,7 +404,9 @@ class TestCompleteLevelPlaythrough:
         assert engine.player.trace_level == 0, "Trace level should reset to 0"
 
         # Verify inventory persisted
-        assert engine.player.inventory_manager.equipped_exploits == pre_equipped, "Equipped exploits not preserved"
+        assert (
+            engine.player.inventory_manager.equipped_exploits == pre_equipped
+        ), "Equipped exploits not preserved"
 
         # Verify base stats persisted
         assert engine.player.max_cpu == pre_max_cpu, "Max CPU not preserved"
@@ -484,7 +488,9 @@ class TestCompleteLevelPlaythrough:
                 engine.maybe_process_turn()
 
                 # Verify fragment was collected
-                assert fragment_pos not in engine.game_map.story_fragments, "Fragment not removed from map"
+                assert (
+                    fragment_pos not in engine.game_map.story_fragments
+                ), "Fragment not removed from map"
 
                 break
 
@@ -518,6 +524,7 @@ class TestCompleteLevelPlaythrough:
             engine.player.cpu = 100
 
             from game_combat import ExploitSystem
+
             exploit_system = ExploitSystem(engine)
 
             # Try to use exploit (might require targeting)
@@ -601,7 +608,9 @@ class TestCompleteLevelPlaythrough:
 
             assert engine.level == target_level, f"Failed to progress to level {target_level}"
             # Verify player still has same max_cpu (no upgrades collected)
-            assert engine.player.max_cpu == initial_max_cpu, f"Max CPU changed unexpectedly at level {target_level}"
+            assert (
+                engine.player.max_cpu == initial_max_cpu
+            ), f"Max CPU changed unexpectedly at level {target_level}"
             assert engine.game_map is not None
             assert len(engine.enemies) > 0
 
@@ -637,7 +646,9 @@ class TestCompleteLevelPlaythrough:
 
             # Verify item was added (or inventory system handles overflow gracefully)
             final_inventory_count = len(engine.player.inventory_manager.items)
-            assert final_inventory_count >= initial_inventory_count, "Inventory count decreased unexpectedly"
+            assert (
+                final_inventory_count >= initial_inventory_count
+            ), "Inventory count decreased unexpectedly"
 
         # Verify game is still playable
         assert engine.player.cpu > 0
@@ -657,7 +668,10 @@ class TestLevelEnvironmentGeneration:
 
             # Verify border walls exist
             assert (0, 0) in engine.game_map.walls, f"Missing top-left border on level {level}"
-            assert (GameConfig.MAP_WIDTH-1, 0) in engine.game_map.walls, f"Missing top-right border on level {level}"
+            assert (
+                GameConfig.MAP_WIDTH - 1,
+                0,
+            ) in engine.game_map.walls, f"Missing top-right border on level {level}"
 
             # Verify gateway exists
             assert engine.game_map.gateway is not None, f"No gateway on level {level}"
@@ -671,10 +685,10 @@ class TestLevelEnvironmentGeneration:
             # Verify special nodes spawned
             network_config = engine.game_state.get_current_network_config()
 
-            if network_config.get('cooling_nodes', 0) > 0:
+            if network_config.get("cooling_nodes", 0) > 0:
                 assert len(engine.game_map.cooling_nodes) > 0, f"No cooling nodes on level {level}"
 
-            if network_config.get('cpu_nodes', 0) > 0:
+            if network_config.get("cpu_nodes", 0) > 0:
                 assert len(engine.game_map.cpu_recovery_nodes) > 0, f"No CPU nodes on level {level}"
 
     def test_blind_spot_coverage_varies_by_level(self, basic_game_engine):
@@ -687,8 +701,10 @@ class TestLevelEnvironmentGeneration:
 
             # Verify blind spots exist
             network_config = engine.game_state.get_current_network_config()
-            if network_config.get('blind_spot_coverage', 0) > 0:
-                assert blind_spot_counts[level] > 0, f"No blind spots on level {level} despite blind_spot_coverage > 0"
+            if network_config.get("blind_spot_coverage", 0) > 0:
+                assert (
+                    blind_spot_counts[level] > 0
+                ), f"No blind spots on level {level} despite blind_spot_coverage > 0"
 
     def test_enemy_density_scales_with_level(self, basic_game_engine):
         """Test that enemy density increases or stays same across levels."""
@@ -709,20 +725,32 @@ class TestLevelEnvironmentGeneration:
         # Check code hacks
         for pos in engine.game_map.code_hacks.keys():
             assert pos not in engine.game_map.walls, f"Code hack at {pos} is in a wall"
-            assert 0 <= pos[0] < GameConfig.MAP_WIDTH, f"Code hack X coordinate {pos[0]} out of bounds"
-            assert 0 <= pos[1] < GameConfig.MAP_HEIGHT, f"Code hack Y coordinate {pos[1]} out of bounds"
+            assert (
+                0 <= pos[0] < GameConfig.MAP_WIDTH
+            ), f"Code hack X coordinate {pos[0]} out of bounds"
+            assert (
+                0 <= pos[1] < GameConfig.MAP_HEIGHT
+            ), f"Code hack Y coordinate {pos[1]} out of bounds"
 
         # Check exploit pickups
         for pos in engine.game_map.exploit_pickups.keys():
             assert pos not in engine.game_map.walls, f"Exploit at {pos} is in a wall"
-            assert 0 <= pos[0] < GameConfig.MAP_WIDTH, f"Exploit X coordinate {pos[0]} out of bounds"
-            assert 0 <= pos[1] < GameConfig.MAP_HEIGHT, f"Exploit Y coordinate {pos[1]} out of bounds"
+            assert (
+                0 <= pos[0] < GameConfig.MAP_WIDTH
+            ), f"Exploit X coordinate {pos[0]} out of bounds"
+            assert (
+                0 <= pos[1] < GameConfig.MAP_HEIGHT
+            ), f"Exploit Y coordinate {pos[1]} out of bounds"
 
         # Check permanent upgrades
         for pos in engine.game_map.permanent_upgrades.keys():
             assert pos not in engine.game_map.walls, f"Upgrade at {pos} is in a wall"
-            assert 0 <= pos[0] < GameConfig.MAP_WIDTH, f"Upgrade X coordinate {pos[0]} out of bounds"
-            assert 0 <= pos[1] < GameConfig.MAP_HEIGHT, f"Upgrade Y coordinate {pos[1]} out of bounds"
+            assert (
+                0 <= pos[0] < GameConfig.MAP_WIDTH
+            ), f"Upgrade X coordinate {pos[0]} out of bounds"
+            assert (
+                0 <= pos[1] < GameConfig.MAP_HEIGHT
+            ), f"Upgrade Y coordinate {pos[1]} out of bounds"
 
     def test_gateway_spawns_far_from_player_start(self, basic_game_engine):
         """Test that gateway spawns a reasonable distance from player starting position."""

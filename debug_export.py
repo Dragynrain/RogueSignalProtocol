@@ -18,16 +18,16 @@ Export triggered by:
 Output: debug_exports/debug_YYYY-MM-DD_HHMM.zip
 """
 
-import os
-import sys
 import json
-import zipfile
 import logging
+import os
 import platform
+import sys
 import traceback
+import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, Any, List
+from typing import Optional
 
 from game_errors import GameErrorHandler
 
@@ -38,9 +38,9 @@ class DebugExporter:
     EXPORT_DIR = Path("debug_exports")
 
     @classmethod
-    def create_debug_package(cls,
-                            game_engine: Optional['GameEngine'] = None,
-                            crash_info: Optional[str] = None) -> Optional[Path]:
+    def create_debug_package(
+        cls, game_engine: Optional["GameEngine"] = None, crash_info: str | None = None
+    ) -> Path | None:
         """
         Create a comprehensive debug package.
 
@@ -62,7 +62,7 @@ class DebugExporter:
             logging.info(f"Debug Export: Creating debug package: {zip_filename}")
 
             # Create zip file
-            with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
                 # 1. System information
                 cls._add_system_info(zipf, crash_info, game_engine)
 
@@ -81,10 +81,14 @@ class DebugExporter:
 
                 # 5. Game state snapshot (if game engine available)
                 if game_engine:
-                    logging.info(f"Debug Export: Adding game snapshot (level={game_engine.level}, turn={game_engine.turn})")
+                    logging.info(
+                        f"Debug Export: Adding game snapshot (level={game_engine.level}, turn={game_engine.turn})"
+                    )
                     cls._add_game_snapshot(zipf, game_engine)
                 else:
-                    logging.warning("Debug Export: No game engine provided - snapshot will not be included")
+                    logging.warning(
+                        "Debug Export: No game engine provided - snapshot will not be included"
+                    )
 
                 # 6. Reproduction steps template
                 cls._add_reproduction_template(zipf)
@@ -98,11 +102,15 @@ class DebugExporter:
             return zip_filename
 
         except Exception as e:
-            GameErrorHandler.handle_error(e, "create_debug_package", "Failed to create debug package", fatal=False)
+            GameErrorHandler.handle_error(
+                e, "create_debug_package", "Failed to create debug package", fatal=False
+            )
             return None
 
     @classmethod
-    def _add_system_info(cls, zipf: zipfile.ZipFile, crash_info: Optional[str] = None, game_engine=None) -> None:
+    def _add_system_info(
+        cls, zipf: zipfile.ZipFile, crash_info: str | None = None, game_engine=None
+    ) -> None:
         """Add system_info.txt with environment details."""
         info_lines = [
             "=== SYSTEM INFORMATION ===",
@@ -116,20 +124,23 @@ class DebugExporter:
 
         # Note if active game state is included
         if game_engine:
-            info_lines.extend([
-                "=== ACTIVE GAME STATE ===",
-                f"Level: {game_engine.level}",
-                f"Turn: {game_engine.turn}",
-                f"Game Over: {game_engine.game_over}",
-                f"Player CPU: {game_engine.player.cpu}/{game_engine.player.max_cpu}",
-                f"Enemies: {len(game_engine.enemies)}",
-                "Active game state saved as: saves/rogue_signal_save_ACTIVE.json",
-                "",
-            ])
+            info_lines.extend(
+                [
+                    "=== ACTIVE GAME STATE ===",
+                    f"Level: {game_engine.level}",
+                    f"Turn: {game_engine.turn}",
+                    f"Game Over: {game_engine.game_over}",
+                    f"Player CPU: {game_engine.player.cpu}/{game_engine.player.max_cpu}",
+                    f"Enemies: {len(game_engine.enemies)}",
+                    "Active game state saved as: saves/rogue_signal_save_ACTIVE.json",
+                    "",
+                ]
+            )
 
         # Add TCOD version
         try:
             import tcod
+
             info_lines.append(f"TCOD Version: {tcod.__version__}")
         except ImportError:
             info_lines.append("TCOD Version: Not installed")
@@ -137,6 +148,7 @@ class DebugExporter:
         # Add pygame version
         try:
             import pygame
+
             info_lines.append(f"Pygame Version: {pygame.version.ver}")
         except ImportError:
             info_lines.append("Pygame Version: Not installed")
@@ -145,24 +157,24 @@ class DebugExporter:
 
         # Add crash info if provided
         if crash_info:
-            info_lines.extend([
-                "=== CRASH INFORMATION ===",
-                crash_info,
-                ""
-            ])
+            info_lines.extend(["=== CRASH INFORMATION ===", crash_info, ""])
 
         # Add current working directory
-        info_lines.extend([
-            "=== ENVIRONMENT ===",
-            f"Working Directory: {os.getcwd()}",
-            f"Executable: {sys.executable}",
-            ""
-        ])
+        info_lines.extend(
+            [
+                "=== ENVIRONMENT ===",
+                f"Working Directory: {os.getcwd()}",
+                f"Executable: {sys.executable}",
+                "",
+            ]
+        )
 
         zipf.writestr("system_info.txt", "\n".join(info_lines))
 
     @classmethod
-    def _add_directory_to_zip(cls, zipf: zipfile.ZipFile, dir_path: str, arcname_prefix: str) -> None:
+    def _add_directory_to_zip(
+        cls, zipf: zipfile.ZipFile, dir_path: str, arcname_prefix: str
+    ) -> None:
         """Add entire directory to zip file."""
         dir_path_obj = Path(dir_path)
 
@@ -177,10 +189,15 @@ class DebugExporter:
                     zipf.write(file_path, arcname)
                     logging.debug(f"Debug Export: Added {arcname}")
                 except Exception as e:
-                    GameErrorHandler.handle_error(e, "add_file_to_debug_zip", f"Failed to add {file_path} to debug package", fatal=False)
+                    GameErrorHandler.handle_error(
+                        e,
+                        "add_file_to_debug_zip",
+                        f"Failed to add {file_path} to debug package",
+                        fatal=False,
+                    )
 
     @classmethod
-    def _add_game_snapshot(cls, zipf: zipfile.ZipFile, game_engine: 'GameEngine') -> None:
+    def _add_game_snapshot(cls, zipf: zipfile.ZipFile, game_engine: "GameEngine") -> None:
         """Add current game state snapshot for reproduction."""
         try:
             snapshot = {
@@ -201,7 +218,7 @@ class DebugExporter:
                         "type": e.type,
                         "position": {"x": e.position.x, "y": e.position.y},
                         "state": e.state.value,
-                        "cpu": e.cpu
+                        "cpu": e.cpu,
                     }
                     for e in game_engine.enemies
                 ],
@@ -209,13 +226,20 @@ class DebugExporter:
             }
 
             zipf.writestr("game_snapshot.json", json.dumps(snapshot, indent=2))
-            logging.info(f"Debug Export: Game snapshot added successfully ({len(game_engine.enemies)} enemies)")
+            logging.info(
+                f"Debug Export: Game snapshot added successfully ({len(game_engine.enemies)} enemies)"
+            )
 
         except Exception as e:
-            GameErrorHandler.handle_error(e, "add_game_snapshot", "Failed to create game snapshot for debug package", fatal=False)
+            GameErrorHandler.handle_error(
+                e,
+                "add_game_snapshot",
+                "Failed to create game snapshot for debug package",
+                fatal=False,
+            )
 
     @classmethod
-    def _add_active_save(cls, zipf: zipfile.ZipFile, game_engine: 'GameEngine') -> None:
+    def _add_active_save(cls, zipf: zipfile.ZipFile, game_engine: "GameEngine") -> None:
         """Save the current active game state directly to the debug package."""
         try:
             from game_save import SaveGameManager
@@ -228,7 +252,12 @@ class DebugExporter:
             logging.info("Debug Export: Active game state saved to package")
 
         except Exception as e:
-            GameErrorHandler.handle_error(e, "add_active_save_to_debug", "Failed to save active game state to debug package", fatal=False)
+            GameErrorHandler.handle_error(
+                e,
+                "add_active_save_to_debug",
+                "Failed to save active game state to debug package",
+                fatal=False,
+            )
 
     @classmethod
     def _add_reproduction_template(cls, zipf: zipfile.ZipFile) -> None:
@@ -279,11 +308,16 @@ Thank you for helping improve Rogue Signal Protocol!
         for config_file in config_files:
             if Path(config_file).exists():
                 try:
-                    with open(config_file, 'rb') as f:
+                    with open(config_file, "rb") as f:
                         file_hash = hashlib.sha256(f.read()).hexdigest()
                     hash_info.append(f"{config_file}: {file_hash}")
                 except Exception as e:
-                    GameErrorHandler.handle_error(e, "hash_config_file", f"Failed to hash {config_file} for debug package", fatal=False)
+                    GameErrorHandler.handle_error(
+                        e,
+                        "hash_config_file",
+                        f"Failed to hash {config_file} for debug package",
+                        fatal=False,
+                    )
                     hash_info.append(f"{config_file}: ERROR - {e}")
             else:
                 hash_info.append(f"{config_file}: MISSING")
@@ -291,7 +325,7 @@ Thank you for helping improve Rogue Signal Protocol!
         zipf.writestr("config_hashes.txt", "\n".join(hash_info))
 
 
-def export_debug_package(game_engine: Optional['GameEngine'] = None) -> Optional[Path]:
+def export_debug_package(game_engine: Optional["GameEngine"] = None) -> Path | None:
     """
     Convenience function to export debug package.
 
@@ -304,7 +338,9 @@ def export_debug_package(game_engine: Optional['GameEngine'] = None) -> Optional
     return DebugExporter.create_debug_package(game_engine=game_engine)
 
 
-def export_crash_report(exception: Exception, game_engine: Optional['GameEngine'] = None) -> Optional[Path]:
+def export_crash_report(
+    exception: Exception, game_engine: Optional["GameEngine"] = None
+) -> Path | None:
     """
     Export debug package with crash information.
 
@@ -318,6 +354,8 @@ def export_crash_report(exception: Exception, game_engine: Optional['GameEngine'
     crash_info = f"Exception: {type(exception).__name__}\n"
     crash_info += f"Message: {str(exception)}\n\n"
     crash_info += "Stack Trace:\n"
-    crash_info += "".join(traceback.format_exception(type(exception), exception, exception.__traceback__))
+    crash_info += "".join(
+        traceback.format_exception(type(exception), exception, exception.__traceback__)
+    )
 
     return DebugExporter.create_debug_package(game_engine=game_engine, crash_info=crash_info)

@@ -13,18 +13,17 @@ These tests verify the game remains stable and performant
 under extreme conditions that might occur in normal play.
 """
 
-import pytest
 import gc
-import sys
 import os
+import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+import pytest
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from game_entities import Position
-from game_characters import Enemy
-from game_config import GameConfig
-from tests.test_agent import GameTestAgent
 from tests.fixtures.simple_fixtures import enemy_builder
+from tests.test_agent import GameTestAgent
 
 
 class TestLongRunningSession:
@@ -61,7 +60,9 @@ class TestLongRunningSession:
             pytest.fail(f"Game crashed after {turns_completed} turns: {e}")
 
         # Should complete at least 100 turns without crash
-        assert turns_completed >= 100, f"Game should survive at least 100 turns, got {turns_completed}"
+        assert (
+            turns_completed >= 100
+        ), f"Game should survive at least 100 turns, got {turns_completed}"
 
     def test_500_turn_session_memory_stable(self):
         """Test memory doesn't grow excessively over 500 turns."""
@@ -83,6 +84,7 @@ class TestLongRunningSession:
 
             # Simple random movement
             import random
+
             dx = random.choice([-1, 0, 1])
             dy = random.choice([-1, 0, 1])
             agent.move_player(dx, dy)
@@ -94,7 +96,7 @@ class TestLongRunningSession:
         snapshot_end = tracemalloc.take_snapshot()
 
         # Compare memory usage
-        top_stats = snapshot_end.compare_to(snapshot_start, 'lineno')
+        top_stats = snapshot_end.compare_to(snapshot_start, "lineno")
 
         # Calculate total memory increase
         total_increase = sum(stat.size_diff for stat in top_stats)
@@ -104,8 +106,9 @@ class TestLongRunningSession:
         # Memory should not increase by more than 50MB over 500 turns
         max_allowed_increase = 50 * 1024 * 1024  # 50 MB
 
-        assert total_increase < max_allowed_increase, \
-            f"Memory increased by {total_increase / 1024 / 1024:.2f} MB (max allowed: 50 MB)"
+        assert (
+            total_increase < max_allowed_increase
+        ), f"Memory increased by {total_increase / 1024 / 1024:.2f} MB (max allowed: 50 MB)"
 
 
 class TestManyEnemies:
@@ -183,7 +186,7 @@ class TestParticleSystemStress:
                 world_x=25 + i % 5,
                 world_y=25 + i // 5,
                 colors=[(255, 0, 0), (255, 255, 0)],
-                particle_count=10
+                particle_count=10,
             )
 
         # Update once
@@ -201,10 +204,7 @@ class TestParticleSystemStress:
         for frame in range(50):
             # Create explosions
             particle_system.create_death_explosion(
-                world_x=25,
-                world_y=25,
-                colors=[(255, 0, 0)],
-                particle_count=5
+                world_x=25, world_y=25, colors=[(255, 0, 0)], particle_count=5
             )
 
             particle_system.update(0.016)
@@ -229,7 +229,7 @@ class TestRapidExploitUsage:
         enemy = enemy_builder("scanner", pos=(11, 10))
         basic_game_engine.enemies = [enemy]
 
-        basic_game_engine.player.inventory_manager.equipped_exploits = ['buffer_overflow']
+        basic_game_engine.player.inventory_manager.equipped_exploits = ["buffer_overflow"]
 
         exploit_system = ExploitSystem(basic_game_engine)
 
@@ -238,7 +238,7 @@ class TestRapidExploitUsage:
         for _ in range(10):
             # Only execute if not overheated
             if basic_game_engine.player.heat < basic_game_engine.player.max_heat:
-                result = exploit_system.execute_exploit('buffer_overflow', enemy.position)
+                result = exploit_system.execute_exploit("buffer_overflow", enemy.position)
                 if result:
                     uses += 1
 
@@ -313,15 +313,16 @@ class TestMemoryLeaks:
 
         snapshot_end = tracemalloc.take_snapshot()
 
-        top_stats = snapshot_end.compare_to(snapshot_start, 'lineno')
+        top_stats = snapshot_end.compare_to(snapshot_start, "lineno")
         total_increase = sum(stat.size_diff for stat in top_stats)
 
         tracemalloc.stop()
 
         # Should not leak significant memory
         max_allowed = 5 * 1024 * 1024  # 5 MB
-        assert total_increase < max_allowed, \
-            f"Memory leak detected: {total_increase / 1024 / 1024:.2f} MB increase"
+        assert (
+            total_increase < max_allowed
+        ), f"Memory leak detected: {total_increase / 1024 / 1024:.2f} MB increase"
 
     def test_particle_spawn_cleanup_no_leak(self, basic_game_engine):
         """Test particle spawning and cleanup doesn't leak memory."""
@@ -336,10 +337,7 @@ class TestMemoryLeaks:
         for cycle in range(50):
             # Spawn particles
             particle_system.create_death_explosion(
-                world_x=25,
-                world_y=25,
-                colors=[(255, 0, 0)],
-                particle_count=10
+                world_x=25, world_y=25, colors=[(255, 0, 0)], particle_count=10
             )
 
             # Update to clean up expired particles
@@ -349,16 +347,17 @@ class TestMemoryLeaks:
         gc.collect()
         snapshot_end = tracemalloc.take_snapshot()
 
-        top_stats = snapshot_end.compare_to(snapshot_start, 'lineno')
+        top_stats = snapshot_end.compare_to(snapshot_start, "lineno")
         total_increase = sum(stat.size_diff for stat in top_stats)
 
         tracemalloc.stop()
 
         # Should not leak significant memory
         max_allowed = 5 * 1024 * 1024  # 5 MB
-        assert total_increase < max_allowed, \
-            f"Particle memory leak: {total_increase / 1024 / 1024:.2f} MB"
+        assert (
+            total_increase < max_allowed
+        ), f"Particle memory leak: {total_increase / 1024 / 1024:.2f} MB"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

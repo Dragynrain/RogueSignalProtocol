@@ -5,17 +5,17 @@ Tests both graphics and glyph rendering modes with real game objects.
 """
 
 import unittest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock
+
 import tcod
-import math
 
 from game_config import GameConfig, GameSettings
-from game_rendering_core import GameRenderer
-from game_rendering_graphics import GraphicsMapRenderer
-from game_rendering_glyphs import GlyphsMapRenderer
 from game_engine import GameEngine
 from game_entities import Position
-from tests.fixtures.simple_fixtures import player, enemy, create_test_map
+from game_rendering_core import GameRenderer
+from game_rendering_glyphs import GlyphsMapRenderer
+from game_rendering_graphics import GraphicsMapRenderer
+from tests.fixtures.simple_fixtures import create_test_map, enemy, player
 
 
 class TestGraphicsRendererIntegration(unittest.TestCase):
@@ -42,9 +42,7 @@ class TestGraphicsRendererIntegration(unittest.TestCase):
 
         # Create renderer
         self.renderer = GraphicsMapRenderer(
-            tile_manager=self.tile_manager,
-            context=self.context,
-            settings=self.settings
+            tile_manager=self.tile_manager, context=self.context, settings=self.settings
         )
 
         # Create test game engine
@@ -61,22 +59,30 @@ class TestGraphicsRendererIntegration(unittest.TestCase):
     def test_should_use_graphics_returns_true_when_properly_configured(self):
         """Test that _should_use_graphics returns True when all components are present."""
         result = self.renderer._should_use_graphics()
-        self.assertTrue(result, "Should use graphics when tile_manager, context, and sdl_renderer are present")
+        self.assertTrue(
+            result, "Should use graphics when tile_manager, context, and sdl_renderer are present"
+        )
 
     def test_should_use_graphics_returns_false_when_missing_components(self):
         """Test that _should_use_graphics returns False when components are missing."""
         # Test with no tile manager
-        renderer_no_tm = GraphicsMapRenderer(tile_manager=None, context=self.context, settings=self.settings)
+        renderer_no_tm = GraphicsMapRenderer(
+            tile_manager=None, context=self.context, settings=self.settings
+        )
         self.assertFalse(renderer_no_tm._should_use_graphics())
 
         # Test with no context
-        renderer_no_ctx = GraphicsMapRenderer(tile_manager=self.tile_manager, context=None, settings=self.settings)
+        renderer_no_ctx = GraphicsMapRenderer(
+            tile_manager=self.tile_manager, context=None, settings=self.settings
+        )
         self.assertFalse(renderer_no_ctx._should_use_graphics())
 
         # Test with no SDL renderer
         mock_context_no_sdl = Mock()
         mock_context_no_sdl.sdl_renderer = None
-        renderer_no_sdl = GraphicsMapRenderer(tile_manager=self.tile_manager, context=mock_context_no_sdl, settings=self.settings)
+        renderer_no_sdl = GraphicsMapRenderer(
+            tile_manager=self.tile_manager, context=mock_context_no_sdl, settings=self.settings
+        )
         self.assertFalse(renderer_no_sdl._should_use_graphics())
 
     def test_world_to_console_coordinate_conversion(self):
@@ -124,14 +130,17 @@ class TestGraphicsRendererIntegration(unittest.TestCase):
         if viewport_width >= GameConfig.MAP_WIDTH:
             expected_x = -(viewport_width - GameConfig.MAP_WIDTH) // 2
         else:
-            expected_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                                   test_player.x - viewport_width // 2))
+            expected_x = max(
+                0, min(GameConfig.MAP_WIDTH - viewport_width, test_player.x - viewport_width // 2)
+            )
 
         if viewport_height >= GameConfig.MAP_HEIGHT:
             expected_y = -(viewport_height - GameConfig.MAP_HEIGHT) // 2
         else:
-            expected_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                                   test_player.y - viewport_height // 2))
+            expected_y = max(
+                0,
+                min(GameConfig.MAP_HEIGHT - viewport_height, test_player.y - viewport_height // 2),
+            )
 
         self.assertEqual(camera_offset.x, expected_x)
         self.assertEqual(camera_offset.y, expected_y)
@@ -168,15 +177,18 @@ class TestGraphicsRendererIntegration(unittest.TestCase):
         self.renderer.render_sprites_layer(self.engine)
 
         # Should have called SDL renderer methods
-        self.assertTrue(self.sdl_renderer.set_draw_color.called or
-                       self.sdl_renderer.draw_color.called or
-                       self.sdl_renderer.copy.called,
-                       "SDL renderer should have been called")
+        self.assertTrue(
+            self.sdl_renderer.set_draw_color.called
+            or self.sdl_renderer.draw_color.called
+            or self.sdl_renderer.copy.called,
+            "SDL renderer should have been called",
+        )
 
     def test_render_overlay_layer_executes_without_error(self):
         """Test that render_overlay_layer executes without error."""
         # Add some vision overlays to test
         from game_entities import EnemyState
+
         test_enemy = enemy("scanner", 15, 15)
         test_enemy.state = EnemyState.HOSTILE
         self.engine.enemies = [test_enemy]
@@ -304,14 +316,17 @@ class TestGlyphsRendererIntegration(unittest.TestCase):
         if viewport_width >= GameConfig.MAP_WIDTH:
             expected_x = -(viewport_width - GameConfig.MAP_WIDTH) // 2
         else:
-            expected_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                                   test_player.x - viewport_width // 2))
+            expected_x = max(
+                0, min(GameConfig.MAP_WIDTH - viewport_width, test_player.x - viewport_width // 2)
+            )
 
         if viewport_height >= GameConfig.MAP_HEIGHT:
             expected_y = -(viewport_height - GameConfig.MAP_HEIGHT) // 2
         else:
-            expected_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                                   test_player.y - viewport_height // 2))
+            expected_y = max(
+                0,
+                min(GameConfig.MAP_HEIGHT - viewport_height, test_player.y - viewport_height // 2),
+            )
 
         self.assertEqual(camera_offset.x, expected_x)
         self.assertEqual(camera_offset.y, expected_y)
@@ -340,7 +355,7 @@ class TestGlyphsRendererIntegration(unittest.TestCase):
         # Should return a string (Unicode box-drawing character)
         self.assertIsInstance(char, str)
         # Should be a valid double-line box drawing character
-        valid_chars = {'║', '═', '╔', '╗', '╚', '╝', '╠', '╣', '╦', '╩', '╬', '■'}
+        valid_chars = {"║", "═", "╔", "╗", "╚", "╝", "╠", "╣", "╦", "╩", "╬", "■"}
         self.assertIn(char, valid_chars)
 
     def test_get_upgrade_color_returns_rgb_tuple(self):
@@ -386,8 +401,9 @@ class TestGlyphsRendererIntegration(unittest.TestCase):
         self.renderer._safely_overlay_tile(self.console, 0, 0, (255, 0, 0))
         # Game area height = SCREEN_HEIGHT - PANEL_HEIGHT
         game_area_height = GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT
-        self.renderer._safely_overlay_tile(self.console, GameConfig.GAME_AREA_WIDTH() - 1,
-                                           game_area_height - 1, (255, 0, 0))
+        self.renderer._safely_overlay_tile(
+            self.console, GameConfig.GAME_AREA_WIDTH() - 1, game_area_height - 1, (255, 0, 0)
+        )
 
 
 class TestGameRendererIntegration(unittest.TestCase):
@@ -423,9 +439,7 @@ class TestGameRendererIntegration(unittest.TestCase):
         self.settings.graphics_mode = "graphics"
 
         renderer = GameRenderer(
-            settings=self.settings,
-            tile_manager=self.tile_manager,
-            context=self.context
+            settings=self.settings, tile_manager=self.tile_manager, context=self.context
         )
 
         self.assertIsNotNone(renderer)
@@ -462,9 +476,7 @@ class TestGameRendererIntegration(unittest.TestCase):
         large_console = tcod.console.Console(100, 100)
 
         renderer = GameRenderer(
-            settings=self.settings,
-            tile_manager=self.tile_manager,
-            context=self.context
+            settings=self.settings, tile_manager=self.tile_manager, context=self.context
         )
 
         # Should execute without raising exceptions
@@ -488,7 +500,9 @@ class TestGameRendererIntegration(unittest.TestCase):
 
     def test_render_game_with_help_screen(self):
         """Test render_game handles help screen overlay."""
-        renderer = GameRenderer(settings=self.settings, tile_manager=self.tile_manager, context=self.context)
+        renderer = GameRenderer(
+            settings=self.settings, tile_manager=self.tile_manager, context=self.context
+        )
 
         # Show help
         self.engine.show_help = True
@@ -604,5 +618,5 @@ class TestRenderingErrorConditions(unittest.TestCase):
         renderer.render_map(console, engine)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

@@ -3,13 +3,12 @@ Tests for the simplified enemy movement system and enemy communication/alerting.
 Tests the actual behavior rather than internal implementation details.
 """
 
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import Mock, patch
-from game_characters import Enemy, Player
-from game_entities import Position, EnemyState, EnemyMovement
-from game_map import GameMap
-from game_config import GameConfig
-from tests.fixtures.simple_fixtures import enemy_builder, create_test_map
+
+from game_entities import EnemyState, Position
+from tests.fixtures.simple_fixtures import enemy_builder
 
 
 class TestEnemyMovementBehavior:
@@ -17,12 +16,13 @@ class TestEnemyMovementBehavior:
 
     def test_hostile_enemy_pathfinds_to_player(self, basic_game_engine):
         """HOSTILE enemies should pathfind toward player's last known position."""
-        test_enemy = enemy_builder("virus", pos=(5, 5), state=EnemyState.HOSTILE,
-                                   last_seen=(10, 10))
+        test_enemy = enemy_builder(
+            "virus", pos=(5, 5), state=EnemyState.HOSTILE, last_seen=(10, 10)
+        )
         basic_game_engine.enemies = [test_enemy]
 
         # Mock pathfinding to succeed
-        with patch.object(test_enemy, 'can_see_player', return_value=False):
+        with patch.object(test_enemy, "can_see_player", return_value=False):
             test_enemy.move(basic_game_engine.game_map, basic_game_engine.player, basic_game_engine)
 
         # Enemy movement system should work
@@ -41,8 +41,9 @@ class TestEnemyMovementBehavior:
 
     def test_alert_enemy_continues_normal_movement(self, basic_game_engine):
         """ALERT enemies should continue normal movement (it's a 1-turn warning)."""
-        test_enemy = enemy_builder("patrol", pos=(5, 5), state=EnemyState.ALERT,
-                                   patrol_points=[(10, 5), (15, 5)])
+        test_enemy = enemy_builder(
+            "patrol", pos=(5, 5), state=EnemyState.ALERT, patrol_points=[(10, 5), (15, 5)]
+        )
         test_enemy.patrol_index = 0
         basic_game_engine.enemies = [test_enemy]
 
@@ -76,7 +77,9 @@ class TestEnemyCommunication:
 
         # Nearby enemy should be alerted
         assert nearby_enemy.state == EnemyState.HOSTILE, "Nearby enemy should become HOSTILE"
-        assert nearby_enemy.last_seen_player == basic_game_engine.player.position, "Should know player position"
+        assert (
+            nearby_enemy.last_seen_player == basic_game_engine.player.position
+        ), "Should know player position"
 
         # Distant enemy should remain unaware
         assert distant_enemy.state == EnemyState.UNAWARE, "Distant enemy should stay UNAWARE"
@@ -104,8 +107,9 @@ class TestEnemyCommunication:
         from game_session import GameSession
 
         alerting_enemy = enemy_builder("scanner", pos=(10, 10), state=EnemyState.HOSTILE)
-        already_hostile = enemy_builder("bot", pos=(12, 12), state=EnemyState.HOSTILE,
-                                       last_seen=(5, 5))
+        already_hostile = enemy_builder(
+            "bot", pos=(12, 12), state=EnemyState.HOSTILE, last_seen=(5, 5)
+        )
 
         basic_game_engine.enemies = [alerting_enemy, already_hostile]
         game_session = GameSession(basic_game_engine)
@@ -122,8 +126,9 @@ class TestQueueMaintenanceIntegration:
 
     def test_queue_always_has_moves_when_path_available(self, basic_game_engine):
         """Queue should always have up to 3 moves when path to target exists."""
-        test_enemy = enemy_builder("virus", pos=(5, 5), state=EnemyState.HOSTILE,
-                                   last_seen=(20, 20))
+        test_enemy = enemy_builder(
+            "virus", pos=(5, 5), state=EnemyState.HOSTILE, last_seen=(20, 20)
+        )
         basic_game_engine.enemies = [test_enemy]
 
         # Execute several moves
@@ -137,8 +142,9 @@ class TestQueueMaintenanceIntegration:
 
     def test_queue_refills_after_each_move(self, basic_game_engine):
         """After each move execution, queue should top back up to 3."""
-        test_enemy = enemy_builder("scanner", pos=(10, 10), state=EnemyState.HOSTILE,
-                                   last_seen=(30, 30))
+        test_enemy = enemy_builder(
+            "scanner", pos=(10, 10), state=EnemyState.HOSTILE, last_seen=(30, 30)
+        )
         basic_game_engine.enemies = [test_enemy]
 
         # First move
@@ -155,8 +161,9 @@ class TestQueueMaintenanceIntegration:
 
     def test_queue_clears_on_state_transition(self, basic_game_engine):
         """Queue should clear when enemy state transitions."""
-        test_enemy = enemy_builder("patrol", pos=(10, 10), state=EnemyState.UNAWARE,
-                                   patrol_points=[(15, 15), (20, 20)])
+        test_enemy = enemy_builder(
+            "patrol", pos=(10, 10), state=EnemyState.UNAWARE, patrol_points=[(15, 15), (20, 20)]
+        )
         test_enemy.patrol_index = 0
         basic_game_engine.enemies = [test_enemy]
 
@@ -177,4 +184,5 @@ class TestQueueMaintenanceIntegration:
 
 if __name__ == "__main__":
     import pytest
+
     pytest.main([__file__, "-v"])

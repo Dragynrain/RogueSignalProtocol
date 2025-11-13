@@ -10,11 +10,13 @@ PHILOSOPHY: Test gameplay behavior, not TCOD internals
 - DO NOT test Bresenham implementation details (legacy code)
 """
 
-import pytest
 from unittest.mock import Mock, patch
-from game_characters import Player, Enemy
-from game_map import GameMap
+
+import pytest
+
+from game_characters import Enemy
 from game_entities import Position
+from game_map import GameMap
 from tests.fixtures.simple_fixtures import player
 
 
@@ -44,7 +46,7 @@ class TestPlayerVisionRange(TestVisionLineOfSight):
     def test_enhanced_vision_increases_range(self):
         """Enhanced vision temporary effect increases range."""
         test_player = player()
-        test_player.temporary_effects['enhanced_vision_turns'] = 5
+        test_player.temporary_effects["enhanced_vision_turns"] = 5
         assert test_player.get_vision_range() == 17  # Base 15 + 2 bonus
 
     def test_enhanced_vision_allows_wall_sight(self):
@@ -52,22 +54,24 @@ class TestPlayerVisionRange(TestVisionLineOfSight):
         test_player = player()
         assert not test_player.can_see_through_walls()
 
-        test_player.temporary_effects['enhanced_vision_turns'] = 5
+        test_player.temporary_effects["enhanced_vision_turns"] = 5
         assert test_player.can_see_through_walls()
 
     def test_player_sees_enemy_within_range(self):
         """Player can see enemy within vision range."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(15, 10), "test_enemy")  # 5 units away
             assert self.player.can_see_enemy(enemy, self.game_map) == True
 
     def test_player_cannot_see_enemy_beyond_range(self):
         """Player cannot see enemy beyond vision range."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(30, 10), "test_enemy")  # 20 units away
             assert self.player.can_see_enemy(enemy, self.game_map) == False
 
@@ -77,9 +81,10 @@ class TestShadowConcealment(TestVisionLineOfSight):
 
     def test_enemy_in_shadow_not_visible_from_distance(self):
         """Enemy in shadow is not visible from distance."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(13, 10), "test_enemy")  # 3 units away
             self.game_map.blind_spots.add((13, 10))
 
@@ -87,9 +92,10 @@ class TestShadowConcealment(TestVisionLineOfSight):
 
     def test_enemy_in_shadow_visible_when_adjacent(self):
         """Enemy in shadow is visible when adjacent (close quarters rule)."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(11, 10), "test_enemy")  # 1 unit away
             self.game_map.blind_spots.add((11, 10))
 
@@ -97,9 +103,10 @@ class TestShadowConcealment(TestVisionLineOfSight):
 
     def test_player_in_shadow_has_normal_vision_out(self):
         """Player in shadow has normal outgoing vision (shadows block vision IN, not OUT)."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             self.game_map.blind_spots.add((10, 10))
 
             # Close enemy - visible
@@ -112,9 +119,10 @@ class TestShadowConcealment(TestVisionLineOfSight):
 
     def test_ghost_nodes_act_as_shadows(self):
         """Ghost nodes function as shadows for concealment."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(13, 10), "test_enemy")
             self.game_map.ghost_nodes.add((13, 10))
 
@@ -122,21 +130,23 @@ class TestShadowConcealment(TestVisionLineOfSight):
 
     def test_invisible_player_cannot_be_seen(self):
         """Invisible player (traffic masquerade) cannot be seen by enemies."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(12, 10), "test_enemy")
-            self.player.temporary_effects['traffic_masquerade_turns'] = 3
+            self.player.temporary_effects["traffic_masquerade_turns"] = 3
 
             assert enemy.can_see_player(self.player, self.game_map) == False
 
     def test_admin_sees_through_invisibility(self):
         """Admin enemies can see invisible players."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'admin': Mock(movement=Mock(), cpu=100, vision=10, damage=20)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"admin": Mock(movement=Mock(), cpu=100, vision=10, damage=20)},
+        ):
             admin_enemy = Enemy(Position(12, 10), "admin")
-            self.player.temporary_effects['traffic_masquerade_turns'] = 3
+            self.player.temporary_effects["traffic_masquerade_turns"] = 3
 
             assert admin_enemy.can_see_player(self.player, self.game_map) == True
 
@@ -146,9 +156,10 @@ class TestWallBlocking(TestVisionLineOfSight):
 
     def test_wall_blocks_line_of_sight(self):
         """Wall between player and enemy blocks vision."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(12, 10), "test_enemy")
             self.game_map.walls.add((11, 10))
             self.game_map.invalidate_transparency_cache()
@@ -157,29 +168,32 @@ class TestWallBlocking(TestVisionLineOfSight):
 
     def test_clear_line_allows_vision(self):
         """Clear line of sight allows vision."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(12, 10), "test_enemy")
             assert self.player.can_see_enemy(enemy, self.game_map) == True
 
     def test_enhanced_vision_sees_through_walls(self):
         """Enhanced vision allows seeing through walls."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(12, 10), "test_enemy")
             self.game_map.walls.add((11, 10))
             self.game_map.invalidate_transparency_cache()
 
-            self.player.temporary_effects['enhanced_vision_turns'] = 5
+            self.player.temporary_effects["enhanced_vision_turns"] = 5
             assert self.player.can_see_enemy(enemy, self.game_map) == True
 
     def test_diagonal_wall_blocking(self):
         """Walls block diagonal sight lines correctly."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(13, 13), "test_enemy")
             self.game_map.walls.add((11, 11))
             self.game_map.walls.add((12, 12))
@@ -193,9 +207,10 @@ class TestEnemyVision(TestVisionLineOfSight):
 
     def test_enemy_vision_range_limits(self):
         """Enemy cannot see player beyond their vision range."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=5, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=5, damage=10)},
+        ):
             # Within range
             enemy = Enemy(Position(14, 10), "test_enemy")  # 4 units away
             assert enemy.can_see_player(self.player, self.game_map) == True
@@ -206,9 +221,10 @@ class TestEnemyVision(TestVisionLineOfSight):
 
     def test_disabled_enemy_cannot_see(self):
         """Disabled enemy cannot see player."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(12, 10), "test_enemy")
             enemy.disabled_turns = 3
 
@@ -216,9 +232,10 @@ class TestEnemyVision(TestVisionLineOfSight):
 
     def test_enemy_cannot_see_player_in_shadow(self):
         """Enemy cannot see player in shadow from distance."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(13, 10), "test_enemy")
             self.game_map.blind_spots.add((10, 10))
 
@@ -226,9 +243,10 @@ class TestEnemyVision(TestVisionLineOfSight):
 
     def test_enemy_sees_adjacent_player_in_shadow(self):
         """Enemy can see adjacent player even in shadow."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'test_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(11, 10), "test_enemy")
             self.game_map.blind_spots.add((10, 10))
 
@@ -236,15 +254,16 @@ class TestEnemyVision(TestVisionLineOfSight):
 
     def test_admin_has_perfect_tracking(self):
         """Admin enemy has perfect tracking regardless of conditions."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'admin': Mock(movement=Mock(), cpu=100, vision=10, damage=20)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"admin": Mock(movement=Mock(), cpu=100, vision=10, damage=20)},
+        ):
             admin_enemy = Enemy(Position(19, 19), "admin")
 
             # Add obstacles
             self.game_map.walls.add((15, 15))
             self.game_map.blind_spots.add((10, 10))
-            self.player.temporary_effects['traffic_masquerade_turns'] = 3
+            self.player.temporary_effects["traffic_masquerade_turns"] = 3
             self.game_map.invalidate_transparency_cache()
 
             # Admin should still see player
@@ -256,9 +275,10 @@ class TestStealthGameplayScenarios(TestVisionLineOfSight):
 
     def test_hiding_in_shadows(self):
         """Player hiding in blind spots is not detected from distance."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'guard': Mock(movement=Mock(), cpu=50, vision=8, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"guard": Mock(movement=Mock(), cpu=50, vision=8, damage=10)},
+        ):
             enemy = Enemy(Position(15, 10), "guard")  # 5 units away
             self.game_map.blind_spots.add((10, 10))
 
@@ -273,9 +293,10 @@ class TestStealthGameplayScenarios(TestVisionLineOfSight):
 
     def test_using_walls_for_cover(self):
         """Using walls for cover blocks mutual vision."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'guard': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"guard": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             self.player.position = Position(8, 10)
             enemy = Enemy(Position(12, 10), "guard")
 
@@ -288,10 +309,13 @@ class TestStealthGameplayScenarios(TestVisionLineOfSight):
 
     def test_traffic_masquerade_invisibility(self):
         """Traffic masquerade makes player invisible to normal enemies."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'scanner': Mock(movement=Mock(), cpu=50, vision=10, damage=10),
-            'admin': Mock(movement=Mock(), cpu=100, vision=10, damage=20)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "scanner": Mock(movement=Mock(), cpu=50, vision=10, damage=10),
+                "admin": Mock(movement=Mock(), cpu=100, vision=10, damage=20),
+            },
+        ):
             scanner = Enemy(Position(12, 10), "scanner")
             admin = Enemy(Position(13, 10), "admin")
 
@@ -300,7 +324,7 @@ class TestStealthGameplayScenarios(TestVisionLineOfSight):
             assert admin.can_see_player(self.player, self.game_map)
 
             # Activate invisibility
-            self.player.temporary_effects['traffic_masquerade_turns'] = 3
+            self.player.temporary_effects["traffic_masquerade_turns"] = 3
 
             # Scanner cannot see, admin can
             assert not scanner.can_see_player(self.player, self.game_map)
@@ -308,9 +332,10 @@ class TestStealthGameplayScenarios(TestVisionLineOfSight):
 
     def test_enhanced_vision_exploit(self):
         """Enhanced vision allows seeing through walls."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'hidden_enemy': Mock(movement=Mock(), cpu=50, vision=10, damage=10)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"hidden_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
+        ):
             enemy = Enemy(Position(13, 10), "hidden_enemy")
 
             self.game_map.walls.add((11, 10))
@@ -321,7 +346,7 @@ class TestStealthGameplayScenarios(TestVisionLineOfSight):
             assert not self.player.can_see_enemy(enemy, self.game_map)
 
             # Activate enhanced vision
-            self.player.temporary_effects['enhanced_vision_turns'] = 5
+            self.player.temporary_effects["enhanced_vision_turns"] = 5
 
             # Now can see through walls
             assert self.player.can_see_enemy(enemy, self.game_map)

@@ -16,7 +16,8 @@ are caught during development, not during gameplay.
 import json
 import logging
 import os
-from typing import List, Dict, Any
+from typing import Any
+
 from game_errors import GameErrorHandler
 
 
@@ -49,14 +50,18 @@ class DataLoader:
             Exits game via GameErrorHandler if file not found or invalid
         """
         try:
-            with open(filename, 'r', encoding='utf-8') as f:
+            with open(filename, encoding="utf-8") as f:
                 data = json.load(f)
                 result = data[key] if key else data
                 key_info = f", key='{key}'" if key else ""
                 if isinstance(result, dict):
-                    logging.debug(f"Data Loading: Loaded {filename}{key_info} ({len(result)} entries)")
+                    logging.debug(
+                        f"Data Loading: Loaded {filename}{key_info} ({len(result)} entries)"
+                    )
                 elif isinstance(result, list):
-                    logging.debug(f"Data Loading: Loaded {filename}{key_info} ({len(result)} items)")
+                    logging.debug(
+                        f"Data Loading: Loaded {filename}{key_info} ({len(result)} items)"
+                    )
                 else:
                     logging.debug(f"Data Loading: Loaded {filename}{key_info}")
                 return result
@@ -66,26 +71,26 @@ class DataLoader:
             GameErrorHandler.handle_config_error(f"Invalid JSON in {filename}", e)
         except KeyError as e:
             GameErrorHandler.handle_config_error(f"Missing '{key}' key in {filename}", e)
-    
+
     @classmethod
-    def load_story_fragments(cls) -> List[str]:
+    def load_story_fragments(cls) -> list[str]:
         """Load story fragments from JSON file."""
         if cls._story_fragments is None:
             logging.debug("Data Loading: Loading story fragments (cache miss)")
-            cls._story_fragments = cls._load_json_file('narrative_content.json', 'fragments')
+            cls._story_fragments = cls._load_json_file("narrative_content.json", "fragments")
         else:
             logging.debug("Data Loading: Using cached story fragments")
         return cls._story_fragments
-    
+
     @classmethod
-    def load_game_data(cls) -> Dict[str, Any]:
+    def load_game_data(cls) -> dict[str, Any]:
         """Load game data from JSON file."""
         if cls._game_data is None:
-            cls._game_data = cls._load_json_file('game_content.json')
+            cls._game_data = cls._load_json_file("game_content.json")
         return cls._game_data
-    
+
     @classmethod
-    def _get_section(cls, section: str, data: Dict) -> Dict[str, Any]:
+    def _get_section(cls, section: str, data: dict) -> dict[str, Any]:
         """Get a section from data with error handling."""
         try:
             return data[section]
@@ -97,12 +102,12 @@ class DataLoader:
             raise KeyError(f"Required '{section}' section missing from game_content.json") from e
 
     @classmethod
-    def get_balance_config(cls) -> Dict[str, Any]:
+    def get_balance_config(cls) -> dict[str, Any]:
         """Get balance configuration from game data."""
-        return cls._get_section('balance', cls.load_game_data())
+        return cls._get_section("balance", cls.load_game_data())
 
     @classmethod
-    def load_config(cls) -> Dict[str, Any]:
+    def load_config(cls) -> dict[str, Any]:
         """
         Load configuration from game_rules.json with caching.
 
@@ -118,52 +123,58 @@ class DataLoader:
         if cls._config is None:
             logging.debug("Data Loading: Loading game_rules.json (cache miss)")
             try:
-                with open('game_rules.json', 'r', encoding='utf-8') as f:
+                with open("game_rules.json", encoding="utf-8") as f:
                     cls._config = json.load(f)
-                logging.debug(f"Data Loading: Loaded game_rules.json ({len(cls._config)} top-level keys)")
+                logging.debug(
+                    f"Data Loading: Loaded game_rules.json ({len(cls._config)} top-level keys)"
+                )
             except FileNotFoundError as e:
-                error_msg = f"CRITICAL CONFIG ERROR: game_rules.json not found"
+                error_msg = "CRITICAL CONFIG ERROR: game_rules.json not found"
                 logging.error(error_msg)
                 logging.error(f"Exception: {str(e)}")
-                raise FileNotFoundError(f"Required file game_rules.json is missing") from e
+                raise FileNotFoundError("Required file game_rules.json is missing") from e
             except json.JSONDecodeError as e:
-                error_msg = f"CRITICAL CONFIG ERROR: Invalid JSON in game_rules.json"
+                error_msg = "CRITICAL CONFIG ERROR: Invalid JSON in game_rules.json"
                 logging.error(error_msg)
                 logging.error(f"Exception: {str(e)}")
-                raise json.JSONDecodeError(f"game_rules.json contains invalid JSON", e.doc, e.pos) from e
+                raise json.JSONDecodeError(
+                    "game_rules.json contains invalid JSON", e.doc, e.pos
+                ) from e
         return cls._config
 
 
 class PersistentStorage:
     """Handles persistent storage and game saves."""
-    
+
     def __init__(self, base_dir="saves"):
         self.base_dir = base_dir
         self.ensure_directory_exists()
-    
+
     def ensure_directory_exists(self):
         """Create saves directory if it doesn't exist."""
         if not os.path.exists(self.base_dir):
             os.makedirs(self.base_dir)
-    
-    def save_data(self, filename: str, data: Dict[str, Any]) -> bool:
+
+    def save_data(self, filename: str, data: dict[str, Any]) -> bool:
         """Save data to JSON file."""
         try:
             filepath = os.path.join(self.base_dir, filename)
-            with open(filepath, 'w', encoding='utf-8') as f:
+            with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
             return True
         except Exception as e:
             from game_errors import GameErrorHandler
-            GameErrorHandler.handle_error(e, f"PersistentStorage.save_data({filename})",
-                                        "Failed to save game data")
+
+            GameErrorHandler.handle_error(
+                e, f"PersistentStorage.save_data({filename})", "Failed to save game data"
+            )
             return False
-    
-    def load_data(self, filename: str) -> Dict[str, Any]:
+
+    def load_data(self, filename: str) -> dict[str, Any]:
         """Load data from JSON file."""
         filepath = os.path.join(self.base_dir, filename)
         try:
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError:
             # This is normal for new games - return empty dict
@@ -175,26 +186,26 @@ class PersistentStorage:
             return {}
 
 
-def get_story_fragments() -> List[str]:
+def get_story_fragments() -> list[str]:
     """Get story fragments - convenience function."""
     return DataLoader.load_story_fragments()
 
 
-def get_environmental_messages() -> Dict[str, List[str]]:
+def get_environmental_messages() -> dict[str, list[str]]:
     """Get environmental messages for atmospheric flavor text."""
-    return DataLoader._load_json_file('narrative_content.json', 'environmental_messages')
+    return DataLoader._load_json_file("narrative_content.json", "environmental_messages")
 
 
-def get_death_messages() -> List[str]:
+def get_death_messages() -> list[str]:
     """Get death messages with story context."""
-    return DataLoader._load_json_file('narrative_content.json', 'death_messages')
+    return DataLoader._load_json_file("narrative_content.json", "death_messages")
 
 
-def get_level_transition_messages() -> Dict[str, str]:
+def get_level_transition_messages() -> dict[str, str]:
     """Get level transition flavor text."""
-    return DataLoader._load_json_file('narrative_content.json', 'level_transition_messages')
+    return DataLoader._load_json_file("narrative_content.json", "level_transition_messages")
 
 
-def get_intro_messages() -> Dict[str, Dict[str, str]]:
+def get_intro_messages() -> dict[str, dict[str, str]]:
     """Get tiered intro messages based on fragment discovery."""
-    return DataLoader._load_json_file('narrative_content.json', 'intro_messages')
+    return DataLoader._load_json_file("narrative_content.json", "intro_messages")

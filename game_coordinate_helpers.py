@@ -8,7 +8,7 @@ array indexing to prevent common transparency and positioning bugs.
 Key Principle: Pass coordinates as (x, y), access TCOD arrays as [y, x].
 """
 
-from typing import Tuple
+
 import tcod.console
 
 
@@ -34,8 +34,9 @@ class CoordinateHelpers:
     """
 
     @staticmethod
-    def center_box(box_width: int, box_height: int,
-                   console_width: int, console_height: int) -> Tuple[int, int]:
+    def center_box(
+        box_width: int, box_height: int, console_width: int, console_height: int
+    ) -> tuple[int, int]:
         """
         Calculate top-left position to center a box within a console area.
 
@@ -62,8 +63,9 @@ class CoordinateHelpers:
         return (start_x, start_y)
 
     @staticmethod
-    def clamp_bounds(x: int, y: int, width: int, height: int,
-                     max_width: int, max_height: int) -> Tuple[int, int, int, int]:
+    def clamp_bounds(
+        x: int, y: int, width: int, height: int, max_width: int, max_height: int
+    ) -> tuple[int, int, int, int]:
         """
         Clamp a rectangular region to fit within array bounds.
 
@@ -102,9 +104,9 @@ class CoordinateHelpers:
         return (clamped_x, clamped_y, clamped_width, clamped_height)
 
     @staticmethod
-    def set_alpha_region(console: tcod.console.Console,
-                         x: int, y: int, width: int, height: int,
-                         alpha: int) -> None:
+    def set_alpha_region(
+        console: tcod.console.Console, x: int, y: int, width: int, height: int, alpha: int
+    ) -> None:
         """
         Set alpha transparency for a rectangular region of the console.
 
@@ -145,9 +147,14 @@ class CoordinateHelpers:
                 console.rgba["bg"][row, col, 3] = alpha
 
     @staticmethod
-    def char_to_pixel_coords(console_x: int, console_y: int,
-                            window_width: int, window_height: int,
-                            console_width: int = 80, console_height: int = 50) -> Tuple[int, int]:
+    def char_to_pixel_coords(
+        console_x: int,
+        console_y: int,
+        window_width: int,
+        window_height: int,
+        console_width: int = 80,
+        console_height: int = 50,
+    ) -> tuple[int, int]:
         """
         Convert console character coordinates to SDL pixel coordinates.
 
@@ -185,10 +192,16 @@ class CoordinateHelpers:
         return (pixel_x, pixel_y)
 
     @staticmethod
-    def pixel_to_char_coords(pixel_x: int, pixel_y: int,
-                            window_width: int, window_height: int,
-                            console_width: int = 80, console_height: int = 50,
-                            tile_pixel_width: int = 10, tile_pixel_height: int = 16) -> Tuple[int, int]:
+    def pixel_to_char_coords(
+        pixel_x: int,
+        pixel_y: int,
+        window_width: int,
+        window_height: int,
+        console_width: int = 80,
+        console_height: int = 50,
+        tile_pixel_width: int = 10,
+        tile_pixel_height: int = 16,
+    ) -> tuple[int, int]:
         """
         Convert SDL pixel coordinates to console character coordinates.
 
@@ -223,8 +236,9 @@ class CoordinateHelpers:
         return (tile_x, tile_y)
 
     @staticmethod
-    def pixel_to_sprite_grid(pixel_x: int, pixel_y: int,
-                            sprite_tile_width: int, sprite_tile_height: int) -> Tuple[int, int]:
+    def pixel_to_sprite_grid(
+        pixel_x: int, pixel_y: int, sprite_tile_width: int, sprite_tile_height: int
+    ) -> tuple[int, int]:
         """
         Convert SDL pixel coordinates to sprite grid coordinates.
 

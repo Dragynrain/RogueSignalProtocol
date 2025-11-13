@@ -9,15 +9,16 @@ Special handlers for config and data loading errors with enhanced context.
 
 import logging
 import traceback
-from typing import Optional, Any
+from typing import Any
 
 
 class GameErrorHandler:
     """Centralized error handling for consistent logging and user notification."""
 
     @staticmethod
-    def handle_error(error: Exception, context: str, user_message: Optional[str] = None,
-                    fatal: bool = False) -> None:
+    def handle_error(
+        error: Exception, context: str, user_message: str | None = None, fatal: bool = False
+    ) -> None:
         """
         Handle an error with consistent logging and user notification.
 
@@ -59,8 +60,9 @@ class GameErrorHandler:
         logging.warning(f"WARNING: {warning_msg}")
 
     @staticmethod
-    def handle_safe_operation(operation_func, context: str, fallback_value: Any = None,
-                            user_message: Optional[str] = None) -> Any:
+    def handle_safe_operation(
+        operation_func, context: str, fallback_value: Any = None, user_message: str | None = None
+    ) -> Any:
         """
         Safely execute an operation with error handling.
 
@@ -76,7 +78,9 @@ class GameErrorHandler:
         try:
             return operation_func()
         except Exception as e:
-            logging.debug(f"Error Handling: Safe operation failed in {context}, using fallback={fallback_value}")
+            logging.debug(
+                f"Error Handling: Safe operation failed in {context}, using fallback={fallback_value}"
+            )
             GameErrorHandler.handle_error(e, context, user_message)
             return fallback_value
 
@@ -104,7 +108,9 @@ class GameErrorHandler:
         Raises:
             The same exception type with enhanced message
         """
-        logging.debug(f"Error Handling: Config error - {operation}, exception={type(exception).__name__}")
+        logging.debug(
+            f"Error Handling: Config error - {operation}, exception={type(exception).__name__}"
+        )
         error_msg = f"CRITICAL CONFIG ERROR: {operation}"
         logging.error(error_msg)
         logging.error(f"Exception: {str(exception)}")

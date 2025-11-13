@@ -7,9 +7,10 @@ Tests menu navigation, rendering, scrolling, and interaction with achievement sy
 
 import pytest
 import tcod
-from game_menu_achievements import AchievementsMenu
-from game_achievements import AchievementManager, ALL_ACHIEVEMENTS
+
+from game_achievements import ALL_ACHIEVEMENTS, AchievementManager
 from game_config import GameConfig
+from game_menu_achievements import AchievementsMenu
 
 
 class TestAchievementsMenuBasic:
@@ -41,12 +42,13 @@ class TestAchievementsMenuBasic:
             "EFFICIENCY & SPEED",
             "CHALLENGE RUNS",
             "MASTERY & COLLECTION",
-            "LIFETIME"
+            "LIFETIME",
         ]
 
         for category in categories:
-            assert any(category in line['text'] for line in lines), \
-                f"Category '{category}' not found in menu"
+            assert any(
+                category in line["text"] for line in lines
+            ), f"Category '{category}' not found in menu"
 
     def test_build_achievement_lines_includes_all_achievements(self):
         """Test that all 25 achievements are listed."""
@@ -55,8 +57,14 @@ class TestAchievementsMenuBasic:
 
         # Should have lines for all 25 achievements (not counting category headers and blank lines)
         # Count achievement lines (those with icons like [X], [ ], or 🔒 for hidden)
-        achievement_lines = [line for line in lines if '[X]' in line['text'] or '[ ]' in line['text'] or '🔒' in line['text']]
-        assert len(achievement_lines) == 25, f"Expected 25 achievements, found {len(achievement_lines)}"
+        achievement_lines = [
+            line
+            for line in lines
+            if "[X]" in line["text"] or "[ ]" in line["text"] or "🔒" in line["text"]
+        ]
+        assert (
+            len(achievement_lines) == 25
+        ), f"Expected 25 achievements, found {len(achievement_lines)}"
 
     def test_text_wrapping(self):
         """Test text wrapping works correctly."""
@@ -85,10 +93,7 @@ class TestAchievementsMenuScrolling:
 
         # Create KeyDown event for down arrow
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier(0),
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.DOWN, mod=tcod.event.Modifier(0), repeat=False
         )
 
         action = menu.handle_input(event)
@@ -103,10 +108,7 @@ class TestAchievementsMenuScrolling:
 
         # Create KeyDown event for up arrow
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.UP,
-            mod=tcod.event.Modifier(0),
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.UP, mod=tcod.event.Modifier(0), repeat=False
         )
 
         action = menu.handle_input(event)
@@ -121,10 +123,7 @@ class TestAchievementsMenuScrolling:
 
         # Try to scroll up from 0
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.UP,
-            mod=tcod.event.Modifier(0),
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.UP, mod=tcod.event.Modifier(0), repeat=False
         )
 
         menu.handle_input(event)
@@ -143,10 +142,7 @@ class TestAchievementsMenuScrolling:
         menu.scroll_offset = max_scroll
 
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier(0),
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.DOWN, mod=tcod.event.Modifier(0), repeat=False
         )
 
         menu.handle_input(event)
@@ -159,7 +155,7 @@ class TestAchievementsMenuScrolling:
         original_offset = menu.scroll_offset
 
         # Create fake mouse wheel event (scroll down)
-        event = type('Event', (), {'y': -1})()
+        event = type("Event", (), {"y": -1})()
 
         result = menu.handle_mouse_wheel(event)
 
@@ -176,10 +172,7 @@ class TestAchievementsMenuInput:
 
         # Create KeyDown event for ESC
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier(0),
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier(0), repeat=False
         )
 
         action = menu.handle_input(event)
@@ -191,10 +184,14 @@ class TestAchievementsMenuInput:
         menu = AchievementsMenu()
 
         # Create fake right-click event
-        event = type('Event', (), {
-            'button': tcod.event.MouseButton.RIGHT,
-            'position': type('Position', (), {'x': 40, 'y': 25})()
-        })()
+        event = type(
+            "Event",
+            (),
+            {
+                "button": tcod.event.MouseButton.RIGHT,
+                "position": type("Position", (), {"x": 40, "y": 25})(),
+            },
+        )()
 
         action = menu.handle_mouse_click(event)
 
@@ -205,10 +202,14 @@ class TestAchievementsMenuInput:
         menu = AchievementsMenu()
 
         # Create fake left-click event
-        event = type('Event', (), {
-            'button': tcod.event.MouseButton.LEFT,
-            'position': type('Position', (), {'x': 40, 'y': 25})()
-        })()
+        event = type(
+            "Event",
+            (),
+            {
+                "button": tcod.event.MouseButton.LEFT,
+                "position": type("Position", (), {"x": 40, "y": 25})(),
+            },
+        )()
 
         action = menu.handle_mouse_click(event)
 
@@ -218,9 +219,7 @@ class TestAchievementsMenuInput:
         """Test mouse motion is ignored."""
         menu = AchievementsMenu()
 
-        event = type('Event', (), {
-            'position': type('Position', (), {'x': 40, 'y': 25})()
-        })()
+        event = type("Event", (), {"position": type("Position", (), {"x": 40, "y": 25})()})()
 
         result = menu.handle_mouse_motion(event)
 
@@ -233,7 +232,7 @@ class TestAchievementsMenuIntegration:
     def test_menu_displays_unlocked_achievements_correctly(self):
         """Test unlocked achievements show as green with checkmark."""
         # Unlock a test achievement
-        AchievementManager._unlocked_achievements = {'first_blood'}
+        AchievementManager._unlocked_achievements = {"first_blood"}
 
         menu = AchievementsMenu()
         lines = menu._build_achievement_lines()
@@ -241,12 +240,12 @@ class TestAchievementsMenuIntegration:
         # Find the first_blood achievement line
         first_blood_line = None
         for line in lines:
-            if 'First Blood' in line['text']:
+            if "First Blood" in line["text"]:
                 first_blood_line = line
                 break
 
         assert first_blood_line is not None
-        assert '[X]' in first_blood_line['text']  # Should have checked checkbox
+        assert "[X]" in first_blood_line["text"]  # Should have checked checkbox
         # Note: color will be Colors.GREEN tuple, we can't easily test exact color
 
         # Clean up
@@ -263,17 +262,17 @@ class TestAchievementsMenuIntegration:
         # Find any achievement line (e.g., first_blood)
         first_blood_line = None
         for line in lines:
-            if 'First Blood' in line['text']:
+            if "First Blood" in line["text"]:
                 first_blood_line = line
                 break
 
         assert first_blood_line is not None
-        assert '[ ]' in first_blood_line['text']  # Should have unchecked checkbox
+        assert "[ ]" in first_blood_line["text"]  # Should have unchecked checkbox
 
     def test_menu_shows_progress_count(self):
         """Test menu displays unlock progress in title."""
         # Unlock 3 achievements
-        AchievementManager._unlocked_achievements = {'first_blood', 'massacre', 'overkill'}
+        AchievementManager._unlocked_achievements = {"first_blood", "massacre", "overkill"}
 
         menu = AchievementsMenu()
         console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
@@ -309,7 +308,7 @@ class TestAchievementsMenuIntegration:
         lines = menu._build_achievement_lines()
 
         # Search for ??? in achievement lines
-        has_hidden = any('???' in line['text'] for line in lines)
+        has_hidden = any("???" in line["text"] for line in lines)
         assert has_hidden, "Hidden achievements should show as '???'"
 
 
@@ -355,7 +354,7 @@ class TestAchievementsMenuEdgeCases:
         menu = AchievementsMenu()
 
         # Event without 'y' attribute
-        event = type('Event', (), {})()
+        event = type("Event", (), {})()
 
         result = menu.handle_mouse_wheel(event)
 
@@ -366,7 +365,7 @@ class TestAchievementsMenuEdgeCases:
         menu = AchievementsMenu()
 
         # Event without 'position' attribute
-        event = type('Event', (), {})()
+        event = type("Event", (), {})()
 
         action = menu.handle_mouse_click(event)
 

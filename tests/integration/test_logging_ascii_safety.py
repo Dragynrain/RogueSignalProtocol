@@ -8,6 +8,7 @@ non-ASCII characters in logging calls during testing instead of at runtime.
 
 import os
 import re
+
 import pytest
 
 
@@ -17,14 +18,14 @@ class TestLoggingASCIISafety:
     def _find_python_files(self):
         """Find all Python source files in the project."""
         python_files = []
-        exclude_dirs = {'.venv', 'venv', '__pycache__', '.git', 'build', 'dist', '.pytest_cache'}
+        exclude_dirs = {".venv", "venv", "__pycache__", ".git", "build", "dist", ".pytest_cache"}
 
-        for root, dirs, files in os.walk('.'):
+        for root, dirs, files in os.walk("."):
             # Remove excluded directories from traversal
             dirs[:] = [d for d in dirs if d not in exclude_dirs]
 
             for file in files:
-                if file.endswith('.py'):
+                if file.endswith(".py"):
                     python_files.append(os.path.join(root, file))
 
         return python_files
@@ -36,7 +37,7 @@ class TestLoggingASCIISafety:
         Returns list of (line_number, logging_string) tuples.
         """
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             pytest.skip(f"Could not read {file_path}: {e}")
@@ -50,11 +51,11 @@ class TestLoggingASCIISafety:
         for match in re.finditer(pattern, content):
             log_string = match.group(2)
             # Find line number by counting newlines up to this position
-            line_num = content[:match.start()].count('\n') + 1
+            line_num = content[: match.start()].count("\n") + 1
 
             # Check if string contains non-ASCII characters
             try:
-                log_string.encode('ascii')
+                log_string.encode("ascii")
             except UnicodeEncodeError:
                 violations.append((line_num, log_string, file_path))
 
@@ -100,16 +101,18 @@ class TestLoggingASCIISafety:
         python_files = self._find_python_files()
         arrow_violations = []
 
-        unicode_arrows = ['→', '←', '↑', '↓', '⇒', '⇐', '⇑', '⇓']
+        unicode_arrows = ["→", "←", "↑", "↓", "⇒", "⇐", "⇑", "⇓"]
 
         for file_path in python_files:
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, encoding="utf-8") as f:
                     for line_num, line in enumerate(f, 1):
-                        if 'logging.' in line:
+                        if "logging." in line:
                             for arrow in unicode_arrows:
                                 if arrow in line:
-                                    arrow_violations.append((file_path, line_num, line.strip(), arrow))
+                                    arrow_violations.append(
+                                        (file_path, line_num, line.strip(), arrow)
+                                    )
             except Exception:
                 continue
 
@@ -133,16 +136,18 @@ class TestLoggingASCIISafety:
         emoji_violations = []
 
         # Common emojis that might appear in logging
-        common_emojis = ['💀', '✅', '❌', '🎮', '🔥', '⚠️', '🚨', '🏆', '💡']
+        common_emojis = ["💀", "✅", "❌", "🎮", "🔥", "⚠️", "🚨", "🏆", "💡"]
 
         for file_path in python_files:
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, encoding="utf-8") as f:
                     for line_num, line in enumerate(f, 1):
-                        if 'logging.' in line:
+                        if "logging." in line:
                             for emoji in common_emojis:
                                 if emoji in line:
-                                    emoji_violations.append((file_path, line_num, line.strip(), emoji))
+                                    emoji_violations.append(
+                                        (file_path, line_num, line.strip(), emoji)
+                                    )
             except Exception:
                 continue
 

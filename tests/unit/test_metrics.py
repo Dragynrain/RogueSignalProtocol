@@ -2,16 +2,24 @@
 Unit tests for metrics tracking system.
 """
 
-import pytest
 import json
 import sqlite3
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
+
+import pytest
+
 from game_metrics import (
-    SessionMetrics, LifetimeMetrics, init_session_metrics, track,
-    finalize_session, save_session_to_json, save_session_to_sqlite,
-    load_lifetime_metrics, save_lifetime_metrics, update_lifetime_metrics,
-    METRICS_DIR
+    METRICS_DIR,
+    LifetimeMetrics,
+    SessionMetrics,
+    finalize_session,
+    init_session_metrics,
+    load_lifetime_metrics,
+    save_session_to_json,
+    save_session_to_sqlite,
+    track,
+    update_lifetime_metrics,
 )
 
 
@@ -158,7 +166,7 @@ def test_save_session_to_json(clean_metrics):
     assert len(json_files) == 1
 
     # Verify content
-    with open(json_files[0], 'r') as f:
+    with open(json_files[0]) as f:
         data = json.load(f)
 
     assert data["damage_dealt"] == 100

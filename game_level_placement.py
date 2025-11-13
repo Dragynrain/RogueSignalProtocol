@@ -21,9 +21,8 @@ Node placement strategies:
 - Ghost nodes: Shadow-adjacent positions (stealth paths)
 """
 
-import random
 import logging
-from typing import List, Tuple, Dict
+import random
 
 from game_config import GameConfig
 from game_entities import Position
@@ -66,7 +65,7 @@ class TilePlacementGenerator:
         # Invalidate transparency cache after walls are modified
         self.game_map.invalidate_transparency_cache()
 
-    def place_special_tiles(self, level: int, landmark_rooms: List[Dict] = None) -> None:
+    def place_special_tiles(self, level: int, landmark_rooms: list[dict] = None) -> None:
         """
         Place cooling nodes, CPU recovery nodes, and other special tiles.
 
@@ -86,7 +85,9 @@ class TilePlacementGenerator:
         floor_positions = self.get_all_floor_positions()
 
         if not floor_positions:
-            logging.warning(f"No floor positions available for level {level} special node placement")
+            logging.warning(
+                f"No floor positions available for level {level} special node placement"
+            )
             return
 
         network_configs = GameConfig.get_network_configs()
@@ -106,9 +107,11 @@ class TilePlacementGenerator:
                 raise KeyError(f"Required key '{key}' missing from level {level} config")
             return config[key]
 
-        cooling_count = get_required_config('cooling_nodes')
+        cooling_count = get_required_config("cooling_nodes")
         cooling_positions = self.get_high_traffic_positions(floor_positions)
-        logging.debug(f"Tile Placement: Placing {cooling_count} cooling nodes (high-traffic candidates={len(cooling_positions)})")
+        logging.debug(
+            f"Tile Placement: Placing {cooling_count} cooling nodes (high-traffic candidates={len(cooling_positions)})"
+        )
         for i in range(cooling_count):
             if cooling_positions:
                 pos = random.choice(cooling_positions)
@@ -121,11 +124,15 @@ class TilePlacementGenerator:
                 self.game_map.cooling_nodes.add(pos)
         actual_cooling = len(self.game_map.cooling_nodes)
         match_status = "MATCH" if actual_cooling == cooling_count else "MISMATCH"
-        logging.info(f"Tile Placement: COOLING NODES - Expected: {cooling_count}, Actual: {actual_cooling} [{match_status}]")
+        logging.info(
+            f"Tile Placement: COOLING NODES - Expected: {cooling_count}, Actual: {actual_cooling} [{match_status}]"
+        )
 
-        cpu_count = get_required_config('cpu_nodes')
+        cpu_count = get_required_config("cpu_nodes")
         cpu_positions = self.get_peripheral_positions(floor_positions)
-        logging.debug(f"Tile Placement: Placing {cpu_count} CPU nodes (peripheral candidates={len(cpu_positions)})")
+        logging.debug(
+            f"Tile Placement: Placing {cpu_count} CPU nodes (peripheral candidates={len(cpu_positions)})"
+        )
         for i in range(cpu_count):
             if cpu_positions:
                 pos = random.choice(cpu_positions)
@@ -138,11 +145,15 @@ class TilePlacementGenerator:
                 self.game_map.cpu_recovery_nodes.add(pos)
         actual_cpu = len(self.game_map.cpu_recovery_nodes)
         match_status = "MATCH" if actual_cpu == cpu_count else "MISMATCH"
-        logging.info(f"Tile Placement: CPU NODES - Expected: {cpu_count}, Actual: {actual_cpu} [{match_status}]")
+        logging.info(
+            f"Tile Placement: CPU NODES - Expected: {cpu_count}, Actual: {actual_cpu} [{match_status}]"
+        )
 
-        ghost_count = get_required_config('ghost_nodes')
+        ghost_count = get_required_config("ghost_nodes")
         ghost_positions = self.get_shadow_adjacent_positions(floor_positions)
-        logging.debug(f"Tile Placement: Placing {ghost_count} ghost nodes (shadow-adjacent candidates={len(ghost_positions)})")
+        logging.debug(
+            f"Tile Placement: Placing {ghost_count} ghost nodes (shadow-adjacent candidates={len(ghost_positions)})"
+        )
         for i in range(ghost_count):
             if ghost_positions:
                 pos = random.choice(ghost_positions)
@@ -155,9 +166,13 @@ class TilePlacementGenerator:
                 self.game_map.ghost_nodes.add(pos)
         actual_ghost = len(self.game_map.ghost_nodes)
         match_status = "MATCH" if actual_ghost == ghost_count else "MISMATCH"
-        logging.info(f"Tile Placement: GHOST NODES - Expected: {ghost_count}, Actual: {actual_ghost} [{match_status}]")
+        logging.info(
+            f"Tile Placement: GHOST NODES - Expected: {ghost_count}, Actual: {actual_ghost} [{match_status}]"
+        )
 
-    def get_high_traffic_positions(self, floor_positions: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    def get_high_traffic_positions(
+        self, floor_positions: list[tuple[int, int]]
+    ) -> list[tuple[int, int]]:
         """
         Get positions in high-traffic areas (central corridors, hub rooms).
 
@@ -184,8 +199,7 @@ class TilePlacementGenerator:
                 continue
 
             floor_neighbors = 0
-            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1),
-                          (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
                 neighbor = (x + dx, y + dy)
                 if neighbor not in self.game_map.walls:
                     floor_neighbors += 1
@@ -195,7 +209,9 @@ class TilePlacementGenerator:
 
         return high_traffic
 
-    def get_peripheral_positions(self, floor_positions: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    def get_peripheral_positions(
+        self, floor_positions: list[tuple[int, int]]
+    ) -> list[tuple[int, int]]:
         """
         Get positions in peripheral/safer areas (edge rooms, dead ends).
 
@@ -214,8 +230,9 @@ class TilePlacementGenerator:
         for pos in floor_positions:
             x, y = pos
 
-            near_edge = (x < 15 or x > GameConfig.MAP_WIDTH - 15 or
-                        y < 15 or y > GameConfig.MAP_HEIGHT - 15)
+            near_edge = (
+                x < 15 or x > GameConfig.MAP_WIDTH - 15 or y < 15 or y > GameConfig.MAP_HEIGHT - 15
+            )
 
             if near_edge:
                 floor_neighbors = 0
@@ -229,7 +246,9 @@ class TilePlacementGenerator:
 
         return peripheral
 
-    def get_shadow_adjacent_positions(self, floor_positions: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
+    def get_shadow_adjacent_positions(
+        self, floor_positions: list[tuple[int, int]]
+    ) -> list[tuple[int, int]]:
         """
         Get positions adjacent to or within shadow areas.
 
@@ -259,7 +278,7 @@ class TilePlacementGenerator:
 
         return shadow_adjacent
 
-    def get_all_floor_positions(self) -> List[Tuple[int, int]]:
+    def get_all_floor_positions(self) -> list[tuple[int, int]]:
         """
         Get all valid floor positions (not walls, not blind spots).
 
@@ -297,29 +316,33 @@ class TilePlacementGenerator:
         floor_positions = self.get_all_floor_positions()
 
         # Exclude positions with special nodes (cooling, CPU, ghost)
-        occupied_positions = (self.game_map.cooling_nodes |
-                            self.game_map.cpu_recovery_nodes |
-                            self.game_map.ghost_nodes)
+        occupied_positions = (
+            self.game_map.cooling_nodes
+            | self.game_map.cpu_recovery_nodes
+            | self.game_map.ghost_nodes
+        )
         floor_positions = [pos for pos in floor_positions if pos not in occupied_positions]
 
         if not floor_positions:
             logging.warning(f"Gateway: No floor positions available for level {level}")
             return
 
-        if strategy == 'far_corner':
+        if strategy == "far_corner":
             gateway_pos = self.gateway_far_corner(spawn_area, floor_positions)
-        elif strategy == 'central_hub':
+        elif strategy == "central_hub":
             gateway_pos = self.gateway_central_hub(floor_positions)
-        elif strategy == 'hidden_dead_end':
+        elif strategy == "hidden_dead_end":
             gateway_pos = self.gateway_hidden_dead_end(floor_positions)
-        elif strategy == 'gauntlet':
+        elif strategy == "gauntlet":
             gateway_pos = self.gateway_gauntlet(spawn_area, floor_positions)
         else:
             gateway_pos = self.gateway_far_corner(spawn_area, floor_positions)
 
         self.game_map.gateway = Position(gateway_pos[0], gateway_pos[1])
         distance_from_spawn = spawn_area.distance_to(self.game_map.gateway)
-        logging.debug(f"Gateway: Placed at {gateway_pos}, distance_from_spawn={distance_from_spawn:.1f}")
+        logging.debug(
+            f"Gateway: Placed at {gateway_pos}, distance_from_spawn={distance_from_spawn:.1f}"
+        )
 
     def select_gateway_strategy(self) -> str:
         """
@@ -328,14 +351,14 @@ class TilePlacementGenerator:
         Returns:
             Strategy name string
         """
-        weights = GameConfig._get_required('room_generation.gateway_strategy_weights')
+        weights = GameConfig._get_required("room_generation.gateway_strategy_weights")
 
-        strategies = ['far_corner', 'central_hub', 'hidden_dead_end', 'gauntlet']
+        strategies = ["far_corner", "central_hub", "hidden_dead_end", "gauntlet"]
         strategy_weights = [
-            weights.get('far_corner', 0.4),
-            weights.get('central_hub', 0.3),
-            weights.get('hidden_dead_end', 0.2),
-            weights.get('gauntlet', 0.1)
+            weights.get("far_corner", 0.4),
+            weights.get("central_hub", 0.3),
+            weights.get("hidden_dead_end", 0.2),
+            weights.get("gauntlet", 0.1),
         ]
 
         total = sum(strategy_weights)
@@ -350,7 +373,9 @@ class TilePlacementGenerator:
 
         return strategies[0]
 
-    def gateway_far_corner(self, spawn: Position, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
+    def gateway_far_corner(
+        self, spawn: Position, floor_positions: list[tuple[int, int]]
+    ) -> tuple[int, int]:
         """
         Gateway in opposite corner from spawn - minimum 45 tiles.
 
@@ -363,19 +388,26 @@ class TilePlacementGenerator:
         Returns:
             Selected gateway position (x, y)
         """
-        min_distance = GameConfig._get_required('room_generation.gateway_minimum_distances')['far_corner']
+        min_distance = GameConfig._get_required("room_generation.gateway_minimum_distances")[
+            "far_corner"
+        ]
 
-        far_positions = [pos for pos in floor_positions
-                        if spawn.distance_to(Position(pos[0], pos[1])) > min_distance]
+        far_positions = [
+            pos
+            for pos in floor_positions
+            if spawn.distance_to(Position(pos[0], pos[1])) > min_distance
+        ]
 
         if far_positions:
             return random.choice(far_positions)
 
         furthest = max(floor_positions, key=lambda pos: spawn.distance_to(Position(pos[0], pos[1])))
-        logging.warning(f"Far corner gateway: No positions >{min_distance} tiles from spawn, using furthest available")
+        logging.warning(
+            f"Far corner gateway: No positions >{min_distance} tiles from spawn, using furthest available"
+        )
         return furthest
 
-    def gateway_central_hub(self, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
+    def gateway_central_hub(self, floor_positions: list[tuple[int, int]]) -> tuple[int, int]:
         """
         Gateway in or near central area of map - minimum 35 tiles from spawn.
 
@@ -387,7 +419,9 @@ class TilePlacementGenerator:
         Returns:
             Selected gateway position (x, y)
         """
-        min_distance = GameConfig._get_required('room_generation.gateway_minimum_distances')['central_hub']
+        min_distance = GameConfig._get_required("room_generation.gateway_minimum_distances")[
+            "central_hub"
+        ]
         spawn = Position(5, 5)
         map_center_x = GameConfig.MAP_WIDTH // 2
         map_center_y = GameConfig.MAP_HEIGHT // 2
@@ -403,15 +437,23 @@ class TilePlacementGenerator:
         if central_positions:
             return random.choice(central_positions)
 
-        valid_by_distance = [pos for pos in floor_positions
-                            if spawn.distance_to(Position(pos[0], pos[1])) > min_distance]
+        valid_by_distance = [
+            pos
+            for pos in floor_positions
+            if spawn.distance_to(Position(pos[0], pos[1])) > min_distance
+        ]
         if valid_by_distance:
-            return min(valid_by_distance, key=lambda pos: abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y))
+            return min(
+                valid_by_distance,
+                key=lambda pos: abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y),
+            )
 
         logging.warning(f"Central hub gateway: No positions >{min_distance} tiles from spawn!")
-        return min(floor_positions, key=lambda pos: abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y))
+        return min(
+            floor_positions, key=lambda pos: abs(pos[0] - map_center_x) + abs(pos[1] - map_center_y)
+        )
 
-    def gateway_hidden_dead_end(self, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
+    def gateway_hidden_dead_end(self, floor_positions: list[tuple[int, int]]) -> tuple[int, int]:
         """
         Gateway at end of longest branch - minimum 38 tiles from spawn.
 
@@ -423,7 +465,9 @@ class TilePlacementGenerator:
         Returns:
             Selected gateway position (x, y)
         """
-        min_distance = GameConfig._get_required('room_generation.gateway_minimum_distances')['hidden_dead_end']
+        min_distance = GameConfig._get_required("room_generation.gateway_minimum_distances")[
+            "hidden_dead_end"
+        ]
         spawn = Position(5, 5)
 
         dead_end_positions = []
@@ -431,8 +475,11 @@ class TilePlacementGenerator:
         for pos in floor_positions:
             x, y = pos
 
-            neighbor_count = sum(1 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
-                                if (x + dx, y + dy) in floor_positions)
+            neighbor_count = sum(
+                1
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+                if (x + dx, y + dy) in floor_positions
+            )
 
             if neighbor_count <= 2:
                 distance_from_spawn = spawn.distance_to(Position(x, y))
@@ -442,17 +489,28 @@ class TilePlacementGenerator:
         if dead_end_positions:
             return random.choice(dead_end_positions)
 
-        any_dead_end = [pos for pos in floor_positions
-                       if sum(1 for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
-                             if (pos[0] + dx, pos[1] + dy) in floor_positions) <= 2]
+        any_dead_end = [
+            pos
+            for pos in floor_positions
+            if sum(
+                1
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+                if (pos[0] + dx, pos[1] + dy) in floor_positions
+            )
+            <= 2
+        ]
 
         if any_dead_end:
-            logging.warning(f"Hidden dead end gateway: No dead ends >{min_distance} tiles from spawn")
+            logging.warning(
+                f"Hidden dead end gateway: No dead ends >{min_distance} tiles from spawn"
+            )
             return random.choice(any_dead_end)
 
         return random.choice(floor_positions)
 
-    def gateway_gauntlet(self, spawn: Position, floor_positions: List[Tuple[int, int]]) -> Tuple[int, int]:
+    def gateway_gauntlet(
+        self, spawn: Position, floor_positions: list[tuple[int, int]]
+    ) -> tuple[int, int]:
         """
         Gateway along edge - minimum 40 tiles from spawn, requires crossing map.
 
@@ -465,14 +523,17 @@ class TilePlacementGenerator:
         Returns:
             Selected gateway position (x, y)
         """
-        min_distance = GameConfig._get_required('room_generation.gateway_minimum_distances')['gauntlet']
+        min_distance = GameConfig._get_required("room_generation.gateway_minimum_distances")[
+            "gauntlet"
+        ]
 
         edge_positions = []
         for pos in floor_positions:
             x, y = pos
 
-            near_edge = (x < 10 or x > GameConfig.MAP_WIDTH - 10 or
-                        y < 10 or y > GameConfig.MAP_HEIGHT - 10)
+            near_edge = (
+                x < 10 or x > GameConfig.MAP_WIDTH - 10 or y < 10 or y > GameConfig.MAP_HEIGHT - 10
+            )
 
             distance_from_spawn = spawn.distance_to(Position(x, y))
 
@@ -482,5 +543,7 @@ class TilePlacementGenerator:
         if edge_positions:
             return random.choice(edge_positions)
 
-        logging.warning(f"Gauntlet gateway: No edge positions >{min_distance} tiles from spawn, using far corner")
+        logging.warning(
+            f"Gauntlet gateway: No edge positions >{min_distance} tiles from spawn, using far corner"
+        )
         return self.gateway_far_corner(spawn, floor_positions)

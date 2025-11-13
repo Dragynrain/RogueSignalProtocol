@@ -8,12 +8,14 @@ Tests the behavior fixes for patrol enemies to ensure:
 3. Queue properly extends with next waypoint moves
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from game_characters import Enemy, Player
-from game_entities import Position, EnemyState, EnemyMovement
-from game_map import GameMap
 from game_engine import GameEngine
+from game_entities import EnemyMovement, EnemyState, Position
+from game_map import GameMap
 
 
 @pytest.fixture
@@ -28,6 +30,7 @@ def mock_game_map():
 
     # Mock walkability map
     import numpy as np
+
     game_map.get_walkability_map.return_value = np.ones((50, 50), dtype=np.int32)
     game_map._compute_fov_cached.return_value = np.ones((50, 50), dtype=bool)
 
@@ -49,9 +52,19 @@ class TestShortPatrolQueues:
 
     def test_short_patrol_maintains_full_queue(self, mock_game_map, mock_game_engine):
         """Patrol with waypoints 1-2 tiles apart should still maintain 3-move queue."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'patrol': Mock(movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="Patrol", max_cpu=50)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "patrol": Mock(
+                    movement=EnemyMovement.PATROL,
+                    cpu=50,
+                    vision=5,
+                    damage=10,
+                    name="Patrol",
+                    max_cpu=50,
+                )
+            },
+        ):
             # Create patrol with very short distances between waypoints
             patrol = Enemy(Position(10, 10), "patrol")
             patrol.patrol_points = [
@@ -74,9 +87,19 @@ class TestShortPatrolQueues:
 
     def test_patrol_queue_extends_across_waypoints(self, mock_game_map, mock_game_engine):
         """Queue should chain moves from current waypoint to next waypoint(s)."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'patrol': Mock(movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="Patrol", max_cpu=50)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "patrol": Mock(
+                    movement=EnemyMovement.PATROL,
+                    cpu=50,
+                    vision=5,
+                    damage=10,
+                    name="Patrol",
+                    max_cpu=50,
+                )
+            },
+        ):
             # Create patrol route
             patrol = Enemy(Position(10, 10), "patrol")
             patrol.patrol_points = [
@@ -103,9 +126,19 @@ class TestPatrolWaypointAdvancement:
 
     def test_waypoint_advancement_preserves_valid_moves(self, mock_game_map, mock_game_engine):
         """When advancing waypoint, existing valid moves to next waypoint should be preserved."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'patrol': Mock(movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="Patrol", max_cpu=50)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "patrol": Mock(
+                    movement=EnemyMovement.PATROL,
+                    cpu=50,
+                    vision=5,
+                    damage=10,
+                    name="Patrol",
+                    max_cpu=50,
+                )
+            },
+        ):
             patrol = Enemy(Position(10, 10), "patrol")
             patrol.patrol_points = [
                 Position(12, 10),  # Waypoint 0
@@ -134,14 +167,25 @@ class TestPatrolWaypointAdvancement:
 
                 # Queue should NOT be cleared - the fix removes the queue.clear() call
                 # The already-queued move toward waypoint 1 should remain
-                assert len(patrol.move_queue) == old_queue_length, \
-                    "Waypoint advancement should not clear already-queued valid moves"
+                assert (
+                    len(patrol.move_queue) == old_queue_length
+                ), "Waypoint advancement should not clear already-queued valid moves"
 
     def test_waypoint_detection_uses_grid_distance(self, mock_game_map, mock_game_engine):
         """Waypoint advancement should trigger when at waypoint (grid_distance == 0 or 1)."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'patrol': Mock(movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="Patrol", max_cpu=50)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "patrol": Mock(
+                    movement=EnemyMovement.PATROL,
+                    cpu=50,
+                    vision=5,
+                    damage=10,
+                    name="Patrol",
+                    max_cpu=50,
+                )
+            },
+        ):
             patrol = Enemy(Position(10, 10), "patrol")
             patrol.patrol_points = [Position(12, 10), Position(15, 10)]
             patrol.patrol_index = 0
@@ -164,9 +208,19 @@ class TestPatrolQueueExtension:
 
     def test_extend_patrol_queue_fills_to_three(self, mock_game_map, mock_game_engine):
         """_extend_patrol_queue should fill queue to 3 moves by chaining waypoints."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'patrol': Mock(movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="Patrol", max_cpu=50)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "patrol": Mock(
+                    movement=EnemyMovement.PATROL,
+                    cpu=50,
+                    vision=5,
+                    damage=10,
+                    name="Patrol",
+                    max_cpu=50,
+                )
+            },
+        ):
             patrol = Enemy(Position(10, 10), "patrol")
             patrol.patrol_points = [
                 Position(11, 10),  # Waypoint 0 - close
@@ -189,9 +243,19 @@ class TestPatrolQueueExtension:
 
     def test_extend_patrol_queue_skips_current_position(self, mock_game_map, mock_game_engine):
         """_extend_patrol_queue should skip waypoints we're already at (distance == 0)."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'patrol': Mock(movement=EnemyMovement.PATROL, cpu=50, vision=5, damage=10, name="Patrol", max_cpu=50)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "patrol": Mock(
+                    movement=EnemyMovement.PATROL,
+                    cpu=50,
+                    vision=5,
+                    damage=10,
+                    name="Patrol",
+                    max_cpu=50,
+                )
+            },
+        ):
             patrol = Enemy(Position(12, 10), "patrol")
             patrol.patrol_points = [
                 Position(12, 10),  # Waypoint 0 - we're already here!

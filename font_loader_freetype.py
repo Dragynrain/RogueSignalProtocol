@@ -4,14 +4,22 @@ Custom TrueType font loader using FreeType for proper glyph scaling.
 This bypasses tcod's broken load_truetype_font() which doesn't properly scale glyphs.
 Based on python-tcod's examples/ttf.py.
 """
-import numpy as np
+
 import freetype
+import numpy as np
 import tcod.tileset
+
 from game_errors import GameErrorHandler
 
 
-def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: int, chars: str = None,
-                              h_scale: float = None, v_scale: float = None) -> tcod.tileset.Tileset:
+def load_truetype_font_custom(
+    font_path: str,
+    glyph_width: int,
+    glyph_height: int,
+    chars: str = None,
+    h_scale: float = None,
+    v_scale: float = None,
+) -> tcod.tileset.Tileset:
     """
     Load a TrueType font with explicit glyph size control using FreeType.
 
@@ -32,7 +40,7 @@ def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: in
     # Auto-detect scaling based on font name if not specified
     if h_scale is None or v_scale is None:
         font_name = font_path.lower()
-        if 'kreative' in font_name or 'square' in font_name:
+        if "kreative" in font_name or "square" in font_name:
             # KreativeSquare: 1.0× (no scaling) - font already matches tile size
             h_scale = h_scale if h_scale is not None else 1.0
             v_scale = v_scale if v_scale is not None else 1.0
@@ -94,7 +102,9 @@ def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: in
 
             # Position glyphs using proper baseline alignment
             if bitmap.width > 0 and bitmap.rows > 0:
-                glyph_data = np.array(bitmap.buffer, dtype=np.uint8).reshape(bitmap.rows, bitmap.width)
+                glyph_data = np.array(bitmap.buffer, dtype=np.uint8).reshape(
+                    bitmap.rows, bitmap.width
+                )
 
                 # Calculate baseline position using font metrics
                 # FreeType metrics: ascender (above baseline), descender (below baseline), height (total)
@@ -118,7 +128,9 @@ def load_truetype_font_custom(font_path: str, glyph_width: int, glyph_height: in
                 # Copy glyph into output (white glyph, alpha from FreeType)
                 if dst_bottom > dst_top and dst_right > dst_left:
                     output[dst_top:dst_bottom, dst_left:dst_right, :3] = 255  # RGB = white
-                    output[dst_top:dst_bottom, dst_left:dst_right, 3] = glyph_data[src_top:src_bottom, src_left:src_right]
+                    output[dst_top:dst_bottom, dst_left:dst_right, 3] = glyph_data[
+                        src_top:src_bottom, src_left:src_right
+                    ]
 
             # Set tile in tileset
             tileset.set_tile(codepoint, output)
@@ -173,11 +185,11 @@ if __name__ == "__main__":
         title="FreeType Test: KreativeSquare 64x64",
         vsync=True,
         width=pixel_width,
-        height=pixel_height
+        height=pixel_height,
     ) as context:
         console = tcod.console.Console(console_width, console_height)
 
-        if hasattr(context, 'sdl_window'):
+        if hasattr(context, "sdl_window"):
             actual = context.sdl_window.size
             print(f"Actual window: {actual[0]}x{actual[1]}px")
 

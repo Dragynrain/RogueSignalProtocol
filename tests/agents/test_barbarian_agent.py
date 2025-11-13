@@ -12,12 +12,12 @@ The barbarian isn't stupid - he fights smart! When outnumbered, retreat
 to choke points. When wounded, retreat to healing nodes. RARRR!
 """
 
+from typing import Any
+
 import pytest
-import random
-from typing import Optional, Tuple, List, Dict, Any
+
+from game_entities import Position
 from tests.test_agent import GameTestAgent
-from game_entities import Position, EnemyState
-from game_config import GameBalance
 
 
 class BarbarianAgent(GameTestAgent):
@@ -69,16 +69,18 @@ class BarbarianAgent(GameTestAgent):
 
     def log_death(self, context: str = ""):
         """Log death details for analysis."""
-        self.death_log.append({
-            'level': self.engine.level,
-            'turn': self.turns_taken,
-            'hp': self.player.cpu,
-            'trace': self.player.trace_level,
-            'enemies_nearby': self.count_adjacent_enemies(),
-            'total_enemies_alive': len(self.enemies),
-            'position': (self.player.x, self.player.y),
-            'context': context,
-        })
+        self.death_log.append(
+            {
+                "level": self.engine.level,
+                "turn": self.turns_taken,
+                "hp": self.player.cpu,
+                "trace": self.player.trace_level,
+                "enemies_nearby": self.count_adjacent_enemies(),
+                "total_enemies_alive": len(self.enemies),
+                "position": (self.player.x, self.player.y),
+                "context": context,
+            }
+        )
 
     def count_adjacent_enemies(self) -> int:
         """
@@ -113,17 +115,18 @@ class BarbarianAgent(GameTestAgent):
         Returns:
             True if 2 or more mobile enemies have spotted the player
         """
-        from game_characters import EnemyState, EnemyMovement
+        from game_characters import EnemyMovement, EnemyState
 
         # Count ALERT + HOSTILE mobile enemies (not STATIC)
         alerted_mobile_count = sum(
-            1 for e in self.enemies
+            1
+            for e in self.enemies
             if (e.state == EnemyState.ALERT or e.state == EnemyState.HOSTILE)
             and e.get_movement_type() != EnemyMovement.STATIC
         )
         return alerted_mobile_count >= 2  # Trigger at 2+ to keep fights 1v1
 
-    def find_nearest_enemy(self) -> Optional[Tuple[int, int]]:
+    def find_nearest_enemy(self) -> tuple[int, int] | None:
         """
         Find nearest enemy position.
 
@@ -134,7 +137,7 @@ class BarbarianAgent(GameTestAgent):
             return None
 
         nearest = None
-        min_dist = float('inf')
+        min_dist = float("inf")
 
         for enemy in self.enemies:
             dist = abs(enemy.x - self.player.x) + abs(enemy.y - self.player.y)
@@ -144,7 +147,7 @@ class BarbarianAgent(GameTestAgent):
 
         return nearest
 
-    def find_nearest_cpu_node(self) -> Optional[Tuple[int, int]]:
+    def find_nearest_cpu_node(self) -> tuple[int, int] | None:
         """
         Find nearest CPU recovery node.
 
@@ -155,7 +158,7 @@ class BarbarianAgent(GameTestAgent):
             return None
 
         nearest = None
-        min_dist = float('inf')
+        min_dist = float("inf")
 
         for node_x, node_y in self.game_map.cpu_recovery_nodes:
             dist = abs(node_x - self.player.x) + abs(node_y - self.player.y)
@@ -165,7 +168,7 @@ class BarbarianAgent(GameTestAgent):
 
         return nearest
 
-    def find_nearest_ghost_node(self) -> Optional[Tuple[int, int]]:
+    def find_nearest_ghost_node(self) -> tuple[int, int] | None:
         """
         Find nearest ghost node (for trace level reduction).
 
@@ -176,7 +179,7 @@ class BarbarianAgent(GameTestAgent):
             return None
 
         nearest = None
-        min_dist = float('inf')
+        min_dist = float("inf")
 
         for node_x, node_y in self.game_map.ghost_nodes:
             dist = abs(node_x - self.player.x) + abs(node_y - self.player.y)
@@ -253,7 +256,7 @@ class BarbarianAgent(GameTestAgent):
         # At a chokepoint if 6+ adjacent walls (true corridor, not corner)
         return wall_count >= 6
 
-    def find_choke_point(self) -> Optional[Tuple[int, int]]:
+    def find_choke_point(self) -> tuple[int, int] | None:
         """
         Find nearby corridor (position with walls on both sides) using smart selection.
 
@@ -266,7 +269,7 @@ class BarbarianAgent(GameTestAgent):
         Returns:
             (x, y) tuple of best corridor position, or None if no corridors nearby
         """
-        from game_characters import EnemyState, EnemyMovement
+        from game_characters import EnemyMovement, EnemyState
 
         candidates = []
         px, py = self.player.x, self.player.y
@@ -276,15 +279,20 @@ class BarbarianAgent(GameTestAgent):
 
         # Get hostile enemy positions for danger calculation
         hostile_positions = [
-            (e.x, e.y) for e in self.enemies
+            (e.x, e.y)
+            for e in self.enemies
             if e.state == EnemyState.HOSTILE and e.get_movement_type() != EnemyMovement.STATIC
         ]
 
         # Search nearby area for corridors
         search_radius = 20  # Increased from 10 to cover more area
 
-        for check_x in range(max(0, px - search_radius), min(self.game_map.width, px + search_radius + 1)):
-            for check_y in range(max(0, py - search_radius), min(self.game_map.height, py + search_radius + 1)):
+        for check_x in range(
+            max(0, px - search_radius), min(self.game_map.width, px + search_radius + 1)
+        ):
+            for check_y in range(
+                max(0, py - search_radius), min(self.game_map.height, py + search_radius + 1)
+            ):
                 # Skip if it's a wall
                 if (check_x, check_y) in self.game_map.walls:
                     continue
@@ -311,13 +319,21 @@ class BarbarianAgent(GameTestAgent):
                     # Calculate minimum distance to any hostile enemy (higher is better)
                     if hostile_positions:
                         min_dist_to_enemy = min(
-                            abs(check_x - ex) + abs(check_y - ey)
-                            for ex, ey in hostile_positions
+                            abs(check_x - ex) + abs(check_y - ey) for ex, ey in hostile_positions
                         )
                     else:
                         min_dist_to_enemy = 999  # No enemies, perfect score
 
-                    candidates.append((check_x, check_y, wall_count, dist_to_player, dist_to_cpu, min_dist_to_enemy))
+                    candidates.append(
+                        (
+                            check_x,
+                            check_y,
+                            wall_count,
+                            dist_to_player,
+                            dist_to_cpu,
+                            min_dist_to_enemy,
+                        )
+                    )
 
         if not candidates:
             return None
@@ -330,10 +346,10 @@ class BarbarianAgent(GameTestAgent):
         def score_corridor(c):
             check_x, check_y, wall_count, dist_to_player, dist_to_cpu, min_dist_to_enemy = c
             return (
-                -dist_to_player       # Closer to player is better (quick retreat)
-                - dist_to_cpu * 2      # Strongly prefer closer to CPU node (healing access)
-                + min_dist_to_enemy    # Farther from enemies is safer
-                + wall_count * 0.5     # More walls is slightly better (tighter corridor)
+                -dist_to_player  # Closer to player is better (quick retreat)
+                - dist_to_cpu * 2  # Strongly prefer closer to CPU node (healing access)
+                + min_dist_to_enemy  # Farther from enemies is safer
+                + wall_count * 0.5  # More walls is slightly better (tighter corridor)
             )
 
         # Sort by score (higher is better)
@@ -357,7 +373,9 @@ class BarbarianAgent(GameTestAgent):
         hp_percent = self.player.cpu / self.player.max_cpu
         return hp_percent < 0.5 and len(self.game_map.cpu_recovery_nodes) > 0
 
-    def move_toward_target_smart(self, target_x: int, target_y: int, avoid_enemies: bool = False) -> bool:
+    def move_toward_target_smart(
+        self, target_x: int, target_y: int, avoid_enemies: bool = False
+    ) -> bool:
         """
         Take one step toward target using A* pathfinding.
 
@@ -394,12 +412,12 @@ class BarbarianAgent(GameTestAgent):
                 # Check if enemies nearby
                 adjacent_enemies = self.count_adjacent_enemies()
                 if adjacent_enemies == 0:
-                    return 'healed'
+                    return "healed"
                 # Still enemies nearby, keep fighting
 
             # Check death
             if self.player.cpu <= 0:
-                return 'died'
+                return "died"
 
             # Stay on node (wait or attack if enemy adjacent)
             adjacent_enemies = self.count_adjacent_enemies()
@@ -409,7 +427,7 @@ class BarbarianAgent(GameTestAgent):
             # Wait a turn (this keeps us on the node and processes CPU recovery)
             self.wait(1)
 
-        return 'timeout'
+        return "timeout"
 
     def charge_and_attack(self, max_moves: int = 50) -> str:
         """
@@ -434,7 +452,7 @@ class BarbarianAgent(GameTestAgent):
             # Find nearest enemy
             enemy_pos = self.find_nearest_enemy()
             if not enemy_pos:
-                return 'no_enemies'
+                return "no_enemies"
 
             ex, ey = enemy_pos
 
@@ -461,14 +479,14 @@ class BarbarianAgent(GameTestAgent):
 
             # Check death
             if self.player.cpu <= 0:
-                return 'died'
+                return "died"
 
             # Check if we killed the target
             current_enemy_count = len(self.enemies)
             if current_enemy_count < initial_enemy_count:
-                return 'killed'
+                return "killed"
 
-        return 'fighting'
+        return "fighting"
 
     def retreat_to_choke_and_fight(self, max_moves: int = 50) -> str:
         """
@@ -485,13 +503,12 @@ class BarbarianAgent(GameTestAgent):
         Returns:
             Status: 'reached_choke', 'no_choke', 'died', 'timeout'
         """
-        from game_characters import EnemyState, EnemyMovement
 
         self.retreats_to_choke += 1
 
         choke = self.find_choke_point()
         if not choke:
-            return 'no_choke'
+            return "no_choke"
 
         cx, cy = choke
         initial_distance = abs(cx - self.player.x) + abs(cy - self.player.y)
@@ -503,7 +520,7 @@ class BarbarianAgent(GameTestAgent):
 
             # Check if reached choke
             if self.player.x == cx and self.player.y == cy:
-                return 'reached_choke'
+                return "reached_choke"
 
             # Check current distance to corridor
             current_distance = abs(cx - self.player.x) + abs(cy - self.player.y)
@@ -521,7 +538,7 @@ class BarbarianAgent(GameTestAgent):
             # If stuck for too long (5 turns), we're probably blocked
             # Return and let main loop decide (might need to retreat to heal instead)
             if turns_stuck > 5:
-                return 'timeout'
+                return "timeout"
 
             if not moved:
                 # Stuck - wait
@@ -533,9 +550,9 @@ class BarbarianAgent(GameTestAgent):
 
             # Check death
             if self.player.cpu <= 0:
-                return 'died'
+                return "died"
 
-        return 'timeout'
+        return "timeout"
 
     def retreat_to_ghost_node_and_hide(self, max_moves: int = 300) -> str:
         """
@@ -555,7 +572,7 @@ class BarbarianAgent(GameTestAgent):
 
         node = self.find_nearest_ghost_node()
         if not node:
-            return 'no_node'
+            return "no_node"
 
         nx, ny = node
 
@@ -582,9 +599,9 @@ class BarbarianAgent(GameTestAgent):
 
             # Check death
             if self.player.cpu <= 0:
-                return 'died'
+                return "died"
 
-        return 'timeout'
+        return "timeout"
 
     def fight_on_ghost_node_until_clear_or_death(self, max_turns: int = 200) -> str:
         """
@@ -606,20 +623,20 @@ class BarbarianAgent(GameTestAgent):
 
             # Check if trace is fully cleared or near-zero (floating point / game mechanics)
             if self.player.trace_level <= 1:
-                return 'trace_cleared'
+                return "trace_cleared"
 
             # Check death
             if self.player.cpu <= 0:
-                return 'died'
+                return "died"
 
             # SAFETY: Abort if HP drops too low (need to go heal!)
             hp_percent = self.player.cpu / self.player.max_cpu
             if hp_percent < 0.4:
-                return 'hp_critical'
+                return "hp_critical"
 
             # Check if still on ghost node (might have been pushed off by combat)
             if not self.is_on_ghost_node():
-                return 'moved_off'
+                return "moved_off"
 
             # Stay on node (wait or attack if enemy adjacent)
             adjacent_enemies = self.count_adjacent_enemies()
@@ -629,7 +646,7 @@ class BarbarianAgent(GameTestAgent):
             # Wait a turn (this keeps us on the node and processes trace reduction)
             self.wait(1)
 
-        return 'timeout'
+        return "timeout"
 
     def do_full_maintenance_cycle(self) -> str:
         """
@@ -650,11 +667,11 @@ class BarbarianAgent(GameTestAgent):
         # Phase 1: Heal HP
         heal_status = self.retreat_to_cpu_node_and_heal(max_moves=100)
 
-        if heal_status == 'died':
-            return 'died'
-        elif heal_status != 'healed':
+        if heal_status == "died":
+            return "died"
+        elif heal_status != "healed":
             # Couldn't heal (no CPU nodes or timeout)
-            return 'no_cpu_node'
+            return "no_cpu_node"
 
         # Successfully healed!
         self.maintenance_phase1_success += 1
@@ -677,24 +694,24 @@ class BarbarianAgent(GameTestAgent):
 
             # Check death
             if self.player.cpu <= 0:
-                return 'died'
+                return "died"
         else:
             # Couldn't clear enemies in time - just go back to hunting
-            return 'partial_maintenance'
+            return "partial_maintenance"
 
         # Phase 3: SAFELY go to ghost node (abort if HP drops)
         trace_status = self.safe_retreat_to_ghost_node(max_moves=300)
 
-        if trace_status == 'died':
-            return 'died'
-        elif trace_status == 'trace_cleared':
+        if trace_status == "died":
+            return "died"
+        elif trace_status == "trace_cleared":
             # Success! HP full and trace clear
             self.maintenance_phase3_success += 1
-            return 'maintenance_complete'
+            return "maintenance_complete"
         else:
             # Couldn't clear trace (aborted, no nodes, or timeout)
             # But at least we're healed
-            return 'partial_maintenance'
+            return "partial_maintenance"
 
     def safe_retreat_to_ghost_node(self, max_moves: int = 300) -> str:
         """
@@ -708,7 +725,7 @@ class BarbarianAgent(GameTestAgent):
         """
         node = self.find_nearest_ghost_node()
         if not node:
-            return 'no_node'
+            return "no_node"
 
         nx, ny = node
 
@@ -718,7 +735,7 @@ class BarbarianAgent(GameTestAgent):
 
             # SAFETY CHECK: If HP drops below 50%, ABORT and go heal again
             if self.player.cpu < self.player.max_cpu * 0.5:
-                return 'aborted'
+                return "aborted"
 
             # Check if reached ghost node
             if self.is_on_ghost_node():
@@ -740,9 +757,9 @@ class BarbarianAgent(GameTestAgent):
 
             # Check death
             if self.player.cpu <= 0:
-                return 'died'
+                return "died"
 
-        return 'timeout'
+        return "timeout"
 
     def retreat_to_cpu_node_and_heal(self, max_moves: int = 100) -> str:
         """
@@ -758,7 +775,7 @@ class BarbarianAgent(GameTestAgent):
 
         node = self.find_nearest_cpu_node()
         if not node:
-            return 'no_node'
+            return "no_node"
 
         nx, ny = node
 
@@ -785,9 +802,9 @@ class BarbarianAgent(GameTestAgent):
 
             # Check death
             if self.player.cpu <= 0:
-                return 'died'
+                return "died"
 
-        return 'timeout'
+        return "timeout"
 
     def explore_to_find_enemies(self, max_moves: int = 50) -> str:
         """
@@ -810,19 +827,19 @@ class BarbarianAgent(GameTestAgent):
 
             # Check if found an enemy
             if self.find_nearest_enemy():
-                return 'found_enemy'
+                return "found_enemy"
 
             # Find unexplored visible tile
             visible = self.engine.visible_tiles
-            unexplored = [tile for tile in visible
-                         if tile not in visited
-                         and tile not in self.game_map.walls]
+            unexplored = [
+                tile for tile in visible if tile not in visited and tile not in self.game_map.walls
+            ]
 
             if not unexplored:
                 # No more visible unexplored tiles - try moving randomly
                 import random
-                directions = [(1, 0), (0, 1), (-1, 0), (0, -1),
-                             (1, 1), (1, -1), (-1, 1), (-1, -1)]
+
+                directions = [(1, 0), (0, 1), (-1, 0), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
                 random.shuffle(directions)
 
                 moved = False
@@ -833,17 +850,18 @@ class BarbarianAgent(GameTestAgent):
 
                 if not moved:
                     # Completely stuck
-                    return 'no_more_tiles'
+                    return "no_more_tiles"
             else:
                 # Move toward nearest unexplored tile
-                target = min(unexplored,
-                           key=lambda t: abs(t[0] - self.player.x) + abs(t[1] - self.player.y))
+                target = min(
+                    unexplored, key=lambda t: abs(t[0] - self.player.x) + abs(t[1] - self.player.y)
+                )
                 self.move_toward_target_smart(target[0], target[1])
 
             # Mark current position as visited
             visited.add((self.player.x, self.player.y))
 
-        return 'timeout'
+        return "timeout"
 
     def go_to_gateway(self, max_moves: int = 200) -> str:
         """
@@ -856,7 +874,7 @@ class BarbarianAgent(GameTestAgent):
             Status: 'next_level', 'no_gateway', 'timeout'
         """
         if not self.game_map.gateway:
-            return 'no_gateway'
+            return "no_gateway"
 
         gw_x, gw_y = self.game_map.gateway.x, self.game_map.gateway.y
 
@@ -866,7 +884,7 @@ class BarbarianAgent(GameTestAgent):
             # Check if reached gateway
             if self.player.x == gw_x and self.player.y == gw_y:
                 # Standing on gateway - would trigger level transition in real game
-                return 'next_level'
+                return "next_level"
 
             # Move toward gateway
             moved = self.move_toward_target_smart(gw_x, gw_y)
@@ -877,11 +895,11 @@ class BarbarianAgent(GameTestAgent):
 
             # Check if player somehow died
             if self.player.cpu <= 0:
-                return 'died'
+                return "died"
 
-        return 'timeout'
+        return "timeout"
 
-    def clear_level(self) -> Dict[str, Any]:
+    def clear_level(self) -> dict[str, Any]:
         """
         Attempt to kill all enemies on current level, then proceed to gateway.
 
@@ -897,45 +915,45 @@ class BarbarianAgent(GameTestAgent):
                 # All enemies dead! Go to gateway
                 status = self.go_to_gateway()
 
-                if status == 'next_level':
+                if status == "next_level":
                     self.levels_cleared += 1
                     return {
-                        'status': 'cleared',
-                        'turns': self.turns_taken,
-                        'initial_enemies': initial_enemy_count,
-                        'kills': self.kills,
+                        "status": "cleared",
+                        "turns": self.turns_taken,
+                        "initial_enemies": initial_enemy_count,
+                        "kills": self.kills,
                     }
-                elif status == 'no_gateway':
+                elif status == "no_gateway":
                     # No gateway - just count as cleared
                     self.levels_cleared += 1
                     return {
-                        'status': 'cleared',
-                        'turns': self.turns_taken,
-                        'initial_enemies': initial_enemy_count,
-                        'kills': self.kills,
+                        "status": "cleared",
+                        "turns": self.turns_taken,
+                        "initial_enemies": initial_enemy_count,
+                        "kills": self.kills,
                     }
                 else:
                     # Timeout trying to reach gateway
                     return {
-                        'status': 'timeout_gateway',
-                        'turns': self.turns_taken,
-                        'initial_enemies': initial_enemy_count,
-                        'kills': self.kills,
+                        "status": "timeout_gateway",
+                        "turns": self.turns_taken,
+                        "initial_enemies": initial_enemy_count,
+                        "kills": self.kills,
                     }
 
             # Decide action based on state
             # PRIORITY 1: Survival - retreat to heal when HP is low
             if self.should_retreat_to_healing():
                 status = self.retreat_to_cpu_node_and_heal()
-                if status == 'died':
+                if status == "died":
                     self.log_death("died while retreating to heal")
                     return {
-                        'status': 'died',
-                        'turns': self.turns_taken,
-                        'initial_enemies': initial_enemy_count,
-                        'kills': self.kills,
+                        "status": "died",
+                        "turns": self.turns_taken,
+                        "initial_enemies": initial_enemy_count,
+                        "kills": self.kills,
                     }
-                elif status == 'healed':
+                elif status == "healed":
                     # Healed! Go back to fighting
                     continue
                 # Other statuses (timeout, no_node) - continue trying
@@ -946,31 +964,31 @@ class BarbarianAgent(GameTestAgent):
             if enemy_pos:
                 # Enemy visible - charge!
                 status = self.charge_and_attack()
-                if status == 'died':
+                if status == "died":
                     self.log_death("died while charging enemy")
                     return {
-                        'status': 'died',
-                        'turns': self.turns_taken,
-                        'initial_enemies': initial_enemy_count,
-                        'kills': self.kills,
+                        "status": "died",
+                        "turns": self.turns_taken,
+                        "initial_enemies": initial_enemy_count,
+                        "kills": self.kills,
                     }
                 # If we killed or are fighting, continue loop
             else:
                 # No enemy visible - explore to find them
                 status = self.explore_to_find_enemies(max_moves=20)
-                if status == 'no_more_tiles':
+                if status == "no_more_tiles":
                     # Can't find any more enemies (maybe all dead but count is wrong?)
                     break
 
         # Timeout
         return {
-            'status': 'timeout',
-            'turns': self.turns_taken,
-            'initial_enemies': initial_enemy_count,
-            'kills': self.kills,
+            "status": "timeout",
+            "turns": self.turns_taken,
+            "initial_enemies": initial_enemy_count,
+            "kills": self.kills,
         }
 
-    def run_barbarian_campaign(self, max_levels: int = 10) -> Dict[str, Any]:
+    def run_barbarian_campaign(self, max_levels: int = 10) -> dict[str, Any]:
         """
         Run full barbarian campaign: clear levels, progress through gateway.
 
@@ -988,15 +1006,15 @@ class BarbarianAgent(GameTestAgent):
             result = self.clear_level()
 
             # Check if died
-            if result['status'] == 'died':
+            if result["status"] == "died":
                 break
 
             # Check if timed out
-            if result['status'] == 'timeout':
+            if result["status"] == "timeout":
                 break
 
             # Level cleared! Progress to next level
-            if result['status'] == 'cleared':
+            if result["status"] == "cleared":
                 # Use engine to progress to next level
                 self.engine.next_level()
                 # Level counter already incremented in clear_level()
@@ -1007,31 +1025,38 @@ class BarbarianAgent(GameTestAgent):
         hp_lost = self.initial_hp - self.player.cpu
 
         campaign_result = {
-            'status': result['status'],
-            'levels_cleared': self.levels_cleared,
-            'deepest_level': self.engine.level,
-            'total_enemies_faced': self.total_enemies_faced,
-            'kills': self.kills,
-            'turns_taken': self.turns_taken,
-            'combat_turns': self.combat_turns,
-            'retreats_to_choke': self.retreats_to_choke,
-            'retreats_to_healing': self.retreats_to_healing,
-            'turns_on_cpu_node': self.turns_on_cpu_node,
-            'initial_hp': self.initial_hp,
-            'final_hp': self.player.cpu,
-            'hp_lost': hp_lost,
-            'survived': self.player.cpu > 0,
-            'initial_enemy_count': initial_state['enemies'].__len__() if isinstance(initial_state['enemies'], list) else initial_state['enemies'],
-            'final_enemy_count': len(final_state['enemies']),
-            'kill_percentage': (self.kills / self.total_enemies_faced * 100) if self.total_enemies_faced > 0 else 0,
-            'final_trace': self.player.trace_level,
-            'death_log': self.death_log,  # Death details for analysis
+            "status": result["status"],
+            "levels_cleared": self.levels_cleared,
+            "deepest_level": self.engine.level,
+            "total_enemies_faced": self.total_enemies_faced,
+            "kills": self.kills,
+            "turns_taken": self.turns_taken,
+            "combat_turns": self.combat_turns,
+            "retreats_to_choke": self.retreats_to_choke,
+            "retreats_to_healing": self.retreats_to_healing,
+            "turns_on_cpu_node": self.turns_on_cpu_node,
+            "initial_hp": self.initial_hp,
+            "final_hp": self.player.cpu,
+            "hp_lost": hp_lost,
+            "survived": self.player.cpu > 0,
+            "initial_enemy_count": (
+                initial_state["enemies"].__len__()
+                if isinstance(initial_state["enemies"], list)
+                else initial_state["enemies"]
+            ),
+            "final_enemy_count": len(final_state["enemies"]),
+            "kill_percentage": (
+                (self.kills / self.total_enemies_faced * 100) if self.total_enemies_faced > 0 else 0
+            ),
+            "final_trace": self.player.trace_level,
+            "death_log": self.death_log,  # Death details for analysis
         }
 
         return campaign_result
 
 
 # ===== Tests =====
+
 
 class TestBarbarianAgent:
     """Test BarbarianAgent behavior and combat mechanics."""
@@ -1099,19 +1124,23 @@ class TestBarbarianAgent:
         result = agent.run_barbarian_campaign()
 
         # Should return comprehensive results
-        assert 'status' in result
-        assert 'kills' in result
-        assert 'turns_taken' in result
-        assert 'retreats_to_choke' in result
-        assert 'retreats_to_healing' in result
-        assert 'survived' in result
+        assert "status" in result
+        assert "kills" in result
+        assert "turns_taken" in result
+        assert "retreats_to_choke" in result
+        assert "retreats_to_healing" in result
+        assert "survived" in result
 
-        print(f"\n=== Barbarian Agent Short Combat ===")
+        print("\n=== Barbarian Agent Short Combat ===")
         print(f"Status: {result['status']}")
-        print(f"Kills: {result['kills']}/{result['total_enemies_faced']} ({result['kill_percentage']:.1f}%)")
+        print(
+            f"Kills: {result['kills']}/{result['total_enemies_faced']} ({result['kill_percentage']:.1f}%)"
+        )
         print(f"Turns: {result['turns_taken']} (Combat: {result['combat_turns']})")
         print(f"HP: {result['final_hp']}/{result['initial_hp']} (Lost: {result['hp_lost']})")
-        print(f"Retreats: Choke={result['retreats_to_choke']}, Healing={result['retreats_to_healing']}")
+        print(
+            f"Retreats: Choke={result['retreats_to_choke']}, Healing={result['retreats_to_healing']}"
+        )
         print(f"Turns on CPU node: {result['turns_on_cpu_node']}")
 
     def test_barbarian_multiple_seeds(self):
@@ -1121,19 +1150,23 @@ class TestBarbarianAgent:
         for seed in [1, 42, 123, 456, 789]:
             agent = BarbarianAgent(seed=seed, max_turns=200)
             result = agent.run_barbarian_campaign()
-            results.append({
-                'seed': seed,
-                'status': result['status'],
-                'kills': result['kills'],
-                'survived': result['survived'],
-            })
+            results.append(
+                {
+                    "seed": seed,
+                    "status": result["status"],
+                    "kills": result["kills"],
+                    "survived": result["survived"],
+                }
+            )
 
-        print(f"\n=== Barbarian Agent Multi-Seed Results ===")
+        print("\n=== Barbarian Agent Multi-Seed Results ===")
         for r in results:
-            print(f"Seed {r['seed']}: {r['status']} | Kills: {r['kills']} | Survived: {r['survived']}")
+            print(
+                f"Seed {r['seed']}: {r['status']} | Kills: {r['kills']} | Survived: {r['survived']}"
+            )
 
         # At least one should make some kills
-        total_kills = sum(r['kills'] for r in results)
+        total_kills = sum(r["kills"] for r in results)
         assert total_kills > 0, "Barbarian should kill at least some enemies across seeds"
 
     @pytest.mark.slow
@@ -1143,7 +1176,7 @@ class TestBarbarianAgent:
 
         result = agent.run_barbarian_campaign()
 
-        print(f"\n=== Barbarian Agent Long Combat ===")
+        print("\n=== Barbarian Agent Long Combat ===")
         print(f"Status: {result['status']}")
         print(f"Levels cleared: {result['levels_cleared']}")
         print(f"Enemies faced: {result['total_enemies_faced']}")
@@ -1157,7 +1190,7 @@ class TestBarbarianAgent:
         print(f"Survived: {result['survived']}")
 
         # Barbarian should attempt combat
-        assert result['combat_turns'] > 0, "Barbarian should engage in combat"
+        assert result["combat_turns"] > 0, "Barbarian should engage in combat"
 
     def test_barbarian_healing_behavior(self):
         """Test barbarian retreats to heal when low HP."""
@@ -1166,15 +1199,15 @@ class TestBarbarianAgent:
         # Run combat session
         result = agent.run_barbarian_campaign()
 
-        print(f"\n=== Barbarian Healing Behavior ===")
+        print("\n=== Barbarian Healing Behavior ===")
         print(f"Healing retreats: {result['retreats_to_healing']}")
         print(f"Turns on healing node: {result['turns_on_cpu_node']}")
         print(f"Final HP: {result['final_hp']}/{result['initial_hp']}")
 
         # Just verify tracking works (doesn't crash)
-        assert isinstance(result['retreats_to_healing'], int)
-        assert isinstance(result['turns_on_cpu_node'], int)
+        assert isinstance(result["retreats_to_healing"], int)
+        assert isinstance(result["turns_on_cpu_node"], int)
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '-s'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "-s"])

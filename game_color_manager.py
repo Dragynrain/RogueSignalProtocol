@@ -7,7 +7,7 @@ Provides ColorManager class with no fallback colors - fails fast on missing conf
 Ensures all colors are loaded from game_rules.json for consistency.
 """
 
-from typing import Tuple
+
 from game_entities import ensure_color_tuple
 
 
@@ -17,6 +17,7 @@ class ColorManager:
     CRITICAL: No fallback colors! If a color is missing from config, raises KeyError.
     This ensures config errors are caught immediately rather than hidden.
     """
+
     _config = None
     _colors = None
 
@@ -25,6 +26,7 @@ class ColorManager:
         """Load colors from config once."""
         if cls._colors is None:
             from data_loading import DataLoader
+
             cls._config = DataLoader.load_config()
 
             # Fail fast if colors section missing
@@ -34,7 +36,7 @@ class ColorManager:
             cls._colors = cls._config["colors"]
 
     @classmethod
-    def get(cls, category: str, key: str) -> Tuple[int, int, int]:
+    def get(cls, category: str, key: str) -> tuple[int, int, int]:
         """
         Get color from config. NO FALLBACKS - raises KeyError if missing.
 
@@ -66,26 +68,26 @@ class ColorManager:
         return ensure_color_tuple(category_colors[key])
 
     @classmethod
-    def get_exploit_color(cls, exploit_type: str) -> Tuple[int, int, int]:
+    def get_exploit_color(cls, exploit_type: str) -> tuple[int, int, int]:
         """Get exploit-specific color. Raises KeyError if not in config."""
         return cls.get("exploits", exploit_type)
 
     @classmethod
-    def get_tint_color(cls, tint_type: str) -> Tuple[int, int, int]:
+    def get_tint_color(cls, tint_type: str) -> tuple[int, int, int]:
         """Get graphics tint color. Raises KeyError if not in config."""
         return cls.get("graphics_tint", tint_type)
 
     @classmethod
-    def get_enemy_state_color(cls, state: str) -> Tuple[int, int, int]:
+    def get_enemy_state_color(cls, state: str) -> tuple[int, int, int]:
         """Get enemy state color. Raises KeyError if not in config."""
         return cls.get("enemies", state)
 
     @classmethod
-    def get_terrain_variant_color(cls, variant: str) -> Tuple[int, int, int]:
+    def get_terrain_variant_color(cls, variant: str) -> tuple[int, int, int]:
         """Get terrain variant color. Raises KeyError if not in config."""
         return cls.get("terrain_variants", variant)
 
     @classmethod
-    def get_targeting_color(cls, element: str) -> Tuple[int, int, int]:
+    def get_targeting_color(cls, element: str) -> tuple[int, int, int]:
         """Get targeting overlay color. Raises KeyError if not in config."""
         return cls.get("targeting", element)

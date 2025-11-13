@@ -7,16 +7,17 @@ LoreMenu displays discovered story fragments from main menu.
 Factory function (create_help_menu) selects HelpMenu or GraphicalHelpMenu based on graphics mode.
 """
 
-import tcod
 import logging
 import textwrap
 
+import tcod
+
 from game_config import GameConfig
 from game_entities import Colors
-from game_story import StoryFragmentManager
-from game_ui import render_char_safe, UniversalInputHandler
-from game_screen_utilities import ScreenRenderingUtils
 from game_help_content import HelpContent
+from game_screen_utilities import ScreenRenderingUtils
+from game_story import StoryFragmentManager
+from game_ui import UniversalInputHandler, render_char_safe
 
 
 def create_help_menu(settings, context=None, tile_manager=None):
@@ -67,30 +68,30 @@ def create_help_menu(settings, context=None, tile_manager=None):
 
 class LoreMenu:
     """Data Fragments viewer menu for main menu."""
-    
+
     def __init__(self):
         self.story_fragment_manager = None
         self.lore_viewer_selection = 0
         self.lore_viewer_mode = "list"  # "list" or "reading"
-    
+
     def _load_story_fragments(self):
         """Load story fragment manager from save data."""
         if self.story_fragment_manager is None:
             self.story_fragment_manager = StoryFragmentManager()
-    
+
     def render(self, console: tcod.console.Console) -> None:
         """Render the lore viewer screen."""
         console.clear()
-        
+
         self._load_story_fragments()
         discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
         discovered_count, total_count = self.story_fragment_manager.get_fragment_count()
-        
+
         if self.lore_viewer_mode == "reading" and discovered_fragments:
             self._render_reading_mode(console, discovered_fragments)
         else:
             self._render_list_mode(console, discovered_fragments, discovered_count, total_count)
-    
+
     def _render_list_mode(self, console, discovered_fragments, discovered_count, total_count):
         """Render data fragment list."""
         title = f"DISCOVERED DATA FRAGMENTS ({discovered_count}/{total_count})"
@@ -99,7 +100,9 @@ class LoreMenu:
         if not discovered_fragments:
             render_char_safe(console, 2, 5, "No data fragments discovered yet.", fg=Colors.WHITE)
             render_char_safe(console, 2, 6, "Start playing to discover the story!", fg=Colors.WHITE)
-            render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "ESC/Right-Click: Back", fg=Colors.CYAN)
+            render_char_safe(
+                console, 2, GameConfig.SCREEN_HEIGHT - 2, "ESC/Right-Click: Back", fg=Colors.CYAN
+            )
             return
 
         start_y = 5
@@ -108,17 +111,29 @@ class LoreMenu:
             if self.lore_viewer_selection >= len(discovered_fragments):
                 self.lore_viewer_selection = len(discovered_fragments) - 1
 
-            is_selected = (i == self.lore_viewer_selection)
+            is_selected = i == self.lore_viewer_selection
             color = Colors.CYAN if is_selected else Colors.WHITE
             prefix = "▶ " if is_selected else "  "
 
             # Show first line of fragment as title
-            first_line = fragment_text.split('\n')[0][:60]
-            render_char_safe(console, 2, start_y + i, f"{prefix}Fragment {fragment_index + 1}: {first_line}", fg=color)
+            first_line = fragment_text.split("\n")[0][:60]
+            render_char_safe(
+                console,
+                2,
+                start_y + i,
+                f"{prefix}Fragment {fragment_index + 1}: {first_line}",
+                fg=color,
+            )
 
         # Instructions
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 4, "↕/Wheel: Navigate │ Enter/Click: Read │ ESC/Right-Click: Back", fg=Colors.LIGHT_GRAY)
-    
+        render_char_safe(
+            console,
+            2,
+            GameConfig.SCREEN_HEIGHT - 4,
+            "↕/Wheel: Navigate │ Enter/Click: Read │ ESC/Right-Click: Back",
+            fg=Colors.LIGHT_GRAY,
+        )
+
     def _render_reading_mode(self, console, discovered_fragments):
         """Render individual fragment for reading."""
         if self.lore_viewer_selection >= len(discovered_fragments):
@@ -132,13 +147,22 @@ class LoreMenu:
 
         # Render fragment text with word wrapping utility
         ScreenRenderingUtils.render_word_wrapped_text(
-            console, fragment_text, 2, 5,
+            console,
+            fragment_text,
+            2,
+            5,
             max_width=GameConfig.SCREEN_WIDTH - 4,
-            max_height=GameConfig.SCREEN_HEIGHT - 4
+            max_height=GameConfig.SCREEN_HEIGHT - 4,
         )
 
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, "ESC/Right-Click: Back to list │ Click/Any key: Close", fg=Colors.CYAN)
-    
+        render_char_safe(
+            console,
+            2,
+            GameConfig.SCREEN_HEIGHT - 2,
+            "ESC/Right-Click: Back to list │ Click/Any key: Close",
+            fg=Colors.CYAN,
+        )
+
     def handle_input(self, event) -> str:
         """Handle lore menu input with proper navigation."""
         self._load_story_fragments()
@@ -182,7 +206,7 @@ class LoreMenu:
         self._load_story_fragments()
         discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
 
-        if not discovered_fragments or not hasattr(event, 'position') or not event.position:
+        if not discovered_fragments or not hasattr(event, "position") or not event.position:
             return False
 
         # Fragment list starts at Y=5, 1 line per item (rendered with start_y + i)
@@ -203,7 +227,7 @@ class LoreMenu:
         import tcod.event
 
         # Right-click = go back (standard behavior)
-        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
             if self.lore_viewer_mode == "reading":
                 # In reading mode, go back to list
                 self.lore_viewer_mode = "list"
@@ -212,7 +236,7 @@ class LoreMenu:
                 # In list mode, go back to main menu
                 return "back"
 
-        if not hasattr(event, 'position') or not event.position:
+        if not hasattr(event, "position") or not event.position:
             return ""
 
         if self.lore_viewer_mode == "reading":
@@ -237,7 +261,7 @@ class LoreMenu:
         if not discovered_fragments:
             return False
 
-        if hasattr(event, 'y'):
+        if hasattr(event, "y"):
             if event.y > 0:
                 # Scroll up
                 self._navigate_lore_selection(-1)
@@ -255,7 +279,10 @@ class LoreMenu:
             if direction == -1:
                 self.lore_viewer_selection = max(0, self.lore_viewer_selection - 1)
             else:
-                self.lore_viewer_selection = min(len(discovered_fragments) - 1, self.lore_viewer_selection + 1)
+                self.lore_viewer_selection = min(
+                    len(discovered_fragments) - 1, self.lore_viewer_selection + 1
+                )
+
 
 class HelpMenu:
     """Refactored help menu using centralized content and layout helpers."""
@@ -320,7 +347,9 @@ class HelpMenu:
         lines.append((0, "", Colors.WHITE))
 
         # Map symbols - left-aligned block, centered as a group
-        symbol_text = [f"{glyph}  {name} {desc}" for glyph, name, desc, _ in HelpContent.get_map_symbols()]
+        symbol_text = [
+            f"{glyph}  {name} {desc}" for glyph, name, desc, _ in HelpContent.get_map_symbols()
+        ]
         block_x = utils.center_block_x(symbol_text)
         for i, (glyph, name, desc, color) in enumerate(HelpContent.get_map_symbols()):
             lines.append((block_x, symbol_text[i], color))
@@ -356,16 +385,16 @@ class HelpMenu:
         controls = HelpContent.get_controls()
 
         # Movement and exploits - left-aligned block, centered as a group
-        movement_text = [f"{label}: {desc}" for label, desc in controls['movement']]
+        movement_text = [f"{label}: {desc}" for label, desc in controls["movement"]]
         block_x = utils.center_block_x(movement_text)
-        for label, desc in controls['movement']:
+        for label, desc in controls["movement"]:
             text = f"{label}: {desc}"
             lines.append((block_x, text, Colors.WHITE))
 
         lines.append((0, "", Colors.WHITE))
 
         # Screen shortcuts - left-aligned block, centered as a group
-        screens = controls['screens']
+        screens = controls["screens"]
         screen_text = [f"{label}: {desc}" for label, desc in screens]
         block_x = utils.center_block_x(screen_text)
         for label, desc in screens:
@@ -375,9 +404,9 @@ class HelpMenu:
         lines.append((0, "", Colors.WHITE))
 
         # Inventory controls - left-aligned block, centered as a group
-        inventory_text = [f"{label}: {desc}" for label, desc in controls['inventory']]
+        inventory_text = [f"{label}: {desc}" for label, desc in controls["inventory"]]
         block_x = utils.center_block_x(inventory_text)
-        for label, desc in controls['inventory']:
+        for label, desc in controls["inventory"]:
             text = f"{label}: {desc}"
             lines.append((block_x, text, Colors.WHITE))
 
@@ -385,7 +414,7 @@ class HelpMenu:
 
         # Mouse controls - left-aligned block, centered as a group
         mouse_text = []
-        for label, desc in controls['mouse']:
+        for label, desc in controls["mouse"]:
             if "Click" in label:
                 mouse_text.append(f"Mouse: {label} to {desc.lower()}")
             elif "Wheel" in label:
@@ -394,11 +423,17 @@ class HelpMenu:
                 mouse_text.append(f"Right-click to {desc.lower()}")
 
         block_x = utils.center_block_x(mouse_text)
-        for i, (label, desc) in enumerate(controls['mouse']):
-            lines.append((block_x, mouse_text[i], Colors.WHITE if "Right" not in label else Colors.LIGHT_GRAY))
+        for i, (label, desc) in enumerate(controls["mouse"]):
+            lines.append(
+                (
+                    block_x,
+                    mouse_text[i],
+                    Colors.WHITE if "Right" not in label else Colors.LIGHT_GRAY,
+                )
+            )
 
         # Debug
-        for label, desc in controls['debug']:
+        for label, desc in controls["debug"]:
             text = f"{label}: {desc}"
             lines.append((utils.center_x(text), text, Colors.LIGHT_GRAY))
 
@@ -419,7 +454,9 @@ class HelpMenu:
         lines.append((0, "", Colors.WHITE))
 
         # Power-ups - left-aligned block, centered as a group
-        powerup_text = [f"{glyph}  {name} - {desc}" for glyph, name, desc, _ in HelpContent.get_power_ups()]
+        powerup_text = [
+            f"{glyph}  {name} - {desc}" for glyph, name, desc, _ in HelpContent.get_power_ups()
+        ]
         block_x = utils.center_block_x(powerup_text)
         for i, (glyph, name, desc, color) in enumerate(HelpContent.get_power_ups()):
             lines.append((block_x, powerup_text[i], color))
@@ -429,7 +466,9 @@ class HelpMenu:
             lines.append((0, "", Colors.WHITE))
 
         # Nodes - left-aligned block, centered as a group
-        node_text = [f"{glyph}  {name} - {desc}" for glyph, name, desc, _ in HelpContent.get_nodes()]
+        node_text = [
+            f"{glyph}  {name} - {desc}" for glyph, name, desc, _ in HelpContent.get_nodes()
+        ]
         block_x = utils.center_block_x(node_text)
         for i, (glyph, name, desc, color) in enumerate(HelpContent.get_nodes()):
             lines.append((block_x, node_text[i], color))
@@ -439,7 +478,9 @@ class HelpMenu:
             lines.append((0, "", Colors.WHITE))
 
         # Upgrades - left-aligned block, centered as a group
-        upgrade_text = [f"{glyph}  {name} - {desc}" for glyph, name, desc, _ in HelpContent.get_upgrades()]
+        upgrade_text = [
+            f"{glyph}  {name} - {desc}" for glyph, name, desc, _ in HelpContent.get_upgrades()
+        ]
         block_x = utils.center_block_x(upgrade_text)
         for i, (glyph, name, desc, color) in enumerate(HelpContent.get_upgrades()):
             lines.append((block_x, upgrade_text[i], color))
@@ -455,22 +496,31 @@ class HelpMenu:
 
         # Load enemy data and render with proper column alignment
         enemies = HelpContent.get_enemy_data()
-        enemy_order = ['Scanner', 'Firewall', 'Patrol', 'Bot', 'Hunter', 'Virus', 'Inhibitor', 'Admin Avatar']
+        enemy_order = [
+            "Scanner",
+            "Firewall",
+            "Patrol",
+            "Bot",
+            "Hunter",
+            "Virus",
+            "Inhibitor",
+            "Admin Avatar",
+        ]
 
         # Build all enemy lines first to calculate block width
         enemy_lines = []
         for enemy_name in enemy_order:
             if enemy_name in enemies:
                 data = enemies[enemy_name]
-                glyph = data['glyph']
-                cpu = data['cpu']
-                vision = data['vision']
-                damage = data['damage']
-                desc = data['description']
+                glyph = data["glyph"]
+                cpu = data["cpu"]
+                vision = data["vision"]
+                damage = data["damage"]
+                desc = data["description"]
 
                 # Fixed-width columns: Name(13) + Stats(16) + Desc
                 text = f"{glyph} {enemy_name:<13} {cpu:3d} / {vision} / {damage:2d}  - {desc}"
-                enemy_lines.append((text, data['behavior']))
+                enemy_lines.append((text, data["behavior"]))
 
         # Calculate block position
         block_x = utils.center_block_x([line[0] for line in enemy_lines])
@@ -481,7 +531,7 @@ class HelpMenu:
             lines.append((block_x, text, color))
 
             # Add spacing after firewall and bot (between groups)
-            if enemy_order[i] in ['Firewall', 'Bot']:
+            if enemy_order[i] in ["Firewall", "Bot"]:
                 lines.append((0, "", Colors.WHITE))
 
         return lines
@@ -503,7 +553,7 @@ class HelpMenu:
         text_lines.append((left_x, y_left, "COMBAT EXPLOITS:", Colors.CYAN))
         y_left += 2
 
-        for name, desc, color in exploits['combat']:
+        for name, desc, color in exploits["combat"]:
             text_lines.append((left_x + 1, y_left, name, color))  # Name in color
             y_left += 1
             text_lines.append((left_x + 1, y_left, desc, Colors.WHITE))  # Description in white
@@ -515,7 +565,7 @@ class HelpMenu:
         text_lines.append((left_x, y_left, "STEALTH EXPLOITS:", Colors.CYAN))
         y_left += 2
 
-        for name, desc, color in exploits['stealth']:
+        for name, desc, color in exploits["stealth"]:
             text_lines.append((left_x + 1, y_left, name, color))  # Name in color
             y_left += 1
             text_lines.append((left_x + 1, y_left, desc, Colors.WHITE))  # Description in white
@@ -527,7 +577,7 @@ class HelpMenu:
         text_lines.append((left_x, y_left, "UTILITY EXPLOITS:", Colors.CYAN))
         y_left += 2
 
-        for name, desc, color in exploits['utility']:
+        for name, desc, color in exploits["utility"]:
             text_lines.append((left_x + 1, y_left, name, color))  # Name in color
             y_left += 1
             text_lines.append((left_x + 1, y_left, desc, Colors.WHITE))  # Description in white
@@ -538,7 +588,7 @@ class HelpMenu:
         text_lines.append((right_x, y_right, "STATUS EFFECTS:", Colors.CYAN))
         y_right += 2
 
-        for name, desc, color in effects['positive']:
+        for name, desc, color in effects["positive"]:
             text_lines.append((right_x + 1, y_right, name, color))  # Name in color
             y_right += 1
             text_lines.append((right_x + 1, y_right, desc, Colors.WHITE))  # Description in white
@@ -546,7 +596,7 @@ class HelpMenu:
 
         y_right += 1  # Blank line between positive and negative effects
 
-        for name, desc, color in effects['negative']:
+        for name, desc, color in effects["negative"]:
             text_lines.append((right_x + 1, y_right, name, color))  # Name in color
             y_right += 1
             text_lines.append((right_x + 1, y_right, desc, Colors.WHITE))  # Description in white
@@ -599,7 +649,7 @@ class HelpMenu:
         import tcod.event
 
         # Right-click = go back (standard behavior)
-        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
             return "back"
 
         # Left-click on empty space does nothing (removed confusing click-anywhere-to-exit)
@@ -607,7 +657,7 @@ class HelpMenu:
 
     def handle_mouse_wheel(self, event) -> bool:
         """Handle mouse wheel - navigate pages."""
-        if hasattr(event, 'y'):
+        if hasattr(event, "y"):
             if event.y > 0:
                 self._navigate_page(-1)
             elif event.y < 0:

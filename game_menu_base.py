@@ -7,9 +7,8 @@ Provides common background detection, layout calculation, and rendering helpers.
 Subclasses implement render() and handle_input() for specific menu behavior.
 """
 
-import logging
+
 import tcod
-from typing import Optional
 
 from game_config import GameConfig
 from game_menu_utilities import MenuRenderingUtils
@@ -48,9 +47,11 @@ class BaseMenu:
         Returns:
             True if background should be rendered, False otherwise
         """
-        return (self.background and
-                self.background.should_load_background() and
-                self.background.background_texture)
+        return (
+            self.background
+            and self.background.should_load_background()
+            and self.background.background_texture
+        )
 
     def _get_menu_layout_params(self) -> dict:
         """
@@ -68,10 +69,10 @@ class BaseMenu:
         else:
             # Glyph mode or no background - center everything
             return {
-                'title_x': GameConfig.SCREEN_WIDTH // 2,
-                'menu_x': GameConfig.SCREEN_WIDTH // 2,
-                'use_background_layout': False,
-                'layout_zone': 'center'
+                "title_x": GameConfig.SCREEN_WIDTH // 2,
+                "menu_x": GameConfig.SCREEN_WIDTH // 2,
+                "use_background_layout": False,
+                "layout_zone": "center",
             }
 
     def _calculate_background_aware_layout(self) -> dict:
@@ -98,8 +99,9 @@ class BaseMenu:
         layout = self._get_menu_layout_params()
         MenuRenderingUtils.clear_text_areas_only(console, layout)
 
-    def _render_right_side_box(self, console: tcod.console.Console,
-                               height: int, border_color: tuple, y_offset: int = 0) -> int:
+    def _render_right_side_box(
+        self, console: tcod.console.Console, height: int, border_color: tuple, y_offset: int = 0
+    ) -> int:
         """
         Render menu box using shared utilities.
 
@@ -129,7 +131,7 @@ class BaseMenu:
         """
         raise NotImplementedError("Subclasses must implement render()")
 
-    def handle_input(self, event) -> Optional[str]:
+    def handle_input(self, event) -> str | None:
         """
         Handle input events. Must be implemented by subclass.
 
@@ -161,7 +163,7 @@ class BaseMenu:
             return False
 
         # Check if position coordinates are available (tile is deprecated)
-        if not hasattr(event, 'position') or event.position is None:
+        if not hasattr(event, "position") or event.position is None:
             return False
 
         # After context.convert_event(), position contains TILE coordinates
@@ -181,7 +183,7 @@ class BaseMenu:
 
         return False
 
-    def handle_mouse_click(self, event) -> Optional[str]:
+    def handle_mouse_click(self, event) -> str | None:
         """
         Handle mouse click events - activate clicked option or go back.
 
@@ -198,14 +200,14 @@ class BaseMenu:
         import tcod.event
 
         # Right-click = universal go back / cancel
-        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
             return "back"
 
         if not self.options:
             return None
 
         # Check if position coordinates are available (tile is deprecated)
-        if not hasattr(event, 'position') or event.position is None:
+        if not hasattr(event, "position") or event.position is None:
             return None
 
         # After context.convert_event(), position contains TILE coordinates (0-79, 0-49)
@@ -230,7 +232,7 @@ class BaseMenu:
 
         return None
 
-    def _get_action_for_option(self, option_index: int) -> Optional[str]:
+    def _get_action_for_option(self, option_index: int) -> str | None:
         """
         Get the action string for a menu option.
 

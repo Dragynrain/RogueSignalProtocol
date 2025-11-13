@@ -5,12 +5,14 @@ Tests for map generation using real objects and integration testing.
 Removed over-mocked unit tests that test implementation details.
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch
+
+from game_config import GameConfig, RoomGenerationConfig
+from game_entities import Position
 from game_level import LevelGenerator
 from game_map import GameMap
-from game_entities import Position
-from game_config import GameConfig, RoomGenerationConfig
 
 
 class TestMapGeneration:
@@ -23,11 +25,11 @@ class TestMapGeneration:
 
         # Store original config values for restoration
         self.original_config = {
-            'MIN_ROOMS_BASE': RoomGenerationConfig.MIN_ROOMS_BASE,
-            'MAX_ROOMS': RoomGenerationConfig.MAX_ROOMS,
-            'MIN_ROOM_SIZE': RoomGenerationConfig.MIN_ROOM_SIZE,
-            'MAX_ROOM_SIZE': RoomGenerationConfig.MAX_ROOM_SIZE,
-            'ROOM_PADDING': RoomGenerationConfig.ROOM_PADDING
+            "MIN_ROOMS_BASE": RoomGenerationConfig.MIN_ROOMS_BASE,
+            "MAX_ROOMS": RoomGenerationConfig.MAX_ROOMS,
+            "MIN_ROOM_SIZE": RoomGenerationConfig.MIN_ROOM_SIZE,
+            "MAX_ROOM_SIZE": RoomGenerationConfig.MAX_ROOM_SIZE,
+            "ROOM_PADDING": RoomGenerationConfig.ROOM_PADDING,
         }
 
     def teardown_method(self):
@@ -157,7 +159,9 @@ class TestRoomGeneration(TestMapGeneration):
 
         # Test non-overlapping room
         non_overlapping = (30, 30, 5, 5)
-        assert not self.level_generator.room_generator.room_overlaps(non_overlapping, existing_rooms)
+        assert not self.level_generator.room_generator.room_overlaps(
+            non_overlapping, existing_rooms
+        )
 
         # Test overlapping room (direct overlap)
         overlapping_direct = (7, 7, 5, 5)
@@ -166,7 +170,9 @@ class TestRoomGeneration(TestMapGeneration):
         # Test overlapping room considering padding
         padding = RoomGenerationConfig.ROOM_PADDING
         overlapping_padding = (15 - padding, 5, 5, 5)
-        assert self.level_generator.room_generator.room_overlaps(overlapping_padding, existing_rooms)
+        assert self.level_generator.room_generator.room_overlaps(
+            overlapping_padding, existing_rooms
+        )
 
         # Test edge case - just outside padding
         just_outside = (15 + padding + 1, 5, 5, 5)
@@ -190,11 +196,7 @@ class TestRoomOverlapPrevention(TestMapGeneration):
 
     def test_overlap_with_multiple_rooms(self):
         """Overlap detection works with multiple existing rooms."""
-        existing_rooms = [
-            (5, 5, 8, 6),
-            (20, 20, 6, 8),
-            (35, 35, 5, 5)
-        ]
+        existing_rooms = [(5, 5, 8, 6), (20, 20, 6, 8), (35, 35, 5, 5)]
 
         # Test room that overlaps with first room
         overlapping_1 = (7, 7, 5, 5)
@@ -206,7 +208,9 @@ class TestRoomOverlapPrevention(TestMapGeneration):
 
         # Test room that doesn't overlap with any
         non_overlapping = (50, 50, 5, 5)
-        assert not self.level_generator.room_generator.room_overlaps(non_overlapping, existing_rooms)
+        assert not self.level_generator.room_generator.room_overlaps(
+            non_overlapping, existing_rooms
+        )
 
     def test_padding_consideration(self):
         """Room overlap considers padding correctly."""
@@ -215,11 +219,15 @@ class TestRoomOverlapPrevention(TestMapGeneration):
 
         # Room exactly at padding distance should not overlap
         room_at_padding = (20 + padding, 10, 5, 5)
-        assert not self.level_generator.room_generator.room_overlaps(room_at_padding, existing_rooms)
+        assert not self.level_generator.room_generator.room_overlaps(
+            room_at_padding, existing_rooms
+        )
 
         # Room inside padding distance should overlap
         room_inside_padding = (20 + padding - 1, 10, 5, 5)
-        assert self.level_generator.room_generator.room_overlaps(room_inside_padding, existing_rooms)
+        assert self.level_generator.room_generator.room_overlaps(
+            room_inside_padding, existing_rooms
+        )
 
 
 class TestMapConnectivity(TestMapGeneration):
@@ -416,6 +424,7 @@ class TestMapIntegration(TestMapGeneration):
 
         # Verify BSP room generator was used
         from game_level_structure import BSPRoomGenerator
+
         assert isinstance(bsp_generator.room_generator, BSPRoomGenerator)
 
 

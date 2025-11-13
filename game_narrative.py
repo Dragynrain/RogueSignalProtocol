@@ -25,7 +25,7 @@ Event types:
 """
 
 import random
-from typing import Dict, List, Set
+
 from data_loading import get_environmental_messages
 
 
@@ -42,22 +42,16 @@ class NarrativeManager:
         self.messages = get_environmental_messages()
 
         # Track shown messages to avoid repeats (reset per level or session as needed)
-        self.shown_messages: Dict[str, Set[str]] = {
+        self.shown_messages: dict[str, set[str]] = {
             category: set() for category in self.messages.keys()
         }
 
         # Per-level flags to ensure certain messages only show once per level
-        self.level_flags = {
-            'first_blind_spot': False,
-            'first_combat': False
-        }
+        self.level_flags = {"first_blind_spot": False, "first_combat": False}
 
     def reset_level_flags(self):
         """Reset per-level flags when starting a new level."""
-        self.level_flags = {
-            'first_blind_spot': False,
-            'first_combat': False
-        }
+        self.level_flags = {"first_blind_spot": False, "first_combat": False}
 
     def get_message(self, category: str, force: bool = False) -> str:
         """
@@ -80,8 +74,9 @@ class NarrativeManager:
 
         # Filter out recently shown messages (if not forcing)
         if not force and category in self.shown_messages:
-            unshown = [msg for msg in available_messages
-                      if msg not in self.shown_messages[category]]
+            unshown = [
+                msg for msg in available_messages if msg not in self.shown_messages[category]
+            ]
 
             # If we've shown all messages, reset the tracking for this category
             if not unshown:
@@ -101,45 +96,45 @@ class NarrativeManager:
 
     def trigger_level_start(self) -> str:
         """Trigger level start message."""
-        return self.get_message('level_start')
+        return self.get_message("level_start")
 
     def trigger_first_blind_spot(self) -> str:
         """Trigger first blind spot entry message (once per level)."""
-        if not self.level_flags['first_blind_spot']:
-            self.level_flags['first_blind_spot'] = True
-            return self.get_message('first_blind_spot')
+        if not self.level_flags["first_blind_spot"]:
+            self.level_flags["first_blind_spot"] = True
+            return self.get_message("first_blind_spot")
         return ""
 
     def trigger_high_trace(self) -> str:
         """Trigger high trace warning message."""
-        return self.get_message('high_trace')
+        return self.get_message("high_trace")
 
     def trigger_low_cpu(self) -> str:
         """Trigger low CPU warning message."""
-        return self.get_message('low_cpu')
+        return self.get_message("low_cpu")
 
     def trigger_first_combat(self) -> str:
         """Trigger first combat message (once per level)."""
-        if not self.level_flags['first_combat']:
-            self.level_flags['first_combat'] = True
-            return self.get_message('first_combat')
+        if not self.level_flags["first_combat"]:
+            self.level_flags["first_combat"] = True
+            return self.get_message("first_combat")
         return ""
 
     def trigger_admin_spawn(self) -> str:
         """Trigger admin spawn message."""
-        return self.get_message('admin_spawn')
+        return self.get_message("admin_spawn")
 
     def trigger_admin_defeated(self) -> str:
         """Trigger admin defeated message."""
-        return self.get_message('admin_defeated')
+        return self.get_message("admin_defeated")
 
     def trigger_overheating(self) -> str:
         """Trigger overheating message."""
-        return self.get_message('overheating')
+        return self.get_message("overheating")
 
     def trigger_gateway_approach(self) -> str:
         """Trigger gateway approach message."""
-        return self.get_message('gateway_approach')
+        return self.get_message("gateway_approach")
 
     def trigger_random_atmospheric(self, chance: float = 0.15) -> str:
         """
@@ -152,5 +147,5 @@ class NarrativeManager:
             Message string, or empty if roll failed
         """
         if random.random() < chance:
-            return self.get_message('random_atmospheric')
+            return self.get_message("random_atmospheric")
         return ""

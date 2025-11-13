@@ -15,8 +15,9 @@ across different scenarios and edge cases.
 """
 
 import pytest
-from game_entities import Position
+
 from game_config import GameBalance
+from game_entities import Position
 from tests.fixtures.simple_fixtures import create_real_enemy
 
 
@@ -45,8 +46,9 @@ class TestTraceIncreaseRate:
         engine.process_turn()
 
         # Verify trace increased after the interval
-        assert engine.player.trace_level > trace_before_interval, \
-            f"Trace should increase at interval {interval}"
+        assert (
+            engine.player.trace_level > trace_before_interval
+        ), f"Trace should increase at interval {interval}"
 
     def test_trace_increase_amount_accurate(self, basic_game_engine):
         """Test trace increase amount matches config over time."""
@@ -61,7 +63,7 @@ class TestTraceIncreaseRate:
 
         # Get current network config
         config = engine.game_state.get_current_network_config()
-        background_trace = config.get('background_trace', 1)
+        background_trace = config.get("background_trace", 1)
         expected_increase_per_interval = background_trace * GameBalance.TRACE_INCREASE_AMOUNT
 
         # Process many turns and count trace increases
@@ -84,9 +86,10 @@ class TestTraceIncreaseRate:
         min_expected = expected_total_increase
         max_expected = expected_total_increase * 2 + 1  # Allow up to double (if turn 0 counted)
 
-        assert min_expected <= actual_total_increase <= max_expected, \
-            f"After processing {total_turns} turns ({num_intervals} intervals), " \
+        assert min_expected <= actual_total_increase <= max_expected, (
+            f"After processing {total_turns} turns ({num_intervals} intervals), "
             f"trace should be between {min_expected} and {max_expected}, got {actual_total_increase}"
+        )
 
     def test_trace_increases_scale_by_level(self, basic_game_engine):
         """Test trace increase varies by level (higher levels = faster trace)."""
@@ -115,8 +118,9 @@ class TestTraceIncreaseRate:
 
         # Level 2 should have higher or equal trace accumulation
         # (background_trace config increases with level)
-        assert level_2_trace >= level_1_trace, \
-            f"Level 2 trace ({level_2_trace}) should be >= Level 1 trace ({level_1_trace})"
+        assert (
+            level_2_trace >= level_1_trace
+        ), f"Level 2 trace ({level_2_trace}) should be >= Level 1 trace ({level_1_trace})"
 
 
 class TestTraceFloorAndCeiling:
@@ -130,16 +134,17 @@ class TestTraceFloorAndCeiling:
         engine.player.trace_level = 5.0
 
         # Add log wiper exploit (reduces trace by 30%)
-        engine.player.inventory_manager.equipped_exploits.append('log_wiper')
+        engine.player.inventory_manager.equipped_exploits.append("log_wiper")
         engine.player.position = Position(10, 10)
 
         # Use log wiper multiple times to try to go negative
         for _ in range(5):
-            engine.exploit_system.use_exploit('log_wiper')
+            engine.exploit_system.use_exploit("log_wiper")
 
         # Verify trace didn't go negative
-        assert engine.player.trace_level >= 0, \
-            f"Trace should not go negative, got {engine.player.trace_level}"
+        assert (
+            engine.player.trace_level >= 0
+        ), f"Trace should not go negative, got {engine.player.trace_level}"
 
     def test_trace_ceiling_at_100(self, basic_game_engine):
         """Test trace caps at 100."""
@@ -153,8 +158,9 @@ class TestTraceFloorAndCeiling:
             engine.process_turn()
 
         # Verify trace capped at 100
-        assert engine.player.trace_level <= 100, \
-            f"Trace should cap at 100, got {engine.player.trace_level}"
+        assert (
+            engine.player.trace_level <= 100
+        ), f"Trace should cap at 100, got {engine.player.trace_level}"
 
     def test_trace_at_exactly_zero(self, basic_game_engine):
         """Test trace at exactly 0 is stable."""
@@ -167,8 +173,9 @@ class TestTraceFloorAndCeiling:
         engine.process_turn()
 
         # Verify no negative values
-        assert engine.player.trace_level >= 0, \
-            f"Trace should not go negative from 0, got {engine.player.trace_level}"
+        assert (
+            engine.player.trace_level >= 0
+        ), f"Trace should not go negative from 0, got {engine.player.trace_level}"
 
 
 class TestGhostNodeTraceReduction:
@@ -197,9 +204,10 @@ class TestGhostNodeTraceReduction:
         # Verify trace reduced by 20 points (allow for background trace increase)
         actual_trace = engine.player.trace_level
         # The actual reduction might be slightly less than 20 if background trace increased
-        assert actual_trace <= expected_trace + 1.0, \
-            f"Ghost node should reduce trace by approximately {expected_reduction} points, " \
+        assert actual_trace <= expected_trace + 1.0, (
+            f"Ghost node should reduce trace by approximately {expected_reduction} points, "
             f"expected around {expected_trace}, got {actual_trace}"
+        )
 
     def test_ghost_node_doesnt_go_below_zero(self, basic_game_engine):
         """Test ghost node reduction respects 0 floor."""
@@ -217,8 +225,9 @@ class TestGhostNodeTraceReduction:
         engine.process_turn()
 
         # Verify trace is 0 or positive
-        assert engine.player.trace_level >= 0, \
-            f"Ghost node should not make trace negative, got {engine.player.trace_level}"
+        assert (
+            engine.player.trace_level >= 0
+        ), f"Ghost node should not make trace negative, got {engine.player.trace_level}"
 
     def test_multiple_turns_on_ghost_node(self, basic_game_engine):
         """Test ghost node reduces trace each turn."""
@@ -240,8 +249,9 @@ class TestGhostNodeTraceReduction:
 
         # Verify trace decreased over time (accounting for background increase)
         # After 5 turns, trace should be noticeably lower
-        assert trace_values[-1] < trace_values[0], \
-            f"Ghost node should reduce trace over multiple turns"
+        assert (
+            trace_values[-1] < trace_values[0]
+        ), "Ghost node should reduce trace over multiple turns"
 
 
 class TestLogWiperExploit:
@@ -253,13 +263,13 @@ class TestLogWiperExploit:
 
         # Set up player with log wiper
         engine.player.trace_level = 60.0
-        engine.player.inventory_manager.equipped_exploits.append('log_wiper')
+        engine.player.inventory_manager.equipped_exploits.append("log_wiper")
         engine.player.position = Position(10, 10)
 
         initial_trace = engine.player.trace_level
 
         # Use log wiper
-        result = engine.exploit_system.use_exploit('log_wiper')
+        result = engine.exploit_system.use_exploit("log_wiper")
 
         # Verify exploit succeeded
         assert result is True, "Log Wiper should succeed"
@@ -271,9 +281,10 @@ class TestLogWiperExploit:
 
         # Verify trace reduced by approximately 30
         actual_trace = engine.player.trace_level
-        assert abs(actual_trace - expected_trace) < 1.0, \
-            f"Log Wiper should reduce trace by {expected_reduction}, " \
+        assert abs(actual_trace - expected_trace) < 1.0, (
+            f"Log Wiper should reduce trace by {expected_reduction}, "
             f"expected {expected_trace}, got {actual_trace}"
+        )
 
     def test_log_wiper_doesnt_go_below_zero(self, basic_game_engine):
         """Test Log Wiper respects 0 floor."""
@@ -281,15 +292,16 @@ class TestLogWiperExploit:
 
         # Set low trace
         engine.player.trace_level = 10.0
-        engine.player.inventory_manager.equipped_exploits.append('log_wiper')
+        engine.player.inventory_manager.equipped_exploits.append("log_wiper")
         engine.player.position = Position(10, 10)
 
         # Use log wiper
-        engine.exploit_system.use_exploit('log_wiper')
+        engine.exploit_system.use_exploit("log_wiper")
 
         # Verify trace is 0 or positive
-        assert engine.player.trace_level >= 0, \
-            f"Log Wiper should not make trace negative, got {engine.player.trace_level}"
+        assert (
+            engine.player.trace_level >= 0
+        ), f"Log Wiper should not make trace negative, got {engine.player.trace_level}"
 
     def test_log_wiper_multiple_uses(self, basic_game_engine):
         """Test Log Wiper can be used multiple times."""
@@ -297,7 +309,7 @@ class TestLogWiperExploit:
 
         # Set high trace
         engine.player.trace_level = 90.0
-        engine.player.inventory_manager.equipped_exploits.append('log_wiper')
+        engine.player.inventory_manager.equipped_exploits.append("log_wiper")
         engine.player.position = Position(10, 10)
         engine.player.ram = 100  # Ensure enough RAM
 
@@ -305,14 +317,12 @@ class TestLogWiperExploit:
 
         # Use log wiper 3 times
         for _ in range(3):
-            engine.exploit_system.use_exploit('log_wiper')
+            engine.exploit_system.use_exploit("log_wiper")
             trace_values.append(engine.player.trace_level)
 
         # Verify trace decreased with each use
-        assert trace_values[-1] < trace_values[0], \
-            f"Multiple Log Wiper uses should reduce trace"
-        assert engine.player.trace_level >= 0, \
-            f"Trace should not go negative"
+        assert trace_values[-1] < trace_values[0], "Multiple Log Wiper uses should reduce trace"
+        assert engine.player.trace_level >= 0, "Trace should not go negative"
 
 
 class TestTraceLevelTransition:
@@ -338,8 +348,9 @@ class TestTraceLevelTransition:
         engine.game_session.progress_to_next_level()
 
         # Verify trace reset to 0
-        assert engine.player.trace_level == 0, \
-            f"Trace should reset to 0 on level transition, got {engine.player.trace_level}"
+        assert (
+            engine.player.trace_level == 0
+        ), f"Trace should reset to 0 on level transition, got {engine.player.trace_level}"
 
         # Verify CPU and heat preserved
         assert engine.player.cpu == old_cpu, "CPU should be preserved"
@@ -406,8 +417,9 @@ class TestTraceCombinedScenarios:
 
         # Ghost node reduction should outpace background increase
         # (20% reduction per turn vs ~1% increase per interval)
-        assert engine.player.trace_level < initial_trace, \
-            f"Ghost node should reduce trace despite background increase"
+        assert (
+            engine.player.trace_level < initial_trace
+        ), "Ghost node should reduce trace despite background increase"
 
     def test_log_wiper_and_exploit_usage_interaction(self, basic_game_engine):
         """Test using log wiper after building up trace with exploits."""
@@ -415,7 +427,7 @@ class TestTraceCombinedScenarios:
 
         # Set up player with exploits
         engine.player.trace_level = 20.0
-        engine.player.inventory_manager.equipped_exploits.extend(['code_injection', 'log_wiper'])
+        engine.player.inventory_manager.equipped_exploits.extend(["code_injection", "log_wiper"])
         engine.player.ram = 100
 
         # Create target enemy
@@ -426,23 +438,24 @@ class TestTraceCombinedScenarios:
         # Use offensive exploit multiple times (increases trace)
         for _ in range(3):
             if len(engine.enemies) > 0:
-                engine.exploit_system.use_exploit('code_injection')
+                engine.exploit_system.use_exploit("code_injection")
 
         trace_after_combat = engine.player.trace_level
 
         # Use log wiper to reduce trace
-        engine.exploit_system.use_exploit('log_wiper')
+        engine.exploit_system.use_exploit("log_wiper")
 
         # Verify trace reduced
-        assert engine.player.trace_level < trace_after_combat, \
-            f"Log Wiper should reduce trace after combat"
+        assert (
+            engine.player.trace_level < trace_after_combat
+        ), "Log Wiper should reduce trace after combat"
 
     def test_high_trace_level_admin_spawn_threshold(self, basic_game_engine):
         """Test trace reaching admin spawn threshold."""
         engine = basic_game_engine
 
         # Initialize admin_spawned if not present
-        if not hasattr(engine.game_state, 'admin_spawned'):
+        if not hasattr(engine.game_state, "admin_spawned"):
             engine.game_state.admin_spawned = False
 
         # Set trace near threshold
@@ -455,11 +468,11 @@ class TestTraceCombinedScenarios:
                 break
 
         # Verify admin spawn system is tracking
-        assert hasattr(engine.game_state, 'admin_spawned'), \
-            "Should track admin spawn status"
-        assert isinstance(engine.game_state.admin_spawned, bool), \
-            "Admin spawn flag should be boolean"
+        assert hasattr(engine.game_state, "admin_spawned"), "Should track admin spawn status"
+        assert isinstance(
+            engine.game_state.admin_spawned, bool
+        ), "Admin spawn flag should be boolean"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

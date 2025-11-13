@@ -4,8 +4,9 @@ Screen Rendering Utilities
 Shared rendering utilities for all screen types (menus, in-game overlays, etc.)
 """
 
+
 import tcod
-from typing import List, Tuple, Optional
+
 from game_config import GameConfig
 from game_entities import Colors
 from game_ui import render_char_safe
@@ -24,8 +25,13 @@ class ScreenRenderingUtils:
     """
 
     @staticmethod
-    def render_centered_title(console: tcod.console.Console, title: str, y: int,
-                             color: tuple = Colors.YELLOW, width: int = None) -> None:
+    def render_centered_title(
+        console: tcod.console.Console,
+        title: str,
+        y: int,
+        color: tuple = Colors.YELLOW,
+        width: int = None,
+    ) -> None:
         """
         Render a centered title.
 
@@ -43,8 +49,13 @@ class ScreenRenderingUtils:
         render_char_safe(console, title_x, y, title, fg=color)
 
     @staticmethod
-    def render_centered_title_in_area(console: tcod.console.Console, title: str, y: int,
-                                     area_width: int, color: tuple = Colors.YELLOW) -> None:
+    def render_centered_title_in_area(
+        console: tcod.console.Console,
+        title: str,
+        y: int,
+        area_width: int,
+        color: tuple = Colors.YELLOW,
+    ) -> None:
         """
         Render a centered title within a specific area width (e.g., game area only).
 
@@ -59,9 +70,13 @@ class ScreenRenderingUtils:
         render_char_safe(console, title_x, y, title, fg=color)
 
     @staticmethod
-    def render_screen_header(console: tcod.console.Console, title: str,
-                           subtitle: str = None, border_color: tuple = Colors.CYAN,
-                           title_color: tuple = Colors.CYAN) -> int:
+    def render_screen_header(
+        console: tcod.console.Console,
+        title: str,
+        subtitle: str = None,
+        border_color: tuple = Colors.CYAN,
+        title_color: tuple = Colors.CYAN,
+    ) -> int:
         """
         Render a standardized screen header with title, optional subtitle, and borders.
 
@@ -93,9 +108,12 @@ class ScreenRenderingUtils:
             return 5  # Content starts at line 5
 
     @staticmethod
-    def render_screen_footer(console: tcod.console.Console, instructions: str,
-                           additional_line: str = None,
-                           color: tuple = Colors.YELLOW) -> None:
+    def render_screen_footer(
+        console: tcod.console.Console,
+        instructions: str,
+        additional_line: str = None,
+        color: tuple = Colors.YELLOW,
+    ) -> None:
         """
         Render a standardized screen footer with instructions.
 
@@ -115,12 +133,20 @@ class ScreenRenderingUtils:
 
         # Additional line if provided
         if additional_line:
-            ScreenRenderingUtils.render_centered_title(console, additional_line, footer_y + 2, color)
+            ScreenRenderingUtils.render_centered_title(
+                console, additional_line, footer_y + 2, color
+            )
 
     @staticmethod
-    def render_word_wrapped_text(console: tcod.console.Console, text: str,
-                                start_x: int, start_y: int, max_width: int,
-                                max_height: int = None, color: tuple = Colors.WHITE) -> int:
+    def render_word_wrapped_text(
+        console: tcod.console.Console,
+        text: str,
+        start_x: int,
+        start_y: int,
+        max_width: int,
+        max_height: int = None,
+        color: tuple = Colors.WHITE,
+    ) -> int:
         """
         Render text with word wrapping using TCOD's built-in wrapping.
 
@@ -146,31 +172,34 @@ class ScreenRenderingUtils:
                 string=text,
                 fg=color,
                 width=max_width,
-                height=available_height
+                height=available_height,
             )
             # Check if text was truncated
             if start_y + lines_printed >= max_height:
                 # Show truncation indicator
                 if max_height > start_y:
-                    render_char_safe(console, start_x, max_height - 1, "... [Text continues]", fg=Colors.YELLOW)
+                    render_char_safe(
+                        console, start_x, max_height - 1, "... [Text continues]", fg=Colors.YELLOW
+                    )
                 return max_height
             return start_y + lines_printed
         else:
             # No height limit, render all text
             lines_printed = console.print(
-                x=start_x,
-                y=start_y,
-                string=text,
-                fg=color,
-                width=max_width
+                x=start_x, y=start_y, string=text, fg=color, width=max_width
             )
             return start_y + lines_printed
 
     @staticmethod
-    def render_scroll_indicators(console: tcod.console.Console, x: int,
-                                top_y: int, bottom_y: int,
-                                show_up: bool, show_down: bool,
-                                color: tuple = Colors.YELLOW) -> None:
+    def render_scroll_indicators(
+        console: tcod.console.Console,
+        x: int,
+        top_y: int,
+        bottom_y: int,
+        show_up: bool,
+        show_down: bool,
+        color: tuple = Colors.YELLOW,
+    ) -> None:
         """
         Render scroll indicators (^ MORE ^ / v MORE v).
 
@@ -206,7 +235,7 @@ class ScreenRenderingUtils:
         return width // 2 - len(text) // 2
 
     @staticmethod
-    def center_block_x(lines: List[str], width: int = None) -> int:
+    def center_block_x(lines: list[str], width: int = None) -> int:
         """
         Calculate starting X position for a left-aligned block that's centered as a whole.
 
@@ -238,8 +267,13 @@ class ScreenRenderingUtils:
         return width // 2 - max_len // 2
 
     @staticmethod
-    def render_centered_text(console: tcod.console.Console, text: str, y: int,
-                            color: tuple = Colors.WHITE, width: int = None) -> None:
+    def render_centered_text(
+        console: tcod.console.Console,
+        text: str,
+        y: int,
+        color: tuple = Colors.WHITE,
+        width: int = None,
+    ) -> None:
         """
         Render centered text (like render_centered_title but for non-title text).
 
@@ -254,8 +288,9 @@ class ScreenRenderingUtils:
         render_char_safe(console, x, y, text, fg=color)
 
     @staticmethod
-    def render_indented_lines(console: tcod.console.Console, lines: List[Tuple[str, tuple]],
-                             start_y: int, indent: int = 0) -> int:
+    def render_indented_lines(
+        console: tcod.console.Console, lines: list[tuple[str, tuple]], start_y: int, indent: int = 0
+    ) -> int:
         """
         Render a list of (text, color) tuples as indented lines.
 
@@ -276,8 +311,14 @@ class ScreenRenderingUtils:
         return y
 
     @staticmethod
-    def render_column_section(console: tcod.console.Console, heading: str, items: List[Tuple[str, tuple]],
-                             x: int, y: int, heading_color: tuple = Colors.CYAN) -> int:
+    def render_column_section(
+        console: tcod.console.Console,
+        heading: str,
+        items: list[tuple[str, tuple]],
+        x: int,
+        y: int,
+        heading_color: tuple = Colors.CYAN,
+    ) -> int:
         """
         Render a column section with heading and items.
 
@@ -357,7 +398,7 @@ class ScrollableListManager:
         max_scroll = max(0, self.total_items - self.visible_height)
         self.scroll_offset = max(0, min(self.scroll_offset, max_scroll))
 
-    def get_visible_range(self) -> Tuple[int, int]:
+    def get_visible_range(self) -> tuple[int, int]:
         """
         Get the range of items currently visible.
 

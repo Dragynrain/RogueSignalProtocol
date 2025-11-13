@@ -7,23 +7,23 @@ Navigate between entity types and cycle through available variants to see
 how different combinations look together.
 """
 
-import tcod
-import logging
-import os
 import glob
-import re
 import json
-import time
+import logging
 import math
-from typing import Dict, List, Tuple, Optional
+import os
+import re
+import time
 from collections import defaultdict
 
-from game_config import GameSettings, GameConfig
-from game_entities import Colors, ensure_color_tuple
-from game_ui import render_char_safe
-from game_graphics_tiles import TileManager
+import tcod
+
 from data_loading import DataLoader
+from game_config import GameConfig, GameSettings
 from game_coordinate_helpers import CoordinateHelpers
+from game_entities import Colors, ensure_color_tuple
+from game_graphics_tiles import TileManager
+from game_ui import render_char_safe
 
 
 class GraphicsPreviewMenu:
@@ -62,7 +62,11 @@ class GraphicsPreviewMenu:
         self.alert_color_index = 0  # 0=yellow, 1=orange, 2=red
         config = DataLoader.load_config()
         alert_seq = config.get("colors", {}).get("preview_demo", {}).get("alert_sequence", [])
-        self.alert_colors = [ensure_color_tuple(c) for c in alert_seq] if alert_seq else [(255, 255, 0), (255, 165, 0), (255, 0, 0)]
+        self.alert_colors = (
+            [ensure_color_tuple(c) for c in alert_seq]
+            if alert_seq
+            else [(255, 255, 0), (255, 165, 0), (255, 0, 0)]
+        )
 
         # Load available graphics
         self._scan_available_graphics()
@@ -73,7 +77,7 @@ class GraphicsPreviewMenu:
     def _load_color_config(self):
         """Load color configurations from game_rules.json."""
         try:
-            with open("game_rules.json", 'r', encoding='utf-8') as f:
+            with open("game_rules.json", encoding="utf-8") as f:
                 rules = json.load(f)
 
             # Load codehack colors (data_codes)
@@ -96,10 +100,12 @@ class GraphicsPreviewMenu:
                 tuple(exploits.get("utility", [255, 215, 0])),
                 tuple(exploits.get("emergency", [255, 120, 20])),
                 tuple(exploits.get("stealth", [138, 43, 226])),  # Repeat
-                tuple(exploits.get("combat", [220, 20, 60])),    # Repeat
+                tuple(exploits.get("combat", [220, 20, 60])),  # Repeat
             ]
 
-            logging.info(f"Loaded {len(self.codehack_colors)} codehack colors and {len(self.exploit_colors)} exploit colors")
+            logging.info(
+                f"Loaded {len(self.codehack_colors)} codehack colors and {len(self.exploit_colors)} exploit colors"
+            )
 
         except Exception as e:
             logging.error(f"Failed to load color config from game_rules.json: {e}")
@@ -108,14 +114,30 @@ class GraphicsPreviewMenu:
             preview_demo = config.get("colors", {}).get("preview_demo", {})
             entity_colors_data = preview_demo.get("entity_colors", [])
             exploit_colors_data = preview_demo.get("exploit_colors", [])
-            self.codehack_colors = [ensure_color_tuple(c) for c in entity_colors_data] if entity_colors_data else [
-                (220, 20, 60), (0, 255, 255), (50, 205, 50),
-                (255, 215, 0), (138, 43, 226), (192, 192, 192)
-            ]
-            self.exploit_colors = [ensure_color_tuple(c) for c in exploit_colors_data] if exploit_colors_data else [
-                (138, 43, 226), (220, 20, 60), (255, 215, 0),
-                (255, 120, 20), (138, 43, 226), (220, 20, 60)
-            ]
+            self.codehack_colors = (
+                [ensure_color_tuple(c) for c in entity_colors_data]
+                if entity_colors_data
+                else [
+                    (220, 20, 60),
+                    (0, 255, 255),
+                    (50, 205, 50),
+                    (255, 215, 0),
+                    (138, 43, 226),
+                    (192, 192, 192),
+                ]
+            )
+            self.exploit_colors = (
+                [ensure_color_tuple(c) for c in exploit_colors_data]
+                if exploit_colors_data
+                else [
+                    (138, 43, 226),
+                    (220, 20, 60),
+                    (255, 215, 0),
+                    (255, 120, 20),
+                    (138, 43, 226),
+                    (220, 20, 60),
+                ]
+            )
 
     def _get_default_variant_from_config(self, entity_key: str) -> int:
         """
@@ -134,7 +156,7 @@ class GraphicsPreviewMenu:
             if "player" in tile_mappings and "file" in tile_mappings["player"]:
                 filename = tile_mappings["player"]["file"]
                 # Extract variant number from filename (e.g., "player02.png" -> 2)
-                match = re.match(r'^[a-z]+(\d+)\.png$', filename)
+                match = re.match(r"^[a-z]+(\d+)\.png$", filename)
                 if match:
                     return int(match.group(1))
 
@@ -150,7 +172,7 @@ class GraphicsPreviewMenu:
                             base_name = filename.replace(".png", "").rstrip("0123456789")
                             if base_name == entity_key:
                                 # Extract variant number
-                                match = re.match(r'^[a-z]+(\d+)\.png$', filename)
+                                match = re.match(r"^[a-z]+(\d+)\.png$", filename)
                                 if match:
                                     return int(match.group(1))
 
@@ -175,7 +197,7 @@ class GraphicsPreviewMenu:
             filename = os.path.basename(filepath)
 
             # Extract entity name and variant number (e.g., "player01.png" -> "player", 1)
-            match = re.match(r'^([a-z]+)(\d+)\.png$', filename)
+            match = re.match(r"^([a-z]+)(\d+)\.png$", filename)
             if match:
                 entity_name = match.group(1)
                 variant_num = int(match.group(2))
@@ -218,7 +240,11 @@ class GraphicsPreviewMenu:
                 self.variants[terrain_type] = sorted(entity_groups[terrain_type])
                 # Use default from graphics_tiles.json
                 default_variant = self._get_default_variant_from_config(terrain_type)
-                self.selected_variants[terrain_type] = default_variant if default_variant in self.variants[terrain_type] else self.variants[terrain_type][0]
+                self.selected_variants[terrain_type] = (
+                    default_variant
+                    if default_variant in self.variants[terrain_type]
+                    else self.variants[terrain_type][0]
+                )
 
         # Player
         if "player" in entity_groups:
@@ -226,10 +252,23 @@ class GraphicsPreviewMenu:
             self.variants["player"] = sorted(entity_groups["player"])
             # Use default from graphics_tiles.json
             default_variant = self._get_default_variant_from_config("player")
-            self.selected_variants["player"] = default_variant if default_variant in self.variants["player"] else self.variants["player"][0]
+            self.selected_variants["player"] = (
+                default_variant
+                if default_variant in self.variants["player"]
+                else self.variants["player"][0]
+            )
 
         # Enemies
-        enemy_order = ["scanner", "patrol", "bot", "hunter", "virus", "inhibitor", "firewall", "avatar"]
+        enemy_order = [
+            "scanner",
+            "patrol",
+            "bot",
+            "hunter",
+            "virus",
+            "inhibitor",
+            "firewall",
+            "avatar",
+        ]
         for enemy_type in enemy_order:
             if enemy_type in entity_groups:
                 display_name = get_display_name(enemy_type)
@@ -237,11 +276,23 @@ class GraphicsPreviewMenu:
                 self.variants[enemy_type] = sorted(entity_groups[enemy_type])
                 # Use default from graphics_tiles.json
                 default_variant = self._get_default_variant_from_config(enemy_type)
-                self.selected_variants[enemy_type] = default_variant if default_variant in self.variants[enemy_type] else self.variants[enemy_type][0]
+                self.selected_variants[enemy_type] = (
+                    default_variant
+                    if default_variant in self.variants[enemy_type]
+                    else self.variants[enemy_type][0]
+                )
 
         # Items
-        item_order = ["codehack", "exploit", "coolingnode", "coolingupgrade",
-                     "cpunode", "cpuupgrade", "ramupgrade", "ghostnode"]
+        item_order = [
+            "codehack",
+            "exploit",
+            "coolingnode",
+            "coolingupgrade",
+            "cpunode",
+            "cpuupgrade",
+            "ramupgrade",
+            "ghostnode",
+        ]
         for item_type in item_order:
             if item_type in entity_groups:
                 display_name = get_display_name(item_type)
@@ -249,7 +300,11 @@ class GraphicsPreviewMenu:
                 self.variants[item_type] = sorted(entity_groups[item_type])
                 # Use default from graphics_tiles.json
                 default_variant = self._get_default_variant_from_config(item_type)
-                self.selected_variants[item_type] = default_variant if default_variant in self.variants[item_type] else self.variants[item_type][0]
+                self.selected_variants[item_type] = (
+                    default_variant
+                    if default_variant in self.variants[item_type]
+                    else self.variants[item_type][0]
+                )
 
         # Special
         special_order = ["gateway", "storyfragment", "movementprediction", "targeting"]
@@ -260,7 +315,11 @@ class GraphicsPreviewMenu:
                 self.variants[special_type] = sorted(entity_groups[special_type])
                 # Use default from graphics_tiles.json
                 default_variant = self._get_default_variant_from_config(special_type)
-                self.selected_variants[special_type] = default_variant if default_variant in self.variants[special_type] else self.variants[special_type][0]
+                self.selected_variants[special_type] = (
+                    default_variant
+                    if default_variant in self.variants[special_type]
+                    else self.variants[special_type][0]
+                )
 
         logging.info(f"Graphics Preview: Found {len(self.entity_types)} entity types")
 
@@ -283,7 +342,9 @@ class GraphicsPreviewMenu:
         # Center the preview in the left side (entity list starts at x=50)
         # Available space: 50 tiles, preview: 44 tiles, centered: (50-44)/2 = 3
         self.preview_offset_x = 3
-        self.preview_offset_y = 8  # Moved down 2 rows to make space for file text and graphics mode note
+        self.preview_offset_y = (
+            8  # Moved down 2 rows to make space for file text and graphics mode note
+        )
 
     def render(self, console: tcod.console.Console) -> None:
         """Render the graphics preview screen."""
@@ -293,7 +354,7 @@ class GraphicsPreviewMenu:
             # Clear entire console to black first
             for y in range(console.height):
                 for x in range(console.width):
-                    render_char_safe(console, x, y, ' ', fg=(0, 0, 0), bg=(0, 0, 0))
+                    render_char_safe(console, x, y, " ", fg=(0, 0, 0), bg=(0, 0, 0))
 
             # Then make preview area transparent so SDL graphics show through
             CoordinateHelpers.set_alpha_region(
@@ -302,7 +363,7 @@ class GraphicsPreviewMenu:
                 y=self.preview_offset_y,
                 width=self.preview_width,
                 height=self.preview_height,
-                alpha=0
+                alpha=0,
             )
         else:
             # Glyph mode: just clear to black
@@ -310,8 +371,9 @@ class GraphicsPreviewMenu:
 
         # Title
         title = "GRAPHICS PREVIEW - VARIANT EXPLORER"
-        render_char_safe(console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 1,
-                        title, fg=Colors.CYAN)
+        render_char_safe(
+            console, GameConfig.SCREEN_WIDTH // 2 - len(title) // 2, 1, title, fg=Colors.CYAN
+        )
 
         # Current selection info (no arrows here - arrows are next to each entity in list)
         if self.entity_types:
@@ -356,11 +418,17 @@ class GraphicsPreviewMenu:
         if self.settings.graphics_mode != "graphics":
             # Show message in glyph mode
             msg = "Graphics Preview requires Graphics Mode"
-            render_char_safe(console, self.preview_offset_x, self.preview_offset_y + 5,
-                           msg, fg=Colors.RED)
+            render_char_safe(
+                console, self.preview_offset_x, self.preview_offset_y + 5, msg, fg=Colors.RED
+            )
             msg2 = "Enable Graphics Mode in Settings"
-            render_char_safe(console, self.preview_offset_x, self.preview_offset_y + 6,
-                           msg2, fg=Colors.LIGHT_GRAY)
+            render_char_safe(
+                console,
+                self.preview_offset_x,
+                self.preview_offset_y + 6,
+                msg2,
+                fg=Colors.LIGHT_GRAY,
+            )
             return
 
         # Calculate pixel positions
@@ -413,11 +481,17 @@ class GraphicsPreviewMenu:
         # Player is rendered explicitly in combat scene section (not in render_queue)
 
         # Enemies (compact grid in center-left - 2 rows of 4)
-        enemy_positions = [
-            (2, 7), (4, 7), (6, 7), (8, 7),
-            (2, 9), (4, 9), (6, 9), (8, 9)
+        enemy_positions = [(2, 7), (4, 7), (6, 7), (8, 7), (2, 9), (4, 9), (6, 9), (8, 9)]
+        enemy_types = [
+            "scanner",
+            "patrol",
+            "bot",
+            "hunter",
+            "virus",
+            "inhibitor",
+            "firewall",
+            "avatar",
         ]
-        enemy_types = ["scanner", "patrol", "bot", "hunter", "virus", "inhibitor", "firewall", "avatar"]
         for i, enemy_type in enumerate(enemy_types):
             if enemy_type in self.selected_variants and i < len(enemy_positions):
                 ex, ey = enemy_positions[i]
@@ -425,11 +499,21 @@ class GraphicsPreviewMenu:
 
         # Items (compact cluster in bottom-left)
         item_positions = [
-            (2, 12), (4, 12), (6, 12),  # First row
-            (2, 14), (4, 14), (6, 14)  # Second row
+            (2, 12),
+            (4, 12),
+            (6, 12),  # First row
+            (2, 14),
+            (4, 14),
+            (6, 14),  # Second row
         ]
-        item_types = ["coolingnode", "coolingupgrade", "cpunode", "cpuupgrade",
-                     "ramupgrade", "gateway"]
+        item_types = [
+            "coolingnode",
+            "coolingupgrade",
+            "cpunode",
+            "cpuupgrade",
+            "ramupgrade",
+            "gateway",
+        ]
         for i, item_type in enumerate(item_types):
             if item_type in self.selected_variants and i < len(item_positions):
                 ix, iy = item_positions[i]
@@ -461,9 +545,12 @@ class GraphicsPreviewMenu:
             if codehack_texture:
                 # Tight cluster: 3 rows x 2 columns starting at (16,1)
                 codehack_grid = [
-                    (16, 1), (17, 1),  # Top row
-                    (16, 2), (17, 2),  # Middle row
-                    (16, 3), (17, 3),  # Bottom row
+                    (16, 1),
+                    (17, 1),  # Top row
+                    (16, 2),
+                    (17, 2),  # Middle row
+                    (16, 3),
+                    (17, 3),  # Bottom row
                 ]
                 for i, color in enumerate(self.codehack_colors):
                     if i < len(codehack_grid):
@@ -477,7 +564,9 @@ class GraphicsPreviewMenu:
 
                 # Reset color mod
                 config = DataLoader.load_config()
-                normal_tint = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255]))
+                normal_tint = ensure_color_tuple(
+                    config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255])
+                )
                 codehack_texture.color_mod = normal_tint
 
         # 2. Exploits in TOP RIGHT corner - tight 3x2 cluster below CodeHacks
@@ -486,9 +575,12 @@ class GraphicsPreviewMenu:
             if exploit_texture:
                 # Tight cluster: 3 rows x 2 columns starting at (19,1)
                 exploit_grid = [
-                    (19, 1), (20, 1),  # Top row
-                    (19, 2), (20, 2),  # Middle row
-                    (19, 3), (20, 3),  # Bottom row
+                    (19, 1),
+                    (20, 1),  # Top row
+                    (19, 2),
+                    (20, 2),  # Middle row
+                    (19, 3),
+                    (20, 3),  # Bottom row
                 ]
                 for i, color in enumerate(self.exploit_colors):
                     if i < len(exploit_grid):
@@ -502,7 +594,9 @@ class GraphicsPreviewMenu:
 
                 # Reset color mod
                 config = DataLoader.load_config()
-                normal_tint = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255]))
+                normal_tint = ensure_color_tuple(
+                    config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255])
+                )
                 exploit_texture.color_mod = normal_tint
 
         # 3. Pulsing alert rings on all enemies
@@ -512,8 +606,16 @@ class GraphicsPreviewMenu:
         for i, enemy_type in enumerate(enemy_types):
             if enemy_type in self.selected_variants and i < len(enemy_positions):
                 ex, ey = enemy_positions[i]
-                self._render_alert_ring(renderer, offset_pixel_x, offset_pixel_y,
-                                      ex, ey, tile_w, tile_h, pulse_intensity)
+                self._render_alert_ring(
+                    renderer,
+                    offset_pixel_x,
+                    offset_pixel_y,
+                    ex,
+                    ey,
+                    tile_w,
+                    tile_h,
+                    pulse_intensity,
+                )
 
         # 3b. Rainbow pulsing ring around story fragment
         if "storyfragment" in self.selected_variants:
@@ -530,17 +632,41 @@ class GraphicsPreviewMenu:
             renderer.draw_color = (*pulsed_rainbow, 255)
 
             # Top
-            renderer.fill_rect((screen_x + ring_offset, screen_y + ring_offset,
-                              tile_w - (ring_offset * 2), ring_thickness))
+            renderer.fill_rect(
+                (
+                    screen_x + ring_offset,
+                    screen_y + ring_offset,
+                    tile_w - (ring_offset * 2),
+                    ring_thickness,
+                )
+            )
             # Bottom
-            renderer.fill_rect((screen_x + ring_offset, screen_y + tile_h - ring_offset - ring_thickness,
-                              tile_w - (ring_offset * 2), ring_thickness))
+            renderer.fill_rect(
+                (
+                    screen_x + ring_offset,
+                    screen_y + tile_h - ring_offset - ring_thickness,
+                    tile_w - (ring_offset * 2),
+                    ring_thickness,
+                )
+            )
             # Left
-            renderer.fill_rect((screen_x + ring_offset, screen_y + ring_offset,
-                              ring_thickness, tile_h - (ring_offset * 2)))
+            renderer.fill_rect(
+                (
+                    screen_x + ring_offset,
+                    screen_y + ring_offset,
+                    ring_thickness,
+                    tile_h - (ring_offset * 2),
+                )
+            )
             # Right
-            renderer.fill_rect((screen_x + tile_w - ring_offset - ring_thickness, screen_y + ring_offset,
-                              ring_thickness, tile_h - (ring_offset * 2)))
+            renderer.fill_rect(
+                (
+                    screen_x + tile_w - ring_offset - ring_thickness,
+                    screen_y + ring_offset,
+                    ring_thickness,
+                    tile_h - (ring_offset * 2),
+                )
+            )
 
             # Reset draw color
             renderer.draw_color = (255, 255, 255, 255)
@@ -578,7 +704,7 @@ class GraphicsPreviewMenu:
         for dx in range(-scanner_vision_range, scanner_vision_range + 1):
             for dy in range(-scanner_vision_range, scanner_vision_range + 1):
                 # Use Euclidean distance (same as game_rendering.py:1667)
-                if dx*dx + dy*dy <= scanner_vision_range*scanner_vision_range:
+                if dx * dx + dy * dy <= scanner_vision_range * scanner_vision_range:
                     bracket_x = combat_enemy_x + dx
                     bracket_y = combat_enemy_y + dy
 
@@ -592,12 +718,18 @@ class GraphicsPreviewMenu:
                             offset_pixel_x + (bracket_x * tile_w),
                             offset_pixel_y + (bracket_y * tile_h),
                             tile_w,
-                            tile_h
+                            tile_h,
                         )
                         # Red brackets for hostile enemy state
                         config = DataLoader.load_config()
-                        bracket_color = ensure_color_tuple(config.get("colors", {}).get("targeting", {}).get("corner_bracket", [255, 0, 0]))
-                        self._draw_corner_brackets(renderer, bracket_rect, bracket_color, bracket_size=4)
+                        bracket_color = ensure_color_tuple(
+                            config.get("colors", {})
+                            .get("targeting", {})
+                            .get("corner_bracket", [255, 0, 0])
+                        )
+                        self._draw_corner_brackets(
+                            renderer, bracket_rect, bracket_color, bracket_size=4
+                        )
 
         # Render enemy in combat scene
         if "scanner" in self.selected_variants:
@@ -608,8 +740,16 @@ class GraphicsPreviewMenu:
                 renderer.copy(enemy_texture, dest=(screen_x, screen_y, tile_w, tile_h))
 
                 # Alert ring on this enemy (use same pulse)
-                self._render_alert_ring(renderer, offset_pixel_x, offset_pixel_y,
-                                      combat_enemy_x, combat_enemy_y, tile_w, tile_h, pulse_intensity)
+                self._render_alert_ring(
+                    renderer,
+                    offset_pixel_x,
+                    offset_pixel_y,
+                    combat_enemy_x,
+                    combat_enemy_y,
+                    tile_w,
+                    tile_h,
+                    pulse_intensity,
+                )
 
         # Movement prediction showing enemy's next 3 queued moves TOWARD player
         # Using exact colors from game_rendering.py:1739-1744
@@ -636,11 +776,22 @@ class GraphicsPreviewMenu:
                     prediction_texture.color_mod = prediction_colors[i]
                     renderer.copy(prediction_texture, dest=(screen_x, screen_y, tile_w, tile_h))
                 # Reset color mod
-                normal_tint = ensure_color_tuple(config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255]))
+                normal_tint = ensure_color_tuple(
+                    config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255])
+                )
                 prediction_texture.color_mod = normal_tint
 
-    def _render_alert_ring(self, renderer, offset_pixel_x, offset_pixel_y,
-                          map_x, map_y, tile_w, tile_h, pulse_intensity):
+    def _render_alert_ring(
+        self,
+        renderer,
+        offset_pixel_x,
+        offset_pixel_y,
+        map_x,
+        map_y,
+        tile_w,
+        tile_h,
+        pulse_intensity,
+    ):
         """Render a pulsing alert ring around an entity."""
         # Get current alert color based on user selection (SPACE key cycles)
         base_color = self.alert_colors[self.alert_color_index]
@@ -661,22 +812,52 @@ class GraphicsPreviewMenu:
         renderer.draw_color = (*outline_color, 255)
 
         # Top
-        renderer.fill_rect((screen_x + ring_offset, screen_y + ring_offset,
-                          tile_w - (ring_offset * 2), ring_thickness))
+        renderer.fill_rect(
+            (
+                screen_x + ring_offset,
+                screen_y + ring_offset,
+                tile_w - (ring_offset * 2),
+                ring_thickness,
+            )
+        )
         # Bottom
-        renderer.fill_rect((screen_x + ring_offset, screen_y + tile_h - ring_offset - ring_thickness,
-                          tile_w - (ring_offset * 2), ring_thickness))
+        renderer.fill_rect(
+            (
+                screen_x + ring_offset,
+                screen_y + tile_h - ring_offset - ring_thickness,
+                tile_w - (ring_offset * 2),
+                ring_thickness,
+            )
+        )
         # Left
-        renderer.fill_rect((screen_x + ring_offset, screen_y + ring_offset,
-                          ring_thickness, tile_h - (ring_offset * 2)))
+        renderer.fill_rect(
+            (
+                screen_x + ring_offset,
+                screen_y + ring_offset,
+                ring_thickness,
+                tile_h - (ring_offset * 2),
+            )
+        )
         # Right
-        renderer.fill_rect((screen_x + tile_w - ring_offset - ring_thickness, screen_y + ring_offset,
-                          ring_thickness, tile_h - (ring_offset * 2)))
+        renderer.fill_rect(
+            (
+                screen_x + tile_w - ring_offset - ring_thickness,
+                screen_y + ring_offset,
+                ring_thickness,
+                tile_h - (ring_offset * 2),
+            )
+        )
 
         # Reset draw color to avoid affecting other rendering
         renderer.draw_color = (255, 255, 255, 255)
 
-    def _draw_corner_brackets(self, renderer, rect: Tuple[int, int, int, int], color: Tuple[int, int, int], bracket_size: int = 4):
+    def _draw_corner_brackets(
+        self,
+        renderer,
+        rect: tuple[int, int, int, int],
+        color: tuple[int, int, int],
+        bracket_size: int = 4,
+    ):
         """
         Draw corner brackets around a tile rectangle.
         COPIED DIRECTLY from game_rendering.py:2526-2563
@@ -710,8 +891,12 @@ class GraphicsPreviewMenu:
         renderer.draw_line((x, y + h - 1), (x + bracket_size, y + h - 1))  # Horizontal arm
 
         # Bottom-right corner
-        renderer.draw_line((x + w - 1, y + h - bracket_size - 1), (x + w - 1, y + h - 1))  # Vertical arm
-        renderer.draw_line((x + w - bracket_size - 1, y + h - 1), (x + w - 1, y + h - 1))  # Horizontal arm
+        renderer.draw_line(
+            (x + w - 1, y + h - bracket_size - 1), (x + w - 1, y + h - 1)
+        )  # Vertical arm
+        renderer.draw_line(
+            (x + w - bracket_size - 1, y + h - 1), (x + w - 1, y + h - 1)
+        )  # Horizontal arm
 
         # Reset draw color
         renderer.draw_color = (255, 255, 255, 255)
@@ -732,7 +917,7 @@ class GraphicsPreviewMenu:
         pulse_intensity = 0.7 + 0.3 * math.sin(pulse_phase * 2 * math.pi)
         return pulse_intensity
 
-    def _get_rainbow_color(self) -> Tuple[int, int, int]:
+    def _get_rainbow_color(self) -> tuple[int, int, int]:
         """
         Calculate cyberspace color based on current time for data fragment highlighting.
         Cycles through neon cyberspace colors used in the game.
@@ -743,12 +928,12 @@ class GraphicsPreviewMenu:
         """
         # Cyberspace neon palette from game_rules.json
         cyberspace_colors = [
-            (255, 20, 80),    # Crimson - neon red/pink
-            (0, 200, 255),    # Azure - bright cyan
-            (0, 255, 100),    # Emerald - neon green
-            (255, 240, 0),    # Golden - neon yellow
-            (200, 60, 255),   # Violet - electric purple
-            (255, 20, 147),   # Neon Pink - hot pink
+            (255, 20, 80),  # Crimson - neon red/pink
+            (0, 200, 255),  # Azure - bright cyan
+            (0, 255, 100),  # Emerald - neon green
+            (255, 240, 0),  # Golden - neon yellow
+            (200, 60, 255),  # Violet - electric purple
+            (255, 20, 147),  # Neon Pink - hot pink
         ]
 
         current_time = time.time()
@@ -757,7 +942,7 @@ class GraphicsPreviewMenu:
 
         # Smooth transition between colors
         next_index = (color_index + 1) % len(cyberspace_colors)
-        blend_factor = (current_time % 1.0)  # 0.0 to 1.0 within the second
+        blend_factor = current_time % 1.0  # 0.0 to 1.0 within the second
 
         current_color = cyberspace_colors[color_index]
         next_color = cyberspace_colors[next_index]
@@ -769,7 +954,7 @@ class GraphicsPreviewMenu:
 
         return (r, g, b)
 
-    def _get_variant_texture(self, entity_key: str) -> Optional[tcod.sdl.render.Texture]:
+    def _get_variant_texture(self, entity_key: str) -> tcod.sdl.render.Texture | None:
         """Get texture for entity with currently selected variant (with caching)."""
         if entity_key not in self.selected_variants:
             return None
@@ -789,18 +974,18 @@ class GraphicsPreviewMenu:
             return None
 
         try:
-            from PIL import Image
             import numpy as np
+            from PIL import Image
 
             # Load and scale image
             pil_image = Image.open(filepath)
-            if pil_image.mode != 'RGBA':
-                pil_image = pil_image.convert('RGBA')
+            if pil_image.mode != "RGBA":
+                pil_image = pil_image.convert("RGBA")
 
             # Use GAME sprite size (2x enlarged) so preview matches how game looks
             pil_image = pil_image.resize(
                 (self.tile_manager.tile_width, self.tile_manager.tile_height),
-                Image.Resampling.LANCZOS
+                Image.Resampling.LANCZOS,
             )
 
             pixels = np.array(pil_image, dtype=np.uint8)
@@ -835,7 +1020,7 @@ class GraphicsPreviewMenu:
         scroll_offset = max(0, self.current_entity_index - visible_count + 5)
 
         # Initialize arrow regions storage if not exists
-        if not hasattr(self, 'entity_arrow_regions'):
+        if not hasattr(self, "entity_arrow_regions"):
             self.entity_arrow_regions = []
         self.entity_arrow_regions = []  # Clear and rebuild each frame
 
@@ -845,7 +1030,7 @@ class GraphicsPreviewMenu:
                 break
 
             category, entity_key, display_name = self.entity_types[entity_index]
-            is_selected = (entity_index == self.current_entity_index)
+            is_selected = entity_index == self.current_entity_index
 
             # Color coding by category
             if is_selected:
@@ -879,10 +1064,14 @@ class GraphicsPreviewMenu:
             arrows_x = list_x + len(name_text) + 1
 
             # Check if hovering over arrows for this entity
-            hover_left = (hasattr(self, '_hover_entity_arrow') and
-                         self._hover_entity_arrow == (entity_index, 'left'))
-            hover_right = (hasattr(self, '_hover_entity_arrow') and
-                          self._hover_entity_arrow == (entity_index, 'right'))
+            hover_left = hasattr(self, "_hover_entity_arrow") and self._hover_entity_arrow == (
+                entity_index,
+                "left",
+            )
+            hover_right = hasattr(self, "_hover_entity_arrow") and self._hover_entity_arrow == (
+                entity_index,
+                "right",
+            )
 
             left_color = Colors.CYAN if hover_left else Colors.WHITE
             right_color = Colors.CYAN if hover_right else Colors.WHITE
@@ -893,7 +1082,9 @@ class GraphicsPreviewMenu:
             # Render left arrow
             render_char_safe(console, arrows_x, list_y + i, "<", fg=left_color)
             # Render middle part
-            render_char_safe(console, arrows_x + 2, list_y + i, f"{variant_index}/{variant_count}", fg=color)
+            render_char_safe(
+                console, arrows_x + 2, list_y + i, f"{variant_index}/{variant_count}", fg=color
+            )
             # Render right arrow
             right_arrow_x = arrows_x + 2 + len(f"{variant_index}/{variant_count}") + 1
             render_char_safe(console, right_arrow_x, list_y + i, ">", fg=right_color)
@@ -901,23 +1092,23 @@ class GraphicsPreviewMenu:
             # Store click regions for mouse detection
             # Left arrow: just the '<' character
             left_region = {
-                'entity_index': entity_index,
-                'entity_key': entity_key,  # Store for debugging
-                'direction': 'left',
-                'x': arrows_x,
-                'y': list_y + i,
-                'width': 1
+                "entity_index": entity_index,
+                "entity_key": entity_key,  # Store for debugging
+                "direction": "left",
+                "x": arrows_x,
+                "y": list_y + i,
+                "width": 1,
             }
             self.entity_arrow_regions.append(left_region)
 
             # Right arrow: just the '>' character
             right_region = {
-                'entity_index': entity_index,
-                'entity_key': entity_key,  # Store for debugging
-                'direction': 'right',
-                'x': right_arrow_x,
-                'y': list_y + i,
-                'width': 1
+                "entity_index": entity_index,
+                "entity_key": entity_key,  # Store for debugging
+                "direction": "right",
+                "x": right_arrow_x,
+                "y": list_y + i,
+                "width": 1,
             }
             self.entity_arrow_regions.append(right_region)
 
@@ -930,42 +1121,42 @@ class GraphicsPreviewMenu:
         """
         if not self.entity_types:
             # No entities loaded, any key exits
-            return 'exit'
+            return "exit"
 
         # Navigation (with wrap-around)
         if event.type == "KEYDOWN":
             if event.sym == tcod.event.KeySym.UP or event.sym == tcod.event.KeySym.W:
                 self.current_entity_index = (self.current_entity_index - 1) % len(self.entity_types)
-                return ''
+                return ""
 
             elif event.sym == tcod.event.KeySym.DOWN or event.sym == tcod.event.KeySym.S:
                 self.current_entity_index = (self.current_entity_index + 1) % len(self.entity_types)
-                return ''
+                return ""
 
             elif event.sym == tcod.event.KeySym.LEFT or event.sym == tcod.event.KeySym.A:
                 # Cycle to previous variant
                 self._cycle_variant(-1)
-                return ''
+                return ""
 
             elif event.sym == tcod.event.KeySym.RIGHT or event.sym == tcod.event.KeySym.D:
                 # Cycle to next variant
                 self._cycle_variant(1)
-                return ''
+                return ""
 
             elif event.sym == tcod.event.KeySym.SPACE:
                 # Cycle alert ring color
                 self.alert_color_index = (self.alert_color_index + 1) % len(self.alert_colors)
-                return ''
+                return ""
 
             elif event.sym == tcod.event.KeySym.ESCAPE:
-                return 'exit'
+                return "exit"
 
-        return ''
+        return ""
 
     def handle_mouse_motion(self, event) -> bool:
         """Handle mouse motion - highlight arrows on hover."""
         # After context.convert_event(), coordinates are in event.tile, not event.position
-        if not hasattr(event, 'tile') or event.tile is None:
+        if not hasattr(event, "tile") or event.tile is None:
             return False
 
         tile_x = int(event.tile.x)
@@ -975,11 +1166,10 @@ class GraphicsPreviewMenu:
         self._hover_entity_arrow = None
 
         # Check if hovering over any entity arrow
-        if hasattr(self, 'entity_arrow_regions'):
+        if hasattr(self, "entity_arrow_regions"):
             for region in self.entity_arrow_regions:
-                if (tile_y == region['y'] and
-                    region['x'] <= tile_x < region['x'] + region['width']):
-                    self._hover_entity_arrow = (region['entity_index'], region['direction'])
+                if tile_y == region["y"] and region["x"] <= tile_x < region["x"] + region["width"]:
+                    self._hover_entity_arrow = (region["entity_index"], region["direction"])
                     return True
 
         return False
@@ -989,28 +1179,27 @@ class GraphicsPreviewMenu:
         import tcod.event
 
         # Right-click = go back (standard behavior)
-        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
             return "exit"
 
         # After manual coordinate conversion, coordinates are in event.tile
-        if not hasattr(event, 'tile') or event.tile is None:
+        if not hasattr(event, "tile") or event.tile is None:
             return ""
 
         # Only handle left mouse button clicks for variant cycling
-        if hasattr(event, 'button') and event.button != tcod.event.MouseButton.LEFT:
+        if hasattr(event, "button") and event.button != tcod.event.MouseButton.LEFT:
             return ""
 
         tile_x = int(event.tile.x)
         tile_y = int(event.tile.y)
 
         # Check if clicking any entity arrow
-        if hasattr(self, 'entity_arrow_regions'):
+        if hasattr(self, "entity_arrow_regions"):
             for region in self.entity_arrow_regions:
-                if (tile_y == region['y'] and
-                    region['x'] <= tile_x < region['x'] + region['width']):
+                if tile_y == region["y"] and region["x"] <= tile_x < region["x"] + region["width"]:
                     # Cycle variant for this specific entity
-                    entity_index = region['entity_index']
-                    direction = -1 if region['direction'] == 'left' else 1
+                    entity_index = region["entity_index"]
+                    direction = -1 if region["direction"] == "left" else 1
 
                     # Get entity key and cycle its variant
                     category, entity_key, display_name = self.entity_types[entity_index]
@@ -1020,7 +1209,9 @@ class GraphicsPreviewMenu:
                     new_index = (current_index + direction) % len(variants)
                     self.selected_variants[entity_key] = variants[new_index]
 
-                    logging.info(f"Graphics Preview: Cycled {display_name} variant from {current_variant} to {variants[new_index]} via mouse")
+                    logging.info(
+                        f"Graphics Preview: Cycled {display_name} variant from {current_variant} to {variants[new_index]} via mouse"
+                    )
 
                     return ""
 
@@ -1044,7 +1235,7 @@ class GraphicsPreviewMenu:
     def export_selections(self, output_file: str = "logs/graphic-preview.log"):
         """Export currently selected variants to a log file."""
         try:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write("Graphics Preview - Selected Variants\n")
                 f.write("=" * 50 + "\n\n")
 
@@ -1054,7 +1245,7 @@ class GraphicsPreviewMenu:
                     ("player", "PLAYER"),
                     ("enemy", "ENEMIES"),
                     ("item", "ITEMS"),
-                    ("special", "SPECIAL")
+                    ("special", "SPECIAL"),
                 ]
 
                 for category_key, category_name in categories:

@@ -11,11 +11,11 @@ Real ninjas were spies, not assassins - this agent tests infiltration
 mechanics and whether a pure stealth playthrough is viable.
 """
 
+
 import pytest
-import random
-from typing import Optional, Tuple, List
-from tests.test_agent import GameTestAgent
+
 from game_entities import EnemyState
+from tests.test_agent import GameTestAgent
 
 
 class StealthMixin:
@@ -62,7 +62,7 @@ class StealthMixin:
             return None
 
         player_pos = (self.player.x, self.player.y)
-        min_dist = float('inf')
+        min_dist = float("inf")
         nearest = None
 
         for enemy in self.enemies:
@@ -117,7 +117,7 @@ class NinjaAgent(GameTestAgent, StealthMixin):
         self.gateway_found = False  # Track if we've seen the gateway
         self.gateway_found_turn = 0
 
-    def get_gateway_position(self) -> Optional[Tuple[int, int]]:
+    def get_gateway_position(self) -> tuple[int, int] | None:
         """
         Find gateway/uplink position on map.
 
@@ -171,8 +171,8 @@ class NinjaAgent(GameTestAgent, StealthMixin):
                 visibility_manager._enemy_cache_turn = current_turn
 
             if enemy_key not in visibility_manager._enemy_fov_cache:
-                visibility_manager._enemy_fov_cache[enemy_key] = visibility_manager._compute_fov_set(
-                    enemy.x, enemy.y, enemy.type_data.vision
+                visibility_manager._enemy_fov_cache[enemy_key] = (
+                    visibility_manager._compute_fov_set(enemy.x, enemy.y, enemy.type_data.vision)
                 )
 
             # Add this enemy's vision to collective vision
@@ -194,7 +194,7 @@ class NinjaAgent(GameTestAgent, StealthMixin):
         enemy_vision = self.get_collective_enemy_vision()
         return (x, y) not in enemy_vision
 
-    def find_evasion_direction(self) -> Optional[Tuple[int, int]]:
+    def find_evasion_direction(self) -> tuple[int, int] | None:
         """
         Find best direction to run away from enemies.
 
@@ -250,7 +250,16 @@ class NinjaAgent(GameTestAgent, StealthMixin):
 
             # Score all possible moves for evasion
             candidates = []
-            for try_dx, try_dy in [(dx, dy), (dx, 0), (0, dy), (-dx, -dy), (1, 0), (0, 1), (-1, 0), (0, -1)]:
+            for try_dx, try_dy in [
+                (dx, dy),
+                (dx, 0),
+                (0, dy),
+                (-dx, -dy),
+                (1, 0),
+                (0, 1),
+                (-1, 0),
+                (0, -1),
+            ]:
                 if try_dx == 0 and try_dy == 0:
                     continue
 
@@ -258,7 +267,9 @@ class NinjaAgent(GameTestAgent, StealthMixin):
                 target_y = self.player.y + try_dy
 
                 # Check bounds
-                if not (0 <= target_x < self.game_map.width and 0 <= target_y < self.game_map.height):
+                if not (
+                    0 <= target_x < self.game_map.width and 0 <= target_y < self.game_map.height
+                ):
                     continue
 
                 # Check walkable
@@ -283,8 +294,7 @@ class NinjaAgent(GameTestAgent, StealthMixin):
 
                 # Distance to nearest enemy
                 min_enemy_dist = min(
-                    (abs(e.x - target_x) + abs(e.y - target_y) for e in self.enemies),
-                    default=0
+                    (abs(e.x - target_x) + abs(e.y - target_y) for e in self.enemies), default=0
                 )
                 score += min_enemy_dist
 
@@ -399,13 +409,13 @@ class NinjaAgent(GameTestAgent, StealthMixin):
             risk_score = 10 + (max_consecutive * 10)
 
         return {
-            'path_length': len(path),
-            'consecutive_visible': max_consecutive,
-            'total_visible': total_visible,
-            'risk_score': risk_score
+            "path_length": len(path),
+            "consecutive_visible": max_consecutive,
+            "total_visible": total_visible,
+            "risk_score": risk_score,
         }
 
-    def find_nearest_unexplored(self) -> Optional[Tuple[int, int]]:
+    def find_nearest_unexplored(self) -> tuple[int, int] | None:
         """
         Find best unexplored target using risk-aware search.
 
@@ -456,7 +466,7 @@ class NinjaAgent(GameTestAgent, StealthMixin):
 
         # Evaluate each candidate
         best_target = None
-        best_score = float('inf')
+        best_score = float("inf")
 
         for ux, uy in unexplored_candidates:
             # Evaluate path risk
@@ -467,7 +477,7 @@ class NinjaAgent(GameTestAgent, StealthMixin):
 
             # Score: balance risk vs reward
             # Lower risk + higher cluster quality = better score
-            score = risk['risk_score'] - (cluster_quality * 0.1)
+            score = risk["risk_score"] - (cluster_quality * 0.1)
 
             if score < best_score:
                 best_score = score
@@ -475,7 +485,7 @@ class NinjaAgent(GameTestAgent, StealthMixin):
 
         return best_target
 
-    def find_frontier_tiles(self) -> List[Tuple[int, int]]:
+    def find_frontier_tiles(self) -> list[tuple[int, int]]:
         """
         Find frontier tiles - explored tiles next to unexplored areas.
         These are good places to continue methodical exploration.
@@ -504,7 +514,7 @@ class NinjaAgent(GameTestAgent, StealthMixin):
 
         return frontier
 
-    def find_unexplored_move(self) -> Optional[Tuple[int, int]]:
+    def find_unexplored_move(self) -> tuple[int, int] | None:
         """
         Find a move toward unexplored areas using methodical exploration.
 
@@ -528,8 +538,7 @@ class NinjaAgent(GameTestAgent, StealthMixin):
         else:
             # Pick closest frontier tile
             closest_frontier = min(
-                frontier,
-                key=lambda pos: abs(pos[0] - self.player.x) + abs(pos[1] - self.player.y)
+                frontier, key=lambda pos: abs(pos[0] - self.player.x) + abs(pos[1] - self.player.y)
             )
             target_x, target_y = closest_frontier
 
@@ -557,7 +566,7 @@ class NinjaAgent(GameTestAgent, StealthMixin):
         """
         gateway_pos = self.get_gateway_position()
         if not gateway_pos:
-            return 'no_gateway'
+            return "no_gateway"
 
         gw_x, gw_y = gateway_pos
 
@@ -568,7 +577,7 @@ class NinjaAgent(GameTestAgent, StealthMixin):
             # Check if reached gateway
             if self.player.x == gw_x and self.player.y == gw_y:
                 self.gateway_reached = True
-                return 'reached'
+                return "reached"
 
             # Check if detected (ALERT or HOSTILE)
             if self.is_detected():
@@ -584,11 +593,11 @@ class NinjaAgent(GameTestAgent, StealthMixin):
                         explored_pct = len(self.explored_tiles) / map_size
 
                         if self.player.cpu <= 0:
-                            return 'died'
+                            return "died"
 
                         # Give up if <40% explored and gateway not found
                         if explored_pct < 0.4:
-                            return 'detected'
+                            return "detected"
                         # else: keep going even while detected!
 
                 # Update exploration after evasion attempt (or skipping it)
@@ -625,31 +634,40 @@ class NinjaAgent(GameTestAgent, StealthMixin):
                 if explored_pct > 0.8:
                     # Pick direction with most unexplored tiles and SPRINT
                     # Count unexplored tiles in each quadrant
-                    quadrants = {'N': 0, 'S': 0, 'E': 0, 'W': 0}
+                    quadrants = {"N": 0, "S": 0, "E": 0, "W": 0}
 
                     for x in range(self.game_map.width):
                         for y in range(self.game_map.height):
-                            if (x, y) not in self.explored_tiles and (x, y) not in self.game_map.walls:
+                            if (x, y) not in self.explored_tiles and (
+                                x,
+                                y,
+                            ) not in self.game_map.walls:
                                 # Relative to player
                                 if y < self.player.y:
-                                    quadrants['N'] += 1
+                                    quadrants["N"] += 1
                                 else:
-                                    quadrants['S'] += 1
+                                    quadrants["S"] += 1
                                 if x < self.player.x:
-                                    quadrants['W'] += 1
+                                    quadrants["W"] += 1
                                 else:
-                                    quadrants['E'] += 1
+                                    quadrants["E"] += 1
 
                     # Sprint toward largest unexplored quadrant
-                    best_direction = max(quadrants, key=quadrants.get) if any(quadrants.values()) else None
+                    best_direction = (
+                        max(quadrants, key=quadrants.get) if any(quadrants.values()) else None
+                    )
 
                     if best_direction:
                         # DESPERATE SPRINT - ignore safety, just GO
-                        sprint_dx = {'W': -1, 'E': 1}.get(best_direction, 0)
-                        sprint_dy = {'N': -1, 'S': 1}.get(best_direction, 0)
+                        sprint_dx = {"W": -1, "E": 1}.get(best_direction, 0)
+                        sprint_dy = {"N": -1, "S": 1}.get(best_direction, 0)
 
                         if sprint_dx != 0 or sprint_dy != 0:
-                            for try_dx, try_dy in [(sprint_dx, sprint_dy), (sprint_dx, 0), (0, sprint_dy)]:
+                            for try_dx, try_dy in [
+                                (sprint_dx, sprint_dy),
+                                (sprint_dx, 0),
+                                (0, sprint_dy),
+                            ]:
                                 if try_dx == 0 and try_dy == 0:
                                     continue
                                 if self.move_player(try_dx, try_dy):
@@ -690,9 +708,9 @@ class NinjaAgent(GameTestAgent, StealthMixin):
                 self.damage_taken = self.initial_hp - current_hp
 
             if self.player.cpu <= 0:
-                return 'died'
+                return "died"
 
-        return 'timeout'
+        return "timeout"
 
     def run_pacifist_attempt(self) -> dict:
         """
@@ -713,33 +731,34 @@ class NinjaAgent(GameTestAgent, StealthMixin):
         blind_spot_percent = (self.blind_spot_moves / total_moves * 100) if total_moves > 0 else 0
 
         result = {
-            'status': status,
-            'gateway_reached': self.gateway_reached,
-            'turns_taken': self.turns_taken,
-            'detection_events': self.detection_events,
-            'evasion_attempts': self.evasion_attempts,
-            'successful_evasions': self.successful_evasions,
-            'damage_taken': self.damage_taken,
-            'initial_hp': self.initial_hp,
-            'final_hp': self.player.cpu,
-            'survived': self.player.cpu > 0,
-            'pacifist': self.damage_taken == 0,  # True pacifist = no damage
-            'initial_enemy_count': len(initial_state['enemies']),
-            'final_enemy_count': len(final_state['enemies']),
-            'enemy_states': self.get_enemy_states(),
-            'blind_spot_moves': self.blind_spot_moves,
-            'visible_moves': self.visible_moves,
-            'blind_spot_percent': blind_spot_percent,
-            'wait_turns': self.wait_turns,
-            'explored_tiles': len(self.explored_tiles),
-            'gateway_found': self.gateway_found,
-            'gateway_found_turn': self.gateway_found_turn if self.gateway_found else None
+            "status": status,
+            "gateway_reached": self.gateway_reached,
+            "turns_taken": self.turns_taken,
+            "detection_events": self.detection_events,
+            "evasion_attempts": self.evasion_attempts,
+            "successful_evasions": self.successful_evasions,
+            "damage_taken": self.damage_taken,
+            "initial_hp": self.initial_hp,
+            "final_hp": self.player.cpu,
+            "survived": self.player.cpu > 0,
+            "pacifist": self.damage_taken == 0,  # True pacifist = no damage
+            "initial_enemy_count": len(initial_state["enemies"]),
+            "final_enemy_count": len(final_state["enemies"]),
+            "enemy_states": self.get_enemy_states(),
+            "blind_spot_moves": self.blind_spot_moves,
+            "visible_moves": self.visible_moves,
+            "blind_spot_percent": blind_spot_percent,
+            "wait_turns": self.wait_turns,
+            "explored_tiles": len(self.explored_tiles),
+            "gateway_found": self.gateway_found,
+            "gateway_found_turn": self.gateway_found_turn if self.gateway_found else None,
         }
 
         return result
 
 
 # ===== Tests =====
+
 
 class TestNinjaAgent:
     """Test NinjaAgent behavior and pacifist stealth mechanics."""
@@ -778,7 +797,7 @@ class TestNinjaAgent:
         # Should find nearest enemy
         enemy = agent.find_nearest_enemy()
         # May or may not be enemies, just check it doesn't crash
-        assert enemy is None or hasattr(enemy, 'x')
+        assert enemy is None or hasattr(enemy, "x")
 
     def test_ninja_agent_safety_checking(self):
         """Test ninja agent can evaluate position safety."""
@@ -818,7 +837,7 @@ class TestNinjaAgent:
         status = agent.move_toward_gateway_sprint(max_moves=20)
 
         # Should return valid status
-        valid_statuses = ['reached', 'detected', 'died', 'stuck', 'moving', 'timeout', 'no_gateway']
+        valid_statuses = ["reached", "detected", "died", "stuck", "moving", "timeout", "no_gateway"]
         assert status in valid_statuses
 
         # Should have taken some turns
@@ -831,27 +850,33 @@ class TestNinjaAgent:
         result = agent.run_pacifist_attempt()
 
         # Should return comprehensive results
-        assert 'status' in result
-        assert 'gateway_reached' in result
-        assert 'detection_events' in result
-        assert 'evasion_attempts' in result
-        assert 'damage_taken' in result
-        assert 'pacifist' in result
+        assert "status" in result
+        assert "gateway_reached" in result
+        assert "detection_events" in result
+        assert "evasion_attempts" in result
+        assert "damage_taken" in result
+        assert "pacifist" in result
 
         # Pacifist = no damage taken
-        if result['damage_taken'] == 0:
-            assert result['pacifist']
+        if result["damage_taken"] == 0:
+            assert result["pacifist"]
 
-        print(f"\n=== Ninja Agent Short Run ===")
+        print("\n=== Ninja Agent Short Run ===")
         print(f"Status: {result['status']}")
         print(f"Gateway reached: {result['gateway_reached']}")
         print(f"Turns: {result['turns_taken']}")
         print(f"Explored tiles: {result['explored_tiles']}")
-        print(f"Gateway found: {result['gateway_found']} (turn {result['gateway_found_turn']})" if result['gateway_found'] else f"Gateway found: False")
+        print(
+            f"Gateway found: {result['gateway_found']} (turn {result['gateway_found_turn']})"
+            if result["gateway_found"]
+            else "Gateway found: False"
+        )
         print(f"Detections: {result['detection_events']}")
         print(f"Evasions: {result['successful_evasions']}/{result['evasion_attempts']}")
         print(f"Damage: {result['damage_taken']} (Pacifist: {result['pacifist']})")
-        print(f"Blind spot moves: {result['blind_spot_moves']}/{result['blind_spot_moves'] + result['visible_moves']} ({result['blind_spot_percent']:.1f}%)")
+        print(
+            f"Blind spot moves: {result['blind_spot_moves']}/{result['blind_spot_moves'] + result['visible_moves']} ({result['blind_spot_percent']:.1f}%)"
+        )
 
     def test_ninja_agent_multiple_seeds(self):
         """Test ninja agent across multiple map seeds."""
@@ -860,20 +885,24 @@ class TestNinjaAgent:
         for seed in [1, 42, 123, 456, 789]:
             agent = NinjaAgent(seed=seed, max_turns=200)
             result = agent.run_pacifist_attempt()
-            results.append({
-                'seed': seed,
-                'status': result['status'],
-                'gateway_reached': result['gateway_reached'],
-                'pacifist': result['pacifist']
-            })
+            results.append(
+                {
+                    "seed": seed,
+                    "status": result["status"],
+                    "gateway_reached": result["gateway_reached"],
+                    "pacifist": result["pacifist"],
+                }
+            )
 
-        print(f"\n=== Ninja Agent Multi-Seed Results ===")
+        print("\n=== Ninja Agent Multi-Seed Results ===")
         for r in results:
-            print(f"Seed {r['seed']}: {r['status']} | Gateway: {r['gateway_reached']} | Pacifist: {r['pacifist']}")
+            print(
+                f"Seed {r['seed']}: {r['status']} | Gateway: {r['gateway_reached']} | Pacifist: {r['pacifist']}"
+            )
 
         # At least one should make some progress (not all die immediately)
-        statuses = [r['status'] for r in results]
-        assert 'reached' in statuses or 'moving' in statuses or 'timeout' in statuses
+        statuses = [r["status"] for r in results]
+        assert "reached" in statuses or "moving" in statuses or "timeout" in statuses
 
     @pytest.mark.slow
     def test_ninja_agent_long_pacifist_run(self):
@@ -882,23 +911,29 @@ class TestNinjaAgent:
 
         result = agent.run_pacifist_attempt()
 
-        print(f"\n=== Ninja Agent Long Run ===")
+        print("\n=== Ninja Agent Long Run ===")
         print(f"Status: {result['status']}")
         print(f"Gateway reached: {result['gateway_reached']}")
         print(f"Turns taken: {result['turns_taken']}/{agent.max_turns}")
         print(f"Explored tiles: {result['explored_tiles']}")
-        print(f"Gateway found: {result['gateway_found']} (turn {result['gateway_found_turn']})" if result['gateway_found'] else f"Gateway found: False")
+        print(
+            f"Gateway found: {result['gateway_found']} (turn {result['gateway_found_turn']})"
+            if result["gateway_found"]
+            else "Gateway found: False"
+        )
         print(f"Detection events: {result['detection_events']}")
         print(f"Evasion success: {result['successful_evasions']}/{result['evasion_attempts']}")
         print(f"Final HP: {result['final_hp']}/{result['initial_hp']}")
         print(f"Damage taken: {result['damage_taken']}")
         print(f"Pure pacifist: {result['pacifist']}")
-        print(f"Blind spot moves: {result['blind_spot_moves']}/{result['blind_spot_moves'] + result['visible_moves']} ({result['blind_spot_percent']:.1f}%)")
+        print(
+            f"Blind spot moves: {result['blind_spot_moves']}/{result['blind_spot_moves'] + result['visible_moves']} ({result['blind_spot_percent']:.1f}%)"
+        )
         print(f"Enemy states: {result['enemy_states']}")
 
         # Should survive the attempt (even if doesn't reach gateway)
-        assert result['survived'], "Ninja agent should survive long run"
+        assert result["survived"], "Ninja agent should survive long run"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v', '-s'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v", "-s"])

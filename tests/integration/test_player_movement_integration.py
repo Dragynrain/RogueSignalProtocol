@@ -5,8 +5,8 @@ Tests real movement mechanics, collision detection, and map navigation.
 """
 
 import pytest
+
 from game_entities import Position
-from tests.fixtures.quick_fixtures import quick_engine, map_with_walls, positioned_enemy
 
 
 class TestPlayerMovementIntegration:
@@ -47,9 +47,9 @@ class TestPlayerMovementIntegration:
         # Test movement in all four directions
         directions = [
             Position(0, -1),  # North
-            Position(1, 0),   # East
-            Position(0, 1),   # South
-            Position(-1, 0)   # West
+            Position(1, 0),  # East
+            Position(0, 1),  # South
+            Position(-1, 0),  # West
         ]
 
         successful_moves = 0
@@ -71,8 +71,7 @@ class TestPlayerMovementIntegration:
             else:
                 # Movement blocked by wall or out of bounds
                 assert engine.game_map.is_wall(target_pos) or not (
-                    0 <= target_x < engine.game_map.width and
-                    0 <= target_y < engine.game_map.height
+                    0 <= target_x < engine.game_map.width and 0 <= target_y < engine.game_map.height
                 )
                 blocked_moves += 1
 
@@ -130,9 +129,11 @@ class TestPlayerMovementIntegration:
                 assert new_distance <= distance_to_gateway
 
         # Test interaction with special nodes
-        special_nodes = (engine.game_map.cooling_nodes |
-                        engine.game_map.cpu_recovery_nodes |
-                        engine.game_map.ghost_nodes)
+        special_nodes = (
+            engine.game_map.cooling_nodes
+            | engine.game_map.cpu_recovery_nodes
+            | engine.game_map.ghost_nodes
+        )
 
         if len(special_nodes) > 0:
             node_pos = Position(list(special_nodes)[0][0], list(special_nodes)[0][1])
@@ -175,10 +176,7 @@ class TestPlayerMovementIntegration:
             assert engine.player.position != engine.player.last_position
 
         # Test position validation
-        assert engine.player.position.is_valid(
-            engine.game_map.width,
-            engine.game_map.height
-        )
+        assert engine.player.position.is_valid(engine.game_map.width, engine.game_map.height)
 
 
 class TestMapInteractionIntegration:
@@ -199,7 +197,7 @@ class TestMapInteractionIntegration:
 
                 player_at_cooling_node = (
                     engine.player.position.x,
-                    engine.player.position.y
+                    engine.player.position.y,
                 ) in cooling_nodes
 
                 assert player_at_cooling_node
@@ -221,7 +219,7 @@ class TestMapInteractionIntegration:
 
                 player_at_cpu_node = (
                     engine.player.position.x,
-                    engine.player.position.y
+                    engine.player.position.y,
                 ) in cpu_nodes
 
                 assert player_at_cpu_node
@@ -245,8 +243,10 @@ class TestMapInteractionIntegration:
                 explore_x = player_pos.x + dx
                 explore_y = player_pos.y + dy
 
-                if (0 <= explore_x < engine.game_map.width and
-                    0 <= explore_y < engine.game_map.height):
+                if (
+                    0 <= explore_x < engine.game_map.width
+                    and 0 <= explore_y < engine.game_map.height
+                ):
                     engine.game_map.explored_tiles.add((explore_x, explore_y))
 
         final_explored = len(engine.game_map.explored_tiles)
@@ -275,16 +275,13 @@ class TestMapInteractionIntegration:
                     Position(edge_pos.x - 1, edge_pos.y),
                     Position(edge_pos.x + 1, edge_pos.y),
                     Position(edge_pos.x, edge_pos.y - 1),
-                    Position(edge_pos.x, edge_pos.y + 1)
+                    Position(edge_pos.x, edge_pos.y + 1),
                 ]
 
                 for adj_pos in adjacent:
-                    is_valid = adj_pos.is_valid(
-                        engine.game_map.width,
-                        engine.game_map.height
-                    )
+                    is_valid = adj_pos.is_valid(engine.game_map.width, engine.game_map.height)
                     is_in_bounds = (
-                        0 <= adj_pos.x < engine.game_map.width and
-                        0 <= adj_pos.y < engine.game_map.height
+                        0 <= adj_pos.x < engine.game_map.width
+                        and 0 <= adj_pos.y < engine.game_map.height
                     )
                     assert is_valid == is_in_bounds

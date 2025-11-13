@@ -10,19 +10,20 @@ Critical: These tests use actual GameEngine initialization with minimal mocking
 to validate real-world game startup scenarios.
 """
 
-import pytest
-import sys
 import os
+import sys
+
+import pytest
 
 # Add the project root directory to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
+from game_config import GameConfig, GameSettings
 from game_engine import GameEngine
-from game_config import GameSettings, GameConfig
-from game_map import GameMap
+from game_entities import Position
 from game_level import LevelGenerator
 from game_level_structure import BSPRoomGenerator, RoomGenerator
-from game_entities import Position
+from game_map import GameMap
 
 
 class TestNewGameSmokeTests:
@@ -69,11 +70,7 @@ class TestNewGameSmokeTests:
         level_generator = LevelGenerator(game_map, use_bsp=True)
 
         # Create engine with BSP level generator (generates level in __init__)
-        engine = GameEngine(
-            settings=settings,
-            game_map=game_map,
-            level_generator=level_generator
-        )
+        engine = GameEngine(settings=settings, game_map=game_map, level_generator=level_generator)
 
         # Validate BSP-specific results
         assert isinstance(level_generator.room_generator, BSPRoomGenerator)
@@ -87,9 +84,7 @@ class TestNewGameSmokeTests:
 
         # Spawn area (2,2 to 10,10) should have some walkable tiles
         spawn_area_has_floor = any(
-            not game_map.is_wall(Position(x, y))
-            for x in range(2, 10)
-            for y in range(2, 10)
+            not game_map.is_wall(Position(x, y)) for x in range(2, 10) for y in range(2, 10)
         )
         assert spawn_area_has_floor, "Spawn area has no walkable tiles"
 
@@ -102,11 +97,7 @@ class TestNewGameSmokeTests:
         level_generator = LevelGenerator(game_map, use_bsp=False)
 
         # Create engine with traditional level generator (generates level in __init__)
-        engine = GameEngine(
-            settings=settings,
-            game_map=game_map,
-            level_generator=level_generator
-        )
+        engine = GameEngine(settings=settings, game_map=game_map, level_generator=level_generator)
 
         # Validate traditional generation was used
         assert isinstance(level_generator.room_generator, RoomGenerator)
@@ -279,12 +270,14 @@ class TestActualNewGameRenderingSmoke:
 
         This catches runtime errors that unit tests miss, like GameConfig.CONSOLE_WIDTH bugs.
         """
-        from unittest.mock import Mock, patch, MagicMock
-        import tcod
-        from game_menus import MainMenu
-        from game_input import InputHandler
+        from unittest.mock import Mock, patch
 
-        with patch('game_audio.SoundManager'):
+        import tcod
+
+        from game_input import InputHandler
+        from game_menus import MainMenu
+
+        with patch("game_audio.SoundManager"):
             settings = GameSettings()
 
             # Create main menu
@@ -292,14 +285,18 @@ class TestActualNewGameRenderingSmoke:
             menu.selected_option = 0  # "New Game" is first option
 
             # Simulate pressing Enter to start new game
-            with patch('game_save.SaveGameManager.save_exists', return_value=False):
+            with patch("game_save.SaveGameManager.save_exists", return_value=False):
                 key_event = tcod.event.KeyDown(
                     scancode=tcod.event.Scancode.RETURN,
                     sym=tcod.event.KeySym.RETURN,
-                    mod=tcod.event.Modifier.NONE
+                    mod=tcod.event.Modifier.NONE,
                 )
                 result = menu.handle_input(key_event)
-                assert result in ("new_game", "continue", ""), f"Expected game start action, got: {result}"
+                assert result in (
+                    "new_game",
+                    "continue",
+                    "",
+                ), f"Expected game start action, got: {result}"
 
             # Create game engine
             engine = GameEngine(settings=settings, load_save=False)
@@ -349,7 +346,7 @@ class TestActualNewGameRenderingSmoke:
         """
         from unittest.mock import Mock, patch
 
-        with patch('game_audio.SoundManager'):
+        with patch("game_audio.SoundManager"):
             from game_input import InputHandler
 
             settings = GameSettings()
@@ -367,9 +364,9 @@ class TestActualNewGameRenderingSmoke:
 
             # Test various mouse positions
             test_positions = [
-                (0, 0),      # Top-left
+                (0, 0),  # Top-left
                 (640, 400),  # Center
-                (1279, 799), # Bottom-right
+                (1279, 799),  # Bottom-right
                 (100, 200),  # Random position
             ]
 
@@ -386,10 +383,12 @@ class TestActualNewGameRenderingSmoke:
                     expected_tile_x = pixel_x * GameConfig.SCREEN_WIDTH // 1280
                     expected_tile_y = pixel_y * GameConfig.SCREEN_HEIGHT // 800
 
-                    assert engine.last_mouse_tile_x == expected_tile_x, \
-                        f"Mouse X wrong: expected {expected_tile_x}, got {engine.last_mouse_tile_x}"
-                    assert engine.last_mouse_tile_y == expected_tile_y, \
-                        f"Mouse Y wrong: expected {expected_tile_y}, got {engine.last_mouse_tile_y}"
+                    assert (
+                        engine.last_mouse_tile_x == expected_tile_x
+                    ), f"Mouse X wrong: expected {expected_tile_x}, got {engine.last_mouse_tile_x}"
+                    assert (
+                        engine.last_mouse_tile_y == expected_tile_y
+                    ), f"Mouse Y wrong: expected {expected_tile_y}, got {engine.last_mouse_tile_y}"
 
                 except AttributeError as e:
                     error_str = str(e)
@@ -419,6 +418,7 @@ class TestFullRenderingPipeline:
         - Coordinate conversion bugs
         """
         import tcod
+
         from game_rendering_core import GameRenderer
 
         # Create real game with glyphs mode
@@ -440,9 +440,11 @@ class TestFullRenderingPipeline:
         try:
             renderer.render_game(console, engine, context=None)
         except AttributeError as e:
-            pytest.fail(f"RENDERING FAILURE: {e}\n"
-                       f"This is a critical bug that prevents the game from running!\n"
-                       f"The smoke test should have caught this before commit.")
+            pytest.fail(
+                f"RENDERING FAILURE: {e}\n"
+                f"This is a critical bug that prevents the game from running!\n"
+                f"The smoke test should have caught this before commit."
+            )
         except Exception as e:
             # Other exceptions might be acceptable (like missing context for graphics mode)
             # but AttributeError means code is accessing non-existent attributes
@@ -459,6 +461,7 @@ class TestFullRenderingPipeline:
         Render multiple frames with mouse movement to catch state-dependent bugs.
         """
         import tcod
+
         from game_rendering_core import GameRenderer
 
         settings = GameSettings()
@@ -469,8 +472,16 @@ class TestFullRenderingPipeline:
 
         # Simulate 10 frames with different mouse positions
         mouse_positions = [
-            (10, 10), (30, 15), (50, 20), (5, 5), (40, 25),
-            (35, 30), (20, 10), (45, 35), (15, 40), (25, 20)
+            (10, 10),
+            (30, 15),
+            (50, 20),
+            (5, 5),
+            (40, 25),
+            (35, 30),
+            (20, 10),
+            (45, 35),
+            (15, 40),
+            (25, 20),
         ]
 
         for frame, (mouse_x, mouse_y) in enumerate(mouse_positions):
@@ -487,6 +498,7 @@ class TestFullRenderingPipeline:
     def test_render_with_inventory_open(self):
         """Test rendering with UI screens open (inventory, help, etc.)."""
         import tcod
+
         from game_rendering_core import GameRenderer
 
         settings = GameSettings()
@@ -517,6 +529,7 @@ class TestFullRenderingPipeline:
     def test_render_with_enemies_visible(self):
         """Test rendering with enemies in view to catch entity rendering bugs."""
         import tcod
+
         from game_rendering_core import GameRenderer
 
         settings = GameSettings()
@@ -545,8 +558,9 @@ class TestFullRenderingPipeline:
     def test_render_achievement_popup(self):
         """Test rendering with achievement popup active."""
         import tcod
-        from game_rendering_core import GameRenderer
+
         from game_achievements import AchievementManager
+        from game_rendering_core import GameRenderer
 
         settings = GameSettings()
         settings.graphics_mode = "glyphs"
@@ -572,6 +586,7 @@ class TestFullRenderingPipeline:
         This shouldn't crash with AttributeError, just skip graphics rendering.
         """
         import tcod
+
         from game_rendering_core import GameRenderer
 
         settings = GameSettings()

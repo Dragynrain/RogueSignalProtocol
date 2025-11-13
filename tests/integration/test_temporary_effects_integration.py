@@ -14,15 +14,11 @@ Tests the complete integration of temporary effect system:
 These tests use REAL game objects with minimal mocking.
 """
 
-import pytest
-from unittest.mock import Mock
 
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
-from game_config import GameSettings, GameBalance
+import pytest
+
+from game_entities import EnemyState, Position
 from tests.fixtures.simple_fixtures import enemy_builder
-from tests.fixtures.real_game_data import get_real_game_data
 
 
 class TestBasicEffectLifecycle:
@@ -32,52 +28,56 @@ class TestBasicEffectLifecycle:
         """Test temporary effect expires after its duration."""
 
         # Apply effect with 3-turn duration
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 3
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 3
 
         # Verify effect active
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] == 3
+        assert basic_game_engine.player.temporary_effects["enhanced_vision_turns"] == 3
 
         # Update effects (1 turn passes)
         basic_game_engine.player.update_effects()
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] == 2
+        assert basic_game_engine.player.temporary_effects["enhanced_vision_turns"] == 2
 
         # Update effects (2 turns passed)
         basic_game_engine.player.update_effects()
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] == 1
+        assert basic_game_engine.player.temporary_effects["enhanced_vision_turns"] == 1
 
         # Update effects (3 turns passed - effect should expire)
         basic_game_engine.player.update_effects()
-        assert 'enhanced_vision_turns' not in basic_game_engine.player.temporary_effects or \
-               basic_game_engine.player.temporary_effects['enhanced_vision_turns'] == 0
+        assert (
+            "enhanced_vision_turns" not in basic_game_engine.player.temporary_effects
+            or basic_game_engine.player.temporary_effects["enhanced_vision_turns"] == 0
+        )
 
     def test_multiple_effects_expire_independently(self, basic_game_engine):
         """Test multiple effects expire at different times."""
 
         # Apply multiple effects with different durations
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 5
-        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 2
-        basic_game_engine.player.temporary_effects['speed_boost_turns'] = 3
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 5
+        basic_game_engine.player.temporary_effects["traffic_masquerade_turns"] = 2
+        basic_game_engine.player.temporary_effects["speed_boost_turns"] = 3
 
         # Process 2 turns
         basic_game_engine.player.update_effects()
         basic_game_engine.player.update_effects()
 
         # traffic_masquerade should expire
-        assert basic_game_engine.player.temporary_effects.get('traffic_masquerade_turns', 0) == 0
+        assert basic_game_engine.player.temporary_effects.get("traffic_masquerade_turns", 0) == 0
         # Others should still be active
-        assert basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0) == 3
-        assert basic_game_engine.player.temporary_effects.get('speed_boost_turns', 0) == 1
+        assert basic_game_engine.player.temporary_effects.get("enhanced_vision_turns", 0) == 3
+        assert basic_game_engine.player.temporary_effects.get("speed_boost_turns", 0) == 1
 
     def test_effect_duration_zero_means_inactive(self, basic_game_engine):
         """Test effect with 0 duration is inactive."""
 
         # Apply effect with 0 duration
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 0
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 0
 
         # Verify effect not active (check via vision range)
         normal_vision = basic_game_engine.player.get_vision_range()
         # With 0 turns, enhanced vision should not add bonus
-        assert basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0) == 0, "Effect with 0 turns should not be active"
+        assert (
+            basic_game_engine.player.temporary_effects.get("enhanced_vision_turns", 0) == 0
+        ), "Effect with 0 turns should not be active"
 
 
 class TestEnhancedVisionEffects:
@@ -90,7 +90,7 @@ class TestEnhancedVisionEffects:
         normal_range = basic_game_engine.player.get_vision_range()
 
         # Apply enhanced vision
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 5
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 5
 
         # Get enhanced range
         enhanced_range = basic_game_engine.player.get_vision_range()
@@ -102,20 +102,24 @@ class TestEnhancedVisionEffects:
         """Test enhanced vision allows seeing through walls."""
 
         # Normal player cannot see through walls
-        assert not basic_game_engine.player.can_see_through_walls(), "Normal player should not see through walls"
+        assert (
+            not basic_game_engine.player.can_see_through_walls()
+        ), "Normal player should not see through walls"
 
         # Apply enhanced vision
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 5
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 5
 
         # Verify wall vision
-        assert basic_game_engine.player.can_see_through_walls(), "Enhanced vision should allow seeing through walls"
+        assert (
+            basic_game_engine.player.can_see_through_walls()
+        ), "Enhanced vision should allow seeing through walls"
 
     def test_enhanced_vision_expires_and_range_resets(self, basic_game_engine):
         """Test vision range resets when enhanced vision expires."""
 
         # Apply and measure
         normal_range = basic_game_engine.player.get_vision_range()
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 1
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 1
         enhanced_range = basic_game_engine.player.get_vision_range()
 
         # Expire effect
@@ -138,14 +142,18 @@ class TestInvisibilityEffects:
         basic_game_engine.enemies = [scanner]
 
         # Without invisibility - enemy can see
-        can_see_visible = scanner.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
+        can_see_visible = scanner.can_see_player(
+            basic_game_engine.player, basic_game_engine.game_map
+        )
         assert bool(can_see_visible), "Enemy should see visible player when adjacent"
 
         # Apply invisibility
-        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
+        basic_game_engine.player.temporary_effects["traffic_masquerade_turns"] = 5
 
         # With invisibility - enemy cannot see
-        can_see_invisible = scanner.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
+        can_see_invisible = scanner.can_see_player(
+            basic_game_engine.player, basic_game_engine.game_map
+        )
         assert not can_see_invisible, "Enemy should not see invisible player"
 
     def test_invisibility_expires_causes_detection(self, basic_game_engine):
@@ -157,15 +165,19 @@ class TestInvisibilityEffects:
         basic_game_engine.enemies = [scanner]
 
         # Apply invisibility with 1 turn remaining
-        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 1
-        can_see_invisible = scanner.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
+        basic_game_engine.player.temporary_effects["traffic_masquerade_turns"] = 1
+        can_see_invisible = scanner.can_see_player(
+            basic_game_engine.player, basic_game_engine.game_map
+        )
         assert not can_see_invisible, "Should not see invisible player"
 
         # Expire invisibility
         basic_game_engine.player.update_effects()
 
         # Verify now visible
-        can_see_visible = scanner.can_see_player(basic_game_engine.player, basic_game_engine.game_map)
+        can_see_visible = scanner.can_see_player(
+            basic_game_engine.player, basic_game_engine.game_map
+        )
         assert bool(can_see_visible), "Should see player after invisibility expires"
 
     def test_admin_sees_through_invisibility(self, basic_game_engine):
@@ -173,7 +185,7 @@ class TestInvisibilityEffects:
 
         # Position player and admin
         basic_game_engine.player.position = Position(20, 20)
-        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
+        basic_game_engine.player.temporary_effects["traffic_masquerade_turns"] = 5
         admin = enemy_builder("admin", pos=(40, 40))
         basic_game_engine.enemies = [admin]
 
@@ -201,7 +213,7 @@ class TestDisableEffects:
 
         # Verify position unchanged (if enemy is truly disabled)
         # Note: This depends on enemy AI implementation
-        assert hasattr(scanner, 'disabled_turns'), "Enemy should track disabled status"
+        assert hasattr(scanner, "disabled_turns"), "Enemy should track disabled status"
 
     def test_disabled_enemy_cannot_see_player(self, basic_game_engine):
         """Test disabled enemy cannot see player."""
@@ -239,7 +251,7 @@ class TestInfectionEffects:
         """Test infection effect damages player over multiple turns."""
 
         # Apply infection
-        basic_game_engine.player.temporary_effects['infection_turns'] = 3
+        basic_game_engine.player.temporary_effects["infection_turns"] = 3
         basic_game_engine.player.cpu = 100
 
         initial_cpu = basic_game_engine.player.cpu
@@ -250,20 +262,22 @@ class TestInfectionEffects:
 
         # Verify damage occurred (if infection deals damage)
         # Note: This depends on infection implementation
-        assert hasattr(basic_game_engine.player.temporary_effects, '__getitem__'), "Should have effects system"
+        assert hasattr(
+            basic_game_engine.player.temporary_effects, "__getitem__"
+        ), "Should have effects system"
 
     def test_infection_expires(self, basic_game_engine):
         """Test infection expires after duration."""
 
         # Apply infection
-        basic_game_engine.player.temporary_effects['infection_turns'] = 2
+        basic_game_engine.player.temporary_effects["infection_turns"] = 2
 
         # Process turns
         basic_game_engine.player.update_effects()
-        assert basic_game_engine.player.temporary_effects.get('infection_turns', 0) == 1
+        assert basic_game_engine.player.temporary_effects.get("infection_turns", 0) == 1
 
         basic_game_engine.player.update_effects()
-        assert basic_game_engine.player.temporary_effects.get('infection_turns', 0) == 0
+        assert basic_game_engine.player.temporary_effects.get("infection_turns", 0) == 0
 
 
 class TestEffectStacking:
@@ -273,55 +287,57 @@ class TestEffectStacking:
         """Test reapplying same effect refreshes/extends duration."""
 
         # Apply effect
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 2
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 2
 
         # Process 1 turn
         basic_game_engine.player.update_effects()
-        assert basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0) == 1
+        assert basic_game_engine.player.temporary_effects.get("enhanced_vision_turns", 0) == 1
 
         # Reapply effect (refresh to 3 turns)
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 3
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 3
 
         # Verify refreshed
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] == 3
+        assert basic_game_engine.player.temporary_effects["enhanced_vision_turns"] == 3
 
     def test_multiple_different_effects_active_simultaneously(self, basic_game_engine):
         """Test multiple different effects can be active at once."""
 
         # Apply multiple effects
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 5
-        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 3
-        basic_game_engine.player.temporary_effects['speed_boost_turns'] = 4
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 5
+        basic_game_engine.player.temporary_effects["traffic_masquerade_turns"] = 3
+        basic_game_engine.player.temporary_effects["speed_boost_turns"] = 4
 
         # Verify all active (check durations)
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] > 0, "Enhanced vision should be active"
+        assert (
+            basic_game_engine.player.temporary_effects["enhanced_vision_turns"] > 0
+        ), "Enhanced vision should be active"
         assert basic_game_engine.player.is_invisible(), "Invisibility should be active"
 
         # Process turn
         basic_game_engine.player.update_effects()
 
         # All should still be active
-        assert basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0) == 4
-        assert basic_game_engine.player.temporary_effects.get('traffic_masquerade_turns', 0) == 2
-        assert basic_game_engine.player.temporary_effects.get('speed_boost_turns', 0) == 3
+        assert basic_game_engine.player.temporary_effects.get("enhanced_vision_turns", 0) == 4
+        assert basic_game_engine.player.temporary_effects.get("traffic_masquerade_turns", 0) == 2
+        assert basic_game_engine.player.temporary_effects.get("speed_boost_turns", 0) == 3
 
     def test_buff_and_debuff_coexist(self, basic_game_engine):
         """Test buff and debuff effects can exist simultaneously."""
 
         # Apply buff and debuff
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 3  # Buff
-        basic_game_engine.player.temporary_effects['infection_turns'] = 3  # Debuff
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 3  # Buff
+        basic_game_engine.player.temporary_effects["infection_turns"] = 3  # Debuff
 
         # Both should be active
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] == 3
-        assert basic_game_engine.player.temporary_effects['infection_turns'] == 3
+        assert basic_game_engine.player.temporary_effects["enhanced_vision_turns"] == 3
+        assert basic_game_engine.player.temporary_effects["infection_turns"] == 3
 
         # Update
         basic_game_engine.player.update_effects()
 
         # Both should decrease
-        assert basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0) == 2
-        assert basic_game_engine.player.temporary_effects.get('infection_turns', 0) == 2
+        assert basic_game_engine.player.temporary_effects.get("enhanced_vision_turns", 0) == 2
+        assert basic_game_engine.player.temporary_effects.get("infection_turns", 0) == 2
 
 
 class TestEffectEdgeCases:
@@ -331,7 +347,7 @@ class TestEffectEdgeCases:
         """Test negative duration is treated as inactive."""
 
         # Manually set negative duration (edge case)
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = -1
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = -1
 
         # Should not be active
         # This depends on implementation - some may clamp to 0
@@ -349,17 +365,19 @@ class TestEffectEdgeCases:
 
         # Apply effect with very large duration
         large_duration = 9999
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = large_duration
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = large_duration
 
         # Verify active (check duration)
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] > 0, "Effect should be active"
+        assert (
+            basic_game_engine.player.temporary_effects["enhanced_vision_turns"] > 0
+        ), "Effect should be active"
 
         # Process turns
         for _ in range(10):
             basic_game_engine.player.update_effects()
 
         # Should still be active
-        remaining = basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0)
+        remaining = basic_game_engine.player.temporary_effects.get("enhanced_vision_turns", 0)
         assert remaining == large_duration - 10, "Duration should decrease correctly"
 
     def test_effect_removal_during_combat(self, basic_game_engine):
@@ -367,40 +385,50 @@ class TestEffectEdgeCases:
 
         # Position player and enemy for combat
         basic_game_engine.player.position = Position(20, 20)
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 1
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 1
         bot = enemy_builder("bot", pos=(21, 20))
         bot.state = EnemyState.HOSTILE
         basic_game_engine.enemies = [bot]
 
         # Verify effect active
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] > 0, "Effect should be active"
+        assert (
+            basic_game_engine.player.temporary_effects["enhanced_vision_turns"] > 0
+        ), "Effect should be active"
 
         # Process turn (effect expires during combat)
         basic_game_engine.process_turn()
 
         # Verify effect expired
-        assert basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0) == 0, "Effect should expire"
+        assert (
+            basic_game_engine.player.temporary_effects.get("enhanced_vision_turns", 0) == 0
+        ), "Effect should expire"
 
         # Verify game still stable
-        assert basic_game_engine.player.cpu > 0 or len(basic_game_engine.enemies) > 0, "Game should remain stable"
+        assert (
+            basic_game_engine.player.cpu > 0 or len(basic_game_engine.enemies) > 0
+        ), "Game should remain stable"
 
     def test_multiple_effects_expire_same_turn(self, basic_game_engine):
         """Test multiple effects expiring on same turn."""
 
         # Apply multiple effects with same duration
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 1
-        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 1
-        basic_game_engine.player.temporary_effects['speed_boost_turns'] = 1
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 1
+        basic_game_engine.player.temporary_effects["traffic_masquerade_turns"] = 1
+        basic_game_engine.player.temporary_effects["speed_boost_turns"] = 1
 
         # All active
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] > 0, "Should be active"
+        assert (
+            basic_game_engine.player.temporary_effects["enhanced_vision_turns"] > 0
+        ), "Should be active"
         assert basic_game_engine.player.is_invisible(), "Should be active"
 
         # Update effects (all expire)
         basic_game_engine.player.update_effects()
 
         # All should expire
-        assert basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0) == 0, "Should expire"
+        assert (
+            basic_game_engine.player.temporary_effects.get("enhanced_vision_turns", 0) == 0
+        ), "Should expire"
         assert not basic_game_engine.player.is_invisible(), "Should expire"
 
 
@@ -416,7 +444,7 @@ class TestEffectWithGameplaySystems:
 
         # Position player in shadow with invisibility
         basic_game_engine.player.position = shadow_pos
-        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 5
+        basic_game_engine.player.temporary_effects["traffic_masquerade_turns"] = 5
 
         # Create enemy nearby
         scanner = enemy_builder("scanner", pos=(25, 20))
@@ -437,10 +465,12 @@ class TestEffectWithGameplaySystems:
         shadow_pos = Position(20, 20)
         basic_game_engine.game_map.blind_spots.add((shadow_pos.x, shadow_pos.y))
         basic_game_engine.player.position = shadow_pos
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 5
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 5
 
         # Enhanced vision should work even in shadow
-        assert basic_game_engine.player.temporary_effects['enhanced_vision_turns'] > 0, "Should have enhanced vision"
+        assert (
+            basic_game_engine.player.temporary_effects["enhanced_vision_turns"] > 0
+        ), "Should have enhanced vision"
         assert basic_game_engine.game_map.is_blind_spot(shadow_pos), "Should be in shadow"
 
         # Player can see more while in shadow
@@ -451,22 +481,22 @@ class TestEffectWithGameplaySystems:
         """Test effects persist correctly across multiple game turns."""
 
         # Apply long-duration effect
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 10
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 10
 
         # Process multiple game turns
         for turn in range(5):
             basic_game_engine.process_turn()
 
         # Effect should still be active
-        remaining = basic_game_engine.player.temporary_effects.get('enhanced_vision_turns', 0)
+        remaining = basic_game_engine.player.temporary_effects.get("enhanced_vision_turns", 0)
         assert remaining == 5, "Effect should persist and decrease correctly"
 
     def test_effect_on_player_death(self, basic_game_engine):
         """Test effects are cleared on player death."""
 
         # Apply effects
-        basic_game_engine.player.temporary_effects['enhanced_vision_turns'] = 5
-        basic_game_engine.player.temporary_effects['traffic_masquerade_turns'] = 3
+        basic_game_engine.player.temporary_effects["enhanced_vision_turns"] = 5
+        basic_game_engine.player.temporary_effects["traffic_masquerade_turns"] = 3
 
         # Set player to near-death
         basic_game_engine.player.cpu = 1
@@ -479,5 +509,5 @@ class TestEffectWithGameplaySystems:
         assert basic_game_engine.player.cpu == 0, "Player should be dead"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

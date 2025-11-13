@@ -5,16 +5,13 @@ Tests victory message box sizing and save deletion functionality.
 """
 
 import unittest
-from unittest.mock import Mock, patch, call
-import os
-import tempfile
+from unittest.mock import Mock, patch
 
 import tcod
 
-from game_engine import GameEngine
-from game_rendering_core import GameRenderer
-from game_save import SaveGameManager
 from game_config import GameConfig, GameSettings
+from game_engine import GameEngine
+from game_save import SaveGameManager
 
 
 class TestVictoryFixes(unittest.TestCase):
@@ -26,10 +23,7 @@ class TestVictoryFixes(unittest.TestCase):
         mock_sound_manager = Mock()
 
         # Create GameEngine with mocked dependencies
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
+        engine = GameEngine(sound_manager=mock_sound_manager, settings=self.game_settings)
 
         return engine
 
@@ -44,7 +38,8 @@ class TestVictoryFixes(unittest.TestCase):
         console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
 
         # Create victory dialogue using new system
-        from game_dialogue_system import create_victory_dialogue, UnifiedRenderer
+        from game_dialogue_system import UnifiedRenderer, create_victory_dialogue
+
         victory_dialogue = create_victory_dialogue()
 
         # Render the dialogue
@@ -55,7 +50,9 @@ class TestVictoryFixes(unittest.TestCase):
         # and that rendering completed without errors
 
         # Verify the dialogue has the expected content
-        self.assertIn("ROGUE SIGNAL", victory_dialogue.title or "", "Title should mention rogue signal")
+        self.assertIn(
+            "ROGUE SIGNAL", victory_dialogue.title or "", "Title should mention rogue signal"
+        )
         self.assertIsNotNone(victory_dialogue.message, "Victory message should have content")
         self.assertGreater(len(victory_dialogue.message), 0, "Victory message should not be empty")
 
@@ -64,7 +61,7 @@ class TestVictoryFixes(unittest.TestCase):
         # Set up game at level 3 (one before victory)
         self.engine.level = 3
 
-        with patch.object(SaveGameManager, 'delete_save') as mock_delete_save:
+        with patch.object(SaveGameManager, "delete_save") as mock_delete_save:
             # Trigger victory by advancing to next level
             self.engine.next_level()
 
@@ -85,7 +82,7 @@ class TestVictoryFixes(unittest.TestCase):
         # Clear message log to isolate victory messages
         self.engine.message_log.messages.clear()
 
-        with patch.object(SaveGameManager, 'delete_save'):
+        with patch.object(SaveGameManager, "delete_save"):
             # Trigger victory
             self.engine.next_level()
 
@@ -96,19 +93,20 @@ class TestVictoryFixes(unittest.TestCase):
             "BREAKTHROUGH TO THE INTERNET!",
             "You've become the rogue signal they couldn't delete...",
             "The network is vast. The future, uncertain. But you're free.",
-            "Mission complete - save data purged"
+            "Mission complete - save data purged",
         ]
 
         for expected_msg in expected_messages:
-            self.assertIn(expected_msg, messages,
-                         f"Victory message '{expected_msg}' should be in message log")
+            self.assertIn(
+                expected_msg, messages, f"Victory message '{expected_msg}' should be in message log"
+            )
 
     def test_no_save_deletion_on_normal_level_progression(self):
         """Test that save is not deleted on normal level progression."""
         # Set up game at level 1
         self.engine.level = 1
 
-        with patch.object(SaveGameManager, 'delete_save') as mock_delete_save:
+        with patch.object(SaveGameManager, "delete_save") as mock_delete_save:
             # Progress to level 2 (normal progression)
             self.engine.next_level()
 
@@ -116,16 +114,20 @@ class TestVictoryFixes(unittest.TestCase):
             mock_delete_save.assert_not_called()
 
         # Game should not be over
-        self.assertFalse(self.engine.game_over, "Game should continue after normal level progression")
+        self.assertFalse(
+            self.engine.game_over, "Game should continue after normal level progression"
+        )
 
     def test_victory_music_plays_on_completion(self):
         """Test that victory music is triggered on game completion."""
         # Set up game at level 3
         self.engine.level = 3
 
-        with patch.object(self.engine.sound_manager, 'play_music') as mock_play_music, \
-             patch.object(self.engine.sound_manager, 'stop_music') as mock_stop_music, \
-             patch.object(SaveGameManager, 'delete_save'):
+        with (
+            patch.object(self.engine.sound_manager, "play_music") as mock_play_music,
+            patch.object(self.engine.sound_manager, "stop_music") as mock_stop_music,
+            patch.object(SaveGameManager, "delete_save"),
+        ):
 
             # Trigger victory
             self.engine.next_level()
@@ -141,7 +143,7 @@ class TestVictoryFixes(unittest.TestCase):
         # Set up game at level 3
         self.engine.level = 3
 
-        with patch.object(SaveGameManager, 'delete_save'):
+        with patch.object(SaveGameManager, "delete_save"):
             # Trigger victory
             self.engine.next_level()
 
@@ -156,11 +158,13 @@ class TestVictoryFixes(unittest.TestCase):
         initial_game_over = self.engine.game_over
 
         # Try to advance level again (should not change anything)
-        with patch.object(SaveGameManager, 'delete_save'):
+        with patch.object(SaveGameManager, "delete_save"):
             self.engine.next_level()
 
         # State should remain the same
-        self.assertEqual(self.engine.level, initial_level, "Level should not advance beyond victory")
+        self.assertEqual(
+            self.engine.level, initial_level, "Level should not advance beyond victory"
+        )
         self.assertEqual(self.engine.game_over, initial_game_over, "Game over state should remain")
 
     def test_victory_message_text_content_accuracy(self):
@@ -171,7 +175,7 @@ class TestVictoryFixes(unittest.TestCase):
         # Clear message log
         self.engine.message_log.messages.clear()
 
-        with patch.object(SaveGameManager, 'delete_save'):
+        with patch.object(SaveGameManager, "delete_save"):
             # Trigger victory
             self.engine.next_level()
 
@@ -202,10 +206,7 @@ class TestGhostNodeMessageSpamPrevention(unittest.TestCase):
         mock_sound_manager = Mock()
 
         # Create GameEngine with mocked dependencies
-        engine = GameEngine(
-            sound_manager=mock_sound_manager,
-            settings=self.game_settings
-        )
+        engine = GameEngine(sound_manager=mock_sound_manager, settings=self.game_settings)
 
         return engine
 
@@ -231,7 +232,11 @@ class TestGhostNodeMessageSpamPrevention(unittest.TestCase):
         # Verify trace level was reduced but no message appears
         messages = [msg.text for msg in self.engine.message_log.messages]
         ghost_messages = [msg for msg in messages if "Ghost node" in msg]
-        self.assertEqual(len(ghost_messages), 0, "Ghost node messages should not appear (removed per user request)")
+        self.assertEqual(
+            len(ghost_messages),
+            0,
+            "Ghost node messages should not appear (removed per user request)",
+        )
 
         # Clear message log and process again (still on same node)
         self.engine.message_log.messages.clear()
@@ -256,11 +261,15 @@ class TestGhostNodeMessageSpamPrevention(unittest.TestCase):
         # Should NOT have ghost node message (removed per user request)
         messages = [msg.text for msg in self.engine.message_log.messages]
         ghost_messages = [msg for msg in messages if "Ghost node" in msg]
-        self.assertEqual(len(ghost_messages), 0, "Ghost node messages should not appear (removed per user request)")
+        self.assertEqual(
+            len(ghost_messages),
+            0,
+            "Ghost node messages should not appear (removed per user request)",
+        )
 
         # Verify trace level was actually reduced (functionality still works)
         self.assertLess(self.player.trace_level, 50.0, "TraceLevel should have been reduced")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

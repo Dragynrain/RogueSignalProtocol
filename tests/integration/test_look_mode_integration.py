@@ -6,11 +6,11 @@ Tests the complete look mode workflow without heavy mocking.
 
 import pytest
 import tcod.event
+
+from game_data import GameData
 from game_engine import GameEngine
 from game_entities import Position
 from game_inspection import EntityInspector
-from game_characters import Player, Enemy
-from game_data import GameData
 from game_inventory import CodeHack, ExploitItem
 
 
@@ -30,10 +30,7 @@ class TestLookModeIntegration:
 
         # Simulate pressing L
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.L,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.L, mod=tcod.event.Modifier.NONE, repeat=False
         )
 
         game.input_handler.handle_keydown(event)
@@ -58,10 +55,7 @@ class TestLookModeIntegration:
 
         # Simulate pressing ESC
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier.NONE, repeat=False
         )
 
         game.input_handler.handle_keydown(event)
@@ -83,10 +77,7 @@ class TestLookModeIntegration:
 
         # Simulate pressing L again
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.L,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.L, mod=tcod.event.Modifier.NONE, repeat=False
         )
 
         game.input_handler.handle_keydown(event)
@@ -110,10 +101,7 @@ class TestLookModeIntegration:
 
         # Move right
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.RIGHT,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.RIGHT, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event)
         assert game.look_cursor_position.x == initial_x + 1
@@ -121,10 +109,7 @@ class TestLookModeIntegration:
 
         # Move down
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.DOWN, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event)
         assert game.look_cursor_position.x == initial_x + 1
@@ -146,20 +131,14 @@ class TestLookModeIntegration:
 
         # Move right with D
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.D,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.D, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event)
         assert game.look_cursor_position.x == initial_x + 1
 
         # Move up with W
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.W,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.W, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event)
         assert game.look_cursor_position.y == initial_y - 1
@@ -180,10 +159,7 @@ class TestLookModeIntegration:
 
         # Move right with numpad 6
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.KP_6,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.KP_6, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event)
         assert game.look_cursor_position.x == initial_x + 1
@@ -199,20 +175,14 @@ class TestLookModeIntegration:
 
         # Try to move left (should stay at 0)
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.LEFT,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.LEFT, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event)
         assert game.look_cursor_position.x == 0
 
         # Try to move up (should stay at 0)
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.UP,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.UP, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event)
         assert game.look_cursor_position.y == 0
@@ -222,20 +192,14 @@ class TestLookModeIntegration:
 
         # Try to move right (should stay at max)
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.RIGHT,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.RIGHT, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event)
         assert game.look_cursor_position.x == GameConfig.MAP_WIDTH - 1
 
         # Try to move down (should stay at max)
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.DOWN, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event)
         assert game.look_cursor_position.y == GameConfig.MAP_HEIGHT - 1
@@ -251,11 +215,11 @@ class TestEntityInspection:
         player_pos = Position(game.player.x, game.player.y)
         entity_info = EntityInspector.get_entity_at_position(game, player_pos)
 
-        assert entity_info['entity_type'] == 'player'
-        assert 'Player' in entity_info['name']
-        assert entity_info['description'] != ''
-        assert 'CPU:' in entity_info['details']
-        assert 'Heat:' in entity_info['details']
+        assert entity_info["entity_type"] == "player"
+        assert "Player" in entity_info["name"]
+        assert entity_info["description"] != ""
+        assert "CPU:" in entity_info["details"]
+        assert "Heat:" in entity_info["details"]
 
     def test_inspect_enemy(self):
         """Test inspecting an enemy."""
@@ -267,12 +231,12 @@ class TestEntityInspection:
             enemy_pos = Position(enemy.x, enemy.y)
             entity_info = EntityInspector.get_entity_at_position(game, enemy_pos)
 
-            assert entity_info['entity_type'] == 'enemy'
-            assert entity_info['name'] != ''
+            assert entity_info["entity_type"] == "enemy"
+            assert entity_info["name"] != ""
             # Description may be empty if not loaded from JSON yet, just check it exists
-            assert 'description' in entity_info
-            assert 'State:' in entity_info['details']
-            assert 'CPU:' in entity_info['details']
+            assert "description" in entity_info
+            assert "State:" in entity_info["details"]
+            assert "CPU:" in entity_info["details"]
 
     def test_inspect_wall(self):
         """Test inspecting a wall."""
@@ -280,15 +244,15 @@ class TestEntityInspection:
 
         # Find a wall tile
         wall_pos = None
-        for (x, y) in game.game_map.walls:
+        for x, y in game.game_map.walls:
             wall_pos = Position(x, y)
             break
 
         if wall_pos:
             entity_info = EntityInspector.get_entity_at_position(game, wall_pos)
 
-            assert entity_info['entity_type'] == 'wall'
-            assert 'Barrier' in entity_info['name'] or 'Security' in entity_info['name']
+            assert entity_info["entity_type"] == "wall"
+            assert "Barrier" in entity_info["name"] or "Security" in entity_info["name"]
 
     def test_inspect_floor(self):
         """Test inspecting empty floor."""
@@ -298,14 +262,17 @@ class TestEntityInspection:
         for x in range(game.game_map.width):
             for y in range(game.game_map.height):
                 pos = Position(x, y)
-                if (not game.game_map.is_wall(pos) and
-                    not game.enemy_manager.get_enemy_at_position(pos) and
-                    pos.x != game.player.x and pos.y != game.player.y):
+                if (
+                    not game.game_map.is_wall(pos)
+                    and not game.enemy_manager.get_enemy_at_position(pos)
+                    and pos.x != game.player.x
+                    and pos.y != game.player.y
+                ):
                     entity_info = EntityInspector.get_entity_at_position(game, pos)
 
                     # Should return floor or shadow
-                    assert entity_info['entity_type'] in ['floor', 'blind_spot']
-                    assert entity_info['name'] != ''
+                    assert entity_info["entity_type"] in ["floor", "blind_spot"]
+                    assert entity_info["name"] != ""
                     return
 
     def test_inspect_code_hack(self):
@@ -315,13 +282,15 @@ class TestEntityInspection:
         # Add a code hack to the map
         test_pos = Position(10, 10)
         if not game.game_map.is_wall(test_pos):
-            code_hack = CodeHack('crimson', 'restore_cpu', 'Crimson Code', 'Restores CPU', quantity=1)
+            code_hack = CodeHack(
+                "crimson", "restore_cpu", "Crimson Code", "Restores CPU", quantity=1
+            )
             game.game_map.code_hacks[(test_pos.x, test_pos.y)] = code_hack
 
             entity_info = EntityInspector.get_entity_at_position(game, test_pos)
 
-            assert entity_info['entity_type'] == 'code_hack'
-            assert 'Code' in entity_info['name'] or 'Data' in entity_info['name']
+            assert entity_info["entity_type"] == "code_hack"
+            assert "Code" in entity_info["name"] or "Data" in entity_info["name"]
 
     def test_inspect_exploit_pickup(self):
         """Test inspecting an exploit pickup."""
@@ -337,9 +306,9 @@ class TestEntityInspection:
 
             entity_info = EntityInspector.get_entity_at_position(game, test_pos)
 
-            assert entity_info['entity_type'] == 'exploit_pickup'
-            assert entity_info['name'] != ''
-            assert 'RAM:' in entity_info['details'] or 'Heat:' in entity_info['details']
+            assert entity_info["entity_type"] == "exploit_pickup"
+            assert entity_info["name"] != ""
+            assert "RAM:" in entity_info["details"] or "Heat:" in entity_info["details"]
 
     def test_inspect_cooling_node(self):
         """Test inspecting a cooling node."""
@@ -352,8 +321,8 @@ class TestEntityInspection:
 
             entity_info = EntityInspector.get_entity_at_position(game, node_pos)
 
-            assert entity_info['entity_type'] == 'cooling_node'
-            assert 'Cooling' in entity_info['name']
+            assert entity_info["entity_type"] == "cooling_node"
+            assert "Cooling" in entity_info["name"]
 
     def test_inspect_gateway(self):
         """Test inspecting the gateway."""
@@ -362,9 +331,9 @@ class TestEntityInspection:
         if game.game_map.gateway:
             entity_info = EntityInspector.get_entity_at_position(game, game.game_map.gateway)
 
-            assert entity_info['entity_type'] == 'gateway'
-            assert 'Gateway' in entity_info['name']
-            assert 'Level' in entity_info['details']
+            assert entity_info["entity_type"] == "gateway"
+            assert "Gateway" in entity_info["name"]
+            assert "Level" in entity_info["details"]
 
 
 class TestLookModeWorkflow:
@@ -380,10 +349,7 @@ class TestLookModeWorkflow:
 
         # 1. Enter look mode
         event_l = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.L,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.L, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event_l)
         assert game.look_mode
@@ -392,10 +358,7 @@ class TestLookModeWorkflow:
 
         # 2. Move cursor
         event_right = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.RIGHT,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.RIGHT, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event_right)
         assert game.look_cursor_position.x == initial_pos.x + 1
@@ -403,15 +366,12 @@ class TestLookModeWorkflow:
         # 3. Inspect current position
         entity_info = EntityInspector.get_entity_at_position(game, game.look_cursor_position)
         assert entity_info is not None
-        assert 'name' in entity_info
-        assert 'description' in entity_info
+        assert "name" in entity_info
+        assert "description" in entity_info
 
         # 4. Exit look mode
         event_esc = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event_esc)
         assert not game.look_mode
@@ -429,10 +389,7 @@ class TestLookModeWorkflow:
         # Move cursor multiple times
         for _ in range(5):
             event = tcod.event.KeyDown(
-                scancode=0,
-                sym=tcod.event.KeySym.RIGHT,
-                mod=tcod.event.Modifier.NONE,
-                repeat=False
+                scancode=0, sym=tcod.event.KeySym.RIGHT, mod=tcod.event.Modifier.NONE, repeat=False
             )
             game.input_handler.handle_keydown(event)
 
@@ -448,14 +405,12 @@ class TestLookModeWorkflow:
 
         # Activate a dialogue
         from game_dialogue_system import create_death_dialogue
+
         game.dialogue_state.show(create_death_dialogue())
 
         # Try to enter look mode
         event_l = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.L,
-            mod=tcod.event.Modifier.NONE,
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.L, mod=tcod.event.Modifier.NONE, repeat=False
         )
         game.input_handler.handle_keydown(event_l)
 
@@ -465,8 +420,8 @@ class TestLookModeWorkflow:
 
     def test_look_mode_camera_scrolling(self):
         """Test that camera follows cursor in look mode for map exploration."""
-        from game_rendering_glyphs import GlyphsMapRenderer
         from game_config import GameConfig
+        from game_rendering_glyphs import GlyphsMapRenderer
 
         game = GameEngine(load_save=False)
         renderer = GlyphsMapRenderer(settings=game.settings)
@@ -494,14 +449,17 @@ class TestLookModeWorkflow:
         if viewport_width >= GameConfig.MAP_WIDTH:
             expected_x = -(viewport_width - GameConfig.MAP_WIDTH) // 2
         else:
-            expected_x = max(0, min(GameConfig.MAP_WIDTH - viewport_width,
-                                   game.player.x - viewport_width // 2))
+            expected_x = max(
+                0, min(GameConfig.MAP_WIDTH - viewport_width, game.player.x - viewport_width // 2)
+            )
 
         if viewport_height >= GameConfig.MAP_HEIGHT:
             expected_y = -(viewport_height - GameConfig.MAP_HEIGHT) // 2
         else:
-            expected_y = max(0, min(GameConfig.MAP_HEIGHT - viewport_height,
-                                   game.player.y - viewport_height // 2))
+            expected_y = max(
+                0,
+                min(GameConfig.MAP_HEIGHT - viewport_height, game.player.y - viewport_height // 2),
+            )
 
         assert initial_camera.x == expected_x
         assert initial_camera.y == expected_y
@@ -509,8 +467,7 @@ class TestLookModeWorkflow:
         # Move cursor far away from player
         distance = viewport_width // 2 + 5
         game.look_cursor_position = Position(
-            min(GameConfig.MAP_WIDTH - 1, game.player.x + distance),
-            game.player.y
+            min(GameConfig.MAP_WIDTH - 1, game.player.x + distance), game.player.y
         )
 
         # Camera should follow cursor if scrolling is possible, otherwise stay at origin
@@ -518,17 +475,23 @@ class TestLookModeWorkflow:
 
         if can_scroll_x:
             # If map is larger than viewport, camera should move to follow cursor
-            assert new_camera.x != initial_camera.x, "Camera should scroll when cursor moves away from player"
+            assert (
+                new_camera.x != initial_camera.x
+            ), "Camera should scroll when cursor moves away from player"
         else:
             # If map fits entirely in viewport, camera stays centered (may be negative to center map)
-            assert new_camera.x == expected_x, "Camera should stay centered when map fits in viewport"
+            assert (
+                new_camera.x == expected_x
+            ), "Camera should stay centered when map fits in viewport"
 
         # Exit look mode
         game.look_mode = False
 
         # Camera should return to centering on player
         final_camera = renderer._calculate_camera_offset(game.player, game)
-        assert final_camera == initial_camera, "Camera should return to player when exiting look mode"
+        assert (
+            final_camera == initial_camera
+        ), "Camera should return to player when exiting look mode"
 
 
 if __name__ == "__main__":

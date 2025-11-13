@@ -8,12 +8,14 @@ Tests the behavior fixes for Virus enemies to ensure:
 3. SEEK is never assigned as a base movement type
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
+
 from game_characters import Enemy, Player
-from game_entities import Position, EnemyState, EnemyMovement
-from game_map import GameMap
 from game_engine import GameEngine
+from game_entities import EnemyMovement, EnemyState, Position
+from game_map import GameMap
 
 
 @pytest.fixture
@@ -28,6 +30,7 @@ def mock_game_map():
 
     # Mock FOV
     import numpy as np
+
     game_map._compute_fov_cached.return_value = np.ones((50, 50), dtype=bool)
 
     return game_map
@@ -46,6 +49,7 @@ def mock_game_engine(mock_game_map):
 def mock_pathfinding_cost_map(game_map, game_engine, moving_enemy):
     """Mock cost map for pathfinding."""
     import numpy as np
+
     return np.ones((game_map.height, game_map.width), dtype=np.int32)
 
 
@@ -54,10 +58,22 @@ class TestVirusStaticMovement:
 
     def test_static_virus_never_moves_when_hostile(self, mock_game_map, mock_game_engine):
         """STATIC virus should remain stationary even when hostile and player is visible."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'virus': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0, name="Virus", max_cpu=50)
-        }):
-            with patch('game_characters.PathfindingHelper._create_cost_map', mock_pathfinding_cost_map):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "virus": Mock(
+                    movement=EnemyMovement.RANDOM,
+                    cpu=50,
+                    vision=10,
+                    damage=0,
+                    name="Virus",
+                    max_cpu=50,
+                )
+            },
+        ):
+            with patch(
+                "game_characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+            ):
                 # Create virus with STATIC base movement
                 virus = Enemy(Position(10, 10), "virus")
                 virus.original_movement_type = EnemyMovement.STATIC
@@ -71,7 +87,7 @@ class TestVirusStaticMovement:
 
                 # Try to move (should not move)
                 initial_pos = virus.position
-                with patch.object(virus, 'can_see_player', return_value=True):
+                with patch.object(virus, "can_see_player", return_value=True):
                     virus.move(mock_game_map, mock_game_engine.player, mock_game_engine)
 
                 # Virus should not have moved
@@ -80,10 +96,22 @@ class TestVirusStaticMovement:
 
     def test_static_virus_never_moves_when_unaware(self, mock_game_map, mock_game_engine):
         """STATIC virus should remain stationary when unaware."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'virus': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0, name="Virus", max_cpu=50)
-        }):
-            with patch('game_characters.PathfindingHelper._create_cost_map', mock_pathfinding_cost_map):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "virus": Mock(
+                    movement=EnemyMovement.RANDOM,
+                    cpu=50,
+                    vision=10,
+                    damage=0,
+                    name="Virus",
+                    max_cpu=50,
+                )
+            },
+        ):
+            with patch(
+                "game_characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+            ):
                 # Create virus with STATIC base movement
                 virus = Enemy(Position(10, 10), "virus")
                 virus.original_movement_type = EnemyMovement.STATIC
@@ -105,12 +133,26 @@ class TestVirusStaticMovement:
 class TestVirusMovementTypeTransitions:
     """Test that viruses return to their base movement type after losing player."""
 
-    def test_random_virus_returns_to_random_after_losing_player(self, mock_game_map, mock_game_engine):
+    def test_random_virus_returns_to_random_after_losing_player(
+        self, mock_game_map, mock_game_engine
+    ):
         """Virus with RANDOM base movement should return to RANDOM after losing player."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'virus': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0, name="Virus", max_cpu=50)
-        }):
-            with patch('game_characters.PathfindingHelper._create_cost_map', mock_pathfinding_cost_map):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "virus": Mock(
+                    movement=EnemyMovement.RANDOM,
+                    cpu=50,
+                    vision=10,
+                    damage=0,
+                    name="Virus",
+                    max_cpu=50,
+                )
+            },
+        ):
+            with patch(
+                "game_characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+            ):
                 virus = Enemy(Position(10, 10), "virus")
                 virus.original_movement_type = EnemyMovement.RANDOM
 
@@ -128,12 +170,26 @@ class TestVirusMovementTypeTransitions:
                 virus.state = EnemyState.UNAWARE
                 assert virus.get_movement_type() == EnemyMovement.RANDOM
 
-    def test_patrol_virus_returns_to_patrol_after_losing_player(self, mock_game_map, mock_game_engine):
+    def test_patrol_virus_returns_to_patrol_after_losing_player(
+        self, mock_game_map, mock_game_engine
+    ):
         """Virus with PATROL base movement should return to PATROL after losing player."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'virus': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0, name="Virus", max_cpu=50)
-        }):
-            with patch('game_characters.PathfindingHelper._create_cost_map', mock_pathfinding_cost_map):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "virus": Mock(
+                    movement=EnemyMovement.RANDOM,
+                    cpu=50,
+                    vision=10,
+                    damage=0,
+                    name="Virus",
+                    max_cpu=50,
+                )
+            },
+        ):
+            with patch(
+                "game_characters.PathfindingHelper._create_cost_map", mock_pathfinding_cost_map
+            ):
                 virus = Enemy(Position(10, 10), "virus")
                 virus.original_movement_type = EnemyMovement.PATROL
                 virus.patrol_points = [Position(10, 10), Position(15, 15), Position(20, 20)]
@@ -155,9 +211,19 @@ class TestVirusMovementTypeTransitions:
 
     def test_virus_hostile_behavior_uses_seek(self, mock_game_map, mock_game_engine):
         """All mobile viruses should use SEEK movement when hostile."""
-        with patch('game_data.GameData.ENEMY_TYPES', {
-            'virus': Mock(movement=EnemyMovement.RANDOM, cpu=50, vision=10, damage=0, name="Virus", max_cpu=50)
-        }):
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "virus": Mock(
+                    movement=EnemyMovement.RANDOM,
+                    cpu=50,
+                    vision=10,
+                    damage=0,
+                    name="Virus",
+                    max_cpu=50,
+                )
+            },
+        ):
             # Test with different base movement types
             for base_movement in [EnemyMovement.RANDOM, EnemyMovement.PATROL]:
                 virus = Enemy(Position(10, 10), "virus")

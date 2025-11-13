@@ -9,6 +9,7 @@ Coordinates rendering, input handling, and audio systems.
 
 # CRITICAL: Set DPI awareness BEFORE importing tcod to ensure proper scaling
 import ctypes
+
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)  # PROCESS_PER_MONITOR_DPI_AWARE
 except Exception:
@@ -17,26 +18,26 @@ except Exception:
     except Exception:
         pass  # DPI awareness unavailable - game will still run but may be scaled by Windows
 
-import tcod
-import time
 import logging
+import time
 import traceback
 
-from game_config import GameConfig, GameSettings
-from game_entities import Colors
-from game_ui import render_char_safe, WindowManager
+import tcod
+
 from game_audio import SoundManager
-from game_menus import MenuBackground, MainMenu, SettingsMenu
-from game_menu_help_lore import create_help_menu, LoreMenu
+from game_config import GameConfig, GameSettings
+from game_engine import GameEngine
+from game_entities import Colors
+from game_graphics_tiles import TileManager
+from game_input import InputHandler
+from game_menu_about import AboutMenu
 from game_menu_achievements import AchievementsMenu
 from game_menu_graphics_preview import GraphicsPreviewMenu
-from game_menu_about import AboutMenu
-from game_engine import GameEngine
-from game_rendering_core import GameRenderer
-from game_input import InputHandler
-from game_graphics_tiles import TileManager
-from game_coordinate_helpers import CoordinateHelpers
+from game_menu_help_lore import LoreMenu, create_help_menu
+from game_menus import MainMenu, MenuBackground, SettingsMenu
 from game_mouse_utils import MenuMouseHandler
+from game_rendering_core import GameRenderer
+from game_ui import render_char_safe
 
 
 def log_exception(e: Exception, context: str, level: str = "error"):
@@ -69,11 +70,7 @@ def load_tileset():
     from font_loader_freetype import load_truetype_font_custom
 
     # Use 64x64 tiles with KreativeSquare (square 1:1 aspect ratio font)
-    tileset = load_truetype_font_custom(
-        "KreativeSquare.ttf",
-        64,  # tile_width
-        64   # tile_height
-    )
+    tileset = load_truetype_font_custom("KreativeSquare.ttf", 64, 64)  # tile_width  # tile_height
     return tileset
 
 
@@ -84,11 +81,11 @@ def initialize_tcod_context():
     context_args = {
         "columns": GameConfig.SCREEN_WIDTH,
         "rows": GameConfig.SCREEN_HEIGHT,
-        "width": 1920,   # Explicit window width in pixels (1920×1080 = Full HD)
+        "width": 1920,  # Explicit window width in pixels (1920×1080 = Full HD)
         "height": 1080,  # Explicit window height in pixels
         "title": "Rogue Signal Protocol",
         "vsync": True,
-        "sdl_window_flags": 160  # Maximized + resizable
+        "sdl_window_flags": 160,  # Maximized + resizable
     }
 
     if tileset:
@@ -100,10 +97,11 @@ def initialize_tcod_context():
     context.tileset = tileset
 
     # Validate SDL renderer availability and set up console rendering
-    if hasattr(context, 'sdl_renderer') and context.sdl_renderer:
+    if hasattr(context, "sdl_renderer") and context.sdl_renderer:
         # Create console rendering objects for proper SDL + console mixing
         try:
             from tcod import render as tcod_render
+
             atlas = tcod_render.SDLTilesetAtlas(context.sdl_renderer, tileset)
             console_render = tcod_render.SDLConsoleRender(atlas)
 
@@ -119,7 +117,9 @@ def initialize_tcod_context():
     return context
 
 
-def initialize_game_systems(settings: GameSettings, context, menu_background=None, sound_manager=None, tile_manager=None):
+def initialize_game_systems(
+    settings: GameSettings, context, menu_background=None, sound_manager=None, tile_manager=None
+):
     """Initialize menu systems and return menu objects."""
     # Initialize tile manager if not provided and graphics mode is enabled
     if tile_manager is None and settings.graphics_mode == "graphics":
@@ -130,35 +130,39 @@ def initialize_game_systems(settings: GameSettings, context, menu_background=Non
             tile_manager = None
 
     menus = {
-        'main_menu': None,  # Will be set after menus dict is complete
-        'settings_menu': SettingsMenu(settings, menu_background, sound_manager),  # Pass sound manager for live volume updates
-        'help_menu': create_help_menu(settings, context, tile_manager),  # Use factory function
-        '_help_menu_mode': settings.graphics_mode,  # Track mode used to create help menu
-        '_context': context,  # Store for help menu recreation
-        '_tile_manager': tile_manager,  # Store for help menu recreation
-        'lore_menu': LoreMenu(),
-        'achievements_menu': AchievementsMenu(),
-        'about_menu': AboutMenu(menu_background, settings)
+        "main_menu": None,  # Will be set after menus dict is complete
+        "settings_menu": SettingsMenu(
+            settings, menu_background, sound_manager
+        ),  # Pass sound manager for live volume updates
+        "help_menu": create_help_menu(settings, context, tile_manager),  # Use factory function
+        "_help_menu_mode": settings.graphics_mode,  # Track mode used to create help menu
+        "_context": context,  # Store for help menu recreation
+        "_tile_manager": tile_manager,  # Store for help menu recreation
+        "lore_menu": LoreMenu(),
+        "achievements_menu": AchievementsMenu(),
+        "about_menu": AboutMenu(menu_background, settings),
     }
 
     # Only add graphics preview menu if we have a tile manager
     if tile_manager is not None:
-        menus['graphics_preview_menu'] = GraphicsPreviewMenu(context, settings, tile_manager)
+        menus["graphics_preview_menu"] = GraphicsPreviewMenu(context, settings, tile_manager)
 
     # Now create main menu with reference to menus dict (so it can check if graphics_preview_menu exists)
-    menus['main_menu'] = MainMenu(background=menu_background, settings=settings, menus=menus)
+    menus["main_menu"] = MainMenu(background=menu_background, settings=settings, menus=menus)
 
     return menus
 
 
-def handle_menu_navigation(console, context, menus, settings, menu_sound_manager=None, active_game=None):
+def handle_menu_navigation(
+    console, context, menus, settings, menu_sound_manager=None, active_game=None
+):
     """
     Handle the main menu navigation loop.
 
     Args:
         active_game: If provided, this is a game in progress that should be resumed on "continue"
     """
-    main_menu = menus['main_menu']
+    main_menu = menus["main_menu"]
     main_menu.refresh_options(show_continue=True, active_game=active_game)
     current_menu = main_menu
 
@@ -169,8 +173,9 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
     # DO NOT start menu music if level music is already playing
     # Level music should continue playing when player returns to menu
     try:
-        from game_audio import AUDIO_AVAILABLE
         import pygame
+
+        from game_audio import AUDIO_AVAILABLE
 
         # Only play menu music if NO music is currently playing
         if AUDIO_AVAILABLE and not pygame.mixer.music.get_busy():
@@ -178,22 +183,28 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
     except Exception as e:
         logging.warning(f"Could not play main menu music: {e}")
         # Continue without music
-    
+
     while True:
         # Render console content first
         current_menu.render(console)
 
         # Check for background graphics (main menu, settings menu, etc.)
-        has_background = (hasattr(current_menu, 'background') and
-                         current_menu.background and
-                         current_menu.background.should_load_background())
+        has_background = (
+            hasattr(current_menu, "background")
+            and current_menu.background
+            and current_menu.background.should_load_background()
+        )
 
         # Check for sprite rendering (graphical help menu)
-        has_sprites = hasattr(current_menu, 'render_sprites')
+        has_sprites = hasattr(current_menu, "render_sprites")
 
         # CORRECTED RENDERING: Use SDL renderer when available for graphics mode
-        graphics_available = (context.sdl_renderer and hasattr(context, 'console_render') and
-                            context.console_render and (has_background or has_sprites))
+        graphics_available = (
+            context.sdl_renderer
+            and hasattr(context, "console_render")
+            and context.console_render
+            and (has_background or has_sprites)
+        )
 
         if graphics_available:
             # Graphics mode: render everything through SDL
@@ -223,7 +234,7 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
         else:
             # ASCII mode or fallback: normal console presentation
             context.present(console)
-        
+
         for event in tcod.event.wait():
             # Convert pixel coordinates to tile coordinates for menu mouse events
             if event.type in ("MOUSEMOTION", "MOUSEBUTTONDOWN"):
@@ -243,7 +254,11 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
                 if action == "exit":
                     # Save active game before exiting if one exists and player is alive
-                    if active_game is not None and active_game.player.cpu > 0 and not active_game.game_over:
+                    if (
+                        active_game is not None
+                        and active_game.player.cpu > 0
+                        and not active_game.game_over
+                    ):
                         active_game.auto_save()
                     menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True
@@ -263,36 +278,44 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                         logging.error("Debug Export: Failed to create package from settings menu")
                     # Stay in settings menu
                 elif action == "settings":
-                    current_menu = menus['settings_menu']
+                    current_menu = menus["settings_menu"]
                 elif action == "help":
                     # Only recreate help menu if graphics mode changed (preserves page state)
-                    if menus.get('_help_menu_mode') != settings.graphics_mode:
-                        logging.info(f"Graphics mode changed, recreating help menu: {menus.get('_help_menu_mode')} -> {settings.graphics_mode}")
+                    if menus.get("_help_menu_mode") != settings.graphics_mode:
+                        logging.info(
+                            f"Graphics mode changed, recreating help menu: {menus.get('_help_menu_mode')} -> {settings.graphics_mode}"
+                        )
 
                         # Create TileManager if switching to graphics mode and it doesn't exist
-                        if settings.graphics_mode == "graphics" and menus.get('_tile_manager') is None:
+                        if (
+                            settings.graphics_mode == "graphics"
+                            and menus.get("_tile_manager") is None
+                        ):
                             try:
                                 from game_graphics_tiles import TileManager
-                                menus['_tile_manager'] = TileManager(menus['_context'], settings)
+
+                                menus["_tile_manager"] = TileManager(menus["_context"], settings)
                                 logging.info("Created TileManager for graphics mode help menu")
                             except Exception as e:
                                 logging.error(f"Failed to create TileManager: {e}")
                                 # Fall back to glyph mode
                                 settings.graphics_mode = "glyph"
 
-                        menus['help_menu'] = create_help_menu(settings, menus['_context'], menus['_tile_manager'])
-                        menus['_help_menu_mode'] = settings.graphics_mode
-                    current_menu = menus['help_menu']
+                        menus["help_menu"] = create_help_menu(
+                            settings, menus["_context"], menus["_tile_manager"]
+                        )
+                        menus["_help_menu_mode"] = settings.graphics_mode
+                    current_menu = menus["help_menu"]
                 elif action == "lore":
-                    current_menu = menus['lore_menu']
+                    current_menu = menus["lore_menu"]
                 elif action == "about":
-                    current_menu = menus['about_menu']
+                    current_menu = menus["about_menu"]
                 elif action == "achievements":
-                    current_menu = menus['achievements_menu']
+                    current_menu = menus["achievements_menu"]
                 elif action == "graphics_preview":
-                    if 'graphics_preview_menu' in menus:
+                    if "graphics_preview_menu" in menus:
                         # Enter graphics preview mode
-                        graphics_preview_menu = menus['graphics_preview_menu']
+                        graphics_preview_menu = menus["graphics_preview_menu"]
 
                         # Flush any pending events to avoid immediate exit
                         tcod.event.get()
@@ -303,10 +326,12 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                             graphics_preview_menu.render(console)
 
                             # Check if we should render graphics
-                            graphics_available = (context.sdl_renderer and
-                                                hasattr(context, 'console_render') and
-                                                context.console_render and
-                                                settings.graphics_mode == "graphics")
+                            graphics_available = (
+                                context.sdl_renderer
+                                and hasattr(context, "console_render")
+                                and context.console_render
+                                and settings.graphics_mode == "graphics"
+                            )
 
                             if graphics_available:
                                 # Graphics mode: render through SDL with preview map
@@ -329,7 +354,9 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                             for preview_event in tcod.event.get():
                                 # Convert pixel coordinates to tile coordinates for mouse events
                                 if preview_event.type in ("MOUSEMOTION", "MOUSEBUTTONDOWN"):
-                                    converted_event = MenuMouseHandler.convert_to_tile_coords(preview_event, context)
+                                    converted_event = MenuMouseHandler.convert_to_tile_coords(
+                                        preview_event, context
+                                    )
                                     if converted_event is not None:
                                         preview_event = converted_event
 
@@ -339,8 +366,10 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                                     exit_preview = True
                                     break
                                 elif preview_event.type == "KEYDOWN":
-                                    preview_action = graphics_preview_menu.handle_input(preview_event)
-                                    if preview_action == 'exit':
+                                    preview_action = graphics_preview_menu.handle_input(
+                                        preview_event
+                                    )
+                                    if preview_action == "exit":
                                         # Export selections and return to main menu
                                         graphics_preview_menu.export_selections()
                                         exit_preview = True
@@ -353,7 +382,7 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                                     graphics_preview_menu.handle_mouse_click(preview_event)
 
                             # Small delay to prevent CPU spinning (60 FPS)
-                            time.sleep(1/60)
+                            time.sleep(1 / 60)
 
                         # Cleanup SDL renderer state before returning to main menu
                         if graphics_available and context.sdl_renderer:
@@ -386,6 +415,7 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                         except Exception as e:
                             # Handle save load failures - log error and stay at main menu
                             from game_save import SaveLoadError
+
                             if isinstance(e, SaveLoadError):
                                 logging.error(f"Save load failed: {e}")
                                 print(f"\n[SAVE LOAD ERROR] {e}")
@@ -402,7 +432,7 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
             elif event.type == "MOUSEWHEEL":
                 # Handle mouse wheel events in menus (e.g., scrolling help pages)
-                if hasattr(current_menu, 'handle_mouse_wheel'):
+                if hasattr(current_menu, "handle_mouse_wheel"):
                     current_menu.handle_mouse_wheel(event)
 
             elif event.type == "KEYDOWN":
@@ -410,7 +440,11 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
 
                 if action == "exit":
                     # Save active game before exiting if one exists and player is alive
-                    if active_game is not None and active_game.player.cpu > 0 and not active_game.game_over:
+                    if (
+                        active_game is not None
+                        and active_game.player.cpu > 0
+                        and not active_game.game_over
+                    ):
                         active_game.auto_save()
                     menu_sound_manager.cleanup()
                     return None, True  # game=None, should_exit=True
@@ -430,36 +464,44 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                         logging.error("Debug Export: Failed to create package from settings menu")
                     # Stay in settings menu
                 elif action == "settings":
-                    current_menu = menus['settings_menu']
+                    current_menu = menus["settings_menu"]
                 elif action == "help":
                     # Only recreate help menu if graphics mode changed (preserves page state)
-                    if menus.get('_help_menu_mode') != settings.graphics_mode:
-                        logging.info(f"Graphics mode changed, recreating help menu: {menus.get('_help_menu_mode')} -> {settings.graphics_mode}")
+                    if menus.get("_help_menu_mode") != settings.graphics_mode:
+                        logging.info(
+                            f"Graphics mode changed, recreating help menu: {menus.get('_help_menu_mode')} -> {settings.graphics_mode}"
+                        )
 
                         # Create TileManager if switching to graphics mode and it doesn't exist
-                        if settings.graphics_mode == "graphics" and menus.get('_tile_manager') is None:
+                        if (
+                            settings.graphics_mode == "graphics"
+                            and menus.get("_tile_manager") is None
+                        ):
                             try:
                                 from game_graphics_tiles import TileManager
-                                menus['_tile_manager'] = TileManager(menus['_context'], settings)
+
+                                menus["_tile_manager"] = TileManager(menus["_context"], settings)
                                 logging.info("Created TileManager for graphics mode help menu")
                             except Exception as e:
                                 logging.error(f"Failed to create TileManager: {e}")
                                 # Fall back to glyph mode
                                 settings.graphics_mode = "glyph"
 
-                        menus['help_menu'] = create_help_menu(settings, menus['_context'], menus['_tile_manager'])
-                        menus['_help_menu_mode'] = settings.graphics_mode
-                    current_menu = menus['help_menu']
+                        menus["help_menu"] = create_help_menu(
+                            settings, menus["_context"], menus["_tile_manager"]
+                        )
+                        menus["_help_menu_mode"] = settings.graphics_mode
+                    current_menu = menus["help_menu"]
                 elif action == "lore":
-                    current_menu = menus['lore_menu']
+                    current_menu = menus["lore_menu"]
                 elif action == "about":
-                    current_menu = menus['about_menu']
+                    current_menu = menus["about_menu"]
                 elif action == "achievements":
-                    current_menu = menus['achievements_menu']
+                    current_menu = menus["achievements_menu"]
                 elif action == "graphics_preview":
-                    if 'graphics_preview_menu' in menus:
+                    if "graphics_preview_menu" in menus:
                         # Enter graphics preview mode
-                        graphics_preview_menu = menus['graphics_preview_menu']
+                        graphics_preview_menu = menus["graphics_preview_menu"]
 
                         # Flush any pending events to avoid immediate exit
                         tcod.event.get()
@@ -470,10 +512,12 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                             graphics_preview_menu.render(console)
 
                             # Check if we should render graphics
-                            graphics_available = (context.sdl_renderer and
-                                                hasattr(context, 'console_render') and
-                                                context.console_render and
-                                                settings.graphics_mode == "graphics")
+                            graphics_available = (
+                                context.sdl_renderer
+                                and hasattr(context, "console_render")
+                                and context.console_render
+                                and settings.graphics_mode == "graphics"
+                            )
 
                             if graphics_available:
                                 # Graphics mode: render through SDL with preview map
@@ -496,7 +540,9 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                             for preview_event in tcod.event.get():
                                 # Convert pixel coordinates to tile coordinates for mouse events
                                 if preview_event.type in ("MOUSEMOTION", "MOUSEBUTTONDOWN"):
-                                    converted_event = MenuMouseHandler.convert_to_tile_coords(preview_event, context)
+                                    converted_event = MenuMouseHandler.convert_to_tile_coords(
+                                        preview_event, context
+                                    )
                                     if converted_event is not None:
                                         preview_event = converted_event
 
@@ -506,8 +552,10 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                                     exit_preview = True
                                     break
                                 elif preview_event.type == "KEYDOWN":
-                                    preview_action = graphics_preview_menu.handle_input(preview_event)
-                                    if preview_action == 'exit':
+                                    preview_action = graphics_preview_menu.handle_input(
+                                        preview_event
+                                    )
+                                    if preview_action == "exit":
                                         # Export selections and return to main menu
                                         graphics_preview_menu.export_selections()
                                         exit_preview = True
@@ -520,7 +568,7 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                                     graphics_preview_menu.handle_mouse_click(preview_event)
 
                             # Small delay to prevent CPU spinning (60 FPS)
-                            time.sleep(1/60)
+                            time.sleep(1 / 60)
 
                         # Cleanup SDL renderer state before returning to main menu
                         if graphics_available and context.sdl_renderer:
@@ -553,6 +601,7 @@ def handle_menu_navigation(console, context, menus, settings, menu_sound_manager
                         except Exception as e:
                             # Handle save load failures - log error and stay at main menu
                             from game_save import SaveLoadError
+
                             if isinstance(e, SaveLoadError):
                                 logging.error(f"Save load failed: {e}")
                                 print(f"\n[SAVE LOAD ERROR] {e}")
@@ -602,16 +651,22 @@ def handle_game_input_events(event, game, input_handler):
                     return True, None
                 return True, game
             # Check if any UI states are open - close those first
-            elif (game.show_lore_viewer or
-                game.show_help or
-                game.show_achievements or
-                game.show_inventory or
-                game.look_mode or
-                game.targeting_mode):
+            elif (
+                game.show_lore_viewer
+                or game.show_help
+                or game.show_achievements
+                or game.show_inventory
+                or game.look_mode
+                or game.targeting_mode
+            ):
                 input_handler._handle_escape()
             else:
                 # Don't allow ESC to menu if player is dead or dying
-                if game.player.cpu <= 0 or game.game_over or (hasattr(game, 'pending_death_dialogue') and game.pending_death_dialogue):
+                if (
+                    game.player.cpu <= 0
+                    or game.game_over
+                    or (hasattr(game, "pending_death_dialogue") and game.pending_death_dialogue)
+                ):
                     # Player is dead - force them to see death dialogue, can't ESC to menu
                     return True, game
                 # No UI states open, auto-save and go to main menu
@@ -629,12 +684,16 @@ def handle_game_input_events(event, game, input_handler):
 def handle_error_screen(console, context, error_message, line_no):
     """Display error screen and wait for user input."""
     console.clear()
-    render_char_safe(console, 1, 1, f"Error: {str(error_message)[:50]} (line {line_no})", fg=Colors.RED)
+    render_char_safe(
+        console, 1, 1, f"Error: {str(error_message)[:50]} (line {line_no})", fg=Colors.RED
+    )
     render_char_safe(console, 1, 2, "Press ESC to exit", fg=Colors.WHITE)
     context.present(console)
-    
+
     for event in tcod.event.wait():
-        if event.type == "QUIT" or (event.type == "KEYDOWN" and event.sym == tcod.event.KeySym.ESCAPE):
+        if event.type == "QUIT" or (
+            event.type == "KEYDOWN" and event.sym == tcod.event.KeySym.ESCAPE
+        ):
             return True
     return False
 
@@ -647,6 +706,7 @@ def main():
     # Initialize achievement system with unlocked achievements from progress file
     from game_achievements import AchievementManager
     from game_metrics import load_unlocked_achievements
+
     unlocked_achievements = load_unlocked_achievements()
     AchievementManager.load_unlocked_achievements(unlocked_achievements)
     logging.info(f"Loaded {len(unlocked_achievements)} unlocked achievements")
@@ -654,9 +714,9 @@ def main():
     try:
         with initialize_tcod_context() as context:
             console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
-            
+
             settings = GameSettings()
-            
+
             # Create background manager (loads conditionally based on graphics mode)
             menu_background = MenuBackground(context, settings)
             menu_background.reset_background_system()  # Reset any previous errors
@@ -680,7 +740,9 @@ def main():
 
                 if game is None:
                     # Pass active_game_session to handle_menu_navigation so it can resume
-                    game, should_exit = handle_menu_navigation(console, context, menus, settings, menu_sound_manager, active_game_session)
+                    game, should_exit = handle_menu_navigation(
+                        console, context, menus, settings, menu_sound_manager, active_game_session
+                    )
 
                     if should_exit:
                         # Cleanup background before exit
@@ -717,11 +779,14 @@ def main():
                     # Check if victory screen should be shown
                     if game.game_state.show_victory_screen and victory_screen is None:
                         # Create victory background with ending art
-                        victory_background = MenuBackground(context, settings, art_directory="graphics/ending")
+                        victory_background = MenuBackground(
+                            context, settings, art_directory="graphics/ending"
+                        )
                         victory_background.load_random_background()
 
                         # Import and create victory screen
                         from game_victory_screen import VictoryScreen
+
                         victory_screen = VictoryScreen(background=victory_background)
 
                         logging.info("Victory screen initialized")
@@ -733,12 +798,16 @@ def main():
                             victory_screen.render(console)
 
                             # Use SDL rendering pipeline (SAME as main menu!)
-                            has_background = (victory_background and
-                                            victory_background.should_load_background())
+                            has_background = (
+                                victory_background and victory_background.should_load_background()
+                            )
 
-                            graphics_available = (context.sdl_renderer and
-                                                hasattr(context, 'console_render') and
-                                                context.console_render and has_background)
+                            graphics_available = (
+                                context.sdl_renderer
+                                and hasattr(context, "console_render")
+                                and context.console_render
+                                and has_background
+                            )
 
                             if graphics_available:
                                 # Graphics mode: render everything through SDL (same as main menu)
@@ -767,7 +836,9 @@ def main():
                                     return  # Exit program
                                 elif victory_screen.handle_input(event):
                                     # Victory screen dismissed - return to main menu
-                                    logging.info("Victory screen dismissed - returning to main menu")
+                                    logging.info(
+                                        "Victory screen dismissed - returning to main menu"
+                                    )
                                     victory_background.cleanup()
                                     game = None
                                     break
@@ -811,7 +882,10 @@ def main():
                             if current_time - last_render_time >= render_interval:
                                 # Update particle system with delta time
                                 delta_time = current_time - last_render_time
-                                if hasattr(game, 'particle_system') and game.particle_system is not None:
+                                if (
+                                    hasattr(game, "particle_system")
+                                    and game.particle_system is not None
+                                ):
                                     game.particle_system.update(delta_time)
 
                                 renderer.render_game(console, game, context)
@@ -858,7 +932,9 @@ def main():
 
                             # Save game reference before it potentially becomes None
                             previous_game = game
-                            should_continue, game = handle_game_input_events(event, game, input_handler)
+                            should_continue, game = handle_game_input_events(
+                                event, game, input_handler
+                            )
                             if not should_continue:
                                 return  # Exit program
                             if game is None:
@@ -878,9 +954,11 @@ def main():
                         line_no = tb[-1].lineno if tb else "?"
                         if handle_error_screen(console, context, e, line_no):
                             return
-    
+
     except Exception as e:
-        log_exception(e, "CRITICAL SYSTEM ERROR: Game initialization/main loop failure", level="critical")
+        log_exception(
+            e, "CRITICAL SYSTEM ERROR: Game initialization/main loop failure", level="critical"
+        )
 
 
 if __name__ == "__main__":

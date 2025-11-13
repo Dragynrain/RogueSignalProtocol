@@ -12,11 +12,7 @@ These fixtures enable testing edge cases and complex gameplay scenarios
 without tedious manual setup.
 """
 
-from unittest.mock import Mock
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
-from game_config import GameSettings
+from game_entities import EnemyState
 from tests.fixtures.standard_patterns import create_basic_game_environment
 
 
@@ -54,14 +50,21 @@ def create_full_inventory_fixture():
                 "name": f"{color.capitalize()} Code Hack",
                 "type": "code_hack",
                 "color": color,
-                "ram_bonus": 1
+                "ram_bonus": 1,
             }
             engine.player.inventory.append(code_hack)
 
     # Add all exploits to inventory (not equipped yet)
-    exploit_types = ["buffer_overflow", "packet_storm", "system_hop",
-                     "traffic_masquerade", "data_spike", "logic_bomb",
-                     "memory_leak", "exploit_scanner"]
+    exploit_types = [
+        "buffer_overflow",
+        "packet_storm",
+        "system_hop",
+        "traffic_masquerade",
+        "data_spike",
+        "logic_bomb",
+        "memory_leak",
+        "exploit_scanner",
+    ]
 
     for i, exploit_name in enumerate(exploit_types[:8]):
         if exploit_name in GameData.EXPLOITS:
@@ -72,7 +75,7 @@ def create_full_inventory_fixture():
                 "type": "exploit",
                 "exploit_type": exploit_name,
                 "ram": exploit_data.ram,
-                "heat": exploit_data.heat
+                "heat": exploit_data.heat,
             }
             engine.player.inventory.append(exploit_item)
 
@@ -82,7 +85,7 @@ def create_full_inventory_fixture():
         engine.player.equipped_exploits = [
             exploit_items[0]["exploit_type"],
             exploit_items[1]["exploit_type"],
-            exploit_items[2]["exploit_type"]
+            exploit_items[2]["exploit_type"],
         ]
 
     return engine
@@ -114,25 +117,30 @@ def create_level_2_start_fixture():
 
     # Add some code hacks (5 reds, 3 blues)
     for _ in range(5):
-        engine.player.inventory.append({
-            "id": "code_hack_red",
-            "name": "Red Code Hack",
-            "type": "code_hack",
-            "color": "red",
-            "ram_bonus": 1
-        })
+        engine.player.inventory.append(
+            {
+                "id": "code_hack_red",
+                "name": "Red Code Hack",
+                "type": "code_hack",
+                "color": "red",
+                "ram_bonus": 1,
+            }
+        )
 
     for _ in range(3):
-        engine.player.inventory.append({
-            "id": "code_hack_blue",
-            "name": "Blue Code Hack",
-            "type": "code_hack",
-            "color": "blue",
-            "ram_bonus": 1
-        })
+        engine.player.inventory.append(
+            {
+                "id": "code_hack_blue",
+                "name": "Blue Code Hack",
+                "type": "code_hack",
+                "color": "blue",
+                "ram_bonus": 1,
+            }
+        )
 
     # Equip 2 exploits
     from game_data import GameData
+
     if "buffer_overflow" in GameData.EXPLOITS and "packet_storm" in GameData.EXPLOITS:
         engine.player.equipped_exploits = ["buffer_overflow", "packet_storm", None]
 
@@ -165,34 +173,41 @@ def create_level_3_start_fixture():
 
     # Add many code hacks (10 reds, 5 blues, 5 greens)
     for _ in range(10):
-        engine.player.inventory.append({
-            "id": "code_hack_red",
-            "name": "Red Code Hack",
-            "type": "code_hack",
-            "color": "red",
-            "ram_bonus": 1
-        })
+        engine.player.inventory.append(
+            {
+                "id": "code_hack_red",
+                "name": "Red Code Hack",
+                "type": "code_hack",
+                "color": "red",
+                "ram_bonus": 1,
+            }
+        )
 
     for _ in range(5):
-        engine.player.inventory.append({
-            "id": "code_hack_blue",
-            "name": "Blue Code Hack",
-            "type": "code_hack",
-            "color": "blue",
-            "ram_bonus": 1
-        })
+        engine.player.inventory.append(
+            {
+                "id": "code_hack_blue",
+                "name": "Blue Code Hack",
+                "type": "code_hack",
+                "color": "blue",
+                "ram_bonus": 1,
+            }
+        )
 
     for _ in range(5):
-        engine.player.inventory.append({
-            "id": "code_hack_green",
-            "name": "Green Code Hack",
-            "type": "code_hack",
-            "color": "green",
-            "ram_bonus": 1
-        })
+        engine.player.inventory.append(
+            {
+                "id": "code_hack_green",
+                "name": "Green Code Hack",
+                "type": "code_hack",
+                "color": "green",
+                "ram_bonus": 1,
+            }
+        )
 
     # Equip 3 strong exploits
     from game_data import GameData
+
     exploits_to_equip = ["buffer_overflow", "packet_storm", "data_spike"]
     if all(e in GameData.EXPLOITS for e in exploits_to_equip):
         engine.player.equipped_exploits = exploits_to_equip
@@ -235,9 +250,11 @@ def create_victory_ready_fixture():
         ]
 
         for pos in adjacent_positions:
-            if (0 <= pos[0] < engine.game_map.width and
-                0 <= pos[1] < engine.game_map.height and
-                (pos[0], pos[1]) not in engine.game_map.walls):
+            if (
+                0 <= pos[0] < engine.game_map.width
+                and 0 <= pos[1] < engine.game_map.height
+                and (pos[0], pos[1]) not in engine.game_map.walls
+            ):
                 engine.player.position.x = pos[0]
                 engine.player.position.y = pos[1]
                 break
@@ -249,8 +266,9 @@ def create_victory_ready_fixture():
     engine.player.trace_level = 10
 
     # Clear enemies near gateway to ensure clean victory
-    engine.enemies = [e for e in engine.enemies
-                      if abs(e.x - gateway_pos[0]) > 5 or abs(e.y - gateway_pos[1]) > 5]
+    engine.enemies = [
+        e for e in engine.enemies if abs(e.x - gateway_pos[0]) > 5 or abs(e.y - gateway_pos[1]) > 5
+    ]
 
     return engine
 
@@ -284,11 +302,7 @@ def create_surrounded_by_enemy_type_fixture(enemy_type: str = "bot", count: int 
     engine.player.heat = 50
 
     # Surround positions (up to 8 surrounding tiles)
-    surround_offsets = [
-        (-1, -1), (0, -1), (1, -1),
-        (-1,  0),          (1,  0),
-        (-1,  1), (0,  1), (1,  1)
-    ]
+    surround_offsets = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
 
     # Create enemies at surrounding positions
     from tests.fixtures.real_game_data import create_real_enemy
@@ -339,6 +353,7 @@ def create_performance_stress_fixture():
 
     # Generate 25 valid positions for enemies
     import random
+
     random.seed(42)  # Deterministic for testing
 
     for _ in range(25):
@@ -346,9 +361,11 @@ def create_performance_stress_fixture():
             x = random.randint(5, engine.game_map.width - 5)
             y = random.randint(5, engine.game_map.height - 5)
 
-            if ((x, y) not in engine.game_map.walls and
-                (x, y) not in positions and
-                (x, y) != (engine.player.x, engine.player.y)):
+            if (
+                (x, y) not in engine.game_map.walls
+                and (x, y) not in positions
+                and (x, y) != (engine.player.x, engine.player.y)
+            ):
                 positions.append((x, y))
                 break
 
@@ -360,7 +377,9 @@ def create_performance_stress_fixture():
 
     # Mark large area as explored (500+ tiles)
     for y in range(max(0, engine.player.y - 15), min(engine.game_map.height, engine.player.y + 15)):
-        for x in range(max(0, engine.player.x - 15), min(engine.game_map.width, engine.player.x + 15)):
+        for x in range(
+            max(0, engine.player.x - 15), min(engine.game_map.width, engine.player.x + 15)
+        ):
             engine.explored_tiles.add((x, y))
 
     return engine

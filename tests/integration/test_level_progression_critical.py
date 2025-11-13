@@ -11,20 +11,12 @@ Tests the complete level progression workflow including:
 - Network configuration scaling
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-import json
-import os
-import tempfile
 import copy
+from unittest.mock import Mock
 
+from game_config import GameConfig, GameSettings
 from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState, Colors
-from game_config import GameConfig, GameSettings, GameBalance
-from game_state import GameStateManager
-from tests.fixtures.real_game_data import get_real_game_data
-from tests.fixtures.simple_fixtures import create_test_map_with_real_tiles, create_real_player
+from game_entities import EnemyState, Position
 
 
 class TestLevelProgressionCritical:
@@ -40,10 +32,10 @@ class TestLevelProgressionCritical:
         # Store initial game state
         initial_turn = basic_game_engine.turn
         initial_player_stats = {
-            'cpu': basic_game_engine.player.cpu,
-            'trace level': basic_game_engine.player.trace_level,
-            'x': basic_game_engine.player.x,
-            'y': basic_game_engine.player.y
+            "cpu": basic_game_engine.player.cpu,
+            "trace level": basic_game_engine.player.trace_level,
+            "x": basic_game_engine.player.x,
+            "y": basic_game_engine.player.y,
         }
 
         # Trigger level progression
@@ -59,8 +51,8 @@ class TestLevelProgressionCritical:
         assert basic_game_engine.game_map.height > 0
 
         # Verify player stats preserved (except position which changes)
-        assert basic_game_engine.player.cpu == initial_player_stats['cpu']
-        assert basic_game_engine.player.trace_level == initial_player_stats['trace level']
+        assert basic_game_engine.player.cpu == initial_player_stats["cpu"]
+        assert basic_game_engine.player.trace_level == initial_player_stats["trace level"]
 
         # Verify player position is valid (may or may not change between levels)
         assert 0 <= basic_game_engine.player.x < GameConfig.MAP_WIDTH
@@ -74,8 +66,11 @@ class TestLevelProgressionCritical:
 
         # Verify level 2 music was triggered
         basic_game_engine.sound_manager.play_music.assert_called()
-        music_calls = [call for call in basic_game_engine.sound_manager.play_music.call_args_list
-                      if 'level2' in str(call)]
+        music_calls = [
+            call
+            for call in basic_game_engine.sound_manager.play_music.call_args_list
+            if "level2" in str(call)
+        ]
         assert len(music_calls) > 0
 
     def test_level_2_to_3_progression_with_increased_difficulty(self, basic_game_engine):
@@ -98,12 +93,17 @@ class TestLevelProgressionCritical:
         level_3_config = basic_game_engine.game_state.get_current_network_config()
 
         # Verify difficulty scaling
-        assert level_3_config["enemies"] >= level_2_config["enemies"], "Level 3 should have same or more enemies"
+        assert (
+            level_3_config["enemies"] >= level_2_config["enemies"]
+        ), "Level 3 should have same or more enemies"
 
         # Verify level 3 music
         basic_game_engine.sound_manager.play_music.assert_called()
-        music_calls = [call for call in basic_game_engine.sound_manager.play_music.call_args_list
-                      if 'level3' in str(call)]
+        music_calls = [
+            call
+            for call in basic_game_engine.sound_manager.play_music.call_args_list
+            if "level3" in str(call)
+        ]
         assert len(music_calls) > 0
 
     def test_level_3_completion_triggers_victory(self, basic_game_engine):
@@ -126,27 +126,32 @@ class TestLevelProgressionCritical:
         assert len(victory_messages) > 0
 
         # Verify victory music
-        victory_music_calls = [call for call in basic_game_engine.sound_manager.play_music.call_args_list
-                              if 'victory' in str(call)]
+        victory_music_calls = [
+            call
+            for call in basic_game_engine.sound_manager.play_music.call_args_list
+            if "victory" in str(call)
+        ]
         assert len(victory_music_calls) > 0
 
     def test_level_progression_preserves_player_inventory(self, basic_game_engine):
         """Test that level progression preserves player inventory and exploits."""
 
         # Add items to player inventory
-        initial_exploits = copy.deepcopy(basic_game_engine.player.inventory_manager.equipped_exploits)
+        initial_exploits = copy.deepcopy(
+            basic_game_engine.player.inventory_manager.equipped_exploits
+        )
         initial_inventory_count = len(basic_game_engine.player.inventory_manager.items)
 
         # Add a test exploit to player
-        if 'system_hop' not in basic_game_engine.player.inventory_manager.equipped_exploits:
-            basic_game_engine.player.inventory_manager.equipped_exploits.append('system_hop')
+        if "system_hop" not in basic_game_engine.player.inventory_manager.equipped_exploits:
+            basic_game_engine.player.inventory_manager.equipped_exploits.append("system_hop")
 
         # Progress level
         basic_game_engine.next_level()
 
         # Verify inventory preserved
         assert len(basic_game_engine.player.inventory_manager.items) >= initial_inventory_count
-        assert 'system_hop' in basic_game_engine.player.inventory_manager.equipped_exploits
+        assert "system_hop" in basic_game_engine.player.inventory_manager.equipped_exploits
 
         # Verify initial exploits are preserved
         for exploit in initial_exploits:
@@ -226,8 +231,8 @@ class TestLevelProgressionCritical:
             assert isinstance(enemy.position, Position)
             assert enemy.position.x >= 0 and enemy.position.x < GameConfig.MAP_WIDTH
             assert enemy.position.y >= 0 and enemy.position.y < GameConfig.MAP_HEIGHT
-            assert hasattr(enemy, 'type')
-            
+            assert hasattr(enemy, "type")
+
     def test_map_features_generation_across_levels(self, basic_game_engine):
         """Test that essential map features are generated on each level."""
 
@@ -248,9 +253,18 @@ class TestLevelProgressionCritical:
             # Verify borders were created (should have walls around edges)
             # Check corners are walls
             assert (0, 0) in basic_game_engine.game_map.walls  # Top-left corner
-            assert (GameConfig.MAP_WIDTH-1, 0) in basic_game_engine.game_map.walls  # Top-right corner
-            assert (0, GameConfig.MAP_HEIGHT-1) in basic_game_engine.game_map.walls  # Bottom-left corner
-            assert (GameConfig.MAP_WIDTH-1, GameConfig.MAP_HEIGHT-1) in basic_game_engine.game_map.walls  # Bottom-right corner
+            assert (
+                GameConfig.MAP_WIDTH - 1,
+                0,
+            ) in basic_game_engine.game_map.walls  # Top-right corner
+            assert (
+                0,
+                GameConfig.MAP_HEIGHT - 1,
+            ) in basic_game_engine.game_map.walls  # Bottom-left corner
+            assert (
+                GameConfig.MAP_WIDTH - 1,
+                GameConfig.MAP_HEIGHT - 1,
+            ) in basic_game_engine.game_map.walls  # Bottom-right corner
 
     def test_complete_level_progression_workflow_1_to_victory(self, basic_game_engine):
         """Test complete workflow from level 1 to victory."""
@@ -292,7 +306,6 @@ class TestLevelGenerationCritical:
         """Test that level generation is deterministic with the same seed."""
         # Create two engines with muted audio
         from unittest.mock import Mock
-        from game_config import GameSettings
 
         mock_sound = Mock()
         settings = GameSettings()
@@ -338,19 +351,25 @@ class TestLevelGenerationCritical:
 
             # Verify player is not in a wall
             player_pos = (basic_game_engine.player.x, basic_game_engine.player.y)
-            assert player_pos not in basic_game_engine.game_map.walls, f"Player spawned in wall at level {level}"
+            assert (
+                player_pos not in basic_game_engine.game_map.walls
+            ), f"Player spawned in wall at level {level}"
 
             # Verify player has some free space around them (not completely boxed in)
             adjacent_positions = [
                 (basic_game_engine.player.x + dx, basic_game_engine.player.y + dy)
-                for dx in [-1, 0, 1] for dy in [-1, 0, 1]
+                for dx in [-1, 0, 1]
+                for dy in [-1, 0, 1]
                 if dx != 0 or dy != 0
             ]
 
             valid_adjacent = 0
             for x, y in adjacent_positions:
-                if (0 <= x < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT and
-                    (x, y) not in basic_game_engine.game_map.walls):
+                if (
+                    0 <= x < GameConfig.MAP_WIDTH
+                    and 0 <= y < GameConfig.MAP_HEIGHT
+                    and (x, y) not in basic_game_engine.game_map.walls
+                ):
                     valid_adjacent += 1
 
             assert valid_adjacent > 0, f"Player has no valid adjacent positions at level {level}"
@@ -372,14 +391,20 @@ class TestLevelGenerationCritical:
 
                 # Enemy should not be in wall
                 enemy_pos = (enemy.x, enemy.y)
-                assert enemy_pos not in basic_game_engine.game_map.walls, f"Enemy spawned in wall at level {level}"
+                assert (
+                    enemy_pos not in basic_game_engine.game_map.walls
+                ), f"Enemy spawned in wall at level {level}"
 
                 # Enemy should not be on top of player
-                assert enemy.x != basic_game_engine.player.x or enemy.y != basic_game_engine.player.y, f"Enemy spawned on player at level {level}"
+                assert (
+                    enemy.x != basic_game_engine.player.x or enemy.y != basic_game_engine.player.y
+                ), f"Enemy spawned on player at level {level}"
 
             # Verify no two enemies occupy same position
             positions = [(e.x, e.y) for e in basic_game_engine.enemies]
-            assert len(positions) == len(set(positions)), f"Multiple enemies at same position in level {level}"
+            assert len(positions) == len(
+                set(positions)
+            ), f"Multiple enemies at same position in level {level}"
 
             # Verify enemy distribution is reasonable (not all clumped in one area)
             if len(basic_game_engine.enemies) >= 3:

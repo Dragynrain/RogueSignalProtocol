@@ -15,17 +15,17 @@ These tests verify the full end-to-end integration including:
 - Error handling
 """
 
+import zipfile
+from unittest.mock import Mock, patch
+
 import pytest
 import tcod.event
-import zipfile
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 
+from debug_export import DebugExporter
+from game_config import GameSettings
 from game_engine import GameEngine
 from game_input import InputHandler
 from game_menus import SettingsMenu
-from game_config import GameSettings
-from debug_export import DebugExporter
 
 
 @pytest.fixture
@@ -170,13 +170,12 @@ def settings_menu(mock_game_engine):
 # Test Shift+F12 Hotkey Flow
 # ============================================================================
 
+
 def test_shift_f12_triggers_debug_export_dialogue(input_handler, mock_game_engine):
     """Test that Shift+F12 triggers the debug export confirmation dialogue."""
     # Create Shift+F12 event
     event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.F12,
-        sym=tcod.event.KeySym.F12,
-        mod=tcod.event.Modifier.SHIFT
+        scancode=tcod.event.Scancode.F12, sym=tcod.event.KeySym.F12, mod=tcod.event.Modifier.SHIFT
     )
 
     # Simulate gameplay input
@@ -196,13 +195,13 @@ def test_shift_f12_triggers_debug_export_dialogue(input_handler, mock_game_engin
     assert tcod.event.KeySym.N in dialogue.valid_keys
 
 
-def test_shift_f12_confirm_creates_debug_package(input_handler, mock_game_engine, temp_export_dir, temp_game_files):
+def test_shift_f12_confirm_creates_debug_package(
+    input_handler, mock_game_engine, temp_export_dir, temp_game_files
+):
     """Test that confirming the Shift+F12 dialogue creates a debug package."""
     # First trigger the dialogue
     event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.F12,
-        sym=tcod.event.KeySym.F12,
-        mod=tcod.event.Modifier.SHIFT
+        scancode=tcod.event.Scancode.F12, sym=tcod.event.KeySym.F12, mod=tcod.event.Modifier.SHIFT
     )
     input_handler._handle_gameplay_input(event)
 
@@ -218,9 +217,7 @@ def test_shift_f12_confirm_creates_debug_package(input_handler, mock_game_engine
 
     # Now simulate pressing 'Y' to confirm
     confirm_event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.Y,
-        sym=tcod.event.KeySym.Y,
-        mod=0
+        scancode=tcod.event.Scancode.Y, sym=tcod.event.KeySym.Y, mod=0
     )
 
     # Call the confirm handler
@@ -246,9 +243,7 @@ def test_shift_f12_cancel_closes_dialogue(input_handler, mock_game_engine):
 
     # Simulate pressing 'N' to cancel
     cancel_event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.N,
-        sym=tcod.event.KeySym.N,
-        mod=0
+        scancode=tcod.event.Scancode.N, sym=tcod.event.KeySym.N, mod=0
     )
 
     # Handle the keydown (should not trigger export)
@@ -264,6 +259,7 @@ def test_shift_f12_cancel_closes_dialogue(input_handler, mock_game_engine):
 # ============================================================================
 # Test Settings Menu Keyboard Flow
 # ============================================================================
+
 
 def test_settings_menu_navigate_to_export_option(settings_menu):
     """Test navigating to the Export Debug Package option in settings menu."""
@@ -293,9 +289,7 @@ def test_settings_menu_export_shows_confirmation(settings_menu):
 
     # Simulate pressing Enter
     event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN,
-        sym=tcod.event.KeySym.RETURN,
-        mod=0
+        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
     )
 
     result = settings_menu.handle_input(event)
@@ -313,9 +307,7 @@ def test_settings_menu_confirm_export_returns_action(settings_menu):
 
     # Simulate pressing Enter to confirm
     event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN,
-        sym=tcod.event.KeySym.RETURN,
-        mod=0
+        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
     )
 
     result = settings_menu.handle_input(event)
@@ -333,9 +325,7 @@ def test_settings_menu_cancel_export_confirmation(settings_menu):
 
     # Simulate pressing Enter on "No"
     event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN,
-        sym=tcod.event.KeySym.RETURN,
-        mod=0
+        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
     )
 
     result = settings_menu.handle_input(event)
@@ -352,9 +342,7 @@ def test_settings_menu_escape_closes_confirmation(settings_menu):
 
     # Simulate pressing ESC
     event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.ESCAPE,
-        sym=tcod.event.KeySym.ESCAPE,
-        mod=0
+        scancode=tcod.event.Scancode.ESCAPE, sym=tcod.event.KeySym.ESCAPE, mod=0
     )
 
     result = settings_menu.handle_input(event)
@@ -367,6 +355,7 @@ def test_settings_menu_escape_closes_confirmation(settings_menu):
 # ============================================================================
 # Test Settings Menu Mouse Flow
 # ============================================================================
+
 
 def test_settings_menu_mouse_click_export_button(settings_menu, monkeypatch):
     """Test clicking the Export Debug Package button with mouse."""
@@ -392,16 +381,12 @@ def test_settings_menu_mouse_click_export_button(settings_menu, monkeypatch):
 
     # Simulate mouse click event (left click)
     event = tcod.event.MouseButtonDown(
-        pixel=(400, 300),
-        tile=(20, 15),
-        button=tcod.event.MouseButton.LEFT
+        pixel=(400, 300), tile=(20, 15), button=tcod.event.MouseButton.LEFT
     )
 
     # Test that clicking triggers the same flow as Enter key
     enter_event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN,
-        sym=tcod.event.KeySym.RETURN,
-        mod=0
+        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
     )
 
     result = settings_menu.handle_input(enter_event)
@@ -426,9 +411,7 @@ def test_settings_menu_mouse_click_confirm_yes(settings_menu):
 
     # Simulate Enter key (mouse click handler would set selection then trigger this)
     event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN,
-        sym=tcod.event.KeySym.RETURN,
-        mod=0
+        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
     )
 
     result = settings_menu.handle_input(event)
@@ -449,9 +432,7 @@ def test_settings_menu_mouse_click_confirm_no(settings_menu):
 
     # Simulate Enter key
     event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.RETURN,
-        sym=tcod.event.KeySym.RETURN,
-        mod=0
+        scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
     )
 
     result = settings_menu.handle_input(event)
@@ -465,6 +446,7 @@ def test_settings_menu_mouse_click_confirm_no(settings_menu):
 # Test Debug Package Creation
 # ============================================================================
 
+
 def test_debug_package_created_with_game_state(temp_export_dir, temp_game_files, mock_game_engine):
     """Test that debug package includes game state snapshot."""
     from debug_export import export_debug_package
@@ -477,13 +459,15 @@ def test_debug_package_created_with_game_state(temp_export_dir, temp_game_files,
     assert zipfile.is_zipfile(zip_path)
 
     # Verify game snapshot is included
-    with zipfile.ZipFile(zip_path, 'r') as zipf:
+    with zipfile.ZipFile(zip_path, "r") as zipf:
         assert "game_snapshot.json" in zipf.namelist()
 
 
-def test_debug_package_creation_error_handling(input_handler, mock_game_engine, temp_export_dir, temp_game_files):
+def test_debug_package_creation_error_handling(
+    input_handler, mock_game_engine, temp_export_dir, temp_game_files
+):
     """Test that debug package creation errors are handled gracefully."""
-    with patch('debug_export.export_debug_package', side_effect=Exception("Disk full")):
+    with patch("debug_export.export_debug_package", side_effect=Exception("Disk full")):
         # Trigger debug export
         input_handler._perform_debug_export()
 
@@ -496,7 +480,10 @@ def test_debug_package_creation_error_handling(input_handler, mock_game_engine, 
 # Test Message Log Feedback
 # ============================================================================
 
-def test_debug_export_shows_creation_message(input_handler, mock_game_engine, temp_export_dir, temp_game_files):
+
+def test_debug_export_shows_creation_message(
+    input_handler, mock_game_engine, temp_export_dir, temp_game_files
+):
     """Test that user sees 'Creating debug package...' message."""
     # Perform debug export
     input_handler._perform_debug_export()
@@ -506,7 +493,9 @@ def test_debug_export_shows_creation_message(input_handler, mock_game_engine, te
     assert any("Creating debug package" in msg for msg in messages)
 
 
-def test_debug_export_shows_success_message(input_handler, mock_game_engine, temp_export_dir, temp_game_files):
+def test_debug_export_shows_success_message(
+    input_handler, mock_game_engine, temp_export_dir, temp_game_files
+):
     """Test that user sees success message with filename and instructions."""
     # Perform debug export
     input_handler._perform_debug_export()
@@ -518,9 +507,11 @@ def test_debug_export_shows_success_message(input_handler, mock_game_engine, tem
     assert any("github.com" in msg for msg in messages)
 
 
-def test_debug_export_shows_failure_message(input_handler, mock_game_engine, temp_export_dir, temp_game_files):
+def test_debug_export_shows_failure_message(
+    input_handler, mock_game_engine, temp_export_dir, temp_game_files
+):
     """Test that user sees failure message when export fails."""
-    with patch('debug_export.export_debug_package', return_value=None):
+    with patch("debug_export.export_debug_package", return_value=None):
         # Perform debug export (will fail)
         input_handler._perform_debug_export()
 
@@ -533,10 +524,12 @@ def test_debug_export_shows_failure_message(input_handler, mock_game_engine, tem
 # Test Color Usage
 # ============================================================================
 
-def test_debug_export_uses_valid_colors(input_handler, mock_game_engine, temp_export_dir, temp_game_files):
+
+def test_debug_export_uses_valid_colors(
+    input_handler, mock_game_engine, temp_export_dir, temp_game_files
+):
     """Test that debug export uses valid color names (not Colors.GOLD)."""
     # This test verifies the fix for the Colors.GOLD bug
-    from game_entities import Colors
 
     # Perform debug export
     input_handler._perform_debug_export()

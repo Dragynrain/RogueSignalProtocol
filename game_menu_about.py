@@ -6,15 +6,16 @@ Displays game information and community links.
 Links open in user's default browser when selected.
 """
 
-import tcod
 import logging
 import webbrowser
 
+import tcod
+
+from game_color_manager import ColorManager
 from game_config import GameConfig
 from game_entities import Colors
-from game_ui import render_char_safe, UniversalInputHandler
 from game_menu_base import BaseMenu
-from game_color_manager import ColorManager
+from game_ui import UniversalInputHandler, render_char_safe
 
 
 class AboutMenu(BaseMenu):
@@ -47,26 +48,26 @@ class AboutMenu(BaseMenu):
                 "name": "Itch.io",
                 "description": "Download & Rate",
                 "url": "https://dragynrain.itch.io/rogue-signal-protocol",
-                "color": Colors.NEON_PINK
+                "color": Colors.NEON_PINK,
             },
             {
                 "name": "Discord",
                 "description": "Join Community",
                 "url": "https://discord.gg/aUZgmrpU",
-                "color": Colors.ELECTRIC_PURPLE
+                "color": Colors.ELECTRIC_PURPLE,
             },
             {
                 "name": "GitHub",
                 "description": "Source & Issues",
                 "url": "https://github.com/Dragynrain/RogueSignalProtocol",
-                "color": Colors.CYAN
+                "color": Colors.CYAN,
             },
             {
                 "name": "Back",
                 "description": None,  # No description for Back
                 "url": None,  # Special: returns to main menu
-                "color": Colors.WHITE
-            }
+                "color": Colors.WHITE,
+            },
         ]
 
         # Set options for base class mouse handling
@@ -95,11 +96,17 @@ class AboutMenu(BaseMenu):
 
         # Title
         title = "ABOUT"
-        render_char_safe(console, box['center_x'] - len(title) // 2, box['top'] + 2,
-                        title, fg=Colors.YELLOW, bg=Colors.BLACK)
+        render_char_safe(
+            console,
+            box["center_x"] - len(title) // 2,
+            box["top"] + 2,
+            title,
+            fg=Colors.YELLOW,
+            bg=Colors.BLACK,
+        )
 
         # Game info - adjust for narrow/wide box
-        if box['use_background_layout']:
+        if box["use_background_layout"]:
             # Narrow box - shorter lines
             info_lines = [
                 "Rogue Signal",
@@ -119,7 +126,7 @@ class AboutMenu(BaseMenu):
                 "roguesignalprotocol",
                 "@gmail.com",
             ]
-            info_y_start = box['top'] + 5
+            info_y_start = box["top"] + 5
         else:
             # Wide box - longer lines
             info_lines = [
@@ -134,21 +141,28 @@ class AboutMenu(BaseMenu):
                 "",
                 "roguesignalprotocol@gmail.com",
             ]
-            info_y_start = box['top'] + 5
+            info_y_start = box["top"] + 5
 
         # Render info lines
         for i, line in enumerate(info_lines):
-            line_x = box['center_x'] - len(line) // 2
-            render_char_safe(console, line_x, info_y_start + i,
-                           line, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK)
+            line_x = box["center_x"] - len(line) // 2
+            render_char_safe(
+                console, line_x, info_y_start + i, line, fg=Colors.LIGHT_GRAY, bg=Colors.BLACK
+            )
 
         # Links section
         links_y_start = info_y_start + len(info_lines) + 2
 
         # Section header
         links_header = "LINKS:"
-        render_char_safe(console, box['center_x'] - len(links_header) // 2, links_y_start,
-                        links_header, fg=ui_color, bg=Colors.BLACK)
+        render_char_safe(
+            console,
+            box["center_x"] - len(links_header) // 2,
+            links_y_start,
+            links_header,
+            fg=ui_color,
+            bg=Colors.BLACK,
+        )
 
         # Reset link positions for this frame
         self.link_y_ranges = []
@@ -157,25 +171,32 @@ class AboutMenu(BaseMenu):
         current_y = links_y_start + 2
         for i, link in enumerate(self.links):
             # Determine colors
-            is_selected = (i == self.selected_option)
+            is_selected = i == self.selected_option
             fg_color = Colors.YELLOW if is_selected else link["color"]
-            bg_color = ColorManager.get("backgrounds", "menu_highlight") if is_selected else Colors.BLACK
+            bg_color = (
+                ColorManager.get("backgrounds", "menu_highlight") if is_selected else Colors.BLACK
+            )
 
             # Prefix for selected option
             prefix = "> " if is_selected else "  "
 
             # Line 1: Link name
             link_name = f"{prefix}{link['name']}"
-            name_x = box['center_x'] - len(link_name) // 2  # Center based on full text with prefix
+            name_x = box["center_x"] - len(link_name) // 2  # Center based on full text with prefix
             render_char_safe(console, name_x, current_y, link_name, fg=fg_color, bg=bg_color)
 
             # Line 2: Description (if exists)
             desc_y = current_y + 1
             if link["description"]:
-                desc_x = box['center_x'] - len(link["description"]) // 2
-                render_char_safe(console, desc_x, desc_y, link["description"],
-                               fg=Colors.LIGHT_GRAY if not is_selected else Colors.YELLOW,
-                               bg=bg_color)
+                desc_x = box["center_x"] - len(link["description"]) // 2
+                render_char_safe(
+                    console,
+                    desc_x,
+                    desc_y,
+                    link["description"],
+                    fg=Colors.LIGHT_GRAY if not is_selected else Colors.YELLOW,
+                    bg=bg_color,
+                )
 
             # Store Y range for click detection (both lines are clickable)
             y_end = desc_y if link["description"] else current_y
@@ -185,24 +206,17 @@ class AboutMenu(BaseMenu):
             current_y = desc_y + 2
 
         # Instructions at bottom
-        if box['use_background_layout']:
-            instructions = [
-                "↕: Navigate",
-                "Enter: Open",
-                "ESC/Right-Click: Back"
-            ]
+        if box["use_background_layout"]:
+            instructions = ["↕: Navigate", "Enter: Open", "ESC/Right-Click: Back"]
         else:
-            instructions = [
-                "↕ or W/S: Navigate",
-                "Enter: Open Link",
-                "ESC/Right-Click: Back"
-            ]
+            instructions = ["↕ or W/S: Navigate", "Enter: Open Link", "ESC/Right-Click: Back"]
 
-        inst_y_start = box['bottom'] - len(instructions) - 1
+        inst_y_start = box["bottom"] - len(instructions) - 1
         for i, instruction in enumerate(instructions):
-            inst_x = box['center_x'] - len(instruction) // 2
-            render_char_safe(console, inst_x, inst_y_start + i,
-                           instruction, fg=Colors.CYAN, bg=Colors.BLACK)
+            inst_x = box["center_x"] - len(instruction) // 2
+            render_char_safe(
+                console, inst_x, inst_y_start + i, instruction, fg=Colors.CYAN, bg=Colors.BLACK
+            )
 
     def handle_input(self, event) -> str:
         """
@@ -227,7 +241,7 @@ class AboutMenu(BaseMenu):
 
     def handle_mouse_motion(self, event) -> bool:
         """Handle mouse motion - update selection based on hover."""
-        if not hasattr(event, 'position') or event.position is None:
+        if not hasattr(event, "position") or event.position is None:
             return False
 
         tile_x = int(event.position.x)
@@ -246,7 +260,7 @@ class AboutMenu(BaseMenu):
         import tcod.event
 
         # Right-click = go back (standard behavior)
-        if hasattr(event, 'button') and event.button == tcod.event.MouseButton.RIGHT:
+        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
             return "back"
 
         # Try to update selection based on click position (left-click only)

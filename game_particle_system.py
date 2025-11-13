@@ -5,12 +5,11 @@ Handles explosive particle effects when enemies die, with physics simulation
 and multi-color sprite-based particles.
 """
 
-import random
-import math
-import time
 import logging
+import math
+import random
+import time
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
 
 from game_config import GameConfig
 
@@ -28,7 +27,7 @@ class Particle:
     velocity_y: float
 
     # Visual properties
-    color: Tuple[int, int, int]  # RGB
+    color: tuple[int, int, int]  # RGB
     size: int  # Pixel size (3-5 pixels)
 
     # Lifetime tracking
@@ -61,7 +60,7 @@ class ParticleSystem:
 
     def __init__(self):
         """Initialize the particle system."""
-        self.particles: List[Particle] = []
+        self.particles: list[Particle] = []
 
         # Physics constants from config
         self.gravity = GameConfig.PARTICLE_GRAVITY()
@@ -72,8 +71,8 @@ class ParticleSystem:
         self,
         world_x: int,
         world_y: int,
-        colors: List[Tuple[int, int, int]],
-        particle_count: int = None
+        colors: list[tuple[int, int, int]],
+        particle_count: int = None,
     ) -> None:
         """
         Create an explosive particle effect at the given world position.
@@ -97,7 +96,9 @@ class ParticleSystem:
             angle = random.uniform(0, 2 * math.pi)
 
             # Random speed with variation from config
-            speed = random.uniform(GameConfig.PARTICLE_VELOCITY_MIN(), GameConfig.PARTICLE_VELOCITY_MAX())
+            speed = random.uniform(
+                GameConfig.PARTICLE_VELOCITY_MIN(), GameConfig.PARTICLE_VELOCITY_MAX()
+            )
 
             # Calculate velocity components - add upward bias for explosion
             velocity_x = math.cos(angle) * speed
@@ -109,15 +110,16 @@ class ParticleSystem:
             # Add color variation from config
             color_var = GameConfig.PARTICLE_COLOR_VARIATION()
             varied_color = tuple(
-                max(0, min(255, c + random.randint(-color_var, color_var)))
-                for c in color
+                max(0, min(255, c + random.randint(-color_var, color_var))) for c in color
             )
 
             # Random particle size from config
             size = random.randint(GameConfig.PARTICLE_SIZE_MIN(), GameConfig.PARTICLE_SIZE_MAX())
 
             # Random lifetime from config
-            lifetime = random.uniform(GameConfig.PARTICLE_LIFETIME_MIN(), GameConfig.PARTICLE_LIFETIME_MAX())
+            lifetime = random.uniform(
+                GameConfig.PARTICLE_LIFETIME_MIN(), GameConfig.PARTICLE_LIFETIME_MAX()
+            )
 
             # Create particle at explosion center
             particle = Particle(
@@ -128,7 +130,7 @@ class ParticleSystem:
                 color=varied_color,
                 size=size,
                 birth_time=current_time,
-                lifetime=lifetime
+                lifetime=lifetime,
             )
 
             self.particles.append(particle)
@@ -137,7 +139,9 @@ class ParticleSystem:
         if logging.getLogger().isEnabledFor(logging.DEBUG):
             if len(self.particles) > 0:
                 sample = self.particles[-1]
-                logging.debug(f"Created {particle_count} particles at ({world_x}, {world_y}) with colors: {colors[:3]}")
+                logging.debug(
+                    f"Created {particle_count} particles at ({world_x}, {world_y}) with colors: {colors[:3]}"
+                )
                 self.explosion_start_time = current_time
                 self.explosion_expected_duration = max(p.lifetime for p in self.particles)
 
@@ -155,7 +159,9 @@ class ParticleSystem:
             self.update_count += 1
             if current_time - self.last_update_time > 1.0:
                 if len(self.particles) > 0:
-                    logging.debug(f"Update rate: {self.update_count} updates/sec, {len(self.particles)} active particles")
+                    logging.debug(
+                        f"Update rate: {self.update_count} updates/sec, {len(self.particles)} active particles"
+                    )
                 self.update_count = 0
                 self.last_update_time = current_time
 
@@ -181,7 +187,7 @@ class ParticleSystem:
         viewport_width: int,
         viewport_height: int,
         viewport_pixel_width: int,
-        viewport_pixel_height: int
+        viewport_pixel_height: int,
     ) -> None:
         """
         Render all particles using SDL primitives.
@@ -209,8 +215,12 @@ class ParticleSystem:
         particles_culled = 0
         for particle in self.particles:
             # Skip if particle is outside viewport
-            if (particle.x < viewport_left or particle.x >= viewport_right or
-                particle.y < viewport_top or particle.y >= viewport_bottom):
+            if (
+                particle.x < viewport_left
+                or particle.x >= viewport_right
+                or particle.y < viewport_top
+                or particle.y >= viewport_bottom
+            ):
                 particles_culled += 1
                 continue
 
@@ -233,6 +243,7 @@ class ParticleSystem:
 
             # Set blend mode for alpha blending
             from tcod.sdl.render import BlendMode
+
             original_blend = sdl_renderer.draw_blend_mode
             sdl_renderer.draw_blend_mode = BlendMode.BLEND
 
@@ -247,7 +258,9 @@ class ParticleSystem:
 
         # Only log if we have a lot of particles for performance monitoring
         if len(self.particles) > 200:
-            logging.debug(f"Particle render: {particles_rendered} rendered, {particles_culled} culled")
+            logging.debug(
+                f"Particle render: {particles_rendered} rendered, {particles_culled} culled"
+            )
 
     def clear(self) -> None:
         """Clear all particles (useful for game state transitions)."""

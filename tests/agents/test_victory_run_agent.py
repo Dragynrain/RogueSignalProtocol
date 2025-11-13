@@ -15,6 +15,7 @@ This is a CRITICAL test as it validates end-to-end game flow.
 """
 
 import pytest
+
 from tests.test_agent import GameTestAgent
 
 
@@ -61,7 +62,7 @@ class VictoryRunAgent(GameTestAgent):
             for x in range(self.game_map.width):
                 # Check if this tile is the gateway
                 # (Check game_map.gateway_pos or similar)
-                if hasattr(self.game_map, 'gateway_pos'):
+                if hasattr(self.game_map, "gateway_pos"):
                     gw_x, gw_y = self.game_map.gateway_pos
                     if self.move_to(gw_x, gw_y, max_steps=500):
                         return True
@@ -102,7 +103,7 @@ class VictoryRunAgent(GameTestAgent):
             self.turns_taken += 1
 
             # Check if we're at gateway
-            if hasattr(self.game_map, 'gateway_pos'):
+            if hasattr(self.game_map, "gateway_pos"):
                 gw_x, gw_y = self.game_map.gateway_pos
                 if self.player.x == gw_x and self.player.y == gw_y:
                     return True
@@ -162,7 +163,7 @@ class VictoryRunAgent(GameTestAgent):
             # Check if victory achieved (level 3 gateway triggers victory)
             if level == 3:
                 # Check for victory state
-                if hasattr(self.engine, 'victory_achieved') and self.engine.victory_achieved:
+                if hasattr(self.engine, "victory_achieved") and self.engine.victory_achieved:
                     self.victory_achieved = True
                     return True
 
@@ -274,6 +275,7 @@ class TestVictoryRunIntegration:
 
             # Perform random actions
             import random
+
             if random.random() < 0.8:
                 dx, dy = random.choice([(1, 0), (0, 1), (-1, 0), (0, -1)])
                 agent.move_player(dx, dy)
@@ -284,9 +286,9 @@ class TestVictoryRunIntegration:
 
         # Game state should be valid
         state = agent.get_state()
-        assert state['player_hp'] >= 0
+        assert state["player_hp"] >= 0
         # Turn count should have advanced (or game ended)
-        assert state['turn'] > 0
+        assert state["turn"] > 0
 
     def test_no_crashes_random_play(self):
         """Random gameplay actions don't crash the game."""
@@ -299,9 +301,9 @@ class TestVictoryRunIntegration:
             if agent.engine.game_over:
                 break
 
-            action = random.choice(['move', 'wait'])
+            action = random.choice(["move", "wait"])
 
-            if action == 'move':
+            if action == "move":
                 dx, dy = random.choice([(1, 0), (0, 1), (-1, 0), (0, -1)])
                 try:
                     agent.move_player(dx, dy)

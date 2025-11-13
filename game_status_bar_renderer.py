@@ -9,14 +9,14 @@ Handles rendering of:
 Extracted from game_rendering_ui.py to improve modularity.
 """
 
-import tcod
-from typing import Tuple
 
-from game_config import GameConfig
-from game_entities import Colors
-from game_data import GameData
-from game_ui import render_char_safe
+import tcod
+
 from game_color_thresholds import ColorThresholdManager
+from game_config import GameConfig
+from game_data import GameData
+from game_entities import Colors
+from game_ui import render_char_safe
 from game_unicode_chars import GameGlyphs
 
 
@@ -57,7 +57,7 @@ class StatusBarRenderer:
         # Clear the entire top status area (rows 0-1)
         for y in range(2):
             for x in range(GameConfig.SCREEN_WIDTH):
-                render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
+                render_char_safe(console, x, y, " ", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
 
         # Color coding for status values (using centralized thresholds)
         cpu_color = ColorThresholdManager.get_cpu_color(game.player.cpu)
@@ -68,9 +68,13 @@ class StatusBarRenderer:
         # Build status line (only left side stats - help text goes in log panel)
         status_parts = [
             f"CPU:{game.player.cpu:3d}/{game.player.max_cpu}",
-            f"Heat:{game.player.heat:3d}°C/{game.player.max_heat}°C" if game.player.max_heat > 100 else f"Heat:{game.player.heat:3d}°C",
+            (
+                f"Heat:{game.player.heat:3d}°C/{game.player.max_heat}°C"
+                if game.player.max_heat > 100
+                else f"Heat:{game.player.heat:3d}°C"
+            ),
             f"Trace:{int(game.player.trace_level):3d}%",
-            f"RAM:{game.player.ram_used}/{game.player.ram_total}GB"
+            f"RAM:{game.player.ram_used}/{game.player.ram_total}GB",
         ]
 
         colors = [cpu_color, heat_color, trace_color, ram_color]
@@ -88,9 +92,13 @@ class StatusBarRenderer:
         for x in range(GameConfig.SCREEN_WIDTH):
             if x == GameConfig.GAME_AREA_WIDTH():
                 # T-piece where horizontal status bar meets vertical log border (╦ points down)
-                render_char_safe(console, x, 1, GameGlyphs.WALL_T_DOWN, fg=ui_color, bg=Colors.UI_BG)
+                render_char_safe(
+                    console, x, 1, GameGlyphs.WALL_T_DOWN, fg=ui_color, bg=Colors.UI_BG
+                )
             else:
-                render_char_safe(console, x, 1, GameGlyphs.WALL_HORIZONTAL, fg=ui_color, bg=Colors.UI_BG)
+                render_char_safe(
+                    console, x, 1, GameGlyphs.WALL_HORIZONTAL, fg=ui_color, bg=Colors.UI_BG
+                )
 
     def render_bottom_panel(self, console: tcod.console.Console, game):
         """
@@ -110,16 +118,30 @@ class StatusBarRenderer:
         # Clear panel area (full screen width to accommodate all exploits)
         for x in range(GameConfig.SCREEN_WIDTH):
             for y in range(GameConfig.PANEL_Y(), GameConfig.SCREEN_HEIGHT):
-                render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.UI_BG)
+                render_char_safe(console, x, y, " ", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
 
         # Panel border - horizontal line with UI color
         # Use T-piece where it meets the vertical log border
         for x in range(GameConfig.SCREEN_WIDTH):
             if x == GameConfig.GAME_AREA_WIDTH():
                 # T-piece where horizontal bottom panel meets vertical log border (╩ points up)
-                render_char_safe(console, x, GameConfig.PANEL_Y(), GameGlyphs.WALL_T_UP, fg=ui_color, bg=Colors.UI_BG)
+                render_char_safe(
+                    console,
+                    x,
+                    GameConfig.PANEL_Y(),
+                    GameGlyphs.WALL_T_UP,
+                    fg=ui_color,
+                    bg=Colors.UI_BG,
+                )
             else:
-                render_char_safe(console, x, GameConfig.PANEL_Y(), GameGlyphs.WALL_HORIZONTAL, fg=ui_color, bg=Colors.UI_BG)
+                render_char_safe(
+                    console,
+                    x,
+                    GameConfig.PANEL_Y(),
+                    GameGlyphs.WALL_HORIZONTAL,
+                    fg=ui_color,
+                    bg=Colors.UI_BG,
+                )
 
         # Equipped exploits (2 lines)
         self._render_equipped_exploits_panel(console, game)
@@ -135,13 +157,18 @@ class StatusBarRenderer:
         # Check if mouse is hovering over Inv button
         mouse_tile_x = game.last_mouse_tile_x
         mouse_tile_y = game.last_mouse_tile_y
-        is_inv_hovered = (mouse_tile_x is not None and mouse_tile_y is not None and
-                         mouse_tile_y == inv_button_y and
-                         inv_button_x <= mouse_tile_x < inv_button_x + len(inv_button_text))
+        is_inv_hovered = (
+            mouse_tile_x is not None
+            and mouse_tile_y is not None
+            and mouse_tile_y == inv_button_y
+            and inv_button_x <= mouse_tile_x < inv_button_x + len(inv_button_text)
+        )
 
         # Use highlight background if hovered
         inv_bg = Colors.UI_HIGHLIGHT if is_inv_hovered else Colors.UI_BG
-        render_char_safe(console, inv_button_x, inv_button_y, inv_button_text, fg=Colors.YELLOW, bg=inv_bg)
+        render_char_safe(
+            console, inv_button_x, inv_button_y, inv_button_text, fg=Colors.YELLOW, bg=inv_bg
+        )
 
     def _render_equipped_exploits_panel(self, console: tcod.console.Console, game):
         """
@@ -179,7 +206,7 @@ class StatusBarRenderer:
             if exploit_key in GameData.EXPLOITS:
                 exploit = GameData.EXPLOITS[exploit_key]
                 heat_cost = exploit.heat
-                if game.player.temporary_effects['exploit_efficiency_turns'] > 0:
+                if game.player.temporary_effects["exploit_efficiency_turns"] > 0:
                     heat_cost = int(heat_cost * 0.6)
 
                 heat_ok = game.player.heat + heat_cost <= game.player.max_heat
@@ -197,18 +224,17 @@ class StatusBarRenderer:
         for exploit_key, exploit_text, color, slot in line1_exploits:
             # Check if mouse is hovering over this exploit
             text_width = len(exploit_text)
-            is_hovered = (mouse_tile_x is not None and mouse_tile_y is not None and
-                         mouse_tile_y == y1 and
-                         x_pos <= mouse_tile_x < x_pos + text_width)
+            is_hovered = (
+                mouse_tile_x is not None
+                and mouse_tile_y is not None
+                and mouse_tile_y == y1
+                and x_pos <= mouse_tile_x < x_pos + text_width
+            )
 
             # Store position for click detection
-            StatusBarRenderer.last_exploit_positions.append({
-                'slot': slot,
-                'x': x_pos,
-                'y': y1,
-                'width': text_width,
-                'exploit_key': exploit_key
-            })
+            StatusBarRenderer.last_exploit_positions.append(
+                {"slot": slot, "x": x_pos, "y": y1, "width": text_width, "exploit_key": exploit_key}
+            )
 
             # Use highlight background if hovered
             bg = Colors.UI_HIGHLIGHT if is_hovered else Colors.UI_BG
@@ -220,23 +246,30 @@ class StatusBarRenderer:
 
         # Render second line exploits
         if line2_exploits:
-            render_char_safe(console, 1, y2, "        ", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG)  # Indent to align
+            render_char_safe(
+                console, 1, y2, "        ", fg=Colors.ELECTRIC_PURPLE, bg=Colors.UI_BG
+            )  # Indent to align
             x_pos = 11
             for exploit_key, exploit_text, color, slot in line2_exploits:
                 # Check if mouse is hovering over this exploit
                 text_width = len(exploit_text)
-                is_hovered = (mouse_tile_x is not None and mouse_tile_y is not None and
-                             mouse_tile_y == y2 and
-                             x_pos <= mouse_tile_x < x_pos + text_width)
+                is_hovered = (
+                    mouse_tile_x is not None
+                    and mouse_tile_y is not None
+                    and mouse_tile_y == y2
+                    and x_pos <= mouse_tile_x < x_pos + text_width
+                )
 
                 # Store position for click detection
-                StatusBarRenderer.last_exploit_positions.append({
-                    'slot': slot,
-                    'x': x_pos,
-                    'y': y2,
-                    'width': text_width,
-                    'exploit_key': exploit_key
-                })
+                StatusBarRenderer.last_exploit_positions.append(
+                    {
+                        "slot": slot,
+                        "x": x_pos,
+                        "y": y2,
+                        "width": text_width,
+                        "exploit_key": exploit_key,
+                    }
+                )
 
                 # Use highlight background if hovered
                 bg = Colors.UI_HIGHLIGHT if is_hovered else Colors.UI_BG
@@ -265,21 +298,25 @@ class StatusBarRenderer:
         # Player temporary effects (from codes and other sources)
         for effect_name, turns in game.player.temporary_effects.items():
             if turns > 0:
-                display_name = effect_name.replace('_turns', '').replace('_', ' ').title()
+                display_name = effect_name.replace("_turns", "").replace("_", " ").title()
                 condition_text = f"{display_name}({turns})"
 
                 # Color conditions based on their type
-                if effect_name == 'traffic_masquerade_turns':
+                if effect_name == "traffic_masquerade_turns":
                     color = Colors.BLUE  # Invisible effect
-                elif effect_name == 'speed_boost_turns':
-                    color = self._get_data_code_color_for_effect(game, 'speed_boost', Colors.YELLOW)
-                elif effect_name == 'movement_slowed_turns':
+                elif effect_name == "speed_boost_turns":
+                    color = self._get_data_code_color_for_effect(game, "speed_boost", Colors.YELLOW)
+                elif effect_name == "movement_slowed_turns":
                     color = Colors.ORANGE  # Movement slowed effect
-                elif effect_name == 'enhanced_vision_turns':
-                    color = self._get_data_code_color_for_effect(game, 'enhanced_vision', Colors.ELECTRIC_BLUE)
-                elif effect_name == 'exploit_efficiency_turns':
-                    color = self._get_data_code_color_for_effect(game, 'exploit_efficiency', Colors.ELECTRIC_PURPLE)
-                elif effect_name == 'virus_turns':
+                elif effect_name == "enhanced_vision_turns":
+                    color = self._get_data_code_color_for_effect(
+                        game, "enhanced_vision", Colors.ELECTRIC_BLUE
+                    )
+                elif effect_name == "exploit_efficiency_turns":
+                    color = self._get_data_code_color_for_effect(
+                        game, "exploit_efficiency", Colors.ELECTRIC_PURPLE
+                    )
+                elif effect_name == "virus_turns":
                     color = Colors.DARK_GREEN  # Virus effect
                 else:
                     color = Colors.WHITE  # Default color for other effects
@@ -288,7 +325,9 @@ class StatusBarRenderer:
 
         # Threat scan effect
         if game.game_state.threat_scan_turns > 0:
-            conditions.append((f"Threat Scan({game.game_state.threat_scan_turns})", Colors.ELECTRIC_PURPLE))
+            conditions.append(
+                (f"Threat Scan({game.game_state.threat_scan_turns})", Colors.ELECTRIC_PURPLE)
+            )
 
         # Speed moves remaining (from speed boost)
         if game.player.speed_moves_remaining > 0:
@@ -310,7 +349,9 @@ class StatusBarRenderer:
         else:
             render_char_safe(console, 1, y, "Conditions: None", fg=Colors.UI_TEXT, bg=Colors.UI_BG)
 
-    def _get_data_code_color_for_effect(self, game, effect_key: str, fallback_color: Tuple[int, int, int]) -> Tuple[int, int, int]:
+    def _get_data_code_color_for_effect(
+        self, game, effect_key: str, fallback_color: tuple[int, int, int]
+    ) -> tuple[int, int, int]:
         """
         Get the data code color for a specific effect from current game.
 
@@ -327,12 +368,12 @@ class StatusBarRenderer:
             RGB color tuple matching the code that provides this effect
         """
         color_map = {
-            'crimson': Colors.CRIMSON,
-            'azure': Colors.AZURE,
-            'emerald': Colors.EMERALD,
-            'golden': Colors.GOLDEN,
-            'violet': Colors.VIOLET,
-            'silver': Colors.SILVER
+            "crimson": Colors.CRIMSON,
+            "azure": Colors.AZURE,
+            "emerald": Colors.EMERALD,
+            "golden": Colors.GOLDEN,
+            "violet": Colors.VIOLET,
+            "silver": Colors.SILVER,
         }
 
         # Find which color has this effect in the current game

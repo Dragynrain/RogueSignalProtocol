@@ -11,21 +11,8 @@ Tests the integration of core gameplay systems that are essential for proper gam
 - Map interaction and special tiles
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-import json
-import os
-import tempfile
-import copy
-import random
 
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState, Colors
-from game_config import GameConfig, GameSettings, GameBalance
-from game_state import GameStateManager
-from game_combat import ExploitSystem
-from tests.fixtures.real_game_data import get_real_game_data
+from game_entities import EnemyState
 from tests.fixtures.simple_fixtures import enemy_builder
 
 
@@ -46,12 +33,12 @@ class TestCombatSystemIntegration:
         basic_game_engine.enemies = [enemy]
 
         # Give player a combat exploit
-        basic_game_engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        basic_game_engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         initial_heat = basic_game_engine.player.heat
 
         # Execute exploit (this will target based on game logic)
-        result = basic_game_engine.exploit_system.use_exploit('code_injection')
+        result = basic_game_engine.exploit_system.use_exploit("code_injection")
 
         # Verify exploit system integration
         assert isinstance(result, bool)  # Should return a boolean
@@ -60,7 +47,7 @@ class TestCombatSystemIntegration:
         assert basic_game_engine.player.heat >= initial_heat  # Heat should increase or stay same
 
         # Verify exploit system is properly integrated
-        assert hasattr(basic_game_engine, 'exploit_system')
+        assert hasattr(basic_game_engine, "exploit_system")
         assert basic_game_engine.exploit_system.game == basic_game_engine
 
     def test_enemy_attack_player_integration(self, basic_game_engine):
@@ -98,7 +85,7 @@ class TestCombatSystemIntegration:
         basic_game_engine.player.cpu = 0
 
         # Test if basic_game_engine has death handling method
-        if hasattr(basic_game_engine, '_handle_player_death'):
+        if hasattr(basic_game_engine, "_handle_player_death"):
             basic_game_engine._handle_player_death()
 
         # Check game over integration (basic_game_engine may handle death differently)
@@ -106,8 +93,8 @@ class TestCombatSystemIntegration:
         assert basic_game_engine.player.cpu <= 0  # Player should be dead
 
         # Verify the game basic_game_engine still functions
-        assert hasattr(basic_game_engine, 'game_over')
-        assert hasattr(basic_game_engine, 'player')
+        assert hasattr(basic_game_engine, "game_over")
+        assert hasattr(basic_game_engine, "player")
 
 
 class TestTraceLevelSystemIntegration:
@@ -125,13 +112,13 @@ class TestTraceLevelSystemIntegration:
         basic_game_engine.enemies = [enemy]
 
         # Verify trace level system integration
-        assert hasattr(basic_game_engine.player, 'trace_level')
+        assert hasattr(basic_game_engine.player, "trace_level")
         assert isinstance(basic_game_engine.player.trace_level, (int, float))
         assert basic_game_engine.player.trace_level >= 0
 
         # Verify enemy vision integration
-        assert hasattr(enemy, 'can_see_player')
-        assert hasattr(enemy, 'state')
+        assert hasattr(enemy, "can_see_player")
+        assert hasattr(enemy, "state")
 
     def test_trace_threshold_system_integration(self, basic_game_engine):
         """Test trace level threshold system is properly integrated."""
@@ -157,8 +144,8 @@ class TestTraceLevelSystemIntegration:
         assert basic_game_engine.player.trace_level == initial_trace
 
         # Verify trace level is accessible through game basic_game_engine
-        assert hasattr(basic_game_engine, 'player')
-        assert hasattr(basic_game_engine.player, 'trace_level')
+        assert hasattr(basic_game_engine, "player")
+        assert hasattr(basic_game_engine.player, "trace_level")
 
 
 class TestExploitSystemIntegration:
@@ -168,26 +155,26 @@ class TestExploitSystemIntegration:
         """Test exploit system is properly integrated."""
 
         # Verify exploit system exists and is accessible
-        assert hasattr(basic_game_engine, 'input_handler')
-        assert hasattr(basic_game_engine, 'exploit_system')
+        assert hasattr(basic_game_engine, "input_handler")
+        assert hasattr(basic_game_engine, "exploit_system")
 
         # Verify exploit system is properly initialized
         exploit_system = basic_game_engine.exploit_system
         assert exploit_system.game == basic_game_engine
 
         # Verify player has inventory system for exploits
-        assert hasattr(basic_game_engine.player, 'inventory_manager')
-        assert hasattr(basic_game_engine.player.inventory_manager, 'equipped_exploits')
+        assert hasattr(basic_game_engine.player, "inventory_manager")
+        assert hasattr(basic_game_engine.player.inventory_manager, "equipped_exploits")
 
     def test_exploit_heat_system_integration(self, basic_game_engine):
         """Test exploit system integrates with heat management."""
 
         # Set up player with exploit
-        basic_game_engine.player.inventory_manager.equipped_exploits.append('code_injection')
+        basic_game_engine.player.inventory_manager.equipped_exploits.append("code_injection")
         initial_heat = basic_game_engine.player.heat
 
         # Use exploit
-        result = basic_game_engine.exploit_system.use_exploit('code_injection')
+        result = basic_game_engine.exploit_system.use_exploit("code_injection")
 
         # Verify heat system integration
         assert isinstance(result, bool)
@@ -197,17 +184,17 @@ class TestExploitSystemIntegration:
         """Test exploit system integrates with targeting."""
 
         # Verify targeting system exists
-        assert hasattr(basic_game_engine, 'targeting_mode')
-        assert hasattr(basic_game_engine, 'targeting_exploit')
-        assert hasattr(basic_game_engine, 'cursor_position')
+        assert hasattr(basic_game_engine, "targeting_mode")
+        assert hasattr(basic_game_engine, "targeting_exploit")
+        assert hasattr(basic_game_engine, "cursor_position")
 
         # Test basic integration
         basic_game_engine.targeting_mode = True
-        basic_game_engine.targeting_exploit = 'code_injection'
+        basic_game_engine.targeting_exploit = "code_injection"
 
         # Verify integration works
         assert basic_game_engine.targeting_mode == True
-        assert basic_game_engine.targeting_exploit == 'code_injection'
+        assert basic_game_engine.targeting_exploit == "code_injection"
 
 
 class TestGameStateIntegration:
@@ -217,13 +204,13 @@ class TestGameStateIntegration:
         """Test game state system is properly integrated."""
 
         # Verify game state components exist
-        assert hasattr(basic_game_engine, 'game_state')
-        assert hasattr(basic_game_engine, 'level')
-        assert hasattr(basic_game_engine, 'turn')
+        assert hasattr(basic_game_engine, "game_state")
+        assert hasattr(basic_game_engine, "level")
+        assert hasattr(basic_game_engine, "turn")
 
         # Verify save/load system exists
-        assert hasattr(basic_game_engine, 'game_session')
-        assert hasattr(basic_game_engine, 'auto_save')
+        assert hasattr(basic_game_engine, "game_session")
+        assert hasattr(basic_game_engine, "auto_save")
 
         # Test basic state access
         initial_level = basic_game_engine.level
@@ -245,7 +232,7 @@ class TestGameStateIntegration:
         assert basic_game_engine.turn > initial_turn
 
         # Verify turn processor exists
-        assert hasattr(basic_game_engine, 'turn_processor')
+        assert hasattr(basic_game_engine, "turn_processor")
 
     def test_game_state_persistence_integration(self, basic_game_engine):
         """Test game state persistence integration."""
@@ -261,5 +248,9 @@ class TestGameStateIntegration:
         assert basic_game_engine.player.trace_level == 45
 
         # Verify persistence systems exist
-        assert hasattr(basic_game_engine, 'game_session'), "Engine should have game_session attribute"
-        assert callable(getattr(basic_game_engine, 'auto_save', None)), "Engine should have auto_save method"
+        assert hasattr(
+            basic_game_engine, "game_session"
+        ), "Engine should have game_session attribute"
+        assert callable(
+            getattr(basic_game_engine, "auto_save", None)
+        ), "Engine should have auto_save method"

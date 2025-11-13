@@ -13,7 +13,7 @@ Extracted from game_entities.py to improve modularity.
 
 import math
 from dataclasses import dataclass
-from typing import Tuple, Optional
+from typing import Optional
 
 
 @dataclass
@@ -25,10 +25,11 @@ class Position:
     Provides distance calculations, validation, and conversion utilities.
     Hashable for use as dictionary keys.
     """
+
     x: int
     y: int
 
-    def distance_to(self, other: 'Position') -> float:
+    def distance_to(self, other: "Position") -> float:
         """
         Calculate Euclidean distance to another position.
 
@@ -46,9 +47,9 @@ class Position:
         """
         if other is None:
             raise ValueError("Cannot calculate distance to None position")
-        return math.sqrt((self.x - other.x)**2 + (self.y - other.y)**2)
+        return math.sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
 
-    def grid_distance_to(self, other: 'Position') -> int:
+    def grid_distance_to(self, other: "Position") -> int:
         """
         Calculate Chebyshev (grid/chessboard) distance to another position.
 
@@ -91,7 +92,7 @@ class Position:
             return False
         return 0 <= self.x < width and 0 <= self.y < height
 
-    def is_adjacent_to(self, other: 'Position') -> bool:
+    def is_adjacent_to(self, other: "Position") -> bool:
         """
         Check if this position is adjacent to another (including diagonals).
 
@@ -114,7 +115,7 @@ class Position:
         return hash((self.x, self.y))
 
     @staticmethod
-    def create_safe(x: int, y: int, width: int, height: int) -> Optional['Position']:
+    def create_safe(x: int, y: int, width: int, height: int) -> Optional["Position"]:
         """Create a position only if coordinates are valid."""
         pos = Position(x, y)
         if pos.is_valid(width, height):
@@ -122,15 +123,15 @@ class Position:
         return None
 
     @staticmethod
-    def from_tuple(coords: Tuple[int, int]) -> 'Position':
+    def from_tuple(coords: tuple[int, int]) -> "Position":
         """Create position from tuple coordinates."""
         return Position(coords[0], coords[1])
 
-    def to_tuple(self) -> Tuple[int, int]:
+    def to_tuple(self) -> tuple[int, int]:
         """Convert position to tuple for use as dictionary key."""
         return (self.x, self.y)
 
-    def angle_to(self, other: 'Position') -> float:
+    def angle_to(self, other: "Position") -> float:
         """
         Calculate angle in degrees from this position to another.
 
@@ -165,7 +166,7 @@ class Position:
 
         return angle_deg
 
-    def arrow_char_to(self, other: 'Position') -> str:
+    def arrow_char_to(self, other: "Position") -> str:
         """
         Get Unicode arrow character pointing from this position to another.
 
@@ -179,13 +180,13 @@ class Position:
             Unicode arrow character (→ ↑ ← ↓ ↗ ↖ ↙ ↘)
         """
         if other is None:
-            return '→'  # Default to right
+            return "→"  # Default to right
 
         dx = other.x - self.x
         dy = other.y - self.y
 
         if dx == 0 and dy == 0:
-            return '·'  # Same position, use dot
+            return "·"  # Same position, use dot
 
         # Normalize to -1, 0, or 1
         dx_norm = 0 if dx == 0 else (1 if dx > 0 else -1)
@@ -193,17 +194,17 @@ class Position:
 
         # Map to arrow characters (all Unicode)
         arrow_map = {
-            (1, 0): '→',   # East
-            (1, -1): '↗',  # Northeast
-            (0, -1): '↑',  # North
-            (-1, -1): '↖', # Northwest
-            (-1, 0): '←',  # West
-            (-1, 1): '↙',  # Southwest
-            (0, 1): '↓',   # South
-            (1, 1): '↘',   # Southeast
+            (1, 0): "→",  # East
+            (1, -1): "↗",  # Northeast
+            (0, -1): "↑",  # North
+            (-1, -1): "↖",  # Northwest
+            (-1, 0): "←",  # West
+            (-1, 1): "↙",  # Southwest
+            (0, 1): "↓",  # South
+            (1, 1): "↘",  # Southeast
         }
 
-        return arrow_map.get((dx_norm, dy_norm), '→')
+        return arrow_map.get((dx_norm, dy_norm), "→")
 
     def __eq__(self, other) -> bool:
         """Equality comparison for Position objects."""
@@ -212,7 +213,7 @@ class Position:
         return self.x == other.x and self.y == other.y
 
 
-def parse_coordinate_string(coord_str: str) -> Optional[Position]:
+def parse_coordinate_string(coord_str: str) -> Position | None:
     """
     Parse coordinate string from save file format.
 
@@ -225,7 +226,7 @@ def parse_coordinate_string(coord_str: str) -> Optional[Position]:
         Position if parse successful, None if malformed
     """
     try:
-        parts = coord_str.split(',')
+        parts = coord_str.split(",")
         if len(parts) == 2:
             x = int(parts[0])
             y = int(parts[1])

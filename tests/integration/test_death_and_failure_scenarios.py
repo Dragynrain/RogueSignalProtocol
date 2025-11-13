@@ -18,16 +18,11 @@ These tests verify the complete death workflow integrates correctly with:
 - Game state management
 """
 
-import pytest
-from unittest.mock import Mock, patch
-import os
-import tempfile
+from unittest.mock import Mock
 
-from game_engine import GameEngine
-from game_characters import Player, Enemy
-from game_entities import Position, EnemyState
-from game_config import GameSettings, GameBalance
-from tests.fixtures.real_game_data import get_real_game_data
+import pytest
+
+from game_entities import EnemyState, Position
 from tests.fixtures.simple_fixtures import create_real_enemy
 
 
@@ -130,7 +125,9 @@ class TestOverheatDeath:
 
         # Verify overheat damage dealt (or at least heat is at max)
         # Note: Actual overheat damage implementation varies
-        assert engine.player.heat >= engine.player.max_heat or engine.player.cpu <= 50, "Overheat should have effect"
+        assert (
+            engine.player.heat >= engine.player.max_heat or engine.player.cpu <= 50
+        ), "Overheat should have effect"
 
     def test_gradual_overheat_to_death(self, basic_game_engine):
         """Test player with high heat accumulation."""
@@ -200,8 +197,8 @@ class TestGameOverFlow:
         engine = basic_game_engine
 
         # Verify player has CPU tracking
-        assert hasattr(engine.player, 'cpu'), "Player should track CPU"
-        assert hasattr(engine, 'game_over'), "Engine should have game_over flag"
+        assert hasattr(engine.player, "cpu"), "Player should track CPU"
+        assert hasattr(engine, "game_over"), "Engine should have game_over flag"
 
         # Set player to dead state
         engine.player.cpu = 0
@@ -215,15 +212,15 @@ class TestGameOverFlow:
 
         # Verify sound system exists and is callable
         assert engine.sound_manager is not None, "Sound manager should exist"
-        assert hasattr(engine.sound_manager, 'play_sound'), "Should have play_sound method"
+        assert hasattr(engine.sound_manager, "play_sound"), "Should have play_sound method"
 
     def test_save_system_integration(self, basic_game_engine):
         """Test that save system is integrated with game engine."""
         engine = basic_game_engine
 
         # Verify save system exists
-        assert hasattr(engine, 'auto_save'), "Engine should have auto_save"
-        assert hasattr(engine, 'game_session'), "Engine should have game_session"
+        assert hasattr(engine, "auto_save"), "Engine should have auto_save"
+        assert hasattr(engine, "game_session"), "Engine should have game_session"
 
         # System should be able to track game state
         assert engine.level >= 1, "Game should track level"
@@ -234,7 +231,7 @@ class TestGameOverFlow:
         engine = basic_game_engine
 
         # Verify game over flag exists
-        assert hasattr(engine, 'game_over'), "Engine should have game_over flag"
+        assert hasattr(engine, "game_over"), "Engine should have game_over flag"
 
         # Set game over
         engine.game_over = True
@@ -392,7 +389,7 @@ class TestFailureRecovery:
         engine = basic_game_engine
 
         # Verify code hack effects are randomized
-        assert hasattr(engine, 'code_hack_effects'), "Engine should have code_hack_effects"
+        assert hasattr(engine, "code_hack_effects"), "Engine should have code_hack_effects"
         assert len(engine.code_hack_effects) > 0, "Should have randomized effects"
 
         # Set player to critical CPU
@@ -400,8 +397,8 @@ class TestFailureRecovery:
         engine.player.max_cpu = 100
 
         # Verify player inventory system exists
-        assert hasattr(engine.player, 'inventory_manager'), "Player should have inventory"
-        assert hasattr(engine.player.inventory_manager, 'items'), "Inventory should have items list"
+        assert hasattr(engine.player, "inventory_manager"), "Player should have inventory"
+        assert hasattr(engine.player.inventory_manager, "items"), "Inventory should have items list"
 
 
 class TestDeathStatePersistence:
@@ -445,9 +442,10 @@ class TestDeathDialogueDismissal:
 
     def test_death_dialogue_dismissal_with_keyboard(self, basic_game_engine):
         """Test that dismissing death dialogue with keyboard returns False (exit to menu)."""
-        from game_input import InputHandler
-        from game_dialogue_system import create_death_dialogue
         import tcod.event
+
+        from game_dialogue_system import create_death_dialogue
+        from game_input import InputHandler
 
         engine = basic_game_engine
         input_handler = InputHandler(engine)
@@ -466,10 +464,7 @@ class TestDeathDialogueDismissal:
 
         # Simulate pressing ESC to dismiss (death dialogue)
         event = tcod.event.KeyDown(
-            scancode=0,
-            sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier(0),
-            repeat=False
+            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier(0), repeat=False
         )
 
         # Handle the input
@@ -481,10 +476,10 @@ class TestDeathDialogueDismissal:
 
     def test_death_dialogue_dismissal_with_mouse_click(self, basic_game_engine):
         """Test that dismissing death dialogue with mouse click returns False (exit to menu)."""
-        from game_input import InputHandler
-        from game_dialogue_system import create_death_dialogue
-        from game_entities import Position
         import tcod.event
+
+        from game_dialogue_system import create_death_dialogue
+        from game_input import InputHandler
 
         engine = basic_game_engine
         input_handler = InputHandler(engine)
@@ -498,15 +493,15 @@ class TestDeathDialogueDismissal:
 
         # Store render coordinates (normally done by renderer)
         engine.dialogue_state.last_render_coords = {
-            'box_x': 10,
-            'box_y': 10,
-            'box_width': 60,
-            'box_height': 20,
-            'options_y': 28,
-            'options_x': 15,  # Starting x position of options text
-            'options_width': 30,  # Width of options text
-            'num_options': 1,  # Single option for death dialogue
-            'option_positions': [(15, 28)]
+            "box_x": 10,
+            "box_y": 10,
+            "box_width": 60,
+            "box_height": 20,
+            "options_y": 28,
+            "options_x": 15,  # Starting x position of options text
+            "options_width": 30,  # Width of options text
+            "num_options": 1,  # Single option for death dialogue
+            "option_positions": [(15, 28)],
         }
 
         # Verify dialogue is active
@@ -536,10 +531,11 @@ class TestDeathDialogueDismissal:
 
     def test_normal_dialogue_dismissal_returns_true(self, basic_game_engine):
         """Test that dismissing non-death dialogue returns True (continue game)."""
-        from game_input import InputHandler
+        import tcod.event
+
         from game_dialogue_system import DialogueBox
         from game_entities import Colors
-        import tcod.event
+        from game_input import InputHandler
 
         engine = basic_game_engine
         input_handler = InputHandler(engine)
@@ -557,7 +553,7 @@ class TestDeathDialogueDismissal:
             message_color=Colors.WHITE,
             border_color=Colors.CYAN,
             bg_color=(0, 0, 0),
-            format_data={}
+            format_data={},
         )
         engine.dialogue_state.show(normal_dialogue)
 
@@ -572,5 +568,5 @@ class TestDeathDialogueDismissal:
         assert not engine.dialogue_state.is_active(), "Dialogue should be closed"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

@@ -20,13 +20,14 @@ What it DOES do:
 - Try to break the game by finding unexpected input sequences
 """
 
-import pytest
+import os
 import random
 import sys
-import os
+
+import pytest
 import tcod.event
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 from tests.test_agent import GameTestAgent
 
@@ -49,17 +50,35 @@ class ChaosAgent:
     # All valid game keys (safe to test)
     GAME_KEYS = [
         # Movement - WASD
-        tcod.event.KeySym.W, tcod.event.KeySym.A, tcod.event.KeySym.S, tcod.event.KeySym.D,
-        tcod.event.KeySym.Q, tcod.event.KeySym.E, tcod.event.KeySym.Z, tcod.event.KeySym.C,
+        tcod.event.KeySym.W,
+        tcod.event.KeySym.A,
+        tcod.event.KeySym.S,
+        tcod.event.KeySym.D,
+        tcod.event.KeySym.Q,
+        tcod.event.KeySym.E,
+        tcod.event.KeySym.Z,
+        tcod.event.KeySym.C,
         # Movement - Arrows
-        tcod.event.KeySym.UP, tcod.event.KeySym.DOWN, tcod.event.KeySym.LEFT, tcod.event.KeySym.RIGHT,
+        tcod.event.KeySym.UP,
+        tcod.event.KeySym.DOWN,
+        tcod.event.KeySym.LEFT,
+        tcod.event.KeySym.RIGHT,
         # Movement - Numpad
-        tcod.event.KeySym.KP_8, tcod.event.KeySym.KP_2, tcod.event.KeySym.KP_4, tcod.event.KeySym.KP_6,
-        tcod.event.KeySym.KP_7, tcod.event.KeySym.KP_9, tcod.event.KeySym.KP_1, tcod.event.KeySym.KP_3,
+        tcod.event.KeySym.KP_8,
+        tcod.event.KeySym.KP_2,
+        tcod.event.KeySym.KP_4,
+        tcod.event.KeySym.KP_6,
+        tcod.event.KeySym.KP_7,
+        tcod.event.KeySym.KP_9,
+        tcod.event.KeySym.KP_1,
+        tcod.event.KeySym.KP_3,
         tcod.event.KeySym.KP_5,  # Wait/center
         # Exploit keys
-        tcod.event.KeySym.N1, tcod.event.KeySym.N2, tcod.event.KeySym.N3,
-        tcod.event.KeySym.N4, tcod.event.KeySym.N5,
+        tcod.event.KeySym.N1,
+        tcod.event.KeySym.N2,
+        tcod.event.KeySym.N3,
+        tcod.event.KeySym.N4,
+        tcod.event.KeySym.N5,
         # UI toggles
         tcod.event.KeySym.I,  # Inventory
         tcod.event.KeySym.L,  # Look mode
@@ -67,16 +86,23 @@ class ChaosAgent:
         tcod.event.KeySym.V,  # Achievements
         tcod.event.KeySym.SLASH,  # Help (with shift)
         # Wait/rest
-        tcod.event.KeySym.SPACE, tcod.event.KeySym.PERIOD,
+        tcod.event.KeySym.SPACE,
+        tcod.event.KeySym.PERIOD,
         # Escape (close menus)
         tcod.event.KeySym.ESCAPE,
         # Dialogue responses
-        tcod.event.KeySym.Y, tcod.event.KeySym.N,
+        tcod.event.KeySym.Y,
+        tcod.event.KeySym.N,
         # Random other keys that might do something
-        tcod.event.KeySym.RETURN, tcod.event.KeySym.TAB,
+        tcod.event.KeySym.RETURN,
+        tcod.event.KeySym.TAB,
         # Letters that might trigger hidden features
-        tcod.event.KeySym.H, tcod.event.KeySym.M, tcod.event.KeySym.P,
-        tcod.event.KeySym.G, tcod.event.KeySym.T, tcod.event.KeySym.R,
+        tcod.event.KeySym.H,
+        tcod.event.KeySym.M,
+        tcod.event.KeySym.P,
+        tcod.event.KeySym.G,
+        tcod.event.KeySym.T,
+        tcod.event.KeySym.R,
     ]
 
     # Modifiers to randomly apply
@@ -110,7 +136,6 @@ class ChaosAgent:
             True if game should continue, False if exited
         """
         # Create a fake KeyDown event
-        from game_input import InputHandler
 
         for _ in range(hold_duration):
             # Create mock event with the key and modifier
@@ -122,7 +147,7 @@ class ChaosAgent:
             event = MockKeyEvent(key_sym, modifier)
 
             # Check if game has an input handler
-            if hasattr(self.agent.engine, 'input_handler'):
+            if hasattr(self.agent.engine, "input_handler"):
                 # Use the actual input handler
                 try:
                     result = self.agent.engine.input_handler.handle_keydown(event)
@@ -150,19 +175,19 @@ class ChaosAgent:
             Statistics about the chaos session
         """
         stats = {
-            'actions_taken': 0,
-            'key_presses': 0,
-            'unique_keys_pressed': set(),
-            'modifiers_used': {
-                'none': 0,
-                'shift': 0,
-                'ctrl': 0,
-                'shift_ctrl': 0,
+            "actions_taken": 0,
+            "key_presses": 0,
+            "unique_keys_pressed": set(),
+            "modifiers_used": {
+                "none": 0,
+                "shift": 0,
+                "ctrl": 0,
+                "shift_ctrl": 0,
             },
-            'crashed': False,
-            'crash_reason': None,
-            'final_state': None,
-            'menus_toggled': 0,
+            "crashed": False,
+            "crash_reason": None,
+            "final_state": None,
+            "menus_toggled": 0,
         }
 
         try:
@@ -170,7 +195,7 @@ class ChaosAgent:
                 if self.agent.engine.game_over:
                     break
 
-                stats['actions_taken'] = action
+                stats["actions_taken"] = action
 
                 # Pick random key and modifier
                 key_sym = random.choice(self.GAME_KEYS)
@@ -180,23 +205,27 @@ class ChaosAgent:
                 hold_duration = random.choices([1, 2, 3], weights=[70, 20, 10])[0]
 
                 # Track stats
-                stats['unique_keys_pressed'].add(key_sym)
-                stats['key_presses'] += hold_duration
+                stats["unique_keys_pressed"].add(key_sym)
+                stats["key_presses"] += hold_duration
 
                 if modifier == 0:
-                    stats['modifiers_used']['none'] += 1
+                    stats["modifiers_used"]["none"] += 1
                 elif modifier == tcod.event.Modifier.SHIFT:
-                    stats['modifiers_used']['shift'] += 1
+                    stats["modifiers_used"]["shift"] += 1
                 elif modifier == tcod.event.Modifier.CTRL:
-                    stats['modifiers_used']['ctrl'] += 1
+                    stats["modifiers_used"]["ctrl"] += 1
                 else:
-                    stats['modifiers_used']['shift_ctrl'] += 1
+                    stats["modifiers_used"]["shift_ctrl"] += 1
 
                 # Track menu toggles (I, L, F, V, ESC)
-                if key_sym in [tcod.event.KeySym.I, tcod.event.KeySym.L,
-                              tcod.event.KeySym.F, tcod.event.KeySym.V,
-                              tcod.event.KeySym.ESCAPE]:
-                    stats['menus_toggled'] += 1
+                if key_sym in [
+                    tcod.event.KeySym.I,
+                    tcod.event.KeySym.L,
+                    tcod.event.KeySym.F,
+                    tcod.event.KeySym.V,
+                    tcod.event.KeySym.ESCAPE,
+                ]:
+                    stats["menus_toggled"] += 1
 
                 # Simulate the key press
                 should_continue = self._simulate_keypress(key_sym, modifier, hold_duration)
@@ -204,26 +233,28 @@ class ChaosAgent:
                     break
 
                 # Record action
-                self.actions_taken.append({
-                    'action': action,
-                    'key': key_sym,
-                    'modifier': modifier,
-                    'hold': hold_duration,
-                    'player_pos': (self.agent.player.x, self.agent.player.y),
-                    'player_hp': self.agent.player.cpu,
-                })
+                self.actions_taken.append(
+                    {
+                        "action": action,
+                        "key": key_sym,
+                        "modifier": modifier,
+                        "hold": hold_duration,
+                        "player_pos": (self.agent.player.x, self.agent.player.y),
+                        "player_hp": self.agent.player.cpu,
+                    }
+                )
 
         except Exception as e:
-            stats['crashed'] = True
-            stats['crash_reason'] = str(e)
-            stats['crash_type'] = type(e).__name__
+            stats["crashed"] = True
+            stats["crash_reason"] = str(e)
+            stats["crash_type"] = type(e).__name__
             # Re-raise so test framework catches it
             raise
         finally:
-            stats['final_state'] = self.agent.get_state()
+            stats["final_state"] = self.agent.get_state()
             # Convert set to count for JSON serialization
-            stats['unique_keys_count'] = len(stats['unique_keys_pressed'])
-            del stats['unique_keys_pressed']  # Remove set (not JSON serializable)
+            stats["unique_keys_count"] = len(stats["unique_keys_pressed"])
+            del stats["unique_keys_pressed"]  # Remove set (not JSON serializable)
 
         return stats
 
@@ -239,10 +270,10 @@ class TestChaosAgent:
         stats = chaos.run_chaos(max_actions=200)
 
         # We don't care about success, just that it didn't crash
-        assert not stats['crashed'], f"Game crashed: {stats['crash_reason']}"
+        assert not stats["crashed"], f"Game crashed: {stats['crash_reason']}"
 
         # Log interesting stats
-        print(f"\n=== Chaos Agent Test Results ===")
+        print("\n=== Chaos Agent Test Results ===")
         print(f"Completed {stats['actions_taken']} actions")
         print(f"Pressed {stats['key_presses']} keys total")
         print(f"Used {stats['unique_keys_count']} unique keys")
@@ -261,21 +292,14 @@ class TestChaosAgent:
                 chaos = ChaosAgent(agent)
                 stats = chaos.run_chaos(max_actions=100)
 
-                if stats['crashed']:
-                    crashes.append({
-                        'seed': seed,
-                        'reason': stats['crash_reason']
-                    })
+                if stats["crashed"]:
+                    crashes.append({"seed": seed, "reason": stats["crash_reason"]})
             except Exception as e:
-                crashes.append({
-                    'seed': seed,
-                    'reason': str(e),
-                    'type': type(e).__name__
-                })
+                crashes.append({"seed": seed, "reason": str(e), "type": type(e).__name__})
 
         # Report crashes
         if crashes:
-            print(f"\n=== Crashes Found ===")
+            print("\n=== Crashes Found ===")
             for crash in crashes:
                 print(f"Seed {crash['seed']}: {crash.get('type', 'Unknown')} - {crash['reason']}")
 
@@ -290,15 +314,16 @@ class TestChaosAgent:
         # This is an endurance test
         stats = chaos.run_chaos(max_actions=1000)
 
-        assert not stats['crashed'], f"Long session crashed: {stats['crash_reason']}"
+        assert not stats["crashed"], f"Long session crashed: {stats['crash_reason']}"
 
-        print(f"\n=== Long Chaos Session ===")
+        print("\n=== Long Chaos Session ===")
         print(f"Completed {stats['actions_taken']}/1000 actions")
         print(f"Total key presses: {stats['key_presses']}")
         print(f"Unique keys used: {stats['unique_keys_count']}")
-        print(f"Final state: HP={stats['final_state']['player_hp']}, Game Over={stats['final_state']['game_over']}")
+        print(
+            f"Final state: HP={stats['final_state']['player_hp']}, Game Over={stats['final_state']['game_over']}"
+        )
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])  # -s shows print output
-

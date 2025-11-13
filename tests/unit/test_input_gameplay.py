@@ -13,13 +13,14 @@ Tests focus on:
 - Gameplay left click (adjacent movement, auto-walk, pass turn)
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock, call
 import tcod.event
 
-from game_input_gameplay import GameplayInputHandler
-from game_entities import Position
 from game_config import GameConfig
+from game_entities import Position
+from game_input_gameplay import GameplayInputHandler
 
 
 def create_mock_game():
@@ -33,7 +34,11 @@ def create_mock_game():
     game.player.position = Position(25, 25)
     game.player.inventory_manager = Mock()
     game.player.inventory_manager.equipped_exploits = [
-        'buffer_overflow', 'memory_leak', 'sudo', None, None
+        "buffer_overflow",
+        "memory_leak",
+        "sudo",
+        None,
+        None,
     ]
 
     # Settings
@@ -285,7 +290,7 @@ class TestExploitHotkeys:
         event.mod = 0
         handler.handle_input(event)
 
-        game.exploit_system.use_exploit.assert_called_once_with('buffer_overflow')
+        game.exploit_system.use_exploit.assert_called_once_with("buffer_overflow")
 
     def test_exploit_slot_2(self):
         """Test using exploit in slot 2."""
@@ -297,7 +302,7 @@ class TestExploitHotkeys:
         event.mod = 0
         handler.handle_input(event)
 
-        game.exploit_system.use_exploit.assert_called_once_with('memory_leak')
+        game.exploit_system.use_exploit.assert_called_once_with("memory_leak")
 
     def test_exploit_slot_3(self):
         """Test using exploit in slot 3."""
@@ -309,7 +314,7 @@ class TestExploitHotkeys:
         event.mod = 0
         handler.handle_input(event)
 
-        game.exploit_system.use_exploit.assert_called_once_with('sudo')
+        game.exploit_system.use_exploit.assert_called_once_with("sudo")
 
     def test_empty_exploit_slot(self):
         """Test using empty exploit slot still calls use_exploit with None."""
@@ -333,9 +338,15 @@ class TestExploitHotkeys:
         event.mod = 0
 
         # Test all 5 slots
-        for i, key in enumerate([tcod.event.KeySym.N1, tcod.event.KeySym.N2,
-                                  tcod.event.KeySym.N3, tcod.event.KeySym.N4,
-                                  tcod.event.KeySym.N5]):
+        for i, key in enumerate(
+            [
+                tcod.event.KeySym.N1,
+                tcod.event.KeySym.N2,
+                tcod.event.KeySym.N3,
+                tcod.event.KeySym.N4,
+                tcod.event.KeySym.N5,
+            ]
+        ):
             event.sym = key
             handler.handle_input(event)
 
@@ -490,8 +501,10 @@ class TestMouseHoverUpdates:
         event.position.x = 400
         event.position.y = 300
 
-        with patch('game_input_gameplay.InputCoordinateConverter.pixel_to_world_position',
-                   return_value=Position(20, 15)):
+        with patch(
+            "game_input_gameplay.InputCoordinateConverter.pixel_to_world_position",
+            return_value=Position(20, 15),
+        ):
             result = handler.handle_mouse_motion(event)
 
         assert result is True
@@ -509,8 +522,10 @@ class TestMouseHoverUpdates:
         event.position.x = 1000  # Outside bounds
         event.position.y = 1000
 
-        with patch('game_input_gameplay.InputCoordinateConverter.pixel_to_world_position',
-                   return_value=None):
+        with patch(
+            "game_input_gameplay.InputCoordinateConverter.pixel_to_world_position",
+            return_value=None,
+        ):
             result = handler.handle_mouse_motion(event)
 
         assert result is False
@@ -532,8 +547,10 @@ class TestGameplayLeftClick:
         event.position.y = 300
 
         # Click on player position (25, 25)
-        with patch('game_input_gameplay.InputCoordinateConverter.pixel_to_world_position',
-                   return_value=Position(25, 25)):
+        with patch(
+            "game_input_gameplay.InputCoordinateConverter.pixel_to_world_position",
+            return_value=Position(25, 25),
+        ):
             handler.handle_left_click(event)
 
         # Should pass turn (move 0, 0)
@@ -551,8 +568,10 @@ class TestGameplayLeftClick:
         event.position.y = 300
 
         # Click adjacent tile (26, 25) - one tile to the right
-        with patch('game_input_gameplay.InputCoordinateConverter.pixel_to_world_position',
-                   return_value=Position(26, 25)):
+        with patch(
+            "game_input_gameplay.InputCoordinateConverter.pixel_to_world_position",
+            return_value=Position(26, 25),
+        ):
             handler.handle_left_click(event)
 
         # Should move immediately
@@ -570,8 +589,10 @@ class TestGameplayLeftClick:
         event.position.y = 300
 
         # Click distant tile (40, 40)
-        with patch('game_input_gameplay.InputCoordinateConverter.pixel_to_world_position',
-                   return_value=Position(40, 40)):
+        with patch(
+            "game_input_gameplay.InputCoordinateConverter.pixel_to_world_position",
+            return_value=Position(40, 40),
+        ):
             handler.handle_left_click(event)
 
         # Should start auto-walk
@@ -591,8 +612,10 @@ class TestGameplayLeftClick:
         event.position.y = 1000
 
         # Click returns None (outside bounds)
-        with patch('game_input_gameplay.InputCoordinateConverter.pixel_to_world_position',
-                   return_value=None):
+        with patch(
+            "game_input_gameplay.InputCoordinateConverter.pixel_to_world_position",
+            return_value=None,
+        ):
             result = handler.handle_left_click(event)
 
         # Should return True (event handled) but no action
@@ -619,10 +642,14 @@ class TestUIButtonClicks:
         inv_button_y = GameConfig.SCREEN_HEIGHT - 1
 
         # Mock pixel_to_char_coords to return Inv button tile position
-        with patch('game_input_gameplay.InputCoordinateConverter.get_window_dimensions',
-                   return_value=(800, 600)):
-            with patch('game_input_gameplay.CoordinateHelpers.pixel_to_char_coords',
-                       return_value=(inv_button_x, inv_button_y)):
+        with patch(
+            "game_input_gameplay.InputCoordinateConverter.get_window_dimensions",
+            return_value=(800, 600),
+        ):
+            with patch(
+                "game_input_gameplay.CoordinateHelpers.pixel_to_char_coords",
+                return_value=(inv_button_x, inv_button_y),
+            ):
                 result = handler.handle_inv_button_click(event)
 
         assert result is True
@@ -638,16 +665,18 @@ class TestUIButtonClicks:
         event.position = Mock()
 
         # Mock UIRenderer.get_exploit_at_click to return slot 0
-        with patch('game_input_gameplay.InputCoordinateConverter.get_window_dimensions',
-                   return_value=(800, 600)):
-            with patch('game_input_gameplay.CoordinateHelpers.pixel_to_char_coords',
-                       return_value=(10, 48)):  # Some position in exploit bar
-                with patch('game_rendering_ui.UIRenderer.get_exploit_at_click',
-                           return_value=0):
+        with patch(
+            "game_input_gameplay.InputCoordinateConverter.get_window_dimensions",
+            return_value=(800, 600),
+        ):
+            with patch(
+                "game_input_gameplay.CoordinateHelpers.pixel_to_char_coords", return_value=(10, 48)
+            ):  # Some position in exploit bar
+                with patch("game_rendering_ui.UIRenderer.get_exploit_at_click", return_value=0):
                     result = handler.handle_exploit_bar_click(event)
 
         assert result is True
-        game.exploit_system.use_exploit.assert_called_once_with('buffer_overflow')
+        game.exploit_system.use_exploit.assert_called_once_with("buffer_overflow")
 
     def test_exploit_bar_click_returns_false_when_no_exploit(self):
         """Test that clicking outside exploit bar returns False."""
@@ -659,12 +688,14 @@ class TestUIButtonClicks:
         event.position = Mock()
 
         # Mock UIRenderer.get_exploit_at_click to return None
-        with patch('game_input_gameplay.InputCoordinateConverter.get_window_dimensions',
-                   return_value=(800, 600)):
-            with patch('game_input_gameplay.CoordinateHelpers.pixel_to_char_coords',
-                       return_value=(10, 10)):  # Random position
-                with patch('game_rendering_ui.UIRenderer.get_exploit_at_click',
-                           return_value=None):
+        with patch(
+            "game_input_gameplay.InputCoordinateConverter.get_window_dimensions",
+            return_value=(800, 600),
+        ):
+            with patch(
+                "game_input_gameplay.CoordinateHelpers.pixel_to_char_coords", return_value=(10, 10)
+            ):  # Random position
+                with patch("game_rendering_ui.UIRenderer.get_exploit_at_click", return_value=None):
                     result = handler.handle_exploit_bar_click(event)
 
         assert result is False

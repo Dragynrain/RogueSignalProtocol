@@ -10,11 +10,11 @@ Manages all map-related data:
 - Line of sight calculations using TCOD FOV
 """
 
-import logging
+from functools import lru_cache
+
 import tcod
 import tcod.constants
-from functools import lru_cache
-from typing import Set, Tuple, Dict, Optional
+
 from game_entities import Position
 from game_inventory import CodeHack, ExploitItem, StoryFragment
 
@@ -31,38 +31,42 @@ class GameMap:
     def __init__(self, width: int, height: int):
         self.width = width
         self.height = height
-        
+
         # Terrain sets
-        self.walls: Set[Tuple[int, int]] = set()
-        self.blind_spots: Set[Tuple[int, int]] = set()
-        
+        self.walls: set[tuple[int, int]] = set()
+        self.blind_spots: set[tuple[int, int]] = set()
+
         # Feature sets
-        self.cooling_nodes: Set[Tuple[int, int]] = set()
-        self.cpu_recovery_nodes: Set[Tuple[int, int]] = set()
-        self.ghost_nodes: Set[Tuple[int, int]] = set()
-        
+        self.cooling_nodes: set[tuple[int, int]] = set()
+        self.cpu_recovery_nodes: set[tuple[int, int]] = set()
+        self.ghost_nodes: set[tuple[int, int]] = set()
+
         # Items
-        self.code_hacks: Dict[Tuple[int, int], CodeHack] = {}
-        self.exploit_pickups: Dict[Tuple[int, int], ExploitItem] = {}
-        self.permanent_upgrades: Dict[Tuple[int, int], str] = {}  # position -> upgrade_key
-        self.story_fragments: Dict[Tuple[int, int], StoryFragment] = {}  # position -> story_fragment
-        
+        self.code_hacks: dict[tuple[int, int], CodeHack] = {}
+        self.exploit_pickups: dict[tuple[int, int], ExploitItem] = {}
+        self.permanent_upgrades: dict[tuple[int, int], str] = {}  # position -> upgrade_key
+        self.story_fragments: dict[tuple[int, int], StoryFragment] = (
+            {}
+        )  # position -> story_fragment
+
         # Special locations
-        self.gateway: Optional[Position] = None
-        
+        self.gateway: Position | None = None
+
         # Memory system for hybrid fog of war
-        self.explored_tiles: Set[Tuple[int, int]] = set()
-        self.last_known_enemy_positions: Dict[int, Tuple[Position, int]] = {}  # enemy_id -> (position, turn_seen)
+        self.explored_tiles: set[tuple[int, int]] = set()
+        self.last_known_enemy_positions: dict[int, tuple[Position, int]] = (
+            {}
+        )  # enemy_id -> (position, turn_seen)
 
         # PHASE 5: Loot room clustering
-        self.loot_room_positions: Set[Tuple[int, int]] = set()  # Floor positions in loot rooms
-    
+        self.loot_room_positions: set[tuple[int, int]] = set()  # Floor positions in loot rooms
+
     def is_wall(self, position: Position) -> bool:
         """Check if position contains a wall."""
         if not position.is_valid(self.width, self.height):
             return True
         return (position.x, position.y) in self.walls
-    
+
     def is_blind_spot(self, position: Position) -> bool:
         """
         Check if position is in a blind spot.
@@ -79,34 +83,35 @@ class GameMap:
         if not position.is_valid(self.width, self.height):
             return False
         # Ghost nodes function as blind spots in addition to their special effect
-        return ((position.x, position.y) in self.blind_spots or
-                (position.x, position.y) in self.ghost_nodes)
-    
+        return (position.x, position.y) in self.blind_spots or (
+            position.x,
+            position.y,
+        ) in self.ghost_nodes
+
     def is_cooling_node(self, position: Position) -> bool:
         """Check if position contains a cooling node."""
         return (position.x, position.y) in self.cooling_nodes
-    
+
     def is_cpu_recovery_node(self, position: Position) -> bool:
         """Check if position contains a CPU recovery node."""
         return (position.x, position.y) in self.cpu_recovery_nodes
-    
+
     def is_ghost_node(self, position: Position) -> bool:
         """Check if position contains a ghost node (trace level reduction)."""
         return (position.x, position.y) in self.ghost_nodes
-    
-    def get_code_hack(self, position: Position) -> Optional[CodeHack]:
+
+    def get_code_hack(self, position: Position) -> CodeHack | None:
         """Get code at position."""
         return self.code_hacks.get((position.x, position.y))
-    
-    def get_exploit_pickup(self, position: Position) -> Optional[ExploitItem]:
+
+    def get_exploit_pickup(self, position: Position) -> ExploitItem | None:
         """Get exploit pickup at position."""
         return self.exploit_pickups.get((position.x, position.y))
-    
+
     def is_valid_position(self, position: Position) -> bool:
         """Check if position is valid for movement."""
-        return (position.is_valid(self.width, self.height) and 
-                not self.is_wall(position))
-    
+        return position.is_valid(self.width, self.height) and not self.is_wall(position)
+
     def has_line_of_sight(self, start: Position, end: Position) -> bool:
         """
         Check line of sight between two positions.
@@ -140,28 +145,27 @@ class GameMap:
         Returns:
             True if target is visible from start position
         """
-        if not (start.is_valid(self.width, self.height) and 
-                end.is_valid(self.width, self.height)):
+        if not (start.is_valid(self.width, self.height) and end.is_valid(self.width, self.height)):
             return False
-        
+
         # Use TCOD's FOV for better corner visibility
         # Create a transparency map (True = transparent, False = opaque)
         transparency = self._get_transparency_map()
-        
+
         # Calculate the maximum distance to check
         max_distance = max(abs(end.x - start.x), abs(end.y - start.y)) + 1
-        
+
         # Compute FOV from start position (TCOD uses y,x coordinate order)
         fov = tcod.map.compute_fov(
             transparency=transparency,
             pov=(start.y, start.x),
             radius=max_distance,
-            algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST
+            algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST,
         )
-        
+
         # Check if end position is visible (TCOD array is indexed as [y, x])
         return fov[end.y, end.x]
-    
+
     def _get_transparency_map(self):
         """Get transparency map for FOV calculations (cached for performance).
 
@@ -170,8 +174,9 @@ class GameMap:
             Uses (y, x) indexing consistent with TCOD conventions.
         """
         # Cache the transparency map to avoid recreating it every time
-        if not hasattr(self, '_transparency_cache'):
+        if not hasattr(self, "_transparency_cache"):
             import numpy as np
+
             transparency = np.ones((self.height, self.width), dtype=bool)
             for y in range(self.height):
                 for x in range(self.width):
@@ -179,15 +184,15 @@ class GameMap:
                     transparency[y, x] = not self.is_wall(Position(x, y))
             self._transparency_cache = transparency
         return self._transparency_cache
-    
+
     def invalidate_transparency_cache(self):
         """Invalidate transparency and walkability caches when map changes.
 
         Call this method whenever walls are added or removed from the map.
         """
-        if hasattr(self, '_transparency_cache'):
+        if hasattr(self, "_transparency_cache"):
             del self._transparency_cache
-        if hasattr(self, '_walkability_cache'):
+        if hasattr(self, "_walkability_cache"):
             del self._walkability_cache
         # Clear LRU cache for FOV computations
         self._compute_fov_cached.cache_clear()
@@ -199,8 +204,9 @@ class GameMap:
             Boolean numpy array with shape (height, width) where True = walkable.
             Uses (y, x) indexing consistent with TCOD conventions.
         """
-        if not hasattr(self, '_walkability_cache'):
+        if not hasattr(self, "_walkability_cache"):
             import numpy as np
+
             walkability = np.zeros((self.height, self.width), dtype=bool)
             for y in range(self.height):
                 for x in range(self.width):
@@ -208,11 +214,10 @@ class GameMap:
                     walkability[y, x] = self.is_valid_position(pos)
             self._walkability_cache = walkability
         return self._walkability_cache
-    
+
     def can_see_position(self, start: Position, end: Position, vision_range: int) -> bool:
         """Check if start position can see end position using TCOD FOV within range (optimized with LRU caching)."""
-        if not (start.is_valid(self.width, self.height) and
-                end.is_valid(self.width, self.height)):
+        if not (start.is_valid(self.width, self.height) and end.is_valid(self.width, self.height)):
             return False
 
         # Check if within vision range first (faster early exit)
@@ -245,7 +250,7 @@ class GameMap:
             transparency=transparency,
             pov=(start_y, start_x),
             radius=vision_range,
-            algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST
+            algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST,
         )
         # Note: Can't reliably detect cache hits/misses here, so minimal logging
         return result

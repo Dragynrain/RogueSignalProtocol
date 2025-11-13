@@ -12,10 +12,12 @@ maintainable gameplay interaction logic.
 """
 
 import logging
+
 import tcod.event
+
+from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Position
 from game_input_coordinates import InputCoordinateConverter
-from game_coordinate_helpers import CoordinateHelpers
 
 
 class GameplayInputHandler:
@@ -73,7 +75,11 @@ class GameplayInputHandler:
             self.game.move_player(dx, dy)
 
         # Wait/rest
-        elif event.sym in (tcod.event.KeySym.SPACE, tcod.event.KeySym.PERIOD, tcod.event.KeySym.KP_5):
+        elif event.sym in (
+            tcod.event.KeySym.SPACE,
+            tcod.event.KeySym.PERIOD,
+            tcod.event.KeySym.KP_5,
+        ):
             self.game.maybe_process_turn()
 
         # UI toggles
@@ -85,7 +91,9 @@ class GameplayInputHandler:
                 self.input_handler._enter_look_mode()
         elif event.sym == tcod.event.KeySym.F:
             self.game.show_lore_viewer = True
-        elif event.sym == tcod.event.KeySym.SLASH and (event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)):
+        elif event.sym == tcod.event.KeySym.SLASH and (
+            event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)
+        ):
             self.game.show_help = True
         elif event.sym == tcod.event.KeySym.V:
             self.game.show_achievements = True
@@ -93,9 +101,11 @@ class GameplayInputHandler:
         # Exploit usage (1-5 keys) - check as loop
         else:
             exploit_keys = {
-                tcod.event.KeySym.N1: 0, tcod.event.KeySym.N2: 1,
-                tcod.event.KeySym.N3: 2, tcod.event.KeySym.N4: 3,
-                tcod.event.KeySym.N5: 4
+                tcod.event.KeySym.N1: 0,
+                tcod.event.KeySym.N2: 1,
+                tcod.event.KeySym.N3: 2,
+                tcod.event.KeySym.N4: 3,
+                tcod.event.KeySym.N5: 4,
             }
             if event.sym in exploit_keys:
                 self.use_exploit_slot(exploit_keys[event.sym])
@@ -127,7 +137,9 @@ class GameplayInputHandler:
         Returns:
             True if hover position was updated, False otherwise
         """
-        graphics_mode = self.game.settings.graphics_mode if hasattr(self.game, 'settings') else "glyph"
+        graphics_mode = (
+            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+        )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
         )
@@ -150,13 +162,16 @@ class GameplayInputHandler:
             True if click was on Inv button, False otherwise
         """
         # Convert pixel coordinates to console tile coordinates
-        window_w, window_h = InputCoordinateConverter.get_window_dimensions(self.renderer, self.game)
+        window_w, window_h = InputCoordinateConverter.get_window_dimensions(
+            self.renderer, self.game
+        )
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
             event.position.x, event.position.y, window_w, window_h
         )
 
         # Inv button is on bottom row (must match rendering code)
         from game_config import GameConfig
+
         inv_button_y = GameConfig.SCREEN_HEIGHT - 1
         if tile_y != inv_button_y:
             return False
@@ -192,7 +207,9 @@ class GameplayInputHandler:
         from game_rendering_ui import UIRenderer
 
         # Convert pixel coordinates to console tile coordinates
-        window_w, window_h = InputCoordinateConverter.get_window_dimensions(self.renderer, self.game)
+        window_w, window_h = InputCoordinateConverter.get_window_dimensions(
+            self.renderer, self.game
+        )
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
             event.position.x, event.position.y, window_w, window_h
         )
@@ -223,7 +240,9 @@ class GameplayInputHandler:
         Returns:
             True (event is always consumed in gameplay)
         """
-        graphics_mode = self.game.settings.graphics_mode if hasattr(self.game, 'settings') else "glyph"
+        graphics_mode = (
+            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+        )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
         )

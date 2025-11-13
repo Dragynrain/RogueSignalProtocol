@@ -18,11 +18,13 @@ import tcod
 import tcod.console
 import tcod.event
 
-from game_coordinate_helpers import CoordinateHelpers
 from font_loader_freetype import load_truetype_font_custom
+from game_coordinate_helpers import CoordinateHelpers
 
 
-def render_box_outline(console: tcod.console.Console, x: int, y: int, width: int, height: int, color: tuple):
+def render_box_outline(
+    console: tcod.console.Console, x: int, y: int, width: int, height: int, color: tuple
+):
     """Draw a box outline at the specified position."""
     # Top and bottom borders
     for i in range(width):
@@ -104,7 +106,9 @@ def main():
                 console.print(2, 3, "Press SPACE for next test, ESC to exit", fg=(128, 128, 128))
 
                 # Make entire console transparent
-                CoordinateHelpers.set_alpha_region(console, 0, 0, console_width, console_height, alpha=0)
+                CoordinateHelpers.set_alpha_region(
+                    console, 0, 0, console_width, console_height, alpha=0
+                )
 
                 # Make center region opaque
                 box_w, box_h = 50, 25
@@ -126,7 +130,9 @@ def main():
                 orig_x, orig_y, orig_w, orig_h = 70, 40, 20, 15
 
                 # Show original position (red)
-                console.print(2, 5, f"Original: ({orig_x}, {orig_y}) {orig_w}x{orig_h}", fg=(255, 0, 0))
+                console.print(
+                    2, 5, f"Original: ({orig_x}, {orig_y}) {orig_w}x{orig_h}", fg=(255, 0, 0)
+                )
 
                 # Clamped box
                 clamp_x, clamp_y, clamp_w, clamp_h = CoordinateHelpers.clamp_bounds(
@@ -134,7 +140,9 @@ def main():
                 )
                 render_box_outline(console, clamp_x, clamp_y, clamp_w, clamp_h, (0, 255, 0))
 
-                console.print(2, 6, f"Clamped: ({clamp_x}, {clamp_y}) {clamp_w}x{clamp_h}", fg=(0, 255, 0))
+                console.print(
+                    2, 6, f"Clamped: ({clamp_x}, {clamp_y}) {clamp_w}x{clamp_h}", fg=(0, 255, 0)
+                )
 
             elif test_stage == 4:
                 # Test 5: Pixel coordinate conversion
@@ -158,9 +166,13 @@ def main():
                         console_x, console_y, window_w, window_h
                     )
 
-                    console.print(5, y_offset, f"Console ({console_x:2d}, {console_y:2d})", fg=(255, 255, 0))
+                    console.print(
+                        5, y_offset, f"Console ({console_x:2d}, {console_y:2d})", fg=(255, 255, 0)
+                    )
                     console.print(25, y_offset, "->", fg=(128, 128, 128))
-                    console.print(30, y_offset, f"Pixel ({pixel_x:4d}, {pixel_y:4d})", fg=(0, 255, 255))
+                    console.print(
+                        30, y_offset, f"Pixel ({pixel_x:4d}, {pixel_y:4d})", fg=(0, 255, 255)
+                    )
 
                     y_offset += 2
 

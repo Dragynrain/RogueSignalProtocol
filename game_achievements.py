@@ -5,10 +5,10 @@ Defines achievements and checks if they should be unlocked based on session metr
 Integrates with the metrics system (game_metrics.py) and popup system (game_achievement_popups.py).
 """
 
-from typing import Dict, List, Callable, Optional, Set
-from dataclasses import dataclass
-from game_metrics import SessionMetrics, LifetimeMetrics
 import logging
+from dataclasses import dataclass
+
+from game_metrics import LifetimeMetrics, SessionMetrics
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,6 @@ COMBAT_ACHIEVEMENTS = {
         icon="⚔️",
         category="combat",
     ),
-
     "massacre": Achievement(
         id="massacre",
         name="Massacre",
@@ -51,7 +50,6 @@ COMBAT_ACHIEVEMENTS = {
         icon="💀",
         category="combat",
     ),
-
     "overkill": Achievement(
         id="overkill",
         name="Overkill",
@@ -59,7 +57,6 @@ COMBAT_ACHIEVEMENTS = {
         icon="💥",
         category="combat",
     ),
-
     "crowd_control": Achievement(
         id="crowd_control",
         name="Crowd Control",
@@ -67,7 +64,6 @@ COMBAT_ACHIEVEMENTS = {
         icon="🌀",
         category="combat",
     ),
-
     "efficient_killer": Achievement(
         id="efficient_killer",
         name="Efficient Killer",
@@ -87,7 +83,6 @@ STEALTH_ACHIEVEMENTS = {
         icon="🔪",
         category="stealth",
     ),
-
     "ghost_protocol": Achievement(
         id="ghost_protocol",
         name="Ghost Protocol",
@@ -95,7 +90,6 @@ STEALTH_ACHIEVEMENTS = {
         icon="👻",
         category="stealth",
     ),
-
     "blind_spot_master": Achievement(
         id="blind_spot_master",
         name="Blind Spot Master",
@@ -103,7 +97,6 @@ STEALTH_ACHIEVEMENTS = {
         icon="🌑",
         category="stealth",
     ),
-
     "invisible_victory": Achievement(
         id="invisible_victory",
         name="Invisible Victory",
@@ -123,7 +116,6 @@ EFFICIENCY_ACHIEVEMENTS = {
         icon="⚡",
         category="efficiency",
     ),
-
     "heat_master": Achievement(
         id="heat_master",
         name="Heat Master",
@@ -131,7 +123,6 @@ EFFICIENCY_ACHIEVEMENTS = {
         icon="🔥",
         category="efficiency",
     ),
-
     "resource_efficient": Achievement(
         id="resource_efficient",
         name="Resource Efficient",
@@ -139,7 +130,6 @@ EFFICIENCY_ACHIEVEMENTS = {
         icon="📦",
         category="efficiency",
     ),
-
     "pure_skill": Achievement(
         id="pure_skill",
         name="Pure Skill",
@@ -160,7 +150,6 @@ CHALLENGE_ACHIEVEMENTS = {
         icon="🛡️",
         category="challenge",
     ),
-
     "no_trace": Achievement(
         id="no_trace",
         name="No Trace",
@@ -168,7 +157,6 @@ CHALLENGE_ACHIEVEMENTS = {
         icon="🔍",
         category="challenge",
     ),
-
     "minimalist": Achievement(
         id="minimalist",
         name="Minimalist",
@@ -176,7 +164,6 @@ CHALLENGE_ACHIEVEMENTS = {
         icon="✂️",
         category="challenge",
     ),
-
     "pacifist": Achievement(
         id="pacifist",
         name="Pacifist",
@@ -196,7 +183,6 @@ MASTERY_ACHIEVEMENTS = {
         icon="💻",
         category="mastery",
     ),
-
     "code_collector": Achievement(
         id="code_collector",
         name="Code Collector",
@@ -204,7 +190,6 @@ MASTERY_ACHIEVEMENTS = {
         icon="📚",
         category="mastery",
     ),
-
     "enemy_database": Achievement(
         id="enemy_database",
         name="Enemy Database",
@@ -212,7 +197,6 @@ MASTERY_ACHIEVEMENTS = {
         icon="📖",
         category="mastery",
     ),
-
     "explorer": Achievement(
         id="explorer",
         name="Explorer",
@@ -232,7 +216,6 @@ LIFETIME_ACHIEVEMENTS = {
         icon="🎖️",
         category="lifetime",
     ),
-
     "persistent": Achievement(
         id="persistent",
         name="Persistent",
@@ -240,7 +223,6 @@ LIFETIME_ACHIEVEMENTS = {
         icon="🏆",
         category="lifetime",
     ),
-
     "legendary": Achievement(
         id="legendary",
         name="Legendary",
@@ -249,7 +231,6 @@ LIFETIME_ACHIEVEMENTS = {
         category="lifetime",
         hidden=True,
     ),
-
     "survivor": Achievement(
         id="survivor",
         name="Survivor",
@@ -261,7 +242,7 @@ LIFETIME_ACHIEVEMENTS = {
 
 
 # Combine all achievements
-ALL_ACHIEVEMENTS: Dict[str, Achievement] = {
+ALL_ACHIEVEMENTS: dict[str, Achievement] = {
     **COMBAT_ACHIEVEMENTS,
     **STEALTH_ACHIEVEMENTS,
     **EFFICIENCY_ACHIEVEMENTS,
@@ -275,11 +256,14 @@ ALL_ACHIEVEMENTS: Dict[str, Achievement] = {
 # ACHIEVEMENT CHECKING LOGIC
 # ============================================================================
 
+
 class AchievementChecker:
     """Checks session/lifetime metrics against achievement conditions."""
 
     @staticmethod
-    def check_immediate_achievements(session: SessionMetrics, already_unlocked: Set[str]) -> List[str]:
+    def check_immediate_achievements(
+        session: SessionMetrics, already_unlocked: set[str]
+    ) -> list[str]:
         """
         Check achievements that can be unlocked immediately during gameplay.
 
@@ -316,7 +300,9 @@ class AchievementChecker:
 
         # Efficient killer: average 2+ kills per turn for 10+ turns
         if "efficient_killer" not in already_unlocked and session.turns_with_kills >= 10:
-            avg_kills_per_turn = total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
+            avg_kills_per_turn = (
+                total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
+            )
             if avg_kills_per_turn >= 2.0:
                 newly_unlocked.append("efficient_killer")
 
@@ -330,7 +316,9 @@ class AchievementChecker:
         return newly_unlocked
 
     @staticmethod
-    def check_session_achievements(session: SessionMetrics, already_unlocked: Set[str]) -> List[str]:
+    def check_session_achievements(
+        session: SessionMetrics, already_unlocked: set[str]
+    ) -> list[str]:
         """
         Check which achievements should be unlocked based on session metrics.
 
@@ -362,7 +350,9 @@ class AchievementChecker:
 
         # Efficient killer: average 2+ kills per turn for 10+ turns
         if "efficient_killer" not in already_unlocked and session.turns_with_kills >= 10:
-            avg_kills_per_turn = total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
+            avg_kills_per_turn = (
+                total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
+            )
             if avg_kills_per_turn >= 2.0:
                 newly_unlocked.append("efficient_killer")
 
@@ -370,30 +360,55 @@ class AchievementChecker:
         if "silent_assassin" not in already_unlocked and session.max_stealth_streak >= 10:
             newly_unlocked.append("silent_assassin")
 
-        if "ghost_protocol" not in already_unlocked and session.levels_completed >= 1 and not session.ever_detected:
+        if (
+            "ghost_protocol" not in already_unlocked
+            and session.levels_completed >= 1
+            and not session.ever_detected
+        ):
             newly_unlocked.append("ghost_protocol")
 
         if "blind_spot_master" not in already_unlocked and session.ambushes_from_blind_spots >= 5:
             newly_unlocked.append("blind_spot_master")
 
-        if "invisible_victory" not in already_unlocked and session.victory and not session.ever_detected:
+        if (
+            "invisible_victory" not in already_unlocked
+            and session.victory
+            and not session.ever_detected
+        ):
             newly_unlocked.append("invisible_victory")
 
         # Efficiency achievements
         if "speedrunner" not in already_unlocked and session.victory and session.turns_taken < 100:
             newly_unlocked.append("speedrunner")
 
-        if "heat_master" not in already_unlocked and session.victory and session.highest_heat_reached < 50:
+        if (
+            "heat_master" not in already_unlocked
+            and session.victory
+            and session.highest_heat_reached < 50
+        ):
             newly_unlocked.append("heat_master")
 
-        if "resource_efficient" not in already_unlocked and session.victory and not session.used_any_code_hacks:
+        if (
+            "resource_efficient" not in already_unlocked
+            and session.victory
+            and not session.used_any_code_hacks
+        ):
             newly_unlocked.append("resource_efficient")
 
-        if "pure_skill" not in already_unlocked and session.victory and not session.used_any_exploits and not session.used_any_code_hacks:
+        if (
+            "pure_skill" not in already_unlocked
+            and session.victory
+            and not session.used_any_exploits
+            and not session.used_any_code_hacks
+        ):
             newly_unlocked.append("pure_skill")
 
         # Challenge achievements
-        if "untouchable" not in already_unlocked and session.victory and not session.took_any_damage:
+        if (
+            "untouchable" not in already_unlocked
+            and session.victory
+            and not session.took_any_damage
+        ):
             newly_unlocked.append("untouchable")
 
         # No trace (trace level < 50% throughout)
@@ -413,23 +428,38 @@ class AchievementChecker:
             unique_used = len(session.exploits_used)
 
             # Award if player used minimal exploits (never changed equipment or equipped few)
-            if (unique_equipped == 0 and unique_used <= 3) or (unique_equipped > 0 and unique_equipped <= 3):
+            if (unique_equipped == 0 and unique_used <= 3) or (
+                unique_equipped > 0 and unique_equipped <= 3
+            ):
                 newly_unlocked.append("minimalist")
 
         # Pacifist: complete a level with 5 or fewer kills
-        if "pacifist" not in already_unlocked and session.levels_completed >= 1 and total_kills <= 5:
+        if (
+            "pacifist" not in already_unlocked
+            and session.levels_completed >= 1
+            and total_kills <= 5
+        ):
             newly_unlocked.append("pacifist")
 
         # Mastery achievements
-        if "master_hacker" not in already_unlocked and len(session.unique_exploits_used_this_run) >= TOTAL_EXPLOITS:
+        if (
+            "master_hacker" not in already_unlocked
+            and len(session.unique_exploits_used_this_run) >= TOTAL_EXPLOITS
+        ):
             newly_unlocked.append("master_hacker")
 
-        if "code_collector" not in already_unlocked and len(session.unique_code_hacks_used_this_run) >= TOTAL_CODE_HACK_TYPES:
+        if (
+            "code_collector" not in already_unlocked
+            and len(session.unique_code_hacks_used_this_run) >= TOTAL_CODE_HACK_TYPES
+        ):
             newly_unlocked.append("code_collector")
 
         # Enemy database - need to check total enemy types
         # Assuming there are multiple enemy types in game_content.json
-        if "enemy_database" not in already_unlocked and len(session.unique_enemies_encountered) >= 5:
+        if (
+            "enemy_database" not in already_unlocked
+            and len(session.unique_enemies_encountered) >= 5
+        ):
             newly_unlocked.append("enemy_database")
 
         # Explorer - special nodes discovered
@@ -443,7 +473,9 @@ class AchievementChecker:
         return newly_unlocked
 
     @staticmethod
-    def check_lifetime_achievements(lifetime: LifetimeMetrics, already_unlocked: Set[str]) -> List[str]:
+    def check_lifetime_achievements(
+        lifetime: LifetimeMetrics, already_unlocked: set[str]
+    ) -> list[str]:
         """
         Check lifetime achievements based on cumulative stats.
 
@@ -472,6 +504,7 @@ class AchievementChecker:
 # ACHIEVEMENT MANAGER
 # ============================================================================
 
+
 class AchievementManager:
     """
     Central manager for achievement unlocking and notification.
@@ -480,22 +513,24 @@ class AchievementManager:
     Works with the popup system to display achievement notifications.
     """
 
-    _unlocked_achievements: Set[str] = set()  # Loaded from progress.json
-    _pending_popups: List[str] = []  # Achievement IDs waiting to be shown
+    _unlocked_achievements: set[str] = set()  # Loaded from progress.json
+    _pending_popups: list[str] = []  # Achievement IDs waiting to be shown
 
     @classmethod
-    def load_unlocked_achievements(cls, unlocked_list: List[str]):
+    def load_unlocked_achievements(cls, unlocked_list: list[str]):
         """Load the list of already-unlocked achievements from progress.json."""
         cls._unlocked_achievements = set(unlocked_list)
         logger.info(f"Loaded {len(cls._unlocked_achievements)} unlocked achievements")
 
     @classmethod
-    def get_unlocked_achievements(cls) -> List[str]:
+    def get_unlocked_achievements(cls) -> list[str]:
         """Get the current list of unlocked achievements."""
         return list(cls._unlocked_achievements)
 
     @classmethod
-    def check_achievements(cls, session: SessionMetrics, lifetime: Optional[LifetimeMetrics] = None) -> List[str]:
+    def check_achievements(
+        cls, session: SessionMetrics, lifetime: LifetimeMetrics | None = None
+    ) -> list[str]:
         """
         Check for newly unlocked achievements and queue popups.
 
@@ -530,7 +565,9 @@ class AchievementManager:
         return newly_unlocked
 
     @classmethod
-    def check_immediate_achievements_and_notify(cls, session: SessionMetrics, game_engine) -> List[str]:
+    def check_immediate_achievements_and_notify(
+        cls, session: SessionMetrics, game_engine
+    ) -> list[str]:
         """
         Check for immediately unlockable achievements during gameplay and show popups.
 
@@ -557,7 +594,7 @@ class AchievementManager:
             newly_unlocked.append(achievement_id)
 
             # Show popup immediately if popup manager exists
-            if hasattr(game_engine, 'achievement_popup_manager'):
+            if hasattr(game_engine, "achievement_popup_manager"):
                 game_engine.achievement_popup_manager.show_popup(achievement_id)
 
             logger.info(f"Achievement unlocked (immediate): {achievement_id}")
@@ -565,6 +602,7 @@ class AchievementManager:
         # Save progress immediately
         if newly_unlocked:
             from game_metrics import save_unlocked_achievements
+
             save_unlocked_achievements(list(cls._unlocked_achievements))
 
         return newly_unlocked
@@ -575,7 +613,7 @@ class AchievementManager:
         return len(cls._pending_popups) > 0
 
     @classmethod
-    def get_next_popup(cls) -> Optional[str]:
+    def get_next_popup(cls) -> str | None:
         """Get the next achievement ID to display as a popup."""
         if cls._pending_popups:
             return cls._pending_popups.pop(0)
@@ -592,15 +630,16 @@ class AchievementManager:
         return achievement_id in cls._unlocked_achievements
 
     @classmethod
-    def get_achievement_info(cls, achievement_id: str) -> Optional[Achievement]:
+    def get_achievement_info(cls, achievement_id: str) -> Achievement | None:
         """Get achievement details by ID."""
         return ALL_ACHIEVEMENTS.get(achievement_id)
 
     @classmethod
-    def get_achievements_by_category(cls, category: str) -> List[Achievement]:
+    def get_achievements_by_category(cls, category: str) -> list[Achievement]:
         """Get all achievements in a specific category."""
         return [
-            achievement for achievement in ALL_ACHIEVEMENTS.values()
+            achievement
+            for achievement in ALL_ACHIEVEMENTS.values()
             if achievement.category == category
         ]
 

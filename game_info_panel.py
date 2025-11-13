@@ -13,15 +13,17 @@ The info panel shows:
 - Hovering special node: Type, activation requirements, effect
 """
 
-import tcod
 import logging
-from typing import Optional, Dict, Any, Tuple
+from typing import Any
+
+import tcod
+
 from game_config import GameConfig
-from game_entities import Position, Colors
-from game_ui import render_char_safe
 from game_data import GameData
-from game_unicode_chars import GameGlyphs
+from game_entities import Colors
 from game_errors import GameErrorHandler
+from game_ui import render_char_safe
+from game_unicode_chars import GameGlyphs
 
 
 class InfoProvider:
@@ -34,7 +36,9 @@ class InfoProvider:
     """
 
     @staticmethod
-    def get_info_for_hover(game, mouse_tile_x: Optional[int], mouse_tile_y: Optional[int]) -> Optional[Dict[str, Any]]:
+    def get_info_for_hover(
+        game, mouse_tile_x: int | None, mouse_tile_y: int | None
+    ) -> dict[str, Any] | None:
         """
         Get information for the currently hovered element.
 
@@ -55,7 +59,7 @@ class InfoProvider:
             Dictionary with formatted info, or None for default display
         """
         # Priority 0: Check inventory FIRST (supports keyboard selection even without mouse)
-        if hasattr(game, 'show_inventory') and game.show_inventory:
+        if hasattr(game, "show_inventory") and game.show_inventory:
             inventory_info = InfoProvider._get_inventory_hover(game, mouse_tile_x, mouse_tile_y)
             if inventory_info is not None:
                 return inventory_info
@@ -79,7 +83,7 @@ class InfoProvider:
 
         # Use the world position already calculated by InputHandler
         # This ensures info panel and game rendering use the same coordinate system
-        if not hasattr(game, 'mouse_hover_world_pos') or game.mouse_hover_world_pos is None:
+        if not hasattr(game, "mouse_hover_world_pos") or game.mouse_hover_world_pos is None:
             return None
 
         position = game.mouse_hover_world_pos
@@ -88,8 +92,10 @@ class InfoProvider:
 
         # Only show info for tiles that are visible or explored (no X-ray vision!)
         pos_tuple = (position.x, position.y)
-        is_visible = hasattr(game, 'visible_tiles') and pos_tuple in game.visible_tiles
-        is_explored = hasattr(game.game_map, 'explored_tiles') and pos_tuple in game.game_map.explored_tiles
+        is_visible = hasattr(game, "visible_tiles") and pos_tuple in game.visible_tiles
+        is_explored = (
+            hasattr(game.game_map, "explored_tiles") and pos_tuple in game.game_map.explored_tiles
+        )
 
         if not is_visible and not is_explored:
             return None  # Don't show info for unseen/unexplored tiles
@@ -101,7 +107,7 @@ class InfoProvider:
         return InfoProvider._format_entity_info(game, entity_info)
 
     @staticmethod
-    def _get_exploit_bar_hover(game, mouse_x: int, mouse_y: int) -> Optional[Dict[str, Any]]:
+    def _get_exploit_bar_hover(game, mouse_x: int, mouse_y: int) -> dict[str, Any] | None:
         """
         Check if mouse is hovering over an exploit in the bottom panel exploit bar.
 
@@ -120,14 +126,16 @@ class InfoProvider:
         from game_rendering_ui import UIRenderer
 
         # Check stored exploit positions
-        if not hasattr(UIRenderer, 'last_exploit_positions'):
+        if not hasattr(UIRenderer, "last_exploit_positions"):
             return None
 
         for pos_data in UIRenderer.last_exploit_positions:
-            if (mouse_y == pos_data['y'] and
-                pos_data['x'] <= mouse_x < pos_data['x'] + pos_data['width']):
+            if (
+                mouse_y == pos_data["y"]
+                and pos_data["x"] <= mouse_x < pos_data["x"] + pos_data["width"]
+            ):
                 # Mouse is hovering over this exploit
-                exploit_key = pos_data['exploit_key']
+                exploit_key = pos_data["exploit_key"]
                 exploit_def = GameData.EXPLOITS.get(exploit_key)
                 if exploit_def:
                     return InfoProvider._format_exploit_info(game, exploit_def)
@@ -135,7 +143,7 @@ class InfoProvider:
         return None
 
     @staticmethod
-    def _get_inventory_hover(game, mouse_x: int, mouse_y: int) -> Optional[Dict[str, Any]]:
+    def _get_inventory_hover(game, mouse_x: int, mouse_y: int) -> dict[str, Any] | None:
         """
         Check which item is selected in the inventory screen.
 
@@ -152,11 +160,11 @@ class InfoProvider:
             Formatted item info dict (exploit or code hack), or None if no valid selection
         """
         # Import here to avoid circular dependency
-        from game_rendering_ui import UIRenderer
         from game_inventory import CodeHack
+        from game_rendering_ui import UIRenderer
 
         # Get the selected index - prefer keyboard selection, fall back to mouse hover
-        selected_index = game.inventory_selection if hasattr(game, 'inventory_selection') else None
+        selected_index = game.inventory_selection if hasattr(game, "inventory_selection") else None
 
         # If no keyboard selection, check mouse hover
         if selected_index is None and mouse_y is not None:
@@ -183,7 +191,10 @@ class InfoProvider:
                 selected_item = display_items[unequipped_index]
 
                 # Check if it's an exploit
-                if hasattr(selected_item, 'exploit_key') and selected_item.exploit_key in GameData.EXPLOITS:
+                if (
+                    hasattr(selected_item, "exploit_key")
+                    and selected_item.exploit_key in GameData.EXPLOITS
+                ):
                     exploit_def = GameData.EXPLOITS[selected_item.exploit_key]
                     return InfoProvider._format_exploit_info(game, exploit_def)
 
@@ -194,7 +205,7 @@ class InfoProvider:
         return None
 
     @staticmethod
-    def _format_code_hack_info_for_inventory(game, code_hack) -> Dict[str, Any]:
+    def _format_code_hack_info_for_inventory(game, code_hack) -> dict[str, Any]:
         """
         Format code hack for info panel display in inventory.
 
@@ -212,12 +223,12 @@ class InfoProvider:
 
         # Name with color coding - convert color_name to actual color
         code_color = Colors.get_color(code_hack.color_name.upper())
-        lines.append({'text': code_hack.name, 'color': code_color})
-        lines.append({'text': '', 'color': Colors.WHITE})
+        lines.append({"text": code_hack.name, "color": code_color})
+        lines.append({"text": "", "color": Colors.WHITE})
 
         # Type
-        lines.append({'text': 'Type: Code Fragment', 'color': Colors.YELLOW})
-        lines.append({'text': '', 'color': Colors.WHITE})
+        lines.append({"text": "Type: Code Fragment", "color": Colors.YELLOW})
+        lines.append({"text": "", "color": Colors.WHITE})
 
         # Effect - check if discovered
         if code_hack.discovered:
@@ -226,28 +237,24 @@ class InfoProvider:
                 effect_key, desc = game.code_hack_effects[code_hack.color_name]
                 desc_lines = InfoProvider._wrap_text(desc, 22)
                 for line in desc_lines:
-                    lines.append({'text': line, 'color': Colors.LIGHT_GRAY})
+                    lines.append({"text": line, "color": Colors.LIGHT_GRAY})
             else:
-                lines.append({'text': 'Effect: Unknown', 'color': Colors.DARK_GRAY})
+                lines.append({"text": "Effect: Unknown", "color": Colors.DARK_GRAY})
         else:
             # Not discovered yet - show mystery
-            lines.append({'text': 'Effect: ???', 'color': Colors.DARK_GRAY})
-            lines.append({'text': '', 'color': Colors.WHITE})
-            lines.append({'text': '(Use to discover)', 'color': Colors.DARK_GRAY})
+            lines.append({"text": "Effect: ???", "color": Colors.DARK_GRAY})
+            lines.append({"text": "", "color": Colors.WHITE})
+            lines.append({"text": "(Use to discover)", "color": Colors.DARK_GRAY})
 
         # Quantity (if more than 1)
         if code_hack.quantity > 1:
-            lines.append({'text': '', 'color': Colors.WHITE})
-            lines.append({'text': f'Quantity: {code_hack.quantity}', 'color': Colors.WHITE})
+            lines.append({"text": "", "color": Colors.WHITE})
+            lines.append({"text": f"Quantity: {code_hack.quantity}", "color": Colors.WHITE})
 
-        return {
-            'title': 'CODE HACK',
-            'lines': lines,
-            'color': Colors.CYAN
-        }
+        return {"title": "CODE HACK", "lines": lines, "color": Colors.CYAN}
 
     @staticmethod
-    def _format_exploit_info(game, exploit_def) -> Dict[str, Any]:
+    def _format_exploit_info(game, exploit_def) -> dict[str, Any]:
         """
         Format exploit definition for info panel display.
 
@@ -265,48 +272,50 @@ class InfoProvider:
 
         # Name with category color
         from game_color_manager import ColorManager
+
         category_color = ColorManager.get_exploit_color(exploit_def.category)
-        lines.append({'text': exploit_def.name, 'color': category_color})
-        lines.append({'text': '', 'color': Colors.WHITE})
+        lines.append({"text": exploit_def.name, "color": category_color})
+        lines.append({"text": "", "color": Colors.WHITE})
 
         # Costs and stats
         ram_cost = exploit_def.ram
         heat_cost = exploit_def.heat
 
         # Check for exploit efficiency effect (reduces heat cost)
-        if hasattr(game, 'player') and game.player.temporary_effects['exploit_efficiency_turns'] > 0:
+        if (
+            hasattr(game, "player")
+            and game.player.temporary_effects["exploit_efficiency_turns"] > 0
+        ):
             heat_cost = int(heat_cost * 0.6)
-            lines.append({'text': f'RAM: {ram_cost}GB  Heat: {heat_cost}°C*', 'color': Colors.YELLOW})
-            lines.append({'text': '(*Reduced by efficiency)', 'color': Colors.DARK_GRAY})
+            lines.append(
+                {"text": f"RAM: {ram_cost}GB  Heat: {heat_cost}°C*", "color": Colors.YELLOW}
+            )
+            lines.append({"text": "(*Reduced by efficiency)", "color": Colors.DARK_GRAY})
         else:
-            lines.append({'text': f'RAM: {ram_cost}GB  Heat: {heat_cost}°C', 'color': Colors.WHITE})
+            lines.append({"text": f"RAM: {ram_cost}GB  Heat: {heat_cost}°C", "color": Colors.WHITE})
 
         # Damage and range (if applicable)
         if exploit_def.damage > 0:
-            lines.append({'text': f'Damage: {exploit_def.damage}', 'color': Colors.RED})
+            lines.append({"text": f"Damage: {exploit_def.damage}", "color": Colors.RED})
 
         if exploit_def.range > 0:
-            range_text = f'Range: {exploit_def.range}'
+            range_text = f"Range: {exploit_def.range}"
             if exploit_def.effect_radius > 0:
-                range_text += f' (AOE: {exploit_def.effect_radius})'
-            lines.append({'text': range_text, 'color': Colors.ORANGE})
+                range_text += f" (AOE: {exploit_def.effect_radius})"
+            lines.append({"text": range_text, "color": Colors.ORANGE})
 
         # Blank line before description
-        lines.append({'text': '', 'color': Colors.WHITE})
+        lines.append({"text": "", "color": Colors.WHITE})
 
         # Description (word wrapped)
         desc_lines = InfoProvider._wrap_text(exploit_def.description, 22)
         for line in desc_lines:
-            lines.append({'text': line, 'color': Colors.LIGHT_GRAY})
+            lines.append({"text": line, "color": Colors.LIGHT_GRAY})
 
-        return {
-            'title': 'EXPLOIT INFO',
-            'lines': lines,
-            'color': Colors.CYAN
-        }
+        return {"title": "EXPLOIT INFO", "lines": lines, "color": Colors.CYAN}
 
     @staticmethod
-    def _format_entity_info(game, entity_info: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_entity_info(game, entity_info: dict[str, Any]) -> dict[str, Any]:
         """
         Format entity info for info panel display.
 
@@ -320,45 +329,41 @@ class InfoProvider:
         Returns:
             Formatted info dict with 'title', 'lines', and 'color' keys
         """
-        entity_type = entity_info['entity_type']
+        entity_type = entity_info["entity_type"]
 
         # Special handling for code hacks - respect discovery state
-        if entity_type == 'code_hack':
+        if entity_type == "code_hack":
             return InfoProvider._format_code_hack_info(game, entity_info)
 
         # For other entities, format normally
         lines = []
 
         # Add name
-        lines.append({'text': entity_info['name'], 'color': entity_info['color']})
+        lines.append({"text": entity_info["name"], "color": entity_info["color"]})
 
         # Add blank line
-        lines.append({'text': '', 'color': Colors.WHITE})
+        lines.append({"text": "", "color": Colors.WHITE})
 
         # Add description (word wrapped)
-        desc_lines = InfoProvider._wrap_text(entity_info['description'], 22)  # 24 - 2 for padding
+        desc_lines = InfoProvider._wrap_text(entity_info["description"], 22)  # 24 - 2 for padding
         for line in desc_lines:
-            lines.append({'text': line, 'color': Colors.LIGHT_GRAY})
+            lines.append({"text": line, "color": Colors.LIGHT_GRAY})
 
         # Add blank line if there are details
-        if entity_info['details']:
-            lines.append({'text': '', 'color': Colors.WHITE})
+        if entity_info["details"]:
+            lines.append({"text": "", "color": Colors.WHITE})
 
             # Add details (word wrapped)
-            detail_lines = entity_info['details'].split('\n')
+            detail_lines = entity_info["details"].split("\n")
             for detail_line in detail_lines:
                 wrapped_details = InfoProvider._wrap_text(detail_line, 22)
                 for line in wrapped_details:
-                    lines.append({'text': line, 'color': Colors.WHITE})
+                    lines.append({"text": line, "color": Colors.WHITE})
 
-        return {
-            'title': 'INFO PANEL',
-            'lines': lines,
-            'color': Colors.GREEN
-        }
+        return {"title": "INFO PANEL", "lines": lines, "color": Colors.GREEN}
 
     @staticmethod
-    def _format_code_hack_info(game, entity_info: Dict[str, Any]) -> Dict[str, Any]:
+    def _format_code_hack_info(game, entity_info: dict[str, Any]) -> dict[str, Any]:
         """
         Format code hack info with discovery state handling.
 
@@ -376,39 +381,35 @@ class InfoProvider:
         lines = []
 
         # Add name with color
-        lines.append({'text': entity_info['name'], 'color': entity_info['color']})
+        lines.append({"text": entity_info["name"], "color": entity_info["color"]})
 
         # Add blank line
-        lines.append({'text': '', 'color': Colors.WHITE})
+        lines.append({"text": "", "color": Colors.WHITE})
 
         # Check if effect is discovered
-        if entity_info['description'] == "Unknown effect until used":
+        if entity_info["description"] == "Unknown effect until used":
             # Not discovered - show mystery
-            lines.append({'text': 'Type: Code Fragment', 'color': Colors.YELLOW})
-            lines.append({'text': '', 'color': Colors.WHITE})
-            lines.append({'text': 'Effect: ???', 'color': Colors.DARK_GRAY})
-            lines.append({'text': '', 'color': Colors.WHITE})
-            lines.append({'text': '(Use to discover)', 'color': Colors.DARK_GRAY})
+            lines.append({"text": "Type: Code Fragment", "color": Colors.YELLOW})
+            lines.append({"text": "", "color": Colors.WHITE})
+            lines.append({"text": "Effect: ???", "color": Colors.DARK_GRAY})
+            lines.append({"text": "", "color": Colors.WHITE})
+            lines.append({"text": "(Use to discover)", "color": Colors.DARK_GRAY})
         else:
             # Discovered - show effect
-            lines.append({'text': 'Type: Code Fragment', 'color': Colors.YELLOW})
-            lines.append({'text': '', 'color': Colors.WHITE})
+            lines.append({"text": "Type: Code Fragment", "color": Colors.YELLOW})
+            lines.append({"text": "", "color": Colors.WHITE})
 
             # Word wrap the effect description
-            desc_lines = InfoProvider._wrap_text(entity_info['description'], 22)
+            desc_lines = InfoProvider._wrap_text(entity_info["description"], 22)
             for line in desc_lines:
-                lines.append({'text': line, 'color': Colors.LIGHT_GRAY})
+                lines.append({"text": line, "color": Colors.LIGHT_GRAY})
 
         # Add color detail
-        if entity_info['details']:
-            lines.append({'text': '', 'color': Colors.WHITE})
-            lines.append({'text': entity_info['details'], 'color': Colors.WHITE})
+        if entity_info["details"]:
+            lines.append({"text": "", "color": Colors.WHITE})
+            lines.append({"text": entity_info["details"], "color": Colors.WHITE})
 
-        return {
-            'title': 'INFO PANEL',
-            'lines': lines,
-            'color': Colors.GREEN
-        }
+        return {"title": "INFO PANEL", "lines": lines, "color": Colors.GREEN}
 
     @staticmethod
     def _wrap_text(text: str, max_width: int) -> list:
@@ -425,7 +426,7 @@ class InfoProvider:
         if len(text) <= max_width:
             return [text]
 
-        words = text.split(' ')
+        words = text.split(" ")
         lines = []
         current_line = ""
 
@@ -448,7 +449,7 @@ class InfoProvider:
         return lines
 
     @staticmethod
-    def get_default_info(game) -> Dict[str, Any]:
+    def get_default_info(game) -> dict[str, Any]:
         """
         Get default info to display when nothing is hovered.
 
@@ -468,66 +469,78 @@ class InfoProvider:
         lines = []
 
         # Network level with name (if available) - use separate lines for better readability
-        if hasattr(game, 'game_state') and hasattr(game.game_state, 'level'):
+        if hasattr(game, "game_state") and hasattr(game.game_state, "level"):
             level = game.game_state.level
             try:
                 network_configs = GameConfig.get_network_configs()
-                network_name = network_configs.get(level, {}).get('name', f'Level {level}')
-                lines.append({'text': f'Level {level}', 'color': Colors.CYAN})
-                lines.append({'text': network_name, 'color': Colors.CYAN})
+                network_name = network_configs.get(level, {}).get("name", f"Level {level}")
+                lines.append({"text": f"Level {level}", "color": Colors.CYAN})
+                lines.append({"text": network_name, "color": Colors.CYAN})
             except Exception as e:
-                GameErrorHandler.handle_error(e, "info_panel_network_name", f"Failed to get network name for level {level}", fatal=False)
-                lines.append({'text': f'Level {level}', 'color': Colors.CYAN})
-        elif hasattr(game, 'level'):
+                GameErrorHandler.handle_error(
+                    e,
+                    "info_panel_network_name",
+                    f"Failed to get network name for level {level}",
+                    fatal=False,
+                )
+                lines.append({"text": f"Level {level}", "color": Colors.CYAN})
+        elif hasattr(game, "level"):
             # Fallback to old attribute name
-            lines.append({'text': f'Level {game.level}', 'color': Colors.CYAN})
+            lines.append({"text": f"Level {game.level}", "color": Colors.CYAN})
 
         # Turn counter (if available)
-        if hasattr(game, 'turn'):
-            lines.append({'text': f'Turns Elapsed: {game.turn}', 'color': Colors.WHITE})
-        elif hasattr(game, 'turn_count'):
-            lines.append({'text': f'Turns Elapsed: {game.turn_count}', 'color': Colors.WHITE})
+        if hasattr(game, "turn"):
+            lines.append({"text": f"Turns Elapsed: {game.turn}", "color": Colors.WHITE})
+        elif hasattr(game, "turn_count"):
+            lines.append({"text": f"Turns Elapsed: {game.turn_count}", "color": Colors.WHITE})
 
         # Enemies remaining
-        if hasattr(game, 'enemy_manager') and hasattr(game.enemy_manager, 'enemies'):
+        if hasattr(game, "enemy_manager") and hasattr(game.enemy_manager, "enemies"):
             enemy_count = len(game.enemy_manager.enemies)
-            lines.append({'text': f'Hostiles: {enemy_count}', 'color': Colors.ORANGE})
+            lines.append({"text": f"Hostiles: {enemy_count}", "color": Colors.ORANGE})
 
         # Add blank line before streaks
         if lines:
-            lines.append({'text': '', 'color': Colors.WHITE})
+            lines.append({"text": "", "color": Colors.WHITE})
 
         # Current streak (if any)
         try:
             from game_metrics import get_current_session
+
             session = get_current_session()
             if session:
                 if session.metrics.stealth_kills_current_streak > 0:
-                    lines.append({'text': f'Stealth Streak: {session.metrics.stealth_kills_current_streak}', 'color': Colors.GREEN})
+                    lines.append(
+                        {
+                            "text": f"Stealth Streak: {session.metrics.stealth_kills_current_streak}",
+                            "color": Colors.GREEN,
+                        }
+                    )
 
                 if session.metrics.combat_kills_current_streak > 0:
-                    lines.append({'text': f'Combat Streak: {session.metrics.combat_kills_current_streak}', 'color': Colors.YELLOW})
+                    lines.append(
+                        {
+                            "text": f"Combat Streak: {session.metrics.combat_kills_current_streak}",
+                            "color": Colors.YELLOW,
+                        }
+                    )
         except (ImportError, AttributeError) as e:
             # Metrics system not available or session not started - this is non-critical
             logging.debug(f"Info panel: Metrics not available: {e}")
 
         # If no info available, show a simple message
         if not lines:
-            lines.append({'text': 'Hover to inspect', 'color': Colors.DARK_GRAY})
+            lines.append({"text": "Hover to inspect", "color": Colors.DARK_GRAY})
 
         # Add "Press ? for help" near the bottom (2nd from bottom row)
         # Panel height is 11 rows total, with ~8 content lines available
         # Add blank lines to push help text to 2nd from bottom
         while len(lines) < 7:
-            lines.append({'text': '', 'color': Colors.WHITE})
+            lines.append({"text": "", "color": Colors.WHITE})
 
-        lines.append({'text': 'Press ? for help', 'color': Colors.DARK_GRAY})
+        lines.append({"text": "Press ? for help", "color": Colors.DARK_GRAY})
 
-        return {
-            'title': 'INFO PANEL',
-            'lines': lines,
-            'color': Colors.GREEN
-        }
+        return {"title": "INFO PANEL", "lines": lines, "color": Colors.GREEN}
 
 
 class InfoPanelRenderer:
@@ -568,40 +581,54 @@ class InfoPanelRenderer:
         # Clear panel area
         for y in range(panel_height):
             for x in range(panel_x, GameConfig.SCREEN_WIDTH):
-                render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
+                render_char_safe(console, x, y, " ", fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
 
         # Render border with UI color
-        InfoPanelRenderer._render_border(console, panel_x, 0, panel_width, panel_height, info['title'], ui_color)
+        InfoPanelRenderer._render_border(
+            console, panel_x, 0, panel_width, panel_height, info["title"], ui_color
+        )
 
         # Render content
         content_y = 2  # Start after header
         max_y = panel_height - 1  # Leave room for bottom border
 
-        for line_data in info['lines']:
+        for line_data in info["lines"]:
             if content_y >= max_y:
                 break
 
-            text = line_data['text']
-            color = line_data['color']
+            text = line_data["text"]
+            color = line_data["color"]
 
             # Truncate if too long (safety check)
             if len(text) > panel_width - 2:
-                text = text[:panel_width - 4] + "..."
+                text = text[: panel_width - 4] + "..."
 
             # Pad text to full panel width to ensure complete overwrite of previous content
             padded_text = text.ljust(panel_width - 2)
 
-            render_char_safe(console, panel_x + 1, content_y, padded_text, fg=color, bg=Colors.LOG_BG)
+            render_char_safe(
+                console, panel_x + 1, content_y, padded_text, fg=color, bg=Colors.LOG_BG
+            )
             content_y += 1
 
         # Fill any remaining lines with blank padded lines to clear previous content
         while content_y < max_y:
-            blank_line = ' ' * (panel_width - 2)
-            render_char_safe(console, panel_x + 1, content_y, blank_line, fg=Colors.WHITE, bg=Colors.LOG_BG)
+            blank_line = " " * (panel_width - 2)
+            render_char_safe(
+                console, panel_x + 1, content_y, blank_line, fg=Colors.WHITE, bg=Colors.LOG_BG
+            )
             content_y += 1
 
     @staticmethod
-    def _render_border(console: tcod.console.Console, x: int, y: int, width: int, height: int, title: str, ui_color=None):
+    def _render_border(
+        console: tcod.console.Console,
+        x: int,
+        y: int,
+        width: int,
+        height: int,
+        title: str,
+        ui_color=None,
+    ):
         """
         Render bordered box with title for info panel.
 
@@ -619,7 +646,7 @@ class InfoPanelRenderer:
         border_color = ui_color
 
         # Top border with title
-        render_char_safe(console, x, y, '╔', fg=border_color, bg=Colors.LOG_BG)
+        render_char_safe(console, x, y, "╔", fg=border_color, bg=Colors.LOG_BG)
 
         # Title centered in top border
         title_text = f" {title} "
@@ -630,9 +657,9 @@ class InfoPanelRenderer:
         # Fill rest of top border with ═
         for i in range(1, width + 1):
             if i < title_start - x or i >= title_start - x + len(title_text):
-                render_char_safe(console, x + i, y, '═', fg=border_color, bg=Colors.LOG_BG)
+                render_char_safe(console, x + i, y, "═", fg=border_color, bg=Colors.LOG_BG)
 
-        render_char_safe(console, x + width + 1, y, '╗', fg=border_color, bg=Colors.LOG_BG)
+        render_char_safe(console, x + width + 1, y, "╗", fg=border_color, bg=Colors.LOG_BG)
 
         # Side borders (no bottom border - SYSTEM LOG line serves as separator)
         for row_y in range(1, height):
@@ -640,8 +667,12 @@ class InfoPanelRenderer:
             if y + row_y == 1:
                 # T-piece where status bar horizontal meets info panel left border (╣ points left)
                 # Lines from: LEFT (status bar), UP (border), DOWN (border)
-                render_char_safe(console, x, y + row_y, GameGlyphs.WALL_T_LEFT, fg=border_color, bg=Colors.LOG_BG)
+                render_char_safe(
+                    console, x, y + row_y, GameGlyphs.WALL_T_LEFT, fg=border_color, bg=Colors.LOG_BG
+                )
             else:
-                render_char_safe(console, x, y + row_y, '║', fg=border_color, bg=Colors.LOG_BG)
+                render_char_safe(console, x, y + row_y, "║", fg=border_color, bg=Colors.LOG_BG)
             # Right side: always vertical
-            render_char_safe(console, x + width + 1, y + row_y, '║', fg=border_color, bg=Colors.LOG_BG)
+            render_char_safe(
+                console, x + width + 1, y + row_y, "║", fg=border_color, bg=Colors.LOG_BG
+            )

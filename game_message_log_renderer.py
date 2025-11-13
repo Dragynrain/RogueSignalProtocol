@@ -10,8 +10,8 @@ Handles rendering of the scrolling system message log with:
 Extracted from game_rendering_ui.py to improve modularity.
 """
 
+
 import tcod
-from typing import List, Tuple
 
 from game_config import GameConfig
 from game_entities import Colors
@@ -55,7 +55,14 @@ class MessageLogRenderer:
         log_start_y = GameConfig.LOG_START_Y()
 
         # T-piece at left where log border meets the header line
-        render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), log_start_y, GameGlyphs.WALL_T_RIGHT, fg=ui_color, bg=Colors.LOG_BG)
+        render_char_safe(
+            console,
+            GameConfig.GAME_AREA_WIDTH(),
+            log_start_y,
+            GameGlyphs.WALL_T_RIGHT,
+            fg=ui_color,
+            bg=Colors.LOG_BG,
+        )
 
         # Build header line: "SYSTEM LOG" embedded in ═ border
         header_text = " SYSTEM LOG "
@@ -69,19 +76,23 @@ class MessageLogRenderer:
             if i >= header_start and i < header_start + len(header_text):
                 # SYSTEM LOG text in bright cyan
                 char_idx = i - header_start
-                render_char_safe(console, i, log_start_y, header_text[char_idx], fg=Colors.CYAN, bg=Colors.LOG_BG)
+                render_char_safe(
+                    console, i, log_start_y, header_text[char_idx], fg=Colors.CYAN, bg=Colors.LOG_BG
+                )
             else:
                 # ═ character fill
-                render_char_safe(console, i, log_start_y, '═', fg=ui_color, bg=Colors.LOG_BG)
+                render_char_safe(console, i, log_start_y, "═", fg=ui_color, bg=Colors.LOG_BG)
 
         # Draw log border (from LOG_START_Y + 1 to panel start) with UI color
         for y in range(log_start_y + 1, GameConfig.PANEL_Y()):
-            render_char_safe(console, GameConfig.GAME_AREA_WIDTH(), y, '║', fg=ui_color, bg=Colors.LOG_BG)
+            render_char_safe(
+                console, GameConfig.GAME_AREA_WIDTH(), y, "║", fg=ui_color, bg=Colors.LOG_BG
+            )
 
         # Clear log area - start from log_start_y + 1
         for x in range(GameConfig.GAME_AREA_WIDTH() + 1, GameConfig.SCREEN_WIDTH):
             for y in range(log_start_y + 1, GameConfig.PANEL_Y()):
-                render_char_safe(console, x, y, ' ', fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
+                render_char_safe(console, x, y, " ", fg=Colors.UI_TEXT, bg=Colors.LOG_BG)
 
         # Process and display messages (skip if in look mode - inspection panel will use this area)
         if not game.look_mode:
@@ -101,15 +112,26 @@ class MessageLogRenderer:
         """
         log_start_y = GameConfig.LOG_START_Y()
         wrapped_lines = self._wrap_messages(game.message_log.messages)
-        log_height = GameConfig.PANEL_Y() - (log_start_y + 2)  # Available space (with blank line for breathing space)
-        visible_lines = wrapped_lines[-log_height:] if len(wrapped_lines) > log_height else wrapped_lines
+        log_height = GameConfig.PANEL_Y() - (
+            log_start_y + 2
+        )  # Available space (with blank line for breathing space)
+        visible_lines = (
+            wrapped_lines[-log_height:] if len(wrapped_lines) > log_height else wrapped_lines
+        )
 
         for i, (line, color) in enumerate(visible_lines):
             y_pos = log_start_y + 2 + i  # Start from LOG_START_Y + 2 for breathing space
             if y_pos < GameConfig.PANEL_Y():
-                render_char_safe(console, GameConfig.GAME_AREA_WIDTH() + 1, y_pos, line, fg=color, bg=Colors.LOG_BG)
+                render_char_safe(
+                    console,
+                    GameConfig.GAME_AREA_WIDTH() + 1,
+                    y_pos,
+                    line,
+                    fg=color,
+                    bg=Colors.LOG_BG,
+                )
 
-    def _wrap_messages(self, messages: List) -> List[Tuple[str, Tuple[int, int, int]]]:
+    def _wrap_messages(self, messages: list) -> list[tuple[str, tuple[int, int, int]]]:
         """
         Wrap long messages across multiple lines for display.
 
@@ -127,7 +149,7 @@ class MessageLogRenderer:
 
         for message in messages:
             # Handle both Message objects and tuple formats
-            if hasattr(message, 'text') and hasattr(message, 'color'):
+            if hasattr(message, "text") and hasattr(message, "color"):
                 text, color = message.text, message.color
             else:
                 text, color = message
@@ -135,7 +157,7 @@ class MessageLogRenderer:
                 wrapped_lines.append((text, color))
             else:
                 # Wrap long messages
-                words = text.split(' ')
+                words = text.split(" ")
                 current_line = ""
 
                 for word in words:

@@ -5,14 +5,15 @@ Tests the graphical help menu rendering, navigation, and integration
 with the graphics/glyph mode setting system.
 """
 
+from unittest.mock import Mock
+
 import pytest
 import tcod
 import tcod.event
-from unittest.mock import Mock, MagicMock, patch
 
 from game_config import GameSettings
-from game_menu_help_lore import create_help_menu, HelpMenu
 from game_menu_help_graphics import GraphicalHelpMenu
+from game_menu_help_lore import HelpMenu, create_help_menu
 
 
 class TestGraphicalHelpFactory:
@@ -130,12 +131,12 @@ class TestGraphicalHelpMenuBasics:
 
         # Check each page has required keys
         for page in menu.pages:
-            assert 'title' in page
-            assert 'sprites' in page
-            assert 'text_lines' in page
-            assert isinstance(page['title'], str)
-            assert isinstance(page['sprites'], list)
-            assert isinstance(page['text_lines'], list)
+            assert "title" in page
+            assert "sprites" in page
+            assert "text_lines" in page
+            assert isinstance(page["title"], str)
+            assert isinstance(page["sprites"], list)
+            assert isinstance(page["text_lines"], list)
 
 
 class TestGraphicalHelpMenuNavigation:
@@ -272,7 +273,7 @@ class TestGraphicalHelpMenuRendering:
         has_text = False
         for y in range(console.height):
             for x in range(console.width):
-                if console.ch[y, x] != 0 and console.ch[y, x] != ord(' '):
+                if console.ch[y, x] != 0 and console.ch[y, x] != ord(" "):
                     has_text = True
                     break
             if has_text:
@@ -289,7 +290,7 @@ class TestGraphicalHelpMenuRendering:
         # Find a page with sprites
         page_with_sprites = None
         for page in self.menu.pages:
-            if len(page['sprites']) > 0:
+            if len(page["sprites"]) > 0:
                 page_with_sprites = page
                 break
 
@@ -304,7 +305,7 @@ class TestGraphicalHelpMenuRendering:
             self.menu.render_sprites()
 
             # Verify get_tile was called for each sprite
-            assert self.mock_tile_manager.get_tile.call_count == len(page_with_sprites['sprites'])
+            assert self.mock_tile_manager.get_tile.call_count == len(page_with_sprites["sprites"])
 
     def test_render_sprites_raises_on_missing_sprite(self):
         """Test render_sprites raises error if sprite is missing (no fallback)."""
@@ -317,7 +318,7 @@ class TestGraphicalHelpMenuRendering:
 
         # Find a page with sprites
         for i, page in enumerate(self.menu.pages):
-            if len(page['sprites']) > 0:
+            if len(page["sprites"]) > 0:
                 self.menu.current_page = i
                 break
 
@@ -352,25 +353,35 @@ class TestGraphicalHelpMenuSpriteNames:
         # Find Items & Enemies page (enemies are now on Page 2)
         items_enemies_page = None
         for page in menu.pages:
-            if 'ITEMS' in page['title'] and 'ENEMIES' in page['title']:
+            if "ITEMS" in page["title"] and "ENEMIES" in page["title"]:
                 items_enemies_page = page
                 break
 
         assert items_enemies_page is not None, "Items & Enemies page should exist"
 
         # Collect all sprite names
-        all_sprites = [sprite_data[0] for sprite_data in items_enemies_page['sprites']]
+        all_sprites = [sprite_data[0] for sprite_data in items_enemies_page["sprites"]]
 
         # Filter to only enemy sprites (capitalized names)
         enemy_sprites = [name for name in all_sprites if name[0].isupper()]
 
         # Check all enemies are present and correctly capitalized
-        expected_enemies = ['Scanner', 'Patrol', 'Bot', 'Firewall',
-                           'Hunter', 'Virus', 'Inhibitor', 'Admin Avatar']
+        expected_enemies = [
+            "Scanner",
+            "Patrol",
+            "Bot",
+            "Firewall",
+            "Hunter",
+            "Virus",
+            "Inhibitor",
+            "Admin Avatar",
+        ]
 
         # Verify all expected enemies are in the sprite list
         for expected in expected_enemies:
-            assert expected in enemy_sprites, f"Expected enemy '{expected}' not found in sprite list"
+            assert (
+                expected in enemy_sprites
+            ), f"Expected enemy '{expected}' not found in sprite list"
 
         # Verify only expected enemies are present (no extras)
         for sprite_name in enemy_sprites:
@@ -399,23 +410,38 @@ class TestGraphicalHelpMenuSpriteNames:
         # Find Items & Enemies page (Page 2/3)
         items_enemies_page = None
         for page in menu.pages:
-            if 'ITEMS' in page['title'] and 'ENEMIES' in page['title']:
+            if "ITEMS" in page["title"] and "ENEMIES" in page["title"]:
                 items_enemies_page = page
                 break
 
         assert items_enemies_page is not None, "Items & Enemies page should exist"
 
         # Collect all sprite names on page
-        all_sprites = [sprite_data[0] for sprite_data in items_enemies_page['sprites']]
+        all_sprites = [sprite_data[0] for sprite_data in items_enemies_page["sprites"]]
 
         # Expected lowercase sprites (items, nodes, upgrades) - updated for new layout
-        expected_lowercase = ['codehack', 'exploit',
-                             'cpu_node', 'cooling_node', 'ghost_node',
-                             'cpu_upgrade', 'ram_upgrade', 'cooling_upgrade']
+        expected_lowercase = [
+            "codehack",
+            "exploit",
+            "cpu_node",
+            "cooling_node",
+            "ghost_node",
+            "cpu_upgrade",
+            "ram_upgrade",
+            "cooling_upgrade",
+        ]
 
         # Expected capitalized sprites (enemies)
-        expected_capitalized = ['Scanner', 'Firewall', 'Patrol', 'Bot',
-                               'Hunter', 'Virus', 'Inhibitor', 'Admin Avatar']
+        expected_capitalized = [
+            "Scanner",
+            "Firewall",
+            "Patrol",
+            "Bot",
+            "Hunter",
+            "Virus",
+            "Inhibitor",
+            "Admin Avatar",
+        ]
 
         # Verify all expected sprites are present
         for sprite_name in expected_lowercase + expected_capitalized:
@@ -423,9 +449,10 @@ class TestGraphicalHelpMenuSpriteNames:
 
         # Verify no unexpected sprites
         for sprite_name in all_sprites:
-            assert sprite_name in expected_lowercase + expected_capitalized, \
-                f"Unexpected sprite '{sprite_name}' found in page"
+            assert (
+                sprite_name in expected_lowercase + expected_capitalized
+            ), f"Unexpected sprite '{sprite_name}' found in page"
 
 
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])

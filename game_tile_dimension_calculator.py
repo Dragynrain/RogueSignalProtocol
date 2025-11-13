@@ -4,7 +4,6 @@ Tile Dimension Calculator
 Pure functions for calculating tile/sprite dimensions based on window size and mode.
 """
 
-from typing import Tuple
 import logging
 
 from game_config import GameConfig
@@ -19,7 +18,7 @@ class TileDimensionCalculator:
     """
 
     @staticmethod
-    def calculate_from_window(window_size: Tuple[int, int], graphics_mode: str) -> Tuple[int, int]:
+    def calculate_from_window(window_size: tuple[int, int], graphics_mode: str) -> tuple[int, int]:
         """
         Calculate tile dimensions based on window size and graphics mode.
 
@@ -38,7 +37,7 @@ class TileDimensionCalculator:
             return TileDimensionCalculator._calc_glyph_mode(width, height)
 
     @staticmethod
-    def _calc_graphics_mode(window_width: int, window_height: int) -> Tuple[int, int]:
+    def _calc_graphics_mode(window_width: int, window_height: int) -> tuple[int, int]:
         """
         Calculate tile dimensions for graphics mode.
 
@@ -56,7 +55,7 @@ class TileDimensionCalculator:
         return (64, 64)
 
     @staticmethod
-    def _calc_glyph_mode(window_width: int, window_height: int) -> Tuple[int, int]:
+    def _calc_glyph_mode(window_width: int, window_height: int) -> tuple[int, int]:
         """
         Calculate tile dimensions for glyph/ASCII mode.
 
@@ -78,7 +77,7 @@ class TileDimensionCalculator:
         return TileDimensionCalculator.validate_and_clamp(tile_width, tile_height)
 
     @staticmethod
-    def validate_and_clamp(width: int, height: int) -> Tuple[int, int]:
+    def validate_and_clamp(width: int, height: int) -> tuple[int, int]:
         """
         Ensure tile dimensions meet minimum requirements for readability.
 
@@ -103,7 +102,7 @@ class TileDimensionCalculator:
         return (clamped_width, clamped_height)
 
     @staticmethod
-    def get_fallback_dimensions() -> Tuple[int, int]:
+    def get_fallback_dimensions() -> tuple[int, int]:
         """
         Get fallback tile dimensions when calculation fails.
 

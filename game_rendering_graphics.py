@@ -4,21 +4,20 @@ Game Rendering Graphics
 SDL sprite/texture-based rendering.
 """
 
+import logging
+import math
+import time
+
 import tcod
 from tcod.sdl.render import BlendMode
-import logging
-import time
-import math
-from typing import Tuple
 
-from game_config import GameConfig, GameBalance
-from game_entities import Position, Colors, EnemyState, TargetingMode, ensure_color_tuple
-from game_data import GameData, GameUpgrades
-from data_loading import DataLoader
-from game_rendering_base import MapRendererBase
 from game_color_manager import ColorManager
-from game_unicode_chars import GameGlyphs
 from game_color_thresholds import ColorThresholdManager
+from game_config import GameConfig
+from game_data import GameData
+from game_entities import Colors, EnemyState, Position, TargetingMode
+from game_rendering_base import MapRendererBase
+from game_unicode_chars import GameGlyphs
 
 
 class GraphicsMapRenderer(MapRendererBase):
@@ -87,17 +86,20 @@ class GraphicsMapRenderer(MapRendererBase):
                             terrain_type = "blind_spot"
                         else:
                             terrain_type = "floor"
-                        logging.error(f"CRITICAL: Missing required texture for {terrain_type} - graphics mode cannot continue")
+                        logging.error(
+                            f"CRITICAL: Missing required texture for {terrain_type} - graphics mode cannot continue"
+                        )
                         raise RuntimeError(f"Missing required texture: {terrain_type}")
                 elif explored:
                     # Explored but not currently visible - dimmed (fog of war)
                     # Check for undiscovered special nodes - render as floor instead of blind spot
                     has_undiscovered_node = (
-                        (game.game_map.is_cooling_node(world_pos) or
-                         game.game_map.is_cpu_recovery_node(world_pos) or
-                         game.game_map.is_ghost_node(world_pos)) and
-                        (not hasattr(game.game_state, 'revealed_special_nodes') or
-                         (world_x, world_y) not in game.game_state.revealed_special_nodes)
+                        game.game_map.is_cooling_node(world_pos)
+                        or game.game_map.is_cpu_recovery_node(world_pos)
+                        or game.game_map.is_ghost_node(world_pos)
+                    ) and (
+                        not hasattr(game.game_state, "revealed_special_nodes")
+                        or (world_x, world_y) not in game.game_state.revealed_special_nodes
                     )
 
                     if game.game_map.is_wall(world_pos):
@@ -139,12 +141,12 @@ class GraphicsMapRenderer(MapRendererBase):
                     if self.tile_manager.is_tintable("codehack"):
                         # Map color name to RGB
                         color_map = {
-                            'crimson': Colors.CRIMSON,
-                            'azure': Colors.AZURE,
-                            'emerald': Colors.EMERALD,
-                            'golden': Colors.GOLDEN,
-                            'violet': Colors.VIOLET,
-                            'silver': Colors.SILVER
+                            "crimson": Colors.CRIMSON,
+                            "azure": Colors.AZURE,
+                            "emerald": Colors.EMERALD,
+                            "golden": Colors.GOLDEN,
+                            "violet": Colors.VIOLET,
+                            "silver": Colors.SILVER,
                         }
                         tint_color = color_map.get(code_hack.color_name.lower(), Colors.WHITE)
                         texture.color_mod = tint_color
@@ -212,8 +214,10 @@ class GraphicsMapRenderer(MapRendererBase):
 
                 pos_tuple = (world_x, world_y)
                 is_explored = pos_tuple in game.game_map.explored_tiles
-                is_discovered = (hasattr(game.game_state, 'revealed_special_nodes') and
-                               pos_tuple in game.game_state.revealed_special_nodes)
+                is_discovered = (
+                    hasattr(game.game_state, "revealed_special_nodes")
+                    and pos_tuple in game.game_state.revealed_special_nodes
+                )
 
                 # Determine node type
                 node_type = None
@@ -232,7 +236,7 @@ class GraphicsMapRenderer(MapRendererBase):
                     if can_see:
                         # Currently visible - full brightness, auto-discover
                         if not is_discovered:
-                            if not hasattr(game.game_state, 'revealed_special_nodes'):
+                            if not hasattr(game.game_state, "revealed_special_nodes"):
                                 game.game_state.revealed_special_nodes = {}
                             game.game_state.revealed_special_nodes[pos_tuple] = node_memory_key
                         texture = self.tile_manager.get_tile(node_type)
@@ -267,9 +271,9 @@ class GraphicsMapRenderer(MapRendererBase):
 
                 # Map upgrade key to sprite name
                 upgrade_sprite_map = {
-                    'ram_boost': 'ram_upgrade',
-                    'cpu_boost': 'cpu_upgrade',
-                    'heat_boost': 'cooling_upgrade'
+                    "ram_boost": "ram_upgrade",
+                    "cpu_boost": "cpu_upgrade",
+                    "heat_boost": "cooling_upgrade",
                 }
                 sprite_name = upgrade_sprite_map.get(upgrade_key)
                 if sprite_name:
@@ -299,20 +303,25 @@ class GraphicsMapRenderer(MapRendererBase):
 
                     # Add rainbow pulsing ring around data fragment (uses outline box like enemies)
                     rainbow_color = self._get_rainbow_color()
-                    pulse_intensity = self._get_pulse_intensity(pulse_speed=1.34)  # Consistent with enemy pulses
+                    pulse_intensity = self._get_pulse_intensity(
+                        pulse_speed=1.34
+                    )  # Consistent with enemy pulses
                     pulsed_rainbow = tuple(int(c * pulse_intensity) for c in rainbow_color)
                     self._draw_outline_box(renderer, tile_rect, pulsed_rainbow, thickness=2)
 
         # Gateway
-        if game.game_map.gateway and self._is_in_viewport(game.game_map.gateway.x, game.game_map.gateway.y, camera_offset):
+        if game.game_map.gateway and self._is_in_viewport(
+            game.game_map.gateway.x, game.game_map.gateway.y, camera_offset
+        ):
             screen_x = game.game_map.gateway.x - camera_offset.x
             screen_y = game.game_map.gateway.y - camera_offset.y + 1
 
             distance = game.player.position.distance_to(game.game_map.gateway)
             # Check if player can see the gateway (respecting walls)
-            can_see = (distance <= vision_range and
-                      (game.player.can_see_through_walls() or
-                       game.game_map.has_line_of_sight(game.player.position, game.game_map.gateway)))
+            can_see = distance <= vision_range and (
+                game.player.can_see_through_walls()
+                or game.game_map.has_line_of_sight(game.player.position, game.game_map.gateway)
+            )
 
             if can_see:
                 # Render gateway sprite
@@ -323,16 +332,18 @@ class GraphicsMapRenderer(MapRendererBase):
                 else:
                     logging.warning("render_sprites_layer: Gateway texture not found!")
                 # Add to memory system
-                if not hasattr(game.game_state, 'revealed_special_nodes'):
+                if not hasattr(game.game_state, "revealed_special_nodes"):
                     game.game_state.revealed_special_nodes = {}
                 gateway_pos = (game.game_map.gateway.x, game.game_map.gateway.y)
                 game.game_state.revealed_special_nodes[gateway_pos] = "gateway"
             else:
                 # Check if gateway was previously seen (in memory)
                 gateway_pos = (game.game_map.gateway.x, game.game_map.gateway.y)
-                if (hasattr(game.game_state, 'revealed_special_nodes') and
-                    gateway_pos in game.game_state.revealed_special_nodes and
-                    game.game_state.revealed_special_nodes[gateway_pos] == "gateway"):
+                if (
+                    hasattr(game.game_state, "revealed_special_nodes")
+                    and gateway_pos in game.game_state.revealed_special_nodes
+                    and game.game_state.revealed_special_nodes[gateway_pos] == "gateway"
+                ):
                     # Render gateway sprite with dimmed appearance
                     texture = self.tile_manager.get_tile("gateway")
                     if texture:
@@ -360,14 +371,14 @@ class GraphicsMapRenderer(MapRendererBase):
                     enemy_type_name = enemy.type_data.symbol  # Use symbol as identifier
                     # Map enemy symbols to type names
                     enemy_name_map = {
-                        'S': 'Scanner',
-                        'P': 'Patrol',
-                        'B': 'Bot',
-                        'H': 'Hunter',
-                        'V': 'Virus',
-                        'I': 'Inhibitor',
-                        'F': 'Firewall',
-                        'A': 'Admin Avatar'
+                        "S": "Scanner",
+                        "P": "Patrol",
+                        "B": "Bot",
+                        "H": "Hunter",
+                        "V": "Virus",
+                        "I": "Inhibitor",
+                        "F": "Firewall",
+                        "A": "Admin Avatar",
                     }
                     enemy_type = enemy_name_map.get(enemy_type_name, enemy_type_name)
                     texture = self.tile_manager.get_tile(enemy_type)
@@ -521,7 +532,9 @@ class GraphicsMapRenderer(MapRendererBase):
                     if enemy.disabled_turns > 0:
                         # Disabled enemies get blue outline (no pulsing for disabled)
                         outline_color = ColorManager.get_enemy_state_color("disabled")
-                        self._draw_outline_box(renderer, enemy_tile_rect, outline_color, thickness=2)
+                        self._draw_outline_box(
+                            renderer, enemy_tile_rect, outline_color, thickness=2
+                        )
                     else:
                         # Show enemy state with colored outline + pulsing
                         if enemy.state == EnemyState.HOSTILE:
@@ -534,7 +547,9 @@ class GraphicsMapRenderer(MapRendererBase):
                         # Apply pulse to color
                         outline_color = tuple(int(c * pulse_intensity) for c in base_color)
 
-                        self._draw_outline_box(renderer, enemy_tile_rect, outline_color, thickness=1)
+                        self._draw_outline_box(
+                            renderer, enemy_tile_rect, outline_color, thickness=1
+                        )
 
     def render_particles_layer(self, game):
         """
@@ -548,7 +563,7 @@ class GraphicsMapRenderer(MapRendererBase):
         if not self._should_use_graphics():
             return
 
-        if not hasattr(game, 'particle_system') or game.particle_system is None:
+        if not hasattr(game, "particle_system") or game.particle_system is None:
             return
 
         renderer = self.context.sdl_renderer
@@ -573,10 +588,16 @@ class GraphicsMapRenderer(MapRendererBase):
             viewport_width=viewport_width,
             viewport_height=viewport_height,
             viewport_pixel_width=screen_pixel_width,
-            viewport_pixel_height=screen_pixel_height
+            viewport_pixel_height=screen_pixel_height,
         )
 
-    def _draw_outline_box(self, renderer, rect: Tuple[int, int, int, int], color: Tuple[int, int, int], thickness: int = 1):
+    def _draw_outline_box(
+        self,
+        renderer,
+        rect: tuple[int, int, int, int],
+        color: tuple[int, int, int],
+        thickness: int = 1,
+    ):
         """
         Draw a colored outline rectangle (not filled).
 
@@ -613,7 +634,9 @@ class GraphicsMapRenderer(MapRendererBase):
         # Reset draw color to avoid affecting other rendering
         renderer.draw_color = (255, 255, 255, 255)
 
-    def _expand_rect(self, rect: Tuple[int, int, int, int], offset: int) -> Tuple[int, int, int, int]:
+    def _expand_rect(
+        self, rect: tuple[int, int, int, int], offset: int
+    ) -> tuple[int, int, int, int]:
         """
         Expand rectangle by offset pixels on all sides.
 
@@ -624,8 +647,7 @@ class GraphicsMapRenderer(MapRendererBase):
         Returns:
             Expanded rectangle (x, y, width, height)
         """
-        return (rect[0] - offset, rect[1] - offset,
-                rect[2] + offset * 2, rect[3] + offset * 2)
+        return (rect[0] - offset, rect[1] - offset, rect[2] + offset * 2, rect[3] + offset * 2)
 
     def _render_targeting_cursor(self, game, camera_offset: Position):
         """Render targeting cursor for look mode or targeting mode in graphics mode."""
@@ -646,11 +668,15 @@ class GraphicsMapRenderer(MapRendererBase):
         # Show range indicator and area effect (only for targeting mode)
         if game.targeting_mode and game.targeting_exploit in GameData.EXPLOITS:
             exploit = GameData.EXPLOITS[game.targeting_exploit]
-            self._render_targeting_range_graphics(renderer, game.player.position, exploit.range, camera_offset)
+            self._render_targeting_range_graphics(
+                renderer, game.player.position, exploit.range, camera_offset
+            )
 
             # Show area effect for AREA targeting mode
             if exploit.targeting == TargetingMode.AREA:
-                self._render_targeting_area_graphics(renderer, cursor_pos, exploit.effect_radius, camera_offset)
+                self._render_targeting_area_graphics(
+                    renderer, cursor_pos, exploit.effect_radius, camera_offset
+                )
 
         if self._is_in_viewport(cursor_pos.x, cursor_pos.y, camera_offset):
             cursor_screen_x = cursor_pos.x - camera_offset.x
@@ -667,7 +693,9 @@ class GraphicsMapRenderer(MapRendererBase):
                 # Reset color_mod
                 texture.color_mod = normal_tint
 
-    def _render_targeting_range_graphics(self, renderer, center: Position, range_val: int, camera_offset: Position):
+    def _render_targeting_range_graphics(
+        self, renderer, center: Position, range_val: int, camera_offset: Position
+    ):
         """Render targeting range indicator in graphics mode using transparent overlays."""
         range_color = ColorManager.get_targeting_color("range_overlay")
 
@@ -678,7 +706,7 @@ class GraphicsMapRenderer(MapRendererBase):
         for dx in range(-range_val, range_val + 1):
             for dy in range(-range_val, range_val + 1):
                 # Use Euclidean distance for circular range (matches glyphs mode)
-                if dx*dx + dy*dy <= range_val*range_val:
+                if dx * dx + dy * dy <= range_val * range_val:
                     world_x = center.x + dx
                     world_y = center.y + dy
 
@@ -694,7 +722,9 @@ class GraphicsMapRenderer(MapRendererBase):
         # Restore original blend mode
         renderer.draw_blend_mode = old_blend_mode
 
-    def _render_targeting_area_graphics(self, renderer, center: Position, radius: int, camera_offset: Position):
+    def _render_targeting_area_graphics(
+        self, renderer, center: Position, radius: int, camera_offset: Position
+    ):
         """
         Render area effect indicator in graphics mode using transparent overlays.
 
@@ -729,7 +759,13 @@ class GraphicsMapRenderer(MapRendererBase):
     def _render_hover_highlight(self, game, camera_offset: Position):
         """Render hover highlight for mouse cursor in normal gameplay mode."""
         # Only show hover in normal gameplay (not in look/targeting/menus)
-        if game.look_mode or game.targeting_mode or game.show_inventory or game.show_lore_viewer or game.show_help:
+        if (
+            game.look_mode
+            or game.targeting_mode
+            or game.show_inventory
+            or game.show_lore_viewer
+            or game.show_help
+        ):
             return
 
         # Only show if mouse is hovering over a valid world position
@@ -747,6 +783,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
             # Determine if this is a valid walkable tile
             from game_characters import PositionValidator
+
             is_walkable = PositionValidator.is_basic_valid_position(hover_pos, game.game_map)
 
             # Color: Green for walkable tiles, Yellow for blocked tiles (walls, etc.)
@@ -758,7 +795,7 @@ class GraphicsMapRenderer(MapRendererBase):
             # Draw highlight border (thicker than other overlays for visibility)
             self._draw_outline_box(renderer, tile_rect, highlight_color, thickness=3)
 
-    def _get_status_outline_color(self, status_type: str) -> Tuple[int, int, int]:
+    def _get_status_outline_color(self, status_type: str) -> tuple[int, int, int]:
         """
         Get outline color for status effect.
 
@@ -774,7 +811,13 @@ class GraphicsMapRenderer(MapRendererBase):
             # Fallback to white if status type not found
             return Colors.PURE_WHITE
 
-    def _draw_corner_brackets(self, renderer, rect: Tuple[int, int, int, int], color: Tuple[int, int, int], bracket_size: int = 4):
+    def _draw_corner_brackets(
+        self,
+        renderer,
+        rect: tuple[int, int, int, int],
+        color: tuple[int, int, int],
+        bracket_size: int = 4,
+    ):
         """
         Draw corner brackets around a tile rectangle.
 
@@ -807,8 +850,12 @@ class GraphicsMapRenderer(MapRendererBase):
         renderer.draw_line((x, y + h - 1), (x + bracket_size, y + h - 1))  # Horizontal arm
 
         # Bottom-right corner
-        renderer.draw_line((x + w - 1, y + h - bracket_size - 1), (x + w - 1, y + h - 1))  # Vertical arm
-        renderer.draw_line((x + w - bracket_size - 1, y + h - 1), (x + w - 1, y + h - 1))  # Horizontal arm
+        renderer.draw_line(
+            (x + w - 1, y + h - bracket_size - 1), (x + w - 1, y + h - 1)
+        )  # Vertical arm
+        renderer.draw_line(
+            (x + w - bracket_size - 1, y + h - 1), (x + w - 1, y + h - 1)
+        )  # Horizontal arm
 
         # Reset draw color
         renderer.draw_color = (255, 255, 255, 255)
@@ -828,7 +875,7 @@ class GraphicsMapRenderer(MapRendererBase):
         pulse_intensity = 0.7 + 0.3 * math.sin(pulse_phase * 2 * math.pi)
         return pulse_intensity
 
-    def _get_rainbow_color(self) -> Tuple[int, int, int]:
+    def _get_rainbow_color(self) -> tuple[int, int, int]:
         """
         Calculate cyberspace color based on current time for data fragment highlighting.
         Cycles through neon cyberspace colors used in the game.
@@ -852,7 +899,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
         # Smooth transition between colors
         next_index = (color_index + 1) % len(cyberspace_colors)
-        blend_factor = (current_time % 1.0)  # 0.0 to 1.0 within the second
+        blend_factor = current_time % 1.0  # 0.0 to 1.0 within the second
 
         current_color = cyberspace_colors[color_index]
         next_color = cyberspace_colors[next_index]
@@ -888,7 +935,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
                 self._render_enemy_vision_range(enemy, camera_offset, overlay_color, game, renderer)
 
-    def _get_vision_overlay_color(self, enemy_state: EnemyState) -> Tuple[int, int, int]:
+    def _get_vision_overlay_color(self, enemy_state: EnemyState) -> tuple[int, int, int]:
         """Get vision overlay color based on enemy state (full brightness for graphics mode)."""
         if enemy_state == EnemyState.HOSTILE:
             return ColorManager.get_enemy_state_color("hostile")
@@ -897,7 +944,9 @@ class GraphicsMapRenderer(MapRendererBase):
         else:
             return ColorManager.get_enemy_state_color("unaware")
 
-    def _render_enemy_vision_range(self, enemy, camera_offset: Position, overlay_color: Tuple[int, int, int], game, renderer):
+    def _render_enemy_vision_range(
+        self, enemy, camera_offset: Position, overlay_color: tuple[int, int, int], game, renderer
+    ):
         """Render vision range for a single enemy using semi-transparent tile overlays in graphics mode.
         Uses TCOD FOV for perfect consistency with actual enemy vision.
 
@@ -909,6 +958,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
         # Get configurable alpha from color manager
         from game_entities import Colors
+
         alpha = Colors._manager.vision_alpha if Colors._manager else 0.25
         alpha_byte = int(alpha * 255)  # Convert 0.0-1.0 to 0-255
 
@@ -917,6 +967,7 @@ class GraphicsMapRenderer(MapRendererBase):
 
         # Enable alpha blending for transparent overlays
         from tcod.sdl.render import BlendMode
+
         old_blend_mode = renderer.draw_blend_mode
         renderer.draw_blend_mode = BlendMode.BLEND
 
@@ -987,8 +1038,10 @@ class GraphicsMapRenderer(MapRendererBase):
                 for i, point in enumerate(next_positions):
                     # Skip rendering arrow if there's a character (player or enemy) at this position
                     # Don't draw arrows over the player or other enemies
-                    player_at_point = (game.player.x == point.x and game.player.y == point.y)
-                    enemy_at_point = any(e.position.x == point.x and e.position.y == point.y for e in game.enemies)
+                    player_at_point = game.player.x == point.x and game.player.y == point.y
+                    enemy_at_point = any(
+                        e.position.x == point.x and e.position.y == point.y for e in game.enemies
+                    )
 
                     if player_at_point or enemy_at_point:
                         prev_pos = point  # Update prev_pos for next iteration

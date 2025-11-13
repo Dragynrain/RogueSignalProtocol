@@ -15,15 +15,15 @@ Usage:
     python tests/integration/run_parallel_chaos.py --quick  # 10 agents, 1000 actions
 """
 
-import sys
-import os
 import argparse
+import json
+import os
+import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
-import json
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
 
 def convert_numpy_types(obj):
@@ -64,22 +64,22 @@ def run_single_chaos_agent(agent_id: int, max_actions: int, seed: int = None) ->
     Returns:
         Dictionary with agent results and crash info
     """
-    from tests.test_agent import GameTestAgent
     from tests.integration.test_chaos_agent import ChaosAgent
+    from tests.test_agent import GameTestAgent
 
     # Use agent_id as seed if not provided (ensures different behavior per agent)
     if seed is None:
         seed = agent_id
 
     result = {
-        'agent_id': agent_id,
-        'seed': seed,
-        'max_actions': max_actions,
-        'crashed': False,
-        'crash_reason': None,
-        'crash_type': None,
-        'stats': None,
-        'duration_seconds': 0,
+        "agent_id": agent_id,
+        "seed": seed,
+        "max_actions": max_actions,
+        "crashed": False,
+        "crash_reason": None,
+        "crash_type": None,
+        "stats": None,
+        "duration_seconds": 0,
     }
 
     start_time = time.time()
@@ -92,19 +92,19 @@ def run_single_chaos_agent(agent_id: int, max_actions: int, seed: int = None) ->
         # Run chaos!
         stats = chaos.run_chaos(max_actions=max_actions)
 
-        result['stats'] = stats
-        result['crashed'] = stats.get('crashed', False)
-        result['crash_reason'] = stats.get('crash_reason')
-        result['crash_type'] = stats.get('crash_type')
+        result["stats"] = stats
+        result["crashed"] = stats.get("crashed", False)
+        result["crash_reason"] = stats.get("crash_reason")
+        result["crash_type"] = stats.get("crash_type")
 
     except Exception as e:
         # Agent crashed during execution
-        result['crashed'] = True
-        result['crash_reason'] = str(e)
-        result['crash_type'] = type(e).__name__
+        result["crashed"] = True
+        result["crash_reason"] = str(e)
+        result["crash_type"] = type(e).__name__
 
     finally:
-        result['duration_seconds'] = time.time() - start_time
+        result["duration_seconds"] = time.time() - start_time
 
     return result
 
@@ -151,12 +151,16 @@ def run_parallel_chaos(num_agents: int, actions_per_agent: int, output_file: str
                 results.append(result)
 
                 # Track crashes
-                if result['crashed']:
+                if result["crashed"]:
                     crashes.append(result)
-                    print(f"[{completed}/{num_agents}] Agent {agent_id:3d} CRASHED: {result['crash_type']} - {result['crash_reason']}")
+                    print(
+                        f"[{completed}/{num_agents}] Agent {agent_id:3d} CRASHED: {result['crash_type']} - {result['crash_reason']}"
+                    )
                 else:
-                    actions = result['stats']['actions_taken'] if result['stats'] else 0
-                    print(f"[{completed}/{num_agents}] Agent {agent_id:3d} completed {actions:4d} actions in {result['duration_seconds']:.2f}s")
+                    actions = result["stats"]["actions_taken"] if result["stats"] else 0
+                    print(
+                        f"[{completed}/{num_agents}] Agent {agent_id:3d} completed {actions:4d} actions in {result['duration_seconds']:.2f}s"
+                    )
 
             except Exception as e:
                 print(f"[{completed}/{num_agents}] Agent {agent_id:3d} FAILED TO RUN: {e}")
@@ -169,12 +173,16 @@ def run_parallel_chaos(num_agents: int, actions_per_agent: int, output_file: str
     print("RESULTS")
     print("=" * 80)
 
-    total_actions = sum(r['stats']['actions_taken'] for r in results if r['stats'])
-    total_key_presses = sum(r['stats']['key_presses'] for r in results if r['stats'])
-    total_unique_keys = len(set(
-        key for r in results if r['stats']
-        for key in range(r['stats'].get('unique_keys_count', 0))
-    ))
+    total_actions = sum(r["stats"]["actions_taken"] for r in results if r["stats"])
+    total_key_presses = sum(r["stats"]["key_presses"] for r in results if r["stats"])
+    total_unique_keys = len(
+        set(
+            key
+            for r in results
+            if r["stats"]
+            for key in range(r["stats"].get("unique_keys_count", 0))
+        )
+    )
 
     print(f"Agents completed: {num_agents}")
     print(f"Total runtime: {total_time:.2f} seconds ({total_time/60:.1f} minutes)")
@@ -194,7 +202,7 @@ def run_parallel_chaos(num_agents: int, actions_per_agent: int, output_file: str
         # Group crashes by type
         crash_types = {}
         for crash in crashes:
-            crash_type = crash['crash_type'] or 'Unknown'
+            crash_type = crash["crash_type"] or "Unknown"
             if crash_type not in crash_types:
                 crash_types[crash_type] = []
             crash_types[crash_type].append(crash)
@@ -202,32 +210,34 @@ def run_parallel_chaos(num_agents: int, actions_per_agent: int, output_file: str
         for crash_type, crash_list in crash_types.items():
             print(f"\n{crash_type}: {len(crash_list)} occurrences")
             for crash in crash_list[:3]:  # Show first 3 of each type
-                print(f"  Agent {crash['agent_id']} (seed {crash['seed']}): {crash['crash_reason'][:100]}")
+                print(
+                    f"  Agent {crash['agent_id']} (seed {crash['seed']}): {crash['crash_reason'][:100]}"
+                )
             if len(crash_list) > 3:
                 print(f"  ... and {len(crash_list)-3} more")
 
     # Save detailed results if requested
     if output_file:
         output_data = {
-            'test_info': {
-                'num_agents': num_agents,
-                'actions_per_agent': actions_per_agent,
-                'total_runtime_seconds': total_time,
-                'timestamp': datetime.now().isoformat(),
+            "test_info": {
+                "num_agents": num_agents,
+                "actions_per_agent": actions_per_agent,
+                "total_runtime_seconds": total_time,
+                "timestamp": datetime.now().isoformat(),
             },
-            'summary': {
-                'total_actions': total_actions,
-                'total_key_presses': total_key_presses,
-                'crashes': len(crashes),
-                'crash_rate': len(crashes)/num_agents if num_agents > 0 else 0,
+            "summary": {
+                "total_actions": total_actions,
+                "total_key_presses": total_key_presses,
+                "crashes": len(crashes),
+                "crash_rate": len(crashes) / num_agents if num_agents > 0 else 0,
             },
-            'results': results,
+            "results": results,
         }
 
         # Convert numpy types to native Python types for JSON serialization
         output_data = convert_numpy_types(output_data)
 
-        with open(output_file, 'w') as f:
+        with open(output_file, "w") as f:
             json.dump(output_data, f, indent=2)
 
         print()
@@ -254,17 +264,21 @@ Examples:
 
   # Save detailed results to file
   python run_parallel_chaos.py --agents 50 --actions 5000 --output results.json
-        """
+        """,
     )
 
-    parser.add_argument('--agents', type=int, default=20,
-                       help='Number of parallel agents (default: 20)')
-    parser.add_argument('--actions', type=int, default=2000,
-                       help='Actions per agent (default: 2000)')
-    parser.add_argument('--output', type=str, default=None,
-                       help='Output file for detailed results (JSON)')
-    parser.add_argument('--quick', action='store_true',
-                       help='Quick test: 10 agents, 1000 actions each')
+    parser.add_argument(
+        "--agents", type=int, default=20, help="Number of parallel agents (default: 20)"
+    )
+    parser.add_argument(
+        "--actions", type=int, default=2000, help="Actions per agent (default: 2000)"
+    )
+    parser.add_argument(
+        "--output", type=str, default=None, help="Output file for detailed results (JSON)"
+    )
+    parser.add_argument(
+        "--quick", action="store_true", help="Quick test: 10 agents, 1000 actions each"
+    )
 
     args = parser.parse_args()
 
@@ -279,9 +293,7 @@ Examples:
 
     # Run the chaos!
     exit_code = run_parallel_chaos(
-        num_agents=num_agents,
-        actions_per_agent=actions_per_agent,
-        output_file=args.output
+        num_agents=num_agents, actions_per_agent=actions_per_agent, output_file=args.output
     )
 
     sys.exit(exit_code)

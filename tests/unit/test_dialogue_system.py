@@ -6,22 +6,22 @@ Tests DialogueBox creation, DialogueState management, UnifiedRenderer,
 DialogueInputHandler, and factory functions.
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
+
 import tcod.console
 import tcod.event
 
 from game_dialogue_system import (
     DialogueBox,
+    DialogueInputHandler,
     DialogueState,
     UnifiedRenderer,
-    DialogueInputHandler,
-    create_gateway_dialogue,
     create_death_dialogue,
+    create_gateway_dialogue,
     create_intro_dialogue,
-    create_victory_dialogue,
+    create_inventory_attack_dialogue,
     create_overclock_warning_dialogue,
-    create_inventory_attack_dialogue
+    create_victory_dialogue,
 )
 from game_entities import Colors
 
@@ -40,9 +40,9 @@ class TestDialogueBox:
             message_color=(255, 255, 255),
             border_color=(0, 255, 255),
             bg_color=(0, 0, 0),
-            format_data={'key': 'value'},
+            format_data={"key": "value"},
             priority=5,
-            user_pref_key="test_pref"
+            user_pref_key="test_pref",
         )
 
         assert dialogue.title == "Test Title"
@@ -63,7 +63,7 @@ class TestDialogueBox:
             message_color=Colors.WHITE,
             border_color=Colors.WHITE,
             bg_color=Colors.BLACK,
-            format_data={}
+            format_data={},
         )
 
         assert dialogue.priority == 0
@@ -80,7 +80,7 @@ class TestDialogueBox:
             border_color=Colors.WHITE,
             bg_color=Colors.BLACK,
             format_data={},
-            user_pref_key=None
+            user_pref_key=None,
         )
 
         assert dialogue.user_pref_key is None
@@ -163,7 +163,7 @@ class TestDialogueState:
 
         # Create dialogues with different priorities
         low_priority = create_gateway_dialogue()  # priority = 2
-        high_priority = create_death_dialogue()   # priority = 10
+        high_priority = create_death_dialogue()  # priority = 10
         med_priority = create_overclock_warning_dialogue("Test", 10, 5, 15, 20)  # priority = 5
 
         # Show in random order
@@ -187,9 +187,7 @@ class TestDialogueState:
     def test_should_show_dialogue_respects_preferences(self):
         """should_show_dialogue() respects user preferences."""
         settings = Mock()
-        settings.dialogue_preferences = {
-            'show_overclock_warning': False  # User disabled this
-        }
+        settings.dialogue_preferences = {"show_overclock_warning": False}  # User disabled this
         state = DialogueState(settings)
 
         # Dialogue with preference key set to False should not show
@@ -203,9 +201,7 @@ class TestDialogueState:
     def test_show_respects_user_preferences(self):
         """show() respects user preferences and doesn't show disabled dialogues."""
         settings = Mock()
-        settings.dialogue_preferences = {
-            'show_overclock_warning': False
-        }
+        settings.dialogue_preferences = {"show_overclock_warning": False}
         state = DialogueState(settings)
 
         dialogue = create_overclock_warning_dialogue("Test", 10, 5, 15, 20)
@@ -235,7 +231,7 @@ class TestDialogueState:
 
         state.disable_dialogue("test_key")
 
-        assert hasattr(settings, 'dialogue_preferences')
+        assert hasattr(settings, "dialogue_preferences")
         assert settings.dialogue_preferences["test_key"] is False
 
 
@@ -274,7 +270,7 @@ class TestUnifiedRenderer:
             overheat_amount=15,
             damage=5,
             remaining_cpu=10,
-            max_cpu=20
+            max_cpu=20,
         )
 
         # Should not crash when formatting
@@ -395,7 +391,7 @@ class TestFactoryFunctions:
             overheat_amount=15,
             damage=5,
             remaining_cpu=10,
-            max_cpu=20
+            max_cpu=20,
         )
 
         assert dialogue.title == "*** OVERCLOCK WARNING ***"
@@ -408,9 +404,9 @@ class TestFactoryFunctions:
         assert dialogue.user_pref_key == "show_overclock_warning"
 
         # Check format data
-        assert dialogue.format_data['exploit_name'] == "Buffer Overflow"
-        assert dialogue.format_data['damage'] == 5
-        assert dialogue.format_data['remaining_cpu'] == 10
+        assert dialogue.format_data["exploit_name"] == "Buffer Overflow"
+        assert dialogue.format_data["damage"] == 5
+        assert dialogue.format_data["remaining_cpu"] == 10
 
     def test_create_inventory_attack_dialogue(self):
         """create_inventory_attack_dialogue() creates valid DialogueBox."""
@@ -458,7 +454,7 @@ class TestIntegration:
 
         # Queue three dialogues
         state.show(create_gateway_dialogue())  # priority 2
-        state.show(create_death_dialogue())    # priority 10
+        state.show(create_death_dialogue())  # priority 10
         state.show(create_overclock_warning_dialogue("Test", 10, 5, 15, 20))  # priority 5
 
         # First shown immediately
@@ -477,9 +473,7 @@ class TestIntegration:
     def test_disabled_dialogue_not_shown(self):
         """Test that disabled dialogues are not shown."""
         settings = Mock()
-        settings.dialogue_preferences = {
-            'show_overclock_warning': False
-        }
+        settings.dialogue_preferences = {"show_overclock_warning": False}
         state = DialogueState(settings)
 
         # Try to show disabled dialogue
@@ -499,7 +493,7 @@ class TestIntegration:
             create_intro_dialogue(),
             create_victory_dialogue(),
             create_overclock_warning_dialogue("Test", 10, 5, 15, 20),
-            create_inventory_attack_dialogue()
+            create_inventory_attack_dialogue(),
         ]
 
         for dialogue in dialogues:

@@ -13,16 +13,17 @@ Tests all menu functionality including:
 Consolidated from test_menus.py and test_menu_system.py
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 import tcod
 import tcod.event
 
-from game_menus import MenuBackground, MainMenu, SettingsMenu
-from game_menu_help_lore import LoreMenu, HelpMenu
-from game_menu_about import AboutMenu
-from game_save import SaveGameManager
 from game_config import GameSettings
+from game_menu_about import AboutMenu
+from game_menu_help_lore import HelpMenu, LoreMenu
+from game_menus import MainMenu, MenuBackground, SettingsMenu
+from game_save import SaveGameManager
 
 
 class TestMainMenu:
@@ -30,48 +31,56 @@ class TestMainMenu:
 
     def test_main_menu_initialization_with_save_exists(self):
         """MainMenu initializes correctly when save file exists."""
-        with patch.object(SaveGameManager, 'save_exists', return_value=True):
+        with patch.object(SaveGameManager, "save_exists", return_value=True):
             # Without settings (glyph mode), Graphics Preview is hidden
             menu = MainMenu()
             assert menu.selected_option == 0
             assert "Continue Game" in menu.options
             assert "New Game" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
-            assert len(menu.options) == 8  # Continue, New, Settings, Help, Achievements, Data Fragments, About, Exit
+            assert (
+                len(menu.options) == 8
+            )  # Continue, New, Settings, Help, Achievements, Data Fragments, About, Exit
             assert menu.show_warning is False
 
             # With graphics mode settings, Graphics Preview is shown (if graphics_preview_menu exists)
             mock_settings = Mock()
             mock_settings.graphics_mode = "graphics"
-            mock_menus = {'graphics_preview_menu': Mock()}  # Mock menus dict with graphics_preview_menu
+            mock_menus = {
+                "graphics_preview_menu": Mock()
+            }  # Mock menus dict with graphics_preview_menu
             menu_graphics = MainMenu(settings=mock_settings, menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
             assert len(menu_graphics.options) == 9  # Includes Graphics Preview
 
     def test_main_menu_initialization_no_save(self):
         """MainMenu initializes correctly when no save file exists."""
-        with patch.object(SaveGameManager, 'save_exists', return_value=False):
+        with patch.object(SaveGameManager, "save_exists", return_value=False):
             # Without settings (glyph mode), Graphics Preview is hidden
             menu = MainMenu()
             assert menu.selected_option == 0
             assert "Continue Game" not in menu.options
             assert "New Game" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
-            assert len(menu.options) == 7  # New, Settings, Help, Achievements, Data Fragments, About, Exit
+            assert (
+                len(menu.options) == 7
+            )  # New, Settings, Help, Achievements, Data Fragments, About, Exit
             assert isinstance(menu.options, list)
             assert menu.show_warning is False
 
             # With graphics mode settings, Graphics Preview is shown (if graphics_preview_menu exists)
             mock_settings = Mock()
             mock_settings.graphics_mode = "graphics"
-            mock_menus = {'graphics_preview_menu': Mock()}  # Mock menus dict with graphics_preview_menu
+            mock_menus = {
+                "graphics_preview_menu": Mock()
+            }  # Mock menus dict with graphics_preview_menu
             menu_graphics = MainMenu(settings=mock_settings, menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
             assert len(menu_graphics.options) == 8  # Includes Graphics Preview
 
     def test_refresh_options_with_continue(self):
         """refresh_options() correctly adds continue option when save exists."""
-        with patch.object(SaveGameManager, 'save_exists', return_value=True):
+        with patch.object(SaveGameManager, "save_exists", return_value=True):
             menu = MainMenu()
             menu.refresh_options(show_continue=True)
             assert "Continue Game" in menu.options
@@ -79,7 +88,7 @@ class TestMainMenu:
 
     def test_refresh_options_without_continue(self):
         """refresh_options() correctly removes continue option for mid-game."""
-        with patch.object(SaveGameManager, 'save_exists', return_value=True):
+        with patch.object(SaveGameManager, "save_exists", return_value=True):
             menu = MainMenu()
             menu.refresh_options(show_continue=False)
             assert "Continue Game" not in menu.options
@@ -117,7 +126,7 @@ class TestMainMenu:
 
     def test_menu_selection_enter_new_game(self):
         """Selecting New Game returns correct action."""
-        with patch.object(SaveGameManager, 'save_exists', return_value=False):
+        with patch.object(SaveGameManager, "save_exists", return_value=False):
             menu = MainMenu()
             # Select "New Game" option (should be index 0 when no save exists)
             menu.selected_option = 0
@@ -132,7 +141,7 @@ class TestMainMenu:
 
     def test_menu_warning_system(self):
         """Menu warning system works when trying to overwrite save."""
-        with patch.object(SaveGameManager, 'save_exists', return_value=True):
+        with patch.object(SaveGameManager, "save_exists", return_value=True):
             menu = MainMenu()
             # Select "New Game" when save exists - should show warning
             new_game_index = menu.options.index("New Game")
@@ -203,10 +212,7 @@ class TestMenuBackground:
 
     def test_error_handling_disables_background(self):
         """Background handles errors by disabling."""
-        self.menu_background._handle_background_error(
-            'test error',
-            Exception("Test error")
-        )
+        self.menu_background._handle_background_error("test error", Exception("Test error"))
 
         assert self.menu_background.enabled is False
 
@@ -240,17 +246,17 @@ class TestHelpMenu:
         # Should initialize without errors
         assert help_menu is not None
         # Should have render method
-        assert hasattr(help_menu, 'render')
-        assert hasattr(help_menu, 'handle_input')
+        assert hasattr(help_menu, "render")
+        assert hasattr(help_menu, "handle_input")
 
     def test_help_menu_has_help_sections(self):
         """HelpMenu contains help information."""
         help_menu = HelpMenu()
         # Should have page building methods
-        assert hasattr(help_menu, '_build_page_1')
-        assert hasattr(help_menu, '_build_page_2')
-        assert hasattr(help_menu, '_build_page_3')
-        assert hasattr(help_menu, '_build_page_content')
+        assert hasattr(help_menu, "_build_page_1")
+        assert hasattr(help_menu, "_build_page_2")
+        assert hasattr(help_menu, "_build_page_3")
+        assert hasattr(help_menu, "_build_page_content")
 
         # Should be able to build page content and return lines
         page_content = help_menu._build_page_content()
@@ -267,8 +273,8 @@ class TestLoreMenu:
         # Should initialize without errors
         assert lore_menu is not None
         # Should have expected attributes
-        assert hasattr(lore_menu, 'lore_viewer_selection')
-        assert hasattr(lore_menu, 'lore_viewer_mode')
+        assert hasattr(lore_menu, "lore_viewer_selection")
+        assert hasattr(lore_menu, "lore_viewer_mode")
         assert lore_menu.lore_viewer_mode == "list"
 
     def test_lore_menu_story_fragment_loading(self):
@@ -429,7 +435,7 @@ class TestMenuIntegration:
         for menu in menus:
             result = menu.handle_input(escape_event)
             # Each menu should handle escape appropriately (exit, return to main, etc.)
-            assert result is not None or hasattr(menu, 'show_warning')
+            assert result is not None or hasattr(menu, "show_warning")
 
     def test_console_rendering_safety(self):
         """Menu rendering doesn't crash with mock console."""

@@ -12,9 +12,9 @@ This module provides:
 - Player status color prioritization (critical > warning > effects > normal)
 """
 
-from typing import Tuple
-from game_entities import Colors
+
 from game_color_manager import ColorManager
+from game_entities import Colors
 
 
 class ColorThresholdManager:
@@ -31,18 +31,18 @@ class ColorThresholdManager:
 
     # CPU thresholds (lower is worse)
     CPU_CRITICAL = 30  # Red threshold
-    CPU_WARNING = 60   # Yellow threshold
+    CPU_WARNING = 60  # Yellow threshold
 
     # Heat thresholds (higher is worse)
     HEAT_CRITICAL = 80  # Red threshold
-    HEAT_WARNING = 60   # Yellow threshold
+    HEAT_WARNING = 60  # Yellow threshold
 
     # Trace thresholds (higher is worse)
     TRACE_CRITICAL = 75  # Red threshold
-    TRACE_WARNING = 50   # Yellow threshold
+    TRACE_WARNING = 50  # Yellow threshold
 
     @classmethod
-    def get_cpu_color(cls, cpu: int) -> Tuple[int, int, int]:
+    def get_cpu_color(cls, cpu: int) -> tuple[int, int, int]:
         """
         Get threshold-based color for CPU display.
 
@@ -60,7 +60,7 @@ class ColorThresholdManager:
             return Colors.GREEN
 
     @classmethod
-    def get_heat_color(cls, heat: int) -> Tuple[int, int, int]:
+    def get_heat_color(cls, heat: int) -> tuple[int, int, int]:
         """
         Get threshold-based color for heat display.
 
@@ -78,7 +78,7 @@ class ColorThresholdManager:
             return Colors.GREEN
 
     @classmethod
-    def get_trace_color(cls, trace_level: float) -> Tuple[int, int, int]:
+    def get_trace_color(cls, trace_level: float) -> tuple[int, int, int]:
         """
         Get threshold-based color for trace display.
 
@@ -106,9 +106,11 @@ class ColorThresholdManager:
         Returns:
             True if any stat is in critical range
         """
-        return (player.cpu < cls.CPU_CRITICAL or
-                player.heat > cls.HEAT_CRITICAL or
-                player.trace_level > cls.TRACE_CRITICAL)
+        return (
+            player.cpu < cls.CPU_CRITICAL
+            or player.heat > cls.HEAT_CRITICAL
+            or player.trace_level > cls.TRACE_CRITICAL
+        )
 
     @classmethod
     def is_player_warning(cls, player) -> bool:
@@ -124,12 +126,14 @@ class ColorThresholdManager:
         if cls.is_player_critical(player):
             return False
 
-        return (player.cpu < cls.CPU_WARNING or
-                player.heat > cls.HEAT_WARNING or
-                player.trace_level > cls.TRACE_WARNING)
+        return (
+            player.cpu < cls.CPU_WARNING
+            or player.heat > cls.HEAT_WARNING
+            or player.trace_level > cls.TRACE_WARNING
+        )
 
     @classmethod
-    def get_player_color(cls, player) -> Tuple[int, int, int]:
+    def get_player_color(cls, player) -> tuple[int, int, int]:
         """
         Get player color based on current state with priority.
 
@@ -155,11 +159,11 @@ class ColorThresholdManager:
             return Colors.YELLOW
 
         # Priority 3: Virus effect - Green
-        if player.temporary_effects.get('virus_turns', 0) > 0:
+        if player.temporary_effects.get("virus_turns", 0) > 0:
             return ColorManager.get("status_effects", "virus")
 
         # Priority 4: Slow effect - Cyan
-        if player.temporary_effects.get('movement_slowed_turns', 0) > 0:
+        if player.temporary_effects.get("movement_slowed_turns", 0) > 0:
             return Colors.CYAN
 
         # Default: White
@@ -182,9 +186,9 @@ class ColorThresholdManager:
             return "WARNING"
         elif player.is_invisible():
             return "CLOAKED"
-        elif player.temporary_effects.get('virus_turns', 0) > 0:
+        elif player.temporary_effects.get("virus_turns", 0) > 0:
             return "INFECTED"
-        elif player.temporary_effects.get('movement_slowed_turns', 0) > 0:
+        elif player.temporary_effects.get("movement_slowed_turns", 0) > 0:
             return "SLOWED"
         else:
             return "STABLE"

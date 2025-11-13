@@ -13,17 +13,13 @@ This test suite focuses on:
 These tests ensure inventory system remains stable with large item counts.
 """
 
-import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-from game_engine import GameEngine
-from game_characters import Player
-from game_entities import Position
-from game_inventory import ExploitItem, CodeHack, StoryFragment, InventoryManager
+import pytest
+
 from game_data import GameData
-from game_config import GameConfig, GameBalance
+from game_inventory import CodeHack, ExploitItem
 from tests.fixtures.simple_fixtures import create_real_player
-from tests.fixtures.real_game_data import get_real_game_data
 
 
 @pytest.fixture
@@ -99,7 +95,9 @@ class TestInventoryLargeCapacity:
             final_count = len(player.inventory_manager.items)
             assert final_count >= initial_inventory, "Code hack should be added or stacked"
 
-    def test_pickup_story_fragment_with_large_inventory(self, large_inventory_player, basic_game_engine):
+    def test_pickup_story_fragment_with_large_inventory(
+        self, large_inventory_player, basic_game_engine
+    ):
         """Test story fragment pickup with large inventory."""
         player = large_inventory_player
         engine = basic_game_engine
@@ -145,8 +143,11 @@ class TestCodeHackStacking:
         assert final_count == initial_count, "Same color code hacks should stack"
 
         # Find the crimson code and verify quantity increased
-        crimson_codes = [item for item in manager.items
-                        if isinstance(item, CodeHack) and item.color_name == "crimson"]
+        crimson_codes = [
+            item
+            for item in manager.items
+            if isinstance(item, CodeHack) and item.color_name == "crimson"
+        ]
         assert len(crimson_codes) == 1, "Should have only one crimson code stack"
         assert crimson_codes[0].quantity == 2, "Quantity should be 2 after stacking"
 
@@ -230,12 +231,12 @@ class TestExploitSlotManagement:
             player.inventory_manager.add_item(item)
 
             # Equip to slot
-            if hasattr(player, 'equipped_exploits'):
+            if hasattr(player, "equipped_exploits"):
                 if i < len(player.equipped_exploits):
                     player.equipped_exploits[i] = item
 
         # Verify 3 slots filled
-        if hasattr(player, 'equipped_exploits'):
+        if hasattr(player, "equipped_exploits"):
             equipped_count = sum(1 for e in player.equipped_exploits if e is not None)
             assert equipped_count == 3, "All 3 exploit slots should be filled"
 
@@ -269,7 +270,7 @@ class TestExploitSlotManagement:
 
         # Equip menu should be able to display and handle selection
         # (This test verifies no crashes when inventory is populated)
-        if hasattr(player, 'equipped_exploits'):
+        if hasattr(player, "equipped_exploits"):
             assert player.equipped_exploits is not None
 
 
@@ -289,7 +290,7 @@ class TestInventoryDisplay:
         for item in items:
             assert item is not None
             # Check item has required attributes
-            assert hasattr(item, 'name') or hasattr(item, 'exploit_id')
+            assert hasattr(item, "name") or hasattr(item, "exploit_id")
 
     def test_get_display_items_with_large_inventory(self, large_inventory_player):
         """Test get_display_items works correctly with large inventory."""
@@ -318,7 +319,9 @@ class TestInventoryPersistence:
         # Verify inventory data is serializable (can be saved)
         # This tests that large inventory won't cause save failures
         for item in player.inventory_manager.items:
-            assert hasattr(item, '__dict__') or hasattr(item, '__slots__'), "Item should be serializable"
+            assert hasattr(item, "__dict__") or hasattr(
+                item, "__slots__"
+            ), "Item should be serializable"
 
         # Large inventory should not cause performance issues
         assert initial_count >= 50, "Large inventory handling verified"

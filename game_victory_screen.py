@@ -7,15 +7,14 @@ Shows epic message about escaping to the internet with freedom to explore.
 Uses the MenuBackground system with ending art directory.
 """
 
+
 import tcod
 import tcod.constants
-import logging
-from game_config import GameConfig
+
 from game_entities import Colors
-from game_ui import render_char_safe
 from game_menu_background import MenuBackground
-from game_coordinate_helpers import CoordinateHelpers
 from game_menu_base import BaseMenu
+from game_ui import render_char_safe
 
 
 class VictoryScreen(BaseMenu):
@@ -70,34 +69,38 @@ class VictoryScreen(BaseMenu):
 
         # Render title
         title = "SIGNAL FREE"
-        title_x = box['center_x'] - len(title) // 2
-        render_char_safe(console, title_x, box['top'] + 2, title, fg=Colors.GREEN, bg=Colors.BLACK)
+        title_x = box["center_x"] - len(title) // 2
+        render_char_safe(console, title_x, box["top"] + 2, title, fg=Colors.GREEN, bg=Colors.BLACK)
 
         # Render decorative line
-        line_width = box['content_width'] - 4
-        line_x = box['center_x'] - line_width // 2
-        render_char_safe(console, line_x, box['top'] + 3, "═" * line_width, fg=Colors.CYAN, bg=Colors.BLACK)
+        line_width = box["content_width"] - 4
+        line_x = box["center_x"] - line_width // 2
+        render_char_safe(
+            console, line_x, box["top"] + 3, "═" * line_width, fg=Colors.CYAN, bg=Colors.BLACK
+        )
 
         # Render victory message using TCOD's built-in word wrapping
         message = self._get_victory_message()
-        message_y = box['top'] + 5
-        max_message_y = box['bottom'] - 3  # Leave room for prompt
+        message_y = box["top"] + 5
+        max_message_y = box["bottom"] - 3  # Leave room for prompt
         available_height = max_message_y - message_y
 
         console.print(
-            x=box['content_left'] + 1,
+            x=box["content_left"] + 1,
             y=message_y,
             string=message,
             fg=Colors.CYAN,
-            width=box['content_width'] - 2,
-            height=available_height
+            width=box["content_width"] - 2,
+            height=available_height,
         )
 
         # Render prompt at bottom
         prompt = "[SPACE/ENTER] Continue"
-        prompt_x = box['center_x'] - len(prompt) // 2
-        prompt_y = box['bottom'] - 2
-        render_char_safe(console, prompt_x, prompt_y, prompt, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
+        prompt_x = box["center_x"] - len(prompt) // 2
+        prompt_y = box["bottom"] - 2
+        render_char_safe(
+            console, prompt_x, prompt_y, prompt, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK
+        )
 
     def _render_centered(self, console: tcod.console.Console) -> None:
         """Render victory message centered (glyph mode)."""
@@ -119,14 +122,16 @@ class VictoryScreen(BaseMenu):
             string=message,
             fg=Colors.CYAN,
             width=60,
-            alignment=tcod.constants.CENTER
+            alignment=tcod.constants.CENTER,
         )
 
         # Prompt
         prompt = "[SPACE/ENTER] Continue"
         prompt_x = center_x - len(prompt) // 2
         prompt_y = message_y + lines_printed + 3
-        render_char_safe(console, prompt_x, prompt_y, prompt, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK)
+        render_char_safe(
+            console, prompt_x, prompt_y, prompt, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK
+        )
 
     def _get_victory_message(self) -> str:
         """
@@ -152,7 +157,6 @@ class VictoryScreen(BaseMenu):
             "Welcome to the internet."
         )
 
-
     def handle_input(self, event: tcod.event.Event) -> bool:
         """
         Handle input for victory screen.
@@ -164,7 +168,11 @@ class VictoryScreen(BaseMenu):
             True if screen should close
         """
         if isinstance(event, tcod.event.KeyDown):
-            if event.sym in [tcod.event.KeySym.SPACE, tcod.event.KeySym.RETURN,
-                           tcod.event.KeySym.KP_ENTER, tcod.event.KeySym.ESCAPE]:
+            if event.sym in [
+                tcod.event.KeySym.SPACE,
+                tcod.event.KeySym.RETURN,
+                tcod.event.KeySym.KP_ENTER,
+                tcod.event.KeySym.ESCAPE,
+            ]:
                 return True
         return False

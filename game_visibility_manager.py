@@ -13,11 +13,12 @@ This module provides:
 - Efficient set-based lookups for visible tiles
 """
 
+import logging
+
 import tcod
 from tcod import libtcodpy
-from typing import Set, Tuple, Optional
+
 from game_entities import Position
-import logging
 
 
 class VisibilityManager:
@@ -43,20 +44,20 @@ class VisibilityManager:
         self.game_map = game_map
 
         # Cache data
-        self._cached_player_fov: Optional[Set[Tuple[int, int]]] = None
-        self._cached_player_pos: Optional[Position] = None
-        self._cached_vision_range: Optional[int] = None
+        self._cached_player_fov: set[tuple[int, int]] | None = None
+        self._cached_player_pos: Position | None = None
+        self._cached_vision_range: int | None = None
         self._cached_turn: int = -1
 
         # Enhanced vision cache (for threat scan)
-        self._cached_enhanced_fov: Optional[Set[Tuple[int, int]]] = None
-        self._cached_enhanced_range: Optional[int] = None
+        self._cached_enhanced_fov: set[tuple[int, int]] | None = None
+        self._cached_enhanced_range: int | None = None
 
         # Enemy vision caches (position -> fov set)
         self._enemy_fov_cache: dict = {}
         self._enemy_cache_turn: int = -1
 
-    def get_player_visible_tiles(self, player, current_turn: int) -> Set[Tuple[int, int]]:
+    def get_player_visible_tiles(self, player, current_turn: int) -> set[tuple[int, int]]:
         """
         Get set of tiles visible to the player (cached per turn).
 
@@ -72,10 +73,10 @@ class VisibilityManager:
         player_pos = player.position
 
         cache_valid = (
-            self._cached_turn == current_turn and
-            self._cached_player_pos == player_pos and
-            self._cached_vision_range == vision_range and
-            self._cached_player_fov is not None
+            self._cached_turn == current_turn
+            and self._cached_player_pos == player_pos
+            and self._cached_vision_range == vision_range
+            and self._cached_player_fov is not None
         )
 
         if not cache_valid:
@@ -93,7 +94,9 @@ class VisibilityManager:
 
         return self._cached_player_fov
 
-    def get_enhanced_visible_tiles(self, player, current_turn: int, enhanced_range: int) -> Set[Tuple[int, int]]:
+    def get_enhanced_visible_tiles(
+        self, player, current_turn: int, enhanced_range: int
+    ) -> set[tuple[int, int]]:
         """
         Get tiles visible with enhanced vision (e.g., threat scan).
 
@@ -112,10 +115,10 @@ class VisibilityManager:
         # Check enhanced cache
         player_pos = player.position
         cache_valid = (
-            self._cached_turn == current_turn and
-            self._cached_player_pos == player_pos and
-            self._cached_enhanced_range == enhanced_range and
-            self._cached_enhanced_fov is not None
+            self._cached_turn == current_turn
+            and self._cached_player_pos == player_pos
+            and self._cached_enhanced_range == enhanced_range
+            and self._cached_enhanced_fov is not None
         )
 
         if not cache_valid:
@@ -168,7 +171,7 @@ class VisibilityManager:
         enemy_fov = self._enemy_fov_cache[enemy_key]
         return (player.x, player.y) in enemy_fov
 
-    def _compute_fov_set(self, x: int, y: int, vision_range: int) -> Set[Tuple[int, int]]:
+    def _compute_fov_set(self, x: int, y: int, vision_range: int) -> set[tuple[int, int]]:
         """
         Compute FOV and return as a set for fast lookups.
 
@@ -192,14 +195,16 @@ class VisibilityManager:
             transparency=transparency,
             pov=(y, x),
             radius=vision_range,
-            algorithm=libtcodpy.FOV_DIAMOND
+            algorithm=libtcodpy.FOV_DIAMOND,
         )
 
         # Convert to set of tuples for O(1) lookups
         # CRITICAL: TCOD arrays are indexed [y, x] not [x, y]!
         visible_tiles = set()
         for fx in range(max(0, x - vision_range), min(self.game_map.width, x + vision_range + 1)):
-            for fy in range(max(0, y - vision_range), min(self.game_map.height, y + vision_range + 1)):
+            for fy in range(
+                max(0, y - vision_range), min(self.game_map.height, y + vision_range + 1)
+            ):
                 if 0 <= fx < self.game_map.width and 0 <= fy < self.game_map.height:
                     if fov_array[fy, fx]:
                         visible_tiles.add((fx, fy))
@@ -216,7 +221,7 @@ class VisibilityManager:
         self._cached_turn = -1
         logging.debug("Visibility cache invalidated")
 
-    def is_position_visible(self, pos: Position, visible_tiles: Set[Tuple[int, int]]) -> bool:
+    def is_position_visible(self, pos: Position, visible_tiles: set[tuple[int, int]]) -> bool:
         """
         Quick check if a position is in a visible tile set.
 
@@ -237,9 +242,9 @@ class VisibilityManager:
             Dict with cache statistics
         """
         return {
-            'cached_turn': self._cached_turn,
-            'player_fov_cached': self._cached_player_fov is not None,
-            'enhanced_fov_cached': self._cached_enhanced_fov is not None,
-            'enemy_fov_entries': len(self._enemy_fov_cache),
-            'player_fov_tiles': len(self._cached_player_fov) if self._cached_player_fov else 0
+            "cached_turn": self._cached_turn,
+            "player_fov_cached": self._cached_player_fov is not None,
+            "enhanced_fov_cached": self._cached_enhanced_fov is not None,
+            "enemy_fov_entries": len(self._enemy_fov_cache),
+            "player_fov_tiles": len(self._cached_player_fov) if self._cached_player_fov else 0,
         }

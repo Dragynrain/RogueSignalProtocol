@@ -8,13 +8,14 @@ Consolidated from game_menus.py refactoring for consistency across MainMenu, Set
 """
 
 import logging
+
 import tcod
+
 from game_config import GameConfig
-from game_entities import Colors
-from game_ui import render_char_safe
 from game_coordinate_helpers import CoordinateHelpers
-from game_unicode_chars import GameGlyphs
+from game_entities import Colors
 from game_rendering_utils import draw_bordered_box
+from game_ui import render_char_safe
 
 
 class MenuRenderingUtils:
@@ -30,8 +31,13 @@ class MenuRenderingUtils:
     """
 
     @staticmethod
-    def render_right_side_box(console: tcod.console.Console, layout: dict, height: int,
-                              border_color: tuple, y_offset: int = 0) -> dict:
+    def render_right_side_box(
+        console: tcod.console.Console,
+        layout: dict,
+        height: int,
+        border_color: tuple,
+        y_offset: int = 0,
+    ) -> dict:
         """Render a right-side menu box with consistent positioning and styling.
 
         Args:
@@ -44,7 +50,7 @@ class MenuRenderingUtils:
         Returns:
             dict: Box dimensions and positions for content rendering
         """
-        if layout['use_background_layout']:
+        if layout["use_background_layout"]:
             # Graphics mode - narrow box on right side, shifted 3 left and 1 up
             box_width = 28
             box_right = GameConfig.SCREEN_WIDTH - 2 - 3  # Shift 3 tiles left
@@ -70,21 +76,23 @@ class MenuRenderingUtils:
             box_bottom = box_top + height - 1
 
             # Draw box with border (consolidated using draw_bordered_box)
-            draw_bordered_box(console, box_left, box_top, box_width, height, border_color, Colors.BLACK)
+            draw_bordered_box(
+                console, box_left, box_top, box_width, height, border_color, Colors.BLACK
+            )
 
             return {
-                'left': box_left,
-                'right': box_right,
-                'top': box_top,
-                'bottom': box_bottom,
-                'width': box_width,
-                'height': height,
-                'center_x': (box_left + box_right) // 2,
-                'content_left': box_left + 1,
-                'content_right': box_right - 1,
-                'content_top': box_top + 1,
-                'content_width': box_width - 2,
-                'use_background_layout': True
+                "left": box_left,
+                "right": box_right,
+                "top": box_top,
+                "bottom": box_bottom,
+                "width": box_width,
+                "height": height,
+                "center_x": (box_left + box_right) // 2,
+                "content_left": box_left + 1,
+                "content_right": box_right - 1,
+                "content_top": box_top + 1,
+                "content_width": box_width - 2,
+                "use_background_layout": True,
             }
         else:
             # ASCII mode - larger centered box
@@ -104,21 +112,23 @@ class MenuRenderingUtils:
             box_bottom = box_top + height - 1
 
             # Draw box with border (consolidated using draw_bordered_box)
-            draw_bordered_box(console, box_left, box_top, box_width, height, border_color, Colors.BLACK)
+            draw_bordered_box(
+                console, box_left, box_top, box_width, height, border_color, Colors.BLACK
+            )
 
             return {
-                'left': box_left,
-                'right': box_right,
-                'top': box_top,
-                'bottom': box_bottom,
-                'width': box_width,
-                'height': height,
-                'center_x': (box_left + box_right) // 2,
-                'content_left': box_left + 2,
-                'content_right': box_right - 2,
-                'content_top': box_top + 1,
-                'content_width': box_width - 4,
-                'use_background_layout': False
+                "left": box_left,
+                "right": box_right,
+                "top": box_top,
+                "bottom": box_bottom,
+                "width": box_width,
+                "height": height,
+                "center_x": (box_left + box_right) // 2,
+                "content_left": box_left + 2,
+                "content_right": box_right - 2,
+                "content_top": box_top + 1,
+                "content_width": box_width - 4,
+                "use_background_layout": False,
             }
 
     @staticmethod
@@ -136,7 +146,9 @@ class MenuRenderingUtils:
 
         if background and background.window_manager:
             try:
-                window_width, window_height = background.window_manager.get_window_pixel_dimensions()
+                window_width, window_height = (
+                    background.window_manager.get_window_pixel_dimensions()
+                )
             except (AttributeError, TypeError, ValueError) as e:
                 logging.debug(f"Failed to get window dimensions from background manager: {e}")
                 pass  # Use defaults if retrieval fails
@@ -148,15 +160,15 @@ class MenuRenderingUtils:
         if aspect_ratio > 1.2:
             # Wide window
             text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.85)
-            layout_zone = 'right'
+            layout_zone = "right"
         elif aspect_ratio < 0.8:
             # Tall window
             text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.8)
-            layout_zone = 'upper'
+            layout_zone = "upper"
         else:
             # Square-ish window
             text_x_offset = int(GameConfig.SCREEN_WIDTH * 0.82)
-            layout_zone = 'right_center'
+            layout_zone = "right_center"
 
         # Ensure minimum margins
         min_margin = 5
@@ -165,12 +177,12 @@ class MenuRenderingUtils:
         text_x_offset = max(text_x_offset, min_margin + 10)
 
         return {
-            'title_x': text_x_offset - 10,
-            'menu_x': text_x_offset,
-            'use_background_layout': True,
-            'layout_zone': layout_zone,
-            'window_aspect': aspect_ratio,
-            'window_size': (window_width, window_height)
+            "title_x": text_x_offset - 10,
+            "menu_x": text_x_offset,
+            "use_background_layout": True,
+            "layout_zone": layout_zone,
+            "window_aspect": aspect_ratio,
+            "window_size": (window_width, window_height),
         }
 
     @staticmethod
@@ -181,7 +193,7 @@ class MenuRenderingUtils:
             console: Console to clear
             layout: Layout parameters from get_menu_layout_params()
         """
-        if layout['use_background_layout']:
+        if layout["use_background_layout"]:
             # ENFORCED SEPARATION: 60% graphics area, 40% menu area
             # NOTE: This boundary MUST match the menu box positioning in render_right_side_box()
             # to prevent overlap between transparent graphics area and opaque menu box
@@ -191,16 +203,16 @@ class MenuRenderingUtils:
             for y in range(console.height):
                 for x in range(0, graphics_boundary):
                     console.rgba[y, x] = (
-                        ord(' '),           # Empty character
-                        (255, 255, 255, 0), # Transparent foreground
-                        (0, 0, 0, 0)        # Transparent background
+                        ord(" "),  # Empty character
+                        (255, 255, 255, 0),  # Transparent foreground
+                        (0, 0, 0, 0),  # Transparent background
                     )
 
             # Right 40%: Clear for text menu (opaque)
             # Menu boxes are positioned to start at graphics_boundary or later
             for y in range(console.height):
                 for x in range(graphics_boundary, console.width):
-                    render_char_safe(console, x, y, ' ', fg=(255, 255, 255), bg=(0, 0, 0))
+                    render_char_safe(console, x, y, " ", fg=(255, 255, 255), bg=(0, 0, 0))
         else:
             # ASCII mode: clear entire console
             console.clear()

@@ -9,19 +9,19 @@ Tests focus on:
 - Error handling paths
 """
 
-import unittest
-from unittest.mock import Mock, patch, MagicMock, call
-import sys
 import os
+import sys
+import unittest
+from unittest.mock import Mock, patch
+
 import tcod
 
 # Add project root to sys.path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-from game_loop import handle_game_input_events, log_exception, handle_error_screen
-from game_engine import GameEngine
 from game_config import GameSettings
-from game_entities import Colors
+from game_engine import GameEngine
+from game_loop import handle_error_screen, handle_game_input_events, log_exception
 
 
 class TestGameInputEventHandling(unittest.TestCase):
@@ -314,8 +314,8 @@ class TestErrorHandling(unittest.TestCase):
 
     def test_log_exception_with_traceback(self):
         """Test log_exception extracts traceback info correctly."""
-        with patch('logging.error') as mock_log_error:
-            with patch('traceback.print_exc') as mock_print_exc:
+        with patch("logging.error") as mock_log_error:
+            with patch("traceback.print_exc") as mock_print_exc:
                 try:
                     raise ValueError("Test error")
                 except Exception as e:
@@ -333,8 +333,8 @@ class TestErrorHandling(unittest.TestCase):
 
     def test_log_exception_with_warning_level(self):
         """Test log_exception with warning level."""
-        with patch('logging.warning') as mock_log_warning:
-            with patch('traceback.print_exc'):
+        with patch("logging.warning") as mock_log_warning:
+            with patch("traceback.print_exc"):
                 try:
                     raise RuntimeError("Test warning")
                 except Exception as e:
@@ -345,8 +345,8 @@ class TestErrorHandling(unittest.TestCase):
 
     def test_log_exception_with_critical_level(self):
         """Test log_exception with critical level."""
-        with patch('logging.critical') as mock_log_critical:
-            with patch('traceback.print_exc'):
+        with patch("logging.critical") as mock_log_critical:
+            with patch("traceback.print_exc"):
                 try:
                     raise RuntimeError("Test critical")
                 except Exception as e:
@@ -355,7 +355,7 @@ class TestErrorHandling(unittest.TestCase):
                     # Should call logging.critical
                     self.assertTrue(mock_log_critical.called)
 
-    @patch('game_loop.render_char_safe')
+    @patch("game_loop.render_char_safe")
     def test_handle_error_screen_displays_message(self, mock_render):
         """Test handle_error_screen displays error correctly."""
         console = Mock()
@@ -365,7 +365,7 @@ class TestErrorHandling(unittest.TestCase):
         quit_event = Mock()
         quit_event.type = "QUIT"
 
-        with patch('tcod.event.wait', return_value=[quit_event]):
+        with patch("tcod.event.wait", return_value=[quit_event]):
             result = handle_error_screen(console, context, "Test error", 42)
 
             # Should clear console
@@ -380,7 +380,7 @@ class TestErrorHandling(unittest.TestCase):
             # Should return True (exit)
             self.assertTrue(result)
 
-    @patch('game_loop.render_char_safe')
+    @patch("game_loop.render_char_safe")
     def test_handle_error_screen_escape_exits(self, mock_render):
         """Test handle_error_screen accepts ESC to exit."""
         console = Mock()
@@ -391,7 +391,7 @@ class TestErrorHandling(unittest.TestCase):
         esc_event.type = "KEYDOWN"
         esc_event.sym = tcod.event.KeySym.ESCAPE
 
-        with patch('tcod.event.wait', return_value=[esc_event]):
+        with patch("tcod.event.wait", return_value=[esc_event]):
             result = handle_error_screen(console, context, "Test error", 42)
 
             self.assertTrue(result)
@@ -412,9 +412,7 @@ class TestAutoSaveBehavior(unittest.TestCase):
         quit_event = Mock()
         quit_event.type = "QUIT"
 
-        should_continue, result_game = handle_game_input_events(
-            quit_event, game, input_handler
-        )
+        should_continue, result_game = handle_game_input_events(quit_event, game, input_handler)
 
         game.auto_save.assert_called_once()
 
@@ -440,9 +438,7 @@ class TestAutoSaveBehavior(unittest.TestCase):
         esc_event.type = "KEYDOWN"
         esc_event.sym = tcod.event.KeySym.ESCAPE
 
-        should_continue, result_game = handle_game_input_events(
-            esc_event, game, input_handler
-        )
+        should_continue, result_game = handle_game_input_events(esc_event, game, input_handler)
 
         # Should auto-save when returning to menu
         game.auto_save.assert_called_once()
@@ -471,13 +467,11 @@ class TestAutoSaveBehavior(unittest.TestCase):
         esc_event.type = "KEYDOWN"
         esc_event.sym = tcod.event.KeySym.ESCAPE
 
-        should_continue, result_game = handle_game_input_events(
-            esc_event, game, input_handler
-        )
+        should_continue, result_game = handle_game_input_events(esc_event, game, input_handler)
 
         # Should NOT auto-save (just closing UI)
         game.auto_save.assert_not_called()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

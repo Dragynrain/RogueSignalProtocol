@@ -6,6 +6,7 @@ not ~1.414 as with Euclidean distance.
 """
 
 import pytest
+
 from game_entities import Position
 
 
@@ -44,19 +45,20 @@ class TestGridDistance:
 
         # All 8 adjacent tiles
         adjacent = [
-            Position(9, 9),   # NW
+            Position(9, 9),  # NW
             Position(10, 9),  # N
             Position(11, 9),  # NE
-            Position(11, 10), # E
-            Position(11, 11), # SE
-            Position(10, 11), # S
+            Position(11, 10),  # E
+            Position(11, 11),  # SE
+            Position(10, 11),  # S
             Position(9, 11),  # SW
             Position(9, 10),  # W
         ]
 
         for adj_pos in adjacent:
-            assert center.grid_distance_to(adj_pos) == 1, \
-                f"Position {adj_pos} should be distance 1 from {center}"
+            assert (
+                center.grid_distance_to(adj_pos) == 1
+            ), f"Position {adj_pos} should be distance 1 from {center}"
 
     def test_distant_positions(self):
         """Test grid distance for non-adjacent positions."""
@@ -112,35 +114,36 @@ class TestBufferOverflowRange:
         This is a critical gameplay mechanic - range-1 exploits MUST work
         on diagonals, not just orthogonal neighbors.
         """
+        from unittest.mock import Mock
+
         from game_combat import ExploitSystem
         from game_data import GameData
-        from unittest.mock import Mock
 
         # Create mock game
         game = Mock()
         game.player = Mock()
         game.player.position = Position(10, 10)
         game.player.inventory_manager = Mock()
-        game.player.inventory_manager.equipped_exploits = ['buffer_overflow']
+        game.player.inventory_manager.equipped_exploits = ["buffer_overflow"]
         game.player.heat = 0
         game.player.max_heat = 100
-        game.player.temporary_effects = {'exploit_efficiency_turns': 0}
+        game.player.temporary_effects = {"exploit_efficiency_turns": 0}
         game.message_log = Mock()
         game.sound_manager = Mock()
         game.enemies = []
 
         # Create exploit system
         exploit_system = ExploitSystem(game)
-        exploit = GameData.EXPLOITS['buffer_overflow']
+        exploit = GameData.EXPLOITS["buffer_overflow"]
 
         # Test all 8 adjacent positions
         adjacent_positions = [
-            Position(9, 9),   # NW diagonal
+            Position(9, 9),  # NW diagonal
             Position(10, 9),  # N orthogonal
             Position(11, 9),  # NE diagonal
-            Position(11, 10), # E orthogonal
-            Position(11, 11), # SE diagonal
-            Position(10, 11), # S orthogonal
+            Position(11, 10),  # E orthogonal
+            Position(11, 11),  # SE diagonal
+            Position(10, 11),  # S orthogonal
             Position(9, 11),  # SW diagonal
             Position(9, 10),  # W orthogonal
         ]
@@ -165,9 +168,14 @@ class TestExploitRangeConsistency:
 
         # All positions at grid distance 1
         range_1_positions = [
-            Position(4, 4), Position(5, 4), Position(6, 4),
-            Position(4, 5),                 Position(6, 5),
-            Position(4, 6), Position(5, 6), Position(6, 6),
+            Position(4, 4),
+            Position(5, 4),
+            Position(6, 4),
+            Position(4, 5),
+            Position(6, 5),
+            Position(4, 6),
+            Position(5, 6),
+            Position(6, 6),
         ]
 
         for pos in range_1_positions:

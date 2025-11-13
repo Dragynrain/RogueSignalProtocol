@@ -18,8 +18,6 @@ Tests cover:
 - Rendering pipeline integrity
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
 from game_config import GameSettings
 from tests.test_agent import GameTestAgent
 
@@ -30,20 +28,20 @@ class TestGraphicsModeBasics:
     def test_settings_has_graphics_mode(self):
         """GameSettings has graphics_mode attribute."""
         settings = GameSettings()
-        assert hasattr(settings, 'graphics_mode')
-        assert settings.graphics_mode in ['glyph', 'graphics']
+        assert hasattr(settings, "graphics_mode")
+        assert settings.graphics_mode in ["glyph", "graphics"]
 
     def test_settings_can_change_graphics_mode(self):
         """Graphics mode can be changed in settings."""
         settings = GameSettings()
 
         # Change to glyph mode
-        settings.graphics_mode = 'glyph'
-        assert settings.graphics_mode == 'glyph'
+        settings.graphics_mode = "glyph"
+        assert settings.graphics_mode == "glyph"
 
         # Change to graphics mode
-        settings.graphics_mode = 'graphics'
-        assert settings.graphics_mode == 'graphics'
+        settings.graphics_mode = "graphics"
+        assert settings.graphics_mode == "graphics"
 
     def test_settings_rejects_invalid_graphics_mode(self):
         """Invalid graphics modes are handled gracefully."""
@@ -51,12 +49,12 @@ class TestGraphicsModeBasics:
 
         # Try to set invalid mode (should remain unchanged or default)
         original_mode = settings.graphics_mode
-        settings.graphics_mode = 'invalid_mode'
+        settings.graphics_mode = "invalid_mode"
 
         # Depending on implementation, either:
         # - Mode stays unchanged
         # - Mode defaults to valid value
-        assert settings.graphics_mode in ['glyph', 'graphics', 'invalid_mode']
+        assert settings.graphics_mode in ["glyph", "graphics", "invalid_mode"]
 
 
 class TestGraphicsModeSwitchingDuringGameplay:
@@ -67,7 +65,7 @@ class TestGraphicsModeSwitchingDuringGameplay:
         agent = GameTestAgent(seed=42)
 
         # Change to glyph mode
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
 
         # Continue playing
         agent.move_player(1, 0)
@@ -82,7 +80,7 @@ class TestGraphicsModeSwitchingDuringGameplay:
         agent = GameTestAgent(seed=42)
 
         # Change to graphics mode
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Continue playing
         agent.move_player(1, 0)
@@ -98,7 +96,7 @@ class TestGraphicsModeSwitchingDuringGameplay:
 
         # Switch modes multiple times
         for i in range(5):
-            mode = 'glyph' if i % 2 == 0 else 'graphics'
+            mode = "glyph" if i % 2 == 0 else "graphics"
             agent.engine.settings.graphics_mode = mode
 
             # Play a turn
@@ -118,7 +116,7 @@ class TestGraphicsModeSwitchingDuringGameplay:
         pos_before = (agent.player.x, agent.player.y)
 
         # Switch mode
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
 
         # Position should be unchanged
         pos_after = (agent.player.x, agent.player.y)
@@ -133,7 +131,7 @@ class TestGraphicsModeSwitchingDuringGameplay:
         heat_before = agent.player.heat
 
         # Switch mode
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Stats should be unchanged
         assert agent.player.cpu == hp_before
@@ -148,7 +146,7 @@ class TestGraphicsModeSwitchingDuringGameplay:
         enemy_positions_before = [(e.x, e.y) for e in agent.enemies[:3]]
 
         # Switch mode
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
 
         # Enemies should still exist
         assert len(agent.enemies) == enemy_count_before
@@ -166,7 +164,7 @@ class TestGraphicsModeSwitchingDuringGameplay:
             agent.move_player(1, 0)
 
         # Switch mode during gameplay
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Continue playing
         for _ in range(10):
@@ -189,7 +187,7 @@ class TestGraphicsModeMemoryManagement:
         for i in range(20):
             if agent.engine.game_over:
                 break
-            mode = 'glyph' if i % 2 == 0 else 'graphics'
+            mode = "glyph" if i % 2 == 0 else "graphics"
             agent.engine.settings.graphics_mode = mode
             agent.move_player(1, 0)
 
@@ -202,7 +200,7 @@ class TestGraphicsModeMemoryManagement:
 
         # Perform 50 mode switches
         for i in range(50):
-            mode = 'glyph' if i % 2 == 0 else 'graphics'
+            mode = "glyph" if i % 2 == 0 else "graphics"
             agent.engine.settings.graphics_mode = mode
 
             # Do some gameplay
@@ -227,7 +225,7 @@ class TestGraphicsModeStateConsistency:
         turn_before = agent.turn
 
         # Switch mode
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
 
         # Turn counter should be unchanged
         assert agent.turn == turn_before
@@ -239,7 +237,7 @@ class TestGraphicsModeStateConsistency:
         level_before = agent.engine.level
 
         # Switch mode
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Level should be unchanged
         assert agent.engine.level == level_before
@@ -251,7 +249,7 @@ class TestGraphicsModeStateConsistency:
         visible_before = len(agent.engine.visible_tiles)
 
         # Switch mode
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
 
         # Visible tiles should still exist
         assert len(agent.engine.visible_tiles) > 0
@@ -267,7 +265,7 @@ class TestGraphicsModeStateConsistency:
         explored_before = len(agent.game_map.explored_tiles)
 
         # Switch mode
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Explored tiles should be preserved
         explored_after = len(agent.game_map.explored_tiles)
@@ -298,7 +296,7 @@ class TestGraphicsModeEdgeCases:
 
         # Switch modes very rapidly (10 times in quick succession)
         for i in range(10):
-            mode = 'glyph' if i % 2 == 0 else 'graphics'
+            mode = "glyph" if i % 2 == 0 else "graphics"
             agent.engine.settings.graphics_mode = mode
 
         # Game should still be functional
@@ -310,7 +308,7 @@ class TestGraphicsModeEdgeCases:
         agent = GameTestAgent(seed=42)
 
         # Switch mode before any gameplay
-        agent.engine.settings.graphics_mode = 'glyph'
+        agent.engine.settings.graphics_mode = "glyph"
 
         # Game should work normally
         agent.move_player(1, 0)
@@ -329,7 +327,7 @@ class TestGraphicsModeEdgeCases:
         turns_before = agent.turn
 
         # Switch mode
-        agent.engine.settings.graphics_mode = 'graphics'
+        agent.engine.settings.graphics_mode = "graphics"
 
         # Continue playing
         if not agent.engine.game_over:
@@ -351,7 +349,7 @@ class TestGraphicsModeIntegration:
 
             # Switch mode every 25 turns
             if turn_num % 25 == 0:
-                mode = 'glyph' if (turn_num // 25) % 2 == 0 else 'graphics'
+                mode = "glyph" if (turn_num // 25) % 2 == 0 else "graphics"
                 agent.engine.settings.graphics_mode = mode
 
             # Play a turn
@@ -372,12 +370,12 @@ class TestGraphicsModeIntegration:
 
             # Switch mode occasionally
             if i % 10 == 0:
-                mode = 'glyph' if i % 20 == 0 else 'graphics'
+                mode = "glyph" if i % 20 == 0 else "graphics"
                 agent.engine.settings.graphics_mode = mode
 
             # Perform random action
-            action = random.choice(['move', 'wait'])
-            if action == 'move':
+            action = random.choice(["move", "wait"])
+            if action == "move":
                 dx, dy = random.choice([(1, 0), (0, 1), (-1, 0), (0, -1)])
                 try:
                     agent.move_player(dx, dy)

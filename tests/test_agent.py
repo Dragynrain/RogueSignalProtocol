@@ -7,11 +7,12 @@ Allows programmatic control of game state and actions without rendering.
 """
 
 import random
-from typing import List, Tuple, Optional, Dict, Any
-from game_engine import GameEngine
-from game_entities import Position
+from typing import Any
+
 from game_characters import Enemy
 from game_config import GameConfig
+from game_engine import GameEngine
+from game_entities import Position
 
 
 class GameTestAgent:
@@ -29,7 +30,7 @@ class GameTestAgent:
         agent.attack_at(agent.player.x + 1, agent.player.y)
     """
 
-    def __init__(self, seed: Optional[int] = None, level: int = 1):
+    def __init__(self, seed: int | None = None, level: int = 1):
         """
         Initialize a headless game instance for testing.
 
@@ -62,7 +63,7 @@ class GameTestAgent:
         return self.engine.game_map
 
     @property
-    def enemies(self) -> List[Enemy]:
+    def enemies(self) -> list[Enemy]:
         """Get list of all active enemies."""
         return self.engine.enemies
 
@@ -76,7 +77,7 @@ class GameTestAgent:
         """Current turn number."""
         return self.engine.turn
 
-    def get_state(self) -> Dict[str, Any]:
+    def get_state(self) -> dict[str, Any]:
         """
         Get comprehensive game state snapshot.
 
@@ -84,24 +85,19 @@ class GameTestAgent:
             Dictionary with player stats, positions, enemies, and visibility
         """
         return {
-            'player_hp': self.player.cpu,
-            'player_max_hp': self.player.max_cpu,
-            'player_heat': self.player.heat,
-            'player_pos': (self.player.x, self.player.y),
-            'player_trace': self.player.trace_level,
-            'enemies': [
-                {
-                    'type': e.type,
-                    'pos': (e.x, e.y),
-                    'hp': e.cpu,
-                    'state': e.state.name
-                }
+            "player_hp": self.player.cpu,
+            "player_max_hp": self.player.max_cpu,
+            "player_heat": self.player.heat,
+            "player_pos": (self.player.x, self.player.y),
+            "player_trace": self.player.trace_level,
+            "enemies": [
+                {"type": e.type, "pos": (e.x, e.y), "hp": e.cpu, "state": e.state.name}
                 for e in self.enemies
             ],
-            'visible_tiles': len(self.engine.visible_tiles),
-            'turn': self.turn,
-            'level': self.engine.level,
-            'game_over': self.engine.game_over
+            "visible_tiles": len(self.engine.visible_tiles),
+            "turn": self.turn,
+            "level": self.engine.level,
+            "game_over": self.engine.game_over,
         }
 
     def move_player(self, dx: int, dy: int) -> bool:
@@ -151,10 +147,10 @@ class GameTestAgent:
             True if made progress (moved or attacked), False if blocked
             Note: Returns True even if destination not reached (when max_steps < full path)
         """
-        import tcod
-        import numpy as np
-        from game_config import GameConfig
         import logging
+
+        import numpy as np
+        import tcod
 
         made_progress = False
 
@@ -170,12 +166,16 @@ class GameTestAgent:
                 cost[wall_y, wall_x] = 0  # Blocked (0 or negative)
 
             if debug:
-                logging.debug(f"[PATHFIND] Step {step}: ({self.player.x},{self.player.y}) -> ({x},{y})")
+                logging.debug(
+                    f"[PATHFIND] Step {step}: ({self.player.x},{self.player.y}) -> ({x},{y})"
+                )
                 # Check for obvious problems
                 if cost[y, x] == 0:
                     logging.warning(f"[PATHFIND] Target ({x},{y}) is a wall!")
                 if cost[self.player.y, self.player.x] == 0:
-                    logging.warning(f"[PATHFIND] Player at ({self.player.x},{self.player.y}) is in a wall!")
+                    logging.warning(
+                        f"[PATHFIND] Player at ({self.player.x},{self.player.y}) is in a wall!"
+                    )
 
             graph = tcod.path.SimpleGraph(cost=cost, cardinal=2, diagonal=3)
             pathfinder = tcod.path.Pathfinder(graph)
@@ -186,7 +186,9 @@ class GameTestAgent:
 
             if len(path) == 0:
                 if debug:
-                    logging.debug(f"[PATHFIND] No path found from ({self.player.x},{self.player.y}) to ({x},{y})")
+                    logging.debug(
+                        f"[PATHFIND] No path found from ({self.player.x},{self.player.y}) to ({x},{y})"
+                    )
                 return made_progress  # Return True if we made any progress before this
 
             # TCOD includes starting position as first element - skip it
@@ -205,7 +207,9 @@ class GameTestAgent:
             move_success = self.move_player(dx, dy)
 
             if debug and not move_success:
-                logging.debug(f"[PATHFIND] Move blocked at ({self.player.x},{self.player.y}) with delta ({dx},{dy})")
+                logging.debug(
+                    f"[PATHFIND] Move blocked at ({self.player.x},{self.player.y}) with delta ({dx},{dy})"
+                )
 
             if not move_success:
                 return made_progress  # Return True if we made progress before getting blocked
@@ -225,7 +229,7 @@ class GameTestAgent:
         for _ in range(turns):
             self.engine.process_turn()
 
-    def get_enemy_at(self, x: int, y: int) -> Optional[Enemy]:
+    def get_enemy_at(self, x: int, y: int) -> Enemy | None:
         """
         Get enemy at specific position.
 
@@ -281,7 +285,7 @@ class GameTestAgent:
         """
         return (x, y) in self.game_map.explored_tiles
 
-    def get_messages(self) -> List[str]:
+    def get_messages(self) -> list[str]:
         """
         Get all messages from message log.
 
@@ -294,7 +298,7 @@ class GameTestAgent:
         """Clear the message log."""
         self.message_log.messages.clear()
 
-    def get_exploit_targets(self, exploit_name: str) -> List[Tuple[int, int]]:
+    def get_exploit_targets(self, exploit_name: str) -> list[tuple[int, int]]:
         """
         Get valid targets for an exploit.
 
@@ -323,11 +327,15 @@ class GameTestAgent:
         """Print current game state (for debugging)."""
         state = self.get_state()
         print(f"\n=== Game State (Turn {state['turn']}) ===")
-        print(f"Player: HP={state['player_hp']}/{state['player_max_hp']}, "
-              f"Heat={state['player_heat']}, Pos={state['player_pos']}")
+        print(
+            f"Player: HP={state['player_hp']}/{state['player_max_hp']}, "
+            f"Heat={state['player_heat']}, Pos={state['player_pos']}"
+        )
         print(f"Enemies: {len(state['enemies'])}")
-        for enemy in state['enemies']:
-            print(f"  - {enemy['type']} at {enemy['pos']}, HP={enemy['hp']}, State={enemy['state']}")
+        for enemy in state["enemies"]:
+            print(
+                f"  - {enemy['type']} at {enemy['pos']}, HP={enemy['hp']}, State={enemy['state']}"
+            )
         print(f"Visible tiles: {state['visible_tiles']}")
         print(f"Messages: {len(self.get_messages())}")
         print("=" * 40)

@@ -5,9 +5,10 @@ Tests that popups can be dismissed with keyboard and mouse input,
 and that the input is consumed (not processed by other handlers).
 """
 
+from unittest.mock import Mock
+
 import pytest
 import tcod.event
-from unittest.mock import Mock, MagicMock
 
 from game_achievement_popups import AchievementPopupManager
 from game_input import InputHandler
@@ -70,8 +71,12 @@ def test_any_key_dismisses_popup(popup_manager, input_handler, mock_game):
     assert popup_manager.has_active_popup()
 
     # Try various keys
-    for key_sym in [tcod.event.KeySym.SPACE, tcod.event.KeySym.RETURN,
-                    tcod.event.KeySym.W, tcod.event.KeySym.I]:
+    for key_sym in [
+        tcod.event.KeySym.SPACE,
+        tcod.event.KeySym.RETURN,
+        tcod.event.KeySym.W,
+        tcod.event.KeySym.I,
+    ]:
         popup_manager.show_popup("first_blood")
 
         event = Mock(spec=tcod.event.KeyDown)

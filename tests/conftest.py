@@ -53,30 +53,27 @@ For complex scenarios, import from tests.fixtures.standard_patterns:
 See tests/fixtures/standard_patterns.py for the full list.
 """
 
-import pytest
-import sys
 import os
 import random
+import sys
+
+import pytest
 
 # Add the project root to Python path so we can import game modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from game_entities import Position
-from game_characters import Player, Enemy
 from game_config import GameSettings
-from game_engine import GameEngine
-from game_map import GameMap
-from tests.fixtures.real_game_data import create_real_enemy, create_test_map_with_real_tiles
-from tests.fixtures.simple_fixtures import player, enemy, create_test_map
+from game_entities import Position
+from tests.fixtures.simple_fixtures import create_test_map, enemy, player
 from tests.fixtures.standard_patterns import (
     create_basic_game_environment,
     create_combat_scenario,
-    create_stealth_scenario,
     create_multi_enemy_scenario,
+    create_stealth_scenario,
 )
 
-
 # ===== Test Infrastructure Fixtures =====
+
 
 @pytest.fixture(scope="session", autouse=True)
 def load_game_config_once():
@@ -89,7 +86,7 @@ def load_game_config_once():
     Scope: session (loads once for entire pytest run)
     Safety: GameConfig and GameBalance are read-only during tests
     """
-    from game_config import GameConfig, GameBalance
+    from game_config import GameBalance, GameConfig
 
     # Load config once for all tests
     GameConfig.load_from_json()
@@ -124,10 +121,10 @@ def isolate_random_state():
 
     # Import here to avoid circular dependencies
     import hashlib
-    import pytest
+
 
     # Get current test name for deterministic per-test seeding
-    test_name = os.environ.get('PYTEST_CURRENT_TEST', 'unknown')
+    test_name = os.environ.get("PYTEST_CURRENT_TEST", "unknown")
     test_hash = int(hashlib.md5(test_name.encode()).hexdigest()[:8], 16)
 
     # Seed with test-specific value for determinism
@@ -136,6 +133,7 @@ def isolate_random_state():
     # Reset TCOD RNG with same test-specific seed
     try:
         from game_level_structure import seed_rng
+
         seed_rng(test_hash)
     except ImportError:
         pass
@@ -147,6 +145,7 @@ def isolate_random_state():
 
 
 # ===== Basic Entity Fixtures =====
+
 
 @pytest.fixture
 def sample_position():
@@ -174,6 +173,7 @@ def test_map():
 
 # ===== Dimension & Position Fixtures =====
 
+
 @pytest.fixture
 def map_dimensions():
     """Standard map dimensions for testing."""
@@ -186,14 +186,15 @@ def edge_positions(map_dimensions):
     width, height = map_dimensions["width"], map_dimensions["height"]
     return {
         "origin": Position(0, 0),
-        "top_right": Position(width-1, 0),
-        "bottom_left": Position(0, height-1),
-        "bottom_right": Position(width-1, height-1),
-        "center": Position(width//2, height//2)
+        "top_right": Position(width - 1, 0),
+        "bottom_left": Position(0, height - 1),
+        "bottom_right": Position(width - 1, height - 1),
+        "center": Position(width // 2, height // 2),
     }
 
 
 # ===== Game Engine Fixtures =====
+
 
 @pytest.fixture
 def basic_game_engine():
@@ -246,6 +247,7 @@ def multi_enemy_engine():
 
 # ===== Settings Fixtures =====
 
+
 @pytest.fixture
 def silent_settings():
     """Create GameSettings with audio disabled for testing."""
@@ -258,6 +260,7 @@ def silent_settings():
 
 
 # ===== Achievement Test Fixtures =====
+
 
 @pytest.fixture
 def clean_achievement_state():
@@ -281,6 +284,7 @@ def clean_achievement_state():
 
 # ===== Rendering Test Fixtures =====
 
+
 @pytest.fixture
 def test_console():
     """Create a test console for rendering tests.
@@ -288,4 +292,5 @@ def test_console():
     Returns a standard 80x50 TCOD console for testing rendering code.
     """
     import tcod.console
+
     return tcod.console.Console(80, 50)

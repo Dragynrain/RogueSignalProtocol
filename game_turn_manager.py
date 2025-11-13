@@ -14,16 +14,15 @@ Extracted from GameSession to improve modularity and maintainability.
 """
 
 import logging
-import random
 import math
+import random
+
 import tcod
 import tcod.constants
-from typing import Optional
 
-from game_config import GameConfig, GameBalance
-from game_entities import Position, EnemyState, EnemyMovement, Colors
-from game_inventory import CodeHack, ExploitItem, StoryFragment
+from game_config import GameBalance, GameConfig
 from game_data import GameUpgrades
+from game_entities import Colors, EnemyMovement, EnemyState, Position
 
 
 class GameTurnManager:
@@ -67,7 +66,10 @@ class GameTurnManager:
         self._enemies_alerted_played_this_turn = False
 
         # Grant speed boost moves at start of turn
-        if self.game_engine.player.temporary_effects['speed_boost_turns'] > 0 and self.game_engine.player.speed_moves_remaining == 0:
+        if (
+            self.game_engine.player.temporary_effects["speed_boost_turns"] > 0
+            and self.game_engine.player.speed_moves_remaining == 0
+        ):
             self.game_engine.player.speed_moves_remaining = 2  # Grant 2 moves per enemy turn
 
         # Process turn using the dedicated turn processor
@@ -75,12 +77,17 @@ class GameTurnManager:
         self.game_engine.turn_processor.process_turn(self.game_engine.player)
 
         # Handle sound effects for virus damage
-        if old_cpu > self.game_engine.player.cpu and self.game_engine.player.temporary_effects.get('virus_turns', 0) > 0:
+        if (
+            old_cpu > self.game_engine.player.cpu
+            and self.game_engine.player.temporary_effects.get("virus_turns", 0) > 0
+        ):
             self.game_engine.sound_manager.play_sound("virus_damage")
             if self.game_engine.player.cpu <= 0:
                 # CRITICAL: Force close any active dialogues - death has highest priority
                 if self.game_engine.dialogue_state.is_active():
-                    logging.warning(f"Virus death with dialogue already active - force-closing existing dialogue")
+                    logging.warning(
+                        "Virus death with dialogue already active - force-closing existing dialogue"
+                    )
                     self.game_engine.dialogue_state.close()
 
                 self.game_engine.sound_manager.play_sound("player_death", priority=10)
@@ -94,6 +101,7 @@ class GameTurnManager:
 
                 # Show death dialogue
                 from game_dialogue_system import create_death_dialogue
+
                 self.game_engine.dialogue_state.show(create_death_dialogue())
 
         # Process special tiles
@@ -114,11 +122,14 @@ class GameTurnManager:
             config = network_configs.get(self.game_engine.level, {"background_trace": 1})
             background_increase = config.get("background_trace", 1)
             old_trace = self.game_engine.player.trace_level
-            self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + background_increase)
+            self.game_engine.player.trace_level = min(
+                100, self.game_engine.player.trace_level + background_increase
+            )
 
             # Track metrics if trace actually increased
             if self.game_engine.player.trace_level > old_trace:
                 from game_metrics import track
+
                 track("trace_increases")
 
         # Check for death from ANY source (enemy attacks, virus, etc.)
@@ -126,7 +137,9 @@ class GameTurnManager:
         if self.game_engine.player.cpu <= 0:
             # CRITICAL: Force close any active dialogues - death has highest priority
             if self.game_engine.dialogue_state.is_active():
-                logging.warning(f"Death occurred with dialogue already active - force-closing existing dialogue")
+                logging.warning(
+                    "Death occurred with dialogue already active - force-closing existing dialogue"
+                )
                 self.game_engine.dialogue_state.close()
 
             # Mark game as over and play death sounds
@@ -134,37 +147,40 @@ class GameTurnManager:
             self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
             self.game_engine.game_over = True
 
-            if not hasattr(self, '_death_handled'):
+            if not hasattr(self, "_death_handled"):
                 # Determine death cause for analytics
                 player = self.game_engine.player
                 death_cause = "combat"  # Default
                 if player.heat >= player.max_heat:
                     death_cause = "overheat"
-                elif player.temporary_effects.get('virus_turns', 0) > 0:
+                elif player.temporary_effects.get("virus_turns", 0) > 0:
                     death_cause = "virus"
 
                 # Alpha Testing: Death analytics
-                logging.warning("="*80)
+                logging.warning("=" * 80)
                 logging.warning(f"PLAYER DEATH - {death_cause.upper()}")
                 logging.warning(f"Level: {self.game_engine.level}, Turn: {self.game_engine.turn}")
                 logging.warning(f"Position: ({player.x},{player.y})")
                 logging.warning(f"Final CPU: {player.cpu}/{player.max_cpu}")
                 logging.warning(f"Final Heat: {player.heat}/{player.max_heat}")
                 logging.warning(f"Trace Level: {player.trace_level}")
-                logging.warning(f"Active Virus: {player.temporary_effects.get('virus_turns', 0)} turns")
-                logging.warning(f"Enemies nearby: {len([e for e in self.game_engine.enemies if abs(e.x - player.x) < 10 and abs(e.y - player.y) < 10])}")
-                logging.warning("="*80)
+                logging.warning(
+                    f"Active Virus: {player.temporary_effects.get('virus_turns', 0)} turns"
+                )
+                logging.warning(
+                    f"Enemies nearby: {len([e for e in self.game_engine.enemies if abs(e.x - player.x) < 10 and abs(e.y - player.y) < 10])}"
+                )
+                logging.warning("=" * 80)
 
                 # CRITICAL: Flush logs immediately to ensure death info is written
                 for handler in logging.root.handlers:
                     handler.flush()
 
                 # Finalize and save metrics before deleting save
-                from game_metrics import finalize_session, save_metrics, load_lifetime_metrics
+                from game_metrics import finalize_session, load_lifetime_metrics, save_metrics
+
                 metrics = finalize_session(
-                    victory=False,
-                    death_cause=death_cause,
-                    death_level=self.game_engine.level
+                    victory=False, death_cause=death_cause, death_level=self.game_engine.level
                 )
                 if metrics:
                     save_metrics(metrics)
@@ -172,6 +188,7 @@ class GameTurnManager:
                     # Check for newly unlocked achievements
                     from game_achievements import AchievementManager
                     from game_metrics import save_unlocked_achievements
+
                     lifetime = load_lifetime_metrics()
                     newly_unlocked = AchievementManager.check_achievements(metrics, lifetime)
                     if newly_unlocked:
@@ -195,7 +212,7 @@ class GameTurnManager:
             # Enhanced vision - simple distance check
             for dx in range(-vision_range, vision_range + 1):
                 for dy in range(-vision_range, vision_range + 1):
-                    if dx*dx + dy*dy <= vision_range*vision_range:
+                    if dx * dx + dy * dy <= vision_range * vision_range:
                         x = self.game_engine.player.x + dx
                         y = self.game_engine.player.y + dy
                         world_pos = Position(x, y)
@@ -216,21 +233,28 @@ class GameTurnManager:
                 transparency=transparency,
                 pov=(player_y, player_x),
                 radius=vision_range,
-                algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST
+                algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST,
             )
 
             # Mark all visible tiles as explored
-            for y in range(max(0, self.game_engine.player.y - vision_range),
-                          min(GameConfig.MAP_HEIGHT, self.game_engine.player.y + vision_range + 1)):
-                for x in range(max(0, self.game_engine.player.x - vision_range),
-                              min(GameConfig.MAP_WIDTH, self.game_engine.player.x + vision_range + 1)):
+            for y in range(
+                max(0, self.game_engine.player.y - vision_range),
+                min(GameConfig.MAP_HEIGHT, self.game_engine.player.y + vision_range + 1),
+            ):
+                for x in range(
+                    max(0, self.game_engine.player.x - vision_range),
+                    min(GameConfig.MAP_WIDTH, self.game_engine.player.x + vision_range + 1),
+                ):
                     if fov[y, x]:
                         self.game_engine.game_map.explored_tiles.add((x, y))
 
         # Update last known enemy positions
         for enemy in self.game_engine.enemies:
             if self.game_engine.player.can_see_enemy(enemy, self.game_engine.game_map):
-                self.game_engine.game_map.last_known_enemy_positions[enemy.id] = (enemy.position, self.game_engine.turn)
+                self.game_engine.game_map.last_known_enemy_positions[enemy.id] = (
+                    enemy.position,
+                    self.game_engine.turn,
+                )
 
         # Clean up ghost positions where player can see the area but enemy is not there
         self._cleanup_ghost_positions()
@@ -241,9 +265,13 @@ class GameTurnManager:
         gm = self.game_engine.game_map
 
         positions_to_remove = [
-            enemy_id for enemy_id, (ghost_pos, _) in gm.last_known_enemy_positions.items()
-            if gm.can_see_position(self.game_engine.player.position, ghost_pos, vision_range) and
-               not any(e.id == enemy_id and e.position.distance_to(ghost_pos) == 0 for e in self.game_engine.enemies)
+            enemy_id
+            for enemy_id, (ghost_pos, _) in gm.last_known_enemy_positions.items()
+            if gm.can_see_position(self.game_engine.player.position, ghost_pos, vision_range)
+            and not any(
+                e.id == enemy_id and e.position.distance_to(ghost_pos) == 0
+                for e in self.game_engine.enemies
+            )
         ]
 
         for enemy_id in positions_to_remove:
@@ -264,7 +292,7 @@ class GameTurnManager:
             self.game_engine.last_node_position = player_pos
 
             # Mark special nodes as discovered when first stepped on
-            if not hasattr(self.game_engine.game_state, 'revealed_special_nodes'):
+            if not hasattr(self.game_engine.game_state, "revealed_special_nodes"):
                 self.game_engine.game_state.revealed_special_nodes = {}
 
             if self.game_engine.game_map.is_cooling_node(self.game_engine.player.position):
@@ -285,7 +313,10 @@ class GameTurnManager:
 
         # CPU recovery node
         if self.game_engine.game_map.is_cpu_recovery_node(self.game_engine.player.position):
-            recovery = min(GameBalance.CPU_RECOVERY_AMOUNT, self.game_engine.player.max_cpu - self.game_engine.player.cpu)
+            recovery = min(
+                GameBalance.CPU_RECOVERY_AMOUNT,
+                self.game_engine.player.max_cpu - self.game_engine.player.cpu,
+            )
             self.game_engine.player.cpu += recovery
             if recovery > 0 and should_play_sound:
                 self.game_engine.sound_manager.play_sound("node_activate")
@@ -295,11 +326,13 @@ class GameTurnManager:
             # Reduce trace level by fixed amount per turn while standing on the node
             reduction_amount = 20
             old_trace = self.game_engine.player.trace_level
-            self.game_engine.player.trace_level = max(0, self.game_engine.player.trace_level - reduction_amount)
+            self.game_engine.player.trace_level = max(
+                0, self.game_engine.player.trace_level - reduction_amount
+            )
             actual_reduction = old_trace - self.game_engine.player.trace_level
 
             # Only play sound when first stepping on the node or when there's actual reduction
-            if (should_play_sound or actual_reduction > 0):
+            if should_play_sound or actual_reduction > 0:
                 # Ghost node trace level reduction messages removed per user request
                 # self.game_engine.message_log.add_message(f"Ghost node: Trace Level reduced by {actual_reduction:.1f}")
                 if should_play_sound:
@@ -336,12 +369,16 @@ class GameTurnManager:
         if player_pos in self.game_engine.game_map.story_fragments:
             story_fragment = self.game_engine.game_map.story_fragments[player_pos]
             # Discover the fragment and save progress
-            if self.game_engine.story_fragment_manager.discover_fragment(story_fragment.fragment_index):
+            if self.game_engine.story_fragment_manager.discover_fragment(
+                story_fragment.fragment_index
+            ):
                 self.game_engine.sound_manager.play_sound("item_pickup_story")
                 self.game_engine.message_log.add_message("Data fragment recovered!")
 
                 # Open lore viewer in reading mode for the newly discovered fragment
-                discovered_fragments = self.game_engine.story_fragment_manager.get_discovered_fragments()
+                discovered_fragments = (
+                    self.game_engine.story_fragment_manager.get_discovered_fragments()
+                )
                 # Find the index of this fragment in the discovered list
                 for i, (frag_idx, _) in enumerate(discovered_fragments):
                     if frag_idx == story_fragment.fragment_index:
@@ -394,7 +431,7 @@ class GameTurnManager:
             if can_attack:
                 # Enemy is adjacent - attack instead of moving
                 # Play appropriate sound based on enemy type
-                if enemy.type == 'virus':
+                if enemy.type == "virus":
                     self.game_engine.sound_manager.play_sound("virus_infection")
                 else:
                     self.game_engine.sound_manager.play_sound("enemy_attack")
@@ -405,23 +442,26 @@ class GameTurnManager:
                     cpu_remaining = max(0, self.game_engine.player.cpu)
                     self.game_engine.message_log.add_message(
                         f"{enemy.type_data.name} attacked for {damage} CPU damage! ({cpu_remaining} remaining)",
-                        Colors.RED
+                        Colors.RED,
                     )
-                elif enemy.type == 'virus':
-                    virus_turns = self.game_engine.player.temporary_effects.get('virus_turns', 0)
+                elif enemy.type == "virus":
+                    virus_turns = self.game_engine.player.temporary_effects.get("virus_turns", 0)
                     self.game_engine.message_log.add_message(
                         f"{enemy.type_data.name} infected you! (Virus: {virus_turns} turns)",
-                        Colors.YELLOW
+                        Colors.YELLOW,
                     )
-                elif enemy.type == 'inhibitor':
+                elif enemy.type == "inhibitor":
                     self.game_engine.message_log.add_message(
-                        f"{enemy.type_data.name} inhibited your movement!",
-                        Colors.YELLOW
+                        f"{enemy.type_data.name} inhibited your movement!", Colors.YELLOW
                     )
 
                 # Track attacks for inventory warning
-                if damage >= 0 or (hasattr(enemy.type_data, 'effects') and
-                                  ('virus' in enemy.type_data.effects or 'inhibitor' in enemy.type_data.effects)):
+                if damage >= 0 or (
+                    hasattr(enemy.type_data, "effects")
+                    and (
+                        "virus" in enemy.type_data.effects or "inhibitor" in enemy.type_data.effects
+                    )
+                ):
                     attacking_enemy_count += 1
                     if damage > 0:
                         total_damage_taken += damage
@@ -433,12 +473,14 @@ class GameTurnManager:
                             if attacking_enemy_count > 1:
                                 warning_msg = f"{attacking_enemy_count} enemies attacked for {total_damage_taken} damage! Close inventory to defend."
                             else:
-                                warning_msg = f"Attacked for {damage} damage! Close inventory to defend."
+                                warning_msg = (
+                                    f"Attacked for {damage} damage! Close inventory to defend."
+                                )
                             self.game_engine.message_log.add_message(warning_msg, Colors.RED)
                         else:
                             self.game_engine.message_log.add_message(
                                 "Enemy attacked with status effect! Close inventory to defend.",
-                                Colors.YELLOW
+                                Colors.YELLOW,
                             )
 
             else:
@@ -448,6 +490,7 @@ class GameTurnManager:
         # Show inventory attack warning dialogue if player was attacked while in inventory
         if player_attacked_in_inventory:
             from game_dialogue_system import create_inventory_attack_dialogue
+
             dialogue = create_inventory_attack_dialogue()
             self.game_engine.dialogue_state.show(dialogue)
 
@@ -471,7 +514,10 @@ class GameTurnManager:
         Note: Skip updates on first turn after loading to preserve saved states.
         """
         # Skip enemy state updates on the first turn after loading to preserve saved states
-        if hasattr(self.game_engine.game_state, 'just_loaded') and self.game_engine.game_state.just_loaded:
+        if (
+            hasattr(self.game_engine.game_state, "just_loaded")
+            and self.game_engine.game_state.just_loaded
+        ):
             self.game_engine.game_state.just_loaded = False
             return
 
@@ -483,12 +529,16 @@ class GameTurnManager:
                 can_see = enemy.can_see_player(self.game_engine.player, self.game_engine.game_map)
 
             # Admin Avatar has perfect tracking (but can still be blinded)
-            if enemy.type == 'admin':
+            if enemy.type == "admin":
                 if enemy.blinded_turns <= 0:  # Only track if not blinded
                     if enemy.state != EnemyState.HOSTILE:
                         enemy.state = EnemyState.HOSTILE
-                        self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
-                    enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
+                        self.game_engine.message_log.add_message(
+                            f"{enemy.type_data.name} detected you!"
+                        )
+                    enemy.last_seen_player = Position(
+                        self.game_engine.player.x, self.game_engine.player.y
+                    )
             else:
                 self._update_enemy_state(enemy, can_see)
 
@@ -510,6 +560,7 @@ class GameTurnManager:
 
                 # Track detection for Ghost Protocol achievement
                 from game_metrics import get_current_session
+
                 session = get_current_session()
                 if session:
                     session.ever_detected = True
@@ -522,7 +573,9 @@ class GameTurnManager:
 
             elif enemy.state == EnemyState.HOSTILE:
                 enemy.last_seen_player = player_pos
-                self._increase_trace(GameBalance.ENEMY_TRACE_CONTINUOUS_HOSTILE, 'trace_continuous_hostile')
+                self._increase_trace(
+                    GameBalance.ENEMY_TRACE_CONTINUOUS_HOSTILE, "trace_continuous_hostile"
+                )
                 self._alert_nearby_enemies(enemy)
         else:
             # Enemy lost sight - de-escalate state
@@ -531,18 +584,22 @@ class GameTurnManager:
                 if enemy.alert_timer <= 0:
                     enemy.state = EnemyState.UNAWARE
                     self._restore_patrol(enemy)
-                    self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost interest")
+                    self.game_engine.message_log.add_message(
+                        f"{enemy.type_data.name} lost interest"
+                    )
 
             elif enemy.state == EnemyState.HOSTILE:
                 if random.random() < 0.15:
-                    if enemy.type == 'admin':
+                    if enemy.type == "admin":
                         enemy.state = EnemyState.ALERT
                         enemy.alert_timer = 0
                     else:
                         enemy.state = EnemyState.UNAWARE
                         enemy.last_seen_player = None
                         self._restore_patrol(enemy)
-                        self.game_engine.message_log.add_message(f"{enemy.type_data.name} lost track")
+                        self.game_engine.message_log.add_message(
+                            f"{enemy.type_data.name} lost track"
+                        )
 
         # INVALIDATION TRIGGER #1: State change
         if enemy.state != old_state:
@@ -553,7 +610,7 @@ class GameTurnManager:
         self._restore_patrol(enemy)  # Store original patrol index
         enemy.state = EnemyState.HOSTILE
         # State changed - will be caught by invalidation check in _update_enemy_state
-        self._increase_trace(GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE, 'trace_alert_to_hostile')
+        self._increase_trace(GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE, "trace_alert_to_hostile")
         self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
         self.game_engine.sound_manager.play_sound("enemy_hostile")
         self._alert_nearby_enemies(enemy)
@@ -564,11 +621,14 @@ class GameTurnManager:
         level_config = network_configs.get(self.game_engine.level, network_configs[1])
         trace_increase = level_config.get(config_key, default_value)
         old_trace = self.game_engine.player.trace_level
-        self.game_engine.player.trace_level = min(100, self.game_engine.player.trace_level + trace_increase)
+        self.game_engine.player.trace_level = min(
+            100, self.game_engine.player.trace_level + trace_increase
+        )
 
         # Track metrics if trace actually increased
         if self.game_engine.player.trace_level > old_trace:
             from game_metrics import track
+
             track("trace_increases")
 
         self._check_trace_threshold_warnings(old_trace, self.game_engine.player.trace_level)
@@ -585,7 +645,7 @@ class GameTurnManager:
             (25, "Trace signature detected - network monitoring active", Colors.INFO),
             (50, "Elevated trace level - detection risk increasing", Colors.WARNING),
             (75, "WARNING: High trace level!", Colors.YELLOW),
-            (90, "CRITICAL: Admin spawn imminent!", Colors.RED)
+            (90, "CRITICAL: Admin spawn imminent!", Colors.RED),
         ]
         for threshold, msg, color in thresholds:
             if old_trace < threshold <= new_trace:
@@ -627,7 +687,9 @@ class GameTurnManager:
                 # All enemies within alert range immediately go HOSTILE and get player location
                 enemy.state = EnemyState.HOSTILE
                 enemy.alert_timer = 0
-                enemy.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
+                enemy.last_seen_player = Position(
+                    self.game_engine.player.x, self.game_engine.player.y
+                )
                 alerted_count += 1
 
                 # INVALIDATION: State changed
@@ -639,7 +701,9 @@ class GameTurnManager:
 
         if alerted_count > 0:
             enemy_word = "enemy" if alerted_count == 1 else "enemies"
-            self.game_engine.message_log.add_message(f"{alerted_count} {enemy_word} alerted nearby!")
+            self.game_engine.message_log.add_message(
+                f"{alerted_count} {enemy_word} alerted nearby!"
+            )
             # Only play sound once per turn to prevent stacking
             if not self._enemies_alerted_played_this_turn:
                 self.game_engine.sound_manager.play_sound("enemies_alerted", priority=6)
@@ -647,9 +711,11 @@ class GameTurnManager:
 
     def _check_admin_spawn(self):
         """Check if admin avatar should spawn."""
-        if (self.game_engine.player.trace_level >= GameConfig.MAX_TRACE_LEVEL and
-            not self.game_engine.admin_spawned and
-            not any(e.type == 'admin' for e in self.game_engine.enemies)):
+        if (
+            self.game_engine.player.trace_level >= GameConfig.MAX_TRACE_LEVEL
+            and not self.game_engine.admin_spawned
+            and not any(e.type == "admin" for e in self.game_engine.enemies)
+        ):
             self._spawn_admin_avatar()
 
     def _spawn_admin_avatar(self):
@@ -659,13 +725,14 @@ class GameTurnManager:
 
         spawn_position = self._find_admin_spawn_position()
         if spawn_position:
-            admin = self.game_engine.enemy_manager.spawn_enemy(spawn_position, 'admin')
+            admin = self.game_engine.enemy_manager.spawn_enemy(spawn_position, "admin")
             admin.state = EnemyState.HOSTILE
             admin.last_seen_player = Position(self.game_engine.player.x, self.game_engine.player.y)
             self.game_engine.admin_spawned = True
 
             # Track metrics
             from game_metrics import track
+
             track("admin_spawns")
 
             self.game_engine.message_log.add_message("*** ADMIN AVATAR SPAWNED! ***")
@@ -675,7 +742,7 @@ class GameTurnManager:
             if env_msg:
                 self.game_engine.message_log.add_message(env_msg)
 
-    def _find_admin_spawn_position(self) -> Optional[Position]:
+    def _find_admin_spawn_position(self) -> Position | None:
         """Find a suitable spawn position for admin avatar near player and visible."""
         player_vision = self.game_engine.player.get_vision_range()
 
@@ -689,14 +756,20 @@ class GameTurnManager:
             spawn_y = int(self.game_engine.player.y + distance * math.sin(angle))
             position = Position(spawn_x, spawn_y)
 
-            if (self.game_engine.game_map.is_valid_position(position) and
-                position.distance_to(self.game_engine.player.position) >= 5 and  # Not too close to player
-                position.distance_to(self.game_engine.player.position) <= player_vision and  # Within sight
-                self.game_engine.game_map.has_line_of_sight(self.game_engine.player.position, position) and  # Actually visible
-                not self.game_engine._get_enemy_at(position) and
-                (spawn_x, spawn_y) not in self.game_engine.game_map.code_hacks and
-                (spawn_x, spawn_y) not in self.game_engine.game_map.cooling_nodes and
-                (spawn_x, spawn_y) not in self.game_engine.game_map.cpu_recovery_nodes):
+            if (
+                self.game_engine.game_map.is_valid_position(position)
+                and position.distance_to(self.game_engine.player.position)
+                >= 5  # Not too close to player
+                and position.distance_to(self.game_engine.player.position)
+                <= player_vision  # Within sight
+                and self.game_engine.game_map.has_line_of_sight(
+                    self.game_engine.player.position, position
+                )  # Actually visible
+                and not self.game_engine._get_enemy_at(position)
+                and (spawn_x, spawn_y) not in self.game_engine.game_map.code_hacks
+                and (spawn_x, spawn_y) not in self.game_engine.game_map.cooling_nodes
+                and (spawn_x, spawn_y) not in self.game_engine.game_map.cpu_recovery_nodes
+            ):
                 return position
 
         # Fallback: try positions just within vision range if ideal spots don't work
@@ -708,8 +781,9 @@ class GameTurnManager:
             y = int(self.game_engine.player.y + distance * math.sin(angle))
             position = Position(x, y)
 
-            if (self.game_engine.game_map.is_valid_position(position) and
-                not self.game_engine._get_enemy_at(position)):
+            if self.game_engine.game_map.is_valid_position(
+                position
+            ) and not self.game_engine._get_enemy_at(position):
                 return position
 
         # Last resort fallback position
@@ -733,6 +807,7 @@ class GameTurnManager:
         This ensures the renderer doesn't need side effects.
         """
         from game_save import SaveGameManager
+
         if SaveGameManager.save_exists():
             try:
                 SaveGameManager.delete_save()

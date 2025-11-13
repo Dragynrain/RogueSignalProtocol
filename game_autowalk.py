@@ -8,9 +8,10 @@ with intelligent stop conditions for safety.
 """
 
 import logging
-from typing import Optional, Tuple, TYPE_CHECKING
-from game_entities import Position
+from typing import TYPE_CHECKING
+
 from game_characters import PathfindingHelper
+from game_entities import Position
 
 if TYPE_CHECKING:
     from game_engine import GameEngine
@@ -40,7 +41,7 @@ class AutoWalk:
         self.stop_reason = None  # Human-readable stop reason
         self._last_cpu = None  # Track damage detection
 
-    def start(self, player_pos: Position, target_pos: Position, game_engine: 'GameEngine') -> bool:
+    def start(self, player_pos: Position, target_pos: Position, game_engine: "GameEngine") -> bool:
         """
         Start auto-walk from player position to target using TCOD pathfinding.
 
@@ -66,6 +67,7 @@ class AutoWalk:
 
         # Create cost map for pathfinding (no enemy collision for player autowalk)
         import numpy as np
+
         walkability = game_map.get_walkability_map()
         cost_map = np.where(walkability, 10, 0).astype(np.int32)
 
@@ -86,10 +88,12 @@ class AutoWalk:
         self.stop_reason = None
         self._last_cpu = game_engine.player.cpu
 
-        logging.info(f"AutoWalk: Started from {player_pos} to {target_pos}, path_length={len(self.path)}")
+        logging.info(
+            f"AutoWalk: Started from {player_pos} to {target_pos}, path_length={len(self.path)}"
+        )
         return True
 
-    def get_next_move(self, game_engine: 'GameEngine') -> Optional[Tuple[int, int]]:
+    def get_next_move(self, game_engine: "GameEngine") -> tuple[int, int] | None:
         """
         Get next move in auto-walk path.
 
@@ -134,7 +138,7 @@ class AutoWalk:
         if self.active:
             self.current_step += 1
 
-    def check_stop_conditions(self, game_engine: 'GameEngine') -> Tuple[bool, Optional[str]]:
+    def check_stop_conditions(self, game_engine: "GameEngine") -> tuple[bool, str | None]:
         """
         Check all auto-walk stop conditions.
 
@@ -219,4 +223,4 @@ class AutoWalk:
         """
         if not self.active:
             return []
-        return self.path[self.current_step:]
+        return self.path[self.current_step :]
