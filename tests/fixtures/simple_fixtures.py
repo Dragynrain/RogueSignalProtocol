@@ -3,7 +3,7 @@ Simple test fixtures that create real game objects quickly.
 No complex builder patterns - just create what you need.
 """
 
-from game_characters import Player
+from game_player import Player
 from game_entities import Position
 from tests.fixtures.real_game_data import create_real_enemy, create_test_map_with_real_tiles
 

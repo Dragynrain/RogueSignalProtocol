@@ -25,7 +25,7 @@ class TestAllMenusSmoke:
 
     def test_main_menu_instantiation(self):
         """MainMenu can be instantiated without errors."""
-        with patch("game_menus.SaveGameManager.save_exists", return_value=False):
+        with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
             menu = MainMenu()
             assert menu is not None
             assert hasattr(menu, "options")
@@ -106,7 +106,7 @@ class TestAllMenusSmoke:
 
             # Instantiate menu
             if menu_class == MainMenu:
-                with patch("game_menus.SaveGameManager.save_exists", return_value=False):
+                with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
                     menu = menu_class(**kwargs)
             else:
                 menu = menu_class(**kwargs)
@@ -138,7 +138,7 @@ class TestAllMenusSmoke:
 
             # Instantiate menu
             if menu_class == MainMenu:
-                with patch("game_menus.SaveGameManager.save_exists", return_value=False):
+                with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
                     menu = menu_class(**kwargs)
             else:
                 menu = menu_class(**kwargs)
@@ -153,7 +153,7 @@ class TestAllMenusSmoke:
 
     def test_main_menu_has_expected_options(self):
         """MainMenu has expected options."""
-        with patch("game_menus.SaveGameManager.save_exists", return_value=False):
+        with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
             menu = MainMenu()
 
             # Should have at least these core options
@@ -191,7 +191,7 @@ class TestAllMenusSmoke:
         test_console = tcod.console.Console(width=80, height=50)
 
         # Test a simple menu
-        with patch("game_menus.SaveGameManager.save_exists", return_value=False):
+        with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
             menu = MainMenu()
             try:
                 menu.render(test_console)

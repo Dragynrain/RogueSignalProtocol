@@ -12,7 +12,8 @@ import random
 
 from game_achievement_popups import AchievementPopupManager
 from game_audio import NullSoundManager, SoundManager
-from game_characters import Enemy, Player
+from game_characters import Enemy
+from game_player import Player
 from game_combat import ExploitSystem
 
 # Import all necessary modules

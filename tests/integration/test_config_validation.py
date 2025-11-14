@@ -757,7 +757,7 @@ class TestConfigRealObjectInstantiation:
 
     def test_player_creation_with_real_config(self):
         """Verify Player can be created with real config values."""
-        from game_characters import Player
+        from game_player import Player
         from game_config import GameConfig
         from game_entities import Position
 
@@ -785,7 +785,7 @@ class TestConfigRealObjectInstantiation:
 
     def test_code_hack_with_real_balance_values(self):
         """Verify CodeHack uses real balance values from JSON."""
-        from game_characters import Player
+        from game_player import Player
         from game_config import GameBalance, GameConfig
         from game_inventory import CodeHack
 

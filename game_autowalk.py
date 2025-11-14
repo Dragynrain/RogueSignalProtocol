@@ -10,8 +10,8 @@ with intelligent stop conditions for safety.
 import logging
 from typing import TYPE_CHECKING
 
-from game_characters import PathfindingHelper
 from game_entities import Position
+from game_pathfinding import PathfindingHelper
 
 if TYPE_CHECKING:
     from game_engine import GameEngine

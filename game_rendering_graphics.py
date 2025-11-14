@@ -782,7 +782,7 @@ class GraphicsMapRenderer(MapRendererBase):
             tile_rect = self._get_tile_rect(hover_screen_x, hover_screen_y)
 
             # Determine if this is a valid walkable tile
-            from game_characters import PositionValidator
+            from game_entities import PositionValidator
 
             is_walkable = PositionValidator.is_basic_valid_position(hover_pos, game.game_map)
 
