@@ -294,3 +294,20 @@ def test_console():
     import tcod.console
 
     return tcod.console.Console(80, 50)
+
+
+@pytest.fixture(scope="session")
+def real_game_data():
+    """Fixture that ensures game data is loaded (for testing data-dependent logic)."""
+    # GameData loads automatically on import, but this fixture
+    # makes the dependency explicit for tests
+    from game_data import GameData, GameUpgrades
+
+    GameUpgrades._ensure_loaded()
+    return GameData
+
+
+@pytest.fixture
+def basic_map(test_map):
+    """Alias for test_map fixture (for backward compatibility)."""
+    return test_map
