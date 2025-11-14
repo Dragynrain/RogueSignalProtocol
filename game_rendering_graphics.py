@@ -570,7 +570,6 @@ class GraphicsMapRenderer(MapRendererBase):
         camera_offset = self._calculate_camera_offset(game.player, game)
 
         # Get full screen dimensions (not viewport-limited)
-        graphics_mode = self.settings.graphics_mode if self.settings else "glyph"
         screen_pixel_width = GameConfig.SCREEN_WIDTH * self.tile_manager.tile_width
         screen_pixel_height = GameConfig.SCREEN_HEIGHT * self.tile_manager.tile_height
 

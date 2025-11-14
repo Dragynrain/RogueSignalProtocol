@@ -14,9 +14,13 @@ with enemy movement and other systems.
 """
 
 import logging
+from typing import TYPE_CHECKING
 
 from game_config import GameConfig
 from game_entities import Position, PositionValidator
+
+if TYPE_CHECKING:
+    from game_characters import Enemy
 
 
 class Player:

@@ -196,7 +196,6 @@ class StatusBarRenderer:
         # Check if mouse is hovering over exploit bar area
         mouse_tile_x = game.last_mouse_tile_x
         mouse_tile_y = game.last_mouse_tile_y
-        hovered_slot = None
 
         # Fixed layout: exploits 1,2,3 on first line, 4,5 on second line
         line1_exploits = []
@@ -238,8 +237,6 @@ class StatusBarRenderer:
 
             # Use highlight background if hovered
             bg = Colors.UI_HIGHLIGHT if is_hovered else Colors.UI_BG
-            if is_hovered:
-                hovered_slot = slot
 
             render_char_safe(console, x_pos, y1, exploit_text, fg=color, bg=bg)
             x_pos += text_width + 2
@@ -273,8 +270,6 @@ class StatusBarRenderer:
 
                 # Use highlight background if hovered
                 bg = Colors.UI_HIGHLIGHT if is_hovered else Colors.UI_BG
-                if is_hovered:
-                    hovered_slot = slot
 
                 render_char_safe(console, x_pos, y2, exploit_text, fg=color, bg=bg)
                 x_pos += text_width + 2

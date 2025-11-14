@@ -271,7 +271,6 @@ def handle_menu_navigation(
                     logging.info("Debug Export: Starting debug package creation from settings menu")
                     zip_path = export_debug_package(game_engine=active_game)
                     if zip_path:
-                        filename = zip_path.name
                         logging.info(f"Debug Export: Success from settings menu - {zip_path}")
                         # Show success message via settings menu
                         # Note: We can't show messages directly in menu context, but logging is sufficient
@@ -460,7 +459,6 @@ def handle_menu_navigation(
                     logging.info("Debug Export: Starting debug package creation from settings menu")
                     zip_path = export_debug_package(game_engine=active_game)
                     if zip_path:
-                        filename = zip_path.name
                         logging.info(f"Debug Export: Success from settings menu - {zip_path}")
                         # Show success message via settings menu
                         # Note: We can't show messages directly in menu context, but logging is sufficient

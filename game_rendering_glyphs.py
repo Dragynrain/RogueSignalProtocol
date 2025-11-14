@@ -706,13 +706,6 @@ class GlyphsMapRenderer(MapRendererBase):
         use_graphics=False,
     ):
         """Render next 3 predicted moves for all moving enemies using directional arrows."""
-        threat_scan_active = game.game_state.threat_scan_turns > 0
-
-        # Get renderer for graphics mode
-        renderer = None
-        if use_graphics and self.context and hasattr(self.context, "sdl_renderer"):
-            renderer = self.context.sdl_renderer
-
         visible_count = 0
         for enemy in game.enemies:
             # Skip disabled enemies - they can't move
@@ -989,8 +982,7 @@ class GlyphsMapRenderer(MapRendererBase):
 
             logging.error(
                 f"PLAYER OFF SCREEN: world=({game.player.x}, {game.player.y}), "
-                f"camera=({camera_offset.x}, {camera_offset.y}), "
-                f"screen=({player_screen_x}, {player_screen_y})"
+                f"camera=({camera_offset.x}, {camera_offset.y})"
             )
 
     def _get_player_color(self, player) -> tuple[int, int, int]:

@@ -244,8 +244,6 @@ class MenuBackground:
 
         try:
             # Render the actual PNG background to SDL renderer
-            current_window_size = self.window_manager.get_window_pixel_dimensions()
-
             # Calculate background rectangle with aspect ratio preservation
             bg_rect = self.window_manager.calculate_background_rect(self.image_size)
 

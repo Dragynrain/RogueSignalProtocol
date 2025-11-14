@@ -423,7 +423,6 @@ class SettingsMenu(BaseMenu):
         from game_config import GameConfig
 
         try:
-            tile_x = int(event.tile.x)
             tile_y = int(event.tile.y)
         except (TypeError, ValueError, AttributeError) as e:
             logging.debug(
@@ -580,7 +579,6 @@ class SettingsMenu(BaseMenu):
                 return ""
 
             # Calculate color display position using actual box dimensions
-            menu_height = GameConfig.SCREEN_HEIGHT - 4  # Must match render() method (46 tiles)
             layout = self._get_menu_layout_params()
 
             if layout["use_background_layout"]:
@@ -625,7 +623,6 @@ class SettingsMenu(BaseMenu):
 
             # Calculate slider bar position using actual box dimensions
             # Must match the rendering code exactly
-            menu_height = GameConfig.SCREEN_HEIGHT - 4  # Must match render() method (46 tiles)
             layout = self._get_menu_layout_params()
 
             if layout["use_background_layout"]:
@@ -642,7 +639,6 @@ class SettingsMenu(BaseMenu):
 
                 # The "[" bracket is at bar_start_x + 3 (after "<- ")
                 # Actual bar content starts at bar_start_x + 4
-                bracket_x = bar_start_x + 3
                 bar_content_start = bar_start_x + 4
                 bar_content_end = bar_content_start + bar_length - 1
                 bar_mid = (bar_content_start + bar_content_end) // 2
@@ -659,7 +655,6 @@ class SettingsMenu(BaseMenu):
 
                 # The "[" bracket is at bar_start_x + 3 (after "<- ")
                 # Actual bar content starts at bar_start_x + 4
-                bracket_x = bar_start_x + 3
                 bar_content_start = bar_start_x + 4
                 bar_content_end = bar_content_start + bar_length - 1
                 bar_mid = (bar_content_start + bar_content_end) // 2

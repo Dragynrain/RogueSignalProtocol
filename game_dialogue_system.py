@@ -294,7 +294,6 @@ class UnifiedRenderer:
 
         # Render message (word-wrapped using TCOD's built-in wrapping)
         message_y = box_y + 3
-        max_message_lines = box_height - 6  # Leave room for title, options, and padding
         console.print(
             x=box_x + 2,
             y=message_y,

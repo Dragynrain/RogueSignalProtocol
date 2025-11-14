@@ -359,10 +359,8 @@ class GameLevelCoordinator:
         # Calculate distribution
         if loot_room_positions:
             loot_room_count = int(total_count * loot_percentage)
-            normal_count = total_count - loot_room_count
         else:
             loot_room_count = 0
-            normal_count = total_count
 
         placed_items = 0
         attempts = 0

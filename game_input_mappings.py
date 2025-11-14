@@ -12,7 +12,6 @@ Architecture:
 """
 
 import logging
-from typing import Any
 
 import tcod.event
 

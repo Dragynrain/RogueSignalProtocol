@@ -27,9 +27,12 @@ import traceback
 import zipfile
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 from game_errors import GameErrorHandler
+
+if TYPE_CHECKING:
+    from game_engine import GameEngine
 
 
 class DebugExporter:

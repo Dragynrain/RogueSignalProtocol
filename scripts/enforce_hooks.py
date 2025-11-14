@@ -13,9 +13,9 @@ Examples:
     python scripts/enforce_hooks.py 10    # Check last 10 commits
 """
 
+import re
 import subprocess
 import sys
-import re
 
 
 def run_command(cmd: list[str]) -> str:

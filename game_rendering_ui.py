@@ -514,7 +514,6 @@ class UIRenderer:
             Line index of selected item, or 0 if not found
         """
         equipped_count = len(game.player.inventory_manager.equipped_exploits)
-        display_items = game.player.inventory_manager.get_display_items()
 
         # Count lines before selection
         line_count = 1  # "EQUIPPED EXPLOITS:" header
