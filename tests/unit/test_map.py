@@ -304,7 +304,7 @@ class TestLineOfSight:
         end = Position(15, 10)  # Same row, clear line
 
         # No walls between positions
-        assert game_map.has_line_of_sight(start, end) == True
+        assert game_map.has_line_of_sight(start, end)
 
     def test_has_line_of_sight_blocked_path(self):
         """has_line_of_sight returns False for blocked paths."""
@@ -345,7 +345,7 @@ class TestLineOfSight:
         vision_range = 15  # Long enough to see end position
         with patch.object(game_map, "has_line_of_sight", return_value=True):
             result = game_map.can_see_position(start, end, vision_range)
-            assert result == True
+            assert result
 
 
 class TestTransparencyCache:

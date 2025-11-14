@@ -14,11 +14,12 @@ Does NOT test:
 - Sound effects and UI (integration tests)
 """
 
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
+
 from game_combat import ExploitSystem
-from game_entities import Position, ExploitDefinition, TargetingMode
+from game_entities import ExploitDefinition, Position
 
 
 class TestExploitSystemInitialization:
@@ -430,7 +431,6 @@ class TestSpecificExploitMethods:
         exploit_system = ExploitSystem(mock_game)
 
         # Mock the exploit data
-        from game_entities import ExploitDefinition
 
         mock_exploit = Mock()
         mock_exploit.effect_duration = 5

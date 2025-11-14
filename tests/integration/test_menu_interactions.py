@@ -382,4 +382,4 @@ class TestMenuEdgeCases:
 
             # Should return False, not crash
             result = menu.handle_mouse_motion(event)
-            assert result == False
+            assert not result

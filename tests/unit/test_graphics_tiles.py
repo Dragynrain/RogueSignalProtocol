@@ -150,12 +150,12 @@ class TestSpriteConfiguration:
     def test_tintable_flags_present(self, tile_manager):
         """Sprite configurations should include tintable flags."""
         # Codehacks and exploits should be tintable
-        assert tile_manager.tile_mappings["items"]["codehack"]["tintable"] == True
-        assert tile_manager.tile_mappings["items"]["exploit"]["tintable"] == True
+        assert tile_manager.tile_mappings["items"]["codehack"]["tintable"]
+        assert tile_manager.tile_mappings["items"]["exploit"]["tintable"]
 
         # Enemies should not be tintable
-        assert tile_manager.tile_mappings["enemies"]["Scanner"]["tintable"] == False
-        assert tile_manager.tile_mappings["enemies"]["Hunter"]["tintable"] == False
+        assert not tile_manager.tile_mappings["enemies"]["Scanner"]["tintable"]
+        assert not tile_manager.tile_mappings["enemies"]["Hunter"]["tintable"]
 
 
 class TestSpriteFileExistence:
@@ -235,31 +235,31 @@ class TestTileManagerAPI:
     def test_is_tintable_returns_correct_values(self, tile_manager):
         """is_tintable() should return correct values for different entity types."""
         # Tintable items
-        assert tile_manager.is_tintable("codehack") == True
-        assert tile_manager.is_tintable("exploit") == True
+        assert tile_manager.is_tintable("codehack")
+        assert tile_manager.is_tintable("exploit")
 
         # Non-tintable items
-        assert tile_manager.is_tintable("floor") == False
-        assert tile_manager.is_tintable("wall") == False
-        assert tile_manager.is_tintable("player") == False
+        assert not tile_manager.is_tintable("floor")
+        assert not tile_manager.is_tintable("wall")
+        assert not tile_manager.is_tintable("player")
 
     def test_is_tintable_handles_unknown_entities(self, tile_manager):
         """is_tintable() should return False for unknown entities."""
-        assert tile_manager.is_tintable("unknown_entity") == False
-        assert tile_manager.is_tintable("nonexistent") == False
+        assert not tile_manager.is_tintable("unknown_entity")
+        assert not tile_manager.is_tintable("nonexistent")
 
     def test_has_sprite_returns_true_for_configured_entities(self, tile_manager):
         """has_sprite() should return True for all configured entities."""
-        assert tile_manager.has_sprite("player") == True
-        assert tile_manager.has_sprite("floor") == True
-        assert tile_manager.has_sprite("wall") == True
-        assert tile_manager.has_sprite("codehack") == True
-        assert tile_manager.has_sprite("gateway") == True
+        assert tile_manager.has_sprite("player")
+        assert tile_manager.has_sprite("floor")
+        assert tile_manager.has_sprite("wall")
+        assert tile_manager.has_sprite("codehack")
+        assert tile_manager.has_sprite("gateway")
 
     def test_has_sprite_returns_false_for_unconfigured_entities(self, tile_manager):
         """has_sprite() should return False for unconfigured entities."""
-        assert tile_manager.has_sprite("unknown_entity") == False
-        assert tile_manager.has_sprite("fake_sprite") == False
+        assert not tile_manager.has_sprite("unknown_entity")
+        assert not tile_manager.has_sprite("fake_sprite")
 
 
 class TestCacheManagement:
@@ -305,4 +305,4 @@ class TestErrorHandling:
         # Requesting a non-existent sprite should not crash
         # (In real implementation, it logs warning and returns None)
         result = tile_manager.has_sprite("completely_fake_sprite")
-        assert result == False
+        assert not result

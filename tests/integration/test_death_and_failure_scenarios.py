@@ -44,7 +44,7 @@ class TestCombatDeath:
         engine.enemies = [bot]
 
         # Enemy attacks player
-        damage = bot.attack_player(engine.player)
+        bot.attack_player(engine.player)
 
         # If damage was enough to kill player
         if engine.player.cpu <= 0:
@@ -98,7 +98,7 @@ class TestCombatDeath:
                     continue  # Skip if same position
                 distance = abs(enemy.x - engine.player.x) + abs(enemy.y - engine.player.y)
                 if distance <= 1:  # Adjacent
-                    damage = enemy.attack_player(engine.player)
+                    enemy.attack_player(engine.player)
 
             # Check if player died (death detected when CPU <= 0)
             if engine.player.cpu <= 0:
@@ -442,7 +442,6 @@ class TestDeathDialogueDismissal:
 
     def test_death_dialogue_dismissal_with_keyboard(self, basic_game_engine):
         """Test that dismissing death dialogue with keyboard returns False (exit to menu)."""
-        import tcod.event
 
         from game_dialogue_system import create_death_dialogue
         from game_input import InputHandler
@@ -462,16 +461,11 @@ class TestDeathDialogueDismissal:
         active_dlg = engine.dialogue_state.get_active()
         assert "PURGED" in active_dlg.title, f"Expected death dialogue, got {active_dlg.title}"
 
-        # Simulate pressing ESC to dismiss (death dialogue)
-        event = tcod.event.KeyDown(
-            scancode=0, sym=tcod.event.KeySym.ESCAPE, mod=tcod.event.Modifier(0), repeat=False
-        )
-
-        # Handle the input
+        # Handle the input (simulates pressing ESC to dismiss)
         result = input_handler._handle_dialogue_dismiss()
 
         # For death dialogue, should return False (exit to menu)
-        assert result == False, "Death dialogue dismissal should return False to exit to menu"
+        assert not result, "Death dialogue dismissal should return False to exit to menu"
         assert not engine.dialogue_state.is_active(), "Dialogue should be closed"
 
     def test_death_dialogue_dismissal_with_mouse_click(self, basic_game_engine):
@@ -526,7 +520,7 @@ class TestDeathDialogueDismissal:
         result = input_handler._handle_dialogue_left_click(event)
 
         # For death dialogue, should return False (exit to menu)
-        assert result == False, "Death dialogue click dismissal should return False to exit to menu"
+        assert not result, "Death dialogue click dismissal should return False to exit to menu"
         assert not engine.dialogue_state.is_active(), "Dialogue should be closed"
 
     def test_normal_dialogue_dismissal_returns_true(self, basic_game_engine):
@@ -564,7 +558,7 @@ class TestDeathDialogueDismissal:
         result = input_handler._handle_dialogue_dismiss()
 
         # For normal dialogue, should return True (continue game)
-        assert result == True, "Normal dialogue dismissal should return True to continue game"
+        assert result, "Normal dialogue dismissal should return True to continue game"
         assert not engine.dialogue_state.is_active(), "Dialogue should be closed"
 
 

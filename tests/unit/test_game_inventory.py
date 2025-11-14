@@ -15,11 +15,12 @@ Does NOT test:
 - Metrics tracking (integration tests)
 """
 
-import pytest
 from unittest.mock import Mock
 
-from game_inventory import InventoryManager, InventoryItem, CodeHack, ExploitItem
+import pytest
+
 from game_entities import ExploitDefinition, TargetingMode
+from game_inventory import CodeHack, ExploitItem, InventoryItem, InventoryManager
 
 
 class TestInventoryManagerInitialization:

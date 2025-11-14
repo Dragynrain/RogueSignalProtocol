@@ -64,7 +64,7 @@ class TestPlayerVisionRange(TestVisionLineOfSight):
             {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
         ):
             enemy = Enemy(Position(15, 10), "test_enemy")  # 5 units away
-            assert self.player.can_see_enemy(enemy, self.game_map) == True
+            assert self.player.can_see_enemy(enemy, self.game_map)
 
     def test_player_cannot_see_enemy_beyond_range(self):
         """Player cannot see enemy beyond vision range."""
@@ -73,7 +73,7 @@ class TestPlayerVisionRange(TestVisionLineOfSight):
             {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
         ):
             enemy = Enemy(Position(30, 10), "test_enemy")  # 20 units away
-            assert self.player.can_see_enemy(enemy, self.game_map) == False
+            assert not self.player.can_see_enemy(enemy, self.game_map)
 
 
 class TestShadowConcealment(TestVisionLineOfSight):
@@ -88,7 +88,7 @@ class TestShadowConcealment(TestVisionLineOfSight):
             enemy = Enemy(Position(13, 10), "test_enemy")  # 3 units away
             self.game_map.blind_spots.add((13, 10))
 
-            assert self.player.can_see_enemy(enemy, self.game_map) == False
+            assert not self.player.can_see_enemy(enemy, self.game_map)
 
     def test_enemy_in_shadow_visible_when_adjacent(self):
         """Enemy in shadow is visible when adjacent (close quarters rule)."""
@@ -99,7 +99,7 @@ class TestShadowConcealment(TestVisionLineOfSight):
             enemy = Enemy(Position(11, 10), "test_enemy")  # 1 unit away
             self.game_map.blind_spots.add((11, 10))
 
-            assert self.player.can_see_enemy(enemy, self.game_map) == True
+            assert self.player.can_see_enemy(enemy, self.game_map)
 
     def test_player_in_shadow_has_normal_vision_out(self):
         """Player in shadow has normal outgoing vision (shadows block vision IN, not OUT)."""
@@ -111,11 +111,11 @@ class TestShadowConcealment(TestVisionLineOfSight):
 
             # Close enemy - visible
             enemy_close = Enemy(Position(13, 10), "test_enemy")  # 3 units
-            assert self.player.can_see_enemy(enemy_close, self.game_map) == True
+            assert self.player.can_see_enemy(enemy_close, self.game_map)
 
             # Distant enemy - also visible now (shadows don't block vision going OUT)
             enemy_far = Enemy(Position(17, 10), "test_enemy")  # 7 units
-            assert self.player.can_see_enemy(enemy_far, self.game_map) == True
+            assert self.player.can_see_enemy(enemy_far, self.game_map)
 
     def test_ghost_nodes_act_as_shadows(self):
         """Ghost nodes function as shadows for concealment."""
@@ -126,7 +126,7 @@ class TestShadowConcealment(TestVisionLineOfSight):
             enemy = Enemy(Position(13, 10), "test_enemy")
             self.game_map.ghost_nodes.add((13, 10))
 
-            assert self.player.can_see_enemy(enemy, self.game_map) == False
+            assert not self.player.can_see_enemy(enemy, self.game_map)
 
     def test_invisible_player_cannot_be_seen(self):
         """Invisible player (traffic masquerade) cannot be seen by enemies."""
@@ -137,7 +137,7 @@ class TestShadowConcealment(TestVisionLineOfSight):
             enemy = Enemy(Position(12, 10), "test_enemy")
             self.player.temporary_effects["traffic_masquerade_turns"] = 3
 
-            assert enemy.can_see_player(self.player, self.game_map) == False
+            assert not enemy.can_see_player(self.player, self.game_map)
 
     def test_admin_sees_through_invisibility(self):
         """Admin enemies can see invisible players."""
@@ -148,7 +148,7 @@ class TestShadowConcealment(TestVisionLineOfSight):
             admin_enemy = Enemy(Position(12, 10), "admin")
             self.player.temporary_effects["traffic_masquerade_turns"] = 3
 
-            assert admin_enemy.can_see_player(self.player, self.game_map) == True
+            assert admin_enemy.can_see_player(self.player, self.game_map)
 
 
 class TestWallBlocking(TestVisionLineOfSight):
@@ -164,7 +164,7 @@ class TestWallBlocking(TestVisionLineOfSight):
             self.game_map.walls.add((11, 10))
             self.game_map.invalidate_transparency_cache()
 
-            assert self.player.can_see_enemy(enemy, self.game_map) == False
+            assert not self.player.can_see_enemy(enemy, self.game_map)
 
     def test_clear_line_allows_vision(self):
         """Clear line of sight allows vision."""
@@ -173,7 +173,7 @@ class TestWallBlocking(TestVisionLineOfSight):
             {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
         ):
             enemy = Enemy(Position(12, 10), "test_enemy")
-            assert self.player.can_see_enemy(enemy, self.game_map) == True
+            assert self.player.can_see_enemy(enemy, self.game_map)
 
     def test_enhanced_vision_sees_through_walls(self):
         """Enhanced vision allows seeing through walls."""
@@ -186,7 +186,7 @@ class TestWallBlocking(TestVisionLineOfSight):
             self.game_map.invalidate_transparency_cache()
 
             self.player.temporary_effects["enhanced_vision_turns"] = 5
-            assert self.player.can_see_enemy(enemy, self.game_map) == True
+            assert self.player.can_see_enemy(enemy, self.game_map)
 
     def test_diagonal_wall_blocking(self):
         """Walls block diagonal sight lines correctly."""
@@ -199,7 +199,7 @@ class TestWallBlocking(TestVisionLineOfSight):
             self.game_map.walls.add((12, 12))
             self.game_map.invalidate_transparency_cache()
 
-            assert self.player.can_see_enemy(enemy, self.game_map) == False
+            assert not self.player.can_see_enemy(enemy, self.game_map)
 
 
 class TestEnemyVision(TestVisionLineOfSight):
@@ -213,11 +213,11 @@ class TestEnemyVision(TestVisionLineOfSight):
         ):
             # Within range
             enemy = Enemy(Position(14, 10), "test_enemy")  # 4 units away
-            assert enemy.can_see_player(self.player, self.game_map) == True
+            assert enemy.can_see_player(self.player, self.game_map)
 
             # Beyond range
             enemy.position = Position(4, 10)  # 6 units away
-            assert enemy.can_see_player(self.player, self.game_map) == False
+            assert not enemy.can_see_player(self.player, self.game_map)
 
     def test_disabled_enemy_cannot_see(self):
         """Disabled enemy cannot see player."""
@@ -228,7 +228,7 @@ class TestEnemyVision(TestVisionLineOfSight):
             enemy = Enemy(Position(12, 10), "test_enemy")
             enemy.disabled_turns = 3
 
-            assert enemy.can_see_player(self.player, self.game_map) == False
+            assert not enemy.can_see_player(self.player, self.game_map)
 
     def test_enemy_cannot_see_player_in_shadow(self):
         """Enemy cannot see player in shadow from distance."""
@@ -239,7 +239,7 @@ class TestEnemyVision(TestVisionLineOfSight):
             enemy = Enemy(Position(13, 10), "test_enemy")
             self.game_map.blind_spots.add((10, 10))
 
-            assert enemy.can_see_player(self.player, self.game_map) == False
+            assert not enemy.can_see_player(self.player, self.game_map)
 
     def test_enemy_sees_adjacent_player_in_shadow(self):
         """Enemy can see adjacent player even in shadow."""
@@ -250,7 +250,7 @@ class TestEnemyVision(TestVisionLineOfSight):
             enemy = Enemy(Position(11, 10), "test_enemy")
             self.game_map.blind_spots.add((10, 10))
 
-            assert enemy.can_see_player(self.player, self.game_map) == True
+            assert enemy.can_see_player(self.player, self.game_map)
 
     def test_admin_has_perfect_tracking(self):
         """Admin enemy has perfect tracking regardless of conditions."""
@@ -267,7 +267,7 @@ class TestEnemyVision(TestVisionLineOfSight):
             self.game_map.invalidate_transparency_cache()
 
             # Admin should still see player
-            assert admin_enemy.can_see_player(self.player, self.game_map) == True
+            assert admin_enemy.can_see_player(self.player, self.game_map)
 
 
 class TestStealthGameplayScenarios(TestVisionLineOfSight):
@@ -361,7 +361,7 @@ class TestMapVisionUtilities(TestVisionLineOfSight):
         end = Position(13, 10)
         vision_range = 5
 
-        assert self.game_map.can_see_position(start, end, vision_range) == True
+        assert self.game_map.can_see_position(start, end, vision_range)
 
     def test_can_see_position_beyond_range(self):
         """can_see_position fails beyond vision range."""
@@ -369,7 +369,7 @@ class TestMapVisionUtilities(TestVisionLineOfSight):
         end = Position(16, 10)  # 6 units away
         vision_range = 5
 
-        assert self.game_map.can_see_position(start, end, vision_range) == False
+        assert not self.game_map.can_see_position(start, end, vision_range)
 
     def test_can_see_position_blocked_by_wall(self):
         """can_see_position blocked by wall even within range."""
@@ -380,7 +380,7 @@ class TestMapVisionUtilities(TestVisionLineOfSight):
         self.game_map.walls.add((11, 10))
         self.game_map.invalidate_transparency_cache()
 
-        assert self.game_map.can_see_position(start, end, vision_range) == False
+        assert not self.game_map.can_see_position(start, end, vision_range)
 
     def test_transparency_cache_invalidation(self):
         """Transparency cache invalidates correctly when map changes."""
@@ -388,14 +388,14 @@ class TestMapVisionUtilities(TestVisionLineOfSight):
         end = Position(12, 10)
 
         # Initially clear
-        assert self.game_map.has_line_of_sight_tcod(start, end) == True
+        assert self.game_map.has_line_of_sight_tcod(start, end)
 
         # Add wall
         self.game_map.walls.add((11, 10))
         self.game_map.invalidate_transparency_cache()
 
         # Now blocked
-        assert self.game_map.has_line_of_sight_tcod(start, end) == False
+        assert not self.game_map.has_line_of_sight_tcod(start, end)
 
     def test_out_of_bounds_positions(self):
         """Vision methods handle out of bounds positions correctly."""

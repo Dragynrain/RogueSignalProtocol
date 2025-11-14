@@ -215,12 +215,7 @@ def test_shift_f12_confirm_creates_debug_package(
     mock_game_engine.dialogue_state.active_dialogue = mock_dialogue
     mock_game_engine.dialogue_state.get_active = Mock(return_value=mock_dialogue)
 
-    # Now simulate pressing 'Y' to confirm
-    confirm_event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.Y, sym=tcod.event.KeySym.Y, mod=0
-    )
-
-    # Call the confirm handler
+    # Call the confirm handler (simulates pressing 'Y')
     input_handler._handle_dialogue_confirm()
 
     # Verify message log was updated
@@ -247,7 +242,7 @@ def test_shift_f12_cancel_closes_dialogue(input_handler, mock_game_engine):
     )
 
     # Handle the keydown (should not trigger export)
-    result = input_handler.handle_keydown(cancel_event)
+    input_handler.handle_keydown(cancel_event)
 
     # Verify no debug package creation was attempted
     # (message_log should not have "Creating debug package" message)
@@ -292,7 +287,7 @@ def test_settings_menu_export_shows_confirmation(settings_menu):
         scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
     )
 
-    result = settings_menu.handle_input(event)
+    settings_menu.handle_input(event)
 
     # Verify confirmation dialogue is shown
     assert settings_menu.show_export_confirmation is True
@@ -379,17 +374,12 @@ def test_settings_menu_mouse_click_export_button(settings_menu, monkeypatch):
     # Set selected option to export option
     settings_menu.selected_option = export_index
 
-    # Simulate mouse click event (left click)
-    event = tcod.event.MouseButtonDown(
-        pixel=(400, 300), tile=(20, 15), button=tcod.event.MouseButton.LEFT
-    )
-
     # Test that clicking triggers the same flow as Enter key
     enter_event = tcod.event.KeyDown(
         scancode=tcod.event.Scancode.RETURN, sym=tcod.event.KeySym.RETURN, mod=0
     )
 
-    result = settings_menu.handle_input(enter_event)
+    settings_menu.handle_input(enter_event)
 
     # Verify confirmation dialogue is shown
     assert settings_menu.show_export_confirmation is True

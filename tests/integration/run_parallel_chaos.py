@@ -175,14 +175,6 @@ def run_parallel_chaos(num_agents: int, actions_per_agent: int, output_file: str
 
     total_actions = sum(r["stats"]["actions_taken"] for r in results if r["stats"])
     total_key_presses = sum(r["stats"]["key_presses"] for r in results if r["stats"])
-    total_unique_keys = len(
-        set(
-            key
-            for r in results
-            if r["stats"]
-            for key in range(r["stats"].get("unique_keys_count", 0))
-        )
-    )
 
     print(f"Agents completed: {num_agents}")
     print(f"Total runtime: {total_time:.2f} seconds ({total_time/60:.1f} minutes)")

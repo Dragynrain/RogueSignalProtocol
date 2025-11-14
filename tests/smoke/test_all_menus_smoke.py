@@ -14,8 +14,6 @@ import tcod
 from game_config import GameSettings
 from game_menu_about import AboutMenu
 from game_menu_achievements import AchievementsMenu
-from game_menu_graphics_preview import GraphicsPreviewMenu
-from game_menu_help_graphics import GraphicalHelpMenu
 from game_menu_help_lore import HelpMenu, LoreMenu
 from game_menus import MainMenu, SettingsMenu
 

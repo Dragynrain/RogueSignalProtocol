@@ -103,7 +103,7 @@ class TestGraphicalHelpMenuBasics:
         assert menu.settings == self.settings
         assert menu.tile_manager == self.mock_tile_manager
         assert menu.current_page == 0
-        assert menu.pages_built == False
+        assert not menu.pages_built
 
     def test_raises_error_when_tile_manager_none(self):
         """Test GraphicalHelpMenu raises error if tile_manager is None."""
@@ -115,11 +115,11 @@ class TestGraphicalHelpMenuBasics:
         menu = GraphicalHelpMenu(self.mock_context, self.settings, self.mock_tile_manager)
         console = tcod.console.Console(80, 50)
 
-        assert menu.pages_built == False
+        assert not menu.pages_built
 
         menu.render(console)
 
-        assert menu.pages_built == True
+        assert menu.pages_built
         assert len(menu.pages) > 0
 
     def test_page_structure(self):

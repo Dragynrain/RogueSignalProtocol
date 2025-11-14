@@ -4,9 +4,7 @@ Tests for input abstraction layer (Phase 1: Gamepad Support).
 Tests InputAction/InputContext enums, InputMapper, and AnalogStickHandler.
 """
 
-import math
 
-import pytest
 import tcod.event
 
 from game_input_actions import InputAction, InputContext

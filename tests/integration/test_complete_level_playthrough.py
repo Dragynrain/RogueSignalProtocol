@@ -33,7 +33,7 @@ class TestCompleteLevelPlaythrough:
 
         # Verify engine initialized correctly
         assert engine.level == 1
-        assert engine.game_over == False
+        assert not engine.game_over
         assert engine.turn >= 0
 
         # Verify player exists and has valid state
@@ -76,9 +76,7 @@ class TestCompleteLevelPlaythrough:
         code_positions = list(engine.game_map.code_hacks.keys())
         assert len(code_positions) > 0, "No code hacks spawned on level"
 
-        # Get initial player stats
-        initial_cpu = engine.player.cpu
-        initial_heat = engine.player.heat
+        # Get initial inventory count
         initial_inventory_count = len(engine.player.inventory_manager.items)
 
         # Move player to a code hack position
@@ -116,20 +114,12 @@ class TestCompleteLevelPlaythrough:
         pre_use_heat = engine.player.heat
         pre_use_trace = engine.player.trace_level
         pre_use_temp_effects = dict(engine.player.temporary_effects)
-        pre_use_inventory_count = len(engine.player.inventory_manager.items)
 
         # Code hacks have different effects based on color
         # We'll test that using the code has SOME effect
         success = code_in_inventory.use(engine.player, engine)
 
         assert success, "Code hack use failed"
-
-        # Verify code hack was consumed (quantity decreased or item removed)
-        post_use_count = len(engine.player.inventory_manager.items)
-        consumed = (post_use_count < pre_use_inventory_count) or (
-            code_in_inventory in engine.player.inventory_manager.items
-            and code_in_inventory.quantity < 1
-        )
 
         # Verify some stat changed (CPU, heat, trace level, or temporary effects like speed_boost)
         # Code hack effects: restore_cpu, reduce_heat, reduce_trace_level, speed_boost
@@ -322,14 +312,14 @@ class TestCompleteLevelPlaythrough:
             engine.dialogue_state.close()
 
         # Verify dialogue not shown yet
-        assert engine.dialogue_state.is_active() == False
+        assert not engine.dialogue_state.is_active()
 
         # Move player onto gateway (this triggers the gateway dialogue and level progression)
         initial_level = engine.level
         engine.move_player(1, 0)
 
         # Verify gateway dialogue is shown
-        assert engine.dialogue_state.is_active() == True, "Gateway dialogue not shown"
+        assert engine.dialogue_state.is_active(), "Gateway dialogue not shown"
         active_dialogue = engine.dialogue_state.get_active()
         assert active_dialogue is not None, "Should have an active dialogue"
         assert "GATEWAY" in active_dialogue.title.upper(), "Should be gateway dialogue"
@@ -355,7 +345,7 @@ class TestCompleteLevelPlaythrough:
         engine.move_player(1, 0)
 
         # Verify gateway dialogue is shown
-        assert engine.dialogue_state.is_active() == True, "Gateway dialogue should be shown"
+        assert engine.dialogue_state.is_active(), "Gateway dialogue should be shown"
         active_dialogue = engine.dialogue_state.get_active()
         assert active_dialogue is not None, "Should have an active dialogue"
 
@@ -364,7 +354,7 @@ class TestCompleteLevelPlaythrough:
 
         # Verify level progression happened after confirmation
         assert engine.level == initial_level + 1, "Level not incremented"
-        assert engine.game_over == False, "Game should not be over"
+        assert not engine.game_over, "Game should not be over"
 
         # Verify new level was generated
         assert engine.game_map is not None
@@ -389,7 +379,6 @@ class TestCompleteLevelPlaythrough:
         # Record pre-transition state (equipped exploits should already have at least 1)
         pre_cpu = engine.player.cpu
         pre_heat = engine.player.heat
-        pre_trace = engine.player.trace_level
         pre_equipped = copy.deepcopy(engine.player.inventory_manager.equipped_exploits)
         pre_max_cpu = engine.player.max_cpu
         pre_ram_total = engine.player.ram_total
@@ -418,7 +407,6 @@ class TestCompleteLevelPlaythrough:
 
         # Verify starting conditions
         assert engine.level == 1
-        initial_cpu = engine.player.cpu
 
         # Collect some items
         if len(engine.game_map.code_hacks) > 0:
@@ -442,7 +430,7 @@ class TestCompleteLevelPlaythrough:
         engine.move_player(1, 0)
 
         # Verify gateway dialogue is shown
-        assert engine.dialogue_state.is_active() == True, "Gateway dialogue not shown"
+        assert engine.dialogue_state.is_active(), "Gateway dialogue not shown"
         active_dialogue = engine.dialogue_state.get_active()
         assert active_dialogue is not None, "Should have an active dialogue"
 
@@ -451,7 +439,7 @@ class TestCompleteLevelPlaythrough:
 
         # Verify level 2 state (progression happens after confirmation)
         assert engine.level == 2
-        assert engine.game_over == False
+        assert not engine.game_over
         assert engine.game_map is not None
         assert len(engine.enemies) > 0
         assert engine.game_map.gateway is not None
@@ -517,9 +505,6 @@ class TestCompleteLevelPlaythrough:
 
         # Use an exploit to consume CPU and generate heat
         if len(engine.player.inventory_manager.equipped_exploits) > 0:
-            exploit_key = engine.player.inventory_manager.equipped_exploits[0]
-            exploit_def = GameData.EXPLOITS[exploit_key]
-
             # Ensure player has enough CPU
             engine.player.cpu = 100
 
@@ -579,7 +564,7 @@ class TestCompleteLevelPlaythrough:
         engine.move_player(1, 0)
 
         # Verify gateway dialogue shown (player can leave even with enemies alive)
-        assert engine.dialogue_state.is_active() == True
+        assert engine.dialogue_state.is_active()
         active_dialogue = engine.dialogue_state.get_active()
         assert active_dialogue is not None, "Should have an active dialogue"
 
@@ -588,7 +573,7 @@ class TestCompleteLevelPlaythrough:
 
         # Verify progression worked after confirmation
         assert engine.level == 2
-        assert engine.game_over == False
+        assert not engine.game_over
 
         # Verify new enemies were spawned (not the same enemies)
         # New level should have its own enemies
@@ -603,7 +588,6 @@ class TestCompleteLevelPlaythrough:
 
         # Progress through levels 1 -> 2 -> 3
         for target_level in [2, 3]:
-            current_level = engine.level
             engine.next_level()
 
             assert engine.level == target_level, f"Failed to progress to level {target_level}"
@@ -622,7 +606,7 @@ class TestCompleteLevelPlaythrough:
 
         # Verify victory
         assert engine.level == 4
-        assert engine.game_over == True
+        assert engine.game_over
 
     def test_level_playthrough_with_full_inventory(self, basic_game_engine):
         """Test level playthrough behavior when inventory is full or nearly full."""

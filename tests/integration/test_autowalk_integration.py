@@ -178,7 +178,6 @@ class TestAutoWalkStopConditions(unittest.TestCase):
 
         # Start auto-walk
         self.autowalk.start(start_pos, target_pos, self.engine)
-        initial_cpu = self.engine.player.cpu
 
         # Simulate damage
         self.engine.player.cpu -= 10
