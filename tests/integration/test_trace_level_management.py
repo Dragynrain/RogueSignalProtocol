@@ -356,42 +356,27 @@ class TestTraceLevelTransition:
         assert engine.player.cpu == old_cpu, "CPU should be preserved"
         assert engine.player.heat == old_heat, "Heat should be preserved"
 
-    def test_trace_resets_level_1_to_2(self, basic_game_engine):
-        """Test trace reset from level 1 to level 2."""
+    @pytest.mark.parametrize("start_level,expected_next_level,initial_trace", [
+        (1, 2, 75.0),
+        (2, 3, 95.0),
+    ])
+    def test_trace_resets_on_level_progression(self, basic_game_engine, start_level, expected_next_level, initial_trace):
+        """Test trace reset when progressing between levels."""
         engine = basic_game_engine
 
-        # Set up level 1 with high trace
-        engine.level = 1
-        engine.player.trace_level = 75.0
+        # Set up level with high trace
+        engine.level = start_level
+        engine.player.trace_level = initial_trace
 
         # Position on gateway (singular)
         gateway_pos = engine.game_map.gateway
         engine.player.position = Position(gateway_pos.x, gateway_pos.y)
 
-        # Advance to level 2
+        # Advance to next level
         engine.game_session.progress_to_next_level()
 
         # Verify level advanced and trace reset
-        assert engine.level == 2, "Should be on level 2"
-        assert engine.player.trace_level == 0, "Trace should reset to 0"
-
-    def test_trace_resets_level_2_to_3(self, basic_game_engine):
-        """Test trace reset from level 2 to level 3."""
-        engine = basic_game_engine
-
-        # Set up level 2 with high trace
-        engine.level = 2
-        engine.player.trace_level = 95.0
-
-        # Position on gateway (singular)
-        gateway_pos = engine.game_map.gateway
-        engine.player.position = Position(gateway_pos.x, gateway_pos.y)
-
-        # Advance to level 3
-        engine.game_session.progress_to_next_level()
-
-        # Verify level advanced and trace reset
-        assert engine.level == 3, "Should be on level 3"
+        assert engine.level == expected_next_level, f"Should be on level {expected_next_level}"
         assert engine.player.trace_level == 0, "Trace should reset to 0"
 
 

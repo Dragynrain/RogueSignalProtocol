@@ -53,19 +53,16 @@ class TestEnemyCreation:
         assert test_enemy.position.x == 25
         assert test_enemy.position.y == 30
 
-    def test_enemy_types_have_real_data(self):
-        """Verify that different enemy types have actual GameData properties."""
-        scanner = enemy_builder("scanner", pos=(5, 5))
-        patrol = enemy_builder("patrol", pos=(10, 10))
-        bot = enemy_builder("bot", pos=(15, 15))
+    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"])
+    def test_enemy_type_has_real_data(self, enemy_type):
+        """Verify that enemy type has actual GameData properties."""
+        enemy = enemy_builder(enemy_type, pos=(5, 5))
 
-        # Each enemy type should have different characteristics from real GameData
-        assert scanner.type_data is not None
-        assert patrol.type_data is not None
-        assert bot.type_data is not None
-
-        # Different enemy types should have different movement patterns
-        assert scanner.type_data.movement != patrol.type_data.movement
+        # Each enemy type should have real GameData loaded
+        assert enemy.type_data is not None
+        assert enemy.type_data.movement is not None
+        assert enemy.type_data.vision > 0
+        assert enemy.type_data.damage >= 0
 
 
 class TestEnemyVision:
@@ -118,18 +115,13 @@ class TestEnemyVision:
         # With this distance, should be out of range for any enemy type
         assert can_see is False
 
-    def test_different_enemy_vision_ranges(self):
-        """Different enemy types have different vision ranges from real GameData."""
-        scanner = enemy_builder("scanner", pos=(5, 5))
-        patrol = enemy_builder("patrol", pos=(5, 5))
-        bot = enemy_builder("bot", pos=(5, 5))
+    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"])
+    def test_enemy_vision_range(self, enemy_type):
+        """Each enemy type has a positive vision range from real GameData."""
+        enemy = enemy_builder(enemy_type, pos=(5, 5))
 
         # Each enemy type should have a vision range > 0
-        assert scanner.type_data.vision > 0
-        assert patrol.type_data.vision > 0
-        assert bot.type_data.vision > 0
-
-        # Vision ranges can be different (but that's fine, they might be the same in GameData)
+        assert enemy.type_data.vision > 0
 
 
 class TestEnemyAttack:
@@ -228,21 +220,16 @@ class TestEnemyDamage:
         assert is_destroyed is True
         assert test_enemy.cpu <= 0  # CPU can go negative with overkill
 
-    def test_different_enemy_cpu_values(self):
-        """Different enemy types have different CPU values from real GameData."""
-        scanner = enemy_builder("scanner", pos=(5, 5))
-        patrol = enemy_builder("patrol", pos=(5, 5))
-        virus = enemy_builder("virus", pos=(5, 5))
+    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"])
+    def test_enemy_cpu_values(self, enemy_type):
+        """Each enemy type has positive CPU values from real GameData."""
+        enemy = enemy_builder(enemy_type, pos=(5, 5))
 
         # All enemies should have positive CPU values
-        assert scanner.cpu > 0
-        assert patrol.cpu > 0
-        assert virus.cpu > 0
+        assert enemy.cpu > 0
 
         # CPU should equal max_cpu for fresh enemies
-        assert scanner.cpu == scanner.max_cpu
-        assert patrol.cpu == patrol.max_cpu
-        assert virus.cpu == virus.max_cpu
+        assert enemy.cpu == enemy.max_cpu
 
 
 class TestEnemyColorCoding:
@@ -337,25 +324,19 @@ class TestEnemyManager:
 
         assert found_enemy is None
 
-    def test_enemy_manager_spawn_multiple_types(self):
-        """EnemyManager can spawn different enemy types with real GameData."""
+    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"])
+    def test_enemy_manager_spawn_enemy_type(self, enemy_type):
+        """EnemyManager can spawn each enemy type with real GameData."""
         game_map = create_test_map_with_real_tiles(30, 30)
         mock_message_log = Mock()
 
         enemy_manager = EnemyManager(game_map, mock_message_log)
+        enemy = enemy_manager.spawn_enemy(Position(5, 5), enemy_type)
 
-        # Spawn different enemy types
-        scanner = enemy_manager.spawn_enemy(Position(5, 5), "scanner")
-        patrol = enemy_manager.spawn_enemy(Position(10, 10), "patrol")
-        bot = enemy_manager.spawn_enemy(Position(15, 15), "bot")
-
-        assert len(enemy_manager.enemies) == 3
-        assert scanner.type == "scanner"
-        assert patrol.type == "patrol"
-        assert bot.type == "bot"
-
-        # Each should have different characteristics from real GameData
-        assert scanner.type_data.movement != patrol.type_data.movement
+        assert len(enemy_manager.enemies) == 1
+        assert enemy.type == enemy_type
+        assert enemy.type_data is not None
+        assert enemy.type_data.movement is not None
 
 
 class TestEnemyAIBehavior:

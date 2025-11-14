@@ -13,6 +13,8 @@ Coverage:
 - Enemy type balance validation
 """
 
+import pytest
+
 from game_entities import EnemyState
 from tests.test_agent import GameTestAgent
 
@@ -211,85 +213,47 @@ class TestHunterInLevelProgression:
 class TestAllEnemyTypesSpawning:
     """Validate all enemy types can spawn correctly."""
 
-    def test_all_enemy_types_spawn(self):
-        """Every enemy type in game_content.json spawns successfully."""
+    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "firewall", "hunter", "virus", "inhibitor", "admin"])
+    def test_enemy_type_spawns(self, enemy_type):
+        """Each enemy type spawns successfully."""
         agent = GameTestAgent(seed=56789)
+        enemy = agent.spawn_enemy(enemy_type, 10, 10)
 
-        enemy_types = [
-            "scanner",
-            "patrol",
-            "bot",
-            "firewall",
-            "hunter",
-            "virus",
-            "inhibitor",
-            "admin",
-        ]
+        assert enemy is not None
+        assert enemy.type == enemy_type
 
-        spawned = []
-        x, y = 10, 10
-
-        for enemy_type in enemy_types:
-            enemy = agent.spawn_enemy(enemy_type, x, y)
-            if enemy:
-                assert enemy.type == enemy_type
-                spawned.append(enemy_type)
-                x += 2  # Spread them out
-
-        # All enemy types should spawn successfully
-        assert len(spawned) == len(enemy_types)
-
-    def test_enemy_type_symbols_unique(self):
-        """Each enemy type has a unique symbol."""
+    @pytest.mark.parametrize("enemy_type,expected_symbol", [
+        ("scanner", "S"),
+        ("patrol", "P"),
+        ("bot", "B"),
+        ("firewall", "F"),
+        ("hunter", "H"),
+        ("virus", "V"),
+        ("inhibitor", "I"),
+        ("admin", "A"),
+    ])
+    def test_enemy_type_symbol(self, enemy_type, expected_symbol):
+        """Each enemy type has the correct unique symbol."""
         agent = GameTestAgent(seed=56790)
+        enemy = agent.spawn_enemy(enemy_type, 10, 10)
 
-        enemy_types_symbols = {
-            "scanner": "S",
-            "patrol": "P",
-            "bot": "B",
-            "firewall": "F",
-            "hunter": "H",
-            "virus": "V",
-            "inhibitor": "I",
-            "admin": "A",
-        }
+        assert enemy.type_data.symbol == expected_symbol
 
-        x = 10
-        for enemy_type, expected_symbol in enemy_types_symbols.items():
-            enemy = agent.spawn_enemy(enemy_type, x, 10)
-            assert enemy.type_data.symbol == expected_symbol
-            x += 2  # Spread them out to avoid overlap
-
-    def test_enemy_types_have_valid_stats(self):
-        """All enemy types have sensible stat values."""
+    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "firewall", "hunter", "virus", "inhibitor", "admin"])
+    def test_enemy_type_has_valid_stats(self, enemy_type):
+        """Each enemy type has sensible stat values."""
         agent = GameTestAgent(seed=56791)
+        enemy = agent.spawn_enemy(enemy_type, 10, 10)
 
-        enemy_types = [
-            "scanner",
-            "patrol",
-            "bot",
-            "firewall",
-            "hunter",
-            "virus",
-            "inhibitor",
-            "admin",
-        ]
+        # All enemies should have positive CPU
+        assert enemy.cpu > 0
+        assert enemy.max_cpu > 0
 
-        x = 10
-        for enemy_type in enemy_types:
-            enemy = agent.spawn_enemy(enemy_type, x, 10)
+        # Vision should be reasonable (1-10 range)
+        assert 1 <= enemy.type_data.vision <= 10
 
-            # All enemies should have positive CPU
-            assert enemy.cpu > 0
-            assert enemy.max_cpu > 0
-
-            # Vision should be reasonable (1-10 range)
-            assert 1 <= enemy.type_data.vision <= 10
-
-            # Damage should be non-negative
-            assert enemy.type_data.damage >= 0
-
-            x += 2
+        # Damage should be non-negative
+        assert enemy.type_data.damage >= 0
 
 
 class TestEnemyTypeBalance:
