@@ -34,6 +34,12 @@ class TestViewportRenderingBounds:
         renderer._should_use_graphics = Mock(return_value=True)
         renderer._get_graphics_mode = Mock(return_value="graphics")
 
+        # Mock the helper methods extracted during refactoring
+        # These need to return tuples for unpacking
+        # Use None values to trigger fallback to default viewport dimensions (55x44)
+        renderer._get_tile_dimensions = Mock(return_value=(None, None))
+        renderer._get_sdl_window_dimensions = Mock(return_value=(None, None))
+
         return renderer
 
     @pytest.fixture
