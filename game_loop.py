@@ -420,8 +420,7 @@ def handle_menu_navigation(
 
                             if isinstance(e, SaveLoadError):
                                 logging.error(f"Save load failed: {e}")
-                                print(f"\n[SAVE LOAD ERROR] {e}")
-                                print("Returning to main menu...")
+                                logging.info("Returning to main menu...")
                             else:
                                 # Re-raise unexpected exceptions
                                 raise
@@ -610,8 +609,7 @@ def handle_menu_navigation(
 
                             if isinstance(e, SaveLoadError):
                                 logging.error(f"Save load failed: {e}")
-                                print(f"\n[SAVE LOAD ERROR] {e}")
-                                print("Returning to main menu...")
+                                logging.info("Returning to main menu...")
                             else:
                                 # Re-raise unexpected exceptions
                                 raise

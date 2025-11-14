@@ -337,7 +337,7 @@ class Player:
         return self.position.x
 
     @x.setter
-    def x(self, value: int):
+    def x(self, value: int) -> None:
         self.position.x = value
 
     @property
@@ -345,7 +345,7 @@ class Player:
         return self.position.y
 
     @y.setter
-    def y(self, value: int):
+    def y(self, value: int) -> None:
         self.position.y = value
 
     @property
@@ -466,7 +466,7 @@ class Player:
         return getattr(self, "_max_heat", 100)  # Default 100 if not set
 
     @max_heat.setter
-    def max_heat(self, value: int):
+    def max_heat(self, value: int) -> None:
         """Set maximum heat capacity."""
         self._max_heat = value
 
@@ -624,7 +624,7 @@ class Enemy:
         return self.position.x
 
     @x.setter
-    def x(self, value: int):
+    def x(self, value: int) -> None:
         self.position.x = value
 
     @property
@@ -632,7 +632,7 @@ class Enemy:
         return self.position.y
 
     @y.setter
-    def y(self, value: int):
+    def y(self, value: int) -> None:
         self.position.y = value
 
     def get_color(self) -> tuple[int, int, int]:
@@ -961,11 +961,11 @@ class Enemy:
         current_target = self.patrol_points[self.patrol_index]
         return self.position.grid_distance_to(current_target) <= 1
 
-    def _advance_patrol_waypoint(self):
+    def _advance_patrol_waypoint(self) -> None:
         """Advance to next patrol waypoint (wraps around)."""
         self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
 
-    def _ensure_queue_full(self, game_map, player, game_engine):
+    def _ensure_queue_full(self, game_map, player, game_engine) -> None:
         """
         Ensure move queue has 3 moves (or as many as possible).
 
@@ -1065,7 +1065,7 @@ class Enemy:
                     break
 
         # Pathfinding failed - try greedy fallback (chain up to 3 moves)
-        elif target and len(self.move_queue) == 0:
+        elif target and not self.move_queue:
             self._fill_greedy_moves(target, game_map, player, game_engine)
 
         # PATROL special case: If queue still not full, extend with next waypoint(s)
@@ -1078,7 +1078,7 @@ class Enemy:
         ):
             self._extend_patrol_queue(game_map, game_engine)
 
-    def _fill_random_moves(self, game_map, player, game_engine):
+    def _fill_random_moves(self, game_map, player, game_engine) -> None:
         """
         Fill queue with random moves for RANDOM movement type enemies.
 
@@ -1152,7 +1152,7 @@ class Enemy:
             position, game_map, game_engine.enemies, player.position, self
         )
 
-    def _extend_patrol_queue(self, game_map, game_engine):
+    def _extend_patrol_queue(self, game_map, game_engine) -> None:
         """
         Extend patrol queue with next waypoint(s) to reach 3 moves.
 
@@ -1200,7 +1200,7 @@ class Enemy:
                 # Can't pathfind to next waypoint, stop trying
                 break
 
-    def _fill_greedy_moves(self, target: Position, game_map, player, game_engine):
+    def _fill_greedy_moves(self, target: Position, game_map, player, game_engine) -> None:
         """
         Fill queue with greedy moves toward target (up to 3 moves).
 
@@ -1340,7 +1340,7 @@ class Enemy:
 
         return False
 
-    def _fill_flee_moves(self, game_map, player, game_engine):
+    def _fill_flee_moves(self, game_map, player, game_engine) -> None:
         """
         Fill move queue with flee moves using Dijkstra maps.
 
@@ -1396,7 +1396,7 @@ class Enemy:
                 f"Enemy {self.type_data.name}@({self.x},{self.y}): Flee queue filled with {len(self.move_queue)} moves"
             )
 
-    def _get_current_target(self, player, game_map):
+    def _get_current_target(self, player, game_map) -> Position | None:
         """Get the current target position based on enemy state and movement type."""
         # Admin always targets player (can always see them)
         if self.type == "admin":

@@ -64,7 +64,7 @@ class StoryFragmentManager:
             Next undiscovered fragment index (0-based), or None if all discovered
         """
         story_fragments = get_story_fragments()
-        for i in range(len(story_fragments)):
+        for i, _ in enumerate(story_fragments):
             if i not in self.discovered_fragments:
                 return i
         return None  # All fragments discovered

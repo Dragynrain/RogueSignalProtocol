@@ -305,8 +305,7 @@ class EnemyManager:
         cost_map = self.game_map.get_walkability_map().copy()
 
         # Check each consecutive pair of points using PathfindingHelper
-        for i in range(len(route)):
-            start_point = route[i]
+        for i, start_point in enumerate(route):
             end_point = route[(i + 1) % len(route)]  # Wrap around to check full loop
 
             # Use centralized pathfinding helper

@@ -5,6 +5,8 @@ This bypasses tcod's broken load_truetype_font() which doesn't properly scale gl
 Based on python-tcod's examples/ttf.py.
 """
 
+import logging
+
 import freetype
 import numpy as np
 import tcod.tileset
@@ -82,7 +84,7 @@ def load_truetype_font_custom(
                     try:
                         available_chars.append(chr(codepoint))
                     except ValueError as e:
-                        print(f"[WARN] Font loader: Invalid codepoint {codepoint}: {e}")
+                        logging.warning(f"Font loader: Invalid codepoint {codepoint}: {e}")
 
         chars = "".join(available_chars)
 
@@ -150,25 +152,25 @@ if __name__ == "__main__":
     # Set DPI awareness first
     try:
         ctypes.windll.shcore.SetProcessDpiAwareness(2)
-        print("[OK] DPI awareness enabled")
+        logging.info("DPI awareness enabled")
     except Exception:
         try:
             ctypes.windll.user32.SetProcessDPIAware()
-            print("[OK] DPI awareness enabled (fallback)")
+            logging.info("DPI awareness enabled (fallback)")
         except Exception:
-            print("[WARN] Could not set DPI awareness")
+            logging.warning("Could not set DPI awareness")
 
     import tcod
 
-    print("=" * 70)
-    print("FREETYPE FONT LOADER TEST")
-    print("=" * 70)
+    logging.info("=" * 70)
+    logging.info("FREETYPE FONT LOADER TEST")
+    logging.info("=" * 70)
 
     # Load KreativeSquare font (same as main game)
-    print("\nLoading KreativeSquare with 64x64 glyph size...")
+    logging.info("Loading KreativeSquare with 64x64 glyph size...")
     tileset = load_truetype_font_custom("KreativeSquare.ttf", 64, 64)
 
-    print(f"Tileset created: {tileset.tile_width}x{tileset.tile_height}")
+    logging.info(f"Tileset created: {tileset.tile_width}x{tileset.tile_height}")
 
     # Create test window
     console_width = 10
@@ -176,7 +178,7 @@ if __name__ == "__main__":
     pixel_width = console_width * tileset.tile_width
     pixel_height = console_height * tileset.tile_height
 
-    print(f"Expected window: {pixel_width}x{pixel_height}px")
+    logging.info(f"Expected window: {pixel_width}x{pixel_height}px")
 
     with tcod.context.new(
         columns=console_width,
@@ -191,12 +193,12 @@ if __name__ == "__main__":
 
         if hasattr(context, "sdl_window"):
             actual = context.sdl_window.size
-            print(f"Actual window: {actual[0]}x{actual[1]}px")
+            logging.info(f"Actual window: {actual[0]}x{actual[1]}px")
 
-        print("\nLOOK AT THE WINDOW!")
-        print("Glyphs should fill tiles completely with no gaps.")
-        print("Test box-drawing characters (║═╔╗) and descenders (g, y, p, q, j).")
-        print("Press any key to exit...")
+        logging.info("LOOK AT THE WINDOW!")
+        logging.info("Glyphs should fill tiles completely with no gaps.")
+        logging.info("Test box-drawing characters and descenders (g, y, p, q, j).")
+        logging.info("Press any key to exit...")
 
         while True:
             console.clear()
@@ -211,8 +213,8 @@ if __name__ == "__main__":
 
             for event in tcod.event.wait():
                 if event.type == "QUIT":
-                    print("\nTest done.")
+                    logging.info("Test done.")
                     raise SystemExit()
                 elif event.type == "KEYDOWN":
-                    print("\nTest done.")
+                    logging.info("Test done.")
                     raise SystemExit()
