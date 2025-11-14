@@ -167,7 +167,6 @@ class BaseMenu:
             return False
 
         # After context.convert_event(), position contains TILE coordinates
-        tile_x = int(event.position.x)
         tile_y = int(event.position.y)
 
         # Menu options start at Y=21 (original position, box itself is shifted)
@@ -211,7 +210,6 @@ class BaseMenu:
             return None
 
         # After context.convert_event(), position contains TILE coordinates (0-79, 0-49)
-        tile_x = int(event.position.x)
         tile_y = int(event.position.y)
 
         # Menu options start at Y=21 (original position, box itself is shifted)

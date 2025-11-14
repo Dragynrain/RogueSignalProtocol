@@ -28,8 +28,6 @@ The LevelGenerator now coordinates specialized subsystems:
 import logging
 import random
 
-from game_pathfinding import PathfindingHelper
-
 # Import required classes and configs
 from game_config import GameConfig
 from game_entities import Position
@@ -39,6 +37,7 @@ from game_level_placement import TilePlacementGenerator
 # Import specialized level generation subsystems
 from game_level_structure import BSPRoomGenerator, CorridorGenerator, RoomGenerator
 from game_level_tactical import TacticalGenerator
+from game_pathfinding import PathfindingHelper
 
 
 class LevelGenerator:

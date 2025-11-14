@@ -1074,9 +1074,6 @@ class GraphicsPreviewMenu:
             left_color = Colors.CYAN if hover_left else Colors.WHITE
             right_color = Colors.CYAN if hover_right else Colors.WHITE
 
-            # Format: < 2/5 >
-            arrows_text = f"< {variant_index}/{variant_count} >"
-
             # Render left arrow
             render_char_safe(console, arrows_x, list_y + i, "<", fg=left_color)
             # Render middle part

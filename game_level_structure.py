@@ -897,7 +897,6 @@ class CorridorGenerator:
 
         narrow_weight = GameConfig._get_required("room_generation.corridor_width_weights.narrow")
         medium_weight = GameConfig._get_required("room_generation.corridor_width_weights.medium")
-        wide_weight = GameConfig._get_required("room_generation.corridor_width_weights.wide")
 
         if rand < narrow_weight:
             return 1

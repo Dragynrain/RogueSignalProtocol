@@ -138,7 +138,6 @@ class ParticleSystem:
         # Log only in debug mode
         if logging.getLogger().isEnabledFor(logging.DEBUG):
             if len(self.particles) > 0:
-                sample = self.particles[-1]
                 logging.debug(
                     f"Created {particle_count} particles at ({world_x}, {world_y}) with colors: {colors[:3]}"
                 )

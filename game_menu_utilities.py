@@ -15,7 +15,6 @@ from game_config import GameConfig
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Colors
 from game_rendering_utils import draw_bordered_box
-from game_ui import render_char_safe
 
 
 class MenuRenderingUtils:

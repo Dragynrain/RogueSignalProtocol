@@ -185,8 +185,6 @@ class AdvancedLayoutGenerator:
 
         connectivity = self.build_room_connectivity_graph(rooms)
 
-        leaf_rooms = [room for room in rooms if connectivity.get(room, 0) <= 1]
-
         min_loops = GameConfig._get_required("room_generation.looping_paths_min_loops")
         max_loops = GameConfig._get_required("room_generation.looping_paths_max_loops")
         target_loops = random.randint(min_loops, max_loops)

@@ -11,10 +11,13 @@ import json
 import logging
 import os
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 # Import game modules
 from game_config import GameConfig
+
+if TYPE_CHECKING:
+    from game_engine import GameEngine
 
 
 class SaveLoadError(Exception):

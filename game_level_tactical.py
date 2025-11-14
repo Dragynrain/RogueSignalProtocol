@@ -107,9 +107,6 @@ class TacticalGenerator:
         wall_adjacent_weight = GameConfig._get_required(
             "room_generation.blind_spot_placement_weights.wall_adjacent"
         )
-        interior_weight = GameConfig._get_required(
-            "room_generation.blind_spot_placement_weights.interior"
-        )
 
         total_floor_tiles = sum(w * h for x, y, w, h in rooms)
         target_blind_spot_tiles = int(total_floor_tiles * blind_spot_coverage)
@@ -408,7 +405,6 @@ class TacticalGenerator:
             return points
 
         max_attempts = 30
-        k_attempts = 0
 
         num_points = min(4, max(2, (width * height) // 100))
 
@@ -524,7 +520,6 @@ class TacticalGenerator:
         Args:
             rooms: List of room tuples (x, y, width, height)
         """
-        defensive_chance = GameConfig._get_required("room_generation.defensive_position_chance")
         position_types = GameConfig._get_required("room_generation.defensive_position_types")
 
         strategic_rooms = []
@@ -664,7 +659,6 @@ class TacticalGenerator:
             rooms: List of room tuples (x, y, width, height)
         """
         choke_point_count = GameConfig._get_required("room_generation.choke_point_count")
-        max_exits = GameConfig._get_required("room_generation.choke_point_max_exits")
 
         if not self.corridor_tiles:
             return

@@ -14,13 +14,12 @@ import tcod.console
 import tcod.constants
 
 from game_achievements import ALL_ACHIEVEMENTS, Achievement, AchievementManager
+from game_config import GameConfig
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Colors, ensure_color_tuple
 from game_ui import render_char_safe
 
 logger = logging.getLogger(__name__)
-
-from game_config import GameConfig
 
 
 # Popup configuration loaded from JSON
@@ -211,7 +210,6 @@ class AchievementPopupManager:
         )
 
         # Render description (word-wrapped using TCOD's built-in wrapping)
-        max_desc_lines = get_max_description_lines()
         # Note: TCOD's print() with LEFT alignment doesn't center individual wrapped lines,
         # so we still need to calculate centering for multi-line text. However, TCOD handles
         # the wrapping itself. For centered text, we'd need to wrap manually or accept left-aligned.

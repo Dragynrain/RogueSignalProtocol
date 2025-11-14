@@ -294,7 +294,6 @@ class GameRenderer:
             # Set UI panel areas back to opaque using CoordinateHelpers
             panel_y = GameConfig.PANEL_Y()
             log_x = GameConfig.GAME_AREA_WIDTH()
-            log_start_y = GameConfig.LOG_START_Y()
 
             # Top status bar (full width, height 1)
             CoordinateHelpers.set_alpha_region(

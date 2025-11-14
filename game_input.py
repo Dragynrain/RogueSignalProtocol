@@ -377,9 +377,6 @@ class InputHandler:
         if not hasattr(event, "position") or event.position is None:
             return False
 
-        pixel_x = event.position.x
-        pixel_y = event.position.y
-
         # Dispatch to state-specific handlers based on button
         # Use MouseButton enum (not deprecated BUTTON_* constants)
         if event.button == tcod.event.MouseButton.LEFT:

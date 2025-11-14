@@ -203,8 +203,6 @@ class GraphicalHelpMenu:
 
     def _build_page_2(self) -> dict:
         """Page 2/3: ITEMS & ENEMIES with sprites (two-column centered layout)."""
-        utils = ScreenRenderingUtils
-
         # Load enemy data from HelpContent
         enemies = HelpContent.get_enemy_data()
         enemy_order = [
@@ -221,12 +219,9 @@ class GraphicalHelpMenu:
         # Calculate centered two-column layout
         # Left column width: ~25 chars, Gap: 8 chars, Right column width: ~30 chars
         # Total: 63 chars, centered on 80-char screen = start at (80-63)/2 = 8.5 ~= 9
-        left_col_start = 9
         left_sprite_x = 7  # Sprite slightly left of text
         left_text_x = 9  # Text 2 chars right of sprite position (same gap as right column)
 
-        column_gap = 8
-        right_col_start = left_col_start + 25 + column_gap  # = 42
         right_sprite_x = 40  # Sprite slightly left of text
         right_text_x = 42  # Text 2 chars right of sprite position
 
@@ -307,8 +302,6 @@ class GraphicalHelpMenu:
 
     def _build_page_3(self) -> dict:
         """Page 3/3: EXPLOITS & STATUS EFFECTS (2-column layout, no sprites)."""
-        utils = ScreenRenderingUtils
-
         text_lines = []
 
         # Two-column positions (narrower left column with 2-line exploits, wider gap)

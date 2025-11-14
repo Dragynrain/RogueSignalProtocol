@@ -18,7 +18,6 @@ import math
 import random
 
 import tcod
-import tcod.constants
 
 from game_config import GameBalance, GameConfig
 from game_data import GameUpgrades

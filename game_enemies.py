@@ -17,12 +17,12 @@ import random
 from typing import TYPE_CHECKING
 
 from game_characters import Enemy
-from game_pathfinding import PathfindingHelper
-from game_player import Player
 
 # Import necessary entities and configurations
 from game_config import GameConfig
 from game_entities import EnemyMovement, Position, PositionValidator
+from game_pathfinding import PathfindingHelper
+from game_player import Player
 
 # Forward references to avoid circular imports
 if TYPE_CHECKING:

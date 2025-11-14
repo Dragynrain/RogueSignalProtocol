@@ -244,7 +244,6 @@ class AboutMenu(BaseMenu):
         if not hasattr(event, "position") or event.position is None:
             return False
 
-        tile_x = int(event.position.x)
         tile_y = int(event.position.y)
 
         # Check which link is being hovered over (both lines count)
