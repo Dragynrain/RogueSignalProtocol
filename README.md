@@ -44,16 +44,18 @@
 Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike where you exfiltrate from corporate networks as a digital ghost. Complete runs in 10-15 minutes as you navigate procedurally generated levels, avoid sophisticated AI security systems, and discover the dark secrets hidden in the corporate data vaults.
 
 ### Key Features
-- **🕵️ Stealth-Focused Gameplay**: Hide in blind spots, manage detection risk, avoid the Admin Avatar boss
-- **🎯 Enemy Movement Prediction**: See enemies' next 3 planned moves for tactical advantage
-- **🤖 8 Unique Enemy Types**: Scanners, Hunters, Viruses, Firewalls, and more
+- **🎲 Deterministic Gameplay**: No randomness or luck - pure skill-based tactical decisions
+- **🤖 8 Unique Enemy Types**: Scanners, Hunters, Viruses, Firewalls, and Admin Avatar boss
 - **⚡ 13 Powerful Exploits**: Combat, stealth, and utility abilities with heat management
-- **🌐 3 Network Environments**: Corporate, Government, Military with escalating difficulty
-- **📚 Rich Narrative**: Discover 20+ story fragments revealing Project Chimera
+- **🎯 Enemy Movement Prediction**: See enemies' next 3 planned moves for tactical advantage
+- **🕵️ Blind Spot Stealth Mechanics**: Hide in shadows to avoid detection
+- **⚠️ Dynamic Threat System**: High detection spawns the Admin Avatar boss
 - **🏆 Achievement System**: Track progress across runs with persistent unlocks
-- **🔍 Interactive Look Mode**: Inspect enemies, items, and terrain with mouse or keyboard
+- **📚 Rich Narrative**: Discover 20+ story fragments revealing Project Chimera
 - **🎨 Dual Rendering Modes**: Switch between graphical sprites or classic ASCII/Unicode glyphs
+- **💥 Particle Effect Explosions**: Visual feedback for combat and exploits
 - **🎵 Full Audio**: Sound effects and atmospheric music (toggleable)
+- **🖱️ Keyboard or Mouse**: Playable with full support for both input methods
 - **💾 True Permadeath**: Saves deleted on death, auto-save on exit
 
 ---
