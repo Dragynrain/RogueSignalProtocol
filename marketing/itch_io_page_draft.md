@@ -12,7 +12,7 @@ Rogue Signal Protocol is a **coffee break stealth roguelike** where you play as 
 ### FEATURES:
 * **Deterministic gameplay with no randomness or luck** - Pure skill-based tactical decisions
 * **8 unique enemy types** with distinct AI behaviors (Scanners, Patrols, Hunters, Admin Avatar boss)
-* **12 exploits** across combat, stealth, and utility categories with heat management
+* **13 exploits** across combat, stealth, and utility categories with heat management
 * **Achievement system** - Persistent tracking across runs with unlockable challenges
 * **Interactive look mode** - Inspect enemies, items, and terrain with mouse or keyboard
 * **3 escalating network environments** with procedural generation
