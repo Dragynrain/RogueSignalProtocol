@@ -56,7 +56,7 @@
 
 ## 📦 PACKAGING FOR ITCH.IO
 
-### 8. **Prepare release package** ✅ AUTOMATED
+### 8. ✅ **Prepare release package** - COMPLETED (AUTOMATED)
 
 **The build script already does this!**
 
@@ -68,6 +68,8 @@ build\build.bat alpha
 **What it creates:**
 - `dist/` - Executable + all assets
 - `releases/RogueSignalProtocol_alpha_YYYY-MM-DD.zip` - Ready-to-upload package
+
+**VERIFIED:** Build script exists at `build/build.bat`, releases folder contains recent builds including RogueSignalProtocol_alpha_2025-11-07.zip
 
 **Optional: Rename for version-based naming:**
 ```bash
@@ -94,15 +96,20 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
 - [ ] Set price: Pay what you want ($0 minimum)
 - [ ] Mark as "Alpha - In Development"
 
-### 9.5 **Update and verify screenshots**
+### 9.5 **Update and verify screenshots** - PARTIALLY COMPLETED
 
-**CRITICAL - Screenshots need updating for new features:**
-- [ ] **Take new screenshot showing pixel explosion effect** (graphics mode)
-- [ ] **Take new screenshot showing queue arrows** (the new directional arrow system)
-- [ ] Verify `marketing/screenshots/` has at least 3-5 images total
+**VERIFIED:** 4 screenshots exist in `marketing/screenshots/` from 2025-11-08:
+- Screenshot 2025-11-08 085132.png (1.4M)
+- Screenshot 2025-11-08 085255.png (382K)
+- Screenshot 2025-11-08 085441.png (6.0M)
+- Screenshot 2025-11-08 102149.png (580K)
+
+**Still need manual verification:**
+- [ ] **Verify screenshots show pixel explosion effect** (graphics mode)
+- [ ] **Verify screenshots show queue arrows** (the new directional arrow system)
 - [ ] Verify images show both ASCII and graphics modes
 - [ ] Ensure one screenshot shows the enemy movement queue UI clearly
-- [ ] Consider capturing: gameplay, inventory, lore/fragments screen, death screen with feedback link
+- [ ] Consider if additional shots needed: gameplay, inventory, lore/fragments screen, death screen with feedback link
 
 ### 9.6 **Record new MP4 video for Reddit**
 
@@ -222,11 +229,11 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
 
 ---
 
-## 🚨 TCOD 19.6.0 UPDATE VERIFICATION (Added Nov 8)
+## ✅ TCOD 19.6.0 UPDATE VERIFICATION - COMPLETED (Added Nov 8)
 
 **Update completed:**
-- [x] Updated from 19.4.0 → 19.6.0
-- [x] All 852 unit tests pass
+- [x] Updated from 19.4.0 → 19.6.0 (verified in requirements.txt: tcod==19.6.0)
+- [x] All 2339 tests pass (verified 2025-11-14: 2339 passed, 4 skipped)
 - [x] Game launches successfully in dev environment
 - [x] Graphics look good with new nearest-neighbor scaling
 

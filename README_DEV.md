@@ -24,12 +24,52 @@ Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike whe
 
 - **🕵️ Stealth-Focused Gameplay**: Hide in shadows, avoid detection, and use cunning over brute force
 - **🤖 8 Unique Enemy Types**: From basic Scanners to the terrifying Admin Avatar
-- **⚡ 12 Powerful Exploits**: Combat and utility abilities including Buffer Overflow, Shadow Step, and EMP Burst
+- **⚡ 13 Powerful Exploits**: Combat, stealth, and utility abilities with heat management
 - **🌐 3 Network Environments**: Corporate Network, Government System, and Military Backbone
 - **📚 Rich Narrative**: Discover 20+ story fragments revealing the conspiracy behind Project Chimera
 - **🎵 Enhanced Audio**: Full sound effects and atmospheric music
 - **💾 Persistent Progression**: Story discoveries and settings carry between runs
 - **⚙️ Permadeath Mechanics**: Save files deleted on death - every decision matters
+
+## 🎨 Game Features
+
+### Exploit System
+Choose from 13 different exploits across 4 categories:
+
+**Combat**: Buffer Overflow, Code Injection, Logic Bomb, Denial of Service
+**Stealth**: System Hop, Traffic Masquerade, Decoy Swarm, Memory Leak
+**Utility**: Threat Scan, Network Scan, Log Wiper, Antivirus
+**Emergency**: System Crash
+
+### Procedural Generation
+- **Dynamic Level Layouts**: Each run features unique room arrangements
+- **Balanced Enemy Placement**: Intelligent spawn systems for fair challenge
+- **Resource Distribution**: Strategic placement of upgrades and pickups
+
+### Story Integration
+Discover the dark truth through environmental storytelling:
+- **Project Chimera**: Uncover the real purpose behind the "testing"
+- **Dr. Aris Thorne**: Learn about the obsessed lead researcher
+- **Digital Consciousness**: Explore themes of mind uploading and identity
+
+## 🚧 Alpha Status
+
+This is an **Alpha release** focusing on core gameplay and feedback collection.
+
+### What's Implemented
+- ✅ Complete stealth gameplay loop
+- ✅ All 8 enemy types with unique behaviors
+- ✅ Full exploit system with 13 abilities
+- ✅ 3-level campaign with escalating difficulty
+- ✅ Save/load system with permadeath
+- ✅ Audio system with music and SFX
+- ✅ Complete story content (20+ fragments)
+
+### Known Limitations
+- Windows-focused (Linux/Mac compatibility planned)
+- No tutorial scenario (help menu is comprehensive)
+
+---
 
 ## 🚀 Quick Start
 
@@ -106,13 +146,13 @@ Navigate through 3 increasingly dangerous network levels, reach the gateway (>) 
 
 | Symbol | Name | HP | Vision | Behavior | Damage |
 |--------|------|----|---------|---------| -------|
-| S | Scanner | 35 | 4 | Static | 0 |
-| P | Patrol | 40 | 4 | Patrol Routes | 15 |
+| S | Scanner | 35 | 5 | Static | 0 |
+| P | Patrol | 40 | 4 | Patrol Routes | 10 |
 | B | Bot | 25 | 3 | Random Movement | 8 |
-| F | Firewall | 80 | 5 | Static Guardian | 0 |
-| H | Hunter | 50 | 6 | Seeks Players | 22 |
+| F | Firewall | 80 | 3 | Static Guardian | 5 |
+| H | Hunter | 50 | 6 | Seeks Players | 15 |
 | V | Virus | 35 | 4 | Applies Virus | 0 |
-| I | Inhibitor | 30 | 4 | Slows Movement | 5 |
+| I | Inhibitor | 30 | 4 | Slows Movement | 0 |
 | A | Admin Avatar | 250 | 8 | Perfect Tracking | 45 |
 
 ## 🛠️ Development Setup
@@ -722,77 +762,12 @@ MIT License - Free and Open Source Software
 
 **Maximum freedom for everyone - use it however you want!**
 
-## 🎨 Game Features
+---
 
-### Exploit System
-Choose from 12 different exploits across 4 categories:
+**For full contributing guidelines, see [CONTRIBUTING.md](CONTRIBUTING.md)**
 
-**Combat**: Buffer Overflow, Code Injection, System Crash, EMP Burst
-**Stealth**: Shadow Step, Data Mimic, Noise Maker
-**Utility**: Threat Scan, Network Scan, Log Wiper, Antivirus
-**Special**: Memory Leak
+**For modding and advanced development, see sections above.**
 
-### Procedural Generation
-- **Dynamic Level Layouts**: Each run features unique room arrangements
-- **Balanced Enemy Placement**: Intelligent spawn systems for fair challenge
-- **Resource Distribution**: Strategic placement of upgrades and pickups
+---
 
-### Story Integration
-Discover the dark truth through environmental storytelling:
-- **Project Chimera**: Uncover the real purpose behind the "testing"
-- **Dr. Aris Thorne**: Learn about the obsessed lead researcher
-- **Digital Consciousness**: Explore themes of mind uploading and identity
-
-## 🚧 Alpha Status
-
-This is an **Alpha release** focusing on core gameplay and feedback collection.
-
-### What's Implemented
-- ✅ Complete stealth gameplay loop
-- ✅ All 8 enemy types with unique behaviors
-- ✅ Full exploit system with 12 abilities
-- ✅ 3-level campaign with escalating difficulty
-- ✅ Save/load system with permadeath
-- ✅ Audio system with music and SFX
-- ✅ Complete story content (20 fragments)
-
-### Known Limitations
-- Windows-focused (Linux/Mac compatibility planned)
-- Terminal graphics (advanced graphics being considered beyond title screens)
-
-## 🤝 Contributing
-
-We welcome contributions! Please feel free to:
-- Report bugs through GitHub Issues
-- Suggest gameplay improvements
-- Submit pull requests for bug fixes
-- Share feedback on game balance
-
-📧 **Contact:** roguesignalprotocol@gmail.com for direct feedback or questions
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-**MIT License Summary**: This software is free and open source with minimal restrictions. You can use, modify, and distribute it for any purpose, including commercial projects, without having to open-source your modifications.
-
-Key freedoms under MIT:
-- ✅ Freedom to run the program for any purpose
-- ✅ Freedom to study how the program works and modify it
-- ✅ Freedom to redistribute copies
-- ✅ Freedom to distribute modified versions (open or closed source)
-- ✅ Freedom to use in commercial projects
-
-The only requirement is to include the original copyright notice and license text in any copies or substantial portions of the software.
-
-## 👨‍💻 Author
-
-**Adam Forster** ([@Dragynrain](https://github.com/Dragynrain))
-
-📧 Contact: roguesignalprotocol@gmail.com
-
-## 🙏 Acknowledgments
-
-- Built with [python-tcod](https://github.com/libtcod/python-tcod) - Excellent roguelike development library
-- Inspired by classic stealth games and cyberpunk fiction
-- Special thanks to the roguelike development community
+**Rogue Signal Protocol** - Copyright (C) 2025 Adam Forster - MIT License
