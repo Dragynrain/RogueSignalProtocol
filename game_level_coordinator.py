@@ -577,7 +577,7 @@ class GameLevelCoordinator:
         placed_enemies = 0
         attempts = 0
 
-        while placed_enemies < enemy_count and attempts < enemy_count * 25:
+        while placed_enemies < enemy_count and attempts < enemy_count * GameConfig.ENEMY_PLACEMENT_ATTEMPTS_MULTIPLIER:
             attempts += 1
             # Ensure enemies spawn well away from top-left player spawn area
             x = random.randint(10, GameConfig.MAP_WIDTH - 2)

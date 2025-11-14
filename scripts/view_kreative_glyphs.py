@@ -19,10 +19,10 @@ import tcod
 # Set DPI awareness first
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(2)
-except:
+except (AttributeError, OSError):
     try:
         ctypes.windll.user32.SetProcessDPIAware()
-    except:
+    except (AttributeError, OSError):
         pass
 
 from font_loader_freetype import load_truetype_font_custom
@@ -55,7 +55,7 @@ def get_available_glyphs():
                     char = chr(codepoint)
                     available.append((codepoint, char, range_name))
                     count += 1
-                except:
+                except ValueError:
                     pass
         print(f"  {range_name:25} - {count:3} glyphs")
 

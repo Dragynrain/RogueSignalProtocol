@@ -119,8 +119,8 @@ class GameTurnManager:
         # Passive trace level increase (higher on higher levels)
         if self.game_engine.turn % GameBalance.TRACE_INCREASE_INTERVAL == 0:
             network_configs = GameConfig.NETWORK_CONFIGS()
-            config = network_configs.get(self.game_engine.level, {"background_trace": 1})
-            background_increase = config.get("background_trace", 1)
+            config = network_configs[self.game_engine.level]
+            background_increase = config["background_trace"]
             old_trace = self.game_engine.player.trace_level
             self.game_engine.player.trace_level = min(
                 100, self.game_engine.player.trace_level + background_increase
@@ -618,8 +618,8 @@ class GameTurnManager:
     def _increase_trace(self, default_value, config_key):
         """Increase player trace level."""
         network_configs = GameConfig.NETWORK_CONFIGS()
-        level_config = network_configs.get(self.game_engine.level, network_configs[1])
-        trace_increase = level_config.get(config_key, default_value)
+        level_config = network_configs[self.game_engine.level]
+        trace_increase = level_config[config_key]
         old_trace = self.game_engine.player.trace_level
         self.game_engine.player.trace_level = min(
             100, self.game_engine.player.trace_level + trace_increase

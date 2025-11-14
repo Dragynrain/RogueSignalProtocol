@@ -77,9 +77,9 @@ class ColorManager:
             self._colors = {}
 
             # Load color effects settings
-            color_effects = config.get("color_effects", {})
-            self._enemy_vision_alpha = color_effects.get("enemy_vision_alpha", 0.25)
-            self._enemy_vision_darken = color_effects.get("enemy_vision_darken_factor", 0.15)
+            color_effects = config["color_effects"]
+            self._enemy_vision_alpha = color_effects["enemy_vision_alpha"]
+            self._enemy_vision_darken = color_effects["enemy_vision_darken_factor"]
             logging.info(
                 f"Loaded color effects: enemy_vision_alpha={self._enemy_vision_alpha}, enemy_vision_darken={self._enemy_vision_darken}"
             )

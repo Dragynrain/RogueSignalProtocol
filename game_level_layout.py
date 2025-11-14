@@ -452,10 +452,10 @@ class AdvancedLayoutGenerator:
         edge_rooms = [
             r
             for r in existing_rooms
-            if r[0] < 15
-            or r[0] > GameConfig.MAP_WIDTH - 15
-            or r[1] < 15
-            or r[1] > GameConfig.MAP_HEIGHT - 15
+            if r[0] < GameConfig.EDGE_ROOM_BUFFER
+            or r[0] > GameConfig.MAP_WIDTH - GameConfig.EDGE_ROOM_BUFFER
+            or r[1] < GameConfig.EDGE_ROOM_BUFFER
+            or r[1] > GameConfig.MAP_HEIGHT - GameConfig.EDGE_ROOM_BUFFER
         ]
 
         if not edge_rooms:
@@ -538,8 +538,8 @@ class AdvancedLayoutGenerator:
         Returns:
             Landmark definition dictionary or None
         """
-        corner_x = random.choice([10, GameConfig.MAP_WIDTH - 20])
-        corner_y = random.choice([10, GameConfig.MAP_HEIGHT - 20])
+        corner_x = random.choice([GameConfig.LANDMARK_CORNER_OFFSET, GameConfig.MAP_WIDTH - GameConfig.LANDMARK_CORNER_SIZE_ADJUST])
+        corner_y = random.choice([GameConfig.LANDMARK_CORNER_OFFSET, GameConfig.MAP_HEIGHT - GameConfig.LANDMARK_CORNER_SIZE_ADJUST])
 
         maze_rooms = []
         for i in range(random.randint(4, 6)):
@@ -584,8 +584,8 @@ class AdvancedLayoutGenerator:
             Landmark definition dictionary or None
         """
         arena_size = 14
-        x = random.randint(15, GameConfig.MAP_WIDTH - arena_size - 15)
-        y = random.randint(15, GameConfig.MAP_HEIGHT - arena_size - 15)
+        x = random.randint(GameConfig.ARENA_EDGE_BUFFER, GameConfig.MAP_WIDTH - arena_size - GameConfig.ARENA_EDGE_BUFFER)
+        y = random.randint(GameConfig.ARENA_EDGE_BUFFER, GameConfig.MAP_HEIGHT - arena_size - GameConfig.ARENA_EDGE_BUFFER)
 
         room = (x, y, arena_size, arena_size)
 

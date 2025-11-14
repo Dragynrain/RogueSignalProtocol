@@ -245,7 +245,7 @@ class GameUpgrades:
         from game_entities import ensure_color_tuple
 
         content = DataLoader.load_game_data()
-        upgrades_data = content.get("upgrades", {})
+        upgrades_data = content["upgrades"]
 
         for key, data in upgrades_data.items():
             cls.UPGRADES[key] = UpgradeDefinition(
