@@ -564,7 +564,11 @@ class UIRenderer:
 
         render_char_safe(console, 2, y_start, "CONTROLS:", fg=Colors.CYAN)
         render_char_safe(
-            console, 4, y_start + 1, "↑↓/W/S: Navigate │ Enter/Click: Use/Equip/Unequip", fg=Colors.WHITE
+            console,
+            4,
+            y_start + 1,
+            "↑↓/W/S: Navigate │ Enter/Click: Use/Equip/Unequip",
+            fg=Colors.WHITE,
         )
         render_char_safe(
             console, 4, y_start + 2, "ESC/I/Right-Click: Close inventory", fg=Colors.WHITE

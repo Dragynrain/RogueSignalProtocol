@@ -356,11 +356,16 @@ class TestTraceLevelTransition:
         assert engine.player.cpu == old_cpu, "CPU should be preserved"
         assert engine.player.heat == old_heat, "Heat should be preserved"
 
-    @pytest.mark.parametrize("start_level,expected_next_level,initial_trace", [
-        (1, 2, 75.0),
-        (2, 3, 95.0),
-    ])
-    def test_trace_resets_on_level_progression(self, basic_game_engine, start_level, expected_next_level, initial_trace):
+    @pytest.mark.parametrize(
+        "start_level,expected_next_level,initial_trace",
+        [
+            (1, 2, 75.0),
+            (2, 3, 95.0),
+        ],
+    )
+    def test_trace_resets_on_level_progression(
+        self, basic_game_engine, start_level, expected_next_level, initial_trace
+    ):
         """Test trace reset when progressing between levels."""
         engine = basic_game_engine
 

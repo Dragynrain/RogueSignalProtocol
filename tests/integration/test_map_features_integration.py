@@ -14,7 +14,6 @@ These tests use REAL game objects with minimal mocking.
 Only external dependencies (sound, rendering) are mocked.
 """
 
-
 import pytest
 
 from game_config import GameBalance

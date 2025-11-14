@@ -29,11 +29,15 @@ class InputMapper:
         """Initialize input mapper with default mappings."""
         # Default mappings (context-agnostic for now - context handling added later)
         self._default_keyboard_map: dict[tcod.event.KeySym, InputAction] = {}
-        self._default_gamepad_button_map: dict[int, InputAction] = {}  # ControllerButton enum values
+        self._default_gamepad_button_map: dict[int, InputAction] = (
+            {}
+        )  # ControllerButton enum values
 
         # Custom user bindings (loaded from settings)
         # Format: {context: {action: [key1, key2, ...]}}
-        self._custom_keyboard_bindings: dict[InputContext, dict[InputAction, list[tcod.event.KeySym]]] = {}
+        self._custom_keyboard_bindings: dict[
+            InputContext, dict[InputAction, list[tcod.event.KeySym]]
+        ] = {}
         self._custom_gamepad_bindings: dict[InputContext, dict[InputAction, list[int]]] = {}
 
         # Initialize default keyboard mappings (migrated from InputMappings.MOVEMENT_MAP)

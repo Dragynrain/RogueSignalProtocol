@@ -83,15 +83,19 @@ class TestGameSettingsInitialization:
 class TestGameSettingsVolume:
     """Test volume setting methods."""
 
-    @pytest.mark.parametrize("volume_type,setter_method,attr_name", [
-        ("master", "set_master_volume", "master_volume"),
-        ("sfx", "set_sfx_volume", "sfx_volume"),
-        ("music", "set_music_volume", "music_volume"),
-    ])
+    @pytest.mark.parametrize(
+        "volume_type,setter_method,attr_name",
+        [
+            ("master", "set_master_volume", "master_volume"),
+            ("sfx", "set_sfx_volume", "sfx_volume"),
+            ("music", "set_music_volume", "music_volume"),
+        ],
+    )
     def test_set_volume_clamps_to_range(self, volume_type, setter_method, attr_name):
         """Volume setters should clamp values to [0.0, 1.0]."""
-        with patch.object(GameSettings, "load_settings"), patch.object(
-            GameSettings, "save_settings"
+        with (
+            patch.object(GameSettings, "load_settings"),
+            patch.object(GameSettings, "save_settings"),
         ):
             settings = GameSettings()
 
@@ -121,8 +125,9 @@ class TestGameSettingsVolume:
 
     def test_set_volume_percent_converts_correctly(self):
         """set_volume_percent should convert percentage to float."""
-        with patch.object(GameSettings, "load_settings"), patch.object(
-            GameSettings, "save_settings"
+        with (
+            patch.object(GameSettings, "load_settings"),
+            patch.object(GameSettings, "save_settings"),
         ):
             settings = GameSettings()
 
@@ -181,8 +186,9 @@ class TestGameSettingsGraphicsMode:
 
     def test_set_graphics_mode_accepts_valid_modes(self):
         """set_graphics_mode should accept 'glyph' and 'graphics'."""
-        with patch.object(GameSettings, "load_settings"), patch.object(
-            GameSettings, "save_settings"
+        with (
+            patch.object(GameSettings, "load_settings"),
+            patch.object(GameSettings, "save_settings"),
         ):
             settings = GameSettings()
 
@@ -194,8 +200,9 @@ class TestGameSettingsGraphicsMode:
 
     def test_set_graphics_mode_accepts_ascii_for_backwards_compat(self):
         """set_graphics_mode should accept 'ascii' for backwards compatibility."""
-        with patch.object(GameSettings, "load_settings"), patch.object(
-            GameSettings, "save_settings"
+        with (
+            patch.object(GameSettings, "load_settings"),
+            patch.object(GameSettings, "save_settings"),
         ):
             settings = GameSettings()
 
@@ -215,18 +222,23 @@ class TestGameSettingsPersistence:
 
             try:
                 settings = GameSettings()
-                settings.SETTINGS_FILE = temp_file
-                settings._create_default_settings_file()
+                # Mock the SETTINGS_FILE property to return our temp file
+                with patch.object(
+                    type(settings),
+                    "SETTINGS_FILE",
+                    new_callable=lambda: property(lambda self: temp_file),
+                ):
+                    settings._create_default_settings_file()
 
-                # Verify file exists and contains valid JSON
-                assert os.path.exists(temp_file)
+                    # Verify file exists and contains valid JSON
+                    assert os.path.exists(temp_file)
 
-                with open(temp_file) as f:
-                    data = json.load(f)
+                    with open(temp_file) as f:
+                        data = json.load(f)
 
-                # Check it matches DEFAULTS
-                assert data["master_volume"] == GameSettings.DEFAULTS["master_volume"]
-                assert data["graphics_mode"] == GameSettings.DEFAULTS["graphics_mode"]
+                    # Check it matches DEFAULTS
+                    assert data["master_volume"] == GameSettings.DEFAULTS["master_volume"]
+                    assert data["graphics_mode"] == GameSettings.DEFAULTS["graphics_mode"]
 
             finally:
                 if os.path.exists(temp_file):
@@ -239,20 +251,25 @@ class TestGameSettingsPersistence:
 
             with patch.object(GameSettings, "__init__", lambda x: None):
                 settings = GameSettings()
-                settings.SETTINGS_FILE = temp_file
 
                 # Copy DEFAULTS for initialization
                 for key, value in GameSettings.DEFAULTS.items():
                     setattr(settings, key, value if not isinstance(value, dict) else value.copy())
 
-                settings.load_settings()
+                # Mock the SETTINGS_FILE property to return our temp file
+                with patch.object(
+                    type(settings),
+                    "SETTINGS_FILE",
+                    new_callable=lambda: property(lambda self: temp_file),
+                ):
+                    settings.load_settings()
 
-                # Should NOT have created the file (lazy file creation)
-                assert not os.path.exists(temp_file)
+                    # Should NOT have created the file (lazy file creation)
+                    assert not os.path.exists(temp_file)
 
-                # Should still have default values in memory
-                assert settings.master_volume == GameSettings.DEFAULTS["master_volume"]
-                assert settings.graphics_mode == GameSettings.DEFAULTS["graphics_mode"]
+                    # Should still have default values in memory
+                    assert settings.master_volume == GameSettings.DEFAULTS["master_volume"]
+                    assert settings.graphics_mode == GameSettings.DEFAULTS["graphics_mode"]
 
 
 class TestGameConfigLoading:

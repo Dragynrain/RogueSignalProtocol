@@ -16,11 +16,26 @@ from pathlib import Path
 from typing import Any, Optional
 
 from game_errors import GameErrorHandler
+from game_file_paths import get_data_directory
 
-# Directory for metrics storage
-METRICS_DIR = Path("metrics")
-SESSION_DB = METRICS_DIR / "sessions.db"
+# Max JSON files to keep
 MAX_JSON_FILES = 100
+
+
+def _get_metrics_dir() -> Path:
+    """Get the metrics directory path (supports portable/AppData modes)."""
+    return get_data_directory() / "metrics"
+
+
+def _get_session_db_path() -> Path:
+    """Get the session database path (supports portable/AppData modes)."""
+    return _get_metrics_dir() / "sessions.db"
+
+
+def _get_progress_file_path() -> Path:
+    """Get the progress file path (supports portable/AppData modes)."""
+    return get_data_directory() / "saves" / "rogue_signal_progress.json"
+
 
 # Global metrics instance (initialized by GameEngine)
 _current_session: Optional["SessionMetrics"] = None
@@ -346,9 +361,9 @@ def finalize_session(
 
 def save_session_to_json(session: SessionMetrics) -> None:
     """Save session metrics to JSON file."""
-    METRICS_DIR.mkdir(exist_ok=True)
+    _get_metrics_dir().mkdir(exist_ok=True)
 
-    json_file = METRICS_DIR / f"{session.session_id}.json"
+    json_file = _get_metrics_dir() / f"{session.session_id}.json"
 
     try:
         with open(json_file, "w") as f:
@@ -366,12 +381,12 @@ def save_session_to_json(session: SessionMetrics) -> None:
 
 def save_session_to_sqlite(session: SessionMetrics) -> None:
     """Save session metrics to SQLite database."""
-    METRICS_DIR.mkdir(exist_ok=True)
+    _get_metrics_dir().mkdir(exist_ok=True)
 
     try:
         _init_sqlite_schema()
 
-        conn = sqlite3.connect(SESSION_DB)
+        conn = sqlite3.connect(_get_session_db_path())
         cursor = conn.cursor()
 
         # Insert session record
@@ -452,7 +467,7 @@ def save_session_to_sqlite(session: SessionMetrics) -> None:
 
 def load_lifetime_metrics() -> LifetimeMetrics:
     """Load lifetime metrics from saves/rogue_signal_progress.json."""
-    progress_file = Path("saves/rogue_signal_progress.json")
+    progress_file = _get_progress_file_path()
 
     try:
         if progress_file.exists():
@@ -474,7 +489,7 @@ def load_lifetime_metrics() -> LifetimeMetrics:
 
 def load_unlocked_achievements() -> list:
     """Load unlocked achievements from saves/rogue_signal_progress.json."""
-    progress_file = Path("saves/rogue_signal_progress.json")
+    progress_file = _get_progress_file_path()
 
     try:
         if progress_file.exists():
@@ -494,7 +509,7 @@ def load_unlocked_achievements() -> list:
 
 def save_unlocked_achievements(achievements: list) -> None:
     """Save unlocked achievements to saves/rogue_signal_progress.json."""
-    progress_file = Path("saves/rogue_signal_progress.json")
+    progress_file = _get_progress_file_path()
 
     try:
         # Ensure saves directory exists
@@ -525,7 +540,7 @@ def save_unlocked_achievements(achievements: list) -> None:
 
 def save_lifetime_metrics(lifetime: LifetimeMetrics) -> None:
     """Save lifetime metrics to saves/rogue_signal_progress.json."""
-    progress_file = Path("saves/rogue_signal_progress.json")
+    progress_file = _get_progress_file_path()
 
     try:
         # Ensure saves directory exists
@@ -601,7 +616,7 @@ def save_metrics(session: SessionMetrics) -> None:
 
 def _init_sqlite_schema() -> None:
     """Initialize SQLite database schema if it doesn't exist."""
-    conn = sqlite3.connect(SESSION_DB)
+    conn = sqlite3.connect(_get_session_db_path())
     cursor = conn.cursor()
 
     # Sessions table
@@ -674,7 +689,7 @@ def _init_sqlite_schema() -> None:
 
 def _cleanup_old_json_files() -> None:
     """Remove oldest JSON files if we exceed MAX_JSON_FILES limit."""
-    json_files = sorted(METRICS_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime)
+    json_files = sorted(_get_metrics_dir().glob("*.json"), key=lambda p: p.stat().st_mtime)
 
     if len(json_files) > MAX_JSON_FILES:
         files_to_remove = json_files[:-MAX_JSON_FILES]

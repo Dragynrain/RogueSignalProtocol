@@ -18,6 +18,7 @@ import os
 from typing import Any
 
 from data_loading import DataLoader
+from game_file_paths import get_data_directory
 
 
 class GameSettings:
@@ -34,7 +35,10 @@ class GameSettings:
     - Dialogue preferences (which dialogues to show/hide)
     """
 
-    SETTINGS_FILE = "saves/user_settings.json"
+    @property
+    def SETTINGS_FILE(self) -> str:
+        """Get the path to the settings file (supports portable/AppData modes)."""
+        return str(get_data_directory() / "saves" / "user_settings.json")
 
     # Single source of truth for default settings
     DEFAULTS = {
@@ -340,9 +344,7 @@ class GameConfig:
             error_msg = "CRITICAL CONFIG ERROR: Invalid JSON in game_rules.json"
             logging.error(error_msg)
             logging.error(f"Exception: {str(e)}")
-            raise json.JSONDecodeError(
-                "game_rules.json contains invalid JSON", e.doc, e.pos
-            ) from e
+            raise json.JSONDecodeError("game_rules.json contains invalid JSON", e.doc, e.pos) from e
         except KeyError as e:
             error_msg = "CRITICAL CONFIG ERROR: Missing required config value in game_rules.json"
             logging.error(error_msg)

@@ -564,9 +564,7 @@ class GraphicsPreviewMenu:
 
                 # Reset color mod
                 config = DataLoader.load_config()
-                normal_tint = ensure_color_tuple(
-                    config["colors"]["basic"]["pure_white"]
-                )
+                normal_tint = ensure_color_tuple(config["colors"]["basic"]["pure_white"])
                 codehack_texture.color_mod = normal_tint
 
         # 2. Exploits in TOP RIGHT corner - tight 3x2 cluster below CodeHacks
@@ -594,9 +592,7 @@ class GraphicsPreviewMenu:
 
                 # Reset color mod
                 config = DataLoader.load_config()
-                normal_tint = ensure_color_tuple(
-                    config["colors"]["basic"]["pure_white"]
-                )
+                normal_tint = ensure_color_tuple(config["colors"]["basic"]["pure_white"])
                 exploit_texture.color_mod = normal_tint
 
         # 3. Pulsing alert rings on all enemies
@@ -774,9 +770,7 @@ class GraphicsPreviewMenu:
                     prediction_texture.color_mod = prediction_colors[i]
                     renderer.copy(prediction_texture, dest=(screen_x, screen_y, tile_w, tile_h))
                 # Reset color mod
-                normal_tint = ensure_color_tuple(
-                    config["colors"]["basic"]["pure_white"]
-                )
+                normal_tint = ensure_color_tuple(config["colors"]["basic"]["pure_white"])
                 prediction_texture.color_mod = normal_tint
 
     def _render_alert_ring(

@@ -213,7 +213,10 @@ class TestHunterInLevelProgression:
 class TestAllEnemyTypesSpawning:
     """Validate all enemy types can spawn correctly."""
 
-    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "firewall", "hunter", "virus", "inhibitor", "admin"])
+    @pytest.mark.parametrize(
+        "enemy_type",
+        ["scanner", "patrol", "bot", "firewall", "hunter", "virus", "inhibitor", "admin"],
+    )
     def test_enemy_type_spawns(self, enemy_type):
         """Each enemy type spawns successfully."""
         agent = GameTestAgent(seed=56789)
@@ -222,16 +225,19 @@ class TestAllEnemyTypesSpawning:
         assert enemy is not None
         assert enemy.type == enemy_type
 
-    @pytest.mark.parametrize("enemy_type,expected_symbol", [
-        ("scanner", "S"),
-        ("patrol", "P"),
-        ("bot", "B"),
-        ("firewall", "F"),
-        ("hunter", "H"),
-        ("virus", "V"),
-        ("inhibitor", "I"),
-        ("admin", "A"),
-    ])
+    @pytest.mark.parametrize(
+        "enemy_type,expected_symbol",
+        [
+            ("scanner", "S"),
+            ("patrol", "P"),
+            ("bot", "B"),
+            ("firewall", "F"),
+            ("hunter", "H"),
+            ("virus", "V"),
+            ("inhibitor", "I"),
+            ("admin", "A"),
+        ],
+    )
     def test_enemy_type_symbol(self, enemy_type, expected_symbol):
         """Each enemy type has the correct unique symbol."""
         agent = GameTestAgent(seed=56790)
@@ -239,7 +245,10 @@ class TestAllEnemyTypesSpawning:
 
         assert enemy.type_data.symbol == expected_symbol
 
-    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "firewall", "hunter", "virus", "inhibitor", "admin"])
+    @pytest.mark.parametrize(
+        "enemy_type",
+        ["scanner", "patrol", "bot", "firewall", "hunter", "virus", "inhibitor", "admin"],
+    )
     def test_enemy_type_has_valid_stats(self, enemy_type):
         """Each enemy type has sensible stat values."""
         agent = GameTestAgent(seed=56791)

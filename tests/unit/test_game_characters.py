@@ -89,6 +89,7 @@ class TestPlayerMovement:
         for y in range(basic_map.height):
             for x in range(basic_map.width):
                 from game_entities import Position
+
                 if basic_map.is_wall(Position(x, y)):
                     # Found a wall, try to move player adjacent to it
                     if x < basic_map.width - 1 and not basic_map.is_wall(Position(x + 1, y)):
@@ -247,6 +248,7 @@ class TestPlayerUpgrades:
         # Should be capped at max_ram_capacity (32 by default)
         # Check in config to get exact value
         from game_config import GameConfig
+
         max_ram = GameConfig._get_required("gameplay.max_ram_capacity")
 
         assert player.ram_total <= max_ram
@@ -260,6 +262,7 @@ class TestPlayerUpgrades:
             player.apply_permanent_upgrade("overclock_kit")
 
         from game_config import GameConfig
+
         max_cpu = GameConfig._get_required("gameplay.max_cpu_capacity")
 
         assert player.max_cpu <= max_cpu
@@ -348,6 +351,7 @@ class TestPlayerVision:
 
         # Should be the config value (typically 8)
         from game_config import GameConfig
+
         expected = GameConfig._get_required("gameplay.player_base_vision_range")
 
         assert vision_range == expected

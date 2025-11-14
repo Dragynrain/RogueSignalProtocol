@@ -96,7 +96,7 @@ class TestSaveLoadBasicCycles:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 # Save the game
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
@@ -125,7 +125,7 @@ class TestSaveLoadBasicCycles:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 # Save with enum state
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
@@ -172,7 +172,7 @@ class TestCorruptedDataHandling:
             temp_file.write("{invalid json syntax: missing brace")
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 with patch("logging.error") as mock_log:
                     loaded_data = SaveGameManager.load_game()
 
@@ -188,7 +188,7 @@ class TestCorruptedDataHandling:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 with patch("logging.error"):
                     loaded_data = SaveGameManager.load_game()
                     assert loaded_data is None, "Should return None for empty file"
@@ -203,7 +203,7 @@ class TestCorruptedDataHandling:
             json.dump({"level": 1}, temp_file)
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 loaded_data = SaveGameManager.load_game()
 
                 # System is robust - loads partial data
@@ -221,7 +221,7 @@ class TestCorruptedDataHandling:
             json.dump(corrupted_data, temp_file)
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 with patch("logging.error") as mock_log:
                     loaded_data = SaveGameManager.load_game()
 
@@ -235,7 +235,7 @@ class TestCorruptedDataHandling:
         """Loading non-existent save file returns None."""
         non_existent_path = "/tmp/this_file_does_not_exist_test_12345.json"
 
-        with patch.object(SaveGameManager, "SAVE_FILE", non_existent_path):
+        with patch.object(SaveGameManager, "_get_save_file_path", return_value=non_existent_path):
             loaded_data = SaveGameManager.load_game()
             assert loaded_data is None, "Should return None for missing file"
 
@@ -252,7 +252,7 @@ class TestTemporaryEffects:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
 
@@ -277,7 +277,7 @@ class TestTemporaryEffects:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
 
@@ -314,7 +314,7 @@ class TestComplexEnemyStates:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
 
@@ -344,7 +344,7 @@ class TestComplexEnemyStates:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 save_success = SaveGameManager.save_game(mock_game)
                 assert save_success is True
 
@@ -382,7 +382,7 @@ class TestErrorRecovery:
             temp_path = temp_file.name
 
         try:
-            with patch.object(SaveGameManager, "SAVE_FILE", temp_path):
+            with patch.object(SaveGameManager, "_get_save_file_path", return_value=temp_path):
                 with patch("builtins.open", side_effect=OSError("No space left on device")):
                     with patch("logging.error") as mock_log:
                         save_success = SaveGameManager.save_game(mock_game)
@@ -632,7 +632,7 @@ class TestRealGameEngineIntegration:
             assert success
 
             # Verify no temp file left behind
-            temp_file = SaveGameManager.SAVE_FILE + ".tmp"
+            temp_file = SaveGameManager._get_save_file_path() + ".tmp"
             assert not os.path.exists(temp_file)
 
             # Verify actual save file exists

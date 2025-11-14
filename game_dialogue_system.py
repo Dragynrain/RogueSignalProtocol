@@ -356,9 +356,7 @@ class UnifiedRenderer:
             }
 
     @staticmethod
-    def get_option_at_click(
-        dialogue_state: DialogueState, tile_x: int, tile_y: int
-    ) -> int | None:
+    def get_option_at_click(dialogue_state: DialogueState, tile_x: int, tile_y: int) -> int | None:
         """
         Check if a click at the given console coordinates hits a dialogue option.
 

@@ -53,7 +53,10 @@ class TestEnemyCreation:
         assert test_enemy.position.x == 25
         assert test_enemy.position.y == 30
 
-    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"])
+    @pytest.mark.parametrize(
+        "enemy_type",
+        ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"],
+    )
     def test_enemy_type_has_real_data(self, enemy_type):
         """Verify that enemy type has actual GameData properties."""
         enemy = enemy_builder(enemy_type, pos=(5, 5))
@@ -115,7 +118,10 @@ class TestEnemyVision:
         # With this distance, should be out of range for any enemy type
         assert can_see is False
 
-    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"])
+    @pytest.mark.parametrize(
+        "enemy_type",
+        ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"],
+    )
     def test_enemy_vision_range(self, enemy_type):
         """Each enemy type has a positive vision range from real GameData."""
         enemy = enemy_builder(enemy_type, pos=(5, 5))
@@ -220,7 +226,10 @@ class TestEnemyDamage:
         assert is_destroyed is True
         assert test_enemy.cpu <= 0  # CPU can go negative with overkill
 
-    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"])
+    @pytest.mark.parametrize(
+        "enemy_type",
+        ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"],
+    )
     def test_enemy_cpu_values(self, enemy_type):
         """Each enemy type has positive CPU values from real GameData."""
         enemy = enemy_builder(enemy_type, pos=(5, 5))
@@ -324,7 +333,10 @@ class TestEnemyManager:
 
         assert found_enemy is None
 
-    @pytest.mark.parametrize("enemy_type", ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"])
+    @pytest.mark.parametrize(
+        "enemy_type",
+        ["scanner", "patrol", "bot", "hunter", "virus", "firewall", "admin", "inhibitor"],
+    )
     def test_enemy_manager_spawn_enemy_type(self, enemy_type):
         """EnemyManager can spawn each enemy type with real GameData."""
         game_map = create_test_map_with_real_tiles(30, 30)

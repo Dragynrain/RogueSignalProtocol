@@ -29,19 +29,15 @@ from game_menus import SettingsMenu
 
 
 @pytest.fixture
-def temp_export_dir(tmp_path):
+def temp_export_dir(tmp_path, monkeypatch):
     """Create temporary export directory for tests."""
     export_dir = tmp_path / "debug_exports"
     export_dir.mkdir()
 
-    # Mock the EXPORT_DIR to use temp directory
-    original_dir = DebugExporter.EXPORT_DIR
-    DebugExporter.EXPORT_DIR = export_dir
+    # Mock the _get_export_dir() method to use temp directory
+    monkeypatch.setattr(DebugExporter, "_get_export_dir", lambda: export_dir)
 
     yield export_dir
-
-    # Restore original
-    DebugExporter.EXPORT_DIR = original_dir
 
 
 @pytest.fixture
@@ -61,8 +57,10 @@ def temp_game_files(tmp_path, monkeypatch):
     (logs_dir / "game_debug.log").write_text("Test log\n")
     (metrics_dir / "test_session.json").write_text('{"session": "test"}')
 
-    # Change to temp directory
-    monkeypatch.chdir(tmp_path)
+    # Mock get_data_directory to return temp path
+    import game_file_paths
+
+    monkeypatch.setattr(game_file_paths, "get_data_directory", lambda: tmp_path)
 
     yield tmp_path
 

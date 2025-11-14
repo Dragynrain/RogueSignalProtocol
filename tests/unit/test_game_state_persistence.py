@@ -5,9 +5,6 @@ Comprehensive tests for save/load system data integrity and error handling.
 """
 
 import json
-import os
-import shutil
-import tempfile
 from unittest.mock import Mock, patch
 
 from game_save import SaveGameManager
@@ -17,22 +14,15 @@ from tests.fixtures.simple_fixtures import player
 class TestCorruptionRecovery:
     """Test corruption recovery and error handling."""
 
-    def setup_method(self):
-        """Set up test environment."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.original_save_file = SaveGameManager.SAVE_FILE
-        SaveGameManager.SAVE_FILE = os.path.join(self.temp_dir, "test_save.json")
-
-    def teardown_method(self):
-        """Clean up test environment."""
-        SaveGameManager.SAVE_FILE = self.original_save_file
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    def test_load_corrupted_json(self):
+    def test_load_corrupted_json(self, tmp_path, monkeypatch):
         """Test loading corrupted JSON file."""
+        save_file = tmp_path / "test_save.json"
+
+        # Mock _get_save_file_path to return our temp file
+        monkeypatch.setattr(SaveGameManager, "_get_save_file_path", lambda: str(save_file))
+
         # Create corrupted save file
-        with open(SaveGameManager.SAVE_FILE, "w") as f:
-            f.write('{"incomplete": "json" missing bracket')
+        save_file.write_text('{"incomplete": "json" missing bracket')
 
         result = SaveGameManager.load_game()
         assert result is None
@@ -56,25 +46,20 @@ class TestCorruptionRecovery:
 class TestPartialSaveScenarios:
     """Test partial save scenarios and edge cases."""
 
-    def setup_method(self):
-        """Set up test environment."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.original_save_file = SaveGameManager.SAVE_FILE
-        SaveGameManager.SAVE_FILE = os.path.join(self.temp_dir, "test_save.json")
-
-    def teardown_method(self):
-        """Clean up test environment."""
-        SaveGameManager.SAVE_FILE = self.original_save_file
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    def test_save_with_none_game(self):
+    def test_save_with_none_game(self, tmp_path, monkeypatch):
         """Test saving with None game object."""
+        save_file = tmp_path / "test_save.json"
+        monkeypatch.setattr(SaveGameManager, "_get_save_file_path", lambda: str(save_file))
+
         result = SaveGameManager.save_game(None)
         assert result is False
         assert not SaveGameManager.save_exists()
 
-    def test_save_with_none_player(self):
+    def test_save_with_none_player(self, tmp_path, monkeypatch):
         """Test saving with None player object."""
+        save_file = tmp_path / "test_save.json"
+        monkeypatch.setattr(SaveGameManager, "_get_save_file_path", lambda: str(save_file))
+
         game = Mock()
         game.player = None
 
@@ -86,34 +71,27 @@ class TestPartialSaveScenarios:
 class TestSaveGameUtilities:
     """Test save game utility functions."""
 
-    def setup_method(self):
-        """Set up test environment."""
-        self.temp_dir = tempfile.mkdtemp()
-        self.original_save_file = SaveGameManager.SAVE_FILE
-        SaveGameManager.SAVE_FILE = os.path.join(self.temp_dir, "test_save.json")
-
-    def teardown_method(self):
-        """Clean up test environment."""
-        SaveGameManager.SAVE_FILE = self.original_save_file
-        shutil.rmtree(self.temp_dir, ignore_errors=True)
-
-    def test_save_exists_trace_level(self):
+    def test_save_exists_trace_level(self, tmp_path, monkeypatch):
         """Test save file existence trace_level."""
+        save_file = tmp_path / "test_save.json"
+        monkeypatch.setattr(SaveGameManager, "_get_save_file_path", lambda: str(save_file))
+
         # No save file exists initially
         assert not SaveGameManager.save_exists()
 
         # Create save file
-        with open(SaveGameManager.SAVE_FILE, "w") as f:
-            json.dump({"test": "data"}, f)
+        save_file.write_text(json.dumps({"test": "data"}))
 
         # Now save file should exist
         assert SaveGameManager.save_exists()
 
-    def test_save_deletion(self):
+    def test_save_deletion(self, tmp_path, monkeypatch):
         """Test save file deletion."""
+        save_file = tmp_path / "test_save.json"
+        monkeypatch.setattr(SaveGameManager, "_get_save_file_path", lambda: str(save_file))
+
         # Create save file
-        with open(SaveGameManager.SAVE_FILE, "w") as f:
-            json.dump({"test": "data"}, f)
+        save_file.write_text(json.dumps({"test": "data"}))
 
         assert SaveGameManager.save_exists()
 
@@ -122,17 +100,23 @@ class TestSaveGameUtilities:
         assert result is True
         assert not SaveGameManager.save_exists()
 
-    def test_save_deletion_nonexistent(self):
+    def test_save_deletion_nonexistent(self, tmp_path, monkeypatch):
         """Test deletion of nonexistent save file."""
+        save_file = tmp_path / "test_save.json"
+        monkeypatch.setattr(SaveGameManager, "_get_save_file_path", lambda: str(save_file))
+
         assert not SaveGameManager.save_exists()
 
         # Should handle gracefully
         result = SaveGameManager.delete_save()
         assert result is True
 
-    def test_save_timestamp_retrieval(self):
+    def test_save_timestamp_retrieval(self, tmp_path, monkeypatch):
         """Test save timestamp retrieval."""
         import time
+
+        save_file = tmp_path / "test_save.json"
+        monkeypatch.setattr(SaveGameManager, "_get_save_file_path", lambda: str(save_file))
 
         # No save file exists
         timestamp = SaveGameManager.get_save_timestamp()
@@ -140,9 +124,7 @@ class TestSaveGameUtilities:
 
         # Create save file with timestamp
         save_data = {"timestamp": time.time(), "test": "data"}
-
-        with open(SaveGameManager.SAVE_FILE, "w") as f:
-            json.dump(save_data, f)
+        save_file.write_text(json.dumps(save_data))
 
         # Should return formatted timestamp
         timestamp = SaveGameManager.get_save_timestamp()
@@ -150,13 +132,14 @@ class TestSaveGameUtilities:
         assert isinstance(timestamp, str)
         assert len(timestamp) > 10  # Should be formatted date string
 
-    def test_save_timestamp_fallback(self):
+    def test_save_timestamp_fallback(self, tmp_path, monkeypatch):
         """Test timestamp fallback to file modification time."""
+        save_file = tmp_path / "test_save.json"
+        monkeypatch.setattr(SaveGameManager, "_get_save_file_path", lambda: str(save_file))
+
         # Create save file without timestamp
         save_data = {"test": "data"}
-
-        with open(SaveGameManager.SAVE_FILE, "w") as f:
-            json.dump(save_data, f)
+        save_file.write_text(json.dumps(save_data))
 
         # Should fall back to file modification time
         timestamp = SaveGameManager.get_save_timestamp()

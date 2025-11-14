@@ -29,20 +29,20 @@ def check_commit_for_violations(commit_hash: str) -> list[str]:
     violations = []
 
     # Get commit message
-    msg = run_command(['git', 'log', '-1', '--format=%B', commit_hash])
+    msg = run_command(["git", "log", "-1", "--format=%B", commit_hash])
 
     # Get commit stats
-    stats = run_command(['git', 'show', '--stat', commit_hash])
+    stats = run_command(["git", "show", "--stat", commit_hash])
 
     # Check for suspicious patterns in commit message
-    if '--no-verify' in msg.lower():
+    if "--no-verify" in msg.lower():
         violations.append("Commit message mentions '--no-verify'")
 
-    if 'bypass' in msg.lower() and 'hook' in msg.lower():
+    if "bypass" in msg.lower() and "hook" in msg.lower():
         violations.append("Commit message mentions bypassing hooks")
 
     # Check if pre-commit hook files were modified suspiciously
-    if re.search(r'\.git/hooks/pre-commit.*\|\s*0', stats):
+    if re.search(r"\.git/hooks/pre-commit.*\|\s*0", stats):
         violations.append("Pre-commit hook was deleted or emptied")
 
     return violations
@@ -60,14 +60,12 @@ def main():
     print()
 
     # Get recent commit hashes
-    commits = run_command([
-        'git', 'log', f'-{num_commits}', '--format=%H'
-    ]).split('\n')
+    commits = run_command(["git", "log", f"-{num_commits}", "--format=%H"]).split("\n")
 
     total_violations = 0
     for commit in commits:
         short_hash = commit[:7]
-        subject = run_command(['git', 'log', '-1', '--format=%s', commit])
+        subject = run_command(["git", "log", "-1", "--format=%s", commit])
 
         violations = check_commit_for_violations(commit)
 
@@ -99,5 +97,5 @@ def main():
         return 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

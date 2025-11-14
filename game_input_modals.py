@@ -279,8 +279,6 @@ class TargetingInputHandler:
         return False
 
 
-
-
 class AchievementsInputHandler:
     """Handles achievements screen input."""
 

@@ -14,7 +14,6 @@ Tests the complete integration of temporary effect system:
 These tests use REAL game objects with minimal mocking.
 """
 
-
 import pytest
 
 from game_entities import EnemyState, Position

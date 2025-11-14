@@ -20,7 +20,6 @@ from game_metrics import get_current_session, init_session_metrics
 from tests.fixtures.simple_fixtures import enemy_builder
 from tests.test_agent import GameTestAgent
 
-
 # ============================================================================
 # IMMEDIATE COMBAT ACHIEVEMENTS
 # ============================================================================
@@ -125,7 +124,9 @@ class TestImmediateCombatAchievements:
         session.turns_with_kills = 10  # 10 turns with kills = 2.5 avg kills/turn
 
         # Verify metrics: 10+ turns with kills, 2+ avg kills/turn
-        assert session.turns_with_kills >= 10, f"Should have 10+ turns with kills, got {session.turns_with_kills}"
+        assert (
+            session.turns_with_kills >= 10
+        ), f"Should have 10+ turns with kills, got {session.turns_with_kills}"
         total_kills = sum(session.enemies_killed.values())
         avg_kills = total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
         assert avg_kills >= 2.0, f"Should average 2+ kills/turn, got {avg_kills:.2f}"
@@ -176,7 +177,9 @@ class TestImmediateStealthAchievements:
                 session.max_stealth_streak = session.current_stealth_streak
 
         # Verify metrics
-        assert session.max_stealth_streak >= 10, f"Should have 10+ stealth streak, got {session.max_stealth_streak}"
+        assert (
+            session.max_stealth_streak >= 10
+        ), f"Should have 10+ stealth streak, got {session.max_stealth_streak}"
 
         # Verify achievement triggers
         unlocked = AchievementChecker.check_immediate_achievements(session, set())
@@ -193,7 +196,9 @@ class TestImmediateStealthAchievements:
 
         # Verify achievement triggers
         unlocked = AchievementChecker.check_immediate_achievements(session, set())
-        assert "blind_spot_master" in unlocked, "Blind Spot Master should trigger at 5 blind spot kills"
+        assert (
+            "blind_spot_master" in unlocked
+        ), "Blind Spot Master should trigger at 5 blind spot kills"
 
 
 # ============================================================================
@@ -242,7 +247,9 @@ class TestSessionEndAchievements:
         session.ever_detected = False
 
         unlocked = AchievementChecker.check_session_achievements(session, set())
-        assert "ghost_protocol" in unlocked, "Ghost Protocol should unlock on undetected level completion"
+        assert (
+            "ghost_protocol" in unlocked
+        ), "Ghost Protocol should unlock on undetected level completion"
 
         # Should NOT unlock if detected
         session.ever_detected = True
@@ -323,7 +330,9 @@ class TestSessionEndAchievements:
         assert "minimalist" in unlocked, "Minimalist should unlock with 3 exploits"
 
         # Should NOT unlock with 4+ exploits
-        session.exploits_equipped = Counter(["buffer_overflow", "code_injection", "malware_bomb", "dos_packet"])
+        session.exploits_equipped = Counter(
+            ["buffer_overflow", "code_injection", "malware_bomb", "dos_packet"]
+        )
         unlocked = AchievementChecker.check_session_achievements(session, set())
         assert "minimalist" not in unlocked, "Cannot use 4+ exploits"
 

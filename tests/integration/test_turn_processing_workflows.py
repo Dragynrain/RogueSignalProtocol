@@ -19,7 +19,6 @@ These tests verify turn processing integrates correctly with:
 - Environmental systems
 """
 
-
 import pytest
 
 from game_entities import EnemyState, Position

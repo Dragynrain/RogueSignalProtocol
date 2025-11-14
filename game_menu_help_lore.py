@@ -154,7 +154,9 @@ class LoreMenu:
             content_lines = [line.strip() for line in fragment_text.split("\n") if line.strip()]
             if len(content_lines) > 1:
                 preview = (
-                    content_lines[1][:70] + "..." if len(content_lines[1]) > 70 else content_lines[1]
+                    content_lines[1][:70] + "..."
+                    if len(content_lines[1]) > 70
+                    else content_lines[1]
                 )
                 preview_color = (200, 200, 150) if is_selected else (128, 128, 128)
                 render_char_safe(console, 6, y_offset, preview, fg=preview_color)

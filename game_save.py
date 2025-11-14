@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Any
 
 # Import game modules
 from game_config import GameConfig
+from game_file_paths import get_data_directory
 
 if TYPE_CHECKING:
     from game_engine import GameEngine
@@ -27,12 +28,15 @@ class SaveLoadError(Exception):
 class SaveGameManager:
     """Manages complete game save/load operations."""
 
-    SAVE_FILE = "saves/rogue_signal_save.json"
+    @classmethod
+    def _get_save_file_path(cls) -> str:
+        """Get the path to the save file (supports portable/AppData modes)."""
+        return str(get_data_directory() / "saves" / "rogue_signal_save.json")
 
     @classmethod
     def save_exists(cls) -> bool:
         """Check if a save file exists."""
-        return os.path.exists(cls.SAVE_FILE)
+        return os.path.exists(cls._get_save_file_path())
 
     @staticmethod
     def _numpy_converter(obj):
@@ -170,7 +174,7 @@ class SaveGameManager:
             return False
 
         # Ensure saves directory exists
-        os.makedirs(os.path.dirname(cls.SAVE_FILE), exist_ok=True)
+        os.makedirs(os.path.dirname(cls._get_save_file_path()), exist_ok=True)
 
         # Attempt save with retry logic
         for attempt in range(GameConfig.MAX_SAVE_ATTEMPTS):
@@ -183,7 +187,7 @@ class SaveGameManager:
                 save_data = cls.create_save_data(game)
 
                 # Write to temporary file first, then atomic rename for safety
-                temp_file = cls.SAVE_FILE + ".tmp"
+                temp_file = cls._get_save_file_path() + ".tmp"
                 try:
                     with open(temp_file, "w", encoding="utf-8") as f:
                         json.dump(
@@ -193,11 +197,11 @@ class SaveGameManager:
                     # Atomic rename to prevent corruption
                     import shutil
 
-                    shutil.move(temp_file, cls.SAVE_FILE)
+                    shutil.move(temp_file, cls._get_save_file_path())
 
-                    file_size = os.path.getsize(cls.SAVE_FILE)
+                    file_size = os.path.getsize(cls._get_save_file_path())
                     logging.info(
-                        f"Save: Successful, file={cls.SAVE_FILE}, size={file_size} bytes, enemies={len(game.enemies)}"
+                        f"Save: Successful, file={cls._get_save_file_path()}, size={file_size} bytes, enemies={len(game.enemies)}"
                     )
                     return True
                 finally:
@@ -242,7 +246,7 @@ class SaveGameManager:
 
         try:
             # Read file content first to check for corruption
-            with open(cls.SAVE_FILE, encoding="utf-8") as f:
+            with open(cls._get_save_file_path(), encoding="utf-8") as f:
                 content = f.read().strip()
 
             # Check if file is empty or contains only whitespace
@@ -289,8 +293,10 @@ class SaveGameManager:
         """Delete the save file."""
         try:
             if cls.save_exists():
-                logging.debug(f"Save: Deleting save file: {cls.SAVE_FILE} (reason: player death)")
-                os.remove(cls.SAVE_FILE)
+                logging.debug(
+                    f"Save: Deleting save file: {cls._get_save_file_path()} (reason: player death)"
+                )
+                os.remove(cls._get_save_file_path())
                 logging.info("Save: File deleted successfully")
             return True
         except Exception as e:
@@ -318,7 +324,7 @@ class SaveGameManager:
                 # Fallback to file modification time
                 import datetime
 
-                stat_result = os.stat(cls.SAVE_FILE)
+                stat_result = os.stat(cls._get_save_file_path())
                 dt = datetime.datetime.fromtimestamp(stat_result.st_mtime)
                 return dt.strftime("%Y-%m-%d %H:%M:%S")
         except Exception as e:
