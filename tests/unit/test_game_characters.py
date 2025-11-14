@@ -188,8 +188,8 @@ class TestPlayerUpgrades:
         player = Player(x=10, y=10)
         initial_ram = player.ram_total
 
-        # Apply RAM upgrade (assume "ram_chip" exists in upgrades)
-        success = player.apply_permanent_upgrade("ram_chip")
+        # Apply RAM upgrade
+        success = player.apply_permanent_upgrade("ram_boost")
 
         assert success is True
         assert player.ram_total > initial_ram
@@ -203,7 +203,7 @@ class TestPlayerUpgrades:
         initial_cpu = player.cpu
 
         # Apply CPU upgrade
-        success = player.apply_permanent_upgrade("overclock_kit")
+        success = player.apply_permanent_upgrade("cpu_boost")
 
         assert success is True
         assert player.max_cpu > initial_max_cpu
@@ -215,7 +215,7 @@ class TestPlayerUpgrades:
         initial_max_heat = player.max_heat
 
         # Apply heat upgrade
-        success = player.apply_permanent_upgrade("heat_sink")
+        success = player.apply_permanent_upgrade("heat_boost")
 
         assert success is True
         assert player.max_heat > initial_max_heat
@@ -404,14 +404,14 @@ class TestEnemyInitialization:
         assert enemy.type == "scanner"
         assert enemy.type_data is not None
         assert hasattr(enemy, "cpu")
-        assert hasattr(enemy, "vision_range")
+        assert hasattr(enemy.type_data, "vision")
 
     def test_enemy_has_unique_id(self, real_game_data):
         """Each enemy should have a unique ID."""
         pos = Position(5, 5)
 
         enemy1 = Enemy(pos, "scanner")
-        enemy2 = Enemy(pos, "drone")
+        enemy2 = Enemy(pos, "patrol")
 
         assert enemy1.id != enemy2.id
 
@@ -423,7 +423,7 @@ class TestEnemyInitialization:
         start_id = Enemy.get_next_id_counter()
 
         enemy1 = Enemy(pos, "scanner")
-        enemy2 = Enemy(pos, "drone")
+        enemy2 = Enemy(pos, "patrol")
 
         assert enemy2.id == enemy1.id + 1
 

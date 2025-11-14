@@ -750,13 +750,9 @@ class ExploitSystem:
             # Reveal a small area around each enemy (3x3) to show their local context
             for dx in range(-1, 2):
                 for dy in range(-1, 2):
-                    reveal_x = enemy.position.x + dx
-                    reveal_y = enemy.position.y + dy
-                    if (
-                        0 <= reveal_x < GameConfig.MAP_WIDTH
-                        and 0 <= reveal_y < GameConfig.MAP_HEIGHT
-                    ):
-                        self.game.game_map.explored_tiles.add((reveal_x, reveal_y))
+                    reveal_pos = Position(enemy.position.x + dx, enemy.position.y + dy)
+                    if reveal_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                        self.game.game_map.explored_tiles.add((reveal_pos.x, reveal_pos.y))
             enemy_count += 1
 
         self.game.message_log.add_message(f"THREAT SCAN ACTIVE - {enemy_count} hostiles detected!")
@@ -901,13 +897,9 @@ class ExploitSystem:
             # Add surrounding 3x3 area to explored tiles so node is visible in fog of war
             for dx in range(-1, 2):
                 for dy in range(-1, 2):
-                    explore_x = node_pos[0] + dx
-                    explore_y = node_pos[1] + dy
-                    if (
-                        0 <= explore_x < GameConfig.MAP_WIDTH
-                        and 0 <= explore_y < GameConfig.MAP_HEIGHT
-                    ):
-                        self.game.game_map.explored_tiles.add((explore_x, explore_y))
+                    explore_pos = Position(node_pos[0] + dx, node_pos[1] + dy)
+                    if explore_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                        self.game.game_map.explored_tiles.add((explore_pos.x, explore_pos.y))
 
         # Reveal all CPU recovery nodes and add to explored tiles
         for node_pos in self.game.game_map.cpu_recovery_nodes:
@@ -915,13 +907,9 @@ class ExploitSystem:
             # Add surrounding 3x3 area to explored tiles
             for dx in range(-1, 2):
                 for dy in range(-1, 2):
-                    explore_x = node_pos[0] + dx
-                    explore_y = node_pos[1] + dy
-                    if (
-                        0 <= explore_x < GameConfig.MAP_WIDTH
-                        and 0 <= explore_y < GameConfig.MAP_HEIGHT
-                    ):
-                        self.game.game_map.explored_tiles.add((explore_x, explore_y))
+                    explore_pos = Position(node_pos[0] + dx, node_pos[1] + dy)
+                    if explore_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                        self.game.game_map.explored_tiles.add((explore_pos.x, explore_pos.y))
 
         # Reveal all ghost nodes and add to explored tiles
         for node_pos in self.game.game_map.ghost_nodes:
@@ -929,13 +917,9 @@ class ExploitSystem:
             # Add surrounding 3x3 area to explored tiles
             for dx in range(-1, 2):
                 for dy in range(-1, 2):
-                    explore_x = node_pos[0] + dx
-                    explore_y = node_pos[1] + dy
-                    if (
-                        0 <= explore_x < GameConfig.MAP_WIDTH
-                        and 0 <= explore_y < GameConfig.MAP_HEIGHT
-                    ):
-                        self.game.game_map.explored_tiles.add((explore_x, explore_y))
+                    explore_pos = Position(node_pos[0] + dx, node_pos[1] + dy)
+                    if explore_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                        self.game.game_map.explored_tiles.add((explore_pos.x, explore_pos.y))
 
         total_revealed = len(self.game.game_state.revealed_special_nodes)
         self.game.message_log.add_message(

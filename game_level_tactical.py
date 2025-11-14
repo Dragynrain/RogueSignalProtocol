@@ -24,6 +24,7 @@ import math
 import random
 
 from game_config import GameConfig
+from game_entities import Position
 from game_level_structure import create_noise_map, get_noise_value
 
 
@@ -486,8 +487,9 @@ class TacticalGenerator:
             True if position is valid for cover placement
         """
         x, y = pos
+        pos_obj = Position(x, y)
 
-        if not (0 <= x < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT):
+        if not pos_obj.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
             return False
 
         if pos in self.game_map.walls:

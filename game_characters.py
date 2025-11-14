@@ -268,11 +268,8 @@ class Enemy:
         if self.type_data.damage <= 0 and self.type not in ("virus", "inhibitor"):
             return False
 
-        dx = abs(self.position.x - player.position.x)
-        dy = abs(self.position.y - player.position.y)
-        # Adjacent in any direction (including diagonal)
-        is_adjacent = dx <= 1 and dy <= 1 and (dx + dy) > 0
-        return is_adjacent
+        # Use Position helper for adjacency check (excluding same position)
+        return self.position.is_adjacent_to(player.position) and self.position != player.position
 
     def attack_player(self, player: Player, game_engine=None) -> int:
         """Attack the player and return damage dealt."""
