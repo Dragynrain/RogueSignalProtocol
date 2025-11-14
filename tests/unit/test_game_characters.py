@@ -17,7 +17,9 @@ Does NOT test:
 import pytest
 from unittest.mock import Mock, patch
 
-from game_characters import Player, Enemy, PathfindingHelper
+from game_characters import Enemy
+from game_pathfinding import PathfindingHelper
+from game_player import Player
 from game_entities import Position
 
 

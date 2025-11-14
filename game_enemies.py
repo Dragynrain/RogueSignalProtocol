@@ -16,7 +16,9 @@ import logging
 import random
 from typing import TYPE_CHECKING
 
-from game_characters import Enemy, PathfindingHelper, Player
+from game_characters import Enemy
+from game_pathfinding import PathfindingHelper
+from game_player import Player
 
 # Import necessary entities and configurations
 from game_config import GameConfig

@@ -217,7 +217,7 @@ class TestPathfindingHelper:
         """PathfindingHelper finds basic straight path."""
         from unittest.mock import Mock
 
-        from game_characters import PathfindingHelper
+        from game_pathfinding import PathfindingHelper
 
         game_map = map_builder(width=30, height=30)
         enemy = enemy_builder("scanner", pos=(10, 10))

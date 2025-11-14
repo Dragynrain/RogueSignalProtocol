@@ -36,10 +36,10 @@
 
 - ✅ **USE THESE**: `ls`, `rm`, `mkdir`, `cp`, `mv`, `cat`, `grep`, `find`
 - ❌ **NEVER USE**: `dir`, `del`, `md`, `copy`, `move`, `type` (Windows CMD commands)
-- **Paths**: Forward slashes preferred but backslashes work: `.venv/Scripts/python.exe`
 - **Quote spaces**: Always quote paths with spaces: `cd "path with spaces"`
-- **Python**: Always use `.venv/Scripts/python.exe` (not just `python`)
-- **Pip**: Always use `.venv/Scripts/pip.exe install <pkg>`
+- **CRITICAL - Python/Pip**: NEVER use bare `python`/`pip`/`pytest` (triggers MS Store popup, disrupts workflow!)
+  - ✅ ALWAYS: `.venv/Scripts/python.exe`, `.venv/Scripts/pip.exe`, `.venv/Scripts/python.exe -m pytest`
+  - ❌ FORBIDDEN: `python`, `pip`, `pytest` (even in agents/subagents)
 
 ---
 

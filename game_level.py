@@ -28,7 +28,7 @@ The LevelGenerator now coordinates specialized subsystems:
 import logging
 import random
 
-from game_characters import PathfindingHelper
+from game_pathfinding import PathfindingHelper
 
 # Import required classes and configs
 from game_config import GameConfig

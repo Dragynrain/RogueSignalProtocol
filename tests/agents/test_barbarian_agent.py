@@ -115,7 +115,7 @@ class BarbarianAgent(GameTestAgent):
         Returns:
             True if 2 or more mobile enemies have spotted the player
         """
-        from game_characters import EnemyMovement, EnemyState
+        from game_entities import EnemyMovement, EnemyState
 
         # Count ALERT + HOSTILE mobile enemies (not STATIC)
         alerted_mobile_count = sum(
@@ -269,7 +269,7 @@ class BarbarianAgent(GameTestAgent):
         Returns:
             (x, y) tuple of best corridor position, or None if no corridors nearby
         """
-        from game_characters import EnemyMovement, EnemyState
+        from game_entities import EnemyMovement, EnemyState
 
         candidates = []
         px, py = self.player.x, self.player.y

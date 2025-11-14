@@ -53,21 +53,37 @@ class GameSettings:
     }
 
     def __init__(self):
-        # Initialize with defaults
-        self.master_volume = self.DEFAULTS["master_volume"]
-        self.sfx_volume = self.DEFAULTS["sfx_volume"]
-        self.music_volume = self.DEFAULTS["music_volume"]
-        self.graphics_mode = self.DEFAULTS["graphics_mode"]
-        self.show_achievement_popups = self.DEFAULTS["show_achievement_popups"]
-        self.show_particle_effects = self.DEFAULTS["show_particle_effects"]
-        self.ui_color = self.DEFAULTS["ui_color"]
-        self.dialogue_preferences = self.DEFAULTS["dialogue_preferences"].copy()
-        self.custom_keyboard_bindings = self.DEFAULTS["custom_keyboard_bindings"].copy()
-        self.custom_gamepad_bindings = self.DEFAULTS["custom_gamepad_bindings"].copy()
-        self.gamepad_deadzone = self.DEFAULTS["gamepad_deadzone"]
-        self.gamepad_enabled = self.DEFAULTS["gamepad_enabled"]
-
+        # Initialize all settings from DEFAULTS dictionary
+        self._apply_settings_from_dict(self.DEFAULTS)
         self.load_settings()
+
+    def _apply_settings_from_dict(self, settings_dict: dict) -> None:
+        """
+        Apply settings from a dictionary to instance attributes.
+
+        Handles deep copying for mutable defaults (dicts) to prevent
+        shared reference issues.
+
+        Args:
+            settings_dict: Dictionary containing setting key-value pairs
+        """
+        for key, default_value in self.DEFAULTS.items():
+            value = settings_dict.get(key, default_value)
+
+            # Deep copy mutable types to avoid shared references
+            if isinstance(value, dict):
+                setattr(self, key, value.copy())
+            else:
+                setattr(self, key, value)
+
+    def _get_settings_as_dict(self) -> dict:
+        """
+        Get current settings as a dictionary for saving.
+
+        Returns:
+            Dictionary mapping setting names to current values
+        """
+        return {key: getattr(self, key) for key in self.DEFAULTS.keys()}
 
     def load_settings(self) -> None:
         """
@@ -108,20 +124,7 @@ class GameSettings:
                     return
 
                 # Load settings with defaults from single source of truth
-                self.master_volume = settings_data.get("master_volume", self.DEFAULTS["master_volume"])
-                self.sfx_volume = settings_data.get("sfx_volume", self.DEFAULTS["sfx_volume"])
-                self.music_volume = settings_data.get("music_volume", self.DEFAULTS["music_volume"])
-                self.graphics_mode = settings_data.get("graphics_mode", self.DEFAULTS["graphics_mode"])
-                self.show_achievement_popups = settings_data.get("show_achievement_popups", self.DEFAULTS["show_achievement_popups"])
-                self.show_particle_effects = settings_data.get("show_particle_effects", self.DEFAULTS["show_particle_effects"])
-                self.ui_color = settings_data.get("ui_color", self.DEFAULTS["ui_color"])
-                self.dialogue_preferences = settings_data.get("dialogue_preferences", self.DEFAULTS["dialogue_preferences"].copy())
-
-                # Input customization (Phase 1: Gamepad Support)
-                self.custom_keyboard_bindings = settings_data.get("custom_keyboard_bindings", self.DEFAULTS["custom_keyboard_bindings"].copy())
-                self.custom_gamepad_bindings = settings_data.get("custom_gamepad_bindings", self.DEFAULTS["custom_gamepad_bindings"].copy())
-                self.gamepad_deadzone = settings_data.get("gamepad_deadzone", self.DEFAULTS["gamepad_deadzone"])
-                self.gamepad_enabled = settings_data.get("gamepad_enabled", self.DEFAULTS["gamepad_enabled"])
+                self._apply_settings_from_dict(settings_data)
 
                 # Migrate old "ascii" setting to "glyph"
                 if self.graphics_mode == "ascii":
@@ -155,20 +158,7 @@ class GameSettings:
     def save_settings(self) -> None:
         """Save settings to file."""
         try:
-            settings_data = {
-                "master_volume": self.master_volume,
-                "sfx_volume": self.sfx_volume,
-                "music_volume": self.music_volume,
-                "graphics_mode": self.graphics_mode,
-                "show_achievement_popups": self.show_achievement_popups,
-                "show_particle_effects": self.show_particle_effects,
-                "ui_color": self.ui_color,
-                "dialogue_preferences": self.dialogue_preferences,
-                "custom_keyboard_bindings": self.custom_keyboard_bindings,
-                "custom_gamepad_bindings": self.custom_gamepad_bindings,
-                "gamepad_deadzone": self.gamepad_deadzone,
-                "gamepad_enabled": self.gamepad_enabled,
-            }
+            settings_data = self._get_settings_as_dict()
             with open(self.SETTINGS_FILE, "w") as f:
                 json.dump(settings_data, f, indent=2)
             logging.debug(f"Settings: Saved to {self.SETTINGS_FILE}")
