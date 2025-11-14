@@ -1,24 +1,27 @@
 # Itch.io Page Content - DRAFT
 
 ## Short Description (1-2 sentences)
-A coffee break stealth roguelike set in a cyberpunk digital network. Infiltrate corporate systems, evade AI security, and uncover the dark conspiracy of Project Chimera in quick 10-15 minute runs.
+A traditional turn-based coffee break stealth roguelike set in a cyberpunk digital network. Infiltrate corporate systems, evade AI security, and uncover the dark conspiracy of Project Chimera in quick 10-15 minute runs.
 
 ---
 
 ## Long Description
 
-Rogue Signal Protocol is a **coffee break stealth roguelike** where you play as an escaped digital consciousness navigating hostile corporate networks. Quick 10-15 minute runs with permadeath - but discovered story fragments persist, slowly revealing the truth behind your existence.
+Rogue Signal Protocol is a **traditional turn-based** coffee break stealth roguelike where you play as an escaped digital consciousness navigating hostile corporate networks. Quick 10-15 minute runs with permadeath - but discovered story fragments persist, slowly revealing the truth behind your existence.
 
 ### FEATURES:
 * **Deterministic gameplay with no randomness or luck** - Pure skill-based tactical decisions
 * **8 unique enemy types** with distinct AI behaviors (Scanners, Patrols, Hunters, Admin Avatar boss)
 * **13 exploits** across combat, stealth, and utility categories with heat management
+* **Enemy movement prediction** - See enemies' next 3 planned moves for tactical planning
+* **Blind spot stealth mechanics** - Hide in shadows to avoid detection
+* **Dynamic threat system** - High detection spawns the Admin Avatar boss
 * **Achievement system** - Persistent tracking across runs with unlockable challenges
-* **Interactive look mode** - Inspect enemies, items, and terrain with mouse or keyboard
-* **3 escalating network environments** with procedural generation
 * **20+ story fragments** revealing the Project Chimera conspiracy
 * **Dual rendering modes** - Switch between graphical sprites or classic ASCII/Unicode glyphs
+* **Particle effect explosions** - Visual feedback for combat and exploits
 * **Full audio design** with atmospheric music and 40+ sound effects (toggleable)
+* **Playable with keyboard or mouse** - Full support for both input methods
 * **Permadeath roguelike mechanics** with auto-save on exit
 
 ### WHAT TO EXPECT (Alpha 0.8.0):

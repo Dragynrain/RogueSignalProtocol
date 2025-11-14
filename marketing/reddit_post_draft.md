@@ -21,16 +21,19 @@ I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a coffee break stea
 *(Screenshots in comments)*
 
 ### Core Features:
-* **Traditional roguelike mechanics** - permadeath, turn-based, procedural generation, tactical gameplay
-* **Stealth-first design** - detection spawns a powerful boss enemy (Admin Avatar), hiding in blind spots is key
-* **Enemy movement prediction** - See enemies' next 3 planned moves for tactical planning
-* **20+ story fragments** revealing a dark conspiracy about uploading human minds to networks
-* **8 enemy types** with unique behaviors (static guards, patrols, hunters, viruses, inhibitors)
+* **Deterministic gameplay with no randomness or luck** - Pure skill-based tactical decisions
+* **8 unique enemy types** with distinct AI behaviors (Scanners, Patrols, Hunters, Admin Avatar boss)
 * **13 exploits** across combat, stealth, and utility categories with heat management
+* **Enemy movement prediction** - See enemies' next 3 planned moves for tactical planning
+* **Blind spot stealth mechanics** - Hide in shadows to avoid detection
+* **Dynamic threat system** - High detection spawns the Admin Avatar boss
 * **Achievement system** - Persistent tracking across runs with unlockable challenges
-* **Interactive look mode** - Inspect enemies and terrain with mouse or keyboard
+* **20+ story fragments** revealing the Project Chimera conspiracy
 * **Dual rendering modes** - Switch between graphical sprites or classic ASCII/Unicode glyphs
-* **Full audio design** - Atmospheric music and 40+ sound effects
+* **Particle effect explosions** - Visual feedback for combat and exploits
+* **Full audio design** with atmospheric music and 40+ sound effects (toggleable)
+* **Playable with keyboard or mouse** - Full support for both input methods
+* **Permadeath roguelike mechanics** with auto-save on exit
 
 ### What Makes It Different:
 **Enemy movement prediction** shows you the next 3 planned moves - no guessing, pure tactical planning. It's like playing chess against enemies who show their next moves.
