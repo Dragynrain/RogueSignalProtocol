@@ -445,6 +445,18 @@ class Enemy:
         """Advance to next patrol waypoint (wraps around)."""
         self.patrol_index = (self.patrol_index + 1) % len(self.patrol_points)
 
+    def _get_queue_end_position(self) -> Position:
+        """
+        Get the last queued position or current position if queue is empty.
+
+        This helper encapsulates the common pattern of checking the movement
+        queue's endpoint for pathfinding and validation purposes.
+
+        Returns:
+            Position at end of move queue, or current position if queue is empty
+        """
+        return self.move_queue[-1] if self.move_queue else self.position
+
     def _ensure_queue_full(self, game_map, player, game_engine) -> None:
         """
         Ensure move queue has 3 moves (or as many as possible).
@@ -481,7 +493,7 @@ class Enemy:
 
         # If we're already adjacent to player (in attack range), don't queue more moves
         # Check from last queued position (or current position if queue empty)
-        check_pos = self.move_queue[-1] if self.move_queue else self.position
+        check_pos = self._get_queue_end_position()
         if check_pos.grid_distance_to(player.position) <= 1:
             # Exception: non-hostile enemies can pass by the player
             # Only stop if we're hostile and targeting the player
@@ -512,7 +524,7 @@ class Enemy:
             return
 
         # Start pathfinding from last queued position (or current if empty)
-        start_pos = self.move_queue[-1] if self.move_queue else self.position
+        start_pos = self._get_queue_end_position()
 
         # Calculate path
         path = PathfindingHelper.calculate_path(
@@ -572,7 +584,7 @@ class Enemy:
             game_engine: GameEngine for enemy collision avoidance
         """
         # Start from last queued position (or current if empty)
-        start_pos = self.move_queue[-1] if self.move_queue else self.position
+        start_pos = self._get_queue_end_position()
 
         # Add random moves until queue has 3
         while len(self.move_queue) < 3:
@@ -654,7 +666,7 @@ class Enemy:
             next_waypoint = self.patrol_points[next_index]
 
             # Start from last queued position
-            start_pos = self.move_queue[-1] if self.move_queue else self.position
+            start_pos = self._get_queue_end_position()
 
             # Skip only if already exactly at this waypoint
             # Don't skip if 1 tile away - we still need to queue that move for short patrols
@@ -838,7 +850,7 @@ class Enemy:
         )
 
         # Fill queue with up to 3 flee moves
-        current_pos = self.move_queue[-1] if self.move_queue else self.position
+        current_pos = self._get_queue_end_position()
 
         while len(self.move_queue) < 3:
             # Get best flee move from current position
