@@ -45,6 +45,12 @@ class TestGraphicsRendererIntegration(unittest.TestCase):
             tile_manager=self.tile_manager, context=self.context, settings=self.settings
         )
 
+        # Mock the helper methods extracted during refactoring
+        # These need to return tuples for unpacking
+        # Use None values to trigger fallback to default viewport dimensions (55x44)
+        self.renderer._get_tile_dimensions = Mock(return_value=(None, None))
+        self.renderer._get_sdl_window_dimensions = Mock(return_value=(None, None))
+
         # Create test game engine
         mock_sound_manager = Mock()
         self.engine = GameEngine(sound_manager=mock_sound_manager, settings=self.settings)
@@ -478,6 +484,12 @@ class TestGameRendererIntegration(unittest.TestCase):
         renderer = GameRenderer(
             settings=self.settings, tile_manager=self.tile_manager, context=self.context
         )
+
+        # Mock the helper methods on the graphics renderer (created internally)
+        # These need to return tuples for unpacking
+        # Use None values to trigger fallback to default viewport dimensions (55x44)
+        renderer.graphics_renderer._get_tile_dimensions = Mock(return_value=(None, None))
+        renderer.graphics_renderer._get_sdl_window_dimensions = Mock(return_value=(None, None))
 
         # Should execute without raising exceptions
         renderer.render_game(large_console, self.engine, context=self.context)
