@@ -431,8 +431,9 @@ class GameEngine:
                     damage = 5 + (self.player.heat - self.player.max_heat)
                     self.player.take_damage(damage)
                     self.player.heat = max(
-                        85, self.player.max_heat - 15
-                    )  # Cool down to 15 below max, minimum 85
+                        GameBalance.OVERHEAT_MINIMUM_HEAT,
+                        self.player.max_heat - GameBalance.OVERHEAT_COOLDOWN_AMOUNT
+                    )
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
 
                     # Track metrics

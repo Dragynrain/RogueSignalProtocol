@@ -16,6 +16,10 @@ Based on TCOD research and SDL best practices.
 import math
 import time
 
+# SDL joystick axis range constants
+SDL_JOYSTICK_AXIS_MAX = 32768.0  # Maximum absolute value for joystick axes (signed -32768 to 32767)
+SDL_JOYSTICK_TRIGGER_MAX = 32767.0  # Maximum value for trigger axes (unsigned 0 to 32767)
+
 
 class AnalogStickHandler:
     """
@@ -63,8 +67,8 @@ class AnalogStickHandler:
             (normalized_x, normalized_y) tuple in range -1.0 to 1.0
         """
         # Normalize to -1.0 to 1.0
-        norm_x = x / 32768.0
-        norm_y = y / 32768.0
+        norm_x = x / SDL_JOYSTICK_AXIS_MAX
+        norm_y = y / SDL_JOYSTICK_AXIS_MAX
 
         # Calculate magnitude
         magnitude = math.sqrt(norm_x**2 + norm_y**2)
@@ -100,8 +104,8 @@ class AnalogStickHandler:
             (normalized_x, normalized_y) tuple in range -1.0 to 1.0
         """
         # Normalize to -1.0 to 1.0
-        norm_x = x / 32768.0
-        norm_y = y / 32768.0
+        norm_x = x / SDL_JOYSTICK_AXIS_MAX
+        norm_y = y / SDL_JOYSTICK_AXIS_MAX
 
         # Apply deadzone per axis
         if abs(norm_x) < self.deadzone:
@@ -158,7 +162,7 @@ class AnalogStickHandler:
             Normalized value in range 0.0 to 1.0
         """
         # Normalize to 0.0 to 1.0
-        normalized = value / 32767.0
+        normalized = value / SDL_JOYSTICK_TRIGGER_MAX
 
         # Apply deadzone
         if normalized < self.deadzone:

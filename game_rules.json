@@ -167,6 +167,8 @@
     "enhanced_vision_bonus": 2,
     "blind_spot_vision_reduction_factor": 3,
     "enemy_memory_turns": 20,
+    "overheat_cooldown_amount": 15,
+    "overheat_minimum_heat": 85,
     "shadow_damage_bonus": 10,
     "virus_increment_turns": 3,
     "enemy_flee_health_threshold": 0.3,

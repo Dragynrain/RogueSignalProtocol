@@ -294,13 +294,11 @@ class MenuBackground:
         from data_loading import DataLoader
 
         config = DataLoader.load_config()
-        menu_bg_colors = config.get("colors", {}).get("menu_background", {})
-        pattern_colors_data = menu_bg_colors.get("pattern_colors", [])
+        menu_bg_colors = config["colors"]["menu_background"]
+        pattern_colors_data = menu_bg_colors["pattern_colors"]
         colors = [ensure_color_tuple(c) for c in pattern_colors_data]
-        base_bg = ensure_color_tuple(menu_bg_colors.get("base", [5, 5, 15]))
-        black = ensure_color_tuple(
-            config.get("colors", {}).get("basic", {}).get("black", [0, 0, 0])
-        )
+        base_bg = ensure_color_tuple(menu_bg_colors["base"])
+        black = ensure_color_tuple(config["colors"]["basic"]["black"])
 
         patterns = ["▓", "▒", "░", "·", "▪", "▫"]
 
@@ -321,9 +319,9 @@ class MenuBackground:
         from data_loading import DataLoader
 
         config = DataLoader.load_config()
-        menu_bg_colors = config.get("colors", {}).get("menu_background", {})
-        border_color = ensure_color_tuple(menu_bg_colors.get("border", [0, 150, 200]))
-        base_bg = ensure_color_tuple(menu_bg_colors.get("base", [5, 5, 15]))
+        menu_bg_colors = config["colors"]["menu_background"]
+        border_color = ensure_color_tuple(menu_bg_colors["border"])
+        base_bg = ensure_color_tuple(menu_bg_colors["base"])
 
         # Top border
         for x in range(console.width):
@@ -341,11 +339,9 @@ class MenuBackground:
         from data_loading import DataLoader
 
         config = DataLoader.load_config()
-        menu_bg_colors = config.get("colors", {}).get("menu_background", {})
-        dots_color = ensure_color_tuple(menu_bg_colors.get("dots", [0, 60, 100]))
-        black = ensure_color_tuple(
-            config.get("colors", {}).get("basic", {}).get("black", [0, 0, 0])
-        )
+        menu_bg_colors = config["colors"]["menu_background"]
+        dots_color = ensure_color_tuple(menu_bg_colors["dots"])
+        black = ensure_color_tuple(config["colors"]["basic"]["black"])
 
         for y in range(2, console.height - 2):
             for x in range(26, 54):

@@ -25,7 +25,7 @@ class EntityInspector:
         """Load terrain descriptions from game_rules.json."""
         if cls._terrain_descriptions is None:
             config = DataLoader.load_config()
-            cls._terrain_descriptions = config.get("terrain_descriptions", {})
+            cls._terrain_descriptions = config["terrain_descriptions"]
 
     @staticmethod
     def get_entity_at_position(game, position: Position) -> dict[str, Any]:

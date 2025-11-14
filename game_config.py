@@ -36,21 +36,36 @@ class GameSettings:
 
     SETTINGS_FILE = "saves/user_settings.json"
 
-    def __init__(self):
-        self.master_volume = 0.7
-        self.sfx_volume = 0.75
-        self.music_volume = 0.6
-        self.graphics_mode = "graphics"  # "glyph" (CP437 characters) or "graphics" (PNG sprites)
-        self.show_achievement_popups = True  # Show achievement unlock popups
-        self.show_particle_effects = True  # Show particle effects (explosions) in graphics mode
-        self.ui_color = "cyan"  # UI theme color for borders/headers (cyan, purple, magenta, golden, crimson, azure, emerald)
-        self.dialogue_preferences = {}  # Stores user preferences for dialogue visibility
+    # Single source of truth for default settings
+    DEFAULTS = {
+        "master_volume": 0.7,
+        "sfx_volume": 0.75,
+        "music_volume": 0.6,
+        "graphics_mode": "graphics",  # "glyph" (CP437 characters) or "graphics" (PNG sprites)
+        "show_achievement_popups": True,  # Show achievement unlock popups
+        "show_particle_effects": True,  # Show particle effects (explosions) in graphics mode
+        "ui_color": "cyan",  # UI theme color for borders/headers (cyan, purple, magenta, golden, crimson, azure, emerald)
+        "dialogue_preferences": {},  # Stores user preferences for dialogue visibility
+        "custom_keyboard_bindings": {},  # Custom key bindings for remapping (Phase 1: Gamepad Support)
+        "custom_gamepad_bindings": {},  # Custom gamepad button bindings
+        "gamepad_deadzone": 0.15,  # Analog stick deadzone (15% default)
+        "gamepad_enabled": True,  # Enable/disable gamepad input
+    }
 
-        # Input customization (Phase 1: Gamepad Support)
-        self.custom_keyboard_bindings = {}  # Custom key bindings for remapping
-        self.custom_gamepad_bindings = {}  # Custom gamepad button bindings
-        self.gamepad_deadzone = 0.15  # Analog stick deadzone (15% default)
-        self.gamepad_enabled = True  # Enable/disable gamepad input
+    def __init__(self):
+        # Initialize with defaults
+        self.master_volume = self.DEFAULTS["master_volume"]
+        self.sfx_volume = self.DEFAULTS["sfx_volume"]
+        self.music_volume = self.DEFAULTS["music_volume"]
+        self.graphics_mode = self.DEFAULTS["graphics_mode"]
+        self.show_achievement_popups = self.DEFAULTS["show_achievement_popups"]
+        self.show_particle_effects = self.DEFAULTS["show_particle_effects"]
+        self.ui_color = self.DEFAULTS["ui_color"]
+        self.dialogue_preferences = self.DEFAULTS["dialogue_preferences"].copy()
+        self.custom_keyboard_bindings = self.DEFAULTS["custom_keyboard_bindings"].copy()
+        self.custom_gamepad_bindings = self.DEFAULTS["custom_gamepad_bindings"].copy()
+        self.gamepad_deadzone = self.DEFAULTS["gamepad_deadzone"]
+        self.gamepad_enabled = self.DEFAULTS["gamepad_enabled"]
 
         self.load_settings()
 
@@ -92,21 +107,21 @@ class GameSettings:
                     self._create_default_settings_file()
                     return
 
-                # Load settings (let AttributeError bubble up - it's a code bug)
-                self.master_volume = settings_data.get("master_volume", 0.7)
-                self.sfx_volume = settings_data.get("sfx_volume", 0.75)
-                self.music_volume = settings_data.get("music_volume", 0.6)
-                self.graphics_mode = settings_data.get("graphics_mode", "graphics")
-                self.show_achievement_popups = settings_data.get("show_achievement_popups", True)
-                self.show_particle_effects = settings_data.get("show_particle_effects", True)
-                self.ui_color = settings_data.get("ui_color", "cyan")
-                self.dialogue_preferences = settings_data.get("dialogue_preferences", {})
+                # Load settings with defaults from single source of truth
+                self.master_volume = settings_data.get("master_volume", self.DEFAULTS["master_volume"])
+                self.sfx_volume = settings_data.get("sfx_volume", self.DEFAULTS["sfx_volume"])
+                self.music_volume = settings_data.get("music_volume", self.DEFAULTS["music_volume"])
+                self.graphics_mode = settings_data.get("graphics_mode", self.DEFAULTS["graphics_mode"])
+                self.show_achievement_popups = settings_data.get("show_achievement_popups", self.DEFAULTS["show_achievement_popups"])
+                self.show_particle_effects = settings_data.get("show_particle_effects", self.DEFAULTS["show_particle_effects"])
+                self.ui_color = settings_data.get("ui_color", self.DEFAULTS["ui_color"])
+                self.dialogue_preferences = settings_data.get("dialogue_preferences", self.DEFAULTS["dialogue_preferences"].copy())
 
                 # Input customization (Phase 1: Gamepad Support)
-                self.custom_keyboard_bindings = settings_data.get("custom_keyboard_bindings", {})
-                self.custom_gamepad_bindings = settings_data.get("custom_gamepad_bindings", {})
-                self.gamepad_deadzone = settings_data.get("gamepad_deadzone", 0.15)
-                self.gamepad_enabled = settings_data.get("gamepad_enabled", True)
+                self.custom_keyboard_bindings = settings_data.get("custom_keyboard_bindings", self.DEFAULTS["custom_keyboard_bindings"].copy())
+                self.custom_gamepad_bindings = settings_data.get("custom_gamepad_bindings", self.DEFAULTS["custom_gamepad_bindings"].copy())
+                self.gamepad_deadzone = settings_data.get("gamepad_deadzone", self.DEFAULTS["gamepad_deadzone"])
+                self.gamepad_enabled = settings_data.get("gamepad_enabled", self.DEFAULTS["gamepad_enabled"])
 
                 # Migrate old "ascii" setting to "glyph"
                 if self.graphics_mode == "ascii":
@@ -128,20 +143,8 @@ class GameSettings:
     def _create_default_settings_file(self) -> None:
         """Create a default settings file."""
         try:
-            default_settings = {
-                "master_volume": 0.7,
-                "sfx_volume": 0.75,
-                "music_volume": 0.6,
-                "graphics_mode": "graphics",
-                "show_achievement_popups": True,
-                "show_particle_effects": True,
-                "ui_color": "cyan",
-                "dialogue_preferences": {},
-                "custom_keyboard_bindings": {},
-                "custom_gamepad_bindings": {},
-                "gamepad_deadzone": 0.15,
-                "gamepad_enabled": True,
-            }
+            # Use DEFAULTS as single source of truth
+            default_settings = self.DEFAULTS.copy()
             with open(self.SETTINGS_FILE, "w") as f:
                 json.dump(default_settings, f, indent=2)
             logging.info("Created default settings file")
@@ -287,6 +290,12 @@ class GameConfig:
     MAX_SAVE_ATTEMPTS = 3
     NEARBY_ENEMY_ALERT_RADIUS = 8
     VIRUS_DAMAGE_PER_TURN = 3
+    # Level generation layout constants
+    EDGE_ROOM_BUFFER = 15  # Minimum distance from map edge for room placement
+    LANDMARK_CORNER_OFFSET = 10  # Offset from corner for landmark placement
+    LANDMARK_CORNER_SIZE_ADJUST = 20  # Size adjustment for landmark corner calculation
+    ARENA_EDGE_BUFFER = 15  # Minimum distance from map edge for arena placement
+    ENEMY_PLACEMENT_ATTEMPTS_MULTIPLIER = 25  # Max placement attempts = enemy_count * this value
     DEFAULT_FADE_TIME = 2000
     MESSAGE_CENTER_OFFSET_LARGE = 15
     MESSAGE_CENTER_OFFSET_MEDIUM = 12
@@ -689,6 +698,8 @@ class GameBalance:
     ENEMY_TRACE_ALERT_TO_HOSTILE = 3
     ENEMY_TRACE_CONTINUOUS_HOSTILE = 0.3
     ENEMY_MEMORY_TURNS = 20
+    OVERHEAT_COOLDOWN_AMOUNT = 15  # Heat reduction on overheat
+    OVERHEAT_MINIMUM_HEAT = 85  # Minimum heat level after overheat cooldown
 
     @classmethod
     def load_from_json(cls):
@@ -726,6 +737,8 @@ class GameBalance:
             "balance.ai_behavior.enemy_trace_continuous_hostile"
         )
         cls.ENEMY_MEMORY_TURNS = GameConfig._get_required("balance.enemy_memory_turns")
+        cls.OVERHEAT_COOLDOWN_AMOUNT = GameConfig._get_required("balance.overheat_cooldown_amount")
+        cls.OVERHEAT_MINIMUM_HEAT = GameConfig._get_required("balance.overheat_minimum_heat")
 
     @staticmethod
     def get_enemy_difficulty_multiplier(difficulty: str) -> float:

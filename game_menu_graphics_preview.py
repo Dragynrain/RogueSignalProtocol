@@ -61,7 +61,7 @@ class GraphicsPreviewMenu:
         # Alert ring animation state
         self.alert_color_index = 0  # 0=yellow, 1=orange, 2=red
         config = DataLoader.load_config()
-        alert_seq = config.get("colors", {}).get("preview_demo", {}).get("alert_sequence", [])
+        alert_seq = config["colors"]["preview_demo"]["alert_sequence"]
         self.alert_colors = (
             [ensure_color_tuple(c) for c in alert_seq]
             if alert_seq
@@ -565,7 +565,7 @@ class GraphicsPreviewMenu:
                 # Reset color mod
                 config = DataLoader.load_config()
                 normal_tint = ensure_color_tuple(
-                    config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255])
+                    config["colors"]["basic"]["pure_white"]
                 )
                 codehack_texture.color_mod = normal_tint
 
@@ -595,7 +595,7 @@ class GraphicsPreviewMenu:
                 # Reset color mod
                 config = DataLoader.load_config()
                 normal_tint = ensure_color_tuple(
-                    config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255])
+                    config["colors"]["basic"]["pure_white"]
                 )
                 exploit_texture.color_mod = normal_tint
 
@@ -723,9 +723,7 @@ class GraphicsPreviewMenu:
                         # Red brackets for hostile enemy state
                         config = DataLoader.load_config()
                         bracket_color = ensure_color_tuple(
-                            config.get("colors", {})
-                            .get("targeting", {})
-                            .get("corner_bracket", [255, 0, 0])
+                            config["colors"]["targeting"]["corner_bracket"]
                         )
                         self._draw_corner_brackets(
                             renderer, bracket_rect, bracket_color, bracket_size=4
@@ -763,11 +761,11 @@ class GraphicsPreviewMenu:
                     (14, 11),  # Third move (dimmest)
                 ]
                 config = DataLoader.load_config()
-                targeting_colors = config.get("colors", {}).get("targeting", {})
+                targeting_colors = config["colors"]["targeting"]
                 prediction_colors = [
-                    ensure_color_tuple(targeting_colors.get("prediction_bright", [255, 255, 50])),
-                    ensure_color_tuple(targeting_colors.get("prediction_medium", [240, 240, 30])),
-                    ensure_color_tuple(targeting_colors.get("prediction_dim", [220, 220, 20])),
+                    ensure_color_tuple(targeting_colors["prediction_bright"]),
+                    ensure_color_tuple(targeting_colors["prediction_medium"]),
+                    ensure_color_tuple(targeting_colors["prediction_dim"]),
                 ]
                 for i, (pred_x, pred_y) in enumerate(prediction_positions):
                     screen_x = offset_pixel_x + (pred_x * tile_w)
@@ -777,7 +775,7 @@ class GraphicsPreviewMenu:
                     renderer.copy(prediction_texture, dest=(screen_x, screen_y, tile_w, tile_h))
                 # Reset color mod
                 normal_tint = ensure_color_tuple(
-                    config.get("colors", {}).get("basic", {}).get("pure_white", [255, 255, 255])
+                    config["colors"]["basic"]["pure_white"]
                 )
                 prediction_texture.color_mod = normal_tint
 
