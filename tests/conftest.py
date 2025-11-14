@@ -97,13 +97,16 @@ def load_game_config_once():
     # No cleanup needed - data remains loaded
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def isolate_config_state():
     """
-    Isolate config state between tests to prevent cache pollution.
+    Isolate config state for tests that mock or modify GameConfig.
 
-    Some tests mock or modify GameConfig, which uses class-level caching.
-    This fixture ensures the cache is reloaded after each test to maintain isolation.
+    Use this fixture explicitly when your test mocks GameConfig methods or
+    modifies class-level caching. Don't use autouse to avoid clearing config
+    for tests that don't need it.
+
+    Usage: def test_something(isolate_config_state):
     """
     yield
 

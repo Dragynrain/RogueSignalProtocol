@@ -252,8 +252,8 @@ class TestGameSettingsPersistence:
                 if os.path.exists(temp_file):
                     os.remove(temp_file)
 
-    def test_load_settings_creates_default_on_missing_file(self):
-        """load_settings should create default file if missing."""
+    def test_load_settings_uses_defaults_when_file_missing(self):
+        """load_settings should use in-memory defaults when file doesn't exist (no file creation)."""
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_file = os.path.join(temp_dir, "test_settings.json")
 
@@ -267,8 +267,12 @@ class TestGameSettingsPersistence:
 
                 settings.load_settings()
 
-                # Should have created the file
-                assert os.path.exists(temp_file)
+                # Should NOT have created the file (lazy file creation)
+                assert not os.path.exists(temp_file)
+
+                # Should still have default values in memory
+                assert settings.master_volume == GameSettings.DEFAULTS["master_volume"]
+                assert settings.graphics_mode == GameSettings.DEFAULTS["graphics_mode"]
 
 
 class TestGameConfigLoading:
@@ -299,24 +303,34 @@ class TestGameConfigLoading:
         """GameConfig viewport dimensions should be valid."""
         GameConfig.load_from_json()
 
-        # Viewport should fit within map
-        assert GameConfig.VIEWPORT_WIDTH > 0
-        assert GameConfig.VIEWPORT_HEIGHT > 0
+        # Viewport should be positive (using default glyph mode)
+        viewport_width = GameConfig.VIEWPORT_WIDTH()
+        viewport_height = GameConfig.VIEWPORT_HEIGHT()
 
-        # Map should be larger than or equal to viewport
-        assert GameConfig.MAP_WIDTH >= GameConfig.VIEWPORT_WIDTH
-        assert GameConfig.MAP_HEIGHT >= GameConfig.VIEWPORT_HEIGHT
+        assert viewport_width > 0
+        assert viewport_height > 0
+
+        # Both map and viewport should be positive and reasonable
+        # Note: viewport CAN be larger than map (map gets centered in viewport)
+        assert GameConfig.MAP_WIDTH > 0
+        assert GameConfig.MAP_HEIGHT > 0
 
     def test_game_config_calculate_viewport_calculates_correctly(self):
-        """_calculate_viewport should produce valid dimensions."""
+        """VIEWPORT_WIDTH/HEIGHT should return valid dimensions in glyph mode."""
         GameConfig.load_from_json()
 
-        # Manually calculate expected values
-        expected_width = GameConfig.SCREEN_WIDTH - GameConfig.SIDEBAR_WIDTH
-        expected_height = GameConfig.SCREEN_HEIGHT - GameConfig.UI_HEIGHT
+        # Calculate viewport using default glyph mode
+        viewport_width = GameConfig.VIEWPORT_WIDTH()
+        viewport_height = GameConfig.VIEWPORT_HEIGHT()
 
-        assert GameConfig.VIEWPORT_WIDTH == expected_width
-        assert GameConfig.VIEWPORT_HEIGHT == expected_height
+        # In glyph mode:
+        # - viewport_width = SCREEN_WIDTH - SIDEBAR_WIDTH (game area width)
+        # - viewport_height = SCREEN_HEIGHT - PANEL_HEIGHT - 1 (status bar at top)
+        expected_width = GameConfig.GAME_AREA_WIDTH()
+        expected_height = GameConfig.SCREEN_HEIGHT - GameConfig.PANEL_HEIGHT - 1
+
+        assert viewport_width == expected_width
+        assert viewport_height == expected_height
 
 
 class TestGameConfigErrorHandling:

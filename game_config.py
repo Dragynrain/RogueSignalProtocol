@@ -90,11 +90,12 @@ class GameSettings:
         Load settings from user_settings.json.
 
         Handles:
-        - Missing file (creates default)
+        - Missing file (uses in-memory defaults, doesn't create file)
         - Empty/corrupted file (recreates default)
         - Migration from old setting names (e.g., "ascii" -> "glyph")
 
         Never crashes - always falls back to defaults if needed.
+        File is only created when user changes a setting (via save_settings()).
         """
         try:
             if os.path.exists(self.SETTINGS_FILE):
