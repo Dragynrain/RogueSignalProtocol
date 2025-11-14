@@ -101,10 +101,13 @@ class TestDebugExportGameStates:
         # Large inventory should be captured
         assert len(agent.player.inventory_manager.items) >= 50
 
-    @pytest.mark.parametrize("level,seed", [
-        (2, 99008),
-        (3, 99009),
-    ])
+    @pytest.mark.parametrize(
+        "level,seed",
+        [
+            (2, 99008),
+            (3, 99009),
+        ],
+    )
     def test_debug_export_on_level(self, level, seed):
         """Debug export should work on all levels."""
         agent = GameTestAgent(seed=seed, level=level)

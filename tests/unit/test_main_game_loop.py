@@ -13,7 +13,6 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 
-
 class TestGameComponentIntegration(unittest.TestCase):
     """Test integration of major game components."""
 

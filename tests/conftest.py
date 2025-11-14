@@ -76,6 +76,26 @@ from tests.fixtures.standard_patterns import (
 
 
 @pytest.fixture(scope="session", autouse=True)
+def initialize_file_paths():
+    """
+    Initialize file path system for all tests.
+
+    This prevents "get_data_directory() called before initialize_data_directories()"
+    errors throughout the test suite.
+
+    Scope: session (initialized once for entire pytest run)
+    """
+    import game_file_paths
+
+    # Initialize paths for test environment (will use portable mode)
+    game_file_paths.initialize_data_directories()
+
+    yield
+
+    # No cleanup needed
+
+
+@pytest.fixture(scope="session", autouse=True)
 def load_game_config_once():
     """
     Load game configuration once per test session.
@@ -152,7 +172,6 @@ def isolate_random_state():
 
     # Import here to avoid circular dependencies
     import hashlib
-
 
     # Get current test name for deterministic per-test seeding
     test_name = os.environ.get("PYTEST_CURRENT_TEST", "unknown")

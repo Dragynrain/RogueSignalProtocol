@@ -69,7 +69,9 @@ class TestGameDataEnemyTypes:
     def test_enemy_types_have_single_character_symbols(self, real_game_data):
         """Enemy symbols should be single uppercase letters (A-Z)."""
         for enemy_id, enemy_type in GameData.ENEMY_TYPES.items():
-            assert len(enemy_type.symbol) == 1, f"{enemy_id} symbol not single char: {enemy_type.symbol}"
+            assert (
+                len(enemy_type.symbol) == 1
+            ), f"{enemy_id} symbol not single char: {enemy_type.symbol}"
             assert (
                 enemy_type.symbol.isupper()
             ), f"{enemy_id} symbol not uppercase: {enemy_type.symbol}"
@@ -182,7 +184,9 @@ class TestGameUpgrades:
             assert upgrade.symbol is not None, f"{upgrade_key} missing symbol"
             assert upgrade.color is not None, f"{upgrade_key} missing color"
             assert upgrade.stat_type is not None, f"{upgrade_key} missing stat_type"
-            assert upgrade.bonus_amount > 0, f"{upgrade_key} has invalid bonus: {upgrade.bonus_amount}"
+            assert (
+                upgrade.bonus_amount > 0
+            ), f"{upgrade_key} has invalid bonus: {upgrade.bonus_amount}"
 
     def test_upgrades_have_valid_stat_types(self, real_game_data):
         """Upgrades should use valid stat types."""
@@ -197,7 +201,9 @@ class TestGameUpgrades:
         """Upgrade colors should be valid RGB tuples."""
         for upgrade_key, upgrade in GameUpgrades.UPGRADES.items():
             assert isinstance(upgrade.color, tuple), f"{upgrade_key} color not a tuple"
-            assert len(upgrade.color) == 3, f"{upgrade_key} color not RGB (length {len(upgrade.color)})"
+            assert (
+                len(upgrade.color) == 3
+            ), f"{upgrade_key} color not RGB (length {len(upgrade.color)})"
 
             # Check RGB values are in valid range
             r, g, b = upgrade.color
@@ -220,9 +226,9 @@ class TestGameUpgrades:
         stat_types = set(upgrade.stat_type for upgrade in GameUpgrades.UPGRADES.values())
 
         # Should have variety of upgrade types
-        assert "ram" in stat_types or "cpu" in stat_types or "heat" in stat_types, (
-            "No standard upgrade types found"
-        )
+        assert (
+            "ram" in stat_types or "cpu" in stat_types or "heat" in stat_types
+        ), "No standard upgrade types found"
 
 
 class TestGameBalanceConfiguration:
@@ -231,9 +237,9 @@ class TestGameBalanceConfiguration:
     def test_balance_class_attributes_exist(self, real_game_data):
         """GameConfigBalance should have configuration as class attributes."""
         # game_config.GameBalance uses class attributes loaded from JSON
-        assert hasattr(GameConfigBalance, 'CPU_RESTORE_MIN')
-        assert hasattr(GameConfigBalance, 'CPU_RESTORE_MAX')
-        assert hasattr(GameConfigBalance, 'HEAT_REDUCTION_NORMAL')
+        assert hasattr(GameConfigBalance, "CPU_RESTORE_MIN")
+        assert hasattr(GameConfigBalance, "CPU_RESTORE_MAX")
+        assert hasattr(GameConfigBalance, "HEAT_REDUCTION_NORMAL")
 
     def test_cpu_restore_values_exist(self, real_game_data):
         """CPU restore min/max values should exist as class attributes."""
@@ -244,13 +250,13 @@ class TestGameBalanceConfiguration:
     def test_player_stats_section_exists(self, real_game_data):
         """Balance config should have player-related stat attributes."""
         # Check for common player stats in GameConfigBalance
-        assert hasattr(GameConfigBalance, 'CPU_RECOVERY_AMOUNT')
+        assert hasattr(GameConfigBalance, "CPU_RECOVERY_AMOUNT")
         assert GameConfigBalance.CPU_RECOVERY_AMOUNT > 0
 
     def test_combat_section_exists(self, real_game_data):
         """Balance config should have combat-related attributes."""
         # Check for combat stats in GameConfigBalance
-        assert hasattr(GameConfigBalance, 'ENEMY_ELIMINATION_CPU_REWARD')
+        assert hasattr(GameConfigBalance, "ENEMY_ELIMINATION_CPU_REWARD")
         assert GameConfigBalance.ENEMY_ELIMINATION_CPU_REWARD > 0
 
     def test_get_player_stat_returns_value(self, real_game_data):

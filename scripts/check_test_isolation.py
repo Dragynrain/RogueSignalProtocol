@@ -26,17 +26,17 @@ def run_command(cmd: list[str]) -> tuple[int, str]:
 def get_failed_tests(pytest_output: str) -> set[str]:
     """Extract failed test names from pytest output."""
     failed = set()
-    for line in pytest_output.split('\n'):
-        if line.startswith('FAILED '):
+    for line in pytest_output.split("\n"):
+        if line.startswith("FAILED "):
             # Extract test name: "FAILED tests/unit/test_foo.py::TestClass::test_method"
-            test_name = line.split(' ')[1].split(' ')[0]
+            test_name = line.split(" ")[1].split(" ")[0]
             failed.add(test_name)
     return failed
 
 
 def main():
     """Check for test isolation issues."""
-    test_pattern = sys.argv[1] if len(sys.argv) > 1 else 'tests/'
+    test_pattern = sys.argv[1] if len(sys.argv) > 1 else "tests/"
 
     print("=" * 70)
     print("TEST ISOLATION CHECKER")
@@ -47,9 +47,9 @@ def main():
 
     # Step 1: Run full test suite
     print("[1/2] Running full test suite...")
-    suite_exit, suite_output = run_command([
-        sys.executable, '-m', 'pytest', test_pattern, '-v', '--tb=no'
-    ])
+    suite_exit, suite_output = run_command(
+        [sys.executable, "-m", "pytest", test_pattern, "-v", "--tb=no"]
+    )
     suite_failed = get_failed_tests(suite_output)
 
     if not suite_failed:
@@ -69,11 +69,11 @@ def main():
     still_failing = set()
 
     for i, test_name in enumerate(sorted(suite_failed), 1):
-        print(f"  [{i}/{len(suite_failed)}] {test_name}...", end=' ')
+        print(f"  [{i}/{len(suite_failed)}] {test_name}...", end=" ")
 
-        iso_exit, iso_output = run_command([
-            sys.executable, '-m', 'pytest', test_name, '-v', '--tb=no'
-        ])
+        iso_exit, iso_output = run_command(
+            [sys.executable, "-m", "pytest", test_name, "-v", "--tb=no"]
+        )
 
         if iso_exit == 0:
             print("PASSES (isolation issue!)")
@@ -113,5 +113,5 @@ def main():
     return 1 if isolation_passed else 0
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

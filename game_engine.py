@@ -150,9 +150,7 @@ class GameEngine:
 
         # Mouse hover tracking (for visual feedback)
         self.mouse_hover_world_pos: Position | None = None
-        self.mouse_tile_pos: tuple[int, int] | None = (
-            None  # Mouse position in console tile coords
-        )
+        self.mouse_tile_pos: tuple[int, int] | None = None  # Mouse position in console tile coords
 
         # Camera offset tracking (for consistent input/rendering in look mode)
         self.last_camera_offset: Position | None = None
@@ -433,7 +431,7 @@ class GameEngine:
                     self.player.take_damage(damage)
                     self.player.heat = max(
                         GameBalance.OVERHEAT_MINIMUM_HEAT,
-                        self.player.max_heat - GameBalance.OVERHEAT_COOLDOWN_AMOUNT
+                        self.player.max_heat - GameBalance.OVERHEAT_COOLDOWN_AMOUNT,
                     )
                     self.message_log.add_message(f"Overheating! {damage} CPU damage")
 

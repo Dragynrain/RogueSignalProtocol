@@ -11,7 +11,6 @@ Tests the integration of core gameplay systems that are essential for proper gam
 - Map interaction and special tiles
 """
 
-
 from game_entities import EnemyState
 from tests.fixtures.simple_fixtures import enemy_builder
 

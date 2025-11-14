@@ -322,9 +322,7 @@ class GameLevelCoordinator:
                     return test_pos
 
         # Absolute fallback: Search ENTIRE map for a valid floor tile
-        logging.error(
-            "Spawn: EMERGENCY - No valid position in spawn room! Searching entire map..."
-        )
+        logging.error("Spawn: EMERGENCY - No valid position in spawn room! Searching entire map...")
         for y in range(GameConfig.MAP_HEIGHT):
             for x in range(GameConfig.MAP_WIDTH):
                 test_pos = Position(x, y)
@@ -575,7 +573,10 @@ class GameLevelCoordinator:
         placed_enemies = 0
         attempts = 0
 
-        while placed_enemies < enemy_count and attempts < enemy_count * GameConfig.ENEMY_PLACEMENT_ATTEMPTS_MULTIPLIER:
+        while (
+            placed_enemies < enemy_count
+            and attempts < enemy_count * GameConfig.ENEMY_PLACEMENT_ATTEMPTS_MULTIPLIER
+        ):
             attempts += 1
             # Ensure enemies spawn well away from top-left player spawn area
             x = random.randint(10, GameConfig.MAP_WIDTH - 2)

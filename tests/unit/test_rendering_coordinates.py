@@ -231,13 +231,18 @@ class TestSetAlphaRegion:
 class TestCharToPixelConversion:
     """Test console character to pixel coordinate conversion."""
 
-    @pytest.mark.parametrize("console_x,console_y,window_w,window_h,expected_x,expected_y", [
-        (10, 5, 1920, 1080, 240, 108),  # Standard 1080p
-        (40, 25, 3840, 2160, 1920, 1080),  # 4K resolution
-        (0, 0, 1280, 800, 0, 0),  # Origin
-        (79, 49, 1920, 1080, 1896, 1058),  # Bottom-right corner
-    ])
-    def test_char_to_pixel_conversion(self, console_x, console_y, window_w, window_h, expected_x, expected_y):
+    @pytest.mark.parametrize(
+        "console_x,console_y,window_w,window_h,expected_x,expected_y",
+        [
+            (10, 5, 1920, 1080, 240, 108),  # Standard 1080p
+            (40, 25, 3840, 2160, 1920, 1080),  # 4K resolution
+            (0, 0, 1280, 800, 0, 0),  # Origin
+            (79, 49, 1920, 1080, 1896, 1058),  # Bottom-right corner
+        ],
+    )
+    def test_char_to_pixel_conversion(
+        self, console_x, console_y, window_w, window_h, expected_x, expected_y
+    ):
         """Test console char to pixel conversion with various resolutions."""
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
             console_x=console_x, console_y=console_y, window_width=window_w, window_height=window_h
@@ -250,13 +255,18 @@ class TestCharToPixelConversion:
 class TestPixelToCharConversion:
     """Test pixel to console character coordinate conversion."""
 
-    @pytest.mark.parametrize("pixel_x,pixel_y,window_w,window_h,expected_x,expected_y", [
-        (400, 300, 1280, 800, 25, 18),  # Standard click
-        (9999, 9999, 1280, 800, 79, 49),  # Beyond bounds - clamps
-        (-100, -200, 1280, 800, 0, 0),  # Negative - clamps to origin
-        (0, 0, 1920, 1080, 0, 0),  # Origin
-    ])
-    def test_pixel_to_char_conversion(self, pixel_x, pixel_y, window_w, window_h, expected_x, expected_y):
+    @pytest.mark.parametrize(
+        "pixel_x,pixel_y,window_w,window_h,expected_x,expected_y",
+        [
+            (400, 300, 1280, 800, 25, 18),  # Standard click
+            (9999, 9999, 1280, 800, 79, 49),  # Beyond bounds - clamps
+            (-100, -200, 1280, 800, 0, 0),  # Negative - clamps to origin
+            (0, 0, 1920, 1080, 0, 0),  # Origin
+        ],
+    )
+    def test_pixel_to_char_conversion(
+        self, pixel_x, pixel_y, window_w, window_h, expected_x, expected_y
+    ):
         """Test pixel to console char conversion with various cases."""
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
             pixel_x=pixel_x, pixel_y=pixel_y, window_width=window_w, window_height=window_h

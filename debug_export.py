@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
 from game_errors import GameErrorHandler
+from game_file_paths import get_data_directory
 
 if TYPE_CHECKING:
     from game_engine import GameEngine
@@ -38,7 +39,10 @@ if TYPE_CHECKING:
 class DebugExporter:
     """Handles creation of debug packages for bug reporting."""
 
-    EXPORT_DIR = Path("debug_exports")
+    @classmethod
+    def _get_export_dir(cls) -> Path:
+        """Get the debug export directory path (supports portable/AppData modes)."""
+        return get_data_directory() / "debug_exports"
 
     @classmethod
     def create_debug_package(
@@ -56,11 +60,11 @@ class DebugExporter:
         """
         try:
             # Create export directory
-            cls.EXPORT_DIR.mkdir(exist_ok=True)
+            cls._get_export_dir().mkdir(exist_ok=True)
 
             # Generate filename with timestamp
             timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-            zip_filename = cls.EXPORT_DIR / f"debug_{timestamp}.zip"
+            zip_filename = cls._get_export_dir() / f"debug_{timestamp}.zip"
 
             logging.info(f"Debug Export: Creating debug package: {zip_filename}")
 
@@ -70,17 +74,17 @@ class DebugExporter:
                 cls._add_system_info(zipf, crash_info, game_engine)
 
                 # 2. Save files (from disk)
-                cls._add_directory_to_zip(zipf, "saves", "saves/")
+                cls._add_directory_to_zip(zipf, str(get_data_directory() / "saves"), "saves/")
 
                 # 2b. Current game state as save file (if active game exists)
                 if game_engine:
                     cls._add_active_save(zipf, game_engine)
 
                 # 3. Log files
-                cls._add_directory_to_zip(zipf, "logs", "logs/")
+                cls._add_directory_to_zip(zipf, str(get_data_directory() / "logs"), "logs/")
 
                 # 4. Metrics database
-                cls._add_directory_to_zip(zipf, "metrics", "metrics/")
+                cls._add_directory_to_zip(zipf, str(get_data_directory() / "metrics"), "metrics/")
 
                 # 5. Game state snapshot (if game engine available)
                 if game_engine:

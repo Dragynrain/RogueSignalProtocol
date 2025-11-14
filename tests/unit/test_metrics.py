@@ -10,9 +10,10 @@ from pathlib import Path
 import pytest
 
 from game_metrics import (
-    METRICS_DIR,
     LifetimeMetrics,
     SessionMetrics,
+    _get_metrics_dir,
+    _get_progress_file_path,
     finalize_session,
     init_session_metrics,
     load_lifetime_metrics,
@@ -27,29 +28,32 @@ from game_metrics import (
 def clean_metrics():
     """Clean up metrics directory AND progress file before and after tests."""
     # Clean before test
-    if METRICS_DIR.exists():
-        for file in METRICS_DIR.glob("*.json"):
+    metrics_dir = _get_metrics_dir()
+    if metrics_dir.exists():
+        for file in metrics_dir.glob("*.json"):
             file.unlink()
-        db_file = METRICS_DIR / "sessions.db"
+        db_file = metrics_dir / "sessions.db"
         if db_file.exists():
             db_file.unlink()
 
     # Clean progress file for unit tests (to ensure clean state)
-    progress_file = Path("saves/rogue_signal_progress.json")
+    progress_file = Path(_get_progress_file_path())
     if progress_file.exists():
         progress_file.unlink()
 
     yield
 
     # Clean after test
-    if METRICS_DIR.exists():
-        for file in METRICS_DIR.glob("*.json"):
+    metrics_dir = _get_metrics_dir()
+    if metrics_dir.exists():
+        for file in metrics_dir.glob("*.json"):
             file.unlink()
-        db_file = METRICS_DIR / "sessions.db"
+        db_file = metrics_dir / "sessions.db"
         if db_file.exists():
             db_file.unlink()
 
     # Clean progress file after test
+    progress_file = Path(_get_progress_file_path())
     if progress_file.exists():
         progress_file.unlink()
     # Tests that need progress data should use mocks or temp files.
@@ -162,7 +166,7 @@ def test_save_session_to_json(clean_metrics):
     save_session_to_json(finalized)
 
     # Verify file exists
-    json_files = list(METRICS_DIR.glob("*.json"))
+    json_files = list(_get_metrics_dir().glob("*.json"))
     assert len(json_files) == 1
 
     # Verify content
@@ -189,7 +193,7 @@ def test_save_session_to_sqlite(clean_metrics):
     save_session_to_sqlite(finalized)
 
     # Verify database exists
-    db_file = METRICS_DIR / "sessions.db"
+    db_file = _get_metrics_dir() / "sessions.db"
     assert db_file.exists()
 
     # Query and verify data

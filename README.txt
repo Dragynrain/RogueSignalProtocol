@@ -4,6 +4,14 @@
                     A Coffee Break Stealth Roguelike
 ===============================================================================
 
+** ALPHA BUILD NOTICE **
+This build includes debug features:
+- Console window shows startup/error messages (intentional!)
+- Verbose logging to help track bugs
+- Shift+F12 creates debug packages for bug reports
+
+Final release builds will hide the console for a cleaner experience.
+
 ABOUT
 -----
 You are a trapped digital consciousness infiltrating hostile corporate
@@ -127,10 +135,37 @@ Preview all included sprite variants in different combinations!
 - Cycle between variants to find your preferred aesthetic
 - Exit the preview and your selections are automatically saved
 
-Your selections are saved to: logs/graphic-preview.log
+Your selections are saved to the graphics preview log (see File Locations below).
 
 This log includes instructions for modifying graphics_tiles.json if you
 want to customize which sprites are used in-game. Perfect for modders!
+
+FILE LOCATIONS
+--------------
+The game stores data in one of two locations depending on installation:
+
+PORTABLE MODE (default):
+- Data stored next to the game executable
+- Works great for USB drives, desktop installs, and portable setups
+- Folders: saves/, logs/, metrics/, debug_exports/
+
+APPDATA MODE (automatic fallback):
+- Activates if portable mode fails (e.g., installed to Program Files)
+- Data stored at: %LOCALAPPDATA%\RogueSignalProtocol\
+- Same folder structure: saves/, logs/, metrics/, debug_exports/
+
+TO CHECK YOUR MODE:
+- Look at the console window when the game starts
+- It will show: "Data storage mode: Portable mode: [path]"
+  or "Data storage mode: AppData mode: [path]"
+
+TYPICAL FILE PATHS:
+Portable: RogueSignalProtocol\saves\user_settings.json
+AppData:  C:\Users\YourName\AppData\Local\RogueSignalProtocol\saves\user_settings.json
+
+Graphics Preview Log: [data directory]\logs\graphic-preview.log
+Debug Packages:       [data directory]\debug_exports\debug_YYYY-MM-DD_HHMM.zip
+Save Files:           [data directory]\saves\
 
 SYSTEM REQUIREMENTS
 -------------------
@@ -142,19 +177,22 @@ Font: CascadiaCode (for glyphs mode)
 TROUBLESHOOTING
 ---------------
 GAME WON'T START:
-- Check debug_mode.flag exists for alpha logging
-- Review game_debug.log for error details
+- Check the console window for error messages
+- Check if debug_mode.flag exists (should exist for alpha builds)
+- Review logs in [data directory]\logs\ (see FILE LOCATIONS section above)
+- If directories can't be created: Move game to a writable location
+  (Desktop, Documents, etc.) instead of Program Files
 
 CRASHES/BUGS:
 - This is an alpha build - bugs expected!
 - Use Shift+F12 or Settings > Export Debug Package to create bug report
 - Debug package includes: saves, logs, metrics, system info, screenshot
-- Exports to: debug_exports/debug_YYYY-MM-DD_HHMM.zip
+- Package saved to [data directory]\debug_exports\debug_YYYY-MM-DD_HHMM.zip
 - Report issues on GitHub: github.com/Dragynrain/RogueSignalProtocol
 
 SAVE FILE LOST:
 - Permadeath is intentional, but if save corruption occurred:
-- Check saves/ folder for backup files
+- Check [data directory]\saves\ folder for backup files
 - Note: Story discoveries persist separately
 
 AUDIO ISSUES:

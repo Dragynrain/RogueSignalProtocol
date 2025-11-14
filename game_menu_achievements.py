@@ -5,7 +5,6 @@ Displays all unlocked and locked achievements organized by category.
 Shows progress tracking and handles hidden achievements.
 """
 
-
 import tcod
 
 from game_achievements import AchievementManager

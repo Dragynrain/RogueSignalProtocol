@@ -12,7 +12,6 @@ These tests use REAL game objects and verify actual resource balance values from
 Only external dependencies (sound, rendering) are mocked.
 """
 
-
 import pytest
 
 from game_config import GameBalance, GameConfig

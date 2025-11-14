@@ -25,7 +25,8 @@
 **Debug tools work in EXE:**
 - [ ] Shift+F12 creates debug package
 - [ ] Settings > Export Debug Package works
-- [ ] Verify package includes saves/logs/screenshots
+- [ ] Verify package includes saves/logs/metrics from data directory
+- [ ] Package created in [data directory]/debug_exports/
 
 **Achievement system:**
 - [ ] Unlock an achievement and verify it persists

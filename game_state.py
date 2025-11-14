@@ -92,9 +92,7 @@ class MessageLog:
         """Get color for a specific message type."""
         config = DataLoader.load_config()
         message_colors = config["colors"]["message_log"]
-        return ensure_color_tuple(
-            message_colors.get(msg_type, message_colors["default"])
-        )
+        return ensure_color_tuple(message_colors.get(msg_type, message_colors["default"]))
 
     def _determine_message_color(self, text: str) -> tuple[int, int, int]:
         """

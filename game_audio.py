@@ -100,7 +100,9 @@ class SoundManager:
         self.music_playing = False
         self.max_channels = AUDIO_MAX_CHANNELS  # Allow more simultaneous sound effects
         self._sound_last_played = {}  # Track last play time for each sound
-        self._sound_cooldown = AUDIO_SOUND_COOLDOWN  # 50ms cooldown to prevent stacking (configurable)
+        self._sound_cooldown = (
+            AUDIO_SOUND_COOLDOWN  # 50ms cooldown to prevent stacking (configurable)
+        )
 
         if self.enabled:
             try:

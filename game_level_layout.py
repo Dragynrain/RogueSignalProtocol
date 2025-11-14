@@ -435,9 +435,7 @@ class AdvancedLayoutGenerator:
             "description": "Server Core - Large circular room with server pillars",
         }
 
-    def create_vault_landmark(
-        self, existing_rooms: list[tuple[int, int, int, int]]
-    ) -> dict | None:
+    def create_vault_landmark(self, existing_rooms: list[tuple[int, int, int, int]]) -> dict | None:
         """
         The Vault: Small room at the end of a narrow corridor with upgrade.
 
@@ -524,9 +522,7 @@ class AdvancedLayoutGenerator:
             "description": "Junction - Major cross-shaped hub connecting multiple areas",
         }
 
-    def create_maze_landmark(
-        self, existing_rooms: list[tuple[int, int, int, int]]
-    ) -> dict | None:
+    def create_maze_landmark(self, existing_rooms: list[tuple[int, int, int, int]]) -> dict | None:
         """
         The Maze: Dense cluster of small rooms with many connections.
 
@@ -536,8 +532,18 @@ class AdvancedLayoutGenerator:
         Returns:
             Landmark definition dictionary or None
         """
-        corner_x = random.choice([GameConfig.LANDMARK_CORNER_OFFSET, GameConfig.MAP_WIDTH - GameConfig.LANDMARK_CORNER_SIZE_ADJUST])
-        corner_y = random.choice([GameConfig.LANDMARK_CORNER_OFFSET, GameConfig.MAP_HEIGHT - GameConfig.LANDMARK_CORNER_SIZE_ADJUST])
+        corner_x = random.choice(
+            [
+                GameConfig.LANDMARK_CORNER_OFFSET,
+                GameConfig.MAP_WIDTH - GameConfig.LANDMARK_CORNER_SIZE_ADJUST,
+            ]
+        )
+        corner_y = random.choice(
+            [
+                GameConfig.LANDMARK_CORNER_OFFSET,
+                GameConfig.MAP_HEIGHT - GameConfig.LANDMARK_CORNER_SIZE_ADJUST,
+            ]
+        )
 
         maze_rooms = []
         for i in range(random.randint(4, 6)):
@@ -569,9 +575,7 @@ class AdvancedLayoutGenerator:
             "description": "Maze - Dense cluster of interconnected small rooms",
         }
 
-    def create_arena_landmark(
-        self, existing_rooms: list[tuple[int, int, int, int]]
-    ) -> dict | None:
+    def create_arena_landmark(self, existing_rooms: list[tuple[int, int, int, int]]) -> dict | None:
         """
         The Arena: Large open room with scattered cover, good for major fights.
 
@@ -582,8 +586,14 @@ class AdvancedLayoutGenerator:
             Landmark definition dictionary or None
         """
         arena_size = 14
-        x = random.randint(GameConfig.ARENA_EDGE_BUFFER, GameConfig.MAP_WIDTH - arena_size - GameConfig.ARENA_EDGE_BUFFER)
-        y = random.randint(GameConfig.ARENA_EDGE_BUFFER, GameConfig.MAP_HEIGHT - arena_size - GameConfig.ARENA_EDGE_BUFFER)
+        x = random.randint(
+            GameConfig.ARENA_EDGE_BUFFER,
+            GameConfig.MAP_WIDTH - arena_size - GameConfig.ARENA_EDGE_BUFFER,
+        )
+        y = random.randint(
+            GameConfig.ARENA_EDGE_BUFFER,
+            GameConfig.MAP_HEIGHT - arena_size - GameConfig.ARENA_EDGE_BUFFER,
+        )
 
         room = (x, y, arena_size, arena_size)
 

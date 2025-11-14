@@ -312,7 +312,10 @@ class AchievementChecker:
         if "massacre" not in already_unlocked and total_kills >= MASSACRE_KILLS_THRESHOLD:
             newly_unlocked.append("massacre")
 
-        if "overkill" not in already_unlocked and session.max_single_hit_damage >= OVERKILL_DAMAGE_THRESHOLD:
+        if (
+            "overkill" not in already_unlocked
+            and session.max_single_hit_damage >= OVERKILL_DAMAGE_THRESHOLD
+        ):
             newly_unlocked.append("overkill")
 
         # Check AOE multi-kills
@@ -321,7 +324,10 @@ class AchievementChecker:
             newly_unlocked.append("crowd_control")
 
         # Efficient killer: average 2+ kills per turn for 10+ turns
-        if "efficient_killer" not in already_unlocked and session.turns_with_kills >= EFFICIENT_KILLER_TURNS_THRESHOLD:
+        if (
+            "efficient_killer" not in already_unlocked
+            and session.turns_with_kills >= EFFICIENT_KILLER_TURNS_THRESHOLD
+        ):
             avg_kills_per_turn = (
                 total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
             )
@@ -329,10 +335,16 @@ class AchievementChecker:
                 newly_unlocked.append("efficient_killer")
 
         # Stealth achievements (immediate)
-        if "silent_assassin" not in already_unlocked and session.max_stealth_streak >= SILENT_ASSASSIN_STREAK_THRESHOLD:
+        if (
+            "silent_assassin" not in already_unlocked
+            and session.max_stealth_streak >= SILENT_ASSASSIN_STREAK_THRESHOLD
+        ):
             newly_unlocked.append("silent_assassin")
 
-        if "blind_spot_master" not in already_unlocked and session.ambushes_from_blind_spots >= BLIND_SPOT_AMBUSHES_THRESHOLD:
+        if (
+            "blind_spot_master" not in already_unlocked
+            and session.ambushes_from_blind_spots >= BLIND_SPOT_AMBUSHES_THRESHOLD
+        ):
             newly_unlocked.append("blind_spot_master")
 
         return newly_unlocked
@@ -362,7 +374,10 @@ class AchievementChecker:
         if "massacre" not in already_unlocked and total_kills >= MASSACRE_KILLS_THRESHOLD:
             newly_unlocked.append("massacre")
 
-        if "overkill" not in already_unlocked and session.max_single_hit_damage >= OVERKILL_DAMAGE_THRESHOLD:
+        if (
+            "overkill" not in already_unlocked
+            and session.max_single_hit_damage >= OVERKILL_DAMAGE_THRESHOLD
+        ):
             newly_unlocked.append("overkill")
 
         # Check AOE multi-kills (aoe_multi_kills is Counter of {num_enemies: count})
@@ -371,7 +386,10 @@ class AchievementChecker:
             newly_unlocked.append("crowd_control")
 
         # Efficient killer: average 2+ kills per turn for 10+ turns
-        if "efficient_killer" not in already_unlocked and session.turns_with_kills >= EFFICIENT_KILLER_TURNS_THRESHOLD:
+        if (
+            "efficient_killer" not in already_unlocked
+            and session.turns_with_kills >= EFFICIENT_KILLER_TURNS_THRESHOLD
+        ):
             avg_kills_per_turn = (
                 total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
             )
@@ -379,7 +397,10 @@ class AchievementChecker:
                 newly_unlocked.append("efficient_killer")
 
         # Stealth achievements
-        if "silent_assassin" not in already_unlocked and session.max_stealth_streak >= SILENT_ASSASSIN_STREAK_THRESHOLD:
+        if (
+            "silent_assassin" not in already_unlocked
+            and session.max_stealth_streak >= SILENT_ASSASSIN_STREAK_THRESHOLD
+        ):
             newly_unlocked.append("silent_assassin")
 
         if (
@@ -389,7 +410,10 @@ class AchievementChecker:
         ):
             newly_unlocked.append("ghost_protocol")
 
-        if "blind_spot_master" not in already_unlocked and session.ambushes_from_blind_spots >= BLIND_SPOT_AMBUSHES_THRESHOLD:
+        if (
+            "blind_spot_master" not in already_unlocked
+            and session.ambushes_from_blind_spots >= BLIND_SPOT_AMBUSHES_THRESHOLD
+        ):
             newly_unlocked.append("blind_spot_master")
 
         if (
@@ -485,7 +509,10 @@ class AchievementChecker:
             newly_unlocked.append("enemy_database")
 
         # Explorer - special nodes discovered
-        if "explorer" not in already_unlocked and len(session.special_nodes_discovered) >= EXPLORER_NODES_THRESHOLD:
+        if (
+            "explorer" not in already_unlocked
+            and len(session.special_nodes_discovered) >= EXPLORER_NODES_THRESHOLD
+        ):
             newly_unlocked.append("explorer")
 
         # Survivor - 500+ turns
@@ -513,10 +540,16 @@ class AchievementChecker:
         if "veteran" not in already_unlocked and lifetime.total_games >= VETERAN_GAMES_THRESHOLD:
             newly_unlocked.append("veteran")
 
-        if "persistent" not in already_unlocked and lifetime.total_victories >= PERSISTENT_VICTORIES_THRESHOLD:
+        if (
+            "persistent" not in already_unlocked
+            and lifetime.total_victories >= PERSISTENT_VICTORIES_THRESHOLD
+        ):
             newly_unlocked.append("persistent")
 
-        if "legendary" not in already_unlocked and lifetime.total_victories >= LEGENDARY_VICTORIES_THRESHOLD:
+        if (
+            "legendary" not in already_unlocked
+            and lifetime.total_victories >= LEGENDARY_VICTORIES_THRESHOLD
+        ):
             newly_unlocked.append("legendary")
 
         return newly_unlocked

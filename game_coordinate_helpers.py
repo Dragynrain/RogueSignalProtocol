@@ -8,7 +8,6 @@ array indexing to prevent common transparency and positioning bugs.
 Key Principle: Pass coordinates as (x, y), access TCOD arrays as [y, x].
 """
 
-
 import tcod.console
 
 

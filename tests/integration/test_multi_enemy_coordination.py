@@ -16,7 +16,6 @@ Tests complex enemy interactions and coordination:
 These tests use REAL game objects with minimal mocking.
 """
 
-
 import pytest
 
 from game_entities import EnemyState, Position

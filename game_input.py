@@ -636,4 +636,3 @@ class InputHandler:
             return True
 
         return False
-

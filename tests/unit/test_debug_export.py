@@ -6,7 +6,6 @@ Tests the debug package creation, file collection, and ZIP generation.
 """
 
 import json
-import os
 import zipfile
 from unittest.mock import Mock, patch
 
@@ -16,23 +15,21 @@ from debug_export import DebugExporter, export_crash_report, export_debug_packag
 
 
 @pytest.fixture
-def temp_export_dir(tmp_path):
+def temp_export_dir(tmp_path, monkeypatch):
     """Create temporary export directory."""
     export_dir = tmp_path / "debug_exports"
     export_dir.mkdir()
 
-    # Mock the EXPORT_DIR to use temp directory
-    original_dir = DebugExporter.EXPORT_DIR
-    DebugExporter.EXPORT_DIR = export_dir
+    # Mock the _get_export_dir function to use temp directory
+    from debug_export import DebugExporter
+
+    monkeypatch.setattr(DebugExporter, "_get_export_dir", lambda: export_dir)
 
     yield export_dir
 
-    # Restore original
-    DebugExporter.EXPORT_DIR = original_dir
-
 
 @pytest.fixture
-def temp_game_dirs(tmp_path):
+def temp_game_dirs(tmp_path, monkeypatch):
     """Create temporary game directories with sample files."""
     # Create saves directory with sample files
     saves_dir = tmp_path / "saves"
@@ -52,14 +49,12 @@ def temp_game_dirs(tmp_path):
     metrics_dir.mkdir()
     (metrics_dir / "session_12345.json").write_text('{"session": "test"}')
 
-    # Change to temp directory for testing
-    original_cwd = os.getcwd()
-    os.chdir(tmp_path)
+    # Mock get_data_directory to return tmp_path
+    import game_file_paths
+
+    monkeypatch.setattr(game_file_paths, "get_data_directory", lambda: tmp_path)
 
     yield tmp_path
-
-    # Restore original directory
-    os.chdir(original_cwd)
 
 
 @pytest.fixture
