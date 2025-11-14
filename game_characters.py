@@ -278,9 +278,6 @@ class Enemy:
             virus_max = GameConfig._get_required("gameplay.virus_max_duration")
             virus_turns = player.temporary_effects.get("virus_turns", 0) + virus_increment
             player.temporary_effects["virus_turns"] = min(virus_turns, virus_max)
-            logging.debug(
-                f"Enemy {self.type}@({self.x},{self.y}): infected player, virus_turns={player.temporary_effects['virus_turns']}"
-            )
             return 0
 
         if self.type == "inhibitor":
@@ -299,15 +296,9 @@ class Enemy:
                 player.temporary_effects["movement_slowed_turns"] = min(
                     current_slow + (-net_effect), 5
                 )
-            logging.debug(
-                f"Enemy {self.type}@({self.x},{self.y}): inhibited player, slowed_turns={player.temporary_effects['movement_slowed_turns']}"
-            )
             return 0
 
         damage = player.take_damage(self.type_data.damage)
-        logging.debug(
-            f"Enemy {self.type_data.name}@({self.x},{self.y}): attacked player for {damage} damage, player_cpu={player.cpu}/{player.max_cpu}"
-        )
 
         # CRITICAL: Check for death immediately after attack
         # Don't wait for process_turn() - death may have occurred mid-turn
@@ -347,9 +338,6 @@ class Enemy:
         old_cpu = self.cpu
         self.cpu -= damage
         is_dead = self.cpu <= 0
-        logging.debug(
-            f"Enemy {self.type_data.name}@({self.x},{self.y}): took {damage} damage, cpu {old_cpu} -> {self.cpu}, destroyed={is_dead}"
-        )
         return is_dead
 
     def move(self, game_map, player, game_engine) -> bool:
@@ -879,14 +867,6 @@ class Enemy:
             # Add to queue
             self.move_queue.append(next_pos)
             current_pos = next_pos
-            logging.debug(
-                f"Enemy {self.type_data.name}@({self.x},{self.y}): Added flee move to ({next_pos.x},{next_pos.y})"
-            )
-
-        if len(self.move_queue) > 0:
-            logging.debug(
-                f"Enemy {self.type_data.name}@({self.x},{self.y}): Flee queue filled with {len(self.move_queue)} moves"
-            )
 
     def _get_current_target(self, player, game_map) -> Position | None:
         """Get the current target position based on enemy state and movement type."""

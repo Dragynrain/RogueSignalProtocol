@@ -251,9 +251,6 @@ class TurnProcessor:
             player: Player instance to update
         """
         self.game_state.advance_turn()
-        logging.debug(
-            f"=== Turn {self.game_state.turn} START: heat={player.heat}/{player.max_heat}, trace={player.trace_level:.1f}, cpu={player.cpu}/{player.max_cpu} ==="
-        )
 
         # Process heat reduction
         self._process_heat_management(player)
@@ -276,19 +273,11 @@ class TurnProcessor:
             old_heat = player.heat
             player.heat = max(0, player.heat - heat_reduction)
 
-            if old_heat != player.heat:
-                logging.debug(
-                    f"Turn: Heat cooldown {old_heat} -> {player.heat} (-{heat_reduction})"
-                )
-
             # Heat reduction applied silently
 
     def _process_temporary_effects(self, player) -> None:
         """Process and decay temporary effects."""
         effects_to_update = list(player.temporary_effects.keys())
-        active_effects = {k: v for k, v in player.temporary_effects.items() if v > 0}
-        if active_effects:
-            logging.debug(f"Turn: Active effects: {active_effects}")
 
         for effect_name in effects_to_update:
             if player.temporary_effects[effect_name] > 0:
@@ -297,9 +286,6 @@ class TurnProcessor:
                     virus_damage = GameConfig.VIRUS_DAMAGE_PER_TURN
                     actual_damage = player.take_damage(virus_damage)
                     self.message_log.add_message(f"Virus damage: {actual_damage} CPU damage")
-                    logging.debug(
-                        f"Turn: Virus dealt {actual_damage} damage, player_cpu={player.cpu}/{player.max_cpu}"
-                    )
 
                     # Check for death from virus
                     if player.cpu <= 0:

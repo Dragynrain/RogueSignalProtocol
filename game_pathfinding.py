@@ -87,9 +87,6 @@ class PathfindingHelper:
 
             # Validate path (TCOD returns numpy array)
             if len(path) > 1 and len(path) <= max_length:
-                logging.debug(
-                    f"Pathfinding: ({start.x},{start.y}) -> ({goal.x},{goal.y}), path_length={len(path)}, max={max_length}"
-                )
                 return path
             elif len(path) > max_length:
                 logging.debug(

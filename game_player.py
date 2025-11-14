@@ -121,9 +121,6 @@ class Player:
 
         # Use centralized validation
         if PositionValidator.is_basic_valid_position(new_position, game_map):
-            logging.debug(
-                f"Player: moved from ({self.last_position.x},{self.last_position.y}) to ({new_position.x},{new_position.y})"
-            )
             self.position = new_position
             return True
 

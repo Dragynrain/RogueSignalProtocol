@@ -74,17 +74,13 @@ class DialogueInputManager:
         if not dialogue:
             return
 
-        logging.debug(f"Input: Dialogue confirm for '{dialogue.title}'")
-
         # Check dialogue type by title (since we're using DialogueBox now)
         if "Export Debug Package" in dialogue.title:
             # User confirmed debug export
-            logging.debug("Input: Debug export confirmed")
             self._perform_debug_export()
             self.game._pending_debug_export = False
         elif "OVERCLOCK WARNING" in dialogue.title:
             # Player confirmed overclock - re-execute the pending exploit
-            logging.debug("Input: Overclock confirmed")
             self.game.overclock_confirmation = True
             # Re-execute the exploit that was cancelled
             if self.game.overclock_exploit and self.game.cursor_position:
@@ -99,7 +95,6 @@ class DialogueInputManager:
                 )
         elif "FRIENDLY FIRE WARNING" in dialogue.title:
             # Player confirmed friendly fire - execute the pending exploit
-            logging.debug("Input: Friendly fire confirmed")
             self.game.friendly_fire_confirmed = True
             # Re-execute the exploit that was cancelled
             if self.game.friendly_fire_exploit and self.game.friendly_fire_target:
@@ -108,13 +103,11 @@ class DialogueInputManager:
                 )
         elif "SYSTEM CRASH" in dialogue.title:
             # Player confirmed System Crash - re-execute
-            logging.debug("Input: System Crash confirmed")
             self.game.system_crash_confirmed = True
             # Re-execute System Crash
             self.game.exploit_system.execute_exploit("system_crash", self.game.player.position)
         elif "GATEWAY" in dialogue.title:
             # Player confirmed gateway - proceed to next level
-            logging.debug(f"Input: Gateway confirmed, advancing from level {self.game.level}")
             self.game.sound_manager.play_sound("level_complete")
             self.game.message_log.add_message("Gateway reached! Next network...")
             self.game.next_level()
@@ -133,12 +126,9 @@ class DialogueInputManager:
         if not dialogue:
             return True
 
-        logging.debug(f"Input: Dialogue dismiss for '{dialogue.title}'")
-
         # Check dialogue type by title
         if "Export Debug Package" in dialogue.title:
             # User cancelled debug export
-            logging.debug("Input: Debug export cancelled")
             self.game.message_log.add_message("Debug export cancelled")
             if hasattr(self.game, "_pending_debug_export"):
                 self.game._pending_debug_export = False
