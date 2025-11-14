@@ -32,6 +32,20 @@ from game_story import StoryFragmentManager
 from game_ui import render_char_safe
 
 # ============================================================================
+# Constants
+# ============================================================================
+
+# Dialogue box dimensions
+DIALOGUE_BOX_HEIGHT = 14  # Height to accommodate wrapped text
+
+# Story progression tiers (fragment count thresholds)
+STORY_TIER_BEGINNER = 4  # 0-4 fragments
+STORY_TIER_NOVICE = 9  # 5-9 fragments
+STORY_TIER_INTERMEDIATE = 14  # 10-14 fragments
+STORY_TIER_ADVANCED = 20  # 15-20 fragments
+# 21+ is STORY_TIER_MASTER (implicit)
+
+# ============================================================================
 # Data Structures
 # ============================================================================
 
@@ -240,7 +254,7 @@ class UnifiedRenderer:
         # Use 50 characters for dialogue boxes - centered and readable without being too wide
         # Messages will wrap nicely within this width
         box_width = min(50, console.width - 4)  # Leave 2 char margin
-        box_height = 14  # Increased height to accommodate wrapped text
+        box_height = DIALOGUE_BOX_HEIGHT  # Increased height to accommodate wrapped text
 
         # Center the box
         box_x, box_y = CoordinateHelpers.center_box(
@@ -533,13 +547,13 @@ def create_intro_dialogue() -> DialogueBox:
 
     # Determine tier based on fragment count
     intro_messages = get_intro_messages()
-    if discovered_count <= 4:
+    if discovered_count <= STORY_TIER_BEGINNER:
         intro_data = intro_messages.get("0_to_4", {})
-    elif discovered_count <= 9:
+    elif discovered_count <= STORY_TIER_NOVICE:
         intro_data = intro_messages.get("5_to_9", {})
-    elif discovered_count <= 14:
+    elif discovered_count <= STORY_TIER_INTERMEDIATE:
         intro_data = intro_messages.get("10_to_14", {})
-    elif discovered_count <= 20:
+    elif discovered_count <= STORY_TIER_ADVANCED:
         intro_data = intro_messages.get("15_to_20", {})
     else:
         intro_data = intro_messages.get("21_plus", {})

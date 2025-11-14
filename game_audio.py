@@ -43,6 +43,14 @@ except ImportError:
 # Import game settings
 from game_config import GameConfig, GameSettings
 
+# Audio system constants
+AUDIO_MAX_CHANNELS = 16  # Simultaneous sound effect channels
+AUDIO_FREQUENCY = 22050  # Sample rate in Hz
+AUDIO_SAMPLE_SIZE = -16  # 16-bit signed audio
+AUDIO_CHANNELS = 2  # Stereo output
+AUDIO_BUFFER_SIZE = 512  # Buffer size in samples
+AUDIO_SOUND_COOLDOWN = 0.05  # 50ms cooldown to prevent sound stacking
+
 
 class SoundManager:
     """
@@ -90,13 +98,18 @@ class SoundManager:
         self.sounds = {}
         self.current_music = None
         self.music_playing = False
-        self.max_channels = 16  # Allow more simultaneous sound effects
+        self.max_channels = AUDIO_MAX_CHANNELS  # Allow more simultaneous sound effects
         self._sound_last_played = {}  # Track last play time for each sound
-        self._sound_cooldown = 0.05  # 50ms cooldown to prevent stacking (configurable)
+        self._sound_cooldown = AUDIO_SOUND_COOLDOWN  # 50ms cooldown to prevent stacking (configurable)
 
         if self.enabled:
             try:
-                pygame.mixer.pre_init(frequency=22050, size=-16, channels=2, buffer=512)
+                pygame.mixer.pre_init(
+                    frequency=AUDIO_FREQUENCY,
+                    size=AUDIO_SAMPLE_SIZE,
+                    channels=AUDIO_CHANNELS,
+                    buffer=AUDIO_BUFFER_SIZE,
+                )
                 pygame.mixer.init()
                 pygame.mixer.set_num_channels(self.max_channels)
 

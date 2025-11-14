@@ -20,6 +20,29 @@ from game_rendering_base import MapRendererBase
 from game_ui import render_char_safe
 from game_unicode_chars import GameGlyphs
 
+# Wall rendering lookup table: (north, south, east, west) -> glyph
+# True = wall exists in that direction, False = no wall
+WALL_GLYPH_LOOKUP = {
+    (True, True, True, True): GameGlyphs.WALL_CROSS,  # ┼ cross (4-way intersection)
+    (True, True, True, False): GameGlyphs.WALL_T_RIGHT,  # ├ T pointing right
+    (True, True, False, True): GameGlyphs.WALL_T_LEFT,  # ┤ T pointing left
+    (True, False, True, True): GameGlyphs.WALL_T_UP,  # ┴ T pointing up
+    (False, True, True, True): GameGlyphs.WALL_T_DOWN,  # ┬ T pointing down
+    (True, False, True, False): GameGlyphs.WALL_BOTTOM_LEFT,  # └ bottom-left corner
+    (True, False, False, True): GameGlyphs.WALL_BOTTOM_RIGHT,  # ┘ bottom-right corner
+    (False, True, True, False): GameGlyphs.WALL_TOP_LEFT,  # ┌ top-left corner
+    (False, True, False, True): GameGlyphs.WALL_TOP_RIGHT,  # ┐ top-right corner
+    (True, True, False, False): GameGlyphs.WALL_VERTICAL,  # │ vertical line
+    (False, False, True, True): GameGlyphs.WALL_HORIZONTAL,  # ─ horizontal line
+    # Single-connection walls (stubs)
+    (True, False, False, False): GameGlyphs.WALL_VERTICAL,  # │ vertical stub pointing up
+    (False, True, False, False): GameGlyphs.WALL_VERTICAL,  # │ vertical stub pointing down
+    (False, False, True, False): GameGlyphs.WALL_HORIZONTAL,  # ─ horizontal stub right
+    (False, False, False, True): GameGlyphs.WALL_HORIZONTAL,  # ─ horizontal stub left
+    # Isolated wall
+    (False, False, False, False): GameGlyphs.WALL_ISOLATED,  # ■ small solid square
+}
+
 
 class GlyphsMapRenderer(MapRendererBase):
     """Renders the game map and entities in ASCII/glyph mode."""
@@ -477,41 +500,8 @@ class GlyphsMapRenderer(MapRendererBase):
         e = game_map.is_wall(Position(x + 1, y))  # East
         w = game_map.is_wall(Position(x - 1, y))  # West
 
-        # Return Unicode box-drawing characters
-        if n and s and e and w:
-            return GameGlyphs.WALL_CROSS  # ┼ cross (4-way intersection)
-        elif n and s and e and not w:
-            return GameGlyphs.WALL_T_RIGHT  # ├ T pointing right
-        elif n and s and not e and w:
-            return GameGlyphs.WALL_T_LEFT  # ┤ T pointing left
-        elif n and not s and e and w:
-            return GameGlyphs.WALL_T_UP  # ┴ T pointing up
-        elif not n and s and e and w:
-            return GameGlyphs.WALL_T_DOWN  # ┬ T pointing down
-        elif n and not s and e and not w:
-            return GameGlyphs.WALL_BOTTOM_LEFT  # └ bottom-left corner
-        elif n and not s and not e and w:
-            return GameGlyphs.WALL_BOTTOM_RIGHT  # ┘ bottom-right corner
-        elif not n and s and e and not w:
-            return GameGlyphs.WALL_TOP_LEFT  # ┌ top-left corner
-        elif not n and s and not e and w:
-            return GameGlyphs.WALL_TOP_RIGHT  # ┐ top-right corner
-        elif n and s and not e and not w:
-            return GameGlyphs.WALL_VERTICAL  # │ vertical line
-        elif not n and not s and e and w:
-            return GameGlyphs.WALL_HORIZONTAL  # ─ horizontal line
-        # Handle single-connection walls (stubs)
-        elif n and not s and not e and not w:
-            return GameGlyphs.WALL_VERTICAL  # │ vertical stub pointing up
-        elif not n and s and not e and not w:
-            return GameGlyphs.WALL_VERTICAL  # │ vertical stub pointing down
-        elif not n and not s and e and not w:
-            return GameGlyphs.WALL_HORIZONTAL  # ─ horizontal stub pointing right
-        elif not n and not s and not e and w:
-            return GameGlyphs.WALL_HORIZONTAL  # ─ horizontal stub pointing left
-        # Isolated wall
-        else:
-            return GameGlyphs.WALL_ISOLATED  # ■ small solid square
+        # Look up the appropriate glyph based on neighboring walls
+        return WALL_GLYPH_LOOKUP[(n, s, e, w)]
 
     def _get_upgrade_color(self, color_name: str) -> tuple[int, int, int]:
         """Get color tuple for permanent upgrade."""
