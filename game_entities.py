@@ -493,19 +493,6 @@ def parse_position_key(key: str) -> Position | None:
         logging.debug(f"Failed to parse position key '{key}': {e}")
         return None
 
-    """Ensure color is a valid RGB tuple."""
-    if isinstance(color, str):
-        # Handle string color names - convert to Colors class attributes
-        color_name = color.upper()
-        if hasattr(Colors, color_name):
-            return getattr(Colors, color_name)
-        else:
-            return Colors.WHITE
-    elif isinstance(color, (list, tuple)) and len(color) >= 3:
-        return (int(color[0]), int(color[1]), int(color[2]))
-    else:
-        return Colors.WHITE  # Default fallback
-
 
 class PositionValidator:
     """

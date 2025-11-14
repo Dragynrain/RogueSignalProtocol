@@ -99,6 +99,34 @@ class MapRendererBase:
 
         return (console_x, console_y)
 
+    def _get_tile_dimensions(self) -> tuple[int | None, int | None]:
+        """
+        Get tile dimensions from tile manager.
+
+        Returns:
+            Tuple of (tile_width, tile_height), or (None, None) if unavailable
+        """
+        if hasattr(self, "tile_manager") and self.tile_manager is not None:
+            return (self.tile_manager.tile_width, self.tile_manager.tile_height)
+        return (None, None)
+
+    def _get_sdl_window_dimensions(self) -> tuple[int | None, int | None]:
+        """
+        Get SDL window dimensions from context renderer.
+
+        Returns:
+            Tuple of (window_width, window_height), or (None, None) if unavailable
+        """
+        if hasattr(self, "context") and self.context is not None:
+            if hasattr(self.context, "sdl_renderer") and self.context.sdl_renderer is not None:
+                try:
+                    output_size = self.context.sdl_renderer.output_size
+                    if output_size:
+                        return output_size
+                except (AttributeError, TypeError):
+                    pass
+        return (None, None)
+
     def _is_in_viewport(self, world_x: int, world_y: int, camera_offset: Position) -> bool:
         """
         Check if world coordinates are within the current viewport.
@@ -112,26 +140,8 @@ class MapRendererBase:
             True if position is in viewport
         """
         graphics_mode = self._get_graphics_mode()
-
-        # Get tile dimensions and window size for accurate viewport calculation in graphics mode
-        tile_width = None
-        tile_height = None
-        window_width = None
-        window_height = None
-
-        if hasattr(self, "tile_manager") and self.tile_manager is not None:
-            tile_width = self.tile_manager.tile_width
-            tile_height = self.tile_manager.tile_height
-
-        # Get actual window dimensions from context (dynamic for any resolution)
-        if hasattr(self, "context") and self.context is not None:
-            if hasattr(self.context, "sdl_renderer") and self.context.sdl_renderer is not None:
-                try:
-                    output_size = self.context.sdl_renderer.output_size
-                    if output_size:
-                        window_width, window_height = output_size
-                except (AttributeError, TypeError):
-                    pass
+        tile_width, tile_height = self._get_tile_dimensions()
+        window_width, window_height = self._get_sdl_window_dimensions()
 
         viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode, tile_width, window_width)
         viewport_height = GameConfig.VIEWPORT_HEIGHT(graphics_mode, tile_height, window_height)
@@ -153,36 +163,8 @@ class MapRendererBase:
             game: Game engine (optional, for look mode support)
         """
         graphics_mode = self._get_graphics_mode()
-
-        # Get tile dimensions and window size for accurate viewport calculation in graphics mode
-        tile_width = None
-        tile_height = None
-        window_width = None
-        window_height = None
-
-        if hasattr(self, "tile_manager") and self.tile_manager is not None:
-            tile_width = self.tile_manager.tile_width
-            tile_height = self.tile_manager.tile_height
-
-        # Get actual window dimensions from context (dynamic for any resolution)
-        if hasattr(self, "context") and self.context is not None:
-            if hasattr(self.context, "recommended_console_size"):
-                try:
-                    # Get the current pixel size of the window
-                    pixel_width, pixel_height = self.context.recommended_console_size(
-                        min_columns=GameConfig.SCREEN_WIDTH, min_rows=GameConfig.SCREEN_HEIGHT
-                    )
-                    # This gives us console size, but we need pixel dimensions
-                    # The actual window size is stored differently - use SDL renderer if available
-                    if (
-                        hasattr(self.context, "sdl_renderer")
-                        and self.context.sdl_renderer is not None
-                    ):
-                        output_size = self.context.sdl_renderer.output_size
-                        if output_size:
-                            window_width, window_height = output_size
-                except (AttributeError, TypeError):
-                    pass
+        tile_width, tile_height = self._get_tile_dimensions()
+        window_width, window_height = self._get_sdl_window_dimensions()
 
         # Get viewport dimensions (tiles visible, not console grid size)
         viewport_width = GameConfig.VIEWPORT_WIDTH(graphics_mode, tile_width, window_width)

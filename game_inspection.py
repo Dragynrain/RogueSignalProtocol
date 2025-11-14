@@ -85,30 +85,21 @@ class EntityInspector:
         """Inspect the player."""
         player = game.player
 
-        # Build status effects list
+        # Build status effects list using configuration
+        effect_labels = {
+            "speed_boost_turns": "Speed Boost",
+            "enhanced_vision_turns": "Enhanced Vision",
+            "exploit_efficiency_turns": "Exploit Efficiency",
+            "invisible_turns": "Invisible",
+            "virus_turns": "VIRUS",
+            "movement_slowed_turns": "Slowed",
+        }
+
         status_effects = []
-        if player.temporary_effects["speed_boost_turns"] > 0:
-            status_effects.append(
-                f"Speed Boost ({player.temporary_effects['speed_boost_turns']} turns)"
-            )
-        if player.temporary_effects["enhanced_vision_turns"] > 0:
-            status_effects.append(
-                f"Enhanced Vision ({player.temporary_effects['enhanced_vision_turns']} turns)"
-            )
-        if player.temporary_effects["exploit_efficiency_turns"] > 0:
-            status_effects.append(
-                f"Exploit Efficiency ({player.temporary_effects['exploit_efficiency_turns']} turns)"
-            )
-        if player.temporary_effects.get("invisible_turns", 0) > 0:
-            status_effects.append(
-                f"Invisible ({player.temporary_effects['invisible_turns']} turns)"
-            )
-        if player.temporary_effects["virus_turns"] > 0:
-            status_effects.append(f"VIRUS ({player.temporary_effects['virus_turns']} turns)")
-        if player.temporary_effects["movement_slowed_turns"] > 0:
-            status_effects.append(
-                f"Slowed ({player.temporary_effects['movement_slowed_turns']} turns)"
-            )
+        for effect_key, label in effect_labels.items():
+            turns = player.temporary_effects.get(effect_key, 0)
+            if turns > 0:
+                status_effects.append(f"{label} ({turns} turns)")
 
         status_text = "; ".join(status_effects) if status_effects else "None"
 

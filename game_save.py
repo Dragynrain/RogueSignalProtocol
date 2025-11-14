@@ -20,8 +20,6 @@ from game_config import GameConfig
 class SaveLoadError(Exception):
     """Raised when save file fails to load properly."""
 
-    pass
-
 
 class SaveGameManager:
     """Manages complete game save/load operations."""

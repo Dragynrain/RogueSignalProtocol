@@ -14,6 +14,31 @@ import tcod.event
 # Import game modules
 
 
+def _validate_color(color):
+    """
+    Validate and convert color to RGB tuple.
+
+    Args:
+        color: Color value to validate (None, tuple, or list)
+
+    Returns:
+        None or validated RGB tuple
+
+    Raises:
+        ValueError: If color format is invalid
+    """
+    if color is None:
+        return None
+    if isinstance(color, str):
+        raise ValueError(f"String color '{color}' not allowed - use RGB tuple")
+    if isinstance(color, (list, tuple)) and len(color) >= 3:
+        r, g, b = int(color[0]), int(color[1]), int(color[2])
+        if not (0 <= r <= 255 and 0 <= g <= 255 and 0 <= b <= 255):
+            raise ValueError(f"Color values must be 0-255: {color}")
+        return (r, g, b)
+    raise ValueError(f"Invalid color format: {color}")
+
+
 def render_char_safe(console, x, y, char, fg=None, bg=None) -> None:
     """
     Render character to console with color validation and error handling.
@@ -32,23 +57,9 @@ def render_char_safe(console, x, y, char, fg=None, bg=None) -> None:
     Raises:
         ValueError: If color format is invalid
     """
-
-    def validate_color(color):
-        """Validate and convert color to RGB tuple."""
-        if color is None:
-            return None
-        if isinstance(color, str):
-            raise ValueError(f"String color '{color}' not allowed - use RGB tuple")
-        if isinstance(color, (list, tuple)) and len(color) >= 3:
-            r, g, b = int(color[0]), int(color[1]), int(color[2])
-            if not (0 <= r <= 255 and 0 <= g <= 255 and 0 <= b <= 255):
-                raise ValueError(f"Color values must be 0-255: {color}")
-            return (r, g, b)
-        raise ValueError(f"Invalid color format: {color}")
-
     # Validate colors and let failures bubble up
-    fg = validate_color(fg)
-    bg = validate_color(bg)
+    fg = _validate_color(fg)
+    bg = _validate_color(bg)
 
     # Render with validated colors using TCOD
     try:
