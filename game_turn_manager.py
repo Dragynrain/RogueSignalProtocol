@@ -168,7 +168,7 @@ class GameTurnManager:
                     f"Active Virus: {player.temporary_effects.get('virus_turns', 0)} turns"
                 )
                 logging.warning(
-                    f"Enemies nearby: {len([e for e in self.game_engine.enemies if abs(e.x - player.x) < 10 and abs(e.y - player.y) < 10])}"
+                    f"Enemies nearby: {len([e for e in self.game_engine.enemies if e.position.grid_distance_to(player.position) < 10])}"
                 )
                 logging.warning("=" * 80)
 
@@ -219,34 +219,14 @@ class GameTurnManager:
                         if world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
                             self.game_engine.game_map.explored_tiles.add((x, y))
         else:
-            # Use TCOD FOV for proper line of sight
-            # Bounds check: ensure player position is valid before computing FOV
-            player_x = self.game_engine.player.x
-            player_y = self.game_engine.player.y
-
-            if not (0 <= player_x < GameConfig.MAP_WIDTH and 0 <= player_y < GameConfig.MAP_HEIGHT):
-                # Player is out of bounds, skip FOV calculation
-                return
-
-            transparency = self.game_engine.game_map._get_transparency_map()
-            fov = tcod.map.compute_fov(
-                transparency=transparency,
-                pov=(player_y, player_x),
-                radius=vision_range,
-                algorithm=tcod.constants.FOV_SYMMETRIC_SHADOWCAST,
+            # Use VisibilityManager for cached FOV calculation
+            visible_tiles = self.game_engine.visibility_manager.get_player_visible_tiles(
+                self.game_engine.player, self.game_engine.turn
             )
 
             # Mark all visible tiles as explored
-            for y in range(
-                max(0, self.game_engine.player.y - vision_range),
-                min(GameConfig.MAP_HEIGHT, self.game_engine.player.y + vision_range + 1),
-            ):
-                for x in range(
-                    max(0, self.game_engine.player.x - vision_range),
-                    min(GameConfig.MAP_WIDTH, self.game_engine.player.x + vision_range + 1),
-                ):
-                    if fov[y, x]:
-                        self.game_engine.game_map.explored_tiles.add((x, y))
+            for x, y in visible_tiles:
+                self.game_engine.game_map.explored_tiles.add((x, y))
 
         # Update last known enemy positions
         for enemy in self.game_engine.enemies:

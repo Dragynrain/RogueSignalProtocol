@@ -39,6 +39,7 @@ import tcod.noise
 import tcod.random
 
 from game_config import GameConfig, RoomGenerationConfig
+from game_entities import Position
 
 # Module-level RNG instance - will be seeded by LevelGenerator
 _rng: tcod.random.Random | None = None
@@ -374,7 +375,8 @@ class RoomGenerator:
 
             for rx in range(remove_x, remove_x + remove_width):
                 for ry in range(remove_y, remove_y + remove_height):
-                    if 0 <= rx < GameConfig.MAP_WIDTH and 0 <= ry < GameConfig.MAP_HEIGHT:
+                    pos = Position(rx, ry)
+                    if pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
                         self.game_map.walls.add((rx, ry))
                         removed_area += 1
 
@@ -924,11 +926,10 @@ class CorridorGenerator:
             half_width = width // 2
             for dx in range(-half_width, (width + 1) // 2):
                 for dy in range(-half_width, (width + 1) // 2):
-                    px = x + dx
-                    py = y + dy
-                    if 0 <= px < GameConfig.MAP_WIDTH and 0 <= py < GameConfig.MAP_HEIGHT:
-                        self.game_map.walls.discard((px, py))
-                        self.corridor_tiles.add((px, py))
+                    pos = Position(x + dx, y + dy)
+                    if pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                        self.game_map.walls.discard((pos.x, pos.y))
+                        self.corridor_tiles.add((pos.x, pos.y))
 
     def bresenham_line(self, x1: int, y1: int, x2: int, y2: int) -> list[tuple[int, int]]:
         """
@@ -986,17 +987,17 @@ class CorridorGenerator:
         if horizontal:
             for x in range(x_start, x_end + 1):
                 for offset in range(-(width // 2), (width + 1) // 2):
-                    y = y_start + offset
-                    if 0 <= x < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT:
-                        self.game_map.walls.discard((x, y))
-                        self.corridor_tiles.add((x, y))
+                    pos = Position(x, y_start + offset)
+                    if pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                        self.game_map.walls.discard((pos.x, pos.y))
+                        self.corridor_tiles.add((pos.x, pos.y))
         else:
             for y in range(y_start, y_end + 1):
                 for offset in range(-(width // 2), (width + 1) // 2):
-                    x = x_start + offset
-                    if 0 <= x < GameConfig.MAP_WIDTH and 0 <= y < GameConfig.MAP_HEIGHT:
-                        self.game_map.walls.discard((x, y))
-                        self.corridor_tiles.add((x, y))
+                    pos = Position(x_start + offset, y)
+                    if pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
+                        self.game_map.walls.discard((pos.x, pos.y))
+                        self.corridor_tiles.add((pos.x, pos.y))
 
     def add_corridor_alcoves(self) -> None:
         """

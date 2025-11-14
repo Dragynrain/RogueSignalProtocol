@@ -146,12 +146,10 @@ class InputCoordinateConverter:
             camera_x = camera_offset.x
             camera_y = camera_offset.y
 
-        # Convert to world coordinates
-        world_x = viewport_x + camera_x
-        world_y = viewport_y + camera_y
+        # Convert to world coordinates and validate bounds
+        world_pos = Position(viewport_x + camera_x, viewport_y + camera_y)
 
-        # Validate against map bounds
-        if not (0 <= world_x < GameConfig.MAP_WIDTH and 0 <= world_y < GameConfig.MAP_HEIGHT):
+        if not world_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
             return None
 
-        return Position(world_x, world_y)
+        return world_pos
