@@ -270,7 +270,6 @@ class TurnProcessor:
                 else GameBalance.HEAT_REDUCTION_NORMAL
             )
 
-            old_heat = player.heat
             player.heat = max(0, player.heat - heat_reduction)
 
             # Heat reduction applied silently

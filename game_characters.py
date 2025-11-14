@@ -335,7 +335,6 @@ class Enemy:
                 f"Enemy {self.type_data.name}@({self.x},{self.y}): damage reduced by resistance: {original_damage} -> {damage}"
             )
 
-        old_cpu = self.cpu
         self.cpu -= damage
         is_dead = self.cpu <= 0
         return is_dead

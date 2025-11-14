@@ -25,8 +25,6 @@ This module provides the high-level routing logic while delegating
 specific input handling to focused, testable submodules.
 """
 
-import logging
-
 import tcod
 import tcod.event
 
