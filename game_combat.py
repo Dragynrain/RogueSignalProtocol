@@ -183,10 +183,6 @@ class ExploitSystem:
             self.game.overclock_confirmation = False
             self.game.overclock_exploit = None
 
-        logging.debug(
-            f"Combat: Executing exploit '{exploit.name}' on target ({target.x},{target.y})"
-        )
-
         # Execute specific exploit
         success = self._execute_specific_exploit(exploit_key, exploit, target)
 
@@ -215,11 +211,7 @@ class ExploitSystem:
                 self.game.player.heat = self.game.player.max_heat
             else:
                 # Normal heat application
-                old_heat = self.game.player.heat
                 self.game.player.heat = new_heat
-                logging.debug(
-                    f"Combat: Heat applied for '{exploit.name}': {old_heat} -> {new_heat} (+{heat_cost})"
-                )
 
         if success:
             self.game.targeting_mode = False
@@ -439,9 +431,6 @@ class ExploitSystem:
                     self.game.particle_system.create_death_explosion(
                         world_x=enemy.x, world_y=enemy.y, colors=colors
                     )
-                    logging.debug(
-                        f"Particle explosion created at ({enemy.x}, {enemy.y}) with {len(colors)} colors"
-                    )
                 except Exception as e:
                     # Don't crash game if particle effect fails
                     GameErrorHandler.handle_error(
@@ -452,9 +441,6 @@ class ExploitSystem:
             self.game.player.cpu = min(
                 self.game.player.max_cpu,
                 self.game.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD,
-            )
-            logging.debug(
-                f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) ELIMINATED, CPU reward={GameBalance.ENEMY_ELIMINATION_CPU_REWARD}"
             )
             self.game.message_log.add_message(
                 f"Eliminated {enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)"
@@ -491,14 +477,10 @@ class ExploitSystem:
         else:
             self.game.message_log.add_message(f"{enemy.type_data.name} damaged")
             movement_type = enemy.get_movement_type()
-            old_state = enemy.state
             if movement_type == EnemyMovement.PATROL and enemy.patrol_points:
                 enemy.original_patrol_index = enemy.patrol_index
             enemy.state = EnemyState.HOSTILE
             enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
-            logging.debug(
-                f"Combat: Enemy {enemy.type_data.name}@({enemy.x},{enemy.y}) damaged, state {old_state.name} -> HOSTILE"
-            )
         return True
 
     def _execute_code_injection(self, exploit: ExploitDefinition, target: Position) -> bool:

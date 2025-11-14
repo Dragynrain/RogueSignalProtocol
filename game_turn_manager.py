@@ -324,6 +324,7 @@ class GameTurnManager:
             self.game_engine.sound_manager.play_sound("item_pickup_code")
             self.game_engine.player.inventory_manager.add_item(patch)
             self.game_engine.message_log.add_message(f"Found {patch.name}")
+            logging.info(f"[PICKUP] Code Hack: {patch.name} at ({player_pos[0]},{player_pos[1]}) on Level {self.game_engine.level}")
             del self.game_engine.game_map.code_hacks[player_pos]
 
         # Exploit pickup
@@ -332,6 +333,7 @@ class GameTurnManager:
             self.game_engine.sound_manager.play_sound("item_pickup_exploit")
             self.game_engine.player.inventory_manager.add_item(exploit_item)
             self.game_engine.message_log.add_message(f"Found {exploit_item.name}")
+            logging.info(f"[PICKUP] Exploit: {exploit_item.name} ({exploit_item.exploit_key}) at ({player_pos[0]},{player_pos[1]}) on Level {self.game_engine.level}")
             del self.game_engine.game_map.exploit_pickups[player_pos]
 
         # Permanent upgrade pickup (auto-equip)
@@ -343,6 +345,7 @@ class GameTurnManager:
                     self.game_engine.sound_manager.play_sound("item_pickup_upgrade")
                     self.game_engine.message_log.add_message(f"Integrated {upgrade.name}!")
                     self.game_engine.message_log.add_message(upgrade.description)
+                    logging.info(f"[PICKUP] Permanent Upgrade: {upgrade.name} ({upgrade_key}) at ({player_pos[0]},{player_pos[1]}) on Level {self.game_engine.level}")
                     del self.game_engine.game_map.permanent_upgrades[player_pos]
 
         # Story fragment pickup
@@ -354,6 +357,7 @@ class GameTurnManager:
             ):
                 self.game_engine.sound_manager.play_sound("item_pickup_story")
                 self.game_engine.message_log.add_message("Data fragment recovered!")
+                logging.info(f"[PICKUP] Story Fragment #{story_fragment.fragment_index} at ({player_pos[0]},{player_pos[1]}) on Level {self.game_engine.level}")
 
                 # Open lore viewer in reading mode for the newly discovered fragment
                 discovered_fragments = (
@@ -714,6 +718,13 @@ class GameTurnManager:
             from game_metrics import track
 
             track("admin_spawns")
+
+            logging.warning("=" * 80)
+            logging.warning(f"[ADMIN SPAWN] Admin Avatar spawned at ({spawn_position.x},{spawn_position.y})")
+            logging.warning(f"Level: {self.game_engine.level}, Turn: {self.game_engine.turn}")
+            logging.warning(f"Player Trace: {self.game_engine.player.trace_level:.1f}% (triggered at 100%)")
+            logging.warning(f"Player position: ({self.game_engine.player.x},{self.game_engine.player.y})")
+            logging.warning("=" * 80)
 
             self.game_engine.message_log.add_message("*** ADMIN AVATAR SPAWNED! ***")
             self.game_engine.sound_manager.play_sound("admin_spawn", priority=8)

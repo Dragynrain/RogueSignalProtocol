@@ -122,7 +122,6 @@ class GameplayInputHandler:
         equipped = self.game.player.inventory_manager.equipped_exploits
         if 0 <= slot < len(equipped):
             exploit_key = equipped[slot]
-            logging.debug(f"Input: Using exploit slot {slot+1}: {exploit_key}")
             self.game.exploit_system.use_exploit(exploit_key)
         else:
             logging.debug(f"Input: Exploit slot {slot+1} is empty or invalid")
@@ -183,7 +182,6 @@ class GameplayInputHandler:
 
         # Check if click is within Inv button bounds
         if inv_button_x <= tile_x < inv_button_end_x:
-            logging.debug(f"Input: Inv button clicked at ({tile_x}, {tile_y})")
             if self.input_handler:
                 self.input_handler._open_inventory()
             return True
@@ -219,7 +217,6 @@ class GameplayInputHandler:
 
         if exploit_slot is not None:
             # Activate the exploit (same as pressing the number key)
-            logging.debug(f"Input: Exploit bar click on slot {exploit_slot+1}")
             self.use_exploit_slot(exploit_slot)
             return True
 

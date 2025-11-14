@@ -61,9 +61,6 @@ class InventoryInputHandler:
         if selection < len(equipped):
             # Enter/click on equipped exploit = unequip it
             exploit_name = equipped[selection]
-            logging.debug(
-                f"Inventory: Unequipping {exploit_name} from slot {selection}"
-            )
             self.game.player.inventory_manager.unequip_exploit(exploit_name)
             return
 
@@ -71,7 +68,6 @@ class InventoryInputHandler:
         inventory_idx = selection - len(equipped)
         if 0 <= inventory_idx < len(display_items):
             item = display_items[inventory_idx]
-            logging.debug(f"Inventory: Using item {item} at inventory index {inventory_idx}")
             # Call the item's use method directly
             item.use(self.game.player, self.game)
         else:
@@ -162,9 +158,6 @@ class LookModeInputHandler:
 
         # ESC or L exits look mode
         if UniversalInputHandler.is_escape_key(event) or event.sym == tcod.event.KeySym.L:
-            logging.debug(
-                f"Input: Exiting look mode from cursor ({self.game.look_cursor_position.x},{self.game.look_cursor_position.y})"
-            )
             self.game.look_mode = False
             self.game.message_log.add_message("Look mode exited")
             return True
@@ -183,9 +176,6 @@ class LookModeInputHandler:
         self.game.look_mode = True
         self.game.look_cursor_position = Position(self.game.player.x, self.game.player.y)
         self.game.message_log.add_message("Look mode activated (ESC or L to exit)")
-        logging.debug(
-            f"Input: Entered look mode at player position ({self.game.player.x},{self.game.player.y})"
-        )
 
     def move_cursor(self, dx: int, dy: int):
         """Move look mode cursor and update inspection info."""
@@ -254,9 +244,6 @@ class TargetingInputHandler:
             dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
             self.game._move_cursor(dx, dy)
         elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
-            logging.debug(
-                f"Input: Targeting confirm - exploit={self.game.targeting_exploit}, target=({self.game.cursor_position.x},{self.game.cursor_position.y})"
-            )
             self.game.exploit_system.execute_exploit(
                 self.game.targeting_exploit, self.game.cursor_position
             )
@@ -287,9 +274,6 @@ class TargetingInputHandler:
         if world_pos:
             self.game.cursor_position = world_pos
             # Execute exploit at clicked position
-            logging.debug(
-                f"Input: Mouse targeting confirm - exploit={self.game.targeting_exploit}, target=({world_pos.x},{world_pos.y})"
-            )
             self.game.exploit_system.execute_exploit(self.game.targeting_exploit, world_pos)
             return True
         return False
