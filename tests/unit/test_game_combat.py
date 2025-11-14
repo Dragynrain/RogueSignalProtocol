@@ -15,7 +15,7 @@ Does NOT test:
 """
 
 import pytest
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from game_combat import ExploitSystem
 from game_entities import Position, ExploitDefinition, TargetingMode
@@ -435,7 +435,7 @@ class TestSpecificExploitMethods:
         mock_exploit = Mock()
         mock_exploit.effect_duration = 5
 
-        with pytest.mock.patch("game_combat.GameData.EXPLOITS", {"traffic_masquerade": mock_exploit}):
+        with patch("game_combat.GameData.EXPLOITS", {"traffic_masquerade": mock_exploit}):
             result = exploit_system._execute_traffic_masquerade()
 
         assert result is True

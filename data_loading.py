@@ -150,10 +150,9 @@ class PersistentStorage:
         self.base_dir = base_dir
         self.ensure_directory_exists()
 
-    def ensure_directory_exists(self):
+    def ensure_directory_exists(self) -> None:
         """Create saves directory if it doesn't exist."""
-        if not os.path.exists(self.base_dir):
-            os.makedirs(self.base_dir)
+        os.makedirs(self.base_dir, exist_ok=True)
 
     def save_data(self, filename: str, data: dict[str, Any]) -> bool:
         """Save data to JSON file."""
