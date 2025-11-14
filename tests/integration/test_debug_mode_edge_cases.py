@@ -7,6 +7,8 @@ Tests debug export functionality in various game states and edge cases:
 - Error handling for debug operations
 """
 
+import pytest
+
 from game_entities import EnemyState
 from tests.test_agent import GameTestAgent
 
@@ -99,19 +101,16 @@ class TestDebugExportGameStates:
         # Large inventory should be captured
         assert len(agent.player.inventory_manager.items) >= 50
 
-    def test_debug_export_on_level_2(self):
-        """Debug export should work on level 2."""
-        agent = GameTestAgent(seed=99008, level=2)
+    @pytest.mark.parametrize("level,seed", [
+        (2, 99008),
+        (3, 99009),
+    ])
+    def test_debug_export_on_level(self, level, seed):
+        """Debug export should work on all levels."""
+        agent = GameTestAgent(seed=seed, level=level)
 
-        # Verify level 2 state
-        assert agent.engine.level == 2
-
-    def test_debug_export_on_level_3(self):
-        """Debug export should work on level 3."""
-        agent = GameTestAgent(seed=99009, level=3)
-
-        # Verify level 3 state
-        assert agent.engine.level == 3
+        # Verify level state
+        assert agent.engine.level == level
 
 
 class TestDebugModeFlags:

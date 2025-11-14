@@ -11,24 +11,17 @@ Tests all 3 levels with multiple random seeds to ensure consistency.
 import logging
 import random
 
+import pytest
+
 from game_config import GameConfig
 from game_session import GameSession
 from tests.fixtures.quick_fixtures import quick_engine
 
 
-def test_level_1_spawn_counts():
-    """Verify Level 1 spawns correct counts."""
-    _verify_level_spawn_counts(level=1, seeds=[42, 123, 999])
-
-
-def test_level_2_spawn_counts():
-    """Verify Level 2 spawns correct counts."""
-    _verify_level_spawn_counts(level=2, seeds=[42, 123, 999])
-
-
-def test_level_3_spawn_counts():
-    """Verify Level 3 spawns correct counts."""
-    _verify_level_spawn_counts(level=3, seeds=[42, 123, 999])
+@pytest.mark.parametrize("level", [1, 2, 3])
+def test_level_spawn_counts(level):
+    """Verify each level spawns correct counts across multiple seeds."""
+    _verify_level_spawn_counts(level=level, seeds=[42, 123, 999])
 
 
 def _verify_level_spawn_counts(level: int, seeds: list):
@@ -106,16 +99,9 @@ if __name__ == "__main__":
     # Run tests manually
     logging.basicConfig(level=logging.INFO)
 
-    print("Testing Level 1 spawn counts...")
-    test_level_1_spawn_counts()
-    print("[OK] Level 1\n")
-
-    print("Testing Level 2 spawn counts...")
-    test_level_2_spawn_counts()
-    print("[OK] Level 2\n")
-
-    print("Testing Level 3 spawn counts...")
-    test_level_3_spawn_counts()
-    print("[OK] Level 3\n")
+    for level in [1, 2, 3]:
+        print(f"Testing Level {level} spawn counts...")
+        test_level_spawn_counts(level)
+        print(f"[OK] Level {level}\n")
 
     print("All level generation spawn count tests passed!")

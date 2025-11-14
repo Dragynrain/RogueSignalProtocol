@@ -231,106 +231,39 @@ class TestSetAlphaRegion:
 class TestCharToPixelConversion:
     """Test console character to pixel coordinate conversion."""
 
-    def test_char_to_pixel_standard_resolution(self):
-        """Test conversion with 1920x1080 window."""
-        # Console 80x50, window 1920x1080
+    @pytest.mark.parametrize("console_x,console_y,window_w,window_h,expected_x,expected_y", [
+        (10, 5, 1920, 1080, 240, 108),  # Standard 1080p
+        (40, 25, 3840, 2160, 1920, 1080),  # 4K resolution
+        (0, 0, 1280, 800, 0, 0),  # Origin
+        (79, 49, 1920, 1080, 1896, 1058),  # Bottom-right corner
+    ])
+    def test_char_to_pixel_conversion(self, console_x, console_y, window_w, window_h, expected_x, expected_y):
+        """Test console char to pixel conversion with various resolutions."""
         pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=10, console_y=5, window_width=1920, window_height=1080
+            console_x=console_x, console_y=console_y, window_width=window_w, window_height=window_h
         )
 
-        # pixels_per_char_x = 1920 / 80 = 24
-        # pixels_per_char_y = 1080 / 50 = 21.6
-        expected_x = int(10 * (1920 / 80))  # 10 * 24 = 240
-        expected_y = int(5 * (1080 / 50))  # 5 * 21.6 = 108
-
-        assert pixel_x == expected_x
-        assert pixel_y == expected_y
-
-    def test_char_to_pixel_4k_resolution(self):
-        """Test conversion with 4K resolution."""
-        pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=40, console_y=25, window_width=3840, window_height=2160
-        )
-
-        # pixels_per_char_x = 3840 / 80 = 48
-        # pixels_per_char_y = 2160 / 50 = 43.2
-        expected_x = int(40 * 48)  # 1920
-        expected_y = int(25 * 43.2)  # 1080
-
-        assert pixel_x == expected_x
-        assert pixel_y == expected_y
-
-    def test_char_to_pixel_origin(self):
-        """Test conversion at origin (0, 0)."""
-        pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=0, console_y=0, window_width=1280, window_height=800
-        )
-
-        assert pixel_x == 0
-        assert pixel_y == 0
-
-    def test_char_to_pixel_bottom_right(self):
-        """Test conversion at bottom-right corner."""
-        pixel_x, pixel_y = CoordinateHelpers.char_to_pixel_coords(
-            console_x=79,
-            console_y=49,  # Last valid console position
-            window_width=1920,
-            window_height=1080,
-        )
-
-        # Should be near but not at window edge (since char occupies space)
-        expected_x = int(79 * (1920 / 80))  # 1896
-        expected_y = int(49 * (1080 / 50))  # 1058
-
-        assert pixel_x == expected_x
-        assert pixel_y == expected_y
-        assert pixel_x < 1920  # Not at edge yet
-        assert pixel_y < 1080
+        assert pixel_x == expected_x, f"Expected pixel_x={expected_x}, got {pixel_x}"
+        assert pixel_y == expected_y, f"Expected pixel_y={expected_y}, got {pixel_y}"
 
 
 class TestPixelToCharConversion:
     """Test pixel to console character coordinate conversion."""
 
-    def test_pixel_to_char_standard_click(self):
-        """Test converting mouse click to console coordinates."""
+    @pytest.mark.parametrize("pixel_x,pixel_y,window_w,window_h,expected_x,expected_y", [
+        (400, 300, 1280, 800, 25, 18),  # Standard click
+        (9999, 9999, 1280, 800, 79, 49),  # Beyond bounds - clamps
+        (-100, -200, 1280, 800, 0, 0),  # Negative - clamps to origin
+        (0, 0, 1920, 1080, 0, 0),  # Origin
+    ])
+    def test_pixel_to_char_conversion(self, pixel_x, pixel_y, window_w, window_h, expected_x, expected_y):
+        """Test pixel to console char conversion with various cases."""
         tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=400, pixel_y=300, window_width=1280, window_height=800
+            pixel_x=pixel_x, pixel_y=pixel_y, window_width=window_w, window_height=window_h
         )
 
-        # pixels_per_tile_x = 1280 / 80 = 16
-        # pixels_per_tile_y = 800 / 50 = 16
-        # tile_x = 400 / 16 = 25
-        # tile_y = 300 / 16 = 18
-        assert tile_x == 25
-        assert tile_y == 18
-
-    def test_pixel_to_char_clamping_beyond_bounds(self):
-        """Test that out-of-bounds pixels clamp to console edges."""
-        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=9999, pixel_y=9999, window_width=1280, window_height=800  # Way beyond window
-        )
-
-        # Should clamp to max valid console position
-        assert tile_x == 79, "X should clamp to max console width - 1"
-        assert tile_y == 49, "Y should clamp to max console height - 1"
-
-    def test_pixel_to_char_negative_position(self):
-        """Test that negative pixels clamp to (0, 0)."""
-        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=-100, pixel_y=-200, window_width=1280, window_height=800
-        )
-
-        assert tile_x == 0, "Negative X should clamp to 0"
-        assert tile_y == 0, "Negative Y should clamp to 0"
-
-    def test_pixel_to_char_origin(self):
-        """Test conversion at pixel origin."""
-        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
-            pixel_x=0, pixel_y=0, window_width=1920, window_height=1080
-        )
-
-        assert tile_x == 0
-        assert tile_y == 0
+        assert tile_x == expected_x, f"Expected tile_x={expected_x}, got {tile_x}"
+        assert tile_y == expected_y, f"Expected tile_y={expected_y}, got {tile_y}"
 
 
 class TestPixelToSpriteGrid:

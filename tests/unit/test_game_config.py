@@ -82,50 +82,29 @@ class TestGameSettingsInitialization:
 class TestGameSettingsVolume:
     """Test volume setting methods."""
 
-    def test_set_master_volume_clamps_to_range(self):
-        """set_master_volume should clamp values to [0.0, 1.0]."""
+    @pytest.mark.parametrize("volume_type,setter_method,attr_name", [
+        ("master", "set_master_volume", "master_volume"),
+        ("sfx", "set_sfx_volume", "sfx_volume"),
+        ("music", "set_music_volume", "music_volume"),
+    ])
+    def test_set_volume_clamps_to_range(self, volume_type, setter_method, attr_name):
+        """Volume setters should clamp values to [0.0, 1.0]."""
         with patch.object(GameSettings, "load_settings"), patch.object(
             GameSettings, "save_settings"
         ):
             settings = GameSettings()
 
             # Test over max
-            settings.set_master_volume(1.5)
-            assert settings.master_volume == 1.0
+            getattr(settings, setter_method)(1.5)
+            assert getattr(settings, attr_name) == 1.0
 
             # Test under min
-            settings.set_master_volume(-0.5)
-            assert settings.master_volume == 0.0
+            getattr(settings, setter_method)(-0.5)
+            assert getattr(settings, attr_name) == 0.0
 
             # Test valid value
-            settings.set_master_volume(0.5)
-            assert settings.master_volume == 0.5
-
-    def test_set_sfx_volume_clamps_to_range(self):
-        """set_sfx_volume should clamp values to [0.0, 1.0]."""
-        with patch.object(GameSettings, "load_settings"), patch.object(
-            GameSettings, "save_settings"
-        ):
-            settings = GameSettings()
-
-            settings.set_sfx_volume(2.0)
-            assert settings.sfx_volume == 1.0
-
-            settings.set_sfx_volume(-1.0)
-            assert settings.sfx_volume == 0.0
-
-    def test_set_music_volume_clamps_to_range(self):
-        """set_music_volume should clamp values to [0.0, 1.0]."""
-        with patch.object(GameSettings, "load_settings"), patch.object(
-            GameSettings, "save_settings"
-        ):
-            settings = GameSettings()
-
-            settings.set_music_volume(1.2)
-            assert settings.music_volume == 1.0
-
-            settings.set_music_volume(-0.2)
-            assert settings.music_volume == 0.0
+            getattr(settings, setter_method)(0.5)
+            assert getattr(settings, attr_name) == 0.5
 
     def test_get_volume_percent_converts_correctly(self):
         """get_volume_percent should convert float to percentage."""
