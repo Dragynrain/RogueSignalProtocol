@@ -15,7 +15,8 @@ that the actual JSON configuration is valid and loadable.
 
 import pytest
 
-from game_data import GameData, GameUpgrades, GameBalance
+from game_data import GameData, GameUpgrades, GameBalance as GameDataBalance
+from game_config import GameBalance as GameConfigBalance
 from game_entities import EnemyMovement, TargetingMode
 
 
@@ -56,6 +57,7 @@ class TestGameDataEnemyTypes:
             EnemyMovement.PATROL,
             EnemyMovement.STATIC,
             EnemyMovement.VIRUS,  # Virus has special mimicry behavior
+            EnemyMovement.ADMIN,  # Admin has omniscient tracking
         ]
 
         for enemy_id, enemy_type in GameData.ENEMY_TYPES.items():
@@ -226,49 +228,51 @@ class TestGameBalanceConfiguration:
     """Test GameBalance configuration access."""
 
     def test_balance_class_attributes_exist(self, real_game_data):
-        """GameBalance should have configuration as class attributes."""
-        # GameBalance uses class attributes, not dict-based config
-        assert hasattr(GameBalance, 'CPU_RESTORE_MIN')
-        assert hasattr(GameBalance, 'CPU_RESTORE_MAX')
-        assert hasattr(GameBalance, 'HEAT_REDUCTION_NORMAL')
+        """GameConfigBalance should have configuration as class attributes."""
+        # game_config.GameBalance uses class attributes loaded from JSON
+        assert hasattr(GameConfigBalance, 'CPU_RESTORE_MIN')
+        assert hasattr(GameConfigBalance, 'CPU_RESTORE_MAX')
+        assert hasattr(GameConfigBalance, 'HEAT_REDUCTION_NORMAL')
 
     def test_cpu_restore_values_exist(self, real_game_data):
         """CPU restore min/max values should exist as class attributes."""
         # Should be positive values
-        assert GameBalance.CPU_RESTORE_MIN > 0
-        assert GameBalance.CPU_RESTORE_MAX >= GameBalance.CPU_RESTORE_MIN
+        assert GameConfigBalance.CPU_RESTORE_MIN > 0
+        assert GameConfigBalance.CPU_RESTORE_MAX >= GameConfigBalance.CPU_RESTORE_MIN
 
     def test_player_stats_section_exists(self, real_game_data):
         """Balance config should have player-related stat attributes."""
-        # Check for common player stats in GameBalance
-        assert hasattr(GameBalance, 'CPU_RECOVERY_AMOUNT')
-        assert GameBalance.CPU_RECOVERY_AMOUNT > 0
+        # Check for common player stats in GameConfigBalance
+        assert hasattr(GameConfigBalance, 'CPU_RECOVERY_AMOUNT')
+        assert GameConfigBalance.CPU_RECOVERY_AMOUNT > 0
 
     def test_combat_section_exists(self, real_game_data):
         """Balance config should have combat-related attributes."""
-        # Check for combat stats in GameBalance
-        assert hasattr(GameBalance, 'ENEMY_ELIMINATION_CPU_REWARD')
-        assert GameBalance.ENEMY_ELIMINATION_CPU_REWARD > 0
+        # Check for combat stats in GameConfigBalance
+        assert hasattr(GameConfigBalance, 'ENEMY_ELIMINATION_CPU_REWARD')
+        assert GameConfigBalance.ENEMY_ELIMINATION_CPU_REWARD > 0
 
     def test_get_player_stat_returns_value(self, real_game_data):
         """get_player_stat should return a value for valid keys."""
-        balance = GameBalance.get_balance()
+        # GameDataBalance provides dict-based access via get_balance()
+        balance = GameDataBalance.get_balance()
 
         # Get first available player stat key
         if "player_stats" in balance and balance["player_stats"]:
             first_key = next(iter(balance["player_stats"].keys()))
-            value = GameBalance.get_player_stat(first_key)
+            value = GameDataBalance.get_player_stat(first_key)
 
             assert value is not None
 
     def test_get_combat_value_returns_value(self, real_game_data):
         """get_combat_value should return a value for valid keys."""
-        balance = GameBalance.get_balance()
+        # GameDataBalance provides dict-based access via get_balance()
+        balance = GameDataBalance.get_balance()
 
         # Get first available combat value key
         if "combat" in balance and balance["combat"]:
             first_key = next(iter(balance["combat"].keys()))
-            value = GameBalance.get_combat_value(first_key)
+            value = GameDataBalance.get_combat_value(first_key)
 
             assert value is not None
 
