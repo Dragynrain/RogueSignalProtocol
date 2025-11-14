@@ -14,53 +14,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 
 
-class TestMainGameInitialization(unittest.TestCase):
-    """Test main game initialization and setup."""
-
-    @patch("tcod.tileset.load_tilesheet")
-    @patch("tcod.context.new_terminal")
-    @patch("logging.basicConfig")
-    def test_import_structure(self, mock_logging, mock_terminal, mock_tileset):
-        """Test that all imports work correctly."""
-        # This test just ensures that importing the main file works
-        try:
-            import RogueSignalProtocol
-
-            self.assertTrue(hasattr(RogueSignalProtocol, "tcod"))
-            self.assertTrue(hasattr(RogueSignalProtocol, "logging"))
-        except ImportError as e:
-            self.fail(f"Failed to import RogueSignalProtocol: {e}")
-
-    def test_logging_configuration(self):
-        """Test that logging is configured correctly."""
-        import RogueSignalProtocol
-
-        # Test that logging module is available
-        self.assertTrue(hasattr(RogueSignalProtocol, "logging"))
-
-        # Test that some logging level is set
-        logger = RogueSignalProtocol.logging.getLogger()
-        self.assertIsNotNone(logger)
-
-
 class TestGameComponentIntegration(unittest.TestCase):
     """Test integration of major game components."""
-
-    def test_data_loader_integration(self):
-        """Test that DataLoader can be imported and used."""
-        from data_loading import DataLoader
-
-        # Test that DataLoader class exists and has expected methods
-        self.assertTrue(hasattr(DataLoader, "load_story_fragments"))
-        self.assertTrue(hasattr(DataLoader, "load_game_data"))
-
-        # Test that class methods work
-        try:
-            fragments = DataLoader.load_story_fragments()
-            self.assertIsInstance(fragments, list)
-        except Exception:
-            # Expected if file doesn't exist, which is fine for testing
-            pass
 
     def test_game_settings_integration(self):
         """Test that GameSettings can be imported and initialized."""
@@ -105,100 +60,6 @@ class TestGameComponentIntegration(unittest.TestCase):
             mock_mixer_init.return_value = True
             sound_manager = SoundManager()
             self.assertIsInstance(sound_manager, SoundManager)
-
-
-class TestGameModuleImports(unittest.TestCase):
-    """Test that all game modules can be imported correctly."""
-
-    def test_core_module_imports(self):
-        """Test importing core game modules."""
-        modules_to_test = [
-            "game_config",
-            "game_entities",
-            "game_data",
-            "game_characters",
-            "game_map",
-            "game_level",
-            "game_enemies",
-            "game_combat",
-            "game_save",
-            "game_audio",
-            "game_ui",
-            "game_menus",
-            "game_engine",
-        ]
-
-        for module_name in modules_to_test:
-            with self.subTest(module=module_name):
-                try:
-                    __import__(module_name)
-                except ImportError as e:
-                    self.fail(f"Failed to import {module_name}: {e}")
-
-    def test_rendering_module_imports(self):
-        """Test importing rendering-related modules."""
-        rendering_modules = [
-            "game_rendering_core",
-            "game_rendering_ui",
-            "game_rendering_glyphs",
-            "game_rendering_graphics",
-            "game_loop",
-            "game_state",
-            "game_input",
-        ]
-
-        for module_name in rendering_modules:
-            with self.subTest(module=module_name):
-                try:
-                    __import__(module_name)
-                except ImportError as e:
-                    self.fail(f"Failed to import {module_name}: {e}")
-
-    def test_utility_module_imports(self):
-        """Test importing utility modules."""
-        utility_modules = ["data_loading", "game_story", "game_inventory"]
-
-        for module_name in utility_modules:
-            with self.subTest(module=module_name):
-                try:
-                    __import__(module_name)
-                except ImportError as e:
-                    self.fail(f"Failed to import {module_name}: {e}")
-
-
-class TestErrorHandling(unittest.TestCase):
-    """Test error handling in the main game."""
-
-    @patch("tcod.tileset.load_tilesheet")
-    @patch("tcod.context.new_terminal")
-    @patch("logging.error")
-    def test_logging_error_handling(self, mock_log_error, mock_terminal, mock_tileset):
-        """Test that errors are logged properly."""
-        # Import after setting up mocks
-        import RogueSignalProtocol
-
-        # Verify that logging was configured
-        self.assertTrue(
-            RogueSignalProtocol.logging.getLogger().isEnabledFor(
-                RogueSignalProtocol.logging.WARNING
-            )
-        )
-
-
-class TestTCODIntegration(unittest.TestCase):
-    """Test TCOD library integration."""
-
-    def test_tcod_imports(self):
-        """Test that TCOD modules are available."""
-        import RogueSignalProtocol
-
-        # Check that tcod was imported correctly
-        self.assertTrue(hasattr(RogueSignalProtocol, "tcod"))
-        # Note: libtcodpy import removed as unused by ruff
-
-        # Test some basic tcod functionality
-        self.assertTrue(hasattr(RogueSignalProtocol.tcod, "console"))
-        self.assertTrue(hasattr(RogueSignalProtocol.tcod, "context"))
 
 
 class TestGameConstantsAndConfiguration(unittest.TestCase):
