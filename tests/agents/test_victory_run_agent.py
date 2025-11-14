@@ -216,7 +216,7 @@ class TestVictoryRunAgent:
 
         # Attempt full victory run
         try:
-            result = agent.run_to_victory()
+            _ = agent.run_to_victory()
             # Whether victory is achieved or not, test passes if no crash
             assert True
         except Exception as e:

@@ -123,9 +123,6 @@ class TestTraceLevelSystemIntegration:
     def test_trace_threshold_system_integration(self, basic_game_engine):
         """Test trace level threshold system is properly integrated."""
 
-        # Test trace level system exists
-        initial_trace = basic_game_engine.player.trace_level
-
         # Process a turn
         basic_game_engine.process_turn()
 
@@ -193,7 +190,7 @@ class TestExploitSystemIntegration:
         basic_game_engine.targeting_exploit = "code_injection"
 
         # Verify integration works
-        assert basic_game_engine.targeting_mode == True
+        assert basic_game_engine.targeting_mode
         assert basic_game_engine.targeting_exploit == "code_injection"
 
 

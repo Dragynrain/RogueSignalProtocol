@@ -511,7 +511,6 @@ class BarbarianAgent(GameTestAgent):
             return "no_choke"
 
         cx, cy = choke
-        initial_distance = abs(cx - self.player.x) + abs(cy - self.player.y)
         turns_stuck = 0  # Track if we're making progress
 
         # Move toward choke point

@@ -17,8 +17,6 @@ import logging
 import math
 import random
 
-import tcod
-
 from game_config import GameBalance, GameConfig
 from game_data import GameUpgrades
 from game_entities import Colors, EnemyMovement, EnemyState, Position

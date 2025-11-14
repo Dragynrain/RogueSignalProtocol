@@ -14,13 +14,14 @@ Does NOT test:
 - AI state transitions (tested in test_enemy_ai_behavior.py)
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch
 
 from game_characters import Enemy
+from game_entities import Position
 from game_pathfinding import PathfindingHelper
 from game_player import Player
-from game_entities import Position
 
 
 class TestPlayerInitialization:

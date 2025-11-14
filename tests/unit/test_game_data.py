@@ -15,8 +15,9 @@ that the actual JSON configuration is valid and loadable.
 
 import pytest
 
-from game_data import GameData, GameUpgrades, GameBalance as GameDataBalance
 from game_config import GameBalance as GameConfigBalance
+from game_data import GameBalance as GameDataBalance
+from game_data import GameData, GameUpgrades
 from game_entities import EnemyMovement, TargetingMode
 
 

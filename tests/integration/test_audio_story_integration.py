@@ -95,7 +95,7 @@ class TestAudioStoryIntegration(unittest.TestCase):
         self.engine.game_map.story_fragments[(25, 25)] = fragment
         self.engine.player.x, self.engine.player.y = 25, 25
 
-        with patch.object(self.engine.sound_manager, "play_sound") as mock_play_sound:
+        with patch.object(self.engine.sound_manager, "play_sound"):
             self.engine._process_special_tiles()
 
             # With sound disabled, should still register discovery but may handle audio differently
@@ -113,7 +113,7 @@ class TestAudioStoryIntegration(unittest.TestCase):
         story_manager.discovered_fragments = []
 
         # Discover fragments and check audio integration
-        with patch.object(self.engine.sound_manager, "play_sound") as mock_play_sound:
+        with patch.object(self.engine.sound_manager, "play_sound"):
             # Simulate discovering multiple fragments
             for i in range(3):
                 fragment_discovered = story_manager.discover_fragment(i)

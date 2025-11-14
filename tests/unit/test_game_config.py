@@ -15,13 +15,14 @@ Does NOT test:
 - Dialogue preferences (covered by dialogue system tests)
 """
 
-import pytest
 import json
 import os
 import tempfile
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
-from game_config import GameSettings, GameConfig
+import pytest
+
+from game_config import GameConfig, GameSettings
 
 
 class TestGameSettingsInitialization:

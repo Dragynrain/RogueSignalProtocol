@@ -27,7 +27,7 @@ class TestLevelProgressionCritical:
 
         # Verify initial state
         assert basic_game_engine.level == 1
-        assert basic_game_engine.game_over == False
+        assert not basic_game_engine.game_over
 
         # Store initial game state
         initial_turn = basic_game_engine.turn
@@ -43,7 +43,7 @@ class TestLevelProgressionCritical:
 
         # Verify level progression
         assert basic_game_engine.level == 2
-        assert basic_game_engine.game_over == False  # Should not end game yet
+        assert not basic_game_engine.game_over  # Should not end game yet
 
         # Verify map was regenerated
         assert basic_game_engine.game_map is not None
@@ -87,7 +87,7 @@ class TestLevelProgressionCritical:
 
         # Verify progression
         assert basic_game_engine.level == 3
-        assert basic_game_engine.game_over == False
+        assert not basic_game_engine.game_over
 
         # Get level 3 network config
         level_3_config = basic_game_engine.game_state.get_current_network_config()
@@ -118,7 +118,7 @@ class TestLevelProgressionCritical:
 
         # Verify game victory
         assert basic_game_engine.level == 4
-        assert basic_game_engine.game_over == True
+        assert basic_game_engine.game_over
 
         # Verify victory message was displayed
         recent_messages = basic_game_engine.message_log.get_recent_messages(5)
@@ -284,18 +284,18 @@ class TestLevelProgressionCritical:
             if expected_level <= 3:
                 # Still in game
                 assert basic_game_engine.level == expected_level
-                assert basic_game_engine.game_over == False
+                assert not basic_game_engine.game_over
                 assert len(basic_game_engine.enemies) > 0  # Should have enemies
             else:
                 # Victory condition
                 assert basic_game_engine.level == 4
-                assert basic_game_engine.game_over == True
+                assert basic_game_engine.game_over
 
         # Verify complete progression occurred
         assert len(progression_log) == 6  # 3 pairs of start/progress messages
 
         # Verify final victory state
-        assert basic_game_engine.game_over == True
+        assert basic_game_engine.game_over
         assert basic_game_engine.level == 4
 
 

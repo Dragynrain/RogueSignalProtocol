@@ -185,7 +185,7 @@ class TestCodeHackStacking:
             result = manager.add_item(item)
 
             # Verify add_item returns True (successful)
-            assert result == True, f"Adding item {i} should succeed"
+            assert result, f"Adding item {i} should succeed"
 
         # Verify all items added
         assert len(manager.items) >= 100, "Should have at least 100 items"
@@ -344,7 +344,7 @@ class TestInventoryDropping:
             result = manager.remove_item(item_to_drop)
 
             # Verify item was removed
-            assert result == True, "Remove should return True"
+            assert result, "Remove should return True"
             final_count = len(manager.items)
             assert final_count == initial_count - 1, "Item should be removed from inventory"
 
@@ -358,7 +358,7 @@ class TestInventoryDropping:
 
         # Should return False (item not in inventory)
         result = manager.remove_item(fake_item)
-        assert result == False, "Removing non-existent item should return False"
+        assert not result, "Removing non-existent item should return False"
 
 
 class TestInventoryEdgeCases:
