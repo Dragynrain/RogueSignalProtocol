@@ -97,35 +97,35 @@ def load_game_config_once():
     # No cleanup needed - data remains loaded
 
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def isolate_config_state():
     """
-    Isolate config state for tests that mock or modify GameConfig.
+    Isolate GameConfig state between tests to prevent cache pollution.
 
-    Use this fixture explicitly when your test mocks GameConfig methods or
-    modifies class-level caching. Don't use autouse to avoid clearing config
-    for tests that don't need it.
+    Some tests mock or modify GameConfig._config_data, which pollutes the cache
+    for subsequent tests. This fixture ensures every test starts with fresh config.
 
-    Usage: def test_something(isolate_config_state):
+    Strategy:
+    - Clear ONLY GameConfig._config_data (the polluted cache)
+    - Immediately reload GameConfig and GameBalance (they're coupled)
+    - Leave DataLoader alone (independent, loads from different JSON file)
+
+    This prevents test pollution without breaking DataLoader-dependent tests.
     """
     yield
 
-    # Reload config after test to ensure clean state for next test
+    # After each test, reset GameConfig to clean state
     from game_config import GameBalance, GameConfig
-    from data_loading import DataLoader
 
-    # Clear caches
+    # Clear only GameConfig cache (not DataLoader - it's independent)
     GameConfig._config_data = None
-    DataLoader._config = None
-    DataLoader._game_data = None
-    DataLoader._story_fragments = None
 
-    # Reload for next test (maintains session-level performance optimization)
+    # Immediately reload so next test has fresh, clean config
     try:
         GameConfig.load_from_json()
         GameBalance.load_from_json()
     except Exception:
-        pass  # Ignore load errors during cleanup
+        pass  # Ignore errors during cleanup (some tests intentionally break config)
 
 
 @pytest.fixture(autouse=True)
