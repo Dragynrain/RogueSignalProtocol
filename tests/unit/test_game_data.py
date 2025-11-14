@@ -55,6 +55,7 @@ class TestGameDataEnemyTypes:
             EnemyMovement.RANDOM,
             EnemyMovement.PATROL,
             EnemyMovement.STATIC,
+            EnemyMovement.VIRUS,  # Virus has special mimicry behavior
         ]
 
         for enemy_id, enemy_type in GameData.ENEMY_TYPES.items():
@@ -224,37 +225,30 @@ class TestGameUpgrades:
 class TestGameBalanceConfiguration:
     """Test GameBalance configuration access."""
 
-    def test_get_balance_returns_dict(self, real_game_data):
-        """get_balance should return a dictionary."""
-        balance = GameBalance.get_balance()
-
-        assert balance is not None
-        assert isinstance(balance, dict)
+    def test_balance_class_attributes_exist(self, real_game_data):
+        """GameBalance should have configuration as class attributes."""
+        # GameBalance uses class attributes, not dict-based config
+        assert hasattr(GameBalance, 'CPU_RESTORE_MIN')
+        assert hasattr(GameBalance, 'CPU_RESTORE_MAX')
+        assert hasattr(GameBalance, 'HEAT_REDUCTION_NORMAL')
 
     def test_cpu_restore_values_exist(self, real_game_data):
-        """CPU restore min/max values should exist."""
-        balance = GameBalance.get_balance()
-
-        assert "cpu_restore_min" in balance
-        assert "cpu_restore_max" in balance
-
+        """CPU restore min/max values should exist as class attributes."""
         # Should be positive values
-        assert balance["cpu_restore_min"] > 0
-        assert balance["cpu_restore_max"] >= balance["cpu_restore_min"]
+        assert GameBalance.CPU_RESTORE_MIN > 0
+        assert GameBalance.CPU_RESTORE_MAX >= GameBalance.CPU_RESTORE_MIN
 
     def test_player_stats_section_exists(self, real_game_data):
-        """Balance config should have player_stats section."""
-        balance = GameBalance.get_balance()
-
-        assert "player_stats" in balance
-        assert isinstance(balance["player_stats"], dict)
+        """Balance config should have player-related stat attributes."""
+        # Check for common player stats in GameBalance
+        assert hasattr(GameBalance, 'CPU_RECOVERY_AMOUNT')
+        assert GameBalance.CPU_RECOVERY_AMOUNT > 0
 
     def test_combat_section_exists(self, real_game_data):
-        """Balance config should have combat section."""
-        balance = GameBalance.get_balance()
-
-        assert "combat" in balance
-        assert isinstance(balance["combat"], dict)
+        """Balance config should have combat-related attributes."""
+        # Check for combat stats in GameBalance
+        assert hasattr(GameBalance, 'ENEMY_ELIMINATION_CPU_REWARD')
+        assert GameBalance.ENEMY_ELIMINATION_CPU_REWARD > 0
 
     def test_get_player_stat_returns_value(self, real_game_data):
         """get_player_stat should return a value for valid keys."""
