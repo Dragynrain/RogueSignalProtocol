@@ -892,6 +892,42 @@ Show error: "This button is reserved and cannot be rebound."
 
 ## Testing Strategy
 
+### Primary Testing Platform: Steam Deck
+
+**You Own a Steam Deck - Perfect for Gamepad Testing!**
+
+Steam Deck provides:
+- ✅ Real gamepad hardware (not emulated)
+- ✅ Real Linux environment (tests cross-platform simultaneously)
+- ✅ Target handheld resolution (1280×800 = 16×16 chars, perfect match)
+- ✅ Real suspend/resume testing
+- ✅ Text readability validation at arm's length
+- ✅ Button mapping validation (A/B/X/Y, triggers, bumpers, D-pad, analog sticks)
+
+**Testing Workflow**:
+1. Implement gamepad support on Windows first
+2. Test with Xbox controller on Windows (if available) OR Steam Deck in Desktop Mode
+3. Build Linux version
+4. Copy to Steam Deck
+5. Test in Desktop Mode (validate Linux compatibility)
+6. Add to Steam library
+7. Test in Gaming Mode (full handheld experience)
+8. Verify text readability at 12-18 inches
+9. Test all button mappings
+10. Test analog stick dead zones
+11. Test suspend/resume (mid-game state preservation)
+
+**This validates both gamepad AND Linux simultaneously!**
+
+### Secondary Testing: Windows
+
+**If you have Xbox/PlayStation controller for Windows**:
+- Test gamepad implementation before Linux build
+- Faster iteration (no file transfer to Steam Deck)
+- SDL2 gamepad mapping should be identical across platforms
+
+### Testing Checklist
+
 ### Unit Tests
 - `test_input_mappings.py` - Test action enum, binding serialization, conflict detection
 - `test_analog_handling.py` - Test deadzone algorithms, analog-to-digital conversion
