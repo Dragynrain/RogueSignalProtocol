@@ -1,0 +1,18 @@
+[run]
+omit =
+    tests/*
+    .venv/*
+    *_backup.py
+    simple_tests.py
+    build/*
+    dist/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise AssertionError
+    raise NotImplementedError
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    @abstractmethod
