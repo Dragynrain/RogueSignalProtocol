@@ -75,6 +75,72 @@ from tests.fixtures.standard_patterns import (
 # ===== Test Infrastructure Fixtures =====
 
 
+@pytest.fixture(scope="session")
+def worker_id(request):
+    """Get the xdist worker ID for parallel test isolation.
+
+    Returns 'master' for non-parallel runs, or worker ID (gw0, gw1, etc.) for parallel.
+    """
+    if hasattr(request.config, 'workerinput'):
+        return request.config.workerinput['workerid']
+    return 'master'
+
+
+@pytest.fixture(scope="session")
+def isolated_data_dir(tmp_path_factory, worker_id):
+    """Create isolated data directory for each test worker.
+
+    This prevents parallel test workers from competing for the same files:
+    - saves/
+    - logs/
+    - metrics/
+    - debug_exports/
+
+    Each worker gets its own temporary directory hierarchy.
+    """
+    base_temp = tmp_path_factory.mktemp(f"rogue_signal_{worker_id}")
+
+    # Create subdirectories that the game expects
+    (base_temp / "saves").mkdir(exist_ok=True)
+    (base_temp / "logs").mkdir(exist_ok=True)
+    (base_temp / "metrics").mkdir(exist_ok=True)
+    (base_temp / "debug_exports").mkdir(exist_ok=True)
+
+    return base_temp
+
+
+@pytest.fixture(scope="function", autouse=True)
+def global_file_isolation(request, isolated_data_dir, monkeypatch):
+    """Global autouse fixture that isolates ALL file operations for every test.
+
+    Patches get_data_directory() to return a per-worker isolated directory.
+    This automatically isolates:
+    - SaveGameManager (uses get_data_directory() / "saves")
+    - DebugExporter (uses get_data_directory() / "debug_exports")
+    - MetricsManager (uses get_data_directory() / "metrics")
+    - Logging (uses get_data_directory() / "logs")
+
+    Scope: function (every test gets a fresh patch)
+    Applied: automatically to all tests (except those marked with skip_file_isolation)
+    """
+    # Skip isolation for tests that specifically test file path initialization
+    if "skip_file_isolation" in request.keywords:
+        return
+
+    import game_file_paths
+
+    # Patch the main entry point for all file paths
+    monkeypatch.setattr(
+        game_file_paths,
+        "get_data_directory",
+        lambda: isolated_data_dir
+    )
+
+    # Also ensure the module-level cache is set
+    monkeypatch.setattr(game_file_paths, "_data_directory", isolated_data_dir)
+    monkeypatch.setattr(game_file_paths, "_is_portable_mode", True)
+
+
 @pytest.fixture(scope="session", autouse=True)
 def initialize_file_paths():
     """

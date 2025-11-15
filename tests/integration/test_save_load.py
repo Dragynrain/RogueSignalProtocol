@@ -395,17 +395,11 @@ class TestErrorRecovery:
 
 
 class TestRealGameEngineIntegration:
-    """Test save/load with real GameEngine integration."""
+    """Test save/load with real GameEngine integration.
 
-    def setup_method(self):
-        """Set up test environment."""
-        if SaveGameManager.save_exists():
-            SaveGameManager.delete_save()
-
-    def teardown_method(self):
-        """Clean up after each test."""
-        if SaveGameManager.save_exists():
-            SaveGameManager.delete_save()
+    Note: File isolation is handled by global_file_isolation fixture in conftest.py.
+    Each test automatically gets isolated save/log/metrics directories.
+    """
 
     def test_save_and_load_basic_player_state(self, basic_game_engine):
         """Test that basic player state is preserved through save/load cycle."""

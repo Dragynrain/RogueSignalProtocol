@@ -62,7 +62,13 @@ This is **alpha 0.8.0** - feature complete and playtested, now looking for wider
 
 This game was built using AI tools (Claude Code for code, Stable Diffusion for sprites and images, AudioCraft for SFX), compressing the timeline from 6-12 months to 2-3 months.
 
-**Testing approach:** Beyond typical unit tests, I built a **GameTestAgent framework** - headless AI agents that actually play the game to validate mechanics. These include chaos agents that spam random inputs to find edge cases, speed-running agents to test optimal pathing, and pacifist stealth agents to ensure non-combat paths remain viable. They catch mechanical bugs and edge cases that might not surface in manual playtesting.
+**Testing Infrastructure:**
+* **2000+ automated tests** - 1000+ unit tests, 1000+ integration tests, 50+ agent-based gameplay tests
+* **GameTestAgent framework** - Headless game simulation where AI agents actually play the game to validate mechanics
+* **Specialized test agents:** Chaos agents (spam random inputs to find edge cases), speed-running agents (test optimal pathing), pacifist stealth agents (ensure non-combat paths remain viable), barbarian agents (pure combat validation)
+* **Parallel test execution** with custom per-worker file isolation - runs the full suite in under a minute
+* **Automated regression testing** - Pre-commit hooks prevent broken code from entering the repository
+* Catches mechanical bugs and edge cases that might not surface in manual playtesting
 
 **The reality:** I approached asset generation with high quality control - only keeping outputs that met the game's design vision. AI definitely accelerated the prototyping and iteration cycles, but game design, architecture, balance tuning, and quality standards were all human-driven. **The tools amplified my output, but the creative direction is all human.**
 
@@ -73,7 +79,7 @@ If you're an actual artist or actual sound designer interested in improving the 
 **Technical Stack:**
 * **Language:** Python + TCOD 19.6.0 (latest!)
 * **Dev Environment:** VS Code on Windows 10/11
-* **Testing:** Automated test suite with GameTestAgent framework (AI agents that play the game headless to validate mechanics)
+* **Testing:** Parallel test execution with headless game agents, per-worker file isolation, pre-commit hooks
 * **Runtime:** Windows standalone EXE (~200 MB download)
 * **Play Time:** 5-15 minutes per full 3-level run
 * **License:** MIT (free and open source)

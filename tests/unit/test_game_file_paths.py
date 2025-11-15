@@ -10,6 +10,10 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 import game_file_paths
 
+# Mark all tests in this file to skip global file isolation
+# (these tests specifically test the file path initialization logic)
+pytestmark = pytest.mark.skip_file_isolation
+
 
 class TestFilePathsInitialization:
     """Tests for path initialization and mode detection."""
