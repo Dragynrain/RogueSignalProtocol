@@ -78,17 +78,22 @@ from tests.fixtures.standard_patterns import (
 @pytest.fixture(scope="session", autouse=True)
 def initialize_file_paths():
     """
-    Initialize file path system for all tests.
+    Initialize file path system for all tests (parallel-safe).
 
     This prevents "get_data_directory() called before initialize_data_directories()"
     errors throughout the test suite.
 
-    Scope: session (initialized once for entire pytest run)
+    Scope: session (initialized once per worker in parallel mode)
+    Note: Individual tests use tmp_path/monkeypatch for isolation
     """
     import game_file_paths
 
-    # Initialize paths for test environment (will use portable mode)
-    game_file_paths.initialize_data_directories()
+    # Initialize paths for test environment (will use portable mode in cwd)
+    # Each worker process gets its own initialization
+    try:
+        game_file_paths.initialize_data_directories()
+    except RuntimeError:
+        pass  # Already initialized in this worker
 
     yield
 
