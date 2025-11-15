@@ -15,46 +15,36 @@ from debug_export import DebugExporter, export_crash_report, export_debug_packag
 
 
 @pytest.fixture
-def temp_export_dir(tmp_path, monkeypatch):
-    """Create temporary export directory."""
-    export_dir = tmp_path / "debug_exports"
-    export_dir.mkdir()
+def temp_game_dirs():
+    """Create sample game data files for testing.
 
-    # Mock the _get_export_dir function to use temp directory
-    from debug_export import DebugExporter
+    Note: File isolation is handled by global_file_isolation fixture in conftest.py.
+    This fixture just creates sample files in the isolated directory.
+    """
+    import game_file_paths
 
-    monkeypatch.setattr(DebugExporter, "_get_export_dir", lambda: export_dir)
+    # Get the isolated data directory (already set by global fixture)
+    data_dir = game_file_paths.get_data_directory()
 
-    yield export_dir
-
-
-@pytest.fixture
-def temp_game_dirs(tmp_path, monkeypatch):
-    """Create temporary game directories with sample files."""
     # Create saves directory with sample files
-    saves_dir = tmp_path / "saves"
-    saves_dir.mkdir()
+    saves_dir = data_dir / "saves"
+    saves_dir.mkdir(exist_ok=True)
     (saves_dir / "rogue_signal_save.json").write_text('{"level": 1}')
     (saves_dir / "rogue_signal_progress.json").write_text('{"fragments": [0, 1, 2]}')
     (saves_dir / "user_settings.json").write_text('{"volume": 0.7}')
 
     # Create logs directory with sample files
-    logs_dir = tmp_path / "logs"
-    logs_dir.mkdir()
+    logs_dir = data_dir / "logs"
+    logs_dir.mkdir(exist_ok=True)
     (logs_dir / "game_debug.log").write_text("DEBUG: Test log entry\n")
     (logs_dir / "game_errors.log").write_text("ERROR: Test error\n")
 
     # Create metrics directory with sample file
-    metrics_dir = tmp_path / "metrics"
-    metrics_dir.mkdir()
+    metrics_dir = data_dir / "metrics"
+    metrics_dir.mkdir(exist_ok=True)
     (metrics_dir / "session_12345.json").write_text('{"session": "test"}')
 
-    # Mock get_data_directory to return tmp_path
-    import game_file_paths
-
-    monkeypatch.setattr(game_file_paths, "get_data_directory", lambda: tmp_path)
-
-    yield tmp_path
+    yield data_dir
 
 
 @pytest.fixture
@@ -101,7 +91,7 @@ def mock_game_engine():
     return game
 
 
-def test_create_debug_package_basic(temp_export_dir, temp_game_dirs):
+def test_create_debug_package_basic(temp_game_dirs):
     """Test basic debug package creation."""
     zip_path = DebugExporter.create_debug_package()
 
@@ -114,7 +104,7 @@ def test_create_debug_package_basic(temp_export_dir, temp_game_dirs):
     assert zipfile.is_zipfile(zip_path)
 
 
-def test_debug_package_contains_system_info(temp_export_dir, temp_game_dirs):
+def test_debug_package_contains_system_info(temp_game_dirs):
     """Test that debug package includes system_info.txt."""
     zip_path = DebugExporter.create_debug_package()
 
@@ -129,7 +119,7 @@ def test_debug_package_contains_system_info(temp_export_dir, temp_game_dirs):
         assert "Export Time" in system_info
 
 
-def test_debug_package_includes_saves(temp_export_dir, temp_game_dirs):
+def test_debug_package_includes_saves(temp_game_dirs):
     """Test that debug package includes saves directory."""
     zip_path = DebugExporter.create_debug_package()
 
@@ -142,7 +132,7 @@ def test_debug_package_includes_saves(temp_export_dir, temp_game_dirs):
         assert any("saves/user_settings.json" in f for f in filenames)
 
 
-def test_debug_package_includes_logs(temp_export_dir, temp_game_dirs):
+def test_debug_package_includes_logs(temp_game_dirs):
     """Test that debug package includes logs directory."""
     zip_path = DebugExporter.create_debug_package()
 
@@ -154,7 +144,7 @@ def test_debug_package_includes_logs(temp_export_dir, temp_game_dirs):
         assert any("logs/game_errors.log" in f for f in filenames)
 
 
-def test_debug_package_includes_metrics(temp_export_dir, temp_game_dirs):
+def test_debug_package_includes_metrics(temp_game_dirs):
     """Test that debug package includes metrics directory."""
     zip_path = DebugExporter.create_debug_package()
 
@@ -165,7 +155,7 @@ def test_debug_package_includes_metrics(temp_export_dir, temp_game_dirs):
         assert any("metrics/" in f for f in filenames)
 
 
-def test_debug_package_includes_reproduction_template(temp_export_dir, temp_game_dirs):
+def test_debug_package_includes_reproduction_template(temp_game_dirs):
     """Test that debug package includes reproduction steps template."""
     zip_path = DebugExporter.create_debug_package()
 
@@ -179,7 +169,7 @@ def test_debug_package_includes_reproduction_template(temp_export_dir, temp_game
         assert "What did you expect" in template
 
 
-def test_debug_package_includes_config_hashes(temp_export_dir, temp_game_dirs):
+def test_debug_package_includes_config_hashes(temp_game_dirs):
     """Test that debug package includes config file hashes."""
     zip_path = DebugExporter.create_debug_package()
 
@@ -191,7 +181,7 @@ def test_debug_package_includes_config_hashes(temp_export_dir, temp_game_dirs):
         assert "CONFIG FILE HASHES" in hashes
 
 
-def test_debug_package_with_game_snapshot(temp_export_dir, temp_game_dirs, mock_game_engine):
+def test_debug_package_with_game_snapshot(temp_game_dirs, mock_game_engine):
     """Test that debug package includes game snapshot when game engine provided."""
     zip_path = DebugExporter.create_debug_package(game_engine=mock_game_engine)
 
@@ -209,7 +199,7 @@ def test_debug_package_with_game_snapshot(temp_export_dir, temp_game_dirs, mock_
         assert len(snapshot["enemies"]) == 2
 
 
-def test_debug_package_with_crash_info(temp_export_dir, temp_game_dirs):
+def test_debug_package_with_crash_info(temp_game_dirs):
     """Test that crash information is included when provided."""
     crash_info = "Exception: ValueError\nStack trace: line 42"
     zip_path = DebugExporter.create_debug_package(crash_info=crash_info)
@@ -222,9 +212,7 @@ def test_debug_package_with_crash_info(temp_export_dir, temp_game_dirs):
         assert "Stack trace" in system_info
 
 
-def test_export_debug_package_convenience_function(
-    temp_export_dir, temp_game_dirs, mock_game_engine
-):
+def test_export_debug_package_convenience_function(temp_game_dirs, mock_game_engine):
     """Test the convenience function for exporting debug packages."""
     zip_path = export_debug_package(game_engine=mock_game_engine)
 
@@ -233,7 +221,7 @@ def test_export_debug_package_convenience_function(
     assert zipfile.is_zipfile(zip_path)
 
 
-def test_export_crash_report_function(temp_export_dir, temp_game_dirs, mock_game_engine):
+def test_export_crash_report_function(temp_game_dirs, mock_game_engine):
     """Test the crash report export function."""
     try:
         raise ValueError("Test exception for crash report")
@@ -251,7 +239,7 @@ def test_export_crash_report_function(temp_export_dir, temp_game_dirs, mock_game
         assert "Test exception for crash report" in system_info
 
 
-def test_debug_package_handles_missing_directories(temp_export_dir):
+def test_debug_package_handles_missing_directories():
     """Test that debug package creation handles missing directories gracefully."""
     # Don't create temp_game_dirs - test with missing directories
     zip_path = DebugExporter.create_debug_package()
@@ -265,7 +253,7 @@ def test_debug_package_handles_missing_directories(temp_export_dir):
         assert "system_info.txt" in zipf.namelist()
 
 
-def test_debug_package_error_handling(temp_export_dir, temp_game_dirs):
+def test_debug_package_error_handling(temp_game_dirs):
     """Test error handling when package creation fails."""
     # Mock zipfile to raise an exception
     with patch("zipfile.ZipFile", side_effect=Exception("Simulated failure")):
@@ -275,7 +263,7 @@ def test_debug_package_error_handling(temp_export_dir, temp_game_dirs):
         assert zip_path is None
 
 
-def test_multiple_debug_packages_unique_names(temp_export_dir, temp_game_dirs):
+def test_multiple_debug_packages_unique_names(temp_game_dirs):
     """Test that multiple debug packages get unique timestamped names."""
     import time
 
