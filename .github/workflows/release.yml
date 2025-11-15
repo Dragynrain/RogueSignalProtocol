@@ -30,8 +30,8 @@ jobs:
         if (-not (Test-Path "game_content.json")) { $missing += "game_content.json" }
         if (-not (Test-Path "game_rules.json")) { $missing += "game_rules.json" }
         if (-not (Test-Path "graphics_tiles.json")) { $missing += "graphics_tiles.json" }
-        if (-not (Test-Path "story_content.json")) { $missing += "story_content.json" }
-        if (-not (Test-Path "terminal10x16_gs_ro.png")) { $missing += "terminal10x16_gs_ro.png" }
+        if (-not (Test-Path "narrative_content.json")) { $missing += "narrative_content.json" }
+        if (-not (Test-Path "KreativeSquare.ttf")) { $missing += "KreativeSquare.ttf" }
         if (-not (Test-Path "graphics")) { $missing += "graphics/" }
         if (-not (Test-Path "sound")) { $missing += "sound/" }
         if (-not (Test-Path "music")) { $missing += "music/" }
@@ -76,11 +76,11 @@ jobs:
         Copy-Item -Path "game_content.json" -Destination "dist\"
         Copy-Item -Path "game_rules.json" -Destination "dist\"
         Copy-Item -Path "graphics_tiles.json" -Destination "dist\"
-        Copy-Item -Path "story_content.json" -Destination "dist\"
+        Copy-Item -Path "narrative_content.json" -Destination "dist\"
 
         # Copy font file
         Write-Host "Copying font file..."
-        Copy-Item -Path "terminal10x16_gs_ro.png" -Destination "dist\"
+        Copy-Item -Path "KreativeSquare.ttf" -Destination "dist\"
 
         # Copy LICENSE if it exists
         if (Test-Path "LICENSE") {
