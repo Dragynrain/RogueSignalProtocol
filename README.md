@@ -65,8 +65,9 @@ Rogue Signal Protocol is a traditional turn-based coffee break stealth roguelike
   <img src="docs/images/screenshots/screenshot-2.png" width="45%" alt="Gameplay Screenshot 2">
 </p>
 <p align="center">
-  <img src="docs/images/screenshots/screenshot-3.png" width="45%" alt="Gameplay Screenshot 3">
-  <img src="docs/images/screenshots/screenshot-4.png" width="45%" alt="Gameplay Screenshot 4">
+  <img src="docs/images/screenshots/screenshot-3.png" width="30%" alt="Gameplay Screenshot 3">
+  <img src="docs/images/screenshots/screenshot-4.png" width="30%" alt="Gameplay Screenshot 4">
+  <img src="docs/images/screenshots/screenshot-5.png" width="30%" alt="Gameplay Screenshot 5">
 </p>
 
 ---
