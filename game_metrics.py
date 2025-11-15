@@ -398,76 +398,75 @@ def save_session_to_sqlite(session: SessionMetrics) -> None:
     try:
         _init_sqlite_schema()
 
-        conn = sqlite3.connect(_get_session_db_path())
-        cursor = conn.cursor()
+        with sqlite3.connect(_get_session_db_path()) as conn:
+            cursor = conn.cursor()
 
-        # Insert session record
-        cursor.execute(
-            """
-            INSERT INTO sessions (
-                session_id, timestamp_start, victory, death_cause, death_level,
-                damage_dealt, damage_taken, stealth_kills,
-                steps_taken, levels_completed, turns_taken,
-                heat_generated, overheating_events, trace_increases, admin_spawns
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-            (
-                session.session_id,
-                session.timestamp_start,
-                session.victory,
-                session.death_cause,
-                session.death_level,
-                session.damage_dealt,
-                session.damage_taken,
-                session.stealth_kills,
-                session.steps_taken,
-                session.levels_completed,
-                session.turns_taken,
-                session.heat_generated,
-                session.overheating_events,
-                session.trace_increases,
-                session.admin_spawns,
-            ),
-        )
-
-        # Insert combat events
-        for enemy_type, count in session.enemies_killed.items():
+            # Insert session record
             cursor.execute(
                 """
-                INSERT INTO combat_events (session_id, enemy_type, kills)
-                VALUES (?, ?, ?)
-            """,
-                (session.session_id, enemy_type, count),
-            )
-
-        # Insert exploit events
-        for exploit_name, uses in session.exploits_used.items():
-            cursor.execute(
-                """
-                INSERT INTO exploit_events (session_id, exploit_name, uses, equipped, unequipped)
-                VALUES (?, ?, ?, ?, ?)
+                INSERT INTO sessions (
+                    session_id, timestamp_start, victory, death_cause, death_level,
+                    damage_dealt, damage_taken, stealth_kills,
+                    steps_taken, levels_completed, turns_taken,
+                    heat_generated, overheating_events, trace_increases, admin_spawns
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     session.session_id,
-                    exploit_name,
-                    uses,
-                    session.exploits_equipped.get(exploit_name, 0),
-                    session.exploits_unequipped.get(exploit_name, 0),
+                    session.timestamp_start,
+                    session.victory,
+                    session.death_cause,
+                    session.death_level,
+                    session.damage_dealt,
+                    session.damage_taken,
+                    session.stealth_kills,
+                    session.steps_taken,
+                    session.levels_completed,
+                    session.turns_taken,
+                    session.heat_generated,
+                    session.overheating_events,
+                    session.trace_increases,
+                    session.admin_spawns,
                 ),
             )
 
-        # Insert item events
-        for hack_name, uses in session.code_hacks_used.items():
-            cursor.execute(
-                """
-                INSERT INTO item_events (session_id, item_name, uses)
-                VALUES (?, ?, ?)
-            """,
-                (session.session_id, hack_name, uses),
-            )
+            # Insert combat events
+            for enemy_type, count in session.enemies_killed.items():
+                cursor.execute(
+                    """
+                    INSERT INTO combat_events (session_id, enemy_type, kills)
+                    VALUES (?, ?, ?)
+                """,
+                    (session.session_id, enemy_type, count),
+                )
 
-        conn.commit()
-        conn.close()
+            # Insert exploit events
+            for exploit_name, uses in session.exploits_used.items():
+                cursor.execute(
+                    """
+                    INSERT INTO exploit_events (session_id, exploit_name, uses, equipped, unequipped)
+                    VALUES (?, ?, ?, ?, ?)
+                """,
+                    (
+                        session.session_id,
+                        exploit_name,
+                        uses,
+                        session.exploits_equipped.get(exploit_name, 0),
+                        session.exploits_unequipped.get(exploit_name, 0),
+                    ),
+                )
+
+            # Insert item events
+            for hack_name, uses in session.code_hacks_used.items():
+                cursor.execute(
+                    """
+                    INSERT INTO item_events (session_id, item_name, uses)
+                    VALUES (?, ?, ?)
+                """,
+                    (session.session_id, hack_name, uses),
+                )
+
+            conn.commit()
 
         logging.info(f"Session metrics saved to SQLite: {session.session_id}")
 
@@ -628,75 +627,74 @@ def save_metrics(session: SessionMetrics) -> None:
 
 def _init_sqlite_schema() -> None:
     """Initialize SQLite database schema if it doesn't exist."""
-    conn = sqlite3.connect(_get_session_db_path())
-    cursor = conn.cursor()
+    with sqlite3.connect(_get_session_db_path()) as conn:
+        cursor = conn.cursor()
 
-    # Sessions table
-    cursor.execute(
+        # Sessions table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sessions (
+                session_id TEXT PRIMARY KEY,
+                timestamp_start REAL,
+                victory INTEGER,
+                death_cause TEXT,
+                death_level INTEGER,
+                damage_dealt INTEGER,
+                damage_taken INTEGER,
+                stealth_kills INTEGER,
+                steps_taken INTEGER,
+                levels_completed INTEGER,
+                turns_taken INTEGER,
+                heat_generated INTEGER,
+                overheating_events INTEGER,
+                trace_increases INTEGER,
+                admin_spawns INTEGER
+            )
         """
-        CREATE TABLE IF NOT EXISTS sessions (
-            session_id TEXT PRIMARY KEY,
-            timestamp_start REAL,
-            victory INTEGER,
-            death_cause TEXT,
-            death_level INTEGER,
-            damage_dealt INTEGER,
-            damage_taken INTEGER,
-            stealth_kills INTEGER,
-            steps_taken INTEGER,
-            levels_completed INTEGER,
-            turns_taken INTEGER,
-            heat_generated INTEGER,
-            overheating_events INTEGER,
-            trace_increases INTEGER,
-            admin_spawns INTEGER
         )
-    """
-    )
 
-    # Combat events table
-    cursor.execute(
+        # Combat events table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS combat_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT,
+                enemy_type TEXT,
+                kills INTEGER,
+                FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+            )
         """
-        CREATE TABLE IF NOT EXISTS combat_events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT,
-            enemy_type TEXT,
-            kills INTEGER,
-            FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         )
-    """
-    )
 
-    # Exploit events table
-    cursor.execute(
+        # Exploit events table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS exploit_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT,
+                exploit_name TEXT,
+                uses INTEGER,
+                equipped INTEGER,
+                unequipped INTEGER,
+                FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+            )
         """
-        CREATE TABLE IF NOT EXISTS exploit_events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT,
-            exploit_name TEXT,
-            uses INTEGER,
-            equipped INTEGER,
-            unequipped INTEGER,
-            FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         )
-    """
-    )
 
-    # Item events table
-    cursor.execute(
+        # Item events table
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS item_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                session_id TEXT,
+                item_name TEXT,
+                uses INTEGER,
+                FOREIGN KEY (session_id) REFERENCES sessions(session_id)
+            )
         """
-        CREATE TABLE IF NOT EXISTS item_events (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id TEXT,
-            item_name TEXT,
-            uses INTEGER,
-            FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         )
-    """
-    )
 
-    conn.commit()
-    conn.close()
+        conn.commit()
 
 
 def _cleanup_old_json_files() -> None:

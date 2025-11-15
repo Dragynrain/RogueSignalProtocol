@@ -51,9 +51,9 @@ def clean_metrics():
             if db_file.exists():
                 # Try to close any open connections first
                 try:
-                    # Force close by attempting to open and close
-                    conn = sqlite3.connect(str(db_file))
-                    conn.close()
+                    # Force close by attempting to open and close with context manager
+                    with sqlite3.connect(str(db_file)) as conn:
+                        pass  # Connection will auto-close
                     time.sleep(0.05)  # Small delay to ensure connection closes
                 except Exception:
                     pass
@@ -223,28 +223,26 @@ def test_save_session_to_sqlite(clean_metrics):
     assert db_file.exists()
 
     # Query and verify data
-    conn = sqlite3.connect(db_file)
-    cursor = conn.cursor()
+    with sqlite3.connect(db_file) as conn:
+        cursor = conn.cursor()
 
-    # Check sessions table
-    cursor.execute("SELECT * FROM sessions WHERE session_id = ?", (session.session_id,))
-    row = cursor.fetchone()
-    assert row is not None
-    assert row[2] == 1  # victory
-    assert row[5] == 150  # damage_dealt
-    assert row[10] == 50  # turns_taken
+        # Check sessions table
+        cursor.execute("SELECT * FROM sessions WHERE session_id = ?", (session.session_id,))
+        row = cursor.fetchone()
+        assert row is not None
+        assert row[2] == 1  # victory
+        assert row[5] == 150  # damage_dealt
+        assert row[10] == 50  # turns_taken
 
-    # Check combat_events table
-    cursor.execute("SELECT * FROM combat_events WHERE session_id = ?", (session.session_id,))
-    combat_rows = cursor.fetchall()
-    assert len(combat_rows) == 2  # virus and admin
+        # Check combat_events table
+        cursor.execute("SELECT * FROM combat_events WHERE session_id = ?", (session.session_id,))
+        combat_rows = cursor.fetchall()
+        assert len(combat_rows) == 2  # virus and admin
 
-    # Check exploit_events table
-    cursor.execute("SELECT * FROM exploit_events WHERE session_id = ?", (session.session_id,))
-    exploit_rows = cursor.fetchall()
-    assert len(exploit_rows) == 1  # system_hop
-
-    conn.close()
+        # Check exploit_events table
+        cursor.execute("SELECT * FROM exploit_events WHERE session_id = ?", (session.session_id,))
+        exploit_rows = cursor.fetchall()
+        assert len(exploit_rows) == 1  # system_hop
 
 
 def test_lifetime_metrics(clean_metrics, tmp_path, monkeypatch):
