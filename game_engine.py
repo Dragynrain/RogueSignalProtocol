@@ -211,8 +211,8 @@ class GameEngine:
             self._randomize_code_hacks()
             self.game_session.generate_procedural_level()
             # Show intro messages for new games
-            self.message_log.add_message_typed("CONSCIOUSNESS RESTORED", "cyan")
-            self.message_log.add_message("The simulation is failing. They're coming for you.")
+            self.message_log.add_message_typed("CONSCIOUSNESS RESTORED", "success")
+            self.message_log.add_message_typed("The simulation is failing. They're coming for you.", "critical")
             self.message_log.add_message("Find the gateway - escape before De-Resolution.")
             # Show intro dialogue
             from game_dialogue_system import create_intro_dialogue
