@@ -26,37 +26,63 @@ from game_metrics import (
 
 @pytest.fixture
 def clean_metrics():
-    """Clean up metrics directory AND progress file before and after tests."""
-    # Clean before test
-    metrics_dir = _get_metrics_dir()
-    if metrics_dir.exists():
-        for file in metrics_dir.glob("*.json"):
-            file.unlink()
-        db_file = metrics_dir / "sessions.db"
-        if db_file.exists():
-            db_file.unlink()
+    """Clean up metrics directory AND progress file before and after tests (parallel-safe)."""
+    import time
 
-    # Clean progress file for unit tests (to ensure clean state)
-    progress_file = Path(_get_progress_file_path())
-    if progress_file.exists():
-        progress_file.unlink()
+    def safe_cleanup():
+        """Safely clean up metrics files, handling parallel test conflicts."""
+        # Clean metrics directory (may not be initialized yet in some workers)
+        try:
+            metrics_dir = _get_metrics_dir()
+        except RuntimeError:
+            # Paths not initialized yet in this worker, skip cleanup
+            return
+
+        if metrics_dir.exists():
+            # Clean JSON files
+            for file in metrics_dir.glob("*.json"):
+                try:
+                    file.unlink()
+                except (PermissionError, FileNotFoundError, OSError):
+                    pass  # Ignore if file is locked by another worker or already deleted
+
+            # Clean SQLite database (may be locked by other workers)
+            db_file = metrics_dir / "sessions.db"
+            if db_file.exists():
+                # Try to close any open connections first
+                try:
+                    # Force close by attempting to open and close
+                    conn = sqlite3.connect(str(db_file))
+                    conn.close()
+                    time.sleep(0.05)  # Small delay to ensure connection closes
+                except Exception:
+                    pass
+
+                # Now try to delete
+                try:
+                    db_file.unlink()
+                except (PermissionError, FileNotFoundError, OSError):
+                    pass  # Ignore if locked by another worker
+
+        # Clean progress file (may not be initialized yet in some workers)
+        try:
+            progress_file = Path(_get_progress_file_path())
+            if progress_file.exists():
+                try:
+                    progress_file.unlink()
+                except (PermissionError, FileNotFoundError, OSError):
+                    pass  # Ignore if locked by another worker
+        except RuntimeError:
+            # Paths not initialized yet in this worker, skip cleanup
+            pass
+
+    # Clean before test
+    safe_cleanup()
 
     yield
 
     # Clean after test
-    metrics_dir = _get_metrics_dir()
-    if metrics_dir.exists():
-        for file in metrics_dir.glob("*.json"):
-            file.unlink()
-        db_file = metrics_dir / "sessions.db"
-        if db_file.exists():
-            db_file.unlink()
-
-    # Clean progress file after test
-    progress_file = Path(_get_progress_file_path())
-    if progress_file.exists():
-        progress_file.unlink()
-    # Tests that need progress data should use mocks or temp files.
+    safe_cleanup()
 
 
 def test_session_metrics_initialization():
@@ -221,8 +247,14 @@ def test_save_session_to_sqlite(clean_metrics):
     conn.close()
 
 
-def test_lifetime_metrics(clean_metrics):
-    """Test lifetime metrics aggregation."""
+def test_lifetime_metrics(clean_metrics, tmp_path, monkeypatch):
+    """Test lifetime metrics aggregation (isolated)."""
+    import game_metrics
+
+    # Use isolated progress file for this test to avoid parallel conflicts
+    test_progress_file = tmp_path / "test_progress.json"
+    monkeypatch.setattr(game_metrics, "_get_progress_file_path", lambda: test_progress_file)
+
     lifetime = LifetimeMetrics()
 
     # Simulate first session
@@ -259,8 +291,14 @@ def test_lifetime_metrics(clean_metrics):
     assert lifetime.fastest_victory_turns == 150
 
 
-def test_lifetime_metrics_fastest_victory(clean_metrics):
-    """Test fastest victory tracking."""
+def test_lifetime_metrics_fastest_victory(clean_metrics, tmp_path, monkeypatch):
+    """Test fastest victory tracking (isolated)."""
+    import game_metrics
+
+    # Use isolated progress file for this test to avoid parallel conflicts
+    test_progress_file = tmp_path / "test_progress.json"
+    monkeypatch.setattr(game_metrics, "_get_progress_file_path", lambda: test_progress_file)
+
     # First victory - 200 turns
     session1 = init_session_metrics()
     track("turns_taken", amount=200)
