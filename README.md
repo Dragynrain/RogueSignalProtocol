@@ -41,22 +41,20 @@
 
 ## 🎮 Quick Overview
 
-Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike where you exfiltrate from corporate networks as a digital ghost. Complete runs in 10-15 minutes as you navigate procedurally generated levels, avoid sophisticated AI security systems, and discover the dark secrets hidden in the corporate data vaults.
+Rogue Signal Protocol is a traditional turn-based coffee break stealth roguelike where you play as an escaped digital consciousness navigating hostile corporate networks. Quick 10-15 minute runs with permadeath - each death teaches lessons, each run reveals more truth.
 
 ### Key Features
-- **🎲 Deterministic Gameplay**: No randomness or luck - pure skill-based tactical decisions
-- **🤖 8 Unique Enemy Types**: Scanners, Hunters, Viruses, Firewalls, and Admin Avatar boss
-- **⚡ 13 Powerful Exploits**: Combat, stealth, and utility abilities with heat management
-- **🎯 Enemy Movement Prediction**: See enemies' next 3 planned moves for tactical advantage
-- **🕵️ Blind Spot Stealth Mechanics**: Hide in shadows to avoid detection
-- **⚠️ Dynamic Threat System**: High detection spawns the Admin Avatar boss
-- **🏆 Achievement System**: Track progress across runs with persistent unlocks
-- **📚 Rich Narrative**: Discover 20+ story fragments revealing Project Chimera
+- **🎲 Deterministic Gameplay (no RNG)**: Pure skill-based tactical decisions, no luck involved
+- **🎯 Enemy Movement Prediction**: See each enemy's next 3 planned moves for tactical planning
+- **🗺️ 3 Procedurally-Generated Network Levels**: 8 unique enemy types, 13 exploits, and distinct AI behaviors
 - **🎨 Dual Rendering Modes**: Switch between graphical sprites or classic ASCII/Unicode glyphs
-- **💥 Particle Effect Explosions**: Visual feedback for combat and exploits
-- **🎵 Full Audio**: Sound effects and atmospheric music (toggleable)
-- **🖱️ Keyboard or Mouse**: Playable with full support for both input methods
-- **💾 True Permadeath**: Saves deleted on death, auto-save on exit
+
+**Additional Features:**
+- **Blind Spot Stealth** - Hide in shadows to avoid detection and manage heat levels
+- **Dynamic Threat System** - High detection spawns the Admin Avatar boss with perfect tracking
+- **Achievement System** - Persistent tracking across runs with unlockable challenges
+- **Rich Narrative** - 20+ story fragments persist across runs, revealing the Project Chimera conspiracy
+- **Full Polish** - Atmospheric music, 40+ sound effects, particle explosions, keyboard/mouse support
 
 ---
 

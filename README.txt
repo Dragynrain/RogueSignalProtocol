@@ -14,11 +14,10 @@ Final release builds will hide the console for a cleaner experience.
 
 ABOUT
 -----
-You are a trapped digital consciousness infiltrating hostile corporate
-networks. Navigate procedurally generated levels, avoid AI security systems,
-and uncover the dark secrets of Project Chimera.
-
-Each run takes 10-15 minutes - perfect for a quick gaming break!
+Rogue Signal Protocol is a traditional turn-based coffee break stealth
+roguelike where you play as an escaped digital consciousness navigating
+hostile corporate networks. Quick 10-15 minute runs with permadeath -
+each death teaches lessons, each run reveals more truth.
 
 ** FEEDBACK WANTED **
 This is an alpha release! Please share your experience (2 minute survey):
@@ -26,14 +25,14 @@ https://forms.gle/jbwGdn8VGPa6NG9p9
 
 KEY FEATURES
 ------------
-- STEALTH-FIRST GAMEPLAY: Hiding > fighting. Detection = danger
+- DETERMINISTIC GAMEPLAY: No RNG - pure skill-based tactical decisions
+- 3 PROCEDURALLY-GENERATED LEVELS: 8 enemy types, 13 exploits, distinct AI
+- ENEMY MOVEMENT PREDICTION: See enemies' next 3 planned moves
+- STEALTH-FIRST TACTICS: Hiding > fighting. Detection spawns Admin Avatar
+- 20+ STORY FRAGMENTS: Discover the truth about Project Chimera
+- DUAL RENDERING: Switch between ASCII glyphs or cyberspace graphics
 - COFFEE BREAK RUNS: Complete runs in 10-15 minutes
 - PERMADEATH: Save files deleted on death. Every choice matters
-- 13 POWERFUL EXPLOITS: From System Hop to Memory Leak
-- 8 UNIQUE ENEMIES: Scanners, Hunters, Viruses, Admin Avatar
-- 20+ STORY FRAGMENTS: Discover the truth about your existence
-- 3 NETWORK LEVELS: Corporate, Government, Military
-- DUAL RENDERING: Play with ASCII glyphs or cyberspace graphics
 
 OBJECTIVE
 ---------

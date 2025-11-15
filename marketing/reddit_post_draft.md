@@ -14,33 +14,28 @@
 
 Hey r/roguelikedev!
 
-I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a coffee break stealth roguelike where you exfiltrate from corporate networks as an escaped digital consciousness. Quick 10-15 minute runs perfect for a gaming break.
+I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a traditional turn-based coffee break stealth roguelike where you play as an escaped digital consciousness navigating hostile corporate networks. Quick 10-15 minute runs with permadeath - each death teaches lessons, each run reveals more truth.
 
 **[GIF/Video of gameplay here - even 10 seconds massively increases engagement]**
 
 *(Screenshots in comments)*
 
 ### Core Features:
-* **Deterministic gameplay with no randomness or luck** - Pure skill-based tactical decisions
-* **8 unique enemy types** with distinct AI behaviors (Scanners, Patrols, Hunters, Admin Avatar boss)
-* **13 exploits** across combat, stealth, and utility categories with heat management
-* **Enemy movement prediction** - See enemies' next 3 planned moves for tactical planning
-* **Blind spot stealth mechanics** - Hide in shadows to avoid detection
-* **Dynamic threat system** - High detection spawns the Admin Avatar boss
-* **Achievement system** - Persistent tracking across runs with unlockable challenges
-* **20+ story fragments** revealing the Project Chimera conspiracy
-* **Dual rendering modes** - Switch between graphical sprites or classic ASCII/Unicode glyphs
-* **Particle effect explosions** - Visual feedback for combat and exploits
-* **Full audio design** with atmospheric music and 40+ sound effects (toggleable)
-* **Playable with keyboard or mouse** - Full support for both input methods
-* **Permadeath roguelike mechanics** with auto-save on exit
+* **Deterministic gameplay (no RNG)** - Pure skill-based tactical decisions, no luck involved
+* **Enemy movement prediction** - See each enemy's next 3 planned moves for tactical planning
+* **3 procedurally-generated network levels** with 8 unique enemy types, 13 exploits, and distinct AI behaviors
+* **Dual rendering modes** - Switch between graphical sprites or classic ASCII glyphs
 
 ### What Makes It Different:
-**Enemy movement prediction** shows you the next 3 planned moves - no guessing, pure tactical planning. It's like playing chess against enemies who show their next moves.
+**Enemy movement prediction** shows you each enemy's next 3 planned moves - no guessing, pure tactical planning. It's like playing chess against enemies who show their next moves. Use this intel to slip past patrols, set up ambushes, or plan your escape route.
 
-The stealth mechanics are central - you're not meant to fight everything. High detection (trace level) spawns an Admin Avatar boss that hunts you relentlessly. Heat management from exploit usage adds another resource layer beyond typical HP/mana.
+The **stealth mechanics** are central - you're not meant to fight everything. Hide in blind spots to avoid detection and manage your heat levels carefully. Push your detection too high and the **Admin Avatar** spawns - a powerful boss with perfect tracking and relentless pursuit.
 
-The story is told through environmental fragments you discover - each run might reveal new pieces of the Project Chimera conspiracy, even if you die. Permadeath for your character, but persistent narrative discovery.
+**Heat management** from exploit usage adds another resource layer beyond typical HP/mana. Every move counts in this purely skill-based tactical challenge.
+
+The **story is told through environmental fragments** - 20+ story fragments persist across runs, even death can't erase them. Each run might reveal new pieces of the Project Chimera conspiracy. Permadeath for your character, but persistent narrative discovery means every run brings you closer to the truth.
+
+The game features full audio design with atmospheric music and 40+ sound effects (toggleable), particle effect explosions for visual feedback, and complete keyboard and mouse support. Track your progress across runs with the **Achievement System** - unlock challenges and prove your mastery of stealth tactics.
 
 ### Where to Get It:
 **Itch.io:** https://dragynrain.itch.io/rogue-signal-protocol

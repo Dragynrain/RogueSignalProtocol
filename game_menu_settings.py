@@ -516,6 +516,17 @@ class SettingsMenu(BaseMenu):
 
     def handle_mouse_click(self, event) -> str:
         """Handle mouse click - activate clicked option (for toggle/action types) or confirmation dialogue."""
+        import tcod.event
+
+        # Right-click = go back (standard behavior)
+        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
+            # If confirmation dialogue is open, right-click closes it
+            if self.show_export_confirmation:
+                self.show_export_confirmation = False
+                return ""
+            # Otherwise go back to main menu
+            return "back"
+
         # Priority: Handle confirmation dialogue if active
         if self.show_export_confirmation:
             return self._handle_confirmation_mouse_click(event)
