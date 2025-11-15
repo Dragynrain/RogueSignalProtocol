@@ -668,7 +668,7 @@ class GraphicsMapRenderer(MapRendererBase):
         if game.targeting_mode and game.targeting_exploit in GameData.EXPLOITS:
             exploit = GameData.EXPLOITS[game.targeting_exploit]
             self._render_targeting_range_graphics(
-                renderer, game.player.position, exploit.range, camera_offset
+                renderer, game, game.targeting_exploit, game.player.position, exploit.range, camera_offset
             )
 
             # Show area effect for AREA targeting mode
@@ -693,9 +693,13 @@ class GraphicsMapRenderer(MapRendererBase):
                 texture.color_mod = normal_tint
 
     def _render_targeting_range_graphics(
-        self, renderer, center: Position, range_val: int, camera_offset: Position
+        self, renderer, game, exploit_key: str, center: Position, range_val: int, camera_offset: Position
     ):
-        """Render targeting range indicator in graphics mode using transparent overlays."""
+        """
+        Render targeting range indicator in graphics mode using transparent overlays.
+
+        For System Hop, only highlights valid blind spots with line of sight.
+        """
         range_color = ColorManager.get_targeting_color("range_overlay")
 
         # Enable alpha blending for transparent overlays
@@ -704,10 +708,26 @@ class GraphicsMapRenderer(MapRendererBase):
 
         for dx in range(-range_val, range_val + 1):
             for dy in range(-range_val, range_val + 1):
-                # Use Euclidean distance for circular range (matches glyphs mode)
-                if dx * dx + dy * dy <= range_val * range_val:
+                # Use Chebyshev distance (grid distance) to match gameplay validation
+                if max(abs(dx), abs(dy)) <= range_val:
                     world_x = center.x + dx
                     world_y = center.y + dy
+                    target = Position(world_x, world_y)
+
+                    # For System Hop, only show valid blind spots with LOS
+                    if exploit_key == "system_hop":
+                        # Skip if not a blind spot
+                        if not game.game_map.is_blind_spot(target):
+                            continue
+                        # Skip if not valid position (wall or out of bounds)
+                        if not game.game_map.is_valid_position(target):
+                            continue
+                        # Skip if no line of sight
+                        if not game.game_map.has_line_of_sight(center, target):
+                            continue
+                        # Skip if occupied by enemy
+                        if game._get_enemy_at(target):
+                            continue
 
                     if self._is_in_viewport(world_x, world_y, camera_offset):
                         screen_x = world_x - camera_offset.x

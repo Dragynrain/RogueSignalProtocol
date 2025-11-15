@@ -1045,7 +1045,7 @@ class GlyphsMapRenderer(MapRendererBase):
         if game.targeting_mode and game.targeting_exploit in GameData.EXPLOITS:
             exploit = GameData.EXPLOITS[game.targeting_exploit]
             self._render_targeting_range(
-                console, game.player.position, exploit.range, camera_offset
+                console, game, game.targeting_exploit, game.player.position, exploit.range, camera_offset
             )
 
             # Show area effect for AREA targeting mode
@@ -1057,6 +1057,8 @@ class GlyphsMapRenderer(MapRendererBase):
     def _render_targeting_range(
         self,
         console: tcod.console.Console,
+        game,
+        exploit_key: str,
         center: Position,
         range_val: int,
         camera_offset: Position,
@@ -1065,12 +1067,31 @@ class GlyphsMapRenderer(MapRendererBase):
         Render targeting range indicator.
 
         Uses Chebyshev distance (grid distance) to match gameplay validation.
-        This ensures visual range matches actual usable range - diagonals count as 1.
+        For System Hop, only highlights valid blind spots with line of sight.
         """
         for dx in range(-range_val, range_val + 1):
             for dy in range(-range_val, range_val + 1):
                 # Use Chebyshev distance (max of abs values) to match gameplay
                 if max(abs(dx), abs(dy)) <= range_val:
+                    world_x = center.x + dx
+                    world_y = center.y + dy
+                    target = Position(world_x, world_y)
+
+                    # For System Hop, only show valid blind spots with LOS
+                    if exploit_key == "system_hop":
+                        # Skip if not a blind spot
+                        if not game.game_map.is_blind_spot(target):
+                            continue
+                        # Skip if not valid position (wall or out of bounds)
+                        if not game.game_map.is_valid_position(target):
+                            continue
+                        # Skip if no line of sight
+                        if not game.game_map.has_line_of_sight(center, target):
+                            continue
+                        # Skip if occupied by enemy
+                        if game._get_enemy_at(target):
+                            continue
+
                     range_screen_x = center.x - camera_offset.x + dx
                     range_screen_y = center.y - camera_offset.y + dy + 1
 

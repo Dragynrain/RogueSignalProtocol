@@ -73,6 +73,7 @@ class SettingsMenu(BaseMenu):
         # Debug export confirmation dialogue state
         self.show_export_confirmation = False
         self.export_confirmation_selection = 0
+        self.export_status_message = None  # Status message after export (success or failure)
 
         # Stored coordinates for confirmation dialog click detection
         self.confirm_option_0_x_range = None  # (start_x, end_x) for "Yes"
@@ -291,6 +292,20 @@ class SettingsMenu(BaseMenu):
                         fg=color,
                         bg=bg_color,
                     )
+
+        # Status message (debug export result)
+        if self.export_status_message:
+            msg_color = Colors.GREEN if "Success" in self.export_status_message else Colors.RED
+            msg_x = box["center_x"] - len(self.export_status_message) // 2
+            msg_y = box["bottom"] - 8
+            render_char_safe(
+                console,
+                msg_x,
+                msg_y,
+                self.export_status_message,
+                fg=msg_color,
+                bg=Colors.BLACK,
+            )
 
         # Instructions
         if box["use_background_layout"]:

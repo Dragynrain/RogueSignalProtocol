@@ -877,17 +877,14 @@ class TestInfoPanelColorCoding:
                 exploit_def = GameData.EXPLOITS[exploit_key]
                 result = InfoProvider._format_exploit_info(game, exploit_def)
 
-                # First line should be exploit name
-                name_line = result["lines"][0]
-
-                # Should use category color, not generic cyan
+                # Title should be exploit name with category color
                 expected_color = ColorManager.get_exploit_color(expected_category)
                 assert (
-                    name_line["text"] == exploit_def.name
-                ), f"First line should be exploit name for {exploit_key}"
+                    result["title"] == exploit_def.name
+                ), f"Title should be exploit name for {exploit_key}"
                 assert (
-                    name_line["color"] == expected_color
-                ), f"{exploit_key} ({expected_category}) should use category color {expected_color}, got {name_line['color']}"
+                    result["color"] == expected_color
+                ), f"{exploit_key} ({expected_category}) should use category color {expected_color}, got {result['color']}"
 
     def test_code_hack_name_uses_actual_color(self):
         """Verify code hack names are colored by their actual color in inventory info panel."""
@@ -945,8 +942,9 @@ class TestInfoPanelColorCoding:
 
         # Should still return info based on keyboard selection
         assert result is not None, "Should return info even without mouse coordinates"
-        assert result["title"] == "EXPLOIT INFO"
-        assert any("System Hop" in line["text"] for line in result["lines"])
+        # Exploit name should now be in title (optimization: name moved to title to save space)
+        assert result["title"] == "System Hop"
+        assert len(result["lines"]) > 0, "Should have content lines"
 
     def test_utility_exploit_color_is_cyan_not_yellow(self):
         """Verify utility exploits use cyan color (not yellow which conflicts with selection)."""
