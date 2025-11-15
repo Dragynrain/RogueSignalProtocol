@@ -529,19 +529,6 @@ class TestGameRendererIntegration(unittest.TestCase):
         """Test render_game handles lore viewer overlay."""
         renderer = GameRenderer(settings=self.settings)
 
-        # Show lore viewer
-        self.engine.show_lore_viewer = True
-
-        # Should execute without error
-        renderer.render_game(self.console, self.engine)
-
-        # Console should be cleared for overlay
-        self.assertIsNotNone(self.console)
-
-    def test_render_game_with_lore_viewer(self):
-        """Test render_game handles lore viewer overlay."""
-        renderer = GameRenderer(settings=self.settings)
-
         # Show lore viewer in reading mode
         self.engine.show_lore_viewer = True
         self.engine.lore_viewer_mode = "reading"
