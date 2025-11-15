@@ -379,8 +379,13 @@ def handle_menu_navigation(
                                     # Handle mouse motion (highlight arrows on hover)
                                     graphics_preview_menu.handle_mouse_motion(preview_event)
                                 elif preview_event.type == "MOUSEBUTTONDOWN":
-                                    # Handle mouse clicks (cycle variants when clicking arrows)
-                                    graphics_preview_menu.handle_mouse_click(preview_event)
+                                    # Handle mouse clicks (cycle variants when clicking arrows, exit on right-click)
+                                    preview_action = graphics_preview_menu.handle_mouse_click(preview_event)
+                                    if preview_action == "exit":
+                                        # Export selections and return to main menu
+                                        graphics_preview_menu.export_selections()
+                                        exit_preview = True
+                                        break
 
                             # Small delay to prevent CPU spinning (60 FPS)
                             time.sleep(1 / 60)
@@ -567,8 +572,13 @@ def handle_menu_navigation(
                                     # Handle mouse motion (highlight arrows on hover)
                                     graphics_preview_menu.handle_mouse_motion(preview_event)
                                 elif preview_event.type == "MOUSEBUTTONDOWN":
-                                    # Handle mouse clicks (cycle variants when clicking arrows)
-                                    graphics_preview_menu.handle_mouse_click(preview_event)
+                                    # Handle mouse clicks (cycle variants when clicking arrows, exit on right-click)
+                                    preview_action = graphics_preview_menu.handle_mouse_click(preview_event)
+                                    if preview_action == "exit":
+                                        # Export selections and return to main menu
+                                        graphics_preview_menu.export_selections()
+                                        exit_preview = True
+                                        break
 
                             # Small delay to prevent CPU spinning (60 FPS)
                             time.sleep(1 / 60)
