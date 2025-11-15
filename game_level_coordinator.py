@@ -115,16 +115,11 @@ class GameLevelCoordinator:
         self.game_engine.narrative_manager.reset_level_flags()
 
         self.game_engine.message_log.add_message(f"{config['name']} loaded")
-        logging.info("DEBUG: Level loaded message added to UI")
 
         # Add atmospheric level start message
         env_message = self.game_engine.narrative_manager.trigger_level_start()
-        logging.info(f"DEBUG: Narrative trigger returned: {repr(env_message)}")
         if env_message:
             self.game_engine.message_log.add_message(env_message)
-            logging.info("DEBUG: Env message added to UI")
-
-        logging.info("DEBUG: generate_procedural_level() RETURNING NOW")
 
     def progress_to_next_level(self):
         """
