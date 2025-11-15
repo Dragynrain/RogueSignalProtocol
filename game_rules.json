@@ -861,7 +861,7 @@
     },
     "cooling_node": {
       "name": "Cooling Node",
-      "description": "Thermal regulation system that dissipates 20 degrees of excess heat. Single-use per visit."
+      "description": "Heat sink process that dissipates 20 units of operational heat. Single-use per visit."
     },
     "cpu_recovery_node": {
       "name": "CPU Recovery Node",

@@ -491,7 +491,8 @@ def test_debug_export_shows_success_message(
     # Verify success messages were shown
     messages = [call[0][0] for call in mock_game_engine.message_log.add_message.call_args_list]
     assert any("Debug package created" in msg for msg in messages)
-    assert any("debug_exports/" in msg for msg in messages)
+    # Check for "Location:" message showing the exact path
+    assert any("Location:" in msg for msg in messages)
     assert any("github.com" in msg for msg in messages)
 
 

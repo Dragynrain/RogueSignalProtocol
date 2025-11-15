@@ -272,13 +272,15 @@ def handle_menu_navigation(
                     zip_path = export_debug_package(game_engine=active_game)
                     if zip_path:
                         logging.info(f"Debug Export: Success from settings menu - {zip_path}")
-                        # Show success message via settings menu
-                        # Note: We can't show messages directly in menu context, but logging is sufficient
-                        # The user will see the file in debug_exports/ folder
+                        # Show success message with exact path
+                        menus["settings_menu"].export_status_message = f"Success! Saved to: {zip_path.parent}"
                     else:
                         logging.error("Debug Export: Failed to create package from settings menu")
+                        menus["settings_menu"].export_status_message = "Failed to create debug package"
                     # Stay in settings menu
                 elif action == "settings":
+                    # Clear any previous export status message when entering settings menu
+                    menus["settings_menu"].export_status_message = None
                     current_menu = menus["settings_menu"]
                 elif action == "help":
                     # Only recreate help menu if graphics mode changed (preserves page state)
@@ -401,6 +403,8 @@ def handle_menu_navigation(
                         # Graphics preview not available
                         logging.warning("Graphics Preview not available")
                 elif action == "back":
+                    # Clear export status message when leaving settings menu
+                    menus["settings_menu"].export_status_message = None
                     # Refresh main menu options in case graphics mode changed
                     main_menu.refresh_options(show_continue=True, active_game=active_game)
                     current_menu = main_menu
@@ -465,13 +469,15 @@ def handle_menu_navigation(
                     zip_path = export_debug_package(game_engine=active_game)
                     if zip_path:
                         logging.info(f"Debug Export: Success from settings menu - {zip_path}")
-                        # Show success message via settings menu
-                        # Note: We can't show messages directly in menu context, but logging is sufficient
-                        # The user will see the file in debug_exports/ folder
+                        # Show success message with exact path
+                        menus["settings_menu"].export_status_message = f"Success! Saved to: {zip_path.parent}"
                     else:
                         logging.error("Debug Export: Failed to create package from settings menu")
+                        menus["settings_menu"].export_status_message = "Failed to create debug package"
                     # Stay in settings menu
                 elif action == "settings":
+                    # Clear any previous export status message when entering settings menu
+                    menus["settings_menu"].export_status_message = None
                     current_menu = menus["settings_menu"]
                 elif action == "help":
                     # Only recreate help menu if graphics mode changed (preserves page state)
@@ -594,6 +600,8 @@ def handle_menu_navigation(
                         # Graphics preview not available
                         logging.warning("Graphics Preview not available")
                 elif action == "back":
+                    # Clear export status message when leaving settings menu
+                    menus["settings_menu"].export_status_message = None
                     # Refresh main menu options in case graphics mode changed
                     main_menu.refresh_options(show_continue=True, active_game=active_game)
                     current_menu = main_menu

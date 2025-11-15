@@ -71,7 +71,7 @@ This is an **Alpha release** focusing on core gameplay and feedback collection.
 - ✅ Complete story content (20+ fragments)
 
 ### Known Limitations
-- Windows-focused (Linux/Mac compatibility planned)
+- Windows only
 - No tutorial scenario (help menu is comprehensive)
 
 ---

@@ -282,8 +282,8 @@ class InfoProvider:
         """
         Format exploit definition for info panel display.
 
-        Shows exploit name, costs (RAM, Heat), damage, range, and full description.
-        Name is colored by category (stealth=purple, combat=red, utility=cyan, emergency=orange).
+        Shows costs (RAM, Heat), damage, range, and full description.
+        Exploit name is shown in the panel title border.
 
         Args:
             game: GameEngine instance (for checking heat cost modifications)
@@ -294,14 +294,7 @@ class InfoProvider:
         """
         lines = []
 
-        # Name with category color
-        from game_color_manager import ColorManager
-
-        category_color = ColorManager.get_exploit_color(exploit_def.category)
-        lines.append({"text": exploit_def.name, "color": category_color})
-        lines.append({"text": "", "color": Colors.WHITE})
-
-        # Costs and stats
+        # Costs and stats (name is now in title, saves 2 lines!)
         ram_cost = exploit_def.ram
         heat_cost = exploit_def.heat
 
@@ -336,7 +329,11 @@ class InfoProvider:
         for line in desc_lines:
             lines.append({"text": line, "color": Colors.LIGHT_GRAY})
 
-        return {"title": "EXPLOIT INFO", "lines": lines, "color": Colors.CYAN}
+        # Get category color for title
+        from game_color_manager import ColorManager
+        category_color = ColorManager.get_exploit_color(exploit_def.category)
+
+        return {"title": exploit_def.name, "lines": lines, "color": category_color}
 
     @staticmethod
     def _format_entity_info(game, entity_info: dict[str, Any]) -> dict[str, Any]:
@@ -360,16 +357,11 @@ class InfoProvider:
             return InfoProvider._format_code_hack_info(game, entity_info)
 
         # For other entities, format normally
+        # Name goes in title to save space (like exploits)
         lines = []
 
-        # Add name
-        lines.append({"text": entity_info["name"], "color": entity_info["color"]})
-
-        # Add blank line
-        lines.append({"text": "", "color": Colors.WHITE})
-
         # Add description (word wrapped)
-        desc_lines = InfoProvider._wrap_text(entity_info["description"], 22)  # 24 - 2 for padding
+        desc_lines = InfoProvider._wrap_text(entity_info["description"], 22)
         for line in desc_lines:
             lines.append({"text": line, "color": Colors.LIGHT_GRAY})
 
@@ -384,7 +376,7 @@ class InfoProvider:
                 for line in wrapped_details:
                     lines.append({"text": line, "color": Colors.WHITE})
 
-        return {"title": "INFO PANEL", "lines": lines, "color": Colors.GREEN}
+        return {"title": entity_info["name"], "lines": lines, "color": entity_info["color"]}
 
     @staticmethod
     def _format_code_hack_info(game, entity_info: dict[str, Any]) -> dict[str, Any]:
@@ -480,7 +472,7 @@ class InfoProvider:
         Shows:
         - Network level with name
         - Turn counter
-        - Trace/detection level
+        - Trace level
         - Enemies remaining
         - Current streak (if any)
 

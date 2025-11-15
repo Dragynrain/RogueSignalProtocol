@@ -5,39 +5,39 @@
 ### 7. **Test the EXE**
 
 **Basic functionality:**
-- [ ] Test on clean Windows 10/11 system (no Python installed)
-- [ ] Verify all config files load correctly
-- [ ] Play through one complete run (all 3 levels)
-- [ ] Test save/load functionality
-- [ ] Verify permadeath deletes save
-- [ ] Check all 13 exploits work correctly
-- [ ] Verify keybindings (I=Inventory, L=Look, F=Fragments, ?=Help, V=Achievements)
+- [X] Test on clean Windows 10/11 system (no Python installed)
+- [X] Verify all config files load correctly
+- [X] Play through one complete run (all 3 levels)
+- [X] Test save/load functionality
+- [X] Verify permadeath deletes save
+- [X] Check all 13 exploits work correctly
+- [X] Verify keybindings (I=Inventory, L=Look, F=Fragments, ?=Help, V=Achievements)
 
 **CRITICAL: Test with TCOD 19.6.0 changes:**
-- [ ] Verify nearest-neighbor scaling looks good (graphics sharper, not broken)
-- [ ] Verify graphics mode toggle in Settings menu works
+- [X] Verify nearest-neighbor scaling looks good (graphics sharper, not broken)
+- [X] Verify graphics mode toggle in Settings menu works
 
 **Audio verification:**
-- [ ] Test all 13 exploit sounds play correctly
-- [ ] Verify music tracks load and loop
-- [ ] Check Logic Bomb sound (logic_bomb.wav) plays
+- [X] Test all 13 exploit sounds play correctly
+- [X] Verify music tracks load and loop
+- [X] Check Logic Bomb sound (logic_bomb.wav) plays
 
 **Debug tools work in EXE:**
-- [ ] Shift+F12 creates debug package
-- [ ] Settings > Export Debug Package works
-- [ ] Verify package includes saves/logs/metrics from data directory
-- [ ] Package created in [data directory]/debug_exports/
+- [X] Shift+F12 creates debug package
+- [X] Settings > Export Debug Package works
+- [X] Verify package includes saves/logs/metrics from data directory
+- [X] Package created in [data directory]/debug_exports/
 
 **Achievement system:**
-- [ ] Unlock an achievement and verify it persists
-- [ ] Check achievement popups display correctly
-- [ ] Verify progress tracking works across deaths
+- [X] Unlock an achievement and verify it persists
+- [X] Check achievement popups display correctly
+- [X] Verify progress tracking works across deaths
 
 **Edge cases:**
-- [ ] Test Admin Avatar spawns when trace hits 100%
-- [ ] Verify permadeath deletes save file completely
-- [ ] Test look mode (L key) mouse and keyboard interaction
-- [ ] Check fragments screen (F key) displays all discovered lore
+- [X] Test Admin Avatar spawns when trace hits 100%
+- [X] Verify permadeath deletes save file completely
+- [X] Test look mode (L key) mouse and keyboard interaction
+- [X] Check fragments screen (F key) displays all discovered lore
 
 ### 7.5 **Create backup before packaging**
 
@@ -48,10 +48,10 @@
 
 ### 7.6 **Test new player experience**
 
-- [ ] Delete `user_settings.json` and test fresh start
-- [ ] Verify intro dialogue appears
-- [ ] Check help menu (?) is comprehensive
-- [ ] Ensure first death shows feedback link clearly
+- [X] Delete `user_settings.json` and test fresh start
+- [X] Verify intro dialogue appears
+- [X] Check help menu (?) is comprehensive
+- [X] Ensure first death shows feedback link clearly
 
 ---
 
@@ -147,16 +147,13 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
   - [x] README.md - Add feedback badge/button at top (MUST-HAVE)
   - [x] Itch.io page draft - Prominent "Share Feedback" button (MUST-HAVE)
   - [x] Reddit post draft - In "Where to Get It" section (MUST-HAVE)
-  - [ ] In-game death screen - "Help improve the game: [link]" (OPTIONAL)
-  - [ ] In-game victory screen (after level 3) (OPTIONAL)
-  - [ ] In-game menu - "F: Give Feedback" option (OPTIONAL)
 
 ---
 
 ## 🐛 KNOWN ISSUES (Document on itch.io)
 
 **Alpha limitations to mention:**
-- Windows-only (Linux/Mac planned)
+- Windows-only 
 - Single difficulty level (no easy/hard modes yet)
 - Graphics mode optional (ASCII is primary)
 - No tutorial scenario (help menu is comprehensive)

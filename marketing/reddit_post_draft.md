@@ -85,4 +85,4 @@ I learned so much more about testing methodologies, processes, and patterns buil
 
 **Happy to answer any questions about the workflow** - what worked, what didn't, where AI helped vs. where it fell short, or anything about the development process. And of course, would love feedback on the game itself!
 
-I feel like the game is way too easy in its current state and I want to ratchet up the difficulty and add an Ascension system and gamepad support. What do you think?
+I feel like the game is way too easy in its current state and I want to ratchet up the difficulty and add an Ascension system and gamepad support. But I also wrote the game and know how all the systems work so of course it feels easy to me! What do you think??

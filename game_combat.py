@@ -293,7 +293,8 @@ class ExploitSystem:
         Execute System Hop exploit - pivot to blind spot.
 
         Instantly moves player to target position if it's in a blind spot zone,
-        not occupied by an enemy, and is a valid walkable tile.
+        visible from player position (line of sight), not occupied by an enemy,
+        and is a valid walkable tile.
 
         Args:
             target: Target blind spot position
@@ -301,19 +302,26 @@ class ExploitSystem:
         Returns:
             True if hop succeeded, False if target invalid
         """
-        if self.game.game_map.is_blind_spot(target) and self.game.game_map.is_valid_position(
-            target
-        ):
-            if not self.game._get_enemy_at(target):
-                self.game.sound_manager.play_sound("exploit_system_hop")
-                self.game.player.position = target
-                self.game.message_log.add_message("System Hop executed")
-                return True
-            else:
-                self.game.message_log.add_message("Target occupied")
-        else:
+        # Must be a blind spot and valid walkable position
+        if not (self.game.game_map.is_blind_spot(target) and self.game.game_map.is_valid_position(target)):
             self.game.message_log.add_message("Must target blind spot")
-        return False
+            return False
+
+        # Must have line of sight (can't teleport through walls)
+        if not self.game.game_map.has_line_of_sight(self.game.player.position, target):
+            self.game.message_log.add_message("No line of sight")
+            return False
+
+        # Target must be unoccupied
+        if self.game._get_enemy_at(target):
+            self.game.message_log.add_message("Target occupied")
+            return False
+
+        # All checks passed - execute hop
+        self.game.sound_manager.play_sound("exploit_system_hop")
+        self.game.player.position = target
+        self.game.message_log.add_message("System Hop executed")
+        return True
 
     def _execute_traffic_masquerade(self) -> bool:
         """

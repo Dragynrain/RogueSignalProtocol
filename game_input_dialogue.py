@@ -331,7 +331,8 @@ class DialogueInputManager:
                 self.game.message_log.add_message(
                     f"Debug package created: {filename}", Colors.GREEN
                 )
-                self.game.message_log.add_message("Location: debug_exports/ folder", Colors.CYAN)
+                # Show exact path so user knows where to find it
+                self.game.message_log.add_message(f"Location: {zip_path.parent}", Colors.CYAN)
                 self.game.message_log.add_message(
                     "Report to: github.com/Dragynrain/RogueSignalProtocol", Colors.YELLOW
                 )

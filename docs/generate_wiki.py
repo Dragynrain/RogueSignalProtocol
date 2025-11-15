@@ -238,7 +238,7 @@ def generate_exploit_database(content):
 
             # Stats table
             md.append(
-                f"**Cost:** {exploit['ram']} RAM | **Heat:** {exploit['heat']}° | **Range:** {exploit['range']} tiles\n"
+                f"**Cost:** {exploit['ram']} RAM | **Heat:** {exploit['heat']} | **Range:** {exploit['range']} tiles\n"
             )
 
             md.append(f"\n{exploit['description']}\n")
@@ -271,7 +271,7 @@ def generate_exploit_database(content):
 
             if exploit_id == "system_hop":
                 md.append("- Instant repositioning for escapes or flanking\n")
-                md.append("- No line of sight required\n")
+                md.append("- Requires line of sight to target\n")
                 md.append("- Low heat cost for frequent use\n")
             elif exploit_id == "traffic_masquerade":
                 md.append("- Complete invisibility for 5 turns\n")
