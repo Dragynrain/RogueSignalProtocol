@@ -37,6 +37,7 @@ The game features full audio with atmospheric music and 40+ sound effects, parti
 **Itch.io:** https://dragynrain.itch.io/rogue-signal-protocol
 **Source Code:** https://github.com/Dragynrain/RogueSignalProtocol
 **Feedback Survey:** https://forms.gle/jbwGdn8VGPa6NG9p9
+**Youtube Link:** https://youtu.be/URI75uHpOOc
 
 This is **alpha 0.8.0** - feature complete and playtested, now looking for wider feedback on:
 * **Difficulty** - Is it too easy? Too hard? Fair but challenging?

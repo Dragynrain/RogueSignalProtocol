@@ -41,10 +41,10 @@
 
 ### 7.5 **Create backup before packaging**
 
-- [ ] Copy entire `dist/` folder to `dist_backup_v0.8.0/`
-- [ ] Commit current state to git
-- [ ] Tag release: `git tag v0.8.0-alpha`
-- [ ] Push to GitHub: `git push origin v0.8.0-alpha`
+- [X] Copy entire `dist/` folder to `dist_backup_v0.8.0/`
+- [X] Commit current state to git
+- [X] Tag release: `git tag v0.8.0-alpha`
+- [X] Push to GitHub: `git push origin v0.8.0-alpha`
 
 ### 7.6 **Test new player experience**
 
@@ -79,23 +79,23 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
 ```
 
 **Verify the zip contains:**
-- [ ] RogueSignalProtocol.exe
-- [ ] All .json config files (game_content, game_rules, narrative_content, graphics_tiles)
-- [ ] KreativeSquare.ttf font
-- [ ] README.txt and LICENSE
-- [ ] graphics/ folder (includes main_menu backgrounds)
-- [ ] sound/ folder
-- [ ] music/ folder
-- [ ] debug_mode.flag (alpha builds only)
+- [X] RogueSignalProtocol.exe
+- [X] All .json config files (game_content, game_rules, narrative_content, graphics_tiles)
+- [X] KreativeSquare.ttf font
+- [X] README.txt and LICENSE
+- [X] graphics/ folder (includes main_menu backgrounds)
+- [X] sound/ folder
+- [X] music/ folder
+- [X] debug_mode.flag (alpha builds only)
 
 ### 9. **Prepare itch.io page**
 
-- [ ] Upload .zip package
-- [ ] Copy content from `marketing/itch_io_page_draft.md`
-- [ ] Add 3-5 screenshots (gameplay, menus, lore)
-- [ ] Set tags: roguelike, stealth, cyberpunk, turn-based, permadeath
-- [ ] Set price: Pay what you want ($0 minimum)
-- [ ] Mark as "Alpha - In Development"
+- [X] Upload .zip package
+- [X] Copy content from `marketing/itch_io_page_draft.md`
+- [X] Add 3-5 screenshots (gameplay, menus, lore)
+- [X] Set tags: roguelike, stealth, cyberpunk, turn-based, permadeath
+- [X] Set price: Pay what you want ($0 minimum)
+- [X] Mark as "Alpha - In Development"
 
 ### 9.5 **Update and verify screenshots** - PARTIALLY COMPLETED
 
@@ -106,20 +106,20 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
 - Screenshot 2025-11-08 102149.png (580K)
 
 **Still need manual verification:**
-- [ ] **Verify screenshots show pixel explosion effect** (graphics mode)
-- [ ] **Verify screenshots show queue arrows** (the new directional arrow system)
-- [ ] Verify images show both ASCII and graphics modes
-- [ ] Ensure one screenshot shows the enemy movement queue UI clearly
-- [ ] Consider if additional shots needed: gameplay, inventory, lore/fragments screen, death screen with feedback link
+- [X] **Verify screenshots show pixel explosion effect** (graphics mode)
+- [X] **Verify screenshots show queue arrows** (the new directional arrow system)
+- [X] Verify images show both ASCII and graphics modes
+- [X] Ensure one screenshot shows the enemy movement queue UI clearly
+- [X] Consider if additional shots needed: gameplay, inventory, lore/fragments screen, death screen with feedback link
 
 ### 9.6 **Record new MP4 video for Reddit**
 
 **CRITICAL - Reddit engagement booster:**
-- [ ] **Record new MP4 video showcasing gameplay** (10-15 seconds)
-- [ ] Show key features: movement queue arrows, pixel explosions, stealth mechanics
-- [ ] Keep file size reasonable for Reddit upload (<100 MB)
-- [ ] Consider showing: player hiding in blind spot → enemy moves past → player escapes
-- [ ] Test video plays correctly on Reddit before posting
+- [X] **Record new MP4 video showcasing gameplay** (10-15 seconds)
+- [X] Show key features: movement queue arrows, pixel explosions, stealth mechanics
+- [X] Keep file size reasonable for Reddit upload (<100 MB)
+- [X] Consider showing: player hiding in blind spot → enemy moves past → player escapes
+- [X] Test video plays correctly on Reddit before posting
 
 ---
 
@@ -167,10 +167,10 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
   - Should be 64x64 pixel sprite to match other tiles
   - Color: dimmed/ghostly to indicate uncertainty
   - Used to mark where player last saw an enemy that's no longer visible
-- [ ] Create cover image for itch.io (315x250 or 630x500)
-- [ ] Create banner image (960x540)
-- [ ] Record 10-second GIF of gameplay
-- [ ] Take 5 screenshots:
+- [X] Create cover image for itch.io (315x250 or 630x500)
+- [X] Create banner image (960x540)
+- [X] Record 10-second GIF of gameplay
+- [X] Take 5 screenshots:
   1. Main menu
   2. Stealth gameplay (hiding in shadows)
   3. Combat encounter
@@ -226,23 +226,3 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
 4. Feature requests (consider for v1.0)
 
 ---
-
-## ✅ TCOD 19.6.0 UPDATE VERIFICATION - COMPLETED (Added Nov 8)
-
-**Update completed:**
-- [x] Updated from 19.4.0 → 19.6.0 (verified in requirements.txt: tcod==19.6.0)
-- [x] All 2339 tests pass (verified 2025-11-14: 2339 passed, 4 skipped)
-- [x] Game launches successfully in dev environment
-- [x] Graphics look good with new nearest-neighbor scaling
-
-**Still required before release:**
-- [ ] **Test the actual EXE build** (not just dev environment!)
-- [ ] Verify scaling looks good in built EXE
-- [ ] No visual regressions in graphics or ASCII modes
-- [ ] Confirm controller crash fix doesn't affect non-controller gameplay
-
-**What changed in 19.6.0:**
-- Nearest-neighbor scaling is now default (sharper graphics - good for roguelikes!)
-- Fixed controller event crash (even though we don't use controllers yet)
-- Fixed key symbol regression (lowercase keys)
-- Updated to libtcod 2.2.1
