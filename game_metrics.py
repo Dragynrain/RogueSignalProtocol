@@ -361,7 +361,13 @@ def finalize_session(
 
 def save_session_to_json(session: SessionMetrics) -> None:
     """Save session metrics to JSON file."""
-    _get_metrics_dir().mkdir(exist_ok=True)
+    try:
+        _get_metrics_dir().mkdir(exist_ok=True)
+    except Exception as e:
+        GameErrorHandler.handle_error(
+            e, "create_metrics_dir", "Failed to create metrics directory", fatal=False
+        )
+        return
 
     json_file = _get_metrics_dir() / f"{session.session_id}.json"
 
@@ -381,7 +387,13 @@ def save_session_to_json(session: SessionMetrics) -> None:
 
 def save_session_to_sqlite(session: SessionMetrics) -> None:
     """Save session metrics to SQLite database."""
-    _get_metrics_dir().mkdir(exist_ok=True)
+    try:
+        _get_metrics_dir().mkdir(exist_ok=True)
+    except Exception as e:
+        GameErrorHandler.handle_error(
+            e, "create_metrics_dir", "Failed to create metrics directory", fatal=False
+        )
+        return
 
     try:
         _init_sqlite_schema()
