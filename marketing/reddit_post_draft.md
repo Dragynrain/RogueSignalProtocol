@@ -1,12 +1,10 @@
-# Reddit Post Draft - r/roguelikes or r/roguelikedev
+# Reddit Post Draft - r/roguelikedev
 
 ---
 
 ## Title Options:
 
-1. `[Alpha Release] Rogue Signal Protocol - A cyberspace stealth roguelike built with AI tools`
-2. `Rogue Signal Protocol - Coffee break cyberspace stealth roguelike (with AI dev workflow)`
-3. `Just released my stealth roguelike - built solo using Claude Code, Stable Diffusion, and AudioCraft`
+1. `Rogue Signal Protocol - Cyberspace stealth roguelike (with AI dev workflow)`
 
 ---
 
@@ -14,9 +12,7 @@
 
 Hey r/roguelikedev!
 
-I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a traditional turn-based coffee break stealth roguelike where you play as an escaped digital consciousness navigating hostile corporate networks. Quick 10-15 minute runs with permadeath - each death teaches lessons, each run reveals more truth.
-
-**[GIF/Video of gameplay here - even 10 seconds massively increases engagement]**
+I've lurked here for many years and attempted creating several roguelike games in the past to no great success. However, today I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a traditional turn-based coffee break stealth roguelike (that's a mouthful!) where you play as an escaped digital consciousness navigating hostile corporate networks. Quick 10-15 minute runs with permadeath - each death teaches lessons, each run reveals more truth.
 
 *(Screenshots in comments)*
 
@@ -31,11 +27,11 @@ I've just released **Rogue Signal Protocol** (v0.8.0 Alpha), a traditional turn-
 
 The **stealth mechanics** are central - you're not meant to fight everything. Hide in blind spots to avoid detection and manage your heat levels carefully. Push your detection too high and the **Admin Avatar** spawns - a powerful boss with perfect tracking and relentless pursuit.
 
-**Heat management** from exploit usage adds another resource layer beyond typical HP/mana. Every move counts in this purely skill-based tactical challenge.
+**Heat management** from exploit usage and bump attacks adds another resource layer beyond typical HP/mana. Every move counts in this purely skill-based tactical challenge.
 
 The **story is told through environmental fragments** - 20+ story fragments persist across runs, even death can't erase them. Each run might reveal new pieces of the Project Chimera conspiracy. Permadeath for your character, but persistent narrative discovery means every run brings you closer to the truth.
 
-The game features full audio design with atmospheric music and 40+ sound effects (toggleable), particle effect explosions for visual feedback, and complete keyboard and mouse support. Track your progress across runs with the **Achievement System** - unlock challenges and prove your mastery of stealth tactics.
+The game features full audio with atmospheric music and 40+ sound effects, particle effect explosions for enemy death, and complete keyboard and mouse support. Track your progress across runs with the **Achievement System** - unlock challenges and prove your mastery of stealth tactics.
 
 ### Where to Get It:
 **Itch.io:** https://dragynrain.itch.io/rogue-signal-protocol
@@ -53,11 +49,19 @@ This is **alpha 0.8.0** - feature complete and playtested, now looking for wider
 
 ## How This Was Built
 
-**Background:** I'm a professional software engineer, so this was built with engineering discipline: architecture reviews, code quality standards, and comprehensive automated testing. I approach Claude Code more like a technical project manager: breaking down requirements, reviewing architecture decisions, curating outputs, and ensuring quality.
+**Background:** I'm a professional software engineer, so this was built with engineering discipline: architecture reviews, code quality standards, and comprehensive automated testing. 
 
-This game was built using AI tools (Claude Code for code, Stable Diffusion for sprites and images, AudioCraft for SFX), compressing the timeline from 6-12 months to 2-3 months.
+This game was built with the assistance of AI tools (Claude Code for code, Stable Diffusion for sprites and images, AudioCraft for SFX), compressing the timeline from probably 6-12+ months to closer to 3 months. I did use some wonderful human-created music for the soundtrack!
 
-**Testing Infrastructure:**
+I approached this project more like a technical project manager: breaking down requirements, reviewing architecture decisions, curating outputs, and ensuring quality. This is my first project with AI. I definitely learned a lot about coding with AI assistance and how best to use Claude Code and how to maximize my time spent on the fun things like designing game systems! 
+
+**The reality:** I approached asset generation with most of my time spent on quality control - only keeping outputs that fit the game's design vision. Thousands of sprites and images were discarded before settling on the ones I did. AI definitely accelerated the prototyping and iteration cycles, but game design, architecture, balance tuning, and quality standards were all human-driven. **The tools amplified my output, but the creative direction is all human.**
+
+There's a Graphics Preview option in the main menu that has dozens of sprites I created and lets you preview them together (walls, floors, enemies, player, etc.) to see how well they match, which is how I chose the default sprite set. I'm not a real artist by any means though! If you think you can do choose better from among my sprites send me your set (the previewer will actually save what you have chosen to a log file).
+
+If you are an actual artist or actual sound designer interested in improving the game's polish, I'd love to collaborate. Reach out!
+
+**Testing Infrastructure:** This game is supported by a massive testing infrastructure to alleviate the need for as much manual testing.
 * **2000+ automated tests** - 1000+ unit tests, 1000+ integration tests, 50+ agent-based gameplay tests
 * **GameTestAgent framework** - Headless game simulation where AI agents actually play the game to validate mechanics
 * **Specialized test agents:** Chaos agents (spam random inputs to find edge cases), speed-running agents (test optimal pathing), pacifist stealth agents (ensure non-combat paths remain viable), barbarian agents (pure combat validation)
@@ -65,15 +69,13 @@ This game was built using AI tools (Claude Code for code, Stable Diffusion for s
 * **Automated regression testing** - Pre-commit hooks prevent broken code from entering the repository
 * Catches mechanical bugs and edge cases that might not surface in manual playtesting
 
-**The reality:** I approached asset generation with high quality control - only keeping outputs that met the game's design vision. AI definitely accelerated the prototyping and iteration cycles, but game design, architecture, balance tuning, and quality standards were all human-driven. **The tools amplified my output, but the creative direction is all human.**
-
-If you're an actual artist or actual sound designer interested in improving the game's polish, I'd love to collaborate. Reach out!
+I learned so much more about testing methodologies, processes, and patterns building this all out!
 
 ---
 
 **Technical Stack:**
 * **Language:** Python + TCOD 19.6.0 (latest!)
-* **Dev Environment:** VS Code on Windows 10/11
+* **Dev Environment:** VS Code on Windows 11
 * **Testing:** Parallel test execution with headless game agents, per-worker file isolation, pre-commit hooks
 * **Runtime:** Windows standalone EXE (~200 MB download)
 * **Play Time:** 5-15 minutes per full 3-level run
@@ -83,36 +85,4 @@ If you're an actual artist or actual sound designer interested in improving the 
 
 **Happy to answer any questions about the workflow** - what worked, what didn't, where AI helped vs. where it fell short, or anything about the development process. And of course, would love feedback on the game itself!
 
----
-
-*[Post 3-4 screenshots in comments after submitting - gameplay, inventory, lore screen, maybe a death screen showing feedback link]*
-
----
-
-## Posting Strategy:
-
-**Target Subreddit:** r/roguelikedev (more dev-focused, better reception for AI transparency)
-**Alternative:** r/roguelikes (if roguelikedev goes well, cross-post 1 week later)
-
-**Best Practices:**
-* **Include:** 3-4 screenshots showing ASCII mode, graphics mode, and gameplay
-* **Respond actively** to comments in first 2-3 hours (critical for visibility)
-* **Acknowledge criticism** about AI respectfully - don't get defensive
-* **Emphasize the game first** - "try it and judge for yourself"
-* **Be ready for:** Both fascinated developers asking workflow questions AND immediate "AI slop" dismissals
-
-**What to Expect:**
-* Some devs will be genuinely curious about the workflow
-* Some players will refuse to try it based on AI mention alone
-* Could get picked up by gaming news sites (good or bad coverage)
-* Likely to spark debate in comments (engagement = visibility)
-
-**If It Goes Badly:**
-* Don't delete the post - own it
-* Learn from the feedback
-* Consider making a "lessons learned" follow-up post
-
-**If It Goes Well:**
-* Engage with everyone asking workflow questions
-* Consider doing an AMA or detailed dev blog
-* This could become a case study for AI-assisted indie dev
+I feel like the game is way too easy in its current state and I want to ratchet up the difficulty and add an Ascension system and gamepad support. What do you think?

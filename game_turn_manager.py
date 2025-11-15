@@ -87,19 +87,63 @@ class GameTurnManager:
                     )
                     self.game_engine.dialogue_state.close()
 
+                # Mark game as over to prevent auto-save
+                self.game_engine.game_over = True
+
                 self.game_engine.sound_manager.play_sound("player_death", priority=10)
                 self.game_engine.sound_manager.play_sound("critical_system_failure", priority=10)
-                # Delete save on death (permadeath)
-                self._delete_save_on_death()
 
-                # CRITICAL: Flush logs immediately before death dialogue (ensure combat logs are written)
-                for handler in logging.root.handlers:
-                    handler.flush()
+                # Handle virus death analytics and metrics
+                if not hasattr(self, "_death_handled"):
+                    player = self.game_engine.player
+                    death_cause = "virus"
 
-                # Show death dialogue
-                from game_dialogue_system import create_death_dialogue
+                    # Alpha Testing: Death analytics
+                    logging.warning("=" * 80)
+                    logging.warning(f"PLAYER DEATH - {death_cause.upper()}")
+                    logging.warning(f"Level: {self.game_engine.level}, Turn: {self.game_engine.turn}")
+                    logging.warning(f"Position: ({player.x},{player.y})")
+                    logging.warning(f"Final CPU: {player.cpu}/{player.max_cpu}")
+                    logging.warning(f"Final Heat: {player.heat}/{player.max_heat}")
+                    logging.warning(f"Trace Level: {player.trace_level}")
+                    logging.warning(
+                        f"Active Virus: {player.temporary_effects.get('virus_turns', 0)} turns"
+                    )
+                    logging.warning(
+                        f"Enemies nearby: {len([e for e in self.game_engine.enemies if e.position.grid_distance_to(player.position) < 10])}"
+                    )
+                    logging.warning("=" * 80)
 
-                self.game_engine.dialogue_state.show(create_death_dialogue())
+                    # CRITICAL: Flush logs immediately to ensure death info is written
+                    for handler in logging.root.handlers:
+                        handler.flush()
+
+                    # Finalize and save metrics before deleting save
+                    from game_metrics import finalize_session, load_lifetime_metrics, save_metrics
+
+                    metrics = finalize_session(
+                        victory=False, death_cause=death_cause, death_level=self.game_engine.level
+                    )
+                    if metrics:
+                        save_metrics(metrics)
+
+                        # Check for newly unlocked achievements
+                        from game_achievements import AchievementManager
+                        from game_metrics import save_unlocked_achievements
+
+                        lifetime = load_lifetime_metrics()
+                        newly_unlocked = AchievementManager.check_achievements(metrics, lifetime)
+                        if newly_unlocked:
+                            logging.info(f"Unlocked {len(newly_unlocked)} achievements on death")
+                            # Save achievements to progress file
+                            save_unlocked_achievements(AchievementManager.get_unlocked_achievements())
+
+                    # Delete save on death (permadeath)
+                    self._delete_save_on_death()
+                    self._death_handled = True  # Prevent duplicate handling by general death check
+
+                # Defer death dialogue by one frame to allow damage messages to render
+                self.game_engine.pending_death_dialogue = True
 
         # Process special tiles
         self._process_special_tiles()
