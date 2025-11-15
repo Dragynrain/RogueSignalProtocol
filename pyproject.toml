@@ -35,7 +35,13 @@ select = [
 ]
 ignore = [
     "E501",  # Line too long (handled by formatter)
+    "N802",  # Function name should be lowercase (intentional for config properties)
+    "N806",  # Variable in function should be lowercase (intentional for Win32 API constants)
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# Test files often have unused variables for documentation/clarity
+"tests/**/*.py" = ["F841", "E731"]
 
 [tool.mypy]
 python_version = "3.13"
