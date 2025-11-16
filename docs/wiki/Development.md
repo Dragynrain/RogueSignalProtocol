@@ -190,7 +190,7 @@ Modify:
 - Keep commits focused and atomic
 
 ### Communication
-- **Discord:** https://discord.gg/aUZgmrpU
+- **Discord:** https://discord.gg/5fykUtECqz
 - **GitHub Issues:** https://github.com/Dragynrain/RogueSignalProtocol/issues
 - **Email:** roguesignalprotocol@gmail.com
 

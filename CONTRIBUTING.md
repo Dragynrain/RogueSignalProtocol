@@ -175,7 +175,7 @@ See [README_DEV.md](README_DEV.md) for complete modding documentation.
 
 ## Questions?
 
-- **Discord:** [https://discord.gg/aUZgmrpU](https://discord.gg/aUZgmrpU)
+- **Discord:** [https://discord.gg/5fykUtECqz](https://discord.gg/5fykUtECqz)
 - **Email:** roguesignalprotocol@gmail.com
 - **Discussions:** Use GitHub Discussions for questions
 

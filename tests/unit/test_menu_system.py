@@ -306,7 +306,7 @@ class TestAboutMenu:
 
         # Verify all URLs are exactly as expected
         assert about_menu.links[0]["url"] == "https://dragynrain.itch.io/rogue-signal-protocol"
-        assert about_menu.links[1]["url"] == "https://discord.gg/aUZgmrpU"
+        assert about_menu.links[1]["url"] == "https://discord.gg/5fykUtECqz"
         assert about_menu.links[2]["url"] == "https://github.com/Dragynrain/RogueSignalProtocol"
         assert about_menu.links[3]["url"] is None  # Back button has no URL
 

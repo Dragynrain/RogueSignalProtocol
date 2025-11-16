@@ -48,7 +48,7 @@ Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike whe
 
 ## Community Links
 
-- **Discord:** https://discord.gg/aUZgmrpU
+- **Discord:** https://discord.gg/5fykUtECqz
 - **Itch.io:** https://dragynrain.itch.io/rogue-signal-protocol
 - **GitHub:** https://github.com/Dragynrain/RogueSignalProtocol/
 - **Email:** roguesignalprotocol@gmail.com

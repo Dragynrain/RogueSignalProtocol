@@ -53,7 +53,7 @@ class AboutMenu(BaseMenu):
             {
                 "name": "Discord",
                 "description": "Join Community",
-                "url": "https://discord.gg/aUZgmrpU",
+                "url": "https://discord.gg/5fykUtECqz",
                 "color": Colors.ELECTRIC_PURPLE,
             },
             {
