@@ -46,7 +46,7 @@ This is an [b]active alpha[/b] - your feedback shapes development!
 [*]Email: [url=mailto:roguesignalprotocol@gmail.com]roguesignalprotocol@gmail.com[/url]
 [*]GitHub Wiki: [url=https://github.com/Dragynrain/RogueSignalProtocol/wiki]https://github.com/Dragynrain/RogueSignalProtocol/wiki[/url]
 [*]GitHub Issues: [url=https://github.com/Dragynrain/RogueSignalProtocol/issues]https://github.com/Dragynrain/RogueSignalProtocol/issues[/url]
-[*]Discord: [url=https://discord.gg/aUZgmrpU]https://discord.gg/aUZgmrpU[/url]
+[*]Discord: [url=https://discord.gg/5fykUtECqz]https://discord.gg/5fykUtECqz[/url]
 [/list]
 
 [h2]REQUIREMENTS:[/h2]
@@ -106,7 +106,7 @@ Contact & Feedback:
 • Email: roguesignalprotocol@gmail.com
 • GitHub Wiki: https://github.com/Dragynrain/RogueSignalProtocol/wiki
 • GitHub Issues: https://github.com/Dragynrain/RogueSignalProtocol/issues
-• Discord: https://discord.gg/aUZgmrpU
+• Discord: https://discord.gg/5fykUtECqz
 
 REQUIREMENTS:
 

@@ -90,5 +90,5 @@ Community Impact Guidelines were inspired by [Mozilla's code of conduct enforcem
 
 If you have questions about this Code of Conduct, please reach out:
 
-- **Discord:** [https://discord.gg/aUZgmrpU](https://discord.gg/aUZgmrpU)
+- **Discord:** [https://discord.gg/5fykUtECqz](https://discord.gg/5fykUtECqz)
 - **Email:** roguesignalprotocol@gmail.com

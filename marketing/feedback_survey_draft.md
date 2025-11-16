@@ -73,7 +73,7 @@ Thank you for playing Rogue Signal Protocol and taking the time to provide feedb
 
 **Stay Connected:**
 - Follow development: https://github.com/Dragynrain/RogueSignalProtocol
-- Join Discord: https://discord.gg/aUZgmrpU
+- Join Discord: https://discord.gg/5fykUtECqz
 - Direct contact: roguesignalprotocol@gmail.com
 
 ---

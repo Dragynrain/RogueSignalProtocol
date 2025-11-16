@@ -224,7 +224,7 @@ This is an ALPHA release. Your feedback helps improve the game!
 https://forms.gle/jbwGdn8VGPa6NG9p9
 
 LINKS:
-Discord:  https://discord.gg/aUZgmrpU
+Discord:  https://discord.gg/5fykUtECqz
 Itch.io:  https://dragynrain.itch.io/rogue-signal-protocol
 GitHub:   https://github.com/Dragynrain/RogueSignalProtocol/
 Email:    roguesignalprotocol@gmail.com
