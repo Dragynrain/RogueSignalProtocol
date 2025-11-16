@@ -1,8 +1,0 @@
-Windows Registry Editor Version 5.00
-
-; Disable Auto HDR notification popup
-; This prevents Windows from showing the "Auto HDR is on" toast notification
-; Auto HDR itself remains enabled - only the popup is disabled
-
-[HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Notifications\Settings\Windows.SystemToast.Graphics.AutoHDR]
-"Enabled"=dword:00000000
