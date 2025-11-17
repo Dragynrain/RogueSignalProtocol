@@ -113,11 +113,11 @@ class TestRealConfigIntegration:
 
         mock_game = MockGame()
 
-        # Load heat reduction value from JSON
-        with open("game_content.json") as f:
-            game_data = json.load(f)
+        # Load heat reduction value from JSON (single source of truth: game_rules.json)
+        with open("game_rules.json") as f:
+            game_config = json.load(f)
 
-        heat_reduction_instant = game_data["balance"]["code_hacks"]["heat_reduction_instant"]
+        heat_reduction_instant = game_config["balance"]["heat_reduction_instant"]
 
         # Test heat reduction effect
         player.heat = 75

@@ -4,6 +4,7 @@ Dead code analyzer for RogueSignalProtocol.
 Finds potentially unused functions, classes, variables, and imports.
 """
 
+import argparse
 import ast
 import os
 from collections import defaultdict
@@ -19,6 +20,7 @@ class CodeAnalyzer(ast.NodeVisitor):
         self.usages: set[str] = set()
         self.imports: dict[str, int] = {}
         self.current_class = None
+        self.decorators: dict[str, list[str]] = {}  # Track decorators per function
 
     def visit_FunctionDef(self, node):
         """Track function definitions."""
@@ -27,20 +29,34 @@ class CodeAnalyzer(ast.NodeVisitor):
         else:
             full_name = node.name
 
-        # Skip test functions, magic methods, and common overrides
+        # Track decorators for this function
+        decorator_names = []
+        for decorator in node.decorator_list:
+            if isinstance(decorator, ast.Name):
+                decorator_names.append(decorator.id)
+            elif isinstance(decorator, ast.Attribute):
+                decorator_names.append(decorator.attr)
+
+        # Skip test functions, magic methods, fixtures, and common overrides
         if not (
             node.name.startswith("test_")
             or node.name.startswith("_")
             and node.name.endswith("_")
-            or node.name in ["__init__", "__str__", "__repr__"]
+            or node.name in ["__init__", "__str__", "__repr__", "setUp", "tearDown", "setup_method", "teardown_method"]
+            or "fixture" in decorator_names
+            or "pytest_fixture" in decorator_names
         ):
             self.definitions["function"].append((full_name, node.lineno))
+            self.decorators[full_name] = decorator_names
 
         self.generic_visit(node)
 
     def visit_ClassDef(self, node):
         """Track class definitions."""
-        self.definitions["class"].append((node.name, node.lineno))
+        # Skip test classes (they're discovered by pytest via introspection)
+        if not node.name.startswith("Test"):
+            self.definitions["class"].append((node.name, node.lineno))
+
         old_class = self.current_class
         self.current_class = node.name
         self.generic_visit(node)
@@ -94,10 +110,14 @@ def analyze_file(filepath: Path) -> CodeAnalyzer:
         return None
 
 
-def find_python_files(root_dir: Path) -> list[Path]:
+def find_python_files(root_dir: Path, include_tests: bool = False) -> list[Path]:
     """Find all Python files in the project."""
     python_files = []
-    exclude_dirs = {".venv", "build", "dist", "__pycache__", ".git", ".pytest_cache"}
+    exclude_dirs = {".venv", "build", "dist", "__pycache__", ".git", ".pytest_cache", "docs"}
+
+    # Only exclude tests if not explicitly including them
+    if not include_tests:
+        exclude_dirs.add("tests")
 
     for root, dirs, files in os.walk(root_dir):
         # Remove excluded directories from search
@@ -110,15 +130,16 @@ def find_python_files(root_dir: Path) -> list[Path]:
     return python_files
 
 
-def analyze_project(root_dir: Path) -> dict[str, any]:
+def analyze_project(root_dir: Path, include_tests: bool = False) -> dict[str, any]:
     """Analyze entire project for unused code."""
-    python_files = find_python_files(root_dir)
+    python_files = find_python_files(root_dir, include_tests)
 
     all_definitions = defaultdict(list)
     all_usages = set()
     all_imports = defaultdict(list)
 
-    print(f"Analyzing {len(python_files)} Python files...")
+    scope = "entire project (including tests)" if include_tests else "production code"
+    print(f"Analyzing {len(python_files)} Python files ({scope})...")
 
     for filepath in python_files:
         analyzer = analyze_file(filepath)
@@ -177,14 +198,28 @@ def find_unused_code(analysis: dict) -> dict[str, list]:
 
 def main():
     """Main entry point."""
-    root_dir = Path(__file__).parent
+    parser = argparse.ArgumentParser(
+        description="Dead code analyzer for RogueSignalProtocol",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--include-tests",
+        action="store_true",
+        help="Include test files in analysis (default: exclude tests)",
+    )
+    args = parser.parse_args()
+
+    # Search from project root (parent of scripts/)
+    root_dir = Path(__file__).parent.parent
 
     print("=" * 70)
     print("RogueSignalProtocol - Dead Code Analysis")
+    if args.include_tests:
+        print("(INCLUDING TEST FILES)")
     print("=" * 70)
     print()
 
-    analysis = analyze_project(root_dir)
+    analysis = analyze_project(root_dir, include_tests=args.include_tests)
     unused = find_unused_code(analysis)
 
     # Print results

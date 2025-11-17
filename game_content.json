@@ -326,11 +326,6 @@
     "hard": 1.3,
     "nightmare": 1.6
   },
-  "balance": {
-    "code_hacks": {
-      "heat_reduction_instant": 40
-    }
-  },
   "metadata": {
     "version": "0.8.0 Alpha",
     "description": "Game data definitions for Rogue Signal Protocol",

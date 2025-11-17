@@ -11,7 +11,6 @@ Manages all exploit execution including:
 """
 
 import logging
-from typing import TYPE_CHECKING
 
 # Import required modules
 from game_config import GameBalance, GameConfig
@@ -25,10 +24,6 @@ from game_entities import (
     TargetingMode,
 )
 from game_errors import GameErrorHandler
-
-# Use TYPE_CHECKING to avoid circular imports
-if TYPE_CHECKING:
-    pass
 
 
 class ExploitSystem:

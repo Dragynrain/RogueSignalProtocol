@@ -102,11 +102,6 @@ class DataLoader:
             raise KeyError(f"Required '{section}' section missing from game_content.json") from e
 
     @classmethod
-    def get_balance_config(cls) -> dict[str, Any]:
-        """Get balance configuration from game data."""
-        return cls._get_section("balance", cls.load_game_data())
-
-    @classmethod
     def load_config(cls) -> dict[str, Any]:
         """
         Load configuration from game_rules.json with caching.

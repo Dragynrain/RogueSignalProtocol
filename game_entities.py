@@ -36,8 +36,6 @@ __all__ = [
     # Utility functions
     "clamp",
     "ensure_color_tuple",
-    "format_position_key",
-    "parse_position_key",
 ]
 
 
@@ -460,38 +458,6 @@ def clamp(value: float, min_val: float, max_val: float) -> float:
         Value constrained to [min_val, max_val]
     """
     return max(min_val, min(value, max_val))
-
-
-def format_position_key(pos: Position) -> str:
-    """
-    Format position as string key for dictionaries.
-
-    Args:
-        pos: Position to format
-
-    Returns:
-        String in format "x,y"
-    """
-    return f"{pos.x},{pos.y}"
-
-
-def parse_position_key(key: str) -> Position | None:
-    """
-    Parse string key back to Position.
-
-    Args:
-        key: String in format "x,y"
-
-    Returns:
-        Position object, or None if parsing fails
-    """
-    try:
-        x, y = map(int, key.split(","))
-        return Position(x, y)
-    except (ValueError, AttributeError) as e:
-        # Expected for invalid coordinate strings - return None to signal parsing failure
-        logging.debug(f"Failed to parse position key '{key}': {e}")
-        return None
 
 
 class PositionValidator:
