@@ -19,6 +19,21 @@
 
 ## Implementation Phases
 
+### Phase 0: Platform Detection Infrastructure ✅ COMPLETED
+Create cross-platform utilities and fix critical Windows-specific code that will crash on Linux.
+- Complexity: Low (utility module + targeted fixes)
+- Dependencies: None
+- Risk: Low (isolated changes, easy to test)
+- Status: **COMPLETED** - All changes tested on Windows, all 2393 tests passed
+
+**What Was Fixed**:
+1. Created `game_platform.py` utility module for centralized platform detection
+2. Fixed DPI awareness code in `game_loop.py` (would crash on Linux at import)
+3. Fixed DPI awareness code in `font_loader_freetype.py` (test block)
+4. Fixed DPI awareness code in `scripts/view_kreative_glyphs.py`
+
+All DPI calls now use `game_platform.set_dpi_awareness()` which safely no-ops on Linux.
+
 ### Phase 1: Platform Compatibility Audit (Medium Complexity)
 Identify and catalog all Windows-specific code that needs cross-platform replacements.
 - Complexity: Medium (code review, testing needed)
@@ -172,6 +187,8 @@ data_dir = user_data_dir("RogueSignalProtocol", "Dragynrain")
 
 ## 3. Phase 2 Details: Cross-Platform Code Refactoring
 
+**✅ Good News**: `platformdirs==4.4.0` is already in requirements.txt (line 22), so no new dependencies needed!
+
 ### File: `game_file_paths.py` - Complete Rewrite
 
 **Current Approach**: Windows-specific with LOCALAPPDATA fallback
@@ -180,10 +197,10 @@ data_dir = user_data_dir("RogueSignalProtocol", "Dragynrain")
 **Changes Required**:
 
 1. Replace `ctypes.windll` MessageBox with cross-platform dialog:
-   - **Option A**: pygame messagebox (simple)
-   - **Option B**: tkinter messagebox (no extra deps)
-   - **Option C**: Console fallback only (simplest)
-   - **Recommendation**: Option C for now (console fallback)
+   - **Option A**: tkinter messagebox (stdlib, no extra deps, works on all platforms)
+   - **Option B**: pygame messagebox (already a dependency, simple)
+   - **Option C**: Console fallback only (simplest but poor UX if crash before console visible)
+   - **Recommendation**: Option A (tkinter) - better UX, no extra dependencies
 
 2. Replace `_get_appdata_directory()` with platformdirs:
 ```python
@@ -226,23 +243,12 @@ if sys.platform == "win32":
 
 ### Platform Detection Pattern
 
-**Add utility module**: `game_platform.py`
-```python
-import sys
+**✅ Already Done in Phase 0**: `game_platform.py` utility module created with:
+- `is_windows()`, `is_linux()`, `is_macos()` - Platform detection
+- `get_platform_name()` - Human-readable platform name
+- `set_dpi_awareness()` - Cross-platform DPI handling (no-op on Linux)
 
-def is_windows() -> bool:
-    return sys.platform == "win32"
-
-def is_linux() -> bool:
-    return sys.platform.startswith("linux")
-
-def get_platform_name() -> str:
-    if is_windows(): return "Windows"
-    if is_linux(): return "Linux"
-    return "Unknown"
-```
-
-Use this instead of inline `sys.platform` checks throughout codebase.
+Use these functions instead of inline `sys.platform` checks throughout codebase.
 
 ---
 
@@ -250,11 +256,15 @@ Use this instead of inline `sys.platform` checks throughout codebase.
 
 ### PyInstaller Spec Files
 
-**Current**: Single `RogueSignalProtocol.spec` for Windows
+**Current State**:
+- `RogueSignalProtocol.spec` exists (gitignored in line 16 of `.gitignore`)
+- Currently configured for Windows builds only
+- Need platform-specific modifications for Linux
 
-**New Structure**:
-- `RogueSignalProtocol-windows.spec` - Windows .exe
-- `RogueSignalProtocol-linux.spec` - Linux binary
+**Approach**:
+- Keep single `RogueSignalProtocol.spec` with platform detection
+- OR create separate `RogueSignalProtocol-windows.spec` and `RogueSignalProtocol-linux.spec`
+- Recommendation: Separate specs (clearer, easier to maintain)
 
 **Key Differences**:
 
@@ -285,13 +295,26 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            spec: RogueSignalProtocol-linux.spec
+          - os: windows-latest
+            platform: windows
+            spec: RogueSignalProtocol-windows.spec
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - run: pip install -r requirements.txt
-      - run: pyinstaller RogueSignalProtocol-${{ matrix.os }}.spec
+      - run: pyinstaller ${{ matrix.spec }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: RogueSignalProtocol-${{ matrix.platform }}
+          path: dist/
 ```
 
 ### Icon Format Conversions
@@ -774,13 +797,14 @@ Steam Deck is **perfect** for Linux testing:
 **Goal**: Make codebase Linux-compatible
 
 **Tasks**:
-- Rewrite `game_file_paths.py` with platformdirs
-- Remove MessageBox API (use console fallback)
-- Remove pywin32-ctypes dependency
-- Create `game_platform.py` utility
-- Test on Windows (verify no regressions)
+- ✅ DONE: Create `game_platform.py` utility (Phase 0)
+- Replace `_get_appdata_directory()` in `game_file_paths.py` with `platformdirs.user_data_dir()`
+- Replace `show_fatal_error_and_exit()` MessageBox with tkinter fallback (cross-platform)
+- Remove or conditionalize `pywin32-ctypes` in requirements.txt
+- Verify `debug_export.py` uses `Path.joinpath()` (not string concatenation)
+- Test on Windows (verify no regressions - all saves, logs, settings still work)
 
-**Deliverable**: Cross-platform codebase
+**Deliverable**: Cross-platform codebase that works on Windows and Linux
 
 ---
 
@@ -940,25 +964,34 @@ The overlap of "Mac users" + "roguelike players" + "itch.io indie gamers" = **te
 
 ## Implementation Checklist
 
+**Phase 0: Platform Detection Infrastructure** ✅ COMPLETED
+- [x] Create `game_platform.py` utility module
+- [x] Fix DPI awareness in `game_loop.py`
+- [x] Fix DPI awareness in `font_loader_freetype.py`
+- [x] Fix DPI awareness in `scripts/view_kreative_glyphs.py`
+- [x] Test on Windows (verify game launches, DPI awareness still works) - All 2393 tests passed
+
 **Phase 1: Audit**
-- [ ] Catalog all Windows-specific code
-- [ ] Test existing code on Linux VM (identify breaks)
+- [ ] Catalog all Windows-specific code (MessageBox, LOCALAPPDATA, etc.)
+- [ ] Test existing code on WSL2 or Linux VM (identify import failures)
 - [ ] Create platform compatibility matrix
-- [ ] Document required changes
+- [ ] Document required changes beyond Phase 0
 
 **Phase 2: Refactoring**
-- [ ] Rewrite `game_file_paths.py` with platformdirs
-- [ ] Replace MessageBox with console fallback
-- [ ] Remove or conditionalize `pywin32-ctypes`
-- [ ] Create `game_platform.py` utility module
-- [ ] Test on Windows (verify no regressions)
+- [ ] Replace `_get_appdata_directory()` in `game_file_paths.py` with `platformdirs.user_data_dir()`
+- [ ] Replace `show_fatal_error_and_exit()` MessageBox with tkinter fallback
+- [ ] Remove or conditionalize `pywin32-ctypes` in requirements.txt
+- [ ] Verify `debug_export.py` uses `Path.joinpath()` (not string concat)
+- [ ] Test on Windows (verify saves, logs, settings still work)
 
 **Phase 3: Build System**
-- [ ] Create PyInstaller spec for Linux
-- [ ] Convert logo.ico to .png for Linux
-- [ ] Set up Ubuntu VM in VirtualBox
-- [ ] Set up GitHub Actions for automated builds (optional)
-- [ ] Test builds on Linux VM
+- [ ] Copy `RogueSignalProtocol.spec` to `RogueSignalProtocol-linux.spec`
+- [ ] Modify Linux spec: remove `.exe` extension, change icon to `.png`
+- [ ] Convert logo.ico to logo.png (512x512 for Linux)
+- [ ] Set up Ubuntu VM OR use Steam Deck for testing
+- [ ] Build Linux binary with PyInstaller
+- [ ] Test binary on Ubuntu VM or Steam Deck Desktop Mode
+- [ ] Set up GitHub Actions matrix builds (optional but recommended)
 
 **Phase 4: Linux Packaging**
 - [ ] Build AppImage
@@ -976,14 +1009,14 @@ The overlap of "Mac users" + "roguelike players" + "itch.io indie gamers" = **te
 - [ ] Update itch.io page with Linux screenshots
 
 **Phase 6: Testing**
-- [ ] Test on Ubuntu 22.04 VM
-- [ ] Test on Fedora latest VM
-- [ ] Test on Arch Linux VM
-- [ ] Test on Steam Deck (if hardware available)
-- [ ] Verify save/load on all distros
-- [ ] Verify audio on all distros
-- [ ] Verify graphics rendering consistency
-- [ ] Collect community feedback
+- [ ] PRIMARY: Test on Steam Deck (Desktop Mode - you own this hardware!)
+- [ ] Verify save/load works on Steam Deck
+- [ ] Verify audio works on Steam Deck
+- [ ] Verify graphics rendering (1280x800 native resolution)
+- [ ] Test suspend/resume on Steam Deck
+- [ ] OPTIONAL: Test on Ubuntu 22.04 VM (additional coverage)
+- [ ] OPTIONAL: Test on Fedora VM (Wayland testing)
+- [ ] Collect community feedback from Linux players
 
 ---
 

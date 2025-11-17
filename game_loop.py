@@ -8,15 +8,9 @@ Coordinates rendering, input handling, and audio systems.
 """
 
 # CRITICAL: Set DPI awareness BEFORE importing tcod to ensure proper scaling
-import ctypes
+from game_platform import set_dpi_awareness
 
-try:
-    ctypes.windll.shcore.SetProcessDpiAwareness(2)  # PROCESS_PER_MONITOR_DPI_AWARE
-except Exception:
-    try:
-        ctypes.windll.user32.SetProcessDPIAware()  # Fallback for Windows 7/8
-    except Exception:
-        pass  # DPI awareness unavailable - game will still run but may be scaled by Windows
+set_dpi_awareness()
 
 import logging
 import time

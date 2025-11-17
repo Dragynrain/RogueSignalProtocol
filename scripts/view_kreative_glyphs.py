@@ -11,19 +11,19 @@ Controls:
   ESC/Q - Exit
 """
 
-import ctypes
+import sys
+from pathlib import Path
+
+# Add parent directory to path so we can import game modules
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import freetype
 import tcod
 
-# Set DPI awareness first
-try:
-    ctypes.windll.shcore.SetProcessDpiAwareness(2)
-except (AttributeError, OSError):
-    try:
-        ctypes.windll.user32.SetProcessDPIAware()
-    except (AttributeError, OSError):
-        pass
+# Set DPI awareness first (cross-platform)
+from game_platform import set_dpi_awareness
+
+set_dpi_awareness()
 
 from font_loader_freetype import load_truetype_font_custom
 
