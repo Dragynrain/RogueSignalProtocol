@@ -12,26 +12,26 @@ from game_platform import set_dpi_awareness
 
 set_dpi_awareness()
 
-import logging
-import time
-import traceback
+import logging  # noqa: E402
+import time  # noqa: E402
+import traceback  # noqa: E402
 
-import tcod
+import tcod  # noqa: E402
 
-from game_audio import SoundManager
-from game_config import GameConfig, GameSettings
-from game_engine import GameEngine
-from game_entities import Colors
-from game_graphics_tiles import TileManager
-from game_input import InputHandler
-from game_menu_about import AboutMenu
-from game_menu_achievements import AchievementsMenu
-from game_menu_graphics_preview import GraphicsPreviewMenu
-from game_menu_help_lore import LoreMenu, create_help_menu
-from game_menus import MainMenu, MenuBackground, SettingsMenu
-from game_mouse_utils import MenuMouseHandler
-from game_rendering_core import GameRenderer
-from game_ui import render_char_safe
+from game_audio import SoundManager  # noqa: E402
+from game_config import GameConfig, GameSettings  # noqa: E402
+from game_engine import GameEngine  # noqa: E402
+from game_entities import Colors  # noqa: E402
+from game_graphics_tiles import TileManager  # noqa: E402
+from game_input import InputHandler  # noqa: E402
+from game_menu_about import AboutMenu  # noqa: E402
+from game_menu_achievements import AchievementsMenu  # noqa: E402
+from game_menu_graphics_preview import GraphicsPreviewMenu  # noqa: E402
+from game_menu_help_lore import LoreMenu, create_help_menu  # noqa: E402
+from game_menus import MainMenu, MenuBackground, SettingsMenu  # noqa: E402
+from game_mouse_utils import MenuMouseHandler  # noqa: E402
+from game_rendering_core import GameRenderer  # noqa: E402
+from game_ui import render_char_safe  # noqa: E402
 
 
 def log_exception(e: Exception, context: str, level: str = "error"):
