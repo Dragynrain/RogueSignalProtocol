@@ -147,18 +147,10 @@ def load_truetype_font_custom(
 
 if __name__ == "__main__":
     # Test the font loader
-    import ctypes
+    from game_platform import set_dpi_awareness
 
     # Set DPI awareness first
-    try:
-        ctypes.windll.shcore.SetProcessDpiAwareness(2)
-        logging.info("DPI awareness enabled")
-    except Exception:
-        try:
-            ctypes.windll.user32.SetProcessDPIAware()
-            logging.info("DPI awareness enabled (fallback)")
-        except Exception:
-            logging.warning("Could not set DPI awareness")
+    set_dpi_awareness()
 
     import tcod
 
