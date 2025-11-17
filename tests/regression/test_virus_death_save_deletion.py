@@ -11,7 +11,6 @@ This test verifies that:
 3. Auto-save is blocked when player is dead from virus
 """
 
-import pytest
 from tests.test_agent import GameTestAgent
 
 
