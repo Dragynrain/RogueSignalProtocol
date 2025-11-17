@@ -4,7 +4,6 @@ Use real GameData instead of mocks wherever possible.
 """
 
 from game_characters import Enemy
-from game_data import GameData
 from game_entities import Position
 from game_map import GameMap
 
