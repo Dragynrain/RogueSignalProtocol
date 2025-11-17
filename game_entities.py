@@ -10,7 +10,6 @@ Now streamlined with extracted modules:
 - PositionValidator: Centralized position validation logic
 """
 
-import logging
 from dataclasses import dataclass
 
 from data_loading import DataLoader
