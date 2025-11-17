@@ -16,7 +16,6 @@ from game_entities import (
     TargetingMode,
     UpgradeDefinition,
 )
-from game_errors import GameErrorHandler
 
 
 class GameData:
@@ -259,82 +258,3 @@ class GameUpgrades:
 
 # Load upgrades on module import
 GameUpgrades._ensure_loaded()
-
-
-class GameBalance:
-    """Game balance configuration loaded from JSON data."""
-
-    @classmethod
-    def get_balance(cls):
-        """Get balance configuration from JSON data."""
-        return DataLoader.get_balance_config()
-
-    @classmethod
-    def get_player_stat(cls, stat_name: str):
-        """Get player stat from balance config - FAILS if not found."""
-        balance = cls.get_balance()
-        try:
-            return balance["player_stats"][stat_name]
-        except KeyError as e:
-            GameErrorHandler.handle_config_error(
-                f"Player stat '{stat_name}' not found in game_content.json balance.player_stats", e
-            )
-
-    @classmethod
-    def get_combat_value(cls, value_name: str):
-        """Get combat value from balance config - FAILS if not found."""
-        balance = cls.get_balance()
-        try:
-            return balance["combat"][value_name]
-        except KeyError as e:
-            GameErrorHandler.handle_config_error(
-                f"Combat value '{value_name}' not found in game_content.json balance.combat", e
-            )
-
-    @classmethod
-    def get_code_hack_value(cls, value_name: str):
-        """Get code hack value from balance config - FAILS if not found."""
-        balance = cls.get_balance()
-        try:
-            return balance["code_hacks"][value_name]
-        except KeyError as e:
-            GameErrorHandler.handle_config_error(
-                f"Code hack value '{value_name}' not found in game_content.json balance.code_hacks",
-                e,
-            )
-
-    @classmethod
-    def get_temporary_effect_value(cls, value_name: str):
-        """Get temporary effect value from balance config - FAILS if not found."""
-        balance = cls.get_balance()
-        try:
-            return balance["temporary_effects"][value_name]
-        except KeyError as e:
-            GameErrorHandler.handle_config_error(
-                f"Temporary effect '{value_name}' not found in game_content.json balance.temporary_effects",
-                e,
-            )
-
-    # NO FALLBACK VALUES - All values must come from JSON
-    # These properties dynamically fetch from JSON and will raise KeyError if missing
-
-    @classmethod
-    def __getattr__(cls, name):
-        """Dynamic attribute access for balance values - NO FALLBACKS."""
-        if name == "CPU_RESTORE_MIN":
-            return cls.get_balance()["cpu_restore_min"]
-        elif name == "CPU_RESTORE_MAX":
-            return cls.get_balance()["cpu_restore_max"]
-        elif name == "HEAT_REDUCTION_INSTANT":
-            return cls.get_code_hack_value("heat_reduction_instant")
-        elif name == "ENEMY_ELIMINATION_CPU_REWARD":
-            return cls.get_combat_value("enemy_elimination_cpu_reward")
-        raise AttributeError(f"'{cls.__name__}' has no attribute '{name}'")
-
-    @staticmethod
-    def get_enemy_difficulty_multiplier(difficulty: str) -> float:
-        """Get difficulty multiplier for enemies - uses game_content.json."""
-        # Delegate to GameBalance which loads from JSON
-        from game_config import GameBalance
-
-        return GameBalance.get_enemy_difficulty_multiplier(difficulty)

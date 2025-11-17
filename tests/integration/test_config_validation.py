@@ -340,17 +340,6 @@ class TestGameContentStructure:
                 difficulty in multipliers
             ), f"Missing difficulty multiplier for '{difficulty}' in game_content.json"
 
-    def test_has_balance_section(self, game_data):
-        """Verify balance section exists in game_content.json."""
-        assert "balance" in game_data, "Missing required 'balance' section in game_content.json"
-
-    def test_balance_has_code_hacks_section(self, game_data):
-        """Verify balance.code_hacks section exists."""
-        balance = game_data["balance"]
-        assert (
-            "code_hacks" in balance
-        ), "Missing required 'balance.code_hacks' section in game_content.json"
-
 
 class TestNarrativeContentStructure:
     """Verify narrative_content.json has required structure."""

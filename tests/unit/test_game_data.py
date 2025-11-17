@@ -16,7 +16,6 @@ that the actual JSON configuration is valid and loadable.
 import pytest
 
 from game_config import GameBalance as GameConfigBalance
-from game_data import GameBalance as GameDataBalance
 from game_data import GameData, GameUpgrades
 from game_entities import EnemyMovement, TargetingMode
 
@@ -258,30 +257,6 @@ class TestGameBalanceConfiguration:
         # Check for combat stats in GameConfigBalance
         assert hasattr(GameConfigBalance, "ENEMY_ELIMINATION_CPU_REWARD")
         assert GameConfigBalance.ENEMY_ELIMINATION_CPU_REWARD > 0
-
-    def test_get_player_stat_returns_value(self, real_game_data):
-        """get_player_stat should return a value for valid keys."""
-        # GameDataBalance provides dict-based access via get_balance()
-        balance = GameDataBalance.get_balance()
-
-        # Get first available player stat key
-        if "player_stats" in balance and balance["player_stats"]:
-            first_key = next(iter(balance["player_stats"].keys()))
-            value = GameDataBalance.get_player_stat(first_key)
-
-            assert value is not None
-
-    def test_get_combat_value_returns_value(self, real_game_data):
-        """get_combat_value should return a value for valid keys."""
-        # GameDataBalance provides dict-based access via get_balance()
-        balance = GameDataBalance.get_balance()
-
-        # Get first available combat value key
-        if "combat" in balance and balance["combat"]:
-            first_key = next(iter(balance["combat"].keys()))
-            value = GameDataBalance.get_combat_value(first_key)
-
-            assert value is not None
 
 
 class TestGameDataIntegrity:

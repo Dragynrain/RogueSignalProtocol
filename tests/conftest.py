@@ -45,12 +45,12 @@ For most tests, use one of these pre-configured game engine fixtures:
 ### Advanced Fixtures
 
 For complex scenarios, import from tests.fixtures.standard_patterns:
-- create_surrounded_scenario()
-- create_resource_test_scenario()
-- create_full_gameplay_session()
-- etc.
+- create_basic_game_environment()
+- create_combat_scenario()
+- create_stealth_scenario()
+- create_multi_enemy_scenario()
 
-See tests/fixtures/standard_patterns.py for the full list.
+See tests/fixtures/standard_patterns.py for details on each fixture.
 """
 
 import os
