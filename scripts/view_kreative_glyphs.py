@@ -25,7 +25,7 @@ from game_platform import set_dpi_awareness
 
 set_dpi_awareness()
 
-from font_loader_freetype import load_truetype_font_custom
+from font_loader_freetype import load_truetype_font_custom  # noqa: E402
 
 # Unicode ranges to check (only ranges where KreativeSquare has glyphs)
 UNICODE_RANGES = [
