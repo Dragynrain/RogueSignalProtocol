@@ -151,8 +151,7 @@ class AnalogStickHandler:
     def __init__(self, deadzone: float = 0.15, threshold: float = 0.5):
         self.deadzone = deadzone
         self.threshold = threshold
-        self.last_move_time = 0.0
-        self.move_cooldown = 0.15
+        self.last_move_turn = -1  # TURN-BASED: Track last turn that processed movement
         self.left_x = 0
         self.left_y = 0
         self.right_x = 0
@@ -160,12 +159,54 @@ class AnalogStickHandler:
 
     def apply_scaled_radial_deadzone(x, y) -> tuple[float, float]
     def analog_to_8way(x, y) -> tuple[int, int]
-    def can_move() -> bool  # Cooldown check for tile movement
+    def can_move(current_turn: int) -> bool  # Turn-based check (not time-based!)
     def update_axis(axis: ControllerAxis, value: int)
-    def get_movement_delta() -> tuple[int, int] | None
+    def get_movement_delta(current_turn: int) -> tuple[int, int] | None
 ```
 
-**Rationale:** Scaled radial deadzone for smooth feel, cooldown prevents movement spam from continuous axis events.
+**CRITICAL DESIGN DECISION - Turn-Based Movement:**
+
+Rogue Signal Protocol is **turn-based**, not real-time. Therefore:
+- ❌ **NO time-based cooldown** (`time.time()` - wrong for turn-based games)
+- ✅ **YES turn-based gating** (track `game.turn_count`)
+
+**Implementation:**
+```python
+def can_move(self, current_turn: int) -> bool:
+    """
+    Check if player can move this turn.
+
+    Args:
+        current_turn: Current game turn number from game.turn_count
+
+    Returns:
+        True if this is a new turn (movement allowed), False if same turn (prevent spam)
+    """
+    if current_turn > self.last_move_turn:
+        self.last_move_turn = current_turn
+        return True
+    return False
+
+def get_left_stick_movement(self, current_turn: int) -> tuple[int, int] | None:
+    """Get stick movement for current turn."""
+    dx, dy = self.analog_to_8way(self.left_x, self.left_y)
+    if dx == 0 and dy == 0:
+        return None
+    if not self.can_move(current_turn):
+        return None  # Already moved this turn
+    return (dx, dy)
+```
+
+**Why This Works:**
+1. Player holds stick → continuous ControllerAxis events fire
+2. First event on turn N → `can_move(N)` returns True, player moves
+3. Subsequent events on turn N → `can_move(N)` returns False, ignored
+4. Turn increments (enemies move) → turn N+1 begins
+5. Next event on turn N+1 → `can_move(N+1)` returns True, player moves again
+
+**Result:** One movement per turn, just like keyboard. No double-moves, no spam, perfect turn-based behavior.
+
+**Rationale:** Scaled radial deadzone for smooth feel, turn-based gating prevents movement spam from continuous axis events.
 
 #### 1.4 Extend GameSettings for Input Bindings
 **File:** `game_config.py` (GameSettings class)
@@ -222,17 +263,22 @@ Handles low-level gamepad events:
 
 ```python
 class GamepadInputHandler:
-    def __init__(self, input_mapper: InputMapper):
-        self.controllers: set[GameController] = set()
+    def __init__(self, input_mapper: InputMapper, initial_controllers: set[GameController] = None):
+        """
+        Initialize gamepad input handler.
+
+        Args:
+            input_mapper: InputMapper instance for action lookup
+            initial_controllers: Set of already-connected controllers from game loop init
+        """
+        self.controllers: set[GameController] = initial_controllers or set()
         self.input_mapper = input_mapper
         self.analog_handler = AnalogStickHandler()
-        self.current_exploit_index = 0  # For cycling
+        # NOTE: Exploit cycling state moved to game.selected_exploit_index (Phase 2.7)
 
     def handle_device_event(event: ControllerDevice)
     def handle_button_event(event: ControllerButton, context: InputContext) -> InputAction | None
-    def handle_axis_event(event: ControllerAxis) -> InputAction | None
-    def cycle_exploit(direction: int)  # ±1 for next/prev
-    def get_selected_exploit() -> int
+    def handle_axis_event(event: ControllerAxis, context: InputContext) -> InputAction | None
 ```
 
 **Device management:** Track add/remove events, use `discard()` not `remove()` (see TCOD research gotcha #1).
@@ -245,15 +291,27 @@ class GamepadInputHandler:
 #### 2.3 Integrate with InputHandler Router
 **File:** `game_input.py`
 
-Add gamepad handler alongside existing handlers:
+Add gamepad handler alongside existing handlers. **IMPORTANT:** Pass initial controllers from game loop initialization:
+
 ```python
 class InputHandler:
-    def __init__(self, game, renderer=None):
+    def __init__(self, game, renderer=None, controllers=None):
         # ... existing handlers
         self.input_mapper = InputMapper()
-        self.gamepad_handler = GamepadInputHandler(self.input_mapper)
-        self.input_mapper.load_custom_bindings(game.settings.custom_keyboard_bindings)
+        self.gamepad_handler = GamepadInputHandler(self.input_mapper, controllers or set())
+
+        # Load custom bindings for both keyboard and gamepad
+        self.input_mapper.load_custom_bindings(
+            game.settings.custom_keyboard_bindings,
+            game.settings.custom_gamepad_bindings
+        )
 ```
+
+**Device Ownership Clarified:**
+- `game_loop.py` initializes SDL joystick subsystem and gets initial controllers
+- Initial controller set passed to `InputHandler.__init__(controllers=...)`
+- `InputHandler` owns the controller set going forward
+- `GamepadInputHandler` receives and manages this set (add/remove via device events)
 
 Add event routing in main loop:
 ```python
@@ -277,61 +335,228 @@ def handle_event(self, event) -> bool:
     # ...
 ```
 
-#### 2.4 Create Action Executor
+#### 2.4 Add Context Detection Method
 **File:** `game_input.py` (add method to InputHandler)
 
-Unified action execution (works for both keyboard and gamepad):
+Create method to determine current input context (referenced throughout Phase 2-6):
+```python
+def _get_current_context(self) -> InputContext:
+    """
+    Determine current game state context for input handling.
+
+    Context determines which bindings are active (e.g., A button = wait in gameplay,
+    confirm in menus). Mirrors existing priority logic in handle_event.
+
+    Returns:
+        Current InputContext enum value
+    """
+    # Priority order matches existing game_input.py:100-182 logic
+    if hasattr(self.game, 'achievement_popup_manager') and \
+       self.game.achievement_popup_manager.has_active_popup():
+        return InputContext.ACHIEVEMENT_POPUP
+    elif self.game.dialogue_state.is_active():
+        return InputContext.DIALOGUE
+    elif self.game.game_over or self.game.player.cpu <= 0:
+        return InputContext.GAME_OVER
+    elif self.game.show_inventory:
+        return InputContext.INVENTORY
+    elif self.game.look_mode:
+        return InputContext.LOOK_MODE
+    elif self.game.targeting_mode:
+        return InputContext.TARGETING
+    elif self.game.show_help:
+        return InputContext.HELP
+    elif self.game.show_lore_viewer:
+        return InputContext.LORE_VIEWER
+    elif self.game.show_achievements:
+        return InputContext.ACHIEVEMENTS_SCREEN
+    else:
+        return InputContext.GAMEPLAY
+```
+
+**Note:** This consolidates the existing scattered priority checks into a single method used by both keyboard and gamepad input.
+
+#### 2.5 Create Action Executor
+**File:** `game_input.py` (add method to InputHandler)
+
+Unified action execution that **delegates** to existing handlers (avoids code duplication):
 ```python
 def _execute_action(self, action: InputAction) -> bool:
-    """Execute a game action (from keyboard or gamepad)."""
+    """
+    Execute a game action (from keyboard or gamepad).
+
+    Delegates to existing specialized handlers to avoid duplicating logic.
+    Each handler gets an execute_action() method in Phase 2.6.
+
+    Args:
+        action: The InputAction to execute
+
+    Returns:
+        True if action was handled, False otherwise
+    """
     context = self._get_current_context()
 
+    # Delegate to existing specialized handlers (Phase 2.6 adds execute_action to each)
+    if context == InputContext.GAMEPLAY:
+        return self.gameplay_handler.execute_action(action)
+    elif context == InputContext.INVENTORY:
+        return self.inventory_handler.execute_action(action)
+    elif context == InputContext.LOOK_MODE:
+        return self.look_mode_handler.execute_action(action)
+    elif context == InputContext.TARGETING:
+        return self.targeting_handler.execute_action(action)
+    elif context == InputContext.DIALOGUE:
+        return self.dialogue_handler.execute_action(action)
+    # ... etc for other contexts
+
+    return False  # Action not handled
+```
+
+**Key Design Decision:** Action executor is a **thin routing layer** only. All game logic stays in existing handlers. This:
+- Avoids duplicating logic (e.g., exploit slot handling already in GameplayInputHandler)
+- Maintains single responsibility principle
+- Makes testing easier (test handlers directly, not giant switch statement)
+- Allows gradual migration (existing keyboard paths work alongside new abstraction)
+
+#### 2.6 Extend Existing Handlers with Action Support
+**Files:** `game_input_gameplay.py`, `game_input_inventory.py`, etc.
+
+Add `execute_action()` method to each specialized handler. Example for GameplayInputHandler:
+```python
+def execute_action(self, action: InputAction) -> bool:
+    """
+    Execute an InputAction in gameplay context.
+
+    Translates abstract actions to concrete game logic. Reuses existing methods
+    to avoid duplication.
+
+    Args:
+        action: The InputAction to execute
+
+    Returns:
+        True if action was handled
+    """
     # Movement actions
-    if action in [InputAction.MOVE_NORTH, ...]:
+    if action in [InputAction.MOVE_NORTH, InputAction.MOVE_SOUTH, ...]:
         dx, dy = self._action_to_movement(action)
         self.game.move_player(dx, dy)
         return True
 
-    # Exploit actions
+    # Exploit actions (reuse existing logic)
     elif action == InputAction.EXPLOIT_SLOT_1:
-        self.gameplay_handler.use_exploit_slot(0)
-        return True
+        return self._use_exploit_slot(0)
+    elif action == InputAction.EXPLOIT_SLOT_2:
+        return self._use_exploit_slot(1)
+    # ... etc
 
     # NEW: Gamepad exploit cycling
     elif action == InputAction.EXPLOIT_CYCLE_NEXT:
-        self.gamepad_handler.cycle_exploit(+1)
+        self.game.cycle_exploit_selection(+1)
+        return True
+    elif action == InputAction.EXPLOIT_CYCLE_PREV:
+        self.game.cycle_exploit_selection(-1)
         return True
     elif action == InputAction.EXPLOIT_EXECUTE:
-        slot = self.gamepad_handler.get_selected_exploit()
-        self.gameplay_handler.use_exploit_slot(slot)
-        return True
+        slot = self.game.selected_exploit_index
+        return self._use_exploit_slot(slot)
 
     # UI toggles
     elif action == InputAction.TOGGLE_INVENTORY:
-        self._open_inventory()
+        self.game.show_inventory = True
         return True
+    # ... etc
 
-    # ... etc for all actions
+    return False
+
+def _action_to_movement(self, action: InputAction) -> tuple[int, int]:
+    """Convert movement action to (dx, dy) delta."""
+    movement_map = {
+        InputAction.MOVE_NORTH: (0, -1),
+        InputAction.MOVE_SOUTH: (0, 1),
+        InputAction.MOVE_EAST: (1, 0),
+        InputAction.MOVE_WEST: (-1, 0),
+        InputAction.MOVE_NORTHEAST: (1, -1),
+        InputAction.MOVE_NORTHWEST: (-1, -1),
+        InputAction.MOVE_SOUTHEAST: (1, 1),
+        InputAction.MOVE_SOUTHWEST: (-1, 1),
+    }
+    return movement_map.get(action, (0, 0))
 ```
 
-#### 2.5 Add Visual Feedback for Exploit Cycling
+Repeat for other handlers (InventoryInputHandler, LookModeInputHandler, etc.).
+
+#### 2.7 Add Exploit Cycling State to Game Engine
+**File:** `game_engine.py`
+
+Add state tracking for selected exploit (single source of truth):
+```python
+class GameEngine:
+    def __init__(self, ...):
+        # ... existing init
+        self.selected_exploit_index: int = 0  # Currently selected exploit (for cycling)
+
+    def cycle_exploit_selection(self, direction: int):
+        """
+        Cycle through equipped exploits.
+
+        Args:
+            direction: +1 for next, -1 for previous
+        """
+        equipped_exploits = [e for e in self.player.exploits if e is not None]
+        if not equipped_exploits:
+            self.message_log.add_message("No exploits equipped", colors.YELLOW)
+            return
+
+        self.selected_exploit_index = (self.selected_exploit_index + direction) % len(equipped_exploits)
+
+        # Visual/audio feedback
+        exploit_name = equipped_exploits[self.selected_exploit_index].name
+        self.message_log.add_message(f"Selected: {exploit_name}", colors.CYAN)
+        # Optional: play UI "tick" sound via game_sound.py
+```
+
+**State Ownership Clarified:**
+- `game.selected_exploit_index` = **single source of truth**
+- Keyboard and gamepad both use `game.cycle_exploit_selection()`
+- Renderer reads `game.selected_exploit_index` for visual indicator
+- No duplication, no synchronization issues
+
+#### 2.8 Add Visual Feedback for Exploit Cycling
 **File:** `game_rendering_ui.py`
 
-When gamepad cycles exploits, highlight the currently selected one:
-- Add `selected_exploit_index` to rendering state
-- Render selection indicator (border, highlight color) around selected exploit
-- Update on cycle actions
+Show which exploit is currently selected (works for both keyboard and gamepad cycling):
+
+```python
+def render_exploit_bar(console, game):
+    """Render exploit bar with selection indicator."""
+    # ... existing exploit rendering
+
+    # Add selection indicator if cycling feature is used
+    if game.selected_exploit_index is not None:
+        selected_x, selected_y = calculate_exploit_position(game.selected_exploit_index)
+        # Render border or highlight around selected exploit
+        console.draw_frame(selected_x-1, selected_y-1, 4, 3, fg=colors.CYAN)
+        # Optional: Show "3/5" badge below exploit bar
+        console.print(x, y, f"{game.selected_exploit_index+1}/{len(equipped_exploits)}", fg=colors.CYAN)
+```
+
+**Visual Indicators:**
+- Cyan border around selected exploit slot
+- Badge showing position (e.g., "3/5")
+- Updates immediately when cycling (both keyboard and gamepad)
 
 ### Deliverables
 - 1 new file: `game_input_gamepad.py`
-- Modified: `game_input.py` (router + action executor), `game_loop.py` (init), `game_rendering_ui.py` (visual feedback)
+- Modified: `game_input.py` (router + context + executor + handler delegation), `game_loop.py` (init), `game_rendering_ui.py` (visual feedback), `game_engine.py` (exploit cycling state)
+- Modified: All existing input handlers (add `execute_action()` method)
 - Functional gamepad support with hardcoded Option C bindings
 
 ### Technical Considerations
-- **Analog stick cooldown:** 150ms between tile moves feels responsive (see analog handler)
-- **Right stick behavior:** In gameplay = no action, in look/targeting = move cursor
-- **Button repeat:** Buttons don't auto-repeat like held keys; implement if needed
-- **Context detection:** `_get_current_context()` checks game state flags (show_inventory, look_mode, etc.) - mirrors existing priority logic (game_input.py:100-182)
+- **Turn-based movement:** Analog stick uses `game.turn_count` to gate movement (one move per turn), NOT time-based cooldown
+- **Right stick behavior:** In gameplay = auto-activate look mode (magnitude > 0.3), in look/targeting = move cursor
+- **Button repeat:** Buttons don't auto-repeat like held keys (use turn gating if needed)
+- **Context detection:** `_get_current_context()` consolidates existing priority logic into single method
+- **Action delegation:** Existing handlers keep game logic, new `execute_action()` methods provide abstraction interface
 
 ---
 
@@ -392,15 +617,173 @@ Complete, context-sensitive gamepad bindings for ALL game states.
 - **B:** Back
 - **Start:** (No action - prevent accidental activation)
 
+### Tasks
+
+#### 3.1 Implement Default Gamepad Mappings
+**File:** `game_input_mappings.py` (add to InputMapper class)
+
+Add method to populate default gamepad bindings:
+
+```python
+def _init_default_gamepad_mappings(self):
+    """
+    Initialize default gamepad button mappings (Option C).
+
+    Called during InputMapper.__init__() to set up hardcoded defaults.
+    """
+    from tcod.event import ControllerButton as CB
+
+    # === GAMEPLAY CONTEXT ===
+    gameplay = InputContext.GAMEPLAY
+
+    # Face buttons
+    self._set_default_gamepad(CB.A, gameplay, InputAction.WAIT)
+    self._set_default_gamepad(CB.Y, gameplay, InputAction.EXPLOIT_SLOT_1)
+    self._set_default_gamepad(CB.X, gameplay, InputAction.EXPLOIT_SLOT_2)
+    # B button reserved for potential quick-look feature
+
+    # Shoulder buttons (exploit cycling)
+    self._set_default_gamepad(CB.RIGHTSHOULDER, gameplay, InputAction.EXPLOIT_CYCLE_NEXT)
+    self._set_default_gamepad(CB.LEFTSHOULDER, gameplay, InputAction.EXPLOIT_CYCLE_PREV)
+
+    # Triggers (RT = execute exploit, LT = look mode)
+    self._set_default_gamepad_trigger(is_right=True, gameplay, InputAction.EXPLOIT_EXECUTE)
+    self._set_default_gamepad_trigger(is_right=False, gameplay, InputAction.TOGGLE_LOOK_MODE)
+
+    # Menu buttons
+    self._set_default_gamepad(CB.START, gameplay, InputAction.TOGGLE_INVENTORY)
+    self._set_default_gamepad(CB.BACK, gameplay, InputAction.TOGGLE_HELP)  # "Select" button
+
+    # Stick clicks
+    self._set_default_gamepad(CB.LEFTSTICK, gameplay, InputAction.TOGGLE_LORE_VIEWER)
+    self._set_default_gamepad(CB.RIGHTSTICK, gameplay, InputAction.TOGGLE_ACHIEVEMENTS)
+
+    # D-Pad (movement - handled by analog handler as well)
+    self._set_default_gamepad(CB.DPAD_UP, gameplay, InputAction.MOVE_NORTH)
+    self._set_default_gamepad(CB.DPAD_DOWN, gameplay, InputAction.MOVE_SOUTH)
+    self._set_default_gamepad(CB.DPAD_LEFT, gameplay, InputAction.MOVE_WEST)
+    self._set_default_gamepad(CB.DPAD_RIGHT, gameplay, InputAction.MOVE_EAST)
+
+    # === INVENTORY CONTEXT ===
+    inv = InputContext.INVENTORY
+    self._set_default_gamepad(CB.A, inv, InputAction.CONFIRM)
+    self._set_default_gamepad(CB.B, inv, InputAction.CANCEL)
+    self._set_default_gamepad(CB.DPAD_UP, inv, InputAction.NAVIGATE_UP)
+    self._set_default_gamepad(CB.DPAD_DOWN, inv, InputAction.NAVIGATE_DOWN)
+
+    # === LOOK MODE CONTEXT ===
+    look = InputContext.LOOK_MODE
+    self._set_default_gamepad(CB.A, look, InputAction.CONFIRM)  # Inspect entity
+    self._set_default_gamepad(CB.B, look, InputAction.CANCEL)   # Exit look mode
+    # Right stick movement handled specially (see Phase 3.2)
+
+    # === TARGETING CONTEXT ===
+    target = InputContext.TARGETING
+    self._set_default_gamepad(CB.A, target, InputAction.CONFIRM)
+    self._set_default_gamepad(CB.B, target, InputAction.CANCEL)
+    self._set_default_gamepad_trigger(is_right=True, target, InputAction.CONFIRM)  # RT also confirms
+
+    # === DIALOGUE CONTEXT ===
+    dialogue = InputContext.DIALOGUE
+    self._set_default_gamepad(CB.A, dialogue, InputAction.CONFIRM)
+    self._set_default_gamepad(CB.B, dialogue, InputAction.CANCEL)
+    self._set_default_gamepad(CB.DPAD_LEFT, dialogue, InputAction.NAVIGATE_LEFT)
+    self._set_default_gamepad(CB.DPAD_RIGHT, dialogue, InputAction.NAVIGATE_RIGHT)
+
+    # === MENU CONTEXT (main menu, settings, help, etc.) ===
+    menu = InputContext.MENU
+    self._set_default_gamepad(CB.A, menu, InputAction.CONFIRM)
+    self._set_default_gamepad(CB.B, menu, InputAction.CANCEL)
+    self._set_default_gamepad(CB.DPAD_UP, menu, InputAction.NAVIGATE_UP)
+    self._set_default_gamepad(CB.DPAD_DOWN, menu, InputAction.NAVIGATE_DOWN)
+    self._set_default_gamepad(CB.DPAD_LEFT, menu, InputAction.NAVIGATE_LEFT)
+    self._set_default_gamepad(CB.DPAD_RIGHT, menu, InputAction.NAVIGATE_RIGHT)
+    self._set_default_gamepad(CB.RIGHTSHOULDER, menu, InputAction.NAVIGATE_PAGE_DOWN)
+    self._set_default_gamepad(CB.LEFTSHOULDER, menu, InputAction.NAVIGATE_PAGE_UP)
+
+def _set_default_gamepad(self, button: ControllerButton, context: InputContext, action: InputAction):
+    """Helper to set default gamepad binding."""
+    key = (button, context)
+    self._default_gamepad_button_map[key] = action
+
+def _set_default_gamepad_trigger(self, is_right: bool, context: InputContext, action: InputAction):
+    """Helper to set default trigger binding (triggers are axes, not buttons)."""
+    axis = ControllerAxis.TRIGGERRIGHT if is_right else ControllerAxis.TRIGGERLEFT
+    self._default_gamepad_axis_map[(axis, context)] = action
+```
+
+#### 3.2 Add Right Stick Auto-Look Implementation
+**File:** `game_input_gamepad.py` (GamepadInputHandler class)
+
+Implement right stick auto-activation of look mode:
+
+```python
+def handle_axis_event(self, event: ControllerAxis, context: InputContext) -> InputAction | None:
+    """Handle gamepad axis events (analog sticks, triggers)."""
+
+    # Update analog handler state
+    if event.axis == ControllerAxis.LEFTX:
+        self.analog_handler.update_left_stick(x=event.value)
+    elif event.axis == ControllerAxis.LEFTY:
+        self.analog_handler.update_left_stick(y=event.value)
+    elif event.axis == ControllerAxis.RIGHTX:
+        self.analog_handler.update_right_stick(x=event.value)
+    elif event.axis == ControllerAxis.RIGHTY:
+        self.analog_handler.update_right_stick(y=event.value)
+
+    # Right stick auto-activates look mode (only in gameplay context)
+    if context == InputContext.GAMEPLAY:
+        magnitude = self.analog_handler.get_right_stick_magnitude()
+        if magnitude > 0.3 and not self.game.look_mode:
+            self.game.look_mode = True
+            self.game.message_log.add_message("Look mode activated", colors.CYAN)
+            # Don't return action - let look mode handler process cursor movement
+
+    # In look mode or targeting, right stick moves cursor
+    if context in [InputContext.LOOK_MODE, InputContext.TARGETING]:
+        rx, ry = self.analog_handler.get_right_stick_position()
+        if abs(rx) > 0.5 or abs(ry) > 0.5:
+            # Convert to 8-way cursor movement
+            dx = 1 if rx > 0.5 else (-1 if rx < -0.5 else 0)
+            dy = 1 if ry > 0.5 else (-1 if ry < -0.5 else 0)
+            # Move cursor (handled by look/targeting handler)
+            # This is context-specific, so return appropriate navigation action
+            # ... (implementation details in look mode handler)
+
+    # Left stick movement (turn-gated)
+    if context == InputContext.GAMEPLAY:
+        movement = self.analog_handler.get_left_stick_movement(self.game.turn_count)
+        if movement:
+            dx, dy = movement
+            # Convert to movement action
+            return self._delta_to_movement_action(dx, dy)
+
+    # Triggers (threshold > 50% = pressed)
+    if event.axis in [ControllerAxis.TRIGGERLEFT, ControllerAxis.TRIGGERRIGHT]:
+        normalized = self.analog_handler.apply_trigger_deadzone(event.value)
+        if normalized > 0.5:  # Trigger pressed
+            # Look up trigger binding for current context
+            return self.input_mapper.get_gamepad_axis_action(event.axis, context)
+
+    return None
+```
+
+**Right Stick Look Mode Behavior:**
+- In gameplay: magnitude > 0.3 → auto-enter look mode, stay active until B or LT
+- In look/targeting: always move cursor (no auto-activation needed)
+- In menus: no action (prevent accidental activation)
+
 ### Deliverables
-- Complete bindings in `InputMapper` default mappings
-- Context-aware action routing
+- Complete bindings in `InputMapper` default mappings (Phase 3.1)
+- Right stick auto-look mode (Phase 3.2)
+- Context-aware action routing (works for all contexts)
 - Full playability via gamepad
 
 ### Technical Considerations
-- **Right stick look mode:** Requires threshold detection (see analog handler) - if magnitude > 0.3, enter look mode
-- **Exploit cycling UI:** Show which exploit is selected (1-5 indicator)
-- **Dead zone tuning:** May need per-context adjustment (gameplay vs menus)
+- **Right stick look mode:** Magnitude threshold 0.3 (lower than movement threshold 0.5) for quick activation
+- **Look mode persistence:** Stays active after stick release (exit via B button or LT release only)
+- **Exploit cycling UI:** Visual indicator added in Phase 2.8
+- **Dead zone tuning:** Same deadzone for all contexts (15%), but different thresholds for movement (50%) vs look activation (30%)
 
 ---
 
@@ -784,14 +1167,23 @@ if not game.look_mode and right_stick_magnitude > 0.3:
 
 **Edge case:** Don't activate during menus/dialogues (check context first).
 
-### 4. Analog Stick Continuous Events
-**Problem:** Moving analog stick generates hundreds of ControllerAxis events per second.
+### 4. Analog Stick Continuous Events - Turn-Based Gating
+**Problem:** Moving analog stick generates hundreds of ControllerAxis events per second, but game is turn-based.
 
-**Solution:**
+**Solution (TURN-BASED, not time-based):**
 - Apply deadzone first (filter noise)
-- Use cooldown timer for tile movement (150ms)
-- Store axis state, process on cooldown expiry (not on every event)
-- In look mode: update cursor immediately (no cooldown needed)
+- Track `last_move_turn` instead of `last_move_time`
+- Use `game.turn_count` to gate movement: if current turn > last turn → allow move
+- Store axis state, process when turn increments (not on time interval)
+- In look mode: update cursor immediately (no gating needed - not turn-based)
+
+**Why Turn-Based:**
+- Time-based cooldown (150ms) would allow multiple moves per game turn
+- Turn-based gating ensures one movement per turn, matching keyboard behavior
+- Continuous stick hold = continuous events, but only first event per turn triggers movement
+- Turn increments (enemies move) → next stick event triggers next movement
+
+See Phase 1.3 for full implementation details.
 
 ### 5. Settings Migration
 **Problem:** Existing saves don't have custom binding data.
@@ -866,6 +1258,77 @@ RESERVED_BUTTONS = {ControllerButton.GUIDE}  # Home button = system reserved
 
 Show error: "This button is reserved and cannot be rebound."
 
+### 11. Controller Disconnect/Reconnect Flow
+**Problem:** What happens when controller disconnects mid-game?
+
+**Solution:** Graceful degradation with clear feedback:
+
+**Disconnect handling:**
+1. ControllerDevice event (removed=True) fires
+2. Remove controller from `self.controllers` set
+3. If in gameplay (not menu): Show overlay "Controller disconnected - Press any key to continue"
+4. Game state pauses (don't process turns)
+5. Switch to keyboard input automatically
+
+**Reconnect handling:**
+1. ControllerDevice event (added=True) fires
+2. Add controller to `self.controllers` set
+3. Show brief message: "Controller reconnected"
+4. Resume gameplay (unpause if paused)
+5. Gamepad input available immediately
+
+**Mid-turn disconnect:** If disconnect happens during enemy turn processing, finish current turn cycle first, THEN show overlay (don't interrupt turn resolution).
+
+### 12. Multi-Controller Priority
+**Problem:** Multiple controllers connected - which one to use?
+
+**Solution:** Simple first-wins approach:
+- Use `min(controllers, key=lambda c: c.instance_id)` (lowest ID = first connected)
+- All events from any controller are accepted (user can plug/unplug to change active controller)
+- Future enhancement: Add "Select Controller" in settings to choose specific device
+
+### 13. Analog Cursor Speed in Look/Targeting Mode
+**Problem:** How fast should right stick move cursor in look mode?
+
+**Solution:** **Tile-by-tile with turn-gating** (consistent with keyboard):
+- Convert analog to 8-way digital (same as movement)
+- Apply turn-gating: one cursor move per turn
+- Alternative (if too slow): Use time-based cooldown (100ms) for cursor ONLY (not movement)
+
+**Recommendation:** Start with turn-gated, add time-based option if playtesting shows it's too slow.
+
+### 14. Navigation vs Movement Action Overlap
+**Problem:** WASD moves in gameplay, navigates in menus - are these separate actions?
+
+**Solution:** **Same action, context-aware behavior:**
+- `InputAction.MOVE_NORTH` in GAMEPLAY context → move player north
+- `InputAction.MOVE_NORTH` in MENU context → navigate up in menu
+- No separate `NAVIGATE_UP` action needed
+- Handlers interpret same action differently based on context
+- Simplifies bindings (user binds "up" once, works everywhere)
+
+### 15. Modifier Keys and the Abstraction Layer
+**Problem:** How to handle modifier-dependent actions (Shift+F12 debug export)?
+
+**Solution:** **Bypass abstraction for modifier combos:**
+- Modifier-dependent actions continue using direct key checks
+- `event.mod & tcod.event.KMOD_SHIFT` checked before `_execute_action()`
+- InputMapper only handles non-modified keys
+- Rationale: Modifier combos are rare, complex to remap, low priority for Phase 1-3
+
+**Future enhancement (Phase 4-5):** Add modifier support to remapping UI if needed.
+
+### 16. D-Pad Axis vs Button Reporting
+**Problem:** Some controllers report D-Pad as buttons, others as axis events.
+
+**Solution:** **SDL normalizes to buttons, but handle both:**
+- Primary bindings: Use `ControllerButton.DPAD_UP/DOWN/LEFT/RIGHT`
+- Axis fallback: If D-Pad reports as axis, convert to button events in handler
+- SDL's GameController API should handle normalization automatically
+- Test with multiple controller types to verify
+
+**Implementation note:** TCOD wraps SDL GameController API, so normalization should "just work" - verify during Phase 6.4 testing.
+
 ---
 
 ## Files Created/Modified Summary
@@ -877,13 +1340,15 @@ Show error: "This button is reserved and cannot be rebound."
 4. `game_input_gamepad.py` - Gamepad event handler (Phase 2)
 5. `game_menu_controls.py` - Remapping UI (Phases 4-5)
 
-### Modified Files (6)
+### Modified Files (8)
 1. `game_config.py` - GameSettings (custom bindings, gamepad settings)
-2. `game_input.py` - Router + action executor
-3. `game_loop.py` - SDL joystick init
-4. `game_rendering_ui.py` - Exploit cycling visual feedback
-5. `game_menus.py` - Add Controls submenu
-6. `game_menu_help_lore.py` - Add gamepad controls page
+2. `game_input.py` - Router + context detection + action executor + handler delegation
+3. `game_loop.py` - SDL joystick init, pass controllers to InputHandler
+4. `game_engine.py` - Exploit cycling state (selected_exploit_index)
+5. `game_rendering_ui.py` - Exploit cycling visual feedback
+6. `game_menus.py` - Add Controls submenu
+7. `game_menu_help_lore.py` - Add gamepad controls page
+8. All input handlers (`game_input_gameplay.py`, `game_input_inventory.py`, etc.) - Add `execute_action()` method
 
 ### Configuration Files (1)
 1. `saves/user_settings.json` - New fields for custom bindings
