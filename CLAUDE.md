@@ -19,8 +19,6 @@
 
 ## 2. Build & Test
 
-**TDD:** All development uses Test-Driven Development: Failing test → Code solution → Verify test success → Analyze test (keep, expand for edge cases, or refactor)
-
 **Build:** `build\build.bat [alpha|release]` (needs 7zip at `C:\Program Files\7-Zip\7z.exe`)
 - Outputs: `dist\RogueSignalProtocol.exe` (37MB), `releases\..._[type]_[date].zip` (103MB)
 **Test:** Pre-commit hook auto-runs. Quick: `pytest tests/unit/test_<module>.py -v`, Iterate: `pytest --lf --tb=short`

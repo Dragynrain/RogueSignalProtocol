@@ -26,8 +26,13 @@
       "Bash(pytest:*)",
       "Bash:*",
       "WebFetch(domain:docs.claude.com)",
+      "WebFetch(domain:*)",
       "Fetch(domain:docs.claude.com)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Task(*)",
+      "BashOutput(*)",
+      "KillShell(*)",
+      "AskUserQuestion(*)"
     ],
     "deny": [],
     "ask": [
@@ -44,6 +49,27 @@
     "additionalDirectories": [
       "./.claude/",
       "./dist/"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Skip acknowledgments like \"You are right\" - focus on the solution'"
+          },
+          {
+            "type": "command",
+            "command": "echo 'If PLAN_* file exists, follow it precisely - no exploratory problem-solving'"
+          },
+          {
+            "type": "command",
+            "command": "echo 'Avoid meaningless quality claims: \"production ready\", \"robust\", \"enterprise-grade\". Be specific.'"
+          }
+        ]
+      }
     ]
   }
 }
