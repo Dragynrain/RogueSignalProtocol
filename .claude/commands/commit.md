@@ -1,0 +1,1 @@
+Commit and sync with GitHub with a brief technical-only summary of changes. No AI attributions, no Co-Authored-By tags, no emojis. Clean technical messages only.
