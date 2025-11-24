@@ -1,0 +1,1 @@
+Run the full test suite (unit + integration tests). Analyze any failing tests and resolve them properly by either correcting the test or fixing the code. Use pytest with appropriate verbosity. Don't claim tests pass unless you have actual proof.
