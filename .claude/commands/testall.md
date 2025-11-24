@@ -1,1 +1,13 @@
-Run the full test suite (unit + integration tests). Analyze any failing tests and resolve them properly by either correcting the test or fixing the code. Use pytest with appropriate verbosity. Don't claim tests pass unless you have actual proof.
+---
+description: Run tests and fix failures
+argument-hint: [optional: specific test pattern]
+---
+
+Run tests: $ARGUMENTS (defaults to full suite if empty)
+
+Requirements:
+- Run pytest with appropriate verbosity
+- Analyze any failing tests
+- Fix by either correcting test or fixing code
+- Don't claim tests pass without proof
+- Use TDD cycle: keep test failures visible until fixed

@@ -1,1 +1,12 @@
-Commit and sync with GitHub with a brief technical-only summary of changes. No AI attributions, no Co-Authored-By tags, no emojis. Clean technical messages only.
+---
+description: Commit and sync specific changes to GitHub
+argument-hint: [description of what changed]
+---
+
+Commit and sync with GitHub: $ARGUMENTS
+
+Requirements:
+- Stage only the files described in the parameter
+- Generate brief technical-only commit message
+- No AI attributions, no Co-Authored-By tags, no emojis
+- Push to GitHub after commit
