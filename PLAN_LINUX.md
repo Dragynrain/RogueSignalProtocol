@@ -17,6 +17,62 @@
 
 ---
 
+## TDD Approach for Linux Compatibility
+
+**Test-Driven Development is critical for cross-platform work** - platform bugs are hard to debug after the fact.
+
+### TDD Principles for This Plan
+
+1. **Write tests BEFORE implementation** - Each platform-specific change gets a failing test first
+2. **Tests must pass on BOTH platforms** - Use `pytest` markers to run platform-specific tests
+3. **Mock platform APIs in unit tests** - Don't require Linux to test Linux code paths
+4. **Integration tests on real platforms** - VM/Steam Deck for actual validation
+
+### Test Categories
+
+| Category | Runs On | Purpose |
+|----------|---------|---------|
+| **Unit tests (mocked)** | Windows CI | Verify logic without platform |
+| **Platform detection tests** | Both | Verify `is_linux()`, `is_windows()` |
+| **Path resolution tests** | Both | Verify `platformdirs` integration |
+| **Integration tests** | Linux VM/Deck | Full end-to-end validation |
+
+### Pytest Markers for Platform Tests
+
+```python
+# conftest.py additions
+import pytest
+import sys
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "linux_only: mark test to run only on Linux")
+    config.addinivalue_line("markers", "windows_only: mark test to run only on Windows")
+    config.addinivalue_line("markers", "cross_platform: mark test that must pass on all platforms")
+
+@pytest.fixture
+def mock_linux_platform(monkeypatch):
+    """Mock sys.platform to simulate Linux environment."""
+    monkeypatch.setattr(sys, "platform", "linux")
+
+@pytest.fixture
+def mock_windows_platform(monkeypatch):
+    """Mock sys.platform to simulate Windows environment."""
+    monkeypatch.setattr(sys, "platform", "win32")
+```
+
+### Example TDD Workflow
+
+```
+1. Write failing test: test_get_data_dir_returns_xdg_path_on_linux()
+2. Run test → FAILS (function doesn't exist or returns Windows path)
+3. Implement platformdirs integration
+4. Run test → PASSES
+5. Run ALL tests → Verify no Windows regressions
+6. Commit
+```
+
+---
+
 ## Implementation Phases
 
 ### Phase 0: Platform Detection Infrastructure ✅ COMPLETED
@@ -37,8 +93,13 @@ All DPI calls now use `game_platform.set_dpi_awareness()` which safely no-ops on
 ### Phase 1: Platform Compatibility Audit (Medium Complexity)
 Identify and catalog all Windows-specific code that needs cross-platform replacements.
 - Complexity: Medium (code review, testing needed)
-- Dependencies: None
+- Dependencies: Phase 0 complete
 - Risk: Medium (may discover unexpected platform assumptions)
+
+**TDD Tasks for Phase 1**:
+- Write `test_game_platform.py` with tests for `is_linux()`, `is_windows()` using mocked `sys.platform`
+- Add tests that verify imports don't crash on Linux (mock `ctypes.windll` to raise `AttributeError`)
+- Create test matrix documenting which tests need platform mocking
 
 ### Phase 2: Cross-Platform Code Refactoring (High Complexity)
 Replace Windows-specific code with cross-platform equivalents.
@@ -46,17 +107,36 @@ Replace Windows-specific code with cross-platform equivalents.
 - Dependencies: Phase 1 complete
 - Risk: High (breaking existing Windows functionality)
 
+**TDD Tasks for Phase 2** (write tests BEFORE implementation):
+- `test_get_data_dir_returns_xdg_path_on_linux()` - mock Linux, verify `~/.local/share/`
+- `test_get_data_dir_returns_localappdata_on_windows()` - mock Windows, verify `%LOCALAPPDATA%`
+- `test_portable_mode_works_on_linux()` - verify portable detection logic
+- `test_show_fatal_error_creates_pygame_window()` - verify pygame error screen works cross-platform
+- Run full test suite after each change to catch regressions
+
 ### Phase 3: Linux Build System (Medium Complexity)
 Set up PyInstaller spec and build pipeline for Linux.
 - Complexity: Medium (build tooling, CI/CD setup)
 - Dependencies: Phase 2 complete
 - Risk: Medium (platform-specific build quirks)
 
+**TDD Tasks for Phase 3**:
+- Add GitHub Actions workflow that runs `pytest` on Ubuntu runner
+- Create smoke test: `test_binary_starts_without_crash()` (subprocess launch, check exit code)
+- Add asset verification test: `test_all_required_assets_bundled()` (check dist/ contents)
+- Integration test on Linux VM: manual launch, verify main menu renders
+
 ### Phase 4: Package Creation (Medium Complexity)
 Create distribution packages (AppImage, Flatpak, AUR).
 - Complexity: Medium (each format has unique requirements)
 - Dependencies: Phase 3 complete
 - Risk: Low (packaging is well-documented)
+
+**TDD Tasks for Phase 4**:
+- AppImage: Test extraction and execution on clean Ubuntu VM (no Python installed)
+- Flatpak: Test sandbox permissions (can access gamepad? audio? save files?)
+- All formats: Verify game assets included (graphics/, sound/, music/, *.json, *.ttf)
+- Create manual test script for each package format
 
 ### Phase 5: Distribution & Publishing (Low-Medium Complexity)
 Submit to package repositories and configure auto-updates.
@@ -67,8 +147,20 @@ Submit to package repositories and configure auto-updates.
 ### Phase 6: Testing & Verification (High Complexity)
 Test on Linux VMs across multiple distros.
 - Complexity: High (need multiple VM configurations)
-- Dependencies: Phases 1-5 complete
+- Dependencies: Phases 1-5 complete (but incremental testing happens throughout)
 - Risk: High (platform-specific bugs hard to predict)
+
+**Important**: Testing should happen incrementally, not just at the end:
+- After Phase 2: Verify refactored code runs on WSL2/Steam Deck
+- After Phase 3: Verify build works before packaging
+- Phase 6 is for comprehensive cross-distro validation
+
+**TDD Tasks for Phase 6**:
+- Run full pytest suite on Steam Deck (real Arch Linux)
+- Run full pytest suite on Ubuntu VM
+- Create platform-specific regression test: `test_linux_specific_paths()`
+- Document any tests that fail on Linux but pass on Windows (platform bugs to fix)
+- Add `@pytest.mark.linux_only` to tests that can only run on Linux
 
 ---
 
@@ -123,11 +215,11 @@ Test on Linux VMs across multiple distros.
 
 **File: `game_file_paths.py`**
 ```python
-# PROBLEM: Windows-only MessageBox API
-ctypes.windll.user32.MessageBoxW(...)
+# NEEDS FIX: Windows MessageBox with console fallback
+ctypes.windll.user32.MessageBoxW(...)  # Console fallback exists but console is temporary!
 ```
-**Impact**: Fatal error dialogs won't work on Linux
-**Fix Required**: Cross-platform error dialog or console fallback
+**Impact**: When console is removed, fatal errors will be invisible on Linux
+**Fix Required**: Create pygame-based error screen (render error text to SDL window)
 
 ```python
 # PROBLEM: LOCALAPPDATA environment variable (Windows-only)
@@ -140,10 +232,10 @@ appdata = os.getenv("LOCALAPPDATA")
 
 **File: `requirements.txt`**
 ```
-pywin32-ctypes==0.2.3  # Windows-only dependency
+pywin32-ctypes==0.2.3  # Windows-only PyInstaller dependency
 ```
 **Impact**: Fails to install on Linux
-**Fix Required**: Make conditional or remove (only used for MessageBox)
+**Fix Required**: Add environment marker: `; sys_platform == 'win32'`
 
 **File: `debug_export.py`**
 ```python
@@ -196,20 +288,42 @@ data_dir = user_data_dir("RogueSignalProtocol", "Dragynrain")
 
 **Changes Required**:
 
-1. Replace `ctypes.windll` MessageBox with cross-platform dialog:
-   - **Option A**: tkinter messagebox (stdlib, no extra deps, works on all platforms)
-   - **Option B**: pygame messagebox (already a dependency, simple)
-   - **Option C**: Console fallback only (simplest but poor UX if crash before console visible)
-   - **Recommendation**: Option A (tkinter) - better UX, no extra dependencies
+1. Replace `ctypes.windll` MessageBox with cross-platform pygame error screen:
+   - Console fallback exists but **console is temporary** (alpha only)
+   - Need pygame-based error dialog that works without console
+   - Simple implementation: init minimal pygame, render error text, wait for keypress/click
+   ```python
+   def show_fatal_error_and_exit(message: str, title: str = "Error") -> None:
+       """Display fatal error using pygame (cross-platform)."""
+       try:
+           import pygame
+           pygame.init()
+           screen = pygame.display.set_mode((640, 480))
+           pygame.display.set_caption(title)
+           font = pygame.font.Font(None, 24)
+           # Render error message, wait for ESC/click, then exit
+           ...
+       except Exception:
+           print(f"FATAL: {message}")  # Last resort fallback
+       sys.exit(1)
+   ```
 
 2. Replace `_get_appdata_directory()` with platformdirs:
 ```python
 def _get_system_data_directory() -> Path:
-    if sys.platform == "win32":
-        return Path(user_data_dir("RogueSignalProtocol", "Dragynrain"))
-    else:  # Linux
-        return Path(user_data_dir("RogueSignalProtocol", "Dragynrain"))
+    # platformdirs handles platform detection internally - no conditional needed!
+    # Windows: %LOCALAPPDATA%\Dragynrain\RogueSignalProtocol
+    # Linux: ~/.local/share/RogueSignalProtocol
+    # macOS: ~/Library/Application Support/RogueSignalProtocol
+    return Path(user_data_dir("RogueSignalProtocol", "Dragynrain"))
 ```
+
+**⚠️ PATH MIGRATION WARNING**: Verify current code's path matches platformdirs output!
+- If current code uses `%LOCALAPPDATA%\RogueSignalProtocol\` (no author)
+- But platformdirs returns `%LOCALAPPDATA%\Dragynrain\RogueSignalProtocol\` (with author)
+- Existing Windows saves would be orphaned!
+
+**Before implementing**: Check current `_get_appdata_directory()` output and ensure platformdirs call matches, OR add migration logic to move existing saves.
 
 3. Update portable mode detection (same logic, different fallback)
 
@@ -217,19 +331,42 @@ def _get_system_data_directory() -> Path:
 **Risk**: High (core initialization path)
 **Testing**: Must verify on Windows + Linux VM
 
-### File: `requirements.txt` - Remove Windows Dependencies
+**TDD: Write These Tests BEFORE Implementing**:
+```python
+# tests/unit/test_game_file_paths_linux.py
 
-**Change**:
+def test_get_data_dir_returns_xdg_path_on_linux(mock_linux_platform, tmp_path, monkeypatch):
+    """On Linux, data dir should be ~/.local/share/RogueSignalProtocol/"""
+    monkeypatch.setenv("HOME", str(tmp_path))
+    from game_file_paths import _get_system_data_directory
+    result = _get_system_data_directory()
+    assert ".local/share" in str(result) or "RogueSignalProtocol" in str(result)
+
+def test_get_data_dir_returns_localappdata_on_windows(mock_windows_platform, tmp_path, monkeypatch):
+    """On Windows, data dir should be %LOCALAPPDATA%\\RogueSignalProtocol\\"""
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
+    from game_file_paths import _get_system_data_directory
+    result = _get_system_data_directory()
+    assert str(tmp_path) in str(result) or "RogueSignalProtocol" in str(result)
+
+def test_portable_mode_detected_correctly_on_linux(mock_linux_platform, tmp_path):
+    """Portable mode should work the same on Linux."""
+    # Create portable marker file, verify detection works
+```
+
+### File: `requirements.txt` - Fix Windows-Only Dependencies
+
+**Problem**: `pywin32-ctypes` fails to install on Linux.
+
+**Analysis**: It's a PyInstaller dependency for Windows builds, not used by game code directly.
+
+**Solution**: Add environment marker to make it Windows-only:
 ```diff
 - pywin32-ctypes==0.2.3
-+ # pywin32-ctypes only needed on Windows for MessageBox (removed)
++ pywin32-ctypes==0.2.3 ; sys_platform == 'win32'
 ```
 
-**Alternative**: Make it conditional:
-```python
-if sys.platform == "win32":
-    install_requires.append("pywin32-ctypes")
-```
+**Note**: `requirements.txt` DOES support environment markers (PEP 508). This allows the same file to work on both platforms.
 
 ### File: `debug_export.py` - Path Sanitization
 
@@ -305,11 +442,30 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true  # If using Git LFS for assets
+
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      # Linux-specific: Install system dependencies for SDL2/audio
+      - name: Install Linux dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev
+
       - run: pip install -r requirements.txt
+      - run: pip install pyinstaller
+
       - run: pyinstaller ${{ matrix.spec }}
+
+      # Package game assets alongside binary
+      - name: Package assets
+        run: |
+          cp -r graphics sound music *.json *.ttf dist/
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -322,9 +478,13 @@ jobs:
 | Platform | Format | Tool |
 |----------|--------|------|
 | Windows | .ico (multiple sizes) | Current |
-| Linux | .png (512x512 recommended) | Convert from .ico |
+| Linux | .png (512x512 recommended) | Convert from .ico or source |
 
-**Action Required**: Extract 512x512 PNG from existing logo.ico for Linux
+**Action Required**: Create 512x512 PNG for Linux
+- **Option A**: Extract largest size from logo.ico (often 256x256 max) and upscale
+- **Option B**: Use original vector/high-res source if available (preferred)
+- **Tool**: ImageMagick: `convert logo.ico[0] -resize 512x512 logo.png`
+- **Note**: .ico files typically max out at 256x256 - may need to upscale or use original artwork
 
 ---
 
@@ -338,11 +498,14 @@ jobs:
 ```yaml
 version: 1
 AppDir:
+  path: ./AppDir
   app_info:
     id: com.dragynrain.RogueSignalProtocol
     name: Rogue Signal Protocol
     version: 0.8.0
+    icon: rogue-signal-protocol
     exec: usr/bin/RogueSignalProtocol
+
   files:
     include:
       - dist/RogueSignalProtocol  # PyInstaller output
@@ -351,6 +514,26 @@ AppDir:
       - music/**
       - *.json
       - *.ttf
+
+  # Desktop entry for Linux app menus
+  desktop:
+    path: usr/share/applications/rogue-signal-protocol.desktop
+    file: |
+      [Desktop Entry]
+      Name=Rogue Signal Protocol
+      Exec=RogueSignalProtocol
+      Icon=rogue-signal-protocol
+      Type=Application
+      Categories=Game;RolePlaying;
+      Comment=Cyberpunk roguelike
+
+  # Icon (must provide PNG)
+  icons:
+    usr/share/icons/hicolor/512x512/apps/rogue-signal-protocol.png: logo.png
+
+AppImage:
+  arch: x86_64
+  update-information: guess
 ```
 
 **Output**: `RogueSignalProtocol-0.8.0-x86_64.AppImage`
@@ -372,22 +555,35 @@ sdk: org.freedesktop.Sdk
 command: RogueSignalProtocol
 
 finish-args:
-  - --socket=x11
+  - --socket=wayland
+  - --socket=fallback-x11  # For X11 compatibility
   - --socket=pulseaudio
-  - --device=all  # Gamepad support
+  - --device=input  # Gamepad support (more restrictive than --device=all)
   - --share=ipc
 
 modules:
   - name: RogueSignalProtocol
     buildsystem: simple
     build-commands:
-      - pip3 install --prefix=/app .
-      - install -Dm755 RogueSignalProtocol.py /app/bin/RogueSignalProtocol
+      # Install binary and assets together (game expects assets in same directory)
+      - install -dm755 /app/lib/rogue-signal-protocol
+      - install -Dm755 dist/RogueSignalProtocol /app/lib/rogue-signal-protocol/RogueSignalProtocol
+      - cp -r graphics sound music *.json *.ttf /app/lib/rogue-signal-protocol/
+      # Wrapper script to cd to asset directory before launching
+      - |
+        cat > /app/bin/RogueSignalProtocol << 'EOF'
+        #!/bin/sh
+        cd /app/lib/rogue-signal-protocol
+        exec ./RogueSignalProtocol "$@"
+        EOF
+      - chmod +x /app/bin/RogueSignalProtocol
     sources:
-      - type: git
-        url: https://github.com/Dragynrain/RogueSignalProtocol.git
-        tag: v0.8.0
+      - type: archive
+        url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v0.8.0/RogueSignalProtocol-linux.tar.gz
+        sha256: CHECKSUM_HERE  # Generate with sha256sum after build
 ```
+
+**Note**: Assets must be in the same directory as the binary (game uses relative paths). The wrapper script ensures correct CWD.
 
 **Submission**: PR to github.com/flathub/flathub
 **Review Time**: Typically 1-7 days
@@ -397,17 +593,46 @@ modules:
 
 **Tool**: PKGBUILD script
 
-**Minimal PKGBUILD**:
+**Minimal PKGBUILD** (binary package - PyInstaller bundles Python):
 ```bash
-pkgname=rogue-signal-protocol
+# Maintainer: Your Name <your@email.com>
+pkgname=rogue-signal-protocol-bin
 pkgver=0.8.0
-depends=('python' 'python-tcod' 'python-pygame')
-source=("git+https://github.com/Dragynrain/RogueSignalProtocol.git#tag=v${pkgver}")
+pkgrel=1
+pkgdesc="Cyberpunk roguelike game (binary release)"
+arch=('x86_64')
+url="https://github.com/Dragynrain/RogueSignalProtocol"
+license=('custom')
+# PyInstaller binary bundles Python - only need runtime libs
+depends=('sdl2' 'sdl2_ttf' 'sdl2_mixer')
+provides=('rogue-signal-protocol')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v${pkgver}/RogueSignalProtocol-linux.tar.gz")
+sha256sums=('SKIP')  # Replace with actual checksum
 
 package() {
-  cd "$srcdir/RogueSignalProtocol"
+  cd "$srcdir"
   install -dm755 "$pkgdir/opt/rogue-signal-protocol"
-  cp -r . "$pkgdir/opt/rogue-signal-protocol/"
+  install -Dm755 RogueSignalProtocol "$pkgdir/opt/rogue-signal-protocol/RogueSignalProtocol"
+  cp -r graphics sound music *.json *.ttf "$pkgdir/opt/rogue-signal-protocol/"
+
+  # Create launcher script
+  install -dm755 "$pkgdir/usr/bin"
+  echo '#!/bin/sh' > "$pkgdir/usr/bin/rogue-signal-protocol"
+  echo 'cd /opt/rogue-signal-protocol && ./RogueSignalProtocol "$@"' >> "$pkgdir/usr/bin/rogue-signal-protocol"
+  chmod +x "$pkgdir/usr/bin/rogue-signal-protocol"
+
+  # Install icon
+  install -Dm644 "$srcdir/logo.png" "$pkgdir/usr/share/icons/hicolor/512x512/apps/rogue-signal-protocol.png"
+
+  # Desktop entry
+  install -Dm644 /dev/stdin "$pkgdir/usr/share/applications/rogue-signal-protocol.desktop" <<EOF
+[Desktop Entry]
+Name=Rogue Signal Protocol
+Exec=rogue-signal-protocol
+Icon=rogue-signal-protocol
+Type=Application
+Categories=Game;RolePlaying;
+EOF
 }
 ```
 
@@ -449,7 +674,7 @@ package() {
 - ✅ Tests actual handheld experience
 - ✅ **Perfect screen resolution match**: 1280×800 = exactly 16×16 pixel characters
 
-**This means you can skip VirtualBox VMs entirely and test on real hardware!**
+**Steam Deck provides real Arch Linux testing, but Ubuntu VM is still recommended for distro coverage** (see Testing section).
 
 ### Technical Specifications
 
@@ -514,8 +739,8 @@ package() {
 - Perfect for quick gaming sessions
 
 **Testing Workflow on Your Steam Deck**:
-1. Build Linux binary on Windows (PyInstaller)
-2. Copy to Steam Deck via USB or network share
+1. Build Linux binary via GitHub Actions (PyInstaller must run on target OS - cannot cross-compile)
+2. Download artifact and copy to Steam Deck via USB or network share
 3. Test in Desktop Mode with keyboard/mouse first
 4. Test gamepad controls in Desktop Mode
 5. Add to Steam library (right-click Steam → Add Non-Steam Game)
@@ -556,20 +781,21 @@ Steam Deck is **perfect** for Linux testing:
 - ✅ Tests at target resolution (1280×800)
 
 **Testing Workflow**:
-1. Build Linux binary on Windows
-2. Transfer to Steam Deck (USB/network)
+1. Build Linux binary via GitHub Actions (PyInstaller cannot cross-compile - must build on Linux)
+2. Download build artifact and transfer to Steam Deck (USB/network)
 3. Test in Desktop Mode (validate functionality)
 4. Test in Gaming Mode (validate gamepad)
 5. Install Flatpak build from local file
 6. Verify everything works
 
-**This replaces the need for VirtualBox VMs!**
+**Steam Deck provides excellent Arch Linux testing, but Ubuntu VM is still recommended** - see Secondary Testing section.
 
-### Secondary Testing: Optional VMs
+### Secondary Testing: Ubuntu VM (Recommended)
 
-**Only if you want to test other distros** (Steam Deck covers Arch):
+**Ubuntu is the most common desktop Linux** - testing it is strongly recommended, not optional.
+Steam Deck (Arch-based) has different libraries and package versions than Ubuntu/Debian family.
 
-**VirtualBox Setup** (Free, Optional):
+**VirtualBox Setup** (Free):
 1. Download VirtualBox (free)
 2. Download Ubuntu 22.04 ISO (free)
 3. Create VM with:
@@ -583,14 +809,15 @@ Steam Deck is **perfect** for Linux testing:
    - Real hardware validation
    - Gamepad testing
 
-2. **Ubuntu 22.04 LTS** (Medium Priority - VM)
-   - Most common desktop Linux
-   - Test Flatpak and AppImage
-   - Only if you want additional distro coverage
+2. **Ubuntu 22.04 LTS** (HIGH PRIORITY - VM)
+   - Most common desktop Linux (~40% of desktop Linux users)
+   - Different library versions than Arch
+   - Test Flatpak and AppImage installation
+   - **Catches issues Steam Deck won't find**
 
 3. **Fedora Latest** (Low Priority - VM)
    - Flatpak pre-installed
-   - Tests Wayland
+   - Tests Wayland-first environment
    - Only if issues found on Ubuntu
 
 **WSL2 Alternative** (Windows 11):
@@ -604,9 +831,11 @@ Steam Deck is **perfect** for Linux testing:
 | OS | Version | Architecture | Testing Method | Priority |
 |----|---------|--------------|----------------|----------|
 | **Steam Deck** | SteamOS 3.x | x86_64 | **Real Hardware (YOU OWN IT!)** | **HIGH** |
-| **Ubuntu** | 22.04 LTS | x86_64 | VirtualBox VM (optional) | Medium |
-| **Fedora** | Latest | x86_64 | VirtualBox VM (optional) | Low |
+| **Ubuntu** | 22.04 LTS | x86_64 | VirtualBox VM | **HIGH** |
+| **Fedora** | Latest | x86_64 | VirtualBox VM | Low |
 | **Arch** | Rolling | x86_64 | Covered by Steam Deck | N/A |
+
+**Why Ubuntu is HIGH priority**: Steam Deck uses Arch (rolling release, bleeding edge libraries). Ubuntu LTS uses older, stable library versions. Bugs often appear on one but not the other.
 
 ### Testing Requirements
 
@@ -655,6 +884,18 @@ Steam Deck is **perfect** for Linux testing:
 - Windows: Case-insensitive
 **Risk**: Asset loading may break if filenames have inconsistent casing
 **Solution**: Audit all asset references for consistent casing
+
+**Concrete Audit Steps**:
+```bash
+# Find all Python files that load assets
+grep -rn "open\|Path\|load\|read" --include="*.py" | grep -i "graphics\|sound\|music\|\.json\|\.ttf"
+
+# List all asset files with exact casing
+find graphics sound music -type f | sort
+
+# Check for case conflicts (files that differ only by case)
+find . -type f | sort -f | uniq -di
+```
 
 **Path Separators**:
 - Use `pathlib.Path` everywhere (handles separators automatically)
@@ -778,87 +1019,20 @@ Steam Deck is **perfect** for Linux testing:
 
 ---
 
-## 13. Recommended Action Plan
+## 13. Quick Reference
 
-### Phase 1: Platform Compatibility Audit
-**Goal**: Identify all Windows-specific code
+**See "Implementation Phases" section at top of document for detailed phase breakdown.**
 
-**Tasks**:
-- Grep for Windows-specific APIs
-- Catalog path handling code
-- Identify platform assumptions
-- Document required changes
-
-**Deliverable**: List of files needing changes
-
----
-
-### Phase 2: Cross-Platform Refactoring
-**Goal**: Make codebase Linux-compatible
-
-**Tasks**:
-- ✅ DONE: Create `game_platform.py` utility (Phase 0)
-- Replace `_get_appdata_directory()` in `game_file_paths.py` with `platformdirs.user_data_dir()`
-- Replace `show_fatal_error_and_exit()` MessageBox with tkinter fallback (cross-platform)
-- Remove or conditionalize `pywin32-ctypes` in requirements.txt
-- Verify `debug_export.py` uses `Path.joinpath()` (not string concatenation)
-- Test on Windows (verify no regressions - all saves, logs, settings still work)
-
-**Deliverable**: Cross-platform codebase that works on Windows and Linux
-
----
-
-### Phase 3: Linux Build System
-**Goal**: Create Linux executable
-
-**Tasks**:
-- Create PyInstaller spec for Linux
-- Set up Ubuntu VM for testing
-- Build Linux binary
-- Test on Ubuntu VM
-- Set up GitHub Actions (optional)
-
-**Deliverable**: Working Linux build
-
----
-
-### Phase 4: Package Creation
-**Goal**: Create distribution packages
-
-**Tasks**:
-- Build AppImage
-- Test AppImage on multiple distros
-- Create Flatpak manifest
-- Test Flatpak locally
-- Create AUR PKGBUILD
-
-**Deliverable**: 3 Linux packages
-
----
-
-### Phase 5: Distribution
-**Goal**: Publish to repositories
-
-**Tasks**:
-- Upload AppImage to itch.io + GitHub Releases
-- Submit Flatpak to Flathub (wait for review)
-- Upload AUR package
-- Update README with Linux install instructions
-
-**Deliverable**: Public Linux distribution
-
----
-
-### Phase 6: Testing & Iteration
-**Goal**: Verify stability across distros
-
-**Tasks**:
-- Test on Ubuntu, Fedora, Arch VMs
-- Collect bug reports
-- Fix platform-specific issues
-- Update packages
-
-**Deliverable**: Stable Linux support
+**Phase Summary**:
+| Phase | Goal | Key Deliverable |
+|-------|------|-----------------|
+| 0 ✅ | Platform detection | `game_platform.py` utility |
+| 1 | Audit Windows code | List of files needing changes |
+| 2 | Cross-platform refactor | Linux-compatible codebase |
+| 3 | Build system | Working Linux binary |
+| 4 | Packaging | AppImage, Flatpak, AUR |
+| 5 | Distribution | Published packages |
+| 6 | Testing | Verified cross-distro stability |
 
 ---
 
@@ -973,33 +1147,63 @@ The overlap of "Mac users" + "roguelike players" + "itch.io indie gamers" = **te
 
 **Phase 1: Audit**
 - [ ] Catalog all Windows-specific code (MessageBox, LOCALAPPDATA, etc.)
+- [ ] **WSL2 smoke test**: Run `python -c "import game_loop"` to catch import failures early
+- [ ] Run case sensitivity audit (see Section 9 for commands)
 - [ ] Test existing code on WSL2 or Linux VM (identify import failures)
 - [ ] Create platform compatibility matrix
 - [ ] Document required changes beyond Phase 0
+- [ ] **TDD**: Write `test_game_platform.py` with mocked platform tests
+- [ ] **TDD**: Add pytest markers for `linux_only`, `windows_only`, `cross_platform`
+- [ ] **TDD**: Create `mock_linux_platform` and `mock_windows_platform` fixtures in conftest.py
 
 **Phase 2: Refactoring**
+- [ ] **TDD FIRST**: Write `test_get_data_dir_returns_xdg_path_on_linux()` (expect FAIL)
+- [ ] **TDD FIRST**: Write `test_get_data_dir_returns_localappdata_on_windows()` (expect PASS)
+- [ ] **⚠️ CRITICAL**: Verify current path matches platformdirs output:
+  ```python
+  # Run this check BEFORE changing code:
+  from platformdirs import user_data_dir
+  print(user_data_dir("RogueSignalProtocol", "Dragynrain"))
+  # Compare to current _get_appdata_directory() output
+  # If different, need migration logic!
+  ```
 - [ ] Replace `_get_appdata_directory()` in `game_file_paths.py` with `platformdirs.user_data_dir()`
-- [ ] Replace `show_fatal_error_and_exit()` MessageBox with tkinter fallback
-- [ ] Remove or conditionalize `pywin32-ctypes` in requirements.txt
+- [ ] Run tests → verify Linux test now PASSES
+- [ ] Replace `show_fatal_error_and_exit()` with pygame-based error screen (console is temporary)
+- [ ] Add environment marker to `pywin32-ctypes` in requirements.txt: `; sys_platform == 'win32'`
 - [ ] Verify `debug_export.py` uses `Path.joinpath()` (not string concat)
-- [ ] Test on Windows (verify saves, logs, settings still work)
+- [ ] Run FULL test suite → verify no Windows regressions (all 2393+ tests pass)
+- [ ] **Incremental test**: Verify refactored code runs on WSL2/Steam Deck before proceeding
+
+**Rollback Strategy for Phase 2** (High Risk phase):
+- Create git branch `linux-compat` before starting changes
+- Test each change individually on Windows before moving to next
+- If regressions found: `git diff` to identify breaking change, revert specific commit
+- Keep Windows CI running to catch regressions automatically
 
 **Phase 3: Build System**
 - [ ] Copy `RogueSignalProtocol.spec` to `RogueSignalProtocol-linux.spec`
 - [ ] Modify Linux spec: remove `.exe` extension, change icon to `.png`
-- [ ] Convert logo.ico to logo.png (512x512 for Linux)
-- [ ] Set up Ubuntu VM OR use Steam Deck for testing
-- [ ] Build Linux binary with PyInstaller
-- [ ] Test binary on Ubuntu VM or Steam Deck Desktop Mode
-- [ ] Set up GitHub Actions matrix builds (optional but recommended)
+- [ ] Convert logo.ico to logo.png (512x512 for Linux - may need to upscale from 256x256)
+- [ ] Set up GitHub Actions for Linux builds (recommended - builds in cloud, no local Linux needed)
+- [ ] **TDD**: Add GitHub Actions step to run `pytest` on Ubuntu runner
+- [ ] **TDD**: Create `test_binary_starts_without_crash()` smoke test
+- [ ] **TDD**: Create `test_all_required_assets_bundled()` to verify dist/ contents
+- [ ] **Alternative**: Build on Steam Deck Desktop Mode (real hardware, but slower iteration)
+- [ ] **Alternative**: Build in Ubuntu VM (works but slow)
+- [ ] Test binary on Steam Deck Desktop Mode AND Ubuntu VM
+- [ ] **Incremental test**: Verify build works before packaging
 
 **Phase 4: Linux Packaging**
 - [ ] Build AppImage
-- [ ] Test AppImage on Ubuntu, Fedora, Arch VMs
+- [ ] **TDD**: Test AppImage on clean Ubuntu VM (no Python installed) - verifies bundling
+- [ ] Test AppImage on Fedora, Arch VMs
 - [ ] Create Flatpak manifest
+- [ ] **TDD**: Test Flatpak sandbox permissions (gamepad, audio, save files)
 - [ ] Test Flatpak locally
 - [ ] Create AUR PKGBUILD
 - [ ] Test AUR package on Arch VM
+- [ ] **TDD**: Create manual test checklist for each package format (launch, audio, save/load, gamepad)
 
 **Phase 5: Distribution**
 - [ ] Upload AppImage to itch.io + GitHub Releases
@@ -1009,13 +1213,17 @@ The overlap of "Mac users" + "roguelike players" + "itch.io indie gamers" = **te
 - [ ] Update itch.io page with Linux screenshots
 
 **Phase 6: Testing**
+- [ ] **TDD**: Run full `pytest` suite on Steam Deck (expect all tests pass)
+- [ ] **TDD**: Run full `pytest` suite on Ubuntu VM (expect all tests pass)
 - [ ] PRIMARY: Test on Steam Deck (Desktop Mode - you own this hardware!)
 - [ ] Verify save/load works on Steam Deck
 - [ ] Verify audio works on Steam Deck
 - [ ] Verify graphics rendering (1280x800 native resolution)
 - [ ] Test suspend/resume on Steam Deck
-- [ ] OPTIONAL: Test on Ubuntu 22.04 VM (additional coverage)
-- [ ] OPTIONAL: Test on Fedora VM (Wayland testing)
+- [ ] **HIGH PRIORITY**: Test on Ubuntu 22.04 VM (catches different issues than Steam Deck)
+- [ ] Verify Flatpak and AppImage work on Ubuntu
+- [ ] OPTIONAL: Test on Fedora VM (Wayland-first environment)
+- [ ] **TDD**: Document any tests that fail on Linux (create issues, add `@pytest.mark.linux_only` or fix)
 - [ ] Collect community feedback from Linux players
 
 ---
