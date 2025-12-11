@@ -841,7 +841,8 @@ class DISABLED_DialogueSystemComprehensive:
         engine = dialogue_engine
 
         # Y key should select Yes option in YES/NO dialogues
-        event = InputTestHelper.create_keyboard_event(tcod.event.KeySym.y)
+        # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
+        event = InputTestHelper.create_keyboard_event(tcod.event.KeySym(ord('y')))
 
         # Should work (implementation specific)
         assert event is not None  # Event created successfully
@@ -850,7 +851,8 @@ class DISABLED_DialogueSystemComprehensive:
         """Keyboard: N key selects NO option."""
         engine = dialogue_engine
 
-        event = InputTestHelper.create_keyboard_event(tcod.event.KeySym.n)
+        # Use KeySym(ord('n')) for cross-platform compatibility (KeySym.n doesn't exist on Linux)
+        event = InputTestHelper.create_keyboard_event(tcod.event.KeySym(ord('n')))
 
         assert event is not None  # Event created successfully
 

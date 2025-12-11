@@ -39,11 +39,12 @@ class TestButtonHeldDuringTransition:
         # Start dialogue
         from game_dialogue_system import DialogueBox
         import tcod.event
+        # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
         dialogue = DialogueBox(
             title="Test Dialogue",
             message="Test dialogue text",
             options=["[Y] Confirm"],
-            valid_keys=[tcod.event.KeySym.y],
+            valid_keys=[tcod.event.KeySym(ord('y'))],
             title_color=(255, 255, 255),
             message_color=(255, 255, 255),
             border_color=(255, 255, 255),
@@ -223,11 +224,12 @@ class TestContextPriority:
         # Start dialogue
         from game_dialogue_system import DialogueBox
         import tcod.event
+        # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
         dialogue = DialogueBox(
             title="Test Dialogue",
             message="Test dialogue text",
             options=["[Y] Confirm"],
-            valid_keys=[tcod.event.KeySym.y],
+            valid_keys=[tcod.event.KeySym(ord('y'))],
             title_color=(255, 255, 255),
             message_color=(255, 255, 255),
             border_color=(255, 255, 255),

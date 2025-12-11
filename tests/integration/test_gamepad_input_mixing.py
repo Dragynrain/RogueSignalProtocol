@@ -60,9 +60,10 @@ class TestGamepadKeyboardMixing:
         game, input_handler, controller = game_with_gamepad
 
         # Keyboard move north
+        # Use KeySym(ord('w')) for cross-platform compatibility (KeySym.w doesn't exist on Linux)
         keyboard_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.W,
-            sym=tcod.event.KeySym.w,
+            sym=tcod.event.KeySym(ord('w')),
             mod=tcod.event.Modifier.NONE
         )
         action1 = input_handler.handle_keydown(keyboard_event)
@@ -200,9 +201,10 @@ class TestInputSourceSwitching:
         game, input_handler, controller = game_with_gamepad
 
         # Move with keyboard
+        # Use KeySym(ord('w')) for cross-platform compatibility (KeySym.w doesn't exist on Linux)
         keyboard_north = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.W,
-            sym=tcod.event.KeySym.w,
+            sym=tcod.event.KeySym(ord('w')),
             mod=tcod.event.Modifier.NONE
         )
         action1 = input_handler.handle_keydown(keyboard_north)
@@ -393,9 +395,10 @@ class TestContextSwitchWithMixedInput:
         game, input_handler, controller = game_with_gamepad
 
         # Move with keyboard
+        # Use KeySym(ord('w')) for cross-platform compatibility (KeySym.w doesn't exist on Linux)
         keyboard_move = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.W,
-            sym=tcod.event.KeySym.w,
+            sym=tcod.event.KeySym(ord('w')),
             mod=tcod.event.Modifier.NONE
         )
         action1 = input_handler.handle_keydown(keyboard_move)
