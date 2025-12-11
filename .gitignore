@@ -13,7 +13,8 @@ build/RogueSignalProtocol/
 dist/
 dist_backup*/
 releases/
-*.spec
+# Ignore auto-generated Windows spec (linux spec is tracked for CI)
+RogueSignalProtocol.spec
 
 # Virtual environment
 .venv/
