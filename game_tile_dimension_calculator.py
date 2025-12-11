@@ -18,13 +18,16 @@ class TileDimensionCalculator:
     """
 
     @staticmethod
-    def calculate_from_window(window_size: tuple[int, int], graphics_mode: str) -> tuple[int, int]:
+    def calculate_from_window(
+        window_size: tuple[int, int], graphics_mode: str, ui_scale: str = "normal"
+    ) -> tuple[int, int]:
         """
         Calculate tile dimensions based on window size and graphics mode.
 
         Args:
             window_size: (width, height) in pixels
             graphics_mode: "graphics" or "glyph"
+            ui_scale: "compact" or "normal" (used in graphics mode)
 
         Returns:
             Tuple of (tile_width, tile_height) in pixels
@@ -32,27 +35,33 @@ class TileDimensionCalculator:
         width, height = window_size
 
         if graphics_mode == "graphics":
-            return TileDimensionCalculator._calc_graphics_mode(width, height)
+            return TileDimensionCalculator._calc_graphics_mode(width, height, ui_scale)
         else:
             return TileDimensionCalculator._calc_glyph_mode(width, height)
 
     @staticmethod
-    def _calc_graphics_mode(window_width: int, window_height: int) -> tuple[int, int]:
+    def _calc_graphics_mode(
+        window_width: int, window_height: int, ui_scale: str = "normal"
+    ) -> tuple[int, int]:
         """
         Calculate tile dimensions for graphics mode.
 
-        Graphics mode now uses fixed 64x64 tiles to match glyph mode.
-        Sprites are scaled from 512x512 to 64x64.
+        Graphics mode uses configurable tile sizes:
+        - Normal: 64x64 tiles (default, best for desktop monitors)
+        - Compact: 48x48 tiles (better for handhelds like Steam Deck)
+
+        Sprites are scaled from 512x512 to the target tile size.
 
         Args:
             window_width: Window width in pixels (unused, kept for API compatibility)
             window_height: Window height in pixels (unused, kept for API compatibility)
+            ui_scale: "compact" or "normal"
 
         Returns:
-            Tuple of (tile_width, tile_height) = (64, 64)
+            Tuple of (tile_width, tile_height) based on ui_scale
         """
-        # Fixed 64x64 to match KreativeSquare glyph tiles
-        return (64, 64)
+        tile_size = GameConfig.get_tile_size_for_scale(ui_scale)
+        return (tile_size, tile_size)
 
     @staticmethod
     def _calc_glyph_mode(window_width: int, window_height: int) -> tuple[int, int]:

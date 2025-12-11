@@ -117,7 +117,7 @@ class SoundManager:
 
                 # CRITICAL: Set initial volume from settings immediately after init
                 # pygame.mixer starts at volume 0.0 by default
-                music_vol = self.settings.music_volume * self.settings.master_volume
+                music_vol = self._get_effective_music_volume()
                 pygame.mixer.music.set_volume(music_vol)
                 logging.debug(
                     f"Audio: Initialized pygame.mixer - {self.max_channels} channels, music_vol={music_vol:.2f}"
@@ -126,10 +126,25 @@ class SoundManager:
                 GameErrorHandler.handle_error(e, "sound_init", "Sound initialization failed")
                 self.enabled = False
 
+    def _get_effective_music_volume(self) -> float:
+        """Calculate effective music volume including optional boost.
+
+        Music boost compensates for audio backend differences where music
+        can sound quieter relative to SFX (common on Linux).
+
+        Returns:
+            Music volume (0.0-1.0) after applying master volume and boost
+        """
+        base_vol = self.settings.music_volume * self.settings.master_volume
+        if self.settings.get_effective_music_boost():
+            # Apply 1.5x boost (capped at 1.0)
+            return min(1.0, base_vol * 1.5)
+        return base_vol
+
     def update_volumes(self):
-        """Update volumes from settings"""
+        """Update volumes from settings (includes Linux music boost)"""
         if self.enabled:
-            new_vol = self.settings.music_volume * self.settings.master_volume
+            new_vol = self._get_effective_music_volume()
             pygame.mixer.music.set_volume(new_vol)
             logging.debug(f"Audio: Updated music volume to {new_vol:.2f}")
 
@@ -315,9 +330,9 @@ class SoundManager:
         try:
             pygame.mixer.music.load(music_path)
 
-            # Apply volume from settings (OGG files should be pre-normalized)
-            volume = self.settings.music_volume * self.settings.master_volume
-            pygame.mixer.music.set_volume(min(1.0, volume))  # Cap at 1.0
+            # Apply volume from settings (includes Linux boost, capped at 1.0)
+            volume = self._get_effective_music_volume()
+            pygame.mixer.music.set_volume(volume)
 
             if fade_in_ms > 0:
                 pygame.mixer.music.play(loops, fade_ms=fade_in_ms)

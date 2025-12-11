@@ -285,6 +285,7 @@ class TestSettingsMenu:
     def setup_method(self):
         """Set up settings menu tests."""
         self.mock_settings = Mock(spec=GameSettings)
+        self.mock_settings.graphics_mode = "graphics"  # Required for _build_options
         self.settings_menu = SettingsMenu(self.mock_settings)
 
     def test_settings_menu_initialization(self):

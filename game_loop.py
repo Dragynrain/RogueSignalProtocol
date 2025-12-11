@@ -61,23 +61,37 @@ def log_exception(e: Exception, context: str, level: str = "error"):
     traceback.print_exc()
 
 
-def load_tileset():
+def load_tileset(settings: GameSettings = None):
     """
     Load TrueType font tileset using custom FreeType loader.
 
     TCOD's native loader has "fit without stretching" behavior that leaves
     tons of empty space. Custom loader gives us full control over scaling.
+
+    Args:
+        settings: GameSettings for UI scale preference. If None, uses normal (64px) tiles.
     """
     from font_loader_freetype import load_truetype_font_custom
 
-    # Use 64x64 tiles with KreativeSquare (square 1:1 aspect ratio font)
-    tileset = load_truetype_font_custom("KreativeSquare.ttf", 64, 64)  # tile_width  # tile_height
+    # Determine tile size based on UI scale setting
+    if settings is not None:
+        ui_scale = settings.get_effective_ui_scale()
+        tile_size = GameConfig.get_tile_size_for_scale(ui_scale)
+    else:
+        tile_size = GameConfig.TILE_SIZE_NORMAL()
+
+    tileset = load_truetype_font_custom("KreativeSquare.ttf", tile_size, tile_size)
+    logging.debug(f"Loaded tileset with {tile_size}x{tile_size} tiles (ui_scale={settings.ui_scale if settings else 'default'})")
     return tileset
 
 
-def initialize_tcod_context():
-    """Initialize tcod context with terminal font and SDL validation."""
-    tileset = load_tileset()
+def initialize_tcod_context(settings: GameSettings = None):
+    """Initialize tcod context with terminal font and SDL validation.
+
+    Args:
+        settings: GameSettings for UI scale preference. If None, uses default (64px) tiles.
+    """
+    tileset = load_tileset(settings)
 
     context_args = {
         "columns": GameConfig.SCREEN_WIDTH,
@@ -303,6 +317,7 @@ def _process_menu_action(
 
     elif action == "settings":
         menus["settings_menu"].export_status_message = None
+        menus["settings_menu"].selected_option = 0  # Reset to top when entering
         menu_stack.append(current_menu)
         return menus["settings_menu"], None
 
@@ -793,8 +808,17 @@ def main():
     AchievementManager.load_unlocked_achievements(unlocked_achievements)
     logging.info(f"Loaded {len(unlocked_achievements)} unlocked achievements")
 
+    # Create settings BEFORE context so we can use UI scale for tileset loading
+    settings = GameSettings()
+
+    # Log platform detection results
+    from game_platform import get_platform_name, is_steam_deck
+    platform_name = get_platform_name()
+    ui_scale = settings.get_effective_ui_scale()
+    logging.info(f"Platform: {platform_name}, UI scale: {settings.ui_scale} -> {ui_scale}")
+
     try:
-        with initialize_tcod_context() as context:
+        with initialize_tcod_context(settings) as context:
             console = tcod.console.Console(GameConfig.SCREEN_WIDTH, GameConfig.SCREEN_HEIGHT)
 
             # Initialize SDL joystick subsystem for controller support
@@ -820,8 +844,6 @@ def main():
             else:
                 logging.debug("[STARTUP] No controllers connected at startup")
                 logging.debug("[STARTUP] Controllers may connect during runtime (hotplug supported)")
-
-            settings = GameSettings()
 
             # Create background manager (loads conditionally based on graphics mode)
             menu_background = MenuBackground(context, settings)
