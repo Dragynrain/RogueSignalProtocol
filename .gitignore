@@ -71,3 +71,4 @@ SESSION_*.md
 
 # Development diagnostic scripts
 scripts/diagnostics/
+.venv-linux/
