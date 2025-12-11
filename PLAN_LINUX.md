@@ -1225,7 +1225,8 @@ These items verify Phase 2 changes work on Linux before building:
 - [x] **TDD**: Create `test_binary_starts_without_crash()` smoke test - DONE (in ci.yml build-linux job)
 - [x] **TDD**: Create `test_all_required_assets_bundled()` to verify dist/ contents - DONE (test_build_verification.py)
 - [x] CI builds Linux binary successfully - DONE (first successful CI run!)
-- [ ] Test binary on Steam Deck Desktop Mode (manual)
+- [x] Full test suite passes on both Windows and Linux CI (2334+ tests each)
+- [ ] Test binary on Steam Deck Desktop Mode (manual) - IN PROGRESS
 - [ ] Test binary on Ubuntu VM (manual)
 
 **Phase 4: Linux Packaging**
