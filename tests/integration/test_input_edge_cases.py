@@ -53,9 +53,10 @@ class TestScreenTransitions:
         initial_cpu = engine.player.cpu
 
         # Open inventory with 'i' key
+        # Use KeySym(ord('i')) for cross-platform compatibility (KeySym.i doesn't exist on Linux)
         i_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.I,
-            sym=tcod.event.KeySym.i,
+            sym=tcod.event.KeySym(ord('i')),
             mod=tcod.event.Modifier.NONE
         )
         handler.handle_keydown(i_event)
@@ -137,9 +138,10 @@ class TestScreenTransitions:
         # Rapidly toggle inventory multiple times
         for _ in range(5):
             # Open
+            # Use KeySym(ord('i')) for cross-platform compatibility (KeySym.i doesn't exist on Linux)
             i_event = tcod.event.KeyDown(
                 scancode=tcod.event.Scancode.I,
-                sym=tcod.event.KeySym.i,
+                sym=tcod.event.KeySym(ord('i')),
                 mod=tcod.event.Modifier.NONE
             )
             handler.handle_keydown(i_event)

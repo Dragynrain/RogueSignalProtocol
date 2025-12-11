@@ -313,9 +313,10 @@ class TestGameInputEventHandling(unittest.TestCase):
     def test_keydown_other_than_escape_forwarded(self):
         """Test non-ESC keydown events are forwarded to handler."""
         # Use real TCOD event (isinstance checks require real type, not mock)
+        # Use KeySym(ord('w')) for cross-platform compatibility (KeySym.w doesn't exist on Linux)
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.W,
-            sym=tcod.event.KeySym.w,
+            sym=tcod.event.KeySym(ord('w')),
             mod=tcod.event.Modifier.NONE
         )
 
@@ -330,9 +331,10 @@ class TestGameInputEventHandling(unittest.TestCase):
     def test_player_death_exits_to_menu(self):
         """Test that when player dies and presses a key, return to menu."""
         # Use real TCOD event (isinstance checks require real type, not mock)
+        # Use KeySym(ord('w')) for cross-platform compatibility (KeySym.w doesn't exist on Linux)
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.W,
-            sym=tcod.event.KeySym.w,
+            sym=tcod.event.KeySym(ord('w')),
             mod=tcod.event.Modifier.NONE
         )
 

@@ -411,11 +411,12 @@ class TestMouseContextPriority:
 
         # Show dialogue (higher priority than menus)
         from game_dialogue_system import DialogueBox
+        # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
         dialogue = DialogueBox(
             title="Test",
             message="Test message",
             options=["OK"],
-            valid_keys=[tcod.event.KeySym.y],
+            valid_keys=[tcod.event.KeySym(ord('y'))],
             title_color=(255, 255, 255),
             message_color=(255, 255, 255),
             border_color=(255, 255, 255),
