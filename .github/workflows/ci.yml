@@ -30,7 +30,7 @@ jobs:
       env:
         SDL_VIDEODRIVER: dummy
         SDL_AUDIODRIVER: dummy
-      run: pytest tests/ -v --timeout=30 --no-cov
+      run: pytest tests/ --timeout=30 --no-cov -x --tb=short
 
   test-linux:
     runs-on: ubuntu-latest
@@ -60,7 +60,7 @@ jobs:
       env:
         SDL_VIDEODRIVER: dummy
         SDL_AUDIODRIVER: dummy
-      run: xvfb-run -a pytest tests/ -v --timeout=30 --no-cov
+      run: xvfb-run -a pytest tests/ --timeout=30 --no-cov -x --tb=short
 
   build-linux:
     runs-on: ubuntu-latest
