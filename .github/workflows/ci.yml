@@ -24,13 +24,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-timeout
+        pip install pytest pytest-timeout pytest-xdist
 
     - name: Run tests
       env:
         SDL_VIDEODRIVER: dummy
         SDL_AUDIODRIVER: dummy
-      run: pytest tests/ -v --timeout=30
+      run: pytest tests/ -v --timeout=30 --no-cov
 
   test-linux:
     runs-on: ubuntu-latest
@@ -54,13 +54,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-timeout
+        pip install pytest pytest-timeout pytest-xdist
 
     - name: Run tests
       env:
         SDL_VIDEODRIVER: dummy
         SDL_AUDIODRIVER: dummy
-      run: xvfb-run -a pytest tests/ -v --timeout=30
+      run: xvfb-run -a pytest tests/ -v --timeout=30 --no-cov
 
   build-linux:
     runs-on: ubuntu-latest
