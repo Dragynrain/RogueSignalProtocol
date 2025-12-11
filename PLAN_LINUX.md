@@ -1187,7 +1187,7 @@ These items verify Phase 2 changes work on Linux before building:
 - [x] Fixed `KeySym.w`/`KeySym.a` cross-platform issue (use `KeySym(ord('w'))` instead)
 - [x] Fixed `markdown-it-py` version (4.0.3 -> 4.0.0)
 - [x] Marked Windows-path test as `@pytest.mark.windows_only`
-- [ ] **COMMIT**: `test_game_platform.py` is untracked - must commit before proceeding
+- [x] **COMMIT**: All changes committed (f2f3310, 6e02f34)
 
 **Phase 2: Refactoring**  COMPLETED
 - [x] **TDD FIRST**: Write `test_get_data_dir_returns_xdg_path_on_linux()` - DONE, added to `TestCrossPlatformPaths` class
@@ -1216,18 +1216,18 @@ These items verify Phase 2 changes work on Linux before building:
 - If regressions found: `git diff` to identify breaking change, revert specific commit
 - Keep Windows CI running to catch regressions automatically
 
-**Phase 3: Build System**
-- [ ] Copy `RogueSignalProtocol.spec` to `RogueSignalProtocol-linux.spec`
-- [ ] Modify Linux spec: remove `.exe` extension, change icon to `.png`
-- [ ] Convert logo.ico to logo.png (512x512 for Linux - may need to upscale from 256x256)
-- [ ] Set up GitHub Actions for Linux builds (recommended - builds in cloud, no local Linux needed)
-- [ ] **TDD**: Add GitHub Actions step to run `pytest` on Ubuntu runner
-- [ ] **TDD**: Create `test_binary_starts_without_crash()` smoke test
-- [ ] **TDD**: Create `test_all_required_assets_bundled()` to verify dist/ contents
+**Phase 3: Build System** - IN PROGRESS
+- [x] Copy `RogueSignalProtocol.spec` to `RogueSignalProtocol-linux.spec` - DONE
+- [x] Modify Linux spec: remove `.exe` extension, change icon to `.png` - DONE
+- [x] Copy logo.png to project root for Linux builds - DONE (from marketing/)
+- [x] Set up GitHub Actions for Linux builds - DONE (ci.yml for PR/push, release.yml for releases)
+- [x] **TDD**: Add GitHub Actions step to run `pytest` on Ubuntu runner - DONE (ci.yml test-linux job)
+- [x] **TDD**: Create `test_binary_starts_without_crash()` smoke test - DONE (in ci.yml build-linux job)
+- [x] **TDD**: Create `test_all_required_assets_bundled()` to verify dist/ contents - DONE (test_build_verification.py)
 - [ ] **Alternative**: Build on Steam Deck Desktop Mode (real hardware, but slower iteration)
 - [ ] **Alternative**: Build in Ubuntu VM (works but slow)
 - [ ] Test binary on Steam Deck Desktop Mode AND Ubuntu VM
-- [ ] **Incremental test**: Verify build works before packaging
+- [ ] **Incremental test**: Verify build works before packaging (requires pushing to GitHub to trigger CI)
 
 **Phase 4: Linux Packaging**
 - [ ] Build AppImage
