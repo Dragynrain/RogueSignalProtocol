@@ -140,6 +140,58 @@ class TestSetDpiAwareness:
             game_platform.set_dpi_awareness()
 
 
+class TestSteamDeckDetection:
+    """Tests for is_steam_deck() function."""
+
+    def test_steam_deck_returns_false_on_windows(self, mock_windows_platform):
+        """is_steam_deck() returns False on Windows (non-Linux)."""
+        assert game_platform.is_steam_deck() is False
+
+    def test_steam_deck_returns_false_on_macos(self, mock_macos_platform):
+        """is_steam_deck() returns False on macOS (non-Linux)."""
+        assert game_platform.is_steam_deck() is False
+
+    def test_steam_deck_detects_valve_board_vendor(self, mock_linux_platform):
+        """is_steam_deck() returns True when DMI board vendor is Valve."""
+        mock_file_content = "Valve"
+        with patch("builtins.open", MagicMock(return_value=MagicMock(
+            __enter__=MagicMock(return_value=MagicMock(read=MagicMock(return_value=mock_file_content))),
+            __exit__=MagicMock(return_value=False)
+        ))):
+            assert game_platform.is_steam_deck() is True
+
+    def test_steam_deck_returns_false_on_regular_linux(self, mock_linux_platform):
+        """is_steam_deck() returns False on regular Linux without Valve hardware."""
+        # Simulate file not found (no Valve board vendor file)
+        with patch("builtins.open", MagicMock(side_effect=FileNotFoundError)):
+            assert game_platform.is_steam_deck() is False
+
+    def test_steam_deck_detects_steamos(self, mock_linux_platform):
+        """is_steam_deck() returns True when SteamOS is in os-release."""
+        def mock_open_side_effect(path, *args, **kwargs):
+            if "board_vendor" in str(path):
+                raise FileNotFoundError
+            # os-release file with SteamOS
+            mock_file = MagicMock()
+            mock_file.__enter__ = MagicMock(return_value=MagicMock(
+                read=MagicMock(return_value='NAME="SteamOS"\nVERSION="3.0"')
+            ))
+            mock_file.__exit__ = MagicMock(return_value=False)
+            return mock_file
+
+        with patch("builtins.open", MagicMock(side_effect=mock_open_side_effect)):
+            assert game_platform.is_steam_deck() is True
+
+    def test_platform_name_returns_steam_deck(self, mock_linux_platform):
+        """get_platform_name() returns 'Steam Deck' when detected."""
+        mock_file_content = "Valve"
+        with patch("builtins.open", MagicMock(return_value=MagicMock(
+            __enter__=MagicMock(return_value=MagicMock(read=MagicMock(return_value=mock_file_content))),
+            __exit__=MagicMock(return_value=False)
+        ))):
+            assert game_platform.get_platform_name() == "Steam Deck"
+
+
 class TestImportSafety:
     """Tests that game_platform.py can be imported on any platform."""
 

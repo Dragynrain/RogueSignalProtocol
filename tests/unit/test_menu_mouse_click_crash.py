@@ -60,5 +60,6 @@ class TestMenuMouseClickCrash:
     def test_settings_menu_handle_mouse_click_exists(self):
         """SettingsMenu should have handle_mouse_click method."""
         mock_settings = Mock(spec=GameSettings)
+        mock_settings.graphics_mode = "graphics"  # Required for _build_options
         menu = SettingsMenu(mock_settings)
         assert hasattr(menu, 'handle_mouse_click'), "SettingsMenu missing handle_mouse_click method"

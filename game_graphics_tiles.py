@@ -141,14 +141,16 @@ class TileManager:
         Calculate tile pixel dimensions based on window size and grid layout.
 
         Delegates to TileDimensionCalculator for pure calculation logic.
+        Uses effective UI scale (resolves 'auto' to compact/normal).
         """
         try:
             window_size = self._get_window_size()
+            ui_scale = self.settings.get_effective_ui_scale()
             self.tile_width, self.tile_height = TileDimensionCalculator.calculate_from_window(
-                window_size, self.settings.graphics_mode
+                window_size, self.settings.graphics_mode, ui_scale
             )
             logging.debug(
-                f"Graphics: Calculated tile dimensions {self.tile_width}x{self.tile_height} for window {window_size[0]}x{window_size[1]}"
+                f"Graphics: Calculated tile dimensions {self.tile_width}x{self.tile_height} for window {window_size[0]}x{window_size[1]} (ui_scale={ui_scale})"
             )
 
         except Exception as e:

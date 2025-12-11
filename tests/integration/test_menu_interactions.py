@@ -197,7 +197,7 @@ class TestMenuMouseInteractions:
             # Create click event on graphics toggle
             # Calculate correct Y position based on layout
             layout = menu._get_menu_layout_params()
-            spacing = 3 if layout["use_background_layout"] else 2
+            spacing = 3  # Uniform spacing for both modes
             menu_height = GameConfig.SCREEN_HEIGHT - 4  # Matches actual Settings menu height
             box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
             start_y = box_top + 5
@@ -248,12 +248,16 @@ class TestMenuMouseInteractions:
 
             # Create click event on Back
             # Calculate correct Y position based on layout
+            # Note: separators don't take up render space, so count non-separators
             layout = menu._get_menu_layout_params()
-            spacing = 3 if layout["use_background_layout"] else 2
+            spacing = 3  # Uniform spacing for both modes
             menu_height = GameConfig.SCREEN_HEIGHT - 4  # Matches actual Settings menu height
             box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
             start_y = box_top + 5
-            option_y = start_y + (back_index * spacing)
+
+            # Calculate render_index for Back (skipping separators)
+            render_index = sum(1 for i, opt in enumerate(menu.options) if i < back_index and opt.get("type") != "separator")
+            option_y = start_y + (render_index * spacing)
 
             event = Mock()
             event.button = tcod.event.MouseButton.LEFT  # Required for handle_mouse_click dispatch

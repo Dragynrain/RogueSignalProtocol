@@ -31,7 +31,9 @@
     "min_tile_width": 8,
     "min_tile_height": 8,
     "fallback_tile_width": 10,
-    "fallback_tile_height": 16
+    "fallback_tile_height": 16,
+    "tile_size_normal": 64,
+    "tile_size_compact": 48
   },
   "gameplay": {
     "default_player_ram": 8,

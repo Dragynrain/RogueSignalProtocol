@@ -32,17 +32,51 @@ class SettingsMenu(BaseMenu):
         self.menu_background = menu_background  # Reference to background manager
         self.sound_manager = sound_manager  # For live volume updates and sound previews
 
+        self._build_options()
+
+        # Debug export confirmation dialogue state
+        self.show_export_confirmation = False
+        self.export_confirmation_selection = 0
+        self.export_status_message = None  # Status message after export (success or failure)
+
+        # Stored coordinates for confirmation dialog click detection
+        self.confirm_option_0_x_range = None  # (start_x, end_x) for "Yes"
+        self.confirm_option_1_x_range = None  # (start_x, end_x) for "No"
+        self.confirm_option_0_y = None  # Y coordinate for "Yes"
+        self.confirm_option_1_y = None  # Y coordinate for "No"
+
+    def _build_options(self):
+        """Build options list based on current graphics mode.
+
+        Some options (Particle Effects, UI Scale) only apply to graphics mode
+        and are hidden in glyph/classic mode.
+        """
+        is_graphics_mode = self.settings.graphics_mode == "graphics"
+
         self.options = [
             {"name": "Master Volume", "type": "volume", "key": "master"},
             {"name": "SFX Volume", "type": "volume", "key": "sfx"},
             {"name": "Music Volume", "type": "volume", "key": "music"},
+            {"name": "Music Boost", "type": "tristate_toggle", "key": "music_boost"},
             {
                 "name": "Graphics Mode",
                 "type": "toggle",
                 "key": "graphics_mode",
                 "values": ["Classic", "Graphics"],
             },
-            {"name": "Particle Effects", "type": "bool_toggle", "key": "show_particle_effects"},
+        ]
+
+        # Graphics-only options
+        if is_graphics_mode:
+            self.options.append(
+                {"name": "Particle Effects", "type": "bool_toggle", "key": "show_particle_effects"}
+            )
+            self.options.append(
+                {"name": "UI Scale", "type": "ui_scale", "key": "ui_scale"}  # Restart required
+            )
+
+        # Common options that apply to both modes
+        self.options.extend([
             {
                 "name": "UI Color",
                 "type": "ui_color",
@@ -70,20 +104,8 @@ class SettingsMenu(BaseMenu):
             },
             {"type": "separator"},  # Visual separation before utility actions
             {"name": "Export Debug Package", "type": "action"},
-            {"type": "separator"},  # Extra blank line before Back in classic mode
             {"name": "Back", "type": "action"},
-        ]
-
-        # Debug export confirmation dialogue state
-        self.show_export_confirmation = False
-        self.export_confirmation_selection = 0
-        self.export_status_message = None  # Status message after export (success or failure)
-
-        # Stored coordinates for confirmation dialog click detection
-        self.confirm_option_0_x_range = None  # (start_x, end_x) for "Yes"
-        self.confirm_option_1_x_range = None  # (start_x, end_x) for "No"
-        self.confirm_option_0_y = None  # Y coordinate for "Yes"
-        self.confirm_option_1_y = None  # Y coordinate for "No"
+        ])
 
     def render(self, console: tcod.console.Console) -> None:
         """Render the settings menu."""
@@ -127,12 +149,15 @@ class SettingsMenu(BaseMenu):
                 bg=Colors.BLACK,
             )
 
-        # Options - use more spacing in graphics mode for better readability
+        # Options - use spacing=3 for both modes for better readability
+        # In glyph mode, dialogue_toggle items need space for the checkbox line
         start_y = box["top"] + 5
-        spacing = 3 if box["use_background_layout"] else 2
+        spacing = 3  # Same spacing for both modes
+        render_index = 0  # Track rendered items separately (skipping separators)
         for i, option in enumerate(self.options):
-            # Skip separator - just leave blank line
+            # Skip separator - no extra spacing, just continue
             if option.get("type") == "separator":
+                # Don't increment render_index - separator adds no space
                 continue
 
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
@@ -141,7 +166,8 @@ class SettingsMenu(BaseMenu):
                 if i == self.selected_option
                 else Colors.BLACK
             )
-            option_y = start_y + i * spacing
+            option_y = start_y + render_index * spacing
+            render_index += 1
 
             if box["use_background_layout"]:
                 # Narrow box layout
@@ -203,6 +229,27 @@ class SettingsMenu(BaseMenu):
                         console, name_x, option_y + 1, f"< {status} >", fg=color, bg=bg_color
                     )
 
+                elif option["type"] == "tristate_toggle":
+                    # Tristate: Auto/ON/OFF (for music_boost)
+                    value = getattr(self.settings, option["key"], None)
+                    if value is None:
+                        status = "Auto"
+                    elif value:
+                        status = "ON"
+                    else:
+                        status = "OFF"
+                    render_char_safe(
+                        console, name_x, option_y + 1, f"< {status} >", fg=color, bg=bg_color
+                    )
+
+                elif option["type"] == "ui_scale":
+                    # UI Scale with restart warning
+                    current_value = self.settings.ui_scale.capitalize()
+                    # Short text for narrow box
+                    render_char_safe(
+                        console, name_x, option_y + 1, f"< {current_value} > *", fg=color, bg=bg_color
+                    )
+
                 elif option["type"] == "dialogue_toggle":
                     # Get dialogue preference (default to True if not set)
                     dialogue_prefs = getattr(self.settings, "dialogue_preferences", {})
@@ -213,12 +260,12 @@ class SettingsMenu(BaseMenu):
                         console, name_x, option_y + 1, f"{status} Enabled", fg=color, bg=bg_color
                     )
             else:
-                # Glyph mode - wider layout
+                # Glyph mode - wider layout (shifted 1 left for better fit)
                 # Option name
                 if option["type"] == "section_header":
                     render_char_safe(
                         console,
-                        box["content_left"] + 2,
+                        box["content_left"] + 1,
                         option_y,
                         option["name"],
                         fg=ui_color,
@@ -227,14 +274,14 @@ class SettingsMenu(BaseMenu):
                 else:
                     render_char_safe(
                         console,
-                        box["content_left"] + 2,
+                        box["content_left"] + 1,
                         option_y,
                         option["name"],
                         fg=color,
                         bg=bg_color,
                     )
 
-                # Option value
+                # Option value (shifted 1 more left for better margin from right edge)
                 if option["type"] == "volume":
                     volume_percent = self.settings.get_volume_percent(option["key"])
                     bar_length = 16  # Wider bar for classic mode
@@ -245,7 +292,7 @@ class SettingsMenu(BaseMenu):
                     # Add triangle arrows to show adjustability
                     bar_text = f"◀ {bar} ▶ {volume_percent:3d}%"
                     render_char_safe(
-                        console, box["content_left"] + 18, option_y, bar_text, fg=color, bg=bg_color
+                        console, box["content_left"] + 16, option_y, bar_text, fg=color, bg=bg_color
                     )
 
                 elif option["type"] == "toggle":
@@ -255,7 +302,7 @@ class SettingsMenu(BaseMenu):
                         )
                         render_char_safe(
                             console,
-                            box["content_left"] + 18,
+                            box["content_left"] + 16,
                             option_y,
                             f"< {current_value} >",
                             fg=color,
@@ -268,7 +315,7 @@ class SettingsMenu(BaseMenu):
                     color_rgb = self.settings.get_ui_color_rgb()
                     render_char_safe(
                         console,
-                        box["content_left"] + 18,
+                        box["content_left"] + 16,
                         option_y,
                         f"< {current_value} >",
                         fg=color_rgb,
@@ -281,9 +328,39 @@ class SettingsMenu(BaseMenu):
                     status = "ON " if is_enabled else "OFF"
                     render_char_safe(
                         console,
-                        box["content_left"] + 18,
+                        box["content_left"] + 16,
                         option_y,
                         f"< {status} >",
+                        fg=color,
+                        bg=bg_color,
+                    )
+
+                elif option["type"] == "tristate_toggle":
+                    # Tristate: Auto/ON/OFF (for music_boost)
+                    value = getattr(self.settings, option["key"], None)
+                    if value is None:
+                        status = "Auto"
+                    elif value:
+                        status = "ON"
+                    else:
+                        status = "OFF"
+                    render_char_safe(
+                        console,
+                        box["content_left"] + 16,
+                        option_y,
+                        f"< {status} >",
+                        fg=color,
+                        bg=bg_color,
+                    )
+
+                elif option["type"] == "ui_scale":
+                    # UI Scale with restart warning
+                    current_value = self.settings.ui_scale.capitalize()
+                    render_char_safe(
+                        console,
+                        box["content_left"] + 16,
+                        option_y,
+                        f"< {current_value} > (Restart Required)",
                         fg=color,
                         bg=bg_color,
                     )
@@ -296,7 +373,7 @@ class SettingsMenu(BaseMenu):
                     # Render on next line (like volume controls) to avoid overlap
                     render_char_safe(
                         console,
-                        box["content_left"] + 2,
+                        box["content_left"] + 1,
                         option_y + 1,
                         f"{status} Enabled",
                         fg=color,
@@ -317,13 +394,26 @@ class SettingsMenu(BaseMenu):
                 bg=Colors.BLACK,
             )
 
-        # Instructions - dynamically reflects current bindings
+        # Show "* Restart Required" note in graphics mode (explains the * on UI Scale)
+        if box["use_background_layout"]:
+            restart_note = "* Restart Required"
+            note_x = box["center_x"] - len(restart_note) // 2
+            render_char_safe(
+                console,
+                note_x,
+                box["bottom"] - 4,
+                restart_note,
+                fg=Colors.DARK_GRAY,
+                bg=Colors.BLACK,
+            )
+
+        # Instructions - dynamically reflects current bindings (always at very bottom)
         instructions = get_settings_menu_help(box["use_background_layout"], self.input_mapper)
         inst_x = box["center_x"] - len(instructions) // 2
         render_char_safe(
             console,
             inst_x,
-            box["bottom"] - 3,
+            box["bottom"] - 2,
             instructions,
             fg=Colors.LIGHT_GRAY,
             bg=Colors.BLACK,
@@ -436,27 +526,20 @@ class SettingsMenu(BaseMenu):
     def _navigate_skip_headers(self, direction: int):
         """Navigate options while skipping section headers and separators."""
         old_selection = self.selected_option
+        num_options = len(self.options)
 
-        # Move in the specified direction
-        if direction == -1:
-            self.selected_option = max(0, self.selected_option - 1)
-        else:
-            self.selected_option = min(len(self.options) - 1, self.selected_option + 1)
+        # Move in the specified direction with wraparound
+        self.selected_option = (self.selected_option + direction) % num_options
 
         # Skip section headers and separators (non-selectable items)
         non_selectable_types = {"section_header", "separator"}
+        attempts = 0
         while (
-            self.selected_option != old_selection
-            and self.options[self.selected_option].get("type") in non_selectable_types
+            self.options[self.selected_option].get("type") in non_selectable_types
+            and attempts < num_options
         ):
-            if direction == -1:
-                self.selected_option = max(0, self.selected_option - 1)
-            else:
-                self.selected_option = min(len(self.options) - 1, self.selected_option + 1)
-
-            # Prevent infinite loop if all options are non-selectable
-            if self.selected_option == old_selection:
-                break
+            self.selected_option = (self.selected_option + direction) % num_options
+            attempts += 1
 
     # ========================================================================
     # MOUSE HANDLING (override BaseMenu for confirmation dialog support)
@@ -497,20 +580,32 @@ class SettingsMenu(BaseMenu):
         else:
             box_top = (GameConfig.SCREEN_HEIGHT - menu_height) // 2
 
-        # Options start at box_top + 5 with spacing (3 in graphics mode, 2 in glyph mode)
+        # Options start at box_top + 5 with spacing 3 for both modes
         start_y = box_top + 5
-        spacing = 3 if layout["use_background_layout"] else 2
+        spacing = 3  # Must match render() method
 
         # Calculate which option was hovered
+        # Note: separators don't take up space, so we need to map render_index to actual option index
         if tile_y >= start_y:
-            option_index = (tile_y - start_y) // spacing
+            render_index = (tile_y - start_y) // spacing
 
-            if 0 <= option_index < len(self.options):
-                # Skip section headers - they're not selectable
-                if self.options[option_index]["type"] == "section_header":
+            # Map render_index to actual option index (skipping separators)
+            actual_index = 0
+            rendered_count = 0
+            for idx, opt in enumerate(self.options):
+                if opt.get("type") == "separator":
+                    continue  # Separators don't count toward render position
+                if rendered_count == render_index:
+                    actual_index = idx
+                    break
+                rendered_count += 1
+
+            if 0 <= actual_index < len(self.options):
+                # Skip section headers and separators - they're not selectable
+                if self.options[actual_index]["type"] in ("section_header", "separator"):
                     return ""
 
-                self.selected_option = option_index
+                self.selected_option = actual_index
 
         return ""
 
@@ -604,6 +699,11 @@ class SettingsMenu(BaseMenu):
                     logging.info(
                         f"Graphics mode changed to {new_mode} via mouse - background updated"
                     )
+
+                # Rebuild options (Particle Effects/UI Scale only in graphics mode)
+                self._build_options()
+                # Reset selection to Graphics Mode option (index 4)
+                self.selected_option = min(self.selected_option, len(self.options) - 1)
         elif option["type"] == "bool_toggle":
             # Toggle boolean setting
             current_value = getattr(self.settings, option["key"], True)
@@ -611,6 +711,12 @@ class SettingsMenu(BaseMenu):
             setattr(self.settings, option["key"], new_value)
             self.settings.save_settings()
             logging.info(f"Setting '{option['key']}' set to {new_value} via mouse")
+        elif option["type"] == "tristate_toggle":
+            # Cycle through Auto -> ON -> OFF -> Auto (same as keyboard)
+            self._adjust_setting(1)
+        elif option["type"] == "ui_scale":
+            # Cycle through scales (same as keyboard)
+            self._adjust_setting(1)
         elif option["type"] == "dialogue_toggle":
             # Toggle dialogue preference
             dialogue_prefs = getattr(self.settings, "dialogue_preferences", {})
@@ -651,9 +757,9 @@ class SettingsMenu(BaseMenu):
                 box_width = 50
                 box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
                 content_left = box_left + 2
-                # UI color rendered at: content_left + 18
+                # UI color rendered at: content_left + 16
                 # Text format: "< ColorName >"
-                color_start_x = content_left + 18
+                color_start_x = content_left + 16
 
             # The color text is formatted as "< ColorName >"
             # Example: "< Cyan >" has length 8
@@ -703,9 +809,9 @@ class SettingsMenu(BaseMenu):
                 box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
                 content_left = box_left + 2
 
-                # Bar rendered at: content_left + 18
+                # Bar rendered at: content_left + 16
                 # Bar text: "◀ ████████████████ ▶ XXX%"
-                bar_start_x = content_left + 18
+                bar_start_x = content_left + 16
                 bar_length = 16  # Classic mode bar
 
                 # Bar content starts at bar_start_x + 2 (after "◀ ")
@@ -729,30 +835,16 @@ class SettingsMenu(BaseMenu):
         return "back"
 
     def handle_mouse_wheel(self, event) -> str:
-        """Handle mouse wheel - navigate through settings options."""
+        """Handle mouse wheel - navigate through settings options with wraparound."""
         if not hasattr(event, "y"):
             return ""
 
         if event.y > 0:
-            # Scroll up - move selection up
-            if self.selected_option > 0:
-                # Skip section headers
-                self.selected_option -= 1
-                while (
-                    self.selected_option > 0
-                    and self.options[self.selected_option]["type"] == "section_header"
-                ):
-                    self.selected_option -= 1
+            # Scroll up - move selection up (with wraparound)
+            self._navigate_skip_headers(-1)
         elif event.y < 0:
-            # Scroll down - move selection down
-            if self.selected_option < len(self.options) - 1:
-                # Skip section headers
-                self.selected_option += 1
-                while (
-                    self.selected_option < len(self.options) - 1
-                    and self.options[self.selected_option]["type"] == "section_header"
-                ):
-                    self.selected_option += 1
+            # Scroll down - move selection down (with wraparound)
+            self._navigate_skip_headers(1)
 
         return ""
 
@@ -903,6 +995,11 @@ class SettingsMenu(BaseMenu):
                     self.menu_background.reload_if_mode_changed()
                     logging.info(f"Graphics mode changed to {new_mode} - background updated")
 
+                # Rebuild options (Particle Effects/UI Scale only in graphics mode)
+                self._build_options()
+                # Keep selection valid
+                self.selected_option = min(self.selected_option, len(self.options) - 1)
+
         elif option["type"] == "ui_color":
             # Cycle through UI colors
             colors = ["cyan", "purple", "magenta", "golden", "crimson", "azure", "emerald", "ivory"]
@@ -920,6 +1017,30 @@ class SettingsMenu(BaseMenu):
             setattr(self.settings, option["key"], new_value)
             self.settings.save_settings()
             logging.info(f"Setting '{option['key']}' set to {new_value}")
+
+        elif option["type"] == "tristate_toggle":
+            # Cycle through Auto -> ON -> OFF -> Auto
+            current_value = getattr(self.settings, option["key"], None)
+            if current_value is None:
+                new_value = True  # Auto -> ON
+            elif current_value:
+                new_value = False  # ON -> OFF
+            else:
+                new_value = None  # OFF -> Auto
+            self.settings.set_music_boost(new_value)
+
+            # Update sound manager volumes immediately for live feedback
+            if self.sound_manager:
+                self.sound_manager.update_volumes()
+            logging.info(f"Setting '{option['key']}' set to {new_value}")
+
+        elif option["type"] == "ui_scale":
+            # Cycle through Auto -> Compact -> Normal -> Auto
+            scales = ["auto", "compact", "normal"]
+            current_idx = scales.index(self.settings.ui_scale) if self.settings.ui_scale in scales else 0
+            new_idx = (current_idx + direction) % len(scales)
+            self.settings.set_ui_scale(scales[new_idx])
+            logging.info(f"UI scale changed to {scales[new_idx]} (restart required)")
 
         elif option["type"] == "dialogue_toggle":
             # Toggle dialogue preference

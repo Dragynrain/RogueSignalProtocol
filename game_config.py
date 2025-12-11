@@ -74,6 +74,9 @@ class GameSettings:
         "gamepad_enabled": True,  # Enable/disable gamepad input
         "gamepad_direction_locking": True,  # Lock direction on stick deflection (prevents diagonal multi-move)
         "gamepad_swap_sticks": False,  # Swap left/right stick functions (accessibility)
+        # Steam Deck / handheld optimizations
+        "ui_scale": "auto",  # "auto", "compact", "normal" - compact shows more tiles at smaller size
+        "music_boost": None,  # None = auto (ON for Linux, OFF for Windows), True/False = manual override
     }
 
     def __init__(self):
@@ -270,6 +273,61 @@ class GameSettings:
         }
         if volume_type in setter_map:
             setter_map[volume_type](percent / 100.0)
+
+    def set_ui_scale(self, scale: str):
+        """Set UI scale mode ('auto', 'compact', 'normal').
+
+        'auto' = detect Steam Deck/handheld and use compact, otherwise normal
+        'compact' = smaller tiles, see more of the map (better for handhelds)
+        'normal' = standard 64x64 tiles
+        """
+        valid_scales = ["auto", "compact", "normal"]
+        if scale in valid_scales:
+            old_scale = self.ui_scale
+            self.ui_scale = scale
+            logging.debug(f"Settings: ui_scale changed {old_scale} -> {scale}")
+            self.save_settings()
+
+    def get_effective_ui_scale(self) -> str:
+        """Get the actual UI scale to use (resolves 'auto').
+
+        Returns:
+            'compact' or 'normal' (never 'auto')
+        """
+        from game_platform import is_steam_deck
+
+        if self.ui_scale == "auto":
+            # Auto-detect: use compact on Steam Deck, normal elsewhere
+            return "compact" if is_steam_deck() else "normal"
+        return self.ui_scale
+
+    def set_music_boost(self, enabled: bool | None):
+        """Set music boost (True=ON, False=OFF, None=auto).
+
+        When enabled, music volume is boosted 1.5x to compensate for
+        audio backend differences (especially on Linux).
+        """
+        old_value = self.music_boost
+        self.music_boost = enabled
+        logging.debug(f"Settings: music_boost changed {old_value} -> {enabled}")
+        self.save_settings()
+
+    def get_effective_music_boost(self) -> bool:
+        """Get whether music boost is effectively enabled.
+
+        Returns True if:
+        - music_boost is True, OR
+        - music_boost is None (auto) AND running on Linux
+
+        Returns:
+            True if music should be boosted, False otherwise
+        """
+        from game_platform import is_linux
+
+        if self.music_boost is None:
+            # Auto: enabled on Linux, disabled elsewhere
+            return is_linux()
+        return self.music_boost
 
     @property
     def audio_enabled(self) -> bool:
@@ -546,6 +604,32 @@ class GameConfig:
         """Get fallback tile height from config."""
         cls._ensure_loaded()
         return cls._get_required("rendering.fallback_tile_height")
+
+    @classmethod
+    def TILE_SIZE_NORMAL(cls):
+        """Get tile size for normal UI scale (64px default)."""
+        cls._ensure_loaded()
+        return cls._get_required("rendering.tile_size_normal")
+
+    @classmethod
+    def TILE_SIZE_COMPACT(cls):
+        """Get tile size for compact UI scale (48px default, better for handhelds)."""
+        cls._ensure_loaded()
+        return cls._get_required("rendering.tile_size_compact")
+
+    @classmethod
+    def get_tile_size_for_scale(cls, ui_scale: str) -> int:
+        """Get tile size based on UI scale setting.
+
+        Args:
+            ui_scale: 'compact' or 'normal' (not 'auto' - resolve that first)
+
+        Returns:
+            Tile size in pixels
+        """
+        if ui_scale == "compact":
+            return cls.TILE_SIZE_COMPACT()
+        return cls.TILE_SIZE_NORMAL()
 
     # Particle system configuration
     @classmethod

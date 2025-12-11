@@ -233,8 +233,11 @@ class BaseMenu(BaseInputHandler):
             return ""
 
         # After MenuMouseHandler.convert_to_tile_coords(), coordinates are (0-79, 0-49)
-        # Menu options start at Y=21 (original position, box itself is shifted)
-        start_y = 21
+        # Menu options Y position depends on graphics mode:
+        # - Graphics mode (with background): start_y = 19
+        # - Glyph mode: start_y = 21
+        layout = self._get_menu_layout_params()
+        start_y = 19 if layout["use_background_layout"] else 21
         spacing = 2
 
         if tile_y >= start_y:
@@ -279,8 +282,11 @@ class BaseMenu(BaseInputHandler):
             return ""
 
         # After MenuMouseHandler.convert_to_tile_coords(), coordinates are (0-79, 0-49)
-        # Menu options start at Y=21 (original position, box itself is shifted)
-        start_y = 21
+        # Menu options Y position depends on graphics mode:
+        # - Graphics mode (with background): start_y = 19
+        # - Glyph mode: start_y = 21
+        layout = self._get_menu_layout_params()
+        start_y = 19 if layout["use_background_layout"] else 21
         spacing = 2
 
         # Calculate which option was clicked

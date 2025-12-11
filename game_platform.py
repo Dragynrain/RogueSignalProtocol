@@ -36,14 +36,49 @@ def is_macos() -> bool:
     return sys.platform == "darwin"
 
 
+def is_steam_deck() -> bool:
+    """Check if running on Steam Deck.
+
+    Detects Steam Deck by checking:
+    1. DMI board vendor (Valve)
+    2. SteamOS environment hints
+
+    Returns:
+        True if Steam Deck, False otherwise
+    """
+    if not is_linux():
+        return False
+
+    # Check DMI board vendor (most reliable method)
+    try:
+        with open("/sys/devices/virtual/dmi/id/board_vendor", "r") as f:
+            if "Valve" in f.read():
+                return True
+    except (FileNotFoundError, PermissionError, OSError):
+        pass
+
+    # Check for SteamOS in os-release
+    try:
+        with open("/etc/os-release", "r") as f:
+            content = f.read().lower()
+            if "steamos" in content:
+                return True
+    except (FileNotFoundError, PermissionError, OSError):
+        pass
+
+    return False
+
+
 def get_platform_name() -> str:
     """Get human-readable platform name.
 
     Returns:
-        Platform name: "Windows", "Linux", "macOS", or "Unknown"
+        Platform name: "Windows", "Linux", "Steam Deck", "macOS", or "Unknown"
     """
     if is_windows():
         return "Windows"
+    if is_steam_deck():
+        return "Steam Deck"
     if is_linux():
         return "Linux"
     if is_macos():
