@@ -1216,7 +1216,7 @@ These items verify Phase 2 changes work on Linux before building:
 - If regressions found: `git diff` to identify breaking change, revert specific commit
 - Keep Windows CI running to catch regressions automatically
 
-**Phase 3: Build System** - IN PROGRESS
+**Phase 3: Build System** - DONE
 - [x] Copy `RogueSignalProtocol.spec` to `RogueSignalProtocol-linux.spec` - DONE
 - [x] Modify Linux spec: remove `.exe` extension, change icon to `.png` - DONE
 - [x] Copy logo.png to project root for Linux builds - DONE (from marketing/)
@@ -1224,10 +1224,9 @@ These items verify Phase 2 changes work on Linux before building:
 - [x] **TDD**: Add GitHub Actions step to run `pytest` on Ubuntu runner - DONE (ci.yml test-linux job)
 - [x] **TDD**: Create `test_binary_starts_without_crash()` smoke test - DONE (in ci.yml build-linux job)
 - [x] **TDD**: Create `test_all_required_assets_bundled()` to verify dist/ contents - DONE (test_build_verification.py)
-- [ ] **Alternative**: Build on Steam Deck Desktop Mode (real hardware, but slower iteration)
-- [ ] **Alternative**: Build in Ubuntu VM (works but slow)
-- [ ] Test binary on Steam Deck Desktop Mode AND Ubuntu VM
-- [ ] **Incremental test**: Verify build works before packaging (requires pushing to GitHub to trigger CI)
+- [x] CI builds Linux binary successfully - DONE (first successful CI run!)
+- [ ] Test binary on Steam Deck Desktop Mode (manual)
+- [ ] Test binary on Ubuntu VM (manual)
 
 **Phase 4: Linux Packaging**
 - [ ] Build AppImage
