@@ -6,10 +6,10 @@ Clean
 Functional
 Clearly geared toward gathering feedback
 
-✅ Must-Haves:
+ Must-Haves:
 
 Short game description (2-3 sentences max): Explain what the game is, what genre elements it includes (turn-based, traditional roguelike, cyberpunk, etc.).
-One good trailer OR 1-2 GIFs: Real gameplay. No fluff, no cinematic trailer — /r/roguelikedev prefers substance.
+One good trailer OR 1-2 GIFs: Real gameplay. No fluff, no cinematic trailer - /r/roguelikedev prefers substance.
 Screenshots (2–4 max): Show UI, movement, and one combat example.
 Known limitations: List what isn't finished or what you're actively seeking feedback on. Be transparent.
 Link to feedback form or how you want to receive feedback.
@@ -17,9 +17,9 @@ Instructions: How to play, controls, any hotkeys or important mechanics.
 
 📝 2. Reddit Post on /r/roguelikedev: Honest, Specific, and Engaging
 
-You're not marketing to strangers — you're speaking to peers. Treat the post like a devlog but with a playable prototype.
+You're not marketing to strangers - you're speaking to peers. Treat the post like a devlog but with a playable prototype.
 
-✅ Include:
+ Include:
 
 A personal tone: “Hey folks, I’ve been working on this for X months...”
 Purpose of the release: “I’m looking for feedback on X systems, especially Y mechanic...”
@@ -32,7 +32,7 @@ Optional but useful: Mention if you're planning to post a follow-up on what you 
 
 You will not get good feedback without guiding people. Provide structure to help them help you.
 
-✅ Recommended Tools:
+ Recommended Tools:
 
 Google Forms or Typeform (free tier is fine)
 
@@ -45,7 +45,7 @@ Any bugs or crashes?
 (Optional) Would you play again? Why or why not?
 (Optional) Email or Discord for follow-up
 
-Keep it short — 5-7 questions max. Offer a comment box at the end for general thoughts.
+Keep it short - 5-7 questions max. Offer a comment box at the end for general thoughts.
 
 🧰 4. Re-Usable Assets: Keep These Light
 
@@ -53,7 +53,7 @@ These are nice to have for reusing in devlogs, Discord, or future marketing, but
 
 Asset	Effort Level	Reason
 
-Short gameplay GIFs (2–3)	✅ Worth it	Reddit & Discord love GIFs
+Short gameplay GIFs (2–3)	 Worth it	Reddit & Discord love GIFs
 
 One logo or title screen	👍 Basic branding helps	But don't agonize over design
 

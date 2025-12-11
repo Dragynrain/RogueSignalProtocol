@@ -144,33 +144,66 @@ class ExploitSystem:
             if not self.game.targeting_mode:
                 self.game.cursor_position = target
 
-            # Show overclock warning dialogue
-            from game_dialogue_system import create_overclock_warning_dialogue
+            # Get input mapper for dynamic button hints
+            input_mapper = getattr(self.game, "input_mapper", None)
+            if not input_mapper and hasattr(self.game, "input_handler"):
+                input_mapper = getattr(self.game.input_handler, "input_mapper", None)
 
-            dialogue = create_overclock_warning_dialogue(
-                exploit_name=exploit.name,
-                overheat_amount=overheat_amount,
-                damage=cpu_damage,
-                remaining_cpu=remaining_cpu,
-                max_cpu=self.game.player.max_cpu,
-            )
-            was_shown = self.game.dialogue_state.show(dialogue)
+            # Check if this is System Crash - show combined dialogue for both damages
+            if exploit_key == "system_crash" and exploit.self_damage > 0:
+                from game_dialogue_system import create_system_crash_overheat_dialogue
 
-            if not was_shown:
-                # User disabled overclock warnings - auto-confirm and proceed
-                logging.debug(
-                    f"Combat: Overclock warning suppressed by user preference, auto-confirming for '{exploit.name}'"
+                dialogue = create_system_crash_overheat_dialogue(
+                    overheat_damage=cpu_damage,
+                    self_damage=exploit.self_damage,
+                    current_cpu=self.game.player.cpu,
+                    max_cpu=self.game.player.max_cpu,
+                    input_mapper=input_mapper,
                 )
-                self.game.overclock_confirmation = True
-                # Recursively call execute_exploit - will bypass this check now
-                return self.execute_exploit(exploit_key, target)
+                was_shown = self.game.dialogue_state.show(dialogue)
 
-            # Dialogue was shown - block and wait for user confirmation
-            self.game.sound_manager.play_sound("exploit_failed")
-            logging.debug(
-                f"Combat: Overheat warning shown for '{exploit.name}', awaiting confirmation"
-            )
-            return False
+                if not was_shown:
+                    # Combined dialogue can't be disabled - this shouldn't happen
+                    logging.debug(
+                        "Combat: Combined System Crash+overheat warning auto-confirming"
+                    )
+                    self.game.overclock_confirmation = True
+                    self.game.system_crash_confirmed = True
+                else:
+                    self.game.sound_manager.play_sound("exploit_failed")
+                    logging.debug(
+                        "Combat: Combined System Crash+overheat warning shown, awaiting confirmation"
+                    )
+                    return False
+            else:
+                # Regular overclock warning dialogue
+                from game_dialogue_system import create_overclock_warning_dialogue
+
+                dialogue = create_overclock_warning_dialogue(
+                    exploit_name=exploit.name,
+                    overheat_amount=overheat_amount,
+                    damage=cpu_damage,
+                    remaining_cpu=remaining_cpu,
+                    max_cpu=self.game.player.max_cpu,
+                    input_mapper=input_mapper,
+                )
+                was_shown = self.game.dialogue_state.show(dialogue)
+
+                if not was_shown:
+                    # User disabled overclock warnings - auto-confirm and proceed
+                    logging.debug(
+                        f"Combat: Overclock warning suppressed by user preference, auto-confirming for '{exploit.name}'"
+                    )
+                    # Set confirmation flag and fall through to execution (no recursion needed)
+                    self.game.overclock_confirmation = True
+                    # Don't return - continue to execute below
+                else:
+                    # Dialogue was shown - block and wait for user confirmation
+                    self.game.sound_manager.play_sound("exploit_failed")
+                    logging.debug(
+                        f"Combat: Overheat warning shown for '{exploit.name}', awaiting confirmation"
+                    )
+                    return False
 
         # Clear overclock confirmation if it was set
         if self.game.overclock_confirmation:
@@ -281,6 +314,8 @@ class ExploitSystem:
         handler = self.exploit_handlers.get(exploit_key)
         if handler:
             return handler(exploit, target)
+        # Unknown exploit - log for debugging (should not happen in normal gameplay)
+        logging.warning(f"Combat: No handler for exploit '{exploit_key}'")
         return False
 
     def _execute_system_hop(self, target: Position) -> bool:
@@ -570,11 +605,17 @@ class ExploitSystem:
             # Show warning dialogue
             from game_dialogue_system import create_system_crash_warning_dialogue
 
+            # Get input mapper for dynamic button hints
+            input_mapper = getattr(self.game, "input_mapper", None)
+            if not input_mapper and hasattr(self.game, "input_handler"):
+                input_mapper = getattr(self.game.input_handler, "input_mapper", None)
+
             dialogue = create_system_crash_warning_dialogue(
                 damage=exploit.self_damage,
                 remaining_cpu=remaining_cpu,
                 max_cpu=self.game.player.max_cpu,
                 would_die=would_die,
+                input_mapper=input_mapper,
             )
             was_shown = self.game.dialogue_state.show(dialogue)
 
@@ -583,14 +624,14 @@ class ExploitSystem:
                 logging.debug(
                     "Combat: System Crash warning suppressed by user preference, auto-confirming"
                 )
+                # Set confirmation flag and fall through to execution (no recursion needed)
                 self.game.system_crash_confirmed = True
-                # Recursively call - will bypass this check now
-                return self._execute_system_crash(exploit, target)
-
-            # Dialogue was shown - block and wait for confirmation
-            self.game.sound_manager.play_sound("exploit_failed")
-            logging.debug("Combat: System Crash warning shown, awaiting confirmation")
-            return False
+                # Don't return - continue to execute below
+            else:
+                # Dialogue was shown - block and wait for confirmation
+                self.game.sound_manager.play_sound("exploit_failed")
+                logging.debug("Combat: System Crash warning shown, awaiting confirmation")
+                return False
 
         # Clear confirmation flag
         self.game.system_crash_confirmed = False
@@ -666,11 +707,17 @@ class ExploitSystem:
             # Show friendly fire warning
             from game_dialogue_system import create_friendly_fire_warning_dialogue
 
+            # Get input mapper for dynamic button hints
+            input_mapper = getattr(self.game, "input_mapper", None)
+            if not input_mapper and hasattr(self.game, "input_handler"):
+                input_mapper = getattr(self.game.input_handler, "input_mapper", None)
+
             dialogue = create_friendly_fire_warning_dialogue(
                 exploit_name=exploit.name,
                 damage=damage,
                 remaining_cpu=remaining_cpu,
                 max_cpu=self.game.player.max_cpu,
+                input_mapper=input_mapper,
             )
             self.game.dialogue_state.show(dialogue)
             self.game.sound_manager.play_sound("exploit_failed")

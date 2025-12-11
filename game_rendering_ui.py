@@ -17,6 +17,7 @@ import tcod
 from game_config import GameConfig
 from game_data import GameData
 from game_entities import Colors
+from game_help_hints import get_inventory_help
 from game_message_log_renderer import MessageLogRenderer
 from game_screen_utilities import ScreenRenderingUtils, ScrollableListManager
 
@@ -64,13 +65,13 @@ class UIRenderer:
         """Delegate to StatusBarRenderer."""
         self.status_bar_renderer.render_top_status_bar(console, game)
         # Update class variable for backward compatibility
-        UIRenderer.last_exploit_positions = StatusBarRenderer.last_exploit_positions
+        UIRenderer.last_exploit_positions = self.status_bar_renderer.last_exploit_positions
 
     def render_bottom_panel(self, console: tcod.console.Console, game):
         """Delegate to StatusBarRenderer."""
         self.status_bar_renderer.render_bottom_panel(console, game)
         # Update class variable for backward compatibility
-        UIRenderer.last_exploit_positions = StatusBarRenderer.last_exploit_positions
+        UIRenderer.last_exploit_positions = self.status_bar_renderer.last_exploit_positions
 
     # Old implementation removed - now delegated to game_status_bar_renderer.py
     # The following methods are no longer needed here:
@@ -555,24 +556,17 @@ class UIRenderer:
         """
         Render inventory screen controls at the bottom.
 
-        Shows available actions: equip, unequip, install, use, and close.
+        Shows concise controls that fit within game area (55 chars max).
+        Dynamically reflects current key/button bindings.
 
         Args:
             console: TCOD console to render to
         """
-        y_start = GameConfig.SCREEN_HEIGHT - 6
+        y_start = GameConfig.SCREEN_HEIGHT - 4
 
-        render_char_safe(console, 2, y_start, "CONTROLS:", fg=Colors.CYAN)
-        render_char_safe(
-            console,
-            4,
-            y_start + 1,
-            "↑↓/W/S: Navigate │ Enter/Click: Use/Equip/Unequip",
-            fg=Colors.WHITE,
-        )
-        render_char_safe(
-            console, 4, y_start + 2, "ESC/I/Right-Click: Close inventory", fg=Colors.WHITE
-        )
+        # Dynamic help text that reflects current bindings
+        help_text = get_inventory_help()
+        render_char_safe(console, 2, y_start, help_text, fg=Colors.WHITE)
 
     @staticmethod
     def get_inventory_item_at_click(tile_y: int) -> int | None:

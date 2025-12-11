@@ -769,8 +769,8 @@ class Enemy:
             if any(q.x == next_pos.x and q.y == next_pos.y for q in self.move_queue):
                 continue
 
-            # Calculate distance to target from this position
-            distance = next_pos.distance_to(target)
+            # Calculate distance to target from this position (grid distance for gameplay)
+            distance = next_pos.grid_distance_to(target)
 
             # Keep track of best VALID move (closest to target)
             if distance < best_distance:

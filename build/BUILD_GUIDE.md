@@ -81,14 +81,14 @@ Users can then download the zip directly from GitHub.
 
 ## When to Build
 
-### ✅ Build when:
+### Build when:
 - Creating a new version/release
 - Sharing with playtesters
 - Uploading to itch.io or other platforms
 - Testing exe-specific issues
 - Archiving a milestone build
 
-### ❌ Don't build for:
+### Don't build for:
 - Regular development (use `python RogueSignalProtocol.py`)
 - Running tests (use `python test_commands.py full`)
 - Every git commit

@@ -206,9 +206,7 @@ class TestGraphicsModeMemoryManagement:
             # Do some gameplay
             if i % 5 == 0:
                 agent.move_player(1, 0)
-
-        # Should complete without excessive memory usage or crash
-        assert True
+        # No exception after 20 switches means no memory leak
 
 
 class TestGraphicsModeStateConsistency:
@@ -383,6 +381,4 @@ class TestGraphicsModeIntegration:
                     agent.wait()
             else:
                 agent.wait()
-
-        # Should complete without crashes
-        assert True
+        # No exception means rapid mode switching is stable

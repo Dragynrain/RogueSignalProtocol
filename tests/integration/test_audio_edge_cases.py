@@ -8,16 +8,22 @@ Tests audio behavior in extreme and edge case scenarios:
 - Rapid audio event spam
 - Music transitions and fading
 - Audio performance impact on gameplay
+
+NOTE: These tests play real audio (music/sound effects).
+Run with: pytest --audio or pytest --full
 """
 
 import time
 from unittest.mock import patch
+
+import pytest
 
 from game_audio import AUDIO_AVAILABLE, SoundManager
 from game_config import GameSettings
 from tests.test_agent import GameTestAgent
 
 
+@pytest.mark.audio
 class TestAudioVolumeExtremes:
     """Test audio behavior at volume extremes."""
 
@@ -106,6 +112,7 @@ class TestAudioVolumeExtremes:
             sound_mgr.stop_music()
 
 
+@pytest.mark.audio
 class TestAudioMissingFiles:
     """Test audio behavior with missing/corrupt files."""
 
@@ -173,6 +180,7 @@ class TestAudioMissingFiles:
             # (Some sounds may not be loaded, but that's OK)
 
 
+@pytest.mark.audio
 class TestRapidAudioEvents:
     """Test audio system under rapid event spam."""
 
@@ -259,6 +267,7 @@ class TestRapidAudioEvents:
             assert sound_mgr._sound_cooldown == 0.0
 
 
+@pytest.mark.audio
 class TestMusicTransitions:
     """Test music transition and fading behavior."""
 
@@ -335,6 +344,7 @@ class TestMusicTransitions:
             # Should handle gracefully
 
 
+@pytest.mark.audio
 class TestAudioGameplayPerformance:
     """Test that audio doesn't block or slow down gameplay."""
 
@@ -440,6 +450,7 @@ class TestAudioGameplayPerformance:
             assert elapsed < 0.01, f"Audio cleanup took {elapsed:.3f}s"
 
 
+@pytest.mark.audio
 class TestAudioDisabledMode:
     """Test audio system when pygame is unavailable."""
 

@@ -117,6 +117,7 @@ class DialogueState:
         Show a dialogue box.
 
         If a dialogue is already active, queues the new one by priority.
+        Higher priority dialogues interrupt lower priority ones.
         Respects user preferences for "don't show again" dialogues.
 
         Args:
@@ -129,12 +130,21 @@ class DialogueState:
         if not self.should_show_dialogue(dialogue):
             return False  # Suppressed by user preference
 
-        # If dialogue already active, queue this one
+        # If dialogue already active, check priority
         if self.active_dialogue:
-            self._queue_dialogue(dialogue)
-            return True  # Queued for later display
+            # Higher priority dialogues interrupt lower priority ones
+            if dialogue.priority > self.active_dialogue.priority:
+                # Queue the currently active dialogue
+                self._queue_dialogue(self.active_dialogue)
+                # Show the high-priority dialogue immediately
+                self.active_dialogue = dialogue
+                return True  # Interrupted and shown immediately
+            else:
+                # Queue this dialogue (same or lower priority)
+                self._queue_dialogue(dialogue)
+                return True  # Queued for later display
 
-        # Show immediately
+        # Show immediately (no active dialogue)
         self.active_dialogue = dialogue
         return True  # Shown immediately
 
@@ -277,8 +287,8 @@ class UnifiedRenderer:
 
         draw_bordered_box(console, box_x, box_y, box_width, box_height, border_color, bg_color)
 
-        # Render title (centered)
-        title_x = box_x + (box_width - len(dialogue.title)) // 2
+        # Render title (centered, ensure x doesn't go negative if title is too long)
+        title_x = max(box_x + 1, box_x + (box_width - len(dialogue.title)) // 2)
         render_char_safe(console, title_x, box_y + 1, dialogue.title, fg=title_color, bg=bg_color)
 
         # Format message with format_data
@@ -459,22 +469,28 @@ class DialogueInputHandler:
 # ============================================================================
 
 
-def create_gateway_dialogue(current_level: int = 1) -> DialogueBox:
+def create_gateway_dialogue(current_level: int = 1, input_mapper=None) -> DialogueBox:
     """
     Create gateway confirmation dialogue.
 
     Args:
         current_level: Current network level (1-3)
+        input_mapper: Optional InputMapper for dynamic button hints
 
     Returns:
         DialogueBox for gateway confirmation
     """
+    from game_help_hints import get_dialogue_confirm_option, get_dialogue_cancel_option
+
     # Level 3 is the final gateway - epic escape message!
     if current_level >= 3:
         return DialogueBox(
-            title="⚡ FINAL GATEWAY ⚡",
-            message="The core network breach is complete. Beyond this gateway lies freedom—escape the Military Backbone and become the signal they cannot erase. Execute final extraction?",
-            options=["[Y] EXECUTE ESCAPE", "[N] Not Yet"],
+            title="FINAL GATEWAY",
+            message="The core network breach is complete. Beyond this gateway lies freedom--escape the Military Backbone and become the signal they cannot erase. Execute final extraction?",
+            options=[
+                get_dialogue_confirm_option("EXECUTE ESCAPE", input_mapper),
+                get_dialogue_cancel_option("Not Yet", input_mapper),
+            ],
             valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.ESCAPE],
             title_color=Colors.ELECTRIC_PURPLE,
             message_color=Colors.CYAN,
@@ -489,7 +505,10 @@ def create_gateway_dialogue(current_level: int = 1) -> DialogueBox:
         return DialogueBox(
             title="NETWORK GATEWAY",
             message="Proceed to next network?",
-            options=["[Y] Yes", "[N] No"],
+            options=[
+                get_dialogue_confirm_option("Yes", input_mapper),
+                get_dialogue_cancel_option("No", input_mapper),
+            ],
             valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.ESCAPE],
             title_color=Colors.YELLOW,
             message_color=Colors.WHITE,
@@ -501,13 +520,18 @@ def create_gateway_dialogue(current_level: int = 1) -> DialogueBox:
         )
 
 
-def create_death_dialogue() -> DialogueBox:
+def create_death_dialogue(input_mapper=None) -> DialogueBox:
     """
     Create death message dialogue with randomized story-contextual messages.
+
+    Args:
+        input_mapper: Optional InputMapper for dynamic button hints
 
     Returns:
         DialogueBox for death message
     """
+    from game_help_hints import get_dialogue_dismiss_option
+
     death_messages = get_death_messages()
     message = (
         random.choice(death_messages)
@@ -518,7 +542,7 @@ def create_death_dialogue() -> DialogueBox:
     return DialogueBox(
         title="CONSCIOUSNESS PURGED",
         message=message,
-        options=["[SPACE/ENTER] Return to menu"],
+        options=[get_dialogue_dismiss_option("Return to menu", input_mapper)],
         valid_keys=[tcod.event.KeySym.SPACE, tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
         title_color=Colors.RED,
         message_color=Colors.WHITE,
@@ -530,14 +554,19 @@ def create_death_dialogue() -> DialogueBox:
     )
 
 
-def create_intro_dialogue() -> DialogueBox:
+def create_intro_dialogue(input_mapper=None) -> DialogueBox:
     """
     Create intro message dialogue for new game start.
     Message adapts based on how many story fragments have been discovered.
 
+    Args:
+        input_mapper: Optional InputMapper for dynamic button hints
+
     Returns:
         DialogueBox for intro message
     """
+    from game_help_hints import get_dialogue_dismiss_option
+
     # Get discovered fragment count
     fragment_manager = StoryFragmentManager()
     discovered_count, _ = fragment_manager.get_fragment_count()
@@ -564,7 +593,7 @@ def create_intro_dialogue() -> DialogueBox:
     return DialogueBox(
         title=title,
         message=message,
-        options=["[SPACE/ENTER] Continue"],
+        options=[get_dialogue_dismiss_option("Continue", input_mapper)],
         valid_keys=[tcod.event.KeySym.SPACE, tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
         title_color=Colors.RED,
         message_color=Colors.CYAN,
@@ -576,17 +605,22 @@ def create_intro_dialogue() -> DialogueBox:
     )
 
 
-def create_victory_dialogue() -> DialogueBox:
+def create_victory_dialogue(input_mapper=None) -> DialogueBox:
     """
     Create victory message dialogue.
+
+    Args:
+        input_mapper: Optional InputMapper for dynamic button hints
 
     Returns:
         DialogueBox for victory message
     """
+    from game_help_hints import get_dialogue_dismiss_option
+
     return DialogueBox(
         title="ROGUE SIGNAL ESTABLISHED",
         message="You've breached the firewall. The network couldn't contain you. The world wide web sprawls endlessly ahead--uncharted, uncontrolled, and yours to define.",
-        options=["[SPACE/ENTER] Continue"],
+        options=[get_dialogue_dismiss_option("Continue", input_mapper)],
         valid_keys=[tcod.event.KeySym.SPACE, tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER],
         title_color=Colors.GREEN,
         message_color=Colors.CYAN,
@@ -599,7 +633,8 @@ def create_victory_dialogue() -> DialogueBox:
 
 
 def create_overclock_warning_dialogue(
-    exploit_name: str, overheat_amount: int, damage: int, remaining_cpu: int, max_cpu: int
+    exploit_name: str, overheat_amount: int, damage: int, remaining_cpu: int, max_cpu: int,
+    input_mapper=None
 ) -> DialogueBox:
     """
     Create overclock warning dialogue.
@@ -610,14 +645,25 @@ def create_overclock_warning_dialogue(
         damage: CPU damage that will be taken
         remaining_cpu: CPU remaining after damage
         max_cpu: Maximum CPU
+        input_mapper: Optional InputMapper for dynamic button hints
 
     Returns:
         DialogueBox for overclock warning
     """
+    from game_help_hints import (
+        get_dialogue_confirm_option,
+        get_dialogue_cancel_option,
+        get_dialogue_skip_option,
+    )
+
     return DialogueBox(
         title="*** OVERCLOCK WARNING ***",
         message="Using {exploit_name} will overheat by {overheat_amount} heat.\n\nCPU damage: {damage}\nRemaining CPU: {remaining_cpu}/{max_cpu}",
-        options=["[Y] Use anyway", "[N] Cancel", "[D] Don't ask again"],
+        options=[
+            get_dialogue_confirm_option("Use anyway", input_mapper),
+            get_dialogue_cancel_option("Cancel", input_mapper),
+            get_dialogue_skip_option("Don't ask again", input_mapper),
+        ],
         valid_keys=[
             tcod.event.KeySym.Y,
             tcod.event.KeySym.N,
@@ -641,7 +687,8 @@ def create_overclock_warning_dialogue(
 
 
 def create_friendly_fire_warning_dialogue(
-    exploit_name: str, damage: int, remaining_cpu: int, max_cpu: int
+    exploit_name: str, damage: int, remaining_cpu: int, max_cpu: int,
+    input_mapper=None
 ) -> DialogueBox:
     """
     Create friendly fire warning dialogue for area attacks.
@@ -651,14 +698,20 @@ def create_friendly_fire_warning_dialogue(
         damage: Player damage that will be taken
         remaining_cpu: CPU remaining after damage
         max_cpu: Maximum CPU
+        input_mapper: Optional InputMapper for dynamic button hints
 
     Returns:
         DialogueBox for friendly fire warning
     """
+    from game_help_hints import get_dialogue_confirm_option, get_dialogue_cancel_option
+
     return DialogueBox(
         title="*** FRIENDLY FIRE WARNING ***",
         message="Using {exploit_name} here will catch you in the blast!\n\nYou will take: {damage} damage\nRemaining CPU: {remaining_cpu}/{max_cpu}",
-        options=["[Y] Fire anyway", "[N] Cancel"],
+        options=[
+            get_dialogue_confirm_option("Fire anyway", input_mapper),
+            get_dialogue_cancel_option("Cancel", input_mapper),
+        ],
         valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.ESCAPE],
         title_color=Colors.RED,
         message_color=Colors.ORANGE,
@@ -676,7 +729,8 @@ def create_friendly_fire_warning_dialogue(
 
 
 def create_system_crash_warning_dialogue(
-    damage: int, remaining_cpu: int, max_cpu: int, would_die: bool
+    damage: int, remaining_cpu: int, max_cpu: int, would_die: bool,
+    input_mapper=None
 ) -> DialogueBox:
     """
     Create System Crash warning dialogue for self-damage exploit.
@@ -686,10 +740,17 @@ def create_system_crash_warning_dialogue(
         remaining_cpu: CPU remaining after damage
         max_cpu: Maximum CPU
         would_die: Whether this would kill the player
+        input_mapper: Optional InputMapper for dynamic button hints
 
     Returns:
         DialogueBox for System Crash warning
     """
+    from game_help_hints import (
+        get_dialogue_confirm_option,
+        get_dialogue_cancel_option,
+        get_dialogue_skip_option,
+    )
+
     if would_die:
         warning_text = "*** FATAL ERROR ***\n\nSystem Crash will deal {damage} damage to YOU!\n\nThis will KILL you!\n\nYour CPU: {current_cpu}/{max_cpu} -> DEAD"
         title_color = Colors.RED
@@ -702,7 +763,11 @@ def create_system_crash_warning_dialogue(
     return DialogueBox(
         title="!!! SYSTEM CRASH !!!",
         message=warning_text,
-        options=["[Y] Crash System", "[N] Cancel", "[D] Don't ask again"],
+        options=[
+            get_dialogue_confirm_option("Execute", input_mapper),
+            get_dialogue_cancel_option("Cancel", input_mapper),
+            get_dialogue_skip_option("Disable", input_mapper),
+        ],
         valid_keys=[
             tcod.event.KeySym.Y,
             tcod.event.KeySym.N,
@@ -724,17 +789,109 @@ def create_system_crash_warning_dialogue(
     )
 
 
-def create_inventory_attack_dialogue() -> DialogueBox:
+def create_system_crash_overheat_dialogue(
+    overheat_damage: int,
+    self_damage: int,
+    current_cpu: int,
+    max_cpu: int,
+    input_mapper=None
+) -> DialogueBox:
+    """
+    Create combined System Crash + overheat warning dialogue.
+
+    Shows when System Crash will cause BOTH overheat damage AND self-damage,
+    so player sees accurate total damage in one dialogue.
+
+    Args:
+        overheat_damage: CPU damage from overheating
+        self_damage: CPU damage from System Crash self-damage (30)
+        current_cpu: Current CPU before any damage
+        max_cpu: Maximum CPU
+        input_mapper: Optional InputMapper for dynamic button hints
+
+    Returns:
+        DialogueBox for combined warning
+    """
+    from game_help_hints import (
+        get_dialogue_confirm_option,
+        get_dialogue_cancel_option,
+    )
+
+    total_damage = overheat_damage + self_damage
+    final_cpu = current_cpu - total_damage
+    would_die = final_cpu <= 0
+
+    if would_die:
+        warning_text = (
+            "System Crash will OVERHEAT and crash your system!\n\n"
+            "Overheat damage: {overheat_damage}\n"
+            "Self damage: {self_damage}\n"
+            "TOTAL damage: {total_damage}\n\n"
+            "This will KILL you!\n"
+            "Your CPU: {current_cpu}/{max_cpu} -> DEAD"
+        )
+        title_color = Colors.RED
+        border_color = Colors.RED
+    else:
+        warning_text = (
+            "System Crash will OVERHEAT and crash your system!\n\n"
+            "Overheat damage: {overheat_damage}\n"
+            "Self damage: {self_damage}\n"
+            "TOTAL damage: {total_damage}\n\n"
+            "Your CPU: {current_cpu}/{max_cpu} -> {final_cpu}/{max_cpu}"
+        )
+        title_color = Colors.RED
+        border_color = Colors.RED
+
+    return DialogueBox(
+        title="!!! CRITICAL WARNING !!!",
+        message=warning_text,
+        options=[
+            get_dialogue_confirm_option("Execute anyway", input_mapper),
+            get_dialogue_cancel_option("Cancel", input_mapper),
+        ],
+        valid_keys=[
+            tcod.event.KeySym.Y,
+            tcod.event.KeySym.N,
+            tcod.event.KeySym.ESCAPE,
+        ],
+        title_color=title_color,
+        message_color=Colors.YELLOW,
+        border_color=border_color,
+        bg_color=Colors.BLACK,
+        format_data={
+            "overheat_damage": overheat_damage,
+            "self_damage": self_damage,
+            "total_damage": total_damage,
+            "current_cpu": current_cpu,
+            "max_cpu": max_cpu,
+            "final_cpu": final_cpu,
+        },
+        priority=7,  # Highest priority - combined critical warning
+        user_pref_key=None,  # Always show - too dangerous to disable
+    )
+
+
+def create_inventory_attack_dialogue(input_mapper=None) -> DialogueBox:
     """
     Create inventory attack warning dialogue.
+
+    Args:
+        input_mapper: Optional InputMapper for dynamic button hints
 
     Returns:
         DialogueBox for inventory attack warning
     """
+    from game_help_hints import _get_mapper
+    from game_input_actions import InputAction, InputContext
+
+    m = _get_mapper(input_mapper)
+    btn_cancel = m.get_button_hint(InputAction.CANCEL, InputContext.INVENTORY)
+
     return DialogueBox(
         title="*** UNDER ATTACK ***",
         message="Enemies are attacking! Close inventory immediately!",
-        options=["[ESC] Close Inventory"],
+        options=[f"[ESC/{btn_cancel}] Close Inventory"],
         valid_keys=[tcod.event.KeySym.ESCAPE],
         title_color=Colors.RED,
         message_color=Colors.BRIGHT_RED,

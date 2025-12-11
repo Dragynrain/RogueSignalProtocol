@@ -6,7 +6,7 @@ Validates that all menu classes can be instantiated and have basic properties.
 Quick sanity check that menu definitions are not broken.
 """
 
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, MagicMock, patch
 
 import pytest
 import tcod
@@ -65,21 +65,40 @@ class TestAllMenusSmoke:
         menu = LoreMenu()
         assert menu is not None
 
-    @pytest.mark.skip(
-        reason="GraphicsPreviewMenu requires full graphics stack (SDL, tile files, etc.). "
-        "Cannot be tested in headless environment. Tested in manual QA."
-    )
     def test_graphics_preview_menu_instantiation(self):
-        """GraphicsPreviewMenu requires full graphics environment - tested manually."""
-        pass  # Tested during manual QA with full graphics stack
+        """GraphicsPreviewMenu can be instantiated with mocked context."""
+        from game_menu_graphics_preview import GraphicsPreviewMenu
+        from game_graphics_tiles import TileManager
 
-    @pytest.mark.skip(
-        reason="GraphicalHelpMenu requires full graphics stack (SDL, tile files, etc.). "
-        "Cannot be tested in headless environment. Tested in manual QA."
-    )
+        # Create mock context in glyph mode (no SDL required)
+        context = Mock()
+        context.sdl_renderer = None
+
+        settings = GameSettings()
+        settings.graphics_mode = "glyph"
+
+        tile_manager = TileManager(context, settings)
+        menu = GraphicsPreviewMenu(context, settings, tile_manager)
+
+        assert menu is not None
+
     def test_graphical_help_menu_instantiation(self):
-        """GraphicalHelpMenu requires full graphics environment - tested manually."""
-        pass  # Tested during manual QA with full graphics stack
+        """GraphicalHelpMenu can be instantiated with mocked dependencies."""
+        from game_menu_help_graphics import GraphicalHelpMenu
+
+        # Mock context and tile_manager
+        mock_context = MagicMock()
+        mock_context.sdl_renderer = MagicMock()
+        mock_context.sdl_window = MagicMock()
+        mock_context.sdl_window.size = (1280, 800)
+
+        mock_tile_manager = MagicMock()
+        mock_tile_manager.get_tile = MagicMock(return_value=MagicMock())
+        mock_tile_manager.tile_width = 64
+        mock_tile_manager.tile_height = 64
+
+        menu = GraphicalHelpMenu(mock_context, mock_tile_manager)
+        assert menu is not None
 
     def test_all_menus_have_render_method(self):
         """All menu classes have a render method."""
@@ -178,22 +197,14 @@ class TestAllMenusSmoke:
         menu = HelpMenu()
         test_console = tcod.console.Console(width=80, height=50)
 
-        try:
-            menu.render(test_console)
-            assert True
-        except Exception as e:
-            pytest.fail(f"HelpMenu.render() crashed: {e}")
+        # Smoke test - no exception means success
+        menu.render(test_console)
 
     def test_menus_can_render_to_console(self):
         """Menus can render to a test console without crashing."""
         test_console = tcod.console.Console(width=80, height=50)
 
-        # Test a simple menu
+        # Test a simple menu - smoke test, no exception means success
         with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
             menu = MainMenu()
-            try:
-                menu.render(test_console)
-                # If render completes without exception, that's success
-                assert True
-            except Exception as e:
-                pytest.fail(f"MainMenu.render() crashed: {e}")
+            menu.render(test_console)

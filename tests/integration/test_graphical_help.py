@@ -97,10 +97,9 @@ class TestGraphicalHelpMenuBasics:
 
     def test_initialization(self):
         """Test GraphicalHelpMenu initializes correctly."""
-        menu = GraphicalHelpMenu(self.mock_context, self.settings, self.mock_tile_manager)
+        menu = GraphicalHelpMenu(self.mock_context, self.mock_tile_manager)
 
         assert menu.context == self.mock_context
-        assert menu.settings == self.settings
         assert menu.tile_manager == self.mock_tile_manager
         assert menu.current_page == 0
         assert not menu.pages_built
@@ -108,11 +107,11 @@ class TestGraphicalHelpMenuBasics:
     def test_raises_error_when_tile_manager_none(self):
         """Test GraphicalHelpMenu raises error if tile_manager is None."""
         with pytest.raises(ValueError, match="requires a valid TileManager"):
-            GraphicalHelpMenu(self.mock_context, self.settings, None)
+            GraphicalHelpMenu(self.mock_context, None)
 
     def test_builds_pages_on_first_render(self):
         """Test pages are built on first render."""
-        menu = GraphicalHelpMenu(self.mock_context, self.settings, self.mock_tile_manager)
+        menu = GraphicalHelpMenu(self.mock_context, self.mock_tile_manager)
         console = tcod.console.Console(80, 50)
 
         assert not menu.pages_built
@@ -124,7 +123,7 @@ class TestGraphicalHelpMenuBasics:
 
     def test_page_structure(self):
         """Test pages have correct structure."""
-        menu = GraphicalHelpMenu(self.mock_context, self.settings, self.mock_tile_manager)
+        menu = GraphicalHelpMenu(self.mock_context, self.mock_tile_manager)
         console = tcod.console.Console(80, 50)
 
         menu.render(console)  # Trigger page build
@@ -156,7 +155,7 @@ class TestGraphicalHelpMenuNavigation:
         self.mock_tile_manager.tile_width = 20
         self.mock_tile_manager.tile_height = 32
 
-        self.menu = GraphicalHelpMenu(self.mock_context, self.settings, self.mock_tile_manager)
+        self.menu = GraphicalHelpMenu(self.mock_context, self.mock_tile_manager)
 
         # Build pages
         console = tcod.console.Console(80, 50)
@@ -222,21 +221,25 @@ class TestGraphicalHelpMenuNavigation:
 
         assert result == "back"
 
-    def test_up_down_arrows_navigate_pages(self):
-        """Test up/down arrows also navigate pages."""
+    def test_up_down_arrows_ignored_in_help(self):
+        """Test up/down arrows are intentionally ignored (prevents diagonal stick issues).
+
+        Help menu uses LEFT/RIGHT only for page navigation to avoid accidental
+        diagonal movements when using analog sticks.
+        """
         assert self.menu.current_page == 0
 
-        # Down arrow goes to next page
+        # Down arrow should NOT change page (intentionally ignored)
         event = Mock(spec=tcod.event.KeyDown)
         event.sym = tcod.event.KeySym.DOWN
 
         self.menu.handle_input(event)
-        assert self.menu.current_page == 1
+        assert self.menu.current_page == 0  # Should remain on page 0
 
-        # Up arrow goes to previous page
+        # Up arrow should also NOT change page
         event.sym = tcod.event.KeySym.UP
         self.menu.handle_input(event)
-        assert self.menu.current_page == 0
+        assert self.menu.current_page == 0  # Should still be on page 0
 
 
 class TestGraphicalHelpMenuRendering:
@@ -260,7 +263,7 @@ class TestGraphicalHelpMenuRendering:
         mock_texture = Mock()
         self.mock_tile_manager.get_tile = Mock(return_value=mock_texture)
 
-        self.menu = GraphicalHelpMenu(self.mock_context, self.settings, self.mock_tile_manager)
+        self.menu = GraphicalHelpMenu(self.mock_context, self.mock_tile_manager)
 
     def test_render_creates_console_text(self):
         """Test render method creates text on console."""
@@ -344,7 +347,7 @@ class TestGraphicalHelpMenuSpriteNames:
         mock_tile_manager.tile_height = 32
         mock_tile_manager.get_tile = Mock(return_value=Mock())
 
-        menu = GraphicalHelpMenu(mock_context, settings, mock_tile_manager)
+        menu = GraphicalHelpMenu(mock_context, mock_tile_manager)
 
         # Build pages
         console = tcod.console.Console(80, 50)
@@ -401,7 +404,7 @@ class TestGraphicalHelpMenuSpriteNames:
         mock_tile_manager.tile_height = 32
         mock_tile_manager.get_tile = Mock(return_value=Mock())
 
-        menu = GraphicalHelpMenu(mock_context, settings, mock_tile_manager)
+        menu = GraphicalHelpMenu(mock_context, mock_tile_manager)
 
         # Build pages
         console = tcod.console.Console(80, 50)

@@ -451,10 +451,7 @@ class TestFullRenderingPipeline:
             if "has no attribute" in str(e):
                 pytest.fail(f"CRITICAL: Attribute error during rendering: {e}")
             # Allow other exceptions for test environment limitations
-            pass
-
-        # If we got here, rendering succeeded
-        assert True
+        # No critical exception means rendering code is sound
 
     def test_render_multiple_frames_with_mouse_movement(self):
         """

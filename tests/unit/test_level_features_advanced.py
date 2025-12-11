@@ -472,7 +472,8 @@ class TestPhase5PolishFeatures:
 
         # Verify Phase 5 features are present
         assert hasattr(self.game_map, "loot_room_positions")
-        assert hasattr(self.level_generator, "_room_zones") or True  # May not always be set
+        # _room_zones is set during generation but may be cleared after
+        # Just verify basic structure is valid
 
         # Verify level is playable (gateway not on wall, etc.)
         gateway_pos = (self.game_map.gateway.x, self.game_map.gateway.y)

@@ -4,7 +4,7 @@ Rogue Signal Protocol - Base Menu Class
 
 Shared base class for all menu screens to eliminate duplication.
 Provides common background detection, layout calculation, and rendering helpers.
-Subclasses implement render() and handle_input() for specific menu behavior.
+Subclasses implement render() and execute_action() for specific menu behavior.
 """
 
 
@@ -12,13 +12,18 @@ import tcod
 
 from game_config import GameConfig
 from game_menu_utilities import MenuRenderingUtils
+from game_input_base import BaseInputHandler
+from game_input_actions import InputAction, InputContext
+from game_input_device_tracker import InputDeviceType, set_last_device
 
 
-class BaseMenu:
+class BaseMenu(BaseInputHandler):
     """
     Base class for all menu screens with common functionality.
 
+    Inherits unified input handling from BaseInputHandler.
     Provides shared methods for:
+    - Unified keyboard/gamepad/mouse input (via BaseInputHandler)
     - Background detection
     - Layout calculation
     - Text area clearing
@@ -26,7 +31,8 @@ class BaseMenu:
 
     Subclasses must implement:
     - render(console) - Main rendering method
-    - handle_input(event) - Input handling logic
+    - get_context() - Return the appropriate InputContext
+    - execute_action(action) - Handle InputAction values
     """
 
     def __init__(self, background=None):
@@ -36,9 +42,23 @@ class BaseMenu:
         Args:
             background: Optional MenuBackground instance
         """
+        # Initialize input handling (game=None for menus, renderer set by game loop)
+        super().__init__(game=None, renderer=None)
+
+        # Menu-specific attributes
         self.background = background
         self.selected_option = 0
         self.options = []
+
+    def navigate_up(self):
+        """Navigate up in menu options (with wraparound)."""
+        if self.options:
+            self.selected_option = (self.selected_option - 1) % len(self.options)
+
+    def navigate_down(self):
+        """Navigate down in menu options (with wraparound)."""
+        if self.options:
+            self.selected_option = (self.selected_option + 1) % len(self.options)
 
     def _has_background(self) -> bool:
         """
@@ -119,6 +139,20 @@ class BaseMenu:
             console, layout, height, border_color, y_offset
         )
 
+    # ========================================================================
+    # BASEINPUTHANDLER ABSTRACT METHODS (implemented for menus)
+    # ========================================================================
+
+    def get_default_return(self) -> str:
+        """Menus return empty string by default."""
+        return ""
+
+    # NOTE: get_context() and execute_action() must be implemented by subclasses
+
+    # ========================================================================
+    # RENDERING (menu-specific, not in BaseInputHandler)
+    # ========================================================================
+
     def render(self, console: tcod.console.Console) -> None:
         """
         Render the menu. Must be implemented by subclasses.
@@ -131,22 +165,40 @@ class BaseMenu:
         """
         raise NotImplementedError("Subclasses must implement render()")
 
-    def handle_input(self, event) -> str | None:
+    # ========================================================================
+    # MOUSE HANDLING (override BaseInputHandler defaults)
+    # ========================================================================
+
+    def handle_mouse_click(self, event) -> str:
         """
-        Handle input events. Must be implemented by subclass.
+        Handle mouse click events - dispatch to left/right click handlers.
+
+        This is the main entry point for mouse clicks from the game loop.
+        Dispatches to handle_left_click or handle_right_click based on button.
 
         Args:
-            event: Input event to handle
+            event: Mouse button down event
 
         Returns:
-            Action string or None
-
-        Raises:
-            NotImplementedError: If not implemented by subclass
+            Action string (same as execute_action would return)
         """
-        raise NotImplementedError("Subclasses must implement handle_input()")
+        # Track input device for dynamic help text (mouse = keyboard mode)
+        set_last_device(InputDeviceType.KEYBOARD)
 
-    def handle_mouse_motion(self, event) -> bool:
+        # Check if we have the button attribute
+        if not hasattr(event, "button"):
+            return ""
+
+        # Dispatch to appropriate handler based on button
+        if event.button == tcod.event.MouseButton.LEFT:
+            return self.handle_left_click(event)
+        elif event.button == tcod.event.MouseButton.RIGHT:
+            return self.handle_right_click(event)
+
+        # Unknown button - ignore
+        return ""
+
+    def handle_mouse_motion(self, event) -> str:
         """
         Handle mouse motion events - update selection based on hover.
 
@@ -157,66 +209,81 @@ class BaseMenu:
             event: Mouse motion event with tile coordinates
 
         Returns:
-            True if event was handled, False otherwise
+            Empty string (hover doesn't trigger action)
         """
+        import logging
+
         if not self.options:
-            return False
+            return ""
 
-        # Check if position coordinates are available (tile is deprecated)
-        if not hasattr(event, "position") or event.position is None:
-            return False
+        # Check for tile coordinates (set by MenuMouseHandler.convert_to_tile_coords)
+        # Prefer event.tile, fall back to event.position for test compatibility
+        # Use try/except because Mock objects pass hasattr checks
+        tile_y = None
+        for attr_name in ("tile", "position"):
+            if hasattr(event, attr_name):
+                coord_source = getattr(event, attr_name)
+                if coord_source is not None:
+                    try:
+                        tile_y = int(coord_source.y)
+                        break  # Found valid coordinates
+                    except (TypeError, ValueError, AttributeError):
+                        continue  # Try next attribute
+        if tile_y is None:
+            return ""
 
-        # After context.convert_event(), position contains TILE coordinates
-        tile_y = int(event.position.y)
-
+        # After MenuMouseHandler.convert_to_tile_coords(), coordinates are (0-79, 0-49)
         # Menu options start at Y=21 (original position, box itself is shifted)
         start_y = 21
         spacing = 2
 
-        # Calculate which option was hovered
         if tile_y >= start_y:
             option_index = (tile_y - start_y) // spacing
             if 0 <= option_index < len(self.options):
+                old_selection = self.selected_option
                 self.selected_option = option_index
-                return True
+                logging.debug(f"[MOUSE HOVER] Changed selection: {old_selection} -> {self.selected_option}")
 
-        return False
+        return ""
 
-    def handle_mouse_click(self, event) -> str | None:
+    def handle_left_click(self, event) -> str:
         """
-        Handle mouse click events - activate clicked option or go back.
+        Handle left mouse click - activate clicked option.
 
         Default implementation for menus with vertical option lists.
-        Right-click returns "back" for universal cancel/exit behavior.
         Subclasses can override for custom behavior.
 
         Args:
             event: Mouse click event with tile coordinates
 
         Returns:
-            Action string (same as handle_input would return), or None
+            Action string (same as execute_action would return)
         """
-        import tcod.event
-
-        # Right-click = universal go back / cancel
-        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
-            return "back"
-
         if not self.options:
-            return None
+            return ""
 
-        # Check if position coordinates are available (tile is deprecated)
-        if not hasattr(event, "position") or event.position is None:
-            return None
+        # Check for tile coordinates (set by MenuMouseHandler.convert_to_tile_coords)
+        # Prefer event.tile, fall back to event.position for test compatibility
+        # Use try/except because Mock objects pass hasattr checks
+        tile_y = None
+        for attr_name in ("tile", "position"):
+            if hasattr(event, attr_name):
+                coord_source = getattr(event, attr_name)
+                if coord_source is not None:
+                    try:
+                        tile_y = int(coord_source.y)
+                        break  # Found valid coordinates
+                    except (TypeError, ValueError, AttributeError):
+                        continue  # Try next attribute
+        if tile_y is None:
+            return ""
 
-        # After context.convert_event(), position contains TILE coordinates (0-79, 0-49)
-        tile_y = int(event.position.y)
-
+        # After MenuMouseHandler.convert_to_tile_coords(), coordinates are (0-79, 0-49)
         # Menu options start at Y=21 (original position, box itself is shifted)
         start_y = 21
         spacing = 2
 
-        # Calculate which option was clicked (left-click only)
+        # Calculate which option was clicked
         if tile_y >= start_y:
             option_index = (tile_y - start_y) // spacing
 
@@ -226,9 +293,29 @@ class BaseMenu:
 
                 # Activate this option (same as pressing Enter)
                 action = self._get_action_for_option(option_index)
-                return action
+                return action if action else ""
 
-        return None
+        return ""
+
+    def handle_right_click(self, event) -> str:
+        """
+        Handle right mouse click - universal back/cancel.
+
+        Args:
+            event: Mouse click event
+
+        Returns:
+            "back" action string
+        """
+        # Headless mode check
+        if self.renderer is None:
+            return ""
+
+        return "back"
+
+    # ========================================================================
+    # HELPER METHODS
+    # ========================================================================
 
     def _get_action_for_option(self, option_index: int) -> str | None:
         """

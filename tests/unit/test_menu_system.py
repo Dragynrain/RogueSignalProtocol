@@ -39,44 +39,44 @@ class TestMainMenu:
             assert "New Game" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
             assert (
-                len(menu.options) == 8
-            )  # Continue, New, Settings, Help, Achievements, Data Fragments, About, Exit
+                len(menu.options) == 9
+            )  # Continue, New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit
             assert menu.show_warning is False
 
             # With graphics mode settings, Graphics Preview is shown (if graphics_preview_menu exists)
-            mock_settings = Mock()
-            mock_settings.graphics_mode = "graphics"
+            settings = GameSettings()  # Registers as singleton
+            settings.graphics_mode = "graphics"
             mock_menus = {
                 "graphics_preview_menu": Mock()
             }  # Mock menus dict with graphics_preview_menu
-            menu_graphics = MainMenu(settings=mock_settings, menus=mock_menus)
+            menu_graphics = MainMenu(menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
-            assert len(menu_graphics.options) == 9  # Includes Graphics Preview
+            assert len(menu_graphics.options) == 10  # Includes Graphics Preview
 
     def test_main_menu_initialization_no_save(self):
         """MainMenu initializes correctly when no save file exists."""
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             # Without settings (glyph mode), Graphics Preview is hidden
+            settings = GameSettings()  # Registers as singleton
             menu = MainMenu()
             assert menu.selected_option == 0
             assert "Continue Game" not in menu.options
             assert "New Game" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
             assert (
-                len(menu.options) == 7
-            )  # New, Settings, Help, Achievements, Data Fragments, About, Exit
+                len(menu.options) == 8
+            )  # New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit
             assert isinstance(menu.options, list)
             assert menu.show_warning is False
 
             # With graphics mode settings, Graphics Preview is shown (if graphics_preview_menu exists)
-            mock_settings = Mock()
-            mock_settings.graphics_mode = "graphics"
+            settings.graphics_mode = "graphics"
             mock_menus = {
                 "graphics_preview_menu": Mock()
             }  # Mock menus dict with graphics_preview_menu
-            menu_graphics = MainMenu(settings=mock_settings, menus=mock_menus)
+            menu_graphics = MainMenu(menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
-            assert len(menu_graphics.options) == 8  # Includes Graphics Preview
+            assert len(menu_graphics.options) == 9  # Includes Graphics Preview
 
     def test_refresh_options_with_continue(self):
         """refresh_options() correctly adds continue option when save exists."""
@@ -84,6 +84,7 @@ class TestMainMenu:
             menu = MainMenu()
             menu.refresh_options(show_continue=True)
             assert "Continue Game" in menu.options
+            # mid_game_mode is False when no active_game provided
             assert menu.mid_game_mode is False
 
     def test_refresh_options_without_continue(self):
@@ -92,7 +93,24 @@ class TestMainMenu:
             menu = MainMenu()
             menu.refresh_options(show_continue=False)
             assert "Continue Game" not in menu.options
-            assert menu.mid_game_mode is True
+            # mid_game_mode is False when no active_game provided
+            # (changed: mid_game_mode now depends on active_game, not show_continue)
+            assert menu.mid_game_mode is False
+
+    def test_refresh_options_with_active_game(self):
+        """refresh_options() sets mid_game_mode when active_game provided."""
+        # Create mock game with alive player
+        mock_game = Mock()
+        mock_game.player = Mock()
+        mock_game.player.cpu = 100
+        mock_game.game_over = False
+
+        with patch.object(SaveGameManager, "save_exists", return_value=True):
+            menu = MainMenu()
+            menu.refresh_options(show_continue=True, active_game=mock_game)
+            # Should show Continue Game and enable START button toggle
+            assert "Continue Game" in menu.options
+            assert menu.mid_game_mode is True  # Can resume with START button
 
     def test_menu_navigation_down(self):
         """Menu navigation moves selection down correctly."""
@@ -102,6 +120,7 @@ class TestMainMenu:
         # Create mock keyboard event for DOWN key
         down_event = Mock(spec=tcod.event.KeyDown)
         down_event.sym = tcod.event.KeySym.DOWN
+        down_event.type = "KEYDOWN"  # Required for new input system
 
         result = menu.handle_input(down_event)
 
@@ -119,6 +138,7 @@ class TestMainMenu:
         # Create mock keyboard event for UP key
         up_event = Mock(spec=tcod.event.KeyDown)
         up_event.sym = tcod.event.KeySym.UP
+        up_event.type = "KEYDOWN"  # Required for new input system
 
         result = menu.handle_input(up_event)
 
@@ -134,6 +154,7 @@ class TestMainMenu:
             # Create mock keyboard event for ENTER key
             enter_event = Mock(spec=tcod.event.KeyDown)
             enter_event.sym = tcod.event.KeySym.RETURN
+            enter_event.type = "KEYDOWN"  # Required for new input system
 
             result = menu.handle_input(enter_event)
 
@@ -149,11 +170,45 @@ class TestMainMenu:
 
             enter_event = Mock(spec=tcod.event.KeyDown)
             enter_event.sym = tcod.event.KeySym.RETURN
+            enter_event.type = "KEYDOWN"  # Required for new input system
 
             result = menu.handle_input(enter_event)
 
             # Should show warning instead of starting new game
             assert menu.show_warning is True
+
+    def test_menu_warning_shows_in_mid_game_mode(self):
+        """Warning should appear when New Game selected in mid-game mode with save file.
+
+        Bug fix: Previously, mid_game_mode bypassed the warning check, allowing
+        players to accidentally start a new game without confirmation when returning
+        to main menu from an active game.
+        """
+        with patch.object(SaveGameManager, "save_exists", return_value=True):
+            # Create mock active game
+            mock_game = Mock()
+            mock_game.player = Mock()
+            mock_game.player.cpu = 100
+            mock_game.game_over = False
+
+            menu = MainMenu()
+            # Set up mid-game mode (simulating returning to menu from active game)
+            menu.refresh_options(show_continue=True, active_game=mock_game)
+            assert menu.mid_game_mode is True  # Verify we're in mid-game mode
+
+            # Select "New Game" option
+            new_game_index = menu.options.index("New Game")
+            menu.selected_option = new_game_index
+
+            enter_event = Mock(spec=tcod.event.KeyDown)
+            enter_event.sym = tcod.event.KeySym.RETURN
+            enter_event.type = "KEYDOWN"
+
+            result = menu.handle_input(enter_event)
+
+            # Should show warning even in mid-game mode (save file exists!)
+            assert menu.show_warning is True
+            assert result == ""  # No action yet, waiting for confirmation
 
     def test_background_trace(self):
         """Menu correctly detects if background is available."""
@@ -355,11 +410,8 @@ class TestAboutMenu:
         mock_console.height = 50
         mock_console.rgba = Mock()
 
-        try:
-            about_menu.render(mock_console)
-            assert True
-        except Exception as e:
-            pytest.fail(f"About menu rendering failed: {e}")
+        # Smoke test - no exception means success
+        about_menu.render(mock_console)
 
 
 class TestMenuNavigation:
@@ -445,12 +497,8 @@ class TestMenuIntegration:
         mock_console.height = 25
         mock_console.rgba = Mock()
 
-        # Should not raise exceptions
-        try:
-            menu.render(mock_console)
-            assert True
-        except Exception as e:
-            pytest.fail(f"Menu rendering failed: {e}")
+        # Smoke test - no exception means success
+        menu.render(mock_console)
 
 
 if __name__ == "__main__":

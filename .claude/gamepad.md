@@ -72,14 +72,23 @@ def _get_current_context(self) -> InputContext:
         return InputContext.GAMEPLAY
 ```
 
+### 6. Direction Locking & Settling Period (Gameplay Movement)
+
+**Settling period:** 30ms wait before locking direction (allows stick to reach target position)
+**Direction locking:** After settling, direction is locked until stick released (prevents multi-move from diagonal swipes)
+
+Setting: `settings.gamepad_direction_locking` (passed to AnalogStickHandler)
+Config: `GameConfig.ANALOG_SETTLING_PERIOD` (30ms default)
+
 ## COMMON MISTAKES
 
-### 1. Time-based gating in turn-based game
+### 1. Time-based vs Turn-based
+Gameplay movement uses TIME-based gating, NOT turn-based (turns increment after move)
 ```python
-# WRONG for gameplay: if time_since_last > 0.15: allow_move()
-# RIGHT for gameplay: if current_turn > last_move_turn: allow_move()
+# Both use time.time() for gating
+self.last_gameplay_move_time  # Gameplay
+self.last_menu_move_time      # Menus
 ```
-Exception: Menu navigation IS time-based (not turn-based)
 
 ### 2. Forgetting renderer parameter
 ```python
@@ -195,12 +204,16 @@ event = tcod.event.ControllerAxis(
 
 ## FILE LOCATIONS
 
-- Actions: `game_input_actions.py` (InputAction enum)
-- Gamepad handler: `game_input_gamepad.py`
-- Analog processing: `game_input_analog.py`
-- Input routing: `game_input.py` (_execute_action, context detection)
-- Polling loop: `game_loop.py` (handle_menu_navigation, in-game section ~line 1435+)
-- Working examples: Achievements (game_loop.py ~line 1450), Help (game_loop.py ~line 1462)
+- Actions: `game_input_actions.py` (InputAction enum, InputContext enum)
+- Mappings: `game_input_mappings.py` (InputMapper, default key/button bindings)
+- Base handler: `game_input_base.py` (BaseInputHandler abstract class)
+- Gamepad handler: `game_input_gamepad.py` (GamepadInputHandler)
+- Analog processing: `game_input_analog.py` (AnalogStickHandler)
+- Coordinate conversion: `game_input_coordinates.py` (InputCoordinateConverter)
+- Main input handler: `game_input.py` (InputHandler, context routing)
+- Gameplay handling: `game_input_gameplay.py` (GameplayInputHandler)
+- Modal handling: `game_input_modals.py` (InventoryInputHandler, etc.)
+- Polling loop: `game_loop.py` (handle_menu_navigation)
 
 ## TEST STRUCTURE
 
@@ -208,10 +221,10 @@ event = tcod.event.ControllerAxis(
 - `tests/integration/test_input_*.py` - Screen-specific tests (12 files)
 - `tests/integration/test_gamepad_end_to_end.py` - Full E2E tests
 - `tests/unit/test_gamepad_handler.py` - Unit tests
-- `input_test_utils.py` - Test helpers (InputTestHelper, AutoRepeatTester)
+- `tests/integration/input_test_utils.py` - Test helpers (InputTestHelper, AutoRepeatTester)
 
-**Coverage:** 813 tests passing (100% screen coverage, all input types)
-**Runtime:** ~7-8s with pytest-xdist
+**Coverage:** ~790 input/gamepad tests (100% screen coverage, all input types)
+**Runtime:** ~9-10s with pytest-xdist
 
 ```bash
 # Test specific screen

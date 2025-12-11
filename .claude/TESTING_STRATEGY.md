@@ -337,7 +337,7 @@ Total agent suite: ~2 seconds ← Perfect for pre-commit!
 
 ## Common Mistakes
 
-### ❌ Don't Do This
+### Don't Do This
 
 **Wrong: Integration test for simple logic**
 ```python
@@ -363,7 +363,7 @@ def test_level_generation():
     # ... this needs full engine
 ```
 
-### ✓ Do This Instead
+### Do This Instead
 
 **Right: Unit test for simple logic**
 ```python

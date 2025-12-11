@@ -94,11 +94,10 @@ class TestMenuStackBehavior:
         engine.show_help = True
         engine.show_lore_viewer = True
 
-        # At least one should be open
-        menus_open = [engine.show_inventory, engine.show_help, engine.show_lore_viewer]
-
-        # Just verify state is valid (no crash)
-        assert any(menus_open) or not any(menus_open)
+        # All three menu flags should be True (we set them above)
+        assert engine.show_inventory is True
+        assert engine.show_help is True
+        assert engine.show_lore_viewer is True
 
     def test_escape_closes_active_menu(self, basic_game_engine):
         """Test Escape closes whichever menu is currently active."""
@@ -119,9 +118,9 @@ class TestMenuStackBehavior:
         handler.handle_keydown(key_esc)
         assert not engine.show_inventory
 
-        # Another Escape doesn't crash (no menus open)
+        # Another Escape doesn't crash (no menus open) - verify no menus reopened
         handler.handle_keydown(key_esc)
-        assert True
+        assert not engine.show_inventory
 
 
 class TestMenuGameStateIsolation:
@@ -174,8 +173,10 @@ class TestMenuEscapeHandling:
         )
         handler.handle_keydown(key_esc)
 
-        # Should not crash
-        assert True
+        # Should not crash and menus should still be closed
+        assert not engine.show_inventory
+        assert not engine.show_help
+        assert not engine.show_lore_viewer
 
     def test_multiple_escapes_close_all_menus(self, basic_game_engine):
         """Test multiple Escape presses close all menus."""

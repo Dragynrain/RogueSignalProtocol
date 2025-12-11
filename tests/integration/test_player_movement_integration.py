@@ -40,9 +40,12 @@ class TestPlayerMovementIntegration:
                     engine.player.position = test_pos
                     break
 
-        # If we can't find any valid position, skip test (extremely rare with proper map generation)
+        # If no valid position found, create one by clearing a wall adjacent to player
         if original_position is None:
-            pytest.skip("No valid test position with adjacent moves found in generated map")
+            original_position = engine.player.position
+            clear_x = original_position.x + 1
+            clear_y = original_position.y
+            engine.game_map.walls.discard((clear_x, clear_y))
 
         # Test movement in all four directions
         directions = [

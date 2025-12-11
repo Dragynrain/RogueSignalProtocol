@@ -191,11 +191,12 @@ class VisibilityManager:
         transparency = self.game_map._get_transparency_map()
 
         # CRITICAL: TCOD compute_fov expects pov=(y, x) not (x, y)!
+        # Use SYMMETRIC_SHADOWCAST for better diagonal visibility (matches game_map.py)
         fov_array = tcod.map.compute_fov(
             transparency=transparency,
             pov=(y, x),
             radius=vision_range,
-            algorithm=libtcodpy.FOV_DIAMOND,
+            algorithm=libtcodpy.FOV_SYMMETRIC_SHADOWCAST,
         )
 
         # Convert to set of tuples for O(1) lookups

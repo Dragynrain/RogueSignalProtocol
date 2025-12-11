@@ -158,9 +158,7 @@ class TestFirst5MinutesSmoke:
                     agent.wait()
             else:
                 agent.wait()
-
-        # Should complete without crashes
-        assert True  # Reaching here means no crash
+        # No exception after 50 turns means game loop is stable
 
     def test_player_stats_are_valid(self):
         """Player stats remain in valid ranges during gameplay."""

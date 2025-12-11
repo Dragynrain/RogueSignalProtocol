@@ -22,7 +22,7 @@ class TestDebugExportGameStates:
 
         # Simulate gameplay state
         assert agent.player.cpu > 0
-        assert len(agent.enemies) >= 0
+        assert isinstance(agent.enemies, list), "Enemies should be a list"
 
         # Debug export should be accessible
         # (Actual export tested in test_debug_export_integration.py)

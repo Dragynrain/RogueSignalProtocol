@@ -146,12 +146,12 @@ class TestLevelGeneration:
 
         assert len(failures) == 0, f"{len(failures)}/100 seeds failed generation validation"
 
-    def test_map_connectivity(self):
+    def test_map_connectivity(self, agent_with_guaranteed_gateway):
         """Test that player can reach the gateway (basic connectivity check)."""
-        agent = GameTestAgent(seed=42)
+        agent = agent_with_guaranteed_gateway
 
-        if agent.game_map.gateway is None:
-            pytest.skip("No gateway on this level")
+        # Fixture guarantees gateway exists
+        assert agent.game_map.gateway is not None, "Fixture failed to provide gateway"
 
         # Try to pathfind to gateway
         gateway_x = agent.game_map.gateway.x

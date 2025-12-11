@@ -25,11 +25,11 @@ pytest tests/ -q --tb=no 2>&1 | tail -20
 
 ## Token Budget (CRITICAL)
 
-- Single file: 1-3k ✅
-- Pattern match (`-k`): 3-7k ✅
-- Last-failed (`--lf`): 2-5k ✅
-- Summary only: 1k ✅
-- **Full suite: 20-30k** ⚠️ AVOID
+- Single file: 1-3k (good)
+- Pattern match (`-k`): 3-7k (good)
+- Last-failed (`--lf`): 2-5k (good)
+- Summary only: 1k (good)
+- **Full suite: 20-30k** AVOID
 
 **Goal:** < 10k tokens per session on testing
 
@@ -67,12 +67,12 @@ pytest tests/ -q --tb=no 2>&1 | tail -20
 
 ## RED FLAGS (Stop Wasting Tokens!)
 
-❌ Running full suite multiple times
-❌ Not using `--lf` when iterating
-❌ Seeing `[XXX characters truncated]`
-❌ Using `-v` on full suite
+BAD: Running full suite multiple times
+BAD: Not using `--lf` when iterating
+BAD: Seeing `[XXX characters truncated]`
+BAD: Using `-v` on full suite
 
-✅ Use `-q --tb=no | tail -20` for quick checks
-✅ Use `--lf` when fixing failures
-✅ Run smallest relevant subset
-✅ Save full suite for final validation
+GOOD: Use `-q --tb=no | tail -20` for quick checks
+GOOD: Use `--lf` when fixing failures
+GOOD: Run smallest relevant subset
+GOOD: Save full suite for final validation

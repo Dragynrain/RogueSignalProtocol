@@ -46,80 +46,62 @@ class TestMovement:
             # We just verify the game doesn't crash
             try:
                 agent.move_player(dx, dy)
-                # If we moved, verify we're in a different position or same if blocked
                 new_pos = (agent.player.x, agent.player.y)
-                # Position should either change or stay the same (if blocked)
-                assert new_pos == old_pos or new_pos != old_pos
+                # If position changed, verify it moved by at most 1 tile
+                if new_pos != old_pos:
+                    assert abs(new_pos[0] - old_pos[0]) <= 1
+                    assert abs(new_pos[1] - old_pos[1]) <= 1
             except Exception as e:
                 pytest.fail(f"Movement in direction ({dx}, {dy}) caused exception: {e}")
 
         # Player should still be alive
         agent.assert_alive()
 
-    def test_player_movement_updates_position(self):
+    def test_player_movement_updates_position(self, agent_with_walkable_adjacent):
         """Moving player should update position coordinates."""
-        agent = GameTestAgent(seed=42)
+        agent = agent_with_walkable_adjacent
         initial_x = agent.player.x
         initial_y = agent.player.y
 
-        # Find a walkable direction
-        for dx in [-1, 0, 1]:
-            for dy in [-1, 0, 1]:
-                if dx == 0 and dy == 0:
-                    continue
+        # Find a walkable direction (guaranteed to exist by fixture)
+        for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+            new_x = initial_x + dx
+            new_y = initial_y + dy
 
-                new_x = initial_x + dx
-                new_y = initial_y + dy
+            # Check bounds
+            if 0 <= new_x < 80 and 0 <= new_y < 50:
+                # Check if walkable (not a wall)
+                if (new_x, new_y) not in agent.game_map.walls:
+                    success = agent.move_player(dx, dy)
+                    if success:
+                        assert (
+                            agent.player.x == new_x
+                        ), f"Expected x={new_x}, got {agent.player.x}"
+                        assert (
+                            agent.player.y == new_y
+                        ), f"Expected y={new_y}, got {agent.player.y}"
+                        return  # Test passed
 
-                # Check bounds
-                if 0 <= new_x < 80 and 0 <= new_y < 50:
-                    # Check if walkable (not a wall)
-                    if (new_x, new_y) not in agent.game_map.walls:
-                        # This should work
-                        success = agent.move_player(dx, dy)
-                        if success:
-                            assert (
-                                agent.player.x == new_x
-                            ), f"Expected x={new_x}, got {agent.player.x}"
-                            assert (
-                                agent.player.y == new_y
-                            ), f"Expected y={new_y}, got {agent.player.y}"
-                            return  # Test passed
-
-        # If we couldn't find any walkable tile, that's suspicious but not necessarily wrong
-        # (could be surrounded by walls in rare cases)
-        pytest.skip("Could not find walkable tile to test movement")
+        # Fixture guarantees walkable adjacent - this should never be reached
+        raise AssertionError("Fixture failed to provide walkable adjacent tile")
 
     def test_movement_blocked_by_walls(self):
         """Player cannot move through walls."""
         agent = GameTestAgent(seed=42)
 
-        # Find a wall adjacent to player
         player_x, player_y = agent.player.x, agent.player.y
 
-        for dx in [-1, 0, 1]:
-            for dy in [-1, 0, 1]:
-                if dx == 0 and dy == 0:
-                    continue
+        # Place a wall directly east of player for testing
+        wall_x, wall_y = player_x + 1, player_y
+        agent.game_map.walls.add((wall_x, wall_y))
 
-                check_x = player_x + dx
-                check_y = player_y + dy
+        # Try to move into the wall
+        old_pos = (player_x, player_y)
+        agent.move_player(1, 0)  # Try to move east (into wall)
+        new_pos = (agent.player.x, agent.player.y)
 
-                # Check bounds
-                if 0 <= check_x < 80 and 0 <= check_y < 50:
-                    # If this is a wall
-                    if (check_x, check_y) in agent.game_map.walls:
-                        # Try to move there
-                        old_pos = (player_x, player_y)
-                        agent.move_player(dx, dy)
-                        new_pos = (agent.player.x, agent.player.y)
-
-                        # Position should not have changed
-                        assert old_pos == new_pos, "Player moved through a wall!"
-                        return  # Test passed
-
-        # If no walls found adjacent, skip test
-        pytest.skip("No walls adjacent to player spawn position")
+        # Position should not have changed
+        assert old_pos == new_pos, "Player moved through a wall!"
 
 
 class TestCombat:
@@ -179,22 +161,22 @@ class TestCombat:
 class TestFieldOfView:
     """Test FOV and visibility mechanics."""
 
-    def test_fov_updates_on_movement(self):
+    def test_fov_updates_on_movement(self, agent_with_walkable_adjacent):
         """Field of view should update when player moves."""
-        agent = GameTestAgent(seed=42)
+        agent = agent_with_walkable_adjacent
 
         # Get initial visible tiles
         initial_visible = set(agent.engine.visible_tiles)
 
-        # Move player if possible
+        # Move player (guaranteed to work by fixture)
         moved = False
         for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
             if agent.move_player(dx, dy):
                 moved = True
                 break
 
-        if not moved:
-            pytest.skip("Could not move player to test FOV update")
+        # Fixture guarantees movement is possible
+        assert moved, "Fixture failed to provide walkable adjacent tile"
 
         # Get new visible tiles
         new_visible = set(agent.engine.visible_tiles)
@@ -318,12 +300,12 @@ class TestEnemyBehavior:
             assert 0 <= enemy.x < 80, f"Enemy x={enemy.x} out of bounds"
             assert 0 <= enemy.y < 50, f"Enemy y={enemy.y} out of bounds"
 
-    def test_get_enemy_at_position(self):
+    def test_get_enemy_at_position(self, agent_with_guaranteed_enemy):
         """get_enemy_at should find enemies at their positions."""
-        agent = GameTestAgent(seed=42)
+        agent = agent_with_guaranteed_enemy
 
-        if len(agent.enemies) == 0:
-            pytest.skip("No enemies spawned to test")
+        # Fixture guarantees at least one enemy
+        assert len(agent.enemies) > 0, "Fixture failed to provide enemy"
 
         enemy = agent.enemies[0]
         found = agent.get_enemy_at(enemy.x, enemy.y)

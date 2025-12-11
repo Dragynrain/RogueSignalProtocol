@@ -99,6 +99,38 @@ class Player:
     def ram_used(self) -> int:
         return self.inventory_manager.get_ram_usage()
 
+    @property
+    def exploits(self):
+        """
+        Get equipped exploits as a list of ExploitDefinition objects.
+
+        Returns a 5-element list where each element is either:
+        - An ExploitDefinition object from GameData.EXPLOITS (for equipped exploits)
+        - None (for empty slots)
+
+        This property enables cycle_exploit_selection() and other systems to access
+        exploit data without knowing about InventoryManager internals.
+        """
+        from game_data import GameData
+
+        # Get equipped exploit keys from inventory manager
+        equipped_keys = self.inventory_manager.equipped_exploits
+        max_slots = self.inventory_manager.max_equipped_exploits
+
+        # Build list with exploit definitions and empty slots
+        exploits_list = []
+        for key in equipped_keys:
+            if key in GameData.EXPLOITS:
+                exploits_list.append(GameData.EXPLOITS[key])
+            else:
+                exploits_list.append(None)  # Invalid key (shouldn't happen)
+
+        # Pad remaining slots with None
+        while len(exploits_list) < max_slots:
+            exploits_list.append(None)
+
+        return exploits_list
+
     def move(self, dx: int, dy: int, game_map) -> bool:
         """
         Move player with boundary and collision checking.

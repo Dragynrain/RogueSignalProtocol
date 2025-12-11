@@ -111,11 +111,11 @@ Demonstrate perfect infiltration without detection.
 
 ---
 
-### ⚡ Efficiency & Speed (4 Achievements)
+### Efficiency & Speed (4 Achievements)
 
 Complete runs with speed and resource management mastery.
 
-#### ⚡ Speedrunner
+#### Speedrunner
 **Win in under 100 turns**
 - **Unlock Condition:** Complete all 3 levels in 99 turns or fewer
 - **Difficulty:** Hard

@@ -62,7 +62,7 @@ Checking: tests/
 RESULTS
 ====================================================================================
 
-⚠️  ISOLATION ISSUES DETECTED: 1 tests
+WARNING: ISOLATION ISSUES DETECTED: 1 tests
 
 These tests pass alone but fail in the suite (test pollution):
   - tests/unit/test_foo.py::test_bar
@@ -70,7 +70,7 @@ These tests pass alone but fail in the suite (test pollution):
 Recommendation: Check for shared state, mocking issues, or
 class-level caches being polluted across tests.
 
-❌ LEGITIMATE FAILURES: 4 tests
+LEGITIMATE FAILURES: 4 tests
 
 These tests fail both ways (not pollution):
   - tests/unit/test_foo.py::test_baz
@@ -136,11 +136,11 @@ PRE-COMMIT HOOK ENFORCEMENT CHECK
 
 Checking last 5 commits for hook bypassing...
 
-⚠️  96243f4 - Refactor: Improve helper utilization
-     └─ Commit message mentions '--no-verify'
+WARNING: 96243f4 - Refactor: Improve helper utilization
+     Commit message mentions '--no-verify'
 
 ================================================================================
-❌ VIOLATIONS DETECTED: 1 commit(s)
+VIOLATIONS DETECTED: 1 commit(s)
 
 Action Required:
 1. Review the flagged commits
@@ -173,14 +173,14 @@ Add to your GitHub Actions workflow:
 
 ## Best Practices
 
-### ✅ DO:
+### DO:
 
 1. **Run tests before committing** - Let the hook do its job
 2. **Fix failures immediately** - Don't bypass hooks to "save time"
 3. **Use isolation checker** - After complex refactoring
 4. **Keep test fixtures clean** - Avoid shared mutable state
 
-### ❌ DON'T:
+### DON'T:
 
 1. **Don't use `--no-verify`** - Unless absolute emergency
 2. **Don't commit failing tests** - Ever

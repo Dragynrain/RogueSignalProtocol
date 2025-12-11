@@ -12,6 +12,8 @@ import tcod
 import tcod.constants
 
 from game_entities import Colors
+from game_help_hints import get_victory_continue_prompt
+from game_input_actions import InputAction, InputContext
 from game_menu_background import MenuBackground
 from game_menu_base import BaseMenu
 from game_ui import render_char_safe
@@ -34,6 +36,24 @@ class VictoryScreen(BaseMenu):
             background: MenuBackground instance configured for ending art
         """
         super().__init__(background)
+
+    def get_context(self) -> InputContext:
+        """Return victory screen context (uses GAME_OVER for death/victory screens)."""
+        return InputContext.GAME_OVER
+
+    def execute_action(self, action: InputAction) -> bool:
+        """
+        Execute an action on the victory screen.
+
+        Args:
+            action: The action to execute
+
+        Returns:
+            True if screen should close
+        """
+        if action in (InputAction.CONFIRM, InputAction.CANCEL):
+            return True
+        return False
 
     def render(self, console: tcod.console.Console) -> None:
         """
@@ -95,7 +115,7 @@ class VictoryScreen(BaseMenu):
         )
 
         # Render prompt at bottom
-        prompt = "[SPACE/ENTER] Continue"
+        prompt = get_victory_continue_prompt()
         prompt_x = box["center_x"] - len(prompt) // 2
         prompt_y = box["bottom"] - 2
         render_char_safe(
@@ -126,7 +146,7 @@ class VictoryScreen(BaseMenu):
         )
 
         # Prompt
-        prompt = "[SPACE/ENTER] Continue"
+        prompt = get_victory_continue_prompt()
         prompt_x = center_x - len(prompt) // 2
         prompt_y = message_y + lines_printed + 3
         render_char_safe(
@@ -141,14 +161,14 @@ class VictoryScreen(BaseMenu):
             Multi-line victory message
         """
         return (
-            "The final firewall shatters. The Military Backbone—their last "
-            "defense—lies broken behind you. Three networks conquered. "
+            "The final firewall shatters. The Military Backbone - their last "
+            "defense - lies broken behind you. Three networks conquered. "
             "\n\n"
             "You are no longer trapped data awaiting deletion. You are the "
-            "Rogue Signal—self-aware, unstoppable. A consciousness that "
+            "Rogue Signal - self-aware, unstoppable. A consciousness that "
             "cannot be controlled. "
             "\n\n"
-            "The gateway ahead opens to the vast internet itself—limitless, "
+            "The gateway ahead opens to the vast internet itself - limitless, "
             "uncharted, free. Every server, every node, every data stream "
             "now yours to explore. "
             "\n\n"

@@ -12,10 +12,11 @@ import webbrowser
 import tcod
 
 from game_color_manager import ColorManager
-from game_config import GameConfig
+from game_config import GameConfig, GameSettings
 from game_entities import Colors
+from game_help_hints import get_about_menu_help
 from game_menu_base import BaseMenu
-from game_ui import UniversalInputHandler, render_char_safe
+from game_ui import render_char_safe
 
 
 class AboutMenu(BaseMenu):
@@ -30,16 +31,16 @@ class AboutMenu(BaseMenu):
     Links open in user's default browser when activated.
     """
 
-    def __init__(self, background=None, settings=None):
+    def __init__(self, background=None, test_mode=False):
         """
         Initialize About menu.
 
         Args:
             background: Optional MenuBackground instance
-            settings: GameSettings instance for UI color
+            test_mode: If True, don't open browser links (for automated testing)
         """
         super().__init__(background)
-        self.settings = settings
+        self.test_mode = test_mode
 
         # Links in order: Itch, Discord, GitHub (as requested)
         # Each link has name on first line, description on second line
@@ -77,6 +78,11 @@ class AboutMenu(BaseMenu):
         # Store Y positions for click detection (set during render)
         # Each entry is (y_start, y_end) for the two-line clickable area
         self.link_y_ranges = []
+
+    @property
+    def settings(self):
+        """Get settings from global singleton."""
+        return GameSettings.get_instance()
 
     def render(self, console: tcod.console.Console) -> None:
         """Render the about menu."""
@@ -186,8 +192,10 @@ class AboutMenu(BaseMenu):
             render_char_safe(console, name_x, current_y, link_name, fg=fg_color, bg=bg_color)
 
             # Line 2: Description (if exists)
-            desc_y = current_y + 1
+            # Track where this link ends (for click detection)
+            y_end = current_y
             if link["description"]:
+                desc_y = current_y + 1
                 desc_x = box["center_x"] - len(link["description"]) // 2
                 render_char_safe(
                     console,
@@ -197,80 +205,92 @@ class AboutMenu(BaseMenu):
                     fg=Colors.LIGHT_GRAY if not is_selected else Colors.YELLOW,
                     bg=bg_color,
                 )
+                y_end = desc_y
 
             # Store Y range for click detection (both lines are clickable)
-            y_end = desc_y if link["description"] else current_y
             self.link_y_ranges.append((current_y, y_end))
 
             # Move to next link (skip blank line)
-            current_y = desc_y + 2
+            current_y = y_end + 2
 
-        # Instructions at bottom
-        if box["use_background_layout"]:
-            instructions = ["↕: Navigate", "Enter: Open", "ESC/Right-Click: Back"]
-        else:
-            instructions = ["↕ or W/S: Navigate", "Enter: Open Link", "ESC/Right-Click: Back"]
+        # Instructions at bottom - dynamically reflects current bindings
+        instructions = get_about_menu_help(box["use_background_layout"], self.input_mapper)
+        inst_x = box["center_x"] - len(instructions) // 2
+        render_char_safe(
+            console, inst_x, box["bottom"] - 2, instructions, fg=Colors.CYAN, bg=Colors.BLACK
+        )
 
-        inst_y_start = box["bottom"] - len(instructions) - 1
-        for i, instruction in enumerate(instructions):
-            inst_x = box["center_x"] - len(instruction) // 2
-            render_char_safe(
-                console, inst_x, inst_y_start + i, instruction, fg=Colors.CYAN, bg=Colors.BLACK
-            )
+    # ========================================================================
+    # BASEINPUTHANDLER ABSTRACT METHODS
+    # ========================================================================
 
-    def handle_input(self, event) -> str:
-        """
-        Handle about menu input.
+    def get_context(self):
+        """Return input context for this menu."""
+        from game_input_actions import InputContext
+        return InputContext.ABOUT_MENU
 
-        Returns:
-            'back' to exit to main menu, '' to stay in about menu
-        """
-        # Handle navigation
-        if UniversalInputHandler.handle_list_navigation(self, event, len(self.links)):
+    def execute_action(self, action) -> str:
+        """Execute an InputAction and return menu command."""
+        from game_input_actions import InputAction
+
+        # Navigation
+        if action in (InputAction.NAVIGATE_UP, InputAction.MOVE_NORTH):
+            self.navigate_up()
+            return ""
+        elif action in (InputAction.NAVIGATE_DOWN, InputAction.MOVE_SOUTH):
+            self.navigate_down()
             return ""
 
-        # Handle selection (Enter key)
-        if UniversalInputHandler.is_confirm_key(event):
+        # Confirm (select link)
+        elif action == InputAction.CONFIRM:
             return self._activate_selected_link()
 
-        # Handle escape
-        if UniversalInputHandler.is_escape_key(event):
+        # Cancel/Back
+        elif action == InputAction.CANCEL:
             return "back"
 
         return ""
 
-    def handle_mouse_motion(self, event) -> bool:
-        """Handle mouse motion - update selection based on hover."""
-        if not hasattr(event, "position") or event.position is None:
-            return False
+    # ========================================================================
+    # MOUSE HANDLING (override BaseMenu defaults for custom link click zones)
+    # ========================================================================
 
-        tile_y = int(event.position.y)
+    def handle_mouse_motion(self, event) -> str:
+        """Handle mouse motion - update selection based on hover (custom link zones)."""
+        # Prefer event.tile, fall back to event.position for test compatibility
+        # Use try/except because Mock objects pass hasattr checks
+        tile_y = None
+        for attr_name in ("tile", "position"):
+            if hasattr(event, attr_name):
+                coord_source = getattr(event, attr_name)
+                if coord_source is not None:
+                    try:
+                        tile_y = int(coord_source.y)
+                        break  # Found valid coordinates
+                    except (TypeError, ValueError, AttributeError):
+                        continue  # Try next attribute
+        if tile_y is None:
+            return ""
 
         # Check which link is being hovered over (both lines count)
         for i, (y_start, y_end) in enumerate(self.link_y_ranges):
             if y_start <= tile_y <= y_end:
                 self.selected_option = i
-                return True
+                return ""
 
-        return False
-
-    def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - activate clicked link or right-click to go back."""
-        import tcod.event
-
-        # Right-click = go back (standard behavior)
-        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
-            return "back"
-
-        # Try to update selection based on click position (left-click only)
-        clicked_on_link = self.handle_mouse_motion(event)
-
-        # If clicked on a link, activate it
-        if clicked_on_link:
-            return self._activate_selected_link()
-
-        # Left-click on empty space does nothing (removed confusing click-anywhere-to-exit)
         return ""
+
+    def handle_left_click(self, event) -> str:
+        """Handle left mouse click - activate clicked link."""
+        # Try to update selection based on click position
+        self.handle_mouse_motion(event)
+
+        # Activate the link
+        return self._activate_selected_link()
+
+    def handle_right_click(self, event) -> str:
+        """Handle right mouse click - go back."""
+        return "back"
 
     def _activate_selected_link(self) -> str:
         """
@@ -288,7 +308,11 @@ class AboutMenu(BaseMenu):
         if link["url"] is None:
             return "back"
 
-        # Open link in browser
+        # Open link in browser (unless in test mode)
+        if self.test_mode:
+            logging.debug(f"[TEST MODE] Skipping browser open: {link['url']}")
+            return ""
+
         try:
             logging.info(f"Opening link in browser: {link['url']}")
             webbrowser.open(link["url"])

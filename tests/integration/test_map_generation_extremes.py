@@ -112,8 +112,9 @@ class TestGatewayReachability:
         for seed in range(2000, 2020):  # 20 seeds
             agent = GameTestAgent(seed=seed)
 
-            player_pos = (agent.player.x, agent.player.y)
-            gateway_pos = (agent.game_map.gateway.x, agent.game_map.gateway.y)
+            # TCOD pathfinding uses (y, x) order, not (x, y)
+            player_pos = (agent.player.y, agent.player.x)
+            gateway_pos = (agent.game_map.gateway.y, agent.game_map.gateway.x)
 
             # Build cost map (1 = walkable, 0 = blocked)
             cost = np.ones((GameConfig.MAP_HEIGHT, GameConfig.MAP_WIDTH), dtype=np.int8)

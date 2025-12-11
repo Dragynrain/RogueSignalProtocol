@@ -9,6 +9,25 @@ Handles all dialogue-related input processing including:
 
 This module was extracted from game_input.py to provide focused,
 maintainable dialogue interaction logic.
+
+ARCHITECTURE NOTE:
+==================
+DialogueInputManager intentionally does NOT inherit from BaseInputHandler.
+
+Dialogue input has different requirements from other modals:
+1. Single-key actions (Y/N/D) without action abstraction overhead
+2. Tight integration with DialogueSystem and DialogueInputHandler
+3. No need for gamepad analog stick movement (dialogues use discrete buttons)
+4. Separate mouse button tracking for hover vs click states
+
+The modal handlers (InventoryInputHandler, LookModeInputHandler, etc.) inherit
+from BaseInputHandler because they share common patterns (cursor movement,
+gamepad stick support, unified action dispatch). Dialogues are simpler and
+more specialized, so they use direct event handling.
+
+If gamepad support is needed for dialogues in the future, consider either:
+- Converting to BaseInputHandler with InputContext.DIALOGUE
+- Or extending handle_dialogue_gamepad_input() directly (current approach)
 """
 
 import logging
@@ -50,6 +69,10 @@ class DialogueInputManager:
         if not dialogue:
             return True
 
+        # Only process keyboard events (gamepad uses separate handler)
+        if not hasattr(event, 'sym'):
+            return True
+
         # Use DialogueInputHandler to process input
         action = DialogueInputHandler.handle_input(dialogue, event.sym)
 
@@ -68,13 +91,95 @@ class DialogueInputManager:
         # Dialogue is active - don't process other inputs
         return True
 
+    def handle_dialogue_gamepad_input(self, event) -> bool:
+        """
+        Handle gamepad input for dialogues using InputMapper.
+
+        Uses standard Xbox layout (remappable via settings):
+        - A button = Confirm/Yes (CONFIRM action)
+        - B button = Cancel/No (CANCEL action)
+        - X button = Don't warn again (DIALOGUE_SKIP_WARNING action)
+
+        Args:
+            event: Controller button event
+
+        Returns:
+            True if event was handled, or should_continue value for death/victory dialogues
+        """
+        from game_input_actions import InputAction, InputContext
+
+        dialogue = self.game.dialogue_state.get_active()
+        if not dialogue:
+            return True
+
+        # Only process button presses, not releases
+        if not event.pressed:
+            return True
+
+        # Use InputMapper to get action (respects remapped bindings)
+        input_mapper = getattr(self.game, "input_mapper", None)
+        if not input_mapper:
+            # Fallback: get from game's input handler
+            if hasattr(self.game, "input_handler") and hasattr(self.game.input_handler, "input_mapper"):
+                input_mapper = self.game.input_handler.input_mapper
+            else:
+                # Last resort: create default mapper (loses user bindings!)
+                logging.warning("DialogueInputHandler: input_mapper not found, using defaults")
+                from game_input_mappings import InputMapper
+                input_mapper = InputMapper()
+
+        # Get action from InputMapper using DIALOGUE context
+        input_action = input_mapper.get_action_for_gamepad_button(event.button, InputContext.DIALOGUE)
+
+        # Map InputAction to dialogue action string
+        action = None
+        if input_action == InputAction.CONFIRM:
+            # Check if dialogue has a confirm option (Y key)
+            import tcod.event
+            if tcod.event.KeySym.Y in dialogue.valid_keys:
+                action = "confirm"
+            elif tcod.event.KeySym.SPACE in dialogue.valid_keys or tcod.event.KeySym.RETURN in dialogue.valid_keys:
+                # Single-button dialogues (death, intro, victory) - A dismisses
+                action = "dismiss"
+        elif input_action == InputAction.CANCEL:
+            # Check if dialogue has a cancel option (N key)
+            import tcod.event
+            if tcod.event.KeySym.N in dialogue.valid_keys:
+                action = "cancel"
+            elif tcod.event.KeySym.ESCAPE in dialogue.valid_keys:
+                action = "dismiss"
+            else:
+                # B always dismisses if no explicit cancel
+                action = "dismiss"
+        elif input_action == InputAction.DIALOGUE_SKIP_WARNING:
+            # Check if dialogue has "don't show again" option (D key)
+            import tcod.event
+            if tcod.event.KeySym.D in dialogue.valid_keys:
+                action = "dont_show_again"
+
+        # Process the action
+        if action == "confirm":
+            self.handle_confirm()
+            return True
+        elif action in ["cancel", "dismiss"]:
+            should_continue = self.handle_dismiss()
+            return should_continue
+        elif action == "dont_show_again":
+            self.handle_dont_show_again()
+            return True
+
+        # Dialogue is active - consume all gamepad input
+        return True
+
     def handle_confirm(self) -> None:
         """Handle dialogue confirmation (user pressed Y or clicked confirm button)."""
         dialogue = self.game.dialogue_state.get_active()
         if not dialogue:
             return
 
-        # Check dialogue type by title (since we're using DialogueBox now)
+        # Check dialogue type by title string matching
+        # NOTE: This pattern relies on title strings being stable. A future refactor
+        # could add a 'dialogue_type' enum to DialogueBox for more type-safe matching.
         if "Export Debug Package" in dialogue.title:
             # User confirmed debug export
             self._perform_debug_export()
@@ -83,16 +188,15 @@ class DialogueInputManager:
             # Player confirmed overclock - re-execute the pending exploit
             self.game.overclock_confirmation = True
             # Re-execute the exploit that was cancelled
-            if self.game.overclock_exploit and self.game.cursor_position:
+            exploit_key = self.game.overclock_exploit
+            target_pos = self.game.cursor_position
+            if exploit_key and target_pos:
                 # Use stored cursor position (from targeting mode or direct execute_exploit call)
-                self.game.exploit_system.execute_exploit(
-                    self.game.overclock_exploit, self.game.cursor_position
-                )
-            elif self.game.overclock_exploit:
+                self.game.exploit_system.execute_exploit(exploit_key, target_pos)
+            elif exploit_key:
                 # No cursor position - use player position (untargeted exploits)
-                self.game.exploit_system.execute_exploit(
-                    self.game.overclock_exploit, self.game.player.position
-                )
+                self.game.exploit_system.execute_exploit(exploit_key, self.game.player.position)
+            # Note: overclock_exploit is cleared in game_combat.py after successful execution
         elif "FRIENDLY FIRE WARNING" in dialogue.title:
             # Player confirmed friendly fire - execute the pending exploit
             self.game.friendly_fire_confirmed = True
@@ -101,8 +205,14 @@ class DialogueInputManager:
                 self.game.exploit_system.execute_exploit(
                     self.game.friendly_fire_exploit, self.game.friendly_fire_target
                 )
+        elif "CRITICAL WARNING" in dialogue.title:
+            # Combined System Crash + overheat dialogue - set both flags
+            self.game.overclock_confirmation = True
+            self.game.system_crash_confirmed = True
+            # Re-execute System Crash
+            self.game.exploit_system.execute_exploit("system_crash", self.game.player.position)
         elif "SYSTEM CRASH" in dialogue.title:
-            # Player confirmed System Crash - re-execute
+            # Player confirmed System Crash (no overheat) - re-execute
             self.game.system_crash_confirmed = True
             # Re-execute System Crash
             self.game.exploit_system.execute_exploit("system_crash", self.game.player.position)
@@ -136,8 +246,22 @@ class DialogueInputManager:
             # Close inventory when under attack (can't stay in inventory while being attacked)
             self.game.show_inventory = False
         elif "OVERCLOCK WARNING" in dialogue.title:
-            # Cancel exploit use - just close dialogue
-            pass
+            # Cancel exploit use - clear pending state
+            self.game.overclock_exploit = None
+            self.game.overclock_confirmation = False
+        elif "FRIENDLY FIRE WARNING" in dialogue.title:
+            # Cancel friendly fire - clear pending state
+            self.game.friendly_fire_exploit = None
+            self.game.friendly_fire_target = None
+            self.game.friendly_fire_confirmed = False
+        elif "CRITICAL WARNING" in dialogue.title:
+            # Cancel combined System Crash + overheat - clear both flags
+            self.game.overclock_exploit = None
+            self.game.overclock_confirmation = False
+            self.game.system_crash_confirmed = False
+        elif "SYSTEM CRASH" in dialogue.title:
+            # Cancel system crash - clear pending state
+            self.game.system_crash_confirmed = False
         elif "GATEWAY" in dialogue.title:
             # Player cancelled gateway
             self.game.message_log.add_message("Staying in current network")
@@ -252,38 +376,31 @@ class DialogueInputManager:
             return False
 
         # Convert pixel coordinates to console tile coordinates
-        # Get context for window size
-        context = None
-        if self.renderer and hasattr(self.renderer, "context"):
-            context = self.renderer.context
-        elif hasattr(self.game, "context"):
-            context = self.game.context
+        window_w, window_h = InputCoordinateConverter.get_window_dimensions(
+            self.renderer, self.game
+        )
 
-        # Get window dimensions
-        if context and hasattr(context, "sdl_window"):
-            window_w, window_h = context.sdl_window.size
-        else:
-            window_w, window_h = (800, 600)
-
-        # Simple conversion: pixels / (window_size / console_size)
-        pixels_per_tile_x = window_w / GameConfig.SCREEN_WIDTH  # 80
-        pixels_per_tile_y = window_h / GameConfig.SCREEN_HEIGHT  # 50
-
-        tile_x = int(event.position.x / pixels_per_tile_x)
-        tile_y = int(event.position.y / pixels_per_tile_y)
-
-        # Clamp to valid range
-        tile_x = max(0, min(GameConfig.SCREEN_WIDTH - 1, tile_x))
-        tile_y = max(0, min(GameConfig.SCREEN_HEIGHT - 1, tile_y))
+        # Use CoordinateHelpers for consistent pixel-to-tile conversion
+        tile_x, tile_y = CoordinateHelpers.pixel_to_char_coords(
+            int(event.position.x),
+            int(event.position.y),
+            window_w,
+            window_h,
+            GameConfig.SCREEN_WIDTH,
+            GameConfig.SCREEN_HEIGHT
+        )
 
         # Ask the dialogue renderer which option (if any) was clicked
         # This is the single source of truth - no duplicated calculations!
         option_index = UnifiedRenderer.get_option_at_click(self.game.dialogue_state, tile_x, tile_y)
 
         # Determine action based on which option was clicked
-        if option_index is not None:
+        if option_index is not None and option_index < len(dialogue.valid_keys):
             # Clicked on a specific option - use that option's key
             action = DialogueInputHandler.handle_input(dialogue, dialogue.valid_keys[option_index])
+        elif not dialogue.valid_keys:
+            # No valid keys available - ignore click
+            return True
         else:
             # Clicked anywhere else (not on a button)
             # For death/victory dialogues, don't allow click-to-dismiss (prevent accidental exits)

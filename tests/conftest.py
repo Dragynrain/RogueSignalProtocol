@@ -58,6 +58,8 @@ import random
 import sys
 
 import pytest
+from contextlib import contextmanager
+from unittest.mock import patch
 
 # Add the project root to Python path so we can import game modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -71,6 +73,59 @@ from tests.fixtures.standard_patterns import (
     create_multi_enemy_scenario,
     create_stealth_scenario,
 )
+
+
+# ===== Time Mocking for Reliable Tests =====
+
+
+class MockTime:
+    """
+    Mock time.time() for reliable testing of time-dependent behavior.
+
+    Instead of using time.sleep() (which is flaky in CI), use this to:
+    1. Control what time.time() returns
+    2. Advance time instantly without actually waiting
+
+    Usage:
+        def test_settling_period(mock_time):
+            analog.get_movement()  # Uses initial time
+            mock_time.advance(0.035)  # Advance past settling period
+            analog.get_movement()  # Now sees time has passed
+    """
+
+    def __init__(self, start_time: float = 1000.0):
+        self._current_time = start_time
+
+    def time(self) -> float:
+        """Return the current mocked time."""
+        return self._current_time
+
+    def advance(self, seconds: float) -> float:
+        """Advance the mocked time by the given number of seconds."""
+        self._current_time += seconds
+        return self._current_time
+
+    def set(self, timestamp: float) -> None:
+        """Set the mocked time to a specific value."""
+        self._current_time = timestamp
+
+
+@pytest.fixture
+def mock_time():
+    """
+    Pytest fixture for mocking time.time().
+
+    Replaces time.sleep()-based tests with instant, reliable time control.
+
+    Usage:
+        def test_auto_repeat(mock_time):
+            handler.handle_button(press_event)  # At t=1000.0
+            mock_time.advance(0.4)  # Advance to t=1000.4 (past initial delay)
+            handler.poll_repeat()  # Should now trigger repeat
+    """
+    mock = MockTime()
+    with patch('time.time', mock.time):
+        yield mock
 
 # ===== Test Infrastructure Fixtures =====
 
@@ -432,3 +487,273 @@ def real_game_data():
 def basic_map(test_map):
     """Alias for test_map fixture (for backward compatibility)."""
     return test_map
+
+
+# ===== Gamepad Test Fixtures =====
+
+# Settling period for analog stick (30ms in implementation, use 35ms for safety)
+SETTLING_PERIOD_SEC = 0.035
+
+
+def get_movement_with_settling(analog, game_or_turn, x, y, mock_time, settling_sec=None):
+    """
+    Get movement after waiting for the settling period.
+
+    The analog handler has a 30ms settling period before locking direction.
+    This helper sets the stick position, waits, and then gets the movement.
+
+    Args:
+        analog: The AnalogStickHandler instance
+        game_or_turn: Either GameEngine instance (uses .turn) or turn number directly
+        x, y: Stick coordinates to set
+        mock_time: MockTime instance for advancing time (required for reliable tests)
+        settling_sec: How long to wait for settling (default SETTLING_PERIOD_SEC)
+
+    Returns:
+        The movement tuple (dx, dy) or None
+    """
+    if settling_sec is None:
+        settling_sec = SETTLING_PERIOD_SEC
+
+    # Handle both game object and raw turn number
+    turn = game_or_turn.turn if hasattr(game_or_turn, 'turn') else game_or_turn
+
+    # Set the stick position
+    analog.update_left_stick(x=x, y=y)
+
+    # First call starts the settling timer
+    analog.get_left_stick_movement_gameplay(turn)
+
+    # Advance mock time past settling period
+    mock_time.advance(settling_sec)
+
+    # Now get the actual movement (should have direction locked)
+    return analog.get_left_stick_movement_gameplay(turn)
+
+
+@pytest.fixture
+def game_with_gamepad():
+    """Create game instance with mock gamepad for gamepad input tests.
+
+    Returns (game, input_handler, mock_controller) tuple.
+    Use for testing gamepad input handling, analog stick behavior, etc.
+    """
+    from unittest.mock import Mock
+
+    from game_audio import NullSoundManager
+    from game_engine import GameEngine
+    from game_input import InputHandler
+
+    settings = GameSettings()
+    settings.graphics_mode = "text"
+    sound_manager = NullSoundManager(settings)
+    game = GameEngine(settings=settings, sound_manager=sound_manager)
+
+    # Mock controller
+    mock_controller = Mock()
+    mock_controller.name = "Test Controller"
+    mock_controller.instance_id = 0
+    controllers = {mock_controller}
+
+    # Create input handler with controllers
+    input_handler = InputHandler(game, renderer=None, controllers=controllers)
+
+    # Clear starting dialogue
+    game.dialogue_state.active_dialogue = None
+    game.dialogue_state.dialogue_history = []
+
+    return game, input_handler, mock_controller
+
+
+# ===== Audio Test Configuration =====
+
+def pytest_addoption(parser):
+    """Add custom command line options."""
+    parser.addoption(
+        "--audio",
+        action="store_true",
+        default=False,
+        help="Run audio tests that play real music/sound effects"
+    )
+    parser.addoption(
+        "--full",
+        action="store_true",
+        default=False,
+        help="Run full test suite including audio tests"
+    )
+
+
+def pytest_configure(config):
+    """Configure pytest based on command line options."""
+    config.addinivalue_line(
+        "markers", "audio: Tests that play real audio (skip by default)"
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip audio tests unless --audio or --full flags are provided."""
+    if config.getoption("--audio") or config.getoption("--full"):
+        # Audio tests requested - don't skip them
+        return
+
+    skip_audio = pytest.mark.skip(reason="Audio test skipped (use --audio or --full to run)")
+    for item in items:
+        if "audio" in item.keywords:
+            item.add_marker(skip_audio)
+
+
+# ===== Deterministic Test Agent Fixtures =====
+# These fixtures guarantee specific test conditions exist,
+# eliminating non-deterministic pytest.skip() calls.
+
+
+@pytest.fixture
+def agent_with_walkable_adjacent():
+    """
+    Create a GameTestAgent with guaranteed walkable tile adjacent to player.
+
+    This fixture ensures there's at least one direction the player can move,
+    eliminating the need for runtime pytest.skip() when testing movement.
+
+    The fixture will clear a wall adjacent to the player if all directions
+    are blocked.
+    """
+    from tests.test_agent import GameTestAgent
+
+    agent = GameTestAgent(seed=42)
+
+    # Check if player has any walkable adjacent tile
+    directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # N, E, S, W
+    has_walkable = False
+
+    for dx, dy in directions:
+        adj_x = agent.player.x + dx
+        adj_y = agent.player.y + dy
+        if (adj_x, adj_y) not in agent.game_map.walls:
+            if 0 <= adj_x < agent.game_map.width and 0 <= adj_y < agent.game_map.height:
+                has_walkable = True
+                break
+
+    # If no walkable adjacent, clear the tile to the east
+    if not has_walkable:
+        east_x = agent.player.x + 1
+        east_y = agent.player.y
+        agent.game_map.walls.discard((east_x, east_y))
+
+    return agent
+
+
+@pytest.fixture
+def agent_with_guaranteed_enemy():
+    """
+    Create a GameTestAgent with at least one enemy present.
+
+    This fixture spawns an enemy if none exist, eliminating the need for
+    runtime pytest.skip() when testing enemy-related functionality.
+
+    Returns:
+        GameTestAgent with at least one enemy
+    """
+    from tests.test_agent import GameTestAgent
+
+    agent = GameTestAgent(seed=42)
+
+    # Spawn enemy if none exist
+    if len(agent.enemies) == 0:
+        # Place enemy 3 tiles east of player (safe distance)
+        enemy_x = agent.player.x + 3
+        enemy_y = agent.player.y
+        # Ensure position is walkable
+        agent.game_map.walls.discard((enemy_x, enemy_y))
+        agent.spawn_enemy("bot", enemy_x, enemy_y)
+
+    return agent
+
+
+@pytest.fixture
+def agent_with_guaranteed_gateway():
+    """
+    Create a GameTestAgent with a gateway present on the level.
+
+    This fixture places a gateway if none exists, eliminating the need for
+    runtime pytest.skip() when testing gateway/progression functionality.
+
+    The gateway is placed in a walkable position far from the player.
+
+    Returns:
+        GameTestAgent with gateway present (agent.game_map.gateway is not None)
+    """
+    from game_entities import Position
+
+    from tests.test_agent import GameTestAgent
+
+    agent = GameTestAgent(seed=42)
+
+    # Place gateway if none exists
+    if agent.game_map.gateway is None:
+        # Place gateway in opposite corner from player (far away)
+        # Use lower-right area of map
+        gateway_x = agent.game_map.width - 10
+        gateway_y = agent.game_map.height - 10
+        # Ensure position is walkable
+        agent.game_map.walls.discard((gateway_x, gateway_y))
+        agent.game_map.gateway = Position(gateway_x, gateway_y)
+
+    return agent
+
+
+@pytest.fixture
+def agent_with_valid_movement_position():
+    """
+    Create a GameTestAgent with player at a position that has valid adjacent moves.
+
+    This fixture relocates the player if necessary to ensure at least one
+    adjacent tile allows movement, eliminating runtime pytest.skip() calls.
+
+    Returns:
+        Tuple of (agent, original_position) where original_position is guaranteed
+        to have at least one valid adjacent move.
+    """
+    from game_entities import Position
+
+    from tests.test_agent import GameTestAgent
+
+    agent = GameTestAgent(seed=42)
+
+    directions = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # N, E, S, W
+
+    # Check if current position has valid adjacent moves
+    def has_valid_adjacent(pos):
+        for dx, dy in directions:
+            adj_x = pos.x + dx
+            adj_y = pos.y + dy
+            adj_pos = Position(adj_x, adj_y)
+            if agent.game_map.is_valid_position(adj_pos):
+                return True
+        return False
+
+    original_position = Position(agent.player.x, agent.player.y)
+
+    if has_valid_adjacent(original_position):
+        return agent, original_position
+
+    # Try alternative positions
+    test_positions = [
+        Position(15, 15),
+        Position(20, 20),
+        Position(10, 10),
+        Position(25, 25),
+    ]
+
+    for test_pos in test_positions:
+        if agent.game_map.is_valid_position(test_pos) and has_valid_adjacent(test_pos):
+            agent.player.position = test_pos
+            return agent, test_pos
+
+    # Last resort: clear walls around player's current position
+    agent.player.position = original_position
+    clear_x = original_position.x + 1
+    clear_y = original_position.y
+    agent.game_map.walls.discard((clear_x, clear_y))
+
+    return agent, original_position

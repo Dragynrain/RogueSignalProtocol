@@ -17,11 +17,14 @@ from game_config import GameConfig
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Colors
 from game_help_content import HelpContent
+from game_help_hints import get_help_screen_help
+from game_input_actions import InputAction, InputContext
+from game_input_base import BaseInputHandler
 from game_screen_utilities import ScreenRenderingUtils
-from game_ui import UniversalInputHandler, render_char_safe
+from game_ui import render_char_safe
 
 
-class GraphicalHelpMenu:
+class GraphicalHelpMenu(BaseInputHandler):
     """
     Refactored graphics-mode help menu using centralized content.
 
@@ -29,10 +32,12 @@ class GraphicalHelpMenu:
     Renders sprites via SDL layer, text via console overlay with transparency.
     """
 
-    def __init__(self, context, settings, tile_manager):
+    def __init__(self, context, tile_manager):
         """Initialize graphical help menu."""
+        # Initialize BaseInputHandler (creates InputMapper and GamepadHandler)
+        super().__init__(game=None, renderer=None)
+
         self.context = context
-        self.settings = settings
         self.tile_manager = tile_manager
 
         if self.tile_manager is None:
@@ -59,6 +64,7 @@ class GraphicalHelpMenu:
             self._build_page_1(),  # Objectives & Mechanics
             self._build_page_2(),  # Items & Enemies
             self._build_page_3(),  # Exploits & Status Effects
+            self._build_page_4(),  # Gamepad Controls
         ]
 
         self.pages_built = True
@@ -137,7 +143,7 @@ class GraphicalHelpMenu:
         heading = "CONTROLS:"
         text_lines.append((utils.center_x(heading), y, heading, Colors.CYAN))
 
-        controls = HelpContent.get_controls()
+        controls = HelpContent.get_controls(self.input_mapper)
 
         # Movement - left-aligned block, centered as group
         y += 2
@@ -167,36 +173,11 @@ class GraphicalHelpMenu:
             text_lines.append((block_x, y, text, Colors.WHITE))
             y += 1
 
-        # Mouse - left-aligned block, centered as group
-        y += 1
-        mouse_text = []
-        for label, desc in controls["mouse"]:
-            if "Click" in label:
-                mouse_text.append(f"Mouse: {label} to {desc.lower()}")
-            elif "Wheel" in label:
-                mouse_text.append(f"Wheel to {desc.lower()}")
-            else:
-                mouse_text.append(f"Right-click to {desc.lower()}")
-        block_x = utils.center_block_x(mouse_text)
-        for i, (label, desc) in enumerate(controls["mouse"]):
-            text_lines.append(
-                (
-                    block_x,
-                    y,
-                    mouse_text[i],
-                    Colors.WHITE if "Right" not in label else Colors.LIGHT_GRAY,
-                )
-            )
-            y += 1
-
-        # Debug
-        for label, desc in controls["debug"]:
-            text = f"{label}: {desc}"
-            text_lines.append((utils.center_x(text), y, text, Colors.LIGHT_GRAY))
-            y += 1
+        # NOTE: Mouse and Debug controls removed to fit within screen bounds
+        # Mouse controls are intuitive, debug is Shift+F12
 
         return {
-            "title": "MAP, OBJECTIVE, & CONTROLS (Page 1/3)",
+            "title": "MAP, OBJECTIVE, & CONTROLS (Page 1/4)",
             "sprites": sprites,
             "text_lines": text_lines,
         }
@@ -298,10 +279,10 @@ class GraphicalHelpMenu:
                 )
                 text_lines.append((right_text_x, y + 1, desc, Colors.WHITE))
 
-        return {"title": "ITEMS & ENEMIES (Page 2/3)", "sprites": sprites, "text_lines": text_lines}
+        return {"title": "ITEMS & ENEMIES (Page 2/4)", "sprites": sprites, "text_lines": text_lines}
 
     def _build_page_3(self) -> dict:
-        """Page 3/3: EXPLOITS & STATUS EFFECTS (2-column layout, no sprites)."""
+        """Page 3/4: EXPLOITS & STATUS EFFECTS (2-column layout, no sprites)."""
         text_lines = []
 
         # Two-column positions (narrower left column with 2-line exploits, wider gap)
@@ -383,7 +364,74 @@ class GraphicalHelpMenu:
             y_right += 2
 
         return {
-            "title": "EXPLOITS & STATUS EFFECTS (Page 3/3)",
+            "title": "EXPLOITS & STATUS EFFECTS (Page 3/4)",
+            "sprites": [],  # Text-only page
+            "text_lines": text_lines,
+        }
+
+    def _build_page_4(self) -> dict:
+        """Page 4/4: GAMEPAD CONTROLS (text-only, no sprites)."""
+        text_lines = []
+        utils = ScreenRenderingUtils
+
+        # Pass input_mapper for dynamic button hints
+        gamepad_controls = HelpContent.get_gamepad_controls(self.input_mapper)
+
+        # Start with title
+        y = 4
+        title = "GAMEPAD CONTROLS"
+        text_lines.append((utils.center_x(title), y, title, Colors.YELLOW))
+        y += 2
+
+        # Note about customization
+        note = "(Customizable in Controls)"
+        text_lines.append((utils.center_x(note), y, note, Colors.LIGHT_GRAY))
+        y += 3
+
+        # GAMEPLAY section
+        text_lines.append((5, y, "GAMEPLAY:", Colors.CYAN))
+        y += 2
+
+        for label, desc in gamepad_controls["gameplay"]:
+            text = f"{label:<20} {desc}"
+            text_lines.append((7, y, text, Colors.WHITE))
+            y += 1
+
+        y += 2
+
+        # LOOK MODE section
+        text_lines.append((5, y, "LOOK MODE:", Colors.CYAN))
+        y += 2
+
+        for label, desc in gamepad_controls["look_mode"]:
+            text = f"{label:<20} {desc}"
+            text_lines.append((7, y, text, Colors.WHITE))
+            y += 1
+
+        y += 2
+
+        # TARGETING section
+        text_lines.append((5, y, "TARGETING:", Colors.CYAN))
+        y += 2
+
+        for label, desc in gamepad_controls["targeting"]:
+            text = f"{label:<20} {desc}"
+            text_lines.append((7, y, text, Colors.WHITE))
+            y += 1
+
+        y += 2
+
+        # MENUS section
+        text_lines.append((5, y, "MENUS & INVENTORY:", Colors.CYAN))
+        y += 2
+
+        for label, desc in gamepad_controls["menus"]:
+            text = f"{label:<20} {desc}"
+            text_lines.append((7, y, text, Colors.WHITE))
+            y += 1
+
+        return {
+            "title": "GAMEPAD CONTROLS (Page 4/4)",
             "sprites": [],  # Text-only page
             "text_lines": text_lines,
         }
@@ -470,51 +518,61 @@ class GraphicalHelpMenu:
         for x, y, text, color in page.get("text_lines", []):
             render_char_safe(console, x, y, text, fg=color, bg=Colors.BLACK)
 
-        # Render navigation help
-        nav_text = "←→: Change Page  │  ESC: Back"
+        # Render navigation help - dynamically reflects current bindings
+        nav_text = get_help_screen_help(self.input_mapper)
         nav_x = GameConfig.SCREEN_WIDTH // 2 - len(nav_text) // 2
         render_char_safe(
             console, nav_x, GameConfig.SCREEN_HEIGHT - 2, nav_text, fg=Colors.CYAN, bg=Colors.BLACK
         )
 
-    # Input handling methods (unchanged from original)
-    def handle_input(self, event) -> str:
-        """Handle input for graphical help menu."""
-        if isinstance(event, tcod.event.KeyDown):
-            if event.sym == tcod.event.KeySym.LEFT or event.sym == tcod.event.KeySym.UP:
-                self._previous_page()
-                return ""
-            elif event.sym == tcod.event.KeySym.RIGHT or event.sym == tcod.event.KeySym.DOWN:
-                self._next_page()
-                return ""
-            elif UniversalInputHandler.is_escape_key(event):
-                return "back"
+    # Input handling methods
+    def get_context(self) -> InputContext:
+        """Get current input context for this menu."""
+        return InputContext.HELP
 
+    def get_default_return(self) -> str:
+        """Graphical help menu returns empty string by default."""
         return ""
 
-    def handle_mouse_motion(self, event) -> bool:
-        """Handle mouse motion (not used in graphical help menu)."""
-        return False
+    def execute_action(self, action: InputAction) -> str:
+        """Execute an InputAction and return menu command."""
+        # Navigation - HORIZONTAL ONLY (left/right for page navigation)
+        # Vertical navigation disabled to prevent accidental diagonal movements
+        if action in (InputAction.NAVIGATE_LEFT, InputAction.MOVE_WEST):
+            self._previous_page()
+            return ""
+        elif action in (InputAction.NAVIGATE_RIGHT, InputAction.MOVE_EAST):
+            self._next_page()
+            return ""
 
-    def handle_mouse_click(self, event) -> str:
-        """Handle mouse clicks - right-click to return."""
-        import tcod.event
-
-        # Right-click = go back (standard behavior)
-        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
+        # Cancel/Back
+        elif action == InputAction.CANCEL:
             return "back"
 
+        # Explicitly ignore vertical navigation (prevents diagonal stick issues)
+        elif action in (InputAction.NAVIGATE_UP, InputAction.NAVIGATE_DOWN,
+                       InputAction.MOVE_NORTH, InputAction.MOVE_SOUTH):
+            return ""  # Do nothing
+
         return ""
 
-    def handle_mouse_wheel(self, event) -> bool:
+    def handle_mouse_motion(self, event) -> str:
+        """Handle mouse motion (not used in graphical help menu)."""
+        return ""
+
+    def handle_right_click(self, event) -> str:
+        """Handle right-click - return to previous menu."""
+        return "back"
+
+    def handle_mouse_wheel(self, event) -> str:
         """Handle mouse wheel - navigate pages."""
         if hasattr(event, "y"):
             if event.y > 0:
                 self._previous_page()
             elif event.y < 0:
                 self._next_page()
-            return True
-        return False
+            return ""
+        return ""
 
     def _next_page(self):
         """Navigate to next page."""
@@ -525,3 +583,11 @@ class GraphicalHelpMenu:
         """Navigate to previous page."""
         if self.current_page > 0:
             self.current_page -= 1
+
+    def navigate_right(self):
+        """Navigate right (next page)."""
+        self._next_page()
+
+    def navigate_left(self):
+        """Navigate left (previous page)."""
+        self._previous_page()

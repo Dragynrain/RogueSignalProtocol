@@ -2,11 +2,11 @@
 
 **Version 0.8.0 Alpha** - A coffee break cyberspace stealth roguelike built with Python and TCOD
 
-> 📖 **For Players**: See [README.txt](README.txt) for game instructions
+> **For Players**: See [README.txt](README.txt) for game instructions
 >
-> 📚 **For Game Knowledge**: See the [Comprehensive Wiki](https://github.com/Dragynrain/RogueSignalProtocol/wiki) for all game systems, mechanics, and guides
+> **For Game Knowledge**: See the [Comprehensive Wiki](https://github.com/Dragynrain/RogueSignalProtocol/wiki) for all game systems, mechanics, and guides
 >
-> 🔧 **For Developers/Modders**: This guide covers building from source, modding, and contributing
+> **For Developers/Modders**: This guide covers building from source, modding, and contributing
 
 Copyright (C) 2025 Adam Forster
 
@@ -16,27 +16,27 @@ This program is free software licensed under the MIT License. You can freely use
 ![Version](https://img.shields.io/badge/version-0.8.0%20Alpha-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-## 🎮 Game Overview
+## Game Overview
 
 Rogue Signal Protocol is a coffee break stealth-focused cyberspace roguelike where you infiltrate corporate networks as a digital ghost. Complete runs in 10-15 minutes as you navigate procedurally generated levels, avoid sophisticated AI security systems, and discover the dark secrets hidden in the corporate data vaults.
 
 ### Key Features
 
-- **🎲 Deterministic Gameplay**: No randomness or luck - pure skill-based tactical decisions
-- **🤖 8 Unique Enemy Types**: Scanners, Hunters, Viruses, Firewalls, and Admin Avatar boss
-- **⚡ 13 Powerful Exploits**: Combat, stealth, and utility abilities with heat management
-- **🎯 Enemy Movement Prediction**: See enemies' next 3 planned moves for tactical advantage
-- **🕵️ Blind Spot Stealth Mechanics**: Hide in shadows to avoid detection
-- **⚠️ Dynamic Threat System**: High detection spawns the Admin Avatar boss
-- **🏆 Achievement System**: Track progress across runs with persistent unlocks
-- **📚 Rich Narrative**: Discover 20+ story fragments revealing Project Chimera
-- **🎨 Dual Rendering Modes**: Switch between graphical sprites or classic ASCII/Unicode glyphs
-- **💥 Particle Effect Explosions**: Visual feedback for combat and exploits
-- **🎵 Full Audio**: Sound effects and atmospheric music (toggleable)
-- **🖱️ Keyboard or Mouse**: Playable with full support for both input methods
-- **💾 True Permadeath**: Saves deleted on death, auto-save on exit
+- **Deterministic Gameplay**: No randomness or luck - pure skill-based tactical decisions
+- **8 Unique Enemy Types**: Scanners, Hunters, Viruses, Firewalls, and Admin Avatar boss
+- **13 Powerful Exploits**: Combat, stealth, and utility abilities with heat management
+- **Enemy Movement Prediction**: See enemies' next 3 planned moves for tactical advantage
+- **Blind Spot Stealth Mechanics**: Hide in shadows to avoid detection
+- **Dynamic Threat System**: High detection spawns the Admin Avatar boss
+- **Achievement System**: Track progress across runs with persistent unlocks
+- **Rich Narrative**: Discover 20+ story fragments revealing Project Chimera
+- **Dual Rendering Modes**: Switch between graphical sprites or classic ASCII/Unicode glyphs
+- **Particle Effect Explosions**: Visual feedback for combat and exploits
+- **Full Audio**: Sound effects and atmospheric music (toggleable)
+- **Keyboard or Mouse**: Playable with full support for both input methods
+- **True Permadeath**: Saves deleted on death, auto-save on exit
 
-## 🎨 Game Features
+## Game Features
 
 ### Exploit System
 Choose from 13 different exploits across 4 categories:
@@ -57,18 +57,18 @@ Discover the dark truth through environmental storytelling:
 - **Dr. Aris Thorne**: Learn about the obsessed lead researcher
 - **Digital Consciousness**: Explore themes of mind uploading and identity
 
-## 🚧 Alpha Status
+## Alpha Status
 
 This is an **Alpha release** focusing on core gameplay and feedback collection.
 
 ### What's Implemented
-- ✅ Complete stealth gameplay loop
-- ✅ All 8 enemy types with unique behaviors
-- ✅ Full exploit system with 13 abilities
-- ✅ 3-level campaign with escalating difficulty
-- ✅ Save/load system with permadeath
-- ✅ Audio system with music and SFX
-- ✅ Complete story content (20+ fragments)
+- Complete stealth gameplay loop
+- All 8 enemy types with unique behaviors
+- Full exploit system with 13 abilities
+- 3-level campaign with escalating difficulty
+- Save/load system with permadeath
+- Audio system with music and SFX
+- Complete story content (20+ fragments)
 
 ### Known Limitations
 - Windows only
@@ -76,7 +76,7 @@ This is an **Alpha release** focusing on core gameplay and feedback collection.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -107,7 +107,7 @@ This is an **Alpha release** focusing on core gameplay and feedback collection.
    .venv\Scripts\python.exe RogueSignalProtocol.py
    ```
 
-## 🎯 How to Play
+## How to Play
 
 ### Objective
 Navigate through 3 increasingly dangerous network levels, reach the gateway (>) on each level, and uncover the truth behind the Omni-Lyra Cognitive Resilience Initiative.
@@ -160,7 +160,7 @@ Navigate through 3 increasingly dangerous network levels, reach the gateway (>) 
 | I | Inhibitor | 30 | 4 | Slows Movement | 0 |
 | A | Admin Avatar | 250 | 8 | Perfect Tracking | 45 |
 
-## 🛠️ Development Setup
+## Development Setup
 
 ### Tech Stack
 - **Engine**: Python 3.10+ with python-tcod (19.4.0+)
@@ -214,7 +214,7 @@ RogueSignalProtocol/
 
 ---
 
-## 🧪 Testing
+## Testing
 
 The game has comprehensive test coverage with a custom test runner.
 
@@ -264,7 +264,7 @@ tests/
 
 ---
 
-## 🔨 Building Executables
+## Building Executables
 
 The game uses a sophisticated build system with two build types.
 
@@ -309,7 +309,7 @@ releases/                     # Timestamped archives
 
 ---
 
-## 🎨 Modding & Configuration
+## Modding & Configuration
 
 All game content is JSON-driven and easily moddable!
 
@@ -399,7 +399,7 @@ Maps entities to sprite variants:
 ### What Requires Code Changes
 
 **Add NEW exploits:**
-- ❌ Cannot just add to JSON
+- Cannot just add to JSON
 - Requires code in `game_combat.py`:
   1. Add to `game_content.json` (stats/description)
   2. Add case in `_execute_specific_exploit()`
@@ -408,16 +408,16 @@ Maps entities to sprite variants:
   5. Update help screens if needed
 
 **Add NEW enemy behaviors:**
-- ❌ Cannot just add to JSON
+- Cannot just add to JSON
 - Requires code in `game_enemies.py`
 
 **Add NEW mechanics:**
-- ❌ Always requires code
+- Always requires code
 - Example: New status effects, new tile types, new systems
 
 ---
 
-## 🏗️ Code Architecture
+## Code Architecture
 
 ### Module Organization
 
@@ -474,21 +474,21 @@ message_log.add_message("Enemy detected!", Colors.RED)
 
 ---
 
-## ⚠️ TCOD Gotchas & Important Notes
+## TCOD Gotchas & Important Notes
 
 ### Coordinate System Nightmare
 
-**🚨 CRITICAL: TCOD uses (x, y) for functions but [y, x] for arrays!**
+**CRITICAL: TCOD uses (x, y) for functions but [y, x] for arrays!**
 
 ```python
-# ✓ CORRECT - use helpers
+# CORRECT - use helpers
 from game_coordinate_helpers import CoordinateHelpers
 CoordinateHelpers.set_alpha_region(console, x=10, y=5, width=30, height=15, alpha=255)
 
-# ✓ CORRECT - TCOD functions use (x, y)
+# CORRECT - TCOD functions use (x, y)
 console.print(x=10, y=5, string="Hello")
 
-# ✗ WRONG - direct array access
+# WRONG - direct array access
 console.rgba["bg"][x, y, 3] = 255  # BUG! Should be [y, x]!
 ```
 
@@ -511,7 +511,7 @@ console.rgba["bg"][x, y, 3] = 255  # BUG! Should be [y, x]!
 
 ---
 
-## 🎮 Development Workflow
+## Development Workflow
 
 ### Running from Source
 ```bash
@@ -549,7 +549,7 @@ python test_commands.py full
 **Modify existing exploit balance:**
 1. Edit `game_content.json` (damage, heat cost, etc.)
 2. Run from source to test
-3. No code changes needed! ✅
+3. No code changes needed!
 
 **Add NEW exploit (requires code):**
 1. Add to `game_content.json` (definition)
@@ -571,7 +571,7 @@ python test_commands.py full
 1. Edit `game_rules.json` values
 2. Run from source to test
 3. Update tests if expectations changed
-4. No code changes needed! ✅
+4. No code changes needed!
 
 **Add sound effect:**
 1. Add WAV file to `sound/`
@@ -580,11 +580,11 @@ python test_commands.py full
 
 **Change colors (JSON only):**
 1. Edit `game_rules.json` color definitions
-2. Changes appear immediately ✅
+2. Changes appear immediately
 
 ---
 
-## 📦 Asset Creation
+## Asset Creation
 
 ### Graphics (Sprites)
 - **Format**: PNG with transparency
@@ -613,7 +613,7 @@ python test_commands.py full
 
 ---
 
-## 🔧 Configuration System Details
+## Configuration System Details
 
 ### How Config Loading Works
 
@@ -656,7 +656,7 @@ Located in `user_settings.json` (created automatically):
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 ### How to Contribute
 
@@ -706,7 +706,7 @@ Use GitHub Issues with:
 
 ---
 
-## 🏛️ Project Philosophy
+## Project Philosophy
 
 ### Design Principles
 
@@ -734,7 +734,7 @@ Use GitHub Issues with:
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
 ### Documentation
 - **build/BUILD_GUIDE.md** - Building executables
@@ -750,20 +750,20 @@ Use GitHub Issues with:
 
 ---
 
-## ⚖️ License & Redistribution
+## License & Redistribution
 
 MIT License - Free and Open Source Software
 
 **You can:**
-- ✅ Use for any purpose (including commercial)
-- ✅ Study and modify the code
-- ✅ Redistribute copies
-- ✅ Distribute modified versions
-- ✅ Create proprietary derivatives
+- Use for any purpose (including commercial)
+- Study and modify the code
+- Redistribute copies
+- Distribute modified versions
+- Create proprietary derivatives
 
 **You must:**
-- ✅ Include the original copyright notice
-- ✅ Include the MIT license text
+- Include the original copyright notice
+- Include the MIT license text
 
 **Maximum freedom for everyone - use it however you want!**
 

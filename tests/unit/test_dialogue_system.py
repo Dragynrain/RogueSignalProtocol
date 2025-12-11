@@ -111,35 +111,40 @@ class TestDialogueState:
         assert state.get_active() == dialogue
 
     def test_show_dialogue_queues_if_active(self):
-        """show() queues dialogue if one is already active."""
+        """show() interrupts with higher priority dialogue."""
         settings = Mock()
         settings.dialogue_preferences = {}
         state = DialogueState(settings)
 
-        dialogue1 = create_gateway_dialogue()
-        dialogue2 = create_death_dialogue()
+        dialogue1 = create_gateway_dialogue()  # Priority 2
+        dialogue2 = create_death_dialogue()    # Priority 10 (higher)
 
-        state.show(dialogue1)
-        state.show(dialogue2)
+        state.show(dialogue1)  # Shows immediately
+        state.show(dialogue2)  # Interrupts dialogue1 (higher priority)
 
-        assert state.get_active() == dialogue1
-        assert len(state.dialogue_queue) == 1
+        # Higher priority dialogue interrupts and shows immediately
+        assert state.get_active() == dialogue2
+        assert len(state.dialogue_queue) == 1  # dialogue1 queued
 
     def test_close_dialogue_shows_next_queued(self):
-        """close() shows next queued dialogue if available."""
+        """close() shows next queued dialogue if available with priority interruption."""
         settings = Mock()
         settings.dialogue_preferences = {}
         state = DialogueState(settings)
 
-        dialogue1 = create_gateway_dialogue()
-        dialogue2 = create_death_dialogue()
+        dialogue1 = create_gateway_dialogue()  # Priority 2
+        dialogue2 = create_death_dialogue()    # Priority 10 (higher)
 
-        state.show(dialogue1)
-        state.show(dialogue2)
-        state.close()
+        state.show(dialogue1)  # Shows immediately
+        state.show(dialogue2)  # Interrupts dialogue1 (higher priority)
 
-        # Should now show dialogue2
+        # dialogue2 is active, dialogue1 is queued
         assert state.get_active() == dialogue2
+
+        state.close()  # Close dialogue2
+
+        # Should now show dialogue1 from queue
+        assert state.get_active() == dialogue1
         assert len(state.dialogue_queue) == 0
 
     def test_close_dialogue_with_empty_queue(self):
@@ -156,7 +161,7 @@ class TestDialogueState:
         assert state.get_active() is None
 
     def test_priority_queue_ordering(self):
-        """Dialogues are queued by priority (higher = first)."""
+        """Dialogues interrupt by priority and queue is ordered (higher = first)."""
         settings = Mock()
         settings.dialogue_preferences = {}
         state = DialogueState(settings)
@@ -167,19 +172,19 @@ class TestDialogueState:
         med_priority = create_overclock_warning_dialogue("Test", 10, 5, 15, 20)  # priority = 5
 
         # Show in random order
-        state.show(low_priority)
-        state.show(high_priority)
-        state.show(med_priority)
+        state.show(low_priority)   # Shows immediately (priority 2)
+        state.show(high_priority)  # Interrupts low_priority (priority 10 > 2)
+        state.show(med_priority)   # Queues (priority 5 < 10)
 
-        # First dialogue shown immediately
-        assert state.get_active() == low_priority
+        # Highest priority dialogue interrupts and shows immediately
+        assert state.get_active() == high_priority  # Priority 10
 
-        # Close and check order: high_priority (10) should come before med_priority (5)
+        # Close and check queue order: med_priority (5) should come before low_priority (2)
         state.close()
-        assert state.get_active() == high_priority
+        assert state.get_active() == med_priority  # Priority 5
 
         state.close()
-        assert state.get_active() == med_priority
+        assert state.get_active() == low_priority  # Priority 2
 
         state.close()
         assert not state.is_active()
@@ -447,25 +452,25 @@ class TestIntegration:
         assert not state.is_active()
 
     def test_multiple_dialogues_with_priority(self):
-        """Test multiple dialogues queued by priority."""
+        """Test multiple dialogues with priority interruption."""
         settings = Mock()
         settings.dialogue_preferences = {}
         state = DialogueState(settings)
 
         # Queue three dialogues
-        state.show(create_gateway_dialogue())  # priority 2
-        state.show(create_death_dialogue())  # priority 10
-        state.show(create_overclock_warning_dialogue("Test", 10, 5, 15, 20))  # priority 5
+        state.show(create_gateway_dialogue())  # priority 2 - shows immediately
+        state.show(create_death_dialogue())  # priority 10 - interrupts priority 2
+        state.show(create_overclock_warning_dialogue("Test", 10, 5, 15, 20))  # priority 5 - queues (5 < 10)
 
-        # First shown immediately
-        assert state.get_active().priority == 2
+        # Highest priority interrupts and shows immediately
+        assert state.get_active().priority == 10
 
-        # Close and verify priority order
+        # Close and verify queue is ordered by priority
         state.close()
-        assert state.get_active().priority == 10  # Highest priority shown first
+        assert state.get_active().priority == 5  # Medium priority from queue
 
         state.close()
-        assert state.get_active().priority == 5
+        assert state.get_active().priority == 2  # Lowest priority from queue
 
         state.close()
         assert not state.is_active()

@@ -4,19 +4,19 @@ Thank you for your interest in contributing! This document provides guidelines f
 
 ## Ways to Contribute
 
-### 🐛 Report Bugs
+### Report Bugs
 Use the [Bug Report template](.github/ISSUE_TEMPLATE/bug_report.md) to report issues.
 
-### 💡 Suggest Features
+### Suggest Features
 Use the [Feature Request template](.github/ISSUE_TEMPLATE/feature_request.md) to propose new ideas.
 
-### 🔧 Submit Code
+### Submit Code
 Follow the development workflow below to submit code changes.
 
-### 📖 Improve Documentation
+### Improve Documentation
 Documentation improvements are always welcome!
 
-### 🎨 Create Content
+### Create Content
 - Story fragments
 - Enemy types
 - Exploit abilities
@@ -195,4 +195,4 @@ By contributing, you agree that your contributions will be licensed under the MI
 
 ---
 
-**Thank you for contributing to Rogue Signal Protocol!** 🎮
+**Thank you for contributing to Rogue Signal Protocol!**

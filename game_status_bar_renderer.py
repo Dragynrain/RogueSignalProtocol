@@ -28,9 +28,6 @@ class StatusBarRenderer:
     Bottom panel displays: Equipped exploits and temporary conditions
     """
 
-    # Class variable to store exploit positions for mouse click detection
-    last_exploit_positions = []
-
     def __init__(self, settings=None):
         """
         Initialize status bar renderer.
@@ -39,6 +36,8 @@ class StatusBarRenderer:
             settings: GameSettings instance (optional, for UI color)
         """
         self.settings = settings
+        # Instance variable to store exploit positions for mouse click detection
+        self.last_exploit_positions = []
 
     def render_top_status_bar(self, console: tcod.console.Console, game):
         """
@@ -191,7 +190,7 @@ class StatusBarRenderer:
         equipped_exploits = game.player.inventory_manager.equipped_exploits[:5]
 
         # Clear stored positions for this render
-        StatusBarRenderer.last_exploit_positions = []
+        self.last_exploit_positions = []
 
         # Check if mouse is hovering over exploit bar area
         mouse_tile_x = game.last_mouse_tile_x
@@ -231,12 +230,21 @@ class StatusBarRenderer:
             )
 
             # Store position for click detection
-            StatusBarRenderer.last_exploit_positions.append(
+            self.last_exploit_positions.append(
                 {"slot": slot, "x": x_pos, "y": y1, "width": text_width, "exploit_key": exploit_key}
             )
 
-            # Use highlight background if hovered
-            bg = Colors.UI_HIGHLIGHT if is_hovered else Colors.UI_BG
+            # Determine background color (Phase 3.4: Gamepad visual feedback)
+            # Priority: selected (gamepad) > hovered (mouse)
+            is_selected = slot == game.selected_exploit_index if hasattr(game, "selected_exploit_index") else False
+            if is_selected:
+                # Subtle highlight for gamepad-selected exploit (shows which RT will fire)
+                bg = Colors.UI_ACCENT  # Use existing UI_ACCENT color from palette
+            elif is_hovered:
+                # Subtle highlight for mouse hover
+                bg = Colors.UI_HIGHLIGHT
+            else:
+                bg = Colors.UI_BG
 
             render_char_safe(console, x_pos, y1, exploit_text, fg=color, bg=bg)
             x_pos += text_width + 2
@@ -258,7 +266,7 @@ class StatusBarRenderer:
                 )
 
                 # Store position for click detection
-                StatusBarRenderer.last_exploit_positions.append(
+                self.last_exploit_positions.append(
                     {
                         "slot": slot,
                         "x": x_pos,
@@ -268,8 +276,17 @@ class StatusBarRenderer:
                     }
                 )
 
-                # Use highlight background if hovered
-                bg = Colors.UI_HIGHLIGHT if is_hovered else Colors.UI_BG
+                # Determine background color (Phase 3.4: Gamepad visual feedback)
+                # Priority: selected (gamepad) > hovered (mouse)
+                is_selected = slot == game.selected_exploit_index if hasattr(game, "selected_exploit_index") else False
+                if is_selected:
+                    # Subtle highlight for gamepad-selected exploit (shows which RT will fire)
+                    bg = Colors.UI_ACCENT  # Use existing UI_ACCENT color from palette
+                elif is_hovered:
+                    # Subtle highlight for mouse hover
+                    bg = Colors.UI_HIGHLIGHT
+                else:
+                    bg = Colors.UI_BG
 
                 render_char_safe(console, x_pos, y2, exploit_text, fg=color, bg=bg)
                 x_pos += text_width + 2

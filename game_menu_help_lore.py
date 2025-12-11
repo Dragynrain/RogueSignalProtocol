@@ -15,9 +15,12 @@ import tcod
 from game_config import GameConfig
 from game_entities import Colors
 from game_help_content import HelpContent
+from game_help_hints import get_help_screen_help, get_lore_viewer_help
+from game_input_actions import InputAction, InputContext
+from game_input_base import BaseInputHandler
 from game_screen_utilities import ScreenRenderingUtils
 from game_story import StoryFragmentManager
-from game_ui import UniversalInputHandler, render_char_safe
+from game_ui import render_char_safe
 
 
 def create_help_menu(settings, context=None, tile_manager=None):
@@ -59,17 +62,20 @@ def create_help_menu(settings, context=None, tile_manager=None):
 
         # Create menu - let any exceptions propagate (they indicate real bugs)
         logging.info("Creating GraphicalHelpMenu")
-        return GraphicalHelpMenu(context, settings, tile_manager)
+        return GraphicalHelpMenu(context, tile_manager)
     else:
         # Glyph mode - use standard text-based help
         logging.info("Creating standard HelpMenu (glyph mode)")
         return HelpMenu()
 
 
-class LoreMenu:
+class LoreMenu(BaseInputHandler):
     """Data Fragments viewer menu for main menu."""
 
     def __init__(self):
+        # Initialize BaseInputHandler (creates InputMapper and GamepadHandler)
+        super().__init__(game=None, renderer=None)
+
         self.story_fragment_manager = None
         self.lore_viewer_selection = 0
         self.lore_viewer_mode = "list"  # "list" or "reading"
@@ -109,7 +115,7 @@ class LoreMenu:
                 no_fragments_y + 2,
                 Colors.WHITE,
             )
-            ScreenRenderingUtils.render_screen_footer(console, "ESC/Right-Click: Back")
+            ScreenRenderingUtils.render_screen_footer(console, get_lore_viewer_help("empty", self.input_mapper))
             return
 
         # Show list of discovered fragments with brief previews (matches in-game viewer)
@@ -165,7 +171,7 @@ class LoreMenu:
             y_offset += 1  # Space between entries
 
         ScreenRenderingUtils.render_screen_footer(
-            console, "↑↓ Navigate │ Enter: Read │ ESC/Right-Click: Back"
+            console, get_lore_viewer_help("list", self.input_mapper)
         )
 
     def _render_reading_mode(self, console, discovered_fragments):
@@ -191,83 +197,102 @@ class LoreMenu:
         )
 
         ScreenRenderingUtils.render_screen_footer(
-            console, "ESC/Right-Click: Back to list │ Any key: Close"
+            console, get_lore_viewer_help("reading", self.input_mapper)
         )
 
-    def handle_input(self, event) -> str:
-        """Handle lore menu input with proper navigation."""
+    def get_context(self) -> InputContext:
+        """Get current input context for this menu."""
+        return InputContext.LORE_VIEWER
+
+    def get_default_return(self) -> str:
+        """Lore menu returns empty string by default."""
+        return ""
+
+    def execute_action(self, action: InputAction) -> str:
+        """Execute an InputAction and return menu command."""
         self._load_story_fragments()
         discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
 
         if not discovered_fragments:
             # No fragments - ESC returns to main menu
-            if UniversalInputHandler.is_escape_key(event):
+            if action == InputAction.CANCEL:
                 return "back"
             return ""
 
+        # Execute based on mode
+        return self._execute_mode_action(action, discovered_fragments)
+
+    def _execute_mode_action(self, action: InputAction, discovered_fragments) -> str:
+        """Execute action based on current mode (list or reading)."""
         if self.lore_viewer_mode == "list":
-            # Handle navigation using universal handler
-            if UniversalInputHandler.handle_list_navigation(
-                self, event, len(discovered_fragments), False, self._navigate_lore_selection
-            ):
+            # Navigation - up/down
+            if action in (InputAction.NAVIGATE_UP, InputAction.MOVE_NORTH):
+                self._navigate_lore_selection(-1)
+                return ""
+            elif action in (InputAction.NAVIGATE_DOWN, InputAction.MOVE_SOUTH):
+                self._navigate_lore_selection(1)
                 return ""
 
-            # Handle selection
-            if UniversalInputHandler.is_confirm_key(event):
+            # Confirm - enter reading mode
+            elif action == InputAction.CONFIRM:
                 self.lore_viewer_mode = "reading"
                 return ""
-            elif UniversalInputHandler.is_escape_key(event):
+
+            # Cancel - return to main menu
+            elif action == InputAction.CANCEL:
                 return "back"
 
         elif self.lore_viewer_mode == "reading":
-            # ESC returns to list, any other key closes completely
-            if UniversalInputHandler.is_escape_key(event):
+            # ESC or confirm returns to list
+            if action in (InputAction.CANCEL, InputAction.CONFIRM):
                 self.lore_viewer_mode = "list"
                 return ""
-            elif UniversalInputHandler.handle_any_key_screen(event):
-                return "back"
+            # Ignore other inputs (D-pad, stick movements) while reading
 
         return ""
 
-    def handle_mouse_motion(self, event) -> bool:
+    def handle_mouse_motion(self, event) -> str:
         """Handle mouse motion - update selection based on hover."""
         if self.lore_viewer_mode != "list":
-            return False
+            return ""
 
         self._load_story_fragments()
         discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
 
-        if not discovered_fragments or not hasattr(event, "position") or not event.position:
-            return False
+        if not discovered_fragments:
+            return ""
+
+        # Prefer event.tile, fall back to event.position for test compatibility
+        # Use try/except because Mock objects pass hasattr checks
+        tile_y = None
+        for attr_name in ("tile", "position"):
+            if hasattr(event, attr_name):
+                coord_source = getattr(event, attr_name)
+                if coord_source is not None:
+                    try:
+                        tile_y = int(coord_source.y)
+                        break  # Found valid coordinates
+                    except (TypeError, ValueError, AttributeError):
+                        continue  # Try next attribute
+        if tile_y is None:
+            return ""
 
         # Fragment list starts at Y=5, 1 line per item (rendered with start_y + i)
         start_y = 5
         spacing = 1
-        tile_y = int(event.position.y)
 
         if tile_y >= start_y:
             index = (tile_y - start_y) // spacing
             if 0 <= index < len(discovered_fragments):
                 self.lore_viewer_selection = index
-                return True
-
-        return False
-
-    def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - select fragment, navigate, or go back."""
-        import tcod.event
-
-        # Right-click = go back (standard behavior)
-        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
-            if self.lore_viewer_mode == "reading":
-                # In reading mode, go back to list
-                self.lore_viewer_mode = "list"
                 return ""
-            else:
-                # In list mode, go back to main menu
-                return "back"
 
-        if not hasattr(event, "position") or not event.position:
+        return ""
+
+    def handle_left_click(self, event) -> str:
+        """Handle left mouse click - select fragment or navigate."""
+        # Prefer event.tile, fall back to event.position for test compatibility
+        if not (hasattr(event, "tile") and event.tile) and not (hasattr(event, "position") and event.position):
             return ""
 
         if self.lore_viewer_mode == "reading":
@@ -275,22 +300,33 @@ class LoreMenu:
             self.lore_viewer_mode = "list"
             return ""
         else:
-            # In list mode, update selection and open (left-click only)
-            if self.handle_mouse_motion(event):
+            # In list mode, update selection and open
+            result = self.handle_mouse_motion(event)
+            if result == "":  # Motion was handled successfully
                 # Mouse was over a valid item, open it
                 self.lore_viewer_mode = "reading"
             return ""
 
-    def handle_mouse_wheel(self, event) -> bool:
+    def handle_right_click(self, event) -> str:
+        """Handle right-click - go back."""
+        if self.lore_viewer_mode == "reading":
+            # In reading mode, go back to list
+            self.lore_viewer_mode = "list"
+            return ""
+        else:
+            # In list mode, go back to main menu
+            return "back"
+
+    def handle_mouse_wheel(self, event) -> str:
         """Handle mouse wheel - scroll through fragments."""
         if self.lore_viewer_mode != "list":
-            return False
+            return ""
 
         self._load_story_fragments()
         discovered_fragments = self.story_fragment_manager.get_discovered_fragments()
 
         if not discovered_fragments:
-            return False
+            return ""
 
         if hasattr(event, "y"):
             if event.y > 0:
@@ -299,9 +335,9 @@ class LoreMenu:
             elif event.y < 0:
                 # Scroll down
                 self._navigate_lore_selection(1)
-            return True
+            return ""
 
-        return False
+        return ""
 
     def _navigate_lore_selection(self, direction: int):
         """Navigate lore selection."""
@@ -315,12 +351,15 @@ class LoreMenu:
                 )
 
 
-class HelpMenu:
+class HelpMenu(BaseInputHandler):
     """Refactored help menu using centralized content and layout helpers."""
 
     def __init__(self):
+        # Initialize BaseInputHandler (creates InputMapper and GamepadHandler)
+        super().__init__(game=None, renderer=None)
+
         self.current_page = 0
-        self.total_pages = 3
+        self.total_pages = 4
 
     def render(self, console: tcod.console.Console) -> None:
         """Render the help screen with absolute positioning."""
@@ -350,9 +389,10 @@ class HelpMenu:
                     render_char_safe(console, x, y, text, fg=color)
                     y += 1
 
-        # Page navigation and back instruction
-        nav_text = "← →/Mouse Wheel: Change page │ ESC/Right-Click: Back"
-        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, nav_text, fg=Colors.CYAN)
+        # Page navigation and back instruction - dynamically reflects current bindings
+        nav_text = get_help_screen_help(self.input_mapper)
+        nav_x = ScreenRenderingUtils.center_x(nav_text)
+        render_char_safe(console, nav_x, GameConfig.SCREEN_HEIGHT - 2, nav_text, fg=Colors.CYAN)
 
     def _build_page_content(self):
         """Build page content using HelpContent and calculated positions."""
@@ -360,8 +400,10 @@ class HelpMenu:
             return self._build_page_1()
         elif self.current_page == 1:
             return self._build_page_2()
-        else:
+        elif self.current_page == 2:
             return self._build_page_3()
+        else:
+            return self._build_page_4()
 
     def _build_page_1(self):
         """Page 1: Map Symbols, Objectives, Mechanics, Controls."""
@@ -413,7 +455,7 @@ class HelpMenu:
         lines.append((utils.center_x(heading), heading, Colors.CYAN))
         lines.append((0, "", Colors.WHITE))
 
-        controls = HelpContent.get_controls()
+        controls = HelpContent.get_controls(self.input_mapper)
 
         # Movement and exploits - left-aligned block, centered as a group
         movement_text = [f"{label}: {desc}" for label, desc in controls["movement"]]
@@ -653,17 +695,94 @@ class HelpMenu:
         # Return absolute positioning format (x, y, text, color)
         return text_lines
 
-    # Input handling methods (unchanged from original)
-    def handle_input(self, event) -> str:
-        """Handle help menu input with page navigation."""
-        if UniversalInputHandler.is_escape_key(event):
-            return "back"
+    def _build_page_4(self):
+        """Page 4: Gamepad Controls."""
+        text_lines = []
+        utils = ScreenRenderingUtils
 
-        if event.type == "KEYDOWN":
-            if event.sym in (tcod.event.KeySym.LEFT, tcod.event.KeySym.PAGEUP):
-                self._navigate_page(-1)
-            elif event.sym in (tcod.event.KeySym.RIGHT, tcod.event.KeySym.PAGEDOWN):
-                self._navigate_page(1)
+        # Pass input_mapper for dynamic button hints
+        gamepad_controls = HelpContent.get_gamepad_controls(self.input_mapper)
+
+        # Use absolute positioning (x, y, text, color)
+        y = 4
+
+        # Title
+        title = "GAMEPAD CONTROLS"
+        text_lines.append((utils.center_x(title), y, title, Colors.YELLOW))
+        y += 2
+
+        # Note about customization
+        note = "(Customizable in Controls)"
+        text_lines.append((utils.center_x(note), y, note, Colors.LIGHT_GRAY))
+        y += 3
+
+        # GAMEPLAY section
+        text_lines.append((5, y, "GAMEPLAY:", Colors.CYAN))
+        y += 2
+
+        for label, desc in gamepad_controls["gameplay"]:
+            text = f"{label:<20} {desc}"
+            text_lines.append((7, y, text, Colors.WHITE))
+            y += 1
+
+        y += 2
+
+        # LOOK MODE section
+        text_lines.append((5, y, "LOOK MODE:", Colors.CYAN))
+        y += 2
+
+        for label, desc in gamepad_controls["look_mode"]:
+            text = f"{label:<20} {desc}"
+            text_lines.append((7, y, text, Colors.WHITE))
+            y += 1
+
+        y += 2
+
+        # TARGETING section
+        text_lines.append((5, y, "TARGETING:", Colors.CYAN))
+        y += 2
+
+        for label, desc in gamepad_controls["targeting"]:
+            text = f"{label:<20} {desc}"
+            text_lines.append((7, y, text, Colors.WHITE))
+            y += 1
+
+        y += 2
+
+        # MENUS section
+        text_lines.append((5, y, "MENUS & INVENTORY:", Colors.CYAN))
+        y += 2
+
+        for label, desc in gamepad_controls["menus"]:
+            text = f"{label:<20} {desc}"
+            text_lines.append((7, y, text, Colors.WHITE))
+            y += 1
+
+        # Return absolute positioning format (x, y, text, color)
+        return text_lines
+
+    # Input handling methods
+    def get_context(self) -> InputContext:
+        """Get current input context for this menu."""
+        return InputContext.HELP
+
+    def get_default_return(self) -> str:
+        """Help menu returns empty string by default."""
+        return ""
+
+    def execute_action(self, action: InputAction) -> str:
+        """Execute an InputAction and return menu command."""
+        # Navigation (LEFT/RIGHT for page switching)
+        if action in (InputAction.NAVIGATE_LEFT, InputAction.MOVE_WEST):
+            self._navigate_page(-1)
+            return ""
+        elif action in (InputAction.NAVIGATE_RIGHT, InputAction.MOVE_EAST):
+            self._navigate_page(1)
+            return ""
+
+        # ESC to go back
+        elif action == InputAction.CANCEL:
+            return "back"
 
         return ""
 
@@ -671,27 +790,28 @@ class HelpMenu:
         """Navigate between help pages."""
         self.current_page = (self.current_page + direction) % self.total_pages
 
-    def handle_mouse_motion(self, event) -> bool:
+    def navigate_right(self):
+        """Navigate right (next page)."""
+        self._navigate_page(1)
+
+    def navigate_left(self):
+        """Navigate left (previous page)."""
+        self._navigate_page(-1)
+
+    def handle_mouse_motion(self, event) -> str:
         """Handle mouse motion."""
-        return False
-
-    def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - right-click to return."""
-        import tcod.event
-
-        # Right-click = go back (standard behavior)
-        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
-            return "back"
-
-        # Left-click on empty space does nothing (removed confusing click-anywhere-to-exit)
         return ""
 
-    def handle_mouse_wheel(self, event) -> bool:
+    def handle_right_click(self, event) -> str:
+        """Handle right-click - return to previous menu."""
+        return "back"
+
+    def handle_mouse_wheel(self, event) -> str:
         """Handle mouse wheel - navigate pages."""
         if hasattr(event, "y"):
             if event.y > 0:
                 self._navigate_page(-1)
             elif event.y < 0:
                 self._navigate_page(1)
-            return True
-        return False
+            return ""
+        return ""

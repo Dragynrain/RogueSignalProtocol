@@ -57,7 +57,7 @@ Each run assigns random colors to these 6 effects. Same color = same effect thro
 - Critical for Heat Master achievement (stay under 50 heat)
 - More valuable than CPU restore on average
 
-### 3. 👻 Reduce Trace Level
+### 3. Reduce Trace Level
 **Effect:** -25% trace reduction
 **Use Case:** Detection management, prevent Admin Avatar spawn
 **Value:** High - equivalent to 1.25 ghost nodes
@@ -67,7 +67,7 @@ Each run assigns random colors to these 6 effects. Same color = same effect thro
 - Combines with Log Wiper exploit (-30%) for massive trace reduction
 - Essential for No Trace achievement (stay under 50%)
 
-### 4. ⚡ Speed Boost
+### 4. Speed Boost
 **Effect:** 2 actions per turn for 3 turns
 **Use Case:** Combat burst, rapid repositioning, exploration
 **Value:** Situational but powerful
@@ -185,46 +185,46 @@ Each run assigns random colors to these 6 effects. Same color = same effect thro
 ### When to Use Each Type
 
 **Restore CPU:**
-- ✅ When CPU below 50%
-- ✅ Before boss encounter
-- ✅ After taking heavy damage
-- ❌ At full health (waste)
-- ❌ When CPU nodes available nearby
+- When CPU below 50% (good)
+- Before boss encounter (good)
+- After taking heavy damage (good)
+- At full health (waste)
+- When CPU nodes available nearby (waste)
 
 **Reduce Heat:**
-- ✅ Before exploit-heavy combat
-- ✅ When heat above 70
-- ✅ To enable back-to-back high-heat exploits
-- ❌ At low heat (waste)
-- ❌ When cooling nodes available nearby
+- Before exploit-heavy combat (good)
+- When heat above 70 (good)
+- To enable back-to-back high-heat exploits (good)
+- At low heat (waste)
+- When cooling nodes available nearby (waste)
 
 **Reduce Trace:**
-- ✅ When trace exceeds 50%
-- ✅ On Level 3 to prevent Admin Avatar
-- ✅ Before heavy combat (reduces trace gain)
-- ❌ Below 30% trace (not urgent)
-- ❌ When ghost nodes available
+- When trace exceeds 50% (good)
+- On Level 3 to prevent Admin Avatar (good)
+- Before heavy combat (reduces trace gain) (good)
+- Below 30% trace (not urgent)
+- When ghost nodes available (waste)
 
 **Speed Boost:**
-- ✅ In combat for double attacks
-- ✅ For rapid repositioning
-- ✅ When surrounded
-- ❌ In safe areas (waste potential)
-- ❌ Right before level transition
+- In combat for double attacks (good)
+- For rapid repositioning (good)
+- When surrounded (good)
+- In safe areas (waste potential)
+- Right before level transition (waste)
 
 **Enhanced Vision:**
-- ✅ When exploring new areas
-- ✅ In large open rooms
-- ✅ Combined with Threat Scan
-- ❌ In small rooms (limited benefit)
-- ❌ When already using Threat Scan
+- When exploring new areas (good)
+- In large open rooms (good)
+- Combined with Threat Scan (good)
+- In small rooms (limited benefit)
+- When already using Threat Scan (redundant)
 
 **Exploit Efficiency:**
-- ✅ Before major combat encounter
-- ✅ When planning exploit-heavy strategy
-- ✅ On Level 3 (scarce resources)
-- ❌ In stealth-only approaches
-- ❌ When not planning to use exploits
+- Before major combat encounter (good)
+- When planning exploit-heavy strategy (good)
+- On Level 3 (scarce resources) (good)
+- In stealth-only approaches (waste)
+- When not planning to use exploits (waste)
 
 ---
 

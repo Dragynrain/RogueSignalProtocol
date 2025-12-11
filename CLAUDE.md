@@ -44,7 +44,7 @@ See `.claude/TCOD_GUIDE.md`
 
 **NEVER `context.convert_event()`** (SDL rendering incompatible)
 - Menu/UI: `MenuMouseHandler.convert_to_tile_coords(event, context)` → `event.tile`
-- World: `input_handler._mouse_pixel_to_world(px, py)` → `Position|None`
+- World: `InputCoordinateConverter.pixel_to_world_position(...)` → `Position|None`
 See `.claude/MOUSE_COORDINATE_HANDLING.md`
 
 ## 7. Gamepad
@@ -52,7 +52,7 @@ See `.claude/MOUSE_COORDINATE_HANDLING.md`
 **NEVER `get_controllers()` during gameplay** (returns empty!)
 - Menu: `get_controllers()` OK
 - In-game: `input_handler.gamepad_handler.controllers` (pre-stored)
-- Actions: `if action == InputAction.NAV_UP` (NOT `.action_type`)
+- Actions: `if action == InputAction.NAVIGATE_UP` (NOT `.action_type`)
 See `.claude/gamepad.md`
 
 ## 8. Rendering
@@ -71,11 +71,15 @@ Alerts: 1 turn only, chain to others when spotting player
 
 **Help text in glyphs mode must exactly match in-game symbols and be kept up-to-date at all times**
 
-## 11. Batch Files
+## 11. External Writing
+
+**No emoji, no emdash (—), avoid AI-common phrasing** in code comments, wiki, README, or any public-facing text. Plain hyphens and direct language only.
+
+## 12. Batch Files
 
 NO `else if` - use `) else ( if ... )`. Test before commit. See `.claude/WINDOWS_SCRIPTING.md`
 
-## 12. Top 10 Mistakes
+## 13. Top 10 Mistakes
 
 1. Unicode in logging → Windows crash
 2. `distance_to()` for gameplay → diag break

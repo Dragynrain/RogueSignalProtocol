@@ -163,21 +163,21 @@ All technical troubleshooting merged into README.txt.
 ## Example Scenarios
 
 ### "I changed the controls"
-→ Edit `README.txt`
-→ Build → Automatically in dist/ ✅
+- Edit `README.txt`
+- Build -> Automatically in dist/
 
 ### "I added a new build type"
-→ Edit `README_DEV.md`
-→ Update build/ docs if needed ✅
+- Edit `README_DEV.md`
+- Update build/ docs if needed
 
 ### "I released a new version"
-→ Edit `README.md` (GitHub landing)
-→ Edit `README.txt` (version mentioned there too)
-→ Edit `README_DEV.md` (version in header) ✅
+- Edit `README.md` (GitHub landing)
+- Edit `README.txt` (version mentioned there too)
+- Edit `README_DEV.md` (version in header)
 
 ### "I want to add troubleshooting"
-→ Edit `README.txt` (players need it)
-→ Build → Automatically distributed ✅
+- Edit `README.txt` (players need it)
+- Build -> Automatically distributed
 
 ---
 

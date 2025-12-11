@@ -547,11 +547,9 @@ class TestParticleEdgeCases:
         )
         ps.particles.append(particle)
 
-        # Update with negative delta
+        # Update with negative delta - should handle gracefully
         ps.update(delta_time=-0.1)
-
-        # Should not crash (though behavior may be undefined)
-        assert True  # Survival is success
+        # No exception means edge case handled
 
     def test_particle_with_zero_lifetime(self):
         """Particle with zero lifetime is immediately dead."""

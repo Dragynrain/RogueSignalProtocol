@@ -35,6 +35,9 @@ class InfoProvider:
     Respects code hack discovery state (shows "???" for undiscovered effects).
     """
 
+    # Flag to prevent metrics error spam (only log once)
+    _metrics_error_logged = False
+
     @staticmethod
     def get_info_for_hover(
         game, mouse_tile_x: int | None, mouse_tile_y: int | None
@@ -194,7 +197,7 @@ class InfoProvider:
         if selected_index is None and mouse_y is not None:
             selected_index = UIRenderer.get_inventory_item_at_click(mouse_y)
 
-        if selected_index is None:
+        if selected_index is None or selected_index < 0:
             return None
 
         # Get inventory data
@@ -254,8 +257,9 @@ class InfoProvider:
         lines.append({"text": "Type: Code Fragment", "color": Colors.YELLOW})
         lines.append({"text": "", "color": Colors.WHITE})
 
-        # Effect - check if discovered
-        if code_hack.discovered:
+        # Effect - check if discovered (either on this instance or in global tracking)
+        is_known = code_hack.discovered or code_hack.color_name in game.discovered_code_effects
+        if is_known:
             # Show the actual effect
             if code_hack.color_name in game.code_hack_effects:
                 effect_key, desc = game.code_hack_effects[code_hack.color_name]
@@ -525,6 +529,9 @@ class InfoProvider:
 
             session = get_current_session()
             if session:
+                # Reset error flag on successful access (allows re-logging if it fails later)
+                InfoProvider._metrics_error_logged = False
+
                 if session.metrics.stealth_kills_current_streak > 0:
                     lines.append(
                         {
@@ -542,19 +549,27 @@ class InfoProvider:
                     )
         except (ImportError, AttributeError) as e:
             # Metrics system not available or session not started - this is non-critical
-            logging.debug(f"Info panel: Metrics not available: {e}")
+            # Only log once per failure period to prevent spam (was blocking controller input at 60+ logs/sec)
+            if not InfoProvider._metrics_error_logged:
+                logging.debug(f"Info panel: Metrics not available: {e}")
+                InfoProvider._metrics_error_logged = True
 
         # If no info available, show a simple message
         if not lines:
             lines.append({"text": "Hover to inspect", "color": Colors.DARK_GRAY})
 
-        # Add "Press ? for help" near the bottom (2nd from bottom row)
+        # Add "Press [key] for help" near the bottom (2nd from bottom row)
         # Panel height is 11 rows total, with ~8 content lines available
         # Add blank lines to push help text to 2nd from bottom
         while len(lines) < 7:
             lines.append({"text": "", "color": Colors.WHITE})
 
-        lines.append({"text": "Press ? for help", "color": Colors.DARK_GRAY})
+        # Get the actual key binding for help (supports custom remapping)
+        from game_input_actions import InputAction
+        from game_input_mappings import InputMapper
+        mapper = InputMapper()  # Uses default bindings
+        help_key = mapper.get_key_hint(InputAction.TOGGLE_HELP)
+        lines.append({"text": f"Press {help_key} for help", "color": Colors.DARK_GRAY})
 
         return {"title": "INFO PANEL", "lines": lines, "color": Colors.GREEN}
 

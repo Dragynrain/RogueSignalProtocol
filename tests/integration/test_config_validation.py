@@ -511,6 +511,96 @@ class TestConfigRedundancy:
                 f"All config files should have matching versions."
             )
 
+    def test_no_duplicate_keys_across_all_config_files(self):
+        """
+        Test that no keys are duplicated across ALL config files.
+
+        This comprehensive test prevents the mistake of defining the same
+        variable in multiple JSON files where only the last one loaded would count.
+
+        Checks:
+        - game_rules.json (all sections)
+        - game_content.json (all sections)
+        - user_settings.json defaults (from GameSettings.DEFAULTS)
+
+        Exceptions:
+        - 'metadata' sections (allowed in multiple files)
+        - 'version' keys (allowed in metadata)
+        - Nested structures (ai_behavior) intentionally duplicated
+        """
+        from game_config import GameSettings
+
+        # Collect all keys from all files with their source
+        all_keys = {}  # {key: [file1, file2, ...]}
+
+        def collect_keys(data, file_name, section_path=""):
+            """Recursively collect all keys from a nested dict."""
+            if not isinstance(data, dict):
+                return
+
+            for key, value in data.items():
+                # Skip metadata sections (intentionally in multiple files)
+                if key == "metadata":
+                    continue
+
+                full_key = f"{section_path}.{key}" if section_path else key
+
+                # Track which file this key appears in
+                if full_key not in all_keys:
+                    all_keys[full_key] = []
+                all_keys[full_key].append(file_name)
+
+                # Recurse into nested dicts (but track the path)
+                if isinstance(value, dict):
+                    collect_keys(value, file_name, full_key)
+
+        # Collect keys from all config files
+        collect_keys(self.game_config, "game_rules.json")
+        collect_keys(self.game_data, "game_content.json")
+        collect_keys(GameSettings.DEFAULTS, "user_settings.json")
+
+        # Find duplicates (keys that appear in more than one file)
+        duplicates = {}
+        for key, sources in all_keys.items():
+            if len(sources) > 1:
+                # Exception: ai_behavior is intentionally in multiple files (nested structure)
+                if key == "balance.ai_behavior":
+                    continue
+
+                # Get values from each source
+                values = {}
+                for source in sources:
+                    if source == "game_rules.json":
+                        values[source] = self._get_nested_value(self.game_config, key)
+                    elif source == "game_content.json":
+                        values[source] = self._get_nested_value(self.game_data, key)
+                    elif source == "user_settings.json":
+                        values[source] = self._get_nested_value(GameSettings.DEFAULTS, key)
+
+                duplicates[key] = {
+                    "sources": sources,
+                    "values": values
+                }
+
+        assert len(duplicates) == 0, (
+            f"Found {len(duplicates)} duplicate keys across config files:\n"
+            f"{json.dumps(duplicates, indent=2, default=str)}\n\n"
+            f"Each configuration value should exist in ONLY ONE file to maintain "
+            f"single source of truth and prevent the bug where defining a variable "
+            f"twice means only the last one loaded counts."
+        )
+
+    def _get_nested_value(self, data, key_path):
+        """Get a value from nested dict using dot notation (e.g., 'balance.heat_reduction')."""
+        keys = key_path.split('.')
+        value = data
+        for key in keys:
+            if isinstance(value, dict) and key in value:
+                value = value[key]
+            else:
+                return None
+        return value
+
 
 # ============================================================================
 # TIER 4: VALUE VALIDATION

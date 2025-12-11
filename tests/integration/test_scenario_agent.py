@@ -107,16 +107,16 @@ class TestGameplayScenarios:
         print(f"Turns: {initial_turn} -> {agent.turn}")
         print(f"Heat: {initial_heat} -> {final_heat} (change: {final_heat - initial_heat})")
 
-    def test_scenario_gateway_progression(self):
+    def test_scenario_gateway_progression(self, agent_with_guaranteed_gateway):
         """
         Scenario: Reaching gateway should allow level progression.
 
         Tests that the win condition is reachable.
         """
-        agent = GameTestAgent(seed=42)
+        agent = agent_with_guaranteed_gateway
 
-        if agent.game_map.gateway is None:
-            pytest.skip("No gateway on this level")
+        # Fixture guarantees gateway exists
+        assert agent.game_map.gateway is not None, "Fixture failed to provide gateway"
 
         initial_level = agent.engine.level
         gateway_x = agent.game_map.gateway.x
@@ -140,53 +140,43 @@ class TestGameplayScenarios:
         """
         Scenario: Enemies should not be able to attack through walls.
 
-        Tests collision detection.
+        Tests collision detection. Creates a full wall barrier to ensure
+        enemy cannot path around.
         """
         agent = GameTestAgent(seed=42)
 
-        # Find player position
+        # Get player position
         player_x, player_y = agent.player.x, agent.player.y
 
-        # Find a wall adjacent to player
-        wall_found = False
-        wall_dir = None
+        # Create a vertical wall barrier east of player (3 tiles tall)
+        # This prevents enemy from pathfinding around
+        wall_x = player_x + 1
+        for dy in range(-1, 2):
+            agent.game_map.walls.add((wall_x, player_y + dy))
 
-        for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
-            check_x = player_x + dx
-            check_y = player_y + dy
-            if (check_x, check_y) in agent.game_map.walls:
-                wall_found = True
-                wall_dir = (dx, dy)
-                # Spawn enemy on other side of wall
-                enemy_x = check_x + dx
-                enemy_y = check_y + dy
+        # Spawn enemy on the other side of the wall
+        enemy_x, enemy_y = player_x + 2, player_y
 
-                if (
-                    0 <= enemy_x < 80
-                    and 0 <= enemy_y < 50
-                    and (enemy_x, enemy_y) not in agent.game_map.walls
-                ):
-                    enemy = agent.spawn_enemy("bot", enemy_x, enemy_y)
+        # Make sure enemy position is clear
+        agent.game_map.walls.discard((enemy_x, enemy_y))
 
-                    initial_hp = agent.player.cpu
+        enemy = agent.spawn_enemy("bot", enemy_x, enemy_y)
 
-                    # Process several turns - enemy shouldn't be able to attack
-                    agent.wait(5)
+        initial_hp = agent.player.cpu
 
-                    # Player HP should be unchanged
-                    assert (
-                        agent.player.cpu == initial_hp
-                    ), "Player took damage from enemy through wall!"
+        # Process several turns - enemy shouldn't be able to attack through wall
+        agent.wait(5)
 
-                    print("\n=== Wall Collision Test ===")
-                    print(f"Enemy at ({enemy_x}, {enemy_y})")
-                    print(f"Wall at ({check_x}, {check_y})")
-                    print(f"Player at ({player_x}, {player_y})")
-                    print(f"Player HP: {agent.player.cpu} (unchanged)")
-                    break
+        # Player HP should be unchanged
+        assert (
+            agent.player.cpu == initial_hp
+        ), "Player took damage from enemy through wall!"
 
-        if not wall_found:
-            pytest.skip("No wall found adjacent to player")
+        print("\n=== Wall Collision Test ===")
+        print(f"Enemy at ({enemy_x}, {enemy_y})")
+        print(f"Wall barrier at x={wall_x}")
+        print(f"Player at ({player_x}, {player_y})")
+        print(f"Player HP: {agent.player.cpu} (unchanged)")
 
     def test_scenario_multiple_enemies_same_tile(self):
         """
