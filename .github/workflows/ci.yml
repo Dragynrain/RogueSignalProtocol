@@ -27,6 +27,9 @@ jobs:
         pip install pytest pytest-timeout
 
     - name: Run tests
+      env:
+        SDL_VIDEODRIVER: dummy
+        SDL_AUDIODRIVER: dummy
       run: pytest tests/ -v --timeout=30
 
   test-linux:
@@ -45,7 +48,7 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev
+        sudo apt-get install -y libsdl2-dev libsdl2-ttf-dev libsdl2-mixer-dev xvfb
 
     - name: Install Python dependencies
       run: |
@@ -54,7 +57,10 @@ jobs:
         pip install pytest pytest-timeout
 
     - name: Run tests
-      run: pytest tests/ -v --timeout=30
+      env:
+        SDL_VIDEODRIVER: dummy
+        SDL_AUDIODRIVER: dummy
+      run: xvfb-run -a pytest tests/ -v --timeout=30
 
   build-linux:
     runs-on: ubuntu-latest
