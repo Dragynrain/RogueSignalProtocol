@@ -1226,8 +1226,8 @@ These items verify Phase 2 changes work on Linux before building:
 - [x] **TDD**: Create `test_all_required_assets_bundled()` to verify dist/ contents - DONE (test_build_verification.py)
 - [x] CI builds Linux binary successfully - DONE (first successful CI run!)
 - [x] Full test suite passes on both Windows and Linux CI (2334+ tests each)
-- [ ] Test binary on Steam Deck Desktop Mode (manual) - IN PROGRESS
-- [ ] Test binary on Ubuntu VM (manual)
+- [x] Test binary on Steam Deck Desktop Mode - SUCCESS (graphics, sound, music, mouse, D-pad all work)
+- [ ] Test binary on Ubuntu VM (manual) - optional, Steam Deck success is sufficient
 
 **Phase 4: Linux Packaging**
 - [ ] Build AppImage
