@@ -62,8 +62,9 @@ class TestKeyboardBindingAdd:
         """Adding binding with Shift modifier works."""
         mapper = InputMapper()
 
+        # Use KS(ord('w')) for cross-platform compatibility (KS.w doesn't exist on Linux)
         result = mapper.add_keyboard_binding(
-            InputAction.WAIT, KS.w, InputContext.GAMEPLAY,
+            InputAction.WAIT, KS(ord('w')), InputContext.GAMEPLAY,
             modifier=tcod.event.Modifier.SHIFT
         )
 
@@ -140,13 +141,14 @@ class TestKeyboardBindingRemove:
     def test_remove_with_modifier(self):
         """Removing binding with modifier works."""
         mapper = InputMapper()
+        # Use KS(ord('w')) for cross-platform compatibility (KS.w doesn't exist on Linux)
         mapper.add_keyboard_binding(
-            InputAction.WAIT, KS.w, InputContext.GAMEPLAY,
+            InputAction.WAIT, KS(ord('w')), InputContext.GAMEPLAY,
             modifier=tcod.event.Modifier.SHIFT
         )
 
         result = mapper.remove_keyboard_binding(
-            InputAction.WAIT, KS.w, InputContext.GAMEPLAY,
+            InputAction.WAIT, KS(ord('w')), InputContext.GAMEPLAY,
             modifier=tcod.event.Modifier.SHIFT
         )
 

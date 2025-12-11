@@ -1,20 +1,24 @@
-"""File path resolution system with portable/AppData fallback for Windows.
+"""Cross-platform file path resolution with portable/system fallback.
 
 This module handles the determination of where user data (saves, logs, metrics)
 should be stored, with the following priority:
 
 1. Portable mode: Try to use directories relative to the executable/script
-2. AppData mode: Fall back to %LOCALAPPDATA%\\RogueSignalProtocol if portable fails
+2. System mode: Fall back to platform-appropriate user data directory:
+   - Windows: %LOCALAPPDATA%\\RogueSignalProtocol
+   - Linux: ~/.local/share/RogueSignalProtocol
 3. Fatal error: If both fail, display error and exit
 
 This ensures the game works in both portable installations (USB drives, user folders)
-and system installations (C:\\Program Files).
+and system installations (C:\\Program Files, /usr/local/games, etc.).
 """
 
 import ctypes
 import os
 import sys
 from pathlib import Path
+
+from platformdirs import user_data_dir
 
 # Module-level cache for the data directory
 _data_directory: Path | None = None
@@ -57,18 +61,20 @@ def _test_write_permission(directory: Path) -> bool:
         return False
 
 
-def _get_appdata_directory() -> Path:
-    """Get the Windows AppData\\Local path for this application.
+def _get_system_data_directory() -> Path:
+    """Get the system-specific user data directory for this application.
+
+    Uses platformdirs for cross-platform path resolution:
+    - Windows: %LOCALAPPDATA%\\RogueSignalProtocol
+    - Linux: ~/.local/share/RogueSignalProtocol
+
+    Note: appauthor=False maintains backward compatibility with existing
+    Windows saves (avoids adding author subdirectory).
 
     Returns:
-        Path: %LOCALAPPDATA%\\RogueSignalProtocol
+        Path: Platform-appropriate user data directory
     """
-    appdata = os.getenv("LOCALAPPDATA")
-    if not appdata:
-        # Fallback if LOCALAPPDATA not set (shouldn't happen on Windows 7+)
-        appdata = os.path.expanduser("~\\AppData\\Local")
-
-    return Path(appdata) / "RogueSignalProtocol"
+    return Path(user_data_dir("RogueSignalProtocol", appauthor=False))
 
 
 def initialize_data_directories() -> bool:
@@ -96,12 +102,12 @@ def initialize_data_directories() -> bool:
         _is_portable_mode = True
         return True
 
-    # Portable mode failed, try AppData
-    appdata_base = _get_appdata_directory()
-    appdata_test_dir = appdata_base / "logs"
+    # Portable mode failed, try system data directory
+    system_base = _get_system_data_directory()
+    system_test_dir = system_base / "logs"
 
-    if _test_write_permission(appdata_test_dir):
-        _data_directory = appdata_base
+    if _test_write_permission(system_test_dir):
+        _data_directory = system_base
         _is_portable_mode = False
         return True
 
@@ -154,24 +160,86 @@ def is_portable_mode() -> bool:
 def show_fatal_error_and_exit(message: str, title: str = "Rogue Signal Protocol - Error") -> None:
     """Display a fatal error message and exit the application.
 
-    Uses Windows MessageBox API for native dialog (works even without TCOD initialized).
+    Uses pygame for cross-platform error display. Falls back to console if pygame fails.
 
     Args:
         message: Error message to display
         title: Dialog title
     """
-    # Display Windows MessageBox
+    # Try pygame-based error screen (cross-platform)
     try:
-        # MB_OK | MB_ICONERROR | MB_SYSTEMMODAL
-        MB_OK = 0x00000000
-        MB_ICONERROR = 0x00000010
-        MB_SYSTEMMODAL = 0x00001000
+        import pygame
 
-        ctypes.windll.user32.MessageBoxW(
-            0, message, title, MB_OK | MB_ICONERROR | MB_SYSTEMMODAL  # No parent window
-        )
+        pygame.init()
+        screen = pygame.display.set_mode((640, 480))
+        pygame.display.set_caption(title)
+
+        # Colors
+        bg_color = (40, 40, 40)
+        text_color = (255, 100, 100)
+        instruction_color = (180, 180, 180)
+
+        # Fonts
+        try:
+            title_font = pygame.font.Font(None, 36)
+            message_font = pygame.font.Font(None, 24)
+        except Exception:
+            title_font = pygame.font.SysFont("arial", 28)
+            message_font = pygame.font.SysFont("arial", 18)
+
+        # Render title
+        title_surface = title_font.render(title, True, text_color)
+
+        # Word-wrap message into lines
+        words = message.split()
+        lines = []
+        current_line = ""
+        max_width = 580
+
+        for word in words:
+            test_line = current_line + " " + word if current_line else word
+            test_surface = message_font.render(test_line, True, text_color)
+            if test_surface.get_width() <= max_width:
+                current_line = test_line
+            else:
+                if current_line:
+                    lines.append(current_line)
+                current_line = word
+        if current_line:
+            lines.append(current_line)
+
+        # Render instruction
+        instruction = "Press any key or click to exit"
+        instruction_surface = message_font.render(instruction, True, instruction_color)
+
+        # Event loop
+        running = True
+        while running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    running = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    running = False
+
+            # Draw
+            screen.fill(bg_color)
+            screen.blit(title_surface, (30, 30))
+
+            y_offset = 80
+            for line in lines:
+                line_surface = message_font.render(line, True, text_color)
+                screen.blit(line_surface, (30, y_offset))
+                y_offset += 28
+
+            screen.blit(instruction_surface, (30, 440))
+            pygame.display.flip()
+
+        pygame.quit()
+
     except Exception:
-        # Fallback to console print if MessageBox fails
+        # Fallback to console print if pygame fails
         print(f"\n{'=' * 60}")
         print(f"FATAL ERROR: {title}")
         print(f"{'=' * 60}")

@@ -306,5 +306,54 @@ class TestSoundSystemUpdate(unittest.TestCase):
         mock_quit.assert_called_once()
 
 
+class TestAssetFileCaseSensitivity(unittest.TestCase):
+    """Cross-platform tests verifying asset file references match actual files.
+
+    Linux is case-sensitive, so 'Victory.wav' != 'victory.wav'.
+    These tests catch case mismatches that would break on Linux.
+    """
+
+    def test_victory_music_file_exists_with_correct_case(self):
+        """Test that victory.wav exists with lowercase name (Linux-compatible)."""
+        import os
+        from pathlib import Path
+
+        # Get the music directory
+        project_root = Path(__file__).parent.parent.parent
+        music_dir = project_root / "music"
+
+        # The code references "victory.wav" (lowercase)
+        expected_file = music_dir / "victory.wav"
+
+        # This test will FAIL if file is named "Victory.wav" (uppercase)
+        # because on Linux, case matters
+        self.assertTrue(
+            expected_file.exists(),
+            f"Music file 'victory.wav' not found at {expected_file}. "
+            "Check if file exists with different case (e.g., 'Victory.wav'). "
+            "Linux is case-sensitive!"
+        )
+
+    def test_all_music_files_are_lowercase(self):
+        """Verify all music filenames are lowercase (convention check)."""
+        import os
+        from pathlib import Path
+
+        project_root = Path(__file__).parent.parent.parent
+        music_dir = project_root / "music"
+
+        if not music_dir.exists():
+            self.skipTest("Music directory not found")
+
+        for music_file in music_dir.iterdir():
+            if music_file.is_file():
+                filename = music_file.name
+                self.assertEqual(
+                    filename,
+                    filename.lower(),
+                    f"Music file '{filename}' should be lowercase for Linux compatibility"
+                )
+
+
 if __name__ == "__main__":
     unittest.main()
