@@ -181,8 +181,9 @@ class TestVictoryScreenInputHandling:
         victory_screen = VictoryScreen()
 
         # Create mock event for random key (e.g., 'A')
+        # Use KeySym(ord('a')) for cross-platform compatibility (KeySym.a doesn't exist on Linux)
         other_event = Mock(spec=tcod.event.KeyDown)
-        other_event.sym = tcod.event.KeySym.a
+        other_event.sym = tcod.event.KeySym(ord('a'))
 
         result = victory_screen.handle_input(other_event)
 
@@ -332,7 +333,8 @@ class TestVictoryScreenIntegration:
         victory_screen.render(test_console)
 
         # Try several invalid inputs
-        invalid_keys = [tcod.event.KeySym.a, tcod.event.KeySym.w, tcod.event.KeySym.TAB]
+        # Use KeySym(ord(...)) for letters - cross-platform (KeySym.a/w don't exist on Linux)
+        invalid_keys = [tcod.event.KeySym(ord('a')), tcod.event.KeySym(ord('w')), tcod.event.KeySym.TAB]
 
         for key_sym in invalid_keys:
             key_event = Mock(spec=tcod.event.KeyDown)

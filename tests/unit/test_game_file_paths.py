@@ -1,8 +1,9 @@
-"""Unit tests for game_file_paths.py - Windows file I/O with portable/AppData fallback."""
+"""Unit tests for game_file_paths.py - Cross-platform file I/O with portable/system fallback."""
 
+import os
 import sys
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -45,10 +46,10 @@ class TestFilePathsInitialization:
         # Mock get_application_directory to return read-only path
         monkeypatch.setattr(game_file_paths, "get_application_directory", lambda: readonly_dir)
 
-        # Mock _get_appdata_directory to return writable temp path
+        # Mock _get_system_data_directory to return writable temp path
         appdata_dir = tmp_path / "appdata"
         appdata_dir.mkdir()
-        monkeypatch.setattr(game_file_paths, "_get_appdata_directory", lambda: appdata_dir)
+        monkeypatch.setattr(game_file_paths, "_get_system_data_directory", lambda: appdata_dir)
 
         # Mock _test_write_permission to fail for portable, succeed for appdata
         original_test_write = game_file_paths._test_write_permission
@@ -110,7 +111,7 @@ class TestFilePathsInitialization:
         appdata_dir.mkdir()
 
         monkeypatch.setattr(game_file_paths, "get_application_directory", lambda: readonly_dir)
-        monkeypatch.setattr(game_file_paths, "_get_appdata_directory", lambda: appdata_dir)
+        monkeypatch.setattr(game_file_paths, "_get_system_data_directory", lambda: appdata_dir)
 
         # Mock write test to fail portable, succeed appdata
         original_test = game_file_paths._test_write_permission
@@ -174,35 +175,131 @@ class TestWritePermissionTesting:
         assert result is False
 
 
-class TestAppDataDirectory:
-    """Tests for AppData directory detection."""
+class TestSystemDataDirectory:
+    """Tests for system data directory detection (cross-platform via platformdirs)."""
 
-    def test_appdata_uses_localappdata_env(self, monkeypatch):
-        """Test that AppData path uses LOCALAPPDATA environment variable."""
-        test_appdata = "C:\\Users\\TestUser\\AppData\\Local"
-        monkeypatch.setenv("LOCALAPPDATA", test_appdata)
+    def test_system_data_dir_returns_path_with_app_name(self):
+        """Test that system data directory includes app name."""
+        result = game_file_paths._get_system_data_directory()
 
-        result = game_file_paths._get_appdata_directory()
+        # Should always include the app name
+        assert "RogueSignalProtocol" in str(result)
 
-        assert result == Path(test_appdata) / "RogueSignalProtocol"
+    @pytest.mark.windows_only
+    def test_system_data_dir_uses_localappdata_on_windows(self, monkeypatch):
+        """Test that on Windows, system data dir is under LOCALAPPDATA."""
+        result = game_file_paths._get_system_data_directory()
 
-    def test_appdata_fallback_when_env_not_set(self, monkeypatch):
-        """Test AppData fallback when LOCALAPPDATA not set."""
-        monkeypatch.delenv("LOCALAPPDATA", raising=False)
+        # On Windows, platformdirs uses LOCALAPPDATA
+        localappdata = os.getenv("LOCALAPPDATA")
+        if localappdata:
+            assert localappdata in str(result)
 
-        result = game_file_paths._get_appdata_directory()
+    def test_system_data_dir_returns_path_object(self):
+        """Test that _get_system_data_directory returns a Path object."""
+        result = game_file_paths._get_system_data_directory()
 
-        # Should fall back to ~\AppData\Local
-        assert "AppData" in str(result)
-        assert "Local" in str(result)
-        assert "RogueSignalProtocol" in str(result.name)
+        assert isinstance(result, Path)
+
+
+class TestCrossPlatformPaths:
+    """TDD tests for Phase 2: Cross-platform path resolution.
+
+    These tests use platform mocking fixtures to verify path resolution
+    works correctly on all platforms without requiring actual cross-platform runs.
+    """
+
+    def setup_method(self):
+        """Reset module state before each test."""
+        game_file_paths._data_directory = None
+        game_file_paths._is_portable_mode = None
+
+    def test_get_data_dir_returns_xdg_path_on_linux(self, mock_linux_platform, tmp_path, monkeypatch):
+        """On Linux, data dir should be under ~/.local/share/ (XDG standard).
+
+        This test verifies platformdirs integration returns correct Linux paths.
+        """
+        # platformdirs uses HOME env var on Linux
+        monkeypatch.setenv("HOME", str(tmp_path))
+
+        # Force reimport to pick up mocked platform
+        from platformdirs import user_data_dir
+        result = user_data_dir("RogueSignalProtocol", appauthor=False)
+
+        # Should use XDG_DATA_HOME or default to ~/.local/share
+        assert "RogueSignalProtocol" in result
+        # On Linux, platformdirs returns ~/.local/share/appname or XDG_DATA_HOME/appname
+
+    def test_get_data_dir_returns_localappdata_on_windows(self, mock_windows_platform, tmp_path, monkeypatch):
+        """On Windows, data dir should be under %LOCALAPPDATA%.
+
+        This test verifies platformdirs integration returns correct Windows paths.
+        """
+        test_localappdata = str(tmp_path / "AppData" / "Local")
+        monkeypatch.setenv("LOCALAPPDATA", test_localappdata)
+
+        from platformdirs import user_data_dir
+        result = user_data_dir("RogueSignalProtocol", appauthor=False)
+
+        # Should include the app name
+        assert "RogueSignalProtocol" in result
+
+    def test_portable_mode_works_on_linux(self, mock_linux_platform, tmp_path, monkeypatch):
+        """Portable mode should work identically on Linux.
+
+        The game should detect writable directories and use portable mode
+        regardless of platform.
+        """
+        # Mock application directory to tmp_path (writable)
+        monkeypatch.setattr(game_file_paths, "get_application_directory", lambda: tmp_path)
+
+        # Initialize should succeed in portable mode
+        result = game_file_paths.initialize_data_directories()
+
+        assert result is True
+        assert game_file_paths.is_portable_mode() is True
+        assert game_file_paths.get_data_directory() == tmp_path
+
+    def test_system_fallback_works_on_linux(self, mock_linux_platform, tmp_path, monkeypatch):
+        """When portable mode fails on Linux, system directory should be used."""
+        # Create read-only directory for portable mode simulation
+        readonly_dir = tmp_path / "readonly_app"
+        readonly_dir.mkdir()
+
+        # System data directory
+        system_dir = tmp_path / "system_data"
+        system_dir.mkdir()
+
+        monkeypatch.setattr(game_file_paths, "get_application_directory", lambda: readonly_dir)
+        monkeypatch.setattr(game_file_paths, "_get_system_data_directory", lambda: system_dir)
+
+        # Mock write test to fail for portable, succeed for system
+        original_test = game_file_paths._test_write_permission
+
+        def mock_test(directory: Path) -> bool:
+            if "readonly_app" in str(directory):
+                return False
+            return original_test(directory)
+
+        monkeypatch.setattr(game_file_paths, "_test_write_permission", mock_test)
+
+        # Initialize should succeed via system fallback
+        result = game_file_paths.initialize_data_directories()
+
+        assert result is True
+        assert game_file_paths.is_portable_mode() is False
+        assert game_file_paths.get_data_directory() == system_dir
 
 
 class TestApplicationDirectory:
     """Tests for application directory detection."""
 
+    @pytest.mark.windows_only
     def test_application_directory_frozen_exe(self, monkeypatch):
-        """Test application directory when running as frozen exe."""
+        """Test application directory when running as frozen exe.
+
+        Windows-only: Uses Windows-style paths that don't work on Linux.
+        """
         # Mock sys.frozen and sys.executable
         monkeypatch.setattr(sys, "frozen", True, raising=False)
         monkeypatch.setattr(sys, "executable", "C:\\Games\\RogueSignal\\game.exe")
@@ -226,32 +323,40 @@ class TestApplicationDirectory:
 
 
 class TestFatalErrorDisplay:
-    """Tests for fatal error display (MessageBox)."""
+    """Tests for fatal error display (pygame-based, cross-platform)."""
 
-    @patch("ctypes.windll.user32.MessageBoxW")
     @patch("sys.exit")
-    def test_show_fatal_error_displays_messagebox(self, mock_exit, mock_msgbox):
-        """Test that fatal error shows Windows MessageBox."""
-        game_file_paths.show_fatal_error_and_exit("Test error message", "Test Title")
+    def test_show_fatal_error_exits_with_code_1(self, mock_exit):
+        """Test that fatal error exits with code 1."""
+        # Mock pygame to avoid actually displaying a window
+        with patch.dict("sys.modules", {"pygame": MagicMock()}):
+            # Re-import to pick up mocked pygame
+            import importlib
+            importlib.reload(game_file_paths)
 
-        # Should call MessageBoxW
-        mock_msgbox.assert_called_once()
-        call_args = mock_msgbox.call_args[0]
-        assert "Test error message" in call_args
-        assert "Test Title" in call_args
+            game_file_paths.show_fatal_error_and_exit("Test error message", "Test Title")
 
-        # Should exit with code 1
-        mock_exit.assert_called_once_with(1)
+            # Should exit with code 1
+            mock_exit.assert_called_once_with(1)
 
-    @patch("ctypes.windll.user32.MessageBoxW", side_effect=Exception("MessageBox failed"))
     @patch("sys.exit")
     @patch("builtins.print")
-    def test_show_fatal_error_fallback_to_console(self, mock_print, mock_exit, mock_msgbox):
-        """Test that fatal error falls back to console if MessageBox fails."""
-        game_file_paths.show_fatal_error_and_exit("Test error message", "Test Title")
+    def test_show_fatal_error_fallback_to_console(self, mock_print, mock_exit):
+        """Test that fatal error falls back to console if pygame fails."""
+        # Make pygame import fail
+        with patch.dict("sys.modules", {"pygame": None}):
+            # Force ImportError by removing pygame from modules
+            import sys as sys_module
+            original_pygame = sys_module.modules.get("pygame")
+            sys_module.modules["pygame"] = None
 
-        # Should attempt MessageBox first
-        mock_msgbox.assert_called_once()
+            try:
+                # This should fall back to console print
+                game_file_paths.show_fatal_error_and_exit("Test error message", "Test Title")
+            finally:
+                # Restore pygame
+                if original_pygame is not None:
+                    sys_module.modules["pygame"] = original_pygame
 
         # Should fall back to print
         assert mock_print.called

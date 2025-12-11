@@ -75,6 +75,45 @@ from tests.fixtures.standard_patterns import (
 )
 
 
+# ===== Platform Mocking for Cross-Platform Tests =====
+
+
+@pytest.fixture
+def mock_linux_platform(monkeypatch):
+    """Mock sys.platform to simulate Linux environment.
+
+    Usage:
+        def test_linux_paths(mock_linux_platform):
+            # sys.platform is now 'linux'
+            assert is_linux() is True
+    """
+    monkeypatch.setattr(sys, "platform", "linux")
+
+
+@pytest.fixture
+def mock_windows_platform(monkeypatch):
+    """Mock sys.platform to simulate Windows environment.
+
+    Usage:
+        def test_windows_paths(mock_windows_platform):
+            # sys.platform is now 'win32'
+            assert is_windows() is True
+    """
+    monkeypatch.setattr(sys, "platform", "win32")
+
+
+@pytest.fixture
+def mock_macos_platform(monkeypatch):
+    """Mock sys.platform to simulate macOS environment.
+
+    Usage:
+        def test_macos_paths(mock_macos_platform):
+            # sys.platform is now 'darwin'
+            assert is_macos() is True
+    """
+    monkeypatch.setattr(sys, "platform", "darwin")
+
+
 # ===== Time Mocking for Reliable Tests =====
 
 
@@ -588,18 +627,43 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "audio: Tests that play real audio (skip by default)"
     )
+    config.addinivalue_line(
+        "markers", "linux_only: mark test to run only on Linux"
+    )
+    config.addinivalue_line(
+        "markers", "windows_only: mark test to run only on Windows"
+    )
+    config.addinivalue_line(
+        "markers", "cross_platform: mark test that must pass on all platforms"
+    )
 
 
 def pytest_collection_modifyitems(config, items):
-    """Skip audio tests unless --audio or --full flags are provided."""
-    if config.getoption("--audio") or config.getoption("--full"):
-        # Audio tests requested - don't skip them
-        return
+    """Skip tests based on markers and command line options."""
+    # Skip audio tests unless --audio or --full flags are provided
+    skip_audio = None
+    if not (config.getoption("--audio") or config.getoption("--full")):
+        skip_audio = pytest.mark.skip(reason="Audio test skipped (use --audio or --full to run)")
 
-    skip_audio = pytest.mark.skip(reason="Audio test skipped (use --audio or --full to run)")
+    # Platform-specific test skipping
+    skip_windows = None
+    skip_linux = None
+
+    if sys.platform != "win32":
+        skip_windows = pytest.mark.skip(reason="Windows-only test (current platform: {})".format(sys.platform))
+    if not sys.platform.startswith("linux"):
+        skip_linux = pytest.mark.skip(reason="Linux-only test (current platform: {})".format(sys.platform))
+
     for item in items:
-        if "audio" in item.keywords:
+        # Audio test skipping
+        if skip_audio and "audio" in item.keywords:
             item.add_marker(skip_audio)
+
+        # Platform-specific test skipping
+        if skip_windows and "windows_only" in item.keywords:
+            item.add_marker(skip_windows)
+        if skip_linux and "linux_only" in item.keywords:
+            item.add_marker(skip_linux)
 
 
 # ===== Deterministic Test Agent Fixtures =====
