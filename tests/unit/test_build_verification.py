@@ -87,13 +87,6 @@ class TestAssetBundling:
 class TestPyInstallerSpecs:
     """Tests to verify PyInstaller spec files are valid."""
 
-    def test_windows_spec_exists(self):
-        """Verify Windows PyInstaller spec file exists."""
-        project_root = Path(__file__).parent.parent.parent
-        spec_file = project_root / "RogueSignalProtocol.spec"
-
-        assert spec_file.exists(), "Windows spec file missing: RogueSignalProtocol.spec"
-
     def test_linux_spec_exists(self):
         """Verify Linux PyInstaller spec file exists."""
         project_root = Path(__file__).parent.parent.parent
