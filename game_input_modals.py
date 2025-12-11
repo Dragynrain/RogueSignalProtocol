@@ -14,29 +14,25 @@ import tcod.event
 
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Position
+from game_input_actions import InputAction, InputContext
+from game_input_base import BaseInputHandler
 from game_input_coordinates import InputCoordinateConverter
-from game_ui import UniversalInputHandler
 
 
-class InventoryInputHandler:
-    """Handles inventory screen input (keyboard and mouse)."""
+class InventoryInputHandler(BaseInputHandler):
+    """Handles inventory screen input (keyboard, mouse, and gamepad)."""
 
-    def __init__(self, game, renderer=None):
-        self.game = game
-        self.renderer = renderer
+    def __init__(self, game, renderer=None, input_mapper=None, controllers=None, gamepad_handler=None):
+        # Initialize BaseInputHandler with shared InputMapper, controllers, and gamepad_handler
+        super().__init__(game, renderer, input_mapper=input_mapper, controllers=controllers,
+                        gamepad_handler=gamepad_handler)
 
-    def handle_input(self, event: tcod.event.KeyDown) -> bool:
-        """Handle keyboard input while inventory is open."""
-        # Handle navigation using universal handler with callback
-        if UniversalInputHandler.handle_list_navigation(self, event, 0, True, self.navigate):
-            return True
+    def get_context(self) -> InputContext:
+        """Get current input context for inventory."""
+        return InputContext.INVENTORY
 
-        # Handle selection and other actions
-        if UniversalInputHandler.is_confirm_key(event):
-            self.use_selected_item()
-        elif event.sym == tcod.event.KeySym.I or UniversalInputHandler.is_escape_key(event):
-            self.game.show_inventory = False
-
+    def get_default_return(self) -> bool:
+        """Inventory handler returns True by default (event consumed)."""
         return True
 
     def navigate(self, direction: int):
@@ -50,6 +46,45 @@ class InventoryInputHandler:
             self.game.inventory_selection = (
                 self.game.inventory_selection + direction
             ) % total_items
+
+    def execute_action(self, action: InputAction) -> bool:
+        """
+        Execute an InputAction in inventory context.
+
+        Args:
+            action: The InputAction to execute
+
+        Returns:
+            True if action was handled
+        """
+
+        # Navigation (handle both NAVIGATE_ and MOVE_ actions for keyboard compatibility)
+        # Keyboard maps arrow keys to MOVE_*, gamepad maps to NAVIGATE_*
+        if action == InputAction.NAVIGATE_UP or action == InputAction.MOVE_NORTH:
+            self.navigate(-1)
+            return True
+        elif action == InputAction.NAVIGATE_DOWN or action == InputAction.MOVE_SOUTH:
+            self.navigate(1)
+            return True
+        elif action == InputAction.NAVIGATE_PAGE_UP:
+            # Page up = move 5 items up
+            self.navigate(-5)
+            return True
+        elif action == InputAction.NAVIGATE_PAGE_DOWN:
+            # Page down = move 5 items down
+            self.navigate(5)
+            return True
+        # Confirm/Cancel
+        elif action == InputAction.CONFIRM:
+            self.use_selected_item()
+            return True
+        elif action == InputAction.CANCEL or action == InputAction.TOGGLE_INVENTORY:
+            # Both CANCEL and TOGGLE_INVENTORY should close inventory
+            self.game.show_inventory = False
+            return True
+
+        # Modal captures all input - return True to prevent fall-through to gameplay
+        return self.get_default_return()
 
     def use_selected_item(self):
         """Use or equip the selected inventory item, or unequip if selecting equipped exploit."""
@@ -82,6 +117,9 @@ class InventoryInputHandler:
     def handle_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
         """Handle mouse motion in inventory - update selection on hover."""
         from game_rendering_ui import UIRenderer
+
+        if not hasattr(event, "position") or event.position is None:
+            return False
 
         # Convert pixel coordinates to console tile coordinates
         window_w, window_h = InputCoordinateConverter.get_window_dimensions(
@@ -145,30 +183,20 @@ class InventoryInputHandler:
         return True
 
 
-class LookModeInputHandler:
-    """Handles look mode input (keyboard and mouse)."""
+class LookModeInputHandler(BaseInputHandler):
+    """Handles look mode input (keyboard, gamepad, and mouse)."""
 
-    def __init__(self, game, renderer=None):
-        self.game = game
-        self.renderer = renderer
+    def __init__(self, game, renderer=None, input_mapper=None, controllers=None, gamepad_handler=None):
+        # Initialize BaseInputHandler with shared InputMapper, controllers, and gamepad_handler
+        super().__init__(game, renderer, input_mapper=input_mapper, controllers=controllers,
+                        gamepad_handler=gamepad_handler)
 
-    def handle_input(self, event: tcod.event.KeyDown) -> bool:
-        """Handle keyboard input while in look mode."""
-        from game_input import InputMappings
+    def get_context(self) -> InputContext:
+        """Get current input context for look mode."""
+        return InputContext.LOOK_MODE
 
-        # ESC or L exits look mode
-        if UniversalInputHandler.is_escape_key(event) or event.sym == tcod.event.KeySym.L:
-            self.game.look_mode = False
-            self.game.message_log.add_message("Look mode exited")
-            return True
-
-        # Movement keys - use shared mapping to avoid duplication
-        if event.sym in InputMappings.MOVEMENT_MAP:
-            dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
-            self.move_cursor(dx, dy)
-            return True
-
-        # Unhandled key - consume it and stay in look mode
+    def get_default_return(self) -> bool:
+        """Look mode handler returns True by default (event consumed)."""
         return True
 
     def enter_look_mode(self):
@@ -189,6 +217,70 @@ class LookModeInputHandler:
         # Inspection info is displayed in real-time via the inspection panel
         # No need to log to message log
 
+    def execute_action(self, action: InputAction) -> bool:
+        """
+        Execute an InputAction in look mode context.
+
+        Handles cursor movement for keyboard, gamepad (both sticks), and mouse.
+
+        Args:
+            action: The InputAction to execute
+
+        Returns:
+            True if action was handled
+        """
+
+        # Cursor movement - support full 8-way movement (MOVE actions work in look mode)
+        if action == InputAction.MOVE_NORTH:
+            self.move_cursor(0, -1)
+            return True
+        elif action == InputAction.MOVE_SOUTH:
+            self.move_cursor(0, 1)
+            return True
+        elif action == InputAction.MOVE_WEST:
+            self.move_cursor(-1, 0)
+            return True
+        elif action == InputAction.MOVE_EAST:
+            self.move_cursor(1, 0)
+            return True
+        elif action == InputAction.MOVE_NORTHEAST:
+            self.move_cursor(1, -1)
+            return True
+        elif action == InputAction.MOVE_NORTHWEST:
+            self.move_cursor(-1, -1)
+            return True
+        elif action == InputAction.MOVE_SOUTHEAST:
+            self.move_cursor(1, 1)
+            return True
+        elif action == InputAction.MOVE_SOUTHWEST:
+            self.move_cursor(-1, 1)
+            return True
+        # 4-way navigation (D-pad fallback)
+        elif action == InputAction.NAVIGATE_UP:
+            self.move_cursor(0, -1)
+            return True
+        elif action == InputAction.NAVIGATE_DOWN:
+            self.move_cursor(0, 1)
+            return True
+        elif action == InputAction.NAVIGATE_LEFT:
+            self.move_cursor(-1, 0)
+            return True
+        elif action == InputAction.NAVIGATE_RIGHT:
+            self.move_cursor(1, 0)
+            return True
+        # Confirm/Cancel
+        elif action == InputAction.CONFIRM:
+            # In look mode, confirm doesn't do anything (inspection is automatic)
+            return True
+        elif action == InputAction.CANCEL or action == InputAction.TOGGLE_LOOK_MODE:
+            # Both CANCEL and TOGGLE_LOOK_MODE should exit look mode
+            self.game.look_mode = False
+            self.game.message_log.add_message("Look mode exited")
+            return True
+
+        # Modal captures all input - return True to prevent fall-through to gameplay
+        return self.get_default_return()
+
     def handle_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
         """Handle mouse motion in look mode - update cursor position with throttling."""
         import time
@@ -202,7 +294,9 @@ class LookModeInputHandler:
 
         # Only do expensive world conversion when not throttled
         graphics_mode = (
-            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+            self.game.settings.graphics_mode
+            if hasattr(self.game, "settings") and self.game.settings is not None
+            else "glyph"
         )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
@@ -216,7 +310,9 @@ class LookModeInputHandler:
     def handle_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
         """Handle left click in look mode - inspect entity at cursor."""
         graphics_mode = (
-            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+            self.game.settings.graphics_mode
+            if hasattr(self.game, "settings") and self.game.settings is not None
+            else "glyph"
         )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
@@ -228,32 +324,104 @@ class LookModeInputHandler:
         return False
 
 
-class TargetingInputHandler:
-    """Handles targeting mode input (keyboard and mouse)."""
+class TargetingInputHandler(BaseInputHandler):
+    """Handles targeting mode input (keyboard, gamepad, and mouse)."""
 
-    def __init__(self, game, renderer=None):
-        self.game = game
-        self.renderer = renderer
+    def __init__(self, game, renderer=None, input_mapper=None, controllers=None, gamepad_handler=None):
+        # Initialize BaseInputHandler with shared InputMapper, controllers, and gamepad_handler
+        super().__init__(game, renderer, input_mapper=input_mapper, controllers=controllers,
+                        gamepad_handler=gamepad_handler)
 
-    def handle_input(self, event: tcod.event.KeyDown) -> bool:
-        """Handle keyboard input while in targeting mode."""
-        from game_input import InputMappings
+    def get_context(self) -> InputContext:
+        """Get current input context for targeting mode."""
+        return InputContext.TARGETING
 
-        # Movement keys - use shared mapping to avoid duplication
-        if event.sym in InputMappings.MOVEMENT_MAP:
-            dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
-            self.game._move_cursor(dx, dy)
-        elif event.sym in (tcod.event.KeySym.RETURN, tcod.event.KeySym.KP_ENTER):
+    def get_default_return(self) -> bool:
+        """Targeting handler returns True by default (event consumed)."""
+        return True
+
+    def execute_action(self, action: InputAction) -> bool:
+        """
+        Execute an InputAction in targeting mode context.
+
+        Handles cursor movement (both sticks) and exploit execution.
+
+        Args:
+            action: The InputAction to execute
+
+        Returns:
+            True if action was handled
+        """
+
+        # Cursor movement - support both sticks (8-way left stick + 4-way right stick/D-pad)
+        # Left stick (8-way)
+        if action == InputAction.MOVE_NORTH:
+            self.game._move_cursor(0, -1)
+            return True
+        elif action == InputAction.MOVE_SOUTH:
+            self.game._move_cursor(0, 1)
+            return True
+        elif action == InputAction.MOVE_WEST:
+            self.game._move_cursor(-1, 0)
+            return True
+        elif action == InputAction.MOVE_EAST:
+            self.game._move_cursor(1, 0)
+            return True
+        elif action == InputAction.MOVE_NORTHEAST:
+            self.game._move_cursor(1, -1)
+            return True
+        elif action == InputAction.MOVE_NORTHWEST:
+            self.game._move_cursor(-1, -1)
+            return True
+        elif action == InputAction.MOVE_SOUTHEAST:
+            self.game._move_cursor(1, 1)
+            return True
+        elif action == InputAction.MOVE_SOUTHWEST:
+            self.game._move_cursor(-1, 1)
+            return True
+        # Right stick / D-pad (4-way)
+        elif action == InputAction.NAVIGATE_UP:
+            self.game._move_cursor(0, -1)
+            return True
+        elif action == InputAction.NAVIGATE_DOWN:
+            self.game._move_cursor(0, 1)
+            return True
+        elif action == InputAction.NAVIGATE_LEFT:
+            self.game._move_cursor(-1, 0)
+            return True
+        elif action == InputAction.NAVIGATE_RIGHT:
+            self.game._move_cursor(1, 0)
+            return True
+        # Confirm = execute exploit at cursor
+        elif action == InputAction.CONFIRM:
+            if self.game.targeting_exploit is None:
+                logging.warning("Confirm in targeting mode but no exploit selected")
+                self.game.targeting_mode = False
+                return True
             self.game.exploit_system.execute_exploit(
                 self.game.targeting_exploit, self.game.cursor_position
             )
+            return True
+        # Cancel = exit targeting mode
+        elif action == InputAction.CANCEL:
+            self.game.targeting_mode = False
+            self.game.targeting_exploit = None
+            self.game.message_log.add_message("Targeting cancelled")
+            return True
+        # Block UI toggles in targeting mode (prevent accidental exits)
+        elif action in (InputAction.TOGGLE_INVENTORY, InputAction.TOGGLE_ACHIEVEMENTS,
+                        InputAction.TOGGLE_LORE_VIEWER, InputAction.TOGGLE_HELP):
+            return True  # Silently ignore
 
-        return True
+        # Modal captures all input - return True to prevent fall-through to gameplay
+        return self.get_default_return()
 
     def handle_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
         """Handle mouse motion in targeting mode - update cursor position."""
         graphics_mode = (
-            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+            self.game.settings.graphics_mode
+            if hasattr(self.game, "settings") and self.game.settings is not None
+            else "glyph"
         )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
@@ -266,12 +434,14 @@ class TargetingInputHandler:
     def handle_left_click(self, event: tcod.event.MouseButtonDown) -> bool:
         """Handle left click in targeting mode - execute exploit."""
         graphics_mode = (
-            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+            self.game.settings.graphics_mode
+            if hasattr(self.game, "settings") and self.game.settings is not None
+            else "glyph"
         )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
         )
-        if world_pos:
+        if world_pos and self.game.targeting_exploit:
             self.game.cursor_position = world_pos
             # Execute exploit at clicked position
             self.game.exploit_system.execute_exploit(self.game.targeting_exploit, world_pos)
@@ -279,34 +449,6 @@ class TargetingInputHandler:
         return False
 
 
-class AchievementsInputHandler:
-    """Handles achievements screen input."""
-
-    def __init__(self, game, renderer=None):
-        self.game = game
-        self.renderer = renderer
-
-    def handle_input(self, event: tcod.event.KeyDown) -> bool:
-        """Handle keyboard input while achievements screen is open."""
-        # Get achievements menu from renderer
-        if self.renderer and hasattr(self.renderer, "ui_renderer"):
-            achievements_menu = (
-                self.renderer.ui_renderer._achievements_menu
-                if hasattr(self.renderer.ui_renderer, "_achievements_menu")
-                else None
-            )
-
-            if achievements_menu:
-                # Delegate to achievements menu's input handler
-                action = achievements_menu.handle_input(event)
-                if action == "back":
-                    self.game.show_achievements = False
-                    return True
-
-        # Fallback: ESC or V closes achievements
-        if UniversalInputHandler.is_escape_key(event) or event.sym == tcod.event.KeySym.V:
-            self.game.show_achievements = False
-            return True
-
-        # Unhandled key - consume it and stay in achievements
-        return True
+# AchievementsInputHandler removed in Phase 4
+# Achievements input is now handled directly by AchievementsMenu (game_menu_achievements.py)
+# with a str→bool adapter in game_input.py (_handle_achievements_input)

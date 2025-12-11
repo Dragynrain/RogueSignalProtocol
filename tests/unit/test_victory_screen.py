@@ -98,12 +98,8 @@ class TestVictoryScreenRendering:
         """Victory screen renders 'SIGNAL FREE' title."""
         victory_screen = VictoryScreen()
 
+        # Smoke test - render completes without exception
         victory_screen.render(test_console)
-
-        # Check that the title text is present in the console
-        # (We can't easily verify exact position without complex console introspection,
-        # but we can verify render completes without error)
-        assert True  # Rendering completed without exception
 
     def test_render_displays_victory_message(self, test_console):
         """Victory screen renders the full victory message."""
@@ -121,11 +117,8 @@ class TestVictoryScreenRendering:
         """Victory screen displays continue prompt at bottom."""
         victory_screen = VictoryScreen()
 
+        # Smoke test - render completes without exception
         victory_screen.render(test_console)
-
-        # Rendering should complete without error
-        # Prompt text is "[SPACE/ENTER] Continue"
-        assert True  # Rendering completed
 
 
 class TestVictoryScreenInputHandling:
@@ -277,13 +270,10 @@ class TestVictoryScreenEdgeCases:
         """Victory screen can be rendered multiple times."""
         victory_screen = VictoryScreen()
 
-        # Render multiple times
+        # Smoke test - multiple renders complete without exception
         victory_screen.render(test_console)
         victory_screen.render(test_console)
         victory_screen.render(test_console)
-
-        # Should complete without error
-        assert True
 
     def test_handle_input_before_render(self):
         """Input can be handled before rendering."""

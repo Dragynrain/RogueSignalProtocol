@@ -385,13 +385,13 @@ class TestWorkflowSimulation:
     """Simulate complete dialogue workflows."""
 
     def test_gameplay_dialogue_workflow(self):
-        """Simulate typical gameplay dialogue workflow."""
+        """Simulate typical gameplay dialogue workflow with priority interruption."""
         settings = Mock()
         settings.dialogue_preferences = {}
         state = DialogueState(settings)
         console = tcod.console.Console(width=80, height=50)
 
-        # 1. Player triggers overclock warning
+        # 1. Player triggers overclock warning (priority 5)
         dialogue1 = create_overclock_warning_dialogue(
             exploit_name="Buffer Overflow",
             overheat_amount=10,
@@ -401,19 +401,19 @@ class TestWorkflowSimulation:
         )
         state.show(dialogue1)
 
-        # 2. While dialogue is active, inventory attack occurs (higher priority)
+        # 2. While dialogue is active, inventory attack occurs (priority 8, interrupts)
         dialogue2 = create_inventory_attack_dialogue()
         state.show(dialogue2)
 
-        # 3. First dialogue still active (queued)
-        assert state.get_active() == dialogue1
+        # 3. Higher priority dialogue interrupts and shows immediately
+        assert state.get_active() == dialogue2  # Priority 8
         UnifiedRenderer.render(console, state.get_active())
 
-        # 4. Player dismisses first dialogue
+        # 4. Player dismisses attack dialogue
         state.close()
 
-        # 5. Higher priority dialogue shown
-        assert state.get_active() == dialogue2
+        # 5. Original overclock warning shown from queue
+        assert state.get_active() == dialogue1  # Priority 5
         UnifiedRenderer.render(console, state.get_active())
 
         # 6. Player dismisses second dialogue

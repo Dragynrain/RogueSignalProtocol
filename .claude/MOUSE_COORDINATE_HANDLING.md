@@ -15,8 +15,8 @@
 - **What**: Position on game map (100×100 in this game)
 - **Used by**: In-game clicks, targeting, look mode, movement
 - **Returns**: World position (0-99, 0-99) or None
-- **Tool**: `InputHandler._mouse_pixel_to_world()`
-- **File**: `game_input.py`
+- **Tool**: `InputCoordinateConverter.pixel_to_world_position()`
+- **File**: `game_input_coordinates.py`
 
 **These are fundamentally different operations and should NOT be unified.**
 
@@ -76,14 +76,19 @@ for event in tcod.event.get():
 
 ### For World Coordinates
 
-Use `InputHandler._mouse_pixel_to_world()` (already exists):
+Use `InputCoordinateConverter.pixel_to_world_position()` from `game_input_coordinates.py`:
 
 ```python
+from game_input_coordinates import InputCoordinateConverter
+
 # In game input handling:
-world_pos = self._mouse_pixel_to_world(event.pixel.x, event.pixel.y)
+world_pos = InputCoordinateConverter.pixel_to_world_position(
+    event.pixel.x, event.pixel.y,
+    renderer, game, graphics_mode, camera_offset
+)
 if world_pos:
     # world_pos is Position(x, y) on game map
-    self.game.move_to(world_pos.x, world_pos.y)
+    game.move_to(world_pos.x, world_pos.y)
 ```
 
 **Why these are separate:**
@@ -98,10 +103,10 @@ if world_pos:
 - Converts pixel → console tile (0-79, 0-49)
 - Simple and stateless - no game state needed
 
-**InputHandler._mouse_pixel_to_world (game_input.py):**
+**InputCoordinateConverter.pixel_to_world_position (game_input_coordinates.py):**
 - Converts pixel → world position (0-99, 0-99)
 - Complex and stateful - needs graphics mode, camera offset, map bounds, viewport config
-- Used only in InputHandler, too complex to unify with menu conversion
+- Used by input handlers in `game_input_gameplay.py` and `game_input_modals.py`
 
 ## Testing Checklist
 
@@ -145,24 +150,24 @@ def handle_mouse_click(self, event) -> str:
 
 ### Adding Mouse Support to In-Game
 
-See `game_input.py` for examples - use `InputHandler._mouse_pixel_to_world()`
+See `game_input_gameplay.py` and `game_input_modals.py` for examples - use `InputCoordinateConverter.pixel_to_world_position()`
 
 ## Key Takeaways
 
-1. 📖 **Read `.claude/TCOD_GUIDE.md` first** - documentation already exists!
-2. 🚫 **Never use `context.convert_event()`** - doesn't work with our rendering
-3. ✅ **Two systems, two tools**:
+1. **Read `.claude/TCOD_GUIDE.md` first** - documentation already exists!
+2. **Never use `context.convert_event()`** - doesn't work with our rendering
+3. **Two systems, two tools**:
    - Menu/UI: `MenuMouseHandler.convert_to_tile_coords()`
-   - World: `InputHandler._mouse_pixel_to_world()`
-4. ✅ **Always use `event.tile`** after conversion (not `event.position`)
-5. ✅ **Test thoroughly** - mouse events are tricky
+   - World: `InputCoordinateConverter.pixel_to_world_position()`
+4. **Always use `event.tile`** after conversion (not `event.position`)
+5. **Test thoroughly** - mouse events are tricky
 
 ## Prevention Checklist
 
 **Before adding mouse support:**
 - [ ] Read `.claude/TCOD_GUIDE.md` section "Mouse Coordinate Conversion"
 - [ ] Determine if you need menu or world coordinates
-- [ ] Use the appropriate tool (`MenuMouseHandler` vs `_mouse_pixel_to_world`)
+- [ ] Use the appropriate tool (`MenuMouseHandler` vs `InputCoordinateConverter.pixel_to_world_position`)
 
 **When reviewing PRs with mouse support:**
 - [ ] Uses correct conversion tool for the context?

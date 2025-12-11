@@ -46,6 +46,7 @@ MOVEMENT:
 
 ACTIONS:
   1-5       - Use equipped exploits (shown in HUD)
+  [ / ]     - Cycle exploits (prev/next - like gamepad bumpers)
   Space / . - Wait/rest (pass turn in place)
   I         - Open inventory (manage codes, equip exploits)
   L         - Look mode (examine entities and terrain)
@@ -71,6 +72,20 @@ UNIVERSAL MOUSE BEHAVIOR:
   - Mouse wheel ALWAYS scrolls (achievements, settings, help, inventory)
   - Left-click activates buttons, options, and clickable elements
   - Hover provides visual feedback on interactive elements
+
+GAMEPAD CONTROLS (Xbox/PlayStation):
+  Left Stick / D-Pad - Movement (8-way, time-gated)
+  A Button           - Wait/rest (pass turn)
+  B Button           - Cancel (close menus, exit modes)
+  X Button           - Exploit slot 1 (direct)
+  Y Button           - Inventory (toggle open/close)
+  LB / RB            - Cycle exploits (prev/next)
+  LT                 - Look mode (hold to examine)
+  RT                 - Execute selected exploit
+  Start              - Main menu (pause, toggle back to game)
+  Select             - Help menu
+
+Full gamepad documentation: docs/wiki/Keybindings.md
 
 CORE MECHANICS
 --------------
@@ -198,9 +213,15 @@ AUDIO ISSUES:
 - Adjust volume in Settings menu
 - Disable music/SFX separately if needed
 
-KEYBOARD ONLY:
+KEYBOARD/GAMEPAD ONLY:
 - Full keyboard-only support - mouse is entirely optional
+- Full gamepad support - all features accessible via controller
 - All mouse actions have keyboard equivalents (ESC = right-click, arrows = wheel)
+
+GAMEPAD NOT RECOGNIZED:
+- Most controllers work automatically (Xbox, PlayStation, Switch Pro, etc.)
+- Steam users: Add game to Steam library, use Steam Input to configure
+- Manual mapping: See docs/wiki/Keybindings.md for SDL controller setup
 
 ADVANCED - LOGGING CONTROL
 ---------------------------

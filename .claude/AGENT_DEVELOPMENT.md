@@ -69,30 +69,30 @@ def test_can_clear_level():
 
 ### Step 5: Add Features ONE at a Time
 Each feature needs its own test:
-- HP retreats → Test: survives when low HP
-- Choke points → Test: uses chokes when surrounded
-- Trace management → Test: clears trace before spawning admins
-- Multi-level → Test: proceeds through gateway
+- HP retreats -> Test: survives when low HP
+- Choke points -> Test: uses chokes when surrounded
+- Trace management -> Test: clears trace before spawning admins
+- Multi-level -> Test: proceeds through gateway
 
 ---
 
 ## Common Mistakes to Avoid
 
-### ❌ Duplicate Logic in Multiple Places
+### Duplicate Logic in Multiple Places
 ```python
 # BAD: Retreat check in charge_and_attack() AND main loop
 def charge_and_attack():
-    if self.should_retreat_to_healing():  # ❌ Don't check here
+    if self.should_retreat_to_healing():  # Don't check here
         return 'retreat_heal'  # Caller doesn't handle this!
 ```
 
 **Fix: Only check conditions in ONE place (the caller).**
 
-### ❌ Ignore Return Values
+### Ignore Return Values
 ```python
 # BAD: Call function, ignore return, re-compute result
 old_pos = (self.player.x, self.player.y)
-self.move_to(target_x, target_y, max_steps=1)  # ❌ Ignoring return
+self.move_to(target_x, target_y, max_steps=1)  # Ignoring return
 moved = (old_pos != (self.player.x, self.player.y))  # Re-computing
 ```
 
@@ -102,7 +102,7 @@ moved = (old_pos != (self.player.x, self.player.y))  # Re-computing
 moved = self.move_to(target_x, target_y, max_steps=1)
 ```
 
-### ❌ Test "Survived" Instead of "Cleared"
+### Test "Survived" Instead of "Cleared"
 ```python
 # BAD: "Survived" might mean timed out!
 assert agent.player.cpu > 0

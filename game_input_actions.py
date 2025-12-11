@@ -9,6 +9,12 @@ This abstraction layer enables:
 - Custom key/button remapping
 - Multi-input support (keyboard + gamepad simultaneously)
 - Context-aware input handling (A button = wait in gameplay, confirm in menus)
+
+EXTENSIBILITY:
+- To add new input types (touch, voice, etc.): Create a new mapper class (TouchInputMapper)
+  that converts input events to InputAction values, then add routing in BaseInputHandler
+- To add new actions: Add entries to InputAction enum below using auto()
+- Existing handlers automatically gain new action support via execute_action() override
 """
 
 from enum import Enum, auto
@@ -77,6 +83,32 @@ class InputAction(Enum):
     # SPECIAL
     # ============================================================================
     DEBUG_EXPORT = auto()  # Shift+F12 - export debug package
+    EXIT_TO_MENU = auto()  # Return to main menu (START button on gamepad, ESC on keyboard)
+
+    # ============================================================================
+    # CONTROLS MENU ACTIONS
+    # ============================================================================
+    CONTROLS_RESET_DEFAULT = auto()  # Reset single action to default (X button on gamepad)
+    CONTROLS_RESET_ALL = auto()  # Reset all bindings to defaults (Y button on gamepad, R on keyboard)
+
+    # ============================================================================
+    # DIALOGUE-SPECIFIC ACTIONS
+    # ============================================================================
+    DIALOGUE_SKIP_WARNING = auto()  # "Don't warn me again" (X button on gamepad, D on keyboard)
+
+    # ============================================================================
+    # FUTURE EXTENSIBILITY
+    # ============================================================================
+    # When adding new input types (touch, voice, gesture), add actions here:
+    # Examples:
+    # TOUCH_PINCH_ZOOM_IN = auto()
+    # TOUCH_PINCH_ZOOM_OUT = auto()
+    # TOUCH_TWO_FINGER_ROTATE = auto()
+    # VOICE_COMMAND_INVENTORY = auto()
+    # GESTURE_CIRCLE = auto()
+    #
+    # Then create corresponding mapper (TouchInputMapper, VoiceInputMapper)
+    # and add routing in BaseInputHandler.handle_input()
 
 
 class InputContext(Enum):
@@ -117,3 +149,10 @@ class InputContext(Enum):
     CONTROLS_MENU = auto()
     ABOUT_MENU = auto()
     GRAPHICS_PREVIEW = auto()
+
+    # Future extensibility: Add new contexts here as needed
+    # Examples for future input types:
+    # TOUCH_GESTURE_TUTORIAL = auto()  # Special context for teaching touch gestures
+    # VOICE_CALIBRATION = auto()  # Voice command setup screen
+
+

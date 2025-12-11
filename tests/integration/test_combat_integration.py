@@ -75,6 +75,7 @@ class TestExploitSystem:
             mock_exploit.targeting = TargetingMode.NONE
             mock_exploit.range = 0
             mock_exploit.name = "System Crash"
+            mock_exploit.self_damage = 0  # Prevent TypeError when comparing to int
             mock_game_data.EXPLOITS = {"system_crash": mock_exploit}
 
             exploit_system = ExploitSystem(basic_game_engine)

@@ -27,6 +27,7 @@ from game_dialogue_system import (
     create_inventory_attack_dialogue,
     create_overclock_warning_dialogue,
 )
+from game_entity_enums import EnemyState
 from tests.test_agent import GameTestAgent
 
 
@@ -73,7 +74,7 @@ class TestDialogueDuringCombat:
         # Spawn enemy and make it hostile
         player_x, player_y = agent.player.x, agent.player.y
         enemy = agent.spawn_enemy("hunter", player_x + 5, player_y)
-        enemy.state = "HOSTILE"
+        enemy.state = EnemyState.HOSTILE
         enemy_initial_pos = (enemy.x, enemy.y)
 
         # Show dialogue
@@ -113,7 +114,7 @@ class TestDialogueDuringCombat:
         assert console.rgba["bg"][center_y, center_x, 3] == 255
 
     def test_multiple_combat_dialogues_queued_correctly(self):
-        """Multiple combat-related dialogues queue correctly."""
+        """Multiple combat-related dialogues queue correctly with priority interruption."""
         # Use standalone DialogueState to avoid preference issues
         settings = Mock()
         settings.dialogue_preferences = {}
@@ -124,19 +125,19 @@ class TestDialogueDuringCombat:
         dialogue2 = create_inventory_attack_dialogue()  # Priority 8 (higher)
         dialogue3 = create_death_dialogue()  # Priority 10 (highest)
 
-        state.show(dialogue1)
-        state.show(dialogue2)
-        state.show(dialogue3)
+        state.show(dialogue1)  # Shows immediately (no active dialogue)
+        state.show(dialogue2)  # Interrupts dialogue1 (higher priority)
+        state.show(dialogue3)  # Interrupts dialogue2 (highest priority)
 
-        # First dialogue shown (priority 2)
-        assert state.get_active() == dialogue1
+        # Highest priority dialogue shown first (priority interruption)
+        assert state.get_active() == dialogue3  # Priority 10 (death dialogue)
 
-        # Close and verify priority order (highest to lowest)
-        state.close()
-        assert state.get_active() == dialogue3  # Priority 10 (highest remaining)
-
+        # Close and verify priority order (highest to lowest from queue)
         state.close()
         assert state.get_active() == dialogue2  # Priority 8
+
+        state.close()
+        assert state.get_active() == dialogue1  # Priority 2 (lowest)
 
 
 class TestDialoguePreferencesPersistence:
@@ -366,7 +367,7 @@ class TestDialogueDuringMenuNavigation:
         assert agent.engine.dialogue_state.get_active() == dialogue
 
     def test_multiple_dialogues_during_menu_navigation(self):
-        """Multiple dialogues queue correctly during menu navigation."""
+        """Multiple dialogues queue correctly during menu navigation with priority interruption."""
         agent = GameTestAgent(seed=48)
 
         # Open menu
@@ -374,20 +375,20 @@ class TestDialogueDuringMenuNavigation:
 
         # Queue multiple dialogues with different priorities
         dialogue1 = create_gateway_dialogue()  # Priority 2
-        dialogue2 = create_death_dialogue()  # Priority 10 (higher, should queue)
+        dialogue2 = create_death_dialogue()  # Priority 10 (higher, interrupts)
 
-        agent.engine.dialogue_state.show(dialogue1)
-        agent.engine.dialogue_state.show(dialogue2)
+        agent.engine.dialogue_state.show(dialogue1)  # Shows immediately
+        agent.engine.dialogue_state.show(dialogue2)  # Interrupts dialogue1 (higher priority)
 
-        # First dialogue active (shown immediately)
-        assert agent.engine.dialogue_state.get_active() == dialogue1
+        # Higher priority dialogue interrupts and shows immediately
+        assert agent.engine.dialogue_state.get_active() == dialogue2  # Priority 10
 
-        # Second queued (higher priority, but first was already shown)
+        # First dialogue now queued (was interrupted)
         assert len(agent.engine.dialogue_state.dialogue_queue) == 1
 
-        # Close first, second should appear (higher priority)
+        # Close death dialogue, gateway dialogue should appear
         agent.engine.dialogue_state.close()
-        assert agent.engine.dialogue_state.get_active() == dialogue2
+        assert agent.engine.dialogue_state.get_active() == dialogue1  # Priority 2
 
 
 class TestRapidDialogueTriggers:

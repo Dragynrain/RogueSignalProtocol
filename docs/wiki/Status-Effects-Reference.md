@@ -51,7 +51,7 @@ Beneficial status effects that enhance your capabilities.
 
 ---
 
-### ⚡ Speed Boost
+###  Speed Boost
 
 **Source:** Code hack (randomized color)
 **Duration:** 3 turns
@@ -268,17 +268,17 @@ Harmful status effects that hinder player capabilities.
 ### Stacking Rules
 
 **Multiple Buffs:**
-- ✅ Can have multiple positive effects simultaneously
+-  Can have multiple positive effects simultaneously
 - Example: Invisibility + Speed Boost + Enhanced Vision all active
 - No diminishing returns
 
 **Multiple Debuffs:**
-- ✅ Can have Virus + Slowed simultaneously
+-  Can have Virus + Slowed simultaneously
 - Both effects apply independently
 - Very dangerous situation
 
 **Buff + Debuff:**
-- ✅ Can have positive and negative effects together
+-  Can have positive and negative effects together
 - Example: Speed Boost while Virus is ticking
 - Must manage both
 
@@ -297,10 +297,10 @@ Harmful status effects that hinder player capabilities.
 ### Antivirus Exploit
 
 **What It Removes:**
-- ✅ Virus
-- ✅ Movement Slowed
-- ❌ Does NOT remove buffs (only debuffs)
-- ❌ Does NOT remove Disabled/Stunned (those expire naturally)
+-  Virus
+-  Movement Slowed
+-  Does NOT remove buffs (only debuffs)
+-  Does NOT remove Disabled/Stunned (those expire naturally)
 
 **Cost:**
 - **RAM:** 2

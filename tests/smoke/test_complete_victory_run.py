@@ -94,9 +94,7 @@ class TestCompleteVictoryRun:
             # Perform actions
             agent.move_player(1, 0)
             agent.turns_taken += 1
-
-        # If we reach here, no memory crash occurred
-        assert True
+        # No exception after 1000 turns means no memory leak
 
     @pytest.mark.slow
     def test_victory_run_attempt_completes(self):
@@ -108,15 +106,9 @@ class TestCompleteVictoryRun:
         """
         agent = VictoryRunAgent(seed=99999, max_turns=3000)
 
-        # Attempt victory run
-        try:
-            result = agent.run_to_victory()
-
-            # Whether victory is achieved or not, test passes if no crash
-            # (Victory depends on RNG, pathfinding, combat, etc.)
-            assert True
-        except Exception as e:
-            pytest.fail(f"Victory run crashed: {e}")
+        # Attempt victory run - success depends on RNG, but should not crash
+        result = agent.run_to_victory()
+        # Result can be True (victory) or False (death) - both are valid outcomes
 
     def test_multiple_victory_run_attempts(self):
         """Multiple victory run attempts work without issues."""
@@ -223,14 +215,12 @@ class TestVictoryRunRobustness:
         """Rapid consecutive actions don't crash the game."""
         agent = VictoryRunAgent(seed=42)
 
-        # Perform many rapid actions
+        # Perform many rapid actions - smoke test for stability
         for _ in range(100):
             if agent.engine.game_over:
                 break
             agent.move_player(1, 0)
-
-        # Should complete successfully
-        assert True
+        # No exception means rapid actions handled correctly
 
 
 class TestVictoryRunPerformance:

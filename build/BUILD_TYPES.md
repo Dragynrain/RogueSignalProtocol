@@ -182,15 +182,15 @@ To create a release build via GitHub Actions:
 
 | File | Alpha | Release | Purpose |
 |------|-------|---------|---------|
-| `debug_mode.flag` | ✅ | ❌ | Enables DEBUG logging |
-| `build_info.txt` | ✅ | ✅ | Build type, date, log level |
+| `debug_mode.flag` | Yes | No | Enables DEBUG logging |
+| `build_info.txt` | Yes | Yes | Build type, date, log level |
 
 ### Created at Runtime
 
 | File | Alpha | Release | Purpose |
 |------|-------|---------|---------|
-| `game_debug.log` | ✅ | ❌ | Verbose debug log |
-| `game_errors.log` | ❌ | ✅ | Error log only |
+| `game_debug.log` | Yes | No | Verbose debug log |
+| `game_errors.log` | No | Yes | Error log only |
 
 ---
 

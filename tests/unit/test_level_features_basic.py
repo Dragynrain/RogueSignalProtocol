@@ -620,7 +620,7 @@ class TestStrategicCoverClusters:
         points = self.level_generator.tactical_generator.poisson_disc_sampling(area, radius)
 
         # May generate 0 or very few points due to space constraints
-        assert len(points) >= 0  # Should not crash
+        assert isinstance(points, list), "Should return a list (possibly empty)"
 
 
 if __name__ == "__main__":

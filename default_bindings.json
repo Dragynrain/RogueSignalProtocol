@@ -1,0 +1,221 @@
+{
+    "_comment": "Default input bindings for Rogue Signal Protocol. Edit this file to customize defaults.",
+
+    "keyboard": {
+        "_comment": "Maps keyboard keys to actions. Keys use tcod.event.KeySym names.",
+
+        "W": "MOVE_NORTH",
+        "Q": "MOVE_NORTHWEST",
+        "E": "MOVE_NORTHEAST",
+        "D": "MOVE_EAST",
+        "C": "MOVE_SOUTHEAST",
+        "S": "MOVE_SOUTH",
+        "Z": "MOVE_SOUTHWEST",
+        "A": "MOVE_WEST",
+
+        "UP": "MOVE_NORTH",
+        "DOWN": "MOVE_SOUTH",
+        "LEFT": "MOVE_WEST",
+        "RIGHT": "MOVE_EAST",
+
+        "HOME": "MOVE_NORTHWEST",
+        "PAGEUP": "MOVE_NORTHEAST",
+        "END": "MOVE_SOUTHWEST",
+        "PAGEDOWN": "MOVE_SOUTHEAST",
+
+        "KP_8": "MOVE_NORTH",
+        "KP_9": "MOVE_NORTHEAST",
+        "KP_6": "MOVE_EAST",
+        "KP_3": "MOVE_SOUTHEAST",
+        "KP_2": "MOVE_SOUTH",
+        "KP_1": "MOVE_SOUTHWEST",
+        "KP_4": "MOVE_WEST",
+        "KP_7": "MOVE_NORTHWEST",
+        "KP_5": "WAIT",
+
+        "SPACE": "WAIT",
+        "PERIOD": "WAIT",
+
+        "N1": "EXPLOIT_SLOT_1",
+        "N2": "EXPLOIT_SLOT_2",
+        "N3": "EXPLOIT_SLOT_3",
+        "N4": "EXPLOIT_SLOT_4",
+        "N5": "EXPLOIT_SLOT_5",
+
+        "LEFTBRACKET": "EXPLOIT_CYCLE_PREV",
+        "RIGHTBRACKET": "EXPLOIT_CYCLE_NEXT",
+        "X": "EXPLOIT_EXECUTE",
+
+        "I": "TOGGLE_INVENTORY",
+        "L": "TOGGLE_LOOK_MODE",
+        "F": "TOGGLE_LORE_VIEWER",
+        "V": "TOGGLE_ACHIEVEMENTS",
+        "Shift+SLASH": "TOGGLE_HELP",
+
+        "RETURN": "CONFIRM",
+        "KP_ENTER": "CONFIRM",
+        "ESCAPE": "CANCEL"
+    },
+
+    "gamepad": {
+        "_comment": "Context-sensitive gamepad bindings. Button/axis names use SDL controller names.",
+
+        "buttons": {
+            "GAMEPLAY": {
+                "A": "WAIT",
+                "B": "CANCEL",
+                "X": "EXPLOIT_SLOT_1",
+                "Y": "TOGGLE_INVENTORY",
+                "RIGHTSHOULDER": "EXPLOIT_CYCLE_NEXT",
+                "LEFTSHOULDER": "EXPLOIT_CYCLE_PREV",
+                "START": "EXIT_TO_MENU",
+                "BACK": "TOGGLE_HELP",
+                "LEFTSTICK": "TOGGLE_LORE_VIEWER",
+                "RIGHTSTICK": "TOGGLE_ACHIEVEMENTS",
+                "DPAD_UP": "MOVE_NORTH",
+                "DPAD_DOWN": "MOVE_SOUTH",
+                "DPAD_LEFT": "MOVE_WEST",
+                "DPAD_RIGHT": "MOVE_EAST"
+            },
+
+            "INVENTORY": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "Y": "TOGGLE_INVENTORY",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT",
+                "RIGHTSHOULDER": "NAVIGATE_PAGE_DOWN",
+                "LEFTSHOULDER": "NAVIGATE_PAGE_UP"
+            },
+
+            "LOOK_MODE": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT"
+            },
+
+            "TARGETING": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT"
+            },
+
+            "DIALOGUE": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "X": "DIALOGUE_SKIP_WARNING",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT"
+            },
+
+            "HELP": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT",
+                "LEFTSHOULDER": "NAVIGATE_PAGE_UP",
+                "RIGHTSHOULDER": "NAVIGATE_PAGE_DOWN"
+            },
+
+            "LORE_VIEWER": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT",
+                "LEFTSHOULDER": "NAVIGATE_PAGE_UP",
+                "RIGHTSHOULDER": "NAVIGATE_PAGE_DOWN"
+            },
+
+            "ACHIEVEMENTS_SCREEN": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT",
+                "LEFTSHOULDER": "NAVIGATE_PAGE_UP",
+                "RIGHTSHOULDER": "NAVIGATE_PAGE_DOWN"
+            },
+
+            "MAIN_MENU": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "START": "EXIT_TO_MENU",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN"
+            },
+
+            "SETTINGS_MENU": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT"
+            },
+
+            "CONTROLS_MENU": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "X": "CONTROLS_RESET_DEFAULT",
+                "Y": "CONTROLS_RESET_ALL",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT",
+                "LEFTSHOULDER": "NAVIGATE_PAGE_UP",
+                "RIGHTSHOULDER": "NAVIGATE_PAGE_DOWN"
+            },
+
+            "ABOUT_MENU": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT"
+            },
+
+            "GRAPHICS_PREVIEW": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT"
+            },
+
+            "GAME_OVER": {
+                "A": "CONFIRM",
+                "B": "CONFIRM",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN"
+            }
+        },
+
+        "axes": {
+            "GAMEPLAY": {
+                "TRIGGERRIGHT": "EXPLOIT_EXECUTE",
+                "TRIGGERLEFT": "TOGGLE_LOOK_MODE"
+            },
+
+            "TARGETING": {
+                "TRIGGERRIGHT": "CONFIRM"
+            }
+        }
+    }
+}

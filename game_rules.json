@@ -65,6 +65,20 @@
     "sound_directory": "sound",
     "music_directory": "music"
   },
+  "input": {
+    "gamepad_analog_threshold": 0.2,
+    "gamepad_trigger_threshold": 0.5,
+    "gamepad_look_mode_threshold": 0.3,
+    "button_repeat_initial_delay": 0.4,
+    "button_repeat_rate": 0.15,
+    "button_repeat_rate_fast": 0.075,
+    "menu_navigation_initial_delay": 0.4,
+    "menu_navigation_repeat_rate": 0.15,
+    "cursor_movement_initial_delay": 0.25,
+    "cursor_movement_repeat_rate": 0.08,
+    "gameplay_movement_initial_delay": 0.35,
+    "gameplay_movement_repeat_rate": 0.18
+  },
   "room_generation": {
     "min_rooms_base": 12,
     "room_level_multiplier": 3,

@@ -69,15 +69,15 @@ dy = next_y - player_y
 
 ```python
 # WRONG - will path through walls!
-pathfinder.add_root((player_x, player_y))  # ❌
-path = pathfinder.path_to((target_x, target_y))  # ❌
+pathfinder.add_root((player_x, player_y))  # X
+path = pathfinder.path_to((target_x, target_y))  # X
 
 # CORRECT - swap to (y, x)
-pathfinder.add_root((player_y, player_x))  # ✓
-path = pathfinder.path_to((target_y, target_x))  # ✓
+pathfinder.add_root((player_y, player_x))  # OK
+path = pathfinder.path_to((target_y, target_x))  # OK
 
 # Path output is also (y, x), need to swap back
-next_y, next_x = path[1]  # ✓ (skip starting position at path[0])
+next_y, next_x = path[1]  # OK (skip starting position at path[0])
 dx = next_x - player_x
 dy = next_y - player_y
 ```
@@ -225,7 +225,7 @@ box_x, box_y = CoordinateHelpers.center_box(
 
 **Problem:** Direct array access mixes (x,y) and [y,x] indexing:
 ```python
-# ✗ WRONG - Easy to mess up [y, x] vs (x, y)
+# WRONG - Easy to mess up [y, x] vs (x, y)
 for y in range(height):
     for x in range(width):
         console.rgba["bg"][y, x, 3] = 255  # Must remember [y, x]!
@@ -233,7 +233,7 @@ for y in range(height):
 
 **Solution:** CoordinateHelpers uses function params (x, y) consistently:
 ```python
-# ✓ CORRECT - Always (x, y) order
+# CORRECT - Always (x, y) order
 CoordinateHelpers.set_alpha_region(console, x=0, y=0,
                                     width=width, height=height, alpha=255)
 ```

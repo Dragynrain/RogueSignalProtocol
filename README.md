@@ -8,16 +8,16 @@
 ![Version](https://img.shields.io/badge/version-0.8.0%20Alpha-orange.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-**📋 [SHARE YOUR FEEDBACK](https://forms.gle/jbwGdn8VGPa6NG9p9)** - Help shape development with this 2-minute survey!
+**[SHARE YOUR FEEDBACK](https://forms.gle/jbwGdn8VGPa6NG9p9)** - Help shape development with this 2-minute survey!
 
 ---
 
-## 📖 Documentation
+## Documentation
 
 **Choose your path:**
 
-### 📚 Comprehensive Wiki (All Game Knowledge)
-**[📖 Visit the Wiki](https://github.com/Dragynrain/RogueSignalProtocol/wiki)** - Complete game encyclopedia including:
+### Comprehensive Wiki (All Game Knowledge)
+**[Visit the Wiki](https://github.com/Dragynrain/RogueSignalProtocol/wiki)** - Complete game encyclopedia including:
 - Gameplay mechanics and systems
 - All 26 achievements and how to unlock them
 - Complete enemy, exploit, and item databases
@@ -25,10 +25,10 @@
 - UI/HUD explanations and settings reference
 - Keybindings and inspection system guides
 
-### 🎮 For Players
+### For Players
 **[README.txt](README.txt)** - Game instructions, controls, and gameplay guide
 
-### 🔧 For Developers, Modders & Contributors
+### For Developers, Modders & Contributors
 **[README_DEV.md](README_DEV.md)** - Complete developer guide including:
 - Building from source
 - Testing and development workflow
@@ -39,15 +39,15 @@
 
 ---
 
-## 🎮 Quick Overview
+## Quick Overview
 
 Rogue Signal Protocol is a traditional turn-based coffee break stealth roguelike where you play as an escaped digital consciousness navigating hostile corporate networks. Quick 10-15 minute runs with permadeath - each death teaches lessons, each run reveals more truth.
 
 ### Key Features
-- **🎲 Deterministic Gameplay (no RNG)**: Pure skill-based tactical decisions, no luck involved
-- **🎯 Enemy Movement Prediction**: See each enemy's next 3 planned moves for tactical planning
-- **🗺️ 3 Procedurally-Generated Network Levels**: 8 unique enemy types, 13 exploits, and distinct AI behaviors
-- **🎨 Dual Rendering Modes**: Switch between graphical sprites or classic ASCII/Unicode glyphs
+- **Deterministic Gameplay (no RNG)**: Pure skill-based tactical decisions, no luck involved
+- **Enemy Movement Prediction**: See each enemy's next 3 planned moves for tactical planning
+- **3 Procedurally-Generated Network Levels**: 8 unique enemy types, 13 exploits, and distinct AI behaviors
+- **Dual Rendering Modes**: Switch between graphical sprites or classic ASCII/Unicode glyphs
 
 **Additional Features:**
 - **Blind Spot Stealth** - Hide in shadows to avoid detection and manage heat levels
@@ -58,7 +58,7 @@ Rogue Signal Protocol is a traditional turn-based coffee break stealth roguelike
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 <p align="center">
   <img src="docs/images/screenshots/screenshot-1.png" width="45%" alt="Gameplay Screenshot 1">
@@ -72,7 +72,7 @@ Rogue Signal Protocol is a traditional turn-based coffee break stealth roguelike
 
 ---
 
-## 💬 Community & Links
+## Community & Links
 
 **Join the community and stay connected:**
 
@@ -80,27 +80,27 @@ Rogue Signal Protocol is a traditional turn-based coffee break stealth roguelike
 [![Itch.io](https://img.shields.io/badge/itch.io-Download-fa5c5c?logo=itch.io&logoColor=white)](https://dragynrain.itch.io/rogue-signal-protocol)
 [![GitHub](https://img.shields.io/badge/GitHub-Source-181717?logo=github&logoColor=white)](https://github.com/Dragynrain/RogueSignalProtocol/)
 
-- **💬 Discord:** [https://discord.gg/5fykUtECqz](https://discord.gg/5fykUtECqz) - Share feedback, stories, and ideas
-- **🎮 Itch.io:** [https://dragynrain.itch.io/rogue-signal-protocol](https://dragynrain.itch.io/rogue-signal-protocol) - Download and follow development
-- **🔧 GitHub:** [https://github.com/Dragynrain/RogueSignalProtocol/](https://github.com/Dragynrain/RogueSignalProtocol/) - Source code and issues
-- **📧 Email:** roguesignalprotocol@gmail.com - Direct contact
+- **Discord:** [https://discord.gg/5fykUtECqz](https://discord.gg/5fykUtECqz) - Share feedback, stories, and ideas
+- **Itch.io:** [https://dragynrain.itch.io/rogue-signal-protocol](https://dragynrain.itch.io/rogue-signal-protocol) - Download and follow development
+- **GitHub:** [https://github.com/Dragynrain/RogueSignalProtocol/](https://github.com/Dragynrain/RogueSignalProtocol/) - Source code and issues
+- **Email:** roguesignalprotocol@gmail.com - Direct contact
 
 Share your:
-- 🎮 Epic runs and close calls
-- 💡 Ideas for features or improvements
-- 🐛 Bug reports
-- 🎨 Fan art and mods
+- Epic runs and close calls
+- Ideas for features or improvements
+- Bug reports
+- Fan art and mods
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### For Players (Pre-built Executable)
 Download the latest release:
 - **[Itch.io](https://dragynrain.itch.io/rogue-signal-protocol)** (recommended)
 - **[GitHub Releases](https://github.com/Dragynrain/RogueSignalProtocol/releases)** (alternative)
 
-#### ⚠️ Windows SmartScreen Warning
+#### Windows SmartScreen Warning
 When running the executable for the first time, Windows may display a "Windows protected your PC" warning from **Windows Defender SmartScreen**. This is normal for unsigned executables.
 
 **The game is safe to run.** This warning appears because:
@@ -142,7 +142,7 @@ See **[README_DEV.md](README_DEV.md)** for complete development setup, testing, 
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! See **[README_DEV.md](README_DEV.md)** for:
 - How to contribute
@@ -152,7 +152,7 @@ We welcome contributions! See **[README_DEV.md](README_DEV.md)** for:
 
 ---
 
-## 📝 License
+## License
 
 MIT License - Free and Open Source Software
 
@@ -160,15 +160,15 @@ This permissive license allows maximum freedom for both personal and commercial 
 
 ---
 
-## 👨‍💻 Author
+## Author
 
 **Adam Forster** ([@Dragynrain](https://github.com/Dragynrain))
 
-📧 Contact: roguesignalprotocol@gmail.com
+Contact: roguesignalprotocol@gmail.com
 
 ---
 
-## 🎨 Credits
+## Credits
 
 - **Design & Programming:** Adam Forster
 - **Engine:** Python + TCOD (libtcod)

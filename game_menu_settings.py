@@ -18,8 +18,9 @@ import tcod
 from game_color_manager import ColorManager
 from game_config import GameConfig, GameSettings
 from game_entities import Colors
+from game_help_hints import get_settings_menu_help
 from game_menu_base import BaseMenu
-from game_ui import UniversalInputHandler, render_char_safe
+from game_ui import render_char_safe
 
 
 class SettingsMenu(BaseMenu):
@@ -27,9 +28,10 @@ class SettingsMenu(BaseMenu):
 
     def __init__(self, settings: GameSettings, menu_background=None, sound_manager=None):
         super().__init__(menu_background)
-        self.settings = settings
+        self.settings = settings  # Store settings for modification
         self.menu_background = menu_background  # Reference to background manager
         self.sound_manager = sound_manager  # For live volume updates and sound previews
+
         self.options = [
             {"name": "Master Volume", "type": "volume", "key": "master"},
             {"name": "SFX Volume", "type": "volume", "key": "sfx"},
@@ -66,7 +68,9 @@ class SettingsMenu(BaseMenu):
                 "type": "dialogue_toggle",
                 "key": "show_system_crash_warning",
             },
+            {"type": "separator"},  # Visual separation before utility actions
             {"name": "Export Debug Package", "type": "action"},
+            {"type": "separator"},  # Extra blank line before Back in classic mode
             {"name": "Back", "type": "action"},
         ]
 
@@ -78,6 +82,8 @@ class SettingsMenu(BaseMenu):
         # Stored coordinates for confirmation dialog click detection
         self.confirm_option_0_x_range = None  # (start_x, end_x) for "Yes"
         self.confirm_option_1_x_range = None  # (start_x, end_x) for "No"
+        self.confirm_option_0_y = None  # Y coordinate for "Yes"
+        self.confirm_option_1_y = None  # Y coordinate for "No"
 
     def render(self, console: tcod.console.Console) -> None:
         """Render the settings menu."""
@@ -125,6 +131,10 @@ class SettingsMenu(BaseMenu):
         start_y = box["top"] + 5
         spacing = 3 if box["use_background_layout"] else 2
         for i, option in enumerate(self.options):
+            # Skip separator - just leave blank line
+            if option.get("type") == "separator":
+                continue
+
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             bg_color = (
                 ColorManager.get("backgrounds", "menu_highlight")
@@ -149,13 +159,13 @@ class SettingsMenu(BaseMenu):
                 # Option value
                 if option["type"] == "volume":
                     volume_percent = self.settings.get_volume_percent(option["key"])
-                    bar_length = 8  # Shorter bar for narrow box
+                    bar_length = 10  # Slightly longer bar for better visual
                     filled_length = int(bar_length * volume_percent / 100)
 
-                    # Volume bar with directional hints - more compact
-                    bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
-                    # Add arrows to show click left=down, click right=up
-                    bar_text = f"< {bar} > {volume_percent}%"
+                    # Volume bar with block characters - cleaner look
+                    bar = "█" * filled_length + "░" * (bar_length - filled_length)
+                    # Add triangle arrows to show adjustability
+                    bar_text = f"◀ {bar} ▶ {volume_percent:3d}%"
                     render_char_safe(console, name_x, option_y + 1, bar_text, fg=color, bg=bg_color)
 
                 elif option["type"] == "toggle":
@@ -227,13 +237,13 @@ class SettingsMenu(BaseMenu):
                 # Option value
                 if option["type"] == "volume":
                     volume_percent = self.settings.get_volume_percent(option["key"])
-                    bar_length = 14  # Shortened from 20 to prevent overflow in glyph mode
+                    bar_length = 16  # Wider bar for classic mode
                     filled_length = int(bar_length * volume_percent / 100)
 
-                    # Volume bar with directional hints
-                    bar = "[" + "=" * filled_length + "-" * (bar_length - filled_length) + "]"
-                    # Add arrows to show click left=down, click right=up
-                    bar_text = f"< {bar} > {volume_percent}%"
+                    # Volume bar with block characters - cleaner look
+                    bar = "█" * filled_length + "░" * (bar_length - filled_length)
+                    # Add triangle arrows to show adjustability
+                    bar_text = f"◀ {bar} ▶ {volume_percent:3d}%"
                     render_char_safe(
                         console, box["content_left"] + 18, option_y, bar_text, fg=color, bg=bg_color
                     )
@@ -307,103 +317,124 @@ class SettingsMenu(BaseMenu):
                 bg=Colors.BLACK,
             )
 
-        # Instructions
-        if box["use_background_layout"]:
-            # Compact instructions for narrow box (graphics mode)
-            instructions = ["↕/WASD: Navigate", "←→/A/D: Adjust", "Enter: Select", "ESC: Back"]
-            inst_start_y = box["bottom"] - 6
-        else:
-            # Full instructions for glyph mode
-            instructions = ["↕/WASD: Navigate", "←→ or A/D: Adjust", "Enter: Select", "ESC: Back"]
-            inst_start_y = box["bottom"] - 6
+        # Instructions - dynamically reflects current bindings
+        instructions = get_settings_menu_help(box["use_background_layout"], self.input_mapper)
+        inst_x = box["center_x"] - len(instructions) // 2
+        render_char_safe(
+            console,
+            inst_x,
+            box["bottom"] - 3,
+            instructions,
+            fg=Colors.LIGHT_GRAY,
+            bg=Colors.BLACK,
+        )
 
-        for i, instruction in enumerate(instructions):
-            if box["use_background_layout"]:
-                # Center in narrow box
-                inst_x = box["center_x"] - len(instruction) // 2
-            else:
-                # Center in wide box
-                inst_x = box["center_x"] - len(instruction) // 2
+    # ========================================================================
+    # BASEINPUTHANDLER ABSTRACT METHODS
+    # ========================================================================
 
-            render_char_safe(
-                console,
-                inst_x,
-                inst_start_y + i,
-                instruction,
-                fg=Colors.LIGHT_GRAY,
-                bg=Colors.BLACK,
-            )
+    def get_context(self):
+        """Return input context - DIALOGUE for confirmation, SETTINGS_MENU otherwise."""
+        from game_input_actions import InputContext
+        return InputContext.DIALOGUE if self.show_export_confirmation else InputContext.SETTINGS_MENU
 
-    def handle_input(self, event) -> str:
-        """Handle settings menu input. Returns action: 'back', 'exit', 'export_debug_confirmed', or ''."""
+    def execute_action(self, action) -> str:
+        """Execute an InputAction and return menu command."""
+        from game_input_actions import InputAction
 
-        # Priority: Handle confirmation dialogue if active
-        if self.show_export_confirmation:
-            return self._handle_confirmation_input(event)
-
-        # Handle navigation with section header skipping
-        if UniversalInputHandler.handle_list_navigation(
-            self, event, len(self.options), False, self._navigate_skip_headers
-        ):
+        # Navigation (UP/DOWN)
+        if action in (InputAction.NAVIGATE_UP, InputAction.MOVE_NORTH):
+            self._navigate_skip_headers(-1)
+            return ""
+        elif action in (InputAction.NAVIGATE_DOWN, InputAction.MOVE_SOUTH):
+            self._navigate_skip_headers(1)
             return ""
 
-        # Handle selection
-        if UniversalInputHandler.is_confirm_key(event):
+        # Value adjustment (LEFT/RIGHT for volume, toggles, etc.)
+        elif action in (InputAction.NAVIGATE_LEFT, InputAction.MOVE_WEST):
+            self._adjust_setting(-1)
+            return ""
+        elif action in (InputAction.NAVIGATE_RIGHT, InputAction.MOVE_EAST):
+            self._adjust_setting(1)
+            return ""
+
+        # Confirm/Select
+        elif action == InputAction.CONFIRM:
             option = self.options[self.selected_option]
             if option["type"] == "action":
                 if option["name"] == "Back":
                     return "back"
                 elif option["name"] == "Export Debug Package":
-                    # Show confirmation dialogue instead of exporting immediately
+                    # Show confirmation dialogue
                     self.show_export_confirmation = True
-                    self.export_confirmation_selection = 0  # Default to "No"
+                    self.export_confirmation_selection = 0
                     return ""
-            elif option["type"] == "toggle":
-                # Trigger toggle with Enter key (same as in _adjust_setting)
-                self._adjust_setting(1)  # Direction doesn't matter for toggles
+            elif option["type"] in ("toggle", "bool_toggle", "dialogue_toggle"):
+                # Trigger toggle with Enter/B button
+                self._adjust_setting(1)
                 return ""
-            elif option["type"] == "bool_toggle":
-                # Trigger boolean toggle with Enter key
-                self._adjust_setting(1)  # Direction doesn't matter for toggles
-                return ""
-            elif option["type"] == "dialogue_toggle":
-                # Trigger dialogue toggle with Enter key
-                self._adjust_setting(1)  # Direction doesn't matter for toggles
-                return ""
-
-        # Handle value adjustment using universal handler
-        if UniversalInputHandler.handle_value_adjustment(self, event, self._adjust_setting):
             return ""
 
-        # Handle escape
-        if UniversalInputHandler.is_escape_key(event):
+        # Cancel/Back
+        elif action == InputAction.CANCEL:
             return "back"
 
         return ""
 
+    # ========================================================================
+    # CONFIRMATION DIALOG INPUT (override execute_action when dialog shown)
+    # ========================================================================
+
+    def handle_input(self, event) -> str:
+        """Override to handle confirmation dialog separately."""
+        # Priority: Handle confirmation dialogue if active
+        if self.show_export_confirmation:
+            return self._handle_confirmation_input(event)
+
+        # Otherwise use base class unified input handling
+        return super().handle_input(event)
+
     def _handle_confirmation_input(self, event) -> str:
-        """Handle input for export confirmation dialogue."""
-        # Handle navigation (up/down toggles between options)
-        if event.sym in (
-            UniversalInputHandler.NAVIGATION_UP + UniversalInputHandler.NAVIGATION_DOWN
-        ):
-            self.export_confirmation_selection = 1 - self.export_confirmation_selection
-            return ""
+        """Handle input for export confirmation dialogue (keyboard + gamepad)."""
+        from game_input_actions import InputAction, InputContext
 
-        # Handle selection
-        if UniversalInputHandler.is_confirm_key(event):
-            if self.export_confirmation_selection == 0:  # Yes, Export
-                self.show_export_confirmation = False
-                return "export_debug_confirmed"
-            else:  # No, Cancel
-                self.show_export_confirmation = False
-        elif UniversalInputHandler.is_escape_key(event):
-            self.show_export_confirmation = False
+        event_type = getattr(event, 'type', 'KEYDOWN')
+        input_action = None
 
+        if event_type == "KEYDOWN":
+            modifier = getattr(event, 'mod', 0)
+            input_action = self.input_mapper.get_action_for_key(event.sym, modifier=modifier)
+        elif event_type == "CONTROLLERAXISMOTION":
+            input_action = self.gamepad_handler.handle_axis_event(event, InputContext.DIALOGUE)
+        elif event_type in ("CONTROLLERBUTTONDOWN", "CONTROLLERBUTTONUP"):
+            # Handle both DOWN and UP to properly track button_held state for auto-repeat
+            input_action = self.gamepad_handler.handle_button_event(event, InputContext.DIALOGUE)
+
+        if input_action:
+            # Navigation (swap between Yes/No)
+            if input_action in (InputAction.NAVIGATE_UP, InputAction.NAVIGATE_DOWN, InputAction.NAVIGATE_LEFT, InputAction.NAVIGATE_RIGHT, InputAction.MOVE_NORTH, InputAction.MOVE_SOUTH, InputAction.MOVE_WEST, InputAction.MOVE_EAST):
+                self.export_confirmation_selection = 1 - self.export_confirmation_selection
+                return ""
+
+            # Confirm selection
+            elif input_action == InputAction.CONFIRM:
+                if self.export_confirmation_selection == 0:  # Yes, Export
+                    self.show_export_confirmation = False
+                    return "export_debug_confirmed"
+                else:  # No, Cancel
+                    self.show_export_confirmation = False
+                return ""
+
+            # Cancel dialogue
+            elif input_action == InputAction.CANCEL:
+                self.show_export_confirmation = False
+                return ""
+
+        # No special unmapped keys
         return ""
 
     def _navigate_skip_headers(self, direction: int):
-        """Navigate options while skipping section headers."""
+        """Navigate options while skipping section headers and separators."""
         old_selection = self.selected_option
 
         # Move in the specified direction
@@ -412,38 +443,48 @@ class SettingsMenu(BaseMenu):
         else:
             self.selected_option = min(len(self.options) - 1, self.selected_option + 1)
 
-        # Skip section headers
+        # Skip section headers and separators (non-selectable items)
+        non_selectable_types = {"section_header", "separator"}
         while (
             self.selected_option != old_selection
-            and self.options[self.selected_option]["type"] == "section_header"
+            and self.options[self.selected_option].get("type") in non_selectable_types
         ):
             if direction == -1:
                 self.selected_option = max(0, self.selected_option - 1)
             else:
                 self.selected_option = min(len(self.options) - 1, self.selected_option + 1)
 
-            # Prevent infinite loop if all options are headers
+            # Prevent infinite loop if all options are non-selectable
             if self.selected_option == old_selection:
                 break
 
-    def handle_mouse_motion(self, event) -> bool:
-        """Handle mouse motion - update selection in settings menu or confirmation dialogue."""
-        if not hasattr(event, "tile") or event.tile is None:
-            return False
+    # ========================================================================
+    # MOUSE HANDLING (override BaseMenu for confirmation dialog support)
+    # ========================================================================
 
+    def handle_mouse_motion(self, event) -> str:
+        """Handle mouse motion - update selection in settings menu or confirmation dialogue."""
         # Priority: Handle confirmation dialogue if active
         if self.show_export_confirmation:
-            return self._handle_confirmation_mouse_motion(event)
+            self._handle_confirmation_mouse_motion(event)
+            return ""
 
         from game_config import GameConfig
 
-        try:
-            tile_y = int(event.tile.y)
-        except (TypeError, ValueError, AttributeError) as e:
-            logging.debug(
-                f"Mouse event tile coordinate conversion failed in settings menu motion: {e}"
-            )
-            return False
+        # Check for tile coordinates (set by MenuMouseHandler.convert_to_tile_coords)
+        # Prefer event.tile, fall back to event.position for test compatibility
+        tile_y = None
+        for attr_name in ("tile", "position"):
+            if hasattr(event, attr_name):
+                coord_source = getattr(event, attr_name)
+                if coord_source is not None:
+                    try:
+                        tile_y = int(coord_source.y)
+                        break
+                    except (TypeError, ValueError, AttributeError):
+                        continue
+        if tile_y is None:
+            return ""
 
         # Calculate box dimensions the same way render() does
         menu_height = GameConfig.SCREEN_HEIGHT - 4  # Must match render() method (46 tiles)
@@ -467,26 +508,29 @@ class SettingsMenu(BaseMenu):
             if 0 <= option_index < len(self.options):
                 # Skip section headers - they're not selectable
                 if self.options[option_index]["type"] == "section_header":
-                    return False
+                    return ""
 
                 self.selected_option = option_index
-                return True
 
-        return False
+        return ""
 
-    def _handle_confirmation_mouse_motion(self, event) -> bool:
+    def _handle_confirmation_mouse_motion(self, event):
         """Handle mouse motion in confirmation dialog - update selection."""
-        if not hasattr(event, "tile") or event.tile is None:
-            return False
-
-        try:
-            tile_x = int(event.tile.x)
-            tile_y = int(event.tile.y)
-        except (TypeError, ValueError, AttributeError) as e:
-            logging.debug(
-                f"Mouse event tile coordinate conversion failed in confirmation dialog: {e}"
-            )
-            return False
+        # Check for tile coordinates (set by MenuMouseHandler.convert_to_tile_coords)
+        # Prefer event.tile, fall back to event.position for test compatibility
+        tile_x, tile_y = None, None
+        for attr_name in ("tile", "position"):
+            if hasattr(event, attr_name):
+                coord_source = getattr(event, attr_name)
+                if coord_source is not None:
+                    try:
+                        tile_x = int(coord_source.x)
+                        tile_y = int(coord_source.y)
+                        break
+                    except (TypeError, ValueError, AttributeError):
+                        continue
+        if tile_x is None or tile_y is None:
+            return
 
         # Check if hovering over option 0
         if (
@@ -499,7 +543,7 @@ class SettingsMenu(BaseMenu):
             start_x, end_x = self.confirm_option_0_x_range
             if tile_y == self.confirm_option_0_y and start_x <= tile_x < end_x:
                 self.export_confirmation_selection = 0
-                return True
+                return
 
         # Check if hovering over option 1
         if (
@@ -512,9 +556,7 @@ class SettingsMenu(BaseMenu):
             start_x, end_x = self.confirm_option_1_x_range
             if tile_y == self.confirm_option_1_y and start_x <= tile_x < end_x:
                 self.export_confirmation_selection = 1
-                return True
-
-        return False
+                return
 
     def _handle_confirmation_mouse_click(self, event) -> str:
         """Handle mouse click in confirmation dialog - execute selected option."""
@@ -529,26 +571,14 @@ class SettingsMenu(BaseMenu):
             self.show_export_confirmation = False
             return ""
 
-    def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - activate clicked option (for toggle/action types) or confirmation dialogue."""
-        import tcod.event
-
-        # Right-click = go back (standard behavior)
-        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
-            # If confirmation dialogue is open, right-click closes it
-            if self.show_export_confirmation:
-                self.show_export_confirmation = False
-                return ""
-            # Otherwise go back to main menu
-            return "back"
-
+    def handle_left_click(self, event) -> str:
+        """Handle left click - activate clicked option (for toggle/action types) or confirmation dialogue."""
         # Priority: Handle confirmation dialogue if active
         if self.show_export_confirmation:
             return self._handle_confirmation_mouse_click(event)
 
         # First update selection based on click position
-        if not self.handle_mouse_motion(event):
-            return ""
+        self.handle_mouse_motion(event)
 
         option = self.options[self.selected_option]
 
@@ -559,7 +589,7 @@ class SettingsMenu(BaseMenu):
             elif option["name"] == "Export Debug Package":
                 # Show confirmation dialogue
                 self.show_export_confirmation = True
-                self.export_confirmation_selection = 0  # Default to "No"
+                self.export_confirmation_selection = 0  # Default to "Yes, Export"
                 return ""
         elif option["type"] == "toggle":
             # Toggle the value (same as pressing Enter)
@@ -659,29 +689,27 @@ class SettingsMenu(BaseMenu):
                 content_left = box_left + 1
 
                 # Bar rendered at: name_x = content_left + 1
-                # Bar text: "<- [========] +> 100%"
+                # Bar text: "◀ ██████████ ▶ XXX%"
                 bar_start_x = content_left + 1
-                bar_length = 8  # Graphics mode uses short bar
+                bar_length = 10  # Graphics mode bar
 
-                # The "[" bracket is at bar_start_x + 3 (after "<- ")
-                # Actual bar content starts at bar_start_x + 4
-                bar_content_start = bar_start_x + 4
+                # Bar content starts at bar_start_x + 2 (after "◀ ")
+                bar_content_start = bar_start_x + 2
                 bar_content_end = bar_content_start + bar_length - 1
                 bar_mid = (bar_content_start + bar_content_end) // 2
             else:
-                # ASCII mode - wide box (50 chars wide)
+                # Classic mode - wide box (50 chars wide)
                 box_width = 50
                 box_left = (GameConfig.SCREEN_WIDTH - box_width) // 2
                 content_left = box_left + 2
 
                 # Bar rendered at: content_left + 18
-                # Bar text: "<- [==============] +> 100%"
+                # Bar text: "◀ ████████████████ ▶ XXX%"
                 bar_start_x = content_left + 18
-                bar_length = 14  # ASCII mode bar (shortened to fit in box)
+                bar_length = 16  # Classic mode bar
 
-                # The "[" bracket is at bar_start_x + 3 (after "<- ")
-                # Actual bar content starts at bar_start_x + 4
-                bar_content_start = bar_start_x + 4
+                # Bar content starts at bar_start_x + 2 (after "◀ ")
+                bar_content_start = bar_start_x + 2
                 bar_content_end = bar_content_start + bar_length - 1
                 bar_mid = (bar_content_start + bar_content_end) // 2
 
@@ -691,10 +719,19 @@ class SettingsMenu(BaseMenu):
 
         return ""
 
-    def handle_mouse_wheel(self, event) -> bool:
+    def handle_right_click(self, event) -> str:
+        """Handle right click - go back or cancel confirmation."""
+        # If confirmation dialogue is open, right-click closes it
+        if self.show_export_confirmation:
+            self.show_export_confirmation = False
+            return ""
+        # Otherwise go back to main menu
+        return "back"
+
+    def handle_mouse_wheel(self, event) -> str:
         """Handle mouse wheel - navigate through settings options."""
         if not hasattr(event, "y"):
-            return False
+            return ""
 
         if event.y > 0:
             # Scroll up - move selection up
@@ -706,7 +743,6 @@ class SettingsMenu(BaseMenu):
                     and self.options[self.selected_option]["type"] == "section_header"
                 ):
                     self.selected_option -= 1
-            return True
         elif event.y < 0:
             # Scroll down - move selection down
             if self.selected_option < len(self.options) - 1:
@@ -717,9 +753,8 @@ class SettingsMenu(BaseMenu):
                     and self.options[self.selected_option]["type"] == "section_header"
                 ):
                     self.selected_option += 1
-            return True
 
-        return False
+        return ""
 
     def _render_export_confirmation_dialog(self, console: tcod.console.Console) -> None:
         """Render debug export confirmation dialog with background-aware positioning."""

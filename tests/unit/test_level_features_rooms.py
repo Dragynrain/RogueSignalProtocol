@@ -264,7 +264,7 @@ class TestPhase3LayoutImprovements:
 
         # Should return empty list for too few rooms, or valid hubs otherwise
         if len(rooms) >= 5:
-            assert len(hub_rooms) >= 0
+            assert isinstance(hub_rooms, list), "Hub rooms should be a list"
             # If hubs were created, verify they're larger than original rooms
             if hub_rooms:
                 for hub in hub_rooms:

@@ -40,6 +40,23 @@ class GameSettings:
         """Get the path to the settings file (supports portable/AppData modes)."""
         return str(get_data_directory() / "saves" / "user_settings.json")
 
+    # Singleton instance for global access (set in __init__)
+    _instance: "GameSettings | None" = None
+
+    @classmethod
+    def get_instance(cls) -> "GameSettings | None":
+        """
+        Get the current GameSettings instance.
+
+        Returns the most recently created GameSettings instance, or None if
+        no instance has been created yet. Used by GamepadInputHandler to
+        access settings without constructor threading.
+
+        Returns:
+            The current GameSettings instance, or None
+        """
+        return cls._instance
+
     # Single source of truth for default settings
     DEFAULTS = {
         "master_volume": 0.7,
@@ -53,13 +70,18 @@ class GameSettings:
         "custom_keyboard_bindings": {},  # Custom key bindings for remapping (Phase 1: Gamepad Support)
         "custom_gamepad_bindings": {},  # Custom gamepad button bindings
         "gamepad_deadzone": 0.15,  # Analog stick deadzone (15% default)
+        "gamepad_threshold": 0.20,  # Stick deflection required for direction (20% default)
         "gamepad_enabled": True,  # Enable/disable gamepad input
+        "gamepad_direction_locking": True,  # Lock direction on stick deflection (prevents diagonal multi-move)
+        "gamepad_swap_sticks": False,  # Swap left/right stick functions (accessibility)
     }
 
     def __init__(self):
         # Initialize all settings from DEFAULTS dictionary
         self._apply_settings_from_dict(self.DEFAULTS)
         self.load_settings()
+        # Register as singleton instance for global access
+        GameSettings._instance = self
 
     def _apply_settings_from_dict(self, settings_dict: dict) -> None:
         """
@@ -298,6 +320,26 @@ class GameConfig:
     MESSAGE_CENTER_OFFSET_TINY = 10
     MESSAGE_LINE_SPACING = 1
     MESSAGE_BUTTON_SPACING = 3
+    # Input constants (gamepad/keyboard settings)
+    GAMEPAD_DEADZONE = 0.15
+    GAMEPAD_ANALOG_THRESHOLD = 0.2
+    GAMEPAD_TRIGGER_THRESHOLD = 0.5
+    GAMEPAD_LOOK_MODE_THRESHOLD = 0.3
+    # Threshold for analog stick dismissing achievement popups (~30% deflection)
+    # Uses raw SDL value (10000/32768 ≈ 0.305) to avoid floating point comparison
+    GAMEPAD_POPUP_DISMISS_RAW_THRESHOLD = 10000
+    BUTTON_REPEAT_INITIAL_DELAY = 0.4
+    BUTTON_REPEAT_RATE = 0.15
+    BUTTON_REPEAT_RATE_FAST = 0.075
+    MENU_NAVIGATION_INITIAL_DELAY = 0.4
+    MENU_NAVIGATION_REPEAT_RATE = 0.15
+    CURSOR_MOVEMENT_INITIAL_DELAY = 0.25
+    CURSOR_MOVEMENT_REPEAT_RATE = 0.08
+    # Gameplay movement (left stick in gameplay context) - slower than menus
+    GAMEPLAY_MOVEMENT_INITIAL_DELAY = 0.35  # Delay before hold-to-repeat kicks in
+    GAMEPLAY_MOVEMENT_REPEAT_RATE = 0.18    # Slower repeat than menus (more deliberate)
+    # Analog stick settling period (wait for stick to reach intended position)
+    ANALOG_SETTLING_PERIOD = 0.030  # 30 milliseconds
 
     @classmethod
     def load_from_json(cls):
@@ -334,6 +376,19 @@ class GameConfig:
             cls.MESSAGE_CENTER_OFFSET_TINY = cls._get_required("ui.message_center_offset_tiny")
             cls.MESSAGE_LINE_SPACING = cls._get_required("ui.message_line_spacing")
             cls.MESSAGE_BUTTON_SPACING = cls._get_required("ui.message_button_spacing")
+            # Input constants
+            cls.GAMEPAD_ANALOG_THRESHOLD = cls._get_required("input.gamepad_analog_threshold")
+            cls.GAMEPAD_TRIGGER_THRESHOLD = cls._get_required("input.gamepad_trigger_threshold")
+            cls.GAMEPAD_LOOK_MODE_THRESHOLD = cls._get_required("input.gamepad_look_mode_threshold")
+            cls.BUTTON_REPEAT_INITIAL_DELAY = cls._get_required("input.button_repeat_initial_delay")
+            cls.BUTTON_REPEAT_RATE = cls._get_required("input.button_repeat_rate")
+            cls.BUTTON_REPEAT_RATE_FAST = cls._get_required("input.button_repeat_rate_fast")
+            cls.MENU_NAVIGATION_INITIAL_DELAY = cls._get_required("input.menu_navigation_initial_delay")
+            cls.MENU_NAVIGATION_REPEAT_RATE = cls._get_required("input.menu_navigation_repeat_rate")
+            cls.CURSOR_MOVEMENT_INITIAL_DELAY = cls._get_required("input.cursor_movement_initial_delay")
+            cls.CURSOR_MOVEMENT_REPEAT_RATE = cls._get_required("input.cursor_movement_repeat_rate")
+            cls.GAMEPLAY_MOVEMENT_INITIAL_DELAY = cls._get_required("input.gameplay_movement_initial_delay")
+            cls.GAMEPLAY_MOVEMENT_REPEAT_RATE = cls._get_required("input.gameplay_movement_repeat_rate")
 
         except FileNotFoundError as e:
             error_msg = "CRITICAL CONFIG ERROR: game_rules.json not found"
@@ -628,16 +683,20 @@ class GameConfig:
 
 
 class RoomGenerationConfig:
-    """Configuration for procedural room generation."""
+    """Configuration for procedural room generation.
 
-    # Set class attributes with defaults
-    MIN_ROOMS_BASE = 12
-    ROOM_LEVEL_MULTIPLIER = 3
-    MAX_ROOMS = 20
-    MAX_PLACEMENT_ATTEMPTS = 400
-    MIN_ROOM_SIZE = 3
-    MAX_ROOM_SIZE = 8
-    ROOM_PADDING = 1
+    All values MUST be loaded from game_rules.json via load_from_json().
+    Accessing before loading will raise AttributeError (no silent fallbacks).
+    """
+
+    # NO DEFAULTS - must be loaded from JSON (fail-fast if accessed before load)
+    MIN_ROOMS_BASE: int
+    ROOM_LEVEL_MULTIPLIER: int
+    MAX_ROOMS: int
+    MAX_PLACEMENT_ATTEMPTS: int
+    MIN_ROOM_SIZE: int
+    MAX_ROOM_SIZE: int
+    ROOM_PADDING: int
 
     # NOTE: Special node counts (cooling_nodes, cpu_nodes, ghost_nodes, code_hacks,
     # exploit_pickups, permanent_upgrades) are defined per-level in game_content.json

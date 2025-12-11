@@ -11,7 +11,7 @@ import tcod
 
 from data_loading import DataLoader
 from game_state import MessageLog
-from game_ui import UniversalInputHandler, WindowManager, render_char_safe
+from game_ui import WindowManager, render_char_safe
 
 
 class TestMessageLog:
@@ -267,111 +267,6 @@ class TestWindowManager:
 
         # Y should center vertically
         assert y == (800 - height) // 2
-
-
-class TestUniversalInputHandler:
-    """Test the UniversalInputHandler utility class."""
-
-    def setup_method(self):
-        """Set up test fixtures."""
-        self.mock_screen = MagicMock()
-        self.mock_screen.selected_option = 0
-        self.mock_event = MagicMock()
-
-    def test_list_navigation_up(self):
-        """Test upward navigation in lists."""
-        self.mock_event.sym = tcod.event.KeySym.UP
-
-        result = UniversalInputHandler.handle_list_navigation(
-            self.mock_screen, self.mock_event, option_count=3, wrap_around=True
-        )
-
-        assert result is True
-        assert self.mock_screen.selected_option == 2  # Wrapped from 0 to 2
-
-    def test_list_navigation_down(self):
-        """Test downward navigation in lists."""
-        self.mock_event.sym = tcod.event.KeySym.DOWN
-
-        result = UniversalInputHandler.handle_list_navigation(
-            self.mock_screen, self.mock_event, option_count=3, wrap_around=True
-        )
-
-        assert result is True
-        assert self.mock_screen.selected_option == 1  # Moved from 0 to 1
-
-    def test_list_navigation_no_wrap(self):
-        """Test navigation without wrap-around."""
-        self.mock_screen.selected_option = 0
-        self.mock_event.sym = tcod.event.KeySym.UP
-
-        result = UniversalInputHandler.handle_list_navigation(
-            self.mock_screen, self.mock_event, option_count=3, wrap_around=False
-        )
-
-        assert result is True
-        assert self.mock_screen.selected_option == 0  # Stayed at 0 (clamped)
-
-    def test_dialog_navigation_toggle(self):
-        """Test dialog navigation toggles between options."""
-        self.mock_screen.warning_selection = 0
-        self.mock_event.sym = tcod.event.KeySym.UP
-
-        result = UniversalInputHandler.handle_dialog_navigation(
-            self.mock_screen, self.mock_event, option_count=2
-        )
-
-        assert result is True
-        assert self.mock_screen.warning_selection == 1  # Toggled from 0 to 1
-
-    def test_value_adjustment_left_right(self):
-        """Test value adjustment with left/right keys."""
-        adjustment_values = []
-
-        def adjust_callback(direction):
-            adjustment_values.append(direction)
-
-        # Test left adjustment
-        self.mock_event.sym = tcod.event.KeySym.LEFT
-        result = UniversalInputHandler.handle_value_adjustment(
-            self.mock_screen, self.mock_event, adjust_callback
-        )
-
-        assert result is True
-        assert adjustment_values == [-1]
-
-        # Test right adjustment
-        self.mock_event.sym = tcod.event.KeySym.RIGHT
-        result = UniversalInputHandler.handle_value_adjustment(
-            self.mock_screen, self.mock_event, adjust_callback
-        )
-
-        assert result is True
-        assert adjustment_values == [-1, 1]
-
-    def test_confirm_key_trace_level(self):
-        """Test confirm key trace_level."""
-        self.mock_event.sym = tcod.event.KeySym.RETURN
-        assert UniversalInputHandler.is_confirm_key(self.mock_event) is True
-
-        self.mock_event.sym = tcod.event.KeySym.KP_ENTER
-        assert UniversalInputHandler.is_confirm_key(self.mock_event) is True
-
-        self.mock_event.sym = tcod.event.KeySym.SPACE
-        assert UniversalInputHandler.is_confirm_key(self.mock_event) is False
-
-    def test_escape_key_trace_level(self):
-        """Test escape key trace_level."""
-        self.mock_event.sym = tcod.event.KeySym.ESCAPE
-        assert UniversalInputHandler.is_escape_key(self.mock_event) is True
-
-        self.mock_event.sym = tcod.event.KeySym.RETURN
-        assert UniversalInputHandler.is_escape_key(self.mock_event) is False
-
-    def test_any_key_screen_handler(self):
-        """Test any key screen handler always returns True."""
-        result = UniversalInputHandler.handle_any_key_screen(self.mock_event)
-        assert result is True
 
 
 class TestMessageLogIntegration:

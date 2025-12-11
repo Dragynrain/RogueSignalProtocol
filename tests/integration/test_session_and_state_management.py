@@ -58,7 +58,7 @@ class TestGameSessionLifecycle:
         assert engine.level == initial_state["level"], "Level should not change from movement"
         assert engine.turn >= initial_state["turn"], "Turn should advance or stay same"
         assert engine.player.cpu > 0, "Player should still have CPU"
-        assert len(engine.enemies) >= 0, "Enemy count should be valid"
+        assert isinstance(engine.enemies, list), "Enemies should be a list"
 
     def test_multiple_consecutive_turns_maintain_state(self, basic_game_engine):
         """Test state remains consistent across multiple consecutive turns."""
@@ -171,8 +171,8 @@ class TestStateConsistency:
         # Process turn (enemies act)
         engine.process_turn()
 
-        # Verify enemy count reasonable
-        assert len(engine.enemies) >= 0, "Enemy count should be non-negative"
+        # Verify enemies list is valid
+        assert isinstance(engine.enemies, list), "Enemies should remain a valid list"
         # Enemy count might decrease if player defeats enemies
 
     def test_trace_level_consistent_across_systems(self, basic_game_engine):
@@ -280,16 +280,14 @@ class TestStateRecoveryAndErrors:
         invalid_y = -10
 
         # System should either reject or clamp position
+        # Either the game handles invalid position gracefully or rejects it
+        # Both are acceptable behaviors - we just verify no unhandled crash
+        engine.player.x = invalid_x
+        engine.player.y = invalid_y
         try:
-            engine.player.x = invalid_x
-            engine.player.y = invalid_y
-            # If allowed, verify it doesn't crash game
             engine.process_turn()
-            # Game should still be functional
-            assert True, "Game should handle invalid position"
-        except Exception:
-            # If rejected, that's also acceptable
-            assert True, "Invalid position rejected"
+        except (ValueError, IndexError):
+            pass  # Rejection is acceptable
 
     def test_negative_cpu_state_detectable(self, basic_game_engine):
         """Test that negative CPU state is detectable."""

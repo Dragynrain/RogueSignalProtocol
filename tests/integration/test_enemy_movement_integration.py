@@ -136,9 +136,8 @@ class TestQueueMaintenanceIntegration:
             test_enemy.move(basic_game_engine.game_map, basic_game_engine.player, basic_game_engine)
             # Queue should always have moves (up to 3) when path exists
             assert len(test_enemy.move_queue) <= 3, "Queue should not exceed 3 moves"
-            # Should have at least 1 move if not at target
-            if test_enemy.position != test_enemy.last_seen_player:
-                assert len(test_enemy.move_queue) >= 0, "Queue should have moves when not at target"
+            # Queue is valid (may be empty if at target or blocked)
+            assert isinstance(test_enemy.move_queue, list), "Move queue should be a list"
 
     def test_queue_refills_after_each_move(self, basic_game_engine):
         """After each move execution, queue should top back up to 3."""

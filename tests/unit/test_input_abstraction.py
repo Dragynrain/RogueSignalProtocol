@@ -231,15 +231,15 @@ class TestAnalogStickHandler:
         handler = AnalogStickHandler()
         assert handler is not None
         assert handler.deadzone == 0.15
-        assert handler.threshold == 0.5
-        assert handler.move_cooldown == 0.15
+        assert handler.threshold == 0.2  # Default is 0.2 (20% post-scaling)
+        assert handler.last_gameplay_move_time == -1.0  # Time-based gating
 
     def test_handler_initializes_with_custom_values(self):
         """Test that AnalogStickHandler accepts custom parameters."""
-        handler = AnalogStickHandler(deadzone=0.2, threshold=0.6, move_cooldown=0.1)
+        handler = AnalogStickHandler(deadzone=0.2, threshold=0.6)
         assert handler.deadzone == 0.2
         assert handler.threshold == 0.6
-        assert handler.move_cooldown == 0.1
+        assert handler.last_gameplay_move_time == -1.0  # Time-based gating initialized
 
     def test_scaled_radial_deadzone_zero_input(self):
         """Test that zero input returns zero after deadzone."""
@@ -416,27 +416,68 @@ class TestAnalogStickHandler:
         # Magnitude should be roughly 0.5 (after deadzone scaling)
         assert 0.4 < magnitude < 0.7
 
-    def test_movement_cooldown_timing(self):
-        """Test that movement cooldown prevents rapid moves."""
-        handler = AnalogStickHandler(move_cooldown=0.1)
+    def test_movement_time_gating(self):
+        """Test that time-based gating prevents multiple moves per frame."""
+        import time
+        from game_config import GameConfig
 
-        # First move should succeed
-        assert handler.can_move() is True
+        handler = AnalogStickHandler()
+        handler.update_left_stick(x=32767, y=0)  # Deflect stick east
 
-        # Immediate second move should fail (cooldown active)
-        assert handler.can_move() is False
+        # First call starts settling period (30ms) - returns None
+        movement0 = handler.get_left_stick_movement_gameplay(0)
+        assert movement0 is None  # Settling started
 
-    def test_reset_movement_cooldown(self):
-        """Test that cooldown can be reset."""
-        handler = AnalogStickHandler(move_cooldown=10.0)  # Long cooldown
+        # Simulate settling period by backdating the settling start time
+        handler._settling_start_time = time.time() - GameConfig.ANALOG_SETTLING_PERIOD - 0.01
 
-        # Trigger cooldown
-        assert handler.can_move() is True
-        assert handler.can_move() is False  # Blocked
+        # After settling, first actual move should succeed
+        movement1 = handler.get_left_stick_movement_gameplay(0)
+        assert movement1 is not None
 
-        # Reset cooldown
-        handler.reset_movement_cooldown()
-        assert handler.can_move() is True  # Should work now
+        # Immediate second move should fail (time gating active)
+        movement2 = handler.get_left_stick_movement_gameplay(0)
+        assert movement2 is None
+
+        # Simulate initial delay by backdating last move time
+        handler.last_gameplay_move_time = time.time() - GameConfig.GAMEPLAY_MOVEMENT_INITIAL_DELAY - 0.05
+        movement3 = handler.get_left_stick_movement_gameplay(0)
+        assert movement3 is not None
+
+    def test_reset_movement_time_gating(self):
+        """Test that time-based gating resets on release."""
+        import time
+        from game_config import GameConfig
+
+        handler = AnalogStickHandler()
+
+        # Deflect stick - first call starts settling period
+        handler.update_left_stick(x=32767, y=0)
+        movement0 = handler.get_left_stick_movement_gameplay(0)
+        assert movement0 is None  # Settling started
+
+        # Simulate settling period by backdating start time
+        handler._settling_start_time = time.time() - GameConfig.ANALOG_SETTLING_PERIOD - 0.01
+        movement1 = handler.get_left_stick_movement_gameplay(0)
+        assert movement1 is not None
+
+        # Immediate second should be blocked (time gating active)
+        movement2 = handler.get_left_stick_movement_gameplay(0)
+        assert movement2 is None
+
+        # Release stick - resets timing
+        handler.update_left_stick(x=0, y=0)
+        handler.get_left_stick_movement_gameplay(0)
+
+        # Re-deflect - starts new settling period
+        handler.update_left_stick(x=32767, y=0)
+        movement3_settle = handler.get_left_stick_movement_gameplay(0)
+        assert movement3_settle is None  # New settling period
+
+        # Simulate settling period by backdating start time
+        handler._settling_start_time = time.time() - GameConfig.ANALOG_SETTLING_PERIOD - 0.01
+        movement3 = handler.get_left_stick_movement_gameplay(0)
+        assert movement3 is not None
 
 
 class TestInputMapperConflicts:
@@ -493,3 +534,117 @@ class TestInputMapperDisplay:
         assert mapper._key_sym_to_display_name(tcod.event.KeySym.SPACE) == "Space"
         assert mapper._key_sym_to_display_name(tcod.event.KeySym.RETURN) == "Enter"
         assert mapper._key_sym_to_display_name(tcod.event.KeySym.ESCAPE) == "ESC"
+
+
+class TestModifierKeySupport:
+    """Tests for keyboard modifier key (Shift, Ctrl, Alt) support."""
+
+    def test_shift_slash_maps_to_help(self):
+        """Test that Shift+/ (?) maps to TOGGLE_HELP by default."""
+        mapper = InputMapper()
+
+        # Without modifier - slash alone should NOT trigger help
+        action_no_mod = mapper.get_action_for_key(
+            tcod.event.KeySym.SLASH, modifier=0
+        )
+        assert action_no_mod != InputAction.TOGGLE_HELP
+
+        # With Shift modifier - should trigger help
+        action_with_shift = mapper.get_action_for_key(
+            tcod.event.KeySym.SLASH, modifier=tcod.event.Modifier.SHIFT
+        )
+        assert action_with_shift == InputAction.TOGGLE_HELP
+
+    def test_modifier_binding_requires_correct_modifier(self):
+        """Test that modifier bindings only match when modifier is pressed."""
+        mapper = InputMapper()
+
+        # Ctrl alone should not match Shift+/ binding
+        action_ctrl = mapper.get_action_for_key(
+            tcod.event.KeySym.SLASH, modifier=tcod.event.Modifier.CTRL
+        )
+        assert action_ctrl != InputAction.TOGGLE_HELP
+
+        # Alt alone should not match Shift+/ binding
+        action_alt = mapper.get_action_for_key(
+            tcod.event.KeySym.SLASH, modifier=tcod.event.Modifier.ALT
+        )
+        assert action_alt != InputAction.TOGGLE_HELP
+
+    def test_key_binding_display_name_with_modifier(self):
+        """Test that KeyBinding display names show symbols for Shift combos."""
+        from game_input_mappings import KeyBinding, key_binding_to_display_name
+
+        # Without modifier
+        binding_no_mod = KeyBinding(tcod.event.KeySym.SLASH, 0)
+        assert key_binding_to_display_name(binding_no_mod) == "/"
+
+        # Shift+/ shows as "?" (the resulting character)
+        binding_shift = KeyBinding(tcod.event.KeySym.SLASH, tcod.event.Modifier.SHIFT)
+        assert key_binding_to_display_name(binding_shift) == "?"
+
+        # Shift+. shows as ">"
+        binding_gt = KeyBinding(tcod.event.KeySym.PERIOD, tcod.event.Modifier.SHIFT)
+        assert key_binding_to_display_name(binding_gt) == ">"
+
+        # Ctrl still shows as "Ctrl+key"
+        binding_ctrl = KeyBinding(tcod.event.KeySym.S, tcod.event.Modifier.CTRL)
+        assert key_binding_to_display_name(binding_ctrl) == "Ctrl+S"
+
+    def test_key_binding_matches_normalized_modifiers(self):
+        """Test that left/right modifier keys are treated equivalently."""
+        from game_input_mappings import KeyBinding
+
+        binding = KeyBinding(tcod.event.KeySym.SLASH, tcod.event.Modifier.SHIFT)
+
+        # Left Shift should match
+        assert binding.matches(tcod.event.KeySym.SLASH, tcod.event.Modifier.LSHIFT)
+
+        # Right Shift should match
+        assert binding.matches(tcod.event.KeySym.SLASH, tcod.event.Modifier.RSHIFT)
+
+        # Generic Shift should match
+        assert binding.matches(tcod.event.KeySym.SLASH, tcod.event.Modifier.SHIFT)
+
+    def test_binding_without_modifier_rejects_modified_key(self):
+        """Test that non-modifier binding doesn't match when modifier is pressed."""
+        mapper = InputMapper()
+
+        # W key without modifier should trigger movement
+        action_w_alone = mapper.get_action_for_key(tcod.event.KeySym.W, modifier=0)
+        assert action_w_alone == InputAction.MOVE_NORTH
+
+        # W key WITH Shift should NOT trigger movement (binding requires no modifier)
+        action_w_shift = mapper.get_action_for_key(
+            tcod.event.KeySym.W, modifier=tcod.event.Modifier.SHIFT
+        )
+        assert action_w_shift is None
+
+    def test_custom_modifier_binding_can_be_added(self):
+        """Test that custom modifier bindings can be added and used."""
+        mapper = InputMapper()
+
+        # Add Ctrl+S as a custom binding for WAIT
+        mapper.add_keyboard_binding(
+            InputAction.WAIT,
+            tcod.event.KeySym.S,
+            modifier=tcod.event.Modifier.CTRL
+        )
+
+        # Ctrl+S should trigger WAIT
+        action = mapper.get_action_for_key(
+            tcod.event.KeySym.S, modifier=tcod.event.Modifier.CTRL
+        )
+        assert action == InputAction.WAIT
+
+        # S alone should still be MOVE_SOUTH (default binding)
+        action_plain = mapper.get_action_for_key(tcod.event.KeySym.S, modifier=0)
+        assert action_plain == InputAction.MOVE_SOUTH
+
+    def test_get_all_keys_shows_symbol_for_shifted_key(self):
+        """Test that get_all_keys_for_action shows '?' for Shift+/."""
+        mapper = InputMapper()
+
+        keys = mapper.get_all_keys_for_action(InputAction.TOGGLE_HELP)
+        # Should include "?" for the help key (not "Shift+/")
+        assert "?" in keys

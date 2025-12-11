@@ -75,7 +75,7 @@ def mock_windows_platform(monkeypatch):
 
 ## Implementation Phases
 
-### Phase 0: Platform Detection Infrastructure ✅ COMPLETED
+### Phase 0: Platform Detection Infrastructure  COMPLETED
 Create cross-platform utilities and fix critical Windows-specific code that will crash on Linux.
 - Complexity: Low (utility module + targeted fixes)
 - Dependencies: None
@@ -279,7 +279,7 @@ data_dir = user_data_dir("RogueSignalProtocol", "Dragynrain")
 
 ## 3. Phase 2 Details: Cross-Platform Code Refactoring
 
-**✅ Good News**: `platformdirs==4.4.0` is already in requirements.txt (line 22), so no new dependencies needed!
+** Good News**: `platformdirs==4.4.0` is already in requirements.txt (line 22), so no new dependencies needed!
 
 ### File: `game_file_paths.py` - Complete Rewrite
 
@@ -318,7 +318,7 @@ def _get_system_data_directory() -> Path:
     return Path(user_data_dir("RogueSignalProtocol", "Dragynrain"))
 ```
 
-**⚠️ PATH MIGRATION WARNING**: Verify current code's path matches platformdirs output!
+**NOTE: PATH MIGRATION WARNING**: Verify current code's path matches platformdirs output!
 - If current code uses `%LOCALAPPDATA%\RogueSignalProtocol\` (no author)
 - But platformdirs returns `%LOCALAPPDATA%\Dragynrain\RogueSignalProtocol\` (with author)
 - Existing Windows saves would be orphaned!
@@ -380,7 +380,7 @@ def test_portable_mode_detected_correctly_on_linux(mock_linux_platform, tmp_path
 
 ### Platform Detection Pattern
 
-**✅ Already Done in Phase 0**: `game_platform.py` utility module created with:
+** Already Done in Phase 0**: `game_platform.py` utility module created with:
 - `is_windows()`, `is_linux()`, `is_macos()` - Platform detection
 - `get_platform_name()` - Human-readable platform name
 - `set_dpi_awareness()` - Cross-platform DPI handling (no-op on Linux)
@@ -667,12 +667,12 @@ EOF
 ### You Own a Steam Deck - Perfect Test Platform!
 
 **Steam Deck as Linux Test Hardware**:
-- ✅ You own one (real Linux testing hardware available!)
-- ✅ Real Linux environment (SteamOS 3.0 = Arch Linux based)
-- ✅ Can test Desktop Mode (keyboard/mouse) AND Gaming Mode (gamepad)
-- ✅ Native Flatpak support in Discover
-- ✅ Tests actual handheld experience
-- ✅ **Perfect screen resolution match**: 1280×800 = exactly 16×16 pixel characters
+-  You own one (real Linux testing hardware available!)
+-  Real Linux environment (SteamOS 3.0 = Arch Linux based)
+-  Can test Desktop Mode (keyboard/mouse) AND Gaming Mode (gamepad)
+-  Native Flatpak support in Discover
+-  Tests actual handheld experience
+-  **Perfect screen resolution match**: 1280×800 = exactly 16×16 pixel characters
 
 **Steam Deck provides real Arch Linux testing, but Ubuntu VM is still recommended for distro coverage** (see Testing section).
 
@@ -685,12 +685,12 @@ EOF
 - Storage: Limited (recommend < 500MB installed)
 
 **Your Game Compatibility**:
-- ✅ Turn-based (suspend/resume friendly)
-- ✅ Low resource usage
-- ✅ Python + TCOD (Linux native)
-- ✅ **Perfect resolution match**: 80×50 console at 16×16 chars = 1280×800 native
-- ✅ **Perfect aspect ratio match**: 80:50 = 16:10, same as Steam Deck screen
-- ⚠️ Needs gamepad support (see PLAN_GAMEPAD.md)
+-  Turn-based (suspend/resume friendly)
+-  Low resource usage
+-  Python + TCOD (Linux native)
+-  **Perfect resolution match**: 80×50 console at 16×16 chars = 1280×800 native
+-  **Perfect aspect ratio match**: 80:50 = 16:10, same as Steam Deck screen
+- NOTE: Needs gamepad support (see PLAN_GAMEPAD.md)
 
 ### Installation Methods
 
@@ -771,14 +771,14 @@ EOF
 **You Own a Steam Deck - Use It!**
 
 Steam Deck is **perfect** for Linux testing:
-- ✅ Real Arch Linux (SteamOS)
-- ✅ Real hardware (no VM limitations)
-- ✅ Tests gamepad + keyboard/mouse
-- ✅ Tests handheld experience
-- ✅ Tests battery life
-- ✅ Tests suspend/resume
-- ✅ Tests Flatpak installation
-- ✅ Tests at target resolution (1280×800)
+-  Real Arch Linux (SteamOS)
+-  Real hardware (no VM limitations)
+-  Tests gamepad + keyboard/mouse
+-  Tests handheld experience
+-  Tests battery life
+-  Tests suspend/resume
+-  Tests Flatpak installation
+-  Tests at target resolution (1280×800)
 
 **Testing Workflow**:
 1. Build Linux binary via GitHub Actions (PyInstaller cannot cross-compile - must build on Linux)
@@ -1026,7 +1026,7 @@ find . -type f | sort -f | uniq -di
 **Phase Summary**:
 | Phase | Goal | Key Deliverable |
 |-------|------|-----------------|
-| 0 ✅ | Platform detection | `game_platform.py` utility |
+| 0  | Platform detection | `game_platform.py` utility |
 | 1 | Audit Windows code | List of files needing changes |
 | 2 | Cross-platform refactor | Linux-compatible codebase |
 | 3 | Build system | Working Linux binary |
@@ -1138,7 +1138,7 @@ The overlap of "Mac users" + "roguelike players" + "itch.io indie gamers" = **te
 
 ## Implementation Checklist
 
-**Phase 0: Platform Detection Infrastructure** ✅ COMPLETED
+**Phase 0: Platform Detection Infrastructure**  COMPLETED
 - [x] Create `game_platform.py` utility module
 - [x] Fix DPI awareness in `game_loop.py`
 - [x] Fix DPI awareness in `font_loader_freetype.py`
@@ -1159,7 +1159,7 @@ The overlap of "Mac users" + "roguelike players" + "itch.io indie gamers" = **te
 **Phase 2: Refactoring**
 - [ ] **TDD FIRST**: Write `test_get_data_dir_returns_xdg_path_on_linux()` (expect FAIL)
 - [ ] **TDD FIRST**: Write `test_get_data_dir_returns_localappdata_on_windows()` (expect PASS)
-- [ ] **⚠️ CRITICAL**: Verify current path matches platformdirs output:
+- [ ] **NOTE: CRITICAL**: Verify current path matches platformdirs output:
   ```python
   # Run this check BEFORE changing code:
   from platformdirs import user_data_dir

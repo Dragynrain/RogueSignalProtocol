@@ -245,7 +245,7 @@ You: "Uh, I just wanted to know if combat works..."
 # Runs tests but allows commit even if they fail
 .venv/Scripts/python.exe -m pytest tests/unit/ tests/integration/ -q --tb=line
 if [ $? -ne 0 ]; then
-    echo "⚠️  Tests failed, but allowing commit (fix soon!)"
+    echo "WARNING: Tests failed, but allowing commit (fix soon!)"
 fi
 exit 0
 ```
@@ -366,7 +366,7 @@ cat > .git/hooks/pre-commit << 'EOF'
 echo "Running pre-commit tests..."
 .venv/Scripts/python.exe -m pytest tests/unit/ tests/integration/ \
     -q --tb=line --maxfail=5 -x || exit 1
-echo "✅ All tests passed!"
+echo "All tests passed!"
 EOF
 
 # 2. Make executable

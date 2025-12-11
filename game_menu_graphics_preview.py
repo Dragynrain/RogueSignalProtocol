@@ -23,10 +23,13 @@ from game_config import GameConfig, GameSettings
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Colors, ensure_color_tuple
 from game_graphics_tiles import TileManager
+from game_help_hints import get_graphics_preview_instructions
+from game_input_actions import InputAction, InputContext
+from game_input_base import BaseInputHandler
 from game_ui import render_char_safe
 
 
-class GraphicsPreviewMenu:
+class GraphicsPreviewMenu(BaseInputHandler):
     """Interactive graphics preview and variant selector."""
 
     def __init__(self, context, settings: GameSettings, tile_manager: TileManager):
@@ -38,8 +41,11 @@ class GraphicsPreviewMenu:
             settings: Game settings instance
             tile_manager: Tile manager for loading graphics
         """
+        # Initialize BaseInputHandler (creates InputMapper and GamepadHandler)
+        super().__init__(game=None, renderer=None)
+
         self.context = context
-        self.settings = settings
+        self.settings = settings  # Store settings for graphics_mode checks
         self.tile_manager = tile_manager
 
         # Scan available graphics and organize by entity type
@@ -49,6 +55,7 @@ class GraphicsPreviewMenu:
 
         # Current selection state
         self.current_entity_index = 0  # Which entity type is selected
+        self.selected_option = 0  # Current selected option index
 
         # Texture cache for loaded variants (key: "entityname_variantnum" -> texture)
         self.texture_cache = {}
@@ -234,7 +241,7 @@ class GraphicsPreviewMenu:
         # Terrain
         terrain_order = ["floor", "wall", "blind_spot"]
         for terrain_type in terrain_order:
-            if terrain_type in entity_groups:
+            if terrain_type in entity_groups and entity_groups[terrain_type]:
                 display_name = get_display_name(terrain_type)
                 self.entity_types.append(("terrain", terrain_type, display_name))
                 self.variants[terrain_type] = sorted(entity_groups[terrain_type])
@@ -247,7 +254,7 @@ class GraphicsPreviewMenu:
                 )
 
         # Player
-        if "player" in entity_groups:
+        if "player" in entity_groups and entity_groups["player"]:
             self.entity_types.append(("player", "player", "Player"))
             self.variants["player"] = sorted(entity_groups["player"])
             # Use default from graphics_tiles.json
@@ -270,7 +277,7 @@ class GraphicsPreviewMenu:
             "avatar",
         ]
         for enemy_type in enemy_order:
-            if enemy_type in entity_groups:
+            if enemy_type in entity_groups and entity_groups[enemy_type]:
                 display_name = get_display_name(enemy_type)
                 self.entity_types.append(("enemy", enemy_type, display_name))
                 self.variants[enemy_type] = sorted(entity_groups[enemy_type])
@@ -294,7 +301,7 @@ class GraphicsPreviewMenu:
             "ghostnode",
         ]
         for item_type in item_order:
-            if item_type in entity_groups:
+            if item_type in entity_groups and entity_groups[item_type]:
                 display_name = get_display_name(item_type)
                 self.entity_types.append(("item", item_type, display_name))
                 self.variants[item_type] = sorted(entity_groups[item_type])
@@ -309,7 +316,7 @@ class GraphicsPreviewMenu:
         # Special
         special_order = ["gateway", "storyfragment", "movementprediction", "targeting"]
         for special_type in special_order:
-            if special_type in entity_groups:
+            if special_type in entity_groups and entity_groups[special_type]:
                 display_name = get_display_name(special_type)
                 self.entity_types.append(("special", special_type, display_name))
                 self.variants[special_type] = sorted(entity_groups[special_type])
@@ -351,10 +358,9 @@ class GraphicsPreviewMenu:
         # Clear console properly based on graphics mode
         if self.settings.graphics_mode == "graphics":
             # Graphics mode: make entire screen black with left side transparent for preview
-            # Clear entire console to black first
-            for y in range(console.height):
-                for x in range(console.width):
-                    render_char_safe(console, x, y, " ", fg=(0, 0, 0), bg=(0, 0, 0))
+            # Clear console and set black background using numpy (fast batch operation)
+            console.clear()
+            console.rgba["bg"][:, :] = (0, 0, 0, 255)
 
             # Then make preview area transparent so SDL graphics show through
             CoordinateHelpers.set_alpha_region(
@@ -399,18 +405,11 @@ class GraphicsPreviewMenu:
         # Render entity list (sidebar)
         self._render_entity_list(console)
 
-        # Instructions
-        instructions = [
-            "↑↓ or W/S: Select entity type",
-            "←→ or A/D: Change variant",
-            "Click < > arrows: Change specific variant",
-            "SPACE: Cycle alert ring color",
-            "ESC/Right-Click: Exit and save log",
-        ]
-
-        inst_y = GameConfig.SCREEN_HEIGHT - len(instructions) - 1
-        for i, instruction in enumerate(instructions):
-            render_char_safe(console, 2, inst_y + i, instruction, fg=Colors.CYAN)
+        # Instructions - device-aware
+        instructions = get_graphics_preview_instructions()
+        render_char_safe(
+            console, 2, GameConfig.SCREEN_HEIGHT - 2, instructions, fg=Colors.CYAN
+        )
 
     def _render_preview_map(self, console: tcod.console.Console):
         """Render the preview map showing all selected graphics."""
@@ -1009,7 +1008,17 @@ class GraphicsPreviewMenu:
 
         # Render list (with scrolling if needed)
         visible_count = 25  # Max visible items
-        scroll_offset = max(0, self.current_entity_index - visible_count + 5)
+        total_entities = len(self.entity_types)
+
+        # Only scroll if there are more entities than fit on screen
+        if total_entities <= visible_count:
+            scroll_offset = 0  # No scrolling needed
+        else:
+            # Keep selected item in view, with 5-item buffer from bottom
+            scroll_offset = max(0, min(
+                self.current_entity_index - visible_count + 6,  # Don't scroll past selected
+                total_entities - visible_count  # Don't scroll past end
+            ))
 
         # Initialize arrow regions storage if not exists
         if not hasattr(self, "entity_arrow_regions"):
@@ -1101,52 +1110,52 @@ class GraphicsPreviewMenu:
             }
             self.entity_arrow_regions.append(right_region)
 
-    def handle_input(self, event) -> str:
-        """
-        Handle input for graphics preview.
+    def get_context(self) -> InputContext:
+        """Get current input context for this menu."""
+        return InputContext.GRAPHICS_PREVIEW
 
-        Returns:
-            'exit' to exit and save log, '' to continue
-        """
+    def get_default_return(self) -> str:
+        """Graphics preview returns empty string by default."""
+        return ""
+
+    def execute_action(self, action: InputAction) -> str:
+        """Execute an InputAction and return menu command."""
         if not self.entity_types:
-            # No entities loaded, any key exits
+            # No entities loaded, exit on any action
             return "exit"
 
-        # Navigation (with wrap-around)
-        if event.type == "KEYDOWN":
-            if event.sym == tcod.event.KeySym.UP or event.sym == tcod.event.KeySym.W:
-                self.current_entity_index = (self.current_entity_index - 1) % len(self.entity_types)
-                return ""
+        # Navigation (up/down for entity selection)
+        if action in (InputAction.NAVIGATE_UP, InputAction.MOVE_NORTH):
+            self.current_entity_index = (self.current_entity_index - 1) % len(self.entity_types)
+            return ""
+        elif action in (InputAction.NAVIGATE_DOWN, InputAction.MOVE_SOUTH):
+            self.current_entity_index = (self.current_entity_index + 1) % len(self.entity_types)
+            return ""
 
-            elif event.sym == tcod.event.KeySym.DOWN or event.sym == tcod.event.KeySym.S:
-                self.current_entity_index = (self.current_entity_index + 1) % len(self.entity_types)
-                return ""
+        # Variant cycling (left/right for changing variants)
+        elif action in (InputAction.MOVE_WEST, InputAction.NAVIGATE_LEFT):
+            self._cycle_variant(-1)
+            return ""
+        elif action in (InputAction.MOVE_EAST, InputAction.NAVIGATE_RIGHT):
+            self._cycle_variant(1)
+            return ""
 
-            elif event.sym == tcod.event.KeySym.LEFT or event.sym == tcod.event.KeySym.A:
-                # Cycle to previous variant
-                self._cycle_variant(-1)
-                return ""
+        # Space/X button - cycle alert color (Space is mapped to WAIT)
+        elif action == InputAction.WAIT:
+            self.alert_color_index = (self.alert_color_index + 1) % len(self.alert_colors)
+            return ""
 
-            elif event.sym == tcod.event.KeySym.RIGHT or event.sym == tcod.event.KeySym.D:
-                # Cycle to next variant
-                self._cycle_variant(1)
-                return ""
-
-            elif event.sym == tcod.event.KeySym.SPACE:
-                # Cycle alert ring color
-                self.alert_color_index = (self.alert_color_index + 1) % len(self.alert_colors)
-                return ""
-
-            elif event.sym == tcod.event.KeySym.ESCAPE:
-                return "exit"
+        # Exit (ESC or gamepad back button)
+        elif action == InputAction.CANCEL:
+            return "exit"
 
         return ""
 
-    def handle_mouse_motion(self, event) -> bool:
+    def handle_mouse_motion(self, event) -> str:
         """Handle mouse motion - highlight arrows on hover."""
-        # After context.convert_event(), coordinates are in event.tile, not event.position
+        # MenuMouseHandler.convert_to_tile_coords() sets event.tile with console coordinates
         if not hasattr(event, "tile") or event.tile is None:
-            return False
+            return ""
 
         tile_x = int(event.tile.x)
         tile_y = int(event.tile.y)
@@ -1159,24 +1168,14 @@ class GraphicsPreviewMenu:
             for region in self.entity_arrow_regions:
                 if tile_y == region["y"] and region["x"] <= tile_x < region["x"] + region["width"]:
                     self._hover_entity_arrow = (region["entity_index"], region["direction"])
-                    return True
+                    return ""
 
-        return False
+        return ""
 
-    def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - cycle variants when clicking arrows, right-click to exit."""
-        import tcod.event
-
-        # Right-click = go back (standard behavior)
-        if hasattr(event, "button") and event.button == tcod.event.MouseButton.RIGHT:
-            return "exit"
-
+    def handle_left_click(self, event) -> str:
+        """Handle left mouse click - cycle variants when clicking arrows."""
         # After manual coordinate conversion, coordinates are in event.tile
         if not hasattr(event, "tile") or event.tile is None:
-            return ""
-
-        # Only handle left mouse button clicks for variant cycling
-        if hasattr(event, "button") and event.button != tcod.event.MouseButton.LEFT:
             return ""
 
         tile_x = int(event.tile.x)
@@ -1193,8 +1192,13 @@ class GraphicsPreviewMenu:
                     # Get entity key and cycle its variant
                     category, entity_key, display_name = self.entity_types[entity_index]
                     variants = self.variants[entity_key]
+                    if not variants:
+                        return ""
                     current_variant = self.selected_variants[entity_key]
-                    current_index = variants.index(current_variant)
+                    try:
+                        current_index = variants.index(current_variant)
+                    except ValueError:
+                        current_index = 0
                     new_index = (current_index + direction) % len(variants)
                     self.selected_variants[entity_key] = variants[new_index]
 
@@ -1204,8 +1208,30 @@ class GraphicsPreviewMenu:
 
                     return ""
 
-        # Left-click on empty space does nothing (removed confusing click-anywhere-to-exit)
+        # Left-click on empty space does nothing
         return ""
+
+    def handle_right_click(self, event) -> str:
+        """Handle right mouse click - exit menu."""
+        return "exit"
+
+    def navigate_up(self):
+        """Navigate to previous entity type."""
+        if self.entity_types:
+            self.current_entity_index = (self.current_entity_index - 1) % len(self.entity_types)
+
+    def navigate_down(self):
+        """Navigate to next entity type."""
+        if self.entity_types:
+            self.current_entity_index = (self.current_entity_index + 1) % len(self.entity_types)
+
+    def cycle_variant_left(self):
+        """Cycle variant left (previous variant)."""
+        self._cycle_variant(-1)
+
+    def cycle_variant_right(self):
+        """Cycle variant right (next variant)."""
+        self._cycle_variant(1)
 
     def _cycle_variant(self, direction: int):
         """Cycle the variant for currently selected entity."""
@@ -1214,9 +1240,14 @@ class GraphicsPreviewMenu:
 
         category, entity_key, display_name = self.entity_types[self.current_entity_index]
         variants = self.variants[entity_key]
+        if not variants:
+            return
         current_variant = self.selected_variants[entity_key]
 
-        current_index = variants.index(current_variant)
+        try:
+            current_index = variants.index(current_variant)
+        except ValueError:
+            current_index = 0
         new_index = (current_index + direction) % len(variants)
 
         self.selected_variants[entity_key] = variants[new_index]

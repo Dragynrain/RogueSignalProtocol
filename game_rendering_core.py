@@ -158,6 +158,50 @@ class GameRenderer:
             and self.context.console_render is not None
         )
 
+    def _render_dialogue_and_popups(self, console: tcod.console.Console, game) -> None:
+        """
+        Render dialogue overlays and achievement popups.
+
+        Shared between graphics and glyph modes. Handles:
+        - Pending death dialogue trigger
+        - Active dialogue rendering via UnifiedRenderer
+        - Achievement popup updates and rendering
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine instance with dialogue_state
+        """
+        # Check for pending death dialogue (deferred to allow damage messages to render first)
+        if hasattr(game, "pending_death_dialogue") and game.pending_death_dialogue:
+            from game_dialogue_system import create_death_dialogue
+
+            # Get input mapper for dynamic button hints
+            input_mapper = getattr(game, "input_mapper", None)
+            if not input_mapper and hasattr(game, "input_handler"):
+                input_mapper = getattr(game.input_handler, "input_mapper", None)
+
+            game.dialogue_state.show(create_death_dialogue(input_mapper))
+            game.pending_death_dialogue = False
+            game.sound_manager.play_sound("player_death", priority=10)
+            game.sound_manager.play_sound("critical_system_failure", priority=10)
+
+        # Render dialogue system (highest priority overlay)
+        if game.dialogue_state.is_active():
+            dialogue = game.dialogue_state.get_active()
+            if dialogue:
+                UnifiedRenderer.render(
+                    console,
+                    dialogue,
+                    game.dialogue_state,
+                    game.last_mouse_tile_x,
+                    game.last_mouse_tile_y,
+                )
+
+        # Render achievement popups (high priority, after dialogue or at same level)
+        if hasattr(game, "achievement_popup_manager"):
+            game.achievement_popup_manager.update()
+            game.achievement_popup_manager.render(console)
+
     def render_game(self, console: tcod.console.Console, game, context=None):
         """
         Render the complete game state based on current screen mode.
@@ -313,32 +357,8 @@ class GameRenderer:
                 console, x=log_x, y=0, width=console.width - log_x, height=panel_y, alpha=255
             )
 
-            # Check for pending death dialogue (deferred to allow damage messages to render first)
-            if hasattr(game, "pending_death_dialogue") and game.pending_death_dialogue:
-                from game_dialogue_system import create_death_dialogue
-
-                game.dialogue_state.show(create_death_dialogue())
-                game.pending_death_dialogue = False
-                game.sound_manager.play_sound("player_death", priority=10)
-                game.sound_manager.play_sound("critical_system_failure", priority=10)
-
-            # Render dialogue system on console AFTER transparency pass (highest priority, opaque backgrounds)
-            if game.dialogue_state.is_active():
-                # Use UnifiedRenderer for all dialogue types
-                dialogue = game.dialogue_state.get_active()
-                if dialogue:
-                    UnifiedRenderer.render(
-                        console,
-                        dialogue,
-                        game.dialogue_state,
-                        game.last_mouse_tile_x,
-                        game.last_mouse_tile_y,
-                    )
-
-            # Render achievement popups (high priority, after dialogue or at same level)
-            if hasattr(game, "achievement_popup_manager"):
-                game.achievement_popup_manager.update()
-                game.achievement_popup_manager.render(console)
+            # Render dialogue overlays and achievement popups
+            self._render_dialogue_and_popups(console, game)
 
             # Convert console to texture and overlay on top of sprites
             console_texture = self.context.console_render.render(console)
@@ -361,32 +381,8 @@ class GameRenderer:
             self.ui_renderer.render_bottom_panel(console, game)
             self.ui_renderer.render_system_log(console, game)
 
-            # Check for pending death dialogue (deferred to allow damage messages to render first)
-            if hasattr(game, "pending_death_dialogue") and game.pending_death_dialogue:
-                from game_dialogue_system import create_death_dialogue
-
-                game.dialogue_state.show(create_death_dialogue())
-                game.pending_death_dialogue = False
-                game.sound_manager.play_sound("player_death", priority=10)
-                game.sound_manager.play_sound("critical_system_failure", priority=10)
-
-            # Render dialogue system (highest priority overlay) - handles gateway, death, victory
-            if game.dialogue_state.is_active():
-                # Use UnifiedRenderer for all dialogue types
-                dialogue = game.dialogue_state.get_active()
-                if dialogue:
-                    UnifiedRenderer.render(
-                        console,
-                        dialogue,
-                        game.dialogue_state,
-                        game.last_mouse_tile_x,
-                        game.last_mouse_tile_y,
-                    )
-
-            # Render achievement popups (high priority, after dialogue or at same level)
-            if hasattr(game, "achievement_popup_manager"):
-                game.achievement_popup_manager.update()
-                game.achievement_popup_manager.render(console)
+            # Render dialogue overlays and achievement popups
+            self._render_dialogue_and_popups(console, game)
 
 
 # Legacy alias for backward compatibility

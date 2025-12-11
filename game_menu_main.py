@@ -15,12 +15,13 @@ import logging
 import tcod
 
 from game_color_manager import ColorManager
-from game_config import GameConfig
+from game_config import GameConfig, GameSettings
 from game_entities import Colors
+from game_help_hints import get_main_menu_help
 from game_menu_base import BaseMenu
 from game_save import SaveGameManager
 from game_story import StoryFragmentManager
-from game_ui import UniversalInputHandler, render_char_safe
+from game_ui import render_char_safe
 
 
 class MainMenu(BaseMenu):
@@ -37,18 +38,48 @@ class MainMenu(BaseMenu):
         mid_game_mode: True when accessed from in-game (hides Continue option)
     """
 
-    def __init__(self, background=None, settings=None, menus=None):
+    def __init__(self, background=None, menus=None):
         super().__init__(background)
-        self.settings = settings  # Store settings to check graphics mode
         self.menus = menus  # Reference to menus dict to check if graphics_preview_menu exists
         self.options = self._build_options_list()
         self.show_warning = False
         self.warning_selection = 0
         self.mid_game_mode = False  # Flag to indicate if accessed from mid-game
+        self.last_action = None  # Track last menu action for selection memory
 
         # Stored coordinates for warning dialog click detection
         self.warning_option_0_x_range = None  # (start_x, end_x) for "Yes, Delete"
         self.warning_option_1_x_range = None  # (start_x, end_x) for "No, Go Back"
+        self.warning_option_0_y = None  # Y coordinate for "Yes, Delete"
+        self.warning_option_1_y = None  # Y coordinate for "No, Go Back"
+
+    @property
+    def settings(self):
+        """Get settings from global singleton."""
+        return GameSettings.get_instance()
+
+    def restore_selection_after_submenu(self):
+        """Restore menu selection to the item that was selected when entering a submenu."""
+        if self.last_action:
+            # Map actions to option names
+            action_to_option = {
+                "settings": "Settings",
+                "controls": "Controls",
+                "help": "Help",
+                "achievements": "Achievements",
+                "lore": "Data Fragments",  # Partial match OK since it has count suffix
+                "about": "About",
+                "graphics_preview": "Graphics Preview"
+            }
+
+            target_option = action_to_option.get(self.last_action)
+            if target_option:
+                # Find the option (handle partial matches for "Data Fragments (X/Y)")
+                for i, option in enumerate(self.options):
+                    if target_option in option or option == target_option:
+                        self.selected_option = i
+                        break
+            self.last_action = None  # Clear after restoring
 
     def _build_options_list(self):
         """Build the options list based on save state and graphics mode."""
@@ -59,6 +90,7 @@ class MainMenu(BaseMenu):
         base_options = [
             "New Game",
             "Settings",
+            "Controls",
             "Help",
             "Achievements",
             f"Data Fragments ({discovered}/{total})",
@@ -106,6 +138,7 @@ class MainMenu(BaseMenu):
         base_options = [
             "New Game",
             "Settings",
+            "Controls",
             "Help",
             "Achievements",
             f"Data Fragments ({discovered}/{total})",
@@ -125,10 +158,12 @@ class MainMenu(BaseMenu):
 
         if show_continue and SaveGameManager.save_exists():
             self.options = ["Continue Game"] + base_options
-            self.mid_game_mode = False
         else:
             self.options = base_options
-            self.mid_game_mode = not show_continue  # True when accessed from mid-game
+
+        # mid_game_mode = True when there's an active game that can be resumed
+        # This enables START button to toggle back to game
+        self.mid_game_mode = can_save  # True when active_game is valid and player is alive
 
         # Reset selection to prevent index out of bounds
         self.selected_option = 0
@@ -270,7 +305,8 @@ class MainMenu(BaseMenu):
 
     def _render_menu_options(self, console: tcod.console.Console, box: dict) -> None:
         """Render the main menu options."""
-        start_y = 21  # Back to original Y position (box itself is shifted)
+        # Position depends on layout - graphics mode needs options higher to avoid help text overlap
+        start_y = 19 if box["use_background_layout"] else 21
         for i, option in enumerate(self.options):
             color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             bg_color = (
@@ -295,7 +331,8 @@ class MainMenu(BaseMenu):
         if SaveGameManager.save_exists():
             save_timestamp = SaveGameManager.get_save_timestamp()
             if save_timestamp:
-                start_y = 21
+                # Match menu options start_y
+                start_y = 19 if box["use_background_layout"] else 21
                 if box["use_background_layout"]:
                     # Background mode - position within narrow box
                     save_text = "Save found"
@@ -345,46 +382,27 @@ class MainMenu(BaseMenu):
                     )
 
     def _render_controls_help(self, console: tcod.console.Console, box: dict) -> None:
-        """Render control instructions."""
-        # Use bright cyan for all control hints
-        help_text_color = Colors.CYAN
+        """Render control instructions - dynamically reflects current bindings."""
+        help_text = get_main_menu_help(box["use_background_layout"], self.input_mapper)
 
         if box["use_background_layout"]:
-            # Background mode - position within narrow box
-            nav_text = "↕/W/S: Navigate"
-            select_text = "Enter: Select"
+            # Narrow box (26 char content) - ultra compact, +1 for visual centering
             render_char_safe(
                 console,
-                box["center_x"] - len(nav_text) // 2,
-                GameConfig.SCREEN_HEIGHT - 6,
-                nav_text,
-                fg=help_text_color,
-                bg=Colors.BLACK,
-            )
-            render_char_safe(
-                console,
-                box["center_x"] - len(select_text) // 2,
+                box["center_x"] - len(help_text) // 2 + 1,
                 GameConfig.SCREEN_HEIGHT - 5,
-                select_text,
-                fg=help_text_color,
+                help_text,
+                fg=Colors.CYAN,
                 bg=Colors.BLACK,
             )
         else:
-            # Glyph mode - centered
+            # Wide box - full format
             render_char_safe(
                 console,
-                GameConfig.SCREEN_WIDTH // 2 - 15,
-                GameConfig.SCREEN_HEIGHT - 6,
-                "↕ or W/S: Navigate",
-                fg=help_text_color,
-                bg=Colors.BLACK,
-            )
-            render_char_safe(
-                console,
-                GameConfig.SCREEN_WIDTH // 2 - 10,
+                GameConfig.SCREEN_WIDTH // 2 - len(help_text) // 2,
                 GameConfig.SCREEN_HEIGHT - 5,
-                "Enter: Select",
-                fg=help_text_color,
+                help_text,
+                fg=Colors.CYAN,
                 bg=Colors.BLACK,
             )
 
@@ -478,103 +496,180 @@ class MainMenu(BaseMenu):
                 self.warning_option_1_x_range = (start_x, end_x)
                 self.warning_option_1_y = options_start_y + i
 
-    def handle_input(self, event) -> str:
-        """Handle menu input. Returns action: 'continue', 'new_game', 'exit', or ''."""
+    def select_current_option(self) -> str:
+        """
+        Trigger selection of currently highlighted option.
+
+        Returns menu action string ('continue', 'new_game', 'settings', etc.)
+        """
+        if not self.options or self.selected_option >= len(self.options):
+            return ""
+
         if self.show_warning:
-            return self._handle_warning_input(event)
-        else:
-            return self._handle_menu_input(event)
-
-    def _handle_menu_input(self, event) -> str:
-        """Handle main menu input."""
-        # Handle navigation using universal handler
-        if UniversalInputHandler.handle_list_navigation(self, event, len(self.options)):
-            return ""
-
-        # Handle selection
-        if UniversalInputHandler.is_confirm_key(event):
-            option = self.options[self.selected_option]
-            if option == "Continue Game":
-                return "continue"
-            elif option == "New Game":
-                if SaveGameManager.save_exists() and not self.mid_game_mode:
-                    self.show_warning = True
-                    self.warning_selection = 1  # Default to "No"
-                else:
-                    return "new_game"
-            elif option == "Settings":
-                return "settings"
-            elif option == "Help":
-                return "help"
-            elif option == "Achievements":
-                return "achievements"
-            elif option.startswith("Data Fragments"):
-                return "lore"
-            elif option == "About":
-                return "about"
-            elif option == "Graphics Preview":
-                return "graphics_preview"
-            elif "Exit" in option:  # Matches both "Exit" and "Save and Exit"
-                return "exit"
-        # ESC disabled on main menu to prevent accidental exit
-
-        return ""
-
-    def _handle_warning_input(self, event) -> str:
-        """Handle warning dialog input."""
-        # Handle navigation using universal handler
-        if UniversalInputHandler.handle_dialog_navigation(self, event):
-            return ""
-
-        # Handle selection
-        if UniversalInputHandler.is_confirm_key(event):
-            if self.warning_selection == 0:  # Yes, Delete Save
-                SaveGameManager.delete_save()
+            # Handle warning dialog selection
+            if self.warning_selection == 0:  # "Yes"
                 return "new_game"
-            else:  # No, Go Back
+            else:  # "No"
                 self.show_warning = False
-        elif UniversalInputHandler.is_escape_key(event):
-            self.show_warning = False
+                return ""
+
+        option = self.options[self.selected_option]
+        logging.debug(f"[MENU] Selected option: '{option}'")
+
+        if option == "Continue Game":
+            return "continue"
+        elif option == "New Game":
+            save_exists = SaveGameManager.save_exists()
+            if save_exists:
+                self.show_warning = True
+                self.warning_selection = 1  # Default to "No"
+                return ""
+            else:
+                return "new_game"
+        elif option == "Settings":
+            self.last_action = "settings"
+            return "settings"
+        elif option == "Controls":
+            self.last_action = "controls"
+            return "controls"
+        elif option == "Help":
+            self.last_action = "help"
+            return "help"
+        elif option == "Achievements":
+            self.last_action = "achievements"
+            return "achievements"
+        elif option.startswith("Data Fragments"):
+            self.last_action = "lore"
+            return "lore"
+        elif option == "About":
+            self.last_action = "about"
+            return "about"
+        elif option == "Graphics Preview":
+            self.last_action = "graphics_preview"
+            return "graphics_preview"
+        elif "Exit" in option:  # Matches both "Exit" and "Save and Exit"
+            return "exit"
 
         return ""
 
-    def handle_mouse_motion(self, event) -> bool:
+    # ========================================================================
+    # BASEINPUTHANDLER ABSTRACT METHODS
+    # ========================================================================
+
+    def get_context(self):
+        """Return input context - DIALOGUE for warning dialog, MAIN_MENU otherwise."""
+        from game_input_actions import InputContext
+        return InputContext.DIALOGUE if self.show_warning else InputContext.MAIN_MENU
+
+    def execute_action(self, action) -> str:
+        """Execute an InputAction and return menu command."""
+        from game_input_actions import InputAction
+        import logging
+
+        # Movement keys become navigation in menu context
+        if action in (InputAction.NAVIGATE_UP, InputAction.MOVE_NORTH):
+            if self.show_warning:
+                self.warning_selection = 0 if self.warning_selection == 1 else 1
+            else:
+                old_selection = self.selected_option
+                self.navigate_up()
+                new_selection = self.selected_option
+                logging.debug(f"[MAIN MENU NAV] NAVIGATE_UP: {old_selection} -> {new_selection}")
+            return ""
+        elif action in (InputAction.NAVIGATE_DOWN, InputAction.MOVE_SOUTH):
+            if self.show_warning:
+                self.warning_selection = 1 if self.warning_selection == 0 else 0
+            else:
+                old_selection = self.selected_option
+                self.navigate_down()
+                new_selection = self.selected_option
+                logging.debug(f"[MAIN MENU NAV] NAVIGATE_DOWN: {old_selection} -> {new_selection}")
+            return ""
+        elif action == InputAction.CONFIRM:
+            if self.show_warning:
+                if self.warning_selection == 0:  # "Yes, Delete Save"
+                    return "new_game"
+                else:  # "No, Go Back"
+                    self.show_warning = False
+                    return ""
+            else:
+                return self.select_current_option()
+        elif action == InputAction.CANCEL:
+            if self.show_warning:
+                self.show_warning = False
+            # CANCEL on main menu is disabled (no accidental exit)
+            return ""
+        elif action == InputAction.EXIT_TO_MENU:
+            # START button pressed - if mid-game mode, return to game
+            if self.mid_game_mode:
+                return "continue"
+            # Not in mid-game mode, START does nothing
+            return ""
+
+        return ""
+
+    # ========================================================================
+    # MOUSE HANDLING (override BaseMenu for warning dialog support)
+    # ========================================================================
+
+    def handle_mouse_motion(self, event) -> str:
         """Handle mouse motion - update selection in menu or warning dialog."""
         if self.show_warning:
-            return self._handle_warning_mouse_motion(event)
+            self._handle_warning_mouse_motion(event)
         else:
             # Use base class implementation for main menu
-            return super().handle_mouse_motion(event)
+            super().handle_mouse_motion(event)
+        return ""
 
-    def handle_mouse_click(self, event) -> str:
-        """Handle mouse click - activate option in menu or warning dialog."""
+    def handle_left_click(self, event) -> str:
+        """Handle left mouse click - activate option in menu or warning dialog."""
         if self.show_warning:
             return self._handle_warning_mouse_click(event)
 
         # Get the action from base class
-        action = super().handle_mouse_click(event)
+        action = super().handle_left_click(event)
 
         # If clicking "New Game" with existing save, show warning instead
-        if action == "new_game" and SaveGameManager.save_exists() and not self.mid_game_mode:
+        if action == "new_game" and SaveGameManager.save_exists():
             self.show_warning = True
             self.warning_selection = 1  # Default to "No"
             return ""  # Don't execute new_game yet
 
         return action
 
-    def _handle_warning_mouse_motion(self, event) -> bool:
-        """Handle mouse motion in warning dialog - update selection."""
-        if not hasattr(event, "tile") or event.tile is None:
-            return False
+    def handle_right_click(self, event) -> str:
+        """Handle right mouse click."""
+        if self.show_warning:
+            # Right-click on warning = go back (same as "No, Go Back")
+            self.show_warning = False
+            return ""
+        else:
+            # Right-click on main menu does nothing (no accidental exit)
+            return ""
 
-        # The menu loop already converted pixel to tile coordinates
-        # event.tile is already in tile space (0-79, 0-49)
-        try:
-            tile_x = int(event.tile.x)
-            tile_y = int(event.tile.y)
-        except (TypeError, ValueError, AttributeError) as e:
-            logging.debug(f"Mouse event tile coordinate conversion failed in warning menu: {e}")
-            return False
+    # ========================================================================
+    # WARNING DIALOG MOUSE HANDLING
+    # ========================================================================
+
+    def _handle_warning_mouse_motion(self, event):
+        """Handle mouse motion in warning dialog - update selection."""
+        import logging
+
+        # Prefer event.tile, fall back to event.position for test compatibility
+        # Use try/except because Mock objects pass hasattr checks
+        tile_x = tile_y = None
+        for attr_name in ("tile", "position"):
+            if hasattr(event, attr_name):
+                coord_source = getattr(event, attr_name)
+                if coord_source is not None:
+                    try:
+                        tile_x = int(coord_source.x)
+                        tile_y = int(coord_source.y)
+                        break  # Found valid coordinates
+                    except (TypeError, ValueError, AttributeError):
+                        continue  # Try next attribute
+        if tile_x is None or tile_y is None:
+            return
 
         # Check if hovering over option 0
         if (
@@ -587,7 +682,7 @@ class MainMenu(BaseMenu):
             start_x, end_x = self.warning_option_0_x_range
             if tile_y == self.warning_option_0_y and start_x <= tile_x < end_x:
                 self.warning_selection = 0
-                return True
+                return
 
         # Check if hovering over option 1
         if (
@@ -600,9 +695,7 @@ class MainMenu(BaseMenu):
             start_x, end_x = self.warning_option_1_x_range
             if tile_y == self.warning_option_1_y and start_x <= tile_x < end_x:
                 self.warning_selection = 1
-                return True
-
-        return False
+                return
 
     def _handle_warning_mouse_click(self, event) -> str:
         """Handle mouse click in warning dialog - activate clicked option."""

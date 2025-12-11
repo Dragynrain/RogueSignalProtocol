@@ -357,13 +357,8 @@ class TestLevelGenerationErrorHandling:
 
     def test_invalid_level_numbers(self):
         """Test level generation handles invalid level numbers."""
-        # Test with level 1 (should work)
-        try:
-            self.level_generator.generate_level(1, 12345)
-            # Should not crash
-            assert True
-        except Exception as e:
-            pytest.fail(f"Level generation crashed with level 1: {e}")
+        # Test with level 1 (should work) - smoke test
+        self.level_generator.generate_level(1, 12345)
 
         # Test negative level - this may crash, which is acceptable behavior
         # since the game doesn't expect negative levels
@@ -379,27 +374,19 @@ class TestLevelGenerationErrorHandling:
         extreme_seeds = [0, -1, 2**31 - 1, -(2**31)]
 
         for seed in extreme_seeds:
-            try:
-                self.level_generator.generate_level(1, seed)
-                # Should not crash
-                assert True
-            except Exception as e:
-                pytest.fail(f"Level generation crashed with seed {seed}: {e}")
+            # Each seed should generate a valid level without crashing
+            self.level_generator.generate_level(1, seed)
 
     def test_small_map_generation(self):
         """Test level generation on very small maps."""
         small_map = GameMap(10, 10)  # Very small map
         small_generator = LevelGenerator(small_map)
 
-        try:
-            small_generator.generate_level(1, 12345)
-            # Should not crash even with small map
-            assert True
+        # Should not crash even with small map
+        small_generator.generate_level(1, 12345)
 
-            # Should still place gateway
-            assert small_map.gateway is not None
-        except Exception as e:
-            pytest.fail(f"Level generation crashed on small map: {e}")
+        # Should still place gateway
+        assert small_map.gateway is not None
 
 
 if __name__ == "__main__":

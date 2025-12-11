@@ -95,7 +95,7 @@ class SaveGameManager:
                 "max_cpu": game.player.max_cpu,
                 "heat": game.player.heat,
                 "max_heat": game.player.max_heat,
-                "trace level": game.player.trace_level,
+                "trace_level": game.player.trace_level,
                 "ram_total": game.player.ram_total,
                 "speed_moves_remaining": game.player.speed_moves_remaining,
                 "temporary_effects": dict(game.player.temporary_effects),
@@ -209,10 +209,16 @@ class SaveGameManager:
                     if os.path.exists(temp_file):
                         try:
                             os.remove(temp_file)
-                        except (OSError, FileNotFoundError):
-                            pass  # Temp file cleanup failure is not critical
+                        except (OSError, FileNotFoundError) as e:
+                            logging.debug(f"Temp file cleanup failed (non-critical): {e}")
+
+            except PermissionError as e:
+                # PermissionError is non-retryable - fail immediately
+                logging.error(f"Permission denied during save (no retry): {e}")
+                return False
 
             except OSError as e:
+                # Other I/O errors are retryable
                 logging.warning(f"Save attempt {attempt + 1} failed with I/O error: {e}")
                 if attempt == GameConfig.MAX_SAVE_ATTEMPTS - 1:
                     logging.error("All save attempts failed")
@@ -221,13 +227,6 @@ class SaveGameManager:
 
             except (ValueError, TypeError) as e:
                 logging.error(f"Data serialization error (no retry): {e}")
-                return False
-
-            except (PermissionError, OSError) as e:
-                logging.error(f"File system error during save: {e}")
-                return False
-            except TypeError as e:
-                logging.error(f"JSON encoding error during save: {e}")
                 return False
             except Exception as e:
                 import traceback
@@ -308,25 +307,21 @@ class SaveGameManager:
 
     @classmethod
     def get_save_timestamp(cls) -> str | None:
-        """Get formatted timestamp of save file."""
+        """Get formatted timestamp of save file.
+
+        Uses file modification time for performance - avoids loading entire save file
+        just to display timestamp in menu (was causing 60 load_game() calls per second).
+        """
         if not cls.save_exists():
             return None
 
         try:
-            save_data = cls.load_game()
-            if save_data and "timestamp" in save_data:
-                import datetime
+            # Use file modification time directly (fast, no disk I/O beyond stat)
+            import datetime
 
-                timestamp = save_data["timestamp"]
-                dt = datetime.datetime.fromtimestamp(timestamp)
-                return dt.strftime("%Y-%m-%d %H:%M:%S")
-            else:
-                # Fallback to file modification time
-                import datetime
-
-                stat_result = os.stat(cls._get_save_file_path())
-                dt = datetime.datetime.fromtimestamp(stat_result.st_mtime)
-                return dt.strftime("%Y-%m-%d %H:%M:%S")
+            stat_result = os.stat(cls._get_save_file_path())
+            dt = datetime.datetime.fromtimestamp(stat_result.st_mtime)
+            return dt.strftime("%Y-%m-%d %H:%M:%S")
         except Exception as e:
             import traceback
 

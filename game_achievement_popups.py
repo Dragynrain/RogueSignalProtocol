@@ -17,6 +17,7 @@ from game_achievements import ALL_ACHIEVEMENTS, Achievement, AchievementManager
 from game_config import GameConfig
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Colors, ensure_color_tuple
+from game_help_hints import get_achievement_dismiss_hint
 from game_ui import render_char_safe
 
 logger = logging.getLogger(__name__)
@@ -79,7 +80,7 @@ class AchievementPopup:
         else:
             remaining = get_popup_duration() - elapsed
             progress = remaining / fade_duration
-            return max(0, int(255 * progress))
+            return max(0, min(255, int(255 * progress)))
 
 
 class AchievementPopupManager:
@@ -198,13 +199,13 @@ class AchievementPopupManager:
 
         draw_bordered_box(console, box_x, box_y, popup_width, popup_height, border_color, bg_color)
 
-        # Render title with icon
+        # Render title with icon (ensure title_x doesn't go negative if text is too long)
         title_text = f"{achievement.icon} ACHIEVEMENT UNLOCKED!"
-        title_x = box_x + (popup_width - len(title_text)) // 2
+        title_x = max(box_x + 1, box_x + (popup_width - len(title_text)) // 2)
         render_char_safe(console, title_x, box_y + 1, title_text, fg=title_color, bg=bg_color)
 
-        # Render achievement name (centered)
-        name_x = box_x + (popup_width - len(achievement.name)) // 2
+        # Render achievement name (centered, ensure x doesn't go negative)
+        name_x = max(box_x + 1, box_x + (popup_width - len(achievement.name)) // 2)
         render_char_safe(
             console, name_x, box_y + 3, achievement.name, fg=achievement_name_color, bg=bg_color
         )
@@ -223,9 +224,9 @@ class AchievementPopupManager:
             alignment=tcod.constants.CENTER,
         )
 
-        # Optionally show hint at bottom (very subtle)
-        hint_text = "(press any key or click)"
-        hint_x = box_x + (popup_width - len(hint_text)) // 2
+        # Optionally show hint at bottom (very subtle, ensure x doesn't go negative)
+        hint_text = get_achievement_dismiss_hint()
+        hint_x = max(box_x + 1, box_x + (popup_width - len(hint_text)) // 2)
         hint_color = ensure_color_tuple(GameConfig._get_required("colors.achievement_popup.hint"))
         render_char_safe(
             console, hint_x, box_y + popup_height - 1, hint_text, fg=hint_color, bg=bg_color

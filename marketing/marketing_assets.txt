@@ -146,16 +146,16 @@ a) Short Game Description
 
 
   A stealth-first roguelike where you infiltrate cyberspace as a trapped consciousness. Navigate procedurally generated networks, avoid AI security, and hack through escalating defenses.
-  Manage your systems carefully—overheating damages you, trace signatures alert enemies, and resources are scarce. Detection means deletion. Permadeath erases everything.
+  Manage your systems carefully-overheating damages you, trace signatures alert enemies, and resources are scarce. Detection means deletion. Permadeath erases everything.
 
   ---
   b) Long Game Description
 
   Rogue Signal Protocol is a cyberspace stealth roguelike where you play as a digitized consciousness trapped inside a hostile corporate network. Your memories are fragmented. The security systems
-  are hunting something that shouldn't exist: you. Strange echoes linger in the data streams—traces of others who came before. The network whispers of failures, experiments, and something called
+  are hunting something that shouldn't exist: you. Strange echoes linger in the data streams-traces of others who came before. The network whispers of failures, experiments, and something called
   a resilience initiative. But the only test that matters now is survival.
 
-  Infiltrate three increasingly hostile networks—Corporate, Government, and Military—each filled with sophisticated AI security systems designed to detect and eliminate unauthorized
+  Infiltrate three increasingly hostile networks-Corporate, Government, and Military-each filled with sophisticated AI security systems designed to detect and eliminate unauthorized
   consciousnesses. Hide in digital shadows, deploy 12 powerful hacking exploits ranging from stealth tools to devastating cyberattacks, and discover 20+ narrative fragments that slowly reveal
   what happened to you. Every action generates trace data that alerts enemies to your presence. Overuse your abilities and you'll overheat, causing CPU damage that brings you closer to total
   system failure. And when you die? Your save file is deleted. Forever. Become the rogue signal that shatters the firewalls, or fade into the network's ghost data like the others before you.
@@ -163,13 +163,13 @@ a) Short Game Description
   ---
   c) Key Features
 
-  - Enemy Movement Prediction: See enemies' next 3 planned moves for tactical advantage—slip past patrols or set up ambushes
-  - Stealth-First Infiltration: Hide in blind spots, manage your trace signature, and avoid detection—combat is dangerous, silence is survival
+  - Enemy Movement Prediction: See enemies' next 3 planned moves for tactical advantage-slip past patrols or set up ambushes
+  - Stealth-First Infiltration: Hide in blind spots, manage your trace signature, and avoid detection-combat is dangerous, silence is survival
   - Achievement System: Persistent tracking across runs with unlockable challenges proving your mastery
   - Interactive Look Mode: Inspect enemies, items, and terrain with mouse or keyboard for detailed tactical intel
-  - 12 Powerful Exploits: From Shadow Step teleportation to System Crash emergency protocols—combine stealth, combat, and utility tools with heat management
+  - 12 Powerful Exploits: From Shadow Step teleportation to System Crash emergency protocols-combine stealth, combat, and utility tools with heat management
   - 8 Unique Enemy Types: Face surveillance Scanners, deadly Admin Avatars, corrupting Viruses, and adaptive AI hunters
-  - Dual Rendering Modes: Switch between graphical sprites or classic ASCII/Unicode glyphs—same gameplay, your choice of aesthetic
+  - Dual Rendering Modes: Switch between graphical sprites or classic ASCII/Unicode glyphs-same gameplay, your choice of aesthetic
   - Full Audio Design: Atmospheric music and 40+ sound effects (toggleable) enhance the cyberspace immersion
   - Permadeath with Stakes: Death deletes your save file. Auto-save on exit. No second chances. Every decision carries weight
   - Procedural Generation: Every run creates new network layouts, enemy placements, and resource distributions
@@ -191,21 +191,21 @@ a) Short Game Description
 
   Rogue Signal Protocol Combines Permadeath Stakes, Deep Stealth Mechanics, and Mystery-Driven Narrative
 
-  [YOUR CITY, DATE] — Independent developer Adam Forster is proud to announce the release of Rogue Signal Protocol, a cyberspace stealth roguelike where detection means deletion. Available now
+  [YOUR CITY, DATE] - Independent developer Adam Forster is proud to announce the release of Rogue Signal Protocol, a cyberspace stealth roguelike where detection means deletion. Available now
   on [itch.io/Steam], the game challenges players to infiltrate hostile networks as a trapped digital consciousness with fragmented memories and relentless AI hunters on their trail.
 
   About Rogue Signal Protocol
 
-  You wake as a digitized consciousness inside a hostile corporate network. Your memories are fragmented. The security systems are hunting you. Strange data echoes suggest others came before—and
+  You wake as a digitized consciousness inside a hostile corporate network. Your memories are fragmented. The security systems are hunting you. Strange data echoes suggest others came before-and
   failed. Armed with 12 powerful hacking exploits, you must stealth through three procedurally generated security networks to escape before you're permanently deleted. Piece together what
-  happened through scattered narrative fragments, but move carefully—every action leaves traces that bring the hunters closer.
+  happened through scattered narrative fragments, but move carefully-every action leaves traces that bring the hunters closer.
 
   Key Features:
   - Enemy movement prediction showing their next 3 planned moves for tactical planning
   - Stealth-first gameplay where avoiding detection is survival
   - Achievement system with persistent tracking across runs
   - Interactive look mode to inspect enemies, items, and terrain
-  - Permadeath with save file deletion—every run matters, auto-save on exit
+  - Permadeath with save file deletion-every run matters, auto-save on exit
   - 12 unique exploits combining stealth, combat, and utility abilities with heat management
   - 8 distinct enemy AI types with sophisticated behaviors
   - Dual rendering modes: Switch between graphical sprites or ASCII/Unicode glyphs
@@ -250,9 +250,9 @@ a) Short Game Description
 
   Q: Is there a demo available?A: [Yes - download the demo on itch.io / No, but the full game is available for $X]
 
-  Q: How long does a full run take?A: A complete run through all three networks takes 10-15 minutes depending on playstyle. Most deaths happen much faster—this is a challenging game!
+  Q: How long does a full run take?A: A complete run through all three networks takes 10-15 minutes depending on playstyle. Most deaths happen much faster-this is a challenging game!
 
-  Q: Is permadeath really permanent?A: Yes. When you die, your save file is deleted automatically. This is a core theme—your digital consciousness is being erased. No backups, no restores.
+  Q: Is permadeath really permanent?A: Yes. When you die, your save file is deleted automatically. This is a core theme-your digital consciousness is being erased. No backups, no restores.
 
   Q: What makes this different from other stealth roguelikes?A: Four unique elements: (1) enemies show their planned movement 3 turns ahead for tactical planning, (2) achievement system
   tracking progress across runs, (3) rich cyberpunk narrative with 20+ story fragments, (4) every game system (heat, trace, CPU) reinforces the digital consciousness theme.
@@ -272,7 +272,7 @@ a) Short Game Description
 
   Email Newsletter Signup Template
 
-  Subject: Signal Detected: Join the Network ⚠️
+  Subject: Signal Detected: Join the Network WARNING:
 
   Body:
 
@@ -290,7 +290,7 @@ a) Short Game Description
 
   Warning: This network does not forgive mistakes.
 
-  —Rogue Signal Protocol
+  -Rogue Signal Protocol
   [Your Studio Name]
 
   ---
@@ -305,7 +305,7 @@ a) Short Game Description
   Rogue Signal Protocol is now available.
 
   You are a digital consciousness trapped in a hostile corporate network. Your memories are fragmented. The security systems are hunting you. Three firewall layers stand between you and
-  freedom. Others tried to escape before you—their data echoes still linger in the network.
+  freedom. Others tried to escape before you-their data echoes still linger in the network.
 
   Three networks stand between you and freedom:
   - Corporate firewall
@@ -332,7 +332,7 @@ a) Short Game Description
 
   Signal strength holding. For now.
 
-  —Rogue Signal Protocol
+  -Rogue Signal Protocol
   [Your Studio Name]
 
   P.S. Every purchase supports independent game development and keeps this project open source (MIT license).
@@ -346,7 +346,7 @@ a) Short Game Description
 
   The network is waiting.
 
-  A free demo of Rogue Signal Protocol is now available. Infiltrate the first network layer—the Corporate subnet—and see if you have what it takes to survive as a trapped digital consciousness.
+  A free demo of Rogue Signal Protocol is now available. Infiltrate the first network layer-the Corporate subnet-and see if you have what it takes to survive as a trapped digital consciousness.
 
   Demo includes:
   - Full Corporate Network level
@@ -368,7 +368,7 @@ a) Short Game Description
 
   Detection means deletion. Make your signal count.
 
-  —Rogue Signal Protocol
+  -Rogue Signal Protocol
   [Your Studio Name]
 
 

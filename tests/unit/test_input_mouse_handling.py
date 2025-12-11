@@ -398,14 +398,15 @@ class TestMouseWheelHandlers:
         game = create_mock_game()
         game.show_lore_viewer = True
 
-        # Mock renderer with lore menu that handles mouse wheel
+        # Mock lore menu that handles mouse wheel
         mock_lore_menu = Mock()
         mock_lore_menu.handle_mouse_wheel = Mock(return_value=True)
 
         mock_renderer = Mock()
-        mock_renderer._get_or_create_lore_menu = Mock(return_value=mock_lore_menu)
-
         handler = InputHandler(game, mock_renderer)
+
+        # Mock the _get_or_create_lore_viewer_menu method on the handler itself
+        handler._get_or_create_lore_viewer_menu = Mock(return_value=mock_lore_menu)
 
         # Mock mouse wheel event (scroll down)
         event = Mock()
@@ -540,14 +541,15 @@ class TestMouseWheelIntegration:
         game.show_lore_viewer = True
         game.show_inventory = False
 
-        # Mock renderer with lore menu
+        # Mock lore menu
         mock_lore_menu = Mock()
         mock_lore_menu.handle_mouse_wheel = Mock(return_value=True)
 
         mock_renderer = Mock()
-        mock_renderer._get_or_create_lore_menu = Mock(return_value=mock_lore_menu)
-
         handler = InputHandler(game, mock_renderer)
+
+        # Mock the _get_or_create_lore_viewer_menu method on the handler itself
+        handler._get_or_create_lore_viewer_menu = Mock(return_value=mock_lore_menu)
 
         event = Mock(spec=tcod.event.MouseWheel)
         event.y = -1

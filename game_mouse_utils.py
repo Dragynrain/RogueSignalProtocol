@@ -118,8 +118,7 @@ class MenuMouseHandler:
             True if this is a left button click, False otherwise
         """
         return (
-            event.type == "MOUSEBUTTONDOWN"
-            and hasattr(event, "button")
+            isinstance(event, tcod.event.MouseButtonDown)
             and event.button == tcod.event.MouseButton.LEFT
         )
 
@@ -135,8 +134,7 @@ class MenuMouseHandler:
             True if this is a right button click, False otherwise
         """
         return (
-            event.type == "MOUSEBUTTONDOWN"
-            and hasattr(event, "button")
+            isinstance(event, tcod.event.MouseButtonDown)
             and event.button == tcod.event.MouseButton.RIGHT
         )
 

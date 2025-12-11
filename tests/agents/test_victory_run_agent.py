@@ -214,13 +214,9 @@ class TestVictoryRunAgent:
         """
         agent = VictoryRunAgent(seed=12345)
 
-        # Attempt full victory run
-        try:
-            _ = agent.run_to_victory()
-            # Whether victory is achieved or not, test passes if no crash
-            assert True
-        except Exception as e:
-            pytest.fail(f"Victory run crashed: {e}")
+        # Attempt full victory run - outcome (victory/death) depends on RNG
+        _ = agent.run_to_victory()
+        # No exception means agent completed run successfully
 
     def test_agent_state_remains_consistent(self):
         """Agent maintains consistent state during play."""
@@ -312,6 +308,4 @@ class TestVictoryRunIntegration:
                     pass
             else:
                 agent.wait(1)
-
-        # Reaching here means no crash
-        assert True
+        # No exception after 100 turns means game is stable

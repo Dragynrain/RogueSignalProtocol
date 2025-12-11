@@ -45,6 +45,7 @@ class TestMenuMouseInteractions:
             click_y = 7  # First option row (menu_height=46 matches Main Menu)
 
             event = Mock()
+            event.button = tcod.event.MouseButton.LEFT  # Required for handle_mouse_click dispatch
             event.tile = Mock()
             event.tile.x = click_x
             event.tile.y = click_y
@@ -98,6 +99,7 @@ class TestMenuMouseInteractions:
             click_y = 7  # First option row (menu_height=46 matches Main Menu)
 
             event = Mock()
+            event.button = tcod.event.MouseButton.LEFT  # Required for handle_mouse_click dispatch
             event.tile = Mock()
             event.tile.x = click_x
             event.tile.y = click_y
@@ -147,6 +149,7 @@ class TestMenuMouseInteractions:
 
             # Click left side when at 0%
             event = Mock()
+            event.button = tcod.event.MouseButton.LEFT  # Required for handle_mouse_click dispatch
             event.tile = Mock()
             event.tile.x = bar_content_start + 1
             event.tile.y = 12
@@ -201,6 +204,7 @@ class TestMenuMouseInteractions:
             option_y = start_y + (graphics_option_index * spacing)
 
             event = Mock()
+            event.button = tcod.event.MouseButton.LEFT  # Required for handle_mouse_click dispatch
             event.tile = Mock()
             event.tile.x = 40  # Somewhere in the menu
             event.tile.y = option_y
@@ -252,6 +256,7 @@ class TestMenuMouseInteractions:
             option_y = start_y + (back_index * spacing)
 
             event = Mock()
+            event.button = tcod.event.MouseButton.LEFT  # Required for handle_mouse_click dispatch
             event.tile = Mock()
             event.tile.x = 40
             event.tile.y = option_y
@@ -286,12 +291,8 @@ class TestMenuMouseInteractions:
             settings = GameSettings()
             menu = SettingsMenu(settings)
 
-            # Render menu
+            # Smoke test - rendering completes without exception
             menu.render(console)
-
-            # Check that volume bars are rendered (can't easily verify exact content,
-            # but rendering shouldn't crash)
-            assert True  # If we got here, rendering worked
 
 
 class TestMenuKeyboardInteractions:

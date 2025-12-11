@@ -63,3 +63,11 @@ htmlcov/
 # Benchmark results
 benchmark.json
 .benchmarks/
+
+# Session documentation (archived in docs/sessions/)
+/*_TEST_*.md
+/*_PLAN*.md
+SESSION_*.md
+
+# Development diagnostic scripts
+scripts/diagnostics/

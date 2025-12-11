@@ -102,7 +102,7 @@ class TestAchievementsMenuScrolling:
         assert menu.scroll_offset >= original_offset  # May not increase if at end
 
     def test_scroll_up_decreases_offset(self):
-        """Test scrolling up decreases offset."""
+        """Test scrolling up decreases offset by ARROW_SCROLL_SPEED."""
         menu = AchievementsMenu()
         menu.scroll_offset = 10  # Start at offset 10
 
@@ -114,7 +114,9 @@ class TestAchievementsMenuScrolling:
         action = menu.handle_input(event)
 
         assert action == ""
-        assert menu.scroll_offset == 9  # Should decrease by 1
+        # Should decrease by ARROW_SCROLL_SPEED (default: 3)
+        expected_offset = 10 - menu.ARROW_SCROLL_SPEED
+        assert menu.scroll_offset == expected_offset
 
     def test_scroll_cannot_go_negative(self):
         """Test scrolling up stops at 0."""
@@ -159,7 +161,8 @@ class TestAchievementsMenuScrolling:
 
         result = menu.handle_mouse_wheel(event)
 
-        assert result is True
+        # Menu handlers return strings, not booleans (empty string = handled, no action)
+        assert result == ""
         assert menu.scroll_offset >= original_offset  # Should increase (if not at max)
 
 
@@ -215,15 +218,16 @@ class TestAchievementsMenuInput:
 
         assert action == ""  # Empty string, not "back"
 
-    def test_mouse_motion_returns_false(self):
-        """Test mouse motion is ignored."""
+    def test_mouse_motion_returns_empty_string(self):
+        """Test mouse motion is ignored (returns empty string, no action)."""
         menu = AchievementsMenu()
 
         event = type("Event", (), {"position": type("Position", (), {"x": 40, "y": 25})()})()
 
         result = menu.handle_mouse_motion(event)
 
-        assert result is False
+        # Menu handlers return strings, not booleans. Empty string = no action.
+        assert result == ""
 
 
 class TestAchievementsMenuIntegration:
@@ -358,7 +362,8 @@ class TestAchievementsMenuEdgeCases:
 
         result = menu.handle_mouse_wheel(event)
 
-        assert result is False
+        # Menu handlers return strings, not booleans. Empty string = no action.
+        assert result == ""
 
     def test_menu_handles_mouse_click_without_position(self):
         """Test menu handles mouse click event without position."""

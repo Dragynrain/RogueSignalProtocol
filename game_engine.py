@@ -128,6 +128,9 @@ class GameEngine:
         # UI state
         self.show_inventory = False
         self.show_help = False
+        self.show_main_menu = False
+        self.show_settings = False
+        self.show_about = False
 
         # Track when player first steps on nodes to avoid repeated sounds
         self.last_node_position: tuple[int, int] | None = None
@@ -142,6 +145,10 @@ class GameEngine:
         self.targeting_mode = False
         self.targeting_exploit: str | None = None
         self.cursor_position = Position(0, 0)
+
+        # Exploit cycling (Phase 2: Gamepad Support)
+        # Tracks currently selected exploit for gamepad cycling (RB/LB buttons)
+        self.selected_exploit_index = 0
 
         # Look mode system
         self.look_mode = False
@@ -244,6 +251,11 @@ class GameEngine:
     def turn(self, value: int) -> None:
         """Set current turn number."""
         self.game_state.turn = value
+
+    @property
+    def equipped_exploits(self) -> list:
+        """List of currently equipped exploits (non-None slots)."""
+        return [e for e in self.player.exploits if e is not None]
 
     @property
     def game_over(self) -> bool:
@@ -412,13 +424,18 @@ class GameEngine:
                 # Check for gateway - show dialogue for user confirmation
                 if (
                     self.game_map.gateway
-                    and self.player.position.distance_to(self.game_map.gateway) == 0
+                    and self.player.position.grid_distance_to(self.game_map.gateway) == 0
                 ):
                     self.sound_manager.play_sound("ui_menu_open")
                     # Show dialogue - level transition happens on confirmation
                     from game_dialogue_system import create_gateway_dialogue
 
-                    gateway_dialogue = create_gateway_dialogue(self.game_state.level)
+                    # Get input mapper for dynamic button hints
+                    input_mapper = getattr(self, "input_mapper", None)
+                    if not input_mapper and hasattr(self, "input_handler"):
+                        input_mapper = getattr(self.input_handler, "input_mapper", None)
+
+                    gateway_dialogue = create_gateway_dialogue(self.game_state.level, input_mapper)
                     if self.dialogue_state.should_show_dialogue(gateway_dialogue):
                         self.dialogue_state.show(gateway_dialogue)
                     # Don't progress immediately - wait for dialogue confirmation
@@ -447,6 +464,46 @@ class GameEngine:
             else:
                 # Movement blocked - don't process turn
                 self.message_log.add_message("Wall blocks movement")
+                # Reset analog stick gating so player can immediately try another direction
+                if (hasattr(self, 'input_handler') and
+                    hasattr(self.input_handler, 'gamepad_handler') and
+                    hasattr(self.input_handler.gamepad_handler, 'analog_handler')):
+                    self.input_handler.gamepad_handler.analog_handler.reset_movement_gating()
+
+    def cycle_exploit_selection(self, direction: int):
+        """
+        Cycle through equipped exploits (Phase 2: Gamepad Support).
+
+        Used by gamepad shoulder buttons (RB/LB) and keyboard bindings ([/]).
+        Wraps around available exploits only (skips empty slots).
+
+        Args:
+            direction: +1 for next, -1 for previous
+        """
+        from game_entities import Colors
+
+        # Get list of equipped exploits (non-None slots)
+        equipped_exploits = [e for e in self.player.exploits if e is not None]
+
+        if not equipped_exploits:
+            self.message_log.add_message("No exploits equipped", Colors.YELLOW)
+            # Reset selection index when no exploits
+            self.selected_exploit_index = 0
+            return
+
+        # Clamp index to valid range (edge case: exploits changed since last cycle)
+        if self.selected_exploit_index >= len(equipped_exploits):
+            self.selected_exploit_index = 0
+        elif self.selected_exploit_index < 0:
+            self.selected_exploit_index = 0
+
+        # Cycle through available exploits
+        self.selected_exploit_index = (self.selected_exploit_index + direction) % len(
+            equipped_exploits
+        )
+
+        # Visual feedback only (no System Log spam)
+        # The selected exploit is shown in the UI already, no need for message log
 
     def maybe_process_turn(self):
         """
@@ -645,106 +702,3 @@ class GameEngine:
     def next_level(self):
         """Progress to the next level - delegates to GameSession."""
         self.game_session.progress_to_next_level()
-
-    def get_game_state_for_save(self) -> dict:
-        """
-        Get the current game state as a dictionary for saving.
-
-        Serializes all necessary game state including:
-        - Player stats, position, inventory, and temporary effects
-        - Enemy positions, states, and AI data
-        - Map items and special locations (gateway, nodes, pickups)
-        - Code hack effects and discovered effects for this session
-        - UI state for better user experience on load
-
-        Map layout is NOT saved - regenerated using the same dungeon_seed.
-        This reduces save file size while maintaining deterministic level generation.
-
-        Returns:
-            Dictionary containing all serialized game state
-        """
-        import time
-
-        from game_characters import Enemy
-        from game_save import SaveGameManager
-
-        return {
-            "version": "0.8.0 Alpha",
-            "timestamp": time.time(),
-            # Game state
-            "level": self.level,
-            "turn": self.turn,
-            "game_over": self.game_over,
-            "admin_spawned": self.admin_spawned,
-            "dungeon_seed": self.game_state.dungeon_seed,
-            # Player state
-            "player": {
-                "x": self.player.x,
-                "y": self.player.y,
-                "last_x": self.player.last_position.x,
-                "last_y": self.player.last_position.y,
-                "cpu": self.player.cpu,
-                "max_cpu": self.player.max_cpu,
-                "heat": self.player.heat,
-                "max_heat": self.player.max_heat,
-                "trace level": self.player.trace_level,
-                "ram_total": self.player.ram_total,
-                "speed_moves_remaining": self.player.speed_moves_remaining,
-                "temporary_effects": dict(self.player.temporary_effects),
-                "equipped_exploits": self.player.inventory_manager.equipped_exploits.copy(),
-                "max_equipped_exploits": self.player.inventory_manager.max_equipped_exploits,
-                "inventory_items": SaveGameManager._serialize_inventory(
-                    self.player.inventory_manager.items
-                ),
-            },
-            # Game effects and state
-            "game_effects": {
-                "threat_scan_turns": self.game_state.threat_scan_turns,
-                "noise_locations": [
-                    {"x": pos.x, "y": pos.y} for pos in self.game_state.noise_locations
-                ],
-                "distraction_points": {
-                    f"{pos.x},{pos.y}": turns
-                    for pos, turns in self.game_state.distraction_points.items()
-                },
-            },
-            # Map state (items and special locations only - layout regenerated)
-            "map_state": {
-                "code_hacks": SaveGameManager._serialize_code_hacks(self.game_map.code_hacks),
-                "exploit_pickups": SaveGameManager._serialize_exploit_pickups(
-                    self.game_map.exploit_pickups
-                ),
-                "permanent_upgrades": {
-                    f"{pos[0]},{pos[1]}": upgrade_key
-                    for pos, upgrade_key in self.game_map.permanent_upgrades.items()
-                },
-                "story_fragments": {
-                    f"{pos[0]},{pos[1]}": fragment.fragment_index
-                    for pos, fragment in self.game_map.story_fragments.items()
-                },
-                "gateway": (
-                    {"x": self.game_map.gateway.x, "y": self.game_map.gateway.y}
-                    if self.game_map.gateway
-                    else None
-                ),
-                "explored_tiles": [f"{x},{y}" for x, y in self.game_map.explored_tiles],
-                "last_known_enemy_positions": {
-                    str(enemy_id): {"x": pos.x, "y": pos.y, "turn": turn}
-                    for enemy_id, (pos, turn) in self.game_map.last_known_enemy_positions.items()
-                },
-            },
-            # Enemies
-            "enemies": SaveGameManager._serialize_enemies(self.enemies),
-            "enemy_next_id": getattr(Enemy, "_next_id", 1),
-            # Code hack effects for this run
-            "code_hack_effects": self.code_hack_effects,
-            "discovered_code_effects": self.discovered_code_effects,
-            # Overclocking state
-            "overclock_confirmation": getattr(self, "overclock_confirmation", False),
-            "overclock_exploit": getattr(self, "overclock_exploit", None),
-            # UI state (optional - for better user experience)
-            "ui_state": {
-                "inventory_selection": self.inventory_selection,
-                "lore_viewer_selection": self.lore_viewer_selection,
-            },
-        }

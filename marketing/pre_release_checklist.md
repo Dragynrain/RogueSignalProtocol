@@ -57,7 +57,7 @@
 
 ## 📦 PACKAGING FOR ITCH.IO
 
-### 8. ✅ **Prepare release package** - COMPLETED (AUTOMATED)
+### 8.  **Prepare release package** - COMPLETED (AUTOMATED)
 
 **The build script already does this!**
 
@@ -137,7 +137,7 @@ copy releases\RogueSignalProtocol_alpha_2025-11-08.zip releases\RogueSignalProto
 - More exposure but more competitive
 - Include 2-3 screenshots
 
-### 11. ✅ **Feedback collection** - COMPLETED
+### 11.  **Feedback collection** - COMPLETED
 
 - [x] Create Google Form from `marketing/feedback_survey_draft.md`
 - [x] Get shareable Google Form URL (short link): https://forms.gle/jbwGdn8VGPa6NG9p9

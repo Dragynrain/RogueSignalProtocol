@@ -56,8 +56,8 @@ class TestGameInputEventHandling(unittest.TestCase):
 
     def test_quit_event_saves_and_exits(self):
         """Test that QUIT event triggers auto-save and exits."""
-        event = Mock()
-        event.type = "QUIT"
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.Quit()
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -75,9 +75,12 @@ class TestGameInputEventHandling(unittest.TestCase):
         """Test ESC with active dialogue dismisses it first."""
         self.game.dialogue_state.is_active = Mock(return_value=True)
 
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.ESCAPE
+        # Use proper TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -98,9 +101,12 @@ class TestGameInputEventHandling(unittest.TestCase):
         self.game.dialogue_state.is_active = Mock(return_value=True)
         self.input_handler._handle_dialogue_dismiss = Mock(return_value=False)  # Death dialogue
 
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.ESCAPE
+        # Use proper TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -114,9 +120,12 @@ class TestGameInputEventHandling(unittest.TestCase):
         """Test ESC with inventory open closes it without saving."""
         self.game.show_inventory = True
 
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.ESCAPE
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -136,9 +145,12 @@ class TestGameInputEventHandling(unittest.TestCase):
         """Test ESC with look mode open closes it."""
         self.game.look_mode = True
 
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.ESCAPE
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -154,9 +166,12 @@ class TestGameInputEventHandling(unittest.TestCase):
         """Test ESC with help screen open closes it."""
         self.game.show_help = True
 
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.ESCAPE
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -170,9 +185,12 @@ class TestGameInputEventHandling(unittest.TestCase):
         self.game.show_lore_viewer = True
         self.game.lore_viewer_mode = "list"
 
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.ESCAPE
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -185,9 +203,12 @@ class TestGameInputEventHandling(unittest.TestCase):
         """Test ESC with targeting mode open closes it."""
         self.game.targeting_mode = True
 
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.ESCAPE
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -203,9 +224,12 @@ class TestGameInputEventHandling(unittest.TestCase):
         self.game.look_mode = False
         self.game.show_help = False
 
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.ESCAPE
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -226,9 +250,12 @@ class TestGameInputEventHandling(unittest.TestCase):
         self.game.dialogue_state.is_active = Mock(return_value=True)
         self.game.show_inventory = True
 
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.ESCAPE
+        # Use proper TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -240,8 +267,8 @@ class TestGameInputEventHandling(unittest.TestCase):
 
     def test_mouse_motion_event_handled(self):
         """Test MOUSEMOTION event is forwarded to input handler."""
-        event = Mock()
-        event.type = "MOUSEMOTION"
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.MouseMotion(position=(100, 100))
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -253,8 +280,13 @@ class TestGameInputEventHandling(unittest.TestCase):
 
     def test_mouse_click_event_handled(self):
         """Test MOUSEBUTTONDOWN event is forwarded to input handler."""
-        event = Mock()
-        event.type = "MOUSEBUTTONDOWN"
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        # MouseButtonDown: pixel, tile, button
+        event = tcod.event.MouseButtonDown(
+            pixel=(100, 100),
+            tile=(10, 10),
+            button=tcod.event.MouseButton.LEFT
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -266,8 +298,9 @@ class TestGameInputEventHandling(unittest.TestCase):
 
     def test_mouse_wheel_event_handled(self):
         """Test MOUSEWHEEL event is forwarded to input handler."""
-        event = Mock()
-        event.type = "MOUSEWHEEL"
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        # MouseWheel: x, y, flipped
+        event = tcod.event.MouseWheel(x=0, y=1, flipped=False)
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -279,9 +312,12 @@ class TestGameInputEventHandling(unittest.TestCase):
 
     def test_keydown_other_than_escape_forwarded(self):
         """Test non-ESC keydown events are forwarded to handler."""
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.W  # Movement key (capital W)
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.W,
+            sym=tcod.event.KeySym.w,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(
             event, self.game, self.input_handler
@@ -292,10 +328,13 @@ class TestGameInputEventHandling(unittest.TestCase):
         self.assertEqual(result_game, self.game)
 
     def test_player_death_exits_to_menu(self):
-        """Test that when player dies and ESC is pressed, return to menu."""
-        event = Mock()
-        event.type = "KEYDOWN"
-        event.sym = tcod.event.KeySym.W  # Capital W
+        """Test that when player dies and presses a key, return to menu."""
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.W,
+            sym=tcod.event.KeySym.w,
+            mod=tcod.event.Modifier.NONE
+        )
 
         # Input handler returns False (player dead, wants to exit)
         self.input_handler.handle_keydown = Mock(return_value=False)
@@ -361,9 +400,8 @@ class TestErrorHandling(unittest.TestCase):
         console = Mock()
         context = Mock()
 
-        # Create mock event generator
-        quit_event = Mock()
-        quit_event.type = "QUIT"
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        quit_event = tcod.event.Quit()
 
         with patch("tcod.event.wait", return_value=[quit_event]):
             result = handle_error_screen(console, context, "Test error", 42)
@@ -386,10 +424,12 @@ class TestErrorHandling(unittest.TestCase):
         console = Mock()
         context = Mock()
 
-        # Create ESC event
-        esc_event = Mock()
-        esc_event.type = "KEYDOWN"
-        esc_event.sym = tcod.event.KeySym.ESCAPE
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        esc_event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         with patch("tcod.event.wait", return_value=[esc_event]):
             result = handle_error_screen(console, context, "Test error", 42)
@@ -409,8 +449,8 @@ class TestAutoSaveBehavior(unittest.TestCase):
 
         input_handler = Mock()
 
-        quit_event = Mock()
-        quit_event.type = "QUIT"
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        quit_event = tcod.event.Quit()
 
         should_continue, result_game = handle_game_input_events(quit_event, game, input_handler)
 
@@ -434,9 +474,12 @@ class TestAutoSaveBehavior(unittest.TestCase):
 
         input_handler = Mock()
 
-        esc_event = Mock()
-        esc_event.type = "KEYDOWN"
-        esc_event.sym = tcod.event.KeySym.ESCAPE
+        # Use real TCOD event (isinstance checks require real type, not mock)
+        esc_event = tcod.event.KeyDown(
+            scancode=tcod.event.Scancode.ESCAPE,
+            sym=tcod.event.KeySym.ESCAPE,
+            mod=tcod.event.Modifier.NONE
+        )
 
         should_continue, result_game = handle_game_input_events(esc_event, game, input_handler)
 

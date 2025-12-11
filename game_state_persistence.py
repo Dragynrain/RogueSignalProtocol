@@ -112,14 +112,24 @@ class GameStatePersistence:
             if "enemy_next_id" in save_data:
                 Enemy.set_next_id_counter(save_data["enemy_next_id"])
 
+            # Set just_loaded flag to prevent enemy awareness updates on first turn
+            # This ensures enemies don't get a "free" turn to spot the player
+            self.game_engine.game_state.just_loaded = True
+
             self.game_engine.message_log.add_message_typed(
                 "Game loaded successfully!", Colors.GREEN
             )
             return True
 
-        except Exception as e:
-            logging.error(f"Failed to restore game state: {e}")
+        except (KeyError, TypeError, ValueError, AttributeError) as e:
+            # Common save data errors - corrupted or incompatible save
+            logging.error(f"Failed to restore game state (data error): {e}")
             logging.debug(traceback.format_exc())
+            return False
+        except Exception as e:
+            # Unexpected errors - log full traceback for debugging
+            logging.error(f"Failed to restore game state (unexpected): {e}")
+            logging.error(traceback.format_exc())
             return False
 
     def _restore_game_state(self, save_data: dict[str, Any]) -> None:
@@ -338,7 +348,11 @@ class GameStatePersistence:
         if "last_known_enemy_positions" in map_data:
             game_map.last_known_enemy_positions.clear()
             for enemy_id_str, pos_data in map_data["last_known_enemy_positions"].items():
-                enemy_id = int(enemy_id_str)
+                try:
+                    enemy_id = int(enemy_id_str)
+                except ValueError:
+                    logging.warning(f"Invalid enemy_id in save: {enemy_id_str}, skipping")
+                    continue
                 position = Position(pos_data["x"], pos_data["y"])
                 turn_seen = pos_data["turn"]
                 game_map.last_known_enemy_positions[enemy_id] = (position, turn_seen)
@@ -375,7 +389,7 @@ class GameStatePersistence:
                 else None
             )
 
-            if enemy_data["last_seen_player"]:
+            if enemy_data.get("last_seen_player"):
                 enemy.last_seen_player = Position(
                     enemy_data["last_seen_player"]["x"], enemy_data["last_seen_player"]["y"]
                 )

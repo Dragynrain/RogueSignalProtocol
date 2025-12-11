@@ -17,107 +17,96 @@ import tcod.event
 
 from game_coordinate_helpers import CoordinateHelpers
 from game_entities import Position
+from game_input_actions import InputAction, InputContext
+from game_input_base import BaseInputHandler
 from game_input_coordinates import InputCoordinateConverter
 
 
-class GameplayInputHandler:
+class GameplayInputHandler(BaseInputHandler):
     """Handles gameplay input (movement, exploits, UI buttons)."""
 
-    def __init__(self, game, renderer=None, input_handler=None):
+    def __init__(self, game, renderer=None, input_mapper=None,
+                 controllers=None, gamepad_handler=None):
         """
         Initialize gameplay input handler.
 
         Args:
             game: Game instance
             renderer: Optional GameRenderer instance
-            input_handler: Parent InputHandler for accessing helper methods
+            input_mapper: Shared InputMapper instance (for consistent bindings)
+            controllers: Set of connected controllers for gamepad input
+            gamepad_handler: Shared GamepadInputHandler instance (for consistent state)
         """
-        self.game = game
-        self.renderer = renderer
-        self.input_handler = input_handler
+        # Initialize BaseInputHandler with shared InputMapper, controllers, and gamepad_handler
+        super().__init__(game, renderer, input_mapper=input_mapper, controllers=controllers,
+                        gamepad_handler=gamepad_handler)
 
-    def handle_input(self, event: tcod.event.KeyDown) -> bool:
+    def get_context(self) -> InputContext:
+        """Get current input context for gameplay."""
+        return InputContext.GAMEPLAY
+
+    def get_default_return(self) -> bool:
+        """Gameplay handler returns True by default (event consumed)."""
+        return True
+
+    def handle_input(self, event) -> bool:
         """
-        Handle keyboard input during normal gameplay.
+        Handle input during gameplay with special case handling.
+
+        Overrides BaseInputHandler to handle:
+        - Shift+F12 debug export
+        - Auto-walk cancellation
 
         Args:
-            event: Keyboard event
+            event: Input event (keyboard, gamepad, or mouse)
 
         Returns:
             True if event was handled
         """
-        from game_input import InputMappings
+        # Special case: Shift+F12 - Export Debug Package (not mapped to InputAction)
+        if isinstance(event, tcod.event.KeyDown):
+            if event.sym == tcod.event.KeySym.F12 and (event.mod & tcod.event.Modifier.SHIFT):
+                self.trigger_debug_export()
+                return True
 
-        # Global hotkey: Shift+F12 - Export Debug Package
-        if event.sym == tcod.event.KeySym.F12 and (event.mod & tcod.event.Modifier.SHIFT):
-            if self.input_handler:
-                self.input_handler._trigger_debug_export()
-            return True
-
-        # Check if auto-walk is active - cancel on most keys (except UI toggles)
+        # Check if auto-walk is active - cancel on most actions
         if self.game.autowalk.is_active():
-            # Allow UI toggles without cancelling auto-walk
-            ui_toggle_keys = {
-                tcod.event.KeySym.SLASH,  # Help (when shift-pressed)
-                tcod.event.KeySym.ESCAPE,  # Already handled earlier
-            }
+            # Get action to check if we should cancel auto-walk
+            action = None
+            if isinstance(event, tcod.event.KeyDown) and hasattr(event, 'sym'):
+                modifier = getattr(event, 'mod', 0)
+                action = self.input_mapper.get_action_for_key(event.sym, modifier=modifier)
 
-            # Cancel auto-walk on any action key (movement, exploits, etc.)
-            if event.sym not in ui_toggle_keys:
+            # Cancel auto-walk on movement or exploit actions (but not UI toggles)
+            if action and action not in (
+                InputAction.TOGGLE_HELP,
+                InputAction.TOGGLE_INVENTORY,
+                InputAction.TOGGLE_LOOK_MODE,
+                InputAction.TOGGLE_LORE_VIEWER,
+                InputAction.TOGGLE_ACHIEVEMENTS,
+                InputAction.CANCEL,
+            ):
                 self.game.autowalk.cancel()
-                # Fall through to process the key normally
+                # Fall through to process the action normally
 
-        # Movement keys - use shared mapping to avoid duplication
-        if event.sym in InputMappings.MOVEMENT_MAP:
-            dx, dy = InputMappings.MOVEMENT_MAP[event.sym]
-            # Clear mouse hover when using keyboard movement
-            self.game.mouse_hover_world_pos = None
-            self.game.move_player(dx, dy)
+        # Clear mouse hover when using keyboard/gamepad movement
+        if isinstance(event, (tcod.event.KeyDown, tcod.event.ControllerButton, tcod.event.ControllerAxis)):
+            # Let BaseInputHandler process the event, which will call execute_action
+            # execute_action will clear mouse hover for movement actions
+            pass
 
-        # Wait/rest
-        elif event.sym in (
-            tcod.event.KeySym.SPACE,
-            tcod.event.KeySym.PERIOD,
-            tcod.event.KeySym.KP_5,
-        ):
-            self.game.maybe_process_turn()
+        # Everything else goes through standard BaseInputHandler processing
+        return super().handle_input(event)
 
-        # UI toggles
-        elif event.sym == tcod.event.KeySym.I:
-            if self.input_handler:
-                self.input_handler._open_inventory()
-        elif event.sym == tcod.event.KeySym.L:
-            if self.input_handler:
-                self.input_handler._enter_look_mode()
-        elif event.sym == tcod.event.KeySym.F:
-            self.game.show_lore_viewer = True
-        elif event.sym == tcod.event.KeySym.SLASH and (
-            event.mod & (tcod.event.Modifier.LSHIFT | tcod.event.Modifier.RSHIFT)
-        ):
-            self.game.show_help = True
-        elif event.sym == tcod.event.KeySym.V:
-            self.game.show_achievements = True
-
-        # Exploit usage (1-5 keys) - check as loop
-        else:
-            exploit_keys = {
-                tcod.event.KeySym.N1: 0,
-                tcod.event.KeySym.N2: 1,
-                tcod.event.KeySym.N3: 2,
-                tcod.event.KeySym.N4: 3,
-                tcod.event.KeySym.N5: 4,
-            }
-            if event.sym in exploit_keys:
-                self.use_exploit_slot(exploit_keys[event.sym])
-
-        return True
-
-    def use_exploit_slot(self, slot: int):
+    def use_exploit_slot(self, slot: int) -> bool:
         """
         Use exploit in specified slot.
 
         Args:
             slot: Exploit slot index (0-4)
+
+        Returns:
+            True after attempting to use the exploit slot
         """
         equipped = self.game.player.inventory_manager.equipped_exploits
         if 0 <= slot < len(equipped):
@@ -125,6 +114,53 @@ class GameplayInputHandler:
             self.game.exploit_system.use_exploit(exploit_key)
         else:
             logging.debug(f"Input: Exploit slot {slot+1} is empty or invalid")
+        return True
+
+    def open_inventory(self):
+        """Open the inventory screen with sound effect."""
+        self.game.sound_manager.play_sound("ui_menu_open")
+        self.game.show_inventory = True
+
+    def enter_look_mode(self):
+        """Enter look mode with sound effect, starting cursor at player position."""
+        self.game.look_mode_mouse_last_update = 0.0
+        self.game.sound_manager.play_sound("ui_menu_open")
+        self.game.look_mode = True
+        self.game.look_cursor_position = Position(self.game.player.x, self.game.player.y)
+        self.game.message_log.add_message("Look mode activated (ESC or L to exit)")
+
+    def trigger_debug_export(self):
+        """Trigger debug package export with confirmation dialog."""
+        from game_dialogue_system import DialogueBox
+        from game_entities import Colors
+
+        message = (
+            "This will create a debug package containing:\n"
+            "- Your save files and settings\n"
+            "- Game logs and metrics\n"
+            "- System information\n"
+            "\n"
+            "This package can help developers fix bugs.\n"
+            "Package will be saved to: debug_exports/\n"
+            "\n"
+            "Continue?"
+        )
+
+        dialogue = DialogueBox(
+            title="Export Debug Package",
+            message=message,
+            options=["[Y] Yes", "[N] No"],
+            valid_keys=[tcod.event.KeySym.Y, tcod.event.KeySym.N, tcod.event.KeySym.ESCAPE],
+            title_color=Colors.YELLOW,
+            message_color=Colors.WHITE,
+            border_color=Colors.YELLOW,
+            bg_color=Colors.BLACK,
+            format_data={},
+            priority=5,
+        )
+
+        self.game.dialogue_state.show(dialogue)
+        self.game._pending_debug_export = True
 
     def handle_mouse_motion(self, event: tcod.event.MouseMotion) -> bool:
         """
@@ -137,7 +173,9 @@ class GameplayInputHandler:
             True if hover position was updated, False otherwise
         """
         graphics_mode = (
-            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+            self.game.settings.graphics_mode
+            if hasattr(self.game, "settings") and self.game.settings is not None
+            else "glyph"
         )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
@@ -182,8 +220,7 @@ class GameplayInputHandler:
 
         # Check if click is within Inv button bounds
         if inv_button_x <= tile_x < inv_button_end_x:
-            if self.input_handler:
-                self.input_handler._open_inventory()
+            self.open_inventory()
             return True
 
         return False
@@ -238,7 +275,9 @@ class GameplayInputHandler:
             True (event is always consumed in gameplay)
         """
         graphics_mode = (
-            self.game.settings.graphics_mode if hasattr(self.game, "settings") else "glyph"
+            self.game.settings.graphics_mode
+            if hasattr(self.game, "settings") and self.game.settings is not None
+            else "glyph"
         )
         world_pos = InputCoordinateConverter.pixel_to_world_position(
             event.position.x, event.position.y, self.renderer, self.game, graphics_mode
@@ -271,3 +310,116 @@ class GameplayInputHandler:
             # No path found - event was handled, just no action taken
             logging.debug(f"No path to {world_pos}")
             return True
+
+    def execute_action(self, action: InputAction) -> bool:
+        """
+        Execute an InputAction in gameplay context.
+
+        Translates abstract actions to concrete game logic. Reuses existing methods
+        to avoid duplication.
+
+        Args:
+            action: The InputAction to execute
+
+        Returns:
+            True if action was handled
+        """
+        # Clear mouse hover when using keyboard/gamepad movement
+        if action in (
+            InputAction.MOVE_NORTH,
+            InputAction.MOVE_SOUTH,
+            InputAction.MOVE_EAST,
+            InputAction.MOVE_WEST,
+            InputAction.MOVE_NORTHEAST,
+            InputAction.MOVE_NORTHWEST,
+            InputAction.MOVE_SOUTHEAST,
+            InputAction.MOVE_SOUTHWEST,
+        ):
+            self.game.mouse_hover_world_pos = None
+
+        # Movement actions
+        if action == InputAction.MOVE_NORTH:
+            self.game.move_player(0, -1)
+            return True
+        elif action == InputAction.MOVE_SOUTH:
+            self.game.move_player(0, 1)
+            return True
+        elif action == InputAction.MOVE_EAST:
+            self.game.move_player(1, 0)
+            return True
+        elif action == InputAction.MOVE_WEST:
+            self.game.move_player(-1, 0)
+            return True
+        elif action == InputAction.MOVE_NORTHEAST:
+            self.game.move_player(1, -1)
+            return True
+        elif action == InputAction.MOVE_NORTHWEST:
+            self.game.move_player(-1, -1)
+            return True
+        elif action == InputAction.MOVE_SOUTHEAST:
+            self.game.move_player(1, 1)
+            return True
+        elif action == InputAction.MOVE_SOUTHWEST:
+            self.game.move_player(-1, 1)
+            return True
+
+        # Wait/pass turn
+        elif action == InputAction.WAIT:
+            self.game.move_player(0, 0)
+            return True
+
+        # Exploit direct slots (keyboard 1-5 keys)
+        elif action == InputAction.EXPLOIT_SLOT_1:
+            return self.use_exploit_slot(0)
+        elif action == InputAction.EXPLOIT_SLOT_2:
+            return self.use_exploit_slot(1)
+        elif action == InputAction.EXPLOIT_SLOT_3:
+            return self.use_exploit_slot(2)
+        elif action == InputAction.EXPLOIT_SLOT_4:
+            return self.use_exploit_slot(3)
+        elif action == InputAction.EXPLOIT_SLOT_5:
+            return self.use_exploit_slot(4)
+
+        # NEW: Gamepad exploit cycling (RB/LB buttons)
+        elif action == InputAction.EXPLOIT_CYCLE_NEXT:
+            self.game.cycle_exploit_selection(+1)
+            return True
+        elif action == InputAction.EXPLOIT_CYCLE_PREV:
+            self.game.cycle_exploit_selection(-1)
+            return True
+
+        # NEW: Execute selected exploit (RT trigger)
+        elif action == InputAction.EXPLOIT_EXECUTE:
+            # Get currently selected exploit index
+            equipped_exploits = self.game.player.inventory_manager.equipped_exploits
+            if equipped_exploits and self.game.selected_exploit_index < len(equipped_exploits):
+                # Use the selected slot directly
+                return self.use_exploit_slot(self.game.selected_exploit_index)
+            return True  # Handled but no action (no exploits equipped)
+
+        # UI toggles
+        elif action == InputAction.TOGGLE_INVENTORY:
+            self.open_inventory()
+            return True
+        elif action == InputAction.TOGGLE_LOOK_MODE:
+            self.enter_look_mode()
+            return True
+        elif action == InputAction.TOGGLE_HELP:
+            self.game.show_help = True
+            return True
+        elif action == InputAction.TOGGLE_LORE_VIEWER:
+            # Only open lore viewer if renderer is available (not in headless tests)
+            if self.renderer:
+                self.game.show_lore_viewer = True
+            return True
+        elif action == InputAction.TOGGLE_ACHIEVEMENTS:
+            self.game.show_achievements = True
+            return True
+
+        # ESC/Cancel in gameplay is handled at game_loop level (not here)
+        # Return True to indicate "event processed, continue playing"
+        elif action == InputAction.CANCEL:
+            return True
+
+        # Unknown action - consume it but continue playing
+        return True
