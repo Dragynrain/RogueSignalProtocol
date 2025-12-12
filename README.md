@@ -114,6 +114,18 @@ When running the executable for the first time, Windows may display a "Windows p
 
 The warning may appear again if you download a new version or move the file to a different location.
 
+#### Linux (Including Steam Deck)
+Linux builds are available from **[GitHub Releases](https://github.com/Dragynrain/RogueSignalProtocol/releases)**.
+
+**To run:**
+1. Download and extract `RogueSignalProtocol-linux.tar.gz`
+2. Make the binary executable: `chmod +x RogueSignalProtocol`
+3. Run: `./RogueSignalProtocol`
+
+**Steam Deck:** The game runs natively in Desktop Mode. Add as a non-Steam game for Gaming Mode. Resolution (1280x800) matches the Deck's screen perfectly.
+
+**Requirements:** SDL2, SDL2_ttf, SDL2_mixer (usually pre-installed on modern distros).
+
 ### For Developers (From Source)
 
 1. **Clone the repository**
@@ -125,7 +137,10 @@ The warning may appear again if you download a new version or move the file to a
 2. **Set up virtual environment**
    ```bash
    python -m venv .venv
+   # Windows:
    .venv\Scripts\activate
+   # Linux/macOS:
+   source .venv/bin/activate
    ```
 
 3. **Install dependencies**
