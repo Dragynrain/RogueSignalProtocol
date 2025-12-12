@@ -21,7 +21,7 @@ import math
 import tcod.event
 import tcod.sdl.joystick
 
-from tests.conftest import get_movement_with_settling, SETTLING_PERIOD_SEC
+from tests.conftest import get_movement_with_settling
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton
@@ -45,10 +45,10 @@ class TestAllEightDirections:
         analog = input_handler.gamepad_handler.analog_handler
 
         test_cases = [
-            (32767, 0, (1, 0)),      # East (0°)
-            (0, 32767, (0, 1)),      # South (90°)
-            (-32767, 0, (-1, 0)),    # West (180°)
-            (0, -32767, (0, -1)),    # North (270°)
+            (32767, 0, (1, 0)),  # East (0°)
+            (0, 32767, (0, 1)),  # South (90°)
+            (-32767, 0, (-1, 0)),  # West (180°)
+            (0, -32767, (0, -1)),  # North (270°)
         ]
 
         for x, y, expected_movement in test_cases:
@@ -69,10 +69,10 @@ class TestAllEightDirections:
         diag = 23170
 
         test_cases = [
-            (diag, -diag, (1, -1)),     # Northeast (315° in SDL coords)
-            (diag, diag, (1, 1)),       # Southeast (45°)
-            (-diag, diag, (-1, 1)),     # Southwest (135°)
-            (-diag, -diag, (-1, -1)),   # Northwest (225°)
+            (diag, -diag, (1, -1)),  # Northeast (315° in SDL coords)
+            (diag, diag, (1, 1)),  # Southeast (45°)
+            (-diag, diag, (-1, 1)),  # Southwest (135°)
+            (-diag, -diag, (-1, -1)),  # Northwest (225°)
         ]
 
         for x, y, expected_movement in test_cases:
@@ -116,10 +116,10 @@ class TestBoundaryAngles:
 
         # Test exact 0°, 90°, 180°, 270°
         cardinal_tests = [
-            (0, (1, 0)),      # 0° = East
-            (90, (0, 1)),     # 90° = South (positive Y in SDL)
-            (180, (-1, 0)),   # 180° = West
-            (270, (0, -1)),   # 270° = North (negative Y in SDL)
+            (0, (1, 0)),  # 0° = East
+            (90, (0, 1)),  # 90° = South (positive Y in SDL)
+            (180, (-1, 0)),  # 180° = West
+            (270, (0, -1)),  # 270° = North (negative Y in SDL)
         ]
 
         for angle, expected in cardinal_tests:
@@ -139,10 +139,10 @@ class TestBoundaryAngles:
 
         # Test exact 45°, 135°, 225°, 315°
         diagonal_tests = [
-            (45, (1, 1)),       # 45° = Southeast
-            (135, (-1, 1)),    # 135° = Southwest
-            (225, (-1, -1)),   # 225° = Northwest
-            (315, (1, -1)),    # 315° = Northeast
+            (45, (1, 1)),  # 45° = Southeast
+            (135, (-1, 1)),  # 135° = Southwest
+            (225, (-1, -1)),  # 225° = Northwest
+            (315, (1, -1)),  # 315° = Northeast
         ]
 
         for angle, expected in diagonal_tests:
@@ -196,14 +196,14 @@ class TestEqualAngularZones:
         # Test angles well inside each zone (zone centers)
         zone_tests = [
             # (angle, expected_direction)
-            (0, (1, 0)),       # E zone center
-            (45, (1, 1)),      # SE zone center
-            (90, (0, 1)),      # S zone center
-            (135, (-1, 1)),    # SW zone center
-            (180, (-1, 0)),    # W zone center
-            (225, (-1, -1)),   # NW zone center
-            (270, (0, -1)),    # N zone center
-            (315, (1, -1)),    # NE zone center
+            (0, (1, 0)),  # E zone center
+            (45, (1, 1)),  # SE zone center
+            (90, (0, 1)),  # S zone center
+            (135, (-1, 1)),  # SW zone center
+            (180, (-1, 0)),  # W zone center
+            (225, (-1, -1)),  # NW zone center
+            (270, (0, -1)),  # N zone center
+            (315, (1, -1)),  # NE zone center
         ]
 
         for angle, expected in zone_tests:
@@ -214,7 +214,9 @@ class TestEqualAngularZones:
             # Get movement with settling
             x, y = angle_to_coords(angle)
             movement = get_movement_with_settling(analog, game, x, y, mock_time)
-            assert movement == expected, f"Angle {angle}° in wrong zone: expected {expected}, got {movement}"
+            assert (
+                movement == expected
+            ), f"Angle {angle}° in wrong zone: expected {expected}, got {movement}"
 
 
 class TestMagnitudeThreshold:

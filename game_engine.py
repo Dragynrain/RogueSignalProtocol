@@ -219,7 +219,9 @@ class GameEngine:
             self.game_session.generate_procedural_level()
             # Show intro messages for new games
             self.message_log.add_message_typed("CONSCIOUSNESS RESTORED", "success")
-            self.message_log.add_message_typed("The simulation is failing. They're coming for you.", "critical")
+            self.message_log.add_message_typed(
+                "The simulation is failing. They're coming for you.", "critical"
+            )
             self.message_log.add_message("Find the gateway - escape before De-Resolution.")
             # Show intro dialogue
             from game_dialogue_system import create_intro_dialogue
@@ -465,9 +467,11 @@ class GameEngine:
                 # Movement blocked - don't process turn
                 self.message_log.add_message("Wall blocks movement")
                 # Reset analog stick gating so player can immediately try another direction
-                if (hasattr(self, 'input_handler') and
-                    hasattr(self.input_handler, 'gamepad_handler') and
-                    hasattr(self.input_handler.gamepad_handler, 'analog_handler')):
+                if (
+                    hasattr(self, "input_handler")
+                    and hasattr(self.input_handler, "gamepad_handler")
+                    and hasattr(self.input_handler.gamepad_handler, "analog_handler")
+                ):
                     self.input_handler.gamepad_handler.analog_handler.reset_movement_gating()
 
     def cycle_exploit_selection(self, direction: int):

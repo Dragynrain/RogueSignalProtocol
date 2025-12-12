@@ -8,13 +8,11 @@ Tests validate game over screen behavior with:
 Game over screen handles death and victory conditions!
 """
 
-import pytest
 from unittest.mock import Mock
-import tcod.event
 
-from game_input_actions import InputAction, InputContext
 from game_engine import GameEngine
 from game_input import InputHandler
+from game_input_actions import InputAction, InputContext
 
 
 class TestGameOverActions:

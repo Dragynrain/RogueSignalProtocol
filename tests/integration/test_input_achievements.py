@@ -9,10 +9,11 @@ Tests input handling for achievements screen:
 Note: Extracted from test_input_critical_paths.py for maintainability.
 """
 
+from unittest.mock import Mock
+
 import pytest
 import tcod.event
 import tcod.sdl.joystick
-from unittest.mock import Mock
 
 from game_input_actions import InputAction
 
@@ -90,7 +91,7 @@ class TestAchievementsInputTypes:
         initial = menu.scroll_offset
 
         event = Mock()
-        event.type = 'KEYDOWN'
+        event.type = "KEYDOWN"
         event.sym = tcod.event.KeySym.DOWN
         menu.handle_input(event)
 
@@ -103,7 +104,7 @@ class TestAchievementsInputTypes:
         initial = menu.scroll_offset
 
         event = Mock()
-        event.type = 'CONTROLLERBUTTONDOWN'
+        event.type = "CONTROLLERBUTTONDOWN"
         event.button = tcod.sdl.joystick.ControllerButton.DPAD_DOWN
         menu.handle_input(event)
 
@@ -114,7 +115,7 @@ class TestAchievementsInputTypes:
         menu = achievements_menu
 
         event = Mock()
-        event.type = 'CONTROLLERAXISMOTION'
+        event.type = "CONTROLLERAXISMOTION"
         event.axis = tcod.sdl.joystick.ControllerAxis.LEFTY
         event.value = 20000  # Down
         menu.handle_input(event)
@@ -130,17 +131,17 @@ class TestAchievementsInputTypes:
         menu = achievements_menu
 
         event = Mock()
-        event.type = 'CONTROLLERBUTTONDOWN'
+        event.type = "CONTROLLERBUTTONDOWN"
         event.button = tcod.sdl.joystick.ControllerButton.B
         result = menu.handle_input(event)
 
-        assert result == 'back' or result == ''
+        assert result == "back" or result == ""
 
     def test_mouse_wheel_scrolls(self, achievements_menu):
         """Mouse wheel scrolls if supported."""
         menu = achievements_menu
 
-        if hasattr(menu, 'handle_mouse_wheel'):
+        if hasattr(menu, "handle_mouse_wheel"):
             event = Mock()
             event.y = -1  # Scroll down
             menu.handle_mouse_wheel(event)

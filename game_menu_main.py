@@ -69,7 +69,7 @@ class MainMenu(BaseMenu):
                 "achievements": "Achievements",
                 "lore": "Data Fragments",  # Partial match OK since it has count suffix
                 "about": "About",
-                "graphics_preview": "Graphics Preview"
+                "graphics_preview": "Graphics Preview",
             }
 
             target_option = action_to_option.get(self.last_action)
@@ -559,12 +559,14 @@ class MainMenu(BaseMenu):
     def get_context(self):
         """Return input context - DIALOGUE for warning dialog, MAIN_MENU otherwise."""
         from game_input_actions import InputContext
+
         return InputContext.DIALOGUE if self.show_warning else InputContext.MAIN_MENU
 
     def execute_action(self, action) -> str:
         """Execute an InputAction and return menu command."""
-        from game_input_actions import InputAction
         import logging
+
+        from game_input_actions import InputAction
 
         # Movement keys become navigation in menu context
         if action in (InputAction.NAVIGATE_UP, InputAction.MOVE_NORTH):
@@ -653,8 +655,6 @@ class MainMenu(BaseMenu):
 
     def _handle_warning_mouse_motion(self, event):
         """Handle mouse motion in warning dialog - update selection."""
-        import logging
-
         # Prefer event.tile, fall back to event.position for test compatibility
         # Use try/except because Mock objects pass hasattr checks
         tile_x = tile_y = None

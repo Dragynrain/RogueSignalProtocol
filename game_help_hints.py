@@ -22,7 +22,6 @@ from game_input_actions import InputAction, InputContext
 from game_input_device_tracker import InputDeviceType, get_last_device
 from game_input_mappings import InputMapper
 
-
 # Module-level mapper instance for use in static contexts
 _default_mapper = None
 

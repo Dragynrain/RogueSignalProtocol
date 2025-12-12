@@ -16,7 +16,6 @@ Uses the game_with_gamepad fixture from tests/conftest.py.
 Uses mock_time fixture from conftest.py for reliable time control.
 """
 
-import pytest
 import tcod.event
 import tcod.sdl.joystick
 
@@ -26,7 +25,7 @@ from game_config import GameConfig
 CB = tcod.sdl.joystick.ControllerButton
 CA = tcod.sdl.joystick.ControllerAxis
 
-from tests.conftest import get_movement_with_settling, SETTLING_PERIOD_SEC
+from tests.conftest import get_movement_with_settling  # noqa: E402
 
 
 class TestFirstInputImmediate:

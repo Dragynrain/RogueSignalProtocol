@@ -9,9 +9,8 @@ Tests the full integration flow:
 - Exploit cycling integration with GameEngine
 """
 
-import pytest
 import time
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 from game_input_actions import InputAction, InputContext
 from game_input_analog import AnalogStickHandler
@@ -28,7 +27,7 @@ class TestContextDetection:
         game.dialogue_state = Mock()
         game.dialogue_state.is_active = Mock(return_value=True)
         game.show_inventory = True  # Even with inventory open
-        game.show_help = True       # And help open
+        game.show_help = True  # And help open
         game.player = Mock()
         game.player.cpu = 100  # Alive
 
@@ -37,6 +36,7 @@ class TestContextDetection:
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
         from game_input import InputHandler
+
         handler = InputHandler(game, renderer=None)
 
         context = handler._get_current_context()
@@ -56,6 +56,7 @@ class TestContextDetection:
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
         from game_input import InputHandler
+
         handler = InputHandler(game, renderer=None)
 
         context = handler._get_current_context()
@@ -78,6 +79,7 @@ class TestContextDetection:
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
         from game_input import InputHandler
+
         handler = InputHandler(game, renderer=None)
 
         context = handler._get_current_context()
@@ -100,6 +102,7 @@ class TestContextDetection:
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
         from game_input import InputHandler
+
         handler = InputHandler(game, renderer=None)
 
         context = handler._get_current_context()
@@ -122,6 +125,7 @@ class TestContextDetection:
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
         from game_input import InputHandler
+
         handler = InputHandler(game, renderer=None)
 
         context = handler._get_current_context()
@@ -150,6 +154,7 @@ class TestContextDetection:
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
         from game_input import InputHandler
+
         handler = InputHandler(game, renderer=None)
 
         context = handler._get_current_context()
@@ -182,6 +187,7 @@ class TestActionExecutionDelegation:
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
         from game_input import InputHandler
+
         handler = InputHandler(game, renderer=None)
 
         # Mock gameplay handler's execute_action
@@ -212,6 +218,7 @@ class TestActionExecutionDelegation:
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
         from game_input import InputHandler
+
         handler = InputHandler(game, renderer=None)
 
         # Mock inventory handler's execute_action
@@ -242,6 +249,7 @@ class TestActionExecutionDelegation:
         game.achievement_popup_manager.has_active_popup = Mock(return_value=False)
 
         from game_input import InputHandler
+
         handler = InputHandler(game, renderer=None)
 
         # Mock look mode handler's execute_action
@@ -342,14 +350,14 @@ class TestRightStickCursorControl:
     def test_right_stick_all_8_directions(self):
         """Test that right stick handles all 8 directions after settling."""
         directions = [
-            ((30000, 0), (1, 0)),       # East
-            ((30000, 30000), (1, 1)),   # Southeast
-            ((0, 30000), (0, 1)),       # South
-            ((-30000, 30000), (-1, 1)), # Southwest
-            ((-30000, 0), (-1, 0)),     # West
-            ((-30000, -30000), (-1, -1)), # Northwest
-            ((0, -30000), (0, -1)),     # North
-            ((30000, -30000), (1, -1)), # Northeast
+            ((30000, 0), (1, 0)),  # East
+            ((30000, 30000), (1, 1)),  # Southeast
+            ((0, 30000), (0, 1)),  # South
+            ((-30000, 30000), (-1, 1)),  # Southwest
+            ((-30000, 0), (-1, 0)),  # West
+            ((-30000, -30000), (-1, -1)),  # Northwest
+            ((0, -30000), (0, -1)),  # North
+            ((30000, -30000), (1, -1)),  # Northeast
         ]
 
         # Create new handler for each direction to avoid cooldown issues
@@ -474,7 +482,7 @@ class TestVisualFeedback:
         game.selected_exploit_index = 0
 
         # Verify attribute exists
-        assert hasattr(game, 'selected_exploit_index')
+        assert hasattr(game, "selected_exploit_index")
         assert game.selected_exploit_index == 0
 
     def test_visual_feedback_uses_selected_index(self):

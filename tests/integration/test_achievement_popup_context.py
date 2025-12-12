@@ -9,13 +9,11 @@ Tests validate achievement popup behavior with:
 Achievement popups are highest priority interrupts!
 """
 
-import pytest
 from unittest.mock import Mock
-import tcod.event
 
-from game_input_actions import InputAction, InputContext
 from game_engine import GameEngine
 from game_input import InputHandler
+from game_input_actions import InputAction, InputContext
 
 
 class TestAchievementPopupDismissal:
@@ -98,7 +96,9 @@ class TestAchievementPopupPriority:
         game.player = Mock()
         game.player.cpu = 100
         game.achievement_popup_manager = Mock()
-        game.achievement_popup_manager.has_active_popup = Mock(return_value=True)  # But popup also active
+        game.achievement_popup_manager.has_active_popup = Mock(
+            return_value=True
+        )  # But popup also active
 
         handler = InputHandler(game, renderer=None)
 
@@ -116,7 +116,9 @@ class TestAchievementPopupPriority:
         game.player = Mock()
         game.player.cpu = 0
         game.achievement_popup_manager = Mock()
-        game.achievement_popup_manager.has_active_popup = Mock(return_value=True)  # But popup also active
+        game.achievement_popup_manager.has_active_popup = Mock(
+            return_value=True
+        )  # But popup also active
 
         handler = InputHandler(game, renderer=None)
 

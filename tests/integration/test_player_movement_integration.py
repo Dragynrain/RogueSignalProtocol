@@ -4,7 +4,6 @@ Integration tests for player movement and map interaction.
 Tests real movement mechanics, collision detection, and map navigation.
 """
 
-import pytest
 
 from game_entities import Position
 

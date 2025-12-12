@@ -79,7 +79,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -105,7 +105,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -124,7 +124,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -149,7 +149,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -170,7 +170,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -189,7 +189,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -207,7 +207,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -228,7 +228,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -254,7 +254,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -283,9 +283,7 @@ class TestGameInputEventHandling(unittest.TestCase):
         # Use real TCOD event (isinstance checks require real type, not mock)
         # MouseButtonDown: pixel, tile, button
         event = tcod.event.MouseButtonDown(
-            pixel=(100, 100),
-            tile=(10, 10),
-            button=tcod.event.MouseButton.LEFT
+            pixel=(100, 100), tile=(10, 10), button=tcod.event.MouseButton.LEFT
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -316,8 +314,8 @@ class TestGameInputEventHandling(unittest.TestCase):
         # Use KeySym(ord('w')) for cross-platform compatibility (KeySym.w doesn't exist on Linux)
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.W,
-            sym=tcod.event.KeySym(ord('w')),
-            mod=tcod.event.Modifier.NONE
+            sym=tcod.event.KeySym(ord("w")),
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(
@@ -334,8 +332,8 @@ class TestGameInputEventHandling(unittest.TestCase):
         # Use KeySym(ord('w')) for cross-platform compatibility (KeySym.w doesn't exist on Linux)
         event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.W,
-            sym=tcod.event.KeySym(ord('w')),
-            mod=tcod.event.Modifier.NONE
+            sym=tcod.event.KeySym(ord("w")),
+            mod=tcod.event.Modifier.NONE,
         )
 
         # Input handler returns False (player dead, wants to exit)
@@ -430,7 +428,7 @@ class TestErrorHandling(unittest.TestCase):
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         with patch("tcod.event.wait", return_value=[esc_event]):
@@ -480,7 +478,7 @@ class TestAutoSaveBehavior(unittest.TestCase):
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         should_continue, result_game = handle_game_input_events(esc_event, game, input_handler)

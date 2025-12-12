@@ -5,13 +5,13 @@ This module provides helper classes and fixtures for creating test events
 and verifying input behavior consistently across all integration tests.
 """
 
+from contextlib import contextmanager
+from unittest.mock import patch
+
 import pytest
 import tcod
 import tcod.event
 import tcod.sdl.joystick
-from contextlib import contextmanager
-from unittest.mock import patch
-from game_config import GameSettings
 
 
 class MockTime:
@@ -73,12 +73,12 @@ class MockTime:
             MockTime instance for controlling time
         """
         mock = cls(start_time)
-        with patch('time.time', mock.time):
+        with patch("time.time", mock.time):
             yield mock
 
     def __enter__(self):
         """Start patching time.time()."""
-        self._patcher = patch('time.time', self.time)
+        self._patcher = patch("time.time", self.time)
         self._patcher.start()
         return self
 
@@ -110,26 +110,22 @@ class InputTestHelper:
     @staticmethod
     def create_keyboard_event(key_sym, mod=tcod.event.Modifier.NONE):
         """Create a keyboard event."""
-        return tcod.event.KeyDown(
-            scancode=tcod.event.Scancode(key_sym),
-            sym=key_sym,
-            mod=mod
-        )
+        return tcod.event.KeyDown(scancode=tcod.event.Scancode(key_sym), sym=key_sym, mod=mod)
 
     @staticmethod
     def create_dpad_event(direction, pressed=True):
         """Create a D-pad button event."""
         button_map = {
-            'up': tcod.sdl.joystick.ControllerButton.DPAD_UP,
-            'down': tcod.sdl.joystick.ControllerButton.DPAD_DOWN,
-            'left': tcod.sdl.joystick.ControllerButton.DPAD_LEFT,
-            'right': tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
+            "up": tcod.sdl.joystick.ControllerButton.DPAD_UP,
+            "down": tcod.sdl.joystick.ControllerButton.DPAD_DOWN,
+            "left": tcod.sdl.joystick.ControllerButton.DPAD_LEFT,
+            "right": tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
         }
         return tcod.event.ControllerButton(
             type="CONTROLLERBUTTONDOWN" if pressed else "CONTROLLERBUTTONUP",
             which=0,
             button=button_map[direction],
-            pressed=pressed
+            pressed=pressed,
         )
 
     @staticmethod
@@ -143,60 +139,54 @@ class InputTestHelper:
             value: -32767 to 32767
         """
         axis_map = {
-            ('left', 'x'): tcod.sdl.joystick.ControllerAxis.LEFTX,
-            ('left', 'y'): tcod.sdl.joystick.ControllerAxis.LEFTY,
-            ('right', 'x'): tcod.sdl.joystick.ControllerAxis.RIGHTX,
-            ('right', 'y'): tcod.sdl.joystick.ControllerAxis.RIGHTY,
+            ("left", "x"): tcod.sdl.joystick.ControllerAxis.LEFTX,
+            ("left", "y"): tcod.sdl.joystick.ControllerAxis.LEFTY,
+            ("right", "x"): tcod.sdl.joystick.ControllerAxis.RIGHTX,
+            ("right", "y"): tcod.sdl.joystick.ControllerAxis.RIGHTY,
         }
         return tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=axis_map[(stick, axis_name)],
-            value=value
+            type="CONTROLLERAXISMOTION", which=0, axis=axis_map[(stick, axis_name)], value=value
         )
 
     @staticmethod
     def create_face_button_event(button, pressed=True):
         """Create a face button event (A/B/X/Y)."""
         button_map = {
-            'a': tcod.sdl.joystick.ControllerButton.A,
-            'b': tcod.sdl.joystick.ControllerButton.B,
-            'x': tcod.sdl.joystick.ControllerButton.X,
-            'y': tcod.sdl.joystick.ControllerButton.Y,
+            "a": tcod.sdl.joystick.ControllerButton.A,
+            "b": tcod.sdl.joystick.ControllerButton.B,
+            "x": tcod.sdl.joystick.ControllerButton.X,
+            "y": tcod.sdl.joystick.ControllerButton.Y,
         }
         return tcod.event.ControllerButton(
             type="CONTROLLERBUTTONDOWN" if pressed else "CONTROLLERBUTTONUP",
             which=0,
             button=button_map[button],
-            pressed=pressed
+            pressed=pressed,
         )
 
     @staticmethod
     def create_shoulder_button_event(button, pressed=True):
         """Create a shoulder button event (LB/RB)."""
         button_map = {
-            'lb': tcod.sdl.joystick.ControllerButton.LEFTSHOULDER,
-            'rb': tcod.sdl.joystick.ControllerButton.RIGHTSHOULDER,
+            "lb": tcod.sdl.joystick.ControllerButton.LEFTSHOULDER,
+            "rb": tcod.sdl.joystick.ControllerButton.RIGHTSHOULDER,
         }
         return tcod.event.ControllerButton(
             type="CONTROLLERBUTTONDOWN" if pressed else "CONTROLLERBUTTONUP",
             which=0,
             button=button_map[button],
-            pressed=pressed
+            pressed=pressed,
         )
 
     @staticmethod
     def create_trigger_event(trigger, value):
         """Create a trigger axis event (LT/RT)."""
         axis_map = {
-            'lt': tcod.sdl.joystick.ControllerAxis.TRIGGERLEFT,
-            'rt': tcod.sdl.joystick.ControllerAxis.TRIGGERRIGHT,
+            "lt": tcod.sdl.joystick.ControllerAxis.TRIGGERLEFT,
+            "rt": tcod.sdl.joystick.ControllerAxis.TRIGGERRIGHT,
         }
         return tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=axis_map[trigger],
-            value=value
+            type="CONTROLLERAXISMOTION", which=0, axis=axis_map[trigger], value=value
         )
 
     @staticmethod
@@ -225,6 +215,7 @@ class InputTestHelper:
         # Configure mock to raise exception when .name is accessed
         # This simulates SDL behavior for invalid/disconnected controllers
         from unittest.mock import PropertyMock
+
         type(mock_controller).name = PropertyMock(
             side_effect=RuntimeError("Controller disconnected")
         )
@@ -254,7 +245,7 @@ class AutoRepeatTester:
         after_press = menu.selected_option
 
         # Phase 2: Verify button is held (for D-pad)
-        if hasattr(menu, 'gamepad_handler') and hasattr(press_event, 'button'):
+        if hasattr(menu, "gamepad_handler") and hasattr(press_event, "button"):
             button_held = menu.gamepad_handler.button_held is not None
         else:
             button_held = None
@@ -262,7 +253,7 @@ class AutoRepeatTester:
         # Phase 3: Release
         if release_event:
             menu.handle_input(release_event)
-            if hasattr(menu, 'gamepad_handler'):
+            if hasattr(menu, "gamepad_handler"):
                 button_cleared = menu.gamepad_handler.button_held is None
             else:
                 button_cleared = None
@@ -270,9 +261,9 @@ class AutoRepeatTester:
             button_cleared = None
 
         return {
-            'initial': initial_selection,
-            'after_press': after_press,
-            'moved_on_press': after_press != initial_selection,
-            'button_held': button_held,
-            'button_cleared': button_cleared,
+            "initial": initial_selection,
+            "after_press": after_press,
+            "moved_on_press": after_press != initial_selection,
+            "button_held": button_held,
+            "button_cleared": button_cleared,
         }

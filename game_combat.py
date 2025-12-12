@@ -164,9 +164,7 @@ class ExploitSystem:
 
                 if not was_shown:
                     # Combined dialogue can't be disabled - this shouldn't happen
-                    logging.debug(
-                        "Combat: Combined System Crash+overheat warning auto-confirming"
-                    )
+                    logging.debug("Combat: Combined System Crash+overheat warning auto-confirming")
                     self.game.overclock_confirmation = True
                     self.game.system_crash_confirmed = True
                 else:
@@ -333,7 +331,10 @@ class ExploitSystem:
             True if hop succeeded, False if target invalid
         """
         # Must be a blind spot and valid walkable position
-        if not (self.game.game_map.is_blind_spot(target) and self.game.game_map.is_valid_position(target)):
+        if not (
+            self.game.game_map.is_blind_spot(target)
+            and self.game.game_map.is_valid_position(target)
+        ):
             self.game.message_log.add_message("Must target blind spot")
             return False
 

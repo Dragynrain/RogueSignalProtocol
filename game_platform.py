@@ -51,7 +51,7 @@ def is_steam_deck() -> bool:
 
     # Check DMI board vendor (most reliable method)
     try:
-        with open("/sys/devices/virtual/dmi/id/board_vendor", "r") as f:
+        with open("/sys/devices/virtual/dmi/id/board_vendor") as f:
             if "Valve" in f.read():
                 return True
     except (FileNotFoundError, PermissionError, OSError):
@@ -59,7 +59,7 @@ def is_steam_deck() -> bool:
 
     # Check for SteamOS in os-release
     try:
-        with open("/etc/os-release", "r") as f:
+        with open("/etc/os-release") as f:
             content = f.read().lower()
             if "steamos" in content:
                 return True

@@ -5,19 +5,20 @@ Tests the unified input handling architecture.
 Target: ≥90% line coverage, ≥80% branch coverage
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
 import tcod.event
-from unittest.mock import Mock, MagicMock, patch
 
-from game_input_base import BaseInputHandler
 from game_input_actions import InputAction, InputContext
-from game_input_mappings import InputMapper
+from game_input_base import BaseInputHandler
 from game_input_gamepad import GamepadInputHandler
-
+from game_input_mappings import InputMapper
 
 # ============================================================================
 # Test Fixtures
 # ============================================================================
+
 
 class ConcreteInputHandler(BaseInputHandler):
     """Concrete implementation for testing abstract BaseInputHandler"""
@@ -97,6 +98,7 @@ def gameplay_handler(mock_game, mock_renderer):
 # Test BaseInputHandler Initialization
 # ============================================================================
 
+
 def test_initialization_creates_per_handler_instances(mock_game, mock_renderer):
     """Each handler should get its own InputMapper and GamepadHandler"""
     handler1 = ConcreteInputHandler(mock_game, mock_renderer)
@@ -128,7 +130,7 @@ def test_initialization_loads_custom_bindings(mock_game, mock_renderer):
     mock_game.settings.custom_keyboard_bindings = {tcod.event.KeySym.W: InputAction.MOVE_NORTH}
     mock_game.settings.custom_gamepad_bindings = {0: InputAction.CONFIRM}
 
-    with patch.object(InputMapper, 'load_custom_bindings') as mock_load:
+    with patch.object(InputMapper, "load_custom_bindings") as mock_load:
         handler = ConcreteInputHandler(mock_game, mock_renderer)
         mock_load.assert_called_once()
 
@@ -145,13 +147,14 @@ def test_gamepad_handler_gets_game_ref(mock_game, mock_renderer):
 # Test Keyboard Input Handling
 # ============================================================================
 
+
 def test_handle_input_keyboard_event(handler):
     """KeyDown event should map to InputAction and execute"""
     # Simulate pressing ESC (mapped to CANCEL)
     event = tcod.event.KeyDown(
         scancode=tcod.event.Scancode.ESCAPE,
         sym=tcod.event.KeySym.ESCAPE,
-        mod=tcod.event.Modifier.NONE
+        mod=tcod.event.Modifier.NONE,
     )
 
     # Mock the action mapping
@@ -170,9 +173,7 @@ def test_handle_input_keyboard_event(handler):
 def test_handle_input_keyboard_unmapped_key(handler):
     """Unmapped key should return default value"""
     event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.F12,
-        sym=tcod.event.KeySym.F12,
-        mod=tcod.event.Modifier.NONE
+        scancode=tcod.event.Scancode.F12, sym=tcod.event.KeySym.F12, mod=tcod.event.Modifier.NONE
     )
 
     # Mock returning None (unmapped key)
@@ -189,15 +190,17 @@ def test_handle_input_keyboard_unmapped_key(handler):
 # Test Gamepad Button Input Handling
 # ============================================================================
 
+
 def test_handle_input_gamepad_button(handler):
     """ControllerButton event should map to InputAction and execute"""
     # Simulate pressing A button
     import tcod.sdl.joystick
+
     event = tcod.event.ControllerButton(
         type="CONTROLLERBUTTONDOWN",
         which=0,
         button=tcod.sdl.joystick.ControllerButton.A,
-        pressed=True
+        pressed=True,
     )
 
     # Mock the gamepad handler
@@ -206,7 +209,9 @@ def test_handle_input_gamepad_button(handler):
     result = handler.handle_input(event)
 
     # Verify action was mapped and executed
-    handler.gamepad_handler.handle_button_event.assert_called_once_with(event, InputContext.MAIN_MENU)
+    handler.gamepad_handler.handle_button_event.assert_called_once_with(
+        event, InputContext.MAIN_MENU
+    )
     assert InputAction.CONFIRM in handler.executed_actions
     assert result == "confirmed"
 
@@ -214,11 +219,12 @@ def test_handle_input_gamepad_button(handler):
 def test_handle_input_gamepad_buttonup(handler):
     """BUTTONUP events should be processed (no action returned)"""
     import tcod.sdl.joystick
+
     event = tcod.event.ControllerButton(
         type="CONTROLLERBUTTONUP",
         which=0,
         button=tcod.sdl.joystick.ControllerButton.A,
-        pressed=False
+        pressed=False,
     )
 
     # Mock returning None (BUTTONUP clears state, doesn't generate action)
@@ -236,15 +242,17 @@ def test_handle_input_gamepad_buttonup(handler):
 # Test Gamepad Axis Input Handling
 # ============================================================================
 
+
 def test_handle_input_gamepad_axis(handler):
     """ControllerAxis event should map to InputAction and execute"""
     # Simulate left stick up
     import tcod.sdl.joystick
+
     event = tcod.event.ControllerAxis(
         type="CONTROLLERAXISMOTION",
         which=0,
         axis=tcod.sdl.joystick.ControllerAxis.LEFTY,
-        value=-32000
+        value=-32000,
     )
 
     # Mock the axis handler
@@ -261,11 +269,12 @@ def test_handle_input_gamepad_axis(handler):
 def test_handle_input_gamepad_axis_no_action(handler):
     """Axis events below threshold should not generate action"""
     import tcod.sdl.joystick
+
     event = tcod.event.ControllerAxis(
         type="CONTROLLERAXISMOTION",
         which=0,
         axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-        value=100  # Below threshold
+        value=100,  # Below threshold
     )
 
     # Mock returning None (below threshold)
@@ -281,6 +290,7 @@ def test_handle_input_gamepad_axis_no_action(handler):
 # ============================================================================
 # Test Mouse Input Handling
 # ============================================================================
+
 
 def test_handle_input_mouse_motion(handler):
     """MouseMotion event should call handle_mouse_motion()"""
@@ -351,6 +361,7 @@ def test_handle_input_mouse_wheel(handler):
 # Test Mouse Handling in Headless Mode
 # ============================================================================
 
+
 def test_handle_mouse_motion_headless_mode():
     """Mouse motion in headless mode should return default"""
     handler = ConcreteInputHandler(game=None, renderer=None)
@@ -410,6 +421,7 @@ def test_handle_mouse_wheel_headless_mode():
 # Test Error Handling
 # ============================================================================
 
+
 def test_execute_action_attribute_error_handling(handler):
     """AttributeError in execute_action should be caught and logged"""
 
@@ -422,11 +434,11 @@ def test_execute_action_attribute_error_handling(handler):
     event = tcod.event.KeyDown(
         scancode=tcod.event.Scancode.ESCAPE,
         sym=tcod.event.KeySym.ESCAPE,
-        mod=tcod.event.Modifier.NONE
+        mod=tcod.event.Modifier.NONE,
     )
     handler.input_mapper.get_action_for_key = Mock(return_value=InputAction.CANCEL)
 
-    with patch('logging.error') as mock_log:
+    with patch("logging.error") as mock_log:
         result = handler.handle_input(event)
 
         # Should log error and return default
@@ -446,11 +458,11 @@ def test_execute_action_exception_handling(handler):
     event = tcod.event.KeyDown(
         scancode=tcod.event.Scancode.ESCAPE,
         sym=tcod.event.KeySym.ESCAPE,
-        mod=tcod.event.Modifier.NONE
+        mod=tcod.event.Modifier.NONE,
     )
     handler.input_mapper.get_action_for_key = Mock(return_value=InputAction.CANCEL)
 
-    with patch('logging.error') as mock_log:
+    with patch("logging.error") as mock_log:
         result = handler.handle_input(event)
 
         # Should log error with traceback and return default
@@ -461,6 +473,7 @@ def test_execute_action_exception_handling(handler):
 # ============================================================================
 # Test Unknown Event Types
 # ============================================================================
+
 
 def test_handle_input_unknown_event(handler):
     """Unknown event types should return default value"""
@@ -487,12 +500,13 @@ def test_handle_input_none_event(handler):
 # Test Return Types (str vs bool)
 # ============================================================================
 
+
 def test_menu_handler_returns_str(handler):
     """Menu-like handlers should return str"""
     event = tcod.event.KeyDown(
         scancode=tcod.event.Scancode.ESCAPE,
         sym=tcod.event.KeySym.ESCAPE,
-        mod=tcod.event.Modifier.NONE
+        mod=tcod.event.Modifier.NONE,
     )
     handler.input_mapper.get_action_for_key = Mock(return_value=InputAction.CANCEL)
 
@@ -505,9 +519,7 @@ def test_menu_handler_returns_str(handler):
 def test_gameplay_handler_returns_bool(gameplay_handler):
     """Gameplay-like handlers should return bool"""
     event = tcod.event.KeyDown(
-        scancode=tcod.event.Scancode.W,
-        sym=tcod.event.KeySym.W,
-        mod=tcod.event.Modifier.NONE
+        scancode=tcod.event.Scancode.W, sym=tcod.event.KeySym.W, mod=tcod.event.Modifier.NONE
     )
     gameplay_handler.input_mapper.get_action_for_key = Mock(return_value=InputAction.MOVE_NORTH)
 
@@ -521,9 +533,11 @@ def test_gameplay_handler_returns_bool(gameplay_handler):
 # Test Context Switching
 # ============================================================================
 
+
 def test_get_context_called_for_gamepad_events(handler):
     """get_context() should be called for gamepad events"""
     import tcod.sdl.joystick
+
     handler.get_context = Mock(return_value=InputContext.MAIN_MENU)
     handler.gamepad_handler.handle_button_event = Mock(return_value=None)
 
@@ -531,7 +545,7 @@ def test_get_context_called_for_gamepad_events(handler):
         type="CONTROLLERBUTTONDOWN",
         which=0,
         button=tcod.sdl.joystick.ControllerButton.A,
-        pressed=True
+        pressed=True,
     )
 
     handler.handle_input(event)
@@ -543,14 +557,12 @@ def test_get_context_called_for_gamepad_events(handler):
 def test_get_context_called_for_axis_events(handler):
     """get_context() should be called for axis events"""
     import tcod.sdl.joystick
+
     handler.get_context = Mock(return_value=InputContext.MAIN_MENU)
     handler.gamepad_handler.handle_axis_event = Mock(return_value=None)
 
     event = tcod.event.ControllerAxis(
-        type="CONTROLLERAXISMOTION",
-        which=0,
-        axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-        value=0
+        type="CONTROLLERAXISMOTION", which=0, axis=tcod.sdl.joystick.ControllerAxis.LEFTX, value=0
     )
 
     handler.handle_input(event)
@@ -563,8 +575,10 @@ def test_get_context_called_for_axis_events(handler):
 # Test Abstract Methods
 # ============================================================================
 
+
 def test_abstract_get_context_must_be_implemented():
     """Subclasses must implement get_context() - ABC enforces at instantiation"""
+
     class IncompleteHandler(BaseInputHandler):
         def execute_action(self, action):
             return ""
@@ -579,6 +593,7 @@ def test_abstract_get_context_must_be_implemented():
 
 def test_abstract_execute_action_must_be_implemented():
     """Subclasses must implement execute_action() - ABC enforces at instantiation"""
+
     class IncompleteHandler(BaseInputHandler):
         def get_context(self):
             return InputContext.MAIN_MENU
@@ -593,6 +608,7 @@ def test_abstract_execute_action_must_be_implemented():
 
 def test_abstract_get_default_return_must_be_implemented():
     """Subclasses must implement get_default_return() - ABC enforces at instantiation"""
+
     class IncompleteHandler(BaseInputHandler):
         def get_context(self):
             return InputContext.MAIN_MENU

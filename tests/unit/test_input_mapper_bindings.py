@@ -9,13 +9,11 @@ Tests the key rebinding and gamepad remapping functionality including:
 - get_conflicts / get_gamepad_conflicts
 """
 
-import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_input_mappings import InputMapper
 from game_input_actions import InputAction, InputContext
-
+from game_input_mappings import InputMapper
 
 # Shortcuts for readability
 KS = tcod.event.KeySym
@@ -29,9 +27,7 @@ class TestKeyboardBindingAdd:
         """Adding a key binding works."""
         mapper = InputMapper()
 
-        result = mapper.add_keyboard_binding(
-            InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY
-        )
+        result = mapper.add_keyboard_binding(InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY)
 
         assert result is True
         # Verify it's in custom bindings
@@ -42,9 +38,7 @@ class TestKeyboardBindingAdd:
         """ESC key cannot be bound."""
         mapper = InputMapper()
 
-        result = mapper.add_keyboard_binding(
-            InputAction.WAIT, KS.ESCAPE, InputContext.GAMEPLAY
-        )
+        result = mapper.add_keyboard_binding(InputAction.WAIT, KS.ESCAPE, InputContext.GAMEPLAY)
 
         assert result is False
 
@@ -52,9 +46,7 @@ class TestKeyboardBindingAdd:
         """F12 key cannot be bound."""
         mapper = InputMapper()
 
-        result = mapper.add_keyboard_binding(
-            InputAction.WAIT, KS.F12, InputContext.GAMEPLAY
-        )
+        result = mapper.add_keyboard_binding(InputAction.WAIT, KS.F12, InputContext.GAMEPLAY)
 
         assert result is False
 
@@ -64,8 +56,10 @@ class TestKeyboardBindingAdd:
 
         # Use KS(ord('w')) for cross-platform compatibility (KS.w doesn't exist on Linux)
         result = mapper.add_keyboard_binding(
-            InputAction.WAIT, KS(ord('w')), InputContext.GAMEPLAY,
-            modifier=tcod.event.Modifier.SHIFT
+            InputAction.WAIT,
+            KS(ord("w")),
+            InputContext.GAMEPLAY,
+            modifier=tcod.event.Modifier.SHIFT,
         )
 
         assert result is True
@@ -110,9 +104,7 @@ class TestKeyboardBindingRemove:
         mapper = InputMapper()
         mapper.add_keyboard_binding(InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY)
 
-        result = mapper.remove_keyboard_binding(
-            InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY
-        )
+        result = mapper.remove_keyboard_binding(InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY)
 
         assert result is True
         # Context should be cleaned up
@@ -122,9 +114,7 @@ class TestKeyboardBindingRemove:
         """Removing binding that doesn't exist returns False."""
         mapper = InputMapper()
 
-        result = mapper.remove_keyboard_binding(
-            InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY
-        )
+        result = mapper.remove_keyboard_binding(InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY)
 
         assert result is False
 
@@ -132,9 +122,7 @@ class TestKeyboardBindingRemove:
         """Removing from nonexistent context returns False."""
         mapper = InputMapper()
 
-        result = mapper.remove_keyboard_binding(
-            InputAction.WAIT, KS.SPACE, InputContext.TARGETING
-        )
+        result = mapper.remove_keyboard_binding(InputAction.WAIT, KS.SPACE, InputContext.TARGETING)
 
         assert result is False
 
@@ -143,13 +131,17 @@ class TestKeyboardBindingRemove:
         mapper = InputMapper()
         # Use KS(ord('w')) for cross-platform compatibility (KS.w doesn't exist on Linux)
         mapper.add_keyboard_binding(
-            InputAction.WAIT, KS(ord('w')), InputContext.GAMEPLAY,
-            modifier=tcod.event.Modifier.SHIFT
+            InputAction.WAIT,
+            KS(ord("w")),
+            InputContext.GAMEPLAY,
+            modifier=tcod.event.Modifier.SHIFT,
         )
 
         result = mapper.remove_keyboard_binding(
-            InputAction.WAIT, KS(ord('w')), InputContext.GAMEPLAY,
-            modifier=tcod.event.Modifier.SHIFT
+            InputAction.WAIT,
+            KS(ord("w")),
+            InputContext.GAMEPLAY,
+            modifier=tcod.event.Modifier.SHIFT,
         )
 
         assert result is True
@@ -179,7 +171,9 @@ class TestKeyboardBindingClear:
         mapper.clear_keyboard_bindings(InputAction.WAIT, InputContext.GAMEPLAY)
 
         # Action should be gone
-        assert InputAction.WAIT not in mapper._custom_keyboard_bindings.get(InputContext.GAMEPLAY, {})
+        assert InputAction.WAIT not in mapper._custom_keyboard_bindings.get(
+            InputContext.GAMEPLAY, {}
+        )
 
     def test_clear_leaves_other_actions(self):
         """Clearing one action doesn't affect others."""
@@ -209,9 +203,7 @@ class TestKeyboardBindingReplace:
         mapper.add_keyboard_binding(InputAction.CONFIRM, KS.SPACE, InputContext.GAMEPLAY)
 
         # Now bind SPACE to WAIT instead
-        removed = mapper.replace_keyboard_binding(
-            InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY
-        )
+        removed = mapper.replace_keyboard_binding(InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY)
 
         # CONFIRM should have lost SPACE
         assert InputAction.CONFIRM in removed or len(removed) > 0
@@ -224,9 +216,7 @@ class TestKeyboardBindingReplace:
         mapper.add_keyboard_binding(InputAction.CONFIRM, KS.SPACE, InputContext.GAMEPLAY)
         mapper.add_keyboard_binding(InputAction.CANCEL, KS.SPACE, InputContext.GAMEPLAY)
 
-        removed = mapper.replace_keyboard_binding(
-            InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY
-        )
+        removed = mapper.replace_keyboard_binding(InputAction.WAIT, KS.SPACE, InputContext.GAMEPLAY)
 
         # Both should be in removed list
         assert InputAction.CONFIRM in removed
@@ -283,9 +273,7 @@ class TestGamepadBindingAdd:
         """Adding gamepad button binding works."""
         mapper = InputMapper()
 
-        result = mapper.add_gamepad_binding(
-            InputAction.WAIT, CB.A, InputContext.GAMEPLAY
-        )
+        result = mapper.add_gamepad_binding(InputAction.WAIT, CB.A, InputContext.GAMEPLAY)
 
         assert result is True
         assert InputContext.GAMEPLAY in mapper._custom_gamepad_bindings
@@ -295,9 +283,7 @@ class TestGamepadBindingAdd:
         """Guide button cannot be bound."""
         mapper = InputMapper()
 
-        result = mapper.add_gamepad_binding(
-            InputAction.WAIT, CB.GUIDE, InputContext.GAMEPLAY
-        )
+        result = mapper.add_gamepad_binding(InputAction.WAIT, CB.GUIDE, InputContext.GAMEPLAY)
 
         assert result is False
 
@@ -330,9 +316,7 @@ class TestGamepadBindingRemove:
         mapper = InputMapper()
         mapper.add_gamepad_binding(InputAction.WAIT, CB.A, InputContext.GAMEPLAY)
 
-        result = mapper.remove_gamepad_binding(
-            InputAction.WAIT, CB.A, InputContext.GAMEPLAY
-        )
+        result = mapper.remove_gamepad_binding(InputAction.WAIT, CB.A, InputContext.GAMEPLAY)
 
         assert result is True
         assert InputContext.GAMEPLAY not in mapper._custom_gamepad_bindings
@@ -341,9 +325,7 @@ class TestGamepadBindingRemove:
         """Removing nonexistent binding returns False."""
         mapper = InputMapper()
 
-        result = mapper.remove_gamepad_binding(
-            InputAction.WAIT, CB.A, InputContext.GAMEPLAY
-        )
+        result = mapper.remove_gamepad_binding(InputAction.WAIT, CB.A, InputContext.GAMEPLAY)
 
         assert result is False
 
@@ -371,7 +353,9 @@ class TestGamepadBindingClear:
 
         mapper.clear_gamepad_bindings(InputAction.WAIT, InputContext.GAMEPLAY)
 
-        assert InputAction.WAIT not in mapper._custom_gamepad_bindings.get(InputContext.GAMEPLAY, {})
+        assert InputAction.WAIT not in mapper._custom_gamepad_bindings.get(
+            InputContext.GAMEPLAY, {}
+        )
 
     def test_clear_leaves_other_actions(self):
         """Clearing one action doesn't affect others."""
@@ -392,9 +376,7 @@ class TestGamepadBindingReplace:
         mapper = InputMapper()
         mapper.add_gamepad_binding(InputAction.CONFIRM, CB.A, InputContext.GAMEPLAY)
 
-        removed = mapper.replace_gamepad_binding(
-            InputAction.WAIT, CB.A, InputContext.GAMEPLAY
-        )
+        removed = mapper.replace_gamepad_binding(InputAction.WAIT, CB.A, InputContext.GAMEPLAY)
 
         # CONFIRM should have lost A button
         assert InputAction.CONFIRM in removed or len(removed) > 0
@@ -406,9 +388,7 @@ class TestGamepadBindingReplace:
         mapper = InputMapper()
         mapper.add_gamepad_binding(InputAction.CONFIRM, CB.A, InputContext.GAMEPLAY)
 
-        removed = mapper.replace_gamepad_binding(
-            InputAction.WAIT, CB.A, InputContext.GAMEPLAY
-        )
+        removed = mapper.replace_gamepad_binding(InputAction.WAIT, CB.A, InputContext.GAMEPLAY)
 
         assert InputAction.CONFIRM in removed
 
@@ -421,9 +401,7 @@ class TestGamepadConflicts:
         mapper = InputMapper()
 
         # A button in GAMEPLAY is usually WAIT by default
-        conflicts = mapper.get_gamepad_conflicts(
-            InputAction.CONFIRM, CB.A, InputContext.GAMEPLAY
-        )
+        conflicts = mapper.get_gamepad_conflicts(InputAction.CONFIRM, CB.A, InputContext.GAMEPLAY)
 
         # Should find WAIT (the default A button mapping)
         assert isinstance(conflicts, list)
@@ -432,9 +410,7 @@ class TestGamepadConflicts:
         """Action doesn't conflict with itself."""
         mapper = InputMapper()
 
-        conflicts = mapper.get_gamepad_conflicts(
-            InputAction.WAIT, CB.A, InputContext.GAMEPLAY
-        )
+        conflicts = mapper.get_gamepad_conflicts(InputAction.WAIT, CB.A, InputContext.GAMEPLAY)
 
         assert InputAction.WAIT not in conflicts
 

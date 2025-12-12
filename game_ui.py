@@ -9,8 +9,6 @@ Extracted from RogueSignalProtocol.py for better organization.
 
 import time
 
-import tcod.event
-
 # Import game modules
 
 

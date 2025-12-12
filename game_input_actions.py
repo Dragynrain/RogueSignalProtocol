@@ -89,7 +89,9 @@ class InputAction(Enum):
     # CONTROLS MENU ACTIONS
     # ============================================================================
     CONTROLS_RESET_DEFAULT = auto()  # Reset single action to default (X button on gamepad)
-    CONTROLS_RESET_ALL = auto()  # Reset all bindings to defaults (Y button on gamepad, R on keyboard)
+    CONTROLS_RESET_ALL = (
+        auto()
+    )  # Reset all bindings to defaults (Y button on gamepad, R on keyboard)
 
     # ============================================================================
     # DIALOGUE-SPECIFIC ACTIONS
@@ -154,5 +156,3 @@ class InputContext(Enum):
     # Examples for future input types:
     # TOUCH_GESTURE_TUTORIAL = auto()  # Special context for teaching touch gestures
     # VOICE_CALIBRATION = auto()  # Voice command setup screen
-
-

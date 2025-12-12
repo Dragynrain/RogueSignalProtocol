@@ -25,7 +25,7 @@ class InputDeviceType(Enum):
     """Input device categories for help text switching."""
 
     KEYBOARD = auto()  # Keyboard and mouse (users typically use both together)
-    GAMEPAD = auto()   # Gamepad/controller
+    GAMEPAD = auto()  # Gamepad/controller
 
 
 # Module-level state - simple and thread-safe for single-threaded game loop

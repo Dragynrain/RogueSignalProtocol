@@ -20,9 +20,9 @@ class AchievementsMenu(BaseMenu):
     """Achievements viewer menu for main menu."""
 
     # Per-screen scroll speed configuration
-    ARROW_SCROLL_SPEED = 3      # Lines per arrow key press (default: 1, increased for faster scrolling)
-    PAGE_SCROLL_SPEED = 35      # Lines per Page Up/Down (full page = max_visible_lines)
-    WHEEL_SCROLL_SPEED = 5      # Lines per mouse wheel tick (default: 3)
+    ARROW_SCROLL_SPEED = 3  # Lines per arrow key press (default: 1, increased for faster scrolling)
+    PAGE_SCROLL_SPEED = 35  # Lines per Page Up/Down (full page = max_visible_lines)
+    WHEEL_SCROLL_SPEED = 5  # Lines per mouse wheel tick (default: 3)
 
     def __init__(self, background=None):
         super().__init__(background)
@@ -70,7 +70,9 @@ class AchievementsMenu(BaseMenu):
             total_pages = (len(all_lines) + self.max_visible_lines - 1) // self.max_visible_lines
             # Calculate current page based on last visible line (not just offset)
             # This ensures we show "Page 3/3" when at max scroll, not "Page 2/3"
-            last_visible_line = min(self.scroll_offset + self.max_visible_lines - 1, len(all_lines) - 1)
+            last_visible_line = min(
+                self.scroll_offset + self.max_visible_lines - 1, len(all_lines) - 1
+            )
             current_page = (last_visible_line // self.max_visible_lines) + 1
             scroll_text = (
                 f"Page {current_page}/{total_pages}  │  ↑↓ Scroll  │  PgUp/PgDn: Fast scroll"
@@ -176,6 +178,7 @@ class AchievementsMenu(BaseMenu):
     def get_context(self):
         """Return input context for this menu."""
         from game_input_actions import InputContext
+
         return InputContext.ACHIEVEMENTS_SCREEN
 
     def execute_action(self, action) -> str:

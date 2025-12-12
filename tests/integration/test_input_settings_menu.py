@@ -12,16 +12,17 @@ Tests all input types for settings menu navigation and value adjustment:
 Note: Extracted from test_input_critical_paths.py for maintainability.
 """
 
+import time
+from unittest.mock import Mock
+
 import pytest
 import tcod
 import tcod.event
 import tcod.sdl.joystick
-import time
-from unittest.mock import Mock
 
 from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
-from tests.integration.input_test_utils import InputTestHelper, AutoRepeatTester
+from game_input_actions import InputContext
+from tests.integration.input_test_utils import InputTestHelper
 
 
 class TestSettingsMenuCriticalPath:
@@ -40,7 +41,6 @@ class TestSettingsMenuCriticalPath:
     def settings_menu(self):
         """Create settings menu for testing."""
         from game_menu_settings import SettingsMenu
-        from game_config import GameSettings
 
         settings = GameSettings()
         settings.master_volume = 0.0
@@ -67,7 +67,7 @@ class TestSettingsMenuCriticalPath:
         """D-pad: Up/down buttons navigate settings."""
         initial = settings_menu.selected_option
 
-        down_event = InputTestHelper.create_dpad_event('down', pressed=True)
+        down_event = InputTestHelper.create_dpad_event("down", pressed=True)
         settings_menu.handle_input(down_event)
 
         assert settings_menu.selected_option != initial or len(settings_menu.options) == 1
@@ -76,7 +76,7 @@ class TestSettingsMenuCriticalPath:
         """Left stick: Vertical axis navigates settings."""
         initial = settings_menu.selected_option
 
-        down_event = InputTestHelper.create_stick_event('left', 'y', 32767)
+        down_event = InputTestHelper.create_stick_event("left", "y", 32767)
         settings_menu.handle_input(down_event)
 
         assert settings_menu.selected_option != initial or len(settings_menu.options) == 1
@@ -90,30 +90,40 @@ class TestSettingsMenuCriticalPath:
         # This test documents that left/right should adjust values
         # Implementation depends on SettingsMenu having value adjustment
         # Value adjustment occurred (actual value checking requires setting introspection)
-        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(settings_menu.options)
+        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(
+            settings_menu.options
+        )
 
     def test_dpad_left_right_adjusts_value(self, settings_menu):
         """D-pad: Left/right buttons adjust setting values."""
         # Navigate to a setting with adjustable value (like volume)
         # Press D-pad left/right to change value
         # Value adjustment occurred (actual value checking requires setting introspection)
-        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(settings_menu.options)
+        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(
+            settings_menu.options
+        )
 
     def test_left_stick_horizontal_adjusts_value(self, settings_menu):
         """Left stick: Horizontal axis adjusts setting values."""
         # Unlike Main Menu, horizontal stick should work for value adjustment
         # Value adjustment occurred (actual value checking requires setting introspection)
-        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(settings_menu.options)
+        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(
+            settings_menu.options
+        )
 
     def test_mouse_wheel_adjusts_value(self, settings_menu):
         """Mouse: Wheel adjusts setting values."""
         # Value adjustment occurred (actual value checking requires setting introspection)
-        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(settings_menu.options)
+        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(
+            settings_menu.options
+        )
 
     def test_triggers_fast_value_adjustment(self, settings_menu):
         """Triggers: LT/RT for fast value changes (if supported)."""
         # Value adjustment occurred (actual value checking requires setting introspection)
-        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(settings_menu.options)
+        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(
+            settings_menu.options
+        )
 
     # --------------------------------------------------------------------------
     # Tab Navigation Tests
@@ -122,12 +132,16 @@ class TestSettingsMenuCriticalPath:
     def test_tab_key_switches_category(self, settings_menu):
         """Keyboard: Tab switches between setting categories (if applicable)."""
         # Tab navigation occurred (actual category checking requires menu introspection)
-        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(settings_menu.options)
+        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(
+            settings_menu.options
+        )
 
     def test_shoulder_buttons_switch_category(self, settings_menu):
         """Shoulder buttons: LB/RB switch categories (if applicable)."""
         # Category switching occurred (actual category checking requires menu introspection)
-        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(settings_menu.options)
+        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(
+            settings_menu.options
+        )
 
     # --------------------------------------------------------------------------
     # Confirm/Cancel Tests
@@ -151,7 +165,7 @@ class TestSettingsMenuCriticalPath:
 
     def test_face_button_a_confirms(self, settings_menu):
         """Face button: A confirms/toggles setting."""
-        event = InputTestHelper.create_face_button_event('a', pressed=True)
+        event = InputTestHelper.create_face_button_event("a", pressed=True)
         result = settings_menu.handle_input(event)
 
         # A button confirms - verify result is a valid action string
@@ -159,7 +173,7 @@ class TestSettingsMenuCriticalPath:
 
     def test_face_button_b_cancels(self, settings_menu):
         """Face button: B cancels/exits settings."""
-        event = InputTestHelper.create_face_button_event('b', pressed=True)
+        event = InputTestHelper.create_face_button_event("b", pressed=True)
         result = settings_menu.handle_input(event)
 
         # Should exit or cancel changes - verify result is a valid action string
@@ -171,7 +185,7 @@ class TestSettingsMenuCriticalPath:
 
     def test_dpad_auto_repeat_navigation(self, settings_menu):
         """D-pad: Holding down auto-repeats through settings."""
-        down_press = InputTestHelper.create_dpad_event('down', pressed=True)
+        down_press = InputTestHelper.create_dpad_event("down", pressed=True)
         settings_menu.handle_input(down_press)
 
         # Wait for auto-repeat
@@ -183,7 +197,7 @@ class TestSettingsMenuCriticalPath:
         assert settings_menu.selected_option >= 0
 
         # Clean up
-        down_release = InputTestHelper.create_dpad_event('down', pressed=False)
+        down_release = InputTestHelper.create_dpad_event("down", pressed=False)
         settings_menu.handle_input(down_release)
 
     def test_left_stick_auto_repeat_navigation(self, settings_menu):
@@ -207,13 +221,15 @@ class TestSettingsMenuCriticalPath:
 
     def test_dpad_release_stops_navigation(self, settings_menu):
         """D-pad: Releasing button stops auto-repeat."""
-        down_press = InputTestHelper.create_dpad_event('down', pressed=True)
+        down_press = InputTestHelper.create_dpad_event("down", pressed=True)
         settings_menu.handle_input(down_press)
 
         # Check that menu state is valid after press
-        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(settings_menu.options)
+        assert settings_menu.selected_option >= 0 and settings_menu.selected_option < len(
+            settings_menu.options
+        )
 
-        down_release = InputTestHelper.create_dpad_event('down', pressed=False)
+        down_release = InputTestHelper.create_dpad_event("down", pressed=False)
         settings_menu.handle_input(down_release)
 
         assert settings_menu.gamepad_handler.button_held is None
@@ -248,7 +264,6 @@ class TestSettingsMenuInputComprehensive:
     def settings_menu(self):
         """Create settings menu instance."""
         from game_menu_settings import SettingsMenu
-        from game_config import GameSettings
 
         settings = GameSettings()
         menu = SettingsMenu(settings=settings, menu_background=None, sound_manager=None)
@@ -277,7 +292,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_keyboard_left_right_value_adjust(self, settings_menu):
         """Settings: Keyboard left/right adjusts values via handle_input."""
-        from unittest.mock import Mock
         import tcod.event
 
         menu = settings_menu
@@ -297,7 +311,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_keyboard_enter_confirms(self, settings_menu):
         """Settings: Enter key confirms selection via handle_input."""
-        from unittest.mock import Mock
         import tcod.event
 
         menu = settings_menu
@@ -313,7 +326,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_keyboard_escape_exits(self, settings_menu):
         """Settings: Escape exits settings menu via handle_input."""
-        from unittest.mock import Mock
         import tcod.event
 
         menu = settings_menu
@@ -331,7 +343,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_dpad_up_down_navigation(self, settings_menu):
         """Settings: D-pad up/down navigates options via handle_input."""
-        from unittest.mock import Mock
         import tcod.sdl.joystick
 
         menu = settings_menu
@@ -352,7 +363,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_dpad_left_right_value_adjust(self, settings_menu):
         """Settings: D-pad left/right adjusts values via handle_input."""
-        from unittest.mock import Mock
         import tcod.sdl.joystick
 
         menu = settings_menu
@@ -372,7 +382,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_dpad_auto_repeat_navigation(self, settings_menu):
         """Settings: D-pad auto-repeat for navigation."""
-        from unittest.mock import Mock
         import tcod.sdl.joystick
 
         menu = settings_menu
@@ -389,7 +398,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_dpad_release_stops_repeat(self, settings_menu):
         """Settings: D-pad release stops auto-repeat."""
-        from unittest.mock import Mock
         import tcod.sdl.joystick
 
         menu = settings_menu
@@ -413,7 +421,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_left_stick_vertical_navigation(self, settings_menu):
         """Settings: Left stick up/down navigates options via handle_input."""
-        from unittest.mock import Mock
         import tcod.sdl.joystick
 
         menu = settings_menu
@@ -433,7 +440,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_left_stick_horizontal_value_adjust(self, settings_menu):
         """Settings: Left stick left/right adjusts values via handle_input."""
-        from unittest.mock import Mock
         import tcod.sdl.joystick
 
         menu = settings_menu
@@ -454,7 +460,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_right_stick_ignored(self, settings_menu):
         """Settings: Right stick input ignored via handle_input."""
-        from unittest.mock import Mock
         import tcod.sdl.joystick
 
         menu = settings_menu
@@ -474,7 +479,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_a_button_confirms(self, settings_menu):
         """Settings: A button confirms selection via handle_input."""
-        from unittest.mock import Mock
         import tcod.sdl.joystick
 
         menu = settings_menu
@@ -489,7 +493,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_b_button_exits(self, settings_menu):
         """Settings: B button exits settings menu via handle_input."""
-        from unittest.mock import Mock
         import tcod.sdl.joystick
 
         menu = settings_menu
@@ -507,7 +510,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_shoulder_buttons_category_switch(self, settings_menu):
         """Settings: Shoulder buttons switch categories via handle_input."""
-        from unittest.mock import Mock
         import tcod.sdl.joystick
 
         menu = settings_menu
@@ -529,7 +531,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_mouse_hover_highlights(self, settings_menu):
         """Settings: Mouse hover highlights option."""
-        from unittest.mock import Mock
 
         menu = settings_menu
 
@@ -537,7 +538,7 @@ class TestSettingsMenuInputComprehensive:
         event = Mock()
         event.position = Mock()
         event.position.y = 10
-        if hasattr(menu, 'handle_mouse_motion'):
+        if hasattr(menu, "handle_mouse_motion"):
             menu.handle_mouse_motion(event)
 
         # Mouse hover occurred - verify menu state is valid
@@ -545,7 +546,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_mouse_click_selects(self, settings_menu):
         """Settings: Mouse click selects option."""
-        from unittest.mock import Mock
 
         menu = settings_menu
 
@@ -553,7 +553,7 @@ class TestSettingsMenuInputComprehensive:
         event = Mock()
         event.position = Mock()
         event.position.y = 10
-        if hasattr(menu, 'handle_mouse_click'):
+        if hasattr(menu, "handle_mouse_click"):
             menu.handle_mouse_click(event)
 
         # Mouse click occurred - verify menu state is valid
@@ -561,19 +561,18 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_mouse_wheel_adjusts_value(self, settings_menu):
         """Settings: Mouse wheel adjusts values."""
-        from unittest.mock import Mock
 
         menu = settings_menu
 
         # Scroll down
         event = Mock()
         event.y = -1
-        if hasattr(menu, 'handle_mouse_wheel'):
+        if hasattr(menu, "handle_mouse_wheel"):
             menu.handle_mouse_wheel(event)
 
         # Scroll up
         event.y = 1
-        if hasattr(menu, 'handle_mouse_wheel'):
+        if hasattr(menu, "handle_mouse_wheel"):
             menu.handle_mouse_wheel(event)
 
         # Value adjustment occurred - verify menu state is valid
@@ -583,7 +582,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_keyboard_mouse_mixing(self, settings_menu):
         """Settings: Seamless keyboard and mouse input mixing."""
-        from unittest.mock import Mock
         import tcod.event
 
         menu = settings_menu
@@ -598,7 +596,7 @@ class TestSettingsMenuInputComprehensive:
         mouse_event = Mock()
         mouse_event.position = Mock()
         mouse_event.position.y = 15
-        if hasattr(menu, 'handle_mouse_motion'):
+        if hasattr(menu, "handle_mouse_motion"):
             menu.handle_mouse_motion(mouse_event)
 
         # Back to keyboard
@@ -609,7 +607,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_gamepad_keyboard_switching(self, settings_menu):
         """Settings: Switch between gamepad and keyboard seamlessly."""
-        from unittest.mock import Mock
         import tcod.event
         import tcod.sdl.joystick
 
@@ -637,7 +634,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_rapid_input_spam(self, settings_menu):
         """Settings: Rapid input doesn't break state."""
-        from unittest.mock import Mock
         import tcod.event
 
         menu = settings_menu
@@ -660,7 +656,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_value_adjustment_boundaries(self, settings_menu):
         """Settings: Value adjustment respects min/max bounds."""
-        from unittest.mock import Mock
         import tcod.event
 
         menu = settings_menu
@@ -684,7 +679,6 @@ class TestSettingsMenuInputComprehensive:
 
     def test_settings_tab_navigation(self, settings_menu):
         """Settings: Tab key navigates between setting groups."""
-        from unittest.mock import Mock
         import tcod.event
 
         menu = settings_menu

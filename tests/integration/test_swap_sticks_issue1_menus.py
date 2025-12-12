@@ -9,8 +9,9 @@ FIX APPLIED: GamepadInputHandler uses GameSettings.get_instance() singleton
 to read swap_sticks, so menus can access the setting even with game=None.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 import tcod.event
 import tcod.sdl.joystick
 
@@ -63,9 +64,10 @@ class TestSwapSticksMenuNavigation:
 
         # This SHOULD navigate, but currently swap_sticks is always False
         # because the menu has no access to settings
-        assert result == InputAction.NAVIGATE_DOWN, \
-            f"Menu's RIGHT stick should navigate down when swap=True, got {result}. " \
+        assert result == InputAction.NAVIGATE_DOWN, (
+            f"Menu's RIGHT stick should navigate down when swap=True, got {result}. "
             f"BUG: Menu's GamepadInputHandler has game=None, can't read swap_sticks!"
+        )
 
     def test_menu_left_stick_ignored_when_swap_enabled(self, settings_with_swap):
         """
@@ -87,5 +89,6 @@ class TestSwapSticksMenuNavigation:
         result = menu.gamepad_handler.handle_axis_event(event, InputContext.MAIN_MENU)
 
         # When swap is ON, left stick should NOT navigate
-        assert result != InputAction.NAVIGATE_DOWN, \
-            f"LEFT stick should NOT navigate when swap=True, got {result}"
+        assert (
+            result != InputAction.NAVIGATE_DOWN
+        ), f"LEFT stick should NOT navigate when swap=True, got {result}"

@@ -227,6 +227,7 @@ class AboutMenu(BaseMenu):
     def get_context(self):
         """Return input context for this menu."""
         from game_input_actions import InputContext
+
         return InputContext.ABOUT_MENU
 
     def execute_action(self, action) -> str:

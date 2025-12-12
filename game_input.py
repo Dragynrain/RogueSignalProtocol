@@ -35,6 +35,7 @@ from game_config import GameConfig
 from game_coordinate_helpers import CoordinateHelpers
 from game_input_actions import InputAction, InputContext
 from game_input_coordinates import InputCoordinateConverter
+from game_input_device_tracker import InputDeviceType, set_last_device
 from game_input_dialogue import DialogueInputManager
 from game_input_gamepad import GamepadInputHandler
 from game_input_gameplay import GameplayInputHandler
@@ -44,7 +45,6 @@ from game_input_modals import (
     LookModeInputHandler,
     TargetingInputHandler,
 )
-from game_input_device_tracker import InputDeviceType, set_last_device
 
 
 class InputHandler:
@@ -61,36 +61,48 @@ class InputHandler:
         self.gamepad_handler = GamepadInputHandler(self.input_mapper, game, controllers or set())
 
         # Load custom bindings BEFORE initializing handlers (they'll share this mapper)
-        keyboard_bindings = getattr(game.settings, "custom_keyboard_bindings", {}) if hasattr(game, "settings") else {}
-        gamepad_bindings = getattr(game.settings, "custom_gamepad_bindings", {}) if hasattr(game, "settings") else {}
+        keyboard_bindings = (
+            getattr(game.settings, "custom_keyboard_bindings", {})
+            if hasattr(game, "settings")
+            else {}
+        )
+        gamepad_bindings = (
+            getattr(game.settings, "custom_gamepad_bindings", {})
+            if hasattr(game, "settings")
+            else {}
+        )
         self.input_mapper.load_custom_bindings(keyboard_bindings, gamepad_bindings)
 
         # Initialize specialized input handlers with SHARED InputMapper AND GamepadHandler
         # Sharing gamepad_handler ensures state (button_held, analog stick, settings) stays in sync
         self.dialogue_manager = DialogueInputManager(game, renderer)
         self.gameplay_handler = GameplayInputHandler(
-            game, renderer,
+            game,
+            renderer,
             input_mapper=self.input_mapper,
             controllers=controllers,
-            gamepad_handler=self.gamepad_handler
+            gamepad_handler=self.gamepad_handler,
         )
         self.inventory_handler = InventoryInputHandler(
-            game, renderer,
+            game,
+            renderer,
             input_mapper=self.input_mapper,
             controllers=controllers,
-            gamepad_handler=self.gamepad_handler
+            gamepad_handler=self.gamepad_handler,
         )
         self.look_mode_handler = LookModeInputHandler(
-            game, renderer,
+            game,
+            renderer,
             input_mapper=self.input_mapper,
             controllers=controllers,
-            gamepad_handler=self.gamepad_handler
+            gamepad_handler=self.gamepad_handler,
         )
         self.targeting_handler = TargetingInputHandler(
-            game, renderer,
+            game,
+            renderer,
             input_mapper=self.input_mapper,
             controllers=controllers,
-            gamepad_handler=self.gamepad_handler
+            gamepad_handler=self.gamepad_handler,
         )
         # Note: achievements_handler removed - using AchievementsMenu directly (Phase 4)
 
@@ -138,7 +150,7 @@ class InputHandler:
             # Check renderer exists (may be None in headless tests)
             if self.renderer is None:
                 # In headless mode, just handle ESC to close help
-                if hasattr(event, 'sym') and event.sym == tcod.event.KeySym.ESCAPE:
+                if hasattr(event, "sym") and event.sym == tcod.event.KeySym.ESCAPE:
                     self.game.show_help = False
                 return True
 
@@ -154,7 +166,7 @@ class InputHandler:
             # Check renderer exists (may be None in headless tests)
             if self.renderer is None:
                 # In headless mode, just handle ESC to close lore viewer
-                if hasattr(event, 'sym') and event.sym == tcod.event.KeySym.ESCAPE:
+                if hasattr(event, "sym") and event.sym == tcod.event.KeySym.ESCAPE:
                     self.game.show_lore_viewer = False
                 return True
 
@@ -251,8 +263,8 @@ class InputHandler:
                 return True
 
         # Fallback if menu not available: ESC or V closes achievements
-        if hasattr(event, 'sym'):
-            modifier = getattr(event, 'mod', 0)
+        if hasattr(event, "sym"):
+            modifier = getattr(event, "mod", 0)
             action = self.input_mapper.get_action_for_key(event.sym, modifier=modifier)
             if action in (InputAction.CANCEL, InputAction.TOGGLE_ACHIEVEMENTS):
                 self.game.show_achievements = False
@@ -294,6 +306,7 @@ class InputHandler:
                     "This is a programming error - lore viewer should not be openable without a renderer."
                 )
             from game_menu_help_lore import LoreMenu
+
             self._lore_viewer_menu = LoreMenu()  # LoreMenu takes no arguments
         return self._lore_viewer_menu
 
@@ -730,7 +743,11 @@ class InputHandler:
             # Headless mode: Allow B button to close help (matches ESC on keyboard)
             if not self.renderer:
                 # In headless mode, just handle B button to close help
-                if isinstance(event, tcod.event.ControllerButton) and event.pressed and event.button == tcod.sdl.joystick.ControllerButton.B:
+                if (
+                    isinstance(event, tcod.event.ControllerButton)
+                    and event.pressed
+                    and event.button == tcod.sdl.joystick.ControllerButton.B
+                ):
                     self.game.show_help = False
                 return True
 
@@ -747,7 +764,11 @@ class InputHandler:
             # Check renderer exists (may be None in headless tests)
             if self.renderer is None:
                 # In headless mode, just handle B button to close lore viewer
-                if isinstance(event, tcod.event.ControllerButton) and event.pressed and event.button == tcod.sdl.joystick.ControllerButton.B:
+                if (
+                    isinstance(event, tcod.event.ControllerButton)
+                    and event.pressed
+                    and event.button == tcod.sdl.joystick.ControllerButton.B
+                ):
                     self.game.show_lore_viewer = False
                 return True
 
@@ -781,7 +802,10 @@ class InputHandler:
                 if (
                     self.game.player.cpu <= 0
                     or self.game.game_over
-                    or (hasattr(self.game, "pending_death_dialogue") and self.game.pending_death_dialogue)
+                    or (
+                        hasattr(self.game, "pending_death_dialogue")
+                        and self.game.pending_death_dialogue
+                    )
                 ):
                     return True  # Consume event, but don't exit
 

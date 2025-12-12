@@ -25,8 +25,9 @@ from game_input_coordinates import InputCoordinateConverter
 class GameplayInputHandler(BaseInputHandler):
     """Handles gameplay input (movement, exploits, UI buttons)."""
 
-    def __init__(self, game, renderer=None, input_mapper=None,
-                 controllers=None, gamepad_handler=None):
+    def __init__(
+        self, game, renderer=None, input_mapper=None, controllers=None, gamepad_handler=None
+    ):
         """
         Initialize gameplay input handler.
 
@@ -38,8 +39,13 @@ class GameplayInputHandler(BaseInputHandler):
             gamepad_handler: Shared GamepadInputHandler instance (for consistent state)
         """
         # Initialize BaseInputHandler with shared InputMapper, controllers, and gamepad_handler
-        super().__init__(game, renderer, input_mapper=input_mapper, controllers=controllers,
-                        gamepad_handler=gamepad_handler)
+        super().__init__(
+            game,
+            renderer,
+            input_mapper=input_mapper,
+            controllers=controllers,
+            gamepad_handler=gamepad_handler,
+        )
 
     def get_context(self) -> InputContext:
         """Get current input context for gameplay."""
@@ -73,8 +79,8 @@ class GameplayInputHandler(BaseInputHandler):
         if self.game.autowalk.is_active():
             # Get action to check if we should cancel auto-walk
             action = None
-            if isinstance(event, tcod.event.KeyDown) and hasattr(event, 'sym'):
-                modifier = getattr(event, 'mod', 0)
+            if isinstance(event, tcod.event.KeyDown) and hasattr(event, "sym"):
+                modifier = getattr(event, "mod", 0)
                 action = self.input_mapper.get_action_for_key(event.sym, modifier=modifier)
 
             # Cancel auto-walk on movement or exploit actions (but not UI toggles)
@@ -90,7 +96,9 @@ class GameplayInputHandler(BaseInputHandler):
                 # Fall through to process the action normally
 
         # Clear mouse hover when using keyboard/gamepad movement
-        if isinstance(event, (tcod.event.KeyDown, tcod.event.ControllerButton, tcod.event.ControllerAxis)):
+        if isinstance(
+            event, (tcod.event.KeyDown, tcod.event.ControllerButton, tcod.event.ControllerAxis)
+        ):
             # Let BaseInputHandler process the event, which will call execute_action
             # execute_action will clear mouse hover for movement actions
             pass

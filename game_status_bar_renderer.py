@@ -236,7 +236,11 @@ class StatusBarRenderer:
 
             # Determine background color (Phase 3.4: Gamepad visual feedback)
             # Priority: selected (gamepad) > hovered (mouse)
-            is_selected = slot == game.selected_exploit_index if hasattr(game, "selected_exploit_index") else False
+            is_selected = (
+                slot == game.selected_exploit_index
+                if hasattr(game, "selected_exploit_index")
+                else False
+            )
             if is_selected:
                 # Subtle highlight for gamepad-selected exploit (shows which RT will fire)
                 bg = Colors.UI_ACCENT  # Use existing UI_ACCENT color from palette
@@ -278,7 +282,11 @@ class StatusBarRenderer:
 
                 # Determine background color (Phase 3.4: Gamepad visual feedback)
                 # Priority: selected (gamepad) > hovered (mouse)
-                is_selected = slot == game.selected_exploit_index if hasattr(game, "selected_exploit_index") else False
+                is_selected = (
+                    slot == game.selected_exploit_index
+                    if hasattr(game, "selected_exploit_index")
+                    else False
+                )
                 if is_selected:
                     # Subtle highlight for gamepad-selected exploit (shows which RT will fire)
                     bg = Colors.UI_ACCENT  # Use existing UI_ACCENT color from palette

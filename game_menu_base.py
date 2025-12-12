@@ -11,10 +11,9 @@ Subclasses implement render() and execute_action() for specific menu behavior.
 import tcod
 
 from game_config import GameConfig
-from game_menu_utilities import MenuRenderingUtils
 from game_input_base import BaseInputHandler
-from game_input_actions import InputAction, InputContext
 from game_input_device_tracker import InputDeviceType, set_last_device
+from game_menu_utilities import MenuRenderingUtils
 
 
 class BaseMenu(BaseInputHandler):
@@ -245,7 +244,9 @@ class BaseMenu(BaseInputHandler):
             if 0 <= option_index < len(self.options):
                 old_selection = self.selected_option
                 self.selected_option = option_index
-                logging.debug(f"[MOUSE HOVER] Changed selection: {old_selection} -> {self.selected_option}")
+                logging.debug(
+                    f"[MOUSE HOVER] Changed selection: {old_selection} -> {self.selected_option}"
+                )
 
         return ""
 

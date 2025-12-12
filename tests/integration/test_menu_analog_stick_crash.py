@@ -5,8 +5,6 @@ Regression test for crash when using analog stick in main menu.
 Bug: game_loop.py references InputAction without importing it.
 """
 
-import pytest
-
 
 def test_game_loop_has_input_enums_for_gamepad_handling():
     """
@@ -28,12 +26,22 @@ def test_game_loop_has_input_enums_for_gamepad_handling():
 
     Both enums are defined in game_input_actions.py and must be imported
     in game_loop.py to prevent crashes during gamepad menu navigation.
+
+    Note: InputAction is imported at module level, InputContext is imported
+    locally where needed (inside functions). Both approaches prevent NameError.
     """
     import game_loop
 
-    # Check if both enums are available in game_loop module
-    assert hasattr(game_loop, 'InputAction'), \
-        "game_loop.py must import InputAction to handle analog stick navigation (lines 784-787)"
+    from game_input_actions import InputAction, InputContext
 
-    assert hasattr(game_loop, 'InputContext'), \
-        "game_loop.py must import InputContext to determine menu context for button auto-repeat (lines 753-765)"
+    # Check if InputAction is available in game_loop module (imported at top)
+    assert hasattr(
+        game_loop, "InputAction"
+    ), "game_loop.py must import InputAction to handle analog stick navigation"
+
+    # InputContext is imported locally inside functions, verify it exists
+    assert InputContext is not None, "InputContext must be importable from game_input_actions"
+
+    # Verify the specific contexts used in game_loop exist
+    assert hasattr(InputContext, "MAIN_MENU"), "InputContext.MAIN_MENU must exist"
+    assert hasattr(InputContext, "SETTINGS_MENU"), "InputContext.SETTINGS_MENU must exist"

@@ -16,7 +16,7 @@ import tcod.event
 
 from game_config import GameSettings
 from game_input_actions import InputAction
-from game_input_mappings import InputMapper, MODIFIER_ONLY_KEYS
+from game_input_mappings import MODIFIER_ONLY_KEYS, InputMapper
 from game_menu_controls import KeyboardBindingsMenu
 from tests.integration.input_test_utils import InputTestHelper
 
@@ -58,8 +58,7 @@ class TestKeyboardBindingModifierIntegration:
 
         # Create Shift key event
         event = InputTestHelper.create_keyboard_event(
-            tcod.event.KeySym.LSHIFT,
-            mod=tcod.event.Modifier.SHIFT
+            tcod.event.KeySym.LSHIFT, mod=tcod.event.Modifier.SHIFT
         )
 
         # Process through full input pipeline
@@ -74,8 +73,7 @@ class TestKeyboardBindingModifierIntegration:
         menu = binding_menu_in_binding_mode
 
         event = InputTestHelper.create_keyboard_event(
-            tcod.event.KeySym.RSHIFT,
-            mod=tcod.event.Modifier.SHIFT
+            tcod.event.KeySym.RSHIFT, mod=tcod.event.Modifier.SHIFT
         )
 
         menu.handle_input(event)
@@ -88,8 +86,7 @@ class TestKeyboardBindingModifierIntegration:
         menu = binding_menu_in_binding_mode
 
         event = InputTestHelper.create_keyboard_event(
-            tcod.event.KeySym.LCTRL,
-            mod=tcod.event.Modifier.CTRL
+            tcod.event.KeySym.LCTRL, mod=tcod.event.Modifier.CTRL
         )
 
         menu.handle_input(event)
@@ -101,8 +98,7 @@ class TestKeyboardBindingModifierIntegration:
         menu = binding_menu_in_binding_mode
 
         event = InputTestHelper.create_keyboard_event(
-            tcod.event.KeySym.LALT,
-            mod=tcod.event.Modifier.ALT
+            tcod.event.KeySym.LALT, mod=tcod.event.Modifier.ALT
         )
 
         menu.handle_input(event)
@@ -119,8 +115,7 @@ class TestKeyboardBindingModifierIntegration:
 
         # Create Shift+/ event (which produces '?' on US keyboard)
         event = InputTestHelper.create_keyboard_event(
-            tcod.event.KeySym.SLASH,
-            mod=tcod.event.Modifier.SHIFT
+            tcod.event.KeySym.SLASH, mod=tcod.event.Modifier.SHIFT
         )
 
         menu.handle_input(event)
@@ -138,8 +133,7 @@ class TestKeyboardBindingModifierIntegration:
 
         # Create Shift+Semicolon event (typically unbound)
         event = InputTestHelper.create_keyboard_event(
-            tcod.event.KeySym.SEMICOLON,
-            mod=tcod.event.Modifier.SHIFT
+            tcod.event.KeySym.SEMICOLON, mod=tcod.event.Modifier.SHIFT
         )
 
         menu.handle_input(event)
@@ -170,16 +164,14 @@ class TestKeyboardBindingModifierIntegration:
 
         # Step 2: Press Shift alone (should be ignored)
         shift_event = InputTestHelper.create_keyboard_event(
-            tcod.event.KeySym.LSHIFT,
-            mod=tcod.event.Modifier.SHIFT
+            tcod.event.KeySym.LSHIFT, mod=tcod.event.Modifier.SHIFT
         )
         menu.handle_input(shift_event)
         assert menu.binding_mode is True, "Shift alone should not create binding"
 
         # Step 3: Press Shift+/ to create the binding
         slash_event = InputTestHelper.create_keyboard_event(
-            tcod.event.KeySym.SLASH,
-            mod=tcod.event.Modifier.SHIFT
+            tcod.event.KeySym.SLASH, mod=tcod.event.Modifier.SHIFT
         )
         menu.handle_input(slash_event)
 
@@ -221,9 +213,7 @@ class TestModifierBindingSaveLoad:
 
         # Add a custom binding with Shift modifier
         mapper.add_keyboard_binding(
-            InputAction.TOGGLE_HELP,
-            tcod.event.KeySym.SLASH,
-            modifier=tcod.event.Modifier.SHIFT
+            InputAction.TOGGLE_HELP, tcod.event.KeySym.SLASH, modifier=tcod.event.Modifier.SHIFT
         )
 
         # Save bindings
@@ -241,16 +231,12 @@ class TestModifierBindingSaveLoad:
 
         # Verify the binding works - Shift+/ should trigger TOGGLE_HELP
         action = new_mapper.get_action_for_key(
-            tcod.event.KeySym.SLASH,
-            modifier=tcod.event.Modifier.SHIFT
+            tcod.event.KeySym.SLASH, modifier=tcod.event.Modifier.SHIFT
         )
         assert action == InputAction.TOGGLE_HELP
 
         # Verify plain / does NOT trigger TOGGLE_HELP
-        action_plain = new_mapper.get_action_for_key(
-            tcod.event.KeySym.SLASH,
-            modifier=0
-        )
+        action_plain = new_mapper.get_action_for_key(tcod.event.KeySym.SLASH, modifier=0)
         assert action_plain != InputAction.TOGGLE_HELP
 
     def test_save_load_multiple_modifiers(self):
@@ -259,11 +245,7 @@ class TestModifierBindingSaveLoad:
 
         # Add Ctrl+Shift+S binding
         ctrl_shift = tcod.event.Modifier.CTRL | tcod.event.Modifier.SHIFT
-        mapper.add_keyboard_binding(
-            InputAction.WAIT,
-            tcod.event.KeySym.S,
-            modifier=ctrl_shift
-        )
+        mapper.add_keyboard_binding(InputAction.WAIT, tcod.event.KeySym.S, modifier=ctrl_shift)
 
         # Save and reload
         keyboard_bindings, gamepad_bindings = mapper.save_custom_bindings()
@@ -271,10 +253,7 @@ class TestModifierBindingSaveLoad:
         new_mapper.load_custom_bindings(keyboard_bindings, gamepad_bindings)
 
         # Verify Ctrl+Shift+S triggers WAIT
-        action = new_mapper.get_action_for_key(
-            tcod.event.KeySym.S,
-            modifier=ctrl_shift
-        )
+        action = new_mapper.get_action_for_key(tcod.event.KeySym.S, modifier=ctrl_shift)
         assert action == InputAction.WAIT
 
         # Plain S should still be MOVE_SOUTH (default)
@@ -289,9 +268,7 @@ class TestModifierBindingSaveLoad:
         mapper.add_keyboard_binding(InputAction.WAIT, tcod.event.KeySym.T)
         # Add modifier binding
         mapper.add_keyboard_binding(
-            InputAction.TOGGLE_HELP,
-            tcod.event.KeySym.H,
-            modifier=tcod.event.Modifier.SHIFT
+            InputAction.TOGGLE_HELP, tcod.event.KeySym.H, modifier=tcod.event.Modifier.SHIFT
         )
 
         # Save and reload
@@ -304,8 +281,7 @@ class TestModifierBindingSaveLoad:
 
         # Verify Shift+H triggers TOGGLE_HELP
         action = new_mapper.get_action_for_key(
-            tcod.event.KeySym.H,
-            modifier=tcod.event.Modifier.SHIFT
+            tcod.event.KeySym.H, modifier=tcod.event.Modifier.SHIFT
         )
         assert action == InputAction.TOGGLE_HELP
 

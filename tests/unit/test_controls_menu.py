@@ -16,15 +16,16 @@ import tcod.event
 
 from game_input_actions import InputAction, InputContext
 
-
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def settings():
     """Create a GameSettings instance for testing."""
     from game_config import GameSettings
+
     return GameSettings()
 
 
@@ -32,6 +33,7 @@ def settings():
 def input_mapper():
     """Create an InputMapper instance for testing."""
     from game_input_mappings import InputMapper
+
     return InputMapper()
 
 
@@ -45,12 +47,13 @@ def console():
 # Helper Function Tests
 # =============================================================================
 
+
 class TestKeyDisplayNames:
     """Test key_sym_to_display_name function."""
 
     def test_special_keys_have_readable_names(self):
         """Special keys should have human-readable names."""
-        from game_menu_controls import key_sym_to_display_name
+        from game_input_mappings import key_sym_to_display_name
 
         assert key_sym_to_display_name(tcod.event.KeySym.SPACE) == "Space"
         assert key_sym_to_display_name(tcod.event.KeySym.RETURN) == "Enter"
@@ -58,7 +61,7 @@ class TestKeyDisplayNames:
 
     def test_arrow_keys(self):
         """Arrow keys should have readable names (Unicode arrows)."""
-        from game_menu_controls import key_sym_to_display_name
+        from game_input_mappings import key_sym_to_display_name
 
         assert key_sym_to_display_name(tcod.event.KeySym.UP) == "↑"
         assert key_sym_to_display_name(tcod.event.KeySym.DOWN) == "↓"
@@ -67,14 +70,14 @@ class TestKeyDisplayNames:
 
     def test_letter_keys(self):
         """Letter keys should return uppercase letters."""
-        from game_menu_controls import key_sym_to_display_name
+        from game_input_mappings import key_sym_to_display_name
 
         assert key_sym_to_display_name(tcod.event.KeySym.W) == "W"
         assert key_sym_to_display_name(tcod.event.KeySym.A) == "A"
 
     def test_numpad_keys(self):
         """Numpad keys should have readable names."""
-        from game_menu_controls import key_sym_to_display_name
+        from game_input_mappings import key_sym_to_display_name
 
         assert key_sym_to_display_name(tcod.event.KeySym.KP_8) == "Numpad 8"
         assert key_sym_to_display_name(tcod.event.KeySym.KP_ENTER) == "Numpad Enter"
@@ -86,6 +89,7 @@ class TestButtonDisplayNames:
     def test_face_buttons(self):
         """Face buttons should have readable names."""
         from game_menu_controls import button_to_display_name
+
         CB = tcod.sdl.joystick.ControllerButton
 
         assert button_to_display_name(CB.A) == "A"
@@ -96,6 +100,7 @@ class TestButtonDisplayNames:
     def test_shoulder_buttons(self):
         """Shoulder buttons should have readable names."""
         from game_menu_controls import button_to_display_name
+
         CB = tcod.sdl.joystick.ControllerButton
 
         assert button_to_display_name(CB.LEFTSHOULDER) == "LB"
@@ -104,6 +109,7 @@ class TestButtonDisplayNames:
     def test_dpad(self):
         """D-pad buttons should have readable names."""
         from game_menu_controls import button_to_display_name
+
         CB = tcod.sdl.joystick.ControllerButton
 
         assert button_to_display_name(CB.DPAD_UP) == "D-Up"
@@ -116,6 +122,7 @@ class TestAxisDisplayNames:
     def test_triggers(self):
         """Triggers should have readable names."""
         from game_menu_controls import axis_to_display_name
+
         CA = tcod.sdl.joystick.ControllerAxis
 
         assert axis_to_display_name(CA.TRIGGERLEFT) == "LT"
@@ -125,6 +132,7 @@ class TestAxisDisplayNames:
 # =============================================================================
 # ControlsMenuHub Tests
 # =============================================================================
+
 
 class TestControlsMenuHub:
     """Tests for ControlsMenuHub class."""
@@ -220,8 +228,6 @@ class TestControlsMenuHub:
     def test_instructions_fit_within_box_bounds(self, settings):
         """Instructions text should fit within the menu box width."""
         from game_menu_controls import ControlsMenuHub
-        from game_menu_utilities import MenuRenderingUtils
-        from game_config import GameConfig
 
         hub = ControlsMenuHub(settings, None)
 
@@ -241,19 +247,22 @@ class TestControlsMenuHub:
 
         # Check glyph mode instructions fit
         glyph_instructions = "Arrows | Enter:Select | ESC:Back"
-        assert len(glyph_instructions) < glyph_box_width, \
-            f"Glyph instructions ({len(glyph_instructions)} chars) exceed box width ({glyph_box_width})"
+        assert (
+            len(glyph_instructions) < glyph_box_width
+        ), f"Glyph instructions ({len(glyph_instructions)} chars) exceed box width ({glyph_box_width})"
 
         # Check graphics mode instructions fit (must be MUCH shorter - box is 28, content is 26)
         graphics_instructions = "D-Pad | A:Ok | B:Back"
         graphics_content_width = graphics_box_width - 2  # Account for box borders
-        assert len(graphics_instructions) < graphics_content_width, \
-            f"Graphics instructions ({len(graphics_instructions)} chars) exceed content width ({graphics_content_width})"
+        assert (
+            len(graphics_instructions) < graphics_content_width
+        ), f"Graphics instructions ({len(graphics_instructions)} chars) exceed content width ({graphics_content_width})"
 
 
 # =============================================================================
 # KeyboardBindingsMenu Tests
 # =============================================================================
+
 
 class TestKeyboardBindingsMenu:
     """Tests for KeyboardBindingsMenu class."""
@@ -358,6 +367,7 @@ class TestKeyboardBindingsMenu:
 # =============================================================================
 # GamepadSettingsMenu Tests
 # =============================================================================
+
 
 class TestGamepadSettingsMenu:
     """Tests for GamepadSettingsMenu class."""
@@ -468,6 +478,7 @@ class TestGamepadSettingsMenu:
 # GamepadBindingsMenu Tests
 # =============================================================================
 
+
 class TestGamepadBindingsMenu:
     """Tests for GamepadBindingsMenu class."""
 
@@ -546,6 +557,7 @@ class TestGamepadBindingsMenu:
 # =============================================================================
 # KeyboardBindingsMenu Binding Mode Tests
 # =============================================================================
+
 
 class TestKeyboardBindingModeInput:
     """Tests for keyboard binding mode input handling."""
@@ -663,6 +675,7 @@ class TestKeyboardBindingModeInput:
 # KeyboardBindingsMenu Conflict Dialog Tests
 # =============================================================================
 
+
 class TestKeyboardConflictDialog:
     """Tests for keyboard conflict dialog handling."""
 
@@ -765,6 +778,7 @@ class TestKeyboardConflictDialog:
 # GamepadBindingsMenu Tab Switching Tests
 # =============================================================================
 
+
 class TestGamepadTabSwitching:
     """Tests for gamepad bindings menu tab switching."""
 
@@ -856,6 +870,7 @@ class TestGamepadTabSwitching:
 # GamepadBindingsMenu Binding Mode Tests
 # =============================================================================
 
+
 class TestGamepadBindingModeInput:
     """Tests for gamepad binding mode input handling."""
 
@@ -902,6 +917,7 @@ class TestGamepadBindingModeInput:
 # Gamepad Button Actions in Controls Menus (X=Default, Y=Reset)
 # =============================================================================
 
+
 class TestGamepadButtonActionsInKeyboardMenu:
     """Tests for gamepad X=Default and Y=Reset in keyboard bindings menu."""
 
@@ -945,6 +961,7 @@ class TestGamepadButtonActionsInGamepadMenu:
     def test_x_button_clears_binding_in_binding_mode(self, settings, input_mapper):
         """X button should clear all bindings for action in binding mode."""
         from game_menu_controls import GamepadBindingsMenu
+
         CB = tcod.sdl.joystick.ControllerButton
 
         # Add a custom binding first
@@ -963,6 +980,7 @@ class TestGamepadButtonActionsInGamepadMenu:
     def test_y_button_resets_all_bindings(self, settings, input_mapper):
         """Y button should reset all gamepad bindings to defaults."""
         from game_menu_controls import GamepadBindingsMenu
+
         CB = tcod.sdl.joystick.ControllerButton
 
         # Add some custom bindings
@@ -981,6 +999,7 @@ class TestGamepadButtonActionsInGamepadMenu:
 # =============================================================================
 # Reset to Defaults Tests
 # =============================================================================
+
 
 class TestResetToDefaults:
     """Tests for reset to defaults functionality."""
@@ -1001,6 +1020,7 @@ class TestResetToDefaults:
     def test_gamepad_reset_clears_custom_bindings(self, settings, input_mapper):
         """Reset gamepad should clear all custom gamepad bindings."""
         from game_menu_controls import GamepadBindingsMenu
+
         CB = tcod.sdl.joystick.ControllerButton
 
         # Add some custom bindings
@@ -1034,6 +1054,7 @@ class TestResetToDefaults:
     def test_r_key_triggers_gamepad_reset(self, settings, input_mapper):
         """R key should trigger reset in gamepad bindings menu."""
         from game_menu_controls import GamepadBindingsMenu
+
         CB = tcod.sdl.joystick.ControllerButton
 
         # Add custom binding
@@ -1055,6 +1076,7 @@ class TestResetToDefaults:
 # =============================================================================
 # Modifier Key Handling Tests
 # =============================================================================
+
 
 class TestModifierKeyHandling:
     """Tests for modifier key handling in keyboard binding mode.
@@ -1203,6 +1225,7 @@ class TestModifierKeyHandling:
 # Settings Menu Separator Tests
 # =============================================================================
 
+
 class TestSettingsMenuSeparator:
     """Tests for visual separators in the settings menu.
 
@@ -1232,8 +1255,9 @@ class TestSettingsMenuSeparator:
         assert separator_index >= 0, "Export Debug Package is first option (no room for separator)"
 
         separator_option = menu.options[separator_index]
-        assert separator_option.get("type") == "separator", \
-            f"Expected separator before Export Debug Package, found: {separator_option}"
+        assert (
+            separator_option.get("type") == "separator"
+        ), f"Expected separator before Export Debug Package, found: {separator_option}"
 
     def test_separator_renders_as_blank_line_in_classic_mode(self, settings, console):
         """Separator should render as blank line in classic (glyph) mode."""

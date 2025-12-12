@@ -150,7 +150,9 @@ class EnemyManager:
             return
 
         # Find nearest patrol point (grid distance for gameplay)
-        distances = [(i, enemy.position.grid_distance_to(p)) for i, p in enumerate(enemy.patrol_points)]
+        distances = [
+            (i, enemy.position.grid_distance_to(p)) for i, p in enumerate(enemy.patrol_points)
+        ]
         nearest_index, min_distance = min(distances, key=lambda x: x[1])
 
         # Advance if already at nearest point

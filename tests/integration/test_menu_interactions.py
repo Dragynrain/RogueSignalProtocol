@@ -256,7 +256,11 @@ class TestMenuMouseInteractions:
             start_y = box_top + 5
 
             # Calculate render_index for Back (skipping separators)
-            render_index = sum(1 for i, opt in enumerate(menu.options) if i < back_index and opt.get("type") != "separator")
+            render_index = sum(
+                1
+                for i, opt in enumerate(menu.options)
+                if i < back_index and opt.get("type") != "separator"
+            )
             option_y = start_y + (render_index * spacing)
 
             event = Mock()

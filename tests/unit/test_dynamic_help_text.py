@@ -5,9 +5,6 @@ Verifies that help hints at the bottom of screens dynamically reflect
 the current key/button bindings, updating when users remap controls.
 """
 
-import pytest
-import tcod.event
-
 from game_input_actions import InputAction, InputContext
 from game_input_mappings import InputMapper
 
@@ -40,11 +37,7 @@ class TestDynamicHelpText:
 
         # Remap WAIT action (which has a default binding) to test custom bindings
         # The custom bindings format uses per-context structure
-        custom_bindings = {
-            "GAMEPLAY": {
-                "WAIT": ["T"]  # Remap Wait to T key
-            }
-        }
+        custom_bindings = {"GAMEPLAY": {"WAIT": ["T"]}}  # Remap Wait to T key
         mapper.load_custom_bindings(custom_bindings, {})
 
         hint = mapper.get_key_hint(InputAction.WAIT)
@@ -179,18 +172,20 @@ class TestDeviceAwareHints:
     def setup_method(self):
         """Reset device tracker before each test."""
         from game_input_device_tracker import reset_to_default
+
         reset_to_default()
 
     def teardown_method(self):
         """Reset device tracker after each test to prevent pollution."""
         from game_input_device_tracker import reset_to_default
+
         reset_to_default()
 
     def test_confirm_hint_keyboard_mode(self):
         """In keyboard mode, confirm hint shows keyboard key only."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_confirm_hint_for_device
         from game_input_actions import InputContext
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         hint = get_confirm_hint_for_device(InputContext.MAIN_MENU)
@@ -201,9 +196,9 @@ class TestDeviceAwareHints:
 
     def test_confirm_hint_gamepad_mode(self):
         """In gamepad mode, confirm hint shows gamepad button only."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_confirm_hint_for_device
         from game_input_actions import InputContext
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.GAMEPAD)
         hint = get_confirm_hint_for_device(InputContext.MAIN_MENU)
@@ -214,9 +209,9 @@ class TestDeviceAwareHints:
 
     def test_cancel_hint_keyboard_mode(self):
         """In keyboard mode, cancel hint shows keyboard key only."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_cancel_hint_for_device
         from game_input_actions import InputContext
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         hint = get_cancel_hint_for_device(InputContext.MAIN_MENU)
@@ -226,9 +221,9 @@ class TestDeviceAwareHints:
 
     def test_cancel_hint_gamepad_mode(self):
         """In gamepad mode, cancel hint shows gamepad button only."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_cancel_hint_for_device
         from game_input_actions import InputContext
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.GAMEPAD)
         hint = get_cancel_hint_for_device(InputContext.MAIN_MENU)
@@ -238,8 +233,8 @@ class TestDeviceAwareHints:
 
     def test_dialogue_confirm_option_keyboard(self):
         """Dialogue confirm option shows [Y] in keyboard mode."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_dialogue_confirm_option_for_device
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         option = get_dialogue_confirm_option_for_device("Yes")
@@ -251,8 +246,8 @@ class TestDeviceAwareHints:
 
     def test_dialogue_confirm_option_gamepad(self):
         """Dialogue confirm option shows [A] in gamepad mode."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_dialogue_confirm_option_for_device
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.GAMEPAD)
         option = get_dialogue_confirm_option_for_device("Yes")
@@ -264,8 +259,8 @@ class TestDeviceAwareHints:
 
     def test_dialogue_cancel_option_keyboard(self):
         """Dialogue cancel option shows [N] in keyboard mode."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_dialogue_cancel_option_for_device
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         option = get_dialogue_cancel_option_for_device("No")
@@ -275,8 +270,8 @@ class TestDeviceAwareHints:
 
     def test_dialogue_cancel_option_gamepad(self):
         """Dialogue cancel option shows [B] in gamepad mode."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_dialogue_cancel_option_for_device
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.GAMEPAD)
         option = get_dialogue_cancel_option_for_device("No")
@@ -286,8 +281,8 @@ class TestDeviceAwareHints:
 
     def test_nav_hint_keyboard_mode(self):
         """Nav hint shows keyboard keys in keyboard mode."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_nav_hint_for_device
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         hint = get_nav_hint_for_device()
@@ -297,8 +292,8 @@ class TestDeviceAwareHints:
 
     def test_nav_hint_gamepad_mode(self):
         """Nav hint shows D-Pad in gamepad mode."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_nav_hint_for_device
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.GAMEPAD)
         hint = get_nav_hint_for_device()
@@ -308,18 +303,15 @@ class TestDeviceAwareHints:
 
     def test_explicit_device_override(self):
         """Can explicitly specify device to override auto-detection."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_confirm_hint_for_device
         from game_input_actions import InputContext
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         # Set to keyboard mode
         set_last_device(InputDeviceType.KEYBOARD)
 
         # But explicitly request gamepad hint
-        hint = get_confirm_hint_for_device(
-            InputContext.MAIN_MENU,
-            device=InputDeviceType.GAMEPAD
-        )
+        hint = get_confirm_hint_for_device(InputContext.MAIN_MENU, device=InputDeviceType.GAMEPAD)
 
         # Should show gamepad hint despite keyboard mode
         assert "A" in hint
@@ -332,13 +324,14 @@ class TestEndToEndDeviceSwitching:
     def setup_method(self):
         """Reset device tracker before each test."""
         from game_input_device_tracker import InputDeviceType, set_last_device
+
         set_last_device(InputDeviceType.KEYBOARD)
 
     def test_menu_help_switches_on_device_change(self):
         """Menu help text changes when device changes."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_menu_help
         from game_input_actions import InputContext
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         # Start with keyboard
         set_last_device(InputDeviceType.KEYBOARD)
@@ -361,8 +354,8 @@ class TestEndToEndDeviceSwitching:
 
     def test_dialogue_options_switch_on_device_change(self):
         """Dialogue options change when device changes."""
+        from game_help_hints import get_dialogue_cancel_option, get_dialogue_confirm_option
         from game_input_device_tracker import InputDeviceType, set_last_device
-        from game_help_hints import get_dialogue_confirm_option, get_dialogue_cancel_option
 
         # Keyboard mode
         set_last_device(InputDeviceType.KEYBOARD)
@@ -386,8 +379,8 @@ class TestEndToEndDeviceSwitching:
 
     def test_inventory_help_switches_on_device_change(self):
         """Inventory help text changes when device changes."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_inventory_help
+        from game_input_device_tracker import InputDeviceType, set_last_device
 
         set_last_device(InputDeviceType.KEYBOARD)
         kb_help = get_inventory_help()
@@ -407,18 +400,21 @@ class TestGraphicsModeWidthLimits:
     def setup_method(self):
         """Reset device tracker before each test."""
         from game_input_device_tracker import InputDeviceType, set_last_device
+
         set_last_device(InputDeviceType.KEYBOARD)
 
     def test_main_menu_help_fits_keyboard(self):
         """Main menu help fits in graphics box (keyboard)."""
         from game_help_hints import get_main_menu_help
+
         help_text = get_main_menu_help(use_graphics_mode=True)
         assert len(help_text) <= self.MAX_WIDTH, f"'{help_text}' is {len(help_text)} chars"
 
     def test_main_menu_help_fits_gamepad(self):
         """Main menu help fits in graphics box (gamepad)."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_main_menu_help
+        from game_input_device_tracker import InputDeviceType, set_last_device
+
         set_last_device(InputDeviceType.GAMEPAD)
         help_text = get_main_menu_help(use_graphics_mode=True)
         assert len(help_text) <= self.MAX_WIDTH, f"'{help_text}' is {len(help_text)} chars"
@@ -426,13 +422,15 @@ class TestGraphicsModeWidthLimits:
     def test_about_menu_help_fits_keyboard(self):
         """About menu help fits in graphics box (keyboard)."""
         from game_help_hints import get_about_menu_help
+
         help_text = get_about_menu_help(use_graphics_mode=True)
         assert len(help_text) <= self.MAX_WIDTH, f"'{help_text}' is {len(help_text)} chars"
 
     def test_about_menu_help_fits_gamepad(self):
         """About menu help fits in graphics box (gamepad)."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_about_menu_help
+        from game_input_device_tracker import InputDeviceType, set_last_device
+
         set_last_device(InputDeviceType.GAMEPAD)
         help_text = get_about_menu_help(use_graphics_mode=True)
         assert len(help_text) <= self.MAX_WIDTH, f"'{help_text}' is {len(help_text)} chars"
@@ -440,13 +438,15 @@ class TestGraphicsModeWidthLimits:
     def test_settings_menu_help_fits_keyboard(self):
         """Settings menu help fits in graphics box (keyboard)."""
         from game_help_hints import get_settings_menu_help
+
         help_text = get_settings_menu_help(use_graphics_mode=True)
         assert len(help_text) <= self.MAX_WIDTH, f"'{help_text}' is {len(help_text)} chars"
 
     def test_settings_menu_help_fits_gamepad(self):
         """Settings menu help fits in graphics box (gamepad)."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_settings_menu_help
+        from game_input_device_tracker import InputDeviceType, set_last_device
+
         set_last_device(InputDeviceType.GAMEPAD)
         help_text = get_settings_menu_help(use_graphics_mode=True)
         assert len(help_text) <= self.MAX_WIDTH, f"'{help_text}' is {len(help_text)} chars"
@@ -454,13 +454,15 @@ class TestGraphicsModeWidthLimits:
     def test_controls_hub_help_fits_keyboard(self):
         """Controls hub help fits in graphics box (keyboard)."""
         from game_help_hints import get_controls_hub_help
+
         help_text = get_controls_hub_help(use_graphics_mode=True)
         assert len(help_text) <= self.MAX_WIDTH, f"'{help_text}' is {len(help_text)} chars"
 
     def test_controls_hub_help_fits_gamepad(self):
         """Controls hub help fits in graphics box (gamepad)."""
-        from game_input_device_tracker import InputDeviceType, set_last_device
         from game_help_hints import get_controls_hub_help
+        from game_input_device_tracker import InputDeviceType, set_last_device
+
         set_last_device(InputDeviceType.GAMEPAD)
         help_text = get_controls_hub_help(use_graphics_mode=True)
         assert len(help_text) <= self.MAX_WIDTH, f"'{help_text}' is {len(help_text)} chars"
@@ -524,8 +526,9 @@ class TestGamepadControlsHelpPageDynamic:
 
     def test_get_gamepad_controls_reflects_remapped_wait_button(self):
         """WAIT remapped to B shows B instead of A in help."""
-        from game_help_content import HelpContent
         import tcod.sdl.joystick
+
+        from game_help_content import HelpContent
 
         mapper = InputMapper()
         # Remap WAIT from A (default) to B in GAMEPLAY context
@@ -540,14 +543,13 @@ class TestGamepadControlsHelpPageDynamic:
 
     def test_get_gamepad_controls_reflects_remapped_inventory_button(self):
         """TOGGLE_INVENTORY remapped to X shows X instead of Y."""
-        from game_help_content import HelpContent
         import tcod.sdl.joystick
+
+        from game_help_content import HelpContent
 
         mapper = InputMapper()
         CB = tcod.sdl.joystick.ControllerButton
-        mapper.add_gamepad_binding(
-            InputAction.TOGGLE_INVENTORY, CB.X, InputContext.GAMEPLAY
-        )
+        mapper.add_gamepad_binding(InputAction.TOGGLE_INVENTORY, CB.X, InputContext.GAMEPLAY)
 
         controls = HelpContent.get_gamepad_controls(mapper=mapper)
         inv_btn = self._find_control(controls["gameplay"], "Inventory")
@@ -557,8 +559,9 @@ class TestGamepadControlsHelpPageDynamic:
 
     def test_get_gamepad_controls_reflects_remapped_confirm_in_menus(self):
         """CONFIRM remapped in MAIN_MENU context shows in menus section."""
-        from game_help_content import HelpContent
         import tcod.sdl.joystick
+
+        from game_help_content import HelpContent
 
         mapper = InputMapper()
         CB = tcod.sdl.joystick.ControllerButton
@@ -584,8 +587,9 @@ class TestGamepadControlsHelpPageDynamic:
 
     def test_analog_controls_remain_static(self):
         """Analog stick controls (movement) don't change with remapping."""
-        from game_help_content import HelpContent
         import tcod.sdl.joystick
+
+        from game_help_content import HelpContent
 
         mapper = InputMapper()
         # Try remapping something random

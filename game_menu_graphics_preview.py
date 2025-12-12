@@ -407,9 +407,7 @@ class GraphicsPreviewMenu(BaseInputHandler):
 
         # Instructions - device-aware
         instructions = get_graphics_preview_instructions()
-        render_char_safe(
-            console, 2, GameConfig.SCREEN_HEIGHT - 2, instructions, fg=Colors.CYAN
-        )
+        render_char_safe(console, 2, GameConfig.SCREEN_HEIGHT - 2, instructions, fg=Colors.CYAN)
 
     def _render_preview_map(self, console: tcod.console.Console):
         """Render the preview map showing all selected graphics."""
@@ -1015,10 +1013,13 @@ class GraphicsPreviewMenu(BaseInputHandler):
             scroll_offset = 0  # No scrolling needed
         else:
             # Keep selected item in view, with 5-item buffer from bottom
-            scroll_offset = max(0, min(
-                self.current_entity_index - visible_count + 6,  # Don't scroll past selected
-                total_entities - visible_count  # Don't scroll past end
-            ))
+            scroll_offset = max(
+                0,
+                min(
+                    self.current_entity_index - visible_count + 6,  # Don't scroll past selected
+                    total_entities - visible_count,  # Don't scroll past end
+                ),
+            )
 
         # Initialize arrow regions storage if not exists
         if not hasattr(self, "entity_arrow_regions"):

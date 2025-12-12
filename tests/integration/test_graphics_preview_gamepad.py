@@ -12,12 +12,11 @@ BUGS BEING TESTED:
 3. Auto-repeat system is not polled, causing erratic behavior
 """
 
-import pytest
-import tcod.sdl.joystick
 from unittest.mock import Mock
 
+import pytest
+
 from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
 
 
 class TestGraphicsPreviewGamepadInput:
@@ -26,8 +25,8 @@ class TestGraphicsPreviewGamepadInput:
     @pytest.fixture
     def graphics_preview_menu(self):
         """Create graphics preview menu for testing."""
-        from game_menu_graphics_preview import GraphicsPreviewMenu
         from game_graphics_tiles import TileManager
+        from game_menu_graphics_preview import GraphicsPreviewMenu
 
         # Create mock context
         context = Mock()
@@ -85,7 +84,7 @@ class TestGraphicsPreviewGamepadInput:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-            value=25000  # Right direction (past threshold)
+            value=25000,  # Right direction (past threshold)
         )
 
         # Handle the event
@@ -95,8 +94,7 @@ class TestGraphicsPreviewGamepadInput:
         new_variant = menu.selected_variants[entity_key]
 
         # Variant should change (cycle right)
-        assert new_variant != initial_variant, \
-            "Left stick horizontal should cycle variants"
+        assert new_variant != initial_variant, "Left stick horizontal should cycle variants"
 
     def test_left_stick_horizontal_left_cycles_variant_backward(self, graphics_preview_menu):
         """
@@ -117,7 +115,7 @@ class TestGraphicsPreviewGamepadInput:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-            value=-25000  # Left direction (past threshold)
+            value=-25000,  # Left direction (past threshold)
         )
 
         # Handle the event
@@ -127,8 +125,7 @@ class TestGraphicsPreviewGamepadInput:
         new_variant = menu.selected_variants[entity_key]
 
         # Variant should change (cycle left)
-        assert new_variant != initial_variant, \
-            "Left stick horizontal should cycle variants"
+        assert new_variant != initial_variant, "Left stick horizontal should cycle variants"
 
     # --------------------------------------------------------------------------
     # D-pad Variant Cycling Tests
@@ -149,7 +146,7 @@ class TestGraphicsPreviewGamepadInput:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
-            pressed=True
+            pressed=True,
         )
 
         result = menu.handle_input(event)
@@ -158,8 +155,7 @@ class TestGraphicsPreviewGamepadInput:
         new_variant = menu.selected_variants[entity_key]
 
         # D-pad should work for variant cycling
-        assert new_variant != initial_variant, \
-            "D-pad RIGHT should cycle variant forward"
+        assert new_variant != initial_variant, "D-pad RIGHT should cycle variant forward"
 
     # NOTE: test_dpad_release_clears_held_state removed - covered by test_gamepad_auto_repeat.py
 
@@ -180,15 +176,16 @@ class TestGraphicsPreviewGamepadInput:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_DOWN,
-            pressed=True
+            pressed=True,
         )
 
         menu.handle_input(event)
 
         # Should move exactly one position
         expected_index = (initial_index + 1) % len(menu.entity_types)
-        assert menu.current_entity_index == expected_index, \
-            "Single D-pad press should move selection exactly once"
+        assert (
+            menu.current_entity_index == expected_index
+        ), "Single D-pad press should move selection exactly once"
 
     # --------------------------------------------------------------------------
     # Left Stick Vertical Movement Tests (Should work)
@@ -207,14 +204,15 @@ class TestGraphicsPreviewGamepadInput:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTY,
-            value=25000  # Down direction (past threshold)
+            value=25000,  # Down direction (past threshold)
         )
 
         menu.handle_input(event)
 
         # Should navigate down the list
-        assert menu.current_entity_index != initial_index, \
-            "Left stick vertical should navigate entity list"
+        assert (
+            menu.current_entity_index != initial_index
+        ), "Left stick vertical should navigate entity list"
 
     # --------------------------------------------------------------------------
     # Integration Test: Real-world scenario
@@ -239,7 +237,7 @@ class TestGraphicsPreviewGamepadInput:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-            value=25000  # Right direction
+            value=25000,  # Right direction
         )
 
         menu.handle_input(stick_event)
@@ -250,16 +248,18 @@ class TestGraphicsPreviewGamepadInput:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
-            pressed=True
+            pressed=True,
         )
 
         menu.handle_input(dpad_event)
         variant_after_dpad = menu.selected_variants[entity_key]
 
         # At least ONE of them should have changed the variant
-        assert variant_after_stick != initial_variant or variant_after_dpad != variant_after_stick, \
-            "Either stick or D-pad should cycle variants"
+        assert (
+            variant_after_stick != initial_variant or variant_after_dpad != variant_after_stick
+        ), "Either stick or D-pad should cycle variants"
 
         # Both should work
-        assert variant_after_stick != initial_variant, \
-            "Left stick horizontal should work for variant cycling!"
+        assert (
+            variant_after_stick != initial_variant
+        ), "Left stick horizontal should work for variant cycling!"

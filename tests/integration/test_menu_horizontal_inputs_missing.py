@@ -22,11 +22,12 @@ Expected behavior:
 import pytest
 import tcod.event
 import tcod.sdl.joystick
-from game_menu_settings import SettingsMenu
-from game_menu_help_lore import HelpMenu
+
 from game_config import GameSettings
 from game_input_actions import InputAction, InputContext
 from game_input_mappings import InputMapper
+from game_menu_help_lore import HelpMenu
+from game_menu_settings import SettingsMenu
 
 
 class TestSettingsMenuHorizontalInputs:
@@ -64,15 +65,17 @@ class TestSettingsMenuHorizontalInputs:
         assert result == "", "execute_action should return empty string for value adjustments"
 
         # Volume should have increased
-        assert settings_menu.settings.master_volume > initial_volume, \
-            "NAVIGATE_RIGHT should increase master volume"
+        assert (
+            settings_menu.settings.master_volume > initial_volume
+        ), "NAVIGATE_RIGHT should increase master volume"
 
         # Execute NAVIGATE_LEFT (should decrease volume)
         settings_menu.execute_action(InputAction.NAVIGATE_LEFT)
 
         # Volume should be back to initial
-        assert settings_menu.settings.master_volume == initial_volume, \
-            "NAVIGATE_LEFT should decrease master volume"
+        assert (
+            settings_menu.settings.master_volume == initial_volume
+        ), "NAVIGATE_LEFT should decrease master volume"
 
     def test_dpad_left_right_mapped_to_navigate_actions(self, input_mapper):
         """
@@ -85,21 +88,21 @@ class TestSettingsMenuHorizontalInputs:
 
         # Test D-pad LEFT button
         action_left = input_mapper.get_action_for_gamepad_button(
-            tcod.sdl.joystick.ControllerButton.DPAD_LEFT,
-            context
+            tcod.sdl.joystick.ControllerButton.DPAD_LEFT, context
         )
-        assert action_left == InputAction.NAVIGATE_LEFT, \
-            "BUG: D-pad LEFT not mapped in SETTINGS_MENU context! " \
+        assert action_left == InputAction.NAVIGATE_LEFT, (
+            "BUG: D-pad LEFT not mapped in SETTINGS_MENU context! "
             "Cannot adjust volumes/toggles with D-pad."
+        )
 
         # Test D-pad RIGHT button
         action_right = input_mapper.get_action_for_gamepad_button(
-            tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
-            context
+            tcod.sdl.joystick.ControllerButton.DPAD_RIGHT, context
         )
-        assert action_right == InputAction.NAVIGATE_RIGHT, \
-            "BUG: D-pad RIGHT not mapped in SETTINGS_MENU context! " \
+        assert action_right == InputAction.NAVIGATE_RIGHT, (
+            "BUG: D-pad RIGHT not mapped in SETTINGS_MENU context! "
             "Cannot adjust volumes/toggles with D-pad."
+        )
 
     def test_dpad_left_right_end_to_end(self, settings_menu):
         """
@@ -116,15 +119,16 @@ class TestSettingsMenuHorizontalInputs:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
-            pressed=True
+            pressed=True,
         )
 
         # Process the event
         result = settings_menu.handle_input(dpad_right_event)
 
         # Should have increased volume
-        assert settings_menu.settings.master_volume > 0.5, \
-            "BUG: D-pad RIGHT should increase master volume in Settings Menu"
+        assert (
+            settings_menu.settings.master_volume > 0.5
+        ), "BUG: D-pad RIGHT should increase master volume in Settings Menu"
 
     def test_left_stick_horizontal_movement_generates_navigate_actions(self, settings_menu):
         """
@@ -145,8 +149,9 @@ class TestSettingsMenuHorizontalInputs:
         result = settings_menu.execute_action(InputAction.NAVIGATE_RIGHT)
 
         # Volume should have increased
-        assert settings_menu.settings.master_volume > 0.5, \
-            "LEFT stick RIGHT (via NAVIGATE_RIGHT action) should increase master volume"
+        assert (
+            settings_menu.settings.master_volume > 0.5
+        ), "LEFT stick RIGHT (via NAVIGATE_RIGHT action) should increase master volume"
 
 
 class TestHelpMenuHorizontalInputs:
@@ -172,8 +177,9 @@ class TestHelpMenuHorizontalInputs:
 
         # Should have changed page (unless at last page)
         if initial_page < help_menu.total_pages - 1:
-            assert help_menu.current_page == initial_page + 1, \
-                "NAVIGATE_RIGHT should move to next page"
+            assert (
+                help_menu.current_page == initial_page + 1
+            ), "NAVIGATE_RIGHT should move to next page"
 
     def test_help_menu_dpad_left_right_already_mapped(self):
         """
@@ -185,18 +191,18 @@ class TestHelpMenuHorizontalInputs:
         context = InputContext.HELP
 
         action_left = mapper.get_action_for_gamepad_button(
-            tcod.sdl.joystick.ControllerButton.DPAD_LEFT,
-            context
+            tcod.sdl.joystick.ControllerButton.DPAD_LEFT, context
         )
-        assert action_left == InputAction.NAVIGATE_LEFT, \
-            "D-pad LEFT should be mapped in HELP context"
+        assert (
+            action_left == InputAction.NAVIGATE_LEFT
+        ), "D-pad LEFT should be mapped in HELP context"
 
         action_right = mapper.get_action_for_gamepad_button(
-            tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
-            context
+            tcod.sdl.joystick.ControllerButton.DPAD_RIGHT, context
         )
-        assert action_right == InputAction.NAVIGATE_RIGHT, \
-            "D-pad RIGHT should be mapped in HELP context"
+        assert (
+            action_right == InputAction.NAVIGATE_RIGHT
+        ), "D-pad RIGHT should be mapped in HELP context"
 
     def test_help_menu_left_stick_horizontal_movement(self, help_menu):
         """
@@ -210,7 +216,7 @@ class TestHelpMenuHorizontalInputs:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-            value=32767  # Full right
+            value=32767,  # Full right
         )
 
         initial_page = help_menu.current_page
@@ -218,14 +224,16 @@ class TestHelpMenuHorizontalInputs:
         # handle_axis_event should return NAVIGATE_RIGHT for X-axis in HELP context
         action = help_menu.gamepad_handler.handle_axis_event(axis_event, InputContext.HELP)
 
-        assert action == InputAction.NAVIGATE_RIGHT, \
-            f"Left stick RIGHT should return NAVIGATE_RIGHT in HELP context, got {action}"
+        assert (
+            action == InputAction.NAVIGATE_RIGHT
+        ), f"Left stick RIGHT should return NAVIGATE_RIGHT in HELP context, got {action}"
 
         # Execute the action to verify help menu responds correctly
         if initial_page < help_menu.total_pages - 1:
             help_menu.execute_action(action)
-            assert help_menu.current_page == initial_page + 1, \
-                "Left stick RIGHT should switch to next page in Help Menu"
+            assert (
+                help_menu.current_page == initial_page + 1
+            ), "Left stick RIGHT should switch to next page in Help Menu"
 
 
 class TestComprehensiveMenuInputMapping:
@@ -256,12 +264,10 @@ class TestComprehensiveMenuInputMapping:
 
         for context, menu_name in contexts_needing_horizontal:
             action_left = mapper.get_action_for_gamepad_button(
-                tcod.sdl.joystick.ControllerButton.DPAD_LEFT,
-                context
+                tcod.sdl.joystick.ControllerButton.DPAD_LEFT, context
             )
             action_right = mapper.get_action_for_gamepad_button(
-                tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
-                context
+                tcod.sdl.joystick.ControllerButton.DPAD_RIGHT, context
             )
 
             if action_left != InputAction.NAVIGATE_LEFT:
@@ -271,6 +277,6 @@ class TestComprehensiveMenuInputMapping:
 
         if failures:
             pytest.fail(
-                "BUG: Missing D-pad horizontal mappings:\n" +
-                "\n".join(f"  - {f}" for f in failures)
+                "BUG: Missing D-pad horizontal mappings:\n"
+                + "\n".join(f"  - {f}" for f in failures)
             )

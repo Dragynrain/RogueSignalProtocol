@@ -42,7 +42,16 @@ class CodeAnalyzer(ast.NodeVisitor):
             node.name.startswith("test_")
             or node.name.startswith("_")
             and node.name.endswith("_")
-            or node.name in ["__init__", "__str__", "__repr__", "setUp", "tearDown", "setup_method", "teardown_method"]
+            or node.name
+            in [
+                "__init__",
+                "__str__",
+                "__repr__",
+                "setUp",
+                "tearDown",
+                "setup_method",
+                "teardown_method",
+            ]
             or "fixture" in decorator_names
             or "pytest_fixture" in decorator_names
         ):

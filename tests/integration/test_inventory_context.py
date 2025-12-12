@@ -8,14 +8,11 @@ Tests validate inventory navigation, selection, and item use with:
 Inventory is critical for item management and tactical preparation!
 """
 
-import pytest
 from unittest.mock import Mock
-import tcod.event
-import tcod.sdl.joystick
 
-from game_input_actions import InputAction
 from game_engine import GameEngine
 from game_input import InputHandler
+from game_input_actions import InputAction
 
 
 class TestInventoryNavigation:
@@ -142,6 +139,7 @@ class TestInventoryContextPriority:
         handler = InputHandler(game, renderer=None)
 
         from game_input_actions import InputContext
+
         context = handler._get_current_context()
 
         assert context == InputContext.INVENTORY

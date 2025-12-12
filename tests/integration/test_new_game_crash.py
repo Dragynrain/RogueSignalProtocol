@@ -3,11 +3,10 @@ Test for new game crash with analog stick handler.
 
 Reproduces the AttributeError: 'AnalogStickHandler' object has no attribute 'get_left_stick_movement'
 """
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+
+from unittest.mock import Mock
+
 from game_input_analog import AnalogStickHandler
-from game_input_gamepad import GamepadInputHandler
-from game_input import InputHandler
 
 
 class TestNewGameCrash:
@@ -23,8 +22,9 @@ class TestNewGameCrash:
         analog_handler = AnalogStickHandler()
 
         # The method should exist and work
-        assert hasattr(analog_handler, 'get_left_stick_movement'), \
-            "get_left_stick_movement() should exist for swap_sticks cursor control"
+        assert hasattr(
+            analog_handler, "get_left_stick_movement"
+        ), "get_left_stick_movement() should exist for swap_sticks cursor control"
 
         # Test that it returns None when no input
         result = analog_handler.get_left_stick_movement()

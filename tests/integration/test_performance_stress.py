@@ -11,15 +11,16 @@ Test coverage:
 - Memory leaks from repeated actions
 """
 
+import time
+
 import pytest
 import tcod.event
 import tcod.sdl.joystick
-import time
 
-from game_engine import GameEngine
-from game_input import InputHandler
 from game_audio import NullSoundManager
 from game_config import GameSettings
+from game_engine import GameEngine
+from game_input import InputHandler
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton
@@ -67,7 +68,7 @@ class TestEventFloodHandling:
                 type="CONTROLLERAXISMOTION",
                 which=0,
                 axis=CA.LEFTX,
-                value=int((i % 10) * 3276.7)  # Vary value
+                value=int((i % 10) * 3276.7),  # Vary value
             )
             input_handler.handle_controller_axis(axis_event)
 
@@ -86,16 +87,10 @@ class TestEventFloodHandling:
         # Spam A button 50 times
         for i in range(50):
             press = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.A,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
             )
             release = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONUP",
-                which=0,
-                button=CB.A,
-                pressed=False
+                type="CONTROLLERBUTTONUP", which=0, button=CB.A, pressed=False
             )
             input_handler.handle_controller_button(press)
             input_handler.handle_controller_button(release)
@@ -130,10 +125,7 @@ class TestMemoryLeaks:
         for i in range(200):
             direction = CB.DPAD_UP if i % 2 == 0 else CB.DPAD_DOWN
             event = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=direction,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=direction, pressed=True
             )
             input_handler.handle_controller_button(event)
         # No exception after 200 navigations means no memory leak

@@ -24,16 +24,16 @@ from game_engine import GameEngine  # noqa: E402
 from game_entities import Colors  # noqa: E402
 from game_graphics_tiles import TileManager  # noqa: E402
 from game_input import InputHandler  # noqa: E402
-from game_input_actions import InputAction, InputContext  # noqa: E402
+from game_input_actions import InputAction  # noqa: E402
 from game_menu_about import AboutMenu  # noqa: E402
 from game_menu_achievements import AchievementsMenu  # noqa: E402
-from game_menu_graphics_preview import GraphicsPreviewMenu  # noqa: E402
 from game_menu_controls import (  # noqa: E402
     ControlsMenuHub,
-    KeyboardBindingsMenu,
-    GamepadSettingsMenu,
     GamepadBindingsMenu,
+    GamepadSettingsMenu,
+    KeyboardBindingsMenu,
 )
+from game_menu_graphics_preview import GraphicsPreviewMenu  # noqa: E402
 from game_menu_help_lore import LoreMenu, create_help_menu  # noqa: E402
 from game_menus import MainMenu, MenuBackground, SettingsMenu  # noqa: E402
 from game_mouse_utils import MenuMouseHandler  # noqa: E402
@@ -81,7 +81,9 @@ def load_tileset(settings: GameSettings = None):
         tile_size = GameConfig.TILE_SIZE_NORMAL()
 
     tileset = load_truetype_font_custom("KreativeSquare.ttf", tile_size, tile_size)
-    logging.debug(f"Loaded tileset with {tile_size}x{tile_size} tiles (ui_scale={settings.ui_scale if settings else 'default'})")
+    logging.debug(
+        f"Loaded tileset with {tile_size}x{tile_size} tiles (ui_scale={settings.ui_scale if settings else 'default'})"
+    )
     return tileset
 
 
@@ -149,8 +151,7 @@ def initialize_game_systems(
     # Create input mapper for controls menus (shares bindings with settings)
     input_mapper = InputMapper()
     input_mapper.load_custom_bindings(
-        settings.custom_keyboard_bindings,
-        settings.custom_gamepad_bindings
+        settings.custom_keyboard_bindings, settings.custom_gamepad_bindings
     )
 
     menus = {
@@ -181,8 +182,6 @@ def initialize_game_systems(
     menus["main_menu"] = MainMenu(background=menu_background, menus=menus)
 
     return menus
-
-
 
 
 def _run_graphics_preview_loop(graphics_preview_menu, console, context, settings):
@@ -228,9 +227,7 @@ def _run_graphics_preview_loop(graphics_preview_menu, console, context, settings
         for preview_event in tcod.event.wait(timeout=0.1):
             # Convert pixel coordinates to tile coordinates for mouse events
             if isinstance(preview_event, (tcod.event.MouseMotion, tcod.event.MouseButtonDown)):
-                converted_event = MenuMouseHandler.convert_to_tile_coords(
-                    preview_event, context
-                )
+                converted_event = MenuMouseHandler.convert_to_tile_coords(preview_event, context)
                 if converted_event is not None:
                     preview_event = converted_event
 
@@ -251,7 +248,9 @@ def _run_graphics_preview_loop(graphics_preview_menu, console, context, settings
                     graphics_preview_menu.export_selections()
                     exit_preview = True
                     break
-            elif isinstance(preview_event, tcod.event.ControllerButton) and not preview_event.pressed:
+            elif (
+                isinstance(preview_event, tcod.event.ControllerButton) and not preview_event.pressed
+            ):
                 # Handle gamepad button release events (needed for auto-repeat state)
                 graphics_preview_menu.handle_input(preview_event)
             elif isinstance(preview_event, tcod.event.ControllerAxis):
@@ -279,8 +278,16 @@ def _run_graphics_preview_loop(graphics_preview_menu, console, context, settings
 
 
 def _process_menu_action(
-    action, menus, menu_stack, current_menu, main_menu, settings, context, console,
-    active_game, menu_sound_manager
+    action,
+    menus,
+    menu_stack,
+    current_menu,
+    main_menu,
+    settings,
+    context,
+    console,
+    active_game,
+    menu_sound_manager,
 ):
     """
     Process a menu action and return updated state.
@@ -292,11 +299,7 @@ def _process_menu_action(
     """
     if action == "exit":
         # Save active game before exiting if one exists and player is alive
-        if (
-            active_game is not None
-            and active_game.player.cpu > 0
-            and not active_game.game_over
-        ):
+        if active_game is not None and active_game.player.cpu > 0 and not active_game.game_over:
             active_game.auto_save()
         menu_sound_manager.cleanup()
         return current_menu, (None, True)  # game=None, should_exit=True
@@ -336,7 +339,9 @@ def _process_menu_action(
                     logging.error(f"Failed to create TileManager: {e}")
                     settings.graphics_mode = "glyph"
 
-            menus["help_menu"] = create_help_menu(settings, menus["_context"], menus["_tile_manager"])
+            menus["help_menu"] = create_help_menu(
+                settings, menus["_context"], menus["_tile_manager"]
+            )
             menus["_help_menu_mode"] = settings.graphics_mode
         menu_stack.append(current_menu)
         return menus["help_menu"], None
@@ -402,6 +407,7 @@ def _process_menu_action(
                 return current_menu, (game, False)
             except Exception as e:
                 from game_save import SaveLoadError
+
                 if isinstance(e, SaveLoadError):
                     logging.error(f"Save load failed: {e}")
                     logging.info("Returning to main menu...")
@@ -412,6 +418,7 @@ def _process_menu_action(
     elif action == "new_game":
         menu_sound_manager.stop_music(fade_out_ms=1000)
         from game_achievements import AchievementManager
+
         AchievementManager.clear_pending_popups()
         game = GameEngine(settings=settings)
         return current_menu, (game, False)
@@ -420,7 +427,13 @@ def _process_menu_action(
 
 
 def handle_menu_navigation(
-    console, context, menus, settings, menu_sound_manager=None, active_game=None, shared_controllers=None
+    console,
+    context,
+    menus,
+    settings,
+    menu_sound_manager=None,
+    active_game=None,
+    shared_controllers=None,
 ):
     """
     Handle the main menu navigation loop.
@@ -443,15 +456,18 @@ def handle_menu_navigation(
         # Detect headless/test mode: if SDL video isn't initialized, use NullSoundManager
         try:
             import pygame
+
             if pygame.display.get_surface() is None:
                 # Headless mode (no display) - use null audio
                 from game_audio import NullSoundManager
+
                 menu_sound_manager = NullSoundManager(settings)
             else:
                 menu_sound_manager = SoundManager(settings)
         except Exception:
             # Pygame not initialized or error - use null audio
             from game_audio import NullSoundManager
+
             menu_sound_manager = NullSoundManager(settings)
 
     # DO NOT start menu music if level music is already playing
@@ -546,8 +562,16 @@ def handle_menu_navigation(
                 action = current_menu.handle_mouse_click(event)
                 if action and action != "":
                     current_menu, result = _process_menu_action(
-                        action, menus, menu_stack, current_menu, main_menu, settings,
-                        context, console, active_game, menu_sound_manager
+                        action,
+                        menus,
+                        menu_stack,
+                        current_menu,
+                        main_menu,
+                        settings,
+                        context,
+                        console,
+                        active_game,
+                        menu_sound_manager,
                     )
                     if result is not None:
                         return result
@@ -563,7 +587,7 @@ def handle_menu_navigation(
 
                 # Track controllers so game can pick them up (critical for hotplug during menu)
                 if shared_controllers is not None and event.type == "CONTROLLERDEVICEADDED":
-                    if hasattr(event, 'controller') and event.controller:
+                    if hasattr(event, "controller") and event.controller:
                         shared_controllers.add(event.controller)
                         try:
                             name = event.controller.name
@@ -582,7 +606,9 @@ def handle_menu_navigation(
                                 logging.info(f"Menu: Added controller (enum): {name}")
                                 break
 
-            elif isinstance(event, (tcod.event.ControllerButton, tcod.event.ControllerAxis, tcod.event.KeyDown)):
+            elif isinstance(
+                event, (tcod.event.ControllerButton, tcod.event.ControllerAxis, tcod.event.KeyDown)
+            ):
                 # PLAN architecture: Menu owns ALL input handling
                 # Menu.handle_input() uses InputMapper for both keyboard and gamepad
                 # NOTE: ONLY accept CONTROLLER* events (GameController API - recommended)
@@ -590,7 +616,9 @@ def handle_menu_navigation(
                 # IMPORTANT: This handles both CONTROLLERBUTTONDOWN and CONTROLLERBUTTONUP events
                 # Button-up (CONTROLLERBUTTONUP) clears held button state for auto-repeat
                 event_type_name = type(event).__name__
-                logging.debug(f"Menu Loop: Routing {event_type_name} to current_menu.handle_input()")
+                logging.debug(
+                    f"Menu Loop: Routing {event_type_name} to current_menu.handle_input()"
+                )
                 action = current_menu.handle_input(event)
                 logging.debug(f"Menu Loop: handle_input returned action={repr(action)}")
             else:
@@ -602,8 +630,16 @@ def handle_menu_navigation(
             # Process menu action (shared for both keyboard and gamepad)
             if action and action != "":
                 current_menu, result = _process_menu_action(
-                    action, menus, menu_stack, current_menu, main_menu, settings,
-                    context, console, active_game, menu_sound_manager
+                    action,
+                    menus,
+                    menu_stack,
+                    current_menu,
+                    main_menu,
+                    settings,
+                    context,
+                    console,
+                    active_game,
+                    menu_sound_manager,
                 )
                 if result is not None:
                     return result
@@ -611,22 +647,22 @@ def handle_menu_navigation(
         # REMOVED: Old polling-based navigation system (caused double-navigation bug)
         # NOW: Button repeat checking for D-pad auto-repeat
         # Check if any held navigation button should repeat
-        if hasattr(current_menu, 'gamepad_handler') and current_menu.gamepad_handler:
+        if hasattr(current_menu, "gamepad_handler") and current_menu.gamepad_handler:
             from game_input_actions import InputContext
 
             # Determine input context based on current menu type
             input_context = InputContext.MAIN_MENU  # Default
-            if hasattr(current_menu, '__class__'):
+            if hasattr(current_menu, "__class__"):
                 menu_name = current_menu.__class__.__name__
-                if 'Settings' in menu_name:
+                if "Settings" in menu_name:
                     input_context = InputContext.SETTINGS_MENU
-                elif 'Help' in menu_name:
+                elif "Help" in menu_name:
                     input_context = InputContext.HELP
-                elif 'About' in menu_name:
+                elif "About" in menu_name:
                     input_context = InputContext.ABOUT_MENU
-                elif 'Achievement' in menu_name:
+                elif "Achievement" in menu_name:
                     input_context = InputContext.ACHIEVEMENTS_SCREEN
-                elif 'Lore' in menu_name or 'Fragment' in menu_name:
+                elif "Lore" in menu_name or "Fragment" in menu_name:
                     input_context = InputContext.LORE_VIEWER
 
             # Check for button repeat
@@ -673,7 +709,10 @@ def handle_game_input_events(event, game, input_handler):
         return _handle_game_input_events_impl(event, game, input_handler)
     except Exception as e:
         import logging
-        logging.error(f"INPUT ERROR: Exception in event handler for {event.type}: {e}", exc_info=True)
+
+        logging.error(
+            f"INPUT ERROR: Exception in event handler for {event.type}: {e}", exc_info=True
+        )
         # Return True to continue playing instead of crashing
         return True, game
 
@@ -792,6 +831,7 @@ def main():
     # CRITICAL: Set SDL hints BEFORE any SDL initialization (before creating TCOD context)
     # Force SDL3 to use XInput on Windows for gamepad support
     import os
+
     os.environ["SDL_JOYSTICK_HIDAPI"] = "0"  # Disable HIDAPI
     os.environ["SDL_JOYSTICK_RAWINPUT"] = "0"  # Disable Raw Input
     os.environ["SDL_XINPUT_ENABLED"] = "1"  # Enable XInput (Windows native)
@@ -812,7 +852,8 @@ def main():
     settings = GameSettings()
 
     # Log platform detection results
-    from game_platform import get_platform_name, is_steam_deck
+    from game_platform import get_platform_name
+
     platform_name = get_platform_name()
     ui_scale = settings.get_effective_ui_scale()
     logging.info(f"Platform: {platform_name}, UI scale: {settings.ui_scale} -> {ui_scale}")
@@ -829,6 +870,7 @@ def main():
             # WINDOWS TIMING FIX: Give SDL a moment to enumerate XInput devices
             # On some systems, XInput detection isn't instant after init()
             import time
+
             time.sleep(0.1)  # 100ms delay for XInput enumeration
 
             # Get already-connected controllers (CONTROLLERDEVICEADDED only fires for hot-plugging)
@@ -843,7 +885,9 @@ def main():
                     logging.info(f"[STARTUP]   - {name}")
             else:
                 logging.debug("[STARTUP] No controllers connected at startup")
-                logging.debug("[STARTUP] Controllers may connect during runtime (hotplug supported)")
+                logging.debug(
+                    "[STARTUP] Controllers may connect during runtime (hotplug supported)"
+                )
 
             # Create background manager (loads conditionally based on graphics mode)
             menu_background = MenuBackground(context, settings)
@@ -870,7 +914,13 @@ def main():
                     # Pass active_game_session to handle_menu_navigation so it can resume
                     # Also pass initial_controllers so menu can track hotplugged controllers
                     game, should_exit = handle_menu_navigation(
-                        console, context, menus, settings, menu_sound_manager, active_game_session, initial_controllers
+                        console,
+                        context,
+                        menus,
+                        settings,
+                        menu_sound_manager,
+                        active_game_session,
+                        initial_controllers,
                     )
 
                     if should_exit:
@@ -896,9 +946,13 @@ def main():
 
                     # Use initial_controllers (now updated by menu if controllers connected during menu)
                     if initial_controllers:
-                        logging.info(f"[GAME START] Initializing with {len(initial_controllers)} controller(s)")
+                        logging.info(
+                            f"[GAME START] Initializing with {len(initial_controllers)} controller(s)"
+                        )
 
-                    input_handler = InputHandler(game, renderer=renderer, controllers=initial_controllers)
+                    input_handler = InputHandler(
+                        game, renderer=renderer, controllers=initial_controllers
+                    )
 
                 # Main game loop
                 last_render_time = time.time()
@@ -1073,24 +1127,37 @@ def main():
 
                         # GAMEPAD HEALTH MONITORING: Track controller events and warn on timeout
                         current_time_for_health = time.time()
-                        has_controller_event = False
                         for event in events:
-                            if isinstance(event, (tcod.event.ControllerButton, tcod.event.ControllerAxis)):
-                                has_controller_event = True
+                            if isinstance(
+                                event, (tcod.event.ControllerButton, tcod.event.ControllerAxis)
+                            ):
                                 last_controller_event_time = current_time_for_health
                                 break
 
                         # Periodic health check
-                        if current_time_for_health - last_controller_health_check >= controller_health_check_interval:
+                        if (
+                            current_time_for_health - last_controller_health_check
+                            >= controller_health_check_interval
+                        ):
                             last_controller_health_check = current_time_for_health
-                            controller_count = len(input_handler.gamepad_handler.controllers) if hasattr(input_handler, 'gamepad_handler') else 0
-                            time_since_last_event = current_time_for_health - last_controller_event_time
+                            controller_count = (
+                                len(input_handler.gamepad_handler.controllers)
+                                if hasattr(input_handler, "gamepad_handler")
+                                else 0
+                            )
+                            time_since_last_event = (
+                                current_time_for_health - last_controller_event_time
+                            )
 
                             # Log controller health status ONLY when there's a problem
                             if controller_count == 0:
-                                logging.warning(f"[GAMEPAD HEALTH] No controllers in handler! Events may not be received.")
+                                logging.warning(
+                                    "[GAMEPAD HEALTH] No controllers in handler! Events may not be received."
+                                )
                             elif time_since_last_event > controller_event_timeout:
-                                logging.warning(f"[GAMEPAD HEALTH] No controller events for {time_since_last_event:.0f}s. Controllers: {controller_count}. Possible disconnect?")
+                                logging.warning(
+                                    f"[GAMEPAD HEALTH] No controller events for {time_since_last_event:.0f}s. Controllers: {controller_count}. Possible disconnect?"
+                                )
 
                         # Handle input events
                         for event in events:
@@ -1117,7 +1184,7 @@ def main():
 
                         # ANALOG STICK REPEAT FIX: Poll analog sticks for repeat movement/navigation
                         # even when no new axis events arrived (stick held in one direction)
-                        if game is not None and hasattr(input_handler, 'gamepad_handler'):
+                        if game is not None and hasattr(input_handler, "gamepad_handler"):
                             action = None
                             analog = input_handler.gamepad_handler.analog_handler
 
@@ -1127,15 +1194,24 @@ def main():
                             # Gameplay movement (not in inventory/look/targeting/achievements/help)
                             # When swap_sticks=True: use RIGHT stick for movement
                             # When swap_sticks=False: use LEFT stick for movement
-                            if (not game.show_inventory and not game.look_mode and
-                                not game.targeting_mode and not game.show_achievements and not game.show_help):
+                            if (
+                                not game.show_inventory
+                                and not game.look_mode
+                                and not game.targeting_mode
+                                and not game.show_achievements
+                                and not game.show_help
+                            ):
                                 if swap_sticks:
                                     movement = analog.get_right_stick_movement_gameplay(game.turn)
                                 else:
                                     movement = analog.get_left_stick_movement_gameplay(game.turn)
                                 if movement:
                                     dx, dy = movement
-                                    action = input_handler.gamepad_handler._delta_to_movement_action(dx, dy)
+                                    action = (
+                                        input_handler.gamepad_handler._delta_to_movement_action(
+                                            dx, dy
+                                        )
+                                    )
 
                             # Achievements/help scrolling
                             # NOTE: Inventory is handled by event system (InventoryInputHandler) to prevent double-triggering
@@ -1156,28 +1232,47 @@ def main():
                                         if dy != 0:
                                             # Get achievements menu from renderer (same as game_input.py)
                                             achievements_menu = None
-                                            if input_handler.renderer and hasattr(input_handler.renderer, "ui_renderer"):
+                                            if input_handler.renderer and hasattr(
+                                                input_handler.renderer, "ui_renderer"
+                                            ):
                                                 ui_renderer = input_handler.renderer.ui_renderer
                                                 if hasattr(ui_renderer, "_achievements_menu"):
-                                                    achievements_menu = ui_renderer._achievements_menu
+                                                    achievements_menu = (
+                                                        ui_renderer._achievements_menu
+                                                    )
                                             if achievements_menu:
                                                 if dy < 0:  # Up
-                                                    achievements_menu.scroll_offset = max(0, achievements_menu.scroll_offset - 1)
+                                                    achievements_menu.scroll_offset = max(
+                                                        0, achievements_menu.scroll_offset - 1
+                                                    )
                                                 else:  # Down
-                                                    all_lines = achievements_menu._build_achievement_lines()
-                                                    max_scroll = max(0, len(all_lines) - achievements_menu.max_visible_lines)
-                                                    achievements_menu.scroll_offset = min(max_scroll, achievements_menu.scroll_offset + 1)
+                                                    all_lines = (
+                                                        achievements_menu._build_achievement_lines()
+                                                    )
+                                                    max_scroll = max(
+                                                        0,
+                                                        len(all_lines)
+                                                        - achievements_menu.max_visible_lines,
+                                                    )
+                                                    achievements_menu.scroll_offset = min(
+                                                        max_scroll,
+                                                        achievements_menu.scroll_offset + 1,
+                                                    )
                                     elif game.show_help:
                                         # Help menu: Horizontal navigation (left/right for pages)
                                         if dx != 0:
-                                            if input_handler.renderer and hasattr(input_handler.renderer, '_get_or_create_help_menu'):
-                                                help_menu = input_handler.renderer._get_or_create_help_menu()
+                                            if input_handler.renderer and hasattr(
+                                                input_handler.renderer, "_get_or_create_help_menu"
+                                            ):
+                                                help_menu = (
+                                                    input_handler.renderer._get_or_create_help_menu()
+                                                )
                                                 if help_menu:
                                                     if dx < 0:  # Left = previous page
-                                                        if hasattr(help_menu, '_previous_page'):
+                                                        if hasattr(help_menu, "_previous_page"):
                                                             help_menu._previous_page()
                                                     else:  # Right = next page
-                                                        if hasattr(help_menu, '_next_page'):
+                                                        if hasattr(help_menu, "_next_page"):
                                                             help_menu._next_page()
 
                             # Look mode or targeting cursor movement
@@ -1190,7 +1285,11 @@ def main():
                                     movement = analog.get_right_stick_movement()
                                 if movement:
                                     dx, dy = movement
-                                    action = input_handler.gamepad_handler._delta_to_movement_action(dx, dy)
+                                    action = (
+                                        input_handler.gamepad_handler._delta_to_movement_action(
+                                            dx, dy
+                                        )
+                                    )
 
                             # Execute action if found
                             if action:
@@ -1198,6 +1297,7 @@ def main():
                                 if should_continue is not None and not should_continue:
                                     # Death/victory dialogue was dismissed - return to main menu
                                     from game_achievements import AchievementManager
+
                                     AchievementManager.clear_pending_popups()
                                     active_game_session = game
                                     game = None

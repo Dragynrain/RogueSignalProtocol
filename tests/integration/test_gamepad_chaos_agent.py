@@ -153,7 +153,7 @@ class GamepadChaosAgent:
 
         # If HP is 0, game should be over (or death pending)
         if player.cpu <= 0 and not self.engine.game_over:
-            if not getattr(self.engine, 'pending_death_dialogue', False):
+            if not getattr(self.engine, "pending_death_dialogue", False):
                 violations.append(f"Player dead (HP={player.cpu}) but game not over")
 
         # Turn counter should never be negative
@@ -186,13 +186,15 @@ class GamepadChaosAgent:
                 self.menu_exits += 1
             return result
         except Exception as e:
-            self.exceptions.append({
-                "type": "button",
-                "button": button,
-                "pressed": pressed,
-                "error": str(e),
-                "error_type": type(e).__name__,
-            })
+            self.exceptions.append(
+                {
+                    "type": "button",
+                    "button": button,
+                    "pressed": pressed,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                }
+            )
             raise
 
     def _send_axis(self, axis: int, value: int) -> bool | None:
@@ -205,13 +207,15 @@ class GamepadChaosAgent:
                 self.actions_executed += 1
             return result
         except Exception as e:
-            self.exceptions.append({
-                "type": "axis",
-                "axis": axis,
-                "value": value,
-                "error": str(e),
-                "error_type": type(e).__name__,
-            })
+            self.exceptions.append(
+                {
+                    "type": "axis",
+                    "axis": axis,
+                    "value": value,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                }
+            )
             raise
 
     def run_chaos(self, max_actions: int = 500, real_timing: bool = False) -> dict:
@@ -291,7 +295,11 @@ class GamepadChaosAgent:
                     time.sleep(0.05)  # 50ms - enough for settling period
 
                 # Track menu state changes
-                if self.engine.show_help or self.engine.show_inventory or self.engine.show_achievements:
+                if (
+                    self.engine.show_help
+                    or self.engine.show_inventory
+                    or self.engine.show_achievements
+                ):
                     stats["menus_opened"] += 1
 
                 # Validate game state periodically (every 50 actions)
@@ -434,6 +442,7 @@ class GamepadChaosAgent:
                 if test_type == 0:
                     # Full-circle stick rotation (8 cardinal + diagonal directions)
                     import math
+
                     for angle in range(0, 360, 45):
                         x = int(32767 * math.cos(math.radians(angle)))
                         y = int(32767 * math.sin(math.radians(angle)))
@@ -662,10 +671,12 @@ class TestGamepadChaosAgent:
                 if stats.get("state_violations"):
                     violations.append({"seed": seed, "violations": stats["state_violations"]})
             except Exception as e:
-                crashes.append({
-                    "seed": seed,
-                    "info": {"error": str(e), "error_type": type(e).__name__},
-                })
+                crashes.append(
+                    {
+                        "seed": seed,
+                        "info": {"error": str(e), "error_type": type(e).__name__},
+                    }
+                )
 
         if crashes:
             print("\n=== Crashes Found ===")
@@ -756,8 +767,29 @@ class TestGamepadChaosAgent:
 
         # Values clustered around 15% deadzone (~4915 for 32767 max)
         boundary_values = [
-            0, 1000, 2000, 3000, 4000, 4500, 4900, 5000, 5100, 5500, 6000, 8000,
-            -1000, -2000, -3000, -4000, -4500, -4900, -5000, -5100, -5500, -6000, -8000,
+            0,
+            1000,
+            2000,
+            3000,
+            4000,
+            4500,
+            4900,
+            5000,
+            5100,
+            5500,
+            6000,
+            8000,
+            -1000,
+            -2000,
+            -3000,
+            -4000,
+            -4500,
+            -4900,
+            -5000,
+            -5100,
+            -5500,
+            -6000,
+            -8000,
         ]
         chaos._random_axis_value = lambda: chaos.rng.choice(boundary_values)
 
@@ -818,8 +850,9 @@ class TestGamepadChaosAgent:
         moved = (new_x != old_x) or (new_y != old_y)
         target_blocked = (old_x + 1, old_y) in agent.engine.game_map.walls
 
-        assert moved or target_blocked, \
-            f"RIGHT stick with swap_sticks=True didn't move player: ({old_x},{old_y}) -> ({new_x},{new_y})"
+        assert (
+            moved or target_blocked
+        ), f"RIGHT stick with swap_sticks=True didn't move player: ({old_x},{old_y}) -> ({new_x},{new_y})"
 
         print(f"\nSwap sticks directional: moved={moved}, blocked={target_blocked}")
 
@@ -829,8 +862,9 @@ class TestGamepadChaosAgent:
         chaos = GamepadChaosAgent(agent, seed=42)
 
         # Create and show a test dialogue
-        from game_dialogue_system import DialogueBox
         import tcod.event
+
+        from game_dialogue_system import DialogueBox
 
         test_dialogue = DialogueBox(
             title="TEST DIALOGUE",

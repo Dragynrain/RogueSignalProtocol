@@ -11,16 +11,16 @@ Test coverage:
 - Chained action failures
 """
 
+from unittest.mock import Mock
+
 import pytest
 import tcod.event
 import tcod.sdl.joystick
-from unittest.mock import Mock, patch
 
-from game_engine import GameEngine
-from game_input import InputHandler
 from game_audio import NullSoundManager
 from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
+from game_engine import GameEngine
+from game_input import InputHandler
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton
@@ -59,10 +59,7 @@ class TestActionExecutionFailures:
 
         # Press an unmapped button (e.g., GUIDE button - typically unmapped)
         guide_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.GUIDE,  # Usually unmapped
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.GUIDE, pressed=True  # Usually unmapped
         )
 
         # Should handle gracefully (return None for unmapped)
@@ -82,10 +79,7 @@ class TestActionExecutionFailures:
 
         # Try to move west (into wall/void)
         west_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_LEFT,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_LEFT, pressed=True
         )
 
         # Should handle gracefully - action consumed but no movement
@@ -111,7 +105,7 @@ class TestActionExecutionFailures:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.RIGHTSHOULDER,  # RB button
-            pressed=True
+            pressed=True,
         )
 
         # Should handle gracefully (may enter targeting mode or fail silently)
@@ -129,10 +123,7 @@ class TestActionExecutionFailures:
 
         # Try to confirm selection
         a_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
 
         # Should handle gracefully (bounds checking)
@@ -156,19 +147,13 @@ class TestUserFeedback:
 
         # Press A to select
         a_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
         result1 = input_handler.handle_controller_button(a_event)
 
         # Try another action immediately
         b_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.B,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.B, pressed=True
         )
         result2 = input_handler.handle_controller_button(b_event)
 
@@ -183,16 +168,13 @@ class TestUserFeedback:
         # Send 10 rapid button presses of unmapped button
         for i in range(10):
             event = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.GUIDE,  # Unmapped
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.GUIDE, pressed=True  # Unmapped
             )
             result = input_handler.handle_controller_button(event)
 
         # Game should still be responsive - player object should still be valid
         assert game.player is not None
-        assert hasattr(game.player, 'x') and hasattr(game.player, 'y')
+        assert hasattr(game.player, "x") and hasattr(game.player, "y")
 
 
 class TestPartialExecutionFailures:
@@ -207,10 +189,7 @@ class TestPartialExecutionFailures:
 
         # Try to open inventory (START button toggles inventory)
         start_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.START,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.START, pressed=True
         )
         result = input_handler.handle_controller_button(start_event)
 
@@ -220,10 +199,7 @@ class TestPartialExecutionFailures:
 
         # Send another input to verify system still responsive
         b_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.B,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.B, pressed=True
         )
         result2 = input_handler.handle_controller_button(b_event)
 
@@ -240,10 +216,7 @@ class TestPartialExecutionFailures:
 
         # Try to send input
         a_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
 
         # Should handle gracefully (game over state)
@@ -270,10 +243,7 @@ class TestChainedFailures:
 
         # Try to interact
         a_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
 
         # Should prioritize game over state and handle gracefully
@@ -293,10 +263,7 @@ class TestChainedFailures:
 
         # Navigate (should reset selection to valid range)
         down_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         input_handler.handle_controller_button(down_event)
 
@@ -306,10 +273,7 @@ class TestChainedFailures:
 
         # System should be responsive
         b_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.B,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.B, pressed=True
         )
         result = input_handler.handle_controller_button(b_event)
         assert result is True

@@ -56,10 +56,9 @@ See tests/fixtures/standard_patterns.py for details on each fixture.
 import os
 import random
 import sys
+from unittest.mock import patch
 
 import pytest
-from contextlib import contextmanager
-from unittest.mock import patch
 
 # Add the project root to Python path so we can import game modules
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -73,7 +72,6 @@ from tests.fixtures.standard_patterns import (
     create_multi_enemy_scenario,
     create_stealth_scenario,
 )
-
 
 # ===== Platform Mocking for Cross-Platform Tests =====
 
@@ -163,8 +161,9 @@ def mock_time():
             handler.poll_repeat()  # Should now trigger repeat
     """
     mock = MockTime()
-    with patch('time.time', mock.time):
+    with patch("time.time", mock.time):
         yield mock
+
 
 # ===== Test Infrastructure Fixtures =====
 
@@ -175,9 +174,9 @@ def worker_id(request):
 
     Returns 'master' for non-parallel runs, or worker ID (gw0, gw1, etc.) for parallel.
     """
-    if hasattr(request.config, 'workerinput'):
-        return request.config.workerinput['workerid']
-    return 'master'
+    if hasattr(request.config, "workerinput"):
+        return request.config.workerinput["workerid"]
+    return "master"
 
 
 @pytest.fixture(scope="session")
@@ -224,11 +223,7 @@ def global_file_isolation(request, isolated_data_dir, monkeypatch):
     import game_file_paths
 
     # Patch the main entry point for all file paths
-    monkeypatch.setattr(
-        game_file_paths,
-        "get_data_directory",
-        lambda: isolated_data_dir
-    )
+    monkeypatch.setattr(game_file_paths, "get_data_directory", lambda: isolated_data_dir)
 
     # Also ensure the module-level cache is set
     monkeypatch.setattr(game_file_paths, "_data_directory", isolated_data_dir)
@@ -555,7 +550,7 @@ def get_movement_with_settling(analog, game_or_turn, x, y, mock_time, settling_s
         settling_sec = SETTLING_PERIOD_SEC
 
     # Handle both game object and raw turn number
-    turn = game_or_turn.turn if hasattr(game_or_turn, 'turn') else game_or_turn
+    turn = game_or_turn.turn if hasattr(game_or_turn, "turn") else game_or_turn
 
     # Set the stick position
     analog.update_left_stick(x=x, y=y)
@@ -606,36 +601,29 @@ def game_with_gamepad():
 
 # ===== Audio Test Configuration =====
 
+
 def pytest_addoption(parser):
     """Add custom command line options."""
     parser.addoption(
         "--audio",
         action="store_true",
         default=False,
-        help="Run audio tests that play real music/sound effects"
+        help="Run audio tests that play real music/sound effects",
     )
     parser.addoption(
         "--full",
         action="store_true",
         default=False,
-        help="Run full test suite including audio tests"
+        help="Run full test suite including audio tests",
     )
 
 
 def pytest_configure(config):
     """Configure pytest based on command line options."""
-    config.addinivalue_line(
-        "markers", "audio: Tests that play real audio (skip by default)"
-    )
-    config.addinivalue_line(
-        "markers", "linux_only: mark test to run only on Linux"
-    )
-    config.addinivalue_line(
-        "markers", "windows_only: mark test to run only on Windows"
-    )
-    config.addinivalue_line(
-        "markers", "cross_platform: mark test that must pass on all platforms"
-    )
+    config.addinivalue_line("markers", "audio: Tests that play real audio (skip by default)")
+    config.addinivalue_line("markers", "linux_only: mark test to run only on Linux")
+    config.addinivalue_line("markers", "windows_only: mark test to run only on Windows")
+    config.addinivalue_line("markers", "cross_platform: mark test that must pass on all platforms")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -650,9 +638,11 @@ def pytest_collection_modifyitems(config, items):
     skip_linux = None
 
     if sys.platform != "win32":
-        skip_windows = pytest.mark.skip(reason="Windows-only test (current platform: {})".format(sys.platform))
+        skip_windows = pytest.mark.skip(
+            reason=f"Windows-only test (current platform: {sys.platform})"
+        )
     if not sys.platform.startswith("linux"):
-        skip_linux = pytest.mark.skip(reason="Linux-only test (current platform: {})".format(sys.platform))
+        skip_linux = pytest.mark.skip(reason=f"Linux-only test (current platform: {sys.platform})")
 
     for item in items:
         # Audio test skipping
@@ -748,7 +738,6 @@ def agent_with_guaranteed_gateway():
         GameTestAgent with gateway present (agent.game_map.gateway is not None)
     """
     from game_entities import Position
-
     from tests.test_agent import GameTestAgent
 
     agent = GameTestAgent(seed=42)
@@ -779,7 +768,6 @@ def agent_with_valid_movement_position():
         to have at least one valid adjacent move.
     """
     from game_entities import Position
-
     from tests.test_agent import GameTestAgent
 
     agent = GameTestAgent(seed=42)

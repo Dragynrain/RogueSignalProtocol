@@ -8,13 +8,13 @@ Tests validate achievements screen navigation and interaction with:
 Achievements screen is the player's progress tracker!
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
+
 import tcod.event
 
-from game_input_actions import InputAction, InputContext
 from game_engine import GameEngine
 from game_input import InputHandler
+from game_input_actions import InputAction, InputContext
 from game_menu_achievements import AchievementsMenu
 
 

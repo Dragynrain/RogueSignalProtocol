@@ -21,13 +21,15 @@ Expected behavior:
 - Mouse wheel: change pages
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 import tcod.event
 import tcod.sdl.joystick
-from game_menu_help_graphics import GraphicalHelpMenu
+
 from game_config import GameSettings
 from game_input_actions import InputAction
+from game_menu_help_graphics import GraphicalHelpMenu
 
 
 class TestGraphicalHelpHorizontalOnly:
@@ -67,12 +69,12 @@ class TestGraphicalHelpHorizontalOnly:
         # Should have changed page
         if help_menu.current_page < len(help_menu.pages) - 1:
             # Not at last page, should have moved forward
-            assert help_menu.current_page == initial_page + 1, \
-                "NAVIGATE_RIGHT should move to next page"
+            assert (
+                help_menu.current_page == initial_page + 1
+            ), "NAVIGATE_RIGHT should move to next page"
         else:
             # At last page, should wrap to first
-            assert help_menu.current_page == 0, \
-                "NAVIGATE_RIGHT at last page should wrap to first"
+            assert help_menu.current_page == 0, "NAVIGATE_RIGHT at last page should wrap to first"
 
     def test_navigate_up_down_should_do_nothing(self, help_menu):
         """
@@ -90,15 +92,17 @@ class TestGraphicalHelpHorizontalOnly:
         assert result == "", "execute_action should return empty string"
 
         # Page should NOT have changed
-        assert help_menu.current_page == initial_page, \
-            "BUG: NAVIGATE_UP should do nothing in Graphical Help (horizontal-only navigation)"
+        assert (
+            help_menu.current_page == initial_page
+        ), "BUG: NAVIGATE_UP should do nothing in Graphical Help (horizontal-only navigation)"
 
         # Try to navigate DOWN (should do nothing)
         result = help_menu.execute_action(InputAction.NAVIGATE_DOWN)
 
         # Page should STILL not have changed
-        assert help_menu.current_page == initial_page, \
-            "BUG: NAVIGATE_DOWN should do nothing in Graphical Help (horizontal-only navigation)"
+        assert (
+            help_menu.current_page == initial_page
+        ), "BUG: NAVIGATE_DOWN should do nothing in Graphical Help (horizontal-only navigation)"
 
     def test_move_north_south_should_do_nothing(self, help_menu):
         """
@@ -111,13 +115,15 @@ class TestGraphicalHelpHorizontalOnly:
 
         # Try MOVE_NORTH (keyboard W or up arrow)
         result = help_menu.execute_action(InputAction.MOVE_NORTH)
-        assert help_menu.current_page == initial_page, \
-            "BUG: MOVE_NORTH should do nothing in Graphical Help"
+        assert (
+            help_menu.current_page == initial_page
+        ), "BUG: MOVE_NORTH should do nothing in Graphical Help"
 
         # Try MOVE_SOUTH (keyboard S or down arrow)
         result = help_menu.execute_action(InputAction.MOVE_SOUTH)
-        assert help_menu.current_page == initial_page, \
-            "BUG: MOVE_SOUTH should do nothing in Graphical Help"
+        assert (
+            help_menu.current_page == initial_page
+        ), "BUG: MOVE_SOUTH should do nothing in Graphical Help"
 
     def test_dpad_up_down_does_nothing_end_to_end(self, help_menu):
         """
@@ -132,29 +138,31 @@ class TestGraphicalHelpHorizontalOnly:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_DOWN,
-            pressed=True
+            pressed=True,
         )
 
         # Process the event
         result = help_menu.handle_input(dpad_down)
 
         # Page should NOT have changed
-        assert help_menu.current_page == initial_page, \
-            "BUG: D-pad DOWN should not change pages in Graphical Help"
+        assert (
+            help_menu.current_page == initial_page
+        ), "BUG: D-pad DOWN should not change pages in Graphical Help"
 
         # Try D-pad UP
         dpad_up = tcod.event.ControllerButton(
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_UP,
-            pressed=True
+            pressed=True,
         )
 
         result = help_menu.handle_input(dpad_up)
 
         # Page should STILL not have changed
-        assert help_menu.current_page == initial_page, \
-            "BUG: D-pad UP should not change pages in Graphical Help"
+        assert (
+            help_menu.current_page == initial_page
+        ), "BUG: D-pad UP should not change pages in Graphical Help"
 
     def test_dpad_left_right_still_works(self, help_menu):
         """
@@ -172,15 +180,16 @@ class TestGraphicalHelpHorizontalOnly:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
-            pressed=True
+            pressed=True,
         )
 
         # Process the event
         result = help_menu.handle_input(dpad_right)
 
         # Page SHOULD have changed
-        assert help_menu.current_page != initial_page, \
-            "D-pad RIGHT should change pages in Graphical Help"
+        assert (
+            help_menu.current_page != initial_page
+        ), "D-pad RIGHT should change pages in Graphical Help"
 
 
 class TestGraphicalHelpMouseWheel:
@@ -223,5 +232,6 @@ class TestGraphicalHelpMouseWheel:
         result = help_menu.handle_mouse_wheel(wheel_event)
 
         # Should have changed page
-        assert help_menu.current_page != initial_page, \
-            "Mouse wheel down should navigate to next page"
+        assert (
+            help_menu.current_page != initial_page
+        ), "Mouse wheel down should navigate to next page"

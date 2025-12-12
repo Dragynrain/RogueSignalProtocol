@@ -115,7 +115,9 @@ class LoreMenu(BaseInputHandler):
                 no_fragments_y + 2,
                 Colors.WHITE,
             )
-            ScreenRenderingUtils.render_screen_footer(console, get_lore_viewer_help("empty", self.input_mapper))
+            ScreenRenderingUtils.render_screen_footer(
+                console, get_lore_viewer_help("empty", self.input_mapper)
+            )
             return
 
         # Show list of discovered fragments with brief previews (matches in-game viewer)
@@ -292,7 +294,9 @@ class LoreMenu(BaseInputHandler):
     def handle_left_click(self, event) -> str:
         """Handle left mouse click - select fragment or navigate."""
         # Prefer event.tile, fall back to event.position for test compatibility
-        if not (hasattr(event, "tile") and event.tile) and not (hasattr(event, "position") and event.position):
+        if not (hasattr(event, "tile") and event.tile) and not (
+            hasattr(event, "position") and event.position
+        ):
             return ""
 
         if self.lore_viewer_mode == "reading":

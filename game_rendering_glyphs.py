@@ -1045,7 +1045,12 @@ class GlyphsMapRenderer(MapRendererBase):
         if game.targeting_mode and game.targeting_exploit in GameData.EXPLOITS:
             exploit = GameData.EXPLOITS[game.targeting_exploit]
             self._render_targeting_range(
-                console, game, game.targeting_exploit, game.player.position, exploit.range, camera_offset
+                console,
+                game,
+                game.targeting_exploit,
+                game.player.position,
+                exploit.range,
+                camera_offset,
             )
 
             # Show area effect for AREA targeting mode

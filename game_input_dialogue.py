@@ -70,7 +70,7 @@ class DialogueInputManager:
             return True
 
         # Only process keyboard events (gamepad uses separate handler)
-        if not hasattr(event, 'sym'):
+        if not hasattr(event, "sym"):
             return True
 
         # Use DialogueInputHandler to process input
@@ -120,30 +120,40 @@ class DialogueInputManager:
         input_mapper = getattr(self.game, "input_mapper", None)
         if not input_mapper:
             # Fallback: get from game's input handler
-            if hasattr(self.game, "input_handler") and hasattr(self.game.input_handler, "input_mapper"):
+            if hasattr(self.game, "input_handler") and hasattr(
+                self.game.input_handler, "input_mapper"
+            ):
                 input_mapper = self.game.input_handler.input_mapper
             else:
                 # Last resort: create default mapper (loses user bindings!)
                 logging.warning("DialogueInputHandler: input_mapper not found, using defaults")
                 from game_input_mappings import InputMapper
+
                 input_mapper = InputMapper()
 
         # Get action from InputMapper using DIALOGUE context
-        input_action = input_mapper.get_action_for_gamepad_button(event.button, InputContext.DIALOGUE)
+        input_action = input_mapper.get_action_for_gamepad_button(
+            event.button, InputContext.DIALOGUE
+        )
 
         # Map InputAction to dialogue action string
         action = None
         if input_action == InputAction.CONFIRM:
             # Check if dialogue has a confirm option (Y key)
             import tcod.event
+
             if tcod.event.KeySym.Y in dialogue.valid_keys:
                 action = "confirm"
-            elif tcod.event.KeySym.SPACE in dialogue.valid_keys or tcod.event.KeySym.RETURN in dialogue.valid_keys:
+            elif (
+                tcod.event.KeySym.SPACE in dialogue.valid_keys
+                or tcod.event.KeySym.RETURN in dialogue.valid_keys
+            ):
                 # Single-button dialogues (death, intro, victory) - A dismisses
                 action = "dismiss"
         elif input_action == InputAction.CANCEL:
             # Check if dialogue has a cancel option (N key)
             import tcod.event
+
             if tcod.event.KeySym.N in dialogue.valid_keys:
                 action = "cancel"
             elif tcod.event.KeySym.ESCAPE in dialogue.valid_keys:
@@ -154,6 +164,7 @@ class DialogueInputManager:
         elif input_action == InputAction.DIALOGUE_SKIP_WARNING:
             # Check if dialogue has "don't show again" option (D key)
             import tcod.event
+
             if tcod.event.KeySym.D in dialogue.valid_keys:
                 action = "dont_show_again"
 
@@ -387,7 +398,7 @@ class DialogueInputManager:
             window_w,
             window_h,
             GameConfig.SCREEN_WIDTH,
-            GameConfig.SCREEN_HEIGHT
+            GameConfig.SCREEN_HEIGHT,
         )
 
         # Ask the dialogue renderer which option (if any) was clicked

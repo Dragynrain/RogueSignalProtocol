@@ -4,9 +4,9 @@ Test for mouse click crash in menu system.
 Regression test for AttributeError: 'AchievementsMenu' object has no attribute 'handle_mouse_click'
 """
 
-import pytest
-import tcod.event
 from unittest.mock import Mock
+
+import tcod.event
 
 from game_config import GameSettings
 from game_menu_achievements import AchievementsMenu
@@ -20,7 +20,9 @@ class TestMenuMouseClickCrash:
     def test_achievements_menu_handle_mouse_click_exists(self):
         """AchievementsMenu should have handle_mouse_click method."""
         menu = AchievementsMenu()
-        assert hasattr(menu, 'handle_mouse_click'), "AchievementsMenu missing handle_mouse_click method"
+        assert hasattr(
+            menu, "handle_mouse_click"
+        ), "AchievementsMenu missing handle_mouse_click method"
 
     def test_achievements_menu_left_click_does_not_crash(self):
         """AchievementsMenu should handle left click without crashing."""
@@ -36,7 +38,10 @@ class TestMenuMouseClickCrash:
         # This should not raise AttributeError
         result = menu.handle_mouse_click(event)
         # Menu click handlers return "" (no action) or "back" (exit menu)
-        assert result in ("", "back"), f"handle_mouse_click should return '' or 'back', got {result!r}"
+        assert result in (
+            "",
+            "back",
+        ), f"handle_mouse_click should return '' or 'back', got {result!r}"
 
     def test_achievements_menu_right_click_returns_back(self):
         """AchievementsMenu should return 'back' on right click."""
@@ -55,11 +60,11 @@ class TestMenuMouseClickCrash:
     def test_main_menu_handle_mouse_click_exists(self):
         """MainMenu should have handle_mouse_click method."""
         menu = MainMenu()
-        assert hasattr(menu, 'handle_mouse_click'), "MainMenu missing handle_mouse_click method"
+        assert hasattr(menu, "handle_mouse_click"), "MainMenu missing handle_mouse_click method"
 
     def test_settings_menu_handle_mouse_click_exists(self):
         """SettingsMenu should have handle_mouse_click method."""
         mock_settings = Mock(spec=GameSettings)
         mock_settings.graphics_mode = "graphics"  # Required for _build_options
         menu = SettingsMenu(mock_settings)
-        assert hasattr(menu, 'handle_mouse_click'), "SettingsMenu missing handle_mouse_click method"
+        assert hasattr(menu, "handle_mouse_click"), "SettingsMenu missing handle_mouse_click method"

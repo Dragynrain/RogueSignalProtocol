@@ -419,6 +419,7 @@ class TestAnalogStickHandler:
     def test_movement_time_gating(self):
         """Test that time-based gating prevents multiple moves per frame."""
         import time
+
         from game_config import GameConfig
 
         handler = AnalogStickHandler()
@@ -440,13 +441,16 @@ class TestAnalogStickHandler:
         assert movement2 is None
 
         # Simulate initial delay by backdating last move time
-        handler.last_gameplay_move_time = time.time() - GameConfig.GAMEPLAY_MOVEMENT_INITIAL_DELAY - 0.05
+        handler.last_gameplay_move_time = (
+            time.time() - GameConfig.GAMEPLAY_MOVEMENT_INITIAL_DELAY - 0.05
+        )
         movement3 = handler.get_left_stick_movement_gameplay(0)
         assert movement3 is not None
 
     def test_reset_movement_time_gating(self):
         """Test that time-based gating resets on release."""
         import time
+
         from game_config import GameConfig
 
         handler = AnalogStickHandler()
@@ -544,9 +548,7 @@ class TestModifierKeySupport:
         mapper = InputMapper()
 
         # Without modifier - slash alone should NOT trigger help
-        action_no_mod = mapper.get_action_for_key(
-            tcod.event.KeySym.SLASH, modifier=0
-        )
+        action_no_mod = mapper.get_action_for_key(tcod.event.KeySym.SLASH, modifier=0)
         assert action_no_mod != InputAction.TOGGLE_HELP
 
         # With Shift modifier - should trigger help
@@ -626,15 +628,11 @@ class TestModifierKeySupport:
 
         # Add Ctrl+S as a custom binding for WAIT
         mapper.add_keyboard_binding(
-            InputAction.WAIT,
-            tcod.event.KeySym.S,
-            modifier=tcod.event.Modifier.CTRL
+            InputAction.WAIT, tcod.event.KeySym.S, modifier=tcod.event.Modifier.CTRL
         )
 
         # Ctrl+S should trigger WAIT
-        action = mapper.get_action_for_key(
-            tcod.event.KeySym.S, modifier=tcod.event.Modifier.CTRL
-        )
+        action = mapper.get_action_for_key(tcod.event.KeySym.S, modifier=tcod.event.Modifier.CTRL)
         assert action == InputAction.WAIT
 
         # S alone should still be MOVE_SOUTH (default binding)

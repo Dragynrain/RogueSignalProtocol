@@ -14,12 +14,12 @@ Test coverage:
 Uses the game_with_gamepad fixture from tests/conftest.py.
 """
 
-import pytest
-import tcod.event
-import tcod.sdl.joystick
 from unittest.mock import Mock
 
-from game_input_actions import InputAction, InputContext
+import tcod.event
+import tcod.sdl.joystick
+
+from game_input_actions import InputContext
 from tests.integration.input_test_utils import InputTestHelper
 
 # Shortcuts
@@ -42,8 +42,7 @@ class TestDisconnectDuringGameplay:
 
         # Simulate controller disconnect event
         disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0  # Controller instance ID
+            type="CONTROLLERDEVICEREMOVED", which=0  # Controller instance ID
         )
 
         # Configure mock controller to behave as disconnected
@@ -67,18 +66,15 @@ class TestDisconnectDuringGameplay:
         game.message_log.messages = []
 
         # Disconnect controller
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 
         # Verify disconnect message was added to message log
-        assert len(game.message_log.messages) == 1, \
-            "Disconnect should add exactly one message"
-        assert "disconnected" in game.message_log.messages[0].text.lower(), \
-            "Disconnect message should mention 'disconnected'"
+        assert len(game.message_log.messages) == 1, "Disconnect should add exactly one message"
+        assert (
+            "disconnected" in game.message_log.messages[0].text.lower()
+        ), "Disconnect message should mention 'disconnected'"
 
     def test_disconnect_clears_input_state(self, game_with_gamepad):
         """Disconnect should clear any held button/stick state."""
@@ -93,10 +89,7 @@ class TestDisconnectDuringGameplay:
         input_handler.gamepad_handler.analog_handler.left_y = -32767
 
         # Disconnect controller
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 
@@ -121,10 +114,7 @@ class TestDisconnectDuringMenu:
         assert input_handler._get_current_context() == InputContext.INVENTORY
 
         # Disconnect controller
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 
@@ -149,10 +139,7 @@ class TestDisconnectDuringMenu:
         input_handler.gamepad_handler.button_held_since = 1.0
 
         # Disconnect controller
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 
@@ -171,10 +158,7 @@ class TestControllerReconnect:
         game, input_handler, controller = game_with_gamepad
 
         # Disconnect
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 
@@ -185,10 +169,7 @@ class TestControllerReconnect:
         new_controller.name = "Test Controller"
         new_controller.instance_id = 0
 
-        connect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEADDED",
-            which=0
-        )
+        connect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEADDED", which=0)
 
         # Need to manually add controller to test (in real game, SDL handles this)
         # This tests that the handler's add logic works
@@ -201,10 +182,7 @@ class TestControllerReconnect:
         game, input_handler, controller = game_with_gamepad
 
         # Disconnect first controller
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 
@@ -230,10 +208,7 @@ class TestRapidConnectDisconnect:
         current_controller = controller
         for i in range(5):
             # Disconnect
-            disconnect_event = tcod.event.ControllerDevice(
-                type="CONTROLLERDEVICEREMOVED",
-                which=0
-            )
+            disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
             InputTestHelper.simulate_controller_disconnect(current_controller)
             input_handler.handle_controller_device(disconnect_event)
 
@@ -262,10 +237,7 @@ class TestRapidConnectDisconnect:
         assert len(input_handler.gamepad_handler.controllers) == 1
 
         # Disconnect
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 
@@ -282,10 +254,7 @@ class TestDisconnectDuringButtonHold:
 
         # Press A button (wait action)
         press_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
         action = input_handler.handle_controller_button(press_event)
         assert action is True  # Returns True if handled, not InputAction
@@ -294,10 +263,7 @@ class TestDisconnectDuringButtonHold:
         # In implementation, button_held may or may not be set for non-navigation buttons
 
         # Disconnect controller while button held
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 
@@ -312,10 +278,7 @@ class TestDisconnectDuringButtonHold:
 
         # Press A button again - should work (no stuck state)
         press_event2 = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
         action2 = input_handler.handle_controller_button(press_event2)
         assert action2 is True  # Works normally - returns True if handled
@@ -326,10 +289,7 @@ class TestDisconnectDuringButtonHold:
 
         # Deflect stick
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=32767  # Full right
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=32767  # Full right
         )
         input_handler.handle_controller_axis(axis_event)
 
@@ -337,10 +297,7 @@ class TestDisconnectDuringButtonHold:
         assert input_handler.gamepad_handler.analog_handler.left_x == 32767
 
         # Disconnect
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 
@@ -365,10 +322,7 @@ class TestMultipleControllers:
         assert len(input_handler.gamepad_handler.controllers) == 2
 
         # Disconnect first controller (instance_id=0)
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 
@@ -390,14 +344,8 @@ class TestMultipleControllers:
         input_handler.gamepad_handler.controllers.add(controller2)
 
         # Disconnect both
-        disconnect1 = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
-        disconnect2 = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=1
-        )
+        disconnect1 = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
+        disconnect2 = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=1)
 
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect1)
@@ -419,10 +367,7 @@ class TestEdgeCases:
         game, input_handler, controller = game_with_gamepad
 
         # Disconnect unknown controller (instance_id=99)
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=99
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=99)
 
         # Should handle gracefully (no crash)
         input_handler.handle_controller_device(disconnect_event)
@@ -438,10 +383,7 @@ class TestEdgeCases:
         input_handler.gamepad_handler.controllers.clear()
 
         # Disconnect event with empty set
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
 
         # Should handle gracefully
         input_handler.handle_controller_device(disconnect_event)
@@ -454,10 +396,7 @@ class TestEdgeCases:
         game, input_handler, controller = game_with_gamepad
 
         # Disconnect controller
-        disconnect_event = tcod.event.ControllerDevice(
-            type="CONTROLLERDEVICEREMOVED",
-            which=0
-        )
+        disconnect_event = tcod.event.ControllerDevice(type="CONTROLLERDEVICEREMOVED", which=0)
         InputTestHelper.simulate_controller_disconnect(controller)
         input_handler.handle_controller_device(disconnect_event)
 

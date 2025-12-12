@@ -12,8 +12,9 @@ Example bugs caught:
 - Input state management issues
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 import tcod.event
 
 from game_config import GameConfig, GameSettings
@@ -53,23 +54,32 @@ class TestGameLoopInputPolling:
 
             # Simulate the game loop's input polling section
             # This is what game_loop.py does after processing events:
-            if hasattr(input_handler, 'gamepad_handler'):
+            if hasattr(input_handler, "gamepad_handler"):
                 # This code path MUST execute without crashing
                 try:
                     # LEFT STICK POLLING (gameplay context)
-                    if (not engine.show_inventory and not engine.look_mode and
-                        not engine.targeting_mode and not engine.show_achievements and not engine.show_help):
+                    if (
+                        not engine.show_inventory
+                        and not engine.look_mode
+                        and not engine.targeting_mode
+                        and not engine.show_achievements
+                        and not engine.show_help
+                    ):
                         # This line caused the crash:
                         # movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement()
                         # Should be:
-                        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(engine.turn)
+                        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(
+                            engine.turn
+                        )
                         # Should not crash even if no controller connected
                         assert movement is None or isinstance(movement, tuple)
 
                     # LEFT STICK POLLING (modal context)
                     engine.show_achievements = True
                     # This line also caused the crash:
-                    movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_menu()
+                    movement = (
+                        input_handler.gamepad_handler.analog_handler.get_left_stick_movement_menu()
+                    )
                     assert movement is None or isinstance(movement, tuple)
 
                 except AttributeError as e:
@@ -91,21 +101,24 @@ class TestGameLoopInputPolling:
             input_handler = InputHandler(engine)
 
             # Verify gamepad handler exists
-            assert hasattr(input_handler, 'gamepad_handler')
+            assert hasattr(input_handler, "gamepad_handler")
 
             # Verify analog handler exists and has correct methods
-            assert hasattr(input_handler.gamepad_handler, 'analog_handler')
+            assert hasattr(input_handler.gamepad_handler, "analog_handler")
             analog = input_handler.gamepad_handler.analog_handler
 
             # These methods MUST exist
-            assert hasattr(analog, 'get_left_stick_movement_gameplay'), \
-                "Missing get_left_stick_movement_gameplay - game will crash!"
-            assert hasattr(analog, 'get_left_stick_movement_menu'), \
-                "Missing get_left_stick_movement_menu - game will crash!"
+            assert hasattr(
+                analog, "get_left_stick_movement_gameplay"
+            ), "Missing get_left_stick_movement_gameplay - game will crash!"
+            assert hasattr(
+                analog, "get_left_stick_movement_menu"
+            ), "Missing get_left_stick_movement_menu - game will crash!"
 
             # This method exists for swap_sticks cursor control
-            assert hasattr(analog, 'get_left_stick_movement'), \
-                "Missing get_left_stick_movement - needed for swap_sticks cursor control!"
+            assert hasattr(
+                analog, "get_left_stick_movement"
+            ), "Missing get_left_stick_movement - needed for swap_sticks cursor control!"
 
     def test_game_loop_input_polling_all_contexts(self):
         """
@@ -118,34 +131,43 @@ class TestGameLoopInputPolling:
             engine = GameEngine(settings=settings, load_save=False)
             input_handler = InputHandler(engine)
 
-            if not hasattr(input_handler, 'gamepad_handler'):
+            if not hasattr(input_handler, "gamepad_handler"):
                 pytest.skip("Gamepad support not available")
 
             analog = input_handler.gamepad_handler.analog_handler
 
             # Test contexts where the bug occurred:
             test_contexts = [
-                ("Gameplay", {
-                    'show_inventory': False,
-                    'look_mode': False,
-                    'targeting_mode': False,
-                    'show_achievements': False,
-                    'show_help': False
-                }),
-                ("Achievements", {
-                    'show_inventory': False,
-                    'look_mode': False,
-                    'targeting_mode': False,
-                    'show_achievements': True,
-                    'show_help': False
-                }),
-                ("Help", {
-                    'show_inventory': False,
-                    'look_mode': False,
-                    'targeting_mode': False,
-                    'show_achievements': False,
-                    'show_help': True
-                }),
+                (
+                    "Gameplay",
+                    {
+                        "show_inventory": False,
+                        "look_mode": False,
+                        "targeting_mode": False,
+                        "show_achievements": False,
+                        "show_help": False,
+                    },
+                ),
+                (
+                    "Achievements",
+                    {
+                        "show_inventory": False,
+                        "look_mode": False,
+                        "targeting_mode": False,
+                        "show_achievements": True,
+                        "show_help": False,
+                    },
+                ),
+                (
+                    "Help",
+                    {
+                        "show_inventory": False,
+                        "look_mode": False,
+                        "targeting_mode": False,
+                        "show_achievements": False,
+                        "show_help": True,
+                    },
+                ),
             ]
 
             for context_name, flags in test_contexts:
@@ -161,13 +183,14 @@ class TestGameLoopInputPolling:
                         movement = analog.get_left_stick_movement_menu()
 
                     # Should return None (no input) or tuple (dx, dy)
-                    assert movement is None or (isinstance(movement, tuple) and len(movement) == 2), \
-                        f"{context_name} context returned invalid movement: {movement}"
+                    assert movement is None or (
+                        isinstance(movement, tuple) and len(movement) == 2
+                    ), f"{context_name} context returned invalid movement: {movement}"
 
                 except AttributeError as e:
                     pytest.fail(f"CRASH in {context_name} context: {e}")
 
-    @patch('tcod.event.wait')
+    @patch("tcod.event.wait")
     def test_full_game_loop_iteration_with_events(self, mock_wait):
         """
         Simulate a complete game loop iteration with events.
@@ -205,17 +228,21 @@ class TestGameLoopInputPolling:
                     pass  # Would call handle_game_input_events()
 
                 # 2. INPUT POLLING (⚠️ THIS IS WHERE THE BUG WAS!)
-                if hasattr(input_handler, 'gamepad_handler'):
+                if hasattr(input_handler, "gamepad_handler"):
                     # Gameplay movement polling
                     if not engine.show_inventory:
-                        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(engine.turn)
+                        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(
+                            engine.turn
+                        )
 
                     # Modal scrolling polling
                     engine.show_achievements = True
-                    movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_menu()
+                    movement = (
+                        input_handler.gamepad_handler.analog_handler.get_left_stick_movement_menu()
+                    )
 
                 # 3. Render (simplified - just verify no crash)
-                if hasattr(input_handler, 'renderer') and input_handler.renderer:
+                if hasattr(input_handler, "renderer") and input_handler.renderer:
                     # Don't actually render, just verify renderer exists
                     pass
 
@@ -253,8 +280,10 @@ class TestGameLoopSmokeWithRenderer:
 
             try:
                 # Step 1: Input polling (where the bug was)
-                if hasattr(input_handler, 'gamepad_handler'):
-                    movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(engine.turn)
+                if hasattr(input_handler, "gamepad_handler"):
+                    movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(
+                        engine.turn
+                    )
 
                 # Step 2: Rendering
                 renderer.render_game(console, engine, context=None)

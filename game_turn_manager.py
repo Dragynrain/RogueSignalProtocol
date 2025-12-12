@@ -297,7 +297,11 @@ class GameTurnManager:
                         break
 
                 # Only open lore viewer if renderer is available (not in headless tests)
-                if hasattr(self.game_engine, 'input_handler') and self.game_engine.input_handler and self.game_engine.input_handler.renderer:
+                if (
+                    hasattr(self.game_engine, "input_handler")
+                    and self.game_engine.input_handler
+                    and self.game_engine.input_handler.renderer
+                ):
                     self.game_engine.show_lore_viewer = True
                     self.game_engine.lore_viewer_mode = "reading"
             del self.game_engine.game_map.story_fragments[player_pos]
@@ -752,9 +756,7 @@ class GameTurnManager:
 
         # CRITICAL: Force close any active dialogues - death has highest priority
         if self.game_engine.dialogue_state.is_active():
-            logging.warning(
-                f"{death_cause.title()} death with dialogue active - force-closing"
-            )
+            logging.warning(f"{death_cause.title()} death with dialogue active - force-closing")
             self.game_engine.dialogue_state.close()
 
         # Mark game as over and play death sounds
@@ -771,9 +773,7 @@ class GameTurnManager:
         logging.warning(f"Final CPU: {player.cpu}/{player.max_cpu}")
         logging.warning(f"Final Heat: {player.heat}/{player.max_heat}")
         logging.warning(f"Trace Level: {player.trace_level}")
-        logging.warning(
-            f"Active Virus: {player.temporary_effects.get('virus_turns', 0)} turns"
-        )
+        logging.warning(f"Active Virus: {player.temporary_effects.get('virus_turns', 0)} turns")
         logging.warning(
             f"Enemies nearby: {len([e for e in self.game_engine.enemies if e.position.grid_distance_to(player.position) < 10])}"
         )

@@ -395,7 +395,7 @@ class GameConfig:
     CURSOR_MOVEMENT_REPEAT_RATE = 0.08
     # Gameplay movement (left stick in gameplay context) - slower than menus
     GAMEPLAY_MOVEMENT_INITIAL_DELAY = 0.35  # Delay before hold-to-repeat kicks in
-    GAMEPLAY_MOVEMENT_REPEAT_RATE = 0.18    # Slower repeat than menus (more deliberate)
+    GAMEPLAY_MOVEMENT_REPEAT_RATE = 0.18  # Slower repeat than menus (more deliberate)
     # Analog stick settling period (wait for stick to reach intended position)
     ANALOG_SETTLING_PERIOD = 0.030  # 30 milliseconds
 
@@ -441,12 +441,20 @@ class GameConfig:
             cls.BUTTON_REPEAT_INITIAL_DELAY = cls._get_required("input.button_repeat_initial_delay")
             cls.BUTTON_REPEAT_RATE = cls._get_required("input.button_repeat_rate")
             cls.BUTTON_REPEAT_RATE_FAST = cls._get_required("input.button_repeat_rate_fast")
-            cls.MENU_NAVIGATION_INITIAL_DELAY = cls._get_required("input.menu_navigation_initial_delay")
+            cls.MENU_NAVIGATION_INITIAL_DELAY = cls._get_required(
+                "input.menu_navigation_initial_delay"
+            )
             cls.MENU_NAVIGATION_REPEAT_RATE = cls._get_required("input.menu_navigation_repeat_rate")
-            cls.CURSOR_MOVEMENT_INITIAL_DELAY = cls._get_required("input.cursor_movement_initial_delay")
+            cls.CURSOR_MOVEMENT_INITIAL_DELAY = cls._get_required(
+                "input.cursor_movement_initial_delay"
+            )
             cls.CURSOR_MOVEMENT_REPEAT_RATE = cls._get_required("input.cursor_movement_repeat_rate")
-            cls.GAMEPLAY_MOVEMENT_INITIAL_DELAY = cls._get_required("input.gameplay_movement_initial_delay")
-            cls.GAMEPLAY_MOVEMENT_REPEAT_RATE = cls._get_required("input.gameplay_movement_repeat_rate")
+            cls.GAMEPLAY_MOVEMENT_INITIAL_DELAY = cls._get_required(
+                "input.gameplay_movement_initial_delay"
+            )
+            cls.GAMEPLAY_MOVEMENT_REPEAT_RATE = cls._get_required(
+                "input.gameplay_movement_repeat_rate"
+            )
 
         except FileNotFoundError as e:
             error_msg = "CRITICAL CONFIG ERROR: game_rules.json not found"

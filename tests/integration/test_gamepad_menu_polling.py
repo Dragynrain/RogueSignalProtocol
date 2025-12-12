@@ -14,9 +14,9 @@ Coverage:
 Uses the game_with_gamepad fixture from tests/conftest.py.
 """
 
-import pytest
 import time
 
+import pytest
 import tcod.event
 import tcod.sdl.joystick
 
@@ -50,10 +50,7 @@ class TestMenuNavigationPolling:
 
         # Set stick to full up (negative Y = up in SDL)
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=-32000  # Full up
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=-32000  # Full up
         )
 
         # Handle in MAIN_MENU context
@@ -69,10 +66,7 @@ class TestMenuNavigationPolling:
 
         # Set stick to full down
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=32000  # Full down
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=32000  # Full down
         )
 
         # Handle in SETTINGS_MENU context
@@ -87,10 +81,7 @@ class TestMenuNavigationPolling:
 
         # Full right on X axis
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.SETTINGS_MENU)
@@ -104,10 +95,7 @@ class TestMenuNavigationPolling:
 
         # Full right on X axis
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=32000
         )
 
         # Main menu only uses vertical navigation
@@ -245,10 +233,7 @@ class TestAchievementsScreenPolling:
 
         # Set stick down
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.ACHIEVEMENTS_SCREEN)
@@ -266,10 +251,7 @@ class TestHelpMenuPolling:
 
         # Set stick right
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.HELP)
@@ -283,10 +265,7 @@ class TestHelpMenuPolling:
 
         # Set stick down
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.HELP)
@@ -304,10 +283,7 @@ class TestLoreViewerPolling:
 
         # Set stick left
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=-32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=-32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.LORE_VIEWER)
@@ -321,10 +297,7 @@ class TestLoreViewerPolling:
 
         # Set stick up
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=-32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=-32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.LORE_VIEWER)
@@ -342,10 +315,7 @@ class TestGraphicsPreviewPolling:
 
         # Set stick right
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.GRAPHICS_PREVIEW)
@@ -359,10 +329,7 @@ class TestGraphicsPreviewPolling:
 
         # Set stick down
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.GRAPHICS_PREVIEW)
@@ -380,10 +347,7 @@ class TestInventoryPolling:
 
         # Set stick up
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=-32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=-32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.INVENTORY)
@@ -494,10 +458,7 @@ class TestButtonAutoRepeatInMenus:
 
         # Press D-pad up
         button_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
 
         gamepad.handle_button_event(button_event, InputContext.MAIN_MENU)
@@ -513,19 +474,13 @@ class TestButtonAutoRepeatInMenus:
 
         # Press button
         press_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         gamepad.handle_button_event(press_event, InputContext.MAIN_MENU)
 
         # Release button
         release_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=False
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=False
         )
         gamepad.handle_button_event(release_event, InputContext.MAIN_MENU)
 
@@ -539,10 +494,7 @@ class TestButtonAutoRepeatInMenus:
 
         # Press button
         button_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         gamepad.handle_button_event(button_event, InputContext.MAIN_MENU)
 
@@ -557,10 +509,7 @@ class TestButtonAutoRepeatInMenus:
 
         # Press button
         button_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         gamepad.handle_button_event(button_event, InputContext.MAIN_MENU)
 

@@ -12,7 +12,6 @@ These edge cases can cause state corruption if not handled properly.
 Uses the game_with_gamepad fixture from tests/conftest.py.
 """
 
-import pytest
 import time
 
 import tcod.event
@@ -53,19 +52,13 @@ class TestSimultaneousAxisInput:
 
         # Send X axis event (right)
         x_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=32000
         )
         action_x = gamepad.handle_axis_event(x_event, InputContext.SETTINGS_MENU)
 
         # Send Y axis event (down)
         y_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=32000
         )
         action_y = gamepad.handle_axis_event(y_event, InputContext.SETTINGS_MENU)
 
@@ -80,20 +73,14 @@ class TestSimultaneousAxisInput:
 
         # X axis for variant cycling
         x_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=32000
         )
         action_x = gamepad.handle_axis_event(x_event, InputContext.GRAPHICS_PREVIEW)
         assert action_x == InputAction.NAVIGATE_RIGHT
 
         # Y axis for entity selection
         y_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=32000
         )
         action_y = gamepad.handle_axis_event(y_event, InputContext.GRAPHICS_PREVIEW)
         assert action_y == InputAction.NAVIGATE_DOWN
@@ -110,10 +97,7 @@ class TestEventPollingMixing:
 
         # D-pad up (event-based)
         dpad_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         dpad_action = gamepad.handle_button_event(dpad_event, InputContext.MAIN_MENU)
         assert dpad_action == InputAction.NAVIGATE_UP
@@ -144,10 +128,7 @@ class TestEventPollingMixing:
 
         # Then D-pad
         dpad_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         dpad_action = gamepad.handle_button_event(dpad_event, InputContext.MAIN_MENU)
         assert dpad_action == InputAction.NAVIGATE_DOWN
@@ -163,10 +144,7 @@ class TestEventPollingMixing:
 
         # Press D-pad while stick is held
         dpad_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
 
         # Should not raise exception
@@ -188,19 +166,13 @@ class TestInputReleaseWhileOtherHeld:
 
         # Press and release D-pad
         press_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         gamepad.handle_button_event(press_event, InputContext.MAIN_MENU)
         assert gamepad.button_held == CB.DPAD_UP
 
         release_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=False
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=False
         )
         gamepad.handle_button_event(release_event, InputContext.MAIN_MENU)
 
@@ -219,10 +191,7 @@ class TestInputReleaseWhileOtherHeld:
         # Press D-pad UP (navigation button in menu context)
         # Note: MAIN_MENU only maps up/down, not left/right
         dpad_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         gamepad.handle_button_event(dpad_event, InputContext.MAIN_MENU)
 
@@ -270,10 +239,7 @@ class TestContextSwitchWithActiveInputs:
 
         # Press navigation button
         button_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         gamepad.handle_button_event(button_event, InputContext.INVENTORY)
 
@@ -296,6 +262,7 @@ class TestContextSwitchWithActiveInputs:
 
         # Dialogue appears
         from game_dialogue_system import DialogueBox
+
         dialogue = DialogueBox(
             title="Test",
             message="Test dialogue",
@@ -306,7 +273,7 @@ class TestContextSwitchWithActiveInputs:
             border_color=(255, 255, 255),
             bg_color=(0, 0, 0),
             format_data={},
-            priority=1
+            priority=1,
         )
         game.dialogue_state.active_dialogue = dialogue
 
@@ -387,18 +354,12 @@ class TestRapidInputSequences:
 
         for button in buttons:
             press = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=button,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=button, pressed=True
             )
             gamepad.handle_button_event(press, InputContext.MAIN_MENU)
 
             release = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=button,
-                pressed=False
+                type="CONTROLLERBUTTONDOWN", which=0, button=button, pressed=False
             )
             gamepad.handle_button_event(release, InputContext.MAIN_MENU)
 
@@ -417,18 +378,12 @@ class TestRapidInputSequences:
             y_val = ((i + 1) % 3 - 1) * 32000
 
             x_event = tcod.event.ControllerAxis(
-                type="CONTROLLERAXISMOTION",
-                which=0,
-                axis=CA.LEFTX,
-                value=x_val
+                type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=x_val
             )
             gamepad.handle_axis_event(x_event, InputContext.GAMEPLAY)
 
             y_event = tcod.event.ControllerAxis(
-                type="CONTROLLERAXISMOTION",
-                which=0,
-                axis=CA.LEFTY,
-                value=y_val
+                type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=y_val
             )
             gamepad.handle_axis_event(y_event, InputContext.GAMEPLAY)
 
@@ -450,18 +405,12 @@ class TestTriggerWithStick:
 
         # Press left trigger (starts at 0)
         trigger_unpressed = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.TRIGGERLEFT,
-            value=0
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.TRIGGERLEFT, value=0
         )
         gamepad.handle_axis_event(trigger_unpressed, InputContext.GAMEPLAY)
 
         trigger_pressed = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.TRIGGERLEFT,
-            value=30000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.TRIGGERLEFT, value=30000
         )
         action = gamepad.handle_axis_event(trigger_pressed, InputContext.GAMEPLAY)
 
@@ -481,10 +430,7 @@ class TestTriggerWithStick:
 
         # Right stick (cursor control in look mode)
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTX, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.LOOK_MODE)
@@ -504,20 +450,14 @@ class TestMultipleButtonsHeld:
 
         # Press first button
         first = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         gamepad.handle_button_event(first, InputContext.MAIN_MENU)
         assert gamepad.button_held == CB.DPAD_UP
 
         # Press second button (navigation - will update tracking)
         second = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         gamepad.handle_button_event(second, InputContext.MAIN_MENU)
 
@@ -531,27 +471,18 @@ class TestMultipleButtonsHeld:
 
         # Press both buttons
         first = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         gamepad.handle_button_event(first, InputContext.MAIN_MENU)
 
         second = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         gamepad.handle_button_event(second, InputContext.MAIN_MENU)
 
         # Release first button (not the tracked one)
         first_release = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=False
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=False
         )
         gamepad.handle_button_event(first_release, InputContext.MAIN_MENU)
 

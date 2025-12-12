@@ -335,6 +335,7 @@ class InfoProvider:
 
         # Get category color for title
         from game_color_manager import ColorManager
+
         category_color = ColorManager.get_exploit_color(exploit_def.category)
 
         return {"title": exploit_def.name, "lines": lines, "color": category_color}
@@ -567,6 +568,7 @@ class InfoProvider:
         # Get the actual key binding for help (supports custom remapping)
         from game_input_actions import InputAction
         from game_input_mappings import InputMapper
+
         mapper = InputMapper()  # Uses default bindings
         help_key = mapper.get_key_hint(InputAction.TOGGLE_HELP)
         lines.append({"text": f"Press {help_key} for help", "color": Colors.DARK_GRAY})

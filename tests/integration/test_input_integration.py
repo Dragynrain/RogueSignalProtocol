@@ -11,14 +11,9 @@ Note: Extracted from test_input_critical_paths.py for maintainability.
 """
 
 import pytest
-import tcod
-import tcod.event
-import tcod.sdl.joystick
-from unittest.mock import Mock
 
 from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
-from tests.integration.input_test_utils import InputTestHelper
+from game_input_actions import InputAction
 
 
 class TestContextTransitionsComprehensive:
@@ -46,7 +41,6 @@ class TestContextTransitionsComprehensive:
 
     def test_gameplay_to_inventory_transition(self, game_engine):
         """Gameplay → Inventory: Clean transition."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Open inventory
@@ -57,7 +51,6 @@ class TestContextTransitionsComprehensive:
 
     def test_inventory_to_gameplay_transition(self, game_engine):
         """Inventory → Gameplay: Clean transition."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Open then close inventory
@@ -69,7 +62,6 @@ class TestContextTransitionsComprehensive:
 
     def test_inventory_escape_returns_to_gameplay(self, game_engine):
         """Inventory: Escape returns to gameplay."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Open inventory
@@ -87,7 +79,6 @@ class TestContextTransitionsComprehensive:
 
     def test_gameplay_to_look_mode_transition(self, game_engine):
         """Gameplay → Look Mode: Clean transition."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         engine.look_mode = False
@@ -100,7 +91,6 @@ class TestContextTransitionsComprehensive:
 
     def test_look_mode_to_gameplay_transition(self, game_engine):
         """Look Mode → Gameplay: Clean transition."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Enter then exit look mode
@@ -112,7 +102,6 @@ class TestContextTransitionsComprehensive:
 
     def test_look_mode_escape_returns_to_gameplay(self, game_engine):
         """Look Mode: Escape returns to gameplay."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         engine.look_mode = True
@@ -127,7 +116,6 @@ class TestContextTransitionsComprehensive:
 
     def test_targeting_mode_cancel_returns_to_gameplay(self, game_engine):
         """Targeting Mode: Cancel returns to gameplay."""
-        from game_input_actions import InputAction
         from game_data import GameData
         from game_inventory import ExploitItem
 
@@ -152,7 +140,6 @@ class TestContextTransitionsComprehensive:
 
     def test_multiple_context_switches_maintain_state(self, game_engine):
         """Multiple transitions: Game state remains valid."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Gameplay → Inventory → Gameplay → Look Mode → Gameplay
@@ -167,7 +154,6 @@ class TestContextTransitionsComprehensive:
 
     def test_rapid_context_switching(self, game_engine):
         """Rapid context switches handled gracefully."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Rapid open/close
@@ -183,7 +169,6 @@ class TestContextTransitionsComprehensive:
 
     def test_context_switch_during_movement(self, game_engine):
         """Context switch during movement: State handled correctly."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Start movement
@@ -197,7 +182,6 @@ class TestContextTransitionsComprehensive:
 
     def test_nested_context_prevention(self, game_engine):
         """Nested contexts: Can't open inventory while in look mode."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Enter look mode
@@ -225,6 +209,7 @@ class TestInputIntegrationScenarios:
     @pytest.fixture
     def game_engine(self):
         from tests.fixtures.standard_patterns import create_basic_game_environment
+
         engine = create_basic_game_environment()
         if engine.dialogue_state.is_active():
             engine.dialogue_state.close()
@@ -233,7 +218,6 @@ class TestInputIntegrationScenarios:
     # Workflow 1: Inventory → Look Mode → Gameplay
     def test_workflow_inventory_to_look_to_gameplay(self, game_engine):
         """Workflow: Open inventory, close, enter look mode, exit back to gameplay."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Open inventory
@@ -255,12 +239,12 @@ class TestInputIntegrationScenarios:
     # Workflow 2: Movement → Exploit Usage
     def test_workflow_move_and_use_exploit(self, game_engine):
         """Workflow: Move around, select exploit, use it."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Equip an exploit
         from game_data import GameData
         from game_inventory import ExploitItem
+
         exploit_def = GameData.EXPLOITS["code_injection"]
         exploit_item = ExploitItem("code_injection", exploit_def)
         engine.player.inventory_manager.add_item(exploit_item)
@@ -275,12 +259,12 @@ class TestInputIntegrationScenarios:
     # Workflow 3: Inventory Navigation
     def test_workflow_inventory_navigation_and_selection(self, game_engine):
         """Workflow: Open inventory, navigate, select item, close."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Add items to inventory
         from game_data import GameData
         from game_inventory import ExploitItem
+
         for exploit_id in ["code_injection", "sql_injection"]:
             if exploit_id in GameData.EXPLOITS:
                 exploit_def = GameData.EXPLOITS[exploit_id]
@@ -304,7 +288,6 @@ class TestInputIntegrationScenarios:
     # Workflow 4: Look Mode Exploration
     def test_workflow_look_mode_exploration(self, game_engine):
         """Workflow: Enter look mode, move cursor around, examine, exit."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Enter look mode
@@ -324,7 +307,6 @@ class TestInputIntegrationScenarios:
     # Workflow 5: Multiple Context Switches
     def test_workflow_rapid_context_switching(self, game_engine):
         """Workflow: Rapidly switch between multiple contexts."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         for _ in range(3):
@@ -341,7 +323,6 @@ class TestInputIntegrationScenarios:
     # Input Type Consistency Tests
     def test_keyboard_to_gamepad_consistency(self, game_engine):
         """Input: Keyboard and gamepad produce same results."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Both should move north
@@ -354,7 +335,6 @@ class TestInputIntegrationScenarios:
 
     def test_dpad_to_stick_consistency(self, game_engine):
         """Input: D-pad and analog stick produce same movement."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # D-pad up
@@ -368,7 +348,6 @@ class TestInputIntegrationScenarios:
     # State Management Tests
     def test_state_persists_between_contexts(self, game_engine):
         """State: Player position persists when entering/exiting inventory."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         initial_pos = engine.player.position
@@ -382,7 +361,6 @@ class TestInputIntegrationScenarios:
 
     def test_state_clears_on_context_exit(self, game_engine):
         """State: Look mode state clears when exiting."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Enter look mode
@@ -396,7 +374,6 @@ class TestInputIntegrationScenarios:
     # Error Recovery Tests
     def test_invalid_action_in_context(self, game_engine):
         """Error: Invalid action in context doesn't crash."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Try to use exploit when not in targeting mode
@@ -405,7 +382,6 @@ class TestInputIntegrationScenarios:
 
     def test_double_open_inventory(self, game_engine):
         """Error: Opening inventory twice doesn't break state."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         engine.input_handler._execute_action(InputAction.TOGGLE_INVENTORY)
@@ -417,7 +393,6 @@ class TestInputIntegrationScenarios:
     # Input Combinations
     def test_movement_while_inventory_open(self, game_engine):
         """Input: Movement keys while inventory open (should be blocked)."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         engine.input_handler._execute_action(InputAction.TOGGLE_INVENTORY)
@@ -431,12 +406,12 @@ class TestInputIntegrationScenarios:
 
     def test_exploit_cycle_during_movement(self, game_engine):
         """Input: Cycling exploits during movement."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Add exploits
         from game_data import GameData
         from game_inventory import ExploitItem
+
         for exploit_id in ["code_injection", "sql_injection"]:
             if exploit_id in GameData.EXPLOITS:
                 exploit_def = GameData.EXPLOITS[exploit_id]
@@ -455,7 +430,6 @@ class TestInputIntegrationScenarios:
     # Performance Tests
     def test_rapid_navigation_performance(self, game_engine):
         """Performance: Rapid navigation doesn't cause lag."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Rapid navigation
@@ -467,7 +441,6 @@ class TestInputIntegrationScenarios:
 
     def test_rapid_context_switches_performance(self, game_engine):
         """Performance: Rapid context switching doesn't cause issues."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         for _ in range(20):
@@ -479,7 +452,6 @@ class TestInputIntegrationScenarios:
     # Gamepad-Specific Workflows
     def test_gamepad_complete_gameplay_session(self, game_engine):
         """Gamepad: Complete gameplay session using only gamepad."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Movement with D-pad
@@ -502,7 +474,6 @@ class TestInputIntegrationScenarios:
 
     def test_gamepad_look_mode_workflow(self, game_engine):
         """Gamepad: Look mode using right stick."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Enter look mode
@@ -520,7 +491,6 @@ class TestInputIntegrationScenarios:
     # Keyboard-Specific Workflows
     def test_keyboard_complete_gameplay_session(self, game_engine):
         """Keyboard: Complete gameplay session using only keyboard."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Movement with WASD
@@ -543,12 +513,12 @@ class TestInputIntegrationScenarios:
 
     def test_keyboard_exploit_usage(self, game_engine):
         """Keyboard: Use exploit with number keys."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Equip exploit
         from game_data import GameData
         from game_inventory import ExploitItem
+
         exploit_def = GameData.EXPLOITS["code_injection"]
         exploit_item = ExploitItem("code_injection", exploit_def)
         engine.player.inventory_manager.add_item(exploit_item)
@@ -562,7 +532,6 @@ class TestInputIntegrationScenarios:
     # Mixed Input Tests
     def test_mixed_keyboard_and_gamepad(self, game_engine):
         """Mixed: Keyboard and gamepad used interchangeably."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Keyboard movement
@@ -582,7 +551,6 @@ class TestInputIntegrationScenarios:
     # Boundary Tests
     def test_movement_at_map_edge(self, game_engine):
         """Boundary: Movement at map edge doesn't crash."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Try to move beyond map bounds
@@ -593,9 +561,9 @@ class TestInputIntegrationScenarios:
 
     def test_inventory_with_max_items(self, game_engine):
         """Boundary: Inventory with maximum items."""
-        from game_input_actions import InputAction
         from game_data import GameData
         from game_inventory import ExploitItem
+
         engine = game_engine
 
         # Fill inventory
@@ -614,7 +582,6 @@ class TestInputIntegrationScenarios:
     # Long Session Tests
     def test_long_gameplay_session_simulation(self, game_engine):
         """Long session: Simulate 100 turns of varied gameplay."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         actions = [
@@ -636,7 +603,6 @@ class TestInputIntegrationScenarios:
     # Context-Specific Edge Cases
     def test_look_mode_cursor_stays_in_bounds(self, game_engine):
         """Look Mode: Cursor stays within map bounds."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         engine.input_handler._execute_action(InputAction.TOGGLE_LOOK_MODE)
@@ -646,7 +612,7 @@ class TestInputIntegrationScenarios:
             engine.input_handler._execute_action(InputAction.MOVE_NORTH)
 
         # Should stay in bounds
-        if engine.look_mode and hasattr(engine, 'look_cursor_position'):
+        if engine.look_mode and hasattr(engine, "look_cursor_position"):
             assert engine.look_cursor_position.y >= 0
 
         engine.input_handler._execute_action(InputAction.CANCEL)
@@ -654,9 +620,9 @@ class TestInputIntegrationScenarios:
 
     def test_targeting_mode_range_validation(self, game_engine):
         """Targeting: Range validation prevents invalid targets."""
-        from game_input_actions import InputAction
         from game_data import GameData
         from game_inventory import ExploitItem
+
         engine = game_engine
 
         # Equip exploit
@@ -684,9 +650,11 @@ class TestInputIntegrationScenarios:
         """State: Gamepad button state tracking exists and clears on release."""
         # Button release is handled by input system
         # This test verifies the mechanism exists
-        assert hasattr(game_engine.input_handler, 'gamepad_handler'), "InputHandler should have gamepad_handler"
+        assert hasattr(
+            game_engine.input_handler, "gamepad_handler"
+        ), "InputHandler should have gamepad_handler"
         gamepad = game_engine.input_handler.gamepad_handler
-        assert hasattr(gamepad, 'button_held'), "GamepadHandler should track button_held"
+        assert hasattr(gamepad, "button_held"), "GamepadHandler should track button_held"
         # Initial state should be None (no button held)
         assert gamepad.button_held is None, "No button should be held initially"
 
@@ -698,11 +666,10 @@ class TestInputIntegrationScenarios:
     # Input Priority Tests
     def test_dialogue_blocks_gameplay_input(self, game_engine):
         """Priority: Dialogue mode blocks gameplay inputs."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # If dialogue is active, movement should be blocked
-        if hasattr(engine, 'dialogue_state') and engine.dialogue_state.is_active():
+        if hasattr(engine, "dialogue_state") and engine.dialogue_state.is_active():
             initial_pos = engine.player.position
             engine.input_handler._execute_action(InputAction.MOVE_NORTH)
             # Position should not change
@@ -712,7 +679,6 @@ class TestInputIntegrationScenarios:
 
     def test_inventory_blocks_movement_input(self, game_engine):
         """Priority: Inventory mode blocks movement inputs."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         engine.input_handler._execute_action(InputAction.TOGGLE_INVENTORY)
@@ -727,7 +693,6 @@ class TestInputIntegrationScenarios:
     # Input Validation Tests
     def test_invalid_exploit_slot(self, game_engine):
         """Validation: Using empty exploit slot doesn't crash."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Clear all exploits
@@ -740,7 +705,6 @@ class TestInputIntegrationScenarios:
 
     def test_confirm_in_empty_inventory(self, game_engine):
         """Validation: Confirming in empty inventory doesn't crash."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Clear inventory
@@ -758,7 +722,6 @@ class TestInputIntegrationScenarios:
     # Cross-Context State Tests
     def test_look_mode_preserves_gameplay_state(self, game_engine):
         """State: Look mode preserves gameplay state."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         initial_pos = engine.player.position
@@ -772,7 +735,6 @@ class TestInputIntegrationScenarios:
 
     def test_inventory_preserves_gameplay_state(self, game_engine):
         """State: Inventory preserves gameplay state."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         initial_pos = engine.player.position
@@ -787,7 +749,6 @@ class TestInputIntegrationScenarios:
     # Input Responsiveness Tests
     def test_immediate_response_to_input(self, game_engine):
         """Responsiveness: Inputs are processed immediately."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Input should be processed in same frame
@@ -798,7 +759,6 @@ class TestInputIntegrationScenarios:
 
     def test_no_input_lag_under_load(self, game_engine):
         """Responsiveness: No input lag under heavy load."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         # Simulate heavy input load
@@ -812,9 +772,9 @@ class TestInputIntegrationScenarios:
     # Final Integration Test
     def test_complete_game_session_all_features(self, game_engine):
         """Integration: Complete game session using all features."""
-        from game_input_actions import InputAction
         from game_data import GameData
         from game_inventory import ExploitItem
+
         engine = game_engine
 
         # Movement
@@ -874,7 +834,6 @@ class TestMultiScreenWorkflows:
 
     def test_main_to_settings_and_back_workflow(self):
         """Workflow: Main Menu → Settings → Main Menu."""
-        from game_config import GameSettings
         from game_menu_main import MainMenu
         from game_menu_settings import SettingsMenu
 
@@ -896,9 +855,8 @@ class TestMultiScreenWorkflows:
 
     def test_main_to_about_and_back_workflow(self):
         """Workflow: Main Menu → About → Main Menu."""
-        from game_config import GameSettings
-        from game_menu_main import MainMenu
         from game_menu_about import AboutMenu
+        from game_menu_main import MainMenu
 
         settings = GameSettings()
 
@@ -918,7 +876,6 @@ class TestMultiScreenWorkflows:
 
     def test_gameplay_to_inventory_to_gameplay_full_workflow(self, game_engine):
         """Workflow: Gameplay → Inventory → Gameplay with input."""
-        from game_input_actions import InputAction
 
         engine = game_engine
         initial_x, initial_y = engine.player.x, engine.player.y
@@ -945,7 +902,6 @@ class TestMultiScreenWorkflows:
 
     def test_gameplay_to_look_mode_examine_and_back_workflow(self, game_engine):
         """Workflow: Gameplay → Look Mode → Examine → Gameplay."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -971,7 +927,6 @@ class TestMultiScreenWorkflows:
 
     def test_full_session_workflow(self, game_engine):
         """Workflow: Complete play session with all screens."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1000,7 +955,6 @@ class TestMultiScreenWorkflows:
 
     def test_rapid_screen_cycling_workflow(self, game_engine):
         """Workflow: Rapidly cycle through screens."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1017,7 +971,6 @@ class TestMultiScreenWorkflows:
 
     def test_same_key_different_screens_behavior(self, game_engine):
         """Workflow: Same key has different effects in different screens."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1033,7 +986,6 @@ class TestMultiScreenWorkflows:
 
     def test_exploits_across_screens(self, game_engine):
         """Workflow: Exploit state preserved across screen changes."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1075,7 +1027,6 @@ class TestInputDeviceHotSwapping:
 
     def test_keyboard_to_gamepad_switch(self, game_engine):
         """Input: Switch from keyboard to gamepad seamlessly."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1092,7 +1043,6 @@ class TestInputDeviceHotSwapping:
 
     def test_gamepad_to_mouse_switch(self, game_engine):
         """Input: Switch from gamepad to mouse seamlessly."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1107,7 +1057,6 @@ class TestInputDeviceHotSwapping:
 
     def test_mouse_to_keyboard_switch(self, game_engine):
         """Input: Switch from mouse to keyboard seamlessly."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1122,15 +1071,14 @@ class TestInputDeviceHotSwapping:
 
     def test_rapid_device_switching(self, game_engine):
         """Input: Rapid switching between devices."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
         # Rapidly switch devices
         for _ in range(10):
             engine.input_handler._execute_action(InputAction.MOVE_NORTH)  # keyboard
-            engine.input_handler._execute_action(InputAction.MOVE_EAST)   # gamepad
-            engine.input_handler._execute_action(InputAction.WAIT)        # either
+            engine.input_handler._execute_action(InputAction.MOVE_EAST)  # gamepad
+            engine.input_handler._execute_action(InputAction.WAIT)  # either
 
         assert game_engine is not None
 
@@ -1138,7 +1086,6 @@ class TestInputDeviceHotSwapping:
 
     def test_no_input_ghosting_on_switch(self, game_engine):
         """Input: No ghosting when switching devices."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1153,7 +1100,6 @@ class TestInputDeviceHotSwapping:
 
     def test_auto_repeat_resets_on_device_switch(self, game_engine):
         """Input: Auto-repeat resets when changing devices."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1171,7 +1117,6 @@ class TestInputDeviceHotSwapping:
 
     def test_device_switch_during_menu(self, game_engine):
         """Input: Device switching works in menus."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1188,7 +1133,6 @@ class TestInputDeviceHotSwapping:
 
     def test_device_switch_during_gameplay(self, game_engine):
         """Input: Device switching works during gameplay."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1207,7 +1151,6 @@ class TestInputDeviceHotSwapping:
 
     def test_simultaneous_keyboard_mouse(self, game_engine):
         """Input: Simultaneous keyboard and mouse handled."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1218,7 +1161,6 @@ class TestInputDeviceHotSwapping:
 
     def test_gamepad_doesnt_block_keyboard(self, game_engine):
         """Input: Gamepad presence doesn't block keyboard."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1254,19 +1196,17 @@ class TestPerScreenInputMapping:
     def test_main_menu_input_mapping(self, game_engine):
         """Input: Main menu has correct input mapping."""
         from game_menu_main import MainMenu
-        from game_config import GameSettings
 
         menu = MainMenu()
 
         # Should have navigate up/down, confirm, cancel
-        assert hasattr(menu, 'navigate_up')
-        assert hasattr(menu, 'navigate_down')
+        assert hasattr(menu, "navigate_up")
+        assert hasattr(menu, "navigate_down")
 
     # Gameplay Mapping
 
     def test_gameplay_has_8way_movement(self, game_engine):
         """Input: Gameplay supports 8-directional movement."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1284,7 +1224,6 @@ class TestPerScreenInputMapping:
 
     def test_gameplay_has_exploit_mapping(self, game_engine):
         """Input: Gameplay has 5 exploit slots mapped."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1301,7 +1240,6 @@ class TestPerScreenInputMapping:
 
     def test_inventory_navigation_only(self, game_engine):
         """Input: Inventory only needs navigation + confirm/cancel."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1320,7 +1258,6 @@ class TestPerScreenInputMapping:
 
     def test_look_mode_cursor_movement(self, game_engine):
         """Input: Look mode maps to cursor movement."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1340,7 +1277,6 @@ class TestPerScreenInputMapping:
 
     def test_cancel_has_highest_priority(self, game_engine):
         """Input: Cancel/ESC works in all contexts."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1355,7 +1291,6 @@ class TestPerScreenInputMapping:
 
     def test_help_key_global(self, game_engine):
         """Input: Help key (F1/?) works globally."""
-        from game_input_actions import InputAction
 
         engine = game_engine
 
@@ -1399,5 +1334,3 @@ class TestPerScreenInputMapping:
 # - Cover ALL input types: keyboard, mouse, D-pad, sticks, buttons
 # - Test auto-repeat, release, and device hot-swapping
 # ==============================================================================
-
-

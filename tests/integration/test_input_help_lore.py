@@ -10,15 +10,15 @@ Tests input for help screens and lore viewer:
 Note: Extracted from test_input_critical_paths.py for maintainability.
 """
 
+from unittest.mock import MagicMock, Mock
+
 import pytest
 import tcod
 import tcod.event
 import tcod.sdl.joystick
-from unittest.mock import Mock, MagicMock
 
 from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
-from tests.integration.input_test_utils import InputTestHelper
+from game_input_actions import InputAction
 
 
 class TestGraphicalHelpMenuCriticalPath:
@@ -99,12 +99,14 @@ class TestHelpMenuCriticalPath:
     def help_menu(self):
         """Create help menu instance (text mode)."""
         from game_menu_help_lore import HelpMenu
+
         menu = HelpMenu()
         yield menu
 
     def test_keyboard_navigate_right(self, help_menu):
         """Keyboard: Right arrow navigates to next page."""
         from game_input_actions import InputAction
+
         initial_page = help_menu.current_page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         assert help_menu.current_page != initial_page or help_menu.total_pages == 1
@@ -112,6 +114,7 @@ class TestHelpMenuCriticalPath:
     def test_keyboard_navigate_left(self, help_menu):
         """Keyboard: Left arrow navigates to previous page."""
         from game_input_actions import InputAction
+
         # First go right to ensure we're not on first page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         current_page = help_menu.current_page
@@ -121,12 +124,14 @@ class TestHelpMenuCriticalPath:
     def test_keyboard_escape_exits(self, help_menu):
         """Keyboard: Escape exits help menu."""
         from game_input_actions import InputAction
+
         result = help_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
 
     def test_dpad_left_right_navigate(self, help_menu):
         """D-pad: Left/right navigate pages."""
         from game_input_actions import InputAction
+
         initial_page = help_menu.current_page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         assert help_menu.current_page != initial_page or help_menu.total_pages == 1
@@ -134,6 +139,7 @@ class TestHelpMenuCriticalPath:
     def test_left_stick_horizontal_navigate(self, help_menu):
         """Left stick: Horizontal movement navigates pages."""
         from game_input_actions import InputAction
+
         help_menu.execute_action(InputAction.MOVE_EAST)
         help_menu.execute_action(InputAction.MOVE_WEST)
         assert help_menu.current_page >= 0
@@ -141,6 +147,7 @@ class TestHelpMenuCriticalPath:
     def test_face_button_b_exits(self, help_menu):
         """Face button B: Exits help menu."""
         from game_input_actions import InputAction
+
         result = help_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
 
@@ -156,6 +163,7 @@ class TestLoreMenuCriticalPath:
     def lore_menu(self):
         """Create lore menu instance."""
         from game_menu_help_lore import LoreMenu
+
         menu = LoreMenu()
         # Load story fragments so we have data
         menu._load_story_fragments()
@@ -165,6 +173,7 @@ class TestLoreMenuCriticalPath:
         """Keyboard: Up/down navigate fragment list."""
         # LoreMenu.execute_action() loads fragments internally
         from game_input_actions import InputAction
+
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
         if discovered_fragments:
@@ -178,6 +187,7 @@ class TestLoreMenuCriticalPath:
     def test_keyboard_confirm_enters_reading(self, lore_menu):
         """Keyboard: Enter enters reading mode."""
         from game_input_actions import InputAction
+
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
         if discovered_fragments:
@@ -199,6 +209,7 @@ class TestLoreMenuCriticalPath:
     def test_reading_mode_escape_returns_to_list(self, lore_menu):
         """Reading mode: Escape returns to fragment list."""
         from game_input_actions import InputAction
+
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
         if discovered_fragments:
@@ -211,6 +222,7 @@ class TestLoreMenuCriticalPath:
     def test_dpad_navigation(self, lore_menu):
         """D-pad: Navigate fragment list."""
         from game_input_actions import InputAction
+
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
         if discovered_fragments:
@@ -231,8 +243,8 @@ class TestGraphicsPreviewMenuCriticalPath:
     @pytest.fixture
     def graphics_menu(self):
         """Create graphics preview menu instance with mocked context."""
-        from game_menu_graphics_preview import GraphicsPreviewMenu
         from game_graphics_tiles import TileManager
+        from game_menu_graphics_preview import GraphicsPreviewMenu
 
         # Create mock context (same pattern as test_graphics_preview_gamepad.py)
         context = Mock()
@@ -248,6 +260,7 @@ class TestGraphicsPreviewMenuCriticalPath:
     def test_keyboard_navigate_entities(self, graphics_menu):
         """Keyboard: Navigate through entity types."""
         from game_input_actions import InputAction
+
         graphics_menu.execute_action(InputAction.NAVIGATE_UP)
         graphics_menu.execute_action(InputAction.NAVIGATE_DOWN)
         assert graphics_menu is not None  # Navigation occurred
@@ -255,6 +268,7 @@ class TestGraphicsPreviewMenuCriticalPath:
     def test_keyboard_navigate_variants(self, graphics_menu):
         """Keyboard: Navigate variants (left/right)."""
         from game_input_actions import InputAction
+
         graphics_menu.execute_action(InputAction.NAVIGATE_LEFT)
         graphics_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         assert graphics_menu is not None  # Menu state valid
@@ -262,12 +276,14 @@ class TestGraphicsPreviewMenuCriticalPath:
     def test_keyboard_escape_exits(self, graphics_menu):
         """Keyboard: Escape exits preview."""
         from game_input_actions import InputAction
+
         result = graphics_menu.execute_action(InputAction.CANCEL)
         assert result == "exit"
 
     def test_dpad_navigation(self, graphics_menu):
         """D-pad: Navigate entities and variants."""
         from game_input_actions import InputAction
+
         graphics_menu.execute_action(InputAction.NAVIGATE_UP)
         graphics_menu.execute_action(InputAction.NAVIGATE_DOWN)
         graphics_menu.execute_action(InputAction.NAVIGATE_LEFT)
@@ -277,6 +293,7 @@ class TestGraphicsPreviewMenuCriticalPath:
     def test_face_buttons(self, graphics_menu):
         """Face buttons: Confirm and cancel."""
         from game_input_actions import InputAction
+
         graphics_menu.execute_action(InputAction.CONFIRM)
         result = graphics_menu.execute_action(InputAction.CANCEL)
         assert result == "exit"
@@ -293,13 +310,16 @@ class TestHelpMenuInputComprehensive:
     @pytest.fixture
     def help_menu(self):
         from game_menu_help_lore import HelpMenu
+
         menu = HelpMenu()
         yield menu
 
     def test_help_keyboard_left_right_pages(self, help_menu):
         """Help: Keyboard left/right arrows change pages via handle_input."""
         from unittest.mock import Mock
+
         import tcod.event
+
         menu = help_menu
         event = Mock()
         event.type = "KEYDOWN"
@@ -312,7 +332,9 @@ class TestHelpMenuInputComprehensive:
     def test_help_keyboard_escape_exits(self, help_menu):
         """Help: Escape exits help menu via handle_input."""
         from unittest.mock import Mock
+
         import tcod.event
+
         menu = help_menu
         event = Mock()
         event.type = "KEYDOWN"
@@ -323,7 +345,7 @@ class TestHelpMenuInputComprehensive:
     def test_help_dpad_left_right_pages(self, help_menu):
         """Help: D-pad left/right changes pages via handle_input."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
+
         menu = help_menu
         event = Mock()
         event.type = "CONTROLLERBUTTONDOWN"
@@ -336,7 +358,7 @@ class TestHelpMenuInputComprehensive:
     def test_help_dpad_auto_repeat_pages(self, help_menu):
         """Help: D-pad auto-repeat for page navigation."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
+
         menu = help_menu
         event = Mock()
         event.type = "CONTROLLERBUTTONDOWN"
@@ -348,7 +370,7 @@ class TestHelpMenuInputComprehensive:
     def test_help_left_stick_horizontal_pages(self, help_menu):
         """Help: Left stick left/right changes pages via handle_input."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
+
         menu = help_menu
         event = Mock()
         event.type = "CONTROLLERAXISMOTION"
@@ -362,7 +384,7 @@ class TestHelpMenuInputComprehensive:
     def test_help_b_button_exits(self, help_menu):
         """Help: B button exits help menu via handle_input."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
+
         menu = help_menu
         event = Mock()
         event.type = "CONTROLLERBUTTONDOWN"
@@ -373,17 +395,16 @@ class TestHelpMenuInputComprehensive:
     def test_help_mouse_wheel_changes_pages(self, help_menu):
         """Help: Mouse wheel changes pages."""
         from unittest.mock import Mock
+
         menu = help_menu
         event = Mock()
         event.y = -1
-        if hasattr(menu, 'handle_mouse_wheel'):
+        if hasattr(menu, "handle_mouse_wheel"):
             menu.handle_mouse_wheel(event)
         event.y = 1
-        if hasattr(menu, 'handle_mouse_wheel'):
+        if hasattr(menu, "handle_mouse_wheel"):
             menu.handle_mouse_wheel(event)
         assert menu.current_page >= 0
-
-
 
 
 class TestLoreMenuInputComprehensive:
@@ -411,6 +432,7 @@ class TestLoreMenuInputComprehensive:
     def test_lore_keyboard_up_down_navigation(self, lore_menu):
         """Lore: Keyboard arrow keys navigate list via handle_input."""
         from unittest.mock import Mock
+
         import tcod.event
 
         menu = lore_menu
@@ -435,6 +457,7 @@ class TestLoreMenuInputComprehensive:
     def test_lore_keyboard_enter_selects_fragment(self, lore_menu):
         """Lore: Enter key changes mode to reading via handle_input."""
         from unittest.mock import Mock
+
         import tcod.event
 
         menu = lore_menu
@@ -453,6 +476,7 @@ class TestLoreMenuInputComprehensive:
     def test_lore_keyboard_escape_exits(self, lore_menu):
         """Lore: Escape exits lore menu via handle_input."""
         from unittest.mock import Mock
+
         import tcod.event
 
         menu = lore_menu
@@ -470,6 +494,7 @@ class TestLoreMenuInputComprehensive:
     def test_lore_keyboard_pageup_pagedown(self, lore_menu):
         """Lore: Page Up/Down for navigation via handle_input."""
         from unittest.mock import Mock
+
         import tcod.event
 
         menu = lore_menu
@@ -493,7 +518,6 @@ class TestLoreMenuInputComprehensive:
     def test_lore_dpad_up_navigation(self, lore_menu):
         """Lore: D-pad up scrolls fragment list via handle_input."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
 
         menu = lore_menu
         initial_selection = menu.lore_viewer_selection
@@ -513,7 +537,6 @@ class TestLoreMenuInputComprehensive:
     def test_lore_dpad_down_navigation(self, lore_menu):
         """Lore: D-pad down scrolls fragment list via handle_input."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
 
         menu = lore_menu
         initial_selection = menu.lore_viewer_selection
@@ -533,7 +556,6 @@ class TestLoreMenuInputComprehensive:
     def test_lore_dpad_auto_repeat(self, lore_menu):
         """Lore: D-pad auto-repeat for scrolling."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
 
         menu = lore_menu
 
@@ -550,7 +572,6 @@ class TestLoreMenuInputComprehensive:
     def test_lore_dpad_release_stops_scroll(self, lore_menu):
         """Lore: D-pad release stops auto-repeat."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
 
         menu = lore_menu
         initial_selection = menu.lore_viewer_selection
@@ -577,7 +598,6 @@ class TestLoreMenuInputComprehensive:
     def test_lore_left_stick_vertical_navigation(self, lore_menu):
         """Lore: Left stick up/down navigates list via handle_input."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
 
         menu = lore_menu
 
@@ -598,7 +618,6 @@ class TestLoreMenuInputComprehensive:
     def test_lore_left_stick_horizontal_ignored(self, lore_menu):
         """Lore: Left stick horizontal input ignored via handle_input."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
 
         menu = lore_menu
 
@@ -617,7 +636,6 @@ class TestLoreMenuInputComprehensive:
     def test_lore_right_stick_ignored(self, lore_menu):
         """Lore: Right stick input ignored in list mode via handle_input."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
 
         menu = lore_menu
 
@@ -637,7 +655,6 @@ class TestLoreMenuInputComprehensive:
     def test_lore_a_button_selects(self, lore_menu):
         """Lore: A button selects fragment via handle_input."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
 
         menu = lore_menu
         menu.lore_viewer_mode = "list"
@@ -655,7 +672,6 @@ class TestLoreMenuInputComprehensive:
     def test_lore_b_button_exits(self, lore_menu):
         """Lore: B button exits lore menu via handle_input."""
         from unittest.mock import Mock
-        import tcod.sdl.joystick
 
         menu = lore_menu
 
@@ -683,7 +699,7 @@ class TestLoreMenuInputComprehensive:
         event.position.y = 10
 
         # Mouse interaction
-        if hasattr(menu, 'handle_mouse_motion'):
+        if hasattr(menu, "handle_mouse_motion"):
             menu.handle_mouse_motion(event)
 
         assert menu is not None  # Navigation occurred
@@ -699,7 +715,7 @@ class TestLoreMenuInputComprehensive:
         event.position = Mock()
         event.position.y = 10
 
-        if hasattr(menu, 'handle_mouse_click'):
+        if hasattr(menu, "handle_mouse_click"):
             menu.handle_mouse_click(event)
 
         assert event is not None  # Event created successfully
@@ -726,6 +742,7 @@ class TestLoreMenuInputComprehensive:
     def test_lore_keyboard_mouse_mixing(self, lore_menu):
         """Lore: Seamless keyboard and mouse input mixing."""
         from unittest.mock import Mock
+
         import tcod.event
 
         menu = lore_menu
@@ -750,6 +767,7 @@ class TestLoreMenuInputComprehensive:
     def test_lore_gamepad_keyboard_switching(self, lore_menu):
         """Lore: Switch between gamepad and keyboard seamlessly."""
         from unittest.mock import Mock
+
         import tcod.event
         import tcod.sdl.joystick
 
@@ -777,6 +795,7 @@ class TestLoreMenuInputComprehensive:
     def test_lore_rapid_input_spam(self, lore_menu):
         """Lore: Rapid input doesn't break state via handle_input."""
         from unittest.mock import Mock
+
         import tcod.event
 
         menu = lore_menu
@@ -799,6 +818,7 @@ class TestLoreMenuInputComprehensive:
     def test_lore_empty_fragment_list(self, lore_menu):
         """Lore: Empty list handled gracefully via handle_input."""
         from unittest.mock import Mock
+
         import tcod.event
 
         menu = lore_menu
@@ -817,5 +837,3 @@ class TestLoreMenuInputComprehensive:
         menu.handle_input(up_event)
 
         assert menu is not None  # Scroll occurred
-
-

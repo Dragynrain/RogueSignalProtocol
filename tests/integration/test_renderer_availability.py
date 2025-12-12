@@ -17,10 +17,10 @@ import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_engine import GameEngine
-from game_input import InputHandler
 from game_audio import NullSoundManager
 from game_config import GameSettings
+from game_engine import GameEngine
+from game_input import InputHandler
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton
@@ -58,7 +58,7 @@ class TestHelpScreenWithoutRenderer:
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         # Should handle without crashing
@@ -77,10 +77,7 @@ class TestHelpScreenWithoutRenderer:
 
         # Send B button to close (gamepad escape)
         b_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.B,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.B, pressed=True
         )
 
         # Should handle without crashing
@@ -99,10 +96,7 @@ class TestHelpScreenWithoutRenderer:
 
         # Try to navigate with D-pad (won't work without renderer, but shouldn't crash)
         dpad_down = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
 
         # Should handle without crashing
@@ -124,7 +118,7 @@ class TestLoreViewerWithoutRenderer:
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         # Should handle without crashing
@@ -143,10 +137,7 @@ class TestLoreViewerWithoutRenderer:
 
         # Send B button to close
         b_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.B,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.B, pressed=True
         )
 
         # Should handle without crashing (new fix)
@@ -165,10 +156,7 @@ class TestLoreViewerWithoutRenderer:
 
         # Try to navigate (won't work without renderer, but shouldn't crash)
         dpad_down = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
 
         # Should handle without crashing
@@ -190,7 +178,7 @@ class TestInventoryWithoutRenderer:
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         # Should handle without crashing
@@ -209,10 +197,7 @@ class TestInventoryWithoutRenderer:
 
         # Navigate with D-pad
         dpad_down = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
 
         # Should handle without crashing
@@ -241,10 +226,7 @@ class TestGracefulDegradation:
 
             # Send B button
             b_event = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.B,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.B, pressed=True
             )
 
             # Should handle without crashing
@@ -266,9 +248,7 @@ class TestGracefulDegradation:
 
         # Try to open lore viewer with F key (should be blocked)
         f_event = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.F,
-            sym=tcod.event.KeySym.F,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.F, sym=tcod.event.KeySym.F, mod=tcod.event.Modifier.NONE
         )
 
         input_handler.handle_keydown(f_event)
