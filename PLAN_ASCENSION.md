@@ -16,6 +16,10 @@ Create ascension modifier definitions and calculation logic. No game integration
 - Dependencies: None
 - Risk: Low (isolated from existing code)
 
+**Phase 1 Prerequisites** (must be done first):
+- Move enemy spawn weights from hardcoded in `game_level_coordinator.py:558` to `game_rules.json` (enables A12 modifier)
+- Lower base alert range from 8→6 in `game_rules.json` (enables A15 modifier to raise it to 10)
+
 ### Phase 2: Game Integration (High Complexity)
 Apply modifiers to existing game systems (enemies, items, levels, combat).
 - Complexity: High (touches many systems)
@@ -86,9 +90,9 @@ Background trace gain: x2 (1/2/3 → 2/4/6 per 25 turns)
 **Design Note**: Passive trace pressure doubled. Rewards efficiency, punishes dawdling.
 
 ### Ascension 4: "Aggressive Protocols"
-All enemy damage: +20%
-**Effect**: Firewall 5→6, Bot 8→9, Patrol 10→12, Hunter 15→18, Admin 45→54
-**Design Note**: Every hit hurts more.
+All enemy damage: +20% (truncate decimals)
+**Effect**: Firewall 5→6, Bot 8→9 (9.6 truncated), Patrol 10→12, Hunter 15→18, Admin 45→54
+**Design Note**: Every hit hurts more. Use `int(base * 1.2)` for all damage calculations.
 
 ### Ascension 5: "Wide-Spectrum Sensors"
 All enemies: +1 vision (Scanner now +2 total)
@@ -134,29 +138,29 @@ Enemy spawn weights rebalanced toward tougher enemies:
 **Design Note**: More Hunters, more Viruses. Deadlier enemy mix.
 
 ### Ascension 13: "Degraded Infrastructure"
-Restoration nodes have hidden random capacity and vanish when depleted.
-- Floor 1: 100-200 total restoration (avg ~5-10 uses)
-- Floor 2: 75-150 total restoration (avg ~4-7 uses)
-- Floor 3: 50-100 total restoration (avg ~2-5 uses)
-**Design Note**: Uncertainty in resource planning - that node might run dry mid-heal.
+ALL restoration nodes (cooling, CPU, AND ghost) have hidden random capacity PER NODE and vanish when depleted.
+- Floor 1: Each node has 100-200 capacity (at 20 per use = 5-10 uses each)
+- Floor 2: Each node has 75-150 capacity (at 20 per use = ~4-7 uses each)
+- Floor 3: Each node has 50-100 capacity (at 20 per use = ~2-5 uses each)
+**Design Note**: Uncertainty in resource planning - that node might run dry mid-heal. Each node rolls its own capacity independently.
 
 ### Ascension 14: "Memory Constraints"
 Starting RAM: 8→6
 **Design Note**: Tighter exploit budget. Can't equip everything you find.
 
 ### Ascension 15: "Network Cascade"
-Enemy alert range: 6→10 tiles
+Enemy alert range: 6→10 tiles (A0-A14 use base of 6, A15+ raises to 10)
 **Achievement**: "Signal Ghost"
 **Design Note**: One hostile enemy cascades alerts across nearly half the map.
-**PRE-REQUISITE**: Lower base alert range from 8→6 in game_rules.json before implementing ascension.
+**PRE-REQUISITE**: Phase 1 lowers base alert range from 8→6. This affects ALL players (including A0) but makes base game slightly easier - intentional tradeoff to enable A15's dramatic increase.
 
 ### Ascension 16: "Exposed Topology"
 Level generation favors wide open spaces with less cover:
-- min_room_size: 3→5
-- max_room_size: 7→10
-- corridor_width_wide: 5%→40%
-- corridor_alcove_chance: 15%→5%
-- cover_cluster_chance: 50%→25%
+- `room_generation.min_room_size`: 3→5
+- `room_generation.max_room_size`: 7→10
+- `room_generation.corridor_width_weights.wide`: 0.05→0.40 (5%→40%)
+- `room_generation.corridor_alcove_chance`: 0.15→0.05
+- `room_generation.cover_cluster_chance`: 0.50→0.25
 **Design Note**: Bigger rooms, wider corridors, fewer hiding spots. Nowhere to run.
 
 ### Ascension 17: "Thermal Signature"
@@ -188,13 +192,17 @@ These levels require extra playtesting attention:
 | A11 | Unwinnable if codes spawn too low | Hard floor: minimum 3 codes/level |
 | A13 | Hidden node capacity feels arbitrary | Clear visual feedback when depleted |
 | A15 | Alert cascade range may feel unfair | PRE-REQ: lower base from 8→6 first |
-| A16 | Open maps + enemy density = exposure | Track stealth viability metrics |
+| A16 | Open maps + enemy density = exposure | Manual playtesting for feel |
 | A17+A8 | Heat stacking may punish combat too hard | Combined testing required |
 | A20 | Cumulative pain may be excessive | Target 3-8% win rate, not 1-5% |
 
 ---
 
 ## 4. Data Structure & Persistence
+
+**Single Source of Truth**: All ascension state lives in `user_settings.json`. No duplication in `rogue_signal_progress.json` - avoids sync issues.
+
+**Note**: Game only supports one save file at a time. No need to handle multi-save edge cases (backup file manipulation is unsupported).
 
 ### user_settings.json Addition
 ```json
@@ -208,13 +216,7 @@ These levels require extra playtesting attention:
 }
 ```
 
-### rogue_signal_progress.json Addition
-```json
-"lifetime_metrics": {
-  "ascension_victories": {"0": 12, "5": 1},
-  "highest_ascension_completed": 5
-}
-```
+The `rogue_signal_progress.json` does NOT duplicate this data - query from `user_settings.json` when needed.
 
 ---
 
@@ -281,10 +283,12 @@ class RestoreNode:
         return self.used_capacity >= self.total_capacity
 ```
 
-**Capacity Ranges by Floor**:
-- Floor 1: 100-200 total restoration
-- Floor 2: 75-150 total restoration
-- Floor 3: 50-100 total restoration
+**Capacity Ranges by Floor** (per node, rolled independently):
+- Floor 1: 100-200 capacity per node (at 20 restoration per use = 5-10 uses)
+- Floor 2: 75-150 capacity per node (at 20 restoration per use = ~4-7 uses)
+- Floor 3: 50-100 capacity per node (at 20 restoration per use = ~2-5 uses)
+
+**Applies to**: Cooling nodes (20 heat), CPU nodes (20 CPU), AND ghost nodes (20% trace reduction).
 
 **Integration**: At A13+, all restoration nodes use this system. Below A13, nodes have unlimited uses (`total_capacity = -1` sentinel). Player sees "DEPLETED" message when node runs dry - capacity is never shown numerically.
 
@@ -365,10 +369,11 @@ class RestoreNode:
 - Show "DEPLETED" message when node runs dry, not capacity numbers
 - Color shift: green → red as restoration provided (but not exact number)
 
-**Blind Spot Persistence**:
-- A20 requires tracking which blind spots have been used
-- Add `used` flag to blind spot data structure
-- System log message when blind spot consumed
+**Blind Spot Persistence (A20)**:
+- Blind spots are tile types (no object), so track used positions in a `Set[Tuple[int,int]]` on `GameState`
+- When player steps on blind spot at A20+: add position to set, log "SHADOW FADED"
+- `is_blind_spot_active(pos)` checks: `is_blind_spot(pos) and pos not in used_blind_spots`
+- Set must be saved/loaded with game state
 
 **Save/Load Compatibility**:
 - Old saves without ascension data → default to A0
@@ -391,11 +396,12 @@ class RestoreNode:
 - Current highest unlocked indicator
 
 **Input Handling**:
-- Arrow keys / D-pad: Navigate levels
+- Arrow keys / D-pad: Navigate levels (wrap-around at top/bottom)
 - Enter / A button: Select and confirm
 - Escape / B button: Cancel, return to main menu
 - Mouse: Hover to preview modifiers, click to select
 - Gamepad support required (Steam Deck)
+- **Scroll behavior**: 21 levels may not fit on screen. Show ~10 visible with scroll indicator. D-pad up/down moves selection and scrolls view to keep selection visible. No page-up/page-down needed - list is short enough for single-step navigation.
 
 **Layout** (similar to settings menu):
 - Left panel: Level list (0-20) with lock icons
@@ -422,14 +428,14 @@ class RestoreNode:
 **Changes**:
 - Display completed ascension level prominently
 - Show "ASCENSION X UNLOCKED!" message (if unlocked new level)
-- **NEW UNLOCK SCREEN**: When beating highest-ever ascension, show dedicated screen explaining the next level's modifiers before returning to menu
-- Update `rogue_signal_progress.json` via new function
+- **NEW UNLOCK SCREEN**: When beating highest_unlocked, show a SEPARATE screen (styled like victory screen) after the main victory screen. This screen explains the new ascension level's modifier. Player must dismiss it (Enter/click) to continue - not a "never show again" toggle.
+- Update `user_settings.json` ascension data
 - Play unlock sound effect (optional)
 
 **Integration Point**: Victory screen rendering, post-victory hooks
 
 ### Auto-Advance Behavior
-**REQUIREMENT**: When a new ascension level is unlocked, automatically set it as the selected level for the next run. Player doesn't need to manually select - winning at A3 unlocks A4 and the next "New Game" starts at A4 by default. Players can still manually select lower levels via the Ascension menu if desired.
+**REQUIREMENT**: Auto-advance ONLY triggers when beating highest_unlocked for the first time. If player manually selects A5 and wins, their selection stays at A5. But if they later beat their max (e.g., A8) for the first time, it auto-advances to A9. Players can always manually select lower levels via the Ascension menu.
 
 #### Status Bar (in `game_rendering_*.py`)
 **Changes**:
@@ -606,7 +612,7 @@ class RestoreNode:
 
 ### Stealth Viability at High Exposure
 **Issue**: A16 open maps + A6 fewer blind spots + A9 more enemies = stealth may fail
-**Solution**: Track stealth-vs-combat ratio metrics; if stealth drops below 30% viability at A16+, adjust map generation
+**Solution**: Determine viability through manual playtesting. No automated metric - "stealth viability" is subjective and best assessed by feel. Adjust map generation parameters if playtesting reveals stealth is unworkable at A16+.
 
 ---
 
@@ -647,9 +653,8 @@ One level that shifts mechanics sideways rather than purely harder (e.g., "enemi
 - Win rate per ascension (decreasing appropriately?)
 - Average attempts before first victory at each level
 - Abandonment rate (quit at certain ascensions?)
-- Stealth vs combat ratio per ascension level
 
-**Tracking**: Use existing metrics system, add ascension-specific queries
+**Tracking**: Use existing metrics system, add ascension-specific queries. Stealth viability assessed through manual playtesting, not automated metrics.
 
 ---
 
@@ -682,7 +687,13 @@ How prominent should unlock message be?
 
 ### Modifier Tooltips
 Should in-game tooltips show ascension modifiers?
-**REQUIREMENT**: Yes. Add "(Ascension +X)" notes to affected stats. Players must understand why enemies are stronger or resources scarcer—otherwise difficulty feels arbitrary rather than systemic.
+**REQUIREMENT**: Yes. Add "(Ascension +X)" notes to affected stats. Players must understand why enemies are stronger or resources scarcer - otherwise difficulty feels arbitrary rather than systemic.
+
+**Tooltip Locations**:
+- **Enemy inspection (Look mode)**: Show modified stats with ascension delta, e.g., "CPU: 45 (+10 Ascension)"
+- **Player stats panel**: Show RAM/vision with ascension modifier if active
+- **Help screen (F1)**: Include "Current Ascension: X" and list active modifiers
+- **Node inspection**: At A13+, do NOT show capacity (that's the uncertainty mechanic)
 
 ### Unlock Triggers
 Unlock A6 after ANY A5 attempt, or only victory?
@@ -735,12 +746,13 @@ Creates narrative loop: escape → adaptation → overcome → repeat.
 ## Implementation Checklist
 
 **Phase 1: Core System**
+- [ ] **PREREQ**: Move enemy spawn weights from `game_level_coordinator.py:558` to `game_rules.json`
+- [ ] **PREREQ**: Lower base alert range from 8→6 in `game_rules.json`
 - [ ] Create `game_ascension.py` with `AscensionModifiers` dataclass
 - [ ] Implement `calculate_ascension_modifiers()` cumulative logic
 - [ ] Define all 20 ascension modifier sets in `game_rules.json`
-- [ ] Implement `RestoreNode` capacity system for A13
-- [ ] Update `user_settings.json` schema
-- [ ] Update `rogue_signal_progress.json` schema
+- [ ] Implement `RestoreNode` capacity system for A13 (cooling, CPU, AND ghost nodes)
+- [ ] Update `user_settings.json` schema (single source of truth for ascension state)
 - [ ] Write unit tests for modifier calculations
 - [ ] Write unit tests for node capacity depletion
 
@@ -751,9 +763,8 @@ Creates narrative loop: escape → adaptation → overcome → repeat.
 - [ ] Update level generation (`game_level.py`, `game_level_coordinator.py`)
 - [ ] Update turn management (`game_turn_manager.py`)
 - [ ] Implement node capacity system in gameplay (A13)
-- [ ] Implement one-time-use blind spots (A20)
+- [ ] Implement one-time-use blind spots with Set tracking (A20)
 - [ ] Add code floor clamping (minimum 3)
-- [ ] Lower base alert range from 8→6 (PRE-REQ for A15)
 - [ ] Write integration tests for applied modifiers
 
 **Phase 3: UI/Menu**
@@ -768,7 +779,6 @@ Creates narrative loop: escape → adaptation → overcome → repeat.
 **Phase 4: Achievements**
 - [ ] Add ascension achievements (A5/A10/A15/A20) with thematic names
 - [ ] Update `game_metrics.py` for ascension tracking
-- [ ] Add stealth-vs-combat ratio tracking
 - [ ] Test achievement unlock conditions
 
 **Phase 5: Testing & Balance**
@@ -807,7 +817,23 @@ Unused modifiers for future expansion or A21-30:
 
 ## Changelog
 
-### v1.2 (Current - Complete Redesign)
+### v1.3 (Current - Audit Fixes)
+**Clarifications and fixes from implementation audit:**
+
+- **Auto-advance**: Only triggers when beating highest_unlocked, not any level
+- **Persistence**: Single source of truth in `user_settings.json` (no duplication)
+- **A13 nodes**: All nodes (cooling, CPU, AND ghost) have capacity; per-node not per-floor
+- **A15 prereq**: Base alert range 8→6 happens in Phase 1, affects all players (intentional tradeoff)
+- **A16 structure**: Fixed JSON paths (`room_generation.corridor_width_weights.wide`, etc.)
+- **A20 tracking**: Blind spots are tile types - use `Set[Tuple[int,int]]` on GameState
+- **Unlock screen**: Separate screen after victory (styled similarly), not a dismissable toggle
+- **Damage rounding**: Use `int(base * 1.2)` (truncate decimals)
+- **Tooltips**: Specified locations (enemy inspection, player stats, help screen)
+- **Gamepad scrolling**: Wrap-around navigation, ~10 visible with scroll indicator
+- **Stealth viability**: Removed automated metric - determined via manual playtesting
+- **Phase 1 prereqs**: Added spawn weights to JSON and alert range change as explicit prereqs
+
+### v1.2 (Previous - Complete Redesign)
 **Complete A1-A20 redesign with cyberpunk-themed names and balanced progression:**
 
 **Early Game (A1-A5):**
