@@ -108,6 +108,7 @@ jobs:
         [ ! -f "game_rules.json" ] && missing="$missing game_rules.json"
         [ ! -f "graphics_tiles.json" ] && missing="$missing graphics_tiles.json"
         [ ! -f "narrative_content.json" ] && missing="$missing narrative_content.json"
+        [ ! -f "default_bindings.json" ] && missing="$missing default_bindings.json"
         [ ! -f "KreativeSquare.ttf" ] && missing="$missing KreativeSquare.ttf"
         [ ! -d "graphics" ] && missing="$missing graphics/"
         [ ! -d "sound" ] && missing="$missing sound/"
@@ -143,6 +144,7 @@ jobs:
         cp game_rules.json dist/
         cp graphics_tiles.json dist/
         cp narrative_content.json dist/
+        cp default_bindings.json dist/
 
         # Copy font file
         echo "Copying font file..."
@@ -173,6 +175,10 @@ jobs:
 
         echo "Copying music folder..."
         cp -r music dist/
+
+        # Copy logo for Linux desktop integration
+        echo "Copying logo..."
+        cp logo.png dist/
 
         echo "All assets copied successfully."
 

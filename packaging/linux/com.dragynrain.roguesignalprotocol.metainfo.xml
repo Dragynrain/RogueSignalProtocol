@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metainfo for Rogue Signal Protocol -->
+<!-- Validation: appstreamcli validate com.dragynrain.roguesignalprotocol.metainfo.xml -->
+<component type="desktop-application">
+  <id>com.dragynrain.roguesignalprotocol</id>
+
+  <name>Rogue Signal Protocol</name>
+  <summary>Cyberpunk roguelike game</summary>
+
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+
+  <developer id="com.dragynrain">
+    <name>Dragynrain</name>
+  </developer>
+
+  <description>
+    <p>
+      Rogue Signal Protocol is a tactical cyberpunk roguelike where you infiltrate
+      corporate networks, hack systems, and fight your way through procedurally
+      generated levels. Every run is different. Death is permanent.
+    </p>
+    <p>Features:</p>
+    <ul>
+      <li>Turn-based tactical combat with hacking mechanics</li>
+      <li>Procedurally generated corporate facilities</li>
+      <li>Permadeath - every choice matters</li>
+      <li>Full gamepad support (Steam Deck compatible)</li>
+      <li>Keyboard and mouse controls</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">com.dragynrain.roguesignalprotocol.desktop</launchable>
+
+  <url type="homepage">https://dragynrain.itch.io/rogue-signal-protocol</url>
+  <url type="bugtracker">https://github.com/Dragynrain/RogueSignalProtocol/issues</url>
+
+  <provides>
+    <binary>rogue-signal-protocol</binary>
+  </provides>
+
+  <requires>
+    <display_length compare="ge">800</display_length>
+  </requires>
+
+  <recommends>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>gamepad</control>
+  </recommends>
+
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>gamepad</control>
+  </supports>
+
+  <categories>
+    <category>Game</category>
+    <category>RolePlaying</category>
+  </categories>
+
+  <keywords>
+    <keyword>roguelike</keyword>
+    <keyword>cyberpunk</keyword>
+    <keyword>tactical</keyword>
+    <keyword>turn-based</keyword>
+    <keyword>indie</keyword>
+    <keyword>permadeath</keyword>
+  </keywords>
+
+  <screenshots>
+    <!-- Add screenshots after taking them -->
+    <!-- Example:
+    <screenshot type="default">
+      <caption>Gameplay showing tactical combat</caption>
+      <image>https://raw.githubusercontent.com/Dragynrain/RogueSignalProtocol/main/marketing/screenshot1.png</image>
+    </screenshot>
+    -->
+  </screenshots>
+
+  <releases>
+    <release version="0.8.0" date="2024-12-11">
+      <description>
+        <p>Alpha release with Linux support.</p>
+        <ul>
+          <li>Cross-platform support (Windows, Linux)</li>
+          <li>Steam Deck compatible</li>
+          <li>Full gamepad support with remapping</li>
+        </ul>
+      </description>
+    </release>
+  </releases>
+
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-cartoon">mild</content_attribute>
+    <content_attribute id="violence-fantasy">moderate</content_attribute>
+  </content_rating>
+</component>
