@@ -5,8 +5,8 @@
 **Multi-platform distribution requires 3 package formats to reach 90%+ of Linux users**. No need to submit to dozens of distro-specific repos. Steam Deck is viable via Flatpak + gamepad support.
 
 **Platform Status**:
-- **Current**: Windows-only (single .exe via PyInstaller)
-- **Target**: Windows + Linux (Steam Deck compatible)
+- **Current**: Windows + Linux (Steam Deck compatible) - code complete, awaiting distribution
+- **Target**: Publish Linux packages with 0.8.0 Beta release
 - **Future**: macOS (deferred - see Future Considerations section)
 
 **Current Constraints**:
@@ -167,11 +167,12 @@ Create distribution packages (AppImage, Flatpak, AUR).
 - [ ] All formats: Verify game assets included (graphics/, sound/, music/, *.json, *.ttf)
 - [x] Create manual test script for each package format
 
-### Phase 5: Distribution & Publishing (Low-Medium Complexity)
+### Phase 5: Distribution & Publishing (Low-Medium Complexity) - DEFERRED
 Submit to package repositories and configure auto-updates.
 - Complexity: Low-Medium (mostly administrative)
-- Dependencies: Phase 4 complete
+- Dependencies: Phase 4 complete, PLAN_ASCENSION complete, ready for 0.8.0 Beta release
 - Risk: Low (approval processes take time but are straightforward)
+- Status: **DEFERRED** - Will complete when ready for official 0.8.0 Beta release
 
 ### Phase 6: Testing & Verification (High Complexity)
 Test on Linux VMs across multiple distros.
@@ -1060,16 +1061,18 @@ find . -type f | sort -f | uniq -di
 **See "Implementation Phases" section at top of document for detailed phase breakdown.**
 
 **Phase Summary**:
-| Phase | Goal | Key Deliverable |
-|-------|------|-----------------|
-| 0  | Platform detection | `game_platform.py` utility |
-| 1 | Audit Windows code | List of files needing changes |
-| 1.5 | Validation | WSL2/VM smoke tests, commit pending work |
-| 2 | Cross-platform refactor | Linux-compatible codebase |
-| 3 | Build system | Working Linux binary |
-| 4 | Packaging | AppImage, Flatpak, AUR |
-| 5 | Distribution | Published packages |
-| 6 | Testing | Verified cross-distro stability |
+| Phase | Goal | Key Deliverable | Status |
+|-------|------|-----------------|--------|
+| 0 | Platform detection | `game_platform.py` utility | DONE |
+| 1 | Audit Windows code | List of files needing changes | DONE |
+| 1.5 | Validation | WSL2/VM smoke tests, commit pending work | DONE |
+| 2 | Cross-platform refactor | Linux-compatible codebase | DONE |
+| 3 | Build system | Working Linux binary | DONE |
+| 4 | Packaging | AppImage, Flatpak, AUR files | DONE |
+| 5 | Distribution | Published packages | **DEFERRED** |
+| 6 | Testing | Verified cross-distro stability | DONE |
+
+**Note:** Phase 5 (Distribution) deferred until after PLAN_ASCENSION and ready for 0.8.0 Beta release.
 
 ---
 
@@ -1256,11 +1259,11 @@ These items verify Phase 2 changes work on Linux before building:
 - [ ] ~~Test AUR package on Arch VM~~ - DEFERRED (Steam Deck is Arch-based, covered by Deck testing)
 - [x] **TDD**: Create manual test checklist - `packaging/linux/TEST_CHECKLIST.md`
 
-**Phase 5: Distribution**
+**Phase 5: Distribution** - DEFERRED (until 0.8.0 Beta release after PLAN_ASCENSION)
 - [ ] Upload AppImage to itch.io + GitHub Releases
 - [ ] Submit Flatpak to Flathub (PR)
 - [ ] Upload AUR PKGBUILD
-- [ ] Update README with platform install instructions
+- [x] Update README with platform install instructions - DONE
 - [ ] Update itch.io page with Linux screenshots
 
 **Phase 6: Testing** - DONE
@@ -1276,7 +1279,7 @@ These items verify Phase 2 changes work on Linux before building:
 - [ ] ~~Verify Flatpak and AppImage work on Ubuntu~~ - DEFERRED to Phase 5 (test during actual distribution)
 - [ ] ~~OPTIONAL: Test on Fedora VM~~ - DEFERRED (Ubuntu + Steam Deck coverage is sufficient)
 - [x] **TDD**: Document any tests that fail on Linux - DONE (timing-sensitive gamepad tests need `-n 0` on slow VMs)
-- [ ] Collect community feedback from Linux players
+- [ ] Collect community feedback from Linux players - DEFERRED to Phase 5
 
 ---
 
