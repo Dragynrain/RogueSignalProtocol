@@ -14,12 +14,13 @@ Test coverage:
 Uses the game_with_gamepad fixture from tests/conftest.py.
 """
 
+import time
+
 import pytest
 import tcod.event
 import tcod.sdl.joystick
-import time
 
-from game_input_actions import InputAction, InputContext
+from game_input_actions import InputContext
 
 # Settling period for analog stick (30ms in implementation, use 35ms for safety)
 SETTLING_PERIOD_SEC = 0.035
@@ -37,29 +38,28 @@ class TestButtonHeldDuringTransition:
         game, input_handler, controller = game_with_gamepad
 
         # Start dialogue
-        from game_dialogue_system import DialogueBox
         import tcod.event
+
+        from game_dialogue_system import DialogueBox
+
         # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
         dialogue = DialogueBox(
             title="Test Dialogue",
             message="Test dialogue text",
             options=["[Y] Confirm"],
-            valid_keys=[tcod.event.KeySym(ord('y'))],
+            valid_keys=[tcod.event.KeySym(ord("y"))],
             title_color=(255, 255, 255),
             message_color=(255, 255, 255),
             border_color=(255, 255, 255),
             bg_color=(0, 0, 0),
             format_data={},
-            priority=1
+            priority=1,
         )
         game.dialogue_state.active_dialogue = dialogue
 
         # Hold A button during dialogue
         press_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
         result = input_handler.handle_controller_button(press_event)
         # In dialogue, A button confirms selection
@@ -167,10 +167,7 @@ class TestGameOverDuringInput:
 
         # Hold stick
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=-32767
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=-32767
         )
         input_handler.handle_controller_axis(axis_event)
 
@@ -222,20 +219,22 @@ class TestContextPriority:
         game, input_handler, controller = game_with_gamepad
 
         # Start dialogue
-        from game_dialogue_system import DialogueBox
         import tcod.event
+
+        from game_dialogue_system import DialogueBox
+
         # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
         dialogue = DialogueBox(
             title="Test Dialogue",
             message="Test dialogue text",
             options=["[Y] Confirm"],
-            valid_keys=[tcod.event.KeySym(ord('y'))],
+            valid_keys=[tcod.event.KeySym(ord("y"))],
             title_color=(255, 255, 255),
             message_color=(255, 255, 255),
             border_color=(255, 255, 255),
             bg_color=(0, 0, 0),
             format_data={},
-            priority=1
+            priority=1,
         )
         game.dialogue_state.active_dialogue = dialogue
 
@@ -250,7 +249,7 @@ class TestContextPriority:
         game, input_handler, controller = game_with_gamepad
 
         # Set up achievement popup
-        if not hasattr(game, 'achievement_popup_manager'):
+        if not hasattr(game, "achievement_popup_manager"):
             pytest.skip("Achievement system not available")
 
         # Simulate achievement popup
@@ -338,10 +337,7 @@ class TestStateCleanup:
 
         # Start button repeat (D-pad navigation)
         dpad_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         input_handler.handle_controller_button(dpad_event)
 
@@ -363,16 +359,14 @@ class TestStateCleanup:
 
         # Set stick for menu navigation
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=-32767
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=-32767
         )
         input_handler.handle_controller_axis(axis_event)
 
         # Get menu movement (sets up auto-repeat state)
         from unittest.mock import patch
-        with patch('time.time', return_value=0.0):
+
+        with patch("time.time", return_value=0.0):
             movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_menu()
             # May or may not get movement depending on initial state
 
@@ -387,8 +381,10 @@ class TestStateCleanup:
         # The last_menu_move_time may or may not be reset depending on implementation,
         # but it should be a valid float (not None, not NaN)
         import math
-        assert not math.isnan(analog_handler.last_menu_move_time), \
-            "Menu move time should be a valid number after context switch"
+
+        assert not math.isnan(
+            analog_handler.last_menu_move_time
+        ), "Menu move time should be a valid number after context switch"
 
 
 class TestEdgeCases:

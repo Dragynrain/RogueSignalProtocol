@@ -11,15 +11,15 @@ Tests all input types for main menu:
 Verifies proper navigation, selection, and button release behavior.
 """
 
+from unittest.mock import Mock
+
 import pytest
 import tcod
 import tcod.event
-from unittest.mock import Mock
 
 from game_config import GameSettings
 from game_menu_main import MainMenu
-from game_input_actions import InputAction, InputContext
-from tests.integration.input_test_utils import InputTestHelper, AutoRepeatTester
+from tests.integration.input_test_utils import InputTestHelper
 
 
 class TestMainMenuCriticalPath:
@@ -104,7 +104,7 @@ class TestMainMenuCriticalPath:
         """D-pad DOWN changes menu selection."""
         initial = main_menu.selected_option
 
-        event = InputTestHelper.create_dpad_event('down', pressed=True)
+        event = InputTestHelper.create_dpad_event("down", pressed=True)
         main_menu.handle_input(event)
 
         assert main_menu.selected_option != initial
@@ -114,7 +114,7 @@ class TestMainMenuCriticalPath:
         main_menu.navigate_down()  # Move down first
         after_down = main_menu.selected_option
 
-        event = InputTestHelper.create_dpad_event('up', pressed=True)
+        event = InputTestHelper.create_dpad_event("up", pressed=True)
         main_menu.handle_input(event)
 
         assert main_menu.selected_option != after_down
@@ -123,26 +123,26 @@ class TestMainMenuCriticalPath:
         """D-pad LEFT/RIGHT should not change vertical menu selection."""
         initial = main_menu.selected_option
 
-        left_event = InputTestHelper.create_dpad_event('left', pressed=True)
+        left_event = InputTestHelper.create_dpad_event("left", pressed=True)
         main_menu.handle_input(left_event)
         assert main_menu.selected_option == initial
 
-        right_event = InputTestHelper.create_dpad_event('right', pressed=True)
+        right_event = InputTestHelper.create_dpad_event("right", pressed=True)
         main_menu.handle_input(right_event)
         assert main_menu.selected_option == initial
 
     def test_dpad_button_release_stops_repeat(self, main_menu):
         """D-pad button release stops auto-repeat."""
         # Press down
-        down_press = InputTestHelper.create_dpad_event('down', pressed=True)
+        down_press = InputTestHelper.create_dpad_event("down", pressed=True)
         main_menu.handle_input(down_press)
 
         # Check button is held
-        if hasattr(main_menu, 'gamepad_handler'):
+        if hasattr(main_menu, "gamepad_handler"):
             assert main_menu.gamepad_handler.button_held is not None
 
             # Release
-            down_release = InputTestHelper.create_dpad_event('down', pressed=False)
+            down_release = InputTestHelper.create_dpad_event("down", pressed=False)
             main_menu.handle_input(down_release)
 
             # Verify cleared
@@ -155,7 +155,7 @@ class TestMainMenuCriticalPath:
         initial = main_menu.selected_option
 
         # Full down deflection
-        event = InputTestHelper.create_stick_event('left', 'y', 32767)
+        event = InputTestHelper.create_stick_event("left", "y", 32767)
         main_menu.handle_input(event)
 
         # May or may not change immediately (depends on timing)
@@ -167,7 +167,7 @@ class TestMainMenuCriticalPath:
         main_menu.navigate_down()
 
         # Full up deflection
-        event = InputTestHelper.create_stick_event('left', 'y', -32767)
+        event = InputTestHelper.create_stick_event("left", "y", -32767)
         main_menu.handle_input(event)
 
         assert main_menu.selected_option >= 0
@@ -178,7 +178,7 @@ class TestMainMenuCriticalPath:
 
         # 5% deflection (below typical 15% deadzone)
         small_deflection = int(32767 * 0.05)
-        event = InputTestHelper.create_stick_event('left', 'y', small_deflection)
+        event = InputTestHelper.create_stick_event("left", "y", small_deflection)
         main_menu.handle_input(event)
 
         # Should not change (below deadzone)
@@ -189,7 +189,7 @@ class TestMainMenuCriticalPath:
         initial = main_menu.selected_option
 
         # Right stick full deflection
-        event = InputTestHelper.create_stick_event('right', 'y', 32767)
+        event = InputTestHelper.create_stick_event("right", "y", 32767)
         main_menu.handle_input(event)
 
         # Should not affect menu
@@ -202,7 +202,7 @@ class TestMainMenuCriticalPath:
         # Select quit option
         main_menu.selected_option = len(main_menu.options) - 1
 
-        event = InputTestHelper.create_face_button_event('a', pressed=True)
+        event = InputTestHelper.create_face_button_event("a", pressed=True)
         result = main_menu.handle_input(event)
 
         # Should activate quit/exit
@@ -210,7 +210,7 @@ class TestMainMenuCriticalPath:
 
     def test_b_button_cancels(self, main_menu):
         """B button acts as cancel/back."""
-        event = InputTestHelper.create_face_button_event('b', pressed=True)
+        event = InputTestHelper.create_face_button_event("b", pressed=True)
         result = main_menu.handle_input(event)
 
         # Main menu may not have back action, but should handle it
@@ -259,7 +259,7 @@ class TestMainMenuCriticalPath:
         after_kb = main_menu.selected_option
 
         # Switch to gamepad
-        gp_event = InputTestHelper.create_dpad_event('down', pressed=True)
+        gp_event = InputTestHelper.create_dpad_event("down", pressed=True)
         main_menu.handle_input(gp_event)
         after_gp = main_menu.selected_option
 

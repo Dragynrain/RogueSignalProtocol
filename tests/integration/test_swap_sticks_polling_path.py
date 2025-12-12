@@ -8,17 +8,15 @@ polling code paths.
 Covers gameplay movement, look mode cursor, and menu navigation.
 """
 
-import pytest
 import time
-from unittest.mock import Mock, patch
+
+import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_engine import GameEngine
-from game_config import GameSettings, GameConfig
 from game_audio import NullSoundManager
-from game_input_actions import InputAction
-
+from game_config import GameSettings
+from game_engine import GameEngine
 
 CA = tcod.sdl.joystick.ControllerAxis
 
@@ -123,7 +121,9 @@ class TestPollingPathSwapSticksGameplay:
             movement = analog.get_left_stick_movement_gameplay(game.turn)
 
         # RIGHT stick has no input, so should return None
-        assert movement is None, "LEFT stick should NOT produce movement when swap=True (we read RIGHT)"
+        assert (
+            movement is None
+        ), "LEFT stick should NOT produce movement when swap=True (we read RIGHT)"
 
 
 class TestPollingPathSwapSticksLookMode:
@@ -148,6 +148,7 @@ class TestPollingPathSwapSticksLookMode:
         # Enter look mode
         game.look_mode = True
         from game_entities import Position
+
         game.look_cursor_position = Position(game.player.position.x, game.player.position.y)
 
         # Reset cursor state
@@ -306,7 +307,9 @@ class TestGameLoopPollingSwapSticks:
             movement = analog.get_right_stick_movement()
 
         # With swap=True and left_y=25000, we should get downward cursor movement
-        assert movement is not None, "Polling should detect LEFT stick movement for cursor when swap=True"
+        assert (
+            movement is not None
+        ), "Polling should detect LEFT stick movement for cursor when swap=True"
 
 
 class TestPollingPathSwapSticksMenuNavigation:

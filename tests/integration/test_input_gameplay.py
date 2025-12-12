@@ -86,8 +86,7 @@ class TestGameplayMovement:
         engine.input_handler._execute_action(InputAction.MOVE_NORTHEAST)
 
         # Position should change (unless fully blocked)
-        moved = (engine.player.position.x != initial_x or
-                 engine.player.position.y != initial_y)
+        moved = engine.player.position.x != initial_x or engine.player.position.y != initial_y
         # At minimum, action should not crash
         assert engine.player.position is not None
 
@@ -228,7 +227,7 @@ class TestEdgeCases:
 
         # Game state still valid
         assert engine.player.position is not None
-        assert hasattr(engine, 'turn')
+        assert hasattr(engine, "turn")
 
     def test_invalid_exploit_slot_handled_gracefully(self, gameplay_engine):
         """Using invalid exploit slots doesn't crash."""
@@ -260,7 +259,7 @@ class TestGamepadInGameplay:
         """D-pad triggers player movement."""
         engine = gameplay_engine
 
-        for direction in ['up', 'down', 'left', 'right']:
+        for direction in ["up", "down", "left", "right"]:
             initial_pos = (engine.player.position.x, engine.player.position.y)
 
             press = InputTestHelper.create_dpad_event(direction, pressed=True)
@@ -278,11 +277,11 @@ class TestGamepadInGameplay:
         engine = gameplay_engine
 
         # North
-        event = InputTestHelper.create_stick_event('left', 'y', -32767)
+        event = InputTestHelper.create_stick_event("left", "y", -32767)
         engine.input_handler.handle_keydown(event)
 
         # South
-        event = InputTestHelper.create_stick_event('left', 'y', 32767)
+        event = InputTestHelper.create_stick_event("left", "y", 32767)
         engine.input_handler.handle_keydown(event)
 
         assert engine.player.position is not None
@@ -292,7 +291,7 @@ class TestGamepadInGameplay:
         engine = gameplay_engine
         initial_turn = engine.turn
 
-        event = InputTestHelper.create_face_button_event('a', pressed=True)
+        event = InputTestHelper.create_face_button_event("a", pressed=True)
         engine.input_handler.handle_keydown(event)
 
         # Turn should advance or stay same
@@ -303,11 +302,11 @@ class TestGamepadInGameplay:
         engine = gameplay_engine
 
         # LB - previous exploit
-        lb = InputTestHelper.create_shoulder_button_event('lb', pressed=True)
+        lb = InputTestHelper.create_shoulder_button_event("lb", pressed=True)
         engine.input_handler.handle_keydown(lb)
 
         # RB - next exploit
-        rb = InputTestHelper.create_shoulder_button_event('rb', pressed=True)
+        rb = InputTestHelper.create_shoulder_button_event("rb", pressed=True)
         engine.input_handler.handle_keydown(rb)
 
         # Should not crash

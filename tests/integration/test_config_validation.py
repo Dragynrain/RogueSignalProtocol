@@ -577,10 +577,7 @@ class TestConfigRedundancy:
                     elif source == "user_settings.json":
                         values[source] = self._get_nested_value(GameSettings.DEFAULTS, key)
 
-                duplicates[key] = {
-                    "sources": sources,
-                    "values": values
-                }
+                duplicates[key] = {"sources": sources, "values": values}
 
         assert len(duplicates) == 0, (
             f"Found {len(duplicates)} duplicate keys across config files:\n"
@@ -592,7 +589,7 @@ class TestConfigRedundancy:
 
     def _get_nested_value(self, data, key_path):
         """Get a value from nested dict using dot notation (e.g., 'balance.heat_reduction')."""
-        keys = key_path.split('.')
+        keys = key_path.split(".")
         value = data
         for key in keys:
             if isinstance(value, dict) and key in value:

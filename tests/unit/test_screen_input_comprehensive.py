@@ -11,22 +11,22 @@ Tests that each screen properly handles:
 TDD: These tests define expected behavior. Failures indicate missing input support.
 """
 
-import pytest
 from unittest.mock import Mock, patch
+
+import pytest
 import tcod.event
 import tcod.sdl.joystick
-
-from game_input_actions import InputAction, InputContext
-
 
 # =============================================================================
 # Test Fixtures
 # =============================================================================
 
+
 @pytest.fixture
 def settings():
     """Create GameSettings with gamepad enabled."""
     from game_config import GameSettings
+
     s = GameSettings()
     s.gamepad_enabled = True
     s.gamepad_deadzone = 0.15
@@ -38,6 +38,7 @@ def settings():
 def input_mapper():
     """Create InputMapper with default bindings."""
     from game_input_mappings import InputMapper
+
     return InputMapper()
 
 
@@ -77,6 +78,7 @@ def make_axis_event(axis, value):
 # Main Menu Input Tests
 # =============================================================================
 
+
 class TestMainMenuInputSupport:
     """Test MainMenu handles all input types."""
 
@@ -103,7 +105,9 @@ class TestMainMenuInputSupport:
             initial = menu.selected_option
 
             # D-pad down should move selection
-            result = menu.handle_input(make_button_event(tcod.sdl.joystick.ControllerButton.DPAD_DOWN))
+            result = menu.handle_input(
+                make_button_event(tcod.sdl.joystick.ControllerButton.DPAD_DOWN)
+            )
             assert menu.selected_option == initial + 1
 
     def test_keyboard_confirm(self, settings):
@@ -134,6 +138,7 @@ class TestMainMenuInputSupport:
 # =============================================================================
 # Settings Menu Input Tests
 # =============================================================================
+
 
 class TestSettingsMenuInputSupport:
     """Test SettingsMenu handles all input types."""
@@ -185,6 +190,7 @@ class TestSettingsMenuInputSupport:
 # Controls Hub Input Tests
 # =============================================================================
 
+
 class TestControlsMenuHubInputSupport:
     """Test ControlsMenuHub handles all input types."""
 
@@ -232,6 +238,7 @@ class TestControlsMenuHubInputSupport:
 # =============================================================================
 # Gamepad Settings Menu Input Tests
 # =============================================================================
+
 
 class TestGamepadSettingsMenuInputSupport:
     """Test GamepadSettingsMenu handles all input types including horizontal."""
@@ -282,6 +289,7 @@ class TestGamepadSettingsMenuInputSupport:
 # =============================================================================
 # Achievements Menu Input Tests
 # =============================================================================
+
 
 class TestAchievementsMenuInputSupport:
     """Test AchievementsMenu handles all input types."""
@@ -334,6 +342,7 @@ class TestAchievementsMenuInputSupport:
 # =============================================================================
 # About Menu Input Tests
 # =============================================================================
+
 
 class TestAboutMenuInputSupport:
     """Test AboutMenu handles all input types."""

@@ -168,9 +168,7 @@ class TestGameplayScenarios:
         agent.wait(5)
 
         # Player HP should be unchanged
-        assert (
-            agent.player.cpu == initial_hp
-        ), "Player took damage from enemy through wall!"
+        assert agent.player.cpu == initial_hp, "Player took damage from enemy through wall!"
 
         print("\n=== Wall Collision Test ===")
         print(f"Enemy at ({enemy_x}, {enemy_y})")

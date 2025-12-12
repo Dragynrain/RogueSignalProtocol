@@ -117,7 +117,7 @@ class TestDialogueState:
         state = DialogueState(settings)
 
         dialogue1 = create_gateway_dialogue()  # Priority 2
-        dialogue2 = create_death_dialogue()    # Priority 10 (higher)
+        dialogue2 = create_death_dialogue()  # Priority 10 (higher)
 
         state.show(dialogue1)  # Shows immediately
         state.show(dialogue2)  # Interrupts dialogue1 (higher priority)
@@ -133,7 +133,7 @@ class TestDialogueState:
         state = DialogueState(settings)
 
         dialogue1 = create_gateway_dialogue()  # Priority 2
-        dialogue2 = create_death_dialogue()    # Priority 10 (higher)
+        dialogue2 = create_death_dialogue()  # Priority 10 (higher)
 
         state.show(dialogue1)  # Shows immediately
         state.show(dialogue2)  # Interrupts dialogue1 (higher priority)
@@ -172,9 +172,9 @@ class TestDialogueState:
         med_priority = create_overclock_warning_dialogue("Test", 10, 5, 15, 20)  # priority = 5
 
         # Show in random order
-        state.show(low_priority)   # Shows immediately (priority 2)
+        state.show(low_priority)  # Shows immediately (priority 2)
         state.show(high_priority)  # Interrupts low_priority (priority 10 > 2)
-        state.show(med_priority)   # Queues (priority 5 < 10)
+        state.show(med_priority)  # Queues (priority 5 < 10)
 
         # Highest priority dialogue interrupts and shows immediately
         assert state.get_active() == high_priority  # Priority 10
@@ -460,7 +460,9 @@ class TestIntegration:
         # Queue three dialogues
         state.show(create_gateway_dialogue())  # priority 2 - shows immediately
         state.show(create_death_dialogue())  # priority 10 - interrupts priority 2
-        state.show(create_overclock_warning_dialogue("Test", 10, 5, 15, 20))  # priority 5 - queues (5 < 10)
+        state.show(
+            create_overclock_warning_dialogue("Test", 10, 5, 15, 20)
+        )  # priority 5 - queues (5 < 10)
 
         # Highest priority interrupts and shows immediately
         assert state.get_active().priority == 10

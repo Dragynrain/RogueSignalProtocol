@@ -15,7 +15,9 @@ class TestAchievementsPagination:
         menu = AchievementsMenu()
 
         # Mock _build_achievement_lines to return known number of lines
-        menu._build_achievement_lines = lambda: [{"x": 0, "text": f"Line {i}", "color": (255, 255, 255)} for i in range(100)]
+        menu._build_achievement_lines = lambda: [
+            {"x": 0, "text": f"Line {i}", "color": (255, 255, 255)} for i in range(100)
+        ]
 
         # At offset 0, should be page 1
         all_lines = menu._build_achievement_lines()
@@ -33,7 +35,9 @@ class TestAchievementsPagination:
         menu = AchievementsMenu()
 
         # Mock _build_achievement_lines to return known number of lines
-        menu._build_achievement_lines = lambda: [{"x": 0, "text": f"Line {i}", "color": (255, 255, 255)} for i in range(100)]
+        menu._build_achievement_lines = lambda: [
+            {"x": 0, "text": f"Line {i}", "color": (255, 255, 255)} for i in range(100)
+        ]
 
         all_lines = menu._build_achievement_lines()
         max_scroll = max(0, len(all_lines) - menu.max_visible_lines)
@@ -58,22 +62,27 @@ class TestAchievementsPagination:
         menu = AchievementsMenu()
 
         # Should scroll exactly one page at a time
-        assert menu.PAGE_SCROLL_SPEED == menu.max_visible_lines, \
-            f"PAGE_SCROLL_SPEED ({menu.PAGE_SCROLL_SPEED}) should equal max_visible_lines ({menu.max_visible_lines})"
+        assert (
+            menu.PAGE_SCROLL_SPEED == menu.max_visible_lines
+        ), f"PAGE_SCROLL_SPEED ({menu.PAGE_SCROLL_SPEED}) should equal max_visible_lines ({menu.max_visible_lines})"
 
     def test_page_down_moves_one_full_page(self):
         """Pressing Page Down should advance exactly one page."""
         menu = AchievementsMenu()
-        menu._build_achievement_lines = lambda: [{"x": 0, "text": f"Line {i}", "color": (255, 255, 255)} for i in range(100)]
+        menu._build_achievement_lines = lambda: [
+            {"x": 0, "text": f"Line {i}", "color": (255, 255, 255)} for i in range(100)
+        ]
 
         initial_offset = 0
         menu.scroll_offset = initial_offset
 
         # Execute page down action
         from game_input_actions import InputAction
+
         menu.execute_action(InputAction.NAVIGATE_PAGE_DOWN)
 
         # Should have moved by max_visible_lines (35)
         expected_offset = initial_offset + menu.max_visible_lines
-        assert menu.scroll_offset == expected_offset, \
-            f"Page down should move {menu.max_visible_lines} lines, moved {menu.scroll_offset - initial_offset}"
+        assert (
+            menu.scroll_offset == expected_offset
+        ), f"Page down should move {menu.max_visible_lines} lines, moved {menu.scroll_offset - initial_offset}"

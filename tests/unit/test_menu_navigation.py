@@ -9,8 +9,7 @@ Tests for:
 - Left stick horizontal movement in menus
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch
 
 
 class TestMenuBackNavigation:
@@ -22,14 +21,15 @@ class TestMenuBackNavigation:
         # Main Menu -> Settings -> Controls Hub -> Keyboard/Gamepad Bindings
         # "back" from Controls Hub should go to Settings, not Main Menu
 
-        from game_menu_controls import ControlsMenuHub
         from game_config import GameSettings
+        from game_menu_controls import ControlsMenuHub
 
         settings = GameSettings()
         hub = ControlsMenuHub(settings, None)
 
         # When user presses back in controls hub
         from game_input_actions import InputAction
+
         result = hub.execute_action(InputAction.CANCEL)
 
         # It should return "back" (menu loop handles the actual navigation)
@@ -39,10 +39,10 @@ class TestMenuBackNavigation:
 
     def test_keyboard_bindings_back_returns_to_controls_hub(self):
         """Keyboard bindings 'back' should return to controls hub."""
-        from game_menu_controls import KeyboardBindingsMenu
-        from game_input_mappings import InputMapper
         from game_config import GameSettings
         from game_input_actions import InputAction
+        from game_input_mappings import InputMapper
+        from game_menu_controls import KeyboardBindingsMenu
 
         settings = GameSettings()
         mapper = InputMapper()
@@ -58,9 +58,9 @@ class TestGamepadEnabledSetting:
     def test_gamepad_disabled_blocks_controller_button(self):
         """When gamepad_enabled is False, controller buttons should be ignored."""
         # This is a failing test - the setting isn't checked yet
+        from game_input_actions import InputContext
         from game_input_gamepad import GamepadInputHandler
         from game_input_mappings import InputMapper
-        from game_input_actions import InputContext
 
         mapper = InputMapper()
 
@@ -76,6 +76,7 @@ class TestGamepadEnabledSetting:
         # Create mock button event (A button press)
         import tcod.event
         import tcod.sdl.joystick
+
         mock_event = Mock(spec=tcod.event.ControllerButton)
         mock_event.pressed = True
         mock_event.button = tcod.sdl.joystick.ControllerButton.A
@@ -86,9 +87,9 @@ class TestGamepadEnabledSetting:
 
     def test_gamepad_enabled_processes_controller_button(self):
         """When gamepad_enabled is True, controller buttons should be processed."""
+        from game_input_actions import InputAction, InputContext
         from game_input_gamepad import GamepadInputHandler
         from game_input_mappings import InputMapper
-        from game_input_actions import InputContext, InputAction
 
         mapper = InputMapper()
 
@@ -104,6 +105,7 @@ class TestGamepadEnabledSetting:
         # Create mock button event (A button press)
         import tcod.event
         import tcod.sdl.joystick
+
         mock_event = Mock(spec=tcod.event.ControllerButton)
         mock_event.pressed = True
         mock_event.button = tcod.sdl.joystick.ControllerButton.A
@@ -161,8 +163,9 @@ class TestDeadzoneSetting:
 
         # Sync applies the new value (also called automatically on axis events)
         handler.sync_settings_to_analog_handler()
-        assert handler.analog_handler.deadzone == 0.30, \
-            "Handler should update deadzone when settings change"
+        assert (
+            handler.analog_handler.deadzone == 0.30
+        ), "Handler should update deadzone when settings change"
 
 
 class TestLeftStickHorizontalInMenus:
@@ -214,10 +217,12 @@ class TestKeyboardContextAwareness:
         Bug: Line 112 in game_input_base.py calls get_action_for_key without context.
         This breaks custom keyboard bindings which are context-specific.
         """
-        from game_input_base import BaseInputHandler
-        from game_input_actions import InputAction, InputContext
-        from unittest.mock import Mock, patch
+        from unittest.mock import Mock
+
         import tcod.event
+
+        from game_input_actions import InputAction, InputContext
+        from game_input_base import BaseInputHandler
 
         # Create a concrete subclass for testing
         class TestMenu(BaseInputHandler):
@@ -233,7 +238,7 @@ class TestKeyboardContextAwareness:
         handler = TestMenu()
 
         # Mock the input_mapper to verify context is passed
-        with patch.object(handler.input_mapper, 'get_action_for_key') as mock_get_action:
+        with patch.object(handler.input_mapper, "get_action_for_key") as mock_get_action:
             mock_get_action.return_value = InputAction.NAVIGATE_DOWN
 
             # Create a key event
@@ -246,5 +251,5 @@ class TestKeyboardContextAwareness:
             mock_get_action.assert_called_once_with(
                 tcod.event.KeySym.DOWN,
                 InputContext.SETTINGS_MENU,  # Context should be passed!
-                0  # Default modifier (no modifier pressed)
+                0,  # Default modifier (no modifier pressed)
             )

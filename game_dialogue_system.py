@@ -480,7 +480,7 @@ def create_gateway_dialogue(current_level: int = 1, input_mapper=None) -> Dialog
     Returns:
         DialogueBox for gateway confirmation
     """
-    from game_help_hints import get_dialogue_confirm_option, get_dialogue_cancel_option
+    from game_help_hints import get_dialogue_cancel_option, get_dialogue_confirm_option
 
     # Level 3 is the final gateway - epic escape message!
     if current_level >= 3:
@@ -633,8 +633,12 @@ def create_victory_dialogue(input_mapper=None) -> DialogueBox:
 
 
 def create_overclock_warning_dialogue(
-    exploit_name: str, overheat_amount: int, damage: int, remaining_cpu: int, max_cpu: int,
-    input_mapper=None
+    exploit_name: str,
+    overheat_amount: int,
+    damage: int,
+    remaining_cpu: int,
+    max_cpu: int,
+    input_mapper=None,
 ) -> DialogueBox:
     """
     Create overclock warning dialogue.
@@ -651,8 +655,8 @@ def create_overclock_warning_dialogue(
         DialogueBox for overclock warning
     """
     from game_help_hints import (
-        get_dialogue_confirm_option,
         get_dialogue_cancel_option,
+        get_dialogue_confirm_option,
         get_dialogue_skip_option,
     )
 
@@ -687,8 +691,7 @@ def create_overclock_warning_dialogue(
 
 
 def create_friendly_fire_warning_dialogue(
-    exploit_name: str, damage: int, remaining_cpu: int, max_cpu: int,
-    input_mapper=None
+    exploit_name: str, damage: int, remaining_cpu: int, max_cpu: int, input_mapper=None
 ) -> DialogueBox:
     """
     Create friendly fire warning dialogue for area attacks.
@@ -703,7 +706,7 @@ def create_friendly_fire_warning_dialogue(
     Returns:
         DialogueBox for friendly fire warning
     """
-    from game_help_hints import get_dialogue_confirm_option, get_dialogue_cancel_option
+    from game_help_hints import get_dialogue_cancel_option, get_dialogue_confirm_option
 
     return DialogueBox(
         title="*** FRIENDLY FIRE WARNING ***",
@@ -729,8 +732,7 @@ def create_friendly_fire_warning_dialogue(
 
 
 def create_system_crash_warning_dialogue(
-    damage: int, remaining_cpu: int, max_cpu: int, would_die: bool,
-    input_mapper=None
+    damage: int, remaining_cpu: int, max_cpu: int, would_die: bool, input_mapper=None
 ) -> DialogueBox:
     """
     Create System Crash warning dialogue for self-damage exploit.
@@ -746,8 +748,8 @@ def create_system_crash_warning_dialogue(
         DialogueBox for System Crash warning
     """
     from game_help_hints import (
-        get_dialogue_confirm_option,
         get_dialogue_cancel_option,
+        get_dialogue_confirm_option,
         get_dialogue_skip_option,
     )
 
@@ -790,11 +792,7 @@ def create_system_crash_warning_dialogue(
 
 
 def create_system_crash_overheat_dialogue(
-    overheat_damage: int,
-    self_damage: int,
-    current_cpu: int,
-    max_cpu: int,
-    input_mapper=None
+    overheat_damage: int, self_damage: int, current_cpu: int, max_cpu: int, input_mapper=None
 ) -> DialogueBox:
     """
     Create combined System Crash + overheat warning dialogue.
@@ -813,8 +811,8 @@ def create_system_crash_overheat_dialogue(
         DialogueBox for combined warning
     """
     from game_help_hints import (
-        get_dialogue_confirm_option,
         get_dialogue_cancel_option,
+        get_dialogue_confirm_option,
     )
 
     total_damage = overheat_damage + self_damage

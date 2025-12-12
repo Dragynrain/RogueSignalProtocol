@@ -7,13 +7,12 @@ Verifies that:
 - Button remapping affects dialogue help text
 """
 
-import pytest
 import tcod.event
 import tcod.sdl.joystick
 
 from game_input_actions import InputAction, InputContext
-from game_input_mappings import InputMapper
 from game_input_device_tracker import InputDeviceType, set_last_device
+from game_input_mappings import InputMapper
 
 
 class TestDialogueOptionText:

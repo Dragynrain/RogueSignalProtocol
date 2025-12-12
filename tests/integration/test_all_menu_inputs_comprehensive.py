@@ -10,9 +10,10 @@ This test suite should ALWAYS pass and catch configuration mistakes early.
 """
 
 import pytest
+import tcod.sdl.joystick
+
 from game_input_actions import InputAction, InputContext
 from game_input_mappings import InputMapper
-import tcod.sdl.joystick
 
 
 class TestMenuGamepadInputCompleteness:
@@ -45,22 +46,22 @@ class TestMenuGamepadInputCompleteness:
         for context in menu_contexts:
             # Test A button (confirm)
             action_a = mapper.get_action_for_gamepad_button(
-                tcod.sdl.joystick.ControllerButton.A,
-                context
+                tcod.sdl.joystick.ControllerButton.A, context
             )
             if action_a != InputAction.CONFIRM:
                 failures.append(f"{context.name}: A button not mapped to CONFIRM")
 
             # Test B button (cancel/back)
             action_b = mapper.get_action_for_gamepad_button(
-                tcod.sdl.joystick.ControllerButton.B,
-                context
+                tcod.sdl.joystick.ControllerButton.B, context
             )
             if action_b != InputAction.CANCEL:
                 failures.append(f"{context.name}: B button not mapped to CANCEL")
 
         if failures:
-            pytest.fail("Missing basic button mappings:\n" + "\n".join(f"  - {f}" for f in failures))
+            pytest.fail(
+                "Missing basic button mappings:\n" + "\n".join(f"  - {f}" for f in failures)
+            )
 
     def test_all_menu_contexts_have_vertical_navigation(self, mapper):
         """
@@ -84,16 +85,14 @@ class TestMenuGamepadInputCompleteness:
         for context in menu_contexts:
             # Test D-pad UP
             action_up = mapper.get_action_for_gamepad_button(
-                tcod.sdl.joystick.ControllerButton.DPAD_UP,
-                context
+                tcod.sdl.joystick.ControllerButton.DPAD_UP, context
             )
             if action_up != InputAction.NAVIGATE_UP:
                 failures.append(f"{context.name}: D-pad UP not mapped to NAVIGATE_UP")
 
             # Test D-pad DOWN
             action_down = mapper.get_action_for_gamepad_button(
-                tcod.sdl.joystick.ControllerButton.DPAD_DOWN,
-                context
+                tcod.sdl.joystick.ControllerButton.DPAD_DOWN, context
             )
             if action_down != InputAction.NAVIGATE_DOWN:
                 failures.append(f"{context.name}: D-pad DOWN not mapped to NAVIGATE_DOWN")
@@ -132,12 +131,10 @@ class TestMenuGamepadInputCompleteness:
 
         for context, description in contexts_needing_horizontal:
             action_left = mapper.get_action_for_gamepad_button(
-                tcod.sdl.joystick.ControllerButton.DPAD_LEFT,
-                context
+                tcod.sdl.joystick.ControllerButton.DPAD_LEFT, context
             )
             action_right = mapper.get_action_for_gamepad_button(
-                tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
-                context
+                tcod.sdl.joystick.ControllerButton.DPAD_RIGHT, context
             )
 
             if action_left != InputAction.NAVIGATE_LEFT:
@@ -147,8 +144,8 @@ class TestMenuGamepadInputCompleteness:
 
         if failures:
             pytest.fail(
-                "Missing D-pad horizontal navigation in contexts that need it:\n" +
-                "\n".join(f"  - {f}" for f in failures)
+                "Missing D-pad horizontal navigation in contexts that need it:\n"
+                + "\n".join(f"  - {f}" for f in failures)
             )
 
     def test_vertical_only_menus_dont_have_horizontal(self, mapper):
@@ -167,12 +164,10 @@ class TestMenuGamepadInputCompleteness:
 
         for context, description in vertical_only_contexts:
             action_left = mapper.get_action_for_gamepad_button(
-                tcod.sdl.joystick.ControllerButton.DPAD_LEFT,
-                context
+                tcod.sdl.joystick.ControllerButton.DPAD_LEFT, context
             )
             action_right = mapper.get_action_for_gamepad_button(
-                tcod.sdl.joystick.ControllerButton.DPAD_RIGHT,
-                context
+                tcod.sdl.joystick.ControllerButton.DPAD_RIGHT, context
             )
 
             # These should be None (unmapped) since the menu doesn't use them
@@ -222,13 +217,12 @@ class TestMenuGamepadInputCompleteness:
                 action = mapper.get_action_for_gamepad_button(button, context)
                 if action is not None:
                     if button in button_to_action:
-                        pytest.fail(
-                            f"{context.name}: Button {button} mapped multiple times!"
-                        )
+                        pytest.fail(f"{context.name}: Button {button} mapped multiple times!")
                     button_to_action[button] = action
 
             # Verify: Each button maps to exactly one action (no duplicates)
             # This is implicitly tested by the dict structure above
+
 
 class TestAnalogStickMenuSupport:
     """Verify analog stick support in menus that need it."""
@@ -247,27 +241,26 @@ class TestAnalogStickMenuSupport:
         This is a documentation test to ensure future developers know which
         contexts should have X-axis support.
         """
-        from game_input_gamepad import GamepadInputHandler
         import inspect
+
+        from game_input_gamepad import GamepadInputHandler
 
         # Read the source code to verify the contexts
         source = inspect.getsource(GamepadInputHandler.handle_axis_event)
 
         # Verify that these contexts are mentioned in the horizontal processing logic
-        expected_contexts = [
-            "GRAPHICS_PREVIEW",
-            "SETTINGS_MENU",
-            "HELP",
-            "LORE_VIEWER"
-        ]
+        expected_contexts = ["GRAPHICS_PREVIEW", "SETTINGS_MENU", "HELP", "LORE_VIEWER"]
 
         for context_name in expected_contexts:
-            assert context_name in source, \
-                f"GamepadInputHandler.handle_axis_event should process LEFTX for {context_name}"
+            assert (
+                context_name in source
+            ), f"GamepadInputHandler.handle_axis_event should process LEFTX for {context_name}"
 
         # Verify that LEFTX processing is conditional on these contexts
-        assert "if context in [" in source or "if context ==" in source, \
-            "Horizontal axis processing should be context-aware"
+        assert (
+            "if context in [" in source or "if context ==" in source
+        ), "Horizontal axis processing should be context-aware"
 
-        assert "LEFTX" in source, \
-            "GamepadInputHandler should handle LEFTX axis for horizontal movement"
+        assert (
+            "LEFTX" in source
+        ), "GamepadInputHandler should handle LEFTX axis for horizontal movement"

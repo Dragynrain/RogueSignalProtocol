@@ -35,9 +35,7 @@ class TestMainMenuSystem:
         """
         # Create tileset (required for context)
         tileset = tcod.tileset.load_truetype_font(
-            "KreativeSquare.ttf",
-            tile_width=16,
-            tile_height=16
+            "KreativeSquare.ttf", tile_width=16, tile_height=16
         )
 
         # Create offscreen context (hidden window)
@@ -46,7 +44,7 @@ class TestMainMenuSystem:
             height=50,
             tileset=tileset,
             title="Test Menu",
-            sdl_window_flags=tcod.lib.SDL_WINDOW_HIDDEN  # Don't show window
+            sdl_window_flags=tcod.lib.SDL_WINDOW_HIDDEN,  # Don't show window
         )
 
         console = tcod.console.Console(80, 50)
@@ -119,7 +117,7 @@ class TestMainMenuSystem:
         down_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         # Handle input
@@ -142,7 +140,7 @@ class TestMainMenuSystem:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_DOWN,
-            pressed=True
+            pressed=True,
         )
 
         # Handle input - should move selection down
@@ -171,7 +169,7 @@ class TestMainMenuSystem:
         console.clear()
         help_menu.render(console)
         # Help menu should have page tracking (both HelpMenu and GraphicalHelpMenu have current_page)
-        assert hasattr(help_menu, 'current_page')
+        assert hasattr(help_menu, "current_page")
         assert help_menu.current_page >= 0
 
 
@@ -182,9 +180,7 @@ class TestMenuInputContexts:
     def menu_setup(self):
         """Setup menu system for testing."""
         tileset = tcod.tileset.load_truetype_font(
-            "KreativeSquare.ttf",
-            tile_width=16,
-            tile_height=16
+            "KreativeSquare.ttf", tile_width=16, tile_height=16
         )
 
         context = tcod.context.new(
@@ -192,7 +188,7 @@ class TestMenuInputContexts:
             height=50,
             tileset=tileset,
             title="Test Input",
-            sdl_window_flags=tcod.lib.SDL_WINDOW_HIDDEN
+            sdl_window_flags=tcod.lib.SDL_WINDOW_HIDDEN,
         )
 
         console = tcod.console.Console(80, 50)
@@ -213,7 +209,7 @@ class TestMenuInputContexts:
         main_menu = menus["main_menu"]
 
         # Should have gamepad handler
-        assert hasattr(main_menu, 'gamepad_handler')
+        assert hasattr(main_menu, "gamepad_handler")
         assert main_menu.gamepad_handler is not None
 
     def test_button_repeat_doesnt_crash(self, menu_setup):

@@ -7,7 +7,6 @@ Tests message formatting, log capacity, color coding, and UI rendering integrati
 from unittest.mock import MagicMock, patch
 
 import pytest
-import tcod
 
 from data_loading import DataLoader
 from game_state import MessageLog

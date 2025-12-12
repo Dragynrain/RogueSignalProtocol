@@ -17,16 +17,16 @@ Coverage:
 - Hybrid event+polling pattern verification
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock
 
+import pytest
+import tcod.console
 import tcod.event
 import tcod.sdl.joystick
-import tcod.console
 
+from game_config import GameSettings
 from game_input_actions import InputAction, InputContext
 from game_menu_help_lore import HelpMenu, create_help_menu
-from game_config import GameSettings
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton
@@ -54,6 +54,7 @@ def graphical_help_menu():
     mock_tile_manager.tile_height = 64
 
     from game_menu_help_graphics import GraphicalHelpMenu
+
     return GraphicalHelpMenu(mock_context, mock_tile_manager)
 
 
@@ -62,45 +63,45 @@ class TestHelpMenuMethodExistence:
 
     def test_help_menu_has_navigate_page(self, help_menu):
         """HelpMenu should have _navigate_page method."""
-        assert hasattr(help_menu, '_navigate_page')
+        assert hasattr(help_menu, "_navigate_page")
         assert callable(help_menu._navigate_page)
 
     def test_help_menu_has_navigate_right(self, help_menu):
         """HelpMenu should have navigate_right method."""
-        assert hasattr(help_menu, 'navigate_right')
+        assert hasattr(help_menu, "navigate_right")
         assert callable(help_menu.navigate_right)
 
     def test_help_menu_has_navigate_left(self, help_menu):
         """HelpMenu should have navigate_left method."""
-        assert hasattr(help_menu, 'navigate_left')
+        assert hasattr(help_menu, "navigate_left")
         assert callable(help_menu.navigate_left)
 
     def test_help_menu_does_not_have_next_page(self, help_menu):
         """HelpMenu should NOT have _next_page method."""
-        assert not hasattr(help_menu, '_next_page')
+        assert not hasattr(help_menu, "_next_page")
 
     def test_help_menu_does_not_have_previous_page(self, help_menu):
         """HelpMenu should NOT have _previous_page method."""
-        assert not hasattr(help_menu, '_previous_page')
+        assert not hasattr(help_menu, "_previous_page")
 
     def test_graphical_help_has_next_page(self, graphical_help_menu):
         """GraphicalHelpMenu should have _next_page method."""
-        assert hasattr(graphical_help_menu, '_next_page')
+        assert hasattr(graphical_help_menu, "_next_page")
         assert callable(graphical_help_menu._next_page)
 
     def test_graphical_help_has_previous_page(self, graphical_help_menu):
         """GraphicalHelpMenu should have _previous_page method."""
-        assert hasattr(graphical_help_menu, '_previous_page')
+        assert hasattr(graphical_help_menu, "_previous_page")
         assert callable(graphical_help_menu._previous_page)
 
     def test_graphical_help_has_navigate_right(self, graphical_help_menu):
         """GraphicalHelpMenu should have navigate_right method."""
-        assert hasattr(graphical_help_menu, 'navigate_right')
+        assert hasattr(graphical_help_menu, "navigate_right")
         assert callable(graphical_help_menu.navigate_right)
 
     def test_graphical_help_has_navigate_left(self, graphical_help_menu):
         """GraphicalHelpMenu should have navigate_left method."""
-        assert hasattr(graphical_help_menu, 'navigate_left')
+        assert hasattr(graphical_help_menu, "navigate_left")
         assert callable(graphical_help_menu.navigate_left)
 
 
@@ -287,6 +288,7 @@ class TestHelpMenuFactory:
         mock_tile_manager = MagicMock()
 
         from game_menu_help_graphics import GraphicalHelpMenu
+
         menu = create_help_menu(settings, context=mock_context, tile_manager=mock_tile_manager)
 
         assert isinstance(menu, GraphicalHelpMenu)
@@ -322,7 +324,7 @@ class TestGameLoopPollingCompatibility:
     def test_hasattr_check_for_graphical_menu(self, graphical_help_menu):
         """game_loop.py checks hasattr for _previous_page - should pass for GraphicalHelpMenu."""
         # Simulating game_loop.py logic:
-        if hasattr(graphical_help_menu, '_previous_page'):
+        if hasattr(graphical_help_menu, "_previous_page"):
             # This branch should be taken for GraphicalHelpMenu
             result = graphical_help_menu._previous_page
             assert callable(result)
@@ -332,13 +334,13 @@ class TestGameLoopPollingCompatibility:
     def test_hasattr_check_for_text_menu(self, help_menu):
         """game_loop.py checks hasattr for _previous_page - should fail for HelpMenu."""
         # Simulating game_loop.py logic:
-        if hasattr(help_menu, '_previous_page'):
+        if hasattr(help_menu, "_previous_page"):
             pytest.fail("HelpMenu should NOT have _previous_page method")
         else:
             # This branch should be taken for HelpMenu
             # For HelpMenu, polling path should use navigate_left/navigate_right
-            assert hasattr(help_menu, 'navigate_left')
-            assert hasattr(help_menu, 'navigate_right')
+            assert hasattr(help_menu, "navigate_left")
+            assert hasattr(help_menu, "navigate_right")
 
     def test_common_interface_navigate_right(self, help_menu, graphical_help_menu):
         """Both menus should support navigate_right for common interface."""
@@ -370,12 +372,12 @@ class TestHelpMenuGamepadButtons:
 
     def test_help_menu_has_gamepad_handler(self, help_menu):
         """HelpMenu should have a gamepad handler via BaseInputHandler."""
-        assert hasattr(help_menu, 'gamepad_handler')
+        assert hasattr(help_menu, "gamepad_handler")
         assert help_menu.gamepad_handler is not None
 
     def test_graphical_help_has_gamepad_handler(self, graphical_help_menu):
         """GraphicalHelpMenu should have a gamepad handler via BaseInputHandler."""
-        assert hasattr(graphical_help_menu, 'gamepad_handler')
+        assert hasattr(graphical_help_menu, "gamepad_handler")
         assert graphical_help_menu.gamepad_handler is not None
 
     def test_shoulder_buttons_change_pages(self, help_menu):

@@ -315,7 +315,6 @@ class TestAssetFileCaseSensitivity(unittest.TestCase):
 
     def test_victory_music_file_exists_with_correct_case(self):
         """Test that victory.wav exists with lowercase name (Linux-compatible)."""
-        import os
         from pathlib import Path
 
         # Get the music directory
@@ -331,12 +330,11 @@ class TestAssetFileCaseSensitivity(unittest.TestCase):
             expected_file.exists(),
             f"Music file 'victory.wav' not found at {expected_file}. "
             "Check if file exists with different case (e.g., 'Victory.wav'). "
-            "Linux is case-sensitive!"
+            "Linux is case-sensitive!",
         )
 
     def test_all_music_files_are_lowercase(self):
         """Verify all music filenames are lowercase (convention check)."""
-        import os
         from pathlib import Path
 
         project_root = Path(__file__).parent.parent.parent
@@ -351,7 +349,7 @@ class TestAssetFileCaseSensitivity(unittest.TestCase):
                 self.assertEqual(
                     filename,
                     filename.lower(),
-                    f"Music file '{filename}' should be lowercase for Linux compatibility"
+                    f"Music file '{filename}' should be lowercase for Linux compatibility",
                 )
 
 

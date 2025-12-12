@@ -668,7 +668,12 @@ class GraphicsMapRenderer(MapRendererBase):
         if game.targeting_mode and game.targeting_exploit in GameData.EXPLOITS:
             exploit = GameData.EXPLOITS[game.targeting_exploit]
             self._render_targeting_range_graphics(
-                renderer, game, game.targeting_exploit, game.player.position, exploit.range, camera_offset
+                renderer,
+                game,
+                game.targeting_exploit,
+                game.player.position,
+                exploit.range,
+                camera_offset,
             )
 
             # Show area effect for AREA targeting mode
@@ -693,7 +698,13 @@ class GraphicsMapRenderer(MapRendererBase):
                 texture.color_mod = normal_tint
 
     def _render_targeting_range_graphics(
-        self, renderer, game, exploit_key: str, center: Position, range_val: int, camera_offset: Position
+        self,
+        renderer,
+        game,
+        exploit_key: str,
+        center: Position,
+        range_val: int,
+        camera_offset: Position,
     ):
         """
         Render targeting range indicator in graphics mode using transparent overlays.

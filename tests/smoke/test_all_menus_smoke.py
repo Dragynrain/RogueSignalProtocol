@@ -6,9 +6,8 @@ Validates that all menu classes can be instantiated and have basic properties.
 Quick sanity check that menu definitions are not broken.
 """
 
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import MagicMock, Mock, patch
 
-import pytest
 import tcod
 
 from game_config import GameSettings
@@ -67,8 +66,8 @@ class TestAllMenusSmoke:
 
     def test_graphics_preview_menu_instantiation(self):
         """GraphicsPreviewMenu can be instantiated with mocked context."""
-        from game_menu_graphics_preview import GraphicsPreviewMenu
         from game_graphics_tiles import TileManager
+        from game_menu_graphics_preview import GraphicsPreviewMenu
 
         # Create mock context in glyph mode (no SDL required)
         context = Mock()

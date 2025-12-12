@@ -29,8 +29,9 @@ class TestPageUpDownKeyboardMappings:
 
         action = mapper.get_action_for_key(tcod.event.KeySym.PAGEUP)
 
-        assert action == InputAction.MOVE_NORTHEAST, \
-            "PageUp should map to MOVE_NORTHEAST (laptop-friendly diagonal)"
+        assert (
+            action == InputAction.MOVE_NORTHEAST
+        ), "PageUp should map to MOVE_NORTHEAST (laptop-friendly diagonal)"
 
     def test_pagedown_maps_to_diagonal_movement(self):
         """PageDown key maps to MOVE_SOUTHEAST (laptop diagonal, not page nav)."""
@@ -38,8 +39,9 @@ class TestPageUpDownKeyboardMappings:
 
         action = mapper.get_action_for_key(tcod.event.KeySym.PAGEDOWN)
 
-        assert action == InputAction.MOVE_SOUTHEAST, \
-            "PageDown should map to MOVE_SOUTHEAST (laptop-friendly diagonal)"
+        assert (
+            action == InputAction.MOVE_SOUTHEAST
+        ), "PageDown should map to MOVE_SOUTHEAST (laptop-friendly diagonal)"
 
     def test_home_maps_to_northwest(self):
         """Home key maps to MOVE_NORTHWEST (completes laptop diagonal cluster)."""
@@ -47,8 +49,7 @@ class TestPageUpDownKeyboardMappings:
 
         action = mapper.get_action_for_key(tcod.event.KeySym.HOME)
 
-        assert action == InputAction.MOVE_NORTHWEST, \
-            "Home should map to MOVE_NORTHWEST"
+        assert action == InputAction.MOVE_NORTHWEST, "Home should map to MOVE_NORTHWEST"
 
     def test_end_maps_to_southwest(self):
         """End key maps to MOVE_SOUTHWEST (completes laptop diagonal cluster)."""
@@ -56,8 +57,7 @@ class TestPageUpDownKeyboardMappings:
 
         action = mapper.get_action_for_key(tcod.event.KeySym.END)
 
-        assert action == InputAction.MOVE_SOUTHWEST, \
-            "End should map to MOVE_SOUTHWEST"
+        assert action == InputAction.MOVE_SOUTHWEST, "End should map to MOVE_SOUTHWEST"
 
     def test_laptop_diagonal_cluster_complete(self):
         """All four laptop diagonal keys form a complete movement cluster."""
@@ -78,13 +78,9 @@ class TestPageUpDownKeyboardMappings:
         mapper = InputMapper()
 
         # Same mapping in gameplay and menu contexts
-        gameplay_action = mapper.get_action_for_key(
-            tcod.event.KeySym.PAGEUP,
-            InputContext.GAMEPLAY
-        )
+        gameplay_action = mapper.get_action_for_key(tcod.event.KeySym.PAGEUP, InputContext.GAMEPLAY)
         menu_action = mapper.get_action_for_key(
-            tcod.event.KeySym.PAGEUP,
-            InputContext.ACHIEVEMENTS_SCREEN
+            tcod.event.KeySym.PAGEUP, InputContext.ACHIEVEMENTS_SCREEN
         )
 
         assert gameplay_action == menu_action == InputAction.MOVE_NORTHEAST

@@ -208,21 +208,27 @@ class AnalogStickHandler:
         sector = int(shifted_angle / 45)
 
         direction_map = {
-            0: (1, 0),    # East
-            1: (1, 1),    # Southeast
-            2: (0, 1),    # South
-            3: (-1, 1),   # Southwest
-            4: (-1, 0),   # West
+            0: (1, 0),  # East
+            1: (1, 1),  # Southeast
+            2: (0, 1),  # South
+            3: (-1, 1),  # Southwest
+            4: (-1, 0),  # West
             5: (-1, -1),  # Northwest
-            6: (0, -1),   # North
-            7: (1, -1),   # Northeast
+            6: (0, -1),  # North
+            7: (1, -1),  # Northeast
         }
         result = direction_map.get(sector, (0, 0))
 
         # Debug logging for analog stick direction detection
         direction_names = {
-            (1, 0): "E", (1, 1): "SE", (0, 1): "S", (-1, 1): "SW",
-            (-1, 0): "W", (-1, -1): "NW", (0, -1): "N", (1, -1): "NE"
+            (1, 0): "E",
+            (1, 1): "SE",
+            (0, 1): "S",
+            (-1, 1): "SW",
+            (-1, 0): "W",
+            (-1, -1): "NW",
+            (0, -1): "N",
+            (1, -1): "NE",
         }
         logging.debug(
             f"analog_to_8way: raw=({x},{y}) norm=({norm_x:.2f},{norm_y:.2f}) "
@@ -326,7 +332,9 @@ class AnalogStickHandler:
         if y is not None:
             self.right_y = y
 
-    def _get_stick_movement_gameplay_impl(self, stick_x: int, stick_y: int, stick_name: str = "Stick") -> tuple[int, int] | None:
+    def _get_stick_movement_gameplay_impl(
+        self, stick_x: int, stick_y: int, stick_name: str = "Stick"
+    ) -> tuple[int, int] | None:
         """
         Shared implementation for gameplay movement with settling and direction lock.
 
@@ -364,7 +372,9 @@ class AnalogStickHandler:
             # Check if settling period is complete
             if current_time - self._settling_start_time < settling_period:
                 # Still settling - update tracked direction but don't move
-                logging.debug(f"{stick_name} still settling ({(current_time - self._settling_start_time)*1000:.1f}ms), direction: {dx},{dy}")
+                logging.debug(
+                    f"{stick_name} still settling ({(current_time - self._settling_start_time)*1000:.1f}ms), direction: {dx},{dy}"
+                )
                 return None
 
             # Settling complete - NOW lock direction and give movement
@@ -451,8 +461,9 @@ class AnalogStickHandler:
         direction_changed = False
         if self.last_menu_direction != (0, 0):
             # Check if moved in OPPOSITE direction (e.g., was up, now down)
-            if (dx != 0 and dx != self.last_menu_direction[0]) or \
-               (dy != 0 and dy != self.last_menu_direction[1]):
+            if (dx != 0 and dx != self.last_menu_direction[0]) or (
+                dy != 0 and dy != self.last_menu_direction[1]
+            ):
                 direction_changed = True
 
         # Time-based auto-repeat logic

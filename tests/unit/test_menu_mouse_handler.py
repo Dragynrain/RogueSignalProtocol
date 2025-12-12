@@ -215,10 +215,7 @@ class TestMouseButtonChecks:
     def test_is_left_click_true(self):
         """Detect left mouse button click."""
         # Use real tcod event (isinstance check requires it)
-        event = tcod.event.MouseButtonDown(
-            pixel=(100, 100),
-            button=tcod.event.MouseButton.LEFT
-        )
+        event = tcod.event.MouseButtonDown(pixel=(100, 100), button=tcod.event.MouseButton.LEFT)
 
         assert MenuMouseHandler.is_left_click(event) is True
 
@@ -249,10 +246,7 @@ class TestMouseButtonChecks:
     def test_is_right_click_true(self):
         """Detect right mouse button click."""
         # Use real tcod event (isinstance check requires it)
-        event = tcod.event.MouseButtonDown(
-            pixel=(100, 100),
-            button=tcod.event.MouseButton.RIGHT
-        )
+        event = tcod.event.MouseButtonDown(pixel=(100, 100), button=tcod.event.MouseButton.RIGHT)
 
         assert MenuMouseHandler.is_right_click(event) is True
 

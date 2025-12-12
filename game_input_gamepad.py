@@ -84,7 +84,9 @@ class GamepadInputHandler:
 
         # Log initial controller state
         if self.controllers:
-            logging.info(f"GamepadInputHandler: Initialized with {len(self.controllers)} controller(s)")
+            logging.info(
+                f"GamepadInputHandler: Initialized with {len(self.controllers)} controller(s)"
+            )
         else:
             logging.debug("GamepadInputHandler: No controllers connected at startup")
 
@@ -147,7 +149,7 @@ class GamepadInputHandler:
             try:
                 # CRITICAL FIX: Use event.controller directly (not get_controllers() enumeration)
                 # The event object carries the controller ready to use
-                if hasattr(event, 'controller') and event.controller:
+                if hasattr(event, "controller") and event.controller:
                     controller = event.controller
                     self.controllers.add(controller)
                     try:
@@ -159,9 +161,7 @@ class GamepadInputHandler:
                     if self.game and hasattr(self.game, "message_log"):
                         from game_entities import Colors
 
-                        self.game.message_log.add_message(
-                            "Controller connected", Colors.CYAN
-                        )
+                        self.game.message_log.add_message("Controller connected", Colors.CYAN)
                 else:
                     # CRITICAL: Do NOT call get_controllers() during gameplay - returns empty!
                     # If event.controller is None, we cannot recover safely
@@ -240,13 +240,23 @@ class GamepadInputHandler:
 
         if action:
             # Track navigation buttons for auto-repeat in menu contexts
-            if action in (InputAction.NAVIGATE_UP, InputAction.NAVIGATE_DOWN,
-                         InputAction.NAVIGATE_LEFT, InputAction.NAVIGATE_RIGHT):
-                if context in [InputContext.MAIN_MENU, InputContext.SETTINGS_MENU,
-                             InputContext.CONTROLS_MENU, InputContext.ABOUT_MENU,
-                             InputContext.GRAPHICS_PREVIEW, InputContext.HELP,
-                             InputContext.ACHIEVEMENTS_SCREEN, InputContext.LORE_VIEWER,
-                             InputContext.INVENTORY]:
+            if action in (
+                InputAction.NAVIGATE_UP,
+                InputAction.NAVIGATE_DOWN,
+                InputAction.NAVIGATE_LEFT,
+                InputAction.NAVIGATE_RIGHT,
+            ):
+                if context in [
+                    InputContext.MAIN_MENU,
+                    InputContext.SETTINGS_MENU,
+                    InputContext.CONTROLS_MENU,
+                    InputContext.ABOUT_MENU,
+                    InputContext.GRAPHICS_PREVIEW,
+                    InputContext.HELP,
+                    InputContext.ACHIEVEMENTS_SCREEN,
+                    InputContext.LORE_VIEWER,
+                    InputContext.INVENTORY,
+                ]:
                     self.button_held = event.button
                     self.button_held_since = time.time()
                     self.button_last_repeat_time = time.time()
@@ -336,8 +346,12 @@ class GamepadInputHandler:
             # - Graphics Preview: variant cycling + entity selection
             # - Settings Menu: value adjustment (volume, toggles) + option selection
             # - Help/Lore Menus: tab switching + content scrolling
-            if context in [InputContext.GRAPHICS_PREVIEW, InputContext.SETTINGS_MENU,
-                          InputContext.HELP, InputContext.LORE_VIEWER]:
+            if context in [
+                InputContext.GRAPHICS_PREVIEW,
+                InputContext.SETTINGS_MENU,
+                InputContext.HELP,
+                InputContext.LORE_VIEWER,
+            ]:
                 # Process both X and Y axis
                 if event.axis == nav_axis_x:
                     # Horizontal movement for variant cycling / value adjustment / tab switching
@@ -375,7 +389,7 @@ class GamepadInputHandler:
 
         # Triggers (LT/RT) - edge detection to fire once per press, not continuously
         if event.axis in [CA.TRIGGERLEFT, CA.TRIGGERRIGHT]:
-            is_right_trigger = (event.axis == CA.TRIGGERRIGHT)
+            is_right_trigger = event.axis == CA.TRIGGERRIGHT
             # Check if trigger just crossed threshold (rising edge)
             if self.analog_handler.check_trigger_pressed(event.value, is_right_trigger):
                 # Look up trigger binding for current context
@@ -401,9 +415,11 @@ class GamepadInputHandler:
 
         # Auto-enter look mode from gameplay when look stick is moved
         # Only trigger if THIS event is from the look stick (not the movement stick)
-        if (context == InputContext.GAMEPLAY and
-            is_look_stick_event and
-            look_stick_magnitude > GameConfig.GAMEPAD_LOOK_MODE_THRESHOLD):
+        if (
+            context == InputContext.GAMEPLAY
+            and is_look_stick_event
+            and look_stick_magnitude > GameConfig.GAMEPAD_LOOK_MODE_THRESHOLD
+        ):
             # Auto-activate look mode (will be handled by caller)
             # Return special action to trigger look mode entry
             return InputAction.TOGGLE_LOOK_MODE

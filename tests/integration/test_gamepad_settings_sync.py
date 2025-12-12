@@ -14,7 +14,6 @@ without recreating the handler.
 Uses the game_with_gamepad fixture from tests/conftest.py.
 """
 
-import pytest
 import time
 
 import tcod.event
@@ -49,10 +48,7 @@ class TestGamepadEnabledSetting:
 
         # Try to press A button
         button_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
 
         action = gamepad.handle_button_event(button_event, InputContext.GAMEPLAY)
@@ -70,10 +66,7 @@ class TestGamepadEnabledSetting:
 
         # Try to move left stick
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=-32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=-32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.MAIN_MENU)
@@ -92,10 +85,7 @@ class TestGamepadEnabledSetting:
 
         # Try button press
         button_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
 
         action = gamepad.handle_button_event(button_event, InputContext.GAMEPLAY)
@@ -317,10 +307,7 @@ class TestSwapSticksSetting:
 
         # Right stick should now navigate menus
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTY,
-            value=-32000  # Up
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTY, value=-32000  # Up
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.MAIN_MENU)
@@ -408,10 +395,7 @@ class TestSettingsSyncMethod:
 
         # Axis event should trigger sync
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=100
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=100
         )
         gamepad.handle_axis_event(axis_event, InputContext.GAMEPLAY)
 
@@ -450,20 +434,14 @@ class TestSettingsPersistenceAcrossContexts:
 
         # Test in MAIN_MENU context - right stick should navigate when swapped
         axis_event_up = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTY,
-            value=-32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTY, value=-32000
         )
         action1 = gamepad.handle_axis_event(axis_event_up, InputContext.MAIN_MENU)
         assert action1 == InputAction.NAVIGATE_UP
 
         # Test in SETTINGS_MENU context - same setting should apply
         axis_event_down = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTY,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTY, value=32000
         )
         action2 = gamepad.handle_axis_event(axis_event_down, InputContext.SETTINGS_MENU)
         assert action2 == InputAction.NAVIGATE_DOWN

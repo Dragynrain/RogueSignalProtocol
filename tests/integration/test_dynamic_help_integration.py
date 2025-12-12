@@ -56,13 +56,11 @@ class TestDynamicHelpIntegration:
         menu.input_mapper.add_keyboard_binding(
             InputAction.CONFIRM,
             tcod.event.KeySym.SPACE,
-            InputContext.GAMEPLAY  # Keyboard bindings use GAMEPLAY context
+            InputContext.GAMEPLAY,  # Keyboard bindings use GAMEPLAY context
         )
 
         # Get updated help text
-        new_hint = menu.input_mapper.get_combined_hint(
-            InputAction.CONFIRM, InputContext.MAIN_MENU
-        )
+        new_hint = menu.input_mapper.get_combined_hint(InputAction.CONFIRM, InputContext.MAIN_MENU)
 
         # Space should now be in the hint (custom bindings take priority)
         assert "Space" in new_hint
@@ -74,21 +72,15 @@ class TestDynamicHelpIntegration:
         menu = MainMenu(settings)
 
         # Default: CONFIRM = A button
-        default_btn = menu.input_mapper.get_button_hint(
-            InputAction.CONFIRM, InputContext.MAIN_MENU
-        )
+        default_btn = menu.input_mapper.get_button_hint(InputAction.CONFIRM, InputContext.MAIN_MENU)
         assert default_btn == "A"
 
         # Swap: Bind CONFIRM to B button
         CB = tcod.sdl.joystick.ControllerButton
-        menu.input_mapper.add_gamepad_binding(
-            InputAction.CONFIRM, CB.B, InputContext.MAIN_MENU
-        )
+        menu.input_mapper.add_gamepad_binding(InputAction.CONFIRM, CB.B, InputContext.MAIN_MENU)
 
         # Now should show B (custom takes priority)
-        new_btn = menu.input_mapper.get_button_hint(
-            InputAction.CONFIRM, InputContext.MAIN_MENU
-        )
+        new_btn = menu.input_mapper.get_button_hint(InputAction.CONFIRM, InputContext.MAIN_MENU)
         assert new_btn == "B"
 
     # =========================================================================
@@ -107,9 +99,7 @@ class TestDynamicHelpIntegration:
 
         # Remap CANCEL to Backspace
         menu.input_mapper.add_keyboard_binding(
-            InputAction.CANCEL,
-            tcod.event.KeySym.BACKSPACE,
-            InputContext.GAMEPLAY
+            InputAction.CANCEL, tcod.event.KeySym.BACKSPACE, InputContext.GAMEPLAY
         )
 
         # Should now show Backspace
@@ -128,9 +118,7 @@ class TestDynamicHelpIntegration:
 
         # Remap CANCEL to Tab
         menu.input_mapper.add_keyboard_binding(
-            InputAction.CANCEL,
-            tcod.event.KeySym.TAB,
-            InputContext.GAMEPLAY
+            InputAction.CANCEL, tcod.event.KeySym.TAB, InputContext.GAMEPLAY
         )
 
         # Get help hint - should include Tab
@@ -154,14 +142,10 @@ class TestDynamicHelpIntegration:
 
         # Remap to X button
         CB = tcod.sdl.joystick.ControllerButton
-        menu.input_mapper.add_gamepad_binding(
-            InputAction.CONFIRM, CB.X, InputContext.CONTROLS_MENU
-        )
+        menu.input_mapper.add_gamepad_binding(InputAction.CONFIRM, CB.X, InputContext.CONTROLS_MENU)
 
         # Should now show X
-        new_btn = menu.input_mapper.get_button_hint(
-            InputAction.CONFIRM, InputContext.CONTROLS_MENU
-        )
+        new_btn = menu.input_mapper.get_button_hint(InputAction.CONFIRM, InputContext.CONTROLS_MENU)
         assert new_btn == "X"
 
     # =========================================================================
@@ -177,9 +161,7 @@ class TestDynamicHelpIntegration:
 
         # Remap CANCEL to Delete
         menu.input_mapper.add_keyboard_binding(
-            InputAction.CANCEL,
-            tcod.event.KeySym.DELETE,
-            InputContext.GAMEPLAY
+            InputAction.CANCEL, tcod.event.KeySym.DELETE, InputContext.GAMEPLAY
         )
 
         # Get help hint
@@ -199,9 +181,7 @@ class TestDynamicHelpIntegration:
 
         # Remap CONFIRM to Space
         menu.input_mapper.add_keyboard_binding(
-            InputAction.CONFIRM,
-            tcod.event.KeySym.SPACE,
-            InputContext.GAMEPLAY
+            InputAction.CONFIRM, tcod.event.KeySym.SPACE, InputContext.GAMEPLAY
         )
 
         # Get help hint
@@ -220,14 +200,10 @@ class TestDynamicHelpIntegration:
 
         # Remap CANCEL to Y button
         CB = tcod.sdl.joystick.ControllerButton
-        menu.input_mapper.add_gamepad_binding(
-            InputAction.CANCEL, CB.Y, InputContext.ABOUT_MENU
-        )
+        menu.input_mapper.add_gamepad_binding(InputAction.CANCEL, CB.Y, InputContext.ABOUT_MENU)
 
         # Should show Y
-        hint = menu.input_mapper.get_button_hint(
-            InputAction.CANCEL, InputContext.ABOUT_MENU
-        )
+        hint = menu.input_mapper.get_button_hint(InputAction.CANCEL, InputContext.ABOUT_MENU)
         assert hint == "Y"
 
 
@@ -245,11 +221,7 @@ class TestCustomBindingPriority:
         assert default in valid_wait_keys, f"Expected one of {valid_wait_keys}, got {default}"
 
         # Add custom binding for WAIT = T
-        mapper.add_keyboard_binding(
-            InputAction.WAIT,
-            tcod.event.KeySym.T,
-            InputContext.GAMEPLAY
-        )
+        mapper.add_keyboard_binding(InputAction.WAIT, tcod.event.KeySym.T, InputContext.GAMEPLAY)
 
         # T should now be shown first (custom takes priority over defaults)
         new_hint = mapper.get_key_hint(InputAction.WAIT)
@@ -265,9 +237,7 @@ class TestCustomBindingPriority:
 
         # Add custom binding for CONFIRM = Y
         CB = tcod.sdl.joystick.ControllerButton
-        mapper.add_gamepad_binding(
-            InputAction.CONFIRM, CB.Y, InputContext.MAIN_MENU
-        )
+        mapper.add_gamepad_binding(InputAction.CONFIRM, CB.Y, InputContext.MAIN_MENU)
 
         # Y should now be shown first
         new_hint = mapper.get_button_hint(InputAction.CONFIRM, InputContext.MAIN_MENU)
@@ -293,16 +263,12 @@ class TestHelpHintConsistency:
 
         # Remap keyboard CONFIRM to Space
         mapper.add_keyboard_binding(
-            InputAction.CONFIRM,
-            tcod.event.KeySym.SPACE,
-            InputContext.GAMEPLAY
+            InputAction.CONFIRM, tcod.event.KeySym.SPACE, InputContext.GAMEPLAY
         )
 
         # Remap gamepad CONFIRM to X
         CB = tcod.sdl.joystick.ControllerButton
-        mapper.add_gamepad_binding(
-            InputAction.CONFIRM, CB.X, InputContext.MAIN_MENU
-        )
+        mapper.add_gamepad_binding(InputAction.CONFIRM, CB.X, InputContext.MAIN_MENU)
 
         hint = mapper.get_combined_hint(InputAction.CONFIRM, InputContext.MAIN_MENU)
 
@@ -326,9 +292,7 @@ class TestHelpHintFunctions:
 
         # Remap CONFIRM to Space
         mapper.add_keyboard_binding(
-            InputAction.CONFIRM,
-            tcod.event.KeySym.SPACE,
-            InputContext.GAMEPLAY
+            InputAction.CONFIRM, tcod.event.KeySym.SPACE, InputContext.GAMEPLAY
         )
 
         # Get updated help
@@ -343,9 +307,7 @@ class TestHelpHintFunctions:
 
         # Remap CANCEL to Tab
         mapper.add_keyboard_binding(
-            InputAction.CANCEL,
-            tcod.event.KeySym.TAB,
-            InputContext.GAMEPLAY
+            InputAction.CANCEL, tcod.event.KeySym.TAB, InputContext.GAMEPLAY
         )
 
         help_text = get_settings_menu_help(False, mapper)
@@ -361,9 +323,7 @@ class TestHelpHintFunctions:
 
         # Remap CANCEL to Backspace
         mapper.add_keyboard_binding(
-            InputAction.CANCEL,
-            tcod.event.KeySym.BACKSPACE,
-            InputContext.GAMEPLAY
+            InputAction.CANCEL, tcod.event.KeySym.BACKSPACE, InputContext.GAMEPLAY
         )
 
         help_text = get_achievements_help(mapper)
@@ -414,9 +374,7 @@ class TestRenderedHelpText:
 
         # Remap CONFIRM to Space
         menu.input_mapper.add_keyboard_binding(
-            InputAction.CONFIRM,
-            tcod.event.KeySym.SPACE,
-            InputContext.GAMEPLAY
+            InputAction.CONFIRM, tcod.event.KeySym.SPACE, InputContext.GAMEPLAY
         )
 
         # Render the menu
@@ -432,17 +390,15 @@ class TestRenderedHelpText:
     def test_settings_menu_renders_remapped_cancel_button(self, console):
         """Verify settings menu renders remapped CANCEL button."""
         from game_config import GameSettings
-        from game_menu_settings import SettingsMenu
         from game_input_device_tracker import InputDeviceType, set_last_device
+        from game_menu_settings import SettingsMenu
 
         settings = GameSettings()
         menu = SettingsMenu(settings)
 
         # Remap CANCEL to Y button
         CB = tcod.sdl.joystick.ControllerButton
-        menu.input_mapper.add_gamepad_binding(
-            InputAction.CANCEL, CB.Y, InputContext.SETTINGS_MENU
-        )
+        menu.input_mapper.add_gamepad_binding(InputAction.CANCEL, CB.Y, InputContext.SETTINGS_MENU)
 
         # Set device tracker to GAMEPAD so help text shows gamepad buttons
         set_last_device(InputDeviceType.GAMEPAD)
@@ -469,17 +425,15 @@ class TestRenderedHelpText:
 
     def test_about_menu_renders_remapped_buttons(self, console):
         """Verify about menu renders remapped buttons."""
-        from game_menu_about import AboutMenu
         from game_input_device_tracker import InputDeviceType, set_last_device
+        from game_menu_about import AboutMenu
 
         # AboutMenu takes background, not settings - pass None
         menu = AboutMenu()
 
         # Remap CONFIRM to X
         CB = tcod.sdl.joystick.ControllerButton
-        menu.input_mapper.add_gamepad_binding(
-            InputAction.CONFIRM, CB.X, InputContext.ABOUT_MENU
-        )
+        menu.input_mapper.add_gamepad_binding(InputAction.CONFIRM, CB.X, InputContext.ABOUT_MENU)
 
         # Set device tracker to GAMEPAD so help text shows gamepad buttons
         set_last_device(InputDeviceType.GAMEPAD)
@@ -502,9 +456,7 @@ class TestHelpTextOverflow:
 
         # Remap to long key names
         mapper.add_keyboard_binding(
-            InputAction.CANCEL,
-            tcod.event.KeySym.BACKSPACE,
-            InputContext.GAMEPLAY
+            InputAction.CANCEL, tcod.event.KeySym.BACKSPACE, InputContext.GAMEPLAY
         )
 
         # Should not crash and should return something
@@ -523,6 +475,7 @@ class TestHelpTextOverflow:
         # This is a soft check - warns if too long but doesn't fail
         if len(help_text) > 30:
             import warnings
+
             warnings.warn(f"Compact help text is {len(help_text)} chars, may overflow narrow box")
 
 
@@ -567,9 +520,6 @@ class TestFullRemapScenario:
 
     def test_swap_a_b_buttons_across_menus(self):
         """Simulate user swapping A and B buttons in settings."""
-        from game_menu_main import MainMenu
-        from game_menu_settings import SettingsMenu
-        from game_menu_about import AboutMenu
 
         settings = GameSettings()
 

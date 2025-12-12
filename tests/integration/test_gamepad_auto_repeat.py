@@ -15,11 +15,10 @@ Critical issues tested:
 Uses the game_with_gamepad fixture from tests/conftest.py.
 """
 
-import pytest
+from unittest.mock import patch
+
 import tcod.event
 import tcod.sdl.joystick
-from unittest.mock import patch
-import time
 
 from game_input_actions import InputAction, InputContext
 
@@ -36,16 +35,13 @@ class TestButtonAutoRepeatStop:
         game, input_handler, controller = game_with_gamepad
         gamepad_handler = input_handler.gamepad_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             # Initial press at t=0
             mock_time.return_value = 0.0
 
             # Press D-pad UP using gamepad handler directly (with MAIN_MENU context)
             press_event = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_UP,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
             )
             action = gamepad_handler.handle_button_event(press_event, InputContext.MAIN_MENU)
 
@@ -60,10 +56,7 @@ class TestButtonAutoRepeatStop:
             # Release button
             mock_time.return_value = 0.51
             release_event = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONUP",
-                which=0,
-                button=CB.DPAD_UP,
-                pressed=False
+                type="CONTROLLERBUTTONUP", which=0, button=CB.DPAD_UP, pressed=False
             )
             gamepad_handler.handle_button_event(release_event, InputContext.MAIN_MENU)
 
@@ -79,10 +72,7 @@ class TestButtonAutoRepeatStop:
 
         # Press D-pad DOWN (navigation button) using gamepad handler directly
         press_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         gamepad_handler.handle_button_event(press_event, InputContext.MAIN_MENU)
 
@@ -90,10 +80,7 @@ class TestButtonAutoRepeatStop:
 
         # Release D-pad DOWN
         release_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONUP",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=False
+            type="CONTROLLERBUTTONUP", which=0, button=CB.DPAD_DOWN, pressed=False
         )
         gamepad_handler.handle_button_event(release_event, InputContext.MAIN_MENU)
 
@@ -112,7 +99,7 @@ class TestStickAutoRepeatStop:
         # (handle_controller_axis processes through menu handlers which consume movement)
         analog = input_handler.gamepad_handler.analog_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.return_value = 0.0
 
             # Deflect stick UP directly on analog handler
@@ -139,14 +126,11 @@ class TestStickAutoRepeatStop:
         # Set stick to 5% deflection (below 15% deadzone)
         drift_value = int(32767 * 0.05)
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.return_value = 0.0
 
             axis_event = tcod.event.ControllerAxis(
-                type="CONTROLLERAXISMOTION",
-                which=0,
-                axis=CA.LEFTY,
-                value=drift_value
+                type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=drift_value
             )
             input_handler.handle_controller_axis(axis_event)
 
@@ -172,15 +156,12 @@ class TestDirectionChangeNoFalseRepeat:
         # Track inventory selection to verify navigation
         initial_selection = game.inventory_selection
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.return_value = 0.0
 
             # Press D-pad UP - should navigate up
             up_press = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_UP,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
             )
             input_handler.handle_controller_button(up_press)
             first_selection = game.inventory_selection
@@ -191,10 +172,7 @@ class TestDirectionChangeNoFalseRepeat:
             # Release UP
             mock_time.return_value = 0.1
             up_release = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONUP",
-                which=0,
-                button=CB.DPAD_UP,
-                pressed=False
+                type="CONTROLLERBUTTONUP", which=0, button=CB.DPAD_UP, pressed=False
             )
             input_handler.handle_controller_button(up_release)
 
@@ -202,21 +180,20 @@ class TestDirectionChangeNoFalseRepeat:
             # This is the key test: changing direction should reset timing, not trigger double-move
             mock_time.return_value = 0.11  # Only 10ms after release - too soon for repeat
             down_press = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_DOWN,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
             )
             input_handler.handle_controller_button(down_press)
 
             # The DOWN press should be handled as a new action (not auto-repeat)
             # Verify the button state was reset to DOWN (not still UP)
             gamepad_handler = input_handler.gamepad_handler
-            assert gamepad_handler.button_held == CB.DPAD_DOWN, \
-                "Direction change should track new button (DOWN), not old (UP)"
+            assert (
+                gamepad_handler.button_held == CB.DPAD_DOWN
+            ), "Direction change should track new button (DOWN), not old (UP)"
             # Button held time should be reset to the new press time (0.11)
-            assert gamepad_handler.button_held_since == 0.11, \
-                "Button held time should reset on direction change"
+            assert (
+                gamepad_handler.button_held_since == 0.11
+            ), "Button held time should reset on direction change"
 
     def test_stick_direction_reversal_immediate_response(self, game_with_gamepad):
         """Stick direction reversal should give immediate new direction."""
@@ -224,7 +201,7 @@ class TestDirectionChangeNoFalseRepeat:
         # Use analog handler directly to test analog behavior in isolation
         analog = input_handler.gamepad_handler.analog_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             # Move stick UP
             mock_time.return_value = 0.0
             analog.update_left_stick(x=0, y=-32767)
@@ -250,14 +227,11 @@ class TestAutoRepeatTiming:
         game, input_handler, controller = game_with_gamepad
         gamepad_handler = input_handler.gamepad_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             # Press button at t=0 (use gamepad handler directly with MAIN_MENU context)
             mock_time.return_value = 0.0
             press_event = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_UP,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
             )
             gamepad_handler.handle_button_event(press_event, InputContext.MAIN_MENU)
 
@@ -287,7 +261,7 @@ class TestAutoRepeatTiming:
         # Use analog handler directly to test timing behavior in isolation
         analog = input_handler.gamepad_handler.analog_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             # Deflect stick at t=0
             mock_time.return_value = 0.0
             analog.update_left_stick(x=0, y=-32767)
@@ -325,15 +299,12 @@ class TestAutoRepeatContextSwitch:
         game, input_handler, controller = game_with_gamepad
         gamepad_handler = input_handler.gamepad_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.return_value = 0.0
 
             # Press and hold D-pad DOWN using gamepad handler directly (MAIN_MENU context)
             press_event = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_DOWN,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
             )
             gamepad_handler.handle_button_event(press_event, InputContext.MAIN_MENU)
 
@@ -365,7 +336,7 @@ class TestAutoRepeatContextSwitch:
         # Use analog handler directly to test state reset behavior
         analog = input_handler.gamepad_handler.analog_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.return_value = 0.0
 
             # Move stick directly on analog handler
@@ -399,8 +370,12 @@ class TestStickVsDpadConsistency:
         stick_repeat_rate = input_handler.gamepad_handler.analog_handler.menu_repeat_rate
 
         # Should be identical or very similar
-        assert dpad_initial_delay == stick_initial_delay, f"Initial delays should match: {dpad_initial_delay} vs {stick_initial_delay}"
-        assert dpad_repeat_rate == stick_repeat_rate, f"Repeat rates should match: {dpad_repeat_rate} vs {stick_repeat_rate}"
+        assert (
+            dpad_initial_delay == stick_initial_delay
+        ), f"Initial delays should match: {dpad_initial_delay} vs {stick_initial_delay}"
+        assert (
+            dpad_repeat_rate == stick_repeat_rate
+        ), f"Repeat rates should match: {dpad_repeat_rate} vs {stick_repeat_rate}"
 
     def test_both_stop_on_release(self, game_with_gamepad):
         """Both stick and D-pad should stop immediately on release."""
@@ -408,15 +383,12 @@ class TestStickVsDpadConsistency:
         gamepad_handler = input_handler.gamepad_handler
         analog = gamepad_handler.analog_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.return_value = 0.0
 
             # Test D-pad (use gamepad handler directly with MAIN_MENU context)
             dpad_press = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_UP,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
             )
             gamepad_handler.handle_button_event(dpad_press, InputContext.MAIN_MENU)
 
@@ -424,10 +396,7 @@ class TestStickVsDpadConsistency:
 
             # Release D-pad
             dpad_release = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONUP",
-                which=0,
-                button=CB.DPAD_UP,
-                pressed=False
+                type="CONTROLLERBUTTONUP", which=0, button=CB.DPAD_UP, pressed=False
             )
             gamepad_handler.handle_button_event(dpad_release, InputContext.MAIN_MENU)
 
@@ -456,14 +425,11 @@ class TestAutoRepeatDuringLag:
         game, input_handler, controller = game_with_gamepad
         gamepad_handler = input_handler.gamepad_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             # Press button at t=0 (use gamepad handler directly with MAIN_MENU context)
             mock_time.return_value = 0.0
             press_event = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_DOWN,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
             )
             gamepad_handler.handle_button_event(press_event, InputContext.MAIN_MENU)
 
@@ -490,7 +456,7 @@ class TestAutoRepeatDuringLag:
         # Use analog handler directly to test time-based behavior in isolation
         analog = input_handler.gamepad_handler.analog_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.return_value = 0.0
 
             # Deflect stick directly on analog handler
@@ -521,25 +487,19 @@ class TestAutoRepeatEdgeCases:
         game, input_handler, controller = game_with_gamepad
         gamepad_handler = input_handler.gamepad_handler
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.return_value = 0.0
 
             # Press D-pad UP (navigation button) using gamepad handler directly
             up_press = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_UP,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
             )
             gamepad_handler.handle_button_event(up_press, InputContext.MAIN_MENU)
 
             # Press D-pad DOWN (navigation button, without releasing UP)
             mock_time.return_value = 0.05
             down_press = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_DOWN,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
             )
             gamepad_handler.handle_button_event(down_press, InputContext.MAIN_MENU)
 
@@ -553,15 +513,12 @@ class TestAutoRepeatEdgeCases:
         assert not game.show_inventory
         assert not game.show_help
 
-        with patch('time.time') as mock_time:
+        with patch("time.time") as mock_time:
             mock_time.return_value = 0.0
 
             # Press D-pad in gameplay (movement, not navigation)
             press_event = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_UP,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
             )
             action = input_handler.handle_controller_button(press_event)
 

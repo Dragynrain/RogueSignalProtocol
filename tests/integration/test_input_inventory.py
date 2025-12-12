@@ -3,7 +3,7 @@ Inventory Screen Input Testing
 
 Tests all input types for inventory management:
 - Item navigation and selection
-- Sorting and filtering  
+- Sorting and filtering
 - Equipping/using items
 - Page navigation
 - All input devices
@@ -11,14 +11,15 @@ Tests all input types for inventory management:
 Note: Extracted from test_input_critical_paths.py for maintainability.
 """
 
+from unittest.mock import MagicMock, Mock
+
 import pytest
 import tcod
 import tcod.event
 import tcod.sdl.joystick
-from unittest.mock import Mock, MagicMock
 
 from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
+from game_input_actions import InputAction
 from tests.integration.input_test_utils import InputTestHelper
 
 
@@ -51,8 +52,9 @@ class TestInventoryComprehensive:
 
     def test_keyboard_down_arrow(self, inventory_engine):
         """Keyboard: Down arrow moves selection down."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -65,8 +67,9 @@ class TestInventoryComprehensive:
 
     def test_keyboard_up_arrow(self, inventory_engine):
         """Keyboard: Up arrow moves selection up."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         engine.inventory_selection = 1  # Start at second item
@@ -78,8 +81,9 @@ class TestInventoryComprehensive:
 
     def test_keyboard_page_down(self, inventory_engine):
         """Keyboard: Page Down moves 5 items down."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -92,8 +96,9 @@ class TestInventoryComprehensive:
 
     def test_keyboard_page_up(self, inventory_engine):
         """Keyboard: Page Up moves 5 items up."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         engine.inventory_selection = 5
@@ -107,8 +112,9 @@ class TestInventoryComprehensive:
 
     def test_dpad_down_navigation(self, inventory_engine):
         """D-pad: Down button navigates down."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -121,8 +127,9 @@ class TestInventoryComprehensive:
 
     def test_dpad_up_navigation(self, inventory_engine):
         """D-pad: Up button navigates up."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         engine.inventory_selection = 1
@@ -134,8 +141,9 @@ class TestInventoryComprehensive:
 
     def test_left_stick_vertical(self, inventory_engine):
         """Left stick: Vertical axis navigates inventory."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -153,8 +161,9 @@ class TestInventoryComprehensive:
 
     def test_wrap_to_top_from_bottom(self, inventory_engine):
         """Navigation: Wraps to top when going down from bottom."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -175,8 +184,9 @@ class TestInventoryComprehensive:
 
     def test_wrap_to_bottom_from_top(self, inventory_engine):
         """Navigation: Wraps to bottom when going up from top."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -201,8 +211,9 @@ class TestInventoryComprehensive:
 
     def test_confirm_selects_item(self, inventory_engine):
         """Confirm: Selects item for use/equip."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -236,8 +247,9 @@ class TestInventoryComprehensive:
 
     def test_escape_closes(self, inventory_engine):
         """Escape: Closes inventory screen."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -248,8 +260,9 @@ class TestInventoryComprehensive:
 
     def test_i_key_toggles_closed(self, inventory_engine):
         """I key: Toggles inventory closed."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -260,8 +273,9 @@ class TestInventoryComprehensive:
 
     def test_face_button_b_closes(self, inventory_engine):
         """Face button B: Closes inventory."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -276,8 +290,9 @@ class TestInventoryComprehensive:
 
     def test_empty_inventory_navigation(self, inventory_engine):
         """Empty inventory: Navigation doesn't crash."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         # Clear all items
@@ -293,8 +308,9 @@ class TestInventoryComprehensive:
 
     def test_empty_inventory_confirm(self, inventory_engine):
         """Empty inventory: Confirm doesn't crash."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         # Clear all items
@@ -314,8 +330,9 @@ class TestInventoryComprehensive:
 
     def test_rapid_down_navigation(self, inventory_engine):
         """Rapid down navigation handled correctly."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -334,8 +351,9 @@ class TestInventoryComprehensive:
 
     def test_rapid_alternating_navigation(self, inventory_engine):
         """Rapid alternating up/down handled."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -349,8 +367,9 @@ class TestInventoryComprehensive:
 
     def test_rapid_page_navigation(self, inventory_engine):
         """Rapid page up/down handled."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         handler = InputHandler(engine, renderer=None)
@@ -384,8 +403,9 @@ class TestInventoryComprehensive:
 
     def test_single_item_navigation(self, inventory_engine):
         """Single item: Navigation stays on that item."""
-        from game_input_actions import InputAction
         from game_input import InputHandler
+        from game_input_actions import InputAction
+
         engine = inventory_engine
 
         # Clear and add single item
@@ -573,12 +593,14 @@ class TestHelpMenuCriticalPath:
     def help_menu(self):
         """Create help menu instance (text mode)."""
         from game_menu_help_lore import HelpMenu
+
         menu = HelpMenu()
         yield menu
 
     def test_keyboard_navigate_right(self, help_menu):
         """Keyboard: Right arrow navigates to next page."""
         from game_input_actions import InputAction
+
         initial_page = help_menu.current_page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         assert help_menu.current_page != initial_page or help_menu.total_pages == 1
@@ -586,6 +608,7 @@ class TestHelpMenuCriticalPath:
     def test_keyboard_navigate_left(self, help_menu):
         """Keyboard: Left arrow navigates to previous page."""
         from game_input_actions import InputAction
+
         # First go right to ensure we're not on first page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         current_page = help_menu.current_page
@@ -595,12 +618,14 @@ class TestHelpMenuCriticalPath:
     def test_keyboard_escape_exits(self, help_menu):
         """Keyboard: Escape exits help menu."""
         from game_input_actions import InputAction
+
         result = help_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
 
     def test_dpad_left_right_navigate(self, help_menu):
         """D-pad: Left/right navigate pages."""
         from game_input_actions import InputAction
+
         initial_page = help_menu.current_page
         help_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         assert help_menu.current_page != initial_page or help_menu.total_pages == 1
@@ -608,6 +633,7 @@ class TestHelpMenuCriticalPath:
     def test_left_stick_horizontal_navigate(self, help_menu):
         """Left stick: Horizontal movement navigates pages."""
         from game_input_actions import InputAction
+
         help_menu.execute_action(InputAction.MOVE_EAST)
         help_menu.execute_action(InputAction.MOVE_WEST)
         assert help_menu.current_page >= 0
@@ -615,6 +641,7 @@ class TestHelpMenuCriticalPath:
     def test_face_button_b_exits(self, help_menu):
         """Face button B: Exits help menu."""
         from game_input_actions import InputAction
+
         result = help_menu.execute_action(InputAction.CANCEL)
         assert result == "back"
 
@@ -630,6 +657,7 @@ class TestLoreMenuCriticalPath:
     def lore_menu(self):
         """Create lore menu instance."""
         from game_menu_help_lore import LoreMenu
+
         menu = LoreMenu()
         # Load story fragments so we have data
         menu._load_story_fragments()
@@ -639,6 +667,7 @@ class TestLoreMenuCriticalPath:
         """Keyboard: Up/down navigate fragment list."""
         # LoreMenu.execute_action() loads fragments internally
         from game_input_actions import InputAction
+
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
         if discovered_fragments:
@@ -652,6 +681,7 @@ class TestLoreMenuCriticalPath:
     def test_keyboard_confirm_enters_reading(self, lore_menu):
         """Keyboard: Enter enters reading mode."""
         from game_input_actions import InputAction
+
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
         if discovered_fragments:
@@ -673,6 +703,7 @@ class TestLoreMenuCriticalPath:
     def test_reading_mode_escape_returns_to_list(self, lore_menu):
         """Reading mode: Escape returns to fragment list."""
         from game_input_actions import InputAction
+
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
         if discovered_fragments:
@@ -685,6 +716,7 @@ class TestLoreMenuCriticalPath:
     def test_dpad_navigation(self, lore_menu):
         """D-pad: Navigate fragment list."""
         from game_input_actions import InputAction
+
         discovered_fragments = lore_menu.story_fragment_manager.get_discovered_fragments()
 
         if discovered_fragments:
@@ -705,8 +737,8 @@ class TestGraphicsPreviewMenuCriticalPath:
     @pytest.fixture
     def graphics_menu(self):
         """Create graphics preview menu instance with mocked context."""
-        from game_menu_graphics_preview import GraphicsPreviewMenu
         from game_graphics_tiles import TileManager
+        from game_menu_graphics_preview import GraphicsPreviewMenu
 
         # Create mock context (same pattern as test_graphics_preview_gamepad.py)
         context = Mock()
@@ -722,6 +754,7 @@ class TestGraphicsPreviewMenuCriticalPath:
     def test_keyboard_navigate_entities(self, graphics_menu):
         """Keyboard: Navigate through entity types."""
         from game_input_actions import InputAction
+
         graphics_menu.execute_action(InputAction.NAVIGATE_UP)
         graphics_menu.execute_action(InputAction.NAVIGATE_DOWN)
         assert graphics_menu is not None  # Navigation occurred
@@ -729,6 +762,7 @@ class TestGraphicsPreviewMenuCriticalPath:
     def test_keyboard_navigate_variants(self, graphics_menu):
         """Keyboard: Navigate variants (left/right)."""
         from game_input_actions import InputAction
+
         graphics_menu.execute_action(InputAction.NAVIGATE_LEFT)
         graphics_menu.execute_action(InputAction.NAVIGATE_RIGHT)
         assert graphics_menu is not None  # Menu state valid
@@ -736,12 +770,14 @@ class TestGraphicsPreviewMenuCriticalPath:
     def test_keyboard_escape_exits(self, graphics_menu):
         """Keyboard: Escape exits preview."""
         from game_input_actions import InputAction
+
         result = graphics_menu.execute_action(InputAction.CANCEL)
         assert result == "exit"
 
     def test_dpad_navigation(self, graphics_menu):
         """D-pad: Navigate entities and variants."""
         from game_input_actions import InputAction
+
         graphics_menu.execute_action(InputAction.NAVIGATE_UP)
         graphics_menu.execute_action(InputAction.NAVIGATE_DOWN)
         graphics_menu.execute_action(InputAction.NAVIGATE_LEFT)
@@ -751,6 +787,7 @@ class TestGraphicsPreviewMenuCriticalPath:
     def test_face_buttons(self, graphics_menu):
         """Face buttons: Confirm and cancel."""
         from game_input_actions import InputAction
+
         graphics_menu.execute_action(InputAction.CONFIRM)
         result = graphics_menu.execute_action(InputAction.CANCEL)
         assert result == "exit"
@@ -761,7 +798,7 @@ class TestGraphicsPreviewMenuCriticalPath:
 # ==============================================================================
 
 
-class DISABLED_DialogueSystemComprehensive:
+class DISABLED_DialogueSystemComprehensive:  # noqa: N801
     """
     Dialogue System - YES/NO prompts, confirmations, and modal dialogs.
 
@@ -776,12 +813,12 @@ class DISABLED_DialogueSystemComprehensive:
         engine = create_basic_game_environment()
 
         # Activate a simple YES/NO dialogue
-        if hasattr(engine, 'dialogue_state'):
+        if hasattr(engine, "dialogue_state"):
             # Create test dialogue
             engine.dialogue_state.active = True
             engine.dialogue_state.current_dialogue = {
-                'text': 'Test dialogue question?',
-                'options': ['Yes', 'No']
+                "text": "Test dialogue question?",
+                "options": ["Yes", "No"],
             }
             engine.dialogue_state.selected_option = 0
 
@@ -794,9 +831,10 @@ class DISABLED_DialogueSystemComprehensive:
     def test_keyboard_down_navigates_options(self, dialogue_engine):
         """Keyboard: Down arrow moves to next option."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
-        if hasattr(engine.dialogue_state, 'selected_option'):
+        if hasattr(engine.dialogue_state, "selected_option"):
             initial = engine.dialogue_state.selected_option
 
             engine.input_handler._execute_action(InputAction.NAVIGATE_DOWN)
@@ -807,9 +845,10 @@ class DISABLED_DialogueSystemComprehensive:
     def test_keyboard_up_navigates_options(self, dialogue_engine):
         """Keyboard: Up arrow moves to previous option."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
-        if hasattr(engine.dialogue_state, 'selected_option'):
+        if hasattr(engine.dialogue_state, "selected_option"):
             engine.dialogue_state.selected_option = 1
 
             engine.input_handler._execute_action(InputAction.NAVIGATE_UP)
@@ -819,6 +858,7 @@ class DISABLED_DialogueSystemComprehensive:
     def test_keyboard_enter_confirms(self, dialogue_engine):
         """Keyboard: Enter confirms selected option."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
         engine.input_handler._execute_action(InputAction.CONFIRM)
@@ -829,6 +869,7 @@ class DISABLED_DialogueSystemComprehensive:
     def test_keyboard_escape_closes(self, dialogue_engine):
         """Keyboard: Escape closes dialogue."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
         engine.input_handler._execute_action(InputAction.CANCEL)
@@ -842,7 +883,7 @@ class DISABLED_DialogueSystemComprehensive:
 
         # Y key should select Yes option in YES/NO dialogues
         # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
-        event = InputTestHelper.create_keyboard_event(tcod.event.KeySym(ord('y')))
+        event = InputTestHelper.create_keyboard_event(tcod.event.KeySym(ord("y")))
 
         # Should work (implementation specific)
         assert event is not None  # Event created successfully
@@ -852,7 +893,7 @@ class DISABLED_DialogueSystemComprehensive:
         engine = dialogue_engine
 
         # Use KeySym(ord('n')) for cross-platform compatibility (KeySym.n doesn't exist on Linux)
-        event = InputTestHelper.create_keyboard_event(tcod.event.KeySym(ord('n')))
+        event = InputTestHelper.create_keyboard_event(tcod.event.KeySym(ord("n")))
 
         assert event is not None  # Event created successfully
 
@@ -863,20 +904,20 @@ class DISABLED_DialogueSystemComprehensive:
     def test_dpad_down_navigates(self, dialogue_engine):
         """D-pad: Down button navigates options."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
+        # Execute action - should not raise
         engine.input_handler._execute_action(InputAction.NAVIGATE_DOWN)
-
-        assert event is not None  # Event created successfully
 
     def test_dpad_up_navigates(self, dialogue_engine):
         """D-pad: Up button navigates options."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
+        # Execute action - should not raise
         engine.input_handler._execute_action(InputAction.NAVIGATE_UP)
-
-        assert event is not None  # Event created successfully
 
     # ==========================================================================
     # Face Buttons
@@ -885,6 +926,7 @@ class DISABLED_DialogueSystemComprehensive:
     def test_face_button_a_confirms(self, dialogue_engine):
         """Face button A: Confirms selected option."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
         engine.input_handler._execute_action(InputAction.CONFIRM)
@@ -894,6 +936,7 @@ class DISABLED_DialogueSystemComprehensive:
     def test_face_button_b_cancels(self, dialogue_engine):
         """Face button B: Closes dialogue."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
         engine.input_handler._execute_action(InputAction.CANCEL)
@@ -921,9 +964,10 @@ class DISABLED_DialogueSystemComprehensive:
     def test_option_wrapping_top_to_bottom(self, dialogue_engine):
         """Navigation: Wraps from top to bottom option."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
-        if hasattr(engine.dialogue_state, 'selected_option'):
+        if hasattr(engine.dialogue_state, "selected_option"):
             # Start at first option
             engine.dialogue_state.selected_option = 0
 
@@ -935,9 +979,10 @@ class DISABLED_DialogueSystemComprehensive:
     def test_option_wrapping_bottom_to_top(self, dialogue_engine):
         """Navigation: Wraps from bottom to top option."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
-        if hasattr(engine.dialogue_state, 'selected_option'):
+        if hasattr(engine.dialogue_state, "selected_option"):
             # Set to last option
             engine.dialogue_state.selected_option = 1
 
@@ -953,6 +998,7 @@ class DISABLED_DialogueSystemComprehensive:
     def test_rapid_option_switching(self, dialogue_engine):
         """Rapid option changes handled correctly."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
         # Rapid navigation
@@ -965,6 +1011,7 @@ class DISABLED_DialogueSystemComprehensive:
     def test_confirm_without_selection(self, dialogue_engine):
         """Confirm works even with default selection."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
         # Confirm immediately without navigation
@@ -975,6 +1022,7 @@ class DISABLED_DialogueSystemComprehensive:
     def test_multiple_dialogue_sequences(self, dialogue_engine):
         """Multiple dialogues in sequence handled."""
         from game_input_actions import InputAction
+
         engine = dialogue_engine
 
         # Confirm first dialogue
@@ -987,15 +1035,16 @@ class DISABLED_DialogueSystemComprehensive:
         """Dialogue with only one option (OK button)."""
         engine = dialogue_engine
 
-        if hasattr(engine.dialogue_state, 'current_dialogue'):
+        if hasattr(engine.dialogue_state, "current_dialogue"):
             # Single option dialogue
             engine.dialogue_state.current_dialogue = {
-                'text': 'Information message',
-                'options': ['OK']
+                "text": "Information message",
+                "options": ["OK"],
             }
 
             # Navigation should do nothing
             from game_input_actions import InputAction
+
             engine.input_handler._execute_action(InputAction.NAVIGATE_DOWN)
 
             assert dialogue_engine is not None
@@ -1016,8 +1065,8 @@ class TestAutoRepeatComprehensive:
     @pytest.fixture
     def main_menu(self):
         """Create main menu instance for auto-repeat testing."""
-        from game_menu_main import MainMenu
         from game_config import GameSettings
+        from game_menu_main import MainMenu
 
         settings = GameSettings()
         menu = MainMenu()
@@ -1030,6 +1079,7 @@ class TestAutoRepeatComprehensive:
     def test_dpad_initial_press_immediate_action(self, main_menu):
         """D-pad: Initial press triggers immediate action."""
         from game_input_actions import InputAction
+
         menu = main_menu
 
         initial_selection = menu.selected_option
@@ -1043,6 +1093,7 @@ class TestAutoRepeatComprehensive:
     def test_dpad_down_initial_press(self, main_menu):
         """D-pad Down: First press moves selection."""
         from game_input_actions import InputAction
+
         menu = main_menu
 
         initial = menu.selected_option
@@ -1053,6 +1104,7 @@ class TestAutoRepeatComprehensive:
     def test_dpad_up_initial_press(self, main_menu):
         """D-pad Up: First press moves selection."""
         from game_input_actions import InputAction
+
         menu = main_menu
 
         menu.selected_option = 1  # Start at second option
@@ -1071,6 +1123,7 @@ class TestAutoRepeatComprehensive:
     def test_left_stick_initial_movement(self, main_menu):
         """Left stick: Initial movement triggers action."""
         from game_input_actions import InputAction
+
         menu = main_menu
 
         initial = menu.selected_option
@@ -1081,6 +1134,7 @@ class TestAutoRepeatComprehensive:
     def test_left_stick_hold_continues_movement(self, main_menu):
         """Left stick: Holding stick continues movement."""
         from game_input_actions import InputAction
+
         menu = main_menu
 
         # Multiple movements simulate hold
@@ -1110,6 +1164,7 @@ class TestAutoRepeatComprehensive:
     def test_face_button_a_no_autorepeat(self, main_menu):
         """Face button A: Does NOT auto-repeat in menus."""
         from game_input_actions import InputAction
+
         menu = main_menu
 
         # Press A multiple times
@@ -1132,8 +1187,8 @@ class TestAutoRepeatComprehensive:
 
     def test_gameplay_movement_autorepeat(self):
         """Gameplay: Movement keys auto-repeat during hold."""
-        from tests.fixtures.standard_patterns import create_basic_game_environment
         from game_input_actions import InputAction
+        from tests.fixtures.standard_patterns import create_basic_game_environment
 
         engine = create_basic_game_environment()
 
@@ -1148,8 +1203,8 @@ class TestAutoRepeatComprehensive:
 
     def test_gameplay_wait_no_autorepeat(self):
         """Gameplay: Wait action does NOT auto-repeat."""
-        from tests.fixtures.standard_patterns import create_basic_game_environment
         from game_input_actions import InputAction
+        from tests.fixtures.standard_patterns import create_basic_game_environment
 
         engine = create_basic_game_environment()
 
@@ -1168,6 +1223,7 @@ class TestAutoRepeatComprehensive:
     def test_rapid_direction_changes_reset_timer(self, main_menu):
         """Rapid direction changes reset auto-repeat timer."""
         from game_input_actions import InputAction
+
         menu = main_menu
 
         # Alternate directions rapidly
@@ -1181,6 +1237,7 @@ class TestAutoRepeatComprehensive:
     def test_same_direction_held_continues_repeat(self, main_menu):
         """Same direction held continues auto-repeat."""
         from game_input_actions import InputAction
+
         menu = main_menu
 
         # Hold same direction
@@ -1192,6 +1249,7 @@ class TestAutoRepeatComprehensive:
     def test_release_then_immediate_repress(self, main_menu):
         """Release then immediate re-press treated as new initial press."""
         from game_input_actions import InputAction
+
         menu = main_menu
 
         # First press
@@ -1213,5 +1271,3 @@ class TestAutoRepeatComprehensive:
 # ==============================================================================
 # INTEGRATION TESTS - Context Transitions
 # ==============================================================================
-
-

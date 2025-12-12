@@ -76,36 +76,38 @@ class SettingsMenu(BaseMenu):
             )
 
         # Common options that apply to both modes
-        self.options.extend([
-            {
-                "name": "UI Color",
-                "type": "ui_color",
-                "key": "ui_color",
-                "values": [
-                    "Cyan",
-                    "Purple",
-                    "Magenta",
-                    "Golden",
-                    "Crimson",
-                    "Azure",
-                    "Emerald",
-                    "Ivory",
-                ],
-            },
-            {
-                "name": "Overclock Warnings",
-                "type": "dialogue_toggle",
-                "key": "show_overclock_warning",
-            },
-            {
-                "name": "System Crash Warnings",
-                "type": "dialogue_toggle",
-                "key": "show_system_crash_warning",
-            },
-            {"type": "separator"},  # Visual separation before utility actions
-            {"name": "Export Debug Package", "type": "action"},
-            {"name": "Back", "type": "action"},
-        ])
+        self.options.extend(
+            [
+                {
+                    "name": "UI Color",
+                    "type": "ui_color",
+                    "key": "ui_color",
+                    "values": [
+                        "Cyan",
+                        "Purple",
+                        "Magenta",
+                        "Golden",
+                        "Crimson",
+                        "Azure",
+                        "Emerald",
+                        "Ivory",
+                    ],
+                },
+                {
+                    "name": "Overclock Warnings",
+                    "type": "dialogue_toggle",
+                    "key": "show_overclock_warning",
+                },
+                {
+                    "name": "System Crash Warnings",
+                    "type": "dialogue_toggle",
+                    "key": "show_system_crash_warning",
+                },
+                {"type": "separator"},  # Visual separation before utility actions
+                {"name": "Export Debug Package", "type": "action"},
+                {"name": "Back", "type": "action"},
+            ]
+        )
 
     def render(self, console: tcod.console.Console) -> None:
         """Render the settings menu."""
@@ -247,7 +249,12 @@ class SettingsMenu(BaseMenu):
                     current_value = self.settings.ui_scale.capitalize()
                     # Short text for narrow box
                     render_char_safe(
-                        console, name_x, option_y + 1, f"< {current_value} > *", fg=color, bg=bg_color
+                        console,
+                        name_x,
+                        option_y + 1,
+                        f"< {current_value} > *",
+                        fg=color,
+                        bg=bg_color,
                     )
 
                 elif option["type"] == "dialogue_toggle":
@@ -426,7 +433,10 @@ class SettingsMenu(BaseMenu):
     def get_context(self):
         """Return input context - DIALOGUE for confirmation, SETTINGS_MENU otherwise."""
         from game_input_actions import InputContext
-        return InputContext.DIALOGUE if self.show_export_confirmation else InputContext.SETTINGS_MENU
+
+        return (
+            InputContext.DIALOGUE if self.show_export_confirmation else InputContext.SETTINGS_MENU
+        )
 
     def execute_action(self, action) -> str:
         """Execute an InputAction and return menu command."""
@@ -488,11 +498,11 @@ class SettingsMenu(BaseMenu):
         """Handle input for export confirmation dialogue (keyboard + gamepad)."""
         from game_input_actions import InputAction, InputContext
 
-        event_type = getattr(event, 'type', 'KEYDOWN')
+        event_type = getattr(event, "type", "KEYDOWN")
         input_action = None
 
         if event_type == "KEYDOWN":
-            modifier = getattr(event, 'mod', 0)
+            modifier = getattr(event, "mod", 0)
             input_action = self.input_mapper.get_action_for_key(event.sym, modifier=modifier)
         elif event_type == "CONTROLLERAXISMOTION":
             input_action = self.gamepad_handler.handle_axis_event(event, InputContext.DIALOGUE)
@@ -502,7 +512,16 @@ class SettingsMenu(BaseMenu):
 
         if input_action:
             # Navigation (swap between Yes/No)
-            if input_action in (InputAction.NAVIGATE_UP, InputAction.NAVIGATE_DOWN, InputAction.NAVIGATE_LEFT, InputAction.NAVIGATE_RIGHT, InputAction.MOVE_NORTH, InputAction.MOVE_SOUTH, InputAction.MOVE_WEST, InputAction.MOVE_EAST):
+            if input_action in (
+                InputAction.NAVIGATE_UP,
+                InputAction.NAVIGATE_DOWN,
+                InputAction.NAVIGATE_LEFT,
+                InputAction.NAVIGATE_RIGHT,
+                InputAction.MOVE_NORTH,
+                InputAction.MOVE_SOUTH,
+                InputAction.MOVE_WEST,
+                InputAction.MOVE_EAST,
+            ):
                 self.export_confirmation_selection = 1 - self.export_confirmation_selection
                 return ""
 
@@ -525,7 +544,6 @@ class SettingsMenu(BaseMenu):
 
     def _navigate_skip_headers(self, direction: int):
         """Navigate options while skipping section headers and separators."""
-        old_selection = self.selected_option
         num_options = len(self.options)
 
         # Move in the specified direction with wraparound
@@ -1037,7 +1055,9 @@ class SettingsMenu(BaseMenu):
         elif option["type"] == "ui_scale":
             # Cycle through Auto -> Compact -> Normal -> Auto
             scales = ["auto", "compact", "normal"]
-            current_idx = scales.index(self.settings.ui_scale) if self.settings.ui_scale in scales else 0
+            current_idx = (
+                scales.index(self.settings.ui_scale) if self.settings.ui_scale in scales else 0
+            )
             new_idx = (current_idx + direction) % len(scales)
             self.settings.set_ui_scale(scales[new_idx])
             logging.info(f"UI scale changed to {scales[new_idx]} (restart required)")

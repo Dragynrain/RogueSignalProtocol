@@ -214,7 +214,9 @@ class TestCrossPlatformPaths:
         game_file_paths._data_directory = None
         game_file_paths._is_portable_mode = None
 
-    def test_get_data_dir_returns_xdg_path_on_linux(self, mock_linux_platform, tmp_path, monkeypatch):
+    def test_get_data_dir_returns_xdg_path_on_linux(
+        self, mock_linux_platform, tmp_path, monkeypatch
+    ):
         """On Linux, data dir should be under ~/.local/share/ (XDG standard).
 
         This test verifies platformdirs integration returns correct Linux paths.
@@ -224,13 +226,16 @@ class TestCrossPlatformPaths:
 
         # Force reimport to pick up mocked platform
         from platformdirs import user_data_dir
+
         result = user_data_dir("RogueSignalProtocol", appauthor=False)
 
         # Should use XDG_DATA_HOME or default to ~/.local/share
         assert "RogueSignalProtocol" in result
         # On Linux, platformdirs returns ~/.local/share/appname or XDG_DATA_HOME/appname
 
-    def test_get_data_dir_returns_localappdata_on_windows(self, mock_windows_platform, tmp_path, monkeypatch):
+    def test_get_data_dir_returns_localappdata_on_windows(
+        self, mock_windows_platform, tmp_path, monkeypatch
+    ):
         """On Windows, data dir should be under %LOCALAPPDATA%.
 
         This test verifies platformdirs integration returns correct Windows paths.
@@ -239,6 +244,7 @@ class TestCrossPlatformPaths:
         monkeypatch.setenv("LOCALAPPDATA", test_localappdata)
 
         from platformdirs import user_data_dir
+
         result = user_data_dir("RogueSignalProtocol", appauthor=False)
 
         # Should include the app name
@@ -332,6 +338,7 @@ class TestFatalErrorDisplay:
         with patch.dict("sys.modules", {"pygame": MagicMock()}):
             # Re-import to pick up mocked pygame
             import importlib
+
             importlib.reload(game_file_paths)
 
             game_file_paths.show_fatal_error_and_exit("Test error message", "Test Title")
@@ -347,6 +354,7 @@ class TestFatalErrorDisplay:
         with patch.dict("sys.modules", {"pygame": None}):
             # Force ImportError by removing pygame from modules
             import sys as sys_module
+
             original_pygame = sys_module.modules.get("pygame")
             sys_module.modules["pygame"] = None
 

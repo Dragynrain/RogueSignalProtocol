@@ -13,8 +13,6 @@ This ensures the game works in both portable installations (USB drives, user fol
 and system installations (C:\\Program Files, /usr/local/games, etc.).
 """
 
-import ctypes
-import os
 import sys
 from pathlib import Path
 

@@ -8,18 +8,18 @@ Tests validate mouse interaction across all contexts that support it:
 Mouse input should work seamlessly alongside keyboard and gamepad!
 """
 
-import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
+
 import tcod.event
 
-from game_input_actions import InputAction, InputContext
 from game_engine import GameEngine
 from game_input import InputHandler
-from game_menu_main import MainMenu
-from game_menu_settings import SettingsMenu
+from game_input_actions import InputContext
 from game_menu_about import AboutMenu
 from game_menu_achievements import AchievementsMenu
 from game_menu_help_lore import HelpMenu, LoreMenu
+from game_menu_main import MainMenu
+from game_menu_settings import SettingsMenu
 
 
 class TestMainMenuMouseInteraction:
@@ -58,7 +58,7 @@ class TestMainMenuMouseInteraction:
         event.position.x = 40
 
         # Mock save manager to avoid warning dialog
-        with patch('game_menu_main.SaveGameManager.save_exists', return_value=False):
+        with patch("game_menu_main.SaveGameManager.save_exists", return_value=False):
             result = menu.handle_mouse_click(event)
 
         # Should activate settings (note: actual action depends on index)
@@ -86,6 +86,7 @@ class TestSettingsMenuMouseInteraction:
     def test_mouse_hover_changes_selection(self):
         """Mouse hover changes selected setting."""
         from game_config import GameSettings
+
         menu = SettingsMenu(GameSettings(), menu_background=None, sound_manager=None)
 
         initial_selection = menu.selected_option
@@ -105,6 +106,7 @@ class TestSettingsMenuMouseInteraction:
     def test_mouse_right_click_goes_back(self):
         """Right-click exits settings menu."""
         from game_config import GameSettings
+
         menu = SettingsMenu(GameSettings(), menu_background=None, sound_manager=None)
 
         # Create right-click event
@@ -119,6 +121,7 @@ class TestSettingsMenuMouseInteraction:
     def test_mouse_wheel_scrolls_settings(self):
         """Mouse wheel scrolls in settings if scrollable."""
         from game_config import GameSettings
+
         menu = SettingsMenu(GameSettings(), menu_background=None, sound_manager=None)
 
         # Create wheel event
@@ -411,17 +414,18 @@ class TestMouseContextPriority:
 
         # Show dialogue (higher priority than menus)
         from game_dialogue_system import DialogueBox
+
         # Use KeySym(ord('y')) for cross-platform compatibility (KeySym.y doesn't exist on Linux)
         dialogue = DialogueBox(
             title="Test",
             message="Test message",
             options=["OK"],
-            valid_keys=[tcod.event.KeySym(ord('y'))],
+            valid_keys=[tcod.event.KeySym(ord("y"))],
             title_color=(255, 255, 255),
             message_color=(255, 255, 255),
             border_color=(255, 255, 255),
             bg_color=(0, 0, 0),
-            format_data={}
+            format_data={},
         )
         game.dialogue_state.show(dialogue)
         game.show_main_menu = True  # Menu also active

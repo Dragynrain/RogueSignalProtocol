@@ -8,13 +8,11 @@ Tests validate lore viewer navigation and interaction with:
 Lore viewer is critical for narrative immersion!
 """
 
-import pytest
 from unittest.mock import Mock
-import tcod.event
 
-from game_input_actions import InputAction, InputContext
 from game_engine import GameEngine
 from game_input import InputHandler
+from game_input_actions import InputAction, InputContext
 
 
 class TestLoreViewerNavigation:

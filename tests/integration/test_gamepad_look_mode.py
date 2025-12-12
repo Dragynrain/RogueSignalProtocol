@@ -13,9 +13,9 @@ The look mode threshold is defined in GameConfig.GAMEPAD_LOOK_MODE_THRESHOLD (de
 Uses the game_with_gamepad fixture from tests/conftest.py.
 """
 
-import pytest
 import time
 
+import pytest
 import tcod.event
 import tcod.sdl.joystick
 
@@ -51,10 +51,7 @@ class TestLookModeAutoEntry:
 
         # Full right stick deflection (well above 0.3 threshold)
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTX, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.GAMEPLAY)
@@ -71,10 +68,7 @@ class TestLookModeAutoEntry:
         # Small deflection (20% = below 30% threshold)
         small_value = int(32768 * 0.2)
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTX,
-            value=small_value
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTX, value=small_value
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.GAMEPLAY)
@@ -91,15 +85,16 @@ class TestLookModeAutoEntry:
 
         # Full right stick deflection
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTX, value=32000
         )
 
         # Test in various non-gameplay contexts
-        for context in [InputContext.INVENTORY, InputContext.MAIN_MENU,
-                        InputContext.DIALOGUE, InputContext.HELP]:
+        for context in [
+            InputContext.INVENTORY,
+            InputContext.MAIN_MENU,
+            InputContext.DIALOGUE,
+            InputContext.HELP,
+        ]:
             action = gamepad.handle_axis_event(axis_event, context)
             # Should not trigger look mode in these contexts
             assert action != InputAction.TOGGLE_LOOK_MODE
@@ -117,10 +112,7 @@ class TestLookModeAutoEntry:
 
         # But send an event from the LEFT stick (movement stick)
         left_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=32000
         )
 
         action = gamepad.handle_axis_event(left_event, InputContext.GAMEPLAY)
@@ -142,10 +134,7 @@ class TestLookModeWithSwapSticks:
 
         # Left stick deflection
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.GAMEPLAY)
@@ -166,10 +155,7 @@ class TestLookModeWithSwapSticks:
 
         # But send event from right stick (now movement stick)
         right_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTX, value=32000
         )
 
         action = gamepad.handle_axis_event(right_event, InputContext.GAMEPLAY)
@@ -198,10 +184,7 @@ class TestCursorMovementInLookMode:
 
         # Send axis event in LOOK_MODE context
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTX, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.LOOK_MODE)
@@ -314,10 +297,7 @@ class TestCursorMovementWithSwapSticks:
 
         # Send axis event in LOOK_MODE context
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.LOOK_MODE)
@@ -363,10 +343,7 @@ class TestTargetingMode:
 
         # Send axis event in TARGETING context
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTY,
-            value=-32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTY, value=-32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.TARGETING)
@@ -392,10 +369,7 @@ class TestTargetingMode:
 
         # Send axis event in TARGETING context
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=-32000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=-32000
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.TARGETING)
@@ -427,10 +401,7 @@ class TestLookModeThreshold:
         analog.update_right_stick(x=value, y=0)
 
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTX,
-            value=value
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTX, value=value
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.GAMEPLAY)
@@ -450,10 +421,7 @@ class TestLookModeThreshold:
         analog.update_right_stick(x=value, y=0)
 
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTX,
-            value=value
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTX, value=value
         )
 
         action = gamepad.handle_axis_event(axis_event, InputContext.GAMEPLAY)
@@ -517,19 +485,13 @@ class TestTriggerLookModeToggle:
 
         # Initialize trigger state (unpressed)
         init_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.TRIGGERLEFT,
-            value=0
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.TRIGGERLEFT, value=0
         )
         gamepad.handle_axis_event(init_event, InputContext.GAMEPLAY)
 
         # Press trigger
         press_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.TRIGGERLEFT,
-            value=30000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.TRIGGERLEFT, value=30000
         )
         action = gamepad.handle_axis_event(press_event, InputContext.GAMEPLAY)
 
@@ -542,19 +504,13 @@ class TestTriggerLookModeToggle:
 
         # Initialize trigger
         init_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.TRIGGERLEFT,
-            value=0
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.TRIGGERLEFT, value=0
         )
         gamepad.handle_axis_event(init_event, InputContext.GAMEPLAY)
 
         # Press trigger - first time fires
         press_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.TRIGGERLEFT,
-            value=30000
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.TRIGGERLEFT, value=30000
         )
         action1 = gamepad.handle_axis_event(press_event, InputContext.GAMEPLAY)
         assert action1 == InputAction.TOGGLE_LOOK_MODE
@@ -565,10 +521,7 @@ class TestTriggerLookModeToggle:
 
         # Release and press again
         release_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.TRIGGERLEFT,
-            value=0
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.TRIGGERLEFT, value=0
         )
         gamepad.handle_axis_event(release_event, InputContext.GAMEPLAY)
 

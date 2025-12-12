@@ -7,16 +7,16 @@ When swap_sticks=True:
 
 Tests use the FULL input handler path (not just gamepad handler) to verify integration.
 """
-import pytest
+
 import time
-from unittest.mock import Mock
+
+import pytest
 import tcod.event
 import tcod.sdl.joystick
 
-from game_engine import GameEngine
-from game_config import GameSettings, GameConfig
 from game_audio import NullSoundManager
-from game_input_actions import InputAction, InputContext
+from game_config import GameSettings
+from game_engine import GameEngine
 
 CA = tcod.sdl.joystick.ControllerAxis
 
@@ -58,10 +58,7 @@ class TestSwapSticksGameplayMovement:
 
         # Create proper ControllerAxis event (not Mock)
         event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            axis=CA.RIGHTY,
-            value=25000,
-            which=0
+            type="CONTROLLERAXISMOTION", axis=CA.RIGHTY, value=25000, which=0
         )
 
         # First call starts settling period
@@ -74,8 +71,9 @@ class TestSwapSticksGameplayMovement:
         result2 = input_handler.handle_controller_axis(event)
 
         # Should be handled (True) and have triggered movement action
-        assert result2 is True, \
-            f"RIGHT stick should be handled in gameplay with swap=True, got {result2}"
+        assert (
+            result2 is True
+        ), f"RIGHT stick should be handled in gameplay with swap=True, got {result2}"
 
     def test_left_stick_triggers_look_mode_full_path(self, game_with_swap_sticks):
         """
@@ -96,17 +94,15 @@ class TestSwapSticksGameplayMovement:
 
         # Push LEFT stick down
         event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            axis=CA.LEFTY,
-            value=25000,
-            which=0
+            type="CONTROLLERAXISMOTION", axis=CA.LEFTY, value=25000, which=0
         )
 
         result = input_handler.handle_controller_axis(event)
 
         # Should trigger look mode
-        assert game.look_mode is True, \
-            "LEFT stick should trigger look mode when swap=True in gameplay"
+        assert (
+            game.look_mode is True
+        ), "LEFT stick should trigger look mode when swap=True in gameplay"
 
 
 class TestSwapSticksLookModeCursor:
@@ -124,6 +120,7 @@ class TestSwapSticksLookModeCursor:
         # Enter look mode first
         game.look_mode = True
         from game_entities import Position
+
         game.look_cursor_position = Position(game.player.position.x, game.player.position.y)
         initial_cursor_y = game.look_cursor_position.y
 
@@ -138,10 +135,7 @@ class TestSwapSticksLookModeCursor:
 
         # Push LEFT stick down
         event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            axis=CA.LEFTY,
-            value=25000,  # Down
-            which=0
+            type="CONTROLLERAXISMOTION", axis=CA.LEFTY, value=25000, which=0  # Down
         )
 
         # First call starts settling
@@ -154,9 +148,10 @@ class TestSwapSticksLookModeCursor:
         result2 = input_handler.handle_controller_axis(event)
 
         # Cursor should have moved down (Y increased)
-        assert game.look_cursor_position.y > initial_cursor_y, \
-            f"LEFT stick should move cursor down in look mode with swap=True, " \
+        assert game.look_cursor_position.y > initial_cursor_y, (
+            f"LEFT stick should move cursor down in look mode with swap=True, "
             f"cursor_y was {initial_cursor_y}, now {game.look_cursor_position.y}"
+        )
 
     def test_right_stick_does_nothing_in_look_mode_full_path(self, game_with_swap_sticks):
         """
@@ -168,6 +163,7 @@ class TestSwapSticksLookModeCursor:
         # Enter look mode
         game.look_mode = True
         from game_entities import Position
+
         game.look_cursor_position = Position(game.player.position.x, game.player.position.y)
         initial_cursor_y = game.look_cursor_position.y
 
@@ -178,15 +174,13 @@ class TestSwapSticksLookModeCursor:
 
         # Push RIGHT stick down
         event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            axis=CA.RIGHTY,
-            value=25000,
-            which=0
+            type="CONTROLLERAXISMOTION", axis=CA.RIGHTY, value=25000, which=0
         )
 
         result = input_handler.handle_controller_axis(event)
 
         # Cursor should NOT have moved
-        assert game.look_cursor_position.y == initial_cursor_y, \
-            f"RIGHT stick should NOT move cursor in look mode with swap=True, " \
+        assert game.look_cursor_position.y == initial_cursor_y, (
+            f"RIGHT stick should NOT move cursor in look mode with swap=True, "
             f"cursor_y was {initial_cursor_y}, now {game.look_cursor_position.y}"
+        )

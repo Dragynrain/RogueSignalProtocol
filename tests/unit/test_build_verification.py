@@ -4,11 +4,7 @@ These tests verify that the build system produces valid binaries and includes
 all required assets. They are designed to run in CI after a build is complete.
 """
 
-import os
 from pathlib import Path
-
-import pytest
-
 
 # Required assets that must be bundled with every release
 REQUIRED_JSON_FILES = [
@@ -151,10 +147,10 @@ class TestCrossplatformImports:
     def test_all_core_modules_import(self):
         """Verify all core game modules can be imported."""
         # These imports would fail if there are platform-specific issues
+        import game_combat
+        import game_config
+        import game_enemies
         import game_engine
         import game_entities
-        import game_combat
-        import game_enemies
-        import game_config
 
         assert all([game_engine, game_entities, game_combat, game_enemies, game_config])

@@ -11,14 +11,14 @@ Note: Extracted from test_input_critical_paths.py for maintainability.
 Only includes tests that actually validate behavior (removed placeholders).
 """
 
+from unittest.mock import Mock
+
 import pytest
 import tcod
 import tcod.event
-from unittest.mock import Mock
 
 from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
-from tests.integration.input_test_utils import InputTestHelper
+from game_input_actions import InputAction
 
 
 class TestMouseInputBasics:
@@ -35,7 +35,7 @@ class TestMouseInputBasics:
     @pytest.fixture
     def main_menu(self):
         from game_menu_main import MainMenu
-        from game_config import GameSettings
+
         settings = GameSettings()
         menu = MainMenu()
         yield menu
@@ -43,7 +43,7 @@ class TestMouseInputBasics:
     @pytest.fixture
     def settings_menu(self):
         from game_menu_settings import SettingsMenu
-        from game_config import GameSettings
+
         settings = GameSettings()
         menu = SettingsMenu(settings=settings)
         yield menu
@@ -51,6 +51,7 @@ class TestMouseInputBasics:
     @pytest.fixture
     def inventory_engine(self):
         from tests.fixtures.standard_patterns import create_basic_game_environment
+
         engine = create_basic_game_environment()
         if engine.dialogue_state.is_active():
             engine.dialogue_state.close()
@@ -90,7 +91,6 @@ class TestMouseInputBasics:
 
     def test_main_menu_right_click_exits(self, main_menu):
         """Main Menu: Right click goes back/exits."""
-        import tcod.event
         menu = main_menu
 
         event = Mock()
@@ -118,7 +118,6 @@ class TestMouseInputBasics:
 
     def test_settings_menu_right_click_returns_to_main(self, settings_menu):
         """Settings Menu: Right click returns to main menu."""
-        import tcod.event
         menu = settings_menu
 
         event = Mock()
@@ -133,7 +132,6 @@ class TestMouseInputBasics:
     # Inventory Mouse Tests
     def test_inventory_mouse_scroll_navigation(self, inventory_engine):
         """Inventory: Mouse wheel scrolls through items."""
-        from game_input_actions import InputAction
         engine = inventory_engine
 
         # Simulate scroll down
@@ -143,9 +141,10 @@ class TestMouseInputBasics:
     def test_inventory_click_selects_item(self):
         """Inventory: Click infrastructure exists for item selection."""
         from tests.fixtures.standard_patterns import create_basic_game_environment
+
         engine = create_basic_game_environment()
         engine.show_inventory = True
-        assert hasattr(engine, 'inventory_selection')
+        assert hasattr(engine, "inventory_selection")
 
     # Edge Cases
     def test_click_outside_menu_bounds(self, main_menu):
@@ -198,7 +197,7 @@ class TestMouseInputMixed:
     @pytest.fixture
     def main_menu(self):
         from game_menu_main import MainMenu
-        from game_config import GameSettings
+
         settings = GameSettings()
         menu = MainMenu()
         yield menu
@@ -206,6 +205,7 @@ class TestMouseInputMixed:
     @pytest.fixture
     def game_engine(self):
         from tests.fixtures.standard_patterns import create_basic_game_environment
+
         engine = create_basic_game_environment()
         if engine.dialogue_state.is_active():
             engine.dialogue_state.close()
@@ -213,7 +213,6 @@ class TestMouseInputMixed:
 
     def test_mouse_and_keyboard_mixed(self, main_menu):
         """Mouse: Mouse and keyboard can be used interchangeably."""
-        from game_input_actions import InputAction
         menu = main_menu
 
         # Keyboard navigation
@@ -233,7 +232,6 @@ class TestMouseInputMixed:
 
     def test_mouse_and_gamepad_mixed(self, main_menu):
         """Mouse: Mouse and gamepad can be used interchangeably."""
-        from game_input_actions import InputAction
         menu = main_menu
 
         # Gamepad navigation
@@ -283,6 +281,7 @@ class TestMouseGameplay:
     @pytest.fixture
     def game_engine(self):
         from tests.fixtures.standard_patterns import create_basic_game_environment
+
         engine = create_basic_game_environment()
         if engine.dialogue_state.is_active():
             engine.dialogue_state.close()
@@ -290,7 +289,6 @@ class TestMouseGameplay:
 
     def test_click_to_move_look_mode(self, game_engine):
         """Mouse: Can enter look mode."""
-        from game_input_actions import InputAction
         engine = game_engine
 
         engine.input_handler._execute_action(InputAction.TOGGLE_LOOK_MODE)
@@ -300,9 +298,9 @@ class TestMouseGameplay:
 
     def test_click_to_target(self, game_engine):
         """Mouse: Can enter targeting mode."""
-        from game_input_actions import InputAction
         from game_data import GameData
         from game_inventory import ExploitItem
+
         engine = game_engine
 
         # Clear any pre-equipped exploits so our exploit goes in slot 1

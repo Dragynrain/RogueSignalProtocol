@@ -12,14 +12,15 @@ Architecture:
 """
 
 import logging
-import tcod.event
 from abc import ABC, abstractmethod
 from typing import Any
 
+import tcod.event
+
 from game_input_actions import InputAction, InputContext
-from game_input_mappings import InputMapper
-from game_input_gamepad import GamepadInputHandler
 from game_input_device_tracker import InputDeviceType, set_last_device
+from game_input_gamepad import GamepadInputHandler
+from game_input_mappings import InputMapper
 
 
 class BaseInputHandler(ABC):
@@ -30,8 +31,14 @@ class BaseInputHandler(ABC):
     Subclasses must implement: get_context(), execute_action(), get_default_return()
     """
 
-    def __init__(self, game=None, renderer=None, input_mapper: InputMapper | None = None,
-                 controllers: set | None = None, gamepad_handler=None):
+    def __init__(
+        self,
+        game=None,
+        renderer=None,
+        input_mapper: InputMapper | None = None,
+        controllers: set | None = None,
+        gamepad_handler=None,
+    ):
         """
         Initialize base input handler.
 
@@ -63,9 +70,9 @@ class BaseInputHandler(ABC):
             )
 
         # Load custom bindings if game has settings (only if we created the mapper)
-        if input_mapper is None and game and hasattr(game, 'settings'):
-            keyboard_bindings = getattr(game.settings, 'custom_keyboard_bindings', {})
-            gamepad_bindings = getattr(game.settings, 'custom_gamepad_bindings', {})
+        if input_mapper is None and game and hasattr(game, "settings"):
+            keyboard_bindings = getattr(game.settings, "custom_keyboard_bindings", {})
+            gamepad_bindings = getattr(game.settings, "custom_gamepad_bindings", {})
             self.input_mapper.load_custom_bindings(keyboard_bindings, gamepad_bindings)
 
     # ========================================================================
@@ -134,7 +141,7 @@ class BaseInputHandler(ABC):
         if isinstance(event, tcod.event.KeyDown):
             set_last_device(InputDeviceType.KEYBOARD)
             # Pass modifier flags to support Shift+key, Ctrl+key combinations
-            modifier = getattr(event, 'mod', 0)
+            modifier = getattr(event, "mod", 0)
             action = self.input_mapper.get_action_for_key(event.sym, context, modifier)
 
         # Gamepad button events

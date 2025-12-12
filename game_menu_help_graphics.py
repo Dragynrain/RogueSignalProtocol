@@ -550,8 +550,12 @@ class GraphicalHelpMenu(BaseInputHandler):
             return "back"
 
         # Explicitly ignore vertical navigation (prevents diagonal stick issues)
-        elif action in (InputAction.NAVIGATE_UP, InputAction.NAVIGATE_DOWN,
-                       InputAction.MOVE_NORTH, InputAction.MOVE_SOUTH):
+        elif action in (
+            InputAction.NAVIGATE_UP,
+            InputAction.NAVIGATE_DOWN,
+            InputAction.MOVE_NORTH,
+            InputAction.MOVE_SOUTH,
+        ):
             return ""  # Do nothing
 
         return ""

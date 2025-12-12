@@ -15,17 +15,14 @@ Uses the game_with_gamepad fixture from tests/conftest.py.
 Uses mock_time fixture from conftest.py for reliable time control.
 """
 
-import pytest
 import tcod.event
 import tcod.sdl.joystick
-
-from game_input_actions import InputAction, InputContext
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton
 CA = tcod.sdl.joystick.ControllerAxis
 
-from tests.conftest import get_movement_with_settling, SETTLING_PERIOD_SEC
+from tests.conftest import get_movement_with_settling  # noqa: E402
 
 
 class TestDeadzoneFiltering:
@@ -39,10 +36,7 @@ class TestDeadzoneFiltering:
         drift_value = int(32767 * 0.10)
 
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=drift_value
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=drift_value
         )
         input_handler.handle_controller_axis(axis_event)
 
@@ -50,7 +44,9 @@ class TestDeadzoneFiltering:
         assert input_handler.gamepad_handler.analog_handler.left_x == drift_value
 
         # Try to get movement - should be None (below deadzone)
-        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(game.turn)
+        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(
+            game.turn
+        )
         assert movement is None, "10% deflection should be filtered by 15% deadzone"
 
     def test_stick_at_5_percent_after_release(self, game_with_gamepad, mock_time):
@@ -108,23 +104,19 @@ class TestRadialDeadzone:
 
         # Set both axes
         x_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=drift_value
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=drift_value
         )
         y_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTY,
-            value=drift_value
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTY, value=drift_value
         )
 
         input_handler.handle_controller_axis(x_event)
         input_handler.handle_controller_axis(y_event)
 
         # Try to get movement - should be None (14.1% magnitude < 15% deadzone)
-        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(game.turn)
+        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(
+            game.turn
+        )
         assert movement is None, "14.1% magnitude should be filtered by 15% radial deadzone"
 
     def test_diagonal_above_deadzone_registers(self, game_with_gamepad, mock_time):
@@ -176,15 +168,14 @@ class TestDriftRecovery:
         drift_value = int(32767 * -0.10)
 
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=drift_value
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=drift_value
         )
         input_handler.handle_controller_axis(axis_event)
 
         # Should not generate movement
-        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(game.turn)
+        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(
+            game.turn
+        )
         assert movement is None, "Negative 10% drift should be filtered"
 
 
@@ -199,15 +190,14 @@ class TestDeadzoneConsistency:
         drift_value = int(32767 * 0.10)
 
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=drift_value
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=drift_value
         )
         input_handler.handle_controller_axis(axis_event)
 
         # Gameplay: should be filtered
-        movement_gameplay = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(game.turn)
+        movement_gameplay = (
+            input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(game.turn)
+        )
         assert movement_gameplay is None
 
         # Switch to menu context
@@ -225,10 +215,7 @@ class TestDeadzoneConsistency:
         drift_value = int(32767 * 0.10)
 
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.RIGHTX,
-            value=drift_value
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.RIGHTX, value=drift_value
         )
         input_handler.handle_controller_axis(axis_event)
 
@@ -250,16 +237,15 @@ class TestEdgeCases:
         threshold_value = int(32767 * 0.15)
 
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=threshold_value
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=threshold_value
         )
         input_handler.handle_controller_axis(axis_event)
 
         # At 15%, behavior depends on implementation (< vs <=)
         # Either None or (1, 0) is acceptable, just verify no crash
-        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(game.turn)
+        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(
+            game.turn
+        )
         # Test passes if no exception raised
 
     def test_zero_value_explicitly(self, game_with_gamepad):
@@ -267,14 +253,13 @@ class TestEdgeCases:
         game, input_handler, controller = game_with_gamepad
 
         axis_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=0  # Perfect zero
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=0  # Perfect zero
         )
         input_handler.handle_controller_axis(axis_event)
 
-        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(game.turn)
+        movement = input_handler.gamepad_handler.analog_handler.get_left_stick_movement_gameplay(
+            game.turn
+        )
         assert movement is None, "Perfect zero should never generate movement"
 
     def test_maximum_value_always_works(self, game_with_gamepad, mock_time):
@@ -284,10 +269,10 @@ class TestEdgeCases:
 
         # Test all four cardinal directions at maximum
         test_cases = [
-            (32767, 0, (1, 0)),    # East
+            (32767, 0, (1, 0)),  # East
             (-32767, 0, (-1, 0)),  # West
             (0, -32767, (0, -1)),  # North
-            (0, 32767, (0, 1)),    # South
+            (0, 32767, (0, 1)),  # South
         ]
 
         for x, y, expected_movement in test_cases:
@@ -297,4 +282,6 @@ class TestEdgeCases:
 
             # Set new direction (with settling period)
             movement = get_movement_with_settling(analog, game.turn, x, y, mock_time)
-            assert movement == expected_movement, f"Maximum deflection ({x}, {y}) should always work"
+            assert (
+                movement == expected_movement
+            ), f"Maximum deflection ({x}, {y}) should always work"

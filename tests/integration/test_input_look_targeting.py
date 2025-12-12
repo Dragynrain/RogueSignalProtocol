@@ -14,12 +14,9 @@ import pytest
 import tcod
 import tcod.event
 import tcod.sdl.joystick
-import time
-from unittest.mock import Mock
 
-from game_config import GameSettings
-from game_input_actions import InputAction, InputContext
-from tests.integration.input_test_utils import InputTestHelper, AutoRepeatTester
+from game_input_actions import InputAction
+from tests.integration.input_test_utils import InputTestHelper
 
 
 class TestLookModeCriticalPath:
@@ -68,7 +65,7 @@ class TestLookModeCriticalPath:
         """D-pad: All 4 directions move look cursor."""
         engine = look_mode_engine
 
-        for direction in ['up', 'down', 'left', 'right']:
+        for direction in ["up", "down", "left", "right"]:
             event = InputTestHelper.create_dpad_event(direction, pressed=True)
         # Verify look mode is active and cursor exists
         assert engine.look_mode is True
@@ -79,17 +76,17 @@ class TestLookModeCriticalPath:
         engine = look_mode_engine
 
         # Test vertical
-        event = InputTestHelper.create_stick_event('left', 'y', -32767)
+        event = InputTestHelper.create_stick_event("left", "y", -32767)
         assert engine.look_mode is True
 
-        event = InputTestHelper.create_stick_event('left', 'y', 32767)
+        event = InputTestHelper.create_stick_event("left", "y", 32767)
         assert engine.look_cursor_position is not None
 
         # Test horizontal
-        event = InputTestHelper.create_stick_event('left', 'x', -32767)
+        event = InputTestHelper.create_stick_event("left", "x", -32767)
         assert engine.look_mode is True
 
-        event = InputTestHelper.create_stick_event('left', 'x', 32767)
+        event = InputTestHelper.create_stick_event("left", "x", 32767)
         assert engine.look_cursor_position is not None
 
     def test_right_stick_cursor_movement(self, look_mode_engine):
@@ -97,17 +94,17 @@ class TestLookModeCriticalPath:
         engine = look_mode_engine
 
         # Right stick may be the primary cursor control in look mode
-        event = InputTestHelper.create_stick_event('right', 'y', -32767)
+        event = InputTestHelper.create_stick_event("right", "y", -32767)
         assert engine.look_mode is True
 
-        event = InputTestHelper.create_stick_event('right', 'x', 32767)
+        event = InputTestHelper.create_stick_event("right", "x", 32767)
         assert engine.look_cursor_position is not None
 
     def test_face_button_examine(self, look_mode_engine):
         """Face button: A examines at cursor position."""
         engine = look_mode_engine
 
-        event = InputTestHelper.create_face_button_event('a', pressed=True)
+        event = InputTestHelper.create_face_button_event("a", pressed=True)
         # Verify look mode is active (examine doesn't exit look mode)
         assert engine.look_mode is True
         assert engine.look_cursor_position is not None
@@ -116,7 +113,7 @@ class TestLookModeCriticalPath:
         """Face button: B exits look mode."""
         engine = look_mode_engine
 
-        event = InputTestHelper.create_face_button_event('b', pressed=True)
+        event = InputTestHelper.create_face_button_event("b", pressed=True)
         # Event created - look mode should still be active until dispatched
         assert engine.look_mode is True
         assert engine.look_cursor_position is not None
@@ -141,9 +138,9 @@ class TestTargetingModeCriticalPath:
     @pytest.fixture
     def targeting_mode_engine(self):
         """Create game engine in targeting mode."""
-        from tests.fixtures.standard_patterns import create_basic_game_environment
         from game_data import GameData
         from game_inventory import ExploitItem
+        from tests.fixtures.standard_patterns import create_basic_game_environment
 
         engine = create_basic_game_environment()
 
@@ -167,8 +164,12 @@ class TestTargetingModeCriticalPath:
         """Keyboard: Arrows move targeting cursor."""
         engine = targeting_mode_engine
 
-        keys = [tcod.event.KeySym.UP, tcod.event.KeySym.DOWN,
-                tcod.event.KeySym.LEFT, tcod.event.KeySym.RIGHT]
+        keys = [
+            tcod.event.KeySym.UP,
+            tcod.event.KeySym.DOWN,
+            tcod.event.KeySym.LEFT,
+            tcod.event.KeySym.RIGHT,
+        ]
 
         for key in keys:
             event = InputTestHelper.create_keyboard_event(key)
@@ -178,7 +179,7 @@ class TestTargetingModeCriticalPath:
         """D-pad: All 4 directions move targeting cursor."""
         engine = targeting_mode_engine
 
-        for direction in ['up', 'down', 'left', 'right']:
+        for direction in ["up", "down", "left", "right"]:
             event = InputTestHelper.create_dpad_event(direction, pressed=True)
         assert engine.targeting_mode is True  # Still in targeting mode
 
@@ -186,28 +187,28 @@ class TestTargetingModeCriticalPath:
         """Left stick: Moves targeting cursor."""
         engine = targeting_mode_engine
 
-        event = InputTestHelper.create_stick_event('left', 'y', -32767)
+        event = InputTestHelper.create_stick_event("left", "y", -32767)
         assert engine.targeting_mode is True  # Still in targeting mode
 
     def test_right_stick_targeting_cursor(self, targeting_mode_engine):
         """Right stick: Moves targeting cursor."""
         engine = targeting_mode_engine
 
-        event = InputTestHelper.create_stick_event('right', 'y', 32767)
+        event = InputTestHelper.create_stick_event("right", "y", 32767)
         assert engine.targeting_mode is True  # Still in targeting mode
 
     def test_face_button_confirm_target(self, targeting_mode_engine):
         """Face button: A confirms target and executes exploit."""
         engine = targeting_mode_engine
 
-        event = InputTestHelper.create_face_button_event('a', pressed=True)
+        event = InputTestHelper.create_face_button_event("a", pressed=True)
         assert engine.cursor_position is not None  # Cursor position is valid
 
     def test_face_button_cancel_targeting(self, targeting_mode_engine):
         """Face button: B cancels targeting mode."""
         engine = targeting_mode_engine
 
-        event = InputTestHelper.create_face_button_event('b', pressed=True)
+        event = InputTestHelper.create_face_button_event("b", pressed=True)
         # Should exit targeting mode
         assert engine.cursor_position is not None  # Cursor state exists
 
@@ -246,7 +247,6 @@ class TestInventoryScreenCriticalPath:
         """Keyboard: Down arrow navigates inventory down."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         handler = InputHandler(engine, renderer=None)
         initial_selection = engine.inventory_selection
@@ -261,7 +261,6 @@ class TestInventoryScreenCriticalPath:
         """Keyboard: Up arrow navigates inventory up."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         engine.inventory_selection = 1  # Start at second item
         handler = InputHandler(engine, renderer=None)
@@ -274,7 +273,6 @@ class TestInventoryScreenCriticalPath:
         """Escape closes inventory."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         handler = InputHandler(engine, renderer=None)
 
@@ -286,7 +284,6 @@ class TestInventoryScreenCriticalPath:
         """TOGGLE_INVENTORY action closes inventory."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         handler = InputHandler(engine, renderer=None)
 
@@ -298,7 +295,6 @@ class TestInventoryScreenCriticalPath:
         """D-pad: Down navigates inventory."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         handler = InputHandler(engine, renderer=None)
         initial_selection = engine.inventory_selection
@@ -311,7 +307,6 @@ class TestInventoryScreenCriticalPath:
         """D-pad: Up navigates inventory."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         engine.inventory_selection = 1
         handler = InputHandler(engine, renderer=None)
@@ -324,7 +319,6 @@ class TestInventoryScreenCriticalPath:
         """Confirm action selects/uses item."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         handler = InputHandler(engine, renderer=None)
 
@@ -338,7 +332,6 @@ class TestInventoryScreenCriticalPath:
         """Page up navigates 5 items up."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         handler = InputHandler(engine, renderer=None)
         initial_selection = engine.inventory_selection
@@ -352,7 +345,6 @@ class TestInventoryScreenCriticalPath:
         """Page down navigates 5 items down."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         handler = InputHandler(engine, renderer=None)
         initial_selection = engine.inventory_selection
@@ -366,7 +358,6 @@ class TestInventoryScreenCriticalPath:
         """Navigation wraps from last item to first."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         handler = InputHandler(engine, renderer=None)
 
@@ -388,7 +379,6 @@ class TestInventoryScreenCriticalPath:
         """Empty inventory handles navigation gracefully."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         # Clear all items
         engine.player.inventory_manager.equipped_exploits.clear()
@@ -405,7 +395,6 @@ class TestInventoryScreenCriticalPath:
         """Rapid navigation inputs are handled correctly."""
         engine = inventory_engine
         from game_input import InputHandler
-        from game_input_actions import InputAction
 
         handler = InputHandler(engine, renderer=None)
 
@@ -456,7 +445,6 @@ class TestLookModeComprehensive:
 
     def test_keyboard_move_north(self, look_mode_engine):
         """Keyboard: Up/K moves cursor north."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_y = engine.look_cursor_position.y
 
@@ -467,7 +455,6 @@ class TestLookModeComprehensive:
 
     def test_keyboard_move_south(self, look_mode_engine):
         """Keyboard: Down/J moves cursor south."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_y = engine.look_cursor_position.y
 
@@ -477,7 +464,6 @@ class TestLookModeComprehensive:
 
     def test_keyboard_move_east(self, look_mode_engine):
         """Keyboard: Right/L moves cursor east."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_x = engine.look_cursor_position.x
 
@@ -487,7 +473,6 @@ class TestLookModeComprehensive:
 
     def test_keyboard_move_west(self, look_mode_engine):
         """Keyboard: Left/H moves cursor west."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_x = engine.look_cursor_position.x
 
@@ -497,7 +482,6 @@ class TestLookModeComprehensive:
 
     def test_keyboard_move_northeast(self, look_mode_engine):
         """Keyboard: U moves cursor northeast."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_x = engine.look_cursor_position.x
         initial_y = engine.look_cursor_position.y
@@ -510,7 +494,6 @@ class TestLookModeComprehensive:
 
     def test_keyboard_move_northwest(self, look_mode_engine):
         """Keyboard: Y moves cursor northwest."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_x = engine.look_cursor_position.x
         initial_y = engine.look_cursor_position.y
@@ -523,7 +506,6 @@ class TestLookModeComprehensive:
 
     def test_keyboard_move_southeast(self, look_mode_engine):
         """Keyboard: N moves cursor southeast."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_x = engine.look_cursor_position.x
         initial_y = engine.look_cursor_position.y
@@ -536,7 +518,6 @@ class TestLookModeComprehensive:
 
     def test_keyboard_move_southwest(self, look_mode_engine):
         """Keyboard: B moves cursor southwest."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_x = engine.look_cursor_position.x
         initial_y = engine.look_cursor_position.y
@@ -553,7 +534,6 @@ class TestLookModeComprehensive:
 
     def test_cursor_continuous_movement(self, look_mode_engine):
         """Cursor: Holding direction moves continuously."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_y = engine.look_cursor_position.y
 
@@ -566,7 +546,6 @@ class TestLookModeComprehensive:
 
     def test_cursor_rapid_direction_changes(self, look_mode_engine):
         """Cursor: Rapid direction changes handled."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_cursor = engine.look_cursor_position
 
@@ -588,7 +567,7 @@ class TestLookModeComprehensive:
         """D-pad: All 4 directions with proper press/release cycles."""
         engine = look_mode_engine
 
-        for direction in ['up', 'down', 'left', 'right']:
+        for direction in ["up", "down", "left", "right"]:
             # Press
             press_event = InputTestHelper.create_dpad_event(direction, pressed=True)
             # Just verify events are created correctly
@@ -600,7 +579,6 @@ class TestLookModeComprehensive:
 
     def test_dpad_held_movement(self, look_mode_engine):
         """D-pad: Holding direction causes continuous movement."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_y = engine.look_cursor_position.y
 
@@ -617,7 +595,6 @@ class TestLookModeComprehensive:
 
     def test_left_stick_north(self, look_mode_engine):
         """Left stick: Full north (y = -32767)."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_y = engine.look_cursor_position.y
 
@@ -628,7 +605,6 @@ class TestLookModeComprehensive:
 
     def test_left_stick_south(self, look_mode_engine):
         """Left stick: Full south (y = 32767)."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_y = engine.look_cursor_position.y
 
@@ -639,7 +615,6 @@ class TestLookModeComprehensive:
 
     def test_left_stick_east(self, look_mode_engine):
         """Left stick: Full east (x = 32767)."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_x = engine.look_cursor_position.x
 
@@ -650,7 +625,6 @@ class TestLookModeComprehensive:
 
     def test_left_stick_west(self, look_mode_engine):
         """Left stick: Full west (x = -32767)."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
         initial_x = engine.look_cursor_position.x
 
@@ -661,7 +635,6 @@ class TestLookModeComprehensive:
 
     def test_right_stick_all_8_directions(self, look_mode_engine):
         """Right stick: All 8 directions move cursor."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
 
         # Test all 8 cardinal and diagonal directions
@@ -710,7 +683,6 @@ class TestLookModeComprehensive:
 
     def test_examine_at_cursor(self, look_mode_engine):
         """Examine: Pressing confirm examines tile at cursor."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
 
         engine.input_handler._execute_action(InputAction.CONFIRM)
@@ -721,7 +693,6 @@ class TestLookModeComprehensive:
 
     def test_examine_empty_tile(self, look_mode_engine):
         """Examine: Empty tiles show floor description."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
 
         # Move to empty area
@@ -735,7 +706,6 @@ class TestLookModeComprehensive:
 
     def test_examine_multiple_tiles(self, look_mode_engine):
         """Examine: Can examine multiple tiles sequentially."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
 
         # Examine, move, examine again
@@ -753,7 +723,6 @@ class TestLookModeComprehensive:
 
     def test_escape_exits_look_mode(self, look_mode_engine):
         """Escape: Exits look mode back to gameplay."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
 
         engine.input_handler._execute_action(InputAction.CANCEL)
@@ -763,7 +732,6 @@ class TestLookModeComprehensive:
 
     def test_face_button_b_exits(self, look_mode_engine):
         """Face button B: Exits look mode."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
 
         engine.input_handler._execute_action(InputAction.CANCEL)
@@ -772,7 +740,6 @@ class TestLookModeComprehensive:
 
     def test_toggle_look_mode_exits(self, look_mode_engine):
         """Toggle look mode action: Exits if already in look mode."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
 
         engine.input_handler._execute_action(InputAction.TOGGLE_LOOK_MODE)
@@ -786,7 +753,6 @@ class TestLookModeComprehensive:
 
     def test_cursor_stays_in_bounds(self, look_mode_engine):
         """Cursor: Cannot move outside map boundaries."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
 
         # Try to move cursor far north repeatedly
@@ -801,7 +767,6 @@ class TestLookModeComprehensive:
 
     def test_cursor_at_all_corners(self, look_mode_engine):
         """Cursor: Can reach all four corners of the map."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
 
         # Move to each corner
@@ -816,7 +781,6 @@ class TestLookModeComprehensive:
 
     def test_cursor_wrapping_disabled(self, look_mode_engine):
         """Cursor: Does NOT wrap around map edges."""
-        from game_input_actions import InputAction
         engine = look_mode_engine
 
         # Move to edge
@@ -842,9 +806,9 @@ class TestTargetingModeComprehensive:
     @pytest.fixture
     def targeting_mode_engine(self):
         """Create game engine in targeting mode."""
-        from tests.fixtures.standard_patterns import create_basic_game_environment
         from game_data import GameData
         from game_inventory import ExploitItem
+        from tests.fixtures.standard_patterns import create_basic_game_environment
 
         engine = create_basic_game_environment()
 
@@ -870,7 +834,6 @@ class TestTargetingModeComprehensive:
 
     def test_targeting_cursor_north(self, targeting_mode_engine):
         """Targeting: Cursor moves north."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         initial_y = engine.cursor_position.y
@@ -881,7 +844,6 @@ class TestTargetingModeComprehensive:
 
     def test_targeting_cursor_south(self, targeting_mode_engine):
         """Targeting: Cursor moves south."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         initial_y = engine.cursor_position.y
@@ -892,7 +854,6 @@ class TestTargetingModeComprehensive:
 
     def test_targeting_cursor_east(self, targeting_mode_engine):
         """Targeting: Cursor moves east."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         initial_x = engine.cursor_position.x
@@ -903,7 +864,6 @@ class TestTargetingModeComprehensive:
 
     def test_targeting_cursor_west(self, targeting_mode_engine):
         """Targeting: Cursor moves west."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         initial_x = engine.cursor_position.x
@@ -914,7 +874,6 @@ class TestTargetingModeComprehensive:
 
     def test_targeting_diagonal_movement(self, targeting_mode_engine):
         """Targeting: Diagonal cursor movement works."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         # Test all 4 diagonals
@@ -931,7 +890,6 @@ class TestTargetingModeComprehensive:
 
     def test_cursor_within_exploit_range(self, targeting_mode_engine):
         """Targeting: Cursor stays within exploit range."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         # Try to move cursor far away
@@ -944,7 +902,6 @@ class TestTargetingModeComprehensive:
 
     def test_targeting_invalid_range_blocked(self, targeting_mode_engine):
         """Targeting: Cannot confirm target out of range."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         # Move far away
@@ -963,7 +920,6 @@ class TestTargetingModeComprehensive:
 
     def test_confirm_executes_exploit(self, targeting_mode_engine):
         """Confirm: Executes exploit at cursor position."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         # Confirm target at player position (valid)
@@ -976,7 +932,6 @@ class TestTargetingModeComprehensive:
 
     def test_confirm_on_valid_target(self, targeting_mode_engine):
         """Confirm: Valid target executes and exits targeting."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         engine.input_handler._execute_action(InputAction.CONFIRM)
@@ -986,7 +941,6 @@ class TestTargetingModeComprehensive:
 
     def test_multiple_targeting_sequences(self, targeting_mode_engine):
         """Targeting: Can re-enter after execution."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         # Execute
@@ -1002,7 +956,6 @@ class TestTargetingModeComprehensive:
 
     def test_escape_cancels_targeting(self, targeting_mode_engine):
         """Escape: Cancels targeting without using exploit."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         engine.input_handler._execute_action(InputAction.CANCEL)
@@ -1012,7 +965,6 @@ class TestTargetingModeComprehensive:
 
     def test_face_button_b_cancels(self, targeting_mode_engine):
         """Face button B: Cancels targeting."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         engine.input_handler._execute_action(InputAction.CANCEL)
@@ -1021,7 +973,6 @@ class TestTargetingModeComprehensive:
 
     def test_cancel_preserves_exploit(self, targeting_mode_engine):
         """Cancel: Doesn't consume exploit."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         exploit_count_before = len(engine.player.inventory_manager.equipped_exploits)
@@ -1040,7 +991,6 @@ class TestTargetingModeComprehensive:
 
     def test_dpad_targeting_all_directions(self, targeting_mode_engine):
         """D-pad: All 4 directions move targeting cursor."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         # All 4 cardinals
@@ -1053,7 +1003,6 @@ class TestTargetingModeComprehensive:
 
     def test_left_stick_targeting(self, targeting_mode_engine):
         """Left stick: Moves targeting cursor."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         engine.input_handler._execute_action(InputAction.MOVE_NORTH)
@@ -1062,7 +1011,6 @@ class TestTargetingModeComprehensive:
 
     def test_right_stick_targeting(self, targeting_mode_engine):
         """Right stick: Moves targeting cursor."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         engine.input_handler._execute_action(InputAction.MOVE_EAST)
@@ -1071,7 +1019,6 @@ class TestTargetingModeComprehensive:
 
     def test_face_button_a_confirms(self, targeting_mode_engine):
         """Face button A: Confirms target."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         engine.input_handler._execute_action(InputAction.CONFIRM)
@@ -1085,7 +1032,6 @@ class TestTargetingModeComprehensive:
 
     def test_targeting_at_map_edge(self, targeting_mode_engine):
         """Targeting: Cursor behaves at map edges."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         # Move to edge
@@ -1097,7 +1043,6 @@ class TestTargetingModeComprehensive:
 
     def test_rapid_cursor_movement(self, targeting_mode_engine):
         """Targeting: Rapid cursor changes handled."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         # Rapid alternating movements
@@ -1109,7 +1054,6 @@ class TestTargetingModeComprehensive:
 
     def test_targeting_with_no_enemies(self, targeting_mode_engine):
         """Targeting: Works even with no enemies present."""
-        from game_input_actions import InputAction
         engine = targeting_mode_engine
 
         # Cursor movement should work regardless
@@ -1117,5 +1061,3 @@ class TestTargetingModeComprehensive:
         engine.input_handler._execute_action(InputAction.CONFIRM)
 
         assert engine.cursor_position is not None  # Cursor state valid
-
-

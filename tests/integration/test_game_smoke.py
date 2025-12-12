@@ -74,12 +74,8 @@ class TestMovement:
                 if (new_x, new_y) not in agent.game_map.walls:
                     success = agent.move_player(dx, dy)
                     if success:
-                        assert (
-                            agent.player.x == new_x
-                        ), f"Expected x={new_x}, got {agent.player.x}"
-                        assert (
-                            agent.player.y == new_y
-                        ), f"Expected y={new_y}, got {agent.player.y}"
+                        assert agent.player.x == new_x, f"Expected x={new_x}, got {agent.player.x}"
+                        assert agent.player.y == new_y, f"Expected y={new_y}, got {agent.player.y}"
                         return  # Test passed
 
         # Fixture guarantees walkable adjacent - this should never be reached

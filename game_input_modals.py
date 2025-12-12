@@ -22,10 +22,17 @@ from game_input_coordinates import InputCoordinateConverter
 class InventoryInputHandler(BaseInputHandler):
     """Handles inventory screen input (keyboard, mouse, and gamepad)."""
 
-    def __init__(self, game, renderer=None, input_mapper=None, controllers=None, gamepad_handler=None):
+    def __init__(
+        self, game, renderer=None, input_mapper=None, controllers=None, gamepad_handler=None
+    ):
         # Initialize BaseInputHandler with shared InputMapper, controllers, and gamepad_handler
-        super().__init__(game, renderer, input_mapper=input_mapper, controllers=controllers,
-                        gamepad_handler=gamepad_handler)
+        super().__init__(
+            game,
+            renderer,
+            input_mapper=input_mapper,
+            controllers=controllers,
+            gamepad_handler=gamepad_handler,
+        )
 
     def get_context(self) -> InputContext:
         """Get current input context for inventory."""
@@ -186,10 +193,17 @@ class InventoryInputHandler(BaseInputHandler):
 class LookModeInputHandler(BaseInputHandler):
     """Handles look mode input (keyboard, gamepad, and mouse)."""
 
-    def __init__(self, game, renderer=None, input_mapper=None, controllers=None, gamepad_handler=None):
+    def __init__(
+        self, game, renderer=None, input_mapper=None, controllers=None, gamepad_handler=None
+    ):
         # Initialize BaseInputHandler with shared InputMapper, controllers, and gamepad_handler
-        super().__init__(game, renderer, input_mapper=input_mapper, controllers=controllers,
-                        gamepad_handler=gamepad_handler)
+        super().__init__(
+            game,
+            renderer,
+            input_mapper=input_mapper,
+            controllers=controllers,
+            gamepad_handler=gamepad_handler,
+        )
 
     def get_context(self) -> InputContext:
         """Get current input context for look mode."""
@@ -327,10 +341,17 @@ class LookModeInputHandler(BaseInputHandler):
 class TargetingInputHandler(BaseInputHandler):
     """Handles targeting mode input (keyboard, gamepad, and mouse)."""
 
-    def __init__(self, game, renderer=None, input_mapper=None, controllers=None, gamepad_handler=None):
+    def __init__(
+        self, game, renderer=None, input_mapper=None, controllers=None, gamepad_handler=None
+    ):
         # Initialize BaseInputHandler with shared InputMapper, controllers, and gamepad_handler
-        super().__init__(game, renderer, input_mapper=input_mapper, controllers=controllers,
-                        gamepad_handler=gamepad_handler)
+        super().__init__(
+            game,
+            renderer,
+            input_mapper=input_mapper,
+            controllers=controllers,
+            gamepad_handler=gamepad_handler,
+        )
 
     def get_context(self) -> InputContext:
         """Get current input context for targeting mode."""
@@ -409,8 +430,12 @@ class TargetingInputHandler(BaseInputHandler):
             self.game.message_log.add_message("Targeting cancelled")
             return True
         # Block UI toggles in targeting mode (prevent accidental exits)
-        elif action in (InputAction.TOGGLE_INVENTORY, InputAction.TOGGLE_ACHIEVEMENTS,
-                        InputAction.TOGGLE_LORE_VIEWER, InputAction.TOGGLE_HELP):
+        elif action in (
+            InputAction.TOGGLE_INVENTORY,
+            InputAction.TOGGLE_ACHIEVEMENTS,
+            InputAction.TOGGLE_LORE_VIEWER,
+            InputAction.TOGGLE_HELP,
+        ):
             return True  # Silently ignore
 
         # Modal captures all input - return True to prevent fall-through to gameplay

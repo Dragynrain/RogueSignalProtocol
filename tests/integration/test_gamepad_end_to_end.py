@@ -8,21 +8,20 @@ simulate complete user workflows with only gamepad input.
 Focus: Can you actually play the game with ONLY a controller?
 """
 
+import time
+
 import pytest
 import tcod.console
 import tcod.context
 import tcod.event
-import tcod.tileset
 import tcod.sdl.joystick
-import time
+import tcod.tileset
 
+from game_audio import NullSoundManager
 from game_config import GameSettings
 from game_engine import GameEngine
 from game_input import InputHandler
-from game_audio import NullSoundManager
 from game_input_actions import InputAction, InputContext
-from game_loop import initialize_game_systems
-from game_menus import MenuBackground
 
 # Controller button/axis shortcuts
 CB = tcod.sdl.joystick.ControllerButton
@@ -40,17 +39,13 @@ def game_setup():
     This is NOT mocked - it's the actual game engine with real components.
     """
     # Create minimal TCOD context (hidden window for testing)
-    tileset = tcod.tileset.load_truetype_font(
-        "KreativeSquare.ttf",
-        tile_width=16,
-        tile_height=16
-    )
+    tileset = tcod.tileset.load_truetype_font("KreativeSquare.ttf", tile_width=16, tile_height=16)
     context = tcod.context.new(
         width=80,
         height=50,
         tileset=tileset,
         title="Gamepad Test",
-        sdl_window_flags=tcod.lib.SDL_WINDOW_HIDDEN
+        sdl_window_flags=tcod.lib.SDL_WINDOW_HIDDEN,
     )
     console = tcod.console.Console(80, 50)
 
@@ -89,10 +84,7 @@ class TestGamepadMovement:
 
         # Create D-pad UP event
         dpad_up_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
 
         # Handle the event using the controller button handler
@@ -148,6 +140,7 @@ class TestGamepadMovement:
         # Test northeast (UP + RIGHT would require simultaneous button press)
         # Instead test that the mapper knows about diagonal actions
         from game_input_mappings import InputMapper
+
         mapper = InputMapper()
 
         # Check diagonal actions exist
@@ -172,7 +165,7 @@ class TestGamepadExploitCycling:
         game.player.inventory_manager.equipped_exploits = [
             "buffer_overflow",
             "system_crash",
-            "code_injection"
+            "code_injection",
         ]
         equipped_exploits = [e for e in game.player.exploits if e is not None]
 
@@ -180,10 +173,7 @@ class TestGamepadExploitCycling:
 
         # Press right shoulder to cycle
         rb_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.RIGHTSHOULDER,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.RIGHTSHOULDER, pressed=True
         )
 
         input_handler.handle_controller_button(rb_event)
@@ -201,7 +191,7 @@ class TestGamepadExploitCycling:
         game.player.inventory_manager.equipped_exploits = [
             "buffer_overflow",
             "system_crash",
-            "code_injection"
+            "code_injection",
         ]
         equipped_exploits = [e for e in game.player.exploits if e is not None]
 
@@ -210,10 +200,7 @@ class TestGamepadExploitCycling:
 
         # Press left shoulder to cycle backwards
         lb_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.LEFTSHOULDER,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.LEFTSHOULDER, pressed=True
         )
 
         input_handler.handle_controller_button(lb_event)
@@ -229,7 +216,7 @@ class TestGamepadExploitCycling:
         game.player.inventory_manager.equipped_exploits = [
             "buffer_overflow",
             "system_crash",
-            "code_injection"
+            "code_injection",
         ]
         equipped_exploits = [e for e in game.player.exploits if e is not None]
 
@@ -239,7 +226,7 @@ class TestGamepadExploitCycling:
         bracket_right = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.RIGHTBRACKET,
             sym=tcod.event.KeySym.RIGHTBRACKET,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         input_handler.handle_keydown(bracket_right)
@@ -260,10 +247,7 @@ class TestGamepadUINavigation:
 
         # Press Y button
         y_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.Y,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.Y, pressed=True
         )
 
         input_handler.handle_controller_button(y_event)
@@ -277,10 +261,7 @@ class TestGamepadUINavigation:
 
         # Press Start button
         start_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.START,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.START, pressed=True
         )
 
         # This should return False to signal exit to menu
@@ -297,10 +278,7 @@ class TestGamepadUINavigation:
 
         # Press Select/Back button
         select_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.BACK,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.BACK, pressed=True
         )
 
         input_handler.handle_controller_button(select_event)
@@ -324,7 +302,7 @@ class TestGamepadUINavigation:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=CB.B,  # B button = cancel in inventory (standard Xbox layout)
-            pressed=True
+            pressed=True,
         )
 
         result = input_handler.handle_controller_button(b_event)
@@ -394,19 +372,13 @@ class TestGamepadLookMode:
 
         # Set trigger to unpressed first
         lt_unpressed = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.TRIGGERLEFT,
-            value=0
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.TRIGGERLEFT, value=0
         )
         input_handler.handle_controller_axis(lt_unpressed)
 
         # Now press trigger
         lt_pressed = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.TRIGGERLEFT,
-            value=30000  # ~91% pressed
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.TRIGGERLEFT, value=30000  # ~91% pressed
         )
 
         input_handler.handle_controller_axis(lt_pressed)
@@ -428,17 +400,11 @@ class TestGamepadActionMapping:
 
         # Create A button event
         a_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
 
         # Get the action that would be generated
-        action = input_handler.gamepad_handler.handle_button_event(
-            a_event,
-            InputContext.GAMEPLAY
-        )
+        action = input_handler.gamepad_handler.handle_button_event(a_event, InputContext.GAMEPLAY)
 
         assert action == InputAction.WAIT, "A button should be WAIT in gameplay"
 
@@ -448,20 +414,16 @@ class TestGamepadActionMapping:
 
         # Create A button event
         a_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
 
         # Get action in inventory context
-        action = input_handler.gamepad_handler.handle_button_event(
-            a_event,
-            InputContext.INVENTORY
-        )
+        action = input_handler.gamepad_handler.handle_button_event(a_event, InputContext.INVENTORY)
 
         # Note: Using standard Xbox layout where A=confirm, B=cancel
-        assert action == InputAction.CONFIRM, "A button should be CONFIRM in inventory (standard Xbox layout)"
+        assert (
+            action == InputAction.CONFIRM
+        ), "A button should be CONFIRM in inventory (standard Xbox layout)"
 
     def test_b_button_is_cancel_in_inventory(self, game_setup):
         """B button should map to CANCEL in inventory (standard Xbox layout)."""
@@ -469,20 +431,16 @@ class TestGamepadActionMapping:
 
         # Create B button event
         b_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.B,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.B, pressed=True
         )
 
         # Get action in inventory context
-        action = input_handler.gamepad_handler.handle_button_event(
-            b_event,
-            InputContext.INVENTORY
-        )
+        action = input_handler.gamepad_handler.handle_button_event(b_event, InputContext.INVENTORY)
 
         # Note: Using standard Xbox layout where A=confirm, B=cancel
-        assert action == InputAction.CANCEL, "B button should be CANCEL in inventory (standard Xbox layout)"
+        assert (
+            action == InputAction.CANCEL
+        ), "B button should be CANCEL in inventory (standard Xbox layout)"
 
 
 class TestGamepadFullWorkflow:
@@ -498,10 +456,7 @@ class TestGamepadFullWorkflow:
 
         # Move north with D-pad
         dpad_up = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         input_handler.handle_controller_button(dpad_up)
 
@@ -512,10 +467,7 @@ class TestGamepadFullWorkflow:
         # Wait with A button
         current_turn = game.turn
         a_button = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
         input_handler.handle_controller_button(a_button)
 
@@ -528,23 +480,19 @@ class TestGamepadFullWorkflow:
 
         # Open inventory with Y button (standard Xbox layout)
         y_button = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.Y,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.Y, pressed=True
         )
         input_handler.handle_controller_button(y_button)
         assert game.show_inventory is True, "Y button should open inventory"
 
         # Close with B button (standard Xbox layout: B=cancel)
         b_button_cancel = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.B,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.B, pressed=True
         )
         input_handler.handle_controller_button(b_button_cancel)
-        assert game.show_inventory is False, "B button should close inventory (standard Xbox layout)"
+        assert (
+            game.show_inventory is False
+        ), "B button should close inventory (standard Xbox layout)"
 
         # Note: Help menu test skipped because it requires renderer for proper menu handling
         # The individual test_select_button_opens_help verifies help opens correctly
@@ -561,10 +509,7 @@ class TestGamepadDeadzone:
         small_x = int(32768 * 0.1)
 
         stick_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.LEFTX,
-            value=small_x
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.LEFTX, value=small_x
         )
         input_handler.handle_controller_axis(stick_event)
 

@@ -19,8 +19,8 @@ import tcod.context
 import tcod.event
 import tcod.tileset
 
-from game_config import GameSettings
 from game_audio import NullSoundManager
+from game_config import GameSettings
 from game_loop import initialize_game_systems
 from game_menus import MenuBackground
 
@@ -46,6 +46,7 @@ class TestScreenTransitions:
         engine = gameplay_with_menus_setup
 
         from game_input import InputHandler
+
         handler = InputHandler(engine, None)
 
         # Record initial state
@@ -56,8 +57,8 @@ class TestScreenTransitions:
         # Use KeySym(ord('i')) for cross-platform compatibility (KeySym.i doesn't exist on Linux)
         i_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.I,
-            sym=tcod.event.KeySym(ord('i')),
-            mod=tcod.event.Modifier.NONE
+            sym=tcod.event.KeySym(ord("i")),
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(i_event)
 
@@ -68,7 +69,7 @@ class TestScreenTransitions:
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(esc_event)
 
@@ -84,15 +85,14 @@ class TestScreenTransitions:
         engine = gameplay_with_menus_setup
 
         from game_input import InputHandler
+
         handler = InputHandler(engine, None)
 
         initial_pos = (engine.player.x, engine.player.y)
 
         # Enter look mode with 'L' key
         l_event = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.L,
-            sym=tcod.event.KeySym.L,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.L, sym=tcod.event.KeySym.L, mod=tcod.event.Modifier.NONE
         )
         handler.handle_keydown(l_event)
 
@@ -103,7 +103,7 @@ class TestScreenTransitions:
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(esc_event)
 
@@ -131,6 +131,7 @@ class TestScreenTransitions:
         engine = gameplay_with_menus_setup
 
         from game_input import InputHandler
+
         handler = InputHandler(engine, None)
 
         initial_pos = (engine.player.x, engine.player.y)
@@ -141,8 +142,8 @@ class TestScreenTransitions:
             # Use KeySym(ord('i')) for cross-platform compatibility (KeySym.i doesn't exist on Linux)
             i_event = tcod.event.KeyDown(
                 scancode=tcod.event.Scancode.I,
-                sym=tcod.event.KeySym(ord('i')),
-                mod=tcod.event.Modifier.NONE
+                sym=tcod.event.KeySym(ord("i")),
+                mod=tcod.event.Modifier.NONE,
             )
             handler.handle_keydown(i_event)
 
@@ -150,7 +151,7 @@ class TestScreenTransitions:
             esc_event = tcod.event.KeyDown(
                 scancode=tcod.event.Scancode.ESCAPE,
                 sym=tcod.event.KeySym.ESCAPE,
-                mod=tcod.event.Modifier.NONE
+                mod=tcod.event.Modifier.NONE,
             )
             handler.handle_keydown(esc_event)
 
@@ -183,7 +184,7 @@ class TestInputPriority:
         kb_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         menu.handle_input(kb_event)
 
@@ -194,7 +195,7 @@ class TestInputPriority:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_DOWN,
-            pressed=True
+            pressed=True,
         )
         menu.handle_input(gp_event)
 
@@ -213,7 +214,7 @@ class TestInputPriority:
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         menu.handle_input(esc_event)
         assert not menu.show_warning  # Warning dismissed
@@ -241,7 +242,7 @@ class TestRapidInput:
         down_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         for _ in range(10):
@@ -260,13 +261,11 @@ class TestRapidInput:
         down_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         up_event = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.UP,
-            sym=tcod.event.KeySym.UP,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.UP, sym=tcod.event.KeySym.UP, mod=tcod.event.Modifier.NONE
         )
 
         # Alternate DOWN and UP 10 times
@@ -287,7 +286,7 @@ class TestRapidInput:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_DOWN,
-            pressed=True
+            pressed=True,
         )
 
         # Press D-pad DOWN 15 times rapidly
@@ -318,7 +317,7 @@ class TestBoundaryConditions:
         down_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         # Press DOWN 100 times (way more than achievements exist)
@@ -338,9 +337,7 @@ class TestBoundaryConditions:
         menu.scroll_offset = 5
 
         up_event = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.UP,
-            sym=tcod.event.KeySym.UP,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.UP, sym=tcod.event.KeySym.UP, mod=tcod.event.Modifier.NONE
         )
 
         # Press UP many times to try to go negative
@@ -361,9 +358,7 @@ class TestBoundaryConditions:
 
         # Press UP - should wrap to last option
         up_event = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.UP,
-            sym=tcod.event.KeySym.UP,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.UP, sym=tcod.event.KeySym.UP, mod=tcod.event.Modifier.NONE
         )
         menu.handle_input(up_event)
 
@@ -374,7 +369,7 @@ class TestBoundaryConditions:
         down_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         menu.handle_input(down_event)
 
@@ -389,16 +384,14 @@ class TestSimultaneousInputs:
     def main_menu_setup(self):
         """Setup main menu for testing."""
         tileset = tcod.tileset.load_truetype_font(
-            "KreativeSquare.ttf",
-            tile_width=16,
-            tile_height=16
+            "KreativeSquare.ttf", tile_width=16, tile_height=16
         )
         context = tcod.context.new(
             width=80,
             height=50,
             tileset=tileset,
             title="Test Main Menu",
-            sdl_window_flags=tcod.lib.SDL_WINDOW_HIDDEN
+            sdl_window_flags=tcod.lib.SDL_WINDOW_HIDDEN,
         )
         console = tcod.console.Console(80, 50)
         settings = GameSettings()
@@ -423,7 +416,7 @@ class TestSimultaneousInputs:
         kb_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         # Gamepad UP event (conflicting direction)
@@ -431,7 +424,7 @@ class TestSimultaneousInputs:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_UP,
-            pressed=True
+            pressed=True,
         )
 
         # Process keyboard first, then gamepad
@@ -444,7 +437,11 @@ class TestSimultaneousInputs:
         # Keyboard moved down
         assert selection_after_kb == (initial_selection + 1) % len(menu.options)
         # Gamepad moved up (relative to keyboard position)
-        assert final_selection == selection_after_kb - 1 if selection_after_kb > 0 else len(menu.options) - 1
+        assert (
+            final_selection == selection_after_kb - 1
+            if selection_after_kb > 0
+            else len(menu.options) - 1
+        )
 
     def test_mouse_and_keyboard_simultaneous(self, main_menu_setup):
         """Mouse motion and keyboard navigation work independently."""
@@ -474,7 +471,7 @@ class TestSimultaneousInputs:
         kb_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         menu.handle_input(kb_event)
         assert menu.selected_option == 3
@@ -490,7 +487,7 @@ class TestSimultaneousInputs:
             type="CONTROLLERBUTTONDOWN",
             which=0,
             button=tcod.sdl.joystick.ControllerButton.DPAD_DOWN,
-            pressed=True
+            pressed=True,
         )
         menu.handle_input(dpad_event)
         after_dpad = menu.selected_option
@@ -500,7 +497,7 @@ class TestSimultaneousInputs:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTY,
-            value=32767  # Max positive = down
+            value=32767,  # Max positive = down
         )
         menu.handle_input(axis_event)
         after_stick = menu.selected_option
@@ -538,7 +535,7 @@ class TestAnalogStickEdgeCases:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-            value=5000  # ~15% deflection, below typical 20% deadzone
+            value=5000,  # ~15% deflection, below typical 20% deadzone
         )
 
         # Should handle event without error (deadzone filtering happens internally)
@@ -558,7 +555,7 @@ class TestAnalogStickEdgeCases:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-            value=20000  # ~60% deflection, above deadzone
+            value=20000,  # ~60% deflection, above deadzone
         )
 
         # Should handle event without error
@@ -579,7 +576,7 @@ class TestAnalogStickEdgeCases:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-            value=32767  # Max right
+            value=32767,  # Max right
         )
 
         # Y axis (down)
@@ -587,7 +584,7 @@ class TestAnalogStickEdgeCases:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTY,
-            value=32767  # Max down
+            value=32767,  # Max down
         )
 
         # Should handle both axis events without error
@@ -609,7 +606,7 @@ class TestAnalogStickEdgeCases:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-            value=32767  # Max right
+            value=32767,  # Max right
         )
         handler.handle_controller_axis(right_axis)
 
@@ -618,7 +615,7 @@ class TestAnalogStickEdgeCases:
             type="CONTROLLERAXISMOTION",
             which=0,
             axis=tcod.sdl.joystick.ControllerAxis.LEFTX,
-            value=0  # Centered
+            value=0,  # Centered
         )
         handler.handle_controller_axis(center_axis)
 
@@ -651,9 +648,7 @@ class TestMultiStepWorkflows:
 
         # Step 1: Open inventory with 'i' key
         i_event = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.I,
-            sym=tcod.event.KeySym.I,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.I, sym=tcod.event.KeySym.I, mod=tcod.event.Modifier.NONE
         )
         handler.handle_keydown(i_event)
         assert engine.show_inventory
@@ -662,7 +657,7 @@ class TestMultiStepWorkflows:
         down_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(down_event)
         # (Navigation happens in inventory handler)
@@ -671,7 +666,7 @@ class TestMultiStepWorkflows:
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(esc_event)
         assert not engine.show_inventory
@@ -680,7 +675,7 @@ class TestMultiStepWorkflows:
         move_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(move_event)
 
@@ -699,9 +694,7 @@ class TestMultiStepWorkflows:
 
         # Step 1: Enter look mode with 'L' key
         l_event = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.L,
-            sym=tcod.event.KeySym.L,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.L, sym=tcod.event.KeySym.L, mod=tcod.event.Modifier.NONE
         )
         handler.handle_keydown(l_event)
         assert engine.look_mode
@@ -711,7 +704,7 @@ class TestMultiStepWorkflows:
         move_cursor = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.RIGHT,
             sym=tcod.event.KeySym.RIGHT,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(move_cursor)
         cursor_moved = (engine.look_cursor_position.x, engine.look_cursor_position.y)
@@ -721,7 +714,7 @@ class TestMultiStepWorkflows:
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(esc_event)
         assert not engine.look_mode
@@ -731,8 +724,9 @@ class TestMultiStepWorkflows:
 
     def test_nested_menu_workflow(self, full_game_for_workflows):
         """Workflow: main menu -> submenu -> navigate -> return -> selection preserved."""
-        from game_menu_main import MainMenu
         from unittest.mock import Mock
+
+        from game_menu_main import MainMenu
 
         mock_sound_manager = Mock()
         menu = MainMenu()
@@ -742,7 +736,7 @@ class TestMultiStepWorkflows:
             down_event = tcod.event.KeyDown(
                 scancode=tcod.event.Scancode.DOWN,
                 sym=tcod.event.KeySym.DOWN,
-                mod=tcod.event.Modifier.NONE
+                mod=tcod.event.Modifier.NONE,
             )
             menu.handle_input(down_event)
 
@@ -753,7 +747,7 @@ class TestMultiStepWorkflows:
         enter_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.RETURN,
             sym=tcod.event.KeySym.RETURN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         menu.handle_input(enter_event)
 
@@ -771,16 +765,14 @@ class TestMultiStepWorkflows:
         move_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.RIGHT,
             sym=tcod.event.KeySym.RIGHT,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(move_event)
         # (Movement may or may not succeed depending on map layout)
 
         # Step 2: Open inventory
         i_event = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.I,
-            sym=tcod.event.KeySym.I,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.I, sym=tcod.event.KeySym.I, mod=tcod.event.Modifier.NONE
         )
         handler.handle_keydown(i_event)
         assert engine.show_inventory
@@ -789,7 +781,7 @@ class TestMultiStepWorkflows:
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(esc_event)
         assert not engine.show_inventory
@@ -827,9 +819,7 @@ class TestInputBuffering:
 
         # Open inventory
         i_event = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.I,
-            sym=tcod.event.KeySym.I,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.I, sym=tcod.event.KeySym.I, mod=tcod.event.Modifier.NONE
         )
         handler.handle_keydown(i_event)
 
@@ -837,7 +827,7 @@ class TestInputBuffering:
         down_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         handler.handle_keydown(down_event)
 
@@ -852,15 +842,13 @@ class TestInputBuffering:
         handler = InputHandler(engine, None)
 
         i_event = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.I,
-            sym=tcod.event.KeySym.I,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.I, sym=tcod.event.KeySym.I, mod=tcod.event.Modifier.NONE
         )
 
         esc_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         # Rapidly toggle inventory 10 times
@@ -885,7 +873,7 @@ class TestInputBuffering:
         right_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.RIGHT,
             sym=tcod.event.KeySym.RIGHT,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         # Process 3 inputs in succession (simulating buffering)

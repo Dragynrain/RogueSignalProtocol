@@ -22,10 +22,10 @@ import tcod.sdl.joystick
 
 from game_input_actions import InputAction, InputContext
 
-
 # =============================================================================
 # KEY BINDING TYPE (with modifier support)
 # =============================================================================
+
 
 class KeyBinding(NamedTuple):
     """
@@ -35,6 +35,7 @@ class KeyBinding(NamedTuple):
         key: The primary key (tcod.event.KeySym)
         modifier: Modifier flags (tcod.event.Modifier, 0 for no modifier)
     """
+
     key: tcod.event.KeySym
     modifier: int = 0  # tcod.event.Modifier flags
 
@@ -383,18 +384,16 @@ class InputMapper:
         # Default mappings (context-aware)
         # Now uses KeyBinding (key + modifier) instead of just KeySym
         self._default_keyboard_map: dict[KeyBinding, InputAction] = {}
-        self._default_gamepad_button_map: dict[
-            tuple[int, InputContext], InputAction
-        ] = {}  # (button, context) -> action
-        self._default_gamepad_axis_map: dict[
-            tuple[int, InputContext], InputAction
-        ] = {}  # (axis, context) -> action (for triggers)
+        self._default_gamepad_button_map: dict[tuple[int, InputContext], InputAction] = (
+            {}
+        )  # (button, context) -> action
+        self._default_gamepad_axis_map: dict[tuple[int, InputContext], InputAction] = (
+            {}
+        )  # (axis, context) -> action (for triggers)
 
         # Custom user bindings (loaded from settings)
         # Format: {context: {action: [KeyBinding1, KeyBinding2, ...]}}
-        self._custom_keyboard_bindings: dict[
-            InputContext, dict[InputAction, list[KeyBinding]]
-        ] = {}
+        self._custom_keyboard_bindings: dict[InputContext, dict[InputAction, list[KeyBinding]]] = {}
         self._custom_gamepad_bindings: dict[InputContext, dict[InputAction, list[int]]] = {}
 
         # Load defaults from JSON (with hardcoded fallback)
@@ -515,6 +514,7 @@ class InputMapper:
         Migrated from game_input.py InputMappings.MOVEMENT_MAP (lines 51-75).
         Now uses KeyBinding to support modifier keys.
         """
+
         # Helper to create bindings without modifiers
         def bind(key: tcod.event.KeySym, action: InputAction, modifier: int = 0):
             self._default_keyboard_map[KeyBinding(key, modifier)] = action
@@ -665,7 +665,9 @@ class InputMapper:
         # Standard Xbox layout: A = confirm, B = cancel (consistent with other contexts)
         self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A button = use/equip
         self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B button = close
-        self._set_gamepad_button(CB.Y, ctx, InputAction.TOGGLE_INVENTORY)  # Y button = toggle back (same as open)
+        self._set_gamepad_button(
+            CB.Y, ctx, InputAction.TOGGLE_INVENTORY
+        )  # Y button = toggle back (same as open)
         self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
         self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
         self._set_gamepad_button(CB.DPAD_LEFT, ctx, InputAction.NAVIGATE_LEFT)
@@ -711,7 +713,9 @@ class InputMapper:
         # Standard Xbox layout: A = confirm/yes, B = cancel/no, X = don't warn again
         self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A = Yes/Confirm
         self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B = No/Cancel
-        self._set_gamepad_button(CB.X, ctx, InputAction.DIALOGUE_SKIP_WARNING)  # X = Don't warn again
+        self._set_gamepad_button(
+            CB.X, ctx, InputAction.DIALOGUE_SKIP_WARNING
+        )  # X = Don't warn again
         # D-pad for navigating dialogue choices (all 4 directions)
         self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
         self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
@@ -739,8 +743,12 @@ class InputMapper:
         ctx = InputContext.MAIN_MENU
         # Standard Xbox layout: A = confirm, B = cancel
         self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A button
-        self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B button (but main menu disables ESC)
-        self._set_gamepad_button(CB.START, ctx, InputAction.EXIT_TO_MENU)  # START = resume game (toggle back)
+        self._set_gamepad_button(
+            CB.B, ctx, InputAction.CANCEL
+        )  # B button (but main menu disables ESC)
+        self._set_gamepad_button(
+            CB.START, ctx, InputAction.EXIT_TO_MENU
+        )  # START = resume game (toggle back)
         self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
         self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
         # NO left/right - vertical menu only
@@ -777,7 +785,9 @@ class InputMapper:
         ctx = InputContext.CONTROLS_MENU
         self._set_gamepad_button(CB.A, ctx, InputAction.CONFIRM)  # A = edit binding
         self._set_gamepad_button(CB.B, ctx, InputAction.CANCEL)  # B = back
-        self._set_gamepad_button(CB.X, ctx, InputAction.CONTROLS_RESET_DEFAULT)  # X = reset to default
+        self._set_gamepad_button(
+            CB.X, ctx, InputAction.CONTROLS_RESET_DEFAULT
+        )  # X = reset to default
         self._set_gamepad_button(CB.Y, ctx, InputAction.CONTROLS_RESET_ALL)  # Y = reset all
         self._set_gamepad_button(CB.DPAD_UP, ctx, InputAction.NAVIGATE_UP)
         self._set_gamepad_button(CB.DPAD_DOWN, ctx, InputAction.NAVIGATE_DOWN)
@@ -813,8 +823,10 @@ class InputMapper:
         self._default_gamepad_axis_map[(axis, context)] = action
 
     def get_action_for_key(
-        self, key: tcod.event.KeySym, context: InputContext = InputContext.GAMEPLAY,
-        modifier: int = 0
+        self,
+        key: tcod.event.KeySym,
+        context: InputContext = InputContext.GAMEPLAY,
+        modifier: int = 0,
     ) -> InputAction | None:
         """
         Get the action for a keyboard key in the given context.
@@ -998,7 +1010,9 @@ class InputMapper:
 
         return keys
 
-    def has_custom_keyboard_bindings(self, action: InputAction, context: InputContext = InputContext.GAMEPLAY) -> bool:
+    def has_custom_keyboard_bindings(
+        self, action: InputAction, context: InputContext = InputContext.GAMEPLAY
+    ) -> bool:
         """Check if action has any custom keyboard bindings."""
         if context in self._custom_keyboard_bindings:
             return action in self._custom_keyboard_bindings[context]
@@ -1037,7 +1051,9 @@ class InputMapper:
 
         return buttons
 
-    def has_custom_gamepad_bindings(self, action: InputAction, context: InputContext = InputContext.GAMEPLAY) -> bool:
+    def has_custom_gamepad_bindings(
+        self, action: InputAction, context: InputContext = InputContext.GAMEPLAY
+    ) -> bool:
         """Check if action has any custom gamepad bindings."""
         if context in self._custom_gamepad_bindings:
             return action in self._custom_gamepad_bindings[context]
@@ -1138,7 +1154,7 @@ class InputMapper:
                 keyboard_bindings,
                 self._custom_keyboard_bindings,
                 self._key_name_to_binding,
-                "keyboard"
+                "keyboard",
             )
 
         # Load gamepad bindings
@@ -1147,15 +1163,11 @@ class InputMapper:
                 gamepad_bindings,
                 self._custom_gamepad_bindings,
                 self._button_name_to_value,
-                "gamepad"
+                "gamepad",
             )
 
     def _load_bindings_dict(
-        self,
-        bindings_data: dict,
-        target_dict: dict,
-        name_converter,
-        binding_type: str
+        self, bindings_data: dict, target_dict: dict, name_converter, binding_type: str
     ):
         """
         Load bindings from a dict, handling both flat and per-context formats.
@@ -1196,7 +1208,9 @@ class InputMapper:
                         logging.warning(f"Invalid {binding_type} binding: {action_name} -> {e}")
 
             total = sum(len(actions) for actions in target_dict.values())
-            logging.debug(f"InputMapper: Loaded {total} custom {binding_type} bindings (per-context)")
+            logging.debug(
+                f"InputMapper: Loaded {total} custom {binding_type} bindings (per-context)"
+            )
         else:
             # Old flat format: {"WAIT": ["A"], ...} - load into GAMEPLAY context
             if InputContext.GAMEPLAY not in target_dict:
@@ -1456,8 +1470,11 @@ class InputMapper:
     # =========================================================================
 
     def add_keyboard_binding(
-        self, action: InputAction, key: tcod.event.KeySym,
-        context: InputContext = InputContext.GAMEPLAY, modifier: int = 0
+        self,
+        action: InputAction,
+        key: tcod.event.KeySym,
+        context: InputContext = InputContext.GAMEPLAY,
+        modifier: int = 0,
     ) -> bool:
         """
         Add a keyboard binding for an action.
@@ -1490,13 +1507,18 @@ class InputMapper:
         # Add binding if not already bound
         if binding not in self._custom_keyboard_bindings[context][action]:
             self._custom_keyboard_bindings[context][action].append(binding)
-            logging.info(f"Added keyboard binding: {key_binding_to_display_name(binding)} -> {action.name} (context: {context.name})")
+            logging.info(
+                f"Added keyboard binding: {key_binding_to_display_name(binding)} -> {action.name} (context: {context.name})"
+            )
 
         return True
 
     def remove_keyboard_binding(
-        self, action: InputAction, key: tcod.event.KeySym,
-        context: InputContext = InputContext.GAMEPLAY, modifier: int = 0
+        self,
+        action: InputAction,
+        key: tcod.event.KeySym,
+        context: InputContext = InputContext.GAMEPLAY,
+        modifier: int = 0,
     ) -> bool:
         """
         Remove a specific keyboard binding from an action.
@@ -1519,7 +1541,9 @@ class InputMapper:
         binding = KeyBinding(key, normalize_modifier(modifier))
         if binding in self._custom_keyboard_bindings[context][action]:
             self._custom_keyboard_bindings[context][action].remove(binding)
-            logging.info(f"Removed keyboard binding: {key_binding_to_display_name(binding)} from {action.name} (context: {context.name})")
+            logging.info(
+                f"Removed keyboard binding: {key_binding_to_display_name(binding)} from {action.name} (context: {context.name})"
+            )
 
             # Clean up empty lists
             if not self._custom_keyboard_bindings[context][action]:
@@ -1544,15 +1568,20 @@ class InputMapper:
         if context in self._custom_keyboard_bindings:
             if action in self._custom_keyboard_bindings[context]:
                 del self._custom_keyboard_bindings[context][action]
-                logging.info(f"Cleared all keyboard bindings for {action.name} (context: {context.name})")
+                logging.info(
+                    f"Cleared all keyboard bindings for {action.name} (context: {context.name})"
+                )
 
                 # Clean up empty context
                 if not self._custom_keyboard_bindings[context]:
                     del self._custom_keyboard_bindings[context]
 
     def replace_keyboard_binding(
-        self, action: InputAction, key: tcod.event.KeySym,
-        context: InputContext = InputContext.GAMEPLAY, modifier: int = 0
+        self,
+        action: InputAction,
+        key: tcod.event.KeySym,
+        context: InputContext = InputContext.GAMEPLAY,
+        modifier: int = 0,
     ) -> list[InputAction]:
         """
         Replace existing bindings with a new one (removes conflicts).
@@ -1629,7 +1658,9 @@ class InputMapper:
         # Add button if not already bound
         if button not in self._custom_gamepad_bindings[context][action]:
             self._custom_gamepad_bindings[context][action].append(button)
-            logging.info(f"Added gamepad binding: button {button} -> {action.name} (context: {context.name})")
+            logging.info(
+                f"Added gamepad binding: button {button} -> {action.name} (context: {context.name})"
+            )
 
         return True
 
@@ -1655,7 +1686,9 @@ class InputMapper:
 
         if button in self._custom_gamepad_bindings[context][action]:
             self._custom_gamepad_bindings[context][action].remove(button)
-            logging.info(f"Removed gamepad binding: button {button} from {action.name} (context: {context.name})")
+            logging.info(
+                f"Removed gamepad binding: button {button} from {action.name} (context: {context.name})"
+            )
 
             # Clean up empty lists
             if not self._custom_gamepad_bindings[context][action]:
@@ -1680,7 +1713,9 @@ class InputMapper:
         if context in self._custom_gamepad_bindings:
             if action in self._custom_gamepad_bindings[context]:
                 del self._custom_gamepad_bindings[context][action]
-                logging.info(f"Cleared all gamepad bindings for {action.name} (context: {context.name})")
+                logging.info(
+                    f"Cleared all gamepad bindings for {action.name} (context: {context.name})"
+                )
 
                 # Clean up empty context
                 if not self._custom_gamepad_bindings[context]:
@@ -1787,7 +1822,7 @@ class InputMapper:
         action: InputAction,
         context: InputContext,
         separator: str = "/",
-        keyboard_first: bool = True
+        keyboard_first: bool = True,
     ) -> str:
         """
         Get combined keyboard + gamepad hint for an action.
@@ -1832,10 +1867,7 @@ class InputMapper:
         return "Up/Dn/D-Pad"
 
     def format_help_string(
-        self,
-        template: str,
-        context: InputContext,
-        show_gamepad: bool = True
+        self, template: str, context: InputContext, show_gamepad: bool = True
     ) -> str:
         """
         Format a help string template with current bindings.

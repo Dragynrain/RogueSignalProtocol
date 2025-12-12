@@ -8,16 +8,17 @@ instead of being hardcoded in Python.
 
 import json
 import os
+
 import pytest
 import tcod.event
 import tcod.sdl.joystick
 
 from game_input_actions import InputAction, InputContext
 
-
 # =============================================================================
 # JSON File Existence and Structure Tests
 # =============================================================================
+
 
 class TestDefaultBindingsFileExists:
     """Tests that the default_bindings.json file exists and is valid JSON."""
@@ -66,6 +67,7 @@ class TestDefaultBindingsStructure:
 # =============================================================================
 # Keyboard Bindings Tests
 # =============================================================================
+
 
 class TestKeyboardDefaultBindings:
     """Tests that keyboard defaults are correctly loaded from JSON."""
@@ -145,6 +147,7 @@ class TestKeyboardDefaultBindings:
 # Gamepad Buttons Tests
 # =============================================================================
 
+
 class TestGamepadButtonDefaultBindings:
     """Tests that gamepad button defaults are correctly loaded from JSON."""
 
@@ -200,6 +203,7 @@ class TestGamepadButtonDefaultBindings:
 # Gamepad Axes Tests
 # =============================================================================
 
+
 class TestGamepadAxisDefaultBindings:
     """Tests that gamepad axis defaults are correctly loaded from JSON."""
 
@@ -225,6 +229,7 @@ class TestGamepadAxisDefaultBindings:
 # InputMapper JSON Loading Tests
 # =============================================================================
 
+
 class TestInputMapperLoadsFromJSON:
     """Tests that InputMapper correctly loads defaults from JSON."""
 
@@ -232,6 +237,7 @@ class TestInputMapperLoadsFromJSON:
     def input_mapper(self):
         """Create an InputMapper instance."""
         from game_input_mappings import InputMapper
+
         return InputMapper()
 
     def test_keyboard_wasd_loaded(self, input_mapper):
@@ -265,13 +271,20 @@ class TestInputMapperLoadsFromJSON:
         """InputMapper should have gamepad triggers from JSON."""
         CA = tcod.sdl.joystick.ControllerAxis
         ctx = InputContext.GAMEPLAY
-        assert input_mapper.get_action_for_gamepad_axis(CA.TRIGGERRIGHT, ctx) == InputAction.EXPLOIT_EXECUTE
-        assert input_mapper.get_action_for_gamepad_axis(CA.TRIGGERLEFT, ctx) == InputAction.TOGGLE_LOOK_MODE
+        assert (
+            input_mapper.get_action_for_gamepad_axis(CA.TRIGGERRIGHT, ctx)
+            == InputAction.EXPLOIT_EXECUTE
+        )
+        assert (
+            input_mapper.get_action_for_gamepad_axis(CA.TRIGGERLEFT, ctx)
+            == InputAction.TOGGLE_LOOK_MODE
+        )
 
 
 # =============================================================================
 # Action Name Validation Tests
 # =============================================================================
+
 
 class TestActionNameValidation:
     """Tests that all action names in JSON are valid InputAction values."""
@@ -295,11 +308,15 @@ class TestActionNameValidation:
         valid_actions = {a.name for a in InputAction}
         for context, buttons in bindings["gamepad"]["buttons"].items():
             for button, action_name in buttons.items():
-                assert action_name in valid_actions, f"Invalid action '{action_name}' for {context}/{button}"
+                assert (
+                    action_name in valid_actions
+                ), f"Invalid action '{action_name}' for {context}/{button}"
 
     def test_gamepad_axis_action_names_valid(self, bindings):
         """All gamepad axis action names should be valid InputAction values."""
         valid_actions = {a.name for a in InputAction}
         for context, axes in bindings["gamepad"]["axes"].items():
             for axis, action_name in axes.items():
-                assert action_name in valid_actions, f"Invalid action '{action_name}' for {context}/{axis}"
+                assert (
+                    action_name in valid_actions
+                ), f"Invalid action '{action_name}' for {context}/{axis}"

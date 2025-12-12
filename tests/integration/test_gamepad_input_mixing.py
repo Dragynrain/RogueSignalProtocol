@@ -14,12 +14,12 @@ Test coverage:
 Uses the game_with_gamepad fixture from tests/conftest.py.
 """
 
-import pytest
-import tcod.event
-import tcod.sdl.joystick
 from unittest.mock import Mock
 
-from game_input_actions import InputAction, InputContext
+import tcod.event
+import tcod.sdl.joystick
+
+from game_input_actions import InputContext
 
 # Shortcuts
 CB = tcod.sdl.joystick.ControllerButton
@@ -36,10 +36,7 @@ class TestGamepadKeyboardMixing:
 
         # Press D-pad UP
         gamepad_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         action1 = input_handler.handle_controller_button(gamepad_event)
         # Gamepad input processed without crash
@@ -48,7 +45,7 @@ class TestGamepadKeyboardMixing:
         keyboard_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         action2 = input_handler.handle_keydown(keyboard_event)
         # Keyboard input processed without crash
@@ -63,18 +60,15 @@ class TestGamepadKeyboardMixing:
         # Use KeySym(ord('w')) for cross-platform compatibility (KeySym.w doesn't exist on Linux)
         keyboard_event = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.W,
-            sym=tcod.event.KeySym(ord('w')),
-            mod=tcod.event.Modifier.NONE
+            sym=tcod.event.KeySym(ord("w")),
+            mod=tcod.event.Modifier.NONE,
         )
         action1 = input_handler.handle_keydown(keyboard_event)
         assert action1 is not False  # MOVE_NORTH action handled (True, not exit)
 
         # Gamepad move south
         gamepad_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         action2 = input_handler.handle_controller_button(gamepad_event)
         assert action2 is not False  # MOVE_SOUTH action handled (True or None, not exit)
@@ -91,10 +85,7 @@ class TestGamepadKeyboardMixing:
 
         # Press D-pad UP
         gamepad_up = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         action1 = input_handler.handle_controller_button(gamepad_up)
         if action1:
@@ -104,7 +95,7 @@ class TestGamepadKeyboardMixing:
         keyboard_down = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         action2 = input_handler.handle_keydown(keyboard_down)
         if action2:
@@ -123,16 +114,12 @@ class TestGamepadMouseMixing:
 
         # Enter look mode with left trigger
         trigger_event = tcod.event.ControllerAxis(
-            type="CONTROLLERAXISMOTION",
-            which=0,
-            axis=CA.TRIGGERLEFT,
-            value=32767  # Full press
+            type="CONTROLLERAXISMOTION", which=0, axis=CA.TRIGGERLEFT, value=32767  # Full press
         )
 
         # This triggers look mode
         action = input_handler.gamepad_handler.handle_axis_event(
-            trigger_event,
-            InputContext.GAMEPLAY
+            trigger_event, InputContext.GAMEPLAY
         )
 
         # Test verifies trigger input processed without crash
@@ -145,10 +132,7 @@ class TestGamepadMouseMixing:
 
         # Navigate with D-pad
         dpad_event = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         action1 = input_handler.handle_controller_button(dpad_event)
         assert action1 is not False  # NAVIGATE_DOWN action handled (True or None, not exit)
@@ -169,27 +153,19 @@ class TestInputSourceSwitching:
         # Navigate down with gamepad
         for i in range(3):
             gamepad_event = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN",
-                which=0,
-                button=CB.DPAD_DOWN,
-                pressed=True
+                type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
             )
             input_handler.handle_controller_button(gamepad_event)
 
             # Release
             release = tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONUP",
-                which=0,
-                button=CB.DPAD_DOWN,
-                pressed=False
+                type="CONTROLLERBUTTONUP", which=0, button=CB.DPAD_DOWN, pressed=False
             )
             input_handler.handle_controller_button(release)
 
         # Switch to keyboard
         keyboard_up = tcod.event.KeyDown(
-            scancode=tcod.event.Scancode.UP,
-            sym=tcod.event.KeySym.UP,
-            mod=tcod.event.Modifier.NONE
+            scancode=tcod.event.Scancode.UP, sym=tcod.event.KeySym.UP, mod=tcod.event.Modifier.NONE
         )
         action = input_handler.handle_keydown(keyboard_up)
         # Keyboard input processed without crash
@@ -204,18 +180,15 @@ class TestInputSourceSwitching:
         # Use KeySym(ord('w')) for cross-platform compatibility (KeySym.w doesn't exist on Linux)
         keyboard_north = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.W,
-            sym=tcod.event.KeySym(ord('w')),
-            mod=tcod.event.Modifier.NONE
+            sym=tcod.event.KeySym(ord("w")),
+            mod=tcod.event.Modifier.NONE,
         )
         action1 = input_handler.handle_keydown(keyboard_north)
         assert action1 is not False  # MOVE_NORTH action handled (True, not exit)
 
         # Immediately switch to gamepad (next turn)
         gamepad_south = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         action2 = input_handler.handle_controller_button(gamepad_south)
         assert action2 is not False  # MOVE_SOUTH action handled (True or None, not exit)
@@ -236,10 +209,7 @@ class TestLastInputWins:
 
         # Press D-pad UP
         gamepad_up = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         action1 = input_handler.handle_controller_button(gamepad_up)
 
@@ -247,7 +217,7 @@ class TestLastInputWins:
         keyboard_down = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.DOWN,
             sym=tcod.event.KeySym.DOWN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         action2 = input_handler.handle_keydown(keyboard_down)
         # Keyboard input processed without crash
@@ -262,29 +232,33 @@ class TestLastInputWins:
         actions = []
 
         # Gamepad
-        actions.append(input_handler.handle_controller_button(
-            tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN", which=0,
-                button=CB.DPAD_UP, pressed=True
+        actions.append(
+            input_handler.handle_controller_button(
+                tcod.event.ControllerButton(
+                    type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
+                )
             )
-        ))
+        )
 
         # Keyboard
-        actions.append(input_handler.handle_keydown(
-            tcod.event.KeyDown(
-                scancode=tcod.event.Scancode.DOWN,
-                sym=tcod.event.KeySym.DOWN,
-                mod=tcod.event.Modifier.NONE
+        actions.append(
+            input_handler.handle_keydown(
+                tcod.event.KeyDown(
+                    scancode=tcod.event.Scancode.DOWN,
+                    sym=tcod.event.KeySym.DOWN,
+                    mod=tcod.event.Modifier.NONE,
+                )
             )
-        ))
+        )
 
         # Gamepad again
-        actions.append(input_handler.handle_controller_button(
-            tcod.event.ControllerButton(
-                type="CONTROLLERBUTTONDOWN", which=0,
-                button=CB.DPAD_UP, pressed=True
+        actions.append(
+            input_handler.handle_controller_button(
+                tcod.event.ControllerButton(
+                    type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
+                )
             )
-        ))
+        )
 
         # All actions processed without crash
         assert len(actions) >= 2  # Multiple navigation actions processed
@@ -305,20 +279,14 @@ class TestMultipleGamepads:
 
         # Controller 1 presses A
         event1 = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,  # Controller 1
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True  # Controller 1
         )
         action1 = input_handler.handle_controller_button(event1)
         assert action1 is not False  # WAIT action handled (True or None, not exit)
 
         # Controller 2 presses B
         event2 = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=1,  # Controller 2
-            button=CB.B,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=1, button=CB.B, pressed=True  # Controller 2
         )
         action2 = input_handler.handle_controller_button(event2)
         assert action2 is not False  # CANCEL action handled (True or None, not exit)
@@ -338,19 +306,13 @@ class TestMultipleGamepads:
 
         # Controller 1 navigates UP
         nav_up = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_UP,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_UP, pressed=True
         )
         action1 = input_handler.handle_controller_button(nav_up)
 
         # Controller 2 navigates DOWN (different controller)
         nav_down = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=1,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=1, button=CB.DPAD_DOWN, pressed=True
         )
         action2 = input_handler.handle_controller_button(nav_down)
 
@@ -371,10 +333,7 @@ class TestContextSwitchWithMixedInput:
 
         # Navigate with gamepad
         gamepad_nav = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.DPAD_DOWN,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.DPAD_DOWN, pressed=True
         )
         action1 = input_handler.handle_controller_button(gamepad_nav)
         assert action1 is not False  # NAVIGATE_DOWN action handled (True or None, not exit)
@@ -383,7 +342,7 @@ class TestContextSwitchWithMixedInput:
         keyboard_esc = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.ESCAPE,
             sym=tcod.event.KeySym.ESCAPE,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
         action2 = input_handler.handle_keydown(keyboard_esc)
         assert action2 is not False  # CANCEL action handled (True, not exit)
@@ -398,18 +357,15 @@ class TestContextSwitchWithMixedInput:
         # Use KeySym(ord('w')) for cross-platform compatibility (KeySym.w doesn't exist on Linux)
         keyboard_move = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.W,
-            sym=tcod.event.KeySym(ord('w')),
-            mod=tcod.event.Modifier.NONE
+            sym=tcod.event.KeySym(ord("w")),
+            mod=tcod.event.Modifier.NONE,
         )
         action1 = input_handler.handle_keydown(keyboard_move)
         assert action1 is not False  # MOVE_NORTH action handled (True, not exit)
 
         # Open inventory with gamepad
         gamepad_inventory = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.Y,  # Y button = inventory
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.Y, pressed=True  # Y button = inventory
         )
         action2 = input_handler.handle_controller_button(gamepad_inventory)
         assert action2 is not False  # SHOW_INVENTORY action handled (True or None, not exit)
@@ -426,15 +382,12 @@ class TestEdgeCases:
 
         # Both confirm actions
         gamepad_confirm = tcod.event.ControllerButton(
-            type="CONTROLLERBUTTONDOWN",
-            which=0,
-            button=CB.A,
-            pressed=True
+            type="CONTROLLERBUTTONDOWN", which=0, button=CB.A, pressed=True
         )
         keyboard_confirm = tcod.event.KeyDown(
             scancode=tcod.event.Scancode.RETURN,
             sym=tcod.event.KeySym.RETURN,
-            mod=tcod.event.Modifier.NONE
+            mod=tcod.event.Modifier.NONE,
         )
 
         # Process both

@@ -34,7 +34,6 @@ from game_input_mappings import (
     RESERVED_KEYS,
     axis_to_display_name,
     button_to_display_name,
-    key_sym_to_display_name,
 )
 from game_menu_base import BaseMenu
 from game_screen_utilities import ScreenRenderingUtils, ScrollableListManager
@@ -48,44 +47,59 @@ if TYPE_CHECKING:
 # Users can switch between Gameplay and Menus tabs to customize different contexts
 # Structure matches keyboard ACTION_CATEGORIES for consistency
 GAMEPAD_GAMEPLAY_CATEGORIES = [
-    ("MOVEMENT", [
-        InputAction.MOVE_NORTH,
-        InputAction.MOVE_SOUTH,
-        InputAction.MOVE_WEST,
-        InputAction.MOVE_EAST,
-    ]),
-    ("ACTIONS", [
-        InputAction.WAIT,
-        InputAction.CANCEL,  # B button in gameplay (exit modes, etc.)
-        InputAction.EXIT_TO_MENU,
-    ]),
-    ("EXPLOITS", [
-        InputAction.EXPLOIT_SLOT_1,
-        InputAction.EXPLOIT_CYCLE_PREV,
-        InputAction.EXPLOIT_CYCLE_NEXT,
-        InputAction.EXPLOIT_EXECUTE,
-    ]),
-    ("UI TOGGLES", [
-        InputAction.TOGGLE_INVENTORY,
-        InputAction.TOGGLE_LOOK_MODE,
-        InputAction.TOGGLE_HELP,
-        InputAction.TOGGLE_LORE_VIEWER,
-        InputAction.TOGGLE_ACHIEVEMENTS,
-    ]),
+    (
+        "MOVEMENT",
+        [
+            InputAction.MOVE_NORTH,
+            InputAction.MOVE_SOUTH,
+            InputAction.MOVE_WEST,
+            InputAction.MOVE_EAST,
+        ],
+    ),
+    (
+        "ACTIONS",
+        [
+            InputAction.WAIT,
+            InputAction.CANCEL,  # B button in gameplay (exit modes, etc.)
+            InputAction.EXIT_TO_MENU,
+        ],
+    ),
+    (
+        "EXPLOITS",
+        [
+            InputAction.EXPLOIT_SLOT_1,
+            InputAction.EXPLOIT_CYCLE_PREV,
+            InputAction.EXPLOIT_CYCLE_NEXT,
+            InputAction.EXPLOIT_EXECUTE,
+        ],
+    ),
+    (
+        "UI TOGGLES",
+        [
+            InputAction.TOGGLE_INVENTORY,
+            InputAction.TOGGLE_LOOK_MODE,
+            InputAction.TOGGLE_HELP,
+            InputAction.TOGGLE_LORE_VIEWER,
+            InputAction.TOGGLE_ACHIEVEMENTS,
+        ],
+    ),
 ]
 
 # Menu navigation bindings (applies to inventory, help, settings, etc.)
 GAMEPAD_MENU_CATEGORIES = [
-    ("NAVIGATION", [
-        InputAction.CONFIRM,
-        InputAction.CANCEL,
-        InputAction.NAVIGATE_UP,
-        InputAction.NAVIGATE_DOWN,
-        InputAction.NAVIGATE_LEFT,
-        InputAction.NAVIGATE_RIGHT,
-        InputAction.NAVIGATE_PAGE_UP,
-        InputAction.NAVIGATE_PAGE_DOWN,
-    ]),
+    (
+        "NAVIGATION",
+        [
+            InputAction.CONFIRM,
+            InputAction.CANCEL,
+            InputAction.NAVIGATE_UP,
+            InputAction.NAVIGATE_DOWN,
+            InputAction.NAVIGATE_LEFT,
+            InputAction.NAVIGATE_RIGHT,
+            InputAction.NAVIGATE_PAGE_UP,
+            InputAction.NAVIGATE_PAGE_DOWN,
+        ],
+    ),
 ]
 
 # For backwards compatibility
@@ -94,39 +108,51 @@ GAMEPAD_ACTION_CATEGORIES = GAMEPAD_GAMEPLAY_CATEGORIES
 # Action categories for display (keyboard bindings)
 # Organized to match gamepad structure for consistency
 ACTION_CATEGORIES = [
-    ("MOVEMENT", [
-        InputAction.MOVE_NORTH,
-        InputAction.MOVE_SOUTH,
-        InputAction.MOVE_EAST,
-        InputAction.MOVE_WEST,
-        InputAction.MOVE_NORTHEAST,
-        InputAction.MOVE_NORTHWEST,
-        InputAction.MOVE_SOUTHEAST,
-        InputAction.MOVE_SOUTHWEST,
-    ]),
-    ("ACTIONS", [
-        InputAction.WAIT,
-        InputAction.CONFIRM,
-        InputAction.CANCEL,
-        InputAction.EXIT_TO_MENU,
-    ]),
-    ("EXPLOITS", [
-        InputAction.EXPLOIT_SLOT_1,
-        InputAction.EXPLOIT_SLOT_2,
-        InputAction.EXPLOIT_SLOT_3,
-        InputAction.EXPLOIT_SLOT_4,
-        InputAction.EXPLOIT_SLOT_5,
-        InputAction.EXPLOIT_CYCLE_PREV,
-        InputAction.EXPLOIT_CYCLE_NEXT,
-        InputAction.EXPLOIT_EXECUTE,
-    ]),
-    ("UI TOGGLES", [
-        InputAction.TOGGLE_INVENTORY,
-        InputAction.TOGGLE_LOOK_MODE,
-        InputAction.TOGGLE_HELP,
-        InputAction.TOGGLE_LORE_VIEWER,
-        InputAction.TOGGLE_ACHIEVEMENTS,
-    ]),
+    (
+        "MOVEMENT",
+        [
+            InputAction.MOVE_NORTH,
+            InputAction.MOVE_SOUTH,
+            InputAction.MOVE_EAST,
+            InputAction.MOVE_WEST,
+            InputAction.MOVE_NORTHEAST,
+            InputAction.MOVE_NORTHWEST,
+            InputAction.MOVE_SOUTHEAST,
+            InputAction.MOVE_SOUTHWEST,
+        ],
+    ),
+    (
+        "ACTIONS",
+        [
+            InputAction.WAIT,
+            InputAction.CONFIRM,
+            InputAction.CANCEL,
+            InputAction.EXIT_TO_MENU,
+        ],
+    ),
+    (
+        "EXPLOITS",
+        [
+            InputAction.EXPLOIT_SLOT_1,
+            InputAction.EXPLOIT_SLOT_2,
+            InputAction.EXPLOIT_SLOT_3,
+            InputAction.EXPLOIT_SLOT_4,
+            InputAction.EXPLOIT_SLOT_5,
+            InputAction.EXPLOIT_CYCLE_PREV,
+            InputAction.EXPLOIT_CYCLE_NEXT,
+            InputAction.EXPLOIT_EXECUTE,
+        ],
+    ),
+    (
+        "UI TOGGLES",
+        [
+            InputAction.TOGGLE_INVENTORY,
+            InputAction.TOGGLE_LOOK_MODE,
+            InputAction.TOGGLE_HELP,
+            InputAction.TOGGLE_LORE_VIEWER,
+            InputAction.TOGGLE_ACHIEVEMENTS,
+        ],
+    ),
 ]
 
 # Human-readable action names
@@ -170,6 +196,7 @@ ACTION_DISPLAY_NAMES = {
 # CONTROLS MENU HUB
 # =============================================================================
 
+
 class ControlsMenuHub(BaseMenu):
     """
     Main controls configuration hub.
@@ -180,14 +207,20 @@ class ControlsMenuHub(BaseMenu):
     - Gamepad Settings
     """
 
-    def __init__(self, settings: GameSettings, input_mapper: "InputMapper | None" = None, menu_background=None):
+    def __init__(
+        self,
+        settings: GameSettings,
+        input_mapper: "InputMapper | None" = None,
+        menu_background=None,
+    ):
         super().__init__(menu_background)
         self.settings = settings  # Store settings for UI color access
         # Ensure input_mapper exists - create default if not provided
         if input_mapper is not None:
             self.input_mapper = input_mapper
-        elif not hasattr(self, 'input_mapper') or self.input_mapper is None:
+        elif not hasattr(self, "input_mapper") or self.input_mapper is None:
             from game_input_mappings import InputMapper
+
             self.input_mapper = InputMapper()
         self.options = [
             "Keyboard Bindings",
@@ -248,7 +281,7 @@ class ControlsMenuHub(BaseMenu):
         max_width = box.get("content_width", box["width"] - 2)
         if len(instructions) > max_width:
             # Truncate if somehow still too long
-            instructions = instructions[:max_width - 3] + "..."
+            instructions = instructions[: max_width - 3] + "..."
 
         inst_x = box["center_x"] - len(instructions) // 2
         render_char_safe(
@@ -350,8 +383,7 @@ class BaseBindingsMenu(BaseMenu, ABC):
         # Scroll state - subclasses may adjust max_visible_lines
         self.max_visible_lines = GameConfig.SCREEN_HEIGHT - 11
         self.scroll_manager = ScrollableListManager(
-            total_items=len(self.display_items),
-            visible_height=self.max_visible_lines
+            total_items=len(self.display_items), visible_height=self.max_visible_lines
         )
 
         # Binding mode state
@@ -408,14 +440,16 @@ class BaseBindingsMenu(BaseMenu, ABC):
         pass
 
     @abstractmethod
-    def _render_binding_overlay_content(self, console: tcod.console.Console,
-                                         box_x: int, box_y: int, box_width: int) -> None:
+    def _render_binding_overlay_content(
+        self, console: tcod.console.Console, box_x: int, box_y: int, box_width: int
+    ) -> None:
         """Render input-specific content in the binding overlay."""
         pass
 
     @abstractmethod
-    def _render_conflict_info(self, console: tcod.console.Console,
-                               box_x: int, box_y: int, box_width: int) -> None:
+    def _render_conflict_info(
+        self, console: tcod.console.Console, box_x: int, box_y: int, box_width: int
+    ) -> None:
         """Render input-specific conflict information."""
         pass
 
@@ -445,21 +479,25 @@ class BaseBindingsMenu(BaseMenu, ABC):
 
         for category_name, actions in self._get_action_categories():
             # Add category header (not selectable)
-            self.display_items.append({
-                "type": "category",
-                "name": category_name,
-            })
+            self.display_items.append(
+                {
+                    "type": "category",
+                    "name": category_name,
+                }
+            )
             # Add blank line after header
             self.display_items.append({"type": "blank"})
 
             # Add actions (selectable)
             for action in actions:
                 self.selectable_indices.append(len(self.display_items))
-                self.display_items.append({
-                    "type": "action",
-                    "action": action,
-                    "name": ACTION_DISPLAY_NAMES.get(action, action.name),
-                })
+                self.display_items.append(
+                    {
+                        "type": "action",
+                        "action": action,
+                        "name": ACTION_DISPLAY_NAMES.get(action, action.name),
+                    }
+                )
 
             # Add blank line after category
             self.display_items.append({"type": "blank"})
@@ -519,8 +557,7 @@ class BaseBindingsMenu(BaseMenu, ABC):
                 render_char_safe(console, 4, y, header_text, fg=Colors.ELECTRIC_PURPLE)
             elif item["type"] == "action":
                 is_selected = (
-                    self.selectable_indices
-                    and i == self.selectable_indices[self.selected_index]
+                    self.selectable_indices and i == self.selectable_indices[self.selected_index]
                 )
                 self._render_action_row(console, item, y, is_selected)
 
@@ -530,7 +567,9 @@ class BaseBindingsMenu(BaseMenu, ABC):
         if self.scroll_manager.should_show_scroll_up():
             render_char_safe(console, 4, content_start_y - 1, "^ MORE ^", fg=Colors.YELLOW)
         if self.scroll_manager.should_show_scroll_down():
-            render_char_safe(console, 4, content_start_y + self.max_visible_lines, "v MORE v", fg=Colors.YELLOW)
+            render_char_safe(
+                console, 4, content_start_y + self.max_visible_lines, "v MORE v", fg=Colors.YELLOW
+            )
 
         # Footer with instructions
         main_help, additional_help = self._get_help_text()
@@ -545,7 +584,9 @@ class BaseBindingsMenu(BaseMenu, ABC):
         """Hook for subclasses to render extra header content (e.g., tabs). Return new content_start_y."""
         return content_start_y
 
-    def _render_action_row(self, console: tcod.console.Console, item: dict, y: int, is_selected: bool):
+    def _render_action_row(
+        self, console: tcod.console.Console, item: dict, y: int, is_selected: bool
+    ):
         """Render a single action row with bindings."""
         action = item["action"]
         name = item["name"]
@@ -584,7 +625,9 @@ class BaseBindingsMenu(BaseMenu, ABC):
         else:
             binding_text = "[unbound]"
 
-        render_char_safe(console, 38, y, binding_text, fg=fg if is_selected else Colors.LIGHT_GRAY, bg=bg)
+        render_char_safe(
+            console, 38, y, binding_text, fg=fg if is_selected else Colors.LIGHT_GRAY, bg=bg
+        )
 
     def _is_gamepad_menu(self) -> bool:
         """Return True if this is a gamepad bindings menu."""
@@ -608,7 +651,10 @@ class BaseBindingsMenu(BaseMenu, ABC):
             for dx in range(box_width):
                 target_y = box_y + dy
                 target_x = box_x + dx
-                if 0 <= target_y < GameConfig.SCREEN_HEIGHT and 0 <= target_x < GameConfig.SCREEN_WIDTH:
+                if (
+                    0 <= target_y < GameConfig.SCREEN_HEIGHT
+                    and 0 <= target_x < GameConfig.SCREEN_WIDTH
+                ):
                     console.rgba["bg"][target_y, target_x] = (0, 0, 0, 255)
 
         # Draw border
@@ -788,6 +834,7 @@ class BaseBindingsMenu(BaseMenu, ABC):
 # KEYBOARD BINDINGS MENU
 # =============================================================================
 
+
 class KeyboardBindingsMenu(BaseBindingsMenu):
     """
     Keyboard remapping interface.
@@ -843,7 +890,7 @@ class KeyboardBindingsMenu(BaseBindingsMenu):
 
     def _handle_reset_key(self, event) -> bool:
         """Handle R key for reset."""
-        event_type = getattr(event, 'type', 'KEYDOWN')
+        event_type = getattr(event, "type", "KEYDOWN")
         if event_type == "KEYDOWN":
             key = event.sym
             if key == tcod.event.KeySym.R:
@@ -851,8 +898,9 @@ class KeyboardBindingsMenu(BaseBindingsMenu):
                 return True
         return False
 
-    def _render_binding_overlay_content(self, console: tcod.console.Console,
-                                         box_x: int, box_y: int, box_width: int) -> None:
+    def _render_binding_overlay_content(
+        self, console: tcod.console.Console, box_x: int, box_y: int, box_width: int
+    ) -> None:
         """Render keyboard-specific binding overlay content."""
         # Title
         title = "PRESS KEY TO BIND"
@@ -884,11 +932,13 @@ class KeyboardBindingsMenu(BaseBindingsMenu):
         inst2_x = box_x + (box_width - len(instructions2)) // 2
         render_char_safe(console, inst2_x, box_y + 10, instructions2, fg=Colors.LIGHT_GRAY)
 
-    def _render_conflict_info(self, console: tcod.console.Console,
-                               box_x: int, box_y: int, box_width: int) -> None:
+    def _render_conflict_info(
+        self, console: tcod.console.Console, box_x: int, box_y: int, box_width: int
+    ) -> None:
         """Render keyboard-specific conflict information."""
         if self.pending_key:
-            from game_input_mappings import key_binding_to_display_name, KeyBinding
+            from game_input_mappings import KeyBinding, key_binding_to_display_name
+
             binding = KeyBinding(self.pending_key, self.pending_modifier)
             key_name = key_binding_to_display_name(binding)
             conflict_text = f"[{key_name}] is already bound to:"
@@ -897,11 +947,11 @@ class KeyboardBindingsMenu(BaseBindingsMenu):
 
     def _handle_binding_input(self, event) -> str:
         """Handle input while in binding mode."""
-        event_type = getattr(event, 'type', 'KEYDOWN')
+        event_type = getattr(event, "type", "KEYDOWN")
 
         if event_type == "KEYDOWN":
             key = event.sym
-            modifier = getattr(event, 'mod', 0)
+            modifier = getattr(event, "mod", 0)
 
             # ESC cancels binding mode
             if key == tcod.event.KeySym.ESCAPE:
@@ -941,9 +991,12 @@ class KeyboardBindingsMenu(BaseBindingsMenu):
             # No conflict - add the binding
             self.input_mapper.add_keyboard_binding(self.binding_action, key, modifier=modifier)
             self._save_bindings()
-            from game_input_mappings import key_binding_to_display_name, KeyBinding
+            from game_input_mappings import KeyBinding, key_binding_to_display_name
+
             binding = KeyBinding(key, modifier)
-            logging.info(f"Added binding: {key_binding_to_display_name(binding)} -> {self.binding_action.name}")
+            logging.info(
+                f"Added binding: {key_binding_to_display_name(binding)} -> {self.binding_action.name}"
+            )
             self.binding_mode = False
             self.binding_action = None
 
@@ -951,13 +1004,18 @@ class KeyboardBindingsMenu(BaseBindingsMenu):
 
     def _handle_conflict_input(self, event) -> str:
         """Handle input in conflict dialog."""
-        event_type = getattr(event, 'type', 'KEYDOWN')
+        event_type = getattr(event, "type", "KEYDOWN")
 
         if event_type == "KEYDOWN":
             key = event.sym
 
             # Navigation
-            if key in (tcod.event.KeySym.UP, tcod.event.KeySym.DOWN, tcod.event.KeySym.W, tcod.event.KeySym.S):
+            if key in (
+                tcod.event.KeySym.UP,
+                tcod.event.KeySym.DOWN,
+                tcod.event.KeySym.W,
+                tcod.event.KeySym.S,
+            ):
                 self.conflict_selection = 1 - self.conflict_selection
                 return ""
 
@@ -966,13 +1024,15 @@ class KeyboardBindingsMenu(BaseBindingsMenu):
                 if self.conflict_selection == 0:  # Yes, replace
                     if self.binding_action and self.pending_key:
                         self.input_mapper.replace_keyboard_binding(
-                            self.binding_action, self.pending_key,
-                            modifier=self.pending_modifier
+                            self.binding_action, self.pending_key, modifier=self.pending_modifier
                         )
                         self._save_bindings()
-                        from game_input_mappings import key_binding_to_display_name, KeyBinding
+                        from game_input_mappings import KeyBinding, key_binding_to_display_name
+
                         binding = KeyBinding(self.pending_key, self.pending_modifier)
-                        logging.info(f"Replaced binding: {key_binding_to_display_name(binding)} -> {self.binding_action.name}")
+                        logging.info(
+                            f"Replaced binding: {key_binding_to_display_name(binding)} -> {self.binding_action.name}"
+                        )
                 self._close_keyboard_conflict_dialog()
                 return ""
 
@@ -996,6 +1056,7 @@ class KeyboardBindingsMenu(BaseBindingsMenu):
 # GAMEPAD SETTINGS MENU
 # =============================================================================
 
+
 class GamepadSettingsMenu(BaseMenu):
     """
     Gamepad configuration settings.
@@ -1008,14 +1069,20 @@ class GamepadSettingsMenu(BaseMenu):
     - Swap sticks (accessibility)
     """
 
-    def __init__(self, settings: GameSettings, input_mapper: "InputMapper | None" = None, menu_background=None):
+    def __init__(
+        self,
+        settings: GameSettings,
+        input_mapper: "InputMapper | None" = None,
+        menu_background=None,
+    ):
         super().__init__(menu_background)
         self.settings = settings  # Store settings for modification
         # Ensure input_mapper exists - create default if not provided
         if input_mapper is not None:
             self.input_mapper = input_mapper
-        elif not hasattr(self, 'input_mapper') or self.input_mapper is None:
+        elif not hasattr(self, "input_mapper") or self.input_mapper is None:
             from game_input_mappings import InputMapper
+
             self.input_mapper = InputMapper()
 
         self.options = [
@@ -1109,7 +1176,9 @@ class GamepadSettingsMenu(BaseMenu):
             color=Colors.LIGHT_GRAY,
         )
 
-    def _render_option(self, console: tcod.console.Console, option: dict, y: int, is_selected: bool):
+    def _render_option(
+        self, console: tcod.console.Console, option: dict, y: int, is_selected: bool
+    ):
         """Render a single option row."""
         name = option["name"]
         option_type = option["type"]
@@ -1231,6 +1300,7 @@ class GamepadSettingsMenu(BaseMenu):
 # GAMEPAD BINDINGS MENU (PHASE 5)
 # =============================================================================
 
+
 class GamepadBindingsMenu(BaseBindingsMenu):
     """
     Gamepad button remapping interface with context tabs.
@@ -1322,7 +1392,7 @@ class GamepadBindingsMenu(BaseBindingsMenu):
 
     def _handle_reset_key(self, event) -> bool:
         """Handle reset keys and tab switching."""
-        event_type = getattr(event, 'type', None)
+        event_type = getattr(event, "type", None)
 
         if event_type == "KEYDOWN":
             key = event.sym
@@ -1350,8 +1420,9 @@ class GamepadBindingsMenu(BaseBindingsMenu):
 
         return False
 
-    def _render_binding_overlay_content(self, console: tcod.console.Console,
-                                         box_x: int, box_y: int, box_width: int) -> None:
+    def _render_binding_overlay_content(
+        self, console: tcod.console.Console, box_x: int, box_y: int, box_width: int
+    ) -> None:
         """Render gamepad-specific binding overlay content."""
         # Title
         title = "PRESS BUTTON TO BIND"
@@ -1381,8 +1452,11 @@ class GamepadBindingsMenu(BaseBindingsMenu):
             ctrl_text = "No controller detected - connect gamepad"
         ctrl_x = box_x + (box_width - len(ctrl_text)) // 2
         render_char_safe(
-            console, ctrl_x, box_y + 8, ctrl_text,
-            fg=Colors.GREEN if self.detected_controller_name else Colors.RED
+            console,
+            ctrl_x,
+            box_y + 8,
+            ctrl_text,
+            fg=Colors.GREEN if self.detected_controller_name else Colors.RED,
         )
 
         # Instructions
@@ -1394,8 +1468,9 @@ class GamepadBindingsMenu(BaseBindingsMenu):
         inst2_x = box_x + (box_width - len(instructions2)) // 2
         render_char_safe(console, inst2_x, box_y + 12, instructions2, fg=Colors.LIGHT_GRAY)
 
-    def _render_conflict_info(self, console: tcod.console.Console,
-                               box_x: int, box_y: int, box_width: int) -> None:
+    def _render_conflict_info(
+        self, console: tcod.console.Console, box_x: int, box_y: int, box_width: int
+    ) -> None:
         """Render gamepad-specific conflict information."""
         if self.pending_button is not None:
             button_name = button_to_display_name(self.pending_button)
@@ -1405,7 +1480,7 @@ class GamepadBindingsMenu(BaseBindingsMenu):
 
     def _handle_binding_input(self, event) -> str:
         """Handle input while in binding mode."""
-        event_type = getattr(event, 'type', None)
+        event_type = getattr(event, "type", None)
 
         # Handle keyboard input (ESC to cancel, DEL to clear)
         if event_type == "KEYDOWN":
@@ -1469,7 +1544,9 @@ class GamepadBindingsMenu(BaseBindingsMenu):
                 self.binding_action, button, self._get_current_context()
             )
             self._save_bindings()
-            logging.info(f"Added binding: {button_to_display_name(button)} -> {self.binding_action.name}")
+            logging.info(
+                f"Added binding: {button_to_display_name(button)} -> {self.binding_action.name}"
+            )
             self.binding_mode = False
             self.binding_action = None
 
@@ -1477,13 +1554,18 @@ class GamepadBindingsMenu(BaseBindingsMenu):
 
     def _handle_conflict_input(self, event) -> str:
         """Handle input in conflict dialog."""
-        event_type = getattr(event, 'type', None)
+        event_type = getattr(event, "type", None)
 
         # Keyboard navigation
         if event_type == "KEYDOWN":
             key = event.sym
 
-            if key in (tcod.event.KeySym.UP, tcod.event.KeySym.DOWN, tcod.event.KeySym.W, tcod.event.KeySym.S):
+            if key in (
+                tcod.event.KeySym.UP,
+                tcod.event.KeySym.DOWN,
+                tcod.event.KeySym.W,
+                tcod.event.KeySym.S,
+            ):
                 self.conflict_selection = 1 - self.conflict_selection
                 return ""
 
@@ -1580,7 +1662,9 @@ class GamepadBindingsMenu(BaseBindingsMenu):
                 self.binding_action, self.pending_button, self._get_current_context()
             )
             self._save_bindings()
-            logging.info(f"Replaced binding: {button_to_display_name(self.pending_button)} -> {self.binding_action.name}")
+            logging.info(
+                f"Replaced binding: {button_to_display_name(self.pending_button)} -> {self.binding_action.name}"
+            )
 
     def _close_gamepad_conflict_dialog(self):
         """Close the conflict dialog and reset gamepad-specific state."""

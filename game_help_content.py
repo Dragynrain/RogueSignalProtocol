@@ -193,9 +193,7 @@ class HelpContent:
             context: InputContext,
             default: str,
         ) -> str:
-            return HelpContent._get_button_pair_hint(
-                mapper, action1, action2, context, default
-            )
+            return HelpContent._get_button_pair_hint(mapper, action1, action2, context, default)
 
         # GAMEPLAY context
         gp = InputContext.GAMEPLAY

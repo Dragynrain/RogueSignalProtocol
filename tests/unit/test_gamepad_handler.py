@@ -5,11 +5,11 @@ Tests GamepadInputHandler, device management, button/axis event processing,
 context detection, action execution, and default gamepad bindings.
 """
 
-import pytest
+import time
+from unittest.mock import Mock, PropertyMock
+
 import tcod.event
 import tcod.sdl.joystick
-import time
-from unittest.mock import Mock, MagicMock, patch, PropertyMock
 
 from game_input_actions import InputAction, InputContext
 from game_input_analog import AnalogStickHandler
@@ -33,7 +33,7 @@ def get_movement_with_settling(analog, game_turn, x, y):
     analog.get_left_stick_movement_gameplay(game_turn)  # Start settling
 
     # Simulate time passing by backdating the settling start time
-    if hasattr(analog, '_settling_start_time') and analog._settling_start_time > 0:
+    if hasattr(analog, "_settling_start_time") and analog._settling_start_time > 0:
         analog._settling_start_time = time.time() - SETTLING_PERIOD_SEC - 0.001
 
     return analog.get_left_stick_movement_gameplay(game_turn)
@@ -387,7 +387,9 @@ class TestGamepadMovementIntegration:
         handler = GamepadInputHandler(mapper, game=mock_game)
 
         # Set stick to northeast (with settling)
-        movement = get_movement_with_settling(handler.analog_handler, mock_game.turn_count, 25000, -25000)
+        movement = get_movement_with_settling(
+            handler.analog_handler, mock_game.turn_count, 25000, -25000
+        )
 
         # Should return (1, -1) for northeast
         assert movement == (1, -1)
@@ -402,7 +404,9 @@ class TestGamepadMovementIntegration:
         handler = GamepadInputHandler(mapper, game=mock_game)
 
         # First movement (with settling)
-        movement1 = get_movement_with_settling(handler.analog_handler, mock_game.turn_count, 30000, 0)
+        movement1 = get_movement_with_settling(
+            handler.analog_handler, mock_game.turn_count, 30000, 0
+        )
         assert movement1 is not None
 
         # Second movement immediately after should be blocked (time-based)
@@ -411,7 +415,9 @@ class TestGamepadMovementIntegration:
 
         # After initial delay, movement should work again
         # Simulate time passing by backdating the last move time
-        handler.analog_handler.last_gameplay_move_time = time.time() - GameConfig.GAMEPLAY_MOVEMENT_INITIAL_DELAY - 0.05
+        handler.analog_handler.last_gameplay_move_time = (
+            time.time() - GameConfig.GAMEPLAY_MOVEMENT_INITIAL_DELAY - 0.05
+        )
         movement3 = handler.analog_handler.get_left_stick_movement_gameplay(mock_game.turn_count)
         assert movement3 is not None
 
@@ -510,13 +516,19 @@ class TestDefaultGamepadBindings:
         y_event = Mock()
         y_event.button = CB.Y
         y_event.pressed = True
-        assert handler.handle_button_event(y_event, InputContext.GAMEPLAY) == InputAction.TOGGLE_INVENTORY
+        assert (
+            handler.handle_button_event(y_event, InputContext.GAMEPLAY)
+            == InputAction.TOGGLE_INVENTORY
+        )
 
         # X = Exploit 1 (changed from Exploit 2)
         x_event = Mock()
         x_event.button = CB.X
         x_event.pressed = True
-        assert handler.handle_button_event(x_event, InputContext.GAMEPLAY) == InputAction.EXPLOIT_SLOT_1
+        assert (
+            handler.handle_button_event(x_event, InputContext.GAMEPLAY)
+            == InputAction.EXPLOIT_SLOT_1
+        )
 
     def test_option_c_triggers_in_gameplay(self):
         """Test Option C trigger mappings (RT = execute, LT = look)."""
@@ -534,7 +546,10 @@ class TestDefaultGamepadBindings:
         pressed_rt = Mock()
         pressed_rt.axis = CA.TRIGGERRIGHT
         pressed_rt.value = 30000  # Pressed
-        assert handler.handle_axis_event(pressed_rt, InputContext.GAMEPLAY) == InputAction.EXPLOIT_EXECUTE
+        assert (
+            handler.handle_axis_event(pressed_rt, InputContext.GAMEPLAY)
+            == InputAction.EXPLOIT_EXECUTE
+        )
 
         # LT = Look mode (test rising edge)
         unpressed_lt = Mock()
@@ -545,7 +560,10 @@ class TestDefaultGamepadBindings:
         pressed_lt = Mock()
         pressed_lt.axis = CA.TRIGGERLEFT
         pressed_lt.value = 30000
-        assert handler.handle_axis_event(pressed_lt, InputContext.GAMEPLAY) == InputAction.TOGGLE_LOOK_MODE
+        assert (
+            handler.handle_axis_event(pressed_lt, InputContext.GAMEPLAY)
+            == InputAction.TOGGLE_LOOK_MODE
+        )
 
     def test_option_c_menu_buttons(self):
         """Test Option C menu button mappings."""
@@ -556,13 +574,19 @@ class TestDefaultGamepadBindings:
         start_event = Mock()
         start_event.button = CB.START
         start_event.pressed = True
-        assert handler.handle_button_event(start_event, InputContext.GAMEPLAY) == InputAction.EXIT_TO_MENU
+        assert (
+            handler.handle_button_event(start_event, InputContext.GAMEPLAY)
+            == InputAction.EXIT_TO_MENU
+        )
 
         # Back/Select = Help
         back_event = Mock()
         back_event.button = CB.BACK
         back_event.pressed = True
-        assert handler.handle_button_event(back_event, InputContext.GAMEPLAY) == InputAction.TOGGLE_HELP
+        assert (
+            handler.handle_button_event(back_event, InputContext.GAMEPLAY)
+            == InputAction.TOGGLE_HELP
+        )
 
     def test_all_8_dpad_directions_work(self):
         """Test that all 8 D-pad directions map to movement."""
@@ -633,7 +657,9 @@ class TestTriggerEdgeDetection:
 
         # Releasing and pressing again should fire
         handler.analog_handler.check_trigger_pressed(0, is_right_trigger=True)  # Release
-        pressed3 = handler.analog_handler.check_trigger_pressed(30000, is_right_trigger=True)  # Press
+        pressed3 = handler.analog_handler.check_trigger_pressed(
+            30000, is_right_trigger=True
+        )  # Press
         assert pressed3 is True
 
     def test_left_and_right_triggers_tracked_independently(self):
@@ -662,17 +688,14 @@ class TestInputMapperGamepadSupport:
         mapper = InputMapper()
 
         # Verify mapper has internal structures for gamepad mappings
-        assert hasattr(mapper, '_default_gamepad_button_map')
+        assert hasattr(mapper, "_default_gamepad_button_map")
 
     def test_mapper_can_get_action_for_gamepad_button(self):
         """Test that mapper can return actions for gamepad buttons."""
         mapper = InputMapper()
 
         # Get action for A button in gameplay
-        action = mapper.get_action_for_gamepad_button(
-            CB.A,
-            InputContext.GAMEPLAY
-        )
+        action = mapper.get_action_for_gamepad_button(CB.A, InputContext.GAMEPLAY)
 
         assert action == InputAction.WAIT
 
@@ -681,10 +704,7 @@ class TestInputMapperGamepadSupport:
         mapper = InputMapper()
 
         # Get action for right trigger in gameplay
-        action = mapper.get_action_for_gamepad_axis(
-            CA.TRIGGERRIGHT,
-            InputContext.GAMEPLAY
-        )
+        action = mapper.get_action_for_gamepad_axis(CA.TRIGGERRIGHT, InputContext.GAMEPLAY)
 
         assert action == InputAction.EXPLOIT_EXECUTE
 
@@ -848,8 +868,8 @@ class TestSwapSticksFeature:
             handler.handle_axis_event(mock_event, InputContext.GAMEPLAY)
 
         # Storage is NOT swapped - physical values stay in their physical variables
-        assert handler.analog_handler.left_x == 10000   # LEFTX -> left_x (physical)
-        assert handler.analog_handler.left_y == 11000   # LEFTY -> left_y (physical)
+        assert handler.analog_handler.left_x == 10000  # LEFTX -> left_x (physical)
+        assert handler.analog_handler.left_y == 11000  # LEFTY -> left_y (physical)
         assert handler.analog_handler.right_x == 12000  # RIGHTX -> right_x (physical)
         assert handler.analog_handler.right_y == 13000  # RIGHTY -> right_y (physical)
 
@@ -936,7 +956,7 @@ class TestDeltaToMovementAction:
         handler = GamepadInputHandler(mapper)
 
         # Method should exist
-        assert hasattr(handler, '_delta_to_movement_action')
+        assert hasattr(handler, "_delta_to_movement_action")
         assert callable(handler._delta_to_movement_action)
 
     def test_delta_to_movement_action_cardinal_directions(self):
