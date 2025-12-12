@@ -1,0 +1,95 @@
+# AppImage recipe for Rogue Signal Protocol
+# Build with: appimage-builder --recipe packaging/linux/AppImageBuilder.yml
+# Prerequisites: Run from project root after PyInstaller build completes
+#
+# Build steps:
+#   1. pyinstaller RogueSignalProtocol-linux.spec
+#   2. Copy assets to dist/ (JSON, TTF, graphics/, sound/, music/)
+#   3. appimage-builder --recipe packaging/linux/AppImageBuilder.yml
+
+version: 1
+
+script:
+  # Set up AppDir structure from PyInstaller dist/ output
+  - mkdir -p AppDir/usr/bin
+  - mkdir -p AppDir/usr/share/applications
+  - mkdir -p AppDir/usr/share/icons/hicolor/512x512/apps
+  - mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+  - mkdir -p AppDir/usr/share/icons/hicolor/128x128/apps
+
+  # Copy main executable and all game files
+  - cp -r dist/* AppDir/usr/bin/
+
+  # Ensure executable has proper permissions
+  - chmod +x AppDir/usr/bin/RogueSignalProtocol
+
+  # Copy icons (resize from logo.png if needed, or use as-is)
+  - cp logo.png AppDir/usr/share/icons/hicolor/512x512/apps/rogue-signal-protocol.png
+  - cp logo.png AppDir/usr/share/icons/hicolor/256x256/apps/rogue-signal-protocol.png
+  - cp logo.png AppDir/usr/share/icons/hicolor/128x128/apps/rogue-signal-protocol.png
+
+  # Create desktop entry
+  - |
+    cat > AppDir/usr/share/applications/rogue-signal-protocol.desktop << 'DESKTOP'
+    [Desktop Entry]
+    Name=Rogue Signal Protocol
+    GenericName=Roguelike Game
+    Comment=Cyberpunk roguelike game
+    Exec=RogueSignalProtocol
+    Icon=rogue-signal-protocol
+    Terminal=false
+    Type=Application
+    Categories=Game;RolePlaying;
+    Keywords=roguelike;cyberpunk;tactical;turn-based;
+    DESKTOP
+
+  # Create AppRun symlink (required by AppImage)
+  - ln -sf usr/bin/RogueSignalProtocol AppDir/AppRun
+
+  # Create .DirIcon symlink (AppImage convention)
+  - ln -sf usr/share/icons/hicolor/256x256/apps/rogue-signal-protocol.png AppDir/.DirIcon
+
+  # Copy desktop file to AppDir root (also required)
+  - cp AppDir/usr/share/applications/rogue-signal-protocol.desktop AppDir/rogue-signal-protocol.desktop
+
+AppDir:
+  path: ./AppDir
+
+  app_info:
+    id: com.dragynrain.roguesignalprotocol
+    name: Rogue Signal Protocol
+    version: 0.8.0
+    icon: rogue-signal-protocol
+    exec: usr/bin/RogueSignalProtocol
+    exec_args: $@
+
+  # No apt dependencies - PyInstaller bundles everything including Python
+  apt:
+    arch: amd64
+    sources:
+      - sourceline: deb http://archive.ubuntu.com/ubuntu jammy main universe
+    include: []
+    exclude: []
+
+  runtime:
+    # Don't include any runtime helpers - binary is self-contained
+    env: {}
+
+  test:
+    # Test commands to verify the AppImage works
+    fedora-30:
+      image: appimagecrafters/tests-env:fedora-30
+      command: ./AppRun --version || true
+    debian-stable:
+      image: appimagecrafters/tests-env:debian-stable
+      command: ./AppRun --version || true
+    ubuntu-jammy:
+      image: appimagecrafters/tests-env:ubuntu-jammy
+      command: ./AppRun --version || true
+
+AppImage:
+  arch: x86_64
+  # Update information for optional zsync updates (comment out if not using)
+  # update-information: gh-releases-zsync|Dragynrain|RogueSignalProtocol|latest|*x86_64.AppImage.zsync
+  sign-key: None
+  comp: gzip

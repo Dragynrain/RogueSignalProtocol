@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Rogue Signal Protocol
+GenericName=Roguelike Game
+Comment=Cyberpunk roguelike game
+Exec=rogue-signal-protocol
+Icon=com.dragynrain.roguesignalprotocol
+Terminal=false
+Type=Application
+Categories=Game;RolePlaying;
+Keywords=roguelike;cyberpunk;tactical;turn-based;indie;
+StartupNotify=true

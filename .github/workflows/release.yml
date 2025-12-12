@@ -31,6 +31,7 @@ jobs:
         if (-not (Test-Path "game_rules.json")) { $missing += "game_rules.json" }
         if (-not (Test-Path "graphics_tiles.json")) { $missing += "graphics_tiles.json" }
         if (-not (Test-Path "narrative_content.json")) { $missing += "narrative_content.json" }
+        if (-not (Test-Path "default_bindings.json")) { $missing += "default_bindings.json" }
         if (-not (Test-Path "KreativeSquare.ttf")) { $missing += "KreativeSquare.ttf" }
         if (-not (Test-Path "graphics")) { $missing += "graphics/" }
         if (-not (Test-Path "sound")) { $missing += "sound/" }
@@ -77,6 +78,7 @@ jobs:
         Copy-Item -Path "game_rules.json" -Destination "dist\"
         Copy-Item -Path "graphics_tiles.json" -Destination "dist\"
         Copy-Item -Path "narrative_content.json" -Destination "dist\"
+        Copy-Item -Path "default_bindings.json" -Destination "dist\"
 
         # Copy font file
         Write-Host "Copying font file..."
@@ -160,6 +162,7 @@ jobs:
         [ ! -f "game_rules.json" ] && missing="$missing game_rules.json"
         [ ! -f "graphics_tiles.json" ] && missing="$missing graphics_tiles.json"
         [ ! -f "narrative_content.json" ] && missing="$missing narrative_content.json"
+        [ ! -f "default_bindings.json" ] && missing="$missing default_bindings.json"
         [ ! -f "KreativeSquare.ttf" ] && missing="$missing KreativeSquare.ttf"
         [ ! -d "graphics" ] && missing="$missing graphics/"
         [ ! -d "sound" ] && missing="$missing sound/"
@@ -201,6 +204,7 @@ jobs:
         cp game_rules.json dist/
         cp graphics_tiles.json dist/
         cp narrative_content.json dist/
+        cp default_bindings.json dist/
 
         # Copy font file
         echo "Copying font file..."
@@ -232,6 +236,10 @@ jobs:
         echo "Copying music folder..."
         cp -r music dist/
 
+        # Copy logo for Linux desktop integration
+        echo "Copying logo..."
+        cp logo.png dist/
+
         echo "All assets copied successfully."
 
     - name: Create release archive
@@ -248,9 +256,107 @@ jobs:
         size=$(du -h RogueSignalProtocol-Linux.tar.gz | cut -f1)
         echo "Release archive created: $size"
 
-    - name: Upload release asset
+    - name: Build AppImage
+      run: |
+        # Get version from release tag (strips leading 'v' if present)
+        VERSION="${GITHUB_REF_NAME#v}"
+        echo "Building AppImage version: $VERSION"
+
+        # Create AppDir structure
+        APPDIR="AppDir"
+        mkdir -p "$APPDIR/usr/bin"
+        mkdir -p "$APPDIR/usr/share/applications"
+        mkdir -p "$APPDIR/usr/share/icons/hicolor/512x512/apps"
+        mkdir -p "$APPDIR/usr/share/icons/hicolor/256x256/apps"
+        mkdir -p "$APPDIR/usr/share/icons/hicolor/128x128/apps"
+        mkdir -p "$APPDIR/usr/share/metainfo"
+
+        # Copy executable and all game files
+        cp -r dist/* "$APPDIR/usr/bin/"
+        chmod +x "$APPDIR/usr/bin/RogueSignalProtocol"
+
+        # Copy icon
+        cp logo.png "$APPDIR/usr/share/icons/hicolor/512x512/apps/rogue-signal-protocol.png"
+        cp logo.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/rogue-signal-protocol.png"
+        cp logo.png "$APPDIR/usr/share/icons/hicolor/128x128/apps/rogue-signal-protocol.png"
+
+        # Create desktop entry
+        cat > "$APPDIR/usr/share/applications/rogue-signal-protocol.desktop" << 'EOF'
+        [Desktop Entry]
+        Name=Rogue Signal Protocol
+        GenericName=Roguelike Game
+        Comment=Cyberpunk roguelike game
+        Exec=RogueSignalProtocol
+        Icon=rogue-signal-protocol
+        Terminal=false
+        Type=Application
+        Categories=Game;RolePlaying;
+        Keywords=roguelike;cyberpunk;tactical;turn-based;
+        EOF
+
+        # Create AppStream metainfo
+        cat > "$APPDIR/usr/share/metainfo/com.dragynrain.roguesignalprotocol.appdata.xml" << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <component type="desktop-application">
+          <id>com.dragynrain.roguesignalprotocol</id>
+          <name>Rogue Signal Protocol</name>
+          <summary>Cyberpunk roguelike game</summary>
+          <metadata_license>MIT</metadata_license>
+          <project_license>MIT</project_license>
+          <description>
+            <p>Rogue Signal Protocol is a tactical cyberpunk roguelike.</p>
+          </description>
+          <launchable type="desktop-id">rogue-signal-protocol.desktop</launchable>
+          <provides>
+            <binary>RogueSignalProtocol</binary>
+          </provides>
+          <releases>
+            <release version="$VERSION" date="$(date +%Y-%m-%d)"/>
+          </releases>
+        </component>
+        EOF
+
+        # Create AppRun script (wrapper that sets working directory)
+        cat > "$APPDIR/AppRun" << 'EOF'
+        #!/bin/bash
+        SELF=$(readlink -f "$0")
+        HERE=${SELF%/*}
+        cd "$HERE/usr/bin"
+        exec ./RogueSignalProtocol "$@"
+        EOF
+        chmod +x "$APPDIR/AppRun"
+
+        # Create root-level symlinks (AppImage conventions)
+        ln -sf usr/share/icons/hicolor/256x256/apps/rogue-signal-protocol.png "$APPDIR/.DirIcon"
+        ln -sf usr/share/icons/hicolor/256x256/apps/rogue-signal-protocol.png "$APPDIR/rogue-signal-protocol.png"
+        cp "$APPDIR/usr/share/applications/rogue-signal-protocol.desktop" "$APPDIR/rogue-signal-protocol.desktop"
+
+        # Download appimagetool
+        wget -q "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+        chmod +x appimagetool-x86_64.AppImage
+
+        # Build the AppImage
+        ARCH=x86_64 ./appimagetool-x86_64.AppImage "$APPDIR" "RogueSignalProtocol-${VERSION}-x86_64.AppImage"
+
+        # Verify AppImage was created
+        if [ ! -f "RogueSignalProtocol-${VERSION}-x86_64.AppImage" ]; then
+          echo "Failed to create AppImage!"
+          exit 1
+        fi
+
+        size=$(du -h "RogueSignalProtocol-${VERSION}-x86_64.AppImage" | cut -f1)
+        echo "AppImage created: $size"
+
+    - name: Upload tarball release asset
       uses: softprops/action-gh-release@v1
       with:
         files: RogueSignalProtocol-Linux.tar.gz
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload AppImage release asset
+      uses: softprops/action-gh-release@v1
+      with:
+        files: RogueSignalProtocol-*-x86_64.AppImage
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

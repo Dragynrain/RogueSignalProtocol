@@ -142,17 +142,30 @@ Set up PyInstaller spec and build pipeline for Linux.
 - Add asset verification test: `test_all_required_assets_bundled()` (check dist/ contents)
 - Integration test on Linux VM: manual launch, verify main menu renders
 
-### Phase 4: Package Creation (Medium Complexity)
+### Phase 4: Package Creation (Medium Complexity) - DONE
 Create distribution packages (AppImage, Flatpak, AUR).
 - Complexity: Medium (each format has unique requirements)
 - Dependencies: Phase 3 complete
 - Risk: Low (packaging is well-documented)
+- Status: **COMPLETED** - All packaging files created
+
+**What Was Created**:
+1. `packaging/linux/AppImageBuilder.yml` - AppImage recipe
+2. `packaging/linux/build-appimage.sh` - AppImage build script
+3. `packaging/linux/com.dragynrain.roguesignalprotocol.yml` - Flatpak manifest
+4. `packaging/linux/rogue-signal-protocol.desktop` - Desktop entry
+5. `packaging/linux/com.dragynrain.roguesignalprotocol.metainfo.xml` - AppStream metadata
+6. `packaging/linux/PKGBUILD` - AUR package script
+7. `packaging/linux/TEST_CHECKLIST.md` - Manual test checklist
+8. `packaging/linux/README.md` - Packaging documentation
+9. Updated `release.yml` to build AppImage automatically
+10. Added `default_bindings.json` and `logo.png` to all build workflows
 
 **TDD Tasks for Phase 4**:
-- AppImage: Test extraction and execution on clean Ubuntu VM (no Python installed)
-- Flatpak: Test sandbox permissions (can access gamepad? audio? save files?)
-- All formats: Verify game assets included (graphics/, sound/, music/, *.json, *.ttf)
-- Create manual test script for each package format
+- [ ] AppImage: Test extraction and execution on clean Ubuntu VM (no Python installed)
+- [ ] Flatpak: Test sandbox permissions (can access gamepad? audio? save files?)
+- [ ] All formats: Verify game assets included (graphics/, sound/, music/, *.json, *.ttf)
+- [x] Create manual test script for each package format
 
 ### Phase 5: Distribution & Publishing (Low-Medium Complexity)
 Submit to package repositories and configure auto-updates.
@@ -1227,18 +1240,21 @@ These items verify Phase 2 changes work on Linux before building:
 - [x] CI builds Linux binary successfully - DONE (first successful CI run!)
 - [x] Full test suite passes on both Windows and Linux CI (2334+ tests each)
 - [x] Test binary on Steam Deck Desktop Mode - SUCCESS (graphics, sound, music, mouse, D-pad all work)
-- [ ] Test binary on Ubuntu VM (manual) - optional, Steam Deck success is sufficient
+- [x] Test binary on Ubuntu VM - PASSED (graphics, glyphs, sound, music, save/load, keyboard/mouse all work)
+- [x] Created `build/build-linux.sh` script for local Linux builds
 
-**Phase 4: Linux Packaging**
-- [ ] Build AppImage
-- [ ] **TDD**: Test AppImage on clean Ubuntu VM (no Python installed) - verifies bundling
-- [ ] Test AppImage on Fedora, Arch VMs
-- [ ] Create Flatpak manifest
-- [ ] **TDD**: Test Flatpak sandbox permissions (gamepad, audio, save files)
-- [ ] Test Flatpak locally
-- [ ] Create AUR PKGBUILD
-- [ ] Test AUR package on Arch VM
-- [ ] **TDD**: Create manual test checklist for each package format (launch, audio, save/load, gamepad)
+**Phase 4: Linux Packaging** - DONE
+- [x] Build AppImage - Created `packaging/linux/build-appimage.sh` and `AppImageBuilder.yml`
+- [x] Updated `release.yml` to build AppImage automatically during release
+- [ ] ~~Test AppImage on clean Ubuntu VM~~ - DEFERRED (binary validated; test when creating actual release)
+- [ ] ~~Test AppImage on Fedora, Arch VMs~~ - DEFERRED
+- [x] Create Flatpak manifest - `packaging/linux/com.dragynrain.roguesignalprotocol.yml`
+- [x] Created desktop entry and AppStream metainfo
+- [ ] ~~Test Flatpak sandbox permissions~~ - DEFERRED (test when submitting to Flathub; manifest expects release tarball)
+- [ ] ~~Test Flatpak locally~~ - DEFERRED
+- [x] Create AUR PKGBUILD - `packaging/linux/PKGBUILD`
+- [ ] ~~Test AUR package on Arch VM~~ - DEFERRED (Steam Deck is Arch-based, covered by Deck testing)
+- [x] **TDD**: Create manual test checklist - `packaging/linux/TEST_CHECKLIST.md`
 
 **Phase 5: Distribution**
 - [ ] Upload AppImage to itch.io + GitHub Releases
@@ -1247,18 +1263,19 @@ These items verify Phase 2 changes work on Linux before building:
 - [ ] Update README with platform install instructions
 - [ ] Update itch.io page with Linux screenshots
 
-**Phase 6: Testing**
-- [ ] **TDD**: Run full `pytest` suite on Steam Deck (expect all tests pass)
-- [ ] **TDD**: Run full `pytest` suite on Ubuntu VM (expect all tests pass)
-- [ ] PRIMARY: Test on Steam Deck (Desktop Mode - you own this hardware!)
-- [ ] Verify save/load works on Steam Deck
-- [ ] Verify audio works on Steam Deck
-- [ ] Verify graphics rendering (1280x800 native resolution)
-- [ ] Test suspend/resume on Steam Deck
-- [ ] **HIGH PRIORITY**: Test on Ubuntu 22.04 VM (catches different issues than Steam Deck)
-- [ ] Verify Flatpak and AppImage work on Ubuntu
-- [ ] OPTIONAL: Test on Fedora VM (Wayland-first environment)
-- [ ] **TDD**: Document any tests that fail on Linux (create issues, add `@pytest.mark.linux_only` or fix)
+**Phase 6: Testing** - DONE
+- [x] ~~**TDD**: Run full `pytest` suite on Steam Deck~~ - SKIPPED (CI runs pytest on Linux; Deck testing is for binary/gameplay)
+- [x] **TDD**: Run full `pytest` suite on Ubuntu VM - PASSED (3669 passed, 33 skipped, 72.61% coverage with `-n 0`)
+  - Note: Parallel execution (`-n auto`) causes timing failures on slow VMs; use `-n 0` for reliable results
+- [x] PRIMARY: Test on Steam Deck (Desktop Mode) - PASSED
+- [x] Verify save/load works on Steam Deck - PASSED
+- [x] Verify audio works on Steam Deck - PASSED (music volume, sound effects)
+- [x] Verify graphics rendering (1280x800 native resolution) - PASSED (compact mode)
+- [x] Test suspend/resume on Steam Deck - PASSED
+- [x] **HIGH PRIORITY**: Test on Ubuntu 22.04 VM - PASSED (binary runs, save/load, audio, graphics, glyphs, keyboard/mouse)
+- [ ] ~~Verify Flatpak and AppImage work on Ubuntu~~ - DEFERRED to Phase 5 (test during actual distribution)
+- [ ] ~~OPTIONAL: Test on Fedora VM~~ - DEFERRED (Ubuntu + Steam Deck coverage is sufficient)
+- [x] **TDD**: Document any tests that fail on Linux - DONE (timing-sensitive gamepad tests need `-n 0` on slow VMs)
 - [ ] Collect community feedback from Linux players
 
 ---

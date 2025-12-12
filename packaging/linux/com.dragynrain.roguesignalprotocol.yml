@@ -1,0 +1,110 @@
+# Flatpak manifest for Rogue Signal Protocol
+# Build with: flatpak-builder --user --install build-dir com.dragynrain.roguesignalprotocol.yml
+#
+# For Flathub submission:
+#   1. Fork https://github.com/flathub/flathub
+#   2. Add this file as com.dragynrain.roguesignalprotocol.yml
+#   3. Submit PR
+#
+# Local testing:
+#   flatpak-builder --user --install --force-clean build-dir com.dragynrain.roguesignalprotocol.yml
+#   flatpak run com.dragynrain.roguesignalprotocol
+
+app-id: com.dragynrain.roguesignalprotocol
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+command: rogue-signal-protocol
+
+# Sandbox permissions
+finish-args:
+  # Display (Wayland preferred, X11 fallback)
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+
+  # Audio
+  - --socket=pulseaudio
+
+  # Gamepad support (required for controller input)
+  - --device=all
+
+  # Save files in XDG user data directory (automatic via platformdirs)
+  - --persist=.local/share/RogueSignalProtocol
+
+modules:
+  - name: RogueSignalProtocol
+    buildsystem: simple
+    build-commands:
+      # Create installation directories
+      - install -dm755 /app/lib/rogue-signal-protocol
+      - install -dm755 /app/bin
+      - install -dm755 /app/share/applications
+      - install -dm755 /app/share/icons/hicolor/512x512/apps
+      - install -dm755 /app/share/icons/hicolor/256x256/apps
+      - install -dm755 /app/share/icons/hicolor/128x128/apps
+      - install -dm755 /app/share/metainfo
+
+      # Install main executable
+      - install -Dm755 RogueSignalProtocol /app/lib/rogue-signal-protocol/RogueSignalProtocol
+
+      # Install game assets
+      - cp -r graphics /app/lib/rogue-signal-protocol/
+      - cp -r sound /app/lib/rogue-signal-protocol/
+      - cp -r music /app/lib/rogue-signal-protocol/
+
+      # Install configuration files
+      - install -Dm644 game_content.json /app/lib/rogue-signal-protocol/
+      - install -Dm644 game_rules.json /app/lib/rogue-signal-protocol/
+      - install -Dm644 graphics_tiles.json /app/lib/rogue-signal-protocol/
+      - install -Dm644 narrative_content.json /app/lib/rogue-signal-protocol/
+      - install -Dm644 default_bindings.json /app/lib/rogue-signal-protocol/
+      - install -Dm644 KreativeSquare.ttf /app/lib/rogue-signal-protocol/
+
+      # Install optional files if present
+      - test -f README.txt && install -Dm644 README.txt /app/lib/rogue-signal-protocol/ || true
+      - test -f LICENSE && install -Dm644 LICENSE /app/lib/rogue-signal-protocol/ || true
+      - test -f debug_mode.flag && install -Dm644 debug_mode.flag /app/lib/rogue-signal-protocol/ || true
+
+      # Create wrapper script (game expects assets in CWD)
+      - |
+        cat > /app/bin/rogue-signal-protocol << 'WRAPPER'
+        #!/bin/sh
+        cd /app/lib/rogue-signal-protocol
+        exec ./RogueSignalProtocol "$@"
+        WRAPPER
+      - chmod +x /app/bin/rogue-signal-protocol
+
+      # Install desktop entry
+      - install -Dm644 rogue-signal-protocol.desktop /app/share/applications/com.dragynrain.roguesignalprotocol.desktop
+
+      # Install icons
+      - install -Dm644 logo.png /app/share/icons/hicolor/512x512/apps/com.dragynrain.roguesignalprotocol.png
+      - install -Dm644 logo.png /app/share/icons/hicolor/256x256/apps/com.dragynrain.roguesignalprotocol.png
+      - install -Dm644 logo.png /app/share/icons/hicolor/128x128/apps/com.dragynrain.roguesignalprotocol.png
+
+      # Install AppStream metainfo
+      - install -Dm644 com.dragynrain.roguesignalprotocol.metainfo.xml /app/share/metainfo/
+
+    sources:
+      # Source type: archive from GitHub release
+      # Update URL and sha256 for each release
+      - type: archive
+        url: https://github.com/Dragynrain/RogueSignalProtocol/releases/download/v0.8.0/RogueSignalProtocol-Linux.tar.gz
+        sha256: REPLACE_WITH_ACTUAL_SHA256
+        # For local testing, use:
+        # - type: dir
+        #   path: ../../dist
+
+      # Desktop entry (inline)
+      - type: file
+        path: rogue-signal-protocol.desktop
+
+      # Icon
+      - type: file
+        path: ../../logo.png
+        dest-filename: logo.png
+
+      # AppStream metainfo
+      - type: file
+        path: com.dragynrain.roguesignalprotocol.metainfo.xml
