@@ -10,26 +10,187 @@ Progressive difficulty system modeled after Slay the Spire and Monster Train. Ea
 
 ## Implementation Phases
 
-### Phase 1: Core Modifier System (Medium Complexity)
+### Phase 0: Foundation Prerequisites (Low-Medium Complexity) - COMPLETE
+Add required infrastructure before any ascension-specific code. These changes are invisible to players but enable the system.
+- Complexity: Low-Medium (extends existing systems)
+- Dependencies: None
+- Risk: Low (additive changes, no behavior modification)
+- **Status: COMPLETE** - All 4 sub-phases implemented with 81 passing tests
+
+**0.1 New Death Cause Type**
+Add `"self_damage"` to valid death causes in `game_turn_manager.py`. Currently only: `"combat"`, `"overheat"`, `"virus"`.
+- Note: game_metrics.py comment mentions "trace" but it's not actually used in code
+- Needed for `own_worst_enemy` achievement (Logic Bomb self-kill)
+- Modify `_handle_player_death()` to accept this new type
+- **Implementation**: Game already tracks `game.friendly_fire_exploit` (set to `"logic_bomb"` in game_combat.py:705). When Logic Bomb damages player to 0 CPU:
+  1. Check if `friendly_fire_exploit == "logic_bomb"`
+  2. If so, call `_handle_player_death("self_damage")` instead of `"combat"`
+  3. Set `session.last_exploit_used = friendly_fire_exploit` before finalizing
+
+**0.2 New SessionMetrics Fields**
+Add to `SessionMetrics` dataclass in `game_metrics.py`:
+```python
+# Ascension tracking
+ascension_level: int = 0
+
+# Achievement tracking (new fields)
+last_exploit_used: str | None = None  # Track last exploit for death context
+admin_kills: int = 0                   # For admin_slayer achievement
+final_cpu: int = 0                     # Set in finalize_session(), for close_call
+restoration_nodes_used: int = 0        # For floor_is_lava achievement
+full_floor_clears: int = 0             # For full_clear achievement
+```
+Note: `turns_in_blind_spots` and `highest_heat_reached` already exist - no change needed.
+
+**REQUIRED: Update `to_dict()` method** (line 113 in `game_metrics.py`):
+Add these entries to the return dict:
+```python
+# Ascension tracking
+"ascension_level": self.ascension_level,
+# Achievement tracking
+"last_exploit_used": self.last_exploit_used,
+"admin_kills": self.admin_kills,
+"final_cpu": self.final_cpu,
+"restoration_nodes_used": self.restoration_nodes_used,
+"full_floor_clears": self.full_floor_clears,
+```
+
+**REQUIRED: Update `from_dict()` defaults** (line 196 in `game_metrics.py`):
+Add to the `defaults` dict:
+```python
+"ascension_level": 0,
+"last_exploit_used": None,
+"admin_kills": 0,
+"final_cpu": 0,
+"restoration_nodes_used": 0,
+"full_floor_clears": 0,
+```
+
+**IMPLEMENTATION NOTE - finalize_session() signature change required**:
+Current signature: `finalize_session(victory, death_cause, death_level)`
+New signature: `finalize_session(victory, death_cause, death_level, final_cpu=0)`
+The callers in `game_turn_manager.py:789` and `game_level_coordinator.py:199` must pass `player.cpu` as `final_cpu`.
+**NOTE**: Test file `tests/unit/test_metrics.py` calls `finalize_session()` at lines 153, 191, 218, 263, 279, 303, 312, 321 - these will continue to work due to default parameter.
+
+**TEST UPDATE REQUIRED**: Add at least one test that verifies `final_cpu` is correctly stored:
+```python
+def test_finalize_session_stores_final_cpu():
+    """Verify final_cpu is recorded in session metrics."""
+    start_session("test_id")
+    finalized = finalize_session(victory=True, death_cause=None, death_level=0, final_cpu=42)
+    assert finalized.final_cpu == 42
+```
+
+**0.3 Game Balance Config Changes**
+- **CREATE** `gameplay.enemy_spawn_weights` in `game_rules.json` (path does not exist yet) by moving hardcoded weights from `game_level_coordinator.py:556-566` (enables A12 modifier)
+  - Example JSON structure to add:
+    ```json
+    "enemy_spawn_weights": {
+      "scanner": 4, "patrol": 3, "bot": 2, "firewall": 2,
+      "hunter": 2, "virus": 1, "inhibitor": 2
+    }
+    ```
+- Lower base alert range from 8→6 in `game_rules.json` at `gameplay.nearby_enemy_alert_radius` (enables A15 modifier to raise it to 10)
+  - **NOTE**: `game_config.py:366` has `NEARBY_ENEMY_ALERT_RADIUS = 8` as default - this is loaded from JSON so no code change needed, but verify during testing
+
+**0.4 Node Capacity Data Structure**
+Migrate ALL node storage from sets to capacity-aware structure:
+- Current: `game_map.cooling_nodes: set[tuple[int, int]]`
+- Current: `game_map.cpu_recovery_nodes: set[tuple[int, int]]`
+- Current: `game_map.ghost_nodes: set[tuple[int, int]]`
+- New: `game_map.cooling_nodes: dict[tuple[int, int], RestoreNode]`
+- New: `game_map.cpu_recovery_nodes: dict[tuple[int, int], RestoreNode]`
+- New: `game_map.ghost_nodes: dict[tuple[int, int], RestoreNode]`
+
+**Location**: Define `RestoreNode` at the top of `game_map.py` (after imports, before `GameMap` class). This keeps node data structures together with map data.
+
+```python
+@dataclass
+class RestoreNode:
+    """Tracks per-node state for A13+ capacity system."""
+    node_type: str             # "cooling", "cpu", "ghost"
+    total_capacity: int = -1   # -1 = unlimited (pre-A13), >0 = max capacity
+    used_capacity: int = 0     # How much has been consumed
+
+    def use(self, amount_needed: int) -> int:
+        """
+        Consume capacity and return actual restoration amount.
+        Only consumes capacity equal to actual benefit provided.
+        Returns actual amount restored (may be less than requested if depleted).
+        """
+        if self.total_capacity == -1:
+            return amount_needed  # Unlimited
+        remaining = self.total_capacity - self.used_capacity
+        actual = min(amount_needed, remaining)
+        self.used_capacity += actual
+        return actual
+
+    @property
+    def depleted(self) -> bool:
+        return self.total_capacity != -1 and self.used_capacity >= self.total_capacity
+
+    @property
+    def unlimited(self) -> bool:
+        return self.total_capacity == -1
+```
+
+**NOTE**: Position is NOT stored in RestoreNode - it's the dict key. This avoids redundancy and potential key/value mismatch bugs.
+
+Migration approach:
+- Phase 0: Add `RestoreNode` to `game_map.py`, migrate all three node sets to dicts
+- Phase 0: Update all node access patterns (see mutation patterns below)
+- Phase 2: A13 integration populates actual capacity values during level generation
+
+**Mutation Pattern Reference**:
+```python
+# MEMBERSHIP CHECK - unchanged (works for both set and dict)
+if pos in cooling_nodes:  # Still works
+
+# ADD NODE - set.add() becomes dict assignment
+# Before: self.game_map.cooling_nodes.add(pos)
+# After:  self.game_map.cooling_nodes[pos] = RestoreNode(node_type="cooling")
+
+# REMOVE NODE - set.remove() becomes del
+# Before: self.game_map.cooling_nodes.remove(pos)
+# After:  del self.game_map.cooling_nodes[pos]
+
+# DISCARD (remove if exists) - set.discard() becomes pop with default
+# Before: self.game_map.cooling_nodes.discard(pos)
+# After:  self.game_map.cooling_nodes.pop(pos, None)
+
+# ITERATION - unchanged (iterates over keys)
+for pos in self.game_map.cooling_nodes:  # Still works
+
+# LENGTH CHECK - unchanged
+len(self.game_map.cooling_nodes)  # Still works
+
+# CLEAR - unchanged
+self.game_map.cooling_nodes.clear()  # Still works
+```
+
+### Phase 1: Core Modifier System (Medium Complexity) - COMPLETE
 Create ascension modifier definitions and calculation logic. No game integration yet.
 - Complexity: Medium (new system architecture)
-- Dependencies: None
+- Dependencies: Phase 0 complete
 - Risk: Low (isolated from existing code)
+- **Status: COMPLETE** - AscensionModifiers dataclass, calculate_ascension_modifiers(), unlock functions, JSON config
 
-**Phase 1 Prerequisites** (must be done first):
-- Move enemy spawn weights from hardcoded in `game_level_coordinator.py:558` to `game_rules.json` (enables A12 modifier)
-- Lower base alert range from 8→6 in `game_rules.json` (enables A15 modifier to raise it to 10)
-
-### Phase 2: Game Integration (High Complexity)
+### Phase 2: Game Integration (High Complexity) - COMPLETE
 Apply modifiers to existing game systems (enemies, items, levels, combat).
 - Complexity: High (touches many systems)
 - Dependencies: Phase 1 complete
 - Risk: Medium (potential for subtle bugs in existing systems)
+- **Status: COMPLETE** - 57 passing tests for all ascension modifier calculations
+  - [x] 2.1: GameEngine.ascension_level + AscensionModifiers integration
+  - [x] 2.2: Enemy.apply_ascension_modifiers() for HP, vision, damage
+  - [x] 2.3: Level generation modifiers (enemy counts, codes, node capacity)
+  - [x] 2.4: Turn processing modifiers (heat, trace, alert range)
 
 ### Phase 3: UI/Menu System (Medium Complexity)
 Create ascension selection menu and integrate with main menu/victory screen.
 - Complexity: Medium (new UI screens)
-- Dependencies: Phase 1 complete (can parallel with Phase 2)
+- Dependencies: Phase 1 complete
+- **Can parallel with Phase 2**: Menu selection, display, and navigation can be built while Phase 2 game integration is in progress. Only the victory screen unlock logic needs Phase 2's `unlock_ascension()` to be callable.
 - Risk: Low (UI-only, no gameplay impact)
 
 ### Phase 4: Achievements & Metrics (Low Complexity)
@@ -54,7 +215,7 @@ Playtest all ascension levels, tune modifier values, verify integration.
 - **Levels**: Ascension 0-20 (21 total levels)
 - **Progression**: Each victory at Ascension N unlocks Ascension N+1
 - **Selection**: Choose before each run via main menu
-- **Persistence**: Stored in `user_settings.json` and `rogue_signal_progress.json`
+- **Persistence**: Stored in `user_settings.json` (single source of truth)
 - **Rewards**: Achievements for milestones (A5, A10, A15, A20)
 
 ### Why 20 Levels?
@@ -223,6 +384,37 @@ These levels require extra playtesting attention:
 }
 ```
 
+### GameSettings.DEFAULTS Addition (game_config.py)
+Add to `GameSettings.DEFAULTS` dictionary:
+```python
+"ascension": {
+    "current_level": 0,
+    "highest_unlocked": 0,
+    "victories_per_level": {},
+},
+```
+
+Also add accessor methods to `GameSettings` class:
+```python
+def get_ascension_level(self) -> int:
+    return self.ascension.get("current_level", 0)
+
+def set_ascension_level(self, level: int) -> None:
+    self.ascension["current_level"] = level
+    self.save_settings()
+
+def get_highest_ascension_unlocked(self) -> int:
+    return self.ascension.get("highest_unlocked", 0)
+
+def unlock_ascension(self, level: int) -> bool:
+    """Unlock ascension level if higher than current. Returns True if newly unlocked."""
+    if level > self.ascension.get("highest_unlocked", 0):
+        self.ascension["highest_unlocked"] = level
+        self.save_settings()
+        return True
+    return False
+```
+
 The `rogue_signal_progress.json` does NOT duplicate this data - query from `user_settings.json` when needed.
 
 ---
@@ -255,7 +447,21 @@ Example structure in `game_rules.json`:
     "3": {"trace_gain_multiplier": 2.0},
     "4": {"enemy_damage_multiplier": 1.2},
     "5": {"enemy_vision_bonus": 1},
-    ...
+    "6": {"blind_spot_reduction_per_floor": 1},
+    "7": {"hostile_trace_bonus": 0.2},
+    "8": {"heat_reduction_override": 1},
+    "9": {"enemy_count_bonus": 5},
+    "10": {"player_vision_override": 12},
+    "11": {"code_reduction_per_floor": 2},
+    "12": {"spawn_weights": {"scanner": 4, "patrol": 5, "bot": 4, "firewall": 3, "hunter": 4, "virus": 3, "inhibitor": 4}},
+    "13": {"node_capacity_ranges": {"floor_1": [100, 200], "floor_2": [75, 150], "floor_3": [50, 100]}},
+    "14": {"starting_ram_override": 6},
+    "15": {"alert_range_override": 10},
+    "16": {"room_generation": {"min_room_size": 5, "max_room_size": 10, "wide_corridor_weight": 0.40, "alcove_chance": 0.05, "cover_cluster_chance": 0.25}},
+    "17": {"melee_heat_bonus": 5},
+    "18": {"upgrade_reduction_per_floor": 1},
+    "19": {"node_reduction_per_floor": 1},
+    "20": {"blind_spots_consumable": true}
   }
 }
 ```
@@ -323,34 +529,7 @@ def test_ascension_clamping():
 
 ### Node Capacity System (A13)
 
-New data structure for limited-capacity nodes with hidden totals:
-```python
-@dataclass
-class RestoreNode:
-    node_type: str  # "cooling", "cpu", "ghost"
-    position: Tuple[int, int]
-    total_capacity: int  # Hidden from player, random per floor
-    used_capacity: int = 0
-
-    def use(self, amount_needed: int) -> int:
-        """
-        Returns actual restoration amount (may be less than requested).
-
-        Args:
-            amount_needed: The actual benefit the player needs (not max possible).
-                           e.g., if player has 15 heat, pass 15 not 20.
-
-        Only consumes capacity equal to what's actually provided.
-        """
-        remaining = self.total_capacity - self.used_capacity
-        actual = min(amount_needed, remaining)
-        self.used_capacity += actual  # Fair: only consume what was used
-        return actual
-
-    @property
-    def depleted(self) -> bool:
-        return self.used_capacity >= self.total_capacity
-```
+Uses `RestoreNode` dataclass defined in Phase 0.4. At A13+, nodes are initialized with random capacity values instead of unlimited (-1).
 
 **Capacity Ranges by Floor** (per node, rolled independently):
 - Floor 1: 100-200 capacity per node (at 20 restoration per use = 5-10 uses)
@@ -385,8 +564,6 @@ class RestoreNode:
 **Modifiers Applied**:
 - Enemy counts (A9: +5 per floor)
 - Enemy type distribution (A12: weighted spawn)
-- Node placement counts (A19: -1 cooling/CPU per floor)
-- Node charge limits (A13: limited restoration capacity)
 - Blind spot coverage (A6: -1% per floor)
 - Blind spot persistence (A20: one-time use)
 - Room generation (A16: larger rooms, wider corridors, less cover)
@@ -394,6 +571,13 @@ class RestoreNode:
 - Upgrade placement (A18: -1 per floor)
 
 **Integration Point**: Level generation, after base values loaded from JSON
+
+#### `game_level_placement.py`
+**Modifiers Applied**:
+- Node placement counts (A19: -1 cooling/CPU per floor)
+- Node capacity initialization (A13: random capacity per node based on floor)
+
+**Integration Point**: Node placement loop in `_place_special_tiles()` method (lines 110-171: cooling 110-129, CPU 131-150, ghost 152-171)
 
 #### `game_characters.py` / `game_enemies.py`
 **Modifiers Applied**:
@@ -436,12 +620,20 @@ class RestoreNode:
 **Node Capacity Display**:
 - A13 capacity is HIDDEN from player (uncertainty mechanic)
 - Show "DEPLETED" message when node runs dry, not capacity numbers
-- Color shift: green → red as restoration provided (but not exact number)
+- Color shift: green → yellow → red based on % capacity remaining (but not exact number)
+
+**Partial Restoration UX** (when node has less capacity than needed):
+- Full restoration (20 available): "Cooling node restored 20 heat" (green)
+- Partial restoration (e.g., 12 remaining): "Cooling node restored 12 heat (weakening)" (yellow)
+- Node depleted after use: "Cooling node restored 8 heat - DEPLETED" (red)
+- Node already depleted: "This node is depleted" (gray, no effect)
+
+The "(weakening)" hint tells player the node is running low without revealing exact numbers.
 
 **Blind Spot Persistence (A20)**:
-- Blind spots are tile types (no object), so track used positions in a `Set[Tuple[int,int]]` on `GameState`
+- Blind spots are stored as `set[tuple[int, int]]` on `GameMap`, so track used positions in a new `used_blind_spots: set[tuple[int, int]]` field on `GameMap`
 - When player steps on blind spot at A20+: add position to set, log "SHADOW FADED"
-- `is_blind_spot_active(pos)` checks: `is_blind_spot(pos) and pos not in used_blind_spots`
+- Modify `GameMap.is_blind_spot(pos)` to check: `pos in self.blind_spots and pos not in self.used_blind_spots` (when A20+ active)
 - Set must be saved/loaded with game state
 
 **Save/Load Compatibility**:
@@ -450,9 +642,57 @@ class RestoreNode:
 - Node capacity state must be saved/loaded (A13+)
 - Blind spot used state must be saved/loaded (A20+)
 
+**Save Data Schema Additions** (in game save file, not user_settings.json):
+```json
+{
+  "ascension_level": 5,
+  "node_states": {
+    "cooling": {"10,15": {"used": 80, "total": 150}, ...},
+    "cpu": {"20,25": {"used": 0, "total": -1}, ...},
+    "ghost": {"30,35": {"used": 100, "total": 100}, ...}
+  },
+  "used_blind_spots": [[12, 8], [14, 22], ...]
+}
+```
+
+**Serialization Logic** (add as methods to `GameStatePersistence` class in `game_state_persistence.py`):
+**NOTE**: This file uses a class-based architecture (`class GameStatePersistence`), not standalone functions. Add these as instance methods.
+```python
+def _serialize_node_states(self, game_map: GameMap) -> dict:
+    """Convert node dicts to JSON-serializable format."""
+    result = {"cooling": {}, "cpu": {}, "ghost": {}}
+    for pos, node in game_map.cooling_nodes.items():
+        result["cooling"][f"{pos[0]},{pos[1]}"] = {"used": node.used_capacity, "total": node.total_capacity}
+    for pos, node in game_map.cpu_recovery_nodes.items():
+        result["cpu"][f"{pos[0]},{pos[1]}"] = {"used": node.used_capacity, "total": node.total_capacity}
+    for pos, node in game_map.ghost_nodes.items():
+        result["ghost"][f"{pos[0]},{pos[1]}"] = {"used": node.used_capacity, "total": node.total_capacity}
+    return result
+
+def _deserialize_node_states(self, data: dict, game_map: GameMap) -> None:
+    """Restore node states from saved data."""
+    for key, nodes in [("cooling", game_map.cooling_nodes),
+                       ("cpu", game_map.cpu_recovery_nodes),
+                       ("ghost", game_map.ghost_nodes)]:
+        if key in data:
+            for pos_str, state in data[key].items():
+                x, y = map(int, pos_str.split(","))
+                if (x, y) in nodes:
+                    nodes[(x, y)].used_capacity = state["used"]
+                    nodes[(x, y)].total_capacity = state["total"]
+```
+
+**Integration Points**:
+- `GameStatePersistence` class: Add `_save_ascension_state()` and `_load_ascension_state()` methods
+- Node states only saved when any node has `capacity != -1` (A13+ indicator)
+- Used blind spots only saved when list is non-empty (A20 indicator)
+- Migration: Missing keys → default values (A0 behavior)
+
 ### Phase 2 TDD Requirements
 
-**Write tests BEFORE implementation** in `tests/integration/test_ascension_integration.py`:
+**Write tests BEFORE implementation** in `tests/integration/test_ascension_integration.py`.
+
+**NOTE**: These examples use helper functions that must be created in `tests/fixtures/ascension_fixtures.py` first. The helpers abstract game setup - actual implementations will use `GameEngine`, `GameMap`, etc.
 
 ```python
 # Test 1: Enemy stats modified correctly
@@ -497,10 +737,12 @@ def test_ascension_blind_spot_consumed():
     """A20 blind spots should vanish after use."""
     game = create_game_at_ascension(20)
     pos = Position(10, 10)
-    game.set_tile(pos, TileType.BLIND_SPOT)
-    assert game.is_blind_spot_active(pos)
-    game.player_step_on(pos)
-    assert not game.is_blind_spot_active(pos)  # Consumed
+    game.game_map.blind_spots.add((pos.x, pos.y))
+    assert game.game_map.is_blind_spot(pos)
+    # Simulate player stepping on blind spot (triggers A20 consumption)
+    game.player.position = pos
+    game.process_blind_spot_step()  # Helper to call in turn processing
+    assert not game.game_map.is_blind_spot(pos)  # Consumed at A20
 
 # Test 7: Save/load preserves ascension state
 def test_ascension_save_load_roundtrip():
@@ -578,13 +820,33 @@ def test_ascension_old_save_migration():
 ### Auto-Advance Behavior
 **REQUIREMENT**: Auto-advance ONLY triggers when beating highest_unlocked for the first time. If player manually selects A5 and wins, their selection stays at A5. But if they later beat their max (e.g., A8) for the first time, it auto-advances to A9. Players can always manually select lower levels via the Ascension menu.
 
-#### Status Bar (in `game_rendering_*.py`)
+#### Status Bar (in `game_status_bar_renderer.py`)
 **Changes**:
-- Add `[A#]` indicator to status bar
-- Keep compact (2-3 characters)
-- Position after RAM indicator
+- Add ascension indicator to status bar in `StatusBarRenderer.render_top_status_bar()`
+- Format: `A#` (no brackets) for compactness - e.g., `A5`, `A12`, `A20`
+- Only show if ascension > 0 (hide at A0 to avoid confusion for new players)
+- Position after RAM indicator: `CPU:xxx/yyy Heat:xxx°C Trace:xxx% RAM:x/xGB A5`
+- Color: Use `Colors.CYAN` (matches UI theme)
 
-**Technical Note**: May need to adjust spacing, verify 80-column fit
+**Technical Note**: Current status uses ~45 chars. Game area width is 55 tiles (`GAME_AREA_WIDTH() = SCREEN_WIDTH - LOG_WIDTH = 80 - 25`). Adding ` A20` (4 chars) fits comfortably.
+
+**Implementation Detail**: The status bar uses parallel lists at `game_status_bar_renderer.py:68-79`:
+```python
+status_parts = [
+    f"CPU:{game.player.cpu:3d}/{game.player.max_cpu}",
+    f"Heat:{game.player.heat:3d}°C",
+    f"Trace:{int(game.player.trace_level):3d}%",
+    f"RAM:{game.player.ram_used}/{game.player.ram_total}GB",
+]
+colors = [cpu_color, heat_color, trace_color, ram_color]
+```
+To add ascension indicator, append to BOTH lists:
+```python
+if game.ascension_level > 0:
+    status_parts.append(f"A{game.ascension_level}")
+    colors.append(Colors.CYAN)
+```
+**NOTE**: The rendering loop at lines 83-87 has a bounds check (`if x_pos + len(part) <= GameConfig.GAME_AREA_WIDTH() - 1`). If prior status parts consume too much space, the ascension indicator may be silently skipped. Current usage (~45 chars) leaves room for `A20` (4 chars max) within the 55-char game area, but verify during testing.
 
 **Screen Size Consideration**:
 - Minimum viable resolution: 800×600 (10×12 pixel characters)
@@ -682,13 +944,29 @@ def test_ascension_menu_navigation_wraps():
 ```
 
 **Check Logic**: `session_metrics.victory and session_metrics.ascension_level >= N`
-**NOTE**: These use bracketed text icons `[A5]` etc. to avoid emoji rendering issues and match the game's cyberpunk aesthetic.
+
+**ICON STYLE REQUIREMENT**: ALL achievements (new and existing) must use bracketed text icons like `[A5]`, `[KILL]`, `[HEAT]` - NO emojis. This avoids cross-platform rendering issues and matches the game's cyberpunk terminal aesthetic. Existing achievements in `game_achievements.py` must be migrated from emoji to bracketed text.
 
 #### `game_metrics.py`
 **New Tracking**:
-- `session_ascension_level: int` in `SessionMetrics`
+- `session_ascension_level: int` in `SessionMetrics` (already covered in Phase 0.2)
 - `ascension_victories: Counter` in `LifetimeMetrics`
 - `highest_ascension_completed: int` in `LifetimeMetrics`
+
+**REQUIRED: Add to `LifetimeMetrics` dataclass** (line 229 in `game_metrics.py`):
+```python
+ascension_victories: Counter = field(default_factory=Counter)  # {level: count}
+highest_ascension_completed: int = 0
+```
+
+**REQUIRED: Update `LifetimeMetrics.to_dict()`** (line 246):
+```python
+"ascension_victories": dict(self.ascension_victories),
+"highest_ascension_completed": self.highest_ascension_completed,
+```
+
+**REQUIRED: Update `LifetimeMetrics.from_dict()`** (line 261):
+Add `"ascension_victories"` to the Counter restoration list and handle missing fields.
 
 **Integration Point**: Victory detection, session end
 
@@ -988,13 +1266,38 @@ Creates narrative loop: escape → adaptation → overcome → repeat.
 
 ## Implementation Checklist
 
+**Phase 0: Foundation Prerequisites**
+- [ ] Add `"self_damage"` death cause type to `game_turn_manager.py`
+- [ ] Track `last_exploit_used` when player uses exploits (for death context)
+- [ ] Add new SessionMetrics fields: `ascension_level`, `last_exploit_used`, `admin_kills`, `final_cpu`, `restoration_nodes_used`, `full_floor_clears`
+- [ ] Modify `finalize_session()` signature to accept `final_cpu` parameter
+- [ ] Update callers: `game_turn_manager.py:789` and `game_level_coordinator.py:199` to pass `player.cpu`
+- [ ] Create `RestoreNode` dataclass in `game_map.py`
+- [ ] Migrate ALL node storage from `set[tuple]` to `dict[tuple, RestoreNode]`:
+  - `cooling_nodes`, `cpu_recovery_nodes`, `ghost_nodes`
+- [ ] Run `grep -r "cooling_nodes\|cpu_recovery_nodes\|ghost_nodes" --include="*.py"` to identify all 40 affected files
+- [ ] Run `grep -r "cooling_nodes\.\|cpu_recovery_nodes\.\|ghost_nodes\." --include="*.py"` to find mutation patterns (`.add()`, `.remove()`, `.update()`, `.pop()`)
+- [ ] Update all node access patterns across codebase (see `game_level_placement.py`, `game_combat.py`, etc.)
+  - Membership checks (`pos in nodes`) still work with dicts
+  - Mutations need updating: `nodes.add(pos)` -> `nodes[pos] = RestoreNode(...)`
+- [ ] **CREATE** `gameplay.enemy_spawn_weights` in `game_rules.json` (new path) from hardcoded weights in `game_level_coordinator.py:556-566`
+- [ ] Lower base alert range from 8→6 in `game_rules.json`
+- [ ] Add `GameSettings.DEFAULTS["ascension"]` with accessor methods
+- [ ] Write unit tests for new SessionMetrics fields
+- [ ] Write unit test for `finalize_session()` with `final_cpu` parameter
+- [ ] Write unit tests for RestoreNode dataclass
+- [ ] Update SessionMetrics.to_dict() method with all new fields (line 113)
+- [ ] Update SessionMetrics.from_dict() defaults with all new fields (line 196)
+- [ ] Fix death_cause comments: game_metrics.py:51 AND docstring at line 342 ("trace" -> "virus")
+
 **Phase 1: Core System**
-- [ ] **PREREQ**: Move enemy spawn weights from `game_level_coordinator.py:558` to `game_rules.json`
-- [ ] **PREREQ**: Lower base alert range from 8→6 in `game_rules.json`
+- [ ] Create `tests/fixtures/ascension_fixtures.py` with helper functions:
+  - `create_game_at_ascension(level)` - creates game engine at specified ascension
+  - `create_session(victory, ascension_level, ...)` - creates SessionMetrics for testing
 - [ ] Create `game_ascension.py` with `AscensionModifiers` dataclass
 - [ ] Implement `calculate_ascension_modifiers()` cumulative logic
 - [ ] Define all 20 ascension modifier sets in `game_rules.json`
-- [ ] Implement `RestoreNode` capacity system for A13 (cooling, CPU, AND ghost nodes)
+- [ ] Implement node capacity initialization for A13 (cooling, CPU, AND ghost nodes)
 - [ ] Update `user_settings.json` schema (single source of truth for ascension state)
 - [ ] Write unit tests for modifier calculations
 - [ ] Write unit tests for node capacity depletion
@@ -1004,17 +1307,22 @@ Creates narrative loop: escape → adaptation → overcome → repeat.
 - [ ] Modify `game_engine.py` to load and apply modifiers
 - [ ] Update enemy systems (`game_characters.py`, `game_enemies.py`)
 - [ ] Update level generation (`game_level.py`, `game_level_coordinator.py`)
+- [ ] Update node placement with A13 capacity and A19 count reduction (`game_level_placement.py`)
 - [ ] Update turn management (`game_turn_manager.py`)
-- [ ] Implement node capacity system in gameplay (A13)
+- [ ] Implement node capacity consumption in gameplay (A13)
 - [ ] Implement one-time-use blind spots with Set tracking (A20)
 - [ ] Add code floor clamping (minimum 3)
+- [ ] Add save/load for ascension state in `game_state_persistence.py`
+- [ ] Add save/load for node capacity states (A13+)
+- [ ] Add save/load for used blind spots (A20)
 - [ ] Write integration tests for applied modifiers
+- [ ] Write integration tests for save/load roundtrip
 
-**Phase 3: UI/Menu**
+**Phase 3: UI/Menu** (can start after Phase 1, parallel with Phase 2)
 - [ ] Create `game_menu_ascension.py` selection screen
 - [ ] Modify `game_menu_main.py` for ascension display
 - [ ] Modify `game_victory_screen.py` for unlock messaging
-- [ ] Add status bar indicator
+- [ ] Add status bar indicator in `game_status_bar_renderer.py`
 - [ ] Add node capacity visual feedback (color shift, no numbers)
 - [ ] **REQUIRED**: Implement modifier tooltips in-game
 - [ ] Test UI navigation and rendering
@@ -1022,8 +1330,37 @@ Creates narrative loop: escape → adaptation → overcome → repeat.
 **Phase 4: Achievements**
 - [ ] Add ascension achievements: sensor_sweep (A5), firewall_breaker (A10), silent_running (A15), ascension_master (A20)
 - [ ] Add fun/hidden achievements: thermal_meltdown, own_worst_enemy, admin_slayer, close_call, cold_blooded, floor_is_lava, full_clear, shadow_dancer
-- [ ] Add new SessionMetrics fields: ascension_level, last_exploit_used, admin_kills, final_cpu, restoration_nodes_used, full_floor_clears
-- [ ] Update `game_metrics.py` for ascension tracking
+- [ ] Add achievement check logic using SessionMetrics fields (added in Phase 0)
+- [ ] Update `game_achievements.py` with new achievement definitions
+- [ ] Add LifetimeMetrics fields: `ascension_victories`, `highest_ascension_completed`
+- [ ] Update LifetimeMetrics.to_dict() and from_dict() methods
+- [ ] **ICON STYLE**: All achievement icons must use bracketed text (e.g., `[A5]`, `[KILL]`) - NO emojis
+- [ ] Migrate existing achievements from emoji icons to bracketed text:
+  - `⚔️` -> `[BLOOD]` (first_blood)
+  - `💀` -> `[SKULL]` (massacre)
+  - `💥` -> `[BOOM]` (overkill)
+  - `🌀` -> `[AOE]` (crowd_control)
+  - `🎯` -> `[TARGET]` (efficient_killer)
+  - `🔪` -> `[KNIFE]` (silent_assassin)
+  - `👻` -> `[GHOST]` (ghost_protocol)
+  - `🌑` -> `[DARK]` (blind_spot_master)
+  - `🕶️` -> `[INVIS]` (invisible_victory)
+  - `⚡` -> `[FAST]` (speedrunner)
+  - `🔥` -> `[HEAT]` (heat_master)
+  - `📦` -> `[BOX]` (resource_efficient)
+  - `🧠` -> `[BRAIN]` (tactical_genius)
+  - `🛡️` -> `[SHIELD]` (untouchable)
+  - `🔍` -> `[SCAN]` (enemy_database)
+  - `✂️` -> `[CUT]` (exploit_specialist)
+  - `☮️` -> `[PEACE]` (pacifist)
+  - `💻` -> `[HACK]` (code_collector)
+  - `📚` -> `[BOOK]` (completionist)
+  - `📖` -> `[LORE]` (loremaster)
+  - `🗺️` -> `[MAP]` (explorer)
+  - `🎖️` -> `[MEDAL]` (survivor)
+  - `🏆` -> `[CUP]` (veteran)
+  - `👑` -> `[CROWN]` (persistent)
+  - `⏱️` -> `[TIME]` (legendary)
 - [ ] Write unit tests for all new achievements (TDD)
 - [ ] Test achievement unlock conditions
 
@@ -1063,7 +1400,96 @@ Unused modifiers for future expansion or A21-30:
 
 ## Changelog
 
-### v1.4 (Current - TDD & Achievements)
+### v2.2 (Current - Pre-Implementation Audit)
+**Fixes from codebase verification audit:**
+
+- **FIXED: GameState -> GameMap** - "GameState" class doesn't exist; changed `used_blind_spots` storage to `GameMap` where `blind_spots` already lives
+- **FIXED: Blind spot test example** - Replaced non-existent `TileType.BLIND_SPOT`, `game.set_tile()`, `game.is_blind_spot_active()`, `game.player_step_on()` with actual APIs (`game_map.blind_spots`, `game_map.is_blind_spot()`)
+- **FIXED: Node placement line range** - Changed "110-167" to "110-171" with breakdown (cooling 110-129, CPU 131-150, ghost 152-171)
+- **ADDED: Phase 2 TDD note** - Clarified test examples use helper fixtures that must be created first
+- **ADDED: Status bar bounds warning** - Note about rendering loop bounds check that may skip indicator if space exhausted
+
+### v2.1 (Previous - Final Audit Fixes)
+**Fixes from pre-implementation audit:**
+
+- **FIXED: GAME_AREA_WIDTH** - Corrected from 54 to 55 tiles (80 - 25 = 55)
+- **CLARIFIED: enemy_spawn_weights** - Path must be CREATED in game_rules.json (does not exist yet), not just modified
+- **FIXED: Serialization architecture** - Updated code examples to use `GameStatePersistence` class methods with `self` parameter (not standalone functions)
+- **ADDED: Status bar implementation detail** - Explicit code showing how to append to parallel `status_parts` and `colors` lists
+
+### v2.0 (Previous - Pre-Implementation Polish)
+**Fixes from comprehensive codebase verification audit:**
+
+- **FIXED: RestoreNode redundancy** - Removed `position` field from RestoreNode dataclass (position is already the dict key)
+- **ADDED: Mutation pattern reference** - Explicit code examples for migrating set operations to dict operations (add, remove, discard, iterate)
+- **ADDED: Serialization logic** - Complete Python code for `_serialize_node_states()` and `_deserialize_node_states()` functions
+- **ADDED: Partial restoration UX** - Message formats for full/partial/depleted node usage with color coding
+- **ADDED: test_finalize_session_stores_final_cpu** - Required test to verify new parameter is correctly stored
+- **ADDED: Checklist item** - Added unit test task for `final_cpu` parameter to Phase 0 checklist
+
+### v1.9 (Previous - Implementation Readiness Audit)
+**Fixes from comprehensive audit to prevent implementation friction:**
+
+- **ADDED: to_dict() field list** - Explicit code snippets for SessionMetrics.to_dict() additions (Phase 0.2)
+- **ADDED: from_dict() defaults** - Explicit code snippets for SessionMetrics.from_dict() defaults (Phase 0.2)
+- **ADDED: Test file caller note** - finalize_session() has 8 callers in test_metrics.py that work due to default parameter
+- **ADDED: JSON paths** - Enemy spawn weights at `gameplay.enemy_spawn_weights`, alert range at `gameplay.nearby_enemy_alert_radius`
+- **ADDED: Node mutation grep** - Second grep command to find `.add()`, `.remove()`, `.update()`, `.pop()` patterns
+- **ADDED: Migration strategy notes** - Membership checks still work; mutations need updating
+- **CLARIFIED: RestoreNode location** - Explicitly placed at top of `game_map.py` (after imports, before GameMap class)
+- **FIXED: death_cause locations** - Both line 51 comment AND docstring at line 342 need fixing
+- **ADDED: LifetimeMetrics updates** - Explicit code snippets for to_dict() and from_dict() updates
+- **ADDED: LifetimeMetrics checklist items** - Two new items in Phase 4 checklist
+- **ADDED: Emoji migration table** - All 25 existing achievement emojis with their bracketed replacements
+- **ADDED: alert range config note** - GameConfig.NEARBY_ENEMY_ALERT_RADIUS is loaded from JSON
+
+### v1.8 (Previous - Pre-Implementation Audit Fixes)
+**Fixes from codebase verification audit:**
+
+- **ADDED: to_dict() checklist item** - SessionMetrics.to_dict() must be updated when adding new fields
+- **ADDED: death_cause comment fix** - game_metrics.py:50 says "trace" but should say "virus"
+- **ADDED: grep verification step** - Phase 0.4 now includes grep command to identify all 40 affected files for node migration
+- **ADDED: test fixtures task** - Phase 1 now includes creating `tests/fixtures/ascension_fixtures.py` with helper functions
+- **ADDED: finalize_session() signature change** - Must accept `final_cpu` parameter; callers at game_turn_manager.py:789 and game_level_coordinator.py:199 need updating
+- **ENFORCED: No emoji icons** - All achievements (new AND existing) must use bracketed text icons like `[A5]`, `[KILL]` - NO emojis
+- **ADDED: Phase 4 migration task** - Existing achievements must be migrated from emoji to bracketed text
+
+### v1.7 (Previous - Pre-Implementation Audit Fixes)
+**Fixes from codebase verification audit:**
+
+- **FIXED: Wrong attribute name** - Changed `cpu_nodes` to `cpu_recovery_nodes` throughout (matches game_map.py)
+- **FIXED: Redundant field** - Removed `highest_heat_reached` from Phase 0.2 (already exists in SessionMetrics)
+- **ADDED: Implementation detail** - `own_worst_enemy` achievement now references existing `friendly_fire_exploit` mechanism
+- **ADDED: Missing file** - Added `game_level_placement.py` to Phase 2 files (handles node placement for A13/A19)
+- **FIXED: Line reference** - Spawn weights now correctly listed as lines 556-566 (not just 558)
+- **CLARIFIED: final_cpu** - Added note to set in `finalize_session()` and checklist item
+
+### v1.6 (Previous - Pre-Implementation Audit Fixes)
+**Fixes from codebase verification audit:**
+
+- **CONSOLIDATED: RestoreNode** - Merged duplicate `NodeState` and `RestoreNode` definitions into single `RestoreNode` dataclass in Phase 0.4
+- **EXPANDED: Node migration scope** - Phase 0.4 now explicitly covers all three node types: `cooling_nodes`, `cpu_recovery_nodes`, `ghost_nodes`
+- **ADDED: Complete JSON example** - All 20 ascension modifiers now shown in `game_rules.json` structure including A13 capacity ranges
+- **FIXED: Status bar spec** - Now specifies exact file (`game_status_bar_renderer.py`), format (`A#` without brackets), and placement
+- **ADDED: GameSettings.DEFAULTS** - Python code for ascension settings with accessor methods
+- **FIXED: Death cause list** - Corrected to actual values: `"combat"`, `"overheat"`, `"virus"` (not "trace")
+- **CLARIFIED: Phase 3 parallelization** - Explicitly documented which Phase 3 tasks can run parallel with Phase 2
+- **UPDATED: Implementation checklist** - Uses `RestoreNode` name, includes all three node types, adds GameSettings task
+
+### v1.5 (Previous - Implementation Audit)
+**Infrastructure prerequisites and save/load clarifications:**
+
+- **ADDED: Phase 0** - New foundation prerequisites phase before Phase 1
+- **ADDED: Death cause type** - `"self_damage"` needed for `own_worst_enemy` achievement
+- **ADDED: SessionMetrics fields** - All new fields now documented with explicit requirements
+- **ADDED: NodeState dataclass** - Migration path from `set[tuple]` to `dict[tuple, NodeState]` for node capacity
+- **ADDED: Save/load schema** - Explicit JSON schema for ascension state, node capacities, used blind spots
+- **FIXED: Persistence contradiction** - Line 57 now correctly references only `user_settings.json`
+- **MOVED: Config prereqs** - Enemy spawn weights and alert range changes moved from Phase 1 to Phase 0
+- **CLARIFIED: Phase dependencies** - Phase 1 now depends on Phase 0 complete
+- **UPDATED: Implementation checklist** - Added Phase 0 items, save/load tasks, removed duplicates
+
+### v1.4 (Previous - TDD & Achievements)
 **Added TDD requirements and new achievements:**
 
 - **FIXED: Achievement name collision**: Renamed A5 achievement from "Ghost Protocol" to "Sensor Sweep" (ghost_protocol already exists as stealth achievement)

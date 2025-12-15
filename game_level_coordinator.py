@@ -84,7 +84,9 @@ class GameLevelCoordinator:
 
         # Use the new LevelGenerator system
         self.game_engine.level_generator.generate_level(
-            self.game_engine.level, self.game_engine.game_state.dungeon_seed
+            self.game_engine.level,
+            self.game_engine.game_state.dungeon_seed,
+            self.game_engine.ascension_modifiers,
         )
 
         # Generate additional game elements not handled by LevelGenerator
@@ -248,6 +250,7 @@ class GameLevelCoordinator:
         """Clear all map data."""
         self.game_engine.game_map.walls.clear()
         self.game_engine.game_map.blind_spots.clear()
+        self.game_engine.game_map.used_blind_spots.clear()  # A20: clear consumed blind spots
         self.game_engine.game_map.cooling_nodes.clear()
         self.game_engine.game_map.cpu_recovery_nodes.clear()
         self.game_engine.game_map.ghost_nodes.clear()
@@ -552,25 +555,27 @@ class GameLevelCoordinator:
         )
 
     def _place_enemies(self, enemy_count: int):
-        """Place enemies throughout the level according to config."""
+        """Place enemies throughout the level according to config and ascension modifiers."""
         enemy_types = ["scanner", "patrol", "bot", "firewall", "hunter", "virus", "inhibitor"]
-        # Adjust weights for challenging gameplay
-        enemy_weights = [
-            4,
-            3,
-            2,
-            2,
-            2,
-            1,
-            2,
-        ]  # More scanners and firewalls for trace level challenge, virus is rare
+
+        # Get spawn weights from config (gameplay.enemy_spawn_weights)
+        base_weights = GameConfig.get_enemy_spawn_weights()
+        enemy_weights = [base_weights.get(t, 1) for t in enemy_types]
+
+        # Apply A12+ spawn weight overrides from ascension modifiers
+        mods = self.game_engine.ascension_modifiers
+        if mods.spawn_weights is not None:
+            enemy_weights = [mods.spawn_weights.get(t, base_weights.get(t, 1)) for t in enemy_types]
+
+        # Apply A9+ enemy count bonus
+        modified_count = enemy_count + mods.enemy_count_bonus
 
         placed_enemies = 0
         attempts = 0
 
         while (
-            placed_enemies < enemy_count
-            and attempts < enemy_count * GameConfig.ENEMY_PLACEMENT_ATTEMPTS_MULTIPLIER
+            placed_enemies < modified_count
+            and attempts < modified_count * GameConfig.ENEMY_PLACEMENT_ATTEMPTS_MULTIPLIER
         ):
             attempts += 1
             # Ensure enemies spawn well away from top-left player spawn area
@@ -604,13 +609,16 @@ class GameLevelCoordinator:
                             position
                         )
 
+                # Apply ascension modifiers to enemy stats (HP, vision, damage)
+                enemy.apply_ascension_modifiers(mods)
+
                 self.game_engine.enemy_manager.enemies.append(enemy)
                 placed_enemies += 1
 
         actual_count = len(self.game_engine.enemy_manager.enemies)
-        match_status = "MATCH" if actual_count == enemy_count else "MISMATCH"
+        match_status = "MATCH" if actual_count == modified_count else "MISMATCH"
         logging.info(
-            f"Item Placement: ENEMIES - Expected: {enemy_count}, Actual: {actual_count} [{match_status}]"
+            f"Item Placement: ENEMIES - Expected: {modified_count}, Actual: {actual_count} [{match_status}]"
         )
 
     def _is_valid_patch_placement(self, position: Position) -> bool:

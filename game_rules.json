@@ -51,7 +51,16 @@
     "virus_max_duration": 10,
     "max_ram_capacity": 32,
     "max_cpu_capacity": 200,
-    "nearby_enemy_alert_radius": 8,
+    "nearby_enemy_alert_radius": 6,
+    "enemy_spawn_weights": {
+      "scanner": 4,
+      "patrol": 3,
+      "bot": 2,
+      "firewall": 2,
+      "hunter": 2,
+      "virus": 1,
+      "inhibitor": 2
+    },
     "virus_damage_per_turn": 3,
     "player_spawn_x": 5,
     "player_spawn_y": 5,
@@ -920,6 +929,32 @@
     "lifetime_max": 4.0,
     "color_variation": 40,
     "sprite_color_count": 10
+  },
+  "ascension": {
+    "_comment": "Ascension modifier values - all numbers configurable for balance",
+    "max_level": 20,
+    "modifiers": {
+      "1": {"scanner_vision_bonus": 1},
+      "2": {"enemy_hp_bonus": 10},
+      "3": {"trace_gain_multiplier": 2.0},
+      "4": {"enemy_damage_multiplier": 1.2},
+      "5": {"enemy_vision_bonus": 1},
+      "6": {"blind_spot_reduction_per_floor": 1},
+      "7": {"hostile_trace_bonus": 0.2},
+      "8": {"heat_reduction_override": 1},
+      "9": {"enemy_count_bonus": 5},
+      "10": {"player_vision_override": 12},
+      "11": {"code_reduction_per_floor": 2, "code_minimum": 3},
+      "12": {"spawn_weights": {"scanner": 4, "patrol": 5, "bot": 4, "firewall": 3, "hunter": 4, "virus": 3, "inhibitor": 4}},
+      "13": {"node_capacity_ranges": {"floor_1": [100, 200], "floor_2": [75, 150], "floor_3": [50, 100]}},
+      "14": {"starting_ram_override": 6},
+      "15": {"alert_range_override": 10},
+      "16": {"room_generation": {"min_room_size": 5, "max_room_size": 10, "wide_corridor_weight": 0.40, "alcove_chance": 0.05, "cover_cluster_chance": 0.25}},
+      "17": {"melee_heat_bonus": 5},
+      "18": {"upgrade_reduction_per_floor": 1},
+      "19": {"node_reduction_per_floor": 1},
+      "20": {"blind_spots_consumable": true}
+    }
   },
   "metadata": {
     "version": "0.8.0 Alpha",

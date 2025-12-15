@@ -11,7 +11,7 @@ import pytest
 
 from game_config import GameConfig
 from game_level import LevelGenerator
-from game_map import GameMap
+from game_map import GameMap, RestoreNode
 
 
 class TestVariableCorridorWidths:
@@ -549,7 +549,7 @@ class TestStrategicCoverClusters:
 
         # Remove from corridor, add as special node - should be invalid
         self.level_generator.corridor_tiles.remove(test_pos)
-        self.game_map.cooling_nodes.add(test_pos)
+        self.game_map.cooling_nodes[test_pos] = RestoreNode(node_type="cooling")
         assert not self.level_generator.tactical_generator.is_valid_cover_position(test_pos)
 
         # Test out of bounds

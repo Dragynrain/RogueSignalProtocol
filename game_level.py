@@ -29,6 +29,7 @@ import logging
 import random
 
 # Import required classes and configs
+from game_ascension import AscensionModifiers
 from game_config import GameConfig
 from game_entities import Position
 from game_level_layout import AdvancedLayoutGenerator
@@ -107,7 +108,12 @@ class LevelGenerator:
             self.tactical_generator,
         )
 
-    def generate_level(self, level: int, seed: int) -> None:
+    def generate_level(
+        self,
+        level: int,
+        seed: int,
+        ascension_modifiers: AscensionModifiers | None = None,
+    ) -> None:
         """
         Generate a complete level from scratch using seeded RNG.
 
@@ -121,6 +127,7 @@ class LevelGenerator:
         Args:
             level: Current level number (affects difficulty, room counts, items)
             seed: Base RNG seed (combined with level for reproducibility)
+            ascension_modifiers: Optional AscensionModifiers for A13+ features
         """
         logging.debug(f"Level Gen: === Level {level} Generation START (seed={seed}) ===")
         import time
@@ -142,7 +149,9 @@ class LevelGenerator:
         # Place special tiles and items
         # Pass landmark rooms for objective-oriented placement
         landmark_rooms = getattr(self, "_landmark_rooms", [])
-        self.placement_generator.place_special_tiles(level, landmark_rooms=landmark_rooms)
+        self.placement_generator.place_special_tiles(
+            level, landmark_rooms=landmark_rooms, ascension_modifiers=ascension_modifiers
+        )
 
         # Use strategic gateway placement
         self.placement_generator.place_gateway_strategic(level)
@@ -172,6 +181,7 @@ class LevelGenerator:
         """Clear all existing level data."""
         self.game_map.walls.clear()
         self.game_map.blind_spots.clear()
+        self.game_map.used_blind_spots.clear()  # A20: clear consumed blind spots
         self.game_map.cooling_nodes.clear()
         self.game_map.cpu_recovery_nodes.clear()
         self.game_map.ghost_nodes.clear()

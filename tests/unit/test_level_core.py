@@ -11,7 +11,7 @@ import pytest
 from game_config import GameConfig
 from game_entities import Position
 from game_level import LevelGenerator
-from game_map import GameMap
+from game_map import GameMap, RestoreNode
 
 
 class TestLevelGenerator:
@@ -31,9 +31,9 @@ class TestLevelGenerator:
         # Add some data to clear
         self.game_map.walls.add((5, 5))
         self.game_map.blind_spots.add((10, 10))
-        self.game_map.cooling_nodes.add((15, 15))
-        self.game_map.cpu_recovery_nodes.add((20, 20))
-        self.game_map.ghost_nodes.add((25, 25))
+        self.game_map.cooling_nodes[(15, 15)] = RestoreNode(node_type="cooling")
+        self.game_map.cpu_recovery_nodes[(20, 20)] = RestoreNode(node_type="cpu")
+        self.game_map.ghost_nodes[(25, 25)] = RestoreNode(node_type="ghost")
         self.game_map.code_hacks[(30, 30)] = Mock()
         self.game_map.exploit_pickups[(35, 35)] = Mock()
         self.game_map.permanent_upgrades[(40, 40)] = "test_upgrade"

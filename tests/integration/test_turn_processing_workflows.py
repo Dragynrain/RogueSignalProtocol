@@ -279,13 +279,13 @@ class TestEnemyTurnProcessing:
         player_pos = Position(20, 20)
         basic_game_engine.player.position = player_pos
         basic_game_engine.game_map.blind_spots.discard((player_pos.x, player_pos.y))
-        basic_game_engine.game_map.ghost_nodes.discard((player_pos.x, player_pos.y))
+        basic_game_engine.game_map.ghost_nodes.pop((player_pos.x, player_pos.y), None)
 
         # Create hostile enemy ADJACENT to player to maintain continuous visibility
         # This prevents random de-escalation to UNAWARE (15% chance when can't see player)
         enemy_pos = Position(21, 20)  # Adjacent = always visible
         basic_game_engine.game_map.blind_spots.discard((enemy_pos.x, enemy_pos.y))
-        basic_game_engine.game_map.ghost_nodes.discard((enemy_pos.x, enemy_pos.y))
+        basic_game_engine.game_map.ghost_nodes.pop((enemy_pos.x, enemy_pos.y), None)
 
         enemy = enemy_builder(
             "bot",

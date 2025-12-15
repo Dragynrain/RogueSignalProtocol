@@ -248,20 +248,27 @@ class ExploitSystem:
 
     def _calculate_heat_cost(self, exploit: ExploitDefinition) -> int:
         """
-        Calculate heat cost with exploit efficiency bonus.
+        Calculate heat cost with exploit efficiency bonus and A17+ melee bonus.
 
         Exploit efficiency reduces heat cost by 40% (60% of original cost).
+        A17+ adds melee_heat_bonus to melee attacks (range 1 exploits).
 
         Args:
             exploit: Exploit definition with base heat cost
 
         Returns:
-            Final heat cost after efficiency bonus
+            Final heat cost after efficiency bonus and melee bonus
         """
+        base_heat = exploit.heat
+
+        # A17+: Add melee heat bonus for range-1 (melee) exploits
+        if exploit.range == 1:
+            base_heat += self.game.ascension_modifiers.melee_heat_bonus
+
         multiplier = (
             0.6 if self.game.player.temporary_effects["exploit_efficiency_turns"] > 0 else 1.0
         )
-        return int(exploit.heat * multiplier)
+        return int(base_heat * multiplier)
 
     def _validate_target(self, exploit: ExploitDefinition, target: Position) -> bool:
         """

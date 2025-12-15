@@ -107,6 +107,7 @@ class TestExploitSystem:
 
         mock_exploit = Mock(spec=ExploitDefinition)
         mock_exploit.heat = 20
+        mock_exploit.range = 5  # Non-melee range (no A17 bonus)
 
         heat_cost = exploit_system._calculate_heat_cost(mock_exploit)
 
@@ -121,6 +122,7 @@ class TestExploitSystem:
 
         mock_exploit = Mock(spec=ExploitDefinition)
         mock_exploit.heat = 30
+        mock_exploit.range = 5  # Non-melee range (no A17 bonus)
 
         heat_cost = exploit_system._calculate_heat_cost(mock_exploit)
 

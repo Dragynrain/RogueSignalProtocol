@@ -85,6 +85,8 @@ class SaveGameManager:
             "game_over": game.game_over,
             "admin_spawned": game.admin_spawned,
             "dungeon_seed": game.game_state.dungeon_seed,
+            # Ascension state
+            "ascension_level": game.ascension_level,
             # Player state
             "player": {
                 "x": game.player.x,
@@ -139,6 +141,23 @@ class SaveGameManager:
                 "last_known_enemy_positions": {
                     str(enemy_id): {"x": pos.x, "y": pos.y, "turn": turn}
                     for enemy_id, (pos, turn) in game.game_map.last_known_enemy_positions.items()
+                },
+                # A20: Used blind spots
+                "used_blind_spots": [f"{x},{y}" for x, y in game.game_map.used_blind_spots],
+                # A13+: Node capacity state
+                "node_capacity": {
+                    "cooling": {
+                        f"{pos[0]},{pos[1]}": node.used_capacity
+                        for pos, node in game.game_map.cooling_nodes.items()
+                    },
+                    "cpu": {
+                        f"{pos[0]},{pos[1]}": node.used_capacity
+                        for pos, node in game.game_map.cpu_recovery_nodes.items()
+                    },
+                    "ghost": {
+                        f"{pos[0]},{pos[1]}": node.used_capacity
+                        for pos, node in game.game_map.ghost_nodes.items()
+                    },
                 },
             },
             # Enemies

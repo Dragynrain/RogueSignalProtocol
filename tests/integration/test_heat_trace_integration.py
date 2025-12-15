@@ -18,6 +18,7 @@ These tests use REAL game objects with minimal mocking.
 import pytest
 
 from game_entities import Position
+from game_map import RestoreNode
 from tests.fixtures.simple_fixtures import create_real_enemy
 
 
@@ -113,7 +114,7 @@ class TestHeatDecay:
 
         # Set up player on cooling node with heat
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
         engine.player.position = cooling_pos
         engine.player.heat = 80
 
@@ -457,7 +458,7 @@ class TestEdgeCasesAndBoundaries:
 
         # Set up for rapid changes
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
         engine.player.inventory_manager.equipped_exploits.append("code_injection")
 
         bot = create_real_enemy("bot", Position(11, 10))
@@ -539,7 +540,7 @@ class TestComplexHeatTraceScenarios:
 
         # Set up cooling node
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
 
         # Build up heat
         engine.player.heat = 80
