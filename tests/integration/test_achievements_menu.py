@@ -63,8 +63,8 @@ class TestAchievementsMenuBasic:
             if "[X]" in line["text"] or "[ ]" in line["text"] or "🔒" in line["text"]
         ]
         assert (
-            len(achievement_lines) == 25
-        ), f"Expected 25 achievements, found {len(achievement_lines)}"
+            len(achievement_lines) == 37
+        ), f"Expected 37 achievements, found {len(achievement_lines)}"
 
     def test_text_wrapping(self):
         """Test text wrapping works correctly."""
@@ -288,7 +288,7 @@ class TestAchievementsMenuIntegration:
         # and that get_unlock_progress returns correct values
         unlocked, total = AchievementManager.get_unlock_progress()
         assert unlocked == 3
-        assert total == 25
+        assert total == 37
 
         # Clean up
         AchievementManager._unlocked_achievements = set()
@@ -332,7 +332,7 @@ class TestAchievementsMenuEdgeCases:
         # Check progress is 0/25
         unlocked, total = AchievementManager.get_unlock_progress()
         assert unlocked == 0
-        assert total == 25
+        assert total == 37
 
     def test_menu_handles_all_unlocked_achievements(self):
         """Test menu works when all achievements unlocked."""
@@ -347,8 +347,8 @@ class TestAchievementsMenuEdgeCases:
 
         # Check progress is 25/25
         unlocked, total = AchievementManager.get_unlock_progress()
-        assert unlocked == 25
-        assert total == 25
+        assert unlocked == 37
+        assert total == 37
 
         # Clean up
         AchievementManager._unlocked_achievements = set()

@@ -270,6 +270,10 @@ class LifetimeMetrics:
     total_damage_taken: int = 0
     total_stealth_kills: int = 0
 
+    # Ascension tracking
+    ascension_victories: Counter = field(default_factory=Counter)  # {level: count}
+    highest_ascension_completed: int = 0
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary, handling Counter objects."""
         return {
@@ -283,16 +287,53 @@ class LifetimeMetrics:
             "total_damage_dealt": self.total_damage_dealt,
             "total_damage_taken": self.total_damage_taken,
             "total_stealth_kills": self.total_stealth_kills,
+            "ascension_victories": dict(self.ascension_victories),
+            "highest_ascension_completed": self.highest_ascension_completed,
         }
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "LifetimeMetrics":
         """Create LifetimeMetrics from dictionary, restoring Counter objects."""
+        # Provide defaults for missing fields (backwards compatibility)
+        defaults = {
+            "total_games": 0,
+            "total_victories": 0,
+            "total_turns": 0,
+            "fastest_victory_turns": None,
+            "longest_survival_turns": 0,
+            "total_enemies_killed": Counter(),
+            "total_exploits_used": Counter(),
+            "total_damage_dealt": 0,
+            "total_damage_taken": 0,
+            "total_stealth_kills": 0,
+            "ascension_victories": Counter(),
+            "highest_ascension_completed": 0,
+        }
+        # Merge with provided data
+        merged = {**defaults, **data}
+
         # Convert dicts back to Counter objects
-        for key in ["total_enemies_killed", "total_exploits_used"]:
-            if key in data and isinstance(data[key], dict):
-                data[key] = Counter(data[key])
-        return cls(**data)
+        for key in ["total_enemies_killed", "total_exploits_used", "ascension_victories"]:
+            if key in merged and isinstance(merged[key], dict):
+                merged[key] = Counter(merged[key])
+
+        # Only pass known fields to avoid TypeError on unknown keys
+        known_fields = {
+            "total_games",
+            "total_victories",
+            "total_turns",
+            "fastest_victory_turns",
+            "longest_survival_turns",
+            "total_enemies_killed",
+            "total_exploits_used",
+            "total_damage_dealt",
+            "total_damage_taken",
+            "total_stealth_kills",
+            "ascension_victories",
+            "highest_ascension_completed",
+        }
+        filtered = {k: v for k, v in merged.items() if k in known_fields}
+        return cls(**filtered)
 
 
 def init_session_metrics() -> SessionMetrics:
