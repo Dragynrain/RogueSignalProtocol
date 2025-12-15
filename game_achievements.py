@@ -62,35 +62,35 @@ COMBAT_ACHIEVEMENTS = {
         id="first_blood",
         name="First Blood",
         description="Kill your first enemy",
-        icon="⚔️",
+        icon="[BLOOD]",
         category="combat",
     ),
     "massacre": Achievement(
         id="massacre",
         name="Massacre",
         description=f"Kill {MASSACRE_KILLS_THRESHOLD}+ enemies in one run",
-        icon="💀",
+        icon="[SKULL]",
         category="combat",
     ),
     "overkill": Achievement(
         id="overkill",
         name="Overkill",
         description=f"Deal {OVERKILL_DAMAGE_THRESHOLD}+ damage in a single hit",
-        icon="💥",
+        icon="[CRIT]",
         category="combat",
     ),
     "crowd_control": Achievement(
         id="crowd_control",
         name="Crowd Control",
         description=f"Hit {CROWD_CONTROL_AOE_THRESHOLD}+ enemies with one AOE exploit",
-        icon="🌀",
+        icon="[AOE]",
         category="combat",
     ),
     "efficient_killer": Achievement(
         id="efficient_killer",
         name="Efficient Killer",
         description=f"Average {int(EFFICIENT_KILLER_AVG_KILLS)}+ kills per turn for {EFFICIENT_KILLER_TURNS_THRESHOLD}+ turns",
-        icon="🎯",
+        icon="[TARGET]",
         category="combat",
     ),
 }
@@ -102,28 +102,28 @@ STEALTH_ACHIEVEMENTS = {
         id="silent_assassin",
         name="Silent Assassin",
         description=f"Kill {SILENT_ASSASSIN_STREAK_THRESHOLD} enemies without being detected",
-        icon="🔪",
+        icon="[KNIFE]",
         category="stealth",
     ),
     "ghost_protocol": Achievement(
         id="ghost_protocol",
         name="Ghost Protocol",
         description="Complete a level without being detected",
-        icon="👻",
+        icon="[GHOST]",
         category="stealth",
     ),
     "blind_spot_master": Achievement(
         id="blind_spot_master",
         name="Blind Spot Master",
         description=f"Kill {BLIND_SPOT_AMBUSHES_THRESHOLD}+ enemies from blind spots in one run",
-        icon="🌑",
+        icon="[DARK]",
         category="stealth",
     ),
     "invisible_victory": Achievement(
         id="invisible_victory",
         name="Invisible Victory",
         description="Win the game without ever being detected",
-        icon="🕶️",
+        icon="[INVIS]",
         category="stealth",
     ),
 }
@@ -135,28 +135,28 @@ EFFICIENCY_ACHIEVEMENTS = {
         id="speedrunner",
         name="Speedrunner",
         description="Win in under 100 turns",
-        icon="⚡",
+        icon="[FAST]",
         category="efficiency",
     ),
     "heat_master": Achievement(
         id="heat_master",
         name="Heat Master",
         description="Win while staying under 50 heat",
-        icon="🔥",
+        icon="[HEAT]",
         category="efficiency",
     ),
     "resource_efficient": Achievement(
         id="resource_efficient",
         name="Resource Efficient",
         description="Win without using any code hacks",
-        icon="📦",
+        icon="[BOX]",
         category="efficiency",
     ),
     "pure_skill": Achievement(
         id="pure_skill",
         name="Pure Skill",
         description="Win without using exploits or code hacks",
-        icon="🧠",
+        icon="[BRAIN]",
         category="efficiency",
         hidden=True,
     ),
@@ -169,28 +169,28 @@ CHALLENGE_ACHIEVEMENTS = {
         id="untouchable",
         name="Untouchable",
         description="Win without taking any damage",
-        icon="🛡️",
+        icon="[SHIELD]",
         category="challenge",
     ),
     "no_trace": Achievement(
         id="no_trace",
         name="No Trace",
         description="Win without trace level exceeding 50%",
-        icon="🔍",
+        icon="[SCAN]",
         category="challenge",
     ),
     "minimalist": Achievement(
         id="minimalist",
         name="Minimalist",
         description="Win with only 3 or fewer exploits equipped",
-        icon="✂️",
+        icon="[CUT]",
         category="challenge",
     ),
     "pacifist": Achievement(
         id="pacifist",
         name="Pacifist",
         description="Complete a level killing 5 or fewer enemies",
-        icon="☮️",
+        icon="[PEACE]",
         category="challenge",
     ),
 }
@@ -202,28 +202,28 @@ MASTERY_ACHIEVEMENTS = {
         id="master_hacker",
         name="Master Hacker",
         description="Use all 12 exploits in one run",
-        icon="💻",
+        icon="[HACK]",
         category="mastery",
     ),
     "code_collector": Achievement(
         id="code_collector",
         name="Code Collector",
         description="Use all 6 code hack types in one run",
-        icon="📚",
+        icon="[BOOK]",
         category="mastery",
     ),
     "enemy_database": Achievement(
         id="enemy_database",
         name="Enemy Database",
         description="Encounter all enemy types in one run",
-        icon="📖",
+        icon="[LORE]",
         category="mastery",
     ),
     "explorer": Achievement(
         id="explorer",
         name="Explorer",
         description="Discover all special node types in one run",
-        icon="🗺️",
+        icon="[MAP]",
         category="mastery",
     ),
 }
@@ -235,21 +235,21 @@ LIFETIME_ACHIEVEMENTS = {
         id="veteran",
         name="Veteran",
         description=f"Complete {VETERAN_GAMES_THRESHOLD} games",
-        icon="🎖️",
+        icon="[MEDAL]",
         category="lifetime",
     ),
     "persistent": Achievement(
         id="persistent",
         name="Persistent",
         description=f"Win {PERSISTENT_VICTORIES_THRESHOLD} games",
-        icon="🏆",
+        icon="[CUP]",
         category="lifetime",
     ),
     "legendary": Achievement(
         id="legendary",
         name="Legendary",
         description=f"Win {LEGENDARY_VICTORIES_THRESHOLD} games",
-        icon="👑",
+        icon="[CROWN]",
         category="lifetime",
         hidden=True,
     ),
@@ -257,8 +257,106 @@ LIFETIME_ACHIEVEMENTS = {
         id="survivor",
         name="Survivor",
         description=f"Survive {SURVIVOR_TURNS_THRESHOLD}+ turns in a single run",
-        icon="⏱️",
+        icon="[TIME]",
         category="lifetime",
+    ),
+}
+
+
+# Category: Ascension Achievements
+ASCENSION_ACHIEVEMENTS = {
+    "sensor_sweep": Achievement(
+        id="sensor_sweep",
+        name="Sensor Sweep",
+        description="Complete Ascension 5",
+        icon="[A5]",
+        category="ascension",
+    ),
+    "firewall_breaker": Achievement(
+        id="firewall_breaker",
+        name="Firewall Breaker",
+        description="Complete Ascension 10",
+        icon="[A10]",
+        category="ascension",
+    ),
+    "silent_running": Achievement(
+        id="silent_running",
+        name="Silent Running",
+        description="Complete Ascension 15",
+        icon="[A15]",
+        category="ascension",
+    ),
+    "ascension_master": Achievement(
+        id="ascension_master",
+        name="Ascension Master",
+        description="Complete Ascension 20",
+        icon="[A20]",
+        category="ascension",
+        hidden=True,
+    ),
+}
+
+
+# Category: Fun/Hidden Achievements
+FUN_ACHIEVEMENTS = {
+    "thermal_meltdown": Achievement(
+        id="thermal_meltdown",
+        name="Thermal Meltdown",
+        description="Die from overheating while using System Crash",
+        icon="[MELT]",
+        category="challenge",
+        hidden=True,
+    ),
+    "own_worst_enemy": Achievement(
+        id="own_worst_enemy",
+        name="Own Worst Enemy",
+        description="Kill yourself with Logic Bomb friendly fire",
+        icon="[BOOM]",
+        category="challenge",
+        hidden=True,
+    ),
+    "admin_slayer": Achievement(
+        id="admin_slayer",
+        name="Admin Slayer",
+        description="Defeat the Admin Avatar",
+        icon="[ADMIN]",
+        category="combat",
+    ),
+    "close_call": Achievement(
+        id="close_call",
+        name="Close Call",
+        description="Win with 5 or less CPU remaining",
+        icon="[CLOSE]",
+        category="challenge",
+    ),
+    "cold_blooded": Achievement(
+        id="cold_blooded",
+        name="Cold Blooded",
+        description="Win without ever exceeding 25 heat",
+        icon="[COLD]",
+        category="efficiency",
+    ),
+    "floor_is_lava": Achievement(
+        id="floor_is_lava",
+        name="The Floor is Lava",
+        description="Win without stepping on any restoration nodes",
+        icon="[LAVA]",
+        category="challenge",
+        hidden=True,
+    ),
+    "full_clear": Achievement(
+        id="full_clear",
+        name="Full Clear",
+        description="Eliminate every enemy on a floor",
+        icon="[CLEAR]",
+        category="combat",
+    ),
+    "shadow_dancer": Achievement(
+        id="shadow_dancer",
+        name="Shadow Dancer",
+        description="Spend 100+ turns in blind spots in a single run",
+        icon="[SHADOW]",
+        category="stealth",
     ),
 }
 
@@ -271,6 +369,8 @@ ALL_ACHIEVEMENTS: dict[str, Achievement] = {
     **CHALLENGE_ACHIEVEMENTS,
     **MASTERY_ACHIEVEMENTS,
     **LIFETIME_ACHIEVEMENTS,
+    **ASCENSION_ACHIEVEMENTS,
+    **FUN_ACHIEVEMENTS,
 }
 
 
@@ -518,6 +618,72 @@ class AchievementChecker:
         # Survivor - 500+ turns
         if "survivor" not in already_unlocked and session.turns_taken >= SURVIVOR_TURNS_THRESHOLD:
             newly_unlocked.append("survivor")
+
+        # ============================================
+        # Ascension achievements
+        # ============================================
+        if session.victory and session.ascension_level >= 5:
+            if "sensor_sweep" not in already_unlocked:
+                newly_unlocked.append("sensor_sweep")
+        if session.victory and session.ascension_level >= 10:
+            if "firewall_breaker" not in already_unlocked:
+                newly_unlocked.append("firewall_breaker")
+        if session.victory and session.ascension_level >= 15:
+            if "silent_running" not in already_unlocked:
+                newly_unlocked.append("silent_running")
+        if session.victory and session.ascension_level >= 20:
+            if "ascension_master" not in already_unlocked:
+                newly_unlocked.append("ascension_master")
+
+        # ============================================
+        # Fun/hidden achievements
+        # ============================================
+
+        # Thermal Meltdown: die from overheat while using System Crash
+        if (
+            session.death_cause == "overheat"
+            and session.last_exploit_used == "system_crash"
+        ):
+            if "thermal_meltdown" not in already_unlocked:
+                newly_unlocked.append("thermal_meltdown")
+
+        # Own Worst Enemy: kill yourself with Logic Bomb
+        if (
+            session.death_cause == "self_damage"
+            and session.last_exploit_used == "logic_bomb"
+        ):
+            if "own_worst_enemy" not in already_unlocked:
+                newly_unlocked.append("own_worst_enemy")
+
+        # Admin Slayer: defeat the Admin Avatar
+        if session.admin_kills > 0:
+            if "admin_slayer" not in already_unlocked:
+                newly_unlocked.append("admin_slayer")
+
+        # Close Call: win with 5 or less CPU
+        if session.victory and session.final_cpu <= 5:
+            if "close_call" not in already_unlocked:
+                newly_unlocked.append("close_call")
+
+        # Cold Blooded: win without exceeding 25 heat
+        if session.victory and session.highest_heat_reached <= 25:
+            if "cold_blooded" not in already_unlocked:
+                newly_unlocked.append("cold_blooded")
+
+        # Floor is Lava: win without using restoration nodes
+        if session.victory and session.restoration_nodes_used == 0:
+            if "floor_is_lava" not in already_unlocked:
+                newly_unlocked.append("floor_is_lava")
+
+        # Full Clear: eliminate all enemies on a floor
+        if session.full_floor_clears > 0:
+            if "full_clear" not in already_unlocked:
+                newly_unlocked.append("full_clear")
+
+        # Shadow Dancer: spend 100+ turns in blind spots
+        if session.turns_in_blind_spots >= 100:
+            if "shadow_dancer" not in already_unlocked:
+                newly_unlocked.append("shadow_dancer")
 
         return newly_unlocked
 

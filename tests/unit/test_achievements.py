@@ -398,13 +398,13 @@ def test_achievement_manager_get_by_category(clean_achievement_state):
     """Test getting achievements by category."""
     combat_achievements = AchievementManager.get_achievements_by_category("combat")
     assert (
-        len(combat_achievements) == 5
-    )  # first_blood, massacre, overkill, crowd_control, efficient_killer
+        len(combat_achievements) == 7
+    )  # first_blood, massacre, overkill, crowd_control, efficient_killer, admin_slayer, full_clear
 
     stealth_achievements = AchievementManager.get_achievements_by_category("stealth")
     assert (
-        len(stealth_achievements) == 4
-    )  # silent_assassin, ghost_protocol, blind_spot_master, invisible_victory
+        len(stealth_achievements) == 5
+    )  # silent_assassin, ghost_protocol, blind_spot_master, invisible_victory, shadow_dancer
 
 
 # ============================================================================
@@ -440,5 +440,5 @@ def test_achievement_info_retrieval(clean_achievement_state):
 
     assert first_blood is not None
     assert first_blood.name == "First Blood"
-    assert first_blood.icon == "⚔️"
+    assert first_blood.icon == "[BLOOD]"
     assert first_blood.category == "combat"

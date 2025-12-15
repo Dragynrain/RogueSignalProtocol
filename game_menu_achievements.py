@@ -101,6 +101,7 @@ class AchievementsMenu(BaseMenu):
             ("challenge", "CHALLENGE RUNS"),
             ("mastery", "MASTERY & COLLECTION"),
             ("lifetime", "LIFETIME"),
+            ("ascension", "ASCENSION"),
         ]
 
         for category_id, category_title in categories:
