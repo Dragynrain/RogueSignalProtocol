@@ -63,6 +63,7 @@ class MainMenu(BaseMenu):
         if self.last_action:
             # Map actions to option names
             action_to_option = {
+                "ascension": "Ascension",  # Partial match OK since it has (A#) suffix
                 "settings": "Settings",
                 "controls": "Controls",
                 "help": "Help",
@@ -89,13 +90,23 @@ class MainMenu(BaseMenu):
 
         base_options = [
             "New Game",
-            "Settings",
-            "Controls",
-            "Help",
-            "Achievements",
-            f"Data Fragments ({discovered}/{total})",
-            "About",
         ]
+
+        # Only show Ascension option if A1+ is unlocked
+        if self.settings and self.settings.get_highest_ascension_unlocked() > 0:
+            current_level = self.settings.get_ascension_level()
+            base_options.append(f"Ascension (A{current_level})")
+
+        base_options.extend(
+            [
+                "Settings",
+                "Controls",
+                "Help",
+                "Achievements",
+                f"Data Fragments ({discovered}/{total})",
+                "About",
+            ]
+        )
 
         # Only show Graphics Preview if in graphics mode AND the menu exists
         if (
@@ -137,13 +148,23 @@ class MainMenu(BaseMenu):
         # Build base options
         base_options = [
             "New Game",
-            "Settings",
-            "Controls",
-            "Help",
-            "Achievements",
-            f"Data Fragments ({discovered}/{total})",
-            "About",
         ]
+
+        # Only show Ascension option if A1+ is unlocked
+        if self.settings and self.settings.get_highest_ascension_unlocked() > 0:
+            current_level = self.settings.get_ascension_level()
+            base_options.append(f"Ascension (A{current_level})")
+
+        base_options.extend(
+            [
+                "Settings",
+                "Controls",
+                "Help",
+                "Achievements",
+                f"Data Fragments ({discovered}/{total})",
+                "About",
+            ]
+        )
 
         # Only show Graphics Preview if in graphics mode AND the menu exists
         if (
@@ -526,6 +547,9 @@ class MainMenu(BaseMenu):
                 return ""
             else:
                 return "new_game"
+        elif option.startswith("Ascension"):
+            self.last_action = "ascension"
+            return "ascension"
         elif option == "Settings":
             self.last_action = "settings"
             return "settings"

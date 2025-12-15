@@ -77,6 +77,12 @@ class GameSettings:
         # Steam Deck / handheld optimizations
         "ui_scale": "auto",  # "auto", "compact", "normal" - compact shows more tiles at smaller size
         "music_boost": None,  # None = auto (ON for Linux, OFF for Windows), True/False = manual override
+        # Ascension system (progressive difficulty)
+        "ascension": {
+            "current_level": 0,
+            "highest_unlocked": 0,
+            "victories_per_level": {},
+        },
     }
 
     def __init__(self):
@@ -328,6 +334,44 @@ class GameSettings:
             # Auto: enabled on Linux, disabled elsewhere
             return is_linux()
         return self.music_boost
+
+    # Ascension system accessors
+    def get_ascension_level(self) -> int:
+        """Get current ascension level (0-20)."""
+        return self.ascension.get("current_level", 0)
+
+    def set_ascension_level(self, level: int) -> None:
+        """Set current ascension level for next run."""
+        self.ascension["current_level"] = max(0, min(20, level))
+        self.save_settings()
+
+    def get_highest_ascension_unlocked(self) -> int:
+        """Get highest unlocked ascension level."""
+        return self.ascension.get("highest_unlocked", 0)
+
+    def unlock_ascension(self, level: int) -> bool:
+        """
+        Unlock ascension level if higher than current highest.
+
+        Args:
+            level: The level to unlock
+
+        Returns:
+            True if newly unlocked, False if already unlocked or lower
+        """
+        if level > self.ascension.get("highest_unlocked", 0):
+            self.ascension["highest_unlocked"] = min(20, level)
+            self.save_settings()
+            return True
+        return False
+
+    def record_ascension_victory(self, level: int) -> None:
+        """Record a victory at a specific ascension level."""
+        victories = self.ascension.get("victories_per_level", {})
+        level_key = str(level)
+        victories[level_key] = victories.get(level_key, 0) + 1
+        self.ascension["victories_per_level"] = victories
+        self.save_settings()
 
     @property
     def audio_enabled(self) -> bool:

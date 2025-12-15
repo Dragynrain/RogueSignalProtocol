@@ -39,6 +39,29 @@ class StatusBarRenderer:
         # Instance variable to store exploit positions for mouse click detection
         self.last_exploit_positions = []
 
+    def _get_status_parts(self, game) -> list[str]:
+        """
+        Get the status parts for testing.
+
+        Args:
+            game: GameEngine with player stats
+
+        Returns:
+            List of status part strings
+        """
+        parts = [
+            f"CPU:{game.player.cpu:3d}/{game.player.max_cpu}",
+            f"Heat:{game.player.heat:3d}°C",
+            f"Trace:{int(game.player.trace_level):3d}%",
+            f"RAM:{game.player.ram_used}/{game.player.ram_total}GB",
+        ]
+
+        # Add ascension indicator if above A0
+        if hasattr(game, "ascension_level") and game.ascension_level > 0:
+            parts.append(f"A{game.ascension_level}")
+
+        return parts
+
     def render_top_status_bar(self, console: tcod.console.Console, game):
         """
         Render the top status bar with player resources.
@@ -77,6 +100,11 @@ class StatusBarRenderer:
         ]
 
         colors = [cpu_color, heat_color, trace_color, ram_color]
+
+        # Add ascension indicator if above A0
+        if hasattr(game, "ascension_level") and game.ascension_level > 0:
+            status_parts.append(f"A{game.ascension_level}")
+            colors.append(Colors.CYAN)
 
         # Render status text on row 0
         x_pos = 1
