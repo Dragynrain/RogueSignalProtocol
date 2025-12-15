@@ -10,6 +10,7 @@ Manages all map-related data:
 - Line of sight calculations using TCOD FOV
 """
 
+from dataclasses import dataclass
 from functools import lru_cache
 
 import tcod
@@ -17,6 +18,51 @@ import tcod.constants
 
 from game_entities import Position
 from game_inventory import CodeHack, ExploitItem, StoryFragment
+
+
+@dataclass
+class RestoreNode:
+    """
+    Tracks per-node state for A13+ capacity system.
+
+    Position is NOT stored in RestoreNode - it's the dict key.
+    This avoids redundancy and potential key/value mismatch bugs.
+    """
+
+    node_type: str  # "cooling", "cpu", "ghost"
+    total_capacity: int = -1  # -1 = unlimited (pre-A13), >0 = max capacity
+    used_capacity: int = 0  # How much has been consumed
+
+    def use(self, amount_needed: int) -> int:
+        """
+        Consume capacity and return actual restoration amount.
+
+        Only consumes capacity equal to actual benefit provided.
+        Returns actual amount restored (may be less than requested if depleted).
+
+        Args:
+            amount_needed: Amount of restoration requested
+
+        Returns:
+            Actual amount restored (may be less if capacity is limited)
+        """
+        if self.total_capacity == -1:
+            return amount_needed  # Unlimited
+
+        remaining = self.total_capacity - self.used_capacity
+        actual = min(amount_needed, remaining)
+        self.used_capacity += actual
+        return actual
+
+    @property
+    def depleted(self) -> bool:
+        """Check if node is fully depleted."""
+        return self.total_capacity != -1 and self.used_capacity >= self.total_capacity
+
+    @property
+    def unlimited(self) -> bool:
+        """Check if node has unlimited capacity."""
+        return self.total_capacity == -1
 
 
 class GameMap:
@@ -35,11 +81,14 @@ class GameMap:
         # Terrain sets
         self.walls: set[tuple[int, int]] = set()
         self.blind_spots: set[tuple[int, int]] = set()
+        self.used_blind_spots: set[tuple[int, int]] = set()  # A20: consumed blind spots
 
-        # Feature sets
-        self.cooling_nodes: set[tuple[int, int]] = set()
-        self.cpu_recovery_nodes: set[tuple[int, int]] = set()
-        self.ghost_nodes: set[tuple[int, int]] = set()
+        # Node dicts - dict[position, RestoreNode] for A13+ capacity system
+        # Membership check: `pos in cooling_nodes` works same as with sets
+        # Iteration: `for pos in cooling_nodes` iterates over positions
+        self.cooling_nodes: dict[tuple[int, int], RestoreNode] = {}
+        self.cpu_recovery_nodes: dict[tuple[int, int], RestoreNode] = {}
+        self.ghost_nodes: dict[tuple[int, int], RestoreNode] = {}
 
         # Items
         self.code_hacks: dict[tuple[int, int], CodeHack] = {}
@@ -87,6 +136,26 @@ class GameMap:
             position.x,
             position.y,
         ) in self.ghost_nodes
+
+    def consume_blind_spot(self, position: Position) -> bool:
+        """
+        Consume a blind spot (A20+: one-time-use blind spots).
+
+        Moves the blind spot from active to used. Ghost nodes are NOT consumed
+        as they are special nodes, not regular blind spots.
+
+        Args:
+            position: Position of blind spot to consume
+
+        Returns:
+            True if blind spot was consumed, False if not a consumable blind spot
+        """
+        pos = (position.x, position.y)
+        if pos in self.blind_spots:
+            self.blind_spots.remove(pos)
+            self.used_blind_spots.add(pos)
+            return True
+        return False
 
     def is_cooling_node(self, position: Position) -> bool:
         """Check if position contains a cooling node."""

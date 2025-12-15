@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 from game_config import GameSettings
 from game_engine import GameEngine
 from game_entities import Position
+from game_map import RestoreNode
 from game_story import StoryFragmentManager
 
 
@@ -180,7 +181,7 @@ class TestLevelAudioIntegration(unittest.TestCase):
     def test_special_nodes_audio_feedback(self):
         """Test that special nodes provide audio feedback."""
         # Add cooling node
-        self.engine.game_map.cooling_nodes.add((30, 30))
+        self.engine.game_map.cooling_nodes[(30, 30)] = RestoreNode(node_type="cooling")
         self.engine.player.x, self.engine.player.y = 30, 30
         self.engine.player.heat = 50  # Set some heat to be reduced
 

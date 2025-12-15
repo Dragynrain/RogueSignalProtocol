@@ -10,7 +10,7 @@ from game_entities import Position
 from game_inventory import CodeHack, ExploitItem
 
 # Import actual map classes
-from game_map import GameMap
+from game_map import GameMap, RestoreNode
 
 
 class TestGameMapInitialization:
@@ -113,7 +113,7 @@ class TestTerrainQueries:
         test_pos = Position(25, 15)
 
         # Ghost nodes function as blind spots
-        game_map.ghost_nodes.add((25, 15))
+        game_map.ghost_nodes[(25, 15)] = RestoreNode(node_type="ghost")
         assert game_map.is_blind_spot(test_pos) is True
 
     def test_is_blind_spot_out_of_bounds(self):
@@ -146,7 +146,7 @@ class TestFeatureNodes:
 
         assert game_map.is_cooling_node(node_pos) is False
 
-        game_map.cooling_nodes.add((30, 20))
+        game_map.cooling_nodes[(30, 20)] = RestoreNode(node_type="cooling")
         assert game_map.is_cooling_node(node_pos) is True
 
     def test_cpu_recovery_node_trace_level(self):
@@ -156,7 +156,7 @@ class TestFeatureNodes:
 
         assert game_map.is_cpu_recovery_node(node_pos) is False
 
-        game_map.cpu_recovery_nodes.add((35, 25))
+        game_map.cpu_recovery_nodes[(35, 25)] = RestoreNode(node_type="cpu")
         assert game_map.is_cpu_recovery_node(node_pos) is True
 
     def test_ghost_node_trace_level(self):
@@ -166,7 +166,7 @@ class TestFeatureNodes:
 
         assert game_map.is_ghost_node(node_pos) is False
 
-        game_map.ghost_nodes.add((40, 18))
+        game_map.ghost_nodes[(40, 18)] = RestoreNode(node_type="ghost")
         assert game_map.is_ghost_node(node_pos) is True
 
     def test_multiple_node_types(self):
@@ -175,9 +175,9 @@ class TestFeatureNodes:
         pos = Position(25, 15)
 
         # Add multiple node types at same position (though unusual)
-        game_map.cooling_nodes.add((25, 15))
-        game_map.cpu_recovery_nodes.add((25, 15))
-        game_map.ghost_nodes.add((25, 15))
+        game_map.cooling_nodes[(25, 15)] = RestoreNode(node_type="cooling")
+        game_map.cpu_recovery_nodes[(25, 15)] = RestoreNode(node_type="cpu")
+        game_map.ghost_nodes[(25, 15)] = RestoreNode(node_type="ghost")
 
         assert game_map.is_cooling_node(pos) is True
         assert game_map.is_cpu_recovery_node(pos) is True
@@ -503,9 +503,9 @@ class TestMapIntegration:
         game_map.blind_spots.update([(5, 5), (6, 6), (7, 7)])  # Shadow area
 
         # Add special nodes
-        game_map.cooling_nodes.add((20, 20))
-        game_map.cpu_recovery_nodes.add((25, 25))
-        game_map.ghost_nodes.add((30, 30))
+        game_map.cooling_nodes[(20, 20)] = RestoreNode(node_type="cooling")
+        game_map.cpu_recovery_nodes[(25, 25)] = RestoreNode(node_type="cpu")
+        game_map.ghost_nodes[(30, 30)] = RestoreNode(node_type="ghost")
 
         # Add items
         mock_code_hack = Mock(spec=CodeHack)
@@ -562,7 +562,7 @@ class TestMapIntegration:
         pos = Position(25, 15)
         game_map.walls.add((25, 15))
         game_map.blind_spots.add((25, 15))
-        game_map.cooling_nodes.add((25, 15))
+        game_map.cooling_nodes[(25, 15)] = RestoreNode(node_type="cooling")
 
         # Wall should block movement
         assert game_map.is_valid_position(pos) is False

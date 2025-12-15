@@ -203,39 +203,55 @@ class GameTurnManager:
         else:
             self.game_engine.last_node_position = None
 
-        # Cooling node
+        # Cooling node (with A13+ capacity support)
         if self.game_engine.game_map.is_cooling_node(self.game_engine.player.position):
-            old_heat = self.game_engine.player.heat
-            self.game_engine.player.heat = max(0, self.game_engine.player.heat - 20)
-            if old_heat > self.game_engine.player.heat and should_play_sound:
-                self.game_engine.sound_manager.play_sound("node_activate")
+            node = self.game_engine.game_map.cooling_nodes.get(player_pos)
+            if node and not node.depleted:
+                wanted_reduction = 20
+                # Calculate actual benefit needed (don't waste capacity)
+                actual_benefit = min(wanted_reduction, self.game_engine.player.heat)
+                if actual_benefit > 0:
+                    restored = node.use(actual_benefit)
+                    old_heat = self.game_engine.player.heat
+                    self.game_engine.player.heat = max(0, self.game_engine.player.heat - restored)
+                    if old_heat > self.game_engine.player.heat and should_play_sound:
+                        self.game_engine.sound_manager.play_sound("node_activate")
 
-        # CPU recovery node
+        # CPU recovery node (with A13+ capacity support)
         if self.game_engine.game_map.is_cpu_recovery_node(self.game_engine.player.position):
-            recovery = min(
-                GameBalance.CPU_RECOVERY_AMOUNT,
-                self.game_engine.player.max_cpu - self.game_engine.player.cpu,
-            )
-            self.game_engine.player.cpu += recovery
-            if recovery > 0 and should_play_sound:
-                self.game_engine.sound_manager.play_sound("node_activate")
+            node = self.game_engine.game_map.cpu_recovery_nodes.get(player_pos)
+            if node and not node.depleted:
+                wanted_recovery = GameBalance.CPU_RECOVERY_AMOUNT
+                # Calculate actual benefit needed (don't waste capacity)
+                actual_benefit = min(
+                    wanted_recovery,
+                    self.game_engine.player.max_cpu - self.game_engine.player.cpu,
+                )
+                if actual_benefit > 0:
+                    restored = node.use(actual_benefit)
+                    self.game_engine.player.cpu += restored
+                    if restored > 0 and should_play_sound:
+                        self.game_engine.sound_manager.play_sound("node_activate")
 
-        # Ghost node (trace level reduction while standing on it)
+        # Ghost node (trace level reduction with A13+ capacity support)
         if self.game_engine.game_map.is_ghost_node(self.game_engine.player.position):
-            # Reduce trace level by fixed amount per turn while standing on the node
-            reduction_amount = 20
-            old_trace = self.game_engine.player.trace_level
-            self.game_engine.player.trace_level = max(
-                0, self.game_engine.player.trace_level - reduction_amount
-            )
-            actual_reduction = old_trace - self.game_engine.player.trace_level
+            node = self.game_engine.game_map.ghost_nodes.get(player_pos)
+            if node and not node.depleted:
+                wanted_reduction = 20
+                # Calculate actual benefit needed (don't waste capacity)
+                actual_benefit = min(wanted_reduction, self.game_engine.player.trace_level)
+                if actual_benefit > 0:
+                    restored = node.use(int(actual_benefit))
+                    old_trace = self.game_engine.player.trace_level
+                    self.game_engine.player.trace_level = max(
+                        0, self.game_engine.player.trace_level - restored
+                    )
+                    actual_reduction = old_trace - self.game_engine.player.trace_level
 
-            # Only play sound when first stepping on the node or when there's actual reduction
-            if should_play_sound or actual_reduction > 0:
-                # Ghost node trace level reduction messages removed per user request
-                # self.game_engine.message_log.add_message(f"Ghost node: Trace Level reduced by {actual_reduction:.1f}")
-                if should_play_sound:
-                    self.game_engine.sound_manager.play_sound("node_activate")
+                    # Only play sound when first stepping on the node or when there's actual reduction
+                    if should_play_sound or actual_reduction > 0:
+                        if should_play_sound:
+                            self.game_engine.sound_manager.play_sound("node_activate")
 
         # Code hack
         if player_pos in self.game_engine.game_map.code_hacks:
@@ -311,6 +327,10 @@ class GameTurnManager:
             blind_spot_msg = self.game_engine.narrative_manager.trigger_first_blind_spot()
             if blind_spot_msg:
                 self.game_engine.message_log.add_message(blind_spot_msg)
+
+            # A20+: Consume blind spot after first use (one-time-use)
+            if self.game_engine.ascension_modifiers.blind_spots_consumable:
+                self.game_engine.game_map.consume_blind_spot(pp)
 
         # Environmental narrative: Low CPU warning
         cpu_percent = self.game_engine.player.cpu / self.game_engine.player.max_cpu
@@ -538,10 +558,14 @@ class GameTurnManager:
         self._alert_nearby_enemies(enemy)
 
     def _increase_trace(self, default_value, config_key):
-        """Increase player trace level."""
+        """Increase player trace level, with A7+ hostile trace bonus."""
         network_configs = GameConfig.NETWORK_CONFIGS()
         level_config = network_configs[self.game_engine.level]
         trace_increase = level_config[config_key]
+
+        # A7+: Add hostile trace bonus from ascension modifiers
+        trace_increase += self.game_engine.ascension_modifiers.hostile_trace_bonus
+
         old_trace = self.game_engine.player.trace_level
         self.game_engine.player.trace_level = min(
             100, self.game_engine.player.trace_level + trace_increase
@@ -583,12 +607,17 @@ class GameTurnManager:
                 break
 
     def _alert_nearby_enemies(self, alerting_enemy):
-        """Alert nearby enemies when one becomes hostile."""
+        """Alert nearby enemies when one becomes hostile, with A15+ override."""
         # Stunned enemies cannot alert others
         if alerting_enemy.disabled_turns > 0:
             return
 
-        alert_range = GameConfig.NEARBY_ENEMY_ALERT_RADIUS  # Use config value
+        # A15+: Use alert range override if set, otherwise use config default
+        mods = self.game_engine.ascension_modifiers
+        if mods.alert_range_override is not None:
+            alert_range = mods.alert_range_override
+        else:
+            alert_range = GameConfig.NEARBY_ENEMY_ALERT_RADIUS
         alerted_count = 0
 
         for enemy in self.game_engine.enemies:

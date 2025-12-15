@@ -16,6 +16,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from data_loading import DataLoader
+from game_ascension import AscensionModifiers
 from game_config import GameBalance, GameConfig
 from game_entities import Colors, Position, ensure_color_tuple
 from game_save import SaveGameManager
@@ -227,16 +228,23 @@ class TurnProcessor:
     by GameTurnManager.
     """
 
-    def __init__(self, game_state: GameStateManager, message_log: MessageLog):
+    def __init__(
+        self,
+        game_state: GameStateManager,
+        message_log: MessageLog,
+        ascension_modifiers: AscensionModifiers | None = None,
+    ):
         """
         Initialize turn processor.
 
         Args:
             game_state: GameStateManager instance
             message_log: MessageLog instance for status messages
+            ascension_modifiers: Optional AscensionModifiers for difficulty scaling
         """
         self.game_state = game_state
         self.message_log = message_log
+        self.ascension_modifiers = ascension_modifiers or AscensionModifiers()
 
     def process_turn(self, player) -> None:
         """
@@ -260,13 +268,17 @@ class TurnProcessor:
         self._process_trace_increase(player)
 
     def _process_heat_management(self, player) -> None:
-        """Handle heat reduction over time."""
+        """Handle heat reduction over time, with A8+ ascension modifier."""
         if player.heat > 0:
-            heat_reduction = (
-                GameBalance.HEAT_REDUCTION_BOOSTED
-                if player.temporary_effects["exploit_efficiency_turns"] > 0
-                else GameBalance.HEAT_REDUCTION_NORMAL
-            )
+            # Determine base heat reduction rate
+            if player.temporary_effects["exploit_efficiency_turns"] > 0:
+                heat_reduction = GameBalance.HEAT_REDUCTION_BOOSTED
+            else:
+                heat_reduction = GameBalance.HEAT_REDUCTION_NORMAL
+
+            # A8+: Override heat reduction if ascension modifier is set
+            if self.ascension_modifiers.heat_reduction_override is not None:
+                heat_reduction = self.ascension_modifiers.heat_reduction_override
 
             player.heat = max(0, player.heat - heat_reduction)
 
@@ -327,10 +339,13 @@ class TurnProcessor:
                         self.message_log.add_message("Virus purged from system")
 
     def _process_trace_increase(self, player) -> None:
-        """Handle periodic trace level increases."""
+        """Handle periodic trace level increases, with A3+ ascension modifier."""
         if self.game_state.turn % GameBalance.TRACE_INCREASE_INTERVAL == 0:
             config = self.game_state.get_current_network_config()
             trace_increase = config.get("background_trace", 1) * GameBalance.TRACE_INCREASE_AMOUNT
+
+            # A3+: Apply trace gain multiplier
+            trace_increase *= self.ascension_modifiers.trace_gain_multiplier
 
             old_trace = player.trace_level
             player.trace_level = min(100, player.trace_level + trace_increase)

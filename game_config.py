@@ -773,6 +773,11 @@ class GameConfig:
         """Get network configurations from game data."""
         return cls.get_network_configs()
 
+    @classmethod
+    def get_enemy_spawn_weights(cls) -> dict[str, int]:
+        """Get enemy spawn weights from gameplay config."""
+        return cls._get_required("gameplay.enemy_spawn_weights")
+
 
 class RoomGenerationConfig:
     """Configuration for procedural room generation.

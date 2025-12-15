@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 import tcod
 
 from game_config import GameConfig, GameSettings
+from game_map import RestoreNode
 from game_engine import GameEngine
 from game_save import SaveGameManager
 
@@ -217,7 +218,7 @@ class TestGhostNodeMessageSpamPrevention(unittest.TestCase):
         self.player = self.engine.player
 
         # Set up a ghost node
-        self.engine.game_map.ghost_nodes.add((20, 20))
+        self.engine.game_map.ghost_nodes[(20, 20)] = RestoreNode(node_type="ghost")
         self.player.x, self.player.y = 20, 20
 
     def test_ghost_node_message_only_shows_once_per_visit(self):

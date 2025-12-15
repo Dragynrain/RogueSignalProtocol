@@ -18,6 +18,7 @@ import pytest
 
 from game_config import GameBalance
 from game_entities import Position
+from game_map import RestoreNode
 from tests.fixtures.simple_fixtures import create_real_enemy
 
 
@@ -92,7 +93,9 @@ class TestCoolingNodeTiming:
 
         # Set up cooling node
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(
+            node_type="cooling"
+        )
 
         # Set heat and position player next to node
         engine.player.heat = 60
@@ -117,7 +120,9 @@ class TestCoolingNodeTiming:
 
         # Set up cooling node
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(
+            node_type="cooling"
+        )
         engine.player.position = cooling_pos
         engine.player.heat = 80
 
@@ -144,7 +149,9 @@ class TestCoolingNodeTiming:
 
         # Set up cooling node
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(
+            node_type="cooling"
+        )
         engine.player.position = cooling_pos
         engine.player.heat = 60
 

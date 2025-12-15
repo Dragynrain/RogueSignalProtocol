@@ -4,6 +4,7 @@ No complex builder patterns - just create what you need.
 """
 
 from game_entities import Position
+from game_map import RestoreNode
 from game_player import Player
 from tests.fixtures.real_game_data import create_real_enemy, create_test_map_with_real_tiles
 
@@ -143,13 +144,16 @@ def map_builder(
         game_map.blind_spots.update(shadows)
 
     if cooling_nodes:
-        game_map.cooling_nodes.update(cooling_nodes)
+        for pos in cooling_nodes:
+            game_map.cooling_nodes[pos] = RestoreNode(node_type="cooling")
 
     if cpu_nodes:
-        game_map.cpu_recovery_nodes.update(cpu_nodes)
+        for pos in cpu_nodes:
+            game_map.cpu_recovery_nodes[pos] = RestoreNode(node_type="cpu")
 
     if ghost_nodes:
-        game_map.ghost_nodes.update(ghost_nodes)
+        for pos in ghost_nodes:
+            game_map.ghost_nodes[pos] = RestoreNode(node_type="ghost")
 
     return game_map
 
@@ -165,6 +169,7 @@ def minimal_mock_game():
     mock_game.turn = 10
     mock_game.game_over = False
     mock_game.admin_spawned = False
+    mock_game.ascension_level = 0
 
     mock_player = Mock()
     mock_player.x = 5
@@ -203,6 +208,10 @@ def minimal_mock_game():
     mock_map.gateway = None
     mock_map.explored_tiles = set()
     mock_map.last_known_enemy_positions = {}
+    mock_map.used_blind_spots = set()
+    mock_map.cooling_nodes = {}
+    mock_map.ghost_nodes = {}
+    mock_map.cpu_recovery_nodes = {}
     mock_game.game_map = mock_map
 
     mock_game.enemies = []

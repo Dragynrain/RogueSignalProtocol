@@ -17,6 +17,7 @@ from unittest.mock import Mock
 from game_config import GameSettings
 from game_engine import GameEngine
 from game_entities import EnemyState, Position
+from game_map import RestoreNode
 from tests.fixtures.real_game_data import create_real_enemy
 
 
@@ -129,7 +130,7 @@ def create_stealth_scenario():
     engine.enemies = [scanner]
 
     # Add ghost node for advanced stealth
-    engine.game_map.ghost_nodes.add((22, 22))
+    engine.game_map.ghost_nodes[(22, 22)] = RestoreNode(node_type="ghost")
 
     return engine
 

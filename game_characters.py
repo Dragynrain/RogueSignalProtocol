@@ -118,6 +118,41 @@ class Enemy:
     def y(self, value: int) -> None:
         self.position.y = value
 
+    # Ascension modifier properties
+    damage_multiplier: float = 1.0  # Set by apply_ascension_modifiers
+    _vision_bonus: int = 0  # Set by apply_ascension_modifiers
+
+    @property
+    def vision_range(self) -> int:
+        """Get vision range including ascension bonuses."""
+        return self.type_data.vision + self._vision_bonus
+
+    def apply_ascension_modifiers(self, modifiers) -> None:
+        """
+        Apply ascension modifiers to this enemy's stats.
+
+        Args:
+            modifiers: AscensionModifiers dataclass with modifier values
+        """
+        # A2: Enemy HP bonus
+        if modifiers.enemy_hp_bonus > 0:
+            self.cpu += modifiers.enemy_hp_bonus
+            self.max_cpu += modifiers.enemy_hp_bonus
+
+        # A4: Enemy damage multiplier
+        self.damage_multiplier = modifiers.enemy_damage_multiplier
+
+        # A1: Scanner vision bonus (only for scanners)
+        vision_bonus = 0
+        if self.type == "scanner" and modifiers.scanner_vision_bonus > 0:
+            vision_bonus += modifiers.scanner_vision_bonus
+
+        # A5: All enemy vision bonus
+        if modifiers.enemy_vision_bonus > 0:
+            vision_bonus += modifiers.enemy_vision_bonus
+
+        self._vision_bonus = vision_bonus
+
     def get_color(self) -> tuple[int, int, int]:
         """
         Get the color for rendering this enemy (glyph mode).

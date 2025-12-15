@@ -16,7 +16,7 @@ import pytest
 
 from game_characters import Enemy
 from game_entities import Position
-from game_map import GameMap
+from game_map import GameMap, RestoreNode
 from tests.fixtures.simple_fixtures import player
 
 
@@ -124,7 +124,7 @@ class TestShadowConcealment(TestVisionLineOfSight):
             {"test_enemy": Mock(movement=Mock(), cpu=50, vision=10, damage=10)},
         ):
             enemy = Enemy(Position(13, 10), "test_enemy")
-            self.game_map.ghost_nodes.add((13, 10))
+            self.game_map.ghost_nodes[(13, 10)] = RestoreNode(node_type="ghost")
 
             assert not self.player.can_see_enemy(enemy, self.game_map)
 

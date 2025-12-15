@@ -17,6 +17,7 @@ across different scenarios and edge cases.
 import pytest
 
 from game_config import GameBalance
+from game_map import RestoreNode
 from game_entities import Position
 from tests.fixtures.simple_fixtures import create_real_enemy
 
@@ -187,7 +188,7 @@ class TestGhostNodeTraceReduction:
 
         # Set up ghost node and player position
         ghost_pos = Position(20, 20)
-        engine.game_map.ghost_nodes.add((ghost_pos.x, ghost_pos.y))
+        engine.game_map.ghost_nodes[(ghost_pos.x, ghost_pos.y)] = RestoreNode(node_type="ghost")
         engine.player.position = ghost_pos
 
         # Set initial trace
@@ -215,7 +216,7 @@ class TestGhostNodeTraceReduction:
 
         # Set up ghost node
         ghost_pos = Position(20, 20)
-        engine.game_map.ghost_nodes.add((ghost_pos.x, ghost_pos.y))
+        engine.game_map.ghost_nodes[(ghost_pos.x, ghost_pos.y)] = RestoreNode(node_type="ghost")
         engine.player.position = ghost_pos
 
         # Set very low trace
@@ -235,7 +236,7 @@ class TestGhostNodeTraceReduction:
 
         # Set up ghost node
         ghost_pos = Position(20, 20)
-        engine.game_map.ghost_nodes.add((ghost_pos.x, ghost_pos.y))
+        engine.game_map.ghost_nodes[(ghost_pos.x, ghost_pos.y)] = RestoreNode(node_type="ghost")
         engine.player.position = ghost_pos
 
         # Set initial trace
@@ -394,7 +395,7 @@ class TestTraceCombinedScenarios:
 
         # Set up ghost node
         ghost_pos = Position(20, 20)
-        engine.game_map.ghost_nodes.add((ghost_pos.x, ghost_pos.y))
+        engine.game_map.ghost_nodes[(ghost_pos.x, ghost_pos.y)] = RestoreNode(node_type="ghost")
         engine.player.position = ghost_pos
 
         # Set initial trace

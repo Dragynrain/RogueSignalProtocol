@@ -48,8 +48,18 @@ class SessionMetrics:
     session_id: str
     timestamp_start: float
     victory: bool = False
-    death_cause: str | None = None  # "combat", "overheat", "trace"
+    death_cause: str | None = None  # "combat", "overheat", "virus", "self_damage"
     death_level: int = 0
+
+    # Ascension tracking
+    ascension_level: int = 0
+
+    # Achievement tracking (for ascension achievements)
+    last_exploit_used: str | None = None  # Track last exploit for death context
+    admin_kills: int = 0  # For admin_slayer achievement
+    final_cpu: int = 0  # Set in finalize_session(), for close_call achievement
+    restoration_nodes_used: int = 0  # For floor_is_lava achievement
+    full_floor_clears: int = 0  # For full_clear achievement
 
     # Combat
     enemies_killed: Counter = field(default_factory=Counter)
@@ -118,6 +128,14 @@ class SessionMetrics:
             "victory": self.victory,
             "death_cause": self.death_cause,
             "death_level": self.death_level,
+            # Ascension tracking
+            "ascension_level": self.ascension_level,
+            # Achievement tracking
+            "last_exploit_used": self.last_exploit_used,
+            "admin_kills": self.admin_kills,
+            "final_cpu": self.final_cpu,
+            "restoration_nodes_used": self.restoration_nodes_used,
+            "full_floor_clears": self.full_floor_clears,
             # Combat
             "enemies_killed": dict(self.enemies_killed),
             "damage_dealt": self.damage_dealt,
@@ -194,6 +212,15 @@ class SessionMetrics:
 
         # Provide defaults for new fields (backward compatibility)
         defaults = {
+            # Ascension tracking
+            "ascension_level": 0,
+            # Achievement tracking
+            "last_exploit_used": None,
+            "admin_kills": 0,
+            "final_cpu": 0,
+            "restoration_nodes_used": 0,
+            "full_floor_clears": 0,
+            # Combo/streak tracking
             "current_stealth_streak": 0,
             "max_stealth_streak": 0,
             "current_no_damage_streak": 0,
@@ -332,15 +359,16 @@ def track(metric_name: str, category: str | None = None, amount: int = 1) -> Non
 
 
 def finalize_session(
-    victory: bool, death_cause: str | None = None, death_level: int = 0
+    victory: bool, death_cause: str | None = None, death_level: int = 0, final_cpu: int = 0
 ) -> SessionMetrics:
     """
     Finalize the current session with outcome information.
 
     Args:
         victory: Whether the player won the game
-        death_cause: Cause of death if applicable ("combat", "overheat", "trace")
+        death_cause: Cause of death if applicable ("combat", "overheat", "virus", "self_damage")
         death_level: Level where death occurred (1-3)
+        final_cpu: Player's CPU remaining at session end (for close_call achievement)
 
     Returns:
         The finalized SessionMetrics
@@ -354,6 +382,7 @@ def finalize_session(
     _current_session.victory = victory
     _current_session.death_cause = death_cause
     _current_session.death_level = death_level
+    _current_session.final_cpu = final_cpu
 
     logging.info(f"Session finalized: victory={victory}, cause={death_cause}, level={death_level}")
     return _current_session

@@ -139,6 +139,13 @@ class GameStatePersistence:
         self.game_engine.game_state.game_over = save_data.get("game_over", False)
         self.game_engine.game_state.admin_spawned = save_data.get("admin_spawned", False)
 
+        # Restore ascension level and recalculate modifiers
+        saved_ascension = save_data.get("ascension_level", 0)
+        self.game_engine.ascension_level = saved_ascension
+        from game_ascension import calculate_ascension_modifiers
+
+        self.game_engine.ascension_modifiers = calculate_ascension_modifiers(saved_ascension)
+
         # Log seed restoration for debugging
         saved_seed = save_data.get("dungeon_seed")
         if saved_seed is None:
@@ -356,6 +363,42 @@ class GameStatePersistence:
                 position = Position(pos_data["x"], pos_data["y"])
                 turn_seen = pos_data["turn"]
                 game_map.last_known_enemy_positions[enemy_id] = (position, turn_seen)
+
+        # A20: Restore used blind spots
+        if "used_blind_spots" in map_data:
+            game_map.used_blind_spots.clear()
+            for tile_str in map_data["used_blind_spots"]:
+                position = parse_coordinate_string(tile_str)
+                if position:
+                    # Remove from active blind spots (they were consumed)
+                    pos_tuple = (position.x, position.y)
+                    if pos_tuple in game_map.blind_spots:
+                        game_map.blind_spots.remove(pos_tuple)
+                    game_map.used_blind_spots.add(pos_tuple)
+
+        # A13+: Restore node capacity state
+        if "node_capacity" in map_data:
+            node_capacity = map_data["node_capacity"]
+
+            # Restore cooling node capacity
+            for pos_str, used_capacity in node_capacity.get("cooling", {}).items():
+                position = parse_coordinate_string(pos_str)
+                if position and (position.x, position.y) in game_map.cooling_nodes:
+                    game_map.cooling_nodes[(position.x, position.y)].used_capacity = used_capacity
+
+            # Restore CPU node capacity
+            for pos_str, used_capacity in node_capacity.get("cpu", {}).items():
+                position = parse_coordinate_string(pos_str)
+                if position and (position.x, position.y) in game_map.cpu_recovery_nodes:
+                    game_map.cpu_recovery_nodes[
+                        (position.x, position.y)
+                    ].used_capacity = used_capacity
+
+            # Restore ghost node capacity
+            for pos_str, used_capacity in node_capacity.get("ghost", {}).items():
+                position = parse_coordinate_string(pos_str)
+                if position and (position.x, position.y) in game_map.ghost_nodes:
+                    game_map.ghost_nodes[(position.x, position.y)].used_capacity = used_capacity
 
     def _restore_enemies(self, enemies_data: list[dict]) -> None:
         """Restore enemies from save data."""

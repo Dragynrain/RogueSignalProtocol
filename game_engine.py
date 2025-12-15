@@ -11,6 +11,7 @@ import logging
 import random
 
 from game_achievement_popups import AchievementPopupManager
+from game_ascension import AscensionModifiers, calculate_ascension_modifiers
 from game_audio import NullSoundManager, SoundManager
 from game_characters import Enemy
 from game_combat import ExploitSystem
@@ -60,6 +61,7 @@ class GameEngine:
         load_save: bool = False,
         settings: GameSettings | None = None,
         headless: bool = False,
+        ascension_level: int = 0,
     ) -> None:
         """
         Initialize the game engine with dependency injection.
@@ -75,9 +77,14 @@ class GameEngine:
             load_save: Whether to load from existing save file
             settings: Game settings instance, creates default if None
             headless: Run in headless mode (no rendering/audio, for testing)
+            ascension_level: Ascension difficulty level (0-20, default 0)
         """
         # Store headless mode flag
         self.headless = headless
+
+        # Initialize ascension system
+        self.ascension_level = ascension_level
+        self.ascension_modifiers = calculate_ascension_modifiers(ascension_level)
 
         # Initialize settings first (needed by other systems)
         self.settings = settings or GameSettings()
@@ -110,8 +117,10 @@ class GameEngine:
         # Update enemy manager with message log
         self.enemy_manager.message_log = self.message_log
 
-        # Initialize turn processor with dependencies
-        self.turn_processor = TurnProcessor(self.game_state, self.message_log)
+        # Initialize turn processor with dependencies and ascension modifiers
+        self.turn_processor = TurnProcessor(
+            self.game_state, self.message_log, self.ascension_modifiers
+        )
 
         # Initialize game session coordinator (combines turn, level, and persistence)
         self.game_session = GameSession(self)

@@ -12,7 +12,7 @@ import pytest
 from game_config import GameConfig, RoomGenerationConfig
 from game_entities import Position
 from game_level import LevelGenerator
-from game_map import GameMap
+from game_map import GameMap, RestoreNode
 
 
 class TestMapGeneration:
@@ -85,7 +85,7 @@ class TestGameMapBasics(TestMapGeneration):
         assert game_map.is_blind_spot(Position(5, 5))
 
         # Ghost nodes also count as shadows
-        game_map.ghost_nodes.add((3, 3))
+        game_map.ghost_nodes[(3, 3)] = RestoreNode(node_type="ghost")
         assert game_map.is_blind_spot(Position(3, 3))
 
         # Out of bounds positions are not shadows
@@ -97,9 +97,9 @@ class TestGameMapBasics(TestMapGeneration):
         game_map = GameMap(10, 10)
 
         # Add different types of nodes
-        game_map.cooling_nodes.add((2, 2))
-        game_map.cpu_recovery_nodes.add((3, 3))
-        game_map.ghost_nodes.add((4, 4))
+        game_map.cooling_nodes[(2, 2)] = RestoreNode(node_type="cooling")
+        game_map.cpu_recovery_nodes[(3, 3)] = RestoreNode(node_type="cpu")
+        game_map.ghost_nodes[(4, 4)] = RestoreNode(node_type="ghost")
 
         assert game_map.is_cooling_node(Position(2, 2))
         assert not game_map.is_cooling_node(Position(3, 3))
@@ -271,9 +271,9 @@ class TestLevelDataManagement(TestMapGeneration):
         # Add some test data
         self.game_map.walls.add((5, 5))
         self.game_map.blind_spots.add((6, 6))
-        self.game_map.cooling_nodes.add((7, 7))
-        self.game_map.cpu_recovery_nodes.add((8, 8))
-        self.game_map.ghost_nodes.add((9, 9))
+        self.game_map.cooling_nodes[(7, 7)] = RestoreNode(node_type="cooling")
+        self.game_map.cpu_recovery_nodes[(8, 8)] = RestoreNode(node_type="cpu")
+        self.game_map.ghost_nodes[(9, 9)] = RestoreNode(node_type="ghost")
         self.game_map.code_hacks[(10, 10)] = Mock()
         self.game_map.exploit_pickups[(11, 11)] = Mock()
         self.game_map.permanent_upgrades[(12, 12)] = "test_upgrade"

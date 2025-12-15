@@ -17,6 +17,7 @@ Only external dependencies (sound, rendering) are mocked.
 import pytest
 
 from game_config import GameBalance
+from game_map import RestoreNode
 from game_entities import EnemyState, Position
 from tests.fixtures.simple_fixtures import (
     create_real_enemy,
@@ -32,7 +33,7 @@ class TestCoolingNodeIntegration:
 
         # Position player on cooling node with high heat
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
         engine.player.position = cooling_pos
         engine.player.heat = 50
 
@@ -53,7 +54,7 @@ class TestCoolingNodeIntegration:
 
         # Position player on cooling node
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
         engine.player.position = cooling_pos
         engine.player.heat = 100
 
@@ -74,7 +75,7 @@ class TestCoolingNodeIntegration:
 
         # Start on cooling node
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
         engine.player.position = cooling_pos
         engine.player.heat = 50
 
@@ -106,7 +107,7 @@ class TestCoolingNodeIntegration:
 
         # Position player on cooling node with 0 heat
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((cooling_pos.x, cooling_pos.y))
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
         engine.player.position = cooling_pos
         engine.player.heat = 0
 
@@ -126,7 +127,7 @@ class TestCPURecoveryNodeIntegration:
 
         # Position player on CPU node with low CPU
         cpu_pos = Position(20, 20)
-        engine.game_map.cpu_recovery_nodes.add((cpu_pos.x, cpu_pos.y))
+        engine.game_map.cpu_recovery_nodes[(cpu_pos.x, cpu_pos.y)] = RestoreNode(node_type="cpu")
         engine.player.position = cpu_pos
         engine.player.cpu = 30
         engine.player.max_cpu = 100
@@ -150,7 +151,7 @@ class TestCPURecoveryNodeIntegration:
 
         # Position player on CPU node
         cpu_pos = Position(20, 20)
-        engine.game_map.cpu_recovery_nodes.add((cpu_pos.x, cpu_pos.y))
+        engine.game_map.cpu_recovery_nodes[(cpu_pos.x, cpu_pos.y)] = RestoreNode(node_type="cpu")
         engine.player.position = cpu_pos
         engine.player.cpu = 20
         engine.player.max_cpu = 100
@@ -172,7 +173,7 @@ class TestCPURecoveryNodeIntegration:
 
         # Position player on CPU node near max CPU
         cpu_pos = Position(20, 20)
-        engine.game_map.cpu_recovery_nodes.add((cpu_pos.x, cpu_pos.y))
+        engine.game_map.cpu_recovery_nodes[(cpu_pos.x, cpu_pos.y)] = RestoreNode(node_type="cpu")
         engine.player.position = cpu_pos
         engine.player.cpu = 95
         engine.player.max_cpu = 100
@@ -194,7 +195,7 @@ class TestGhostNodeIntegration:
 
         # Position player on ghost node
         ghost_pos = Position(20, 20)
-        engine.game_map.ghost_nodes.add((ghost_pos.x, ghost_pos.y))
+        engine.game_map.ghost_nodes[(ghost_pos.x, ghost_pos.y)] = RestoreNode(node_type="ghost")
         engine.player.position = ghost_pos
 
         # Verify ghost node is treated as shadow
@@ -216,7 +217,7 @@ class TestGhostNodeIntegration:
 
         # Position player on ghost node
         ghost_pos = Position(20, 20)
-        engine.game_map.ghost_nodes.add((ghost_pos.x, ghost_pos.y))
+        engine.game_map.ghost_nodes[(ghost_pos.x, ghost_pos.y)] = RestoreNode(node_type="ghost")
         engine.player.position = ghost_pos
 
         # Create enemy adjacent
@@ -301,7 +302,7 @@ class TestSpecialTileCombinations:
 
         # Create cooling node in shadow
         special_pos = Position(20, 20)
-        engine.game_map.cooling_nodes.add((special_pos.x, special_pos.y))
+        engine.game_map.cooling_nodes[(special_pos.x, special_pos.y)] = RestoreNode(node_type="cooling")
         engine.game_map.blind_spots.add((special_pos.x, special_pos.y))
 
         # Position player with high heat
@@ -333,8 +334,8 @@ class TestSpecialTileCombinations:
 
         # Create overlapping special tiles
         special_pos = Position(20, 20)
-        engine.game_map.cpu_recovery_nodes.add((special_pos.x, special_pos.y))
-        engine.game_map.ghost_nodes.add((special_pos.x, special_pos.y))
+        engine.game_map.cpu_recovery_nodes[(special_pos.x, special_pos.y)] = RestoreNode(node_type="cpu")
+        engine.game_map.ghost_nodes[(special_pos.x, special_pos.y)] = RestoreNode(node_type="ghost")
 
         # Position player
         engine.player.position = special_pos
@@ -383,8 +384,8 @@ class TestSpecialTileEdgeCases:
         engine = basic_game_engine
 
         # Create alternating special tiles
-        engine.game_map.cooling_nodes.add((20, 20))
-        engine.game_map.cpu_recovery_nodes.add((21, 20))
+        engine.game_map.cooling_nodes[(20, 20)] = RestoreNode(node_type="cooling")
+        engine.game_map.cpu_recovery_nodes[(21, 20)] = RestoreNode(node_type="cpu")
         engine.game_map.blind_spots.add((22, 20))
 
         # Set player state

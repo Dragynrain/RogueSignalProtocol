@@ -24,8 +24,10 @@ Node placement strategies:
 import logging
 import random
 
+from game_ascension import AscensionModifiers
 from game_config import GameConfig
 from game_entities import Position
+from game_map import RestoreNode
 
 
 class TilePlacementGenerator:
@@ -65,7 +67,12 @@ class TilePlacementGenerator:
         # Invalidate transparency cache after walls are modified
         self.game_map.invalidate_transparency_cache()
 
-    def place_special_tiles(self, level: int, landmark_rooms: list[dict] = None) -> None:
+    def place_special_tiles(
+        self,
+        level: int,
+        landmark_rooms: list[dict] = None,
+        ascension_modifiers: AscensionModifiers | None = None,
+    ) -> None:
         """
         Place cooling nodes, CPU recovery nodes, and other special tiles.
 
@@ -77,8 +84,11 @@ class TilePlacementGenerator:
         Args:
             level: Current level number (affects node counts)
             landmark_rooms: List of landmark room definitions for objective placement
+            ascension_modifiers: Optional AscensionModifiers for A13+ node capacity
         """
         logging.debug(f"Tile Placement: Placing special tiles for level {level}")
+        if ascension_modifiers is None:
+            ascension_modifiers = AscensionModifiers()
         if landmark_rooms is None:
             landmark_rooms = []
 
@@ -107,21 +117,36 @@ class TilePlacementGenerator:
                 raise KeyError(f"Required key '{key}' missing from level {level} config")
             return config[key]
 
+        def get_node_capacity() -> int:
+            """Get random node capacity for A13+ or -1 (unlimited) otherwise."""
+            if ascension_modifiers.node_capacity_ranges is None:
+                return -1  # Unlimited
+            floor_key = f"floor_{level}"
+            if floor_key not in ascension_modifiers.node_capacity_ranges:
+                return -1  # Unlimited for unlisted floors
+            min_cap, max_cap = ascension_modifiers.node_capacity_ranges[floor_key]
+            return random.randint(min_cap, max_cap)
+
         cooling_count = get_required_config("cooling_nodes")
         cooling_positions = self.get_high_traffic_positions(floor_positions)
         logging.debug(
             f"Tile Placement: Placing {cooling_count} cooling nodes (high-traffic candidates={len(cooling_positions)})"
         )
         for i in range(cooling_count):
+            capacity = get_node_capacity()
             if cooling_positions:
                 pos = random.choice(cooling_positions)
                 cooling_positions.remove(pos)
                 floor_positions.remove(pos)
-                self.game_map.cooling_nodes.add(pos)
+                self.game_map.cooling_nodes[pos] = RestoreNode(
+                    node_type="cooling", total_capacity=capacity
+                )
             elif floor_positions:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
-                self.game_map.cooling_nodes.add(pos)
+                self.game_map.cooling_nodes[pos] = RestoreNode(
+                    node_type="cooling", total_capacity=capacity
+                )
         actual_cooling = len(self.game_map.cooling_nodes)
         match_status = "MATCH" if actual_cooling == cooling_count else "MISMATCH"
         logging.info(
@@ -134,15 +159,20 @@ class TilePlacementGenerator:
             f"Tile Placement: Placing {cpu_count} CPU nodes (peripheral candidates={len(cpu_positions)})"
         )
         for i in range(cpu_count):
+            capacity = get_node_capacity()
             if cpu_positions:
                 pos = random.choice(cpu_positions)
                 cpu_positions.remove(pos)
                 floor_positions.remove(pos)
-                self.game_map.cpu_recovery_nodes.add(pos)
+                self.game_map.cpu_recovery_nodes[pos] = RestoreNode(
+                    node_type="cpu", total_capacity=capacity
+                )
             elif floor_positions:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
-                self.game_map.cpu_recovery_nodes.add(pos)
+                self.game_map.cpu_recovery_nodes[pos] = RestoreNode(
+                    node_type="cpu", total_capacity=capacity
+                )
         actual_cpu = len(self.game_map.cpu_recovery_nodes)
         match_status = "MATCH" if actual_cpu == cpu_count else "MISMATCH"
         logging.info(
@@ -155,15 +185,20 @@ class TilePlacementGenerator:
             f"Tile Placement: Placing {ghost_count} ghost nodes (shadow-adjacent candidates={len(ghost_positions)})"
         )
         for i in range(ghost_count):
+            capacity = get_node_capacity()
             if ghost_positions:
                 pos = random.choice(ghost_positions)
                 ghost_positions.remove(pos)
                 floor_positions.remove(pos)
-                self.game_map.ghost_nodes.add(pos)
+                self.game_map.ghost_nodes[pos] = RestoreNode(
+                    node_type="ghost", total_capacity=capacity
+                )
             elif floor_positions:
                 pos = random.choice(floor_positions)
                 floor_positions.remove(pos)
-                self.game_map.ghost_nodes.add(pos)
+                self.game_map.ghost_nodes[pos] = RestoreNode(
+                    node_type="ghost", total_capacity=capacity
+                )
         actual_ghost = len(self.game_map.ghost_nodes)
         match_status = "MATCH" if actual_ghost == ghost_count else "MISMATCH"
         logging.info(

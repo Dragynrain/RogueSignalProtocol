@@ -17,6 +17,7 @@ Only external dependencies (sound, rendering) are mocked.
 import pytest
 
 from game_config import GameBalance
+from game_map import RestoreNode
 from game_entities import EnemyState, Position
 from tests.fixtures.simple_fixtures import enemy_builder
 
@@ -43,7 +44,7 @@ class TestBasicShadowDetection:
         if light_pos is None:
             light_pos = Position(20, 20)
             basic_game_engine.game_map.blind_spots.discard((light_pos.x, light_pos.y))
-            basic_game_engine.game_map.ghost_nodes.discard((light_pos.x, light_pos.y))
+            basic_game_engine.game_map.ghost_nodes.pop((light_pos.x, light_pos.y), None)
 
         # Position player in light
         basic_game_engine.player.position = light_pos
@@ -144,7 +145,7 @@ class TestBasicShadowDetection:
         """Test ghost nodes function as shadows for stealth."""
         # Place ghost node at position
         ghost_pos = Position(20, 20)
-        basic_game_engine.game_map.ghost_nodes.add((ghost_pos.x, ghost_pos.y))
+        basic_game_engine.game_map.ghost_nodes[(ghost_pos.x, ghost_pos.y)] = RestoreNode(node_type="ghost")
 
         # Verify ghost node is treated as shadow
         assert basic_game_engine.game_map.is_blind_spot(
@@ -320,7 +321,7 @@ class TestStealthGameplayScenarios:
         # Create enemy watching from light - ensure enemy position has no shadow
         enemy_pos = Position(20, 15)
         basic_game_engine.game_map.blind_spots.discard((enemy_pos.x, enemy_pos.y))
-        basic_game_engine.game_map.ghost_nodes.discard((enemy_pos.x, enemy_pos.y))
+        basic_game_engine.game_map.ghost_nodes.pop((enemy_pos.x, enemy_pos.y), None)
 
         scanner = enemy_builder("scanner", pos=(enemy_pos.x, enemy_pos.y))
         scanner.state = EnemyState.UNAWARE
