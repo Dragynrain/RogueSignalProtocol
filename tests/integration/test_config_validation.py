@@ -567,6 +567,11 @@ class TestConfigRedundancy:
                 if key == "balance.ai_behavior":
                     continue
 
+                # Exception: ascension exists in both game_rules.json (modifier values)
+                # and user_settings.json (user progress/current level) - different purposes
+                if key == "ascension":
+                    continue
+
                 # Get values from each source
                 values = {}
                 for source in sources:
