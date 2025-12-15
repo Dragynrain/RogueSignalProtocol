@@ -186,24 +186,27 @@ Apply modifiers to existing game systems (enemies, items, levels, combat).
   - [x] 2.3: Level generation modifiers (enemy counts, codes, node capacity)
   - [x] 2.4: Turn processing modifiers (heat, trace, alert range)
 
-### Phase 3: UI/Menu System (Medium Complexity)
+### Phase 3: UI/Menu System (Medium Complexity) - COMPLETE
 Create ascension selection menu and integrate with main menu/victory screen.
 - Complexity: Medium (new UI screens)
 - Dependencies: Phase 1 complete
 - **Can parallel with Phase 2**: Menu selection, display, and navigation can be built while Phase 2 game integration is in progress. Only the victory screen unlock logic needs Phase 2's `unlock_ascension()` to be callable.
 - Risk: Low (UI-only, no gameplay impact)
+- **Status: COMPLETE** - AscensionMenu, status bar indicator, main menu integration with 28 tests
 
-### Phase 4: Achievements & Metrics (Low Complexity)
+### Phase 4: Achievements & Metrics (Low Complexity) - COMPLETE
 Add ascension-specific achievements and tracking.
 - Complexity: Low (extends existing achievement system)
 - Dependencies: Phases 1-3 complete
 - Risk: Low
+- **Status: COMPLETE** - 12 new achievements, LifetimeMetrics updates, emoji-to-bracketed migration with 37 tests
 
-### Phase 5: Testing & Balance (Medium-High Complexity)
+### Phase 5: Testing & Balance (Medium-High Complexity) - COMPLETE (Code)
 Playtest all ascension levels, tune modifier values, verify integration.
 - Complexity: Medium-High (requires extensive playtesting)
 - Dependencies: All phases complete
 - Risk: High (balance issues hard to predict)
+- **Status: COMPLETE (Code)** - Save/load roundtrip tests with 13 tests. Manual playtesting pending.
 
 ---
 
