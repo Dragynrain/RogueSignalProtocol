@@ -197,6 +197,14 @@ class GameStatePersistence:
         inventory_items = player_data.get("inventory_items", [])
         player.inventory_manager.items = self._deserialize_inventory(inventory_items)
 
+        # Re-apply ascension modifiers to player
+        # A10: Player vision override
+        if self.game_engine.ascension_modifiers.player_vision_override is not None:
+            player.ascension_vision_override = (
+                self.game_engine.ascension_modifiers.player_vision_override
+            )
+        # A14: Starting RAM is already restored from save (ram_total above)
+
     def _restore_game_effects(self, save_data: dict[str, Any]) -> None:
         """Restore game effects and environmental state from save data."""
         # Handle both old and new save format for backward compatibility
@@ -390,9 +398,9 @@ class GameStatePersistence:
             for pos_str, used_capacity in node_capacity.get("cpu", {}).items():
                 position = parse_coordinate_string(pos_str)
                 if position and (position.x, position.y) in game_map.cpu_recovery_nodes:
-                    game_map.cpu_recovery_nodes[
-                        (position.x, position.y)
-                    ].used_capacity = used_capacity
+                    game_map.cpu_recovery_nodes[(position.x, position.y)].used_capacity = (
+                        used_capacity
+                    )
 
             # Restore ghost node capacity
             for pos_str, used_capacity in node_capacity.get("ghost", {}).items():
@@ -447,6 +455,14 @@ class GameStatePersistence:
                 enemy.move_queue = [
                     Position(point["x"], point["y"]) for point in enemy_data["move_queue"]
                 ]
+
+            # Re-apply ascension modifiers to enemy (A2: HP, A4: damage, A1/A5: vision)
+            # Note: This recalculates max_cpu, damage_multiplier, _vision_bonus
+            # The saved cpu value already includes the HP bonus, so we store the current cpu,
+            # apply modifiers (which adds HP again), then restore the saved cpu value.
+            saved_cpu = enemy.cpu
+            enemy.apply_ascension_modifiers(self.game_engine.ascension_modifiers)
+            enemy.cpu = saved_cpu  # Preserve the actual HP from the save
 
             self.game_engine.enemy_manager.enemies.append(enemy)
 

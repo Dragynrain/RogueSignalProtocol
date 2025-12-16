@@ -17,8 +17,8 @@ Only external dependencies (sound, rendering) are mocked.
 import pytest
 
 from game_config import GameBalance
-from game_map import RestoreNode
 from game_entities import EnemyState, Position
+from game_map import RestoreNode
 from tests.fixtures.simple_fixtures import enemy_builder
 
 
@@ -145,7 +145,9 @@ class TestBasicShadowDetection:
         """Test ghost nodes function as shadows for stealth."""
         # Place ghost node at position
         ghost_pos = Position(20, 20)
-        basic_game_engine.game_map.ghost_nodes[(ghost_pos.x, ghost_pos.y)] = RestoreNode(node_type="ghost")
+        basic_game_engine.game_map.ghost_nodes[(ghost_pos.x, ghost_pos.y)] = RestoreNode(
+            node_type="ghost"
+        )
 
         # Verify ghost node is treated as shadow
         assert basic_game_engine.game_map.is_blind_spot(

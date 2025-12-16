@@ -10,8 +10,8 @@ from unittest.mock import Mock, patch
 import tcod
 
 from game_config import GameConfig, GameSettings
-from game_map import RestoreNode
 from game_engine import GameEngine
+from game_map import RestoreNode
 from game_save import SaveGameManager
 
 

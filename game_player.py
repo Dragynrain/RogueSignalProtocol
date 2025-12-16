@@ -62,6 +62,9 @@ class Player:
 
         self.base_vision_range = GameConfig._get_required("gameplay.player_base_vision_range")
 
+        # A10: Vision override from ascension modifiers (None = use base_vision_range)
+        self.ascension_vision_override: int | None = None
+
         # Temporary effects
         self.temporary_effects = {
             "traffic_masquerade_turns": 0,
@@ -180,8 +183,17 @@ class Player:
         return self.temporary_effects["traffic_masquerade_turns"] > 0
 
     def get_vision_range(self) -> int:
-        """Get current vision range including bonuses."""
-        base_range = self.base_vision_range
+        """Get current vision range including bonuses.
+
+        A10 ascension modifier can override the base vision range.
+        Enhanced vision buff adds +2 on top of the effective base.
+        """
+        # A10: Use ascension override if set, otherwise use config base
+        base_range = (
+            self.ascension_vision_override
+            if self.ascension_vision_override is not None
+            else self.base_vision_range
+        )
         if self.temporary_effects["enhanced_vision_turns"] > 0:
             base_range += 2
         return base_range

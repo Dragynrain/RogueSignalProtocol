@@ -19,6 +19,8 @@ Expected behavior:
 - Both inputs should generate NAVIGATE_LEFT/RIGHT actions
 """
 
+from unittest.mock import Mock
+
 import pytest
 import tcod.event
 import tcod.sdl.joystick
@@ -162,6 +164,15 @@ class TestHelpMenuHorizontalInputs:
         """Create help menu for testing."""
         # HelpMenu takes no arguments - it uses centralized HelpContent
         menu = HelpMenu()
+        # Mock _get_settings to return None so sync_settings_to_analog_handler()
+        # doesn't overwrite our settings (prevents flaky test in parallel execution
+        # where other tests modify the global GameSettings singleton)
+        menu.gamepad_handler._get_settings = Mock(return_value=None)
+        # Ensure analog handler has consistent settings
+        analog = menu.gamepad_handler.analog_handler
+        analog.deadzone = 0.2  # Default deadzone
+        analog.threshold = 0.5  # Default threshold
+        analog.last_menu_move_time = -1.0  # Reset to allow immediate movement
         return menu
 
     def test_help_menu_handles_navigate_left_right(self, help_menu):

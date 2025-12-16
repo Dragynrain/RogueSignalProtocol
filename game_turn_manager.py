@@ -116,7 +116,12 @@ class GameTurnManager:
             # Determine death cause for analytics
             player = self.game_engine.player
             death_cause = "combat"  # Default
-            if player.heat >= player.max_heat:
+
+            # Check for Logic Bomb self-kill (own_worst_enemy achievement)
+            if getattr(self.game_engine, "friendly_fire_death", False):
+                death_cause = "self_damage"
+                self.game_engine.friendly_fire_death = False  # Reset flag
+            elif player.heat >= player.max_heat:
                 death_cause = "overheat"
             elif player.temporary_effects.get("virus_turns", 0) > 0:
                 death_cause = "virus"
@@ -816,7 +821,10 @@ class GameTurnManager:
         from game_metrics import finalize_session, load_lifetime_metrics, save_metrics
 
         metrics = finalize_session(
-            victory=False, death_cause=death_cause, death_level=self.game_engine.level
+            victory=False,
+            death_cause=death_cause,
+            death_level=self.game_engine.level,
+            final_cpu=player.cpu,
         )
         if metrics:
             save_metrics(metrics)

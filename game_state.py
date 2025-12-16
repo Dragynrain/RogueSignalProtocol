@@ -151,6 +151,9 @@ class GameStateManager:
         self.turn: int = 0
         self.game_over: bool = False
         self.show_victory_screen: bool = False
+        self.newly_unlocked_ascension: int | None = (
+            None  # Track newly unlocked level for unlock screen
+        )
         self.admin_spawned: bool = False
         self.dungeon_seed: int = random.randint(1, GameConfig.DUNGEON_SEED_RANGE)
         self.just_loaded: bool = False  # Flag to prevent immediate enemy state updates after load

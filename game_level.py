@@ -30,7 +30,7 @@ import random
 
 # Import required classes and configs
 from game_ascension import AscensionModifiers
-from game_config import GameConfig
+from game_config import GameConfig, RoomGenerationConfig
 from game_entities import Position
 from game_level_layout import AdvancedLayoutGenerator
 from game_level_placement import TilePlacementGenerator
@@ -143,8 +143,8 @@ class LevelGenerator:
         # Clear existing level data
         self._clear_level_data()
 
-        # Generate the level structure
-        self._generate_procedural_level(level)
+        # Generate the level structure (pass ascension_modifiers for A6 blind spot reduction)
+        self._generate_procedural_level(level, ascension_modifiers)
 
         # Place special tiles and items
         # Pass landmark rooms for objective-oriented placement
@@ -195,7 +195,9 @@ class LevelGenerator:
         # Invalidate transparency cache for FOV calculations
         self.game_map.invalidate_transparency_cache()
 
-    def _generate_procedural_level(self, level: int) -> None:
+    def _generate_procedural_level(
+        self, level: int, ascension_modifiers: "AscensionModifiers | None" = None
+    ) -> None:
         """
         Generate the core level structure with multi-phase room/corridor creation.
 
@@ -212,11 +214,30 @@ class LevelGenerator:
 
         Args:
             level: Current level number for difficulty scaling
+            ascension_modifiers: Optional AscensionModifiers for A6 blind spot reduction
         """
         # Fill map with walls initially
         for x in range(GameConfig.MAP_WIDTH):
             for y in range(GameConfig.MAP_HEIGHT):
                 self.game_map.walls.add((x, y))
+
+        # A16+: Apply room generation overrides if present
+        original_min_room_size = None
+        original_max_room_size = None
+        if ascension_modifiers and ascension_modifiers.room_generation_overrides:
+            overrides = ascension_modifiers.room_generation_overrides
+            if "min_room_size" in overrides:
+                original_min_room_size = RoomGenerationConfig.MIN_ROOM_SIZE
+                RoomGenerationConfig.MIN_ROOM_SIZE = overrides["min_room_size"]
+                logging.debug(
+                    f"Level Gen: A16 override min_room_size: {original_min_room_size} -> {overrides['min_room_size']}"
+                )
+            if "max_room_size" in overrides:
+                original_max_room_size = RoomGenerationConfig.MAX_ROOM_SIZE
+                RoomGenerationConfig.MAX_ROOM_SIZE = overrides["max_room_size"]
+                logging.debug(
+                    f"Level Gen: A16 override max_room_size: {original_max_room_size} -> {overrides['max_room_size']}"
+                )
 
         # PHASE 1: Create rooms with varied types (BSP or traditional)
         if self.use_bsp:
@@ -227,6 +248,12 @@ class LevelGenerator:
             logging.debug(f"Level Gen: Phase 1 - Creating varied rooms for level {level}")
             rooms = self.room_generator.create_varied_rooms(level)
             logging.debug(f"Level Gen: Phase 1 complete: {len(rooms)} rooms created")
+
+        # A16+: Restore original room size config after room generation
+        if original_min_room_size is not None:
+            RoomGenerationConfig.MIN_ROOM_SIZE = original_min_room_size
+        if original_max_room_size is not None:
+            RoomGenerationConfig.MAX_ROOM_SIZE = original_max_room_size
 
         # PHASE 3: Identify hub rooms before connecting
         logging.debug("Level Gen: Phase 2 - Identifying hub rooms")
@@ -289,7 +316,9 @@ class LevelGenerator:
 
         # Add blind spot areas for stealth gameplay (with blind spot zones)
         logging.debug("Level Gen: Phase 5 - Placing blind spot areas")
-        self.tactical_generator.place_blind_spot_areas(level, rooms, blind_spot_zone_rooms)
+        self.tactical_generator.place_blind_spot_areas(
+            level, rooms, blind_spot_zone_rooms, ascension_modifiers
+        )
         logging.debug(f"Level Gen: Placed {len(self.game_map.blind_spots)} blind spot tiles")
 
         # PHASE 5: Add defensive positions (cover + shadow combinations)

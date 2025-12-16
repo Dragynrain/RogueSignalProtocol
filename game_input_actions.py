@@ -68,6 +68,7 @@ class InputAction(Enum):
     TOGGLE_HELP = auto()
     TOGGLE_LORE_VIEWER = auto()
     TOGGLE_ACHIEVEMENTS = auto()
+    TOGGLE_ASCENSION = auto()  # View ascension level and modifiers (N on keyboard)
 
     # ============================================================================
     # NAVIGATION (for menus, scrolling, etc.)
@@ -141,6 +142,7 @@ class InputContext(Enum):
     HELP = auto()
     LORE_VIEWER = auto()
     ACHIEVEMENTS_SCREEN = auto()
+    ASCENSION_MENU = auto()  # View ascension level and active modifiers
 
     # Normal gameplay
     GAMEPLAY = auto()

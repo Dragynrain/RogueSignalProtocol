@@ -50,6 +50,7 @@
         "L": "TOGGLE_LOOK_MODE",
         "F": "TOGGLE_LORE_VIEWER",
         "V": "TOGGLE_ACHIEVEMENTS",
+        "N": "TOGGLE_ASCENSION",
         "Shift+SLASH": "TOGGLE_HELP",
 
         "RETURN": "CONFIRM",
@@ -141,6 +142,17 @@
             },
 
             "ACHIEVEMENTS_SCREEN": {
+                "A": "CONFIRM",
+                "B": "CANCEL",
+                "DPAD_UP": "NAVIGATE_UP",
+                "DPAD_DOWN": "NAVIGATE_DOWN",
+                "DPAD_LEFT": "NAVIGATE_LEFT",
+                "DPAD_RIGHT": "NAVIGATE_RIGHT",
+                "LEFTSHOULDER": "NAVIGATE_PAGE_UP",
+                "RIGHTSHOULDER": "NAVIGATE_PAGE_DOWN"
+            },
+
+            "ASCENSION_MENU": {
                 "A": "CONFIRM",
                 "B": "CANCEL",
                 "DPAD_UP": "NAVIGATE_UP",

@@ -31,8 +31,7 @@ def test_game_loop_has_input_enums_for_gamepad_handling():
     locally where needed (inside functions). Both approaches prevent NameError.
     """
     import game_loop
-
-    from game_input_actions import InputAction, InputContext
+    from game_input_actions import InputContext
 
     # Check if InputAction is available in game_loop module (imported at top)
     assert hasattr(

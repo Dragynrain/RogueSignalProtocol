@@ -6,8 +6,7 @@ Tests save/load roundtrip for ascension level, node capacity states,
 and used blind spots.
 """
 
-import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -143,16 +142,13 @@ class TestNodeCapacitySaveLoad:
         # Test serialization format (same as in game_save.py)
         node_capacity = {
             "cooling": {
-                f"{pos[0]},{pos[1]}": node.used_capacity
-                for pos, node in cooling_nodes.items()
+                f"{pos[0]},{pos[1]}": node.used_capacity for pos, node in cooling_nodes.items()
             },
             "cpu": {
-                f"{pos[0]},{pos[1]}": node.used_capacity
-                for pos, node in cpu_recovery_nodes.items()
+                f"{pos[0]},{pos[1]}": node.used_capacity for pos, node in cpu_recovery_nodes.items()
             },
             "ghost": {
-                f"{pos[0]},{pos[1]}": node.used_capacity
-                for pos, node in ghost_nodes.items()
+                f"{pos[0]},{pos[1]}": node.used_capacity for pos, node in ghost_nodes.items()
             },
         }
 
@@ -190,9 +186,7 @@ class TestNodeCapacitySaveLoad:
         ghost_node.used_capacity = 0  # Unused
 
         ghost_nodes = {(15, 15): ghost_node}
-        serialized = {
-            f"{pos[0]},{pos[1]}": node.used_capacity for pos, node in ghost_nodes.items()
-        }
+        serialized = {f"{pos[0]},{pos[1]}": node.used_capacity for pos, node in ghost_nodes.items()}
 
         assert "15,15" in serialized
         assert serialized["15,15"] == 0

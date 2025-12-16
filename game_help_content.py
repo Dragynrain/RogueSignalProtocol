@@ -116,6 +116,7 @@ class HelpContent:
                 ("?", "Help"),
                 ("F", "Lore"),
                 ("V", "Achievements"),
+                ("N", "Ascension Info"),
                 ("ESC", "Menu"),
                 ("Enter", "Confirm/Select"),
             ],

@@ -17,8 +17,8 @@ Only external dependencies (sound, rendering) are mocked.
 import pytest
 
 from game_config import GameBalance
-from game_map import RestoreNode
 from game_entities import EnemyState, Position
+from game_map import RestoreNode
 from tests.fixtures.simple_fixtures import (
     create_real_enemy,
 )
@@ -33,7 +33,9 @@ class TestCoolingNodeIntegration:
 
         # Position player on cooling node with high heat
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(
+            node_type="cooling"
+        )
         engine.player.position = cooling_pos
         engine.player.heat = 50
 
@@ -54,7 +56,9 @@ class TestCoolingNodeIntegration:
 
         # Position player on cooling node
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(
+            node_type="cooling"
+        )
         engine.player.position = cooling_pos
         engine.player.heat = 100
 
@@ -75,7 +79,9 @@ class TestCoolingNodeIntegration:
 
         # Start on cooling node
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(
+            node_type="cooling"
+        )
         engine.player.position = cooling_pos
         engine.player.heat = 50
 
@@ -107,7 +113,9 @@ class TestCoolingNodeIntegration:
 
         # Position player on cooling node with 0 heat
         cooling_pos = Position(20, 20)
-        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(node_type="cooling")
+        engine.game_map.cooling_nodes[(cooling_pos.x, cooling_pos.y)] = RestoreNode(
+            node_type="cooling"
+        )
         engine.player.position = cooling_pos
         engine.player.heat = 0
 
@@ -302,7 +310,9 @@ class TestSpecialTileCombinations:
 
         # Create cooling node in shadow
         special_pos = Position(20, 20)
-        engine.game_map.cooling_nodes[(special_pos.x, special_pos.y)] = RestoreNode(node_type="cooling")
+        engine.game_map.cooling_nodes[(special_pos.x, special_pos.y)] = RestoreNode(
+            node_type="cooling"
+        )
         engine.game_map.blind_spots.add((special_pos.x, special_pos.y))
 
         # Position player with high heat
@@ -334,7 +344,9 @@ class TestSpecialTileCombinations:
 
         # Create overlapping special tiles
         special_pos = Position(20, 20)
-        engine.game_map.cpu_recovery_nodes[(special_pos.x, special_pos.y)] = RestoreNode(node_type="cpu")
+        engine.game_map.cpu_recovery_nodes[(special_pos.x, special_pos.y)] = RestoreNode(
+            node_type="cpu"
+        )
         engine.game_map.ghost_nodes[(special_pos.x, special_pos.y)] = RestoreNode(node_type="ghost")
 
         # Position player

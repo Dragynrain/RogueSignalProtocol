@@ -203,6 +203,8 @@ class InputHandler:
                 self.renderer.clear_help_menu()  # Clear menu cache
         elif g.show_achievements:
             g.show_achievements = False
+        elif g.show_ascension:
+            g.show_ascension = False
         elif g.show_inventory:
             g.show_inventory = False
         elif g.look_mode:
@@ -349,6 +351,8 @@ class InputHandler:
             return InputContext.LORE_VIEWER
         elif self.game.show_achievements:
             return InputContext.ACHIEVEMENTS_SCREEN
+        elif self.game.show_ascension:
+            return InputContext.ASCENSION_MENU
         # Main menu checked last (less specific)
         elif self.game.show_main_menu:
             return InputContext.MAIN_MENU
@@ -410,6 +414,13 @@ class InputHandler:
                     self.game.show_lore_viewer = False
                     self.game.lore_viewer_mode = "list"
                     self.game.lore_viewer_selection = 0
+                return True
+            # Other actions are consumed but ignored
+            return True
+        elif context == InputContext.ASCENSION_MENU:
+            # Simple handler: CANCEL or TOGGLE_ASCENSION closes ascension menu
+            if action in (InputAction.CANCEL, InputAction.TOGGLE_ASCENSION):
+                self.game.show_ascension = False
                 return True
             # Other actions are consumed but ignored
             return True
@@ -639,6 +650,9 @@ class InputHandler:
             return True
         elif self.game.show_achievements:
             self.game.show_achievements = False
+            return True
+        elif self.game.show_ascension:
+            self.game.show_ascension = False
             return True
         elif self.game.show_help:
             self.game.show_help = False
