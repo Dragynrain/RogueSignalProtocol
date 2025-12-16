@@ -90,6 +90,7 @@ class GameplayInputHandler(BaseInputHandler):
                 InputAction.TOGGLE_LOOK_MODE,
                 InputAction.TOGGLE_LORE_VIEWER,
                 InputAction.TOGGLE_ACHIEVEMENTS,
+                InputAction.TOGGLE_ASCENSION,
                 InputAction.CANCEL,
             ):
                 self.game.autowalk.cancel()
@@ -422,6 +423,9 @@ class GameplayInputHandler(BaseInputHandler):
             return True
         elif action == InputAction.TOGGLE_ACHIEVEMENTS:
             self.game.show_achievements = True
+            return True
+        elif action == InputAction.TOGGLE_ASCENSION:
+            self.game.show_ascension = True
             return True
 
         # ESC/Cancel in gameplay is handled at game_loop level (not here)

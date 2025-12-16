@@ -11,7 +11,7 @@ import logging
 import random
 
 from game_achievement_popups import AchievementPopupManager
-from game_ascension import AscensionModifiers, calculate_ascension_modifiers
+from game_ascension import calculate_ascension_modifiers
 from game_audio import NullSoundManager, SoundManager
 from game_characters import Enemy
 from game_combat import ExploitSystem
@@ -109,10 +109,20 @@ class GameEngine:
         self.player = Player(5, 5)
         self.message_log = MessageLog()
 
+        # Apply ascension modifiers to player
+        # A10: Player vision override (15 -> 12)
+        if self.ascension_modifiers.player_vision_override is not None:
+            self.player.ascension_vision_override = self.ascension_modifiers.player_vision_override
+        # A14: Starting RAM override (8 -> 6)
+        if self.ascension_modifiers.starting_ram_override is not None:
+            self.player.ram_total = self.ascension_modifiers.starting_ram_override
+
         # Initialize metrics tracking system (will be overwritten if loading save)
         from game_metrics import init_session_metrics
 
         self.metrics = init_session_metrics()
+        # Set the ascension level in metrics for achievement tracking
+        self.metrics.ascension_level = self.ascension_level
 
         # Update enemy manager with message log
         self.enemy_manager.message_log = self.message_log
@@ -145,6 +155,7 @@ class GameEngine:
         self.last_node_position: tuple[int, int] | None = None
         self.show_lore_viewer = False
         self.show_achievements = False
+        self.show_ascension = False
         self.lore_viewer_selection = 0
         self.lore_viewer_mode = "list"
         self.inventory_selection = 0
@@ -187,6 +198,7 @@ class GameEngine:
         self.friendly_fire_confirmed = False
         self.friendly_fire_exploit: str | None = None
         self.friendly_fire_target: Position | None = None
+        self.friendly_fire_death = False  # Set when player dies from Logic Bomb self-damage
 
         # Code hack system
         self.code_hack_effects: dict[str, tuple[str, str]] = {}

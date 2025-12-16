@@ -145,6 +145,7 @@ class TestContextDetection:
         game.show_help = False
         game.show_lore_viewer = False
         game.show_achievements = False
+        game.show_ascension = False
         game.show_main_menu = False  # Not in main menu
         game.player = Mock()
         game.player.cpu = 100  # Alive
@@ -178,6 +179,7 @@ class TestActionExecutionDelegation:
         game.show_help = False
         game.show_lore_viewer = False
         game.show_achievements = False
+        game.show_ascension = False
         game.show_main_menu = False  # Not in main menu
         game.player = Mock()
         game.player.cpu = 100  # Alive

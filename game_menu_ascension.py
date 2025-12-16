@@ -10,14 +10,12 @@ import logging
 
 import tcod
 
-from game_ascension import calculate_ascension_modifiers
 from game_color_manager import ColorManager
 from game_config import GameConfig, GameSettings
 from game_entities import Colors
 from game_input_actions import InputAction, InputContext
 from game_menu_base import BaseMenu
 from game_ui import render_char_safe
-
 
 # Ascension level names for display
 ASCENSION_NAMES = {
@@ -34,13 +32,13 @@ ASCENSION_NAMES = {
     10: "Signal Fog",
     11: "Data Drought",
     12: "Threat Escalation",
-    13: "Degraded Infrastructure",
+    13: "Node Degradation",
     14: "Memory Constraints",
     15: "Network Cascade",
     16: "Exposed Topology",
     17: "Thermal Signature",
     18: "Streamlined Systems",
-    19: "Failing Infrastructure",
+    19: "Node Scarcity",
     20: "Decaying Shadows",
 }
 
@@ -77,7 +75,13 @@ class AscensionMenu(BaseMenu):
     cumulative modifier descriptions, and navigation controls.
     """
 
-    def __init__(self, highest_unlocked: int = 0, background=None, initial_level: int = 0):
+    def __init__(
+        self,
+        highest_unlocked: int = 0,
+        background=None,
+        initial_level: int = 0,
+        view_only: bool = False,
+    ):
         """
         Initialize ascension menu.
 
@@ -85,6 +89,7 @@ class AscensionMenu(BaseMenu):
             highest_unlocked: Highest ascension level unlocked
             background: Optional MenuBackground instance
             initial_level: Initial selection (current ascension level)
+            view_only: If True, shows info only (no selection changes during gameplay)
         """
         super().__init__(background)
         self.highest_unlocked = highest_unlocked
@@ -92,9 +97,20 @@ class AscensionMenu(BaseMenu):
         self.current_selection = initial_level
         self.scroll_offset = 0  # For scrolling display
         self.visible_levels = 10  # How many levels visible at once
+        self.view_only = view_only
 
         # Build options list for base class compatibility
         self.options = [f"A{i}" for i in range(self.total_levels)]
+
+    @property
+    def selected_level(self) -> int:
+        """Alias for current_selection for external use."""
+        return self.current_selection
+
+    @selected_level.setter
+    def selected_level(self, value: int) -> None:
+        """Set selected level (alias for current_selection)."""
+        self.current_selection = value
 
     def is_level_selectable(self, level: int) -> bool:
         """
@@ -176,7 +192,7 @@ class AscensionMenu(BaseMenu):
 
     def get_context(self) -> InputContext:
         """Return input context for this menu."""
-        return InputContext.SETTINGS  # Uses same context as settings menus
+        return InputContext.ASCENSION_MENU
 
     def execute_action(self, action: InputAction) -> str:
         """
@@ -222,31 +238,24 @@ class AscensionMenu(BaseMenu):
         # Render the right-side box
         box = self._render_right_side_box(console, menu_height, ui_color, y_offset=3)
 
-        # Title
-        title = "ASCENSION"
-        if box["use_background_layout"]:
-            render_char_safe(
-                console,
-                box["center_x"] - len(title) // 2,
-                box["top"] + 2,
-                title,
-                fg=Colors.ELECTRIC_PURPLE,
-                bg=Colors.BLACK,
-            )
-        else:
-            render_char_safe(
-                console,
-                box["center_x"] - len(title) // 2,
-                box["top"] + 2,
-                title,
-                fg=Colors.ELECTRIC_PURPLE,
-                bg=Colors.BLACK,
-            )
+        # Title (show "CURRENT ASCENSION" in view_only mode)
+        title = "CURRENT ASCENSION" if self.view_only else "ASCENSION"
+        render_char_safe(
+            console,
+            box["center_x"] - len(title) // 2,
+            box["top"] + 2,
+            title,
+            fg=Colors.ELECTRIC_PURPLE,
+            bg=Colors.BLACK,
+        )
 
-        # Subtitle with current selection info
+        # Subtitle with current selection info (truncate to fit box)
         current_level = self.current_selection
         level_name = ASCENSION_NAMES.get(current_level, f"Ascension {current_level}")
         subtitle = f"A{current_level}: {level_name}"
+        max_subtitle_width = box["content_width"] - 2
+        if len(subtitle) > max_subtitle_width:
+            subtitle = subtitle[: max_subtitle_width - 2] + ".."
         render_char_safe(
             console,
             box["center_x"] - len(subtitle) // 2,
@@ -359,7 +368,10 @@ class AscensionMenu(BaseMenu):
         """Render control hints."""
         controls_y = box["bottom"] - 2
 
-        if box["use_background_layout"]:
+        if self.view_only:
+            # View-only mode: only show close controls
+            controls = "N/Esc: Close" if not box["use_background_layout"] else "B: Close"
+        elif box["use_background_layout"]:
             controls = "D-pad:Nav Enter:Select"
         else:
             controls = "Arrow Keys: Navigate | Enter: Select | Esc: Back"
@@ -437,3 +449,246 @@ class AscensionMenu(BaseMenu):
                 self.current_selection = hovered_level
 
         return ""
+
+
+class AscensionUnlockScreen(BaseMenu):
+    """
+    Screen shown after victory when a new ascension level is unlocked.
+
+    Displays:
+    - "ASCENSION X UNLOCKED!" message
+    - The new modifier description
+    - Press Enter/click to continue
+    """
+
+    def __init__(self, unlocked_level: int, background=None):
+        """
+        Initialize unlock screen.
+
+        Args:
+            unlocked_level: The new ascension level that was unlocked (1-20)
+            background: Optional MenuBackground instance
+        """
+        super().__init__(background)
+        self.unlocked_level = unlocked_level
+        self.level_name = ASCENSION_NAMES.get(unlocked_level, f"Ascension {unlocked_level}")
+        self.modifier_desc = MODIFIER_DESCRIPTIONS.get(unlocked_level, "Unknown modifier")
+        self.is_first_unlock = unlocked_level == 1
+
+    def _get_explanation_text(self) -> list[str]:
+        """Get explanation text for first-time unlock."""
+        if self.is_first_unlock:
+            return [
+                "Ascension levels add permanent difficulty",
+                "modifiers that stack as you progress.",
+                "Beat your highest level to unlock more.",
+            ]
+        return []
+
+    def get_context(self) -> InputContext:
+        """Return unlock screen context (uses GAME_OVER like victory screen)."""
+        return InputContext.GAME_OVER
+
+    def execute_action(self, action: InputAction) -> bool:
+        """
+        Execute an action on the unlock screen.
+
+        Args:
+            action: The action to execute
+
+        Returns:
+            True if screen should close
+        """
+        if action in (InputAction.CONFIRM, InputAction.CANCEL):
+            return True
+        return False
+
+    def render(self, console: tcod.console.Console) -> None:
+        """Render the unlock screen."""
+        if self._has_background():
+            self._clear_text_areas_only(console)
+        else:
+            console.clear()
+
+        self._render_unlock_message(console)
+
+    def _render_unlock_message(self, console: tcod.console.Console) -> None:
+        """Render the unlock message with decorations."""
+        use_background_layout = self._has_background()
+
+        if use_background_layout:
+            self._render_with_background(console)
+        else:
+            self._render_centered(console)
+
+    def _render_with_background(self, console: tcod.console.Console) -> None:
+        """Render unlock message in right-side box (background mode)."""
+        # Taller box for first unlock to fit explanation
+        box_height = 30 if self.is_first_unlock else 25
+
+        # Render the right-side box
+        box = self._render_right_side_box(console, box_height, Colors.CYAN, y_offset=0)
+
+        # Title
+        title = "ASCENSION UNLOCKED!"
+        title_x = box["center_x"] - len(title) // 2
+        render_char_safe(console, title_x, box["top"] + 3, title, fg=Colors.YELLOW, bg=Colors.BLACK)
+
+        # Decorative line
+        line_width = box["content_width"] - 4
+        line_x = box["center_x"] - line_width // 2
+        render_char_safe(
+            console, line_x, box["top"] + 4, "=" * line_width, fg=Colors.CYAN, bg=Colors.BLACK
+        )
+
+        y_offset = 0
+
+        # First unlock explanation
+        explanation = self._get_explanation_text()
+        if explanation:
+            for i, line in enumerate(explanation):
+                line_x = box["center_x"] - len(line) // 2
+                render_char_safe(
+                    console, line_x, box["top"] + 6 + i, line, fg=(200, 200, 200), bg=Colors.BLACK
+                )
+            y_offset = len(explanation) + 1
+
+        # Level info
+        level_text = f"A{self.unlocked_level}: {self.level_name}"
+        level_x = box["center_x"] - len(level_text) // 2
+        render_char_safe(
+            console,
+            level_x,
+            box["top"] + 7 + y_offset,
+            level_text,
+            fg=Colors.GREEN,
+            bg=Colors.BLACK,
+        )
+
+        # New modifier
+        new_text = "NEW MODIFIER:"
+        new_x = box["center_x"] - len(new_text) // 2
+        render_char_safe(
+            console, new_x, box["top"] + 10 + y_offset, new_text, fg=Colors.WHITE, bg=Colors.BLACK
+        )
+
+        modifier_x = box["center_x"] - len(self.modifier_desc) // 2
+        render_char_safe(
+            console,
+            modifier_x,
+            box["top"] + 12 + y_offset,
+            self.modifier_desc,
+            fg=Colors.CYAN,
+            bg=Colors.BLACK,
+        )
+
+        # Narrative text
+        narrative = "The network has adapted to your tactics."
+        narrative_x = box["center_x"] - len(narrative) // 2
+        render_char_safe(
+            console,
+            narrative_x,
+            box["top"] + 16 + y_offset,
+            narrative,
+            fg=(150, 150, 150),
+            bg=Colors.BLACK,
+        )
+
+        # Prompt
+        prompt = "[Press Enter to continue]"
+        prompt_x = box["center_x"] - len(prompt) // 2
+        render_char_safe(
+            console, prompt_x, box["bottom"] - 3, prompt, fg=Colors.ELECTRIC_PURPLE, bg=Colors.BLACK
+        )
+
+    def _render_centered(self, console: tcod.console.Console) -> None:
+        """Render unlock message centered (glyph mode)."""
+        center_x = console.width // 2
+        start_y = 10 if self.is_first_unlock else 12
+
+        # Title with decoration
+        title = "====== ASCENSION UNLOCKED! ======"
+        title_x = center_x - len(title) // 2
+        render_char_safe(console, title_x, start_y, title, fg=Colors.YELLOW, bg=Colors.BLACK)
+
+        y_offset = 0
+
+        # First unlock explanation
+        explanation = self._get_explanation_text()
+        if explanation:
+            for i, line in enumerate(explanation):
+                line_x = center_x - len(line) // 2
+                render_char_safe(
+                    console, line_x, start_y + 3 + i, line, fg=(200, 200, 200), bg=Colors.BLACK
+                )
+            y_offset = len(explanation) + 1
+
+        # Level info
+        level_text = f"A{self.unlocked_level}: {self.level_name}"
+        level_x = center_x - len(level_text) // 2
+        render_char_safe(
+            console, level_x, start_y + 4 + y_offset, level_text, fg=Colors.GREEN, bg=Colors.BLACK
+        )
+
+        # New modifier
+        new_text = "NEW MODIFIER:"
+        new_x = center_x - len(new_text) // 2
+        render_char_safe(
+            console, new_x, start_y + 7 + y_offset, new_text, fg=Colors.WHITE, bg=Colors.BLACK
+        )
+
+        modifier_x = center_x - len(self.modifier_desc) // 2
+        render_char_safe(
+            console,
+            modifier_x,
+            start_y + 9 + y_offset,
+            self.modifier_desc,
+            fg=Colors.CYAN,
+            bg=Colors.BLACK,
+        )
+
+        # Narrative text
+        narrative = "The network has adapted to your tactics."
+        narrative_x = center_x - len(narrative) // 2
+        render_char_safe(
+            console,
+            narrative_x,
+            start_y + 13 + y_offset,
+            narrative,
+            fg=(150, 150, 150),
+            bg=Colors.BLACK,
+        )
+
+        # Prompt
+        prompt = "[Press Enter to continue]"
+        prompt_x = center_x - len(prompt) // 2
+        render_char_safe(
+            console,
+            prompt_x,
+            start_y + 17 + y_offset,
+            prompt,
+            fg=Colors.ELECTRIC_PURPLE,
+            bg=Colors.BLACK,
+        )
+
+    def handle_input(self, event: tcod.event.Event) -> bool:
+        """
+        Handle input for unlock screen.
+
+        Args:
+            event: TCOD event
+
+        Returns:
+            True if screen should close
+        """
+        if isinstance(event, tcod.event.KeyDown):
+            if event.sym in [
+                tcod.event.KeySym.SPACE,
+                tcod.event.KeySym.RETURN,
+                tcod.event.KeySym.KP_ENTER,
+                tcod.event.KeySym.ESCAPE,
+            ]:
+                return True
+        elif isinstance(event, tcod.event.MouseButtonDown):
+            return True
+        return False

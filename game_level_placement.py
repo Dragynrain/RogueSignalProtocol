@@ -128,6 +128,9 @@ class TilePlacementGenerator:
             return random.randint(min_cap, max_cap)
 
         cooling_count = get_required_config("cooling_nodes")
+        # A19+: Apply node reduction per floor (min 0 nodes)
+        if ascension_modifiers.node_reduction_per_floor > 0:
+            cooling_count = max(0, cooling_count - ascension_modifiers.node_reduction_per_floor)
         cooling_positions = self.get_high_traffic_positions(floor_positions)
         logging.debug(
             f"Tile Placement: Placing {cooling_count} cooling nodes (high-traffic candidates={len(cooling_positions)})"
@@ -154,6 +157,9 @@ class TilePlacementGenerator:
         )
 
         cpu_count = get_required_config("cpu_nodes")
+        # A19+: Apply node reduction per floor (min 0 nodes)
+        if ascension_modifiers.node_reduction_per_floor > 0:
+            cpu_count = max(0, cpu_count - ascension_modifiers.node_reduction_per_floor)
         cpu_positions = self.get_peripheral_positions(floor_positions)
         logging.debug(
             f"Tile Placement: Placing {cpu_count} CPU nodes (peripheral candidates={len(cpu_positions)})"

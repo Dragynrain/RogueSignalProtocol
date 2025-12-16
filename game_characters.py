@@ -333,7 +333,10 @@ class Enemy:
                 )
             return 0
 
-        damage = player.take_damage(self.type_data.damage)
+        # A4+: Apply enemy damage multiplier from ascension modifiers
+        base_damage = self.type_data.damage
+        final_damage = int(base_damage * self.damage_multiplier)
+        damage = player.take_damage(final_damage)
 
         # CRITICAL: Check for death immediately after attack
         # Don't wait for process_turn() - death may have occurred mid-turn

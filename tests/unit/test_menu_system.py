@@ -33,14 +33,19 @@ class TestMainMenu:
         """MainMenu initializes correctly when save file exists."""
         with patch.object(SaveGameManager, "save_exists", return_value=True):
             # Without settings (glyph mode), Graphics Preview is hidden
+            # Note: Ascension option only appears when highest_unlocked > 0
             menu = MainMenu()
             assert menu.selected_option == 0
             assert "Continue Game" in menu.options
             assert "New Game" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
-            assert (
-                len(menu.options) == 9
-            )  # Continue, New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit
+            # Base: Continue, New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit (9)
+            # Plus Ascension if unlocked (settings loaded from user_settings.json)
+            base_count = 9
+            settings = GameSettings.get_instance()
+            if settings and settings.get_highest_ascension_unlocked() > 0:
+                base_count += 1  # Ascension option added
+            assert len(menu.options) == base_count
             assert menu.show_warning is False
 
             # With graphics mode settings, Graphics Preview is shown (if graphics_preview_menu exists)
@@ -51,21 +56,26 @@ class TestMainMenu:
             }  # Mock menus dict with graphics_preview_menu
             menu_graphics = MainMenu(menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
-            assert len(menu_graphics.options) == 10  # Includes Graphics Preview
+            # +1 for Graphics Preview
+            assert len(menu_graphics.options) == base_count + 1
 
     def test_main_menu_initialization_no_save(self):
         """MainMenu initializes correctly when no save file exists."""
         with patch.object(SaveGameManager, "save_exists", return_value=False):
             # Without settings (glyph mode), Graphics Preview is hidden
+            # Note: Ascension option only appears when highest_unlocked > 0
             settings = GameSettings()  # Registers as singleton
             menu = MainMenu()
             assert menu.selected_option == 0
             assert "Continue Game" not in menu.options
             assert "New Game" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
-            assert (
-                len(menu.options) == 8
-            )  # New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit
+            # Base: New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit (8)
+            # Plus Ascension if unlocked
+            base_count = 8
+            if settings.get_highest_ascension_unlocked() > 0:
+                base_count += 1  # Ascension option added
+            assert len(menu.options) == base_count
             assert isinstance(menu.options, list)
             assert menu.show_warning is False
 
@@ -76,7 +86,8 @@ class TestMainMenu:
             }  # Mock menus dict with graphics_preview_menu
             menu_graphics = MainMenu(menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
-            assert len(menu_graphics.options) == 9  # Includes Graphics Preview
+            # +1 for Graphics Preview
+            assert len(menu_graphics.options) == base_count + 1
 
     def test_refresh_options_with_continue(self):
         """refresh_options() correctly adds continue option when save exists."""

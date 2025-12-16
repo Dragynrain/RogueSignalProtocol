@@ -329,7 +329,11 @@ class MainMenu(BaseMenu):
         # Position depends on layout - graphics mode needs options higher to avoid help text overlap
         start_y = 19 if box["use_background_layout"] else 21
         for i, option in enumerate(self.options):
-            color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
+            # Ascension option gets special color to stand out
+            if option.startswith("Ascension"):
+                color = Colors.YELLOW if i == self.selected_option else Colors.CYAN
+            else:
+                color = Colors.YELLOW if i == self.selected_option else Colors.WHITE
             bg_color = (
                 ColorManager.get("backgrounds", "menu_highlight")
                 if i == self.selected_option

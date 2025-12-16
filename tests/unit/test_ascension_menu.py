@@ -6,7 +6,6 @@ Tests menu navigation, display, unlock state, and modifier display.
 TDD-first: Write these tests before implementing game_menu_ascension.py.
 """
 
-import pytest
 
 
 class TestAscensionMenuUnlockState:

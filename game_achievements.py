@@ -640,18 +640,12 @@ class AchievementChecker:
         # ============================================
 
         # Thermal Meltdown: die from overheat while using System Crash
-        if (
-            session.death_cause == "overheat"
-            and session.last_exploit_used == "system_crash"
-        ):
+        if session.death_cause == "overheat" and session.last_exploit_used == "system_crash":
             if "thermal_meltdown" not in already_unlocked:
                 newly_unlocked.append("thermal_meltdown")
 
         # Own Worst Enemy: kill yourself with Logic Bomb
-        if (
-            session.death_cause == "self_damage"
-            and session.last_exploit_used == "logic_bomb"
-        ):
+        if session.death_cause == "self_damage" and session.last_exploit_used == "logic_bomb":
             if "own_worst_enemy" not in already_unlocked:
                 newly_unlocked.append("own_worst_enemy")
 

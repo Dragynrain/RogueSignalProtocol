@@ -19,13 +19,19 @@ Tactical elements provide:
 All shadow placement uses organic Perlin noise patterns for natural-looking darkness zones.
 """
 
+from __future__ import annotations
+
 import logging
 import math
 import random
+from typing import TYPE_CHECKING
 
 from game_config import GameConfig
 from game_entities import Position
 from game_level_structure import create_noise_map, get_noise_value
+
+if TYPE_CHECKING:
+    from game_ascension import AscensionModifiers
 
 
 class TacticalGenerator:
@@ -56,6 +62,7 @@ class TacticalGenerator:
         level: int,
         rooms: list[tuple[int, int, int, int]],
         blind_spot_zone_rooms: list[tuple[int, int, int, int]],
+        ascension_modifiers: AscensionModifiers | None = None,
     ) -> None:
         """
         Place blind spot areas for stealth gameplay using Perlin noise for organic patterns.
@@ -72,6 +79,7 @@ class TacticalGenerator:
             level: Current level number (affects blind spot coverage)
             rooms: List of room tuples (x, y, width, height)
             blind_spot_zone_rooms: List of rooms designated as blind spot zones
+            ascension_modifiers: Optional AscensionModifiers for A6 blind spot reduction
         """
         network_configs = GameConfig.NETWORK_CONFIGS()
 
@@ -90,6 +98,19 @@ class TacticalGenerator:
             raise KeyError(f"Required key 'blind_spot_coverage' missing from level {level} config")
 
         blind_spot_coverage = config["blind_spot_coverage"]
+
+        # A6: Apply blind spot reduction per floor from ascension modifiers
+        if (
+            ascension_modifiers is not None
+            and ascension_modifiers.blind_spot_reduction_per_floor > 0
+        ):
+            reduction = (
+                ascension_modifiers.blind_spot_reduction_per_floor / 100.0
+            )  # Convert 1% to 0.01
+            blind_spot_coverage = max(0.01, blind_spot_coverage - reduction)  # Min 1% coverage
+            logging.debug(
+                f"Shadow Gen: A6 blind spot reduction applied: -{ascension_modifiers.blind_spot_reduction_per_floor}% -> coverage now {blind_spot_coverage:.2%}"
+            )
 
         # Create Perlin noise map for organic blind spot distribution
         noise_seed = level * 12345 + random.randint(0, 10000)

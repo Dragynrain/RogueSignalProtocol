@@ -15,8 +15,8 @@ Only external dependencies (sound, rendering) are mocked.
 import pytest
 
 from game_config import GameBalance, GameConfig
-from game_map import RestoreNode
 from game_entities import Position
+from game_map import RestoreNode
 from tests.fixtures.simple_fixtures import enemy_builder
 
 
@@ -86,7 +86,9 @@ class TestHeatManagement:
         initial_heat = basic_game_engine.player.heat
 
         # Place cooling node at player's position (cooling_nodes is a set of tuples)
-        basic_game_engine.game_map.cooling_nodes[(basic_game_engine.player.x, basic_game_engine.player.y)] = RestoreNode(node_type="cooling")
+        basic_game_engine.game_map.cooling_nodes[
+            (basic_game_engine.player.x, basic_game_engine.player.y)
+        ] = RestoreNode(node_type="cooling")
 
         # Process turn to activate cooling node effect
         basic_game_engine.maybe_process_turn()
@@ -336,7 +338,9 @@ class TestCPUManagement:
         initial_cpu = basic_game_engine.player.cpu
 
         # Place CPU recovery node at player position (cpu_recovery_nodes is a set of tuples)
-        basic_game_engine.game_map.cpu_recovery_nodes[(basic_game_engine.player.x, basic_game_engine.player.y)] = RestoreNode(node_type="cpu")
+        basic_game_engine.game_map.cpu_recovery_nodes[
+            (basic_game_engine.player.x, basic_game_engine.player.y)
+        ] = RestoreNode(node_type="cpu")
 
         # Process turn to activate CPU node effect (real game logic in game_turn_manager.py:173-177)
         basic_game_engine.maybe_process_turn()
@@ -478,7 +482,9 @@ class TestResourceInteractions:
 
         # PHASE 3: Use CPU node (real game logic)
         phase3_cpu = basic_game_engine.player.cpu
-        basic_game_engine.game_map.cpu_recovery_nodes[(basic_game_engine.player.x, basic_game_engine.player.y)] = RestoreNode(node_type="cpu")
+        basic_game_engine.game_map.cpu_recovery_nodes[
+            (basic_game_engine.player.x, basic_game_engine.player.y)
+        ] = RestoreNode(node_type="cpu")
 
         # Process turn to trigger CPU recovery node effect
         basic_game_engine.maybe_process_turn()
@@ -513,7 +519,9 @@ class TestResourceInteractions:
         basic_game_engine.player.heat = 40  # Set some heat
         phase5_heat = basic_game_engine.player.heat
 
-        basic_game_engine.game_map.cooling_nodes[(basic_game_engine.player.x, basic_game_engine.player.y)] = RestoreNode(node_type="cooling")
+        basic_game_engine.game_map.cooling_nodes[
+            (basic_game_engine.player.x, basic_game_engine.player.y)
+        ] = RestoreNode(node_type="cooling")
 
         # Process turn to trigger cooling node effect
         basic_game_engine.maybe_process_turn()

@@ -27,6 +27,7 @@ from game_input import InputHandler  # noqa: E402
 from game_input_actions import InputAction  # noqa: E402
 from game_menu_about import AboutMenu  # noqa: E402
 from game_menu_achievements import AchievementsMenu  # noqa: E402
+from game_menu_ascension import AscensionMenu  # noqa: E402
 from game_menu_controls import (  # noqa: E402
     ControlsMenuHub,
     GamepadBindingsMenu,
@@ -164,9 +165,15 @@ def initialize_game_systems(
         "_context": context,  # Store for help menu recreation
         "_tile_manager": tile_manager,  # Store for help menu recreation
         "_input_mapper": input_mapper,  # Store for controls menus
+        "_settings": settings,  # Store for ascension menu recreation
         "lore_menu": LoreMenu(),
         "achievements_menu": AchievementsMenu(),
         "about_menu": AboutMenu(menu_background),
+        "ascension_menu": AscensionMenu(
+            highest_unlocked=settings.get_highest_ascension_unlocked(),
+            background=menu_background,
+            initial_level=settings.get_ascension_level(),
+        ),
         # Controls menus (Phase 4)
         "controls_hub": ControlsMenuHub(settings, input_mapper, menu_background),
         "keyboard_bindings": KeyboardBindingsMenu(settings, input_mapper, menu_background),
@@ -358,6 +365,16 @@ def _process_menu_action(
         menu_stack.append(current_menu)
         return menus["achievements_menu"], None
 
+    elif action == "ascension":
+        # Refresh ascension menu with latest unlock state
+        menus["ascension_menu"] = AscensionMenu(
+            highest_unlocked=settings.get_highest_ascension_unlocked(),
+            background=menus["ascension_menu"].background,
+            initial_level=settings.get_ascension_level(),
+        )
+        menu_stack.append(current_menu)
+        return menus["ascension_menu"], None
+
     elif action == "controls":
         menu_stack.append(current_menu)
         return menus["controls_hub"], None
@@ -420,7 +437,9 @@ def _process_menu_action(
         from game_achievements import AchievementManager
 
         AchievementManager.clear_pending_popups()
-        game = GameEngine(settings=settings)
+        # Get ascension level from settings for new game
+        ascension_level = settings.get_ascension_level() if settings else 0
+        game = GameEngine(settings=settings, ascension_level=ascension_level)
         return current_menu, (game, False)
 
     return current_menu, None
@@ -777,6 +796,7 @@ def _handle_game_input_events_impl(event, game, input_handler):
                 game.show_lore_viewer
                 or game.show_help
                 or game.show_achievements
+                or game.show_ascension
                 or game.show_inventory
                 or game.look_mode
                 or game.targeting_mode
@@ -1030,10 +1050,52 @@ def main():
                                 if isinstance(event, tcod.event.Quit):
                                     return  # Exit program
                                 elif victory_screen.handle_input(event):
-                                    # Victory screen dismissed - return to main menu
-                                    logging.info(
-                                        "Victory screen dismissed - returning to main menu"
-                                    )
+                                    # Victory screen dismissed - check for unlock screen
+                                    logging.info("Victory screen dismissed")
+
+                                    # Check if a new ascension was unlocked
+                                    newly_unlocked = game.game_state.newly_unlocked_ascension
+                                    if newly_unlocked is not None:
+                                        logging.info(
+                                            f"Showing ascension unlock screen for A{newly_unlocked}"
+                                        )
+                                        # Show unlock screen before returning to menu
+                                        from game_menu_ascension import AscensionUnlockScreen
+
+                                        unlock_screen = AscensionUnlockScreen(
+                                            unlocked_level=newly_unlocked,
+                                            background=victory_background,
+                                        )
+
+                                        # Unlock screen loop - errors should propagate, not be silently swallowed
+                                        unlock_done = False
+                                        while not unlock_done:
+                                            unlock_screen.render(console)
+                                            if (
+                                                context.sdl_renderer
+                                                and hasattr(context, "console_render")
+                                                and context.console_render
+                                            ):
+                                                context.sdl_renderer.draw_color = (0, 0, 0, 255)
+                                                context.sdl_renderer.clear()
+                                                if victory_background:
+                                                    victory_background.render(context.sdl_renderer)
+                                                context.console_render.render(console)
+                                                context.sdl_renderer.present()
+                                            else:
+                                                context.present(console)
+
+                                            for unlock_event in tcod.event.wait():
+                                                if isinstance(unlock_event, tcod.event.Quit):
+                                                    return  # Exit program
+                                                elif unlock_screen.handle_input(unlock_event):
+                                                    unlock_done = True
+                                                    break
+
+                                        # Clear the flag
+                                        game.game_state.newly_unlocked_ascension = None
+
+                                    logging.info("Returning to main menu")
                                     from game_achievements import AchievementManager
 
                                     AchievementManager.clear_pending_popups()
@@ -1042,7 +1104,12 @@ def main():
                                     break
                         except Exception as e:
                             log_exception(e, "Victory screen rendering/input")
-                            # On error, return to main menu
+                            # Show error to user instead of silently returning
+                            tb = traceback.extract_tb(e.__traceback__)
+                            line_no = tb[-1].lineno if tb else "?"
+                            if handle_error_screen(console, context, e, line_no):
+                                return  # User pressed ESC to exit
+                            # Clean up and return to menu
                             from game_achievements import AchievementManager
 
                             AchievementManager.clear_pending_popups()
@@ -1199,6 +1266,7 @@ def main():
                                 and not game.look_mode
                                 and not game.targeting_mode
                                 and not game.show_achievements
+                                and not game.show_ascension
                                 and not game.show_help
                             ):
                                 if swap_sticks:
@@ -1217,7 +1285,7 @@ def main():
                             # NOTE: Inventory is handled by event system (InventoryInputHandler) to prevent double-triggering
                             # When swap_sticks=True: use RIGHT stick for menu navigation
                             # When swap_sticks=False: use LEFT stick for menu navigation
-                            elif game.show_achievements or game.show_help:
+                            elif game.show_achievements or game.show_ascension or game.show_help:
                                 # For all modals: Use analog handler (same data source)
                                 if swap_sticks:
                                     movement = analog.get_right_stick_movement_menu()

@@ -6,8 +6,6 @@ Tests achievement unlock logic for ascension milestones and fun achievements.
 TDD-first: Write these tests before implementing achievement logic.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 
 
 class TestAscensionMilestoneAchievements:
@@ -345,9 +343,9 @@ class TestAscensionAchievementDefinitions:
             assert achievement.icon.endswith("]"), f"{achievement_id} icon doesn't end with ]"
             # Icon should not contain emoji characters (basic check)
             for char in achievement.icon:
-                assert ord(char) < 0x1F600 or ord(char) > 0x1F9FF, (
-                    f"{achievement_id} icon contains emoji"
-                )
+                assert (
+                    ord(char) < 0x1F600 or ord(char) > 0x1F9FF
+                ), f"{achievement_id} icon contains emoji"
 
 
 class TestLifetimeMetricsAscension:

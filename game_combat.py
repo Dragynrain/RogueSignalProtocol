@@ -218,10 +218,15 @@ class ExploitSystem:
             new_heat = self.game.player.heat + heat_cost
 
             # Track metrics
-            from game_metrics import track
+            from game_metrics import get_current_session, track
 
             track("exploits_used", category=exploit_key)
             track("heat_generated", amount=heat_cost)
+
+            # Track last exploit used for death context (achievements)
+            session = get_current_session()
+            if session:
+                session.last_exploit_used = exploit_key
 
             # Check if this will cause overheating
             if new_heat > self.game.player.max_heat:
@@ -751,6 +756,10 @@ class ExploitSystem:
             actual_damage = self.game.player.take_damage(damage)
             self.game.message_log.add_message(f"FRIENDLY FIRE: {actual_damage} damage!", Colors.RED)
             logging.debug(f"Combat: Logic Bomb friendly fire! Player took {actual_damage} damage")
+
+            # Track if player died from their own Logic Bomb (for self_damage death cause)
+            if self.game.player.cpu <= 0:
+                self.game.friendly_fire_death = True
 
         # Show result message
         if enemy_count > 0:

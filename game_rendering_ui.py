@@ -668,3 +668,30 @@ class UIRenderer:
             self._achievements_menu = AchievementsMenu()
 
         self._achievements_menu.render(console)
+
+    # === Ascension Screen ===
+
+    def render_ascension_screen(self, console: tcod.console.Console, game):
+        """
+        Render the ascension info screen (view-only during gameplay).
+
+        Shows current ascension level and active modifiers.
+
+        Args:
+            console: TCOD console to render to
+            game: GameEngine with ascension level and settings
+        """
+        from game_menu_ascension import AscensionMenu
+
+        # Create/update ascension menu for viewing
+        if not hasattr(self, "_ascension_menu") or self._ascension_menu is None:
+            self._ascension_menu = AscensionMenu(
+                highest_unlocked=game.settings.get_highest_ascension_unlocked(),
+                initial_level=game.ascension_level,
+                view_only=True,  # No selection changes allowed during gameplay
+            )
+        else:
+            # Update to current level in case it changed
+            self._ascension_menu.selected_level = game.ascension_level
+
+        self._ascension_menu.render(console)

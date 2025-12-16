@@ -90,10 +90,21 @@ class GameLevelCoordinator:
         )
 
         # Generate additional game elements not handled by LevelGenerator
-        self._place_code_hacks(config["code_hacks"])
+        # A11+: Apply code reduction per floor (min 3 codes)
+        mods = self.game_engine.ascension_modifiers
+        code_count = config["code_hacks"]
+        if mods.code_reduction_per_floor > 0:
+            code_count = max(mods.code_minimum, code_count - mods.code_reduction_per_floor)
+        self._place_code_hacks(code_count)
+
         self._place_exploit_pickups(config["exploit_pickups"])
         self._place_story_fragment()  # Add story fragment placement
-        self._place_permanent_upgrades(config["permanent_upgrades"])
+
+        # A18+: Apply upgrade reduction per floor (min 0 upgrades)
+        upgrade_count = config["permanent_upgrades"]
+        if mods.upgrade_reduction_per_floor > 0:
+            upgrade_count = max(0, upgrade_count - mods.upgrade_reduction_per_floor)
+        self._place_permanent_upgrades(upgrade_count)
         self._place_enemies(config["enemies"])
 
         # Reset player position to spawn location and adjust stats for new level
@@ -198,7 +209,12 @@ class GameLevelCoordinator:
             # Finalize and save metrics before deleting save
             from game_metrics import finalize_session, load_lifetime_metrics, save_metrics
 
-            metrics = finalize_session(victory=True, death_cause=None, death_level=0)
+            metrics = finalize_session(
+                victory=True,
+                death_cause=None,
+                death_level=0,
+                final_cpu=self.game_engine.player.cpu,
+            )
             if metrics:
                 save_metrics(metrics)
 
@@ -216,6 +232,25 @@ class GameLevelCoordinator:
             # Delete save on game completion (no continuing after winning)
             SaveGameManager.delete_save()
             self.game_engine.message_log.add_message("Mission complete - save data purged")
+
+            # Unlock next ascension level and record victory
+            from game_ascension import unlock_next_ascension
+
+            current_ascension = self.game_engine.ascension_level
+            highest_unlocked = self.game_engine.settings.get_highest_ascension_unlocked()
+            new_highest = unlock_next_ascension(current_ascension, highest_unlocked)
+
+            if new_highest > highest_unlocked:
+                self.game_engine.settings.unlock_ascension(new_highest)
+                # Auto-advance to newly unlocked level (per PLAN requirement)
+                self.game_engine.settings.set_ascension_level(new_highest)
+                # Track for unlock screen display after victory screen
+                self.game_engine.game_state.newly_unlocked_ascension = new_highest
+                logging.info(
+                    f"Ascension unlocked: A{new_highest} (beat A{current_ascension}), auto-advanced"
+                )
+
+            self.game_engine.settings.record_ascension_victory(current_ascension)
 
             # Set victory flag to trigger victory screen in game loop
             self.game_engine.game_state.show_victory_screen = True
@@ -466,13 +501,19 @@ class GameLevelCoordinator:
         )
 
     def _place_story_fragment(self):
-        """Place a story fragment on level 3 with 50% chance."""
+        """Place a story fragment on level 3 with chance based on ascension level.
+
+        Base chance: 50% at A0, scaling up to 70% at A20 (+1% per ascension level).
+        This rewards players who beat higher ascension levels with faster story unlocks.
+        """
         # Only place story fragments on level 3 (Military network)
         if self.game_engine.level != 3:
             return
 
-        # 50% chance to spawn a story fragment
-        if random.random() > 0.5:
+        # Base 50% chance, +1% per ascension level (max 70% at A20)
+        ascension_bonus = self.game_engine.ascension_level * 0.01
+        spawn_threshold = 0.5 + ascension_bonus  # Higher threshold = more spawns
+        if random.random() > spawn_threshold:
             return
 
         # Get the next undiscovered fragment

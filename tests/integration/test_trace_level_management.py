@@ -17,8 +17,8 @@ across different scenarios and edge cases.
 import pytest
 
 from game_config import GameBalance
-from game_map import RestoreNode
 from game_entities import Position
+from game_map import RestoreNode
 from tests.fixtures.simple_fixtures import create_real_enemy
 
 

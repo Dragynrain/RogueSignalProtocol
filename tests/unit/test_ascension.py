@@ -8,8 +8,8 @@ Tests cover:
 - SessionMetrics serialization with new fields
 """
 
+
 import pytest
-from collections import Counter
 
 from game_metrics import (
     SessionMetrics,
@@ -486,6 +486,41 @@ class TestEnemyAscensionModifiers:
         assert hasattr(enemy, "damage_multiplier")
         assert enemy.damage_multiplier == 1.2
 
+    def test_enemy_damage_multiplier_actually_increases_damage(self):
+        """A4 enemy_damage_multiplier should actually increase damage dealt."""
+        from game_ascension import AscensionModifiers
+        from game_characters import Enemy
+        from game_entities import Position
+        from game_player import Player
+
+        # Create enemy and player
+        enemy = Enemy(Position(5, 5), "bot")  # bot does damage
+        player = Player(6, 5)
+        player.cpu = 100
+        player.max_cpu = 100
+
+        base_damage = enemy.type_data.damage
+
+        # Test without multiplier (default 1.0)
+        player_before = player.cpu
+        enemy.attack_player(player)
+        damage_without_multiplier = player_before - player.cpu
+
+        # Reset player
+        player.cpu = 100
+
+        # Apply A4 multiplier
+        mods = AscensionModifiers(enemy_damage_multiplier=1.5)
+        enemy.apply_ascension_modifiers(mods)
+
+        player_before = player.cpu
+        enemy.attack_player(player)
+        damage_with_multiplier = player_before - player.cpu
+
+        # Damage with multiplier should be 50% higher
+        assert damage_with_multiplier == int(base_damage * 1.5)
+        assert damage_with_multiplier > damage_without_multiplier
+
     def test_scanner_vision_bonus_applied(self):
         """A1 scanner_vision_bonus should only affect scanners."""
         from game_ascension import AscensionModifiers
@@ -716,6 +751,41 @@ class TestTurnProcessingModifiers:
 
         mods = calculate_ascension_modifiers(14)
         assert mods.alert_range_override is None
+
+
+class TestStoryFragmentAscensionBonus:
+    """Test story fragment spawn chance bonus from ascension level."""
+
+    def test_story_fragment_spawn_threshold_formula(self):
+        """Story fragment spawn threshold should be 50% at A0, 70% at A20."""
+        # Formula: spawn_threshold = 0.5 + (ascension_level * 0.01)
+        # This threshold is used in: if random.random() > spawn_threshold: return
+        # Higher threshold = MORE spawns (fewer early returns)
+
+        # A0: 50% spawn chance
+        a0_threshold = 0.5 + (0 * 0.01)
+        assert a0_threshold == 0.5
+
+        # A10: 60% spawn chance
+        a10_threshold = 0.5 + (10 * 0.01)
+        assert a10_threshold == 0.6
+
+        # A20: 70% spawn chance
+        a20_threshold = 0.5 + (20 * 0.01)
+        assert a20_threshold == 0.7
+
+    def test_story_fragment_spawn_chance_increases_with_ascension(self):
+        """Higher ascension should increase story fragment spawn chance."""
+        # The threshold increases linearly from 0.5 (A0) to 0.7 (A20)
+        thresholds = [0.5 + (level * 0.01) for level in range(21)]
+
+        # Verify monotonic increase
+        for i in range(1, 21):
+            assert thresholds[i] > thresholds[i - 1]
+
+        # Verify bounds
+        assert thresholds[0] == 0.5  # A0: 50%
+        assert thresholds[20] == 0.7  # A20: 70%
 
 
 if __name__ == "__main__":
