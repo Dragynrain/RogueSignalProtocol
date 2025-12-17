@@ -720,8 +720,8 @@ class TestA20BlindSpotConsumption:
         assert not engine.game_map.is_blind_spot(test_pos)
         assert (test_pos.x, test_pos.y) in engine.game_map.used_blind_spots
 
-    def test_blind_spot_consumed_on_player_step_at_a20(self, mock_sound_manager, game_settings):
-        """A20: Blind spot should be consumed when player steps on it."""
+    def test_blind_spot_consumed_when_player_leaves_at_a20(self, mock_sound_manager, game_settings):
+        """A20: Blind spot should be consumed when player LEAVES it, not when entering."""
         engine = create_game_at_ascension(20, mock_sound_manager, game_settings)
 
         # Clear existing blind spots and add a controlled test spot
@@ -732,10 +732,21 @@ class TestA20BlindSpotConsumption:
         # Move player to the blind spot
         engine.player.position = test_pos
 
-        # Process special tiles - this triggers blind spot consumption
+        # Process turn while ON the blind spot - should NOT consume yet
         engine._process_special_tiles()
 
-        # Verify blind spot was consumed
+        # Blind spot should still be active (player hasn't left)
+        assert (test_pos.x, test_pos.y) in engine.game_map.blind_spots
+        assert (test_pos.x, test_pos.y) not in engine.game_map.used_blind_spots
+
+        # Now move player OFF the blind spot
+        new_pos = Position(26, 25)
+        engine.player.position = new_pos
+
+        # Process turn after leaving - this should consume the blind spot
+        engine._process_special_tiles()
+
+        # Verify blind spot was consumed after leaving
         assert (test_pos.x, test_pos.y) not in engine.game_map.blind_spots
         assert (test_pos.x, test_pos.y) in engine.game_map.used_blind_spots
 
