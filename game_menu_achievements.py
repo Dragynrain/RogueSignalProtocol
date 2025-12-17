@@ -136,39 +136,11 @@ class AchievementsMenu(BaseMenu):
                 lines.append({"x": 4, "text": achievement_text, "color": color})
 
                 # Description (indented, word-wrapped)
-                desc_lines = self._wrap_text(description, 70)
+                desc_lines = ScreenRenderingUtils.wrap_text(description, 70)
                 for desc_line in desc_lines:
                     lines.append({"x": 10, "text": desc_line, "color": Colors.LIGHT_GRAY})
 
                 lines.append({"x": 2, "text": "", "color": Colors.WHITE})  # Blank line
-
-        return lines
-
-    def _wrap_text(self, text: str, max_width: int) -> list:
-        """Wrap text to fit within max_width."""
-        if len(text) <= max_width:
-            return [text]
-
-        words = text.split()
-        lines = []
-        current_line = []
-        current_length = 0
-
-        for word in words:
-            word_length = len(word)
-            space_needed = word_length + (1 if current_line else 0)
-
-            if current_length + space_needed <= max_width:
-                current_line.append(word)
-                current_length += space_needed
-            else:
-                if current_line:
-                    lines.append(" ".join(current_line))
-                current_line = [word]
-                current_length = word_length
-
-        if current_line:
-            lines.append(" ".join(current_line))
 
         return lines
 

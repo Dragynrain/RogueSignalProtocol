@@ -16,6 +16,7 @@ import pytest
 
 from game_entities import Colors, EnemyMovement, EnemyState, Position
 from game_inspection import EntityInspector
+from game_screen_utilities import ScreenRenderingUtils
 
 
 class TestEntityInspectorPriority:
@@ -809,8 +810,6 @@ class TestInfoPanelRendering:
 
     def test_text_wrapping_respects_panel_width(self):
         """Verify that text wrapping produces lines that fit within panel width."""
-        from game_info_panel import InfoProvider
-
         # Panel width is 24 chars, text should wrap at 22 (24 - 2 for padding)
         max_width = 22
 
@@ -821,7 +820,7 @@ class TestInfoPanelRendering:
         ]
 
         for text in test_cases:
-            wrapped = InfoProvider._wrap_text(text, max_width)
+            wrapped = ScreenRenderingUtils.wrap_text(text, max_width)
 
             # Verify each wrapped line fits within max_width
             for line in wrapped:

@@ -22,6 +22,7 @@ from game_config import GameConfig
 from game_data import GameData
 from game_entities import Colors
 from game_errors import GameErrorHandler
+from game_screen_utilities import ScreenRenderingUtils
 from game_ui import render_char_safe
 from game_unicode_chars import GameGlyphs
 
@@ -263,7 +264,7 @@ class InfoProvider:
             # Show the actual effect
             if code_hack.color_name in game.code_hack_effects:
                 effect_key, desc = game.code_hack_effects[code_hack.color_name]
-                desc_lines = InfoProvider._wrap_text(desc, 22)
+                desc_lines = ScreenRenderingUtils.wrap_text(desc, 22)
                 for line in desc_lines:
                     lines.append({"text": line, "color": Colors.LIGHT_GRAY})
             else:
@@ -329,7 +330,7 @@ class InfoProvider:
         lines.append({"text": "", "color": Colors.WHITE})
 
         # Description (word wrapped)
-        desc_lines = InfoProvider._wrap_text(exploit_def.description, 22)
+        desc_lines = ScreenRenderingUtils.wrap_text(exploit_def.description, 22)
         for line in desc_lines:
             lines.append({"text": line, "color": Colors.LIGHT_GRAY})
 
@@ -366,7 +367,7 @@ class InfoProvider:
         lines = []
 
         # Add description (word wrapped)
-        desc_lines = InfoProvider._wrap_text(entity_info["description"], 22)
+        desc_lines = ScreenRenderingUtils.wrap_text(entity_info["description"], 22)
         for line in desc_lines:
             lines.append({"text": line, "color": Colors.LIGHT_GRAY})
 
@@ -377,7 +378,7 @@ class InfoProvider:
             # Add details (word wrapped)
             detail_lines = entity_info["details"].split("\n")
             for detail_line in detail_lines:
-                wrapped_details = InfoProvider._wrap_text(detail_line, 22)
+                wrapped_details = ScreenRenderingUtils.wrap_text(detail_line, 22)
                 for line in wrapped_details:
                     lines.append({"text": line, "color": Colors.WHITE})
 
@@ -421,7 +422,7 @@ class InfoProvider:
             lines.append({"text": "", "color": Colors.WHITE})
 
             # Word wrap the effect description
-            desc_lines = InfoProvider._wrap_text(entity_info["description"], 22)
+            desc_lines = ScreenRenderingUtils.wrap_text(entity_info["description"], 22)
             for line in desc_lines:
                 lines.append({"text": line, "color": Colors.LIGHT_GRAY})
 
@@ -431,43 +432,6 @@ class InfoProvider:
             lines.append({"text": entity_info["details"], "color": Colors.WHITE})
 
         return {"title": "INFO PANEL", "lines": lines, "color": Colors.GREEN}
-
-    @staticmethod
-    def _wrap_text(text: str, max_width: int) -> list:
-        """
-        Wrap text to fit within max_width using word boundaries.
-
-        Args:
-            text: Text to wrap
-            max_width: Maximum characters per line
-
-        Returns:
-            List of wrapped text lines
-        """
-        if len(text) <= max_width:
-            return [text]
-
-        words = text.split(" ")
-        lines = []
-        current_line = ""
-
-        for word in words:
-            test_line = current_line + (" " if current_line else "") + word
-            if len(test_line) <= max_width:
-                current_line = test_line
-            else:
-                if current_line:
-                    lines.append(current_line)
-                # Handle very long words
-                if len(word) > max_width:
-                    current_line = word[:max_width]
-                else:
-                    current_line = word
-
-        if current_line:
-            lines.append(current_line)
-
-        return lines
 
     @staticmethod
     def get_default_info(game) -> dict[str, Any]:

@@ -24,13 +24,15 @@ import tcod.sdl.joystick
 
 @pytest.fixture
 def settings():
-    """Create GameSettings with gamepad enabled."""
+    """Create GameSettings with gamepad enabled and ascension reset."""
     from game_config import GameSettings
 
     s = GameSettings()
     s.gamepad_enabled = True
     s.gamepad_deadzone = 0.15
     s.gamepad_direction_locking = True
+    # Reset ascension to defaults to ensure consistent menu options
+    s.ascension = {"current_level": 0, "highest_unlocked": 0, "victories_per_level": {}}
     return s
 
 
