@@ -135,6 +135,71 @@ def initialize_tcod_context(settings: GameSettings = None):
     return context
 
 
+def render_with_sdl_background(context, console, background=None, sprites_callback=None):
+    """
+    Render console with optional SDL background and sprites.
+
+    Handles the SDL rendering sequence correctly:
+    1. Clear SDL renderer
+    2. Render background (if provided)
+    3. Render sprites (if callback provided)
+    4. Render console to texture
+    5. Copy texture to window
+    6. Present
+
+    Args:
+        context: TCOD context with sdl_renderer and console_render
+        console: TCOD console to render
+        background: Optional MenuBackground with render_background() method
+        sprites_callback: Optional callable for sprite rendering (e.g., menu.render_sprites)
+
+    Returns:
+        True if SDL rendering was used, False if fell back to context.present()
+    """
+    # Check if background/sprites are available
+    has_background = (
+        background
+        and hasattr(background, "should_load_background")
+        and background.should_load_background()
+        and hasattr(background, "background_texture")
+        and background.background_texture
+    )
+    has_sprites = sprites_callback is not None
+
+    # Check if SDL graphics rendering is available
+    graphics_available = (
+        context.sdl_renderer
+        and hasattr(context, "console_render")
+        and context.console_render
+        and (has_background or has_sprites)
+    )
+
+    if not graphics_available:
+        context.present(console)
+        return False
+
+    # SDL rendering sequence (order is critical!)
+    context.sdl_renderer.draw_color = (0, 0, 0, 255)
+    context.sdl_renderer.clear()
+
+    # Render background to SDL
+    if has_background:
+        background.render_background(console)
+
+    # Render sprites to SDL
+    if has_sprites:
+        sprites_callback()
+
+    # Render console to texture and copy to window
+    console_texture = context.console_render.render(console)
+    window_w, window_h = context.sdl_window.size
+    dest_rect = (0, 0, window_w, window_h)
+    context.sdl_renderer.copy(console_texture, dest=dest_rect)
+
+    context.sdl_renderer.present()
+    return True
+
+
 def initialize_game_systems(
     settings: GameSettings, context, menu_background=None, sound_manager=None, tile_manager=None
 ):
@@ -510,54 +575,14 @@ def handle_menu_navigation(
         # Render console content first
         current_menu.render(console)
 
-        # Check for background graphics (main menu, settings menu, etc.)
-        has_background = (
-            hasattr(current_menu, "background")
-            and current_menu.background
-            and current_menu.background.should_load_background()
+        # Get background and sprites callback for SDL rendering
+        background = getattr(current_menu, "background", None)
+        sprites_callback = (
+            current_menu.render_sprites if hasattr(current_menu, "render_sprites") else None
         )
 
-        # Check for sprite rendering (graphical help menu)
-        has_sprites = hasattr(current_menu, "render_sprites")
-
-        # CORRECTED RENDERING: Use SDL renderer when available for graphics mode
-        graphics_available = (
-            context.sdl_renderer
-            and hasattr(context, "console_render")
-            and context.console_render
-            and (has_background or has_sprites)
-        )
-
-        if graphics_available:
-            # Graphics mode: render everything through SDL
-            # CRITICAL: Set draw color to BLACK before clear() to avoid white background
-            context.sdl_renderer.draw_color = (0, 0, 0, 255)
-            context.sdl_renderer.clear()
-
-            # Render background graphics to SDL first (if menu has background)
-            if has_background:
-                current_menu.background.render_background(console)
-
-            # Render sprites to SDL (if menu has sprites, like GraphicalHelpMenu)
-            if has_sprites:
-                current_menu.render_sprites()
-
-            # Render console texture to fill entire window (no aspect ratio preservation)
-            # This matches the user's expectation for full-screen console
-            console_texture = context.console_render.render(console)
-
-            window_w, window_h = context.sdl_window.size
-
-            # Fill entire window - no letterboxing
-            dest_rect = (0, 0, window_w, window_h)
-            context.sdl_renderer.copy(console_texture, dest=dest_rect)
-
-            # Present everything through SDL
-            context.sdl_renderer.present()
-
-        else:
-            # ASCII mode or fallback: normal console presentation
-            context.present(console)
+        # Render with SDL background/sprites (falls back to context.present if not available)
+        render_with_sdl_background(context, console, background, sprites_callback)
 
         # Wait for events with timeout to allow stick polling
         for event in tcod.event.wait(timeout=0.1):
@@ -1012,40 +1037,8 @@ def main():
                             # Render victory screen content to console
                             victory_screen.render(console)
 
-                            # Use SDL rendering pipeline (SAME as main menu!)
-                            has_background = (
-                                victory_background and victory_background.should_load_background()
-                            )
-
-                            graphics_available = (
-                                context.sdl_renderer
-                                and hasattr(context, "console_render")
-                                and context.console_render
-                                and has_background
-                            )
-
-                            if graphics_available:
-                                # Graphics mode: render everything through SDL (same as main menu)
-                                # CRITICAL: Set draw color to BLACK before clear() to avoid white background
-                                context.sdl_renderer.draw_color = (0, 0, 0, 255)
-                                context.sdl_renderer.clear()
-
-                                # Render background graphics to SDL
-                                victory_background.render_background(console)
-
-                                # Render console to texture
-                                console_texture = context.console_render.render(console)
-
-                                # Copy console texture to fill window
-                                window_w, window_h = context.sdl_window.size
-                                dest_rect = (0, 0, window_w, window_h)
-                                context.sdl_renderer.copy(console_texture, dest=dest_rect)
-
-                                # Present everything through SDL
-                                context.sdl_renderer.present()
-                            else:
-                                # Fallback: normal console presentation
-                                context.present(console)
+                            # Render with SDL background (falls back to context.present)
+                            render_with_sdl_background(context, console, victory_background)
 
                             # Handle victory screen input
                             for event in tcod.event.wait():
@@ -1069,24 +1062,13 @@ def main():
                                             background=victory_background,
                                         )
 
-                                        # Unlock screen loop - errors should propagate, not be silently swallowed
+                                        # Unlock screen loop
                                         unlock_done = False
                                         while not unlock_done:
-                                            # Render background first (if available)
-                                            if victory_background:
-                                                victory_background.render_background(console)
                                             unlock_screen.render(console)
-                                            if (
-                                                context.sdl_renderer
-                                                and hasattr(context, "console_render")
-                                                and context.console_render
-                                            ):
-                                                context.sdl_renderer.draw_color = (0, 0, 0, 255)
-                                                context.sdl_renderer.clear()
-                                                context.console_render.render(console)
-                                                context.sdl_renderer.present()
-                                            else:
-                                                context.present(console)
+                                            render_with_sdl_background(
+                                                context, console, victory_background
+                                            )
 
                                             for unlock_event in tcod.event.wait():
                                                 if isinstance(unlock_event, tcod.event.Quit):
