@@ -632,7 +632,8 @@ class GlyphsMapRenderer(MapRendererBase):
         """
         # Enemies have full vision range regardless of whether they're in a blind spot
         # The blind spot mechanic only affects whether they can see players IN blind spots
-        actual_vision_range = enemy.type_data.vision
+        # Use enemy.vision_range to include ascension bonuses (A1 scanner, A5 all enemies)
+        actual_vision_range = enemy.vision_range
 
         for dx in range(-actual_vision_range, actual_vision_range + 1):
             for dy in range(-actual_vision_range, actual_vision_range + 1):

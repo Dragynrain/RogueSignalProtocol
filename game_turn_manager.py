@@ -42,6 +42,8 @@ class GameTurnManager:
         """
         self.game_engine = game_engine
         self._enemies_alerted_played_this_turn = False  # Prevent sound stacking
+        # A20: Track last blind spot position for consume-on-leave behavior
+        self._last_blind_spot_position: Position | None = None
 
     def process_turn(self):
         """
@@ -328,14 +330,29 @@ class GameTurnManager:
             del self.game_engine.game_map.story_fragments[player_pos]
 
         # Environmental narrative: First blind spot entry
-        if self.game_engine.game_map.is_blind_spot(pp):
+        player_in_blind_spot = self.game_engine.game_map.is_blind_spot(pp)
+        if player_in_blind_spot:
             blind_spot_msg = self.game_engine.narrative_manager.trigger_first_blind_spot()
             if blind_spot_msg:
                 self.game_engine.message_log.add_message(blind_spot_msg)
 
-            # A20+: Consume blind spot after first use (one-time-use)
-            if self.game_engine.ascension_modifiers.blind_spots_consumable:
-                self.game_engine.game_map.consume_blind_spot(pp)
+        # A20+: Consume blind spot when player LEAVES it (not when entering)
+        # Player can stay as long as they want, but once they move away it vanishes
+        if self.game_engine.ascension_modifiers.blind_spots_consumable:
+            # Check if player left a tracked blind spot
+            if (
+                self._last_blind_spot_position is not None
+                and self._last_blind_spot_position != pp
+            ):
+                # Player moved away from blind spot - consume it
+                self.game_engine.game_map.consume_blind_spot(self._last_blind_spot_position)
+                self._last_blind_spot_position = None
+
+            # Track current blind spot position
+            if player_in_blind_spot:
+                self._last_blind_spot_position = pp
+            else:
+                self._last_blind_spot_position = None
 
         # Environmental narrative: Low CPU warning
         cpu_percent = self.game_engine.player.cpu / self.game_engine.player.max_cpu

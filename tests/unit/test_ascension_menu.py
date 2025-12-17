@@ -62,7 +62,7 @@ class TestAscensionMenuModifierDisplay:
 
         menu = AscensionMenu(highest_unlocked=10)
         modifiers = menu.get_modifiers_for_level(1)
-        assert "Scanner +1 vision" in modifiers
+        assert "Scanners +1 vision" in modifiers
 
     def test_a5_shows_cumulative_modifiers(self):
         """A5 should show all A1-A5 modifiers cumulatively."""
@@ -71,10 +71,10 @@ class TestAscensionMenuModifierDisplay:
         menu = AscensionMenu(highest_unlocked=10)
         modifiers = menu.get_modifiers_for_level(5)
         # Should contain modifiers from A1-A5
-        assert "Scanner +1 vision" in modifiers  # A1
+        assert "Scanners +1 vision" in modifiers  # A1
         assert "Enemies +10 CPU" in modifiers  # A2
-        assert "2x passive trace gain" in modifiers  # A3
-        assert "+20% enemy damage" in modifiers  # A4
+        assert "Trace builds faster over time" in modifiers  # A3
+        assert "Enemies deal +20% damage" in modifiers  # A4
         assert "All enemies +1 vision" in modifiers  # A5
 
     def test_locked_level_shows_placeholder(self):

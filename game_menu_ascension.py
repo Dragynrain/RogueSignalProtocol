@@ -45,26 +45,26 @@ ASCENSION_NAMES = {
 
 # Modifier descriptions for display (player-friendly text)
 MODIFIER_DESCRIPTIONS = {
-    1: "Scanner +1 vision",
+    1: "Scanners +1 vision",
     2: "Enemies +10 CPU",
-    3: "2x passive trace gain",
-    4: "+20% enemy damage",
+    3: "Trace builds faster over time",
+    4: "Enemies deal +20% damage",
     5: "All enemies +1 vision",
-    6: "-1% blind spots/floor",
-    7: "+0.2 hostile trace",
-    8: "Heat reduction halved",
-    9: "+5 enemies/floor",
+    6: "Fewer blind spots per floor",
+    7: "Detection raises trace faster",
+    8: "Heat cools down slower",
+    9: "+5 enemies per floor",
     10: "Player vision 15->12",
-    11: "-2 codes/floor (min 3)",
-    12: "Tougher enemy mix",
-    13: "Nodes have capacity",
+    11: "-2 codes per floor (min 3)",
+    12: "Tougher enemy types spawn more often",
+    13: "Nodes have limited uses",
     14: "Starting RAM 8->6",
     15: "Alert range 6->10",
-    16: "Open map generation",
+    16: "More open level layouts",
     17: "Melee +5 heat",
-    18: "-1 upgrades/floor",
-    19: "-1 nodes/floor",
-    20: "Blind spots consumed",
+    18: "-1 upgrades per floor",
+    19: "-1 nodes per floor",
+    20: "Blind spots vanish when you leave them",
 }
 
 
@@ -409,7 +409,7 @@ class AscensionMenu(BaseMenu):
         # Background: box_top = y_offset - 1 = 2, Glyph: box_top = y_offset = 3
         # Use _has_background() directly to match render behavior
         has_bg = self._has_background()
-        box_top = 2 if has_bg else 4
+        box_top = 2 if has_bg else 3
         list_start_y = box_top + 6
 
         if list_start_y <= tile_y < list_start_y + self.visible_levels:
@@ -446,7 +446,7 @@ class AscensionMenu(BaseMenu):
         # Background: box_top = y_offset - 1 = 2, Glyph: box_top = y_offset = 3
         # Use _has_background() directly to match render behavior
         has_bg = self._has_background()
-        box_top = 2 if has_bg else 4
+        box_top = 2 if has_bg else 3
         list_start_y = box_top + 6
 
         if list_start_y <= tile_y < list_start_y + self.visible_levels:

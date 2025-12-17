@@ -983,7 +983,8 @@ class GraphicsMapRenderer(MapRendererBase):
         Vision indicators are only shown on tiles the player can see (no fog of war vision).
         Vision indicators are hidden on blind spots unless the enemy is adjacent to that blind spot,
         since enemies can only see players in blind spots when adjacent (grid distance <= 1)."""
-        actual_vision_range = enemy.type_data.vision
+        # Use enemy.vision_range to include ascension bonuses (A1 scanner, A5 all enemies)
+        actual_vision_range = enemy.vision_range
         game_map = game.game_map
 
         # Get configurable alpha from color manager
