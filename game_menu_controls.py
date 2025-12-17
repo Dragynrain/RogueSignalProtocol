@@ -1150,24 +1150,10 @@ class GamepadSettingsMenu(BaseMenu):
         help_text = selected_option.get("help", "")
         if help_text:
             help_y = content_start_y + 2 + len(self.options) * 3 + 1
-            # Word-wrap help text if too long
-            if len(help_text) > GameConfig.SCREEN_WIDTH - 8:
-                # Simple word wrap
-                words = help_text.split()
-                lines = []
-                current_line = ""
-                for word in words:
-                    if len(current_line) + len(word) + 1 <= GameConfig.SCREEN_WIDTH - 8:
-                        current_line += (" " if current_line else "") + word
-                    else:
-                        lines.append(current_line)
-                        current_line = word
-                if current_line:
-                    lines.append(current_line)
-                for i, line in enumerate(lines[:2]):  # Max 2 lines
-                    render_char_safe(console, 4, help_y + i, line, fg=Colors.LIGHT_GRAY)
-            else:
-                render_char_safe(console, 4, help_y, help_text, fg=Colors.LIGHT_GRAY)
+            # Word-wrap help text using shared helper
+            lines = ScreenRenderingUtils.wrap_text(help_text, GameConfig.SCREEN_WIDTH - 8)
+            for i, line in enumerate(lines[:2]):  # Max 2 lines
+                render_char_safe(console, 4, help_y + i, line, fg=Colors.LIGHT_GRAY)
 
         # Footer with instructions - dynamically reflects current bindings
         ScreenRenderingUtils.render_screen_footer(

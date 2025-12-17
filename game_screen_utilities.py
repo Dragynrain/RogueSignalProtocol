@@ -191,6 +191,50 @@ class ScreenRenderingUtils:
             return start_y + lines_printed
 
     @staticmethod
+    def wrap_text(text: str, max_width: int) -> list[str]:
+        """
+        Wrap text to fit within max_width using word boundaries.
+
+        Use this when you need a list of pre-wrapped lines (e.g., for manual
+        rendering with render_char_safe). For direct rendering with word wrap,
+        prefer render_word_wrapped_text() or console.print() with width param.
+
+        Args:
+            text: Text to wrap
+            max_width: Maximum characters per line
+
+        Returns:
+            List of wrapped text lines
+        """
+        if not text:
+            return []
+
+        if len(text) <= max_width:
+            return [text]
+
+        words = text.split(" ")
+        lines = []
+        current_line = ""
+
+        for word in words:
+            test_line = current_line + (" " if current_line else "") + word
+            if len(test_line) <= max_width:
+                current_line = test_line
+            else:
+                if current_line:
+                    lines.append(current_line)
+                # Handle very long words by truncating
+                if len(word) > max_width:
+                    current_line = word[:max_width]
+                else:
+                    current_line = word
+
+        if current_line:
+            lines.append(current_line)
+
+        return lines
+
+    @staticmethod
     def render_scroll_indicators(
         console: tcod.console.Console,
         x: int,

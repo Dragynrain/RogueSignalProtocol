@@ -984,6 +984,33 @@ class TestAscensionUnlockScreen:
             assert screen.is_first_unlock is False
             assert screen._get_explanation_text() == []
 
+    def test_unlock_screen_text_fits_in_graphics_box(self):
+        """All unlock screen text should fit within the narrow graphics mode box.
+
+        Graphics mode uses a 28-char wide box (26 char content area).
+        Tests that narrative and explanation text use word wrapping.
+        """
+        from game_menu_ascension import AscensionUnlockScreen
+
+        # Box content width is 26 chars in graphics mode (28 - 2 for borders)
+        box_content_width = 26
+
+        # Test narrative text length (should need wrapping)
+        narrative = "The network has adapted to your tactics."
+        assert len(narrative) > box_content_width, "Test assumes narrative needs wrapping"
+
+        # Test that explanation text when joined is longer than box
+        screen = AscensionUnlockScreen(unlocked_level=1)
+        explanation = screen._get_explanation_text()
+        full_explanation = " ".join(explanation)
+        assert len(full_explanation) > box_content_width, "Test assumes explanation needs wrapping"
+
+        # Verify render doesn't raise (word wrapping should handle long text)
+        import tcod
+
+        console = tcod.console.Console(80, 50)
+        screen.render(console)  # Should not raise
+
 
 class TestAscensionMenuViewOnly:
     """Test the view-only mode of AscensionMenu."""

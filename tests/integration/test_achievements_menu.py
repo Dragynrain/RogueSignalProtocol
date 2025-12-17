@@ -11,6 +11,7 @@ import tcod
 from game_achievements import ALL_ACHIEVEMENTS, AchievementManager
 from game_config import GameConfig
 from game_menu_achievements import AchievementsMenu
+from game_screen_utilities import ScreenRenderingUtils
 
 
 class TestAchievementsMenuBasic:
@@ -67,17 +68,15 @@ class TestAchievementsMenuBasic:
         ), f"Expected 37 achievements, found {len(achievement_lines)}"
 
     def test_text_wrapping(self):
-        """Test text wrapping works correctly."""
-        menu = AchievementsMenu()
-
+        """Test text wrapping works correctly via shared helper."""
         # Short text shouldn't wrap
         short_text = "Short text"
-        wrapped = menu._wrap_text(short_text, 50)
+        wrapped = ScreenRenderingUtils.wrap_text(short_text, 50)
         assert wrapped == ["Short text"]
 
         # Long text should wrap
         long_text = "This is a very long text that definitely needs to be wrapped because it exceeds the maximum width"
-        wrapped = menu._wrap_text(long_text, 50)
+        wrapped = ScreenRenderingUtils.wrap_text(long_text, 50)
         assert len(wrapped) > 1
         for line in wrapped:
             assert len(line) <= 50

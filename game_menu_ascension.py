@@ -9,6 +9,7 @@ Shows lock/unlock state, cumulative modifiers, and victory counts.
 import logging
 
 import tcod
+import tcod.constants
 
 from game_color_manager import ColorManager
 from game_config import GameConfig, GameSettings
@@ -563,15 +564,20 @@ class AscensionUnlockScreen(BaseMenu):
 
         y_offset = 0
 
-        # First unlock explanation
+        # First unlock explanation - use word wrapping to fit in box
         explanation = self._get_explanation_text()
         if explanation:
-            for i, line in enumerate(explanation):
-                line_x = box["center_x"] - len(line) // 2
-                render_char_safe(
-                    console, line_x, box["top"] + 6 + i, line, fg=(200, 200, 200), bg=Colors.BLACK
-                )
-            y_offset = len(explanation) + 1
+            # Join explanation lines and word-wrap within box width
+            explanation_text = " ".join(explanation)
+            wrap_width = box["content_width"] - 2
+            lines_printed = console.print(
+                x=box["content_left"] + 1,
+                y=box["top"] + 6,
+                string=explanation_text,
+                fg=(200, 200, 200),
+                width=wrap_width,
+            )
+            y_offset = lines_printed + 1
 
         # Level info
         level_text = f"A{self.unlocked_level}: {self.level_name}"
@@ -602,16 +608,15 @@ class AscensionUnlockScreen(BaseMenu):
             bg=Colors.BLACK,
         )
 
-        # Narrative text
+        # Narrative text - use word wrapping to fit in box
         narrative = "The network has adapted to your tactics."
-        narrative_x = box["center_x"] - len(narrative) // 2
-        render_char_safe(
-            console,
-            narrative_x,
-            box["top"] + 16 + y_offset,
-            narrative,
+        wrap_width = box["content_width"] - 2
+        console.print(
+            x=box["content_left"] + 1,
+            y=box["top"] + 16 + y_offset,
+            string=narrative,
             fg=(150, 150, 150),
-            bg=Colors.BLACK,
+            width=wrap_width,
         )
 
         # Prompt
@@ -633,15 +638,19 @@ class AscensionUnlockScreen(BaseMenu):
 
         y_offset = 0
 
-        # First unlock explanation
+        # First unlock explanation - use word wrapping for consistency
         explanation = self._get_explanation_text()
         if explanation:
-            for i, line in enumerate(explanation):
-                line_x = center_x - len(line) // 2
-                render_char_safe(
-                    console, line_x, start_y + 3 + i, line, fg=(200, 200, 200), bg=Colors.BLACK
-                )
-            y_offset = len(explanation) + 1
+            explanation_text = " ".join(explanation)
+            lines_printed = console.print(
+                x=center_x - 30,  # Center a 60-char wide block
+                y=start_y + 3,
+                string=explanation_text,
+                fg=(200, 200, 200),
+                width=60,
+                alignment=tcod.constants.CENTER,
+            )
+            y_offset = lines_printed + 1
 
         # Level info
         level_text = f"A{self.unlocked_level}: {self.level_name}"
@@ -667,16 +676,15 @@ class AscensionUnlockScreen(BaseMenu):
             bg=Colors.BLACK,
         )
 
-        # Narrative text
+        # Narrative text - use word wrapping for consistency
         narrative = "The network has adapted to your tactics."
-        narrative_x = center_x - len(narrative) // 2
-        render_char_safe(
-            console,
-            narrative_x,
-            start_y + 13 + y_offset,
-            narrative,
+        console.print(
+            x=center_x - 30,  # Center a 60-char wide block
+            y=start_y + 13 + y_offset,
+            string=narrative,
             fg=(150, 150, 150),
-            bg=Colors.BLACK,
+            width=60,
+            alignment=tcod.constants.CENTER,
         )
 
         # Prompt
