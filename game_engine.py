@@ -85,6 +85,13 @@ class GameEngine:
         # Initialize ascension system
         self.ascension_level = ascension_level
         self.ascension_modifiers = calculate_ascension_modifiers(ascension_level)
+        logging.info(
+            f"Ascension A{ascension_level}: scanner_vision={self.ascension_modifiers.scanner_vision_bonus}, "
+            f"enemy_hp={self.ascension_modifiers.enemy_hp_bonus}, "
+            f"trace_mult={self.ascension_modifiers.trace_gain_multiplier}, "
+            f"enemy_dmg={self.ascension_modifiers.enemy_damage_multiplier}, "
+            f"enemy_vision={self.ascension_modifiers.enemy_vision_bonus}"
+        )
 
         # Initialize settings first (needed by other systems)
         self.settings = settings or GameSettings()
@@ -685,6 +692,9 @@ class GameEngine:
         # Base heat + penalty for standing still
         heat_penalty = self.player.consecutive_attacks_here
         heat_generated = 8 + heat_penalty
+
+        # A17+: Add melee heat bonus for bump attacks (they're melee attacks)
+        heat_generated += self.ascension_modifiers.melee_heat_bonus
 
         if self.player.temporary_effects["exploit_efficiency_turns"] > 0:
             heat_generated = int(heat_generated * 0.7)  # Reduced heat with efficiency

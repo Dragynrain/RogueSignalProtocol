@@ -30,19 +30,20 @@ class GameTestAgent:
         agent.attack_at(agent.player.x + 1, agent.player.y)
     """
 
-    def __init__(self, seed: int | None = None, level: int = 1):
+    def __init__(self, seed: int | None = None, level: int = 1, ascension_level: int = 0):
         """
         Initialize a headless game instance for testing.
 
         Args:
             seed: Random seed for deterministic testing (optional)
             level: Starting level (default 1)
+            ascension_level: Ascension difficulty level (0-20, default 0)
         """
         if seed is not None:
             random.seed(seed)
 
         # Create headless engine (no rendering, no audio)
-        self.engine = GameEngine(headless=True, load_save=False)
+        self.engine = GameEngine(headless=True, load_save=False, ascension_level=ascension_level)
 
         # Dismiss intro dialogue for clean test state
         if self.engine.dialogue_state.is_active():

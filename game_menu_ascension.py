@@ -46,7 +46,7 @@ ASCENSION_NAMES = {
 MODIFIER_DESCRIPTIONS = {
     1: "Scanner +1 vision",
     2: "Enemies +10 CPU",
-    3: "2x trace gain",
+    3: "2x passive trace gain",
     4: "+20% enemy damage",
     5: "All enemies +1 vision",
     6: "-1% blind spots/floor",
@@ -374,7 +374,8 @@ class AscensionMenu(BaseMenu):
         elif box["use_background_layout"]:
             controls = "D-pad:Nav Enter:Select"
         else:
-            controls = "Arrow Keys: Navigate | Enter: Select | Esc: Back"
+            # Shortened to fit within 50-char box (was overlapping frame)
+            controls = "Arrows:Nav | Enter:Select | Esc:Back"
 
         render_char_safe(
             console,
@@ -403,8 +404,11 @@ class AscensionMenu(BaseMenu):
             return ""
 
         # Calculate which level was clicked
-        layout = self._get_menu_layout_params()
-        box_top = 5 if layout["use_background_layout"] else 5
+        # Must match render(): y_offset=3, menu_height=SCREEN_HEIGHT-4
+        # Background: box_top = y_offset - 1 = 2, Glyph: box_top = y_offset = 3
+        # Use _has_background() directly to match render behavior
+        has_bg = self._has_background()
+        box_top = 2 if has_bg else 4
         list_start_y = box_top + 6
 
         if list_start_y <= tile_y < list_start_y + self.visible_levels:
@@ -437,8 +441,11 @@ class AscensionMenu(BaseMenu):
             return ""
 
         # Calculate which level is hovered
-        layout = self._get_menu_layout_params()
-        box_top = 5 if layout["use_background_layout"] else 5
+        # Must match render(): y_offset=3, menu_height=SCREEN_HEIGHT-4
+        # Background: box_top = y_offset - 1 = 2, Glyph: box_top = y_offset = 3
+        # Use _has_background() directly to match render behavior
+        has_bg = self._has_background()
+        box_top = 2 if has_bg else 4
         list_start_y = box_top + 6
 
         if list_start_y <= tile_y < list_start_y + self.visible_levels:
@@ -448,6 +455,19 @@ class AscensionMenu(BaseMenu):
             if 0 <= hovered_level < self.total_levels:
                 self.current_selection = hovered_level
 
+        return ""
+
+    def handle_mouse_wheel(self, event) -> str:
+        """Handle mouse wheel - scroll through ascension levels."""
+        if hasattr(event, "y"):
+            if event.y > 0:
+                # Scroll up
+                for _ in range(3):
+                    self.navigate_up()
+            elif event.y < 0:
+                # Scroll down
+                for _ in range(3):
+                    self.navigate_down()
         return ""
 
 

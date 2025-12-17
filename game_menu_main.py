@@ -121,7 +121,12 @@ class MainMenu(BaseMenu):
 
         # Add Continue Game at the start if save exists
         if SaveGameManager.save_exists():
-            return ["Continue Game"] + base_options
+            save_info = SaveGameManager.get_save_info()
+            if save_info and save_info.get("ascension_level", 0) > 0:
+                continue_text = f"Continue (A{save_info['ascension_level']})"
+            else:
+                continue_text = "Continue"
+            return [continue_text] + base_options
         return base_options
 
     def refresh_options(self, show_continue: bool = True, active_game=None) -> None:
@@ -178,7 +183,12 @@ class MainMenu(BaseMenu):
         base_options.append(exit_text)
 
         if show_continue and SaveGameManager.save_exists():
-            self.options = ["Continue Game"] + base_options
+            save_info = SaveGameManager.get_save_info()
+            if save_info and save_info.get("ascension_level", 0) > 0:
+                continue_text = f"Continue (A{save_info['ascension_level']})"
+            else:
+                continue_text = "Continue"
+            self.options = [continue_text] + base_options
         else:
             self.options = base_options
 
@@ -360,12 +370,15 @@ class MainMenu(BaseMenu):
                 start_y = 19 if box["use_background_layout"] else 21
                 if box["use_background_layout"]:
                     # Background mode - position within narrow box
+                    # Cap save info position to avoid overlapping controls at y=45
+                    # Save info needs 3 lines, so max start is 42 (42, 43, 44)
+                    save_info_y = min(start_y + len(self.options) * 2 + 2, 42)
                     save_text = "Save found"
                     continue_text = "Continue to resume"
                     render_char_safe(
                         console,
                         box["center_x"] - len(save_text) // 2,
-                        start_y + len(self.options) * 2 + 2,
+                        save_info_y,
                         save_text,
                         fg=Colors.GREEN,
                         bg=Colors.BLACK,
@@ -373,7 +386,7 @@ class MainMenu(BaseMenu):
                     render_char_safe(
                         console,
                         box["center_x"] - len(continue_text) // 2,
-                        start_y + len(self.options) * 2 + 3,
+                        save_info_y + 1,
                         continue_text,
                         fg=Colors.GREEN,
                         bg=Colors.BLACK,
@@ -382,7 +395,7 @@ class MainMenu(BaseMenu):
                     render_char_safe(
                         console,
                         box["center_x"] - len(saved_text) // 2,
-                        start_y + len(self.options) * 2 + 4,
+                        save_info_y + 2,
                         saved_text,
                         fg=Colors.LIGHT_GRAY,
                         bg=Colors.BLACK,
@@ -541,7 +554,7 @@ class MainMenu(BaseMenu):
         option = self.options[self.selected_option]
         logging.debug(f"[MENU] Selected option: '{option}'")
 
-        if option == "Continue Game":
+        if option.startswith("Continue"):
             return "continue"
         elif option == "New Game":
             save_exists = SaveGameManager.save_exists()

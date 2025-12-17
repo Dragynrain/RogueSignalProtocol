@@ -36,7 +36,7 @@ class TestMainMenu:
             # Note: Ascension option only appears when highest_unlocked > 0
             menu = MainMenu()
             assert menu.selected_option == 0
-            assert "Continue Game" in menu.options
+            assert any(opt.startswith("Continue") for opt in menu.options)
             assert "New Game" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
             # Base: Continue, New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit (9)
@@ -56,8 +56,9 @@ class TestMainMenu:
             }  # Mock menus dict with graphics_preview_menu
             menu_graphics = MainMenu(menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
-            # +1 for Graphics Preview
-            assert len(menu_graphics.options) == base_count + 1
+            # Graphics Preview should be the only difference from base menu
+            # (both menus have same Continue/Ascension state from same save_exists mock)
+            assert len(menu_graphics.options) == len(menu.options) + 1
 
     def test_main_menu_initialization_no_save(self):
         """MainMenu initializes correctly when no save file exists."""
@@ -67,7 +68,7 @@ class TestMainMenu:
             settings = GameSettings()  # Registers as singleton
             menu = MainMenu()
             assert menu.selected_option == 0
-            assert "Continue Game" not in menu.options
+            assert not any(opt.startswith("Continue") for opt in menu.options)
             assert "New Game" in menu.options
             assert "Graphics Preview" not in menu.options  # Hidden in glyph mode
             # Base: New, Settings, Controls, Help, Achievements, Data Fragments, About, Exit (8)
@@ -86,15 +87,15 @@ class TestMainMenu:
             }  # Mock menus dict with graphics_preview_menu
             menu_graphics = MainMenu(menus=mock_menus)
             assert "Graphics Preview" in menu_graphics.options
-            # +1 for Graphics Preview
-            assert len(menu_graphics.options) == base_count + 1
+            # Graphics Preview should be the only difference from base menu
+            assert len(menu_graphics.options) == len(menu.options) + 1
 
     def test_refresh_options_with_continue(self):
         """refresh_options() correctly adds continue option when save exists."""
         with patch.object(SaveGameManager, "save_exists", return_value=True):
             menu = MainMenu()
             menu.refresh_options(show_continue=True)
-            assert "Continue Game" in menu.options
+            assert any(opt.startswith("Continue") for opt in menu.options)
             # mid_game_mode is False when no active_game provided
             assert menu.mid_game_mode is False
 
@@ -103,7 +104,7 @@ class TestMainMenu:
         with patch.object(SaveGameManager, "save_exists", return_value=True):
             menu = MainMenu()
             menu.refresh_options(show_continue=False)
-            assert "Continue Game" not in menu.options
+            assert not any(opt.startswith("Continue") for opt in menu.options)
             # mid_game_mode is False when no active_game provided
             # (changed: mid_game_mode now depends on active_game, not show_continue)
             assert menu.mid_game_mode is False
@@ -119,8 +120,8 @@ class TestMainMenu:
         with patch.object(SaveGameManager, "save_exists", return_value=True):
             menu = MainMenu()
             menu.refresh_options(show_continue=True, active_game=mock_game)
-            # Should show Continue Game and enable START button toggle
-            assert "Continue Game" in menu.options
+            # Should show Continue and enable START button toggle
+            assert any(opt.startswith("Continue") for opt in menu.options)
             assert menu.mid_game_mode is True  # Can resume with START button
 
     def test_menu_navigation_down(self):

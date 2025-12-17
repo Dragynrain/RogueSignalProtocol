@@ -653,6 +653,13 @@ class GameLevelCoordinator:
                 # Apply ascension modifiers to enemy stats (HP, vision, damage)
                 enemy.apply_ascension_modifiers(mods)
 
+                # Log first enemy of each type to verify modifiers applied
+                if placed_enemies == 0:
+                    logging.debug(
+                        f"First enemy stats after A{self.game_engine.ascension_level} mods: "
+                        f"{enemy.type} cpu={enemy.cpu} vision={enemy.vision_range} dmg_mult={enemy.damage_multiplier}"
+                    )
+
                 self.game_engine.enemy_manager.enemies.append(enemy)
                 placed_enemies += 1
 
