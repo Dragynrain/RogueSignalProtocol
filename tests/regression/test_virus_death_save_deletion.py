@@ -118,3 +118,42 @@ class TestVirusDeathSaveDeletion:
         assert (
             agent.engine.pending_death_dialogue is True
         ), "Virus death should set pending_death_dialogue like other death paths"
+
+    def test_combat_death_deletes_save_immediately(self):
+        """Combat death must delete save file immediately, not wait for process_turn.
+
+        Regression: Player could "Continue" after dying from enemy attack because
+        save deletion only happened in process_turn, which might not complete.
+        """
+        agent = GameTestAgent(seed=42)
+
+        # Save the game first
+        from game_save import SaveGameManager
+
+        SaveGameManager.save_game(agent.engine)
+        assert SaveGameManager.save_exists(), "Save should exist before death"
+
+        # Get an enemy and simulate lethal attack
+        # Set player to 1 CPU so any attack kills them
+        agent.engine.player.cpu = 1
+
+        # Find an enemy that can deal damage (not inhibitor/virus which do 0 damage)
+        enemy = None
+        for e in agent.engine.enemies:
+            if hasattr(e, "attack_player") and e.type_data.damage > 0:
+                enemy = e
+                break
+
+        assert enemy is not None, "Need a damage-dealing enemy to test combat death"
+
+        # Position enemy adjacent to player
+        enemy.x = agent.engine.player.x + 1
+        enemy.y = agent.engine.player.y
+
+        # Attack player - this should delete save immediately
+        enemy.attack_player(agent.engine.player, game_engine=agent.engine)
+
+        # Verify save was deleted immediately (not waiting for process_turn)
+        assert not SaveGameManager.save_exists(), (
+            "Save must be deleted immediately on combat death, not after process_turn"
+        )

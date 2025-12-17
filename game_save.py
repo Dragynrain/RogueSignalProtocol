@@ -349,6 +349,43 @@ class SaveGameManager:
             return "Unknown"
 
     @classmethod
+    def get_save_info(cls) -> dict[str, Any] | None:
+        """Get basic save file info without full load.
+
+        Returns dict with ascension_level and level (floor), or None if no save.
+        Caches result to avoid repeated file reads during menu rendering.
+        """
+        if not cls.save_exists():
+            return None
+
+        # Use a simple cache to avoid repeated reads during menu rendering
+        cache_attr = "_save_info_cache"
+        if hasattr(cls, cache_attr):
+            cached = getattr(cls, cache_attr)
+            # Invalidate cache if file was modified
+            try:
+                current_mtime = os.stat(cls._get_save_file_path()).st_mtime
+                if cached and cached.get("_mtime") == current_mtime:
+                    return cached
+            except OSError:
+                pass
+
+        try:
+            with open(cls._get_save_file_path(), encoding="utf-8") as f:
+                data = json.load(f)
+
+            info = {
+                "ascension_level": data.get("ascension_level", 0),
+                "level": data.get("level", 1),
+                "_mtime": os.stat(cls._get_save_file_path()).st_mtime,
+            }
+            setattr(cls, cache_attr, info)
+            return info
+        except Exception as e:
+            logging.debug(f"Could not get save info: {e}")
+            return None
+
+    @classmethod
     def _serialize_inventory(cls, items: list) -> list[dict[str, Any]]:
         """Serialize inventory items."""
         serialized = []

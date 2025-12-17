@@ -350,6 +350,16 @@ class Enemy:
                 logging.warning(
                     f"Player killed by {self.type_data.name} attack - pending_death_dialogue set"
                 )
+                # Delete save immediately - don't wait for turn processing
+                # This prevents "Continue" appearing after death
+                from game_save import SaveGameManager
+
+                if SaveGameManager.save_exists():
+                    try:
+                        SaveGameManager.delete_save()
+                        logging.info("Save file deleted on combat death (permadeath)")
+                    except OSError as e:
+                        logging.error(f"Failed to delete save on combat death: {e}")
 
         return damage
 

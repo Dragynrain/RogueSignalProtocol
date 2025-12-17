@@ -973,6 +973,8 @@ def main():
                     input_handler = InputHandler(
                         game, renderer=renderer, controllers=initial_controllers
                     )
+                    # CRITICAL: Assign input_handler to game so fragment pickup can check renderer
+                    game.input_handler = input_handler
 
                 # Main game loop
                 last_render_time = time.time()
@@ -1070,6 +1072,9 @@ def main():
                                         # Unlock screen loop - errors should propagate, not be silently swallowed
                                         unlock_done = False
                                         while not unlock_done:
+                                            # Render background first (if available)
+                                            if victory_background:
+                                                victory_background.render_background(console)
                                             unlock_screen.render(console)
                                             if (
                                                 context.sdl_renderer
@@ -1078,8 +1083,6 @@ def main():
                                             ):
                                                 context.sdl_renderer.draw_color = (0, 0, 0, 255)
                                                 context.sdl_renderer.clear()
-                                                if victory_background:
-                                                    victory_background.render(context.sdl_renderer)
                                                 context.console_render.render(console)
                                                 context.sdl_renderer.present()
                                             else:

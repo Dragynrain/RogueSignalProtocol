@@ -73,7 +73,7 @@ class TestAscensionMenuModifierDisplay:
         # Should contain modifiers from A1-A5
         assert "Scanner +1 vision" in modifiers  # A1
         assert "Enemies +10 CPU" in modifiers  # A2
-        assert "2x trace gain" in modifiers  # A3
+        assert "2x passive trace gain" in modifiers  # A3
         assert "+20% enemy damage" in modifiers  # A4
         assert "All enemies +1 vision" in modifiers  # A5
 
