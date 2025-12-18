@@ -145,9 +145,7 @@ class ExploitSystem:
                 self.game.cursor_position = target
 
             # Get input mapper for dynamic button hints
-            input_mapper = getattr(self.game, "input_mapper", None)
-            if not input_mapper and hasattr(self.game, "input_handler"):
-                input_mapper = getattr(self.game.input_handler, "input_mapper", None)
+            input_mapper = self.game.get_input_mapper()
 
             # Check if this is System Crash - show combined dialogue for both damages
             if exploit_key == "system_crash" and exploit.self_damage > 0:
@@ -243,6 +241,11 @@ class ExploitSystem:
             else:
                 # Normal heat application
                 self.game.player.heat = new_heat
+
+            # Track highest heat reached for achievements (cold_blooded, heat_master)
+            from game_metrics import track_highest_heat
+
+            track_highest_heat(self.game.player.heat)
 
         if success:
             self.game.targeting_mode = False
@@ -498,27 +501,39 @@ class ExploitSystem:
             )
 
             # Track metrics
-            from game_metrics import get_current_session, track
+            from game_metrics import (
+                get_current_session,
+                track,
+                track_kill_this_turn,
+                track_max_damage,
+                track_stealth_kill,
+            )
 
             track("enemies_killed", category=enemy.type)
             track("damage_dealt", amount=damage)
+            track_kill_this_turn()  # Track turns with kills for efficient_killer
             if enemy.state == EnemyState.UNAWARE:
                 track("stealth_kills")
-                # Update stealth streak for Silent Assassin achievement
-                current_session = get_current_session()
-                if current_session:
-                    current_session.current_stealth_streak += 1
-                    if current_session.current_stealth_streak > current_session.max_stealth_streak:
-                        current_session.max_stealth_streak = current_session.current_stealth_streak
+                track_stealth_kill()  # Update stealth streak
 
-            # Update max single hit damage for Overkill achievement
-            current_session = get_current_session()
-            if current_session and damage > current_session.max_single_hit_damage:
-                current_session.max_single_hit_damage = damage
+            track_max_damage(damage)  # Update max single hit damage
+
+            # Track admin_kills for admin_slayer achievement
+            if is_admin:
+                track("admin_kills")
+
+            # Track blind spot ambushes for blind_spot_master achievement
+            if self.game.game_map.is_blind_spot(self.game.player.position):
+                track("ambushes_from_blind_spots")
+
+            # Track full floor clears for full_clear achievement
+            if len(self.game.enemies) == 0:
+                track("full_floor_clears")
 
             # Check for immediate achievement unlocks (First Blood, Massacre, Overkill, etc.)
             from game_achievements import AchievementManager
 
+            current_session = get_current_session()
             if current_session:
                 AchievementManager.check_immediate_achievements_and_notify(
                     current_session, self.game
@@ -625,9 +640,7 @@ class ExploitSystem:
             from game_dialogue_system import create_system_crash_warning_dialogue
 
             # Get input mapper for dynamic button hints
-            input_mapper = getattr(self.game, "input_mapper", None)
-            if not input_mapper and hasattr(self.game, "input_handler"):
-                input_mapper = getattr(self.game.input_handler, "input_mapper", None)
+            input_mapper = self.game.get_input_mapper()
 
             dialogue = create_system_crash_warning_dialogue(
                 damage=exploit.self_damage,
@@ -727,9 +740,7 @@ class ExploitSystem:
             from game_dialogue_system import create_friendly_fire_warning_dialogue
 
             # Get input mapper for dynamic button hints
-            input_mapper = getattr(self.game, "input_mapper", None)
-            if not input_mapper and hasattr(self.game, "input_handler"):
-                input_mapper = getattr(self.game.input_handler, "input_mapper", None)
+            input_mapper = self.game.get_input_mapper()
 
             dialogue = create_friendly_fire_warning_dialogue(
                 exploit_name=exploit.name,

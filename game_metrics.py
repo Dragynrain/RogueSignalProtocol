@@ -96,6 +96,7 @@ class SessionMetrics:
     # Efficiency metrics
     max_single_hit_damage: int = 0
     turns_with_kills: int = 0  # For damage-per-turn calculation
+    _kill_this_turn: bool = False  # Internal flag, not serialized
     total_heat_when_dealing_damage: int = 0  # For heat efficiency
 
     # Environmental/Tactical
@@ -350,6 +351,67 @@ def init_session_metrics() -> SessionMetrics:
 def get_current_session() -> SessionMetrics | None:
     """Get the current session metrics."""
     return _current_session
+
+
+def track_stealth_kill() -> None:
+    """
+    Track a stealth kill and update the stealth streak.
+
+    Call this when an enemy is killed without being alerted.
+    Updates current_stealth_streak and max_stealth_streak.
+    """
+    session = get_current_session()
+    if session:
+        session.current_stealth_streak += 1
+        if session.current_stealth_streak > session.max_stealth_streak:
+            session.max_stealth_streak = session.current_stealth_streak
+
+
+def track_max_damage(damage: int) -> None:
+    """
+    Track max single hit damage for Overkill achievement.
+
+    Call this when damage is dealt to update the max if exceeded.
+    """
+    session = get_current_session()
+    if session and damage > session.max_single_hit_damage:
+        session.max_single_hit_damage = damage
+
+
+def track_highest_heat(current_heat: int) -> None:
+    """
+    Track highest heat reached for cold_blooded/heat_master achievements.
+
+    Call this whenever heat increases to update the max if exceeded.
+    """
+    session = get_current_session()
+    if session and current_heat > session.highest_heat_reached:
+        session.highest_heat_reached = current_heat
+
+
+def track_kill_this_turn() -> None:
+    """
+    Mark that a kill happened this turn and update turns_with_kills.
+
+    On the first kill of each turn, increments turns_with_kills.
+    Subsequent kills in the same turn do not increment the counter.
+    Call reset_turn_kill_flag() at the start of each new turn.
+    """
+    session = get_current_session()
+    if session and not session._kill_this_turn:
+        session._kill_this_turn = True
+        session.turns_with_kills += 1
+
+
+def reset_turn_kill_flag() -> None:
+    """
+    Reset the kill-this-turn flag at the start of a new turn.
+
+    Called from advance_turn() to prepare for tracking kills in the new turn.
+    """
+    session = get_current_session()
+    if session:
+        session._kill_this_turn = False
 
 
 def track(metric_name: str, category: str | None = None, amount: int = 1) -> None:

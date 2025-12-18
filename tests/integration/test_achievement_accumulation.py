@@ -636,3 +636,189 @@ class TestAchievementEdgeCases:
         # Silent Assassin should NOT unlock (needs 10)
         unlocked = AchievementChecker.check_immediate_achievements(session, set())
         assert "silent_assassin" not in unlocked, "Streak was broken before 10"
+
+
+# ============================================================================
+# METRICS TRACKING TESTS - Verify metrics are tracked in actual gameplay
+# ============================================================================
+
+
+class TestAscensionMetricsTracking:
+    """Test that ascension-related metrics are tracked during actual combat."""
+
+    def test_admin_kills_tracked_on_admin_death(self):
+        """admin_kills metric should increment when Admin Avatar is killed."""
+        AchievementManager._unlocked_achievements = set()
+
+        agent = GameTestAgent(seed=20001)
+        session = agent.engine.metrics
+
+        # Spawn an admin enemy
+        admin = agent.spawn_enemy("admin", 11, 10)
+        admin.cpu = 10  # Low HP for easy kill
+
+        agent.player.position.x = 10
+        agent.player.position.y = 10
+        agent.player.inventory_manager.equipped_exploits = ["buffer_overflow"]
+
+        # Kill the admin
+        exploit_system = ExploitSystem(agent.engine)
+        exploit_system.execute_exploit("buffer_overflow", Position(11, 10))
+
+        # Verify admin_kills was tracked
+        assert session.admin_kills == 1, f"admin_kills should be 1, got {session.admin_kills}"
+
+    def test_full_floor_clears_tracked_on_last_enemy_death(self):
+        """full_floor_clears should increment when all floor enemies are killed."""
+        AchievementManager._unlocked_achievements = set()
+
+        agent = GameTestAgent(seed=20002)
+        session = agent.engine.metrics
+
+        # Clear any existing enemies
+        agent.engine.enemies.clear()
+
+        # Spawn exactly one enemy
+        enemy = agent.spawn_enemy("bot", 11, 10)
+        enemy.cpu = 10
+
+        agent.player.position.x = 10
+        agent.player.position.y = 10
+        agent.player.inventory_manager.equipped_exploits = ["buffer_overflow"]
+
+        # Before kill - no floor clears
+        assert session.full_floor_clears == 0
+
+        # Kill the only enemy
+        exploit_system = ExploitSystem(agent.engine)
+        exploit_system.execute_exploit("buffer_overflow", Position(11, 10))
+
+        # Should be a full floor clear now
+        assert session.full_floor_clears == 1, (
+            f"full_floor_clears should be 1 after clearing all enemies, "
+            f"got {session.full_floor_clears}"
+        )
+
+    def test_ambushes_from_blind_spots_tracked_when_in_blind_spot(self):
+        """ambushes_from_blind_spots should increment when killing from blind spot."""
+        AchievementManager._unlocked_achievements = set()
+
+        agent = GameTestAgent(seed=20003)
+        session = agent.engine.metrics
+
+        # Find a blind spot position and place player there
+        blind_spot_pos = None
+        for y in range(agent.engine.game_map.height):
+            for x in range(agent.engine.game_map.width):
+                pos = Position(x, y)
+                if agent.engine.game_map.is_blind_spot(pos):
+                    # Check adjacent walkable tile for enemy
+                    for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
+                        adj_pos = Position(x + dx, y + dy)
+                        if (agent.engine.game_map.is_valid_position(adj_pos)
+                            and not agent.engine.game_map.is_wall(adj_pos)):
+                            blind_spot_pos = pos
+                            enemy_pos = adj_pos
+                            break
+                if blind_spot_pos:
+                    break
+            if blind_spot_pos:
+                break
+
+        if blind_spot_pos is None:
+            # No blind spots in this map seed, skip test
+            return
+
+        agent.player.position.x = blind_spot_pos.x
+        agent.player.position.y = blind_spot_pos.y
+
+        # Verify player is in blind spot
+        assert agent.engine.game_map.is_blind_spot(agent.player.position), (
+            "Player should be in blind spot"
+        )
+
+        # Spawn enemy adjacent to blind spot
+        agent.engine.enemies.clear()
+        enemy = agent.spawn_enemy("bot", enemy_pos.x, enemy_pos.y)
+        enemy.cpu = 10
+
+        agent.player.inventory_manager.equipped_exploits = ["buffer_overflow"]
+
+        # Kill from blind spot
+        exploit_system = ExploitSystem(agent.engine)
+        exploit_system.execute_exploit("buffer_overflow", enemy_pos)
+
+        # Should have tracked the ambush
+        assert session.ambushes_from_blind_spots >= 1, (
+            f"ambushes_from_blind_spots should be at least 1, "
+            f"got {session.ambushes_from_blind_spots}"
+        )
+
+
+class TestTurnsWithKillsTracking:
+    """Test that turns_with_kills is properly tracked per turn."""
+
+    def test_single_kill_increments_turns_with_kills(self):
+        """One kill in a turn should increment turns_with_kills by 1."""
+        from game_metrics import init_session_metrics, track_kill_this_turn
+
+        session = init_session_metrics()
+
+        # Simulate first kill of turn
+        track_kill_this_turn()
+
+        assert session.turns_with_kills == 1, "turns_with_kills should be 1"
+        assert session._kill_this_turn is True, "Kill flag should be set"
+
+    def test_multiple_kills_same_turn_increments_once(self):
+        """Multiple kills in same turn should only increment turns_with_kills once."""
+        from game_metrics import init_session_metrics, track_kill_this_turn
+
+        session = init_session_metrics()
+
+        # Simulate multiple kills in same turn
+        track_kill_this_turn()
+        track_kill_this_turn()
+        track_kill_this_turn()
+
+        assert session.turns_with_kills == 1, (
+            f"turns_with_kills should still be 1, got {session.turns_with_kills}"
+        )
+
+    def test_reset_flag_allows_new_turn_tracking(self):
+        """After reset, new turn should be able to track kills."""
+        from game_metrics import (
+            init_session_metrics,
+            reset_turn_kill_flag,
+            track_kill_this_turn,
+        )
+
+        session = init_session_metrics()
+
+        # Turn 1: kill
+        track_kill_this_turn()
+        assert session.turns_with_kills == 1
+
+        # New turn
+        reset_turn_kill_flag()
+        assert session._kill_this_turn is False
+
+        # Turn 2: kill
+        track_kill_this_turn()
+        assert session.turns_with_kills == 2, (
+            f"turns_with_kills should be 2 after 2 turns with kills, "
+            f"got {session.turns_with_kills}"
+        )
+
+    def test_turns_without_kills_dont_increment(self):
+        """Turns without kills should not increment turns_with_kills."""
+        from game_metrics import init_session_metrics, reset_turn_kill_flag
+
+        session = init_session_metrics()
+
+        # Simulate 3 turns with no kills
+        reset_turn_kill_flag()  # Turn 1
+        reset_turn_kill_flag()  # Turn 2
+        reset_turn_kill_flag()  # Turn 3
+
+        assert session.turns_with_kills == 0, "No kills means turns_with_kills stays 0"

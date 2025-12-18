@@ -382,6 +382,72 @@ class AchievementChecker:
     """Checks session/lifetime metrics against achievement conditions."""
 
     @staticmethod
+    def _check_combat_achievements(
+        session: SessionMetrics, already_unlocked: set[str], newly_unlocked: list[str]
+    ) -> None:
+        """
+        Check combat achievements (shared by immediate and session checks).
+
+        Args:
+            session: SessionMetrics to check
+            already_unlocked: Set of achievement IDs already unlocked
+            newly_unlocked: List to append newly unlocked achievement IDs
+        """
+        total_kills = sum(session.enemies_killed.values())
+
+        if "first_blood" not in already_unlocked and total_kills >= 1:
+            newly_unlocked.append("first_blood")
+
+        if "massacre" not in already_unlocked and total_kills >= MASSACRE_KILLS_THRESHOLD:
+            newly_unlocked.append("massacre")
+
+        if (
+            "overkill" not in already_unlocked
+            and session.max_single_hit_damage >= OVERKILL_DAMAGE_THRESHOLD
+        ):
+            newly_unlocked.append("overkill")
+
+        # Check AOE multi-kills (aoe_multi_kills is Counter of {num_enemies: count})
+        max_aoe = max(session.aoe_multi_kills.keys(), default=0) if session.aoe_multi_kills else 0
+        if "crowd_control" not in already_unlocked and max_aoe >= CROWD_CONTROL_AOE_THRESHOLD:
+            newly_unlocked.append("crowd_control")
+
+        # Efficient killer: average kills per turn threshold
+        if (
+            "efficient_killer" not in already_unlocked
+            and session.turns_with_kills >= EFFICIENT_KILLER_TURNS_THRESHOLD
+        ):
+            avg_kills_per_turn = (
+                total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
+            )
+            if avg_kills_per_turn >= EFFICIENT_KILLER_AVG_KILLS:
+                newly_unlocked.append("efficient_killer")
+
+    @staticmethod
+    def _check_stealth_achievements_immediate(
+        session: SessionMetrics, already_unlocked: set[str], newly_unlocked: list[str]
+    ) -> None:
+        """
+        Check stealth achievements that can unlock immediately (shared logic).
+
+        Args:
+            session: SessionMetrics to check
+            already_unlocked: Set of achievement IDs already unlocked
+            newly_unlocked: List to append newly unlocked achievement IDs
+        """
+        if (
+            "silent_assassin" not in already_unlocked
+            and session.max_stealth_streak >= SILENT_ASSASSIN_STREAK_THRESHOLD
+        ):
+            newly_unlocked.append("silent_assassin")
+
+        if (
+            "blind_spot_master" not in already_unlocked
+            and session.ambushes_from_blind_spots >= BLIND_SPOT_AMBUSHES_THRESHOLD
+        ):
+            newly_unlocked.append("blind_spot_master")
+
+    @staticmethod
     def check_immediate_achievements(
         session: SessionMetrics, already_unlocked: set[str]
     ) -> list[str]:
@@ -403,48 +469,12 @@ class AchievementChecker:
         newly_unlocked = []
 
         # Combat achievements (immediate)
-        total_kills = sum(session.enemies_killed.values())
-
-        if "first_blood" not in already_unlocked and total_kills >= 1:
-            newly_unlocked.append("first_blood")
-
-        if "massacre" not in already_unlocked and total_kills >= MASSACRE_KILLS_THRESHOLD:
-            newly_unlocked.append("massacre")
-
-        if (
-            "overkill" not in already_unlocked
-            and session.max_single_hit_damage >= OVERKILL_DAMAGE_THRESHOLD
-        ):
-            newly_unlocked.append("overkill")
-
-        # Check AOE multi-kills
-        max_aoe = max(session.aoe_multi_kills.keys(), default=0)
-        if "crowd_control" not in already_unlocked and max_aoe >= CROWD_CONTROL_AOE_THRESHOLD:
-            newly_unlocked.append("crowd_control")
-
-        # Efficient killer: average 2+ kills per turn for 10+ turns
-        if (
-            "efficient_killer" not in already_unlocked
-            and session.turns_with_kills >= EFFICIENT_KILLER_TURNS_THRESHOLD
-        ):
-            avg_kills_per_turn = (
-                total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
-            )
-            if avg_kills_per_turn >= EFFICIENT_KILLER_AVG_KILLS:
-                newly_unlocked.append("efficient_killer")
+        AchievementChecker._check_combat_achievements(session, already_unlocked, newly_unlocked)
 
         # Stealth achievements (immediate)
-        if (
-            "silent_assassin" not in already_unlocked
-            and session.max_stealth_streak >= SILENT_ASSASSIN_STREAK_THRESHOLD
-        ):
-            newly_unlocked.append("silent_assassin")
-
-        if (
-            "blind_spot_master" not in already_unlocked
-            and session.ambushes_from_blind_spots >= BLIND_SPOT_AMBUSHES_THRESHOLD
-        ):
-            newly_unlocked.append("blind_spot_master")
+        AchievementChecker._check_stealth_achievements_immediate(
+            session, already_unlocked, newly_unlocked
+        )
 
         return newly_unlocked
 
@@ -464,56 +494,24 @@ class AchievementChecker:
         """
         newly_unlocked = []
 
-        # Combat achievements
+        # Calculate total kills (needed for multiple checks including pacifist)
         total_kills = sum(session.enemies_killed.values())
 
-        if "first_blood" not in already_unlocked and total_kills >= 1:
-            newly_unlocked.append("first_blood")
+        # Combat achievements (shared with immediate)
+        AchievementChecker._check_combat_achievements(session, already_unlocked, newly_unlocked)
 
-        if "massacre" not in already_unlocked and total_kills >= MASSACRE_KILLS_THRESHOLD:
-            newly_unlocked.append("massacre")
+        # Stealth achievements (shared immediate checks)
+        AchievementChecker._check_stealth_achievements_immediate(
+            session, already_unlocked, newly_unlocked
+        )
 
-        if (
-            "overkill" not in already_unlocked
-            and session.max_single_hit_damage >= OVERKILL_DAMAGE_THRESHOLD
-        ):
-            newly_unlocked.append("overkill")
-
-        # Check AOE multi-kills (aoe_multi_kills is Counter of {num_enemies: count})
-        max_aoe = max(session.aoe_multi_kills.keys(), default=0)
-        if "crowd_control" not in already_unlocked and max_aoe >= CROWD_CONTROL_AOE_THRESHOLD:
-            newly_unlocked.append("crowd_control")
-
-        # Efficient killer: average 2+ kills per turn for 10+ turns
-        if (
-            "efficient_killer" not in already_unlocked
-            and session.turns_with_kills >= EFFICIENT_KILLER_TURNS_THRESHOLD
-        ):
-            avg_kills_per_turn = (
-                total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
-            )
-            if avg_kills_per_turn >= EFFICIENT_KILLER_AVG_KILLS:
-                newly_unlocked.append("efficient_killer")
-
-        # Stealth achievements
-        if (
-            "silent_assassin" not in already_unlocked
-            and session.max_stealth_streak >= SILENT_ASSASSIN_STREAK_THRESHOLD
-        ):
-            newly_unlocked.append("silent_assassin")
-
+        # Stealth achievements (session-only - require level completion or victory)
         if (
             "ghost_protocol" not in already_unlocked
             and session.levels_completed >= 1
             and not session.ever_detected
         ):
             newly_unlocked.append("ghost_protocol")
-
-        if (
-            "blind_spot_master" not in already_unlocked
-            and session.ambushes_from_blind_spots >= BLIND_SPOT_AMBUSHES_THRESHOLD
-        ):
-            newly_unlocked.append("blind_spot_master")
 
         if (
             "invisible_victory" not in already_unlocked
