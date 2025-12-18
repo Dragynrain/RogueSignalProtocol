@@ -516,14 +516,18 @@ class GameTurnManager:
             # Admin Avatar has perfect tracking (but can still be blinded)
             if enemy.type == "admin":
                 if enemy.blinded_turns <= 0:  # Only track if not blinded
+                    player_pos = Position(
+                        self.game_engine.player.x, self.game_engine.player.y
+                    )
                     if enemy.state != EnemyState.HOSTILE:
-                        enemy.state = EnemyState.HOSTILE
+                        # Use make_hostile for consistent state transition (clears move queue)
+                        enemy.make_hostile(player_pos)
                         self.game_engine.message_log.add_message(
                             f"{enemy.type_data.name} detected you!"
                         )
-                    enemy.last_seen_player = Position(
-                        self.game_engine.player.x, self.game_engine.player.y
-                    )
+                    else:
+                        # Already hostile - just update last seen position
+                        enemy.last_seen_player = player_pos
             else:
                 self._update_enemy_state(enemy, can_see)
 
@@ -593,10 +597,12 @@ class GameTurnManager:
             enemy.move_queue.clear()  # New state = new plan
 
     def _transition_to_hostile(self, enemy):
-        """Transition enemy to hostile state."""
-        self._restore_patrol(enemy)  # Store original patrol index
-        enemy.state = EnemyState.HOSTILE
-        # State changed - will be caught by invalidation check in _update_enemy_state
+        """Transition enemy to hostile state with proper state management."""
+        # Use make_hostile helper for consistent state transitions
+        # (handles patrol index storage, state change, move queue invalidation)
+        player_pos = Position(self.game_engine.player.x, self.game_engine.player.y)
+        enemy.make_hostile(player_pos)
+
         self._increase_trace(GameBalance.ENEMY_TRACE_ALERT_TO_HOSTILE, "trace_alert_to_hostile")
         self.game_engine.message_log.add_message(f"{enemy.type_data.name} detected you!")
         self.game_engine.sound_manager.play_sound("enemy_hostile")
@@ -625,10 +631,16 @@ class GameTurnManager:
         self._check_trace_threshold_warnings(old_trace, self.game_engine.player.trace_level)
 
     def _restore_patrol(self, enemy):
-        """Store/restore patrol index for patrol enemies."""
+        """Restore patrol enemy to their original patrol waypoint when losing interest.
+
+        When a PATROL enemy transitions from HOSTILE/ALERT back to UNAWARE,
+        restore their patrol_index to the original value stored when they
+        first became hostile (via make_hostile()).
+        """
         movement_type = enemy.get_movement_type()
         if movement_type == EnemyMovement.PATROL and enemy.patrol_points:
-            enemy.original_patrol_index = enemy.patrol_index
+            # Restore to original patrol waypoint (stored when became hostile)
+            enemy.patrol_index = enemy.original_patrol_index
 
     def _check_trace_threshold_warnings(self, old_trace: float, new_trace: float):
         """Check and play warning sounds for trace level threshold crossings."""
