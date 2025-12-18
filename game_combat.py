@@ -418,6 +418,8 @@ class ExploitSystem:
                     enemy.last_seen_player = target
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = exploit.alert_duration_normal
+                # Clear move queue - enemy should investigate decoy, not follow old plan
+                enemy.move_queue.clear()
                 attracted += 1
         enemy_word = "enemy" if attracted == 1 else "enemies"
         self.game.message_log.add_message(f"Decoy Swarm: {attracted} {enemy_word} attracted")
@@ -666,6 +668,8 @@ class ExploitSystem:
                     enemy.disabled_turns += exploit.effect_duration  # Additive stun effect
                     enemy.state = EnemyState.UNAWARE
                     enemy.alert_timer = 0
+                    # Clear move queue - stunned enemy shouldn't follow old pursuit plan
+                    enemy.move_queue.clear()
                 count += 1
         self.game.message_log.add_message(f"System crash: {count} affected")
         return True
@@ -867,6 +871,8 @@ class ExploitSystem:
                 enemy.disabled_turns += exploit.effect_duration
                 enemy.state = EnemyState.UNAWARE
                 enemy.alert_timer = 0
+                # Clear move queue - disabled enemy shouldn't follow old pursuit plan
+                enemy.move_queue.clear()
                 count += 1
 
         self.game.message_log.add_message(f"DoS: {count} disabled")
@@ -899,6 +905,8 @@ class ExploitSystem:
                 enemy.last_seen_player = None
                 enemy.alert_timer = 0
                 enemy.blinded_turns = exploit.effect_duration
+                # Clear move queue - blinded enemy shouldn't follow old pursuit plan
+                enemy.move_queue.clear()
                 count += 1
 
         msg = f"Memory Leak: {count} enemies blinded" if count > 0 else "No enemies in range"
