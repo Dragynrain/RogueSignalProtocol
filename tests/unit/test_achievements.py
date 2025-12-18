@@ -77,9 +77,9 @@ def test_crowd_control_achievement(clean_achievement_state, sample_session):
 
 
 def test_efficient_killer_achievement(clean_achievement_state, sample_session):
-    """Test efficient_killer achievement with 2+ kills/turn average."""
-    sample_session.enemies_killed["virus"] = 25
-    sample_session.turns_with_kills = 10  # 25 kills / 10 turns = 2.5 avg
+    """Test efficient_killer achievement with 1.5+ kills/turn average."""
+    sample_session.enemies_killed["virus"] = 10
+    sample_session.turns_with_kills = 5  # 10 kills / 5 turns = 2.0 avg (above 1.5)
 
     unlocked = AchievementChecker.check_session_achievements(sample_session, set())
     assert "efficient_killer" in unlocked
@@ -87,8 +87,8 @@ def test_efficient_killer_achievement(clean_achievement_state, sample_session):
 
 def test_efficient_killer_not_unlocked_low_average(clean_achievement_state, sample_session):
     """Test efficient_killer doesn't unlock with low kill average."""
-    sample_session.enemies_killed["virus"] = 15
-    sample_session.turns_with_kills = 10  # 1.5 avg (too low)
+    sample_session.enemies_killed["virus"] = 5
+    sample_session.turns_with_kills = 10  # 0.5 avg (below 1.5 threshold)
 
     unlocked = AchievementChecker.check_session_achievements(sample_session, set())
     assert "efficient_killer" not in unlocked

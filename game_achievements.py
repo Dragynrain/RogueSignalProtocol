@@ -22,8 +22,8 @@ TOTAL_CODE_HACK_TYPES = 6  # restore_cpu, reduce_heat, reduce_trace_level, speed
 MASSACRE_KILLS_THRESHOLD = 20
 OVERKILL_DAMAGE_THRESHOLD = 50
 CROWD_CONTROL_AOE_THRESHOLD = 5
-EFFICIENT_KILLER_TURNS_THRESHOLD = 10
-EFFICIENT_KILLER_AVG_KILLS = 2.0
+EFFICIENT_KILLER_TURNS_THRESHOLD = 5
+EFFICIENT_KILLER_AVG_KILLS = 1.5
 
 # Stealth
 SILENT_ASSASSIN_STREAK_THRESHOLD = 10
@@ -89,7 +89,7 @@ COMBAT_ACHIEVEMENTS = {
     "efficient_killer": Achievement(
         id="efficient_killer",
         name="Efficient Killer",
-        description=f"Average {int(EFFICIENT_KILLER_AVG_KILLS)}+ kills per turn for {EFFICIENT_KILLER_TURNS_THRESHOLD}+ turns",
+        description=f"Average {EFFICIENT_KILLER_AVG_KILLS:.1f}+ kills per turn for {EFFICIENT_KILLER_TURNS_THRESHOLD}+ turns",
         icon="[TARGET]",
         category="combat",
     ),
@@ -292,7 +292,6 @@ ASCENSION_ACHIEVEMENTS = {
         description="Complete Ascension 20",
         icon="[A20]",
         category="ascension",
-        hidden=True,
     ),
 }
 

@@ -110,7 +110,7 @@ class TestImmediateCombatAchievements:
         assert "crowd_control" in unlocked, "Crowd Control should trigger on 5+ AOE hits"
 
     def test_efficient_killer_triggers_on_sustained_performance(self):
-        """Efficient Killer should trigger with 2+ kills/turn for 10+ turns."""
+        """Efficient Killer should trigger with 1.5+ kills/turn for 5+ turns."""
         from collections import Counter
 
         AchievementManager._unlocked_achievements = set()
@@ -120,16 +120,16 @@ class TestImmediateCombatAchievements:
 
         # Directly set metrics to simulate sustained high-kill performance
         # (Testing achievement logic, not turn processing)
-        session.enemies_killed = Counter({"bot": 25})  # 25 total kills
-        session.turns_with_kills = 10  # 10 turns with kills = 2.5 avg kills/turn
+        session.enemies_killed = Counter({"bot": 10})  # 10 total kills
+        session.turns_with_kills = 5  # 5 turns with kills = 2.0 avg kills/turn
 
-        # Verify metrics: 10+ turns with kills, 2+ avg kills/turn
+        # Verify metrics: 5+ turns with kills, 1.5+ avg kills/turn
         assert (
-            session.turns_with_kills >= 10
-        ), f"Should have 10+ turns with kills, got {session.turns_with_kills}"
+            session.turns_with_kills >= 5
+        ), f"Should have 5+ turns with kills, got {session.turns_with_kills}"
         total_kills = sum(session.enemies_killed.values())
         avg_kills = total_kills / session.turns_with_kills if session.turns_with_kills > 0 else 0
-        assert avg_kills >= 2.0, f"Should average 2+ kills/turn, got {avg_kills:.2f}"
+        assert avg_kills >= 1.5, f"Should average 1.5+ kills/turn, got {avg_kills:.2f}"
 
         # Verify achievement triggers
         unlocked = AchievementChecker.check_immediate_achievements(session, set())

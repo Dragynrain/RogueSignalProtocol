@@ -504,6 +504,12 @@ class ExploitSystem:
             track("damage_dealt", amount=damage)
             if enemy.state == EnemyState.UNAWARE:
                 track("stealth_kills")
+                # Update stealth streak for Silent Assassin achievement
+                current_session = get_current_session()
+                if current_session:
+                    current_session.current_stealth_streak += 1
+                    if current_session.current_stealth_streak > current_session.max_stealth_streak:
+                        current_session.max_stealth_streak = current_session.current_stealth_streak
 
             # Update max single hit damage for Overkill achievement
             current_session = get_current_session()

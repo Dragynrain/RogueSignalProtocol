@@ -363,3 +363,67 @@ class TestMainMenuAscensionDisplay:
 
             # Check options do NOT include Ascension
             assert not any("Ascension" in opt for opt in menu.options)
+
+
+class TestAscensionMenuMouseHandling:
+    """Test mouse click handling for ascension menu."""
+
+    def test_left_click_on_unlocked_level_confirms_selection(self):
+        """Left clicking an unlocked level should confirm and return 'back'."""
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from game_menu_ascension import AscensionMenu
+
+        menu = AscensionMenu(highest_unlocked=5)
+        # Simulate glyph mode (no background)
+        menu._background = None
+
+        # In glyph mode: box_top=3, list_start_y=box_top+6=9
+        # Level 0 is at y=9, level 1 at y=10, etc.
+        event = SimpleNamespace(tile=SimpleNamespace(x=40, y=9))  # Click on level 0
+
+        with patch.object(menu, "confirm_selection", return_value="selected"):
+            result = menu.handle_left_click(event)
+
+        assert result == "back"
+
+    def test_left_click_on_locked_level_does_not_confirm(self):
+        """Left clicking a locked level should update selection but not confirm."""
+        from types import SimpleNamespace
+
+        from game_menu_ascension import AscensionMenu
+
+        menu = AscensionMenu(highest_unlocked=5)
+        menu._background = None
+
+        # In glyph mode: list_start_y=9
+        # Level 10 is at y=19 (9+10), but with scroll we need to scroll first
+        menu.scroll_offset = 10  # Show levels 10-19
+        event = SimpleNamespace(tile=SimpleNamespace(x=40, y=9))  # Click on level 10 (scrolled)
+
+        result = menu.handle_left_click(event)
+
+        # Should update selection to level 10 but return "" since it's locked
+        assert menu.current_selection == 10
+        assert result == ""
+
+    def test_left_click_in_view_only_mode_does_not_confirm(self):
+        """In view_only mode, left click should navigate but not confirm."""
+        from types import SimpleNamespace
+        from unittest.mock import patch
+
+        from game_menu_ascension import AscensionMenu
+
+        menu = AscensionMenu(highest_unlocked=5, view_only=True)
+        menu._background = None
+
+        event = SimpleNamespace(tile=SimpleNamespace(x=40, y=9))  # Click on level 0
+
+        with patch.object(menu, "confirm_selection") as mock_confirm:
+            result = menu.handle_left_click(event)
+
+        # Should NOT call confirm_selection in view_only mode
+        mock_confirm.assert_not_called()
+        assert result == ""
+        assert menu.current_selection == 0

@@ -21,7 +21,7 @@ class AchievementsMenu(BaseMenu):
 
     # Per-screen scroll speed configuration
     ARROW_SCROLL_SPEED = 3  # Lines per arrow key press (default: 1, increased for faster scrolling)
-    PAGE_SCROLL_SPEED = 35  # Lines per Page Up/Down (full page = max_visible_lines)
+    PAGE_SCROLL_SPEED = 30  # Lines per Page Up/Down (less than max_visible to preserve context)
     WHEEL_SCROLL_SPEED = 5  # Lines per mouse wheel tick (default: 3)
 
     def __init__(self, background=None):

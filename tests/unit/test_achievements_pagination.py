@@ -57,17 +57,21 @@ class TestAchievementsPagination:
         assert current_page == 3, f"At max scroll, should be page 3, got {current_page}"
         assert current_page == total_pages, "At max scroll, should be on last page"
 
-    def test_page_scroll_speed_is_full_page(self):
-        """PAGE_SCROLL_SPEED should equal max_visible_lines for true page-by-page."""
+    def test_page_scroll_speed_preserves_context(self):
+        """PAGE_SCROLL_SPEED should be less than max_visible_lines to preserve context."""
         menu = AchievementsMenu()
 
-        # Should scroll exactly one page at a time
+        # Should scroll less than a full page to avoid splitting achievements
+        # and to keep some context visible when paging through
         assert (
-            menu.PAGE_SCROLL_SPEED == menu.max_visible_lines
-        ), f"PAGE_SCROLL_SPEED ({menu.PAGE_SCROLL_SPEED}) should equal max_visible_lines ({menu.max_visible_lines})"
+            menu.PAGE_SCROLL_SPEED < menu.max_visible_lines
+        ), f"PAGE_SCROLL_SPEED ({menu.PAGE_SCROLL_SPEED}) should be less than max_visible_lines ({menu.max_visible_lines})"
+        assert (
+            menu.PAGE_SCROLL_SPEED >= menu.max_visible_lines - 10
+        ), "PAGE_SCROLL_SPEED should still be close to full page for efficient navigation"
 
-    def test_page_down_moves_one_full_page(self):
-        """Pressing Page Down should advance exactly one page."""
+    def test_page_down_moves_by_page_scroll_speed(self):
+        """Pressing Page Down should advance by PAGE_SCROLL_SPEED lines."""
         menu = AchievementsMenu()
         menu._build_achievement_lines = lambda: [
             {"x": 0, "text": f"Line {i}", "color": (255, 255, 255)} for i in range(100)
@@ -81,8 +85,8 @@ class TestAchievementsPagination:
 
         menu.execute_action(InputAction.NAVIGATE_PAGE_DOWN)
 
-        # Should have moved by max_visible_lines (35)
-        expected_offset = initial_offset + menu.max_visible_lines
+        # Should have moved by PAGE_SCROLL_SPEED (preserves context for split prevention)
+        expected_offset = initial_offset + menu.PAGE_SCROLL_SPEED
         assert (
             menu.scroll_offset == expected_offset
-        ), f"Page down should move {menu.max_visible_lines} lines, moved {menu.scroll_offset - initial_offset}"
+        ), f"Page down should move {menu.PAGE_SCROLL_SPEED} lines, moved {menu.scroll_offset - initial_offset}"
