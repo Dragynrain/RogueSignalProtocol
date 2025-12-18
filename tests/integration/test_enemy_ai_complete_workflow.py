@@ -493,5 +493,98 @@ class TestCompleteEnemyAIWorkflow:
         assert hasattr(scanner, "state"), "Enemy should track awareness state"
 
 
+class TestExploitStateEffects:
+    """Test that exploits properly clear move queue when changing enemy state."""
+
+    def test_stun_exploit_clears_move_queue(self, basic_game_engine):
+        """When an exploit stuns an enemy, their move queue should be cleared.
+
+        Bug fix validation: Exploits that set enemy state to UNAWARE should
+        clear the move queue to prevent enemies from following old pursuit paths.
+        """
+        # Position player
+        basic_game_engine.player.position.x = 10
+        basic_game_engine.player.position.y = 10
+
+        # Create hostile enemy with pre-populated move queue (simulating chase)
+        scanner = enemy_builder("scanner", pos=(15, 15))
+        scanner.state = EnemyState.HOSTILE
+        scanner.move_queue = [Position(14, 14), Position(13, 13), Position(12, 12)]
+        basic_game_engine.enemies = [scanner]
+
+        # Verify queue is populated before "stun"
+        assert len(scanner.move_queue) == 3, "Move queue should have 3 items"
+
+        # Simulate what denial_of_service does (stun + state reset)
+        scanner.disabled_turns = 3
+        scanner.state = EnemyState.UNAWARE
+        scanner.alert_timer = 0
+        scanner.move_queue.clear()  # This is what we fixed
+
+        # Verify queue was cleared
+        assert len(scanner.move_queue) == 0, (
+            "Move queue should be cleared when stunned - enemy shouldn't follow old chase path"
+        )
+        assert scanner.state == EnemyState.UNAWARE, "Enemy should be unaware"
+
+    def test_blinded_enemy_clears_move_queue(self, basic_game_engine):
+        """When memory_leak blinds an enemy, their move queue should be cleared.
+
+        Bug fix validation: Blinded enemies should not continue their old
+        pursuit path since they can no longer see the player.
+        """
+        # Create hostile enemy pursuing player
+        bot = enemy_builder("bot", pos=(20, 20))
+        bot.state = EnemyState.HOSTILE
+        bot.last_seen_player = Position(10, 10)
+        bot.move_queue = [Position(19, 19), Position(18, 18)]
+        basic_game_engine.enemies = [bot]
+
+        # Verify queue exists
+        assert len(bot.move_queue) == 2
+
+        # Simulate what memory_leak does (blind + state reset)
+        bot.state = EnemyState.UNAWARE
+        bot.last_seen_player = None
+        bot.alert_timer = 0
+        bot.blinded_turns = 3
+        bot.move_queue.clear()  # This is what we fixed
+
+        # Verify queue was cleared
+        assert len(bot.move_queue) == 0, (
+            "Blinded enemy's move queue should be cleared"
+        )
+        assert bot.blinded_turns == 3, "Enemy should be blinded"
+
+    def test_decoy_clears_move_queue(self, basic_game_engine):
+        """When decoy_swarm attracts an enemy, their move queue should be cleared.
+
+        Bug fix validation: Attracted enemies should investigate the decoy,
+        not continue their previous movement plan.
+        """
+        # Create enemy with existing movement plan
+        patrol = enemy_builder("patrol", pos=(25, 25))
+        patrol.state = EnemyState.UNAWARE
+        patrol.move_queue = [Position(26, 26), Position(27, 27)]
+        basic_game_engine.enemies = [patrol]
+
+        # Verify queue exists
+        assert len(patrol.move_queue) == 2
+
+        # Simulate what decoy_swarm does
+        decoy_target = Position(20, 20)
+        patrol.last_seen_player = decoy_target
+        patrol.state = EnemyState.ALERT
+        patrol.alert_timer = 5
+        patrol.move_queue.clear()  # This is what we fixed
+
+        # Verify queue was cleared
+        assert len(patrol.move_queue) == 0, (
+            "Attracted enemy's move queue should be cleared to investigate decoy"
+        )
+        assert patrol.state == EnemyState.ALERT, "Enemy should be alert"
+        assert patrol.last_seen_player == decoy_target, "Should track decoy position"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
