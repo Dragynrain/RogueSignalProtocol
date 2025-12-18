@@ -218,6 +218,37 @@ class TestTrackingAscensionMetrics:
         assert session.full_floor_clears == 1
 
 
+class TestHighestHeatReachedTracking:
+    """Test highest_heat_reached is tracked when heat increases."""
+
+    def test_highest_heat_reached_tracks_max(self):
+        """Session should track highest heat value reached."""
+        session = init_session_metrics()
+        assert session.highest_heat_reached == 0
+
+        # Simulate heat increases
+        session.highest_heat_reached = max(session.highest_heat_reached, 25)
+        assert session.highest_heat_reached == 25
+
+        session.highest_heat_reached = max(session.highest_heat_reached, 40)
+        assert session.highest_heat_reached == 40
+
+        # Lower heat shouldn't reduce the max
+        session.highest_heat_reached = max(session.highest_heat_reached, 30)
+        assert session.highest_heat_reached == 40  # Still 40
+
+    def test_highest_heat_reached_persists_in_serialization(self):
+        """highest_heat_reached should survive to_dict/from_dict."""
+        session = init_session_metrics()
+        session.highest_heat_reached = 75
+
+        data = session.to_dict()
+        assert data["highest_heat_reached"] == 75
+
+        restored = SessionMetrics.from_dict(data)
+        assert restored.highest_heat_reached == 75
+
+
 class TestGameRulesConfigForAscension:
     """Test game_rules.json has required config for ascension system."""
 
@@ -444,6 +475,29 @@ class TestGameEngineAscensionIntegration:
         assert engine.ascension_modifiers.scanner_vision_bonus == 0
         assert engine.ascension_modifiers.enemy_hp_bonus == 0
         assert engine.ascension_modifiers.enemy_damage_multiplier == 1.0
+
+    def test_game_engine_get_input_mapper_helper(self):
+        """GameEngine.get_input_mapper() returns input mapper from input_handler."""
+        from unittest.mock import Mock
+
+        from game_engine import GameEngine
+
+        engine = GameEngine(sound_manager=Mock(), headless=True, ascension_level=0)
+        input_mapper = engine.get_input_mapper()
+        assert input_mapper is not None
+        assert input_mapper is engine.input_handler.input_mapper
+
+    def test_game_engine_get_input_mapper_returns_none_when_no_handler(self):
+        """GameEngine.get_input_mapper() returns None when no input_handler exists."""
+        from unittest.mock import Mock
+
+        from game_engine import GameEngine
+
+        engine = GameEngine(sound_manager=Mock(), headless=True, ascension_level=0)
+        original_handler = engine.input_handler
+        del engine.input_handler
+        assert engine.get_input_mapper() is None
+        engine.input_handler = original_handler
 
 
 class TestEnemyAscensionModifiers:

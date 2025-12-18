@@ -223,6 +223,11 @@ class GameTurnManager:
                     self.game_engine.player.heat = max(0, self.game_engine.player.heat - restored)
                     if old_heat > self.game_engine.player.heat and should_play_sound:
                         self.game_engine.sound_manager.play_sound("node_activate")
+                    # Track restoration node usage for floor_is_lava achievement
+                    if restored > 0:
+                        from game_metrics import track
+
+                        track("restoration_nodes_used")
 
         # CPU recovery node (with A13+ capacity support)
         if self.game_engine.game_map.is_cpu_recovery_node(self.game_engine.player.position):
@@ -239,6 +244,11 @@ class GameTurnManager:
                     self.game_engine.player.cpu += restored
                     if restored > 0 and should_play_sound:
                         self.game_engine.sound_manager.play_sound("node_activate")
+                    # Track restoration node usage for floor_is_lava achievement
+                    if restored > 0:
+                        from game_metrics import track
+
+                        track("restoration_nodes_used")
 
         # Ghost node (trace level reduction with A13+ capacity support)
         if self.game_engine.game_map.is_ghost_node(self.game_engine.player.position):
@@ -259,6 +269,11 @@ class GameTurnManager:
                     if should_play_sound or actual_reduction > 0:
                         if should_play_sound:
                             self.game_engine.sound_manager.play_sound("node_activate")
+                    # Track restoration node usage for floor_is_lava achievement
+                    if restored > 0:
+                        from game_metrics import track
+
+                        track("restoration_nodes_used")
 
         # Code hack
         if player_pos in self.game_engine.game_map.code_hacks:
@@ -458,9 +473,7 @@ class GameTurnManager:
             from game_dialogue_system import create_inventory_attack_dialogue
 
             # Get input mapper for dynamic button hints
-            input_mapper = getattr(self.game_engine, "input_mapper", None)
-            if not input_mapper and hasattr(self.game_engine, "input_handler"):
-                input_mapper = getattr(self.game_engine.input_handler, "input_mapper", None)
+            input_mapper = self.game_engine.get_input_mapper()
 
             dialogue = create_inventory_attack_dialogue(input_mapper)
             self.game_engine.dialogue_state.show(dialogue)

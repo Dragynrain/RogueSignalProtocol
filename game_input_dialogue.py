@@ -117,19 +117,13 @@ class DialogueInputManager:
             return True
 
         # Use InputMapper to get action (respects remapped bindings)
-        input_mapper = getattr(self.game, "input_mapper", None)
+        input_mapper = self.game.get_input_mapper()
         if not input_mapper:
-            # Fallback: get from game's input handler
-            if hasattr(self.game, "input_handler") and hasattr(
-                self.game.input_handler, "input_mapper"
-            ):
-                input_mapper = self.game.input_handler.input_mapper
-            else:
-                # Last resort: create default mapper (loses user bindings!)
-                logging.warning("DialogueInputHandler: input_mapper not found, using defaults")
-                from game_input_mappings import InputMapper
+            # Last resort: create default mapper (loses user bindings!)
+            logging.warning("DialogueInputHandler: input_mapper not found, using defaults")
+            from game_input_mappings import InputMapper
 
-                input_mapper = InputMapper()
+            input_mapper = InputMapper()
 
         # Get action from InputMapper using DIALOGUE context
         input_action = input_mapper.get_action_for_gamepad_button(

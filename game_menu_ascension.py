@@ -387,30 +387,52 @@ class AscensionMenu(BaseMenu):
             bg=Colors.BLACK,
         )
 
-    def handle_left_click(self, event) -> str:
-        """Handle left mouse click on level list."""
-        # Get tile coordinates
-        tile_y = None
+    def _get_list_start_y(self) -> int:
+        """
+        Get Y coordinate where the level list starts.
+
+        Centralizes the coordinate calculation used by render(), handle_left_click(),
+        and handle_mouse_motion() to ensure consistency.
+
+        Returns:
+            Y coordinate for the start of the level list
+        """
+        # Must match render(): y_offset=3, menu_height=SCREEN_HEIGHT-4
+        # Background: box_top = y_offset - 1 = 2, Glyph: box_top = y_offset = 3
+        has_bg = self._has_background()
+        box_top = 2 if has_bg else 3
+        return box_top + 6
+
+    def _extract_tile_y_from_event(self, event) -> int | None:
+        """
+        Extract tile Y coordinate from a mouse event.
+
+        Args:
+            event: TCOD mouse event (may have tile or position attribute)
+
+        Returns:
+            Tile Y coordinate, or None if extraction failed
+        """
         for attr_name in ("tile", "position"):
             if hasattr(event, attr_name):
                 coord_source = getattr(event, attr_name)
                 if coord_source is not None:
                     try:
-                        tile_y = int(coord_source.y)
-                        break
-                    except (TypeError, ValueError, AttributeError):
+                        return int(coord_source.y)
+                    except (TypeError, ValueError, AttributeError) as e:
+                        logging.debug(
+                            f"Failed to extract y from event.{attr_name}: {type(e).__name__}"
+                        )
                         continue
+        return None
 
+    def handle_left_click(self, event) -> str:
+        """Handle left mouse click on level list."""
+        tile_y = self._extract_tile_y_from_event(event)
         if tile_y is None:
             return ""
 
-        # Calculate which level was clicked
-        # Must match render(): y_offset=3, menu_height=SCREEN_HEIGHT-4
-        # Background: box_top = y_offset - 1 = 2, Glyph: box_top = y_offset = 3
-        # Use _has_background() directly to match render behavior
-        has_bg = self._has_background()
-        box_top = 2 if has_bg else 3
-        list_start_y = box_top + 6
+        list_start_y = self._get_list_start_y()
 
         if list_start_y <= tile_y < list_start_y + self.visible_levels:
             clicked_index = tile_y - list_start_y
@@ -435,28 +457,11 @@ class AscensionMenu(BaseMenu):
 
     def handle_mouse_motion(self, event) -> str:
         """Handle mouse motion for hover highlighting."""
-        # Get tile coordinates
-        tile_y = None
-        for attr_name in ("tile", "position"):
-            if hasattr(event, attr_name):
-                coord_source = getattr(event, attr_name)
-                if coord_source is not None:
-                    try:
-                        tile_y = int(coord_source.y)
-                        break
-                    except (TypeError, ValueError, AttributeError):
-                        continue
-
+        tile_y = self._extract_tile_y_from_event(event)
         if tile_y is None:
             return ""
 
-        # Calculate which level is hovered
-        # Must match render(): y_offset=3, menu_height=SCREEN_HEIGHT-4
-        # Background: box_top = y_offset - 1 = 2, Glyph: box_top = y_offset = 3
-        # Use _has_background() directly to match render behavior
-        has_bg = self._has_background()
-        box_top = 2 if has_bg else 3
-        list_start_y = box_top + 6
+        list_start_y = self._get_list_start_y()
 
         if list_start_y <= tile_y < list_start_y + self.visible_levels:
             hovered_index = tile_y - list_start_y

@@ -359,6 +359,24 @@ class GameEngine:
         """Update enemy awareness states based on FOV and player visibility."""
         self.game_session._update_all_enemy_awareness()
 
+    def get_input_mapper(self):
+        """
+        Get the input mapper for action name lookups.
+
+        Centralizes the input mapper retrieval logic that was previously duplicated
+        across game_combat.py, game_turn_manager.py, and game_input_dialogue.py.
+
+        Returns:
+            InputMapper instance if available, None otherwise
+        """
+        # Try direct access first (newer pattern)
+        if hasattr(self, "input_mapper") and self.input_mapper is not None:
+            return self.input_mapper
+        # Fall back to input_handler (older pattern)
+        if hasattr(self, "input_handler") and self.input_handler is not None:
+            return getattr(self.input_handler, "input_mapper", None)
+        return None
+
     def auto_save(self) -> None:
         """Auto-save the current game state."""
         if not self.game_over:  # Don't auto-save if game is over
@@ -634,27 +652,39 @@ class GameEngine:
 
             # Track metrics
             from game_entities import EnemyState
-            from game_metrics import get_current_session, track
+            from game_metrics import (
+                get_current_session,
+                track,
+                track_kill_this_turn,
+                track_max_damage,
+                track_stealth_kill,
+            )
 
             track("enemies_killed", category=target_enemy.type)
             track("damage_dealt", amount=total_damage)
+            track_kill_this_turn()  # Track turns with kills for efficient_killer
             if target_enemy.state == EnemyState.UNAWARE:
                 track("stealth_kills")
-                # Update stealth streak for Silent Assassin achievement
-                current_session = get_current_session()
-                if current_session:
-                    current_session.current_stealth_streak += 1
-                    if current_session.current_stealth_streak > current_session.max_stealth_streak:
-                        current_session.max_stealth_streak = current_session.current_stealth_streak
+                track_stealth_kill()  # Update stealth streak
 
-            # Update max single hit damage for Overkill achievement
-            current_session = get_current_session()
-            if current_session and total_damage > current_session.max_single_hit_damage:
-                current_session.max_single_hit_damage = total_damage
+            track_max_damage(total_damage)  # Update max single hit damage
+
+            # Track admin_kills for admin_slayer achievement
+            if is_admin:
+                track("admin_kills")
+
+            # Track blind spot ambushes for blind_spot_master achievement
+            if self.game_map.is_blind_spot(self.player.position):
+                track("ambushes_from_blind_spots")
+
+            # Track full floor clears for full_clear achievement
+            if len(self.enemies) == 0:
+                track("full_floor_clears")
 
             # Check for immediate achievement unlocks (First Blood, Massacre, Overkill, etc.)
             from game_achievements import AchievementManager
 
+            current_session = get_current_session()
             if current_session:
                 AchievementManager.check_immediate_achievements_and_notify(current_session, self)
 
@@ -712,6 +742,11 @@ class GameEngine:
             )
 
         self.player.heat = min(self.player.max_heat, self.player.heat + heat_generated)
+
+        # Track highest heat reached for achievements (cold_blooded, heat_master)
+        from game_metrics import track_highest_heat
+
+        track_highest_heat(self.player.heat)
 
     def _move_cursor(self, dx: int, dy: int):
         """Move targeting cursor."""

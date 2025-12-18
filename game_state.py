@@ -18,8 +18,7 @@ from typing import Any
 from data_loading import DataLoader
 from game_ascension import AscensionModifiers
 from game_config import GameBalance, GameConfig
-from game_entities import Colors, Position, ensure_color_tuple
-from game_save import SaveGameManager
+from game_entities import Position, ensure_color_tuple
 
 
 @dataclass
@@ -174,9 +173,10 @@ class GameStateManager:
         self.turn += 1
 
         # Track metrics
-        from game_metrics import track
+        from game_metrics import reset_turn_kill_flag, track
 
         track("turns_taken")
+        reset_turn_kill_flag()  # Reset for efficient_killer tracking
 
         # Update threat scan effect
         if self.threat_scan_turns > 0:
@@ -298,32 +298,8 @@ class TurnProcessor:
                     virus_damage = GameConfig.VIRUS_DAMAGE_PER_TURN
                     actual_damage = player.take_damage(virus_damage)
                     self.message_log.add_message(f"Virus damage: {actual_damage} CPU damage")
-
-                    # Check for death from virus
-                    if player.cpu <= 0:
-                        self.message_log.add_message_typed("CRITICAL SYSTEM FAILURE!", Colors.RED)
-                        SaveGameManager.delete_save()
-                        self.message_log.add_message("Save data purged")
-                        self.game_state.game_over = True
-
-                        # Alpha Testing: Death analytics
-                        logging.warning("=" * 80)
-                        logging.warning("PLAYER DEATH - VIRUS")
-                        logging.warning(
-                            f"Level: {self.game_state.level}, Turn: {self.game_state.turn}"
-                        )
-                        logging.warning(f"Position: ({player.x},{player.y})")
-                        logging.warning(f"Final CPU: {player.cpu}/{player.max_cpu}")
-                        logging.warning(f"Final Heat: {player.heat}/{player.max_heat}")
-                        logging.warning(f"Trace Level: {player.trace_level}")
-                        logging.warning(f"Virus damage per turn: {virus_damage}")
-                        logging.warning("=" * 80)
-
-                        # CRITICAL: Flush logs immediately to ensure death info is written
-                        for handler in logging.root.handlers:
-                            handler.flush()
-
-                        return  # Exit early if player dies
+                    # Note: Death handling is done by GameTurnManager._handle_player_death()
+                    # to ensure consistent metrics tracking and achievement checking
 
                 # Now decrement the counter
                 player.temporary_effects[effect_name] -= 1
