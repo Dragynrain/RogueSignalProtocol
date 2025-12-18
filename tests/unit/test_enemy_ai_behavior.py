@@ -629,5 +629,62 @@ class TestMakeHostileMethod:
             assert enemy.original_patrol_index == original_patrol_index
 
 
+class TestPatrolRestorationIntegration:
+    """Tests for patrol restoration when enemy loses interest."""
+
+    def test_patrol_restoration_restores_original_waypoint(self):
+        """When patrol enemy loses interest, they should resume at original waypoint.
+
+        This tests the integration between make_hostile() storing the original
+        patrol_index and _restore_patrol() restoring it when the enemy becomes UNAWARE.
+        """
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "patrol": Mock(
+                    movement=EnemyMovement.PATROL, cpu=40, vision=6, damage=8, name="PatrolUnit"
+                )
+            },
+        ):
+            enemy = Enemy(Position(5, 5), "patrol")
+            enemy.patrol_points = [
+                Position(0, 0),
+                Position(10, 10),
+                Position(5, 5),
+                Position(15, 15),
+            ]
+            enemy.patrol_index = 2  # Currently at third patrol point
+
+            # Enemy spots player and becomes hostile
+            player_pos = Position(7, 7)
+            enemy.make_hostile(player_pos)
+
+            # Verify hostile state and original index stored
+            assert enemy.state == EnemyState.HOSTILE
+            assert enemy.original_patrol_index == 2
+
+            # Simulate enemy chasing and potentially advancing patrol index
+            # (In real gameplay, patrol_index might change as enemy moves)
+            enemy.patrol_index = 0  # Simulating some state change during chase
+
+            # Import the restore function to test it directly
+            from game_turn_manager import GameTurnManager
+
+            # Create a minimal mock engine for the turn manager
+            mock_engine = Mock()
+            mock_engine.ascension_modifiers = Mock()
+            mock_engine.ascension_modifiers.blind_spots_consumable = False
+            turn_manager = GameTurnManager(mock_engine)
+
+            # Enemy loses track and becomes UNAWARE - should restore patrol index
+            enemy.state = EnemyState.UNAWARE
+            turn_manager._restore_patrol(enemy)
+
+            # Verify patrol_index was restored to original
+            assert enemy.patrol_index == 2, (
+                f"Expected patrol_index to be restored to 2, but got {enemy.patrol_index}"
+            )
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
