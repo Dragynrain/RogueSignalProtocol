@@ -19,7 +19,6 @@ from game_characters import Enemy
 from game_entities import EnemyState, Position
 from tests.test_agent import GameTestAgent
 
-
 # Base enemy stats from game_content.json for reference
 BASE_ENEMY_STATS = {
     "scanner": {"cpu": 35, "vision": 5, "damage": 0},
@@ -224,7 +223,6 @@ class TestAscensionLevel4:
         patrol = agent.spawn_test_enemy("patrol", offset_x=1, offset_y=0)
 
         # Make patrol hostile so it attacks
-        from game_entities import EnemyState
         patrol.state = EnemyState.HOSTILE
         patrol.last_seen_player = agent.player.position
 
