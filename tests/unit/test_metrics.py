@@ -325,5 +325,148 @@ def test_lifetime_metrics_fastest_victory(clean_metrics, tmp_path, monkeypatch):
     assert lifetime.fastest_victory_turns == 150
 
 
+# Tests for track_enemy_kill helper
+
+
+def test_track_enemy_kill_basic(clean_metrics):
+    """Test track_enemy_kill tracks basic kill metrics."""
+    from game_metrics import init_session_metrics, track_enemy_kill
+
+    session = init_session_metrics()
+
+    track_enemy_kill(
+        enemy_type="virus",
+        damage=25,
+        was_stealth=False,
+        is_admin=False,
+        from_blind_spot=False,
+        enemies_remaining=5,
+        game=None,
+    )
+
+    assert session.enemies_killed["virus"] == 1
+    assert session.damage_dealt == 25
+    assert session.turns_with_kills == 1
+    assert session.max_single_hit_damage == 25
+    assert session.stealth_kills == 0  # Not a stealth kill
+
+
+def test_track_enemy_kill_stealth(clean_metrics):
+    """Test track_enemy_kill tracks stealth kills."""
+    from game_metrics import init_session_metrics, track_enemy_kill
+
+    session = init_session_metrics()
+
+    track_enemy_kill(
+        enemy_type="scanner",
+        damage=30,
+        was_stealth=True,
+        is_admin=False,
+        from_blind_spot=False,
+        enemies_remaining=3,
+        game=None,
+    )
+
+    assert session.enemies_killed["scanner"] == 1
+    assert session.stealth_kills == 1
+    assert session.current_stealth_streak == 1
+    assert session.max_stealth_streak == 1
+
+
+def test_track_enemy_kill_admin(clean_metrics):
+    """Test track_enemy_kill tracks admin kills."""
+    from game_metrics import init_session_metrics, track_enemy_kill
+
+    session = init_session_metrics()
+
+    track_enemy_kill(
+        enemy_type="admin",
+        damage=100,
+        was_stealth=False,
+        is_admin=True,
+        from_blind_spot=False,
+        enemies_remaining=0,
+        game=None,
+    )
+
+    assert session.enemies_killed["admin"] == 1
+    assert session.admin_kills == 1
+
+
+def test_track_enemy_kill_blind_spot(clean_metrics):
+    """Test track_enemy_kill tracks blind spot ambushes."""
+    from game_metrics import init_session_metrics, track_enemy_kill
+
+    session = init_session_metrics()
+
+    track_enemy_kill(
+        enemy_type="virus",
+        damage=20,
+        was_stealth=False,
+        is_admin=False,
+        from_blind_spot=True,
+        enemies_remaining=2,
+        game=None,
+    )
+
+    assert session.ambushes_from_blind_spots == 1
+
+
+def test_track_enemy_kill_full_clear(clean_metrics):
+    """Test track_enemy_kill tracks full floor clears."""
+    from game_metrics import init_session_metrics, track_enemy_kill
+
+    session = init_session_metrics()
+
+    track_enemy_kill(
+        enemy_type="virus",
+        damage=20,
+        was_stealth=False,
+        is_admin=False,
+        from_blind_spot=False,
+        enemies_remaining=0,  # Last enemy on floor
+        game=None,
+    )
+
+    assert session.full_floor_clears == 1
+
+
+def test_track_enemy_kill_multiple_same_turn(clean_metrics):
+    """Test track_enemy_kill only increments turns_with_kills once per turn."""
+    from game_metrics import init_session_metrics, reset_turn_kill_flag, track_enemy_kill
+
+    session = init_session_metrics()
+
+    # Kill 3 enemies in same turn
+    for i in range(3):
+        track_enemy_kill(
+            enemy_type="virus",
+            damage=10,
+            was_stealth=False,
+            is_admin=False,
+            from_blind_spot=False,
+            enemies_remaining=5 - i,
+            game=None,
+        )
+
+    assert session.enemies_killed["virus"] == 3
+    assert session.turns_with_kills == 1  # Only 1 turn, not 3
+
+    # Reset for next turn and kill again
+    reset_turn_kill_flag()
+    track_enemy_kill(
+        enemy_type="virus",
+        damage=10,
+        was_stealth=False,
+        is_admin=False,
+        from_blind_spot=False,
+        enemies_remaining=1,
+        game=None,
+    )
+
+    assert session.enemies_killed["virus"] == 4
+    assert session.turns_with_kills == 2  # Now 2 turns
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

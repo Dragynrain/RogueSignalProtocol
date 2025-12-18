@@ -500,44 +500,18 @@ class ExploitSystem:
                 f"Eliminated {enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)"
             )
 
-            # Track metrics
-            from game_metrics import (
-                get_current_session,
-                track,
-                track_kill_this_turn,
-                track_max_damage,
-                track_stealth_kill,
+            # Track kill metrics using consolidated helper
+            from game_metrics import track_enemy_kill
+
+            track_enemy_kill(
+                enemy_type=enemy.type,
+                damage=damage,
+                was_stealth=(enemy.state == EnemyState.UNAWARE),
+                is_admin=is_admin,
+                from_blind_spot=self.game.game_map.is_blind_spot(self.game.player.position),
+                enemies_remaining=len(self.game.enemies),
+                game=self.game,
             )
-
-            track("enemies_killed", category=enemy.type)
-            track("damage_dealt", amount=damage)
-            track_kill_this_turn()  # Track turns with kills for efficient_killer
-            if enemy.state == EnemyState.UNAWARE:
-                track("stealth_kills")
-                track_stealth_kill()  # Update stealth streak
-
-            track_max_damage(damage)  # Update max single hit damage
-
-            # Track admin_kills for admin_slayer achievement
-            if is_admin:
-                track("admin_kills")
-
-            # Track blind spot ambushes for blind_spot_master achievement
-            if self.game.game_map.is_blind_spot(self.game.player.position):
-                track("ambushes_from_blind_spots")
-
-            # Track full floor clears for full_clear achievement
-            if len(self.game.enemies) == 0:
-                track("full_floor_clears")
-
-            # Check for immediate achievement unlocks (First Blood, Massacre, Overkill, etc.)
-            from game_achievements import AchievementManager
-
-            current_session = get_current_session()
-            if current_session:
-                AchievementManager.check_immediate_achievements_and_notify(
-                    current_session, self.game
-                )
 
             # Add environmental narrative for first combat or admin defeat
             if is_admin:
@@ -548,11 +522,7 @@ class ExploitSystem:
                 self.game.message_log.add_message(env_msg)
         else:
             self.game.message_log.add_message(f"{enemy.type_data.name} damaged")
-            movement_type = enemy.get_movement_type()
-            if movement_type == EnemyMovement.PATROL and enemy.patrol_points:
-                enemy.original_patrol_index = enemy.patrol_index
-            enemy.state = EnemyState.HOSTILE
-            enemy.last_seen_player = Position(self.game.player.x, self.game.player.y)
+            enemy.make_hostile(self.game.player.position)
         return True
 
     def _execute_code_injection(self, exploit: ExploitDefinition, target: Position) -> bool:

@@ -414,6 +414,58 @@ def reset_turn_kill_flag() -> None:
         session._kill_this_turn = False
 
 
+def track_enemy_kill(
+    enemy_type: str,
+    damage: int,
+    was_stealth: bool,
+    is_admin: bool,
+    from_blind_spot: bool,
+    enemies_remaining: int,
+    game=None,
+) -> None:
+    """
+    Track all metrics for an enemy kill event.
+
+    Consolidates kill tracking logic that was duplicated in game_combat.py
+    and game_engine.py. Call this whenever an enemy is killed.
+
+    Args:
+        enemy_type: Enemy type (e.g., "virus", "scanner")
+        damage: Damage dealt to kill the enemy
+        was_stealth: True if enemy was unaware when killed
+        is_admin: True if enemy was Admin Avatar
+        from_blind_spot: True if player was in a blind spot
+        enemies_remaining: Number of enemies left on floor (0 = full clear)
+        game: Optional GameEngine for achievement checking
+    """
+    track("enemies_killed", category=enemy_type)
+    track("damage_dealt", amount=damage)
+    track_kill_this_turn()
+
+    if was_stealth:
+        track("stealth_kills")
+        track_stealth_kill()
+
+    track_max_damage(damage)
+
+    if is_admin:
+        track("admin_kills")
+
+    if from_blind_spot:
+        track("ambushes_from_blind_spots")
+
+    if enemies_remaining == 0:
+        track("full_floor_clears")
+
+    # Check for immediate achievements if game provided
+    if game is not None:
+        from game_achievements import AchievementManager
+
+        session = get_current_session()
+        if session:
+            AchievementManager.check_immediate_achievements_and_notify(session, game)
+
+
 def track(metric_name: str, category: str | None = None, amount: int = 1) -> None:
     """
     Track a gameplay event.

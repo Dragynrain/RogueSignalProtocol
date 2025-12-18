@@ -61,8 +61,9 @@ class GameTurnManager:
         Note: Speed boost grants 2 moves per enemy turn. This is processed
         at the start of each turn to ensure consistent move counting.
         """
-        # Reset sound cooldowns at start of turn
+        # Reset flags at start of turn
         self._enemies_alerted_played_this_turn = False
+        self._death_handled = False  # Reset death guard for new turn
 
         # Grant speed boost moves at start of turn
         if (
@@ -671,25 +672,10 @@ class GameTurnManager:
             # Use grid distance for gameplay mechanics (diagonals = 1)
             distance = enemy.position.grid_distance_to(alerting_enemy.position)
             if distance <= alert_range:
-                # Store patrol information for PATROL enemies before becoming hostile
-                movement_type = enemy.get_movement_type()
-                if movement_type == EnemyMovement.PATROL and enemy.patrol_points:
-                    enemy.original_patrol_index = enemy.patrol_index
-
-                # Track old state for invalidation
-                old_state = enemy.state
-
-                # All enemies within alert range immediately go HOSTILE and get player location
-                enemy.state = EnemyState.HOSTILE
-                enemy.alert_timer = 0
-                enemy.last_seen_player = Position(
-                    self.game_engine.player.x, self.game_engine.player.y
-                )
+                # Use consolidated hostile transition
+                enemy.make_hostile(self.game_engine.player.position)
+                enemy.alert_timer = 0  # Reset alert timer specifically for alert chain
                 alerted_count += 1
-
-                # INVALIDATION: State changed
-                if enemy.state != old_state:
-                    enemy.move_queue.clear()
 
         # Don't move alerted enemies immediately - they will move in the movement phase
         # This ensures proper phase separation: awareness -> movement -> attacks

@@ -153,6 +153,37 @@ class Enemy:
 
         self._vision_bonus = vision_bonus
 
+    def make_hostile(self, player_position: "Position") -> None:
+        """
+        Transition enemy to hostile state with proper state management.
+
+        Handles:
+        - Storing original patrol index for PATROL enemies
+        - Setting state to HOSTILE
+        - Recording player's last known position
+        - Clearing movement queue (state change invalidation)
+
+        Args:
+            player_position: Current player position to track
+        """
+        from game_entities import EnemyMovement, EnemyState
+
+        # Store patrol information for PATROL enemies before becoming hostile
+        movement_type = self.get_movement_type()
+        if movement_type == EnemyMovement.PATROL and self.patrol_points:
+            self.original_patrol_index = self.patrol_index
+
+        # Track old state for queue invalidation
+        old_state = self.state
+
+        # Set hostile state and track player
+        self.state = EnemyState.HOSTILE
+        self.last_seen_player = Position(player_position.x, player_position.y)
+
+        # Invalidate movement queue on state change
+        if self.state != old_state:
+            self.move_queue.clear()
+
     def get_color(self) -> tuple[int, int, int]:
         """
         Get the color for rendering this enemy (glyph mode).

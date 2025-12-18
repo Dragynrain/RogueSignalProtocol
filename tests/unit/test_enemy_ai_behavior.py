@@ -541,5 +541,93 @@ class TestPatrolBehavior(TestEnemyAIBehavior):
                     assert enemy.patrol_points is not None
 
 
+class TestMakeHostileMethod:
+    """Tests for Enemy.make_hostile() consolidated state transition."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.player_position = Position(10, 10)
+
+    def test_make_hostile_basic_transition(self):
+        """make_hostile sets state to HOSTILE and records player position."""
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"virus": Mock(movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus")},
+        ):
+            enemy = Enemy(Position(5, 5), "virus")
+            assert enemy.state == EnemyState.UNAWARE
+
+            enemy.make_hostile(self.player_position)
+
+            assert enemy.state == EnemyState.HOSTILE
+            assert enemy.last_seen_player == self.player_position
+
+    def test_make_hostile_stores_patrol_index(self):
+        """make_hostile stores original patrol index for PATROL enemies."""
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "patrol": Mock(
+                    movement=EnemyMovement.PATROL, cpu=40, vision=6, damage=8, name="PatrolUnit"
+                )
+            },
+        ):
+            enemy = Enemy(Position(5, 5), "patrol")
+            enemy.patrol_points = [Position(0, 0), Position(10, 10), Position(5, 5)]
+            enemy.patrol_index = 2  # Currently at third patrol point
+
+            enemy.make_hostile(self.player_position)
+
+            assert enemy.original_patrol_index == 2
+            assert enemy.state == EnemyState.HOSTILE
+
+    def test_make_hostile_clears_move_queue(self):
+        """make_hostile clears movement queue on state change."""
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"virus": Mock(movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus")},
+        ):
+            enemy = Enemy(Position(5, 5), "virus")
+            enemy.move_queue = [Position(6, 5), Position(7, 5), Position(8, 5)]
+
+            enemy.make_hostile(self.player_position)
+
+            assert enemy.move_queue == []
+
+    def test_make_hostile_no_double_queue_clear(self):
+        """make_hostile does not clear queue if already hostile."""
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {"virus": Mock(movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus")},
+        ):
+            enemy = Enemy(Position(5, 5), "virus")
+            enemy.state = EnemyState.HOSTILE
+            enemy.move_queue = [Position(6, 5), Position(7, 5)]
+
+            # Call make_hostile again - should not clear queue since state didn't change
+            enemy.make_hostile(self.player_position)
+
+            # Queue should remain since state was already HOSTILE
+            assert enemy.move_queue == [Position(6, 5), Position(7, 5)]
+
+    def test_make_hostile_non_patrol_ignores_patrol_index(self):
+        """make_hostile does not modify patrol index for non-PATROL enemies."""
+        with patch(
+            "game_data.GameData.ENEMY_TYPES",
+            {
+                "virus": Mock(
+                    movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus"
+                )
+            },
+        ):
+            enemy = Enemy(Position(5, 5), "virus")
+            original_patrol_index = enemy.original_patrol_index
+
+            enemy.make_hostile(self.player_position)
+
+            # original_patrol_index should remain at default (0)
+            assert enemy.original_patrol_index == original_patrol_index
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
