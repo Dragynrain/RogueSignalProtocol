@@ -131,9 +131,14 @@ class CodeHack(InventoryItem):
             game.message_log.add_message(f"Used {self.name} ({description})")
 
         # Track metrics
-        from game_metrics import track
+        from game_metrics import get_current_session, track
 
         track("code_hacks_used", category=self.name)
+
+        # Track unique code hacks for Code Collector achievement
+        session = get_current_session()
+        if session:
+            session.unique_code_hacks_used_this_run.add(self.name)
 
         return self._apply_effect(effect_key, player, game)
 

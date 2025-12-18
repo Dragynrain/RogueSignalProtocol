@@ -336,6 +336,13 @@ class GameTurnManager:
             if blind_spot_msg:
                 self.game_engine.message_log.add_message(blind_spot_msg)
 
+            # Track turns in blind spots for Shadow Dancer achievement
+            from game_metrics import get_current_session
+
+            session = get_current_session()
+            if session:
+                session.turns_in_blind_spots += 1
+
         # A20+: Consume blind spot when player LEAVES it (not when entering)
         # Player can stay as long as they want, but once they move away it vanishes
         if self.game_engine.ascension_modifiers.blind_spots_consumable:
@@ -523,11 +530,13 @@ class GameTurnManager:
                 self.game_engine.sound_manager.play_sound("enemy_alert")
 
                 # Track detection for Ghost Protocol achievement
+                # Also reset stealth streak for Silent Assassin
                 from game_metrics import get_current_session
 
                 session = get_current_session()
                 if session:
                     session.ever_detected = True
+                    session.current_stealth_streak = 0  # Detection breaks the streak
 
             elif enemy.state == EnemyState.ALERT:
                 enemy.last_seen_player = player_pos

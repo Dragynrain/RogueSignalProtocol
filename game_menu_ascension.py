@@ -418,8 +418,17 @@ class AscensionMenu(BaseMenu):
 
             if 0 <= clicked_level < self.total_levels:
                 self.current_selection = clicked_level
+                self._update_scroll()
 
-                # Double-click behavior: if clicking already selected, confirm
+                # In view_only mode, clicking just navigates
+                if self.view_only:
+                    return ""
+
+                # Click selects and confirms (same as Enter key)
+                result = self.confirm_selection()
+                if result == "selected":
+                    return "back"
+                # Locked level - just update selection, no action
                 return ""
 
         return ""
@@ -579,17 +588,29 @@ class AscensionUnlockScreen(BaseMenu):
             )
             y_offset = lines_printed + 1
 
-        # Level info
+        # Level info - use word wrapping for long names
         level_text = f"A{self.unlocked_level}: {self.level_name}"
-        level_x = box["center_x"] - len(level_text) // 2
-        render_char_safe(
-            console,
-            level_x,
-            box["top"] + 7 + y_offset,
-            level_text,
-            fg=Colors.GREEN,
-            bg=Colors.BLACK,
-        )
+        wrap_width = box["content_width"] - 2
+        if len(level_text) <= wrap_width:
+            # Short enough to center
+            level_x = box["center_x"] - len(level_text) // 2
+            render_char_safe(
+                console,
+                level_x,
+                box["top"] + 7 + y_offset,
+                level_text,
+                fg=Colors.GREEN,
+                bg=Colors.BLACK,
+            )
+        else:
+            # Use word wrap
+            console.print(
+                x=box["content_left"] + 1,
+                y=box["top"] + 7 + y_offset,
+                string=level_text,
+                fg=Colors.GREEN,
+                width=wrap_width,
+            )
 
         # New modifier
         new_text = "NEW MODIFIER:"
@@ -598,15 +619,27 @@ class AscensionUnlockScreen(BaseMenu):
             console, new_x, box["top"] + 10 + y_offset, new_text, fg=Colors.WHITE, bg=Colors.BLACK
         )
 
-        modifier_x = box["center_x"] - len(self.modifier_desc) // 2
-        render_char_safe(
-            console,
-            modifier_x,
-            box["top"] + 12 + y_offset,
-            self.modifier_desc,
-            fg=Colors.CYAN,
-            bg=Colors.BLACK,
-        )
+        # Modifier description - use word wrapping for long descriptions
+        if len(self.modifier_desc) <= wrap_width:
+            # Short enough to center
+            modifier_x = box["center_x"] - len(self.modifier_desc) // 2
+            render_char_safe(
+                console,
+                modifier_x,
+                box["top"] + 12 + y_offset,
+                self.modifier_desc,
+                fg=Colors.CYAN,
+                bg=Colors.BLACK,
+            )
+        else:
+            # Use word wrap
+            console.print(
+                x=box["content_left"] + 1,
+                y=box["top"] + 12 + y_offset,
+                string=self.modifier_desc,
+                fg=Colors.CYAN,
+                width=wrap_width,
+            )
 
         # Narrative text - use word wrapping to fit in box
         narrative = "The network has adapted to your tactics."

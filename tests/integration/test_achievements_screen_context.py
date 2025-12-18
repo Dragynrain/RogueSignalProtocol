@@ -174,7 +174,7 @@ class TestAchievementsMenuDirect:
         # Execute PAGE_DOWN action directly (keyboard PageDown not mapped)
         result = menu.execute_action(InputAction.NAVIGATE_PAGE_DOWN)
 
-        # Should scroll by PAGE_SCROLL_SPEED (35 lines = full page, or less if near max)
+        # Should scroll by PAGE_SCROLL_SPEED (30 lines, less than visible for context)
         assert menu.scroll_offset > 0
         assert result == ""  # Stay in menu
 
@@ -186,8 +186,8 @@ class TestAchievementsMenuDirect:
         # Execute PAGE_UP action directly (keyboard PageUp not mapped)
         result = menu.execute_action(InputAction.NAVIGATE_PAGE_UP)
 
-        # Should scroll up by PAGE_SCROLL_SPEED (35 lines = full page)
-        assert menu.scroll_offset == 15
+        # Should scroll up by PAGE_SCROLL_SPEED (30 lines, preserves some context)
+        assert menu.scroll_offset == 20  # 50 - 30 = 20
         assert result == ""  # Stay in menu
 
     def test_mouse_right_click_goes_back(self):

@@ -95,12 +95,13 @@ class TestAscensionMilestoneAchievements:
         unlocked = AchievementChecker.check_session_achievements(session, set())
         assert "ascension_master" in unlocked
 
-    def test_ascension_master_is_hidden(self):
-        """ascension_master should be a hidden achievement."""
+    def test_ascension_master_is_visible(self):
+        """ascension_master should be visible like other ascension milestones."""
         from game_achievements import ALL_ACHIEVEMENTS
 
         assert "ascension_master" in ALL_ACHIEVEMENTS
-        assert ALL_ACHIEVEMENTS["ascension_master"].hidden is True
+        # A20 follows the pattern of A5, A10, A15 - all visible milestones
+        assert ALL_ACHIEVEMENTS["ascension_master"].hidden is False
 
     def test_higher_ascension_unlocks_lower_achievements(self):
         """Winning at A20 should unlock all lower ascension achievements."""

@@ -271,8 +271,9 @@ class Enemy:
             return True
 
         # Check basic range (use Euclidean - TCOD FOV uses Euclidean internally)
+        # Use vision_range property to include ascension bonuses (A1 scanner, A5 all enemies)
         distance = self.position.distance_to(player.position)
-        if distance > self.type_data.vision:
+        if distance > self.vision_range:
             return False
 
         # Invisible players can't be seen
@@ -286,8 +287,8 @@ class Enemy:
         ):
             return False
 
-        # Final LOS check using TCOD FOV
-        return game_map.can_see_position(self.position, player.position, self.type_data.vision)
+        # Final LOS check using TCOD FOV (with ascension vision bonuses)
+        return game_map.can_see_position(self.position, player.position, self.vision_range)
 
     def can_attack_player(self, player: Player) -> bool:
         """Check if enemy can attack player (adjacent including diagonally)."""
