@@ -123,6 +123,38 @@ class TestEnemyStateTransitions:
         assert hasattr(scanner, "state"), "Enemy should have state attribute"
         assert hasattr(scanner, "can_see_player"), "Enemy should have vision checking"
 
+    def test_admin_hostile_transition_clears_move_queue(self, basic_game_engine):
+        """Admin's move queue should be cleared when it becomes hostile.
+
+        Bug fix validation: When admin transitions to hostile, make_hostile()
+        should clear the move queue to prevent the admin from following an
+        outdated movement plan.
+        """
+        # Position player
+        basic_game_engine.player.position.x = 10
+        basic_game_engine.player.position.y = 10
+
+        # Create admin enemy starting in UNAWARE (unusual but tests the transition)
+        admin = enemy_builder("admin", pos=(15, 15))
+        admin.state = EnemyState.UNAWARE  # Force unaware to test transition
+        admin.move_queue = [Position(16, 16), Position(17, 17)]  # Pre-populate queue
+        basic_game_engine.enemies = [admin]
+
+        # Verify queue is populated before transition
+        assert len(admin.move_queue) == 2, "Move queue should have 2 items before transition"
+
+        # Simulate hostile transition using make_hostile (as the turn manager would)
+        admin.make_hostile(basic_game_engine.player.position)
+
+        # Verify queue was cleared
+        assert len(admin.move_queue) == 0, (
+            "Move queue should be cleared when transitioning to hostile"
+        )
+        assert admin.state == EnemyState.HOSTILE, "Should be hostile after transition"
+        assert admin.last_seen_player == basic_game_engine.player.position, (
+            "Should track player position"
+        )
+
 
 class TestEnemyAlertingSystem:
     """Test enemy alerting nearby enemies when player is detected."""
