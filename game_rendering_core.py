@@ -176,9 +176,7 @@ class GameRenderer:
             from game_dialogue_system import create_death_dialogue
 
             # Get input mapper for dynamic button hints
-            input_mapper = getattr(game, "input_mapper", None)
-            if not input_mapper and hasattr(game, "input_handler"):
-                input_mapper = getattr(game.input_handler, "input_mapper", None)
+            input_mapper = game.get_input_mapper()
 
             game.dialogue_state.show(create_death_dialogue(input_mapper))
             game.pending_death_dialogue = False

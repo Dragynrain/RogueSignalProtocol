@@ -479,9 +479,7 @@ class GameEngine:
                     from game_dialogue_system import create_gateway_dialogue
 
                     # Get input mapper for dynamic button hints
-                    input_mapper = getattr(self, "input_mapper", None)
-                    if not input_mapper and hasattr(self, "input_handler"):
-                        input_mapper = getattr(self.input_handler, "input_mapper", None)
+                    input_mapper = self.get_input_mapper()
 
                     gateway_dialogue = create_gateway_dialogue(self.game_state.level, input_mapper)
                     if self.dialogue_state.should_show_dialogue(gateway_dialogue):
@@ -650,43 +648,19 @@ class GameEngine:
                 f"Eliminated {target_enemy.type_data.name} (+{GameBalance.ENEMY_ELIMINATION_CPU_REWARD} CPU)"
             )
 
-            # Track metrics
+            # Track kill metrics using consolidated helper
             from game_entities import EnemyState
-            from game_metrics import (
-                get_current_session,
-                track,
-                track_kill_this_turn,
-                track_max_damage,
-                track_stealth_kill,
+            from game_metrics import track_enemy_kill
+
+            track_enemy_kill(
+                enemy_type=target_enemy.type,
+                damage=total_damage,
+                was_stealth=(target_enemy.state == EnemyState.UNAWARE),
+                is_admin=is_admin,
+                from_blind_spot=self.game_map.is_blind_spot(self.player.position),
+                enemies_remaining=len(self.enemies),
+                game=self,
             )
-
-            track("enemies_killed", category=target_enemy.type)
-            track("damage_dealt", amount=total_damage)
-            track_kill_this_turn()  # Track turns with kills for efficient_killer
-            if target_enemy.state == EnemyState.UNAWARE:
-                track("stealth_kills")
-                track_stealth_kill()  # Update stealth streak
-
-            track_max_damage(total_damage)  # Update max single hit damage
-
-            # Track admin_kills for admin_slayer achievement
-            if is_admin:
-                track("admin_kills")
-
-            # Track blind spot ambushes for blind_spot_master achievement
-            if self.game_map.is_blind_spot(self.player.position):
-                track("ambushes_from_blind_spots")
-
-            # Track full floor clears for full_clear achievement
-            if len(self.enemies) == 0:
-                track("full_floor_clears")
-
-            # Check for immediate achievement unlocks (First Blood, Massacre, Overkill, etc.)
-            from game_achievements import AchievementManager
-
-            current_session = get_current_session()
-            if current_session:
-                AchievementManager.check_immediate_achievements_and_notify(current_session, self)
 
             # Add environmental narrative for first combat or admin defeat
             if is_admin:
@@ -700,17 +674,8 @@ class GameEngine:
             self.message_log.add_message(
                 f"{target_enemy.type_data.name} health: {target_enemy.cpu}/{target_enemy.max_cpu}"
             )
-            # Store patrol information for PATROL enemies before becoming hostile
-            from game_entities import EnemyMovement
-
-            movement_type = target_enemy.get_movement_type()
-            if movement_type == EnemyMovement.PATROL and target_enemy.patrol_points:
-                target_enemy.original_patrol_index = target_enemy.patrol_index
             # Make enemy hostile and aware of player
-            from game_entities import EnemyState
-
-            target_enemy.state = EnemyState.HOSTILE
-            target_enemy.last_seen_player = Position(self.player.x, self.player.y)
+            target_enemy.make_hostile(self.player.position)
 
         # Generate some heat from the attack
         # Track consecutive attacks at same location for heat penalty
