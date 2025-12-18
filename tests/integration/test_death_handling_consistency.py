@@ -11,9 +11,7 @@ All death types (combat, virus, overheat, self_damage) should:
 This test ensures the centralized _handle_player_death() is used for all deaths.
 """
 
-import pytest
-
-from game_metrics import finalize_session, get_current_session, init_session_metrics
+from game_metrics import get_current_session, init_session_metrics
 from tests.test_agent import GameTestAgent
 
 

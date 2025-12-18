@@ -7,11 +7,10 @@ because game.input_handler.renderer was None - the InputHandler with renderer
 was created in game_loop but never assigned back to game.input_handler.
 """
 
-import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-from tests.test_agent import GameTestAgent
 from game_inventory import StoryFragment
+from tests.test_agent import GameTestAgent
 
 
 class TestFragmentPopup:
