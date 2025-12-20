@@ -162,11 +162,11 @@ class VisibilityManager:
             self._enemy_cache_turn = current_turn
 
         # Get or compute enemy FOV
-        enemy_key = (enemy.x, enemy.y, enemy.type_data.vision)
+        # Use enemy.vision_range to include ascension bonuses (A1 scanner, A5 all enemies)
+        enemy_vision = enemy.vision_range
+        enemy_key = (enemy.x, enemy.y, enemy_vision)
         if enemy_key not in self._enemy_fov_cache:
-            self._enemy_fov_cache[enemy_key] = self._compute_fov_set(
-                enemy.x, enemy.y, enemy.type_data.vision
-            )
+            self._enemy_fov_cache[enemy_key] = self._compute_fov_set(enemy.x, enemy.y, enemy_vision)
 
         enemy_fov = self._enemy_fov_cache[enemy_key]
         return (player.x, player.y) in enemy_fov

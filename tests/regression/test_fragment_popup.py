@@ -45,12 +45,12 @@ class TestFragmentPopup:
         agent.engine.process_turn()
 
         # Verify lore viewer was opened
-        assert agent.engine.show_lore_viewer is True, (
-            "Lore viewer should open when picking up a data fragment"
-        )
-        assert agent.engine.lore_viewer_mode == "reading", (
-            "Lore viewer should be in reading mode to show the new fragment"
-        )
+        assert (
+            agent.engine.show_lore_viewer is True
+        ), "Lore viewer should open when picking up a data fragment"
+        assert (
+            agent.engine.lore_viewer_mode == "reading"
+        ), "Lore viewer should be in reading mode to show the new fragment"
 
     def test_fragment_pickup_without_renderer_doesnt_crash(self):
         """Fragment pickup should work even without renderer (headless mode).
@@ -76,10 +76,10 @@ class TestFragmentPopup:
         agent.engine.process_turn()
 
         # Verify fragment was discovered even without popup
-        assert test_fragment_index in agent.engine.story_fragment_manager.discovered_fragments, (
-            "Fragment should be discovered even without renderer"
-        )
+        assert (
+            test_fragment_index in agent.engine.story_fragment_manager.discovered_fragments
+        ), "Fragment should be discovered even without renderer"
         # Lore viewer should NOT open without renderer
-        assert agent.engine.show_lore_viewer is False, (
-            "Lore viewer should not open in headless mode (no renderer)"
-        )
+        assert (
+            agent.engine.show_lore_viewer is False
+        ), "Lore viewer should not open in headless mode (no renderer)"

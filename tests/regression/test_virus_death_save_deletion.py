@@ -154,6 +154,6 @@ class TestVirusDeathSaveDeletion:
         enemy.attack_player(agent.engine.player, game_engine=agent.engine)
 
         # Verify save was deleted immediately (not waiting for process_turn)
-        assert not SaveGameManager.save_exists(), (
-            "Save must be deleted immediately on combat death, not after process_turn"
-        )
+        assert (
+            not SaveGameManager.save_exists()
+        ), "Save must be deleted immediately on combat death, not after process_turn"

@@ -8,7 +8,6 @@ Tests cover:
 - SessionMetrics serialization with new fields
 """
 
-
 import pytest
 
 from game_metrics import (

@@ -323,3 +323,26 @@ class GameMap:
         )
         # Note: Can't reliably detect cache hits/misses here, so minimal logging
         return result
+
+    def reveal_area_around(self, center: Position | tuple[int, int], radius: int = 1) -> None:
+        """
+        Reveal a square area around a position by adding tiles to explored_tiles.
+
+        Used for revealing context around enemies, nodes, and other points of interest.
+        Validates positions are within map bounds before adding.
+
+        Args:
+            center: Center position (Position or (x, y) tuple)
+            radius: Half-size of area to reveal (1 = 3x3, 2 = 5x5, etc.)
+        """
+        # Handle both Position objects and tuples
+        if isinstance(center, Position):
+            cx, cy = center.x, center.y
+        else:
+            cx, cy = center
+
+        for dx in range(-radius, radius + 1):
+            for dy in range(-radius, radius + 1):
+                x, y = cx + dx, cy + dy
+                if 0 <= x < self.width and 0 <= y < self.height:
+                    self.explored_tiles.add((x, y))

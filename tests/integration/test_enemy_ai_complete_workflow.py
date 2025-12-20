@@ -147,13 +147,13 @@ class TestEnemyStateTransitions:
         admin.make_hostile(basic_game_engine.player.position)
 
         # Verify queue was cleared
-        assert len(admin.move_queue) == 0, (
-            "Move queue should be cleared when transitioning to hostile"
-        )
+        assert (
+            len(admin.move_queue) == 0
+        ), "Move queue should be cleared when transitioning to hostile"
         assert admin.state == EnemyState.HOSTILE, "Should be hostile after transition"
-        assert admin.last_seen_player == basic_game_engine.player.position, (
-            "Should track player position"
-        )
+        assert (
+            admin.last_seen_player == basic_game_engine.player.position
+        ), "Should track player position"
 
 
 class TestEnemyAlertingSystem:
@@ -522,9 +522,9 @@ class TestExploitStateEffects:
         scanner.move_queue.clear()  # This is what we fixed
 
         # Verify queue was cleared
-        assert len(scanner.move_queue) == 0, (
-            "Move queue should be cleared when stunned - enemy shouldn't follow old chase path"
-        )
+        assert (
+            len(scanner.move_queue) == 0
+        ), "Move queue should be cleared when stunned - enemy shouldn't follow old chase path"
         assert scanner.state == EnemyState.UNAWARE, "Enemy should be unaware"
 
     def test_blinded_enemy_clears_move_queue(self, basic_game_engine):
@@ -551,9 +551,7 @@ class TestExploitStateEffects:
         bot.move_queue.clear()  # This is what we fixed
 
         # Verify queue was cleared
-        assert len(bot.move_queue) == 0, (
-            "Blinded enemy's move queue should be cleared"
-        )
+        assert len(bot.move_queue) == 0, "Blinded enemy's move queue should be cleared"
         assert bot.blinded_turns == 3, "Enemy should be blinded"
 
     def test_decoy_clears_move_queue(self, basic_game_engine):
@@ -579,9 +577,9 @@ class TestExploitStateEffects:
         patrol.move_queue.clear()  # This is what we fixed
 
         # Verify queue was cleared
-        assert len(patrol.move_queue) == 0, (
-            "Attracted enemy's move queue should be cleared to investigate decoy"
-        )
+        assert (
+            len(patrol.move_queue) == 0
+        ), "Attracted enemy's move queue should be cleared to investigate decoy"
         assert patrol.state == EnemyState.ALERT, "Enemy should be alert"
         assert patrol.last_seen_player == decoy_target, "Should track decoy position"
 

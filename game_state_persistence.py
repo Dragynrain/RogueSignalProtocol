@@ -432,6 +432,7 @@ class GameStatePersistence:
             )
             enemy.move_cooldown = enemy_data["move_cooldown"]
             enemy.disabled_turns = enemy_data["disabled_turns"]
+            enemy.blinded_turns = enemy_data.get("blinded_turns", 0)
             enemy.alert_timer = enemy_data["alert_timer"]
             enemy.patrol_index = enemy_data["patrol_index"]
             enemy.last_target = (

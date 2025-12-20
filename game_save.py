@@ -446,6 +446,7 @@ class SaveGameManager:
                 "state": e.state.value,
                 "move_cooldown": e.move_cooldown,
                 "disabled_turns": e.disabled_turns,
+                "blinded_turns": e.blinded_turns,
                 "alert_timer": e.alert_timer,
                 "patrol_index": e.patrol_index,
                 "last_target": (

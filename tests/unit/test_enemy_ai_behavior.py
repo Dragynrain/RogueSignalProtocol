@@ -552,7 +552,11 @@ class TestMakeHostileMethod:
         """make_hostile sets state to HOSTILE and records player position."""
         with patch(
             "game_data.GameData.ENEMY_TYPES",
-            {"virus": Mock(movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus")},
+            {
+                "virus": Mock(
+                    movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus"
+                )
+            },
         ):
             enemy = Enemy(Position(5, 5), "virus")
             assert enemy.state == EnemyState.UNAWARE
@@ -585,7 +589,11 @@ class TestMakeHostileMethod:
         """make_hostile clears movement queue on state change."""
         with patch(
             "game_data.GameData.ENEMY_TYPES",
-            {"virus": Mock(movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus")},
+            {
+                "virus": Mock(
+                    movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus"
+                )
+            },
         ):
             enemy = Enemy(Position(5, 5), "virus")
             enemy.move_queue = [Position(6, 5), Position(7, 5), Position(8, 5)]
@@ -598,7 +606,11 @@ class TestMakeHostileMethod:
         """make_hostile does not clear queue if already hostile."""
         with patch(
             "game_data.GameData.ENEMY_TYPES",
-            {"virus": Mock(movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus")},
+            {
+                "virus": Mock(
+                    movement=EnemyMovement.RANDOM, cpu=30, vision=5, damage=5, name="Virus"
+                )
+            },
         ):
             enemy = Enemy(Position(5, 5), "virus")
             enemy.state = EnemyState.HOSTILE
@@ -681,9 +693,9 @@ class TestPatrolRestorationIntegration:
             turn_manager._restore_patrol(enemy)
 
             # Verify patrol_index was restored to original
-            assert enemy.patrol_index == 2, (
-                f"Expected patrol_index to be restored to 2, but got {enemy.patrol_index}"
-            )
+            assert (
+                enemy.patrol_index == 2
+            ), f"Expected patrol_index to be restored to 2, but got {enemy.patrol_index}"
 
 
 if __name__ == "__main__":

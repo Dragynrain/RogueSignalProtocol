@@ -715,8 +715,9 @@ class TestAscensionMetricsTracking:
                     # Check adjacent walkable tile for enemy
                     for dx, dy in [(1, 0), (-1, 0), (0, 1), (0, -1)]:
                         adj_pos = Position(x + dx, y + dy)
-                        if (agent.engine.game_map.is_valid_position(adj_pos)
-                            and not agent.engine.game_map.is_wall(adj_pos)):
+                        if agent.engine.game_map.is_valid_position(
+                            adj_pos
+                        ) and not agent.engine.game_map.is_wall(adj_pos):
                             blind_spot_pos = pos
                             enemy_pos = adj_pos
                             break
@@ -733,9 +734,9 @@ class TestAscensionMetricsTracking:
         agent.player.position.y = blind_spot_pos.y
 
         # Verify player is in blind spot
-        assert agent.engine.game_map.is_blind_spot(agent.player.position), (
-            "Player should be in blind spot"
-        )
+        assert agent.engine.game_map.is_blind_spot(
+            agent.player.position
+        ), "Player should be in blind spot"
 
         # Spawn enemy adjacent to blind spot
         agent.engine.enemies.clear()
@@ -781,9 +782,9 @@ class TestTurnsWithKillsTracking:
         track_kill_this_turn()
         track_kill_this_turn()
 
-        assert session.turns_with_kills == 1, (
-            f"turns_with_kills should still be 1, got {session.turns_with_kills}"
-        )
+        assert (
+            session.turns_with_kills == 1
+        ), f"turns_with_kills should still be 1, got {session.turns_with_kills}"
 
     def test_reset_flag_allows_new_turn_tracking(self):
         """After reset, new turn should be able to track kills."""

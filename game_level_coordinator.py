@@ -127,6 +127,10 @@ class GameLevelCoordinator:
         # Reset narrative manager per-level flags
         self.game_engine.narrative_manager.reset_level_flags()
 
+        # Reset A20 blind spot tracking for new level
+        # (prevents incorrectly consuming blind spots from previous level)
+        self.game_engine.game_session.turn_manager._last_blind_spot_position = None
+
         self.game_engine.message_log.add_message(f"{config['name']} loaded")
 
         # Add atmospheric level start message
@@ -162,9 +166,14 @@ class GameLevelCoordinator:
         old_level = self.game_engine.level
 
         # Track level completion (before incrementing)
-        from game_metrics import track
+        from game_metrics import get_current_session, track
 
         track("levels_completed")
+
+        # Track gateway discovery for Explorer achievement
+        session = get_current_session()
+        if session:
+            session.special_nodes_discovered.add("gateway")
 
         # Alpha Testing: Level completion analytics
         player = self.game_engine.player

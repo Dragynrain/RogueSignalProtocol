@@ -139,6 +139,7 @@ class CodeHack(InventoryItem):
         session = get_current_session()
         if session:
             session.unique_code_hacks_used_this_run.add(self.name)
+            session.used_any_code_hacks = True
 
         return self._apply_effect(effect_key, player, game)
 
