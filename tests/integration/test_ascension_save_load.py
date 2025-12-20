@@ -255,3 +255,98 @@ class TestAscensionModifiersRecalculatedOnLoad:
         assert modifiers.enemy_vision_bonus == 1  # A5
         assert modifiers.blind_spot_reduction_per_floor == 1  # A6
         assert modifiers.hostile_trace_bonus == 0.2  # A7
+
+
+class TestTraceIncreaseWithAscensionModifiers:
+    """Test that trace increases correctly with ascension modifiers (A3)."""
+
+    def test_trace_increase_applies_a3_multiplier(self):
+        """Trace increase should be multiplied by A3 modifier."""
+        from unittest.mock import MagicMock
+
+        from game_ascension import calculate_ascension_modifiers
+        from game_config import GameBalance
+        from game_state import TurnProcessor
+
+        # Setup: A3 has 2.0x trace multiplier
+        modifiers = calculate_ascension_modifiers(3)
+        assert modifiers.trace_gain_multiplier == 2.0
+
+        # Create mock game state
+        mock_game_state = MagicMock()
+        mock_game_state.turn = GameBalance.TRACE_INCREASE_INTERVAL  # Trigger trace increase
+        mock_game_state.get_current_network_config.return_value = {"background_trace": 1}
+        mock_message_log = MagicMock()
+
+        # Create turn processor with A3 modifiers
+        processor = TurnProcessor(mock_game_state, mock_message_log, modifiers)
+
+        # Create mock player
+        mock_player = MagicMock()
+        mock_player.trace_level = 0.0
+
+        # Process trace increase
+        processor._process_trace_increase(mock_player)
+
+        # Trace should be base * A3 multiplier = 1 * 1.0 * 2.0 = 2.0
+        expected_trace = 1 * GameBalance.TRACE_INCREASE_AMOUNT * 2.0
+        assert mock_player.trace_level == expected_trace
+
+    def test_trace_increase_only_happens_once_per_interval(self):
+        """Trace should only increase once per TRACE_INCREASE_INTERVAL, not twice."""
+        from unittest.mock import MagicMock
+
+        from game_ascension import calculate_ascension_modifiers
+        from game_config import GameBalance
+        from game_state import TurnProcessor
+
+        # Use A0 (no modifier) for simpler calculation
+        modifiers = calculate_ascension_modifiers(0)
+        assert modifiers.trace_gain_multiplier == 1.0
+
+        # Create mock game state at trace increase interval
+        mock_game_state = MagicMock()
+        mock_game_state.turn = GameBalance.TRACE_INCREASE_INTERVAL
+        mock_game_state.get_current_network_config.return_value = {"background_trace": 1}
+        mock_message_log = MagicMock()
+
+        processor = TurnProcessor(mock_game_state, mock_message_log, modifiers)
+
+        mock_player = MagicMock()
+        mock_player.trace_level = 0.0
+
+        # Call _process_trace_increase directly
+        processor._process_trace_increase(mock_player)
+
+        # Should be exactly the expected amount (not doubled)
+        expected_trace = 1 * GameBalance.TRACE_INCREASE_AMOUNT * 1.0
+        assert mock_player.trace_level == expected_trace
+
+        # If we had the bug, trace would be doubled (once from TurnProcessor, once from
+        # GameTurnManager) but since we fixed it, only TurnProcessor handles trace
+
+    def test_no_trace_increase_before_interval(self):
+        """Trace should not increase before reaching the interval."""
+        from unittest.mock import MagicMock
+
+        from game_ascension import calculate_ascension_modifiers
+        from game_config import GameBalance
+        from game_state import TurnProcessor
+
+        modifiers = calculate_ascension_modifiers(0)
+
+        # Set turn to 1 less than the interval
+        mock_game_state = MagicMock()
+        mock_game_state.turn = GameBalance.TRACE_INCREASE_INTERVAL - 1
+        mock_message_log = MagicMock()
+
+        processor = TurnProcessor(mock_game_state, mock_message_log, modifiers)
+
+        mock_player = MagicMock()
+        mock_player.trace_level = 10.0
+
+        # Process trace increase
+        processor._process_trace_increase(mock_player)
+
+        # Trace should NOT have changed
+        assert mock_player.trace_level == 10.0

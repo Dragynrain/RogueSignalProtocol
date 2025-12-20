@@ -105,9 +105,7 @@ class InputHandler:
             gamepad_handler=self.gamepad_handler,
         )
         # Note: achievements_handler removed - using AchievementsMenu directly (Phase 4)
-
-        # Lore viewer handler (lazy-initialized when first needed)
-        self._lore_viewer_menu = None
+        # Note: Lore viewer uses renderer's shared instance via _get_lore_menu()
 
     def handle_keydown(self, event: tcod.event.KeyDown) -> bool:
         """Handle keydown events.
@@ -170,11 +168,11 @@ class InputHandler:
                     self.game.show_lore_viewer = False
                 return True
 
-            lore_menu = self._get_or_create_lore_viewer_menu()
+            lore_menu = self._get_lore_menu()
             result = lore_menu.handle_input(event)
+            self._sync_lore_state_to_game(lore_menu)
             if result == "back":
                 self.game.show_lore_viewer = False
-                self._lore_viewer_menu = None  # Clear menu cache
             return True
 
         if self.game.show_achievements:
@@ -299,18 +297,28 @@ class InputHandler:
         """Enter look mode - delegated to GameplayInputHandler."""
         self.gameplay_handler.enter_look_mode()
 
-    def _get_or_create_lore_viewer_menu(self):
-        """Get or create the lore viewer menu instance."""
-        if self._lore_viewer_menu is None:
-            if not self.renderer:
-                raise RuntimeError(
-                    "Lore viewer requires a renderer but none was provided. "
-                    "This is a programming error - lore viewer should not be openable without a renderer."
-                )
-            from game_menu_help_lore import LoreMenu
+    def _get_lore_menu(self):
+        """Get the shared lore menu instance from renderer.
 
-            self._lore_viewer_menu = LoreMenu()  # LoreMenu takes no arguments
-        return self._lore_viewer_menu
+        Uses renderer's lore menu to ensure single instance is shared
+        between rendering and input handling. State is synced from GameEngine
+        before each use, and synced back after input changes.
+        """
+        if not self.renderer:
+            raise RuntimeError(
+                "Lore viewer requires a renderer but none was provided. "
+                "This is a programming error - lore viewer should not be openable without a renderer."
+            )
+        lore_menu = self.renderer._get_or_create_lore_menu()
+        # Sync state from GameEngine before use
+        lore_menu.lore_viewer_selection = self.game.lore_viewer_selection
+        lore_menu.lore_viewer_mode = self.game.lore_viewer_mode
+        return lore_menu
+
+    def _sync_lore_state_to_game(self, lore_menu):
+        """Sync LoreMenu state back to GameEngine after input handling."""
+        self.game.lore_viewer_selection = lore_menu.lore_viewer_selection
+        self.game.lore_viewer_mode = lore_menu.lore_viewer_mode
 
     def _get_current_context(self) -> InputContext:
         """
@@ -496,8 +504,10 @@ class InputHandler:
             return self._handle_inventory_mouse_motion(event)
         elif self.game.show_lore_viewer:
             # Delegate to lore menu's mouse handler
-            lore_menu = self._get_or_create_lore_viewer_menu()
-            return lore_menu.handle_mouse_motion(event)
+            lore_menu = self._get_lore_menu()
+            result = lore_menu.handle_mouse_motion(event)
+            self._sync_lore_state_to_game(lore_menu)
+            return result
 
         # Normal gameplay: update hover position for visual feedback
         return self._handle_gameplay_mouse_motion(event)
@@ -551,8 +561,10 @@ class InputHandler:
             if self.renderer is None:
                 return False  # Can't scroll without renderer
 
-            lore_menu = self._get_or_create_lore_viewer_menu()
-            return lore_menu.handle_mouse_wheel(event)
+            lore_menu = self._get_lore_menu()
+            result = lore_menu.handle_mouse_wheel(event)
+            self._sync_lore_state_to_game(lore_menu)
+            return result
 
         return False
 
@@ -606,11 +618,11 @@ class InputHandler:
             return self._handle_inventory_left_click(event)
         elif self.game.show_lore_viewer:
             # Delegate to lore menu's click handler
-            lore_menu = self._get_or_create_lore_viewer_menu()
+            lore_menu = self._get_lore_menu()
             result = lore_menu.handle_mouse_click(event)
+            self._sync_lore_state_to_game(lore_menu)
             if result == "back":
                 self.game.show_lore_viewer = False
-                self._lore_viewer_menu = None  # Clear menu cache
             return True
 
         # Check for UI button clicks (normal gameplay only)
@@ -786,11 +798,11 @@ class InputHandler:
                     self.game.show_lore_viewer = False
                 return True
 
-            lore_menu = self._get_or_create_lore_viewer_menu()
+            lore_menu = self._get_lore_menu()
             result = lore_menu.handle_input(event)
+            self._sync_lore_state_to_game(lore_menu)
             if result == "back":
                 self.game.show_lore_viewer = False
-                self._lore_viewer_menu = None  # Clear menu cache
             return True
 
         # Achievements screen - pass raw events for navigation
@@ -884,8 +896,9 @@ class InputHandler:
 
         # Lore viewer (data fragments) - pass raw axis events for left stick navigation
         if self.game.show_lore_viewer:
-            lore_menu = self._get_or_create_lore_viewer_menu()
+            lore_menu = self._get_lore_menu()
             lore_menu.handle_input(event)
+            self._sync_lore_state_to_game(lore_menu)
             return True
 
         # Achievements screen - pass raw axis events for left stick navigation

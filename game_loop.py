@@ -548,8 +548,9 @@ def handle_menu_navigation(
                 menu_sound_manager = NullSoundManager(settings)
             else:
                 menu_sound_manager = SoundManager(settings)
-        except Exception:
+        except Exception as e:
             # Pygame not initialized or error - use null audio
+            logging.warning(f"Audio initialization failed, continuing without sound: {e}")
             from game_audio import NullSoundManager
 
             menu_sound_manager = NullSoundManager(settings)

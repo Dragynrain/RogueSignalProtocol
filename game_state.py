@@ -333,9 +333,10 @@ class TurnProcessor:
                 logging.debug(
                     f"Turn: Trace level {old_trace:.1f} -> {player.trace_level:.1f} (+{trace_increase:.1f})"
                 )
-                # Track highest trace for no_trace achievement
-                from game_metrics import track_highest_trace
+                # Track metrics for achievements
+                from game_metrics import track, track_highest_trace
 
+                track("trace_increases")
                 track_highest_trace(player.trace_level)
 
             # Trace Level increases silently in background

@@ -65,7 +65,17 @@ class Player:
         # A10: Vision override from ascension modifiers (None = use base_vision_range)
         self.ascension_vision_override: int | None = None
 
-        # Temporary effects
+        # Temporary effects (durations in enemy turns)
+        #
+        # SPEED/SLOW SYSTEM:
+        # - speed_boost_turns: Duration of speed buff. While active, player gets 2 moves
+        #   per enemy turn (via speed_moves_remaining refill). 3:1 action advantage.
+        # - speed_moves_remaining: Current bonus moves this turn. Decremented each action.
+        #   When 0, enemies act. Refilled to 2 at start of each turn while boosted.
+        # - movement_slowed_turns: Duration of slow debuff. While active, enemies get
+        #   2 moves per player action. 1:2 action disadvantage.
+        # - Inhibitor enemies cancel speed boost first, then apply slow if no boost active.
+        #
         self.temporary_effects = {
             "traffic_masquerade_turns": 0,
             "speed_boost_turns": 0,
@@ -320,8 +330,14 @@ class Player:
         )
 
         # Track metrics
-        from game_metrics import track
+        from game_metrics import get_current_session, track
 
         track("damage_taken", amount=actual_damage)
+
+        # Mark session as having taken damage (for Untouchable achievement)
+        if actual_damage > 0:
+            session = get_current_session()
+            if session is not None:
+                session.took_any_damage = True
 
         return actual_damage

@@ -105,22 +105,8 @@ class GameTurnManager:
         # Check for admin spawn
         self._check_admin_spawn()
 
-        # Passive trace level increase (higher on higher levels)
-        if self.game_engine.turn % GameBalance.TRACE_INCREASE_INTERVAL == 0:
-            network_configs = GameConfig.NETWORK_CONFIGS()
-            config = network_configs[self.game_engine.level]
-            background_increase = config["background_trace"]
-            old_trace = self.game_engine.player.trace_level
-            self.game_engine.player.trace_level = min(
-                100, self.game_engine.player.trace_level + background_increase
-            )
-
-            # Track metrics if trace actually increased
-            if self.game_engine.player.trace_level > old_trace:
-                from game_metrics import track, track_highest_trace
-
-                track("trace_increases")
-                track_highest_trace(self.game_engine.player.trace_level)
+        # NOTE: Passive trace level increase is handled in TurnProcessor._process_trace_increase()
+        # which applies ascension modifiers (A3 trace gain multiplier)
 
         # Final death check - catches any deaths not handled at their source
         # The death handler is idempotent, so this is safe even if already called

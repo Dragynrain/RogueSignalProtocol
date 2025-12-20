@@ -312,13 +312,14 @@ class TestMouseWheelIntegration:
         game.dialogue_state.close()
         game.show_lore_viewer = True
 
-        mock_renderer = Mock()
-        handler = InputHandler(game, mock_renderer)
-
         # Mock lore menu
         mock_lore_menu = Mock()
         mock_lore_menu.handle_mouse_wheel = Mock(return_value=True)
-        handler._get_or_create_lore_viewer_menu = Mock(return_value=mock_lore_menu)
+
+        mock_renderer = Mock()
+        # Mock the renderer's lore menu method (shared instance)
+        mock_renderer._get_or_create_lore_menu = Mock(return_value=mock_lore_menu)
+        handler = InputHandler(game, mock_renderer)
 
         # Create wheel event
         event = Mock(spec=tcod.event.MouseWheel)

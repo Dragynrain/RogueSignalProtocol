@@ -253,12 +253,15 @@ class GameSettings:
 
     def get_ui_color_rgb(self) -> tuple:
         """Get RGB values for current UI color from ui_themes in game_rules.json."""
+        import logging
+
         from game_color_manager import ColorManager
 
         try:
             return ColorManager.get("ui_themes", self.ui_color)
         except KeyError:
             # Fallback to neon_cyan if theme not found
+            logging.warning(f"UI theme '{self.ui_color}' not found, using default")
             return ColorManager.get("basic", "neon_cyan")
 
     def get_volume_percent(self, volume_type: str) -> int:
@@ -893,6 +896,7 @@ class GameBalance:
     ENEMY_MEMORY_TURNS = 20
     OVERHEAT_COOLDOWN_AMOUNT = 15  # Heat reduction on overheat
     OVERHEAT_MINIMUM_HEAT = 85  # Minimum heat level after overheat cooldown
+    INHIBITOR_SLOWDOWN_CAP = 5  # Max slowdown turns from inhibitors (prevents infinite stacking)
 
     @classmethod
     def load_from_json(cls):
@@ -932,6 +936,7 @@ class GameBalance:
         cls.ENEMY_MEMORY_TURNS = GameConfig._get_required("balance.enemy_memory_turns")
         cls.OVERHEAT_COOLDOWN_AMOUNT = GameConfig._get_required("balance.overheat_cooldown_amount")
         cls.OVERHEAT_MINIMUM_HEAT = GameConfig._get_required("balance.overheat_minimum_heat")
+        cls.INHIBITOR_SLOWDOWN_CAP = GameConfig._get_required("balance.inhibitor_slowdown_cap")
 
     @staticmethod
     def get_enemy_difficulty_multiplier(difficulty: str) -> float:

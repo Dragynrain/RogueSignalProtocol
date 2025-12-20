@@ -294,6 +294,11 @@ class GameStatePersistence:
                     exploit_def = GameData.EXPLOITS[item_data["exploit_key"]]
                     item = ExploitItem(item_data["exploit_key"], exploit_def)
                     items.append(item)
+                else:
+                    # Exploit was removed or renamed - log for debugging
+                    logging.warning(
+                        f"Saved exploit '{item_data['exploit_key']}' not found in game data, skipping"
+                    )
             elif item_data["type"] == "story_fragment":
                 item = StoryFragment(item_data["fragment_index"])
                 items.append(item)
@@ -402,26 +407,30 @@ class GameStatePersistence:
         # A13+: Restore node capacity state
         if "node_capacity" in map_data:
             node_capacity = map_data["node_capacity"]
+            self._restore_node_capacity(
+                node_capacity.get("cooling", {}), game_map.cooling_nodes
+            )
+            self._restore_node_capacity(
+                node_capacity.get("cpu", {}), game_map.cpu_recovery_nodes
+            )
+            self._restore_node_capacity(
+                node_capacity.get("ghost", {}), game_map.ghost_nodes
+            )
 
-            # Restore cooling node capacity
-            for pos_str, used_capacity in node_capacity.get("cooling", {}).items():
-                position = parse_coordinate_string(pos_str)
-                if position and (position.x, position.y) in game_map.cooling_nodes:
-                    game_map.cooling_nodes[(position.x, position.y)].used_capacity = used_capacity
+    def _restore_node_capacity(
+        self, capacity_data: dict[str, int], node_collection: dict
+    ) -> None:
+        """
+        Restore used_capacity for nodes from save data.
 
-            # Restore CPU node capacity
-            for pos_str, used_capacity in node_capacity.get("cpu", {}).items():
-                position = parse_coordinate_string(pos_str)
-                if position and (position.x, position.y) in game_map.cpu_recovery_nodes:
-                    game_map.cpu_recovery_nodes[(position.x, position.y)].used_capacity = (
-                        used_capacity
-                    )
-
-            # Restore ghost node capacity
-            for pos_str, used_capacity in node_capacity.get("ghost", {}).items():
-                position = parse_coordinate_string(pos_str)
-                if position and (position.x, position.y) in game_map.ghost_nodes:
-                    game_map.ghost_nodes[(position.x, position.y)].used_capacity = used_capacity
+        Args:
+            capacity_data: Dict of "x,y" -> used_capacity from save
+            node_collection: The game_map node dict (cooling_nodes, cpu_recovery_nodes, etc.)
+        """
+        for pos_str, used_capacity in capacity_data.items():
+            position = parse_coordinate_string(pos_str)
+            if position and (position.x, position.y) in node_collection:
+                node_collection[(position.x, position.y)].used_capacity = used_capacity
 
     def _restore_enemies(self, enemies_data: list[dict]) -> None:
         """Restore enemies from save data."""
@@ -472,12 +481,25 @@ class GameStatePersistence:
                     Position(point["x"], point["y"]) for point in enemy_data["move_queue"]
                 ]
 
-            # Re-apply ascension modifiers to enemy (A2: HP, A4: damage, A1/A5: vision)
-            # Note: This recalculates max_cpu, damage_multiplier, _vision_bonus
-            # The saved cpu value already includes the HP bonus, so we store the current cpu,
-            # apply modifiers (which adds HP again), then restore the saved cpu value.
+            # Restore patrol restoration state (for hostile enemies returning to patrol)
+            enemy.original_patrol_index = enemy_data.get("original_patrol_index", 0)
+
+            # Restore original movement type (for virus mimic behavior)
+            if "original_movement_type" in enemy_data:
+                from game_entities import EnemyMovement
+
+                enemy.original_movement_type = EnemyMovement(
+                    enemy_data["original_movement_type"]
+                )
+
+            # Re-apply ascension modifiers for vision and damage (A4 damage, A1/A5 vision)
+            # We DON'T want HP bonus to be re-applied since we restore from saved state
+            # Instead, save the cpu/max_cpu, apply modifiers, then restore saved values
             saved_cpu = enemy.cpu
+            saved_max_cpu = enemy_data.get("max_cpu", enemy.max_cpu)
             enemy.apply_ascension_modifiers(self.game_engine.ascension_modifiers)
-            enemy.cpu = saved_cpu  # Preserve the actual HP from the save
+            # Restore exact saved HP state - this preserves the ascension level from save time
+            enemy.cpu = saved_cpu
+            enemy.max_cpu = saved_max_cpu
 
             self.game_engine.enemy_manager.enemies.append(enemy)

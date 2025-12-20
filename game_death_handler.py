@@ -128,30 +128,50 @@ class PlayerDeathHandler:
         6. Finalize metrics and check achievements
         7. Delete save file
         8. Queue death dialogue for next frame
+
+        Exception handling ensures death is always properly completed even if
+        individual steps fail. Critical operations (game_over, save deletion)
+        are protected and always attempted.
         """
         self._handled = True
         self._death_event = event
 
-        # 1. Set game state
+        # 1. Set game state - CRITICAL, must always succeed
         self.game.game_over = True
 
         # 2. Force-close any active dialogues - death has highest priority
-        if self.game.dialogue_state.is_active():
-            logging.warning(f"{event.cause.title()} death with dialogue active - force-closing")
-            self.game.dialogue_state.close()
+        try:
+            if self.game.dialogue_state.is_active():
+                logging.warning(f"{event.cause.title()} death with dialogue active - force-closing")
+                self.game.dialogue_state.close()
+        except Exception as e:
+            logging.error(f"Death handler: Failed to close dialogue: {e}")
 
         # 3. Play death sounds (only here, not in renderer)
-        self.game.sound_manager.play_sound("player_death", priority=10)
-        self.game.sound_manager.play_sound("critical_system_failure", priority=10)
+        try:
+            self.game.sound_manager.play_sound("player_death", priority=10)
+            self.game.sound_manager.play_sound("critical_system_failure", priority=10)
+        except Exception as e:
+            logging.error(f"Death handler: Failed to play death sounds: {e}")
 
-        # 4. Log analytics
-        self._log_death_analytics(event)
+        # 4. Log analytics - non-critical, continue on failure
+        try:
+            self._log_death_analytics(event)
+        except Exception as e:
+            logging.error(f"Death handler: Failed to log analytics: {e}")
 
-        # 5. Finalize metrics and check achievements
-        self._finalize_metrics(event)
+        # 5. Finalize metrics and check achievements - non-critical
+        try:
+            self._finalize_metrics(event)
+        except Exception as e:
+            logging.error(f"Death handler: Failed to finalize metrics: {e}")
 
-        # 6. Delete save (permadeath)
-        self._delete_save()
+        # 6. Delete save (permadeath) - CRITICAL for permadeath mechanic
+        try:
+            self._delete_save()
+        except Exception as e:
+            # Log as error but don't crash - game_over is already set
+            logging.error(f"Death handler: CRITICAL - Failed to delete save: {e}")
 
         # 7. Queue death dialogue for next render frame
         # (allows damage messages to render first)

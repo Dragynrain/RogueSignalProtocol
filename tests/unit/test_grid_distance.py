@@ -218,3 +218,95 @@ class TestExploitRangeConsistency:
         assert euclidean > 1.4
 
         # This ensures AoE radius 1 includes diagonals when using grid distance
+
+
+class TestPositionSerialization:
+    """Test Position serialization helpers for save/load."""
+
+    def test_to_coord_string(self):
+        """Position.to_coord_string() creates correct format."""
+        pos = Position(10, 25)
+        assert pos.to_coord_string() == "10,25"
+
+    def test_to_coord_string_negative(self):
+        """to_coord_string handles negative coordinates."""
+        pos = Position(-5, -10)
+        assert pos.to_coord_string() == "-5,-10"
+
+    def test_to_coord_string_zero(self):
+        """to_coord_string handles zero coordinates."""
+        pos = Position(0, 0)
+        assert pos.to_coord_string() == "0,0"
+
+    def test_parse_coordinate_string(self):
+        """parse_coordinate_string parses valid string."""
+        from game_position import parse_coordinate_string
+
+        result = parse_coordinate_string("10,25")
+        assert result is not None
+        assert result.x == 10
+        assert result.y == 25
+
+    def test_parse_coordinate_string_invalid(self):
+        """parse_coordinate_string returns None for invalid input."""
+        from game_position import parse_coordinate_string
+
+        assert parse_coordinate_string("invalid") is None
+        assert parse_coordinate_string("10") is None
+        assert parse_coordinate_string("") is None
+        assert parse_coordinate_string("a,b") is None
+
+    def test_tuple_to_coord_string(self):
+        """tuple_to_coord_string creates correct format."""
+        from game_position import tuple_to_coord_string
+
+        assert tuple_to_coord_string((10, 25)) == "10,25"
+        assert tuple_to_coord_string((0, 0)) == "0,0"
+
+    def test_serialize_position_dict(self):
+        """serialize_position_dict converts dict keys correctly."""
+        from game_position import serialize_position_dict
+
+        # Test with tuple keys
+        data = {(10, 25): "value1", (0, 0): "value2"}
+        result = serialize_position_dict(data)
+        assert result == {"10,25": "value1", "0,0": "value2"}
+
+        # Test with Position keys
+        data = {Position(5, 5): "a", Position(10, 10): "b"}
+        result = serialize_position_dict(data)
+        assert result == {"5,5": "a", "10,10": "b"}
+
+    def test_deserialize_position_dict_as_tuple(self):
+        """deserialize_position_dict with as_tuple=True."""
+        from game_position import deserialize_position_dict
+
+        data = {"10,25": "value1", "0,0": "value2"}
+        result = deserialize_position_dict(data, as_tuple=True)
+        assert result == {(10, 25): "value1", (0, 0): "value2"}
+
+    def test_deserialize_position_dict_as_position(self):
+        """deserialize_position_dict with as_tuple=False."""
+        from game_position import deserialize_position_dict
+
+        data = {"5,5": "value"}
+        result = deserialize_position_dict(data, as_tuple=False)
+        assert Position(5, 5) in result
+        assert result[Position(5, 5)] == "value"
+
+    def test_deserialize_skips_invalid_keys(self):
+        """deserialize_position_dict skips invalid coordinate strings."""
+        from game_position import deserialize_position_dict
+
+        data = {"10,25": "valid", "invalid": "skip", "a,b": "skip2"}
+        result = deserialize_position_dict(data)
+        assert result == {(10, 25): "valid"}
+
+    def test_serialize_deserialize_roundtrip(self):
+        """Roundtrip serialization preserves data."""
+        from game_position import deserialize_position_dict, serialize_position_dict
+
+        original = {(5, 10): "data1", (20, 30): "data2"}
+        serialized = serialize_position_dict(original)
+        restored = deserialize_position_dict(serialized)
+        assert restored == original

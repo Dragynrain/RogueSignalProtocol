@@ -83,3 +83,37 @@ class TestFragmentPopup:
         assert (
             agent.engine.show_lore_viewer is False
         ), "Lore viewer should not open in headless mode (no renderer)"
+
+    def test_fragment_popup_selects_correct_fragment(self):
+        """Fragment popup should select the newly discovered fragment.
+
+        Regression: When picking up fragment #5 with fragments 0-4 already discovered,
+        lore_viewer_selection should point to index 4 (the position of fragment #5
+        in the discovered list), not 0 or some default value.
+        """
+        agent = GameTestAgent(seed=42)
+
+        # Simulate having a renderer
+        mock_renderer = Mock()
+        agent.engine.input_handler.renderer = mock_renderer
+
+        # Pre-discover fragments 0, 1, 2, 3
+        agent.engine.story_fragment_manager.discovered_fragments = [0, 1, 2, 3]
+
+        # Pick up fragment 4 (which should become index 4 in the sorted list)
+        test_fragment_index = 4
+        player_pos = (agent.engine.player.x, agent.engine.player.y)
+        fragment = StoryFragment(test_fragment_index)
+        agent.engine.game_map.story_fragments[player_pos] = fragment
+
+        # Process turn to trigger fragment pickup
+        agent.engine.process_turn()
+
+        # Verify correct fragment is selected
+        assert agent.engine.show_lore_viewer is True, "Lore viewer should open"
+        assert agent.engine.lore_viewer_mode == "reading", "Should be in reading mode"
+        # Fragment 4 should be at index 4 in the discovered list (after 0, 1, 2, 3)
+        assert agent.engine.lore_viewer_selection == 4, (
+            f"lore_viewer_selection should be 4 (index of fragment #5), "
+            f"got {agent.engine.lore_viewer_selection}"
+        )
