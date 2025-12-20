@@ -186,6 +186,9 @@ class TilePlacementGenerator:
         )
 
         ghost_count = get_required_config("ghost_nodes")
+        # A19+: Apply node reduction per floor (min 0 nodes)
+        if ascension_modifiers.node_reduction_per_floor > 0:
+            ghost_count = max(0, ghost_count - ascension_modifiers.node_reduction_per_floor)
         ghost_positions = self.get_shadow_adjacent_positions(floor_positions)
         logging.debug(
             f"Tile Placement: Placing {ghost_count} ghost nodes (shadow-adjacent candidates={len(ghost_positions)})"

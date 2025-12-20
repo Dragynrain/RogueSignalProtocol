@@ -225,6 +225,8 @@ class ExploitSystem:
             session = get_current_session()
             if session:
                 session.last_exploit_used = exploit_key
+                session.used_any_exploits = True
+                session.unique_exploits_used_this_run.add(exploit_key)
 
             # Check if this will cause overheating
             if new_heat > self.game.player.max_heat:
@@ -238,6 +240,8 @@ class ExploitSystem:
                 self.game.sound_manager.play_sound("overclocking")
                 # Set heat to max (not over)
                 self.game.player.heat = self.game.player.max_heat
+                # Check for death from overheat
+                self.game.death_handler.check_death("overheat", source=exploit.name)
             else:
                 # Normal heat application
                 self.game.player.heat = new_heat
@@ -412,6 +416,10 @@ class ExploitSystem:
                 and enemy.position.grid_distance_to(target) <= exploit.effect_radius
             ):
                 if movement_type == EnemyMovement.PATROL:
+                    # Store patrol index before state change (like make_hostile does)
+                    # so _restore_patrol can return them to correct waypoint
+                    if enemy.patrol_points:
+                        enemy.original_patrol_index = enemy.patrol_index
                     enemy.state = EnemyState.ALERT
                     enemy.alert_timer = exploit.alert_duration_patrol
                 else:
@@ -648,6 +656,8 @@ class ExploitSystem:
                 Colors.RED,
             )
             logging.debug(f"Combat: System Crash self-damage: {actual_self_damage} CPU")
+            # Check for death from self-damage
+            self.game.death_handler.check_death("self_damage", source="System Crash")
 
         self.game.sound_manager.play_sound("exploit_system_crash")
         # System Crash is an emergency untargeted AoE centered on player
@@ -747,10 +757,8 @@ class ExploitSystem:
             actual_damage = self.game.player.take_damage(damage)
             self.game.message_log.add_message(f"FRIENDLY FIRE: {actual_damage} damage!", Colors.RED)
             logging.debug(f"Combat: Logic Bomb friendly fire! Player took {actual_damage} damage")
-
-            # Track if player died from their own Logic Bomb (for self_damage death cause)
-            if self.game.player.cpu <= 0:
-                self.game.friendly_fire_death = True
+            # Check for death from friendly fire
+            self.game.death_handler.check_death("self_damage", source="Logic Bomb")
 
         # Show result message
         if enemy_count > 0:
@@ -788,11 +796,7 @@ class ExploitSystem:
             )
 
             # Reveal a small area around each enemy (3x3) to show their local context
-            for dx in range(-1, 2):
-                for dy in range(-1, 2):
-                    reveal_pos = Position(enemy.position.x + dx, enemy.position.y + dy)
-                    if reveal_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-                        self.game.game_map.explored_tiles.add((reveal_pos.x, reveal_pos.y))
+            self.game.game_map.reveal_area_around(enemy.position, radius=1)
             enemy_count += 1
 
         self.game.message_log.add_message(f"THREAT SCAN ACTIVE - {enemy_count} hostiles detected!")
@@ -939,31 +943,17 @@ class ExploitSystem:
         for node_pos in self.game.game_map.cooling_nodes:
             self.game.game_state.revealed_special_nodes[node_pos] = "cooling"
             # Add surrounding 3x3 area to explored tiles so node is visible in fog of war
-            for dx in range(-1, 2):
-                for dy in range(-1, 2):
-                    explore_pos = Position(node_pos[0] + dx, node_pos[1] + dy)
-                    if explore_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-                        self.game.game_map.explored_tiles.add((explore_pos.x, explore_pos.y))
+            self.game.game_map.reveal_area_around(node_pos, radius=1)
 
         # Reveal all CPU recovery nodes and add to explored tiles
         for node_pos in self.game.game_map.cpu_recovery_nodes:
             self.game.game_state.revealed_special_nodes[node_pos] = "cpu"
-            # Add surrounding 3x3 area to explored tiles
-            for dx in range(-1, 2):
-                for dy in range(-1, 2):
-                    explore_pos = Position(node_pos[0] + dx, node_pos[1] + dy)
-                    if explore_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-                        self.game.game_map.explored_tiles.add((explore_pos.x, explore_pos.y))
+            self.game.game_map.reveal_area_around(node_pos, radius=1)
 
         # Reveal all ghost nodes and add to explored tiles
         for node_pos in self.game.game_map.ghost_nodes:
             self.game.game_state.revealed_special_nodes[node_pos] = "ghost"
-            # Add surrounding 3x3 area to explored tiles
-            for dx in range(-1, 2):
-                for dy in range(-1, 2):
-                    explore_pos = Position(node_pos[0] + dx, node_pos[1] + dy)
-                    if explore_pos.is_valid(GameConfig.MAP_WIDTH, GameConfig.MAP_HEIGHT):
-                        self.game.game_map.explored_tiles.add((explore_pos.x, explore_pos.y))
+            self.game.game_map.reveal_area_around(node_pos, radius=1)
 
         total_revealed = len(self.game.game_state.revealed_special_nodes)
         self.game.message_log.add_message(

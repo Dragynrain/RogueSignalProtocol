@@ -370,28 +370,9 @@ class Enemy:
         final_damage = int(base_damage * self.damage_multiplier)
         damage = player.take_damage(final_damage)
 
-        # CRITICAL: Check for death immediately after attack
-        # Don't wait for process_turn() - death may have occurred mid-turn
-        if player.cpu <= 0 and game_engine is not None:
-            if (
-                not hasattr(game_engine, "pending_death_dialogue")
-                or not game_engine.pending_death_dialogue
-            ):
-                game_engine.game_over = True
-                game_engine.pending_death_dialogue = True
-                logging.warning(
-                    f"Player killed by {self.type_data.name} attack - pending_death_dialogue set"
-                )
-                # Delete save immediately - don't wait for turn processing
-                # This prevents "Continue" appearing after death
-                from game_save import SaveGameManager
-
-                if SaveGameManager.save_exists():
-                    try:
-                        SaveGameManager.delete_save()
-                        logging.info("Save file deleted on combat death (permadeath)")
-                    except OSError as e:
-                        logging.error(f"Failed to delete save on combat death: {e}")
+        # Check for death using centralized handler
+        if game_engine is not None:
+            game_engine.death_handler.check_death("combat", source=self.type_data.name)
 
         return damage
 

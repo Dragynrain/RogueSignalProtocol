@@ -7,7 +7,6 @@ TDD-first: Write these tests before implementing achievement logic.
 """
 
 
-
 class TestAscensionMilestoneAchievements:
     """Test ascension milestone achievements (A5, A10, A15, A20)."""
 

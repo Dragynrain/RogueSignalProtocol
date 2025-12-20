@@ -155,7 +155,9 @@ class TestAscensionLevel2:
         for enemy_type, base_stats in BASE_ENEMY_STATS.items():
             enemy = agent.spawn_test_enemy(enemy_type)
             expected_hp = base_stats["cpu"] + 10
-            assert enemy.cpu == expected_hp, f"{enemy_type} HP: {base_stats['cpu']} + 10 = {expected_hp}"
+            assert (
+                enemy.cpu == expected_hp
+            ), f"{enemy_type} HP: {base_stats['cpu']} + 10 = {expected_hp}"
             assert enemy.max_cpu == expected_hp
 
     def test_a2_cumulative_with_a1(self):
@@ -197,7 +199,9 @@ class TestAscensionLevel3:
         # A3 should gain approximately 2x trace (allow some variance for game mechanics)
         if trace_gained_a0 > 0:
             ratio = trace_gained_a3 / trace_gained_a0
-            assert ratio >= 1.5, f"A3 trace gain ({trace_gained_a3}) should be ~2x A0 ({trace_gained_a0})"
+            assert (
+                ratio >= 1.5
+            ), f"A3 trace gain ({trace_gained_a3}) should be ~2x A0 ({trace_gained_a0})"
 
 
 class TestAscensionLevel4:
@@ -234,9 +238,9 @@ class TestAscensionLevel4:
 
         # At A4, patrol deals 10 * 1.2 = 12 damage
         expected_damage = int(10 * 1.2)
-        assert damage == expected_damage, (
-            f"Patrol at A4 should deal {expected_damage} damage, got {damage}"
-        )
+        assert (
+            damage == expected_damage
+        ), f"Patrol at A4 should deal {expected_damage} damage, got {damage}"
         assert agent.player.cpu == initial_hp - expected_damage
 
     def test_a4_cumulative_modifiers(self):
@@ -264,9 +268,9 @@ class TestAscensionLevel5:
                 expected_vision = base_stats["vision"] + 2  # A1 + A5
             else:
                 expected_vision = base_stats["vision"] + 1  # A5 only
-            assert enemy.vision_range == expected_vision, (
-                f"{enemy_type} vision: {base_stats['vision']} + bonus = {expected_vision}"
-            )
+            assert (
+                enemy.vision_range == expected_vision
+            ), f"{enemy_type} vision: {base_stats['vision']} + bonus = {expected_vision}"
 
 
 class TestAscensionLevel6:
@@ -295,9 +299,7 @@ class TestAscensionLevel6:
         avg_a6 = sum(a6_blind_spots) / len(a6_blind_spots)
 
         # A6 should have fewer blind spots (reduction of 1 per floor)
-        assert avg_a6 <= avg_a0, (
-            f"A6 avg blind spots ({avg_a6}) should be <= A0 ({avg_a0})"
-        )
+        assert avg_a6 <= avg_a0, f"A6 avg blind spots ({avg_a6}) should be <= A0 ({avg_a0})"
 
 
 class TestAscensionLevel7:
@@ -352,9 +354,9 @@ class TestAscensionLevel8:
         reduction_a8 = initial_heat_a8 - heat_after_a8
 
         # A8 should cool slower (1 vs 2)
-        assert reduction_a8 < reduction_a0, (
-            f"A8 heat reduction ({reduction_a8}) should be less than A0 ({reduction_a0})"
-        )
+        assert (
+            reduction_a8 < reduction_a0
+        ), f"A8 heat reduction ({reduction_a8}) should be less than A0 ({reduction_a0})"
 
 
 class TestAscensionLevel9:
@@ -421,9 +423,7 @@ class TestAscensionLevel11:
         avg_a0 = sum(a0_codes) / len(a0_codes)
         avg_a11 = sum(a11_codes) / len(a11_codes)
 
-        assert avg_a11 < avg_a0, (
-            f"A11 avg code hacks ({avg_a11}) should be less than A0 ({avg_a0})"
-        )
+        assert avg_a11 < avg_a0, f"A11 avg code hacks ({avg_a11}) should be less than A0 ({avg_a0})"
 
 
 class TestAscensionLevel12:
@@ -527,9 +527,9 @@ class TestAscensionLevel17:
 
         # A17 should have significantly more heat than A0
         # +5 from melee bonus, +1 from slower cooling (A8) = +6 total
-        assert heat_a17 > heat_a0, (
-            f"A17 bump attack heat ({heat_a17}) should be higher than A0 ({heat_a0})"
-        )
+        assert (
+            heat_a17 > heat_a0
+        ), f"A17 bump attack heat ({heat_a17}) should be higher than A0 ({heat_a0})"
         # The exact difference is 6: +5 melee bonus, +1 from A8 heat reduction override
         expected_diff = 5 + 1  # melee_bonus + (normal_reduction - a8_reduction)
         actual_diff = heat_a17 - heat_a0
@@ -563,9 +563,7 @@ class TestAscensionLevel18:
         avg_a0 = sum(a0_upgrades) / len(a0_upgrades)
         avg_a18 = sum(a18_upgrades) / len(a18_upgrades)
 
-        assert avg_a18 <= avg_a0, (
-            f"A18 avg upgrades ({avg_a18}) should be <= A0 ({avg_a0})"
-        )
+        assert avg_a18 <= avg_a0, f"A18 avg upgrades ({avg_a18}) should be <= A0 ({avg_a0})"
 
 
 class TestAscensionLevel19:
@@ -588,14 +586,14 @@ class TestAscensionLevel19:
 
             # Count total utility nodes (CPU recovery + ghost + cooling)
             a0_total = (
-                len(agent_a0.game_map.cpu_recovery_nodes) +
-                len(agent_a0.game_map.ghost_nodes) +
-                len(agent_a0.game_map.cooling_nodes)
+                len(agent_a0.game_map.cpu_recovery_nodes)
+                + len(agent_a0.game_map.ghost_nodes)
+                + len(agent_a0.game_map.cooling_nodes)
             )
             a19_total = (
-                len(agent_a19.game_map.cpu_recovery_nodes) +
-                len(agent_a19.game_map.ghost_nodes) +
-                len(agent_a19.game_map.cooling_nodes)
+                len(agent_a19.game_map.cpu_recovery_nodes)
+                + len(agent_a19.game_map.ghost_nodes)
+                + len(agent_a19.game_map.cooling_nodes)
             )
 
             a0_nodes.append(a0_total)
@@ -604,9 +602,7 @@ class TestAscensionLevel19:
         avg_a0 = sum(a0_nodes) / len(a0_nodes)
         avg_a19 = sum(a19_nodes) / len(a19_nodes)
 
-        assert avg_a19 <= avg_a0, (
-            f"A19 avg nodes ({avg_a19}) should be <= A0 ({avg_a0})"
-        )
+        assert avg_a19 <= avg_a0, f"A19 avg nodes ({avg_a19}) should be <= A0 ({avg_a0})"
 
 
 class TestAscensionLevel20:
@@ -641,9 +637,9 @@ class TestAscensionLevel20:
 
         # At A20, blind spots are consumable - should have one fewer
         final_count = len(agent.game_map.blind_spots)
-        assert final_count < initial_count, (
-            f"A20 blind spot should be consumed: {initial_count} -> {final_count}"
-        )
+        assert (
+            final_count < initial_count
+        ), f"A20 blind spot should be consumed: {initial_count} -> {final_count}"
 
 
 class TestAscensionCumulative:
@@ -714,9 +710,9 @@ class TestAscensionGameplay:
         hunter_a20 = agent_a20.spawn_test_enemy("hunter")
         initial_hp_a20 = hunter_a20.cpu
 
-        assert initial_hp_a20 > initial_hp_a0, (
-            f"A20 hunter ({initial_hp_a20}) should have more HP than A0 ({initial_hp_a0})"
-        )
+        assert (
+            initial_hp_a20 > initial_hp_a0
+        ), f"A20 hunter ({initial_hp_a20}) should have more HP than A0 ({initial_hp_a0})"
 
     def test_player_more_vulnerable_at_higher_ascension(self):
         """Player should be more vulnerable at higher ascension (less RAM, vision)."""
@@ -724,9 +720,9 @@ class TestAscensionGameplay:
         agent_a20 = AscensionTestAgent(seed=42, ascension_level=20)
 
         assert agent_a20.player.ram_total < agent_a0.player.ram_total, "Less RAM at A20"
-        assert agent_a20.get_player_vision_range() < agent_a0.get_player_vision_range(), (
-            "Less vision at A20"
-        )
+        assert (
+            agent_a20.get_player_vision_range() < agent_a0.get_player_vision_range()
+        ), "Less vision at A20"
 
     @pytest.mark.slow
     def test_survival_harder_at_high_ascension(self):
@@ -770,9 +766,9 @@ class TestAscensionDetection:
         scanner_a0 = agent_a0.spawn_test_enemy("scanner")
         scanner_a1 = agent_a1.spawn_test_enemy("scanner")
 
-        assert scanner_a1.vision_range > scanner_a0.vision_range, (
-            f"A1 scanner vision ({scanner_a1.vision_range}) > A0 ({scanner_a0.vision_range})"
-        )
+        assert (
+            scanner_a1.vision_range > scanner_a0.vision_range
+        ), f"A1 scanner vision ({scanner_a1.vision_range}) > A0 ({scanner_a0.vision_range})"
 
     def test_all_enemies_see_further_a5(self):
         """A5: All enemies should have +1 vision for detection."""
@@ -783,9 +779,9 @@ class TestAscensionDetection:
         patrol_a4 = agent_a4.spawn_test_enemy("patrol")
         patrol_a5 = agent_a5.spawn_test_enemy("patrol")
 
-        assert patrol_a5.vision_range > patrol_a4.vision_range, (
-            f"A5 patrol vision ({patrol_a5.vision_range}) > A4 ({patrol_a4.vision_range})"
-        )
+        assert (
+            patrol_a5.vision_range > patrol_a4.vision_range
+        ), f"A5 patrol vision ({patrol_a5.vision_range}) > A4 ({patrol_a4.vision_range})"
 
 
 if __name__ == "__main__":

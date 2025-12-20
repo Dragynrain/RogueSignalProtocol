@@ -7,7 +7,6 @@ TDD-first: Write these tests before implementing game_menu_ascension.py.
 """
 
 
-
 class TestAscensionMenuUnlockState:
     """Test menu shows correct unlock state for levels."""
 

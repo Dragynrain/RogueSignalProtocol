@@ -180,8 +180,7 @@ class GameRenderer:
 
             game.dialogue_state.show(create_death_dialogue(input_mapper))
             game.pending_death_dialogue = False
-            game.sound_manager.play_sound("player_death", priority=10)
-            game.sound_manager.play_sound("critical_system_failure", priority=10)
+            # Note: Death sounds are played once in PlayerDeathHandler, not here
 
         # Render dialogue system (highest priority overlay)
         if game.dialogue_state.is_active():

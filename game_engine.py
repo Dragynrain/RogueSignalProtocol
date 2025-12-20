@@ -18,6 +18,7 @@ from game_combat import ExploitSystem
 
 # Import all necessary modules
 from game_config import GameBalance, GameConfig, GameSettings
+from game_death_handler import PlayerDeathHandler
 from game_dialogue_system import DialogueState
 from game_enemies import EnemyManager
 from game_entities import Colors, Position
@@ -116,6 +117,10 @@ class GameEngine:
         self.player = Player(5, 5)
         self.message_log = MessageLog()
 
+        # Initialize death handler (centralized player death handling)
+        self.death_handler = PlayerDeathHandler(self)
+        self.pending_death_dialogue = False  # Deferred death dialogue flag
+
         # Apply ascension modifiers to player
         # A10: Player vision override (15 -> 12)
         if self.ascension_modifiers.player_vision_override is not None:
@@ -205,7 +210,6 @@ class GameEngine:
         self.friendly_fire_confirmed = False
         self.friendly_fire_exploit: str | None = None
         self.friendly_fire_target: Position | None = None
-        self.friendly_fire_death = False  # Set when player dies from Logic Bomb self-damage
 
         # Code hack system
         self.code_hack_effects: dict[str, tuple[str, str]] = {}
@@ -503,7 +507,8 @@ class GameEngine:
 
                     track("overheating_events")
 
-                    # Death handling moved to game_turn_manager.py (called via maybe_process_turn)
+                    # Check for death from overheat
+                    self.death_handler.check_death("overheat")
 
                 # Handle speed boost and turn processing only if move was successful
                 self.maybe_process_turn()

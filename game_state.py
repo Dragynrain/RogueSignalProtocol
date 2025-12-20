@@ -298,8 +298,8 @@ class TurnProcessor:
                     virus_damage = GameConfig.VIRUS_DAMAGE_PER_TURN
                     actual_damage = player.take_damage(virus_damage)
                     self.message_log.add_message(f"Virus damage: {actual_damage} CPU damage")
-                    # Note: Death handling is done by GameTurnManager._handle_player_death()
-                    # to ensure consistent metrics tracking and achievement checking
+                    # Note: Death handling is done by PlayerDeathHandler.check_death()
+                    # called from GameTurnManager.process_turn()
 
                 # Now decrement the counter
                 player.temporary_effects[effect_name] -= 1
