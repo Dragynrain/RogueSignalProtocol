@@ -52,16 +52,16 @@ class TestAchievementsMenuBasic:
             ), f"Category '{category}' not found in menu"
 
     def test_build_achievement_lines_includes_all_achievements(self):
-        """Test that all 25 achievements are listed."""
+        """Test that all 37 achievements are listed."""
         menu = AchievementsMenu()
         lines = menu._build_achievement_lines()
 
-        # Should have lines for all 25 achievements (not counting category headers and blank lines)
-        # Count achievement lines (those with icons like [X], [ ], or 🔒 for hidden)
+        # Should have lines for all 37 achievements (not counting category headers, blank lines, or progress lines)
+        # Count achievement lines (those with icons like [X], [ ], or [?] for hidden)
         achievement_lines = [
             line
             for line in lines
-            if "[X]" in line["text"] or "[ ]" in line["text"] or "🔒" in line["text"]
+            if "[X]" in line["text"] or "[ ]" in line["text"] or "[?]" in line["text"]
         ]
         assert (
             len(achievement_lines) == 37

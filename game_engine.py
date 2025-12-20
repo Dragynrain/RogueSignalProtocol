@@ -619,32 +619,9 @@ class GameEngine:
             is_admin = target_enemy.type == "admin"
             self.sound_manager.play_sound("enemy_death")
 
-            # Trigger particle explosion effect (graphics mode only, if enabled)
-            if (
-                hasattr(self, "particle_system")
-                and self.particle_system is not None
-                and hasattr(self, "tile_manager")
-                and self.tile_manager is not None
-                and self.settings.graphics_mode == "graphics"
-                and self.settings.show_particle_effects
-            ):
-                try:
-                    # Extract colors from enemy sprite for particles
-                    from game_config import GameConfig
+            # Trigger particle explosion effect
+            self.trigger_death_particles(target_enemy.type, target_enemy.x, target_enemy.y)
 
-                    colors = self.tile_manager.extract_sprite_colors(
-                        target_enemy.type, num_colors=GameConfig.PARTICLE_SPRITE_COLOR_COUNT()
-                    )
-
-                    # Create explosion at enemy position (uses particle_count from config)
-                    self.particle_system.create_death_explosion(
-                        world_x=target_enemy.x, world_y=target_enemy.y, colors=colors
-                    )
-                    logging.debug("Particle explosion created for bump attack kill")
-                except Exception as e:
-                    GameErrorHandler.handle_error(
-                        e, "particle_effect", "Particle effect failed in bump attack", fatal=False
-                    )
             self.enemy_manager.remove_enemy(target_enemy)
             self.player.cpu = min(
                 self.player.max_cpu, self.player.cpu + GameBalance.ENEMY_ELIMINATION_CPU_REWARD
@@ -717,6 +694,38 @@ class GameEngine:
         from game_metrics import track_highest_heat
 
         track_highest_heat(self.player.heat)
+
+    def trigger_death_particles(self, enemy_type: str, world_x: int, world_y: int) -> None:
+        """
+        Trigger particle explosion effect for enemy death (if enabled).
+
+        Consolidates particle effect logic used by both bump attacks and exploits.
+        Only triggers in graphics mode with particles enabled.
+
+        Args:
+            enemy_type: Enemy type for sprite color extraction
+            world_x: World X coordinate for explosion
+            world_y: World Y coordinate for explosion
+        """
+        if (
+            hasattr(self, "particle_system")
+            and self.particle_system is not None
+            and hasattr(self, "tile_manager")
+            and self.tile_manager is not None
+            and self.settings.graphics_mode == "graphics"
+            and self.settings.show_particle_effects
+        ):
+            try:
+                colors = self.tile_manager.extract_sprite_colors(
+                    enemy_type, num_colors=GameConfig.PARTICLE_SPRITE_COLOR_COUNT()
+                )
+                self.particle_system.create_death_explosion(
+                    world_x=world_x, world_y=world_y, colors=colors
+                )
+            except Exception as e:
+                GameErrorHandler.handle_error(
+                    e, "particle_effect", "Particle effect failed", fatal=False
+                )
 
     def _move_cursor(self, dx: int, dy: int):
         """Move targeting cursor."""

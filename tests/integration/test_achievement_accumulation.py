@@ -337,36 +337,35 @@ class TestSessionEndAchievements:
         assert "minimalist" not in unlocked, "Cannot use 4+ exploits"
 
     def test_pacifist_requires_level_completion_with_5_or_fewer_kills(self):
-        """Pacifist requires completing a level with ≤5 kills."""
-        from collections import Counter
-
+        """Pacifist requires completing a level with ≤5 kills on that single level."""
         init_session_metrics()
         session = get_current_session()
         session.levels_completed = 1
-        session.enemies_killed = Counter({"bot": 3, "scanner": 2})
+        # min_kills_any_level tracks the minimum kills on any completed level
+        session.min_kills_any_level = 5
 
         unlocked = AchievementChecker.check_session_achievements(session, set())
-        assert "pacifist" in unlocked, "Pacifist should unlock with ≤5 kills"
+        assert "pacifist" in unlocked, "Pacifist should unlock with ≤5 kills on a level"
 
-        # Should NOT unlock with 6+ kills
-        session.enemies_killed = Counter({"bot": 4, "scanner": 3})
+        # Should NOT unlock if minimum kills on any level was 6+
+        session.min_kills_any_level = 6
         unlocked = AchievementChecker.check_session_achievements(session, set())
-        assert "pacifist" not in unlocked, "Cannot have 6+ kills"
+        assert "pacifist" not in unlocked, "Cannot have 6+ kills on every level"
 
     def test_no_trace_requires_win_with_low_trace(self):
-        """No Trace requires winning with low trace increases."""
+        """No Trace requires winning with highest trace level < 50%."""
         init_session_metrics()
         session = get_current_session()
         session.victory = True
-        session.trace_increases = 2  # Very few trace increases
+        session.highest_trace_reached = 25.0  # Stayed under 50%
 
         unlocked = AchievementChecker.check_session_achievements(session, set())
-        assert "no_trace" in unlocked, "No Trace should unlock with low trace"
+        assert "no_trace" in unlocked, "No Trace should unlock with trace under 50%"
 
-        # Should NOT unlock with high trace
-        session.trace_increases = 10
+        # Should NOT unlock with trace >= 50%
+        session.highest_trace_reached = 60.0
         unlocked = AchievementChecker.check_session_achievements(session, set())
-        assert "no_trace" not in unlocked, "Too many trace increases"
+        assert "no_trace" not in unlocked, "Trace exceeded 50%"
 
 
 # ============================================================================
@@ -395,33 +394,34 @@ class TestCollectionAchievements:
         unlocked = AchievementChecker.check_session_achievements(session, set())
         assert "master_hacker" not in unlocked, "Need all 12 exploits"
 
-    def test_code_collector_requires_all_6_code_hack_types(self):
-        """Code Collector requires using all 6 code hack types."""
+    def test_code_collector_requires_all_6_code_hack_colors(self):
+        """Code Collector requires using all 6 code hack colors."""
         init_session_metrics()
         session = get_current_session()
 
+        # Code hacks are tracked by name (color), not by effect type
         session.unique_code_hacks_used_this_run = {
-            "restore_cpu",
-            "reduce_heat",
-            "reduce_trace_level",
-            "speed_boost",
-            "enhanced_vision",
-            "exploit_efficiency",
+            "Crimson Code",
+            "Azure Code",
+            "Emerald Code",
+            "Golden Code",
+            "Violet Code",
+            "Silver Code",
         }
 
         unlocked = AchievementChecker.check_session_achievements(session, set())
         assert "code_collector" in unlocked, "Code Collector should unlock"
 
-        # Should NOT unlock with 5 types
+        # Should NOT unlock with 5 colors
         session.unique_code_hacks_used_this_run = {
-            "restore_cpu",
-            "reduce_heat",
-            "reduce_trace_level",
-            "speed_boost",
-            "enhanced_vision",
+            "Crimson Code",
+            "Azure Code",
+            "Emerald Code",
+            "Golden Code",
+            "Violet Code",
         }
         unlocked = AchievementChecker.check_session_achievements(session, set())
-        assert "code_collector" not in unlocked, "Need all 6 code hack types"
+        assert "code_collector" not in unlocked, "Need all 6 code hack colors"
 
     def test_enemy_database_requires_5_unique_enemy_types(self):
         """Enemy Database requires encountering 5+ unique enemy types."""

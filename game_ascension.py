@@ -84,12 +84,27 @@ class AscensionModifiers:
     blind_spots_consumable: bool = False
 
 
+# Module-level cache for ascension config
+_ascension_config_cache: dict | None = None
+
+
 def _load_ascension_config() -> dict:
-    """Load ascension config from game_rules.json."""
+    """
+    Load ascension config from game_rules.json with caching.
+
+    The config is cached at module level since it doesn't change during runtime.
+    """
+    global _ascension_config_cache
+
+    if _ascension_config_cache is not None:
+        return _ascension_config_cache
+
     game_rules_path = Path(__file__).parent / "game_rules.json"
     with open(game_rules_path, encoding="utf-8") as f:
         rules = json.load(f)
-    return rules.get("ascension", {})
+
+    _ascension_config_cache = rules.get("ascension", {})
+    return _ascension_config_cache
 
 
 def calculate_ascension_modifiers(level: int) -> AscensionModifiers:

@@ -16,6 +16,7 @@ from game_config import GameConfig, GameSettings
 from game_entities import Colors
 from game_input_actions import InputAction, InputContext
 from game_menu_base import BaseMenu
+from game_screen_utilities import ScrollableListManager
 from game_ui import render_char_safe
 
 # Ascension level names for display
@@ -96,12 +97,28 @@ class AscensionMenu(BaseMenu):
         self.highest_unlocked = highest_unlocked
         self.total_levels = 21  # A0-A20
         self.current_selection = initial_level
-        self.scroll_offset = 0  # For scrolling display
         self.visible_levels = 10  # How many levels visible at once
         self.view_only = view_only
 
+        # Use ScrollableListManager for consistent scroll handling
+        self.scroll_manager = ScrollableListManager(
+            total_items=self.total_levels, visible_height=self.visible_levels
+        )
+        # Adjust scroll to show initial selection
+        self.scroll_manager.adjust_for_selection(initial_level)
+
         # Build options list for base class compatibility
         self.options = [f"A{i}" for i in range(self.total_levels)]
+
+    @property
+    def scroll_offset(self) -> int:
+        """Get current scroll offset (property for backward compatibility)."""
+        return self.scroll_manager.get_scroll_offset()
+
+    @scroll_offset.setter
+    def scroll_offset(self, value: int) -> None:
+        """Set scroll offset (property for backward compatibility)."""
+        self.scroll_manager.set_scroll_offset(value)
 
     @property
     def selected_level(self) -> int:
@@ -155,20 +172,12 @@ class AscensionMenu(BaseMenu):
     def navigate_up(self):
         """Navigate up in level list with wraparound."""
         self.current_selection = (self.current_selection - 1) % self.total_levels
-        self._update_scroll()
+        self.scroll_manager.adjust_for_selection(self.current_selection)
 
     def navigate_down(self):
         """Navigate down in level list with wraparound."""
         self.current_selection = (self.current_selection + 1) % self.total_levels
-        self._update_scroll()
-
-    def _update_scroll(self):
-        """Update scroll offset to keep selection visible."""
-        # Keep selection in visible range
-        if self.current_selection < self.scroll_offset:
-            self.scroll_offset = self.current_selection
-        elif self.current_selection >= self.scroll_offset + self.visible_levels:
-            self.scroll_offset = self.current_selection - self.visible_levels + 1
+        self.scroll_manager.adjust_for_selection(self.current_selection)
 
     def get_selected_level(self) -> int:
         """Get the currently selected level."""
@@ -281,14 +290,16 @@ class AscensionMenu(BaseMenu):
         list_x = box["center_x"] - 10
 
         # Show scroll indicator at top if needed
-        if self.scroll_offset > 0:
+        if self.scroll_manager.should_show_scroll_up():
             render_char_safe(
                 console, box["center_x"], list_start_y - 1, "^", fg=Colors.CYAN, bg=Colors.BLACK
             )
 
+        # Get visible range from scroll manager
+        start_idx, end_idx = self.scroll_manager.get_visible_range()
+
         # Render visible levels
-        for i in range(self.visible_levels):
-            level = self.scroll_offset + i
+        for i, level in enumerate(range(start_idx, end_idx)):
             if level >= self.total_levels:
                 break
 
@@ -320,7 +331,7 @@ class AscensionMenu(BaseMenu):
             render_char_safe(console, list_x, y, level_text, fg=fg_color, bg=bg_color)
 
         # Show scroll indicator at bottom if needed
-        if self.scroll_offset + self.visible_levels < self.total_levels:
+        if self.scroll_manager.should_show_scroll_down():
             render_char_safe(
                 console,
                 box["center_x"],
@@ -436,11 +447,11 @@ class AscensionMenu(BaseMenu):
 
         if list_start_y <= tile_y < list_start_y + self.visible_levels:
             clicked_index = tile_y - list_start_y
-            clicked_level = self.scroll_offset + clicked_index
+            clicked_level = self.scroll_manager.get_scroll_offset() + clicked_index
 
             if 0 <= clicked_level < self.total_levels:
                 self.current_selection = clicked_level
-                self._update_scroll()
+                self.scroll_manager.adjust_for_selection(self.current_selection)
 
                 # In view_only mode, clicking just navigates
                 if self.view_only:
@@ -465,7 +476,7 @@ class AscensionMenu(BaseMenu):
 
         if list_start_y <= tile_y < list_start_y + self.visible_levels:
             hovered_index = tile_y - list_start_y
-            hovered_level = self.scroll_offset + hovered_index
+            hovered_level = self.scroll_manager.get_scroll_offset() + hovered_index
 
             if 0 <= hovered_level < self.total_levels:
                 self.current_selection = hovered_level

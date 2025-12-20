@@ -454,3 +454,21 @@ class InventoryManager:
             if exploit_key in GameData.EXPLOITS:
                 names.append(GameData.EXPLOITS[exploit_key].name)
         return names
+
+
+def sync_code_discovered_status(items: list, discovered_code_effects: dict) -> None:
+    """
+    Sync discovered status of inventory code hacks with global discovered effects.
+
+    This is a shared helper used by:
+    - game_level_coordinator.py (after level generation)
+    - game_state_persistence.py (after loading a save)
+
+    Args:
+        items: List of inventory items (from player.inventory_manager.items)
+        discovered_code_effects: Dict of discovered code effects (from game_engine)
+    """
+    for item in items:
+        if isinstance(item, CodeHack):
+            # Update discovered status based on global discovered effects
+            item.discovered = item.color_name in discovered_code_effects

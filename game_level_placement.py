@@ -406,6 +406,8 @@ class TilePlacementGenerator:
         ]
 
         total = sum(strategy_weights)
+        if total == 0:
+            return strategies[0]  # Default to far_corner if all weights are 0
         normalized = [w / total for w in strategy_weights]
 
         rand = random.random()

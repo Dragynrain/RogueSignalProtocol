@@ -178,27 +178,16 @@ class PlayerDeathHandler:
 
     def _finalize_metrics(self, event: DeathEvent):
         """Finalize session metrics and check for achievements."""
-        from game_metrics import finalize_session, load_lifetime_metrics, save_metrics
+        from game_metrics import finalize_and_save_session
 
-        metrics = finalize_session(
+        newly_unlocked = finalize_and_save_session(
             victory=False,
             death_cause=event.cause,
             death_level=event.level,
             final_cpu=event.final_cpu,
         )
-
-        if metrics:
-            save_metrics(metrics)
-
-            # Check for newly unlocked achievements
-            from game_achievements import AchievementManager
-            from game_metrics import save_unlocked_achievements
-
-            lifetime = load_lifetime_metrics()
-            newly_unlocked = AchievementManager.check_achievements(metrics, lifetime)
-            if newly_unlocked:
-                logging.info(f"Unlocked {len(newly_unlocked)} achievements on death")
-                save_unlocked_achievements(AchievementManager.get_unlocked_achievements())
+        if newly_unlocked:
+            logging.info(f"Unlocked {len(newly_unlocked)} achievements on death")
 
     def _delete_save(self):
         """Delete save file on death (permadeath)."""

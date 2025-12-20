@@ -85,8 +85,9 @@ def render_char_safe(console, x, y, char, fg=None, bg=None) -> None:
                 fg=(255, 255, 0) if fg is None else fg,
                 bg=(0, 0, 0) if bg is None else bg,
             )
-        except Exception:
-            pass  # Give up if even fallback fails
+        except Exception as fallback_error:
+            # Even fallback failed - log but don't crash the game
+            logging.debug(f"Fallback render also failed at ({x}, {y}): {fallback_error}")
 
 
 class WindowManager:

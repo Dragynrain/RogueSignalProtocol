@@ -129,6 +129,46 @@ class TestCodeHackTracking:
         # Check that code was added to unique set
         assert "Azure Code" in session.unique_code_hacks_used_this_run
 
+    def test_using_all_6_code_colors_enables_code_collector(self):
+        """Using all 6 code colors should enable the code_collector achievement."""
+        agent = GameTestAgent(seed=42)
+        init_session_metrics()
+
+        session = get_current_session()
+        assert session is not None
+
+        from game_achievements import TOTAL_CODE_HACK_TYPES
+        from game_inventory import CodeHack
+
+        # All 6 code colors and their names
+        code_data = [
+            ("crimson", "Crimson Code"),
+            ("azure", "Azure Code"),
+            ("emerald", "Emerald Code"),
+            ("golden", "Golden Code"),
+            ("violet", "Violet Code"),
+            ("silver", "Silver Code"),
+        ]
+
+        # Use all 6 different colored codes
+        for color, name in code_data:
+            code = CodeHack(
+                color_name=color,
+                effect="restore_cpu",  # Effect doesn't matter for tracking
+                name=name,
+                description="Test",
+            )
+            agent.engine.player.inventory_manager.add_item(code)
+            code.use(agent.engine.player, agent.engine)
+
+        # Verify all 6 unique codes were tracked
+        assert len(session.unique_code_hacks_used_this_run) == 6
+        assert len(session.unique_code_hacks_used_this_run) >= TOTAL_CODE_HACK_TYPES
+
+        # Verify each code name is in the set
+        for _, name in code_data:
+            assert name in session.unique_code_hacks_used_this_run
+
 
 class TestSpecialNodesTracking:
     """Tests for special node discovery tracking."""
@@ -228,3 +268,82 @@ class TestMasterHackerAchievementFix:
         assert "threat_scan" in session.unique_exploits_used_this_run
         # And used_any_exploits should be True
         assert session.used_any_exploits is True
+
+
+class TestEnemyEncounterTracking:
+    """Tests for unique enemy encounter tracking (for enemy_database achievement)."""
+
+    def test_killing_enemy_adds_to_unique_encountered(self):
+        """Killing an enemy should add its type to unique_enemies_encountered."""
+        from game_metrics import track_enemy_kill
+
+        init_session_metrics()
+
+        session = get_current_session()
+        assert session is not None
+        assert len(session.unique_enemies_encountered) == 0
+
+        # Track a kill
+        track_enemy_kill(
+            enemy_type="scanner",
+            damage=10,
+            was_stealth=False,
+            is_admin=False,
+            from_blind_spot=False,
+            enemies_remaining=5,
+            game=None,
+        )
+
+        # Check that enemy type was added
+        assert "scanner" in session.unique_enemies_encountered
+
+    def test_killing_same_enemy_type_twice_doesnt_duplicate(self):
+        """Killing the same enemy type twice shouldn't duplicate entries."""
+        from game_metrics import track_enemy_kill
+
+        init_session_metrics()
+
+        session = get_current_session()
+
+        # Kill two scanners
+        for _ in range(2):
+            track_enemy_kill(
+                enemy_type="scanner",
+                damage=10,
+                was_stealth=False,
+                is_admin=False,
+                from_blind_spot=False,
+                enemies_remaining=5,
+                game=None,
+            )
+
+        # Set should still only have one entry
+        assert len(session.unique_enemies_encountered) == 1
+        assert "scanner" in session.unique_enemies_encountered
+
+    def test_killing_different_enemy_types_adds_each(self):
+        """Killing different enemy types should add each to the set."""
+        from game_metrics import track_enemy_kill
+
+        init_session_metrics()
+
+        session = get_current_session()
+
+        # Kill different enemy types
+        for enemy_type in ["scanner", "virus", "firewall", "hunter"]:
+            track_enemy_kill(
+                enemy_type=enemy_type,
+                damage=10,
+                was_stealth=False,
+                is_admin=False,
+                from_blind_spot=False,
+                enemies_remaining=5,
+                game=None,
+            )
+
+        # All types should be in the set
+        assert len(session.unique_enemies_encountered) == 4
+        assert "scanner" in session.unique_enemies_encountered
+        assert "virus" in session.unique_enemies_encountered
+        assert "firewall" in session.unique_enemies_encountered
+        assert "hunter" in session.unique_enemies_encountered

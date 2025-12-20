@@ -45,6 +45,15 @@ class GameTurnManager:
         # A20: Track last blind spot position for consume-on-leave behavior
         self._last_blind_spot_position: Position | None = None
 
+    def reset_blind_spot_tracking(self) -> None:
+        """
+        Reset A20 blind spot position tracking for a new level.
+
+        Must be called when transitioning to a new level to prevent
+        incorrectly consuming blind spots from the previous level.
+        """
+        self._last_blind_spot_position = None
+
     def process_turn(self):
         """
         Process one complete game turn in structured phases.
@@ -108,9 +117,10 @@ class GameTurnManager:
 
             # Track metrics if trace actually increased
             if self.game_engine.player.trace_level > old_trace:
-                from game_metrics import track
+                from game_metrics import track, track_highest_trace
 
                 track("trace_increases")
+                track_highest_trace(self.game_engine.player.trace_level)
 
         # Final death check - catches any deaths not handled at their source
         # The death handler is idempotent, so this is safe even if already called
@@ -618,9 +628,10 @@ class GameTurnManager:
 
         # Track metrics if trace actually increased
         if self.game_engine.player.trace_level > old_trace:
-            from game_metrics import track
+            from game_metrics import track, track_highest_trace
 
             track("trace_increases")
+            track_highest_trace(self.game_engine.player.trace_level)
 
         self._check_trace_threshold_warnings(old_trace, self.game_engine.player.trace_level)
 

@@ -1638,7 +1638,8 @@ class GamepadBindingsMenu(BaseBindingsMenu):
                 self.detected_controller_name = controllers[0].name[:30]  # Truncate long names
             else:
                 self.detected_controller_name = None
-        except Exception:
+        except Exception as e:
+            logging.debug(f"Controller detection failed (expected in headless mode): {e}")
             self.detected_controller_name = None
 
     def _apply_conflict_replacement(self):

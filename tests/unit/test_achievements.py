@@ -228,10 +228,30 @@ def test_minimalist_achievement(clean_achievement_state, sample_session):
 
 
 def test_pacifist_achievement(clean_achievement_state, sample_session):
-    """Test pacifist achievement (complete level with ≤5 kills)."""
+    """Test pacifist achievement (complete level with ≤5 kills on that level)."""
     sample_session.levels_completed = 1
-    sample_session.enemies_killed["virus"] = 3
-    sample_session.enemies_killed["scanner"] = 2
+    # min_kills_any_level tracks the minimum kills on any single completed level
+    sample_session.min_kills_any_level = 5
+
+    unlocked = AchievementChecker.check_session_achievements(sample_session, set())
+    assert "pacifist" in unlocked
+
+
+def test_pacifist_not_unlocked_with_6_kills_on_level(clean_achievement_state, sample_session):
+    """Test pacifist NOT unlocked if minimum kills on any level > 5."""
+    sample_session.levels_completed = 1
+    sample_session.min_kills_any_level = 6
+
+    unlocked = AchievementChecker.check_session_achievements(sample_session, set())
+    assert "pacifist" not in unlocked
+
+
+def test_pacifist_unlocked_if_any_level_had_low_kills(clean_achievement_state, sample_session):
+    """Test pacifist unlocked if ANY completed level had <= 5 kills, even if others had more."""
+    sample_session.levels_completed = 3
+    # Player completed 3 levels: level 1 with 10 kills, level 2 with 3 kills, level 3 with 8 kills
+    # min_kills_any_level = 3 (from level 2)
+    sample_session.min_kills_any_level = 3
 
     unlocked = AchievementChecker.check_session_achievements(sample_session, set())
     assert "pacifist" in unlocked
@@ -252,14 +272,15 @@ def test_master_hacker_achievement(clean_achievement_state, sample_session):
 
 
 def test_code_collector_achievement(clean_achievement_state, sample_session):
-    """Test code_collector achievement (use all 6 code hack types)."""
+    """Test code_collector achievement (use all 6 code hack colors)."""
+    # Code hacks are tracked by name (color), not by effect type
     sample_session.unique_code_hacks_used_this_run = {
-        "restore_cpu",
-        "reduce_heat",
-        "reduce_trace_level",
-        "speed_boost",
-        "enhanced_vision",
-        "exploit_efficiency",
+        "Crimson Code",
+        "Azure Code",
+        "Emerald Code",
+        "Golden Code",
+        "Violet Code",
+        "Silver Code",
     }
 
     unlocked = AchievementChecker.check_session_achievements(sample_session, set())
