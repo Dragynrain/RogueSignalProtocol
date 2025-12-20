@@ -726,6 +726,12 @@ class AchievementManager:
     _pending_popups: list[str] = []  # Achievement IDs waiting to be shown
 
     @classmethod
+    def reset(cls):
+        """Reset all achievement state. Used for testing and new game sessions."""
+        cls._unlocked_achievements = set()
+        cls._pending_popups = []
+
+    @classmethod
     def load_unlocked_achievements(cls, unlocked_list: list[str]):
         """Load the list of already-unlocked achievements from progress.json."""
         cls._unlocked_achievements = set(unlocked_list)

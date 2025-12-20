@@ -371,7 +371,10 @@ class GlyphsMapRenderer(MapRendererBase):
                     try:
                         color_tuple = ColorManager.get_exploit_color(exploit_category)
                     except KeyError:
-                        # Fallback to magenta if category not found
+                        # Fallback to magenta if category not found - visible but not crashing
+                        logging.warning(
+                            f"Missing exploit color for category: {exploit_category}"
+                        )
                         color_tuple = Colors.MAGENTA
 
                     render_char_safe(

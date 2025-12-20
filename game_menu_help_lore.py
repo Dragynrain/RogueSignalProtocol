@@ -279,12 +279,15 @@ class LoreMenu(BaseInputHandler):
         if tile_y is None:
             return ""
 
-        # Fragment list starts at Y=5, 1 line per item (rendered with start_y + i)
+        # Fragment list starts at Y=5, each fragment takes 3 lines:
+        # - Line 1: Title (fragment number and first line)
+        # - Line 2: Preview (content excerpt)
+        # - Line 3: Spacing between entries
         start_y = 5
-        spacing = 1
+        lines_per_item = 3
 
         if tile_y >= start_y:
-            index = (tile_y - start_y) // spacing
+            index = (tile_y - start_y) // lines_per_item
             if 0 <= index < len(discovered_fragments):
                 self.lore_viewer_selection = index
                 return ""

@@ -174,6 +174,36 @@ class TestPlayerCombat:
         assert damage_taken == 10  # Only actual damage dealt
         assert player.cpu == 0
 
+    def test_player_damage_sets_took_any_damage_flag(self):
+        """Player taking damage sets the took_any_damage session flag for Untouchable achievement."""
+        from game_metrics import init_session_metrics
+
+        # Start a new session to track metrics
+        session = init_session_metrics()
+        assert session.took_any_damage is False
+
+        # Create player and take damage
+        player = Player(10, 10)
+        player.take_damage(10)
+
+        # Flag should now be set
+        assert session.took_any_damage is True
+
+    def test_player_zero_damage_does_not_set_took_any_damage_flag(self):
+        """Zero damage does not set the took_any_damage flag."""
+        from game_metrics import init_session_metrics
+
+        # Start a new session
+        session = init_session_metrics()
+        assert session.took_any_damage is False
+
+        # Create player and take zero damage
+        player = Player(10, 10)
+        player.take_damage(0)
+
+        # Flag should NOT be set
+        assert session.took_any_damage is False
+
     def test_player_temporary_effects_update(self):
         """Player temporary effects decrease each turn."""
         player = Player(5, 5)

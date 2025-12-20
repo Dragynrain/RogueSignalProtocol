@@ -131,6 +131,10 @@ class Position:
         """Convert position to tuple for use as dictionary key."""
         return (self.x, self.y)
 
+    def to_coord_string(self) -> str:
+        """Convert position to 'x,y' string for JSON serialization."""
+        return f"{self.x},{self.y}"
+
     def angle_to(self, other: "Position") -> float:
         """
         Calculate angle in degrees from this position to another.
@@ -234,3 +238,53 @@ def parse_coordinate_string(coord_str: str) -> Position | None:
     except (ValueError, AttributeError):
         pass
     return None
+
+
+def tuple_to_coord_string(pos: tuple[int, int]) -> str:
+    """Convert tuple (x, y) to 'x,y' string for JSON serialization."""
+    return f"{pos[0]},{pos[1]}"
+
+
+def serialize_position_dict(data_dict: dict) -> dict:
+    """
+    Serialize a dictionary with position keys (tuple or Position) to string keys.
+
+    Converts {(x, y): value} or {Position: value} to {"x,y": value} for JSON.
+
+    Args:
+        data_dict: Dictionary with position tuple or Position keys
+
+    Returns:
+        Dictionary with "x,y" string keys
+    """
+    result = {}
+    for pos, value in data_dict.items():
+        if isinstance(pos, Position):
+            key = pos.to_coord_string()
+        else:
+            # Assume tuple (x, y)
+            key = tuple_to_coord_string(pos)
+        result[key] = value
+    return result
+
+
+def deserialize_position_dict(data_dict: dict, as_tuple: bool = True) -> dict:
+    """
+    Deserialize a dictionary with string coordinate keys to position keys.
+
+    Converts {"x,y": value} to {(x, y): value} or {Position: value}.
+
+    Args:
+        data_dict: Dictionary with "x,y" string keys
+        as_tuple: If True, return tuple keys; if False, return Position keys
+
+    Returns:
+        Dictionary with position tuple or Position keys (invalid keys are skipped)
+    """
+    result = {}
+    for pos_str, value in data_dict.items():
+        position = parse_coordinate_string(pos_str)
+        if position:
+            key = position.to_tuple() if as_tuple else position
+            result[key] = value
+    return result

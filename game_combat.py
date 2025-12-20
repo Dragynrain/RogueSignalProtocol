@@ -626,7 +626,8 @@ class ExploitSystem:
         # Clear confirmation flag
         self.game.system_crash_confirmed = False
 
-        # Apply self-damage FIRST (before enemies, for dramatic effect)
+        # Apply self-damage FIRST - this allows player to benefit from kill healing
+        # if they survive, making the risk/reward more balanced
         if exploit.self_damage > 0:
             actual_self_damage = self.game.player.take_damage(exploit.self_damage)
             self.game.message_log.add_message(

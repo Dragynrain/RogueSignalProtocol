@@ -224,6 +224,9 @@ class GameRenderer:
             console.clear()
             # Use LoreMenu for rendering (same as main menu)
             lore_menu = self._get_or_create_lore_menu()
+            # Sync state from GameEngine for in-game lore viewer
+            lore_menu.lore_viewer_selection = game.lore_viewer_selection
+            lore_menu.lore_viewer_mode = game.lore_viewer_mode
             lore_menu.render(console)
         elif game.show_help:
             console.clear()

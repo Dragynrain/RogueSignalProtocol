@@ -16,7 +16,7 @@ Pathfinding and Player logic have been extracted to separate modules:
 import logging
 import random
 
-from game_config import GameConfig
+from game_config import GameBalance, GameConfig
 from game_entities import Colors, EnemyMovement, EnemyState, Position, PositionValidator
 from game_pathfinding import PathfindingHelper
 from game_player import Player
@@ -359,9 +359,9 @@ class Enemy:
                 # No speed boost - apply slowdown by extending duration (stacking with cap)
                 player.temporary_effects["speed_boost_turns"] = 0
                 current_slow = player.temporary_effects.get("movement_slowed_turns", 0)
-                # Add slowdown and cap at 5 turns to prevent infinite stacking
+                # Add slowdown and cap to prevent infinite stacking
                 player.temporary_effects["movement_slowed_turns"] = min(
-                    current_slow + (-net_effect), 5
+                    current_slow + (-net_effect), GameBalance.INHIBITOR_SLOWDOWN_CAP
                 )
             return 0
 
@@ -391,6 +391,7 @@ class Enemy:
                 if hasattr(self.type_data, "damage_resistance_min")
                 else 5
             )
+            # Floor division intentional - always rounds down in favor of admin survival
             damage = max(resist_min, damage * (100 - resist_percent) // 100)
             logging.debug(
                 f"Enemy {self.type_data.name}@({self.x},{self.y}): damage reduced by resistance: {original_damage} -> {damage}"

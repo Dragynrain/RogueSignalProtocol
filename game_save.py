@@ -16,6 +16,7 @@ from typing import TYPE_CHECKING, Any
 # Import game modules
 from game_config import GameConfig
 from game_file_paths import get_data_directory
+from game_position import serialize_position_dict, tuple_to_coord_string
 
 if TYPE_CHECKING:
     from game_engine import GameEngine
@@ -112,24 +113,20 @@ class SaveGameManager:
                     {"x": pos.x, "y": pos.y} for pos in game.game_state.noise_locations
                 ],
                 "distraction_points": {
-                    f"{pos.x},{pos.y}": turns
+                    pos.to_coord_string(): turns
                     for pos, turns in game.game_state.distraction_points.items()
                 },
-                "revealed_special_nodes": {
-                    f"{pos[0]},{pos[1]}": node_type
-                    for pos, node_type in game.game_state.revealed_special_nodes.items()
-                },
+                "revealed_special_nodes": serialize_position_dict(
+                    game.game_state.revealed_special_nodes
+                ),
             },
             # Map state (items and special locations only - layout regenerated)
             "map_state": {
                 "code_hacks": cls._serialize_code_hacks(game.game_map.code_hacks),
                 "exploit_pickups": cls._serialize_exploit_pickups(game.game_map.exploit_pickups),
-                "permanent_upgrades": {
-                    f"{pos[0]},{pos[1]}": upgrade_key
-                    for pos, upgrade_key in game.game_map.permanent_upgrades.items()
-                },
+                "permanent_upgrades": serialize_position_dict(game.game_map.permanent_upgrades),
                 "story_fragments": {
-                    f"{pos[0]},{pos[1]}": fragment.fragment_index
+                    tuple_to_coord_string(pos): fragment.fragment_index
                     for pos, fragment in game.game_map.story_fragments.items()
                 },
                 "gateway": (
@@ -137,27 +134,22 @@ class SaveGameManager:
                     if game.game_map.gateway
                     else None
                 ),
-                "explored_tiles": [f"{x},{y}" for x, y in game.game_map.explored_tiles],
+                "explored_tiles": [
+                    tuple_to_coord_string(pos) for pos in game.game_map.explored_tiles
+                ],
                 "last_known_enemy_positions": {
                     str(enemy_id): {"x": pos.x, "y": pos.y, "turn": turn}
                     for enemy_id, (pos, turn) in game.game_map.last_known_enemy_positions.items()
                 },
                 # A20: Used blind spots
-                "used_blind_spots": [f"{x},{y}" for x, y in game.game_map.used_blind_spots],
+                "used_blind_spots": [
+                    tuple_to_coord_string(pos) for pos in game.game_map.used_blind_spots
+                ],
                 # A13+: Node capacity state
                 "node_capacity": {
-                    "cooling": {
-                        f"{pos[0]},{pos[1]}": node.used_capacity
-                        for pos, node in game.game_map.cooling_nodes.items()
-                    },
-                    "cpu": {
-                        f"{pos[0]},{pos[1]}": node.used_capacity
-                        for pos, node in game.game_map.cpu_recovery_nodes.items()
-                    },
-                    "ghost": {
-                        f"{pos[0]},{pos[1]}": node.used_capacity
-                        for pos, node in game.game_map.ghost_nodes.items()
-                    },
+                    "cooling": cls._serialize_node_capacity(game.game_map.cooling_nodes),
+                    "cpu": cls._serialize_node_capacity(game.game_map.cpu_recovery_nodes),
+                    "ghost": cls._serialize_node_capacity(game.game_map.ghost_nodes),
                 },
             },
             # Enemies
@@ -381,8 +373,13 @@ class SaveGameManager:
             }
             setattr(cls, cache_attr, info)
             return info
-        except Exception as e:
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            # Expected errors - file missing or corrupted
             logging.debug(f"Could not get save info: {e}")
+            return None
+        except (OSError, PermissionError) as e:
+            # Permission or filesystem issues - worth logging more visibly
+            logging.warning(f"Filesystem error reading save info: {e}")
             return None
 
     @classmethod
@@ -417,7 +414,7 @@ class SaveGameManager:
     def _serialize_code_hacks(cls, patches: dict) -> dict[str, dict]:
         """Serialize codes."""
         return {
-            f"{pos[0]},{pos[1]}": {
+            tuple_to_coord_string(pos): {
                 "color": p.color_name,
                 "effect": p.effect,
                 "name": p.name,
@@ -430,7 +427,12 @@ class SaveGameManager:
     @classmethod
     def _serialize_exploit_pickups(cls, exploits: dict) -> dict[str, str]:
         """Serialize exploit pickups."""
-        return {f"{pos[0]},{pos[1]}": e.exploit_key for pos, e in exploits.items()}
+        return {tuple_to_coord_string(pos): e.exploit_key for pos, e in exploits.items()}
+
+    @classmethod
+    def _serialize_node_capacity(cls, nodes: dict) -> dict[str, int]:
+        """Serialize node used_capacity values with coordinate string keys."""
+        return {tuple_to_coord_string(pos): node.used_capacity for pos, node in nodes.items()}
 
     @classmethod
     def _serialize_enemies(cls, enemies: list) -> list[dict[str, Any]]:
@@ -443,6 +445,7 @@ class SaveGameManager:
                 "x": e.position.x,
                 "y": e.position.y,
                 "cpu": e.cpu,
+                "max_cpu": e.max_cpu,  # Save max_cpu for proper ascension handling
                 "state": e.state.value,
                 "move_cooldown": e.move_cooldown,
                 "disabled_turns": e.disabled_turns,
@@ -468,9 +471,12 @@ class SaveGameManager:
             if hasattr(e, "move_queue") and e.move_queue:
                 enemy_data["move_queue"] = [{"x": p.x, "y": p.y} for p in e.move_queue]
 
-            # Save queue target for proper queue invalidation on load
-            if hasattr(e, "_queue_target") and e._queue_target:
-                enemy_data["queue_target"] = {"x": e._queue_target.x, "y": e._queue_target.y}
+            # Save patrol restoration state for hostile enemies returning to patrol
+            enemy_data["original_patrol_index"] = e.original_patrol_index
+
+            # Save original movement type for virus mimic behavior
+            if e.original_movement_type is not None:
+                enemy_data["original_movement_type"] = e.original_movement_type.value
 
             serialized.append(enemy_data)
 

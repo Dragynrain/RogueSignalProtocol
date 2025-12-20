@@ -482,14 +482,12 @@ def clean_achievement_state():
     from game_achievements import AchievementManager
 
     # Clear state before test
-    AchievementManager._unlocked_achievements = set()
-    AchievementManager._pending_popups = []
+    AchievementManager.reset()
 
     yield
 
     # Clean up after test
-    AchievementManager._unlocked_achievements = set()
-    AchievementManager._pending_popups = []
+    AchievementManager.reset()
 
 
 # ===== Rendering Test Fixtures =====

@@ -236,7 +236,7 @@ class TestGracefulDegradation:
             except AttributeError as e:
                 pytest.fail(f"{modal_name} crashed with renderer=None: {e}")
             except RuntimeError as e:
-                # RuntimeError from _get_or_create_lore_viewer_menu is OK if proper guard exists
+                # RuntimeError from _get_lore_menu is OK if proper guard exists
                 assert "renderer" in str(e).lower(), f"Unexpected error: {e}"
 
             # Clean up
