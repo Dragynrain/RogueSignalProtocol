@@ -468,5 +468,111 @@ def test_track_enemy_kill_multiple_same_turn(clean_metrics):
     assert session.turns_with_kills == 2  # Now 2 turns
 
 
+# Tests for ascension victory tracking
+
+
+def test_ascension_victory_tracking(clean_metrics, tmp_path, monkeypatch):
+    """Test that ascension_victories is incremented on victory."""
+    import game_metrics
+
+    # Use isolated progress file for this test
+    test_progress_file = tmp_path / "test_progress.json"
+    monkeypatch.setattr(game_metrics, "_get_progress_file_path", lambda: test_progress_file)
+
+    # Session 1: Victory at A5
+    session1 = init_session_metrics()
+    session1.ascension_level = 5
+    track("turns_taken", amount=100)
+    finalized1 = finalize_session(victory=True, death_cause=None, death_level=0)
+    update_lifetime_metrics(finalized1)
+
+    lifetime = load_lifetime_metrics()
+    # After save/load, int keys become strings in JSON
+    assert lifetime.ascension_victories["5"] == 1
+    assert lifetime.highest_ascension_completed == 5
+
+    # Session 2: Victory at A7 (new high)
+    session2 = init_session_metrics()
+    session2.ascension_level = 7
+    track("turns_taken", amount=100)
+    finalized2 = finalize_session(victory=True, death_cause=None, death_level=0)
+    update_lifetime_metrics(finalized2)
+
+    lifetime = load_lifetime_metrics()
+    assert lifetime.ascension_victories["5"] == 1
+    assert lifetime.ascension_victories["7"] == 1
+    assert lifetime.highest_ascension_completed == 7
+
+    # Session 3: Victory at A5 again (no new high, but still counts)
+    session3 = init_session_metrics()
+    session3.ascension_level = 5
+    track("turns_taken", amount=100)
+    finalized3 = finalize_session(victory=True, death_cause=None, death_level=0)
+    update_lifetime_metrics(finalized3)
+
+    lifetime = load_lifetime_metrics()
+    assert lifetime.ascension_victories["5"] == 2  # Now 2 victories at A5
+    assert lifetime.highest_ascension_completed == 7  # Still 7
+
+
+def test_ascension_defeat_not_tracked(clean_metrics, tmp_path, monkeypatch):
+    """Test that ascension_victories is NOT incremented on defeat."""
+    import game_metrics
+
+    test_progress_file = tmp_path / "test_progress.json"
+    monkeypatch.setattr(game_metrics, "_get_progress_file_path", lambda: test_progress_file)
+
+    # Session: Defeat at A10
+    session = init_session_metrics()
+    session.ascension_level = 10
+    track("turns_taken", amount=50)
+    finalized = finalize_session(victory=False, death_cause="combat", death_level=3)
+    update_lifetime_metrics(finalized)
+
+    lifetime = load_lifetime_metrics()
+    assert lifetime.ascension_victories.get(10, 0) == 0
+    assert lifetime.highest_ascension_completed == 0
+
+
+# Tests for highest_trace_reached tracking
+
+
+def test_highest_trace_reached_tracking(clean_metrics):
+    """Test that highest_trace_reached is tracked correctly."""
+    from game_metrics import init_session_metrics, track_highest_trace
+
+    session = init_session_metrics()
+    assert session.highest_trace_reached == 0.0
+
+    # First trace increase
+    track_highest_trace(25.0)
+    assert session.highest_trace_reached == 25.0
+
+    # Higher trace
+    track_highest_trace(45.0)
+    assert session.highest_trace_reached == 45.0
+
+    # Lower trace (should not update)
+    track_highest_trace(30.0)
+    assert session.highest_trace_reached == 45.0  # Still 45
+
+    # Even higher
+    track_highest_trace(80.0)
+    assert session.highest_trace_reached == 80.0
+
+
+def test_highest_trace_serialization(clean_metrics):
+    """Test that highest_trace_reached survives serialization."""
+    session = SessionMetrics(session_id="test", timestamp_start=0.0)
+    session.highest_trace_reached = 67.5
+
+    # Serialize and deserialize
+    data = session.to_dict()
+    assert data["highest_trace_reached"] == 67.5
+
+    restored = SessionMetrics.from_dict(data)
+    assert restored.highest_trace_reached == 67.5
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

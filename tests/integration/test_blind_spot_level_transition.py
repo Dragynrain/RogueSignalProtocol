@@ -9,6 +9,38 @@ from game_entities import Position
 from tests.test_agent import GameTestAgent
 
 
+class TestBlindSpotResetMethod:
+    """Tests for the reset_blind_spot_tracking() public method."""
+
+    def test_reset_blind_spot_tracking_clears_position(self):
+        """reset_blind_spot_tracking() should clear the last blind spot position."""
+        agent = GameTestAgent(seed=42)
+
+        # Set a blind spot position
+        agent.engine.game_session.turn_manager._last_blind_spot_position = Position(15, 15)
+        assert agent.engine.game_session.turn_manager._last_blind_spot_position is not None
+
+        # Call the public reset method
+        agent.engine.game_session.turn_manager.reset_blind_spot_tracking()
+
+        # Position should be cleared
+        assert agent.engine.game_session.turn_manager._last_blind_spot_position is None
+
+    def test_reset_blind_spot_tracking_called_on_level_generation(self):
+        """Level generation should call reset_blind_spot_tracking()."""
+        agent = GameTestAgent(seed=42)
+
+        # Set a blind spot position
+        agent.engine.game_session.turn_manager._last_blind_spot_position = Position(15, 15)
+
+        # Generate new level
+        agent.engine.level = 2
+        agent.engine.game_session.level_coordinator.generate_procedural_level()
+
+        # Position should be cleared via reset_blind_spot_tracking()
+        assert agent.engine.game_session.turn_manager._last_blind_spot_position is None
+
+
 class TestBlindSpotLevelTransition:
     """Tests for blind spot tracking across level transitions."""
 

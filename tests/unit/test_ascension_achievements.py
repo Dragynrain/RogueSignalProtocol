@@ -394,8 +394,9 @@ class TestLifetimeMetricsAscension:
         metrics = LifetimeMetrics.from_dict(data)
 
         assert metrics.highest_ascension_completed == 7
-        # Counter or dict should have the values
-        assert metrics.ascension_victories.get("5", 0) == 2 or metrics.ascension_victories["5"] == 2
+        # Counter has string keys from JSON (int keys coerced to strings)
+        assert metrics.ascension_victories["5"] == 2
+        assert metrics.ascension_victories["7"] == 1
 
 
 class TestSessionMetricsAscension:

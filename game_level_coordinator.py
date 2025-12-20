@@ -122,14 +122,19 @@ class GameLevelCoordinator:
         self.game_engine.admin_spawned = False
 
         # Sync code hack discovered status with global discovered effects
-        self._sync_code_discovered_status()
+        from game_inventory import sync_code_discovered_status
+
+        sync_code_discovered_status(
+            self.game_engine.player.inventory_manager.items,
+            self.game_engine.discovered_code_effects,
+        )
 
         # Reset narrative manager per-level flags
         self.game_engine.narrative_manager.reset_level_flags()
 
         # Reset A20 blind spot tracking for new level
         # (prevents incorrectly consuming blind spots from previous level)
-        self.game_engine.game_session.turn_manager._last_blind_spot_position = None
+        self.game_engine.game_session.turn_manager.reset_blind_spot_tracking()
 
         self.game_engine.message_log.add_message(f"{config['name']} loaded")
 
@@ -166,7 +171,10 @@ class GameLevelCoordinator:
         old_level = self.game_engine.level
 
         # Track level completion (before incrementing)
-        from game_metrics import get_current_session, track
+        from game_metrics import complete_level_metrics, get_current_session, track
+
+        # Update per-level metrics (for pacifist achievement) before incrementing levels_completed
+        complete_level_metrics()
 
         track("levels_completed")
 
@@ -216,27 +224,16 @@ class GameLevelCoordinator:
             self.game_engine.game_over = True
 
             # Finalize and save metrics before deleting save
-            from game_metrics import finalize_session, load_lifetime_metrics, save_metrics
+            from game_metrics import finalize_and_save_session
 
-            metrics = finalize_session(
+            newly_unlocked = finalize_and_save_session(
                 victory=True,
                 death_cause=None,
                 death_level=0,
                 final_cpu=self.game_engine.player.cpu,
             )
-            if metrics:
-                save_metrics(metrics)
-
-                # Check for newly unlocked achievements
-                from game_achievements import AchievementManager
-                from game_metrics import save_unlocked_achievements
-
-                lifetime = load_lifetime_metrics()
-                newly_unlocked = AchievementManager.check_achievements(metrics, lifetime)
-                if newly_unlocked:
-                    logging.info(f"Unlocked {len(newly_unlocked)} achievements on victory")
-                    # Save achievements to progress file
-                    save_unlocked_achievements(AchievementManager.get_unlocked_achievements())
+            if newly_unlocked:
+                logging.info(f"Unlocked {len(newly_unlocked)} achievements on victory")
 
             # Delete save on game completion (no continuing after winning)
             SaveGameManager.delete_save()
@@ -475,15 +472,6 @@ class GameLevelCoordinator:
         """Check if player has already discovered what this code color does."""
         # Check the global discovered effects for this game session
         return color in self.game_engine.discovered_code_effects
-
-    def _sync_code_discovered_status(self) -> None:
-        """Sync discovered status of inventory code hacks with global discovered effects."""
-        from game_inventory import CodeHack
-
-        for item in self.game_engine.player.inventory_manager.items:
-            if isinstance(item, CodeHack):
-                # Update discovered status based on global discovered effects
-                item.discovered = item.color_name in self.game_engine.discovered_code_effects
 
     def _place_exploit_pickups(self, exploit_count: int):
         """Place random exploit pickups throughout the level with clustering in loot rooms."""

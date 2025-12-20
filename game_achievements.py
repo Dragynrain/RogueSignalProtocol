@@ -15,7 +15,9 @@ logger = logging.getLogger(__name__)
 
 # Constants for collection achievements
 TOTAL_EXPLOITS = 12  # From game_content.json
-TOTAL_CODE_HACK_TYPES = 6  # restore_cpu, reduce_heat, reduce_trace_level, speed_boost, enhanced_vision, exploit_efficiency
+# Each code color maps 1:1 to a randomized effect per game session
+# Tracks by code name: "Crimson Code", "Azure Code", "Emerald Code", "Golden Code", "Violet Code", "Silver Code"
+TOTAL_CODE_HACK_TYPES = 6
 
 # Achievement threshold constants
 # Combat
@@ -494,9 +496,6 @@ class AchievementChecker:
         """
         newly_unlocked = []
 
-        # Calculate total kills (needed for multiple checks including pacifist)
-        total_kills = sum(session.enemies_killed.values())
-
         # Combat achievements (shared with immediate)
         AchievementChecker._check_combat_achievements(session, already_unlocked, newly_unlocked)
 
@@ -555,12 +554,9 @@ class AchievementChecker:
             newly_unlocked.append("untouchable")
 
         # No trace (trace level < 50% throughout)
-        # Trace goes from 0-100, so 50% = 50
+        # Uses highest_trace_reached to track the maximum trace level during the run
         if "no_trace" not in already_unlocked and session.victory:
-            # We need a new metric for max trace reached, let's use trace_increases as proxy
-            # If trace never exceeded 50, they should have very few trace increases
-            # For now, check if they won with low trace events
-            if session.trace_increases < 5:  # Rough heuristic
+            if session.highest_trace_reached < 50:
                 newly_unlocked.append("no_trace")
 
         # Minimalist: win with 3 or fewer unique exploits equipped
@@ -576,11 +572,12 @@ class AchievementChecker:
             ):
                 newly_unlocked.append("minimalist")
 
-        # Pacifist: complete a level with 5 or fewer kills
+        # Pacifist: complete a level with 5 or fewer kills on that level
         if (
             "pacifist" not in already_unlocked
             and session.levels_completed >= 1
-            and total_kills <= 5
+            and session.min_kills_any_level is not None
+            and session.min_kills_any_level <= 5
         ):
             newly_unlocked.append("pacifist")
 
@@ -859,3 +856,112 @@ class AchievementManager:
     def get_unlock_progress(cls) -> tuple[int, int]:
         """Get (unlocked_count, total_count) for progress display."""
         return len(cls._unlocked_achievements), len(ALL_ACHIEVEMENTS)
+
+    @classmethod
+    def get_achievement_progress(
+        cls, achievement_id: str, session=None, lifetime=None
+    ) -> tuple[int, int] | None:
+        """
+        Get progress towards an achievement as (current, target).
+
+        Returns None if achievement has no trackable progress (e.g., victory-based).
+        Only shows progress for unlocked achievements if they have cumulative tracking.
+
+        Args:
+            achievement_id: The achievement to check
+            session: Optional SessionMetrics for in-progress tracking
+            lifetime: Optional LifetimeMetrics for lifetime achievements
+
+        Returns:
+            (current_value, target_value) or None if not trackable
+        """
+        # Already unlocked - no progress needed
+        if cls.is_unlocked(achievement_id):
+            return None
+
+        # Combat achievements
+        if achievement_id == "massacre":
+            if session:
+                kills = sum(session.enemies_killed.values())
+                return (kills, MASSACRE_KILLS_THRESHOLD)
+            return (0, MASSACRE_KILLS_THRESHOLD)
+
+        if achievement_id == "overkill":
+            if session:
+                return (session.max_single_hit_damage, OVERKILL_DAMAGE_THRESHOLD)
+            return (0, OVERKILL_DAMAGE_THRESHOLD)
+
+        if achievement_id == "crowd_control":
+            if session and session.aoe_multi_kills:
+                max_aoe = max(session.aoe_multi_kills.keys(), default=0)
+                return (max_aoe, CROWD_CONTROL_AOE_THRESHOLD)
+            return (0, CROWD_CONTROL_AOE_THRESHOLD)
+
+        if achievement_id == "efficient_killer":
+            # Track turns_with_kills toward the threshold
+            # Once threshold is met, the average kills per turn determines unlock
+            if session:
+                return (session.turns_with_kills, EFFICIENT_KILLER_TURNS_THRESHOLD)
+            return (0, EFFICIENT_KILLER_TURNS_THRESHOLD)
+
+        # Stealth achievements
+        if achievement_id == "silent_assassin":
+            if session:
+                return (session.max_stealth_streak, SILENT_ASSASSIN_STREAK_THRESHOLD)
+            return (0, SILENT_ASSASSIN_STREAK_THRESHOLD)
+
+        if achievement_id == "blind_spot_master":
+            if session:
+                return (session.ambushes_from_blind_spots, BLIND_SPOT_AMBUSHES_THRESHOLD)
+            return (0, BLIND_SPOT_AMBUSHES_THRESHOLD)
+
+        # Mastery achievements
+        if achievement_id == "master_hacker":
+            if session:
+                return (len(session.unique_exploits_used_this_run), TOTAL_EXPLOITS)
+            return (0, TOTAL_EXPLOITS)
+
+        if achievement_id == "code_collector":
+            if session:
+                return (len(session.unique_code_hacks_used_this_run), TOTAL_CODE_HACK_TYPES)
+            return (0, TOTAL_CODE_HACK_TYPES)
+
+        if achievement_id == "enemy_database":
+            if session:
+                return (len(session.unique_enemies_encountered), ENEMY_DATABASE_UNIQUE_THRESHOLD)
+            return (0, ENEMY_DATABASE_UNIQUE_THRESHOLD)
+
+        if achievement_id == "explorer":
+            if session:
+                return (len(session.special_nodes_discovered), EXPLORER_NODES_THRESHOLD)
+            return (0, EXPLORER_NODES_THRESHOLD)
+
+        # Lifetime achievements
+        if achievement_id == "veteran":
+            if lifetime:
+                return (lifetime.total_games, VETERAN_GAMES_THRESHOLD)
+            return (0, VETERAN_GAMES_THRESHOLD)
+
+        if achievement_id == "persistent":
+            if lifetime:
+                return (lifetime.total_victories, PERSISTENT_VICTORIES_THRESHOLD)
+            return (0, PERSISTENT_VICTORIES_THRESHOLD)
+
+        if achievement_id == "legendary":
+            if lifetime:
+                return (lifetime.total_victories, LEGENDARY_VICTORIES_THRESHOLD)
+            return (0, LEGENDARY_VICTORIES_THRESHOLD)
+
+        if achievement_id == "survivor":
+            if session:
+                return (session.turns_taken, SURVIVOR_TURNS_THRESHOLD)
+            return (0, SURVIVOR_TURNS_THRESHOLD)
+
+        # Challenge achievements with trackable progress
+        if achievement_id == "shadow_dancer":
+            if session:
+                return (session.turns_in_blind_spots, 100)
+            return (0, 100)
+
+        # No trackable progress for other achievements
+        return None

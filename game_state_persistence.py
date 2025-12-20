@@ -73,7 +73,13 @@ class GameStatePersistence:
             self._restore_player_state(save_data["player"])
             self._restore_game_effects(save_data)
             self._restore_metrics(save_data)
-            self._sync_code_discovered_status()
+            # Sync code hack discovered status with global discovered effects
+            from game_inventory import sync_code_discovered_status
+
+            sync_code_discovered_status(
+                self.game_engine.player.inventory_manager.items,
+                self.game_engine.discovered_code_effects,
+            )
             self._restore_ui_state(save_data)
 
             # Generate level layout for map structure
@@ -225,6 +231,15 @@ class GameStatePersistence:
             position = parse_coordinate_string(pos_str)
             if position:  # Skip malformed coordinate data
                 self.game_engine.game_state.distraction_points[position] = turns
+
+        # Restore revealed special nodes (from Network Scan exploit)
+        self.game_engine.game_state.revealed_special_nodes = {}
+        for pos_str, node_type in effects_data.get("revealed_special_nodes", {}).items():
+            position = parse_coordinate_string(pos_str)
+            if position:
+                self.game_engine.game_state.revealed_special_nodes[(position.x, position.y)] = (
+                    node_type
+                )
 
         # Restore code effects (backward compatibility)
         self.game_engine.code_hack_effects = save_data.get("code_hack_effects", {})
@@ -466,12 +481,3 @@ class GameStatePersistence:
             enemy.cpu = saved_cpu  # Preserve the actual HP from the save
 
             self.game_engine.enemy_manager.enemies.append(enemy)
-
-    def _sync_code_discovered_status(self) -> None:
-        """Sync discovered status of inventory code hacks with global discovered effects."""
-        from game_inventory import CodeHack
-
-        for item in self.game_engine.player.inventory_manager.items:
-            if isinstance(item, CodeHack):
-                # Update discovered status based on global discovered effects
-                item.discovered = item.color_name in self.game_engine.discovered_code_effects

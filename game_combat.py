@@ -23,7 +23,6 @@ from game_entities import (
     Position,
     TargetingMode,
 )
-from game_errors import GameErrorHandler
 
 
 class ExploitSystem:
@@ -476,30 +475,9 @@ class ExploitSystem:
             # Enemy destroyed
             is_admin = enemy.type == "admin"
             self.game.sound_manager.play_sound("enemy_death")
-            # Trigger particle explosion effect (graphics mode only, if enabled)
-            if (
-                hasattr(self.game, "particle_system")
-                and self.game.particle_system is not None
-                and hasattr(self.game, "tile_manager")
-                and self.game.tile_manager is not None
-                and self.game.settings.graphics_mode == "graphics"
-                and self.game.settings.show_particle_effects
-            ):
-                try:
-                    # Extract colors from enemy sprite for particles
-                    colors = self.game.tile_manager.extract_sprite_colors(
-                        enemy.type, num_colors=GameConfig.PARTICLE_SPRITE_COLOR_COUNT()
-                    )
 
-                    # Create explosion at enemy position (uses particle_count from config)
-                    self.game.particle_system.create_death_explosion(
-                        world_x=enemy.x, world_y=enemy.y, colors=colors
-                    )
-                except Exception as e:
-                    # Don't crash game if particle effect fails
-                    GameErrorHandler.handle_error(
-                        e, "particle_effect", "Particle effect failed", fatal=False
-                    )
+            # Trigger particle explosion effect
+            self.game.trigger_death_particles(enemy.type, enemy.x, enemy.y)
 
             self.game.enemies.remove(enemy)
             self.game.player.cpu = min(
@@ -762,7 +740,7 @@ class ExploitSystem:
 
         # Show result message
         if enemy_count > 0:
-            self.game.message_log.add_message(f"Logic Bomb: {enemy_count} targets eliminated!")
+            self.game.message_log.add_message(f"Logic Bomb: {enemy_count} targets hit!")
         else:
             self.game.message_log.add_message("Logic Bomb detonated (no targets)")
 

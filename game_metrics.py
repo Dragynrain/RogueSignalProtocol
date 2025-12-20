@@ -67,6 +67,10 @@ class SessionMetrics:
     damage_taken: int = 0
     stealth_kills: int = 0
 
+    # Per-level tracking for pacifist achievement
+    kills_current_level: int = 0  # Reset when level completes
+    min_kills_any_level: int | None = None  # Lowest kills on any completed level
+
     # Exploration
     steps_taken: int = 0
     levels_completed: int = 0
@@ -120,6 +124,7 @@ class SessionMetrics:
     # Peak performance
     most_enemies_killed_one_turn: int = 0
     highest_heat_reached: int = 0
+    highest_trace_reached: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary, handling Counter and set objects."""
@@ -142,6 +147,9 @@ class SessionMetrics:
             "damage_dealt": self.damage_dealt,
             "damage_taken": self.damage_taken,
             "stealth_kills": self.stealth_kills,
+            # Per-level tracking
+            "kills_current_level": self.kills_current_level,
+            "min_kills_any_level": self.min_kills_any_level,
             # Exploration
             "steps_taken": self.steps_taken,
             "levels_completed": self.levels_completed,
@@ -184,6 +192,7 @@ class SessionMetrics:
             # Peak performance
             "most_enemies_killed_one_turn": self.most_enemies_killed_one_turn,
             "highest_heat_reached": self.highest_heat_reached,
+            "highest_trace_reached": self.highest_trace_reached,
         }
 
     @classmethod
@@ -221,6 +230,9 @@ class SessionMetrics:
             "final_cpu": 0,
             "restoration_nodes_used": 0,
             "full_floor_clears": 0,
+            # Per-level tracking
+            "kills_current_level": 0,
+            "min_kills_any_level": None,
             # Combo/streak tracking
             "current_stealth_streak": 0,
             "max_stealth_streak": 0,
@@ -244,6 +256,7 @@ class SessionMetrics:
             "special_nodes_discovered": set(),
             "most_enemies_killed_one_turn": 0,
             "highest_heat_reached": 0,
+            "highest_trace_reached": 0.0,
         }
 
         # Apply defaults for missing fields
@@ -389,6 +402,17 @@ def track_highest_heat(current_heat: int) -> None:
         session.highest_heat_reached = current_heat
 
 
+def track_highest_trace(current_trace: float) -> None:
+    """
+    Track highest trace level reached for no_trace achievement.
+
+    Call this whenever trace increases to update the max if exceeded.
+    """
+    session = get_current_session()
+    if session and current_trace > session.highest_trace_reached:
+        session.highest_trace_reached = current_trace
+
+
 def track_kill_this_turn() -> None:
     """
     Mark that a kill happened this turn and update turns_with_kills.
@@ -412,6 +436,35 @@ def reset_turn_kill_flag() -> None:
     session = get_current_session()
     if session:
         session._kill_this_turn = False
+
+
+def complete_level_metrics() -> None:
+    """
+    Update metrics when a level is completed.
+
+    Called from game_level_coordinator when player reaches the gateway.
+    Updates min_kills_any_level for pacifist achievement and resets kills_current_level.
+    """
+    session = get_current_session()
+    if session:
+        # Update minimum kills on any level (for pacifist achievement)
+        if (
+            session.min_kills_any_level is None
+            or session.kills_current_level < session.min_kills_any_level
+        ):
+            session.min_kills_any_level = session.kills_current_level
+            logging.debug(
+                f"Level completed with {session.kills_current_level} kills "
+                f"(new min: {session.min_kills_any_level})"
+            )
+        else:
+            logging.debug(
+                f"Level completed with {session.kills_current_level} kills "
+                f"(min remains: {session.min_kills_any_level})"
+            )
+
+        # Reset for next level
+        session.kills_current_level = 0
 
 
 def track_enemy_kill(
@@ -441,6 +494,13 @@ def track_enemy_kill(
     track("enemies_killed", category=enemy_type)
     track("damage_dealt", amount=damage)
     track_kill_this_turn()
+
+    # Track unique enemies encountered for enemy_database achievement
+    session = get_current_session()
+    if session:
+        session.unique_enemies_encountered.add(enemy_type)
+        # Track per-level kills for pacifist achievement
+        session.kills_current_level += 1
 
     if was_stealth:
         track("stealth_kills")
@@ -664,42 +724,47 @@ def load_lifetime_metrics() -> LifetimeMetrics:
     """Load lifetime metrics from saves/rogue_signal_progress.json."""
     progress_file = _get_progress_file_path()
 
+    if not progress_file.exists():
+        # File doesn't exist yet - new player, use defaults
+        return LifetimeMetrics()
+
     try:
-        if progress_file.exists():
-            with open(progress_file) as f:
-                data = json.load(f)
-                if "lifetime_metrics" in data:
-                    return LifetimeMetrics.from_dict(data["lifetime_metrics"])
+        with open(progress_file) as f:
+            data = json.load(f)
+            if "lifetime_metrics" in data:
+                return LifetimeMetrics.from_dict(data["lifetime_metrics"])
+            # File exists but has no lifetime_metrics section - use defaults
+            return LifetimeMetrics()
     except Exception as e:
+        # File exists but is corrupt or unreadable - this is a real problem
         GameErrorHandler.handle_error(
             e,
             "load_lifetime_metrics",
-            "Failed to load lifetime metrics, using defaults",
-            fatal=False,
+            f"Progress file exists but is corrupt: {progress_file}",
+            fatal=True,
         )
-
-    # Return fresh metrics if loading fails
-    return LifetimeMetrics()
 
 
 def load_unlocked_achievements() -> list:
     """Load unlocked achievements from saves/rogue_signal_progress.json."""
     progress_file = _get_progress_file_path()
 
+    if not progress_file.exists():
+        # File doesn't exist yet - new player, no achievements
+        return []
+
     try:
-        if progress_file.exists():
-            with open(progress_file) as f:
-                data = json.load(f)
-                return data.get("unlocked_achievements", [])
+        with open(progress_file) as f:
+            data = json.load(f)
+            return data.get("unlocked_achievements", [])
     except Exception as e:
+        # File exists but is corrupt or unreadable - this is a real problem
         GameErrorHandler.handle_error(
             e,
             "load_unlocked_achievements",
-            "Failed to load unlocked achievements, using empty list",
-            fatal=False,
+            f"Progress file exists but is corrupt: {progress_file}",
+            fatal=True,
         )
-
-    return []
 
 
 def save_unlocked_achievements(achievements: list) -> None:
@@ -728,8 +793,9 @@ def save_unlocked_achievements(achievements: list) -> None:
         )
 
     except Exception as e:
+        # Achievements are critical player progress - fail loudly so the issue is noticed
         GameErrorHandler.handle_error(
-            e, "save_unlocked_achievements", "Failed to save unlocked achievements", fatal=False
+            e, "save_unlocked_achievements", "Failed to save unlocked achievements", fatal=True
         )
 
 
@@ -757,8 +823,9 @@ def save_lifetime_metrics(lifetime: LifetimeMetrics) -> None:
         logging.info("Lifetime metrics saved to saves/rogue_signal_progress.json")
 
     except Exception as e:
+        # Lifetime metrics are critical player progress - fail loudly so the issue is noticed
         GameErrorHandler.handle_error(
-            e, "save_lifetime_metrics", "Failed to save lifetime metrics", fatal=False
+            e, "save_lifetime_metrics", "Failed to save lifetime metrics", fatal=True
         )
 
 
@@ -770,6 +837,14 @@ def update_lifetime_metrics(session: SessionMetrics) -> None:
     lifetime.total_games += 1
     if session.victory:
         lifetime.total_victories += 1
+
+        # Track ascension victories and highest completion
+        # Use string key for consistency with JSON serialization
+        ascension = session.ascension_level
+        lifetime.ascension_victories[str(ascension)] += 1
+        if ascension > lifetime.highest_ascension_completed:
+            lifetime.highest_ascension_completed = ascension
+            logging.info(f"New highest ascension completed: A{ascension}")
 
     lifetime.total_turns += session.turns_taken
     lifetime.total_damage_dealt += session.damage_dealt
@@ -807,6 +882,54 @@ def save_metrics(session: SessionMetrics) -> None:
     save_session_to_json(session)
     save_session_to_sqlite(session)
     update_lifetime_metrics(session)
+
+
+def finalize_and_save_session(
+    victory: bool,
+    death_cause: str | None = None,
+    death_level: int = 0,
+    final_cpu: int = 0,
+) -> list[str]:
+    """
+    Finalize session, save metrics, and check achievements.
+
+    Consolidates the common pattern of:
+    1. finalize_session()
+    2. save_metrics()
+    3. Check achievements against lifetime stats
+    4. Save newly unlocked achievements
+
+    Args:
+        victory: Whether the player won
+        death_cause: Cause of death if applicable
+        death_level: Level where death occurred
+        final_cpu: Player's final CPU
+
+    Returns:
+        List of newly unlocked achievement IDs (empty if none)
+    """
+    metrics = finalize_session(
+        victory=victory,
+        death_cause=death_cause,
+        death_level=death_level,
+        final_cpu=final_cpu,
+    )
+
+    if not metrics:
+        return []
+
+    save_metrics(metrics)
+
+    # Check for newly unlocked achievements
+    from game_achievements import AchievementManager
+
+    lifetime = load_lifetime_metrics()
+    newly_unlocked = AchievementManager.check_achievements(metrics, lifetime)
+    if newly_unlocked:
+        logging.info(f"Unlocked {len(newly_unlocked)} achievements")
+        save_unlocked_achievements(AchievementManager.get_unlocked_achievements())
+
+    return newly_unlocked
 
 
 def _init_sqlite_schema() -> None:

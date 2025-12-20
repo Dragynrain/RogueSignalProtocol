@@ -1644,8 +1644,9 @@ class InputMapper:
             if button in reserved_buttons:
                 logging.warning(f"Cannot bind reserved button to {action.name}")
                 return False
-        except Exception:
-            pass  # SDL not available, skip reservation check
+        except Exception as e:
+            # SDL not available (e.g., headless testing) - skip reservation check
+            logging.debug(f"Skipping reserved button check (SDL unavailable): {e}")
 
         # Ensure context exists
         if context not in self._custom_gamepad_bindings:
